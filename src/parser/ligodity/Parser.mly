@@ -48,6 +48,7 @@ sym(X)   : oreg(X)       { $1 }
 ident    : reg(Ident)    { $1 }
 constr   : reg(Constr)   { $1 }
 string   : reg(Str)      { $1 }
+bytes    : reg(Bytes)    { $1 }
 eof      : oreg(EOF)     { $1 }
 vbar     : sym(VBAR)     { $1 }
 lpar     : sym(LPAR)     { $1 }
@@ -566,6 +567,7 @@ core_expr:
 | ident | reg(module_field)                                 { EVar $1 }
 | reg(projection)                                          { EProj $1 }
 | string                                        { EString (String $1) }
+| bytes                                                   { EBytes $1 }
 | unit                                                     { EUnit $1 }
 | kwd(False)                          {  ELogic (BoolExpr (False $1)) }
 | kwd(True)                           {  ELogic (BoolExpr (True $1))  }

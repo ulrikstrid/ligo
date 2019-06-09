@@ -434,7 +434,7 @@ let print_str Region.{region; value} =
 
 let print_bytes Region.{region; value=lexeme, abstract} =
   Printf.printf "%s: Bytes (\"%s\", \"0x%s\")\n"
-    (region#compact `Byte) lexeme (Hex.to_string abstract)
+    (region#compact `Byte) lexeme (Hex.show abstract)
 
 let rec print_tokens {decl;eof} =
   Utils.nseq_iter print_statement decl; print_token eof "EOF"

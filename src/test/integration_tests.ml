@@ -431,6 +431,36 @@ let list () : unit result =
   in
   ok ()
 
+let bytes_ligo () : unit result =
+  let%bind program = type_file "./contracts/bytes.ligo" in
+  let%bind () =
+    expect_eq program "main"
+      (e_tuple [
+         e_bytes "pa\000ram" ;
+         e_tuple [e_bytes "storage1" ; e_bytes "storage2"]
+      ])
+      (e_tuple [
+         e_list [] ;
+         e_tuple [e_bytes "bon\000jour" ; e_bytes "pa\000ram"]
+      ])
+  in
+  ok ()
+
+let bytes_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/bytes.mligo" in
+  let%bind () =
+    expect_eq program "main"
+      (e_tuple [
+         e_bytes "pa\000ram" ;
+         e_tuple [e_bytes "storage1" ; e_bytes "storage2"]
+      ])
+      (e_tuple [
+         e_list [] ;
+         e_tuple [e_bytes "bon\000jour" ; e_bytes "pa\000ram"]
+      ])
+  in
+  ok ()
+
 let condition () : unit result =
   let%bind program = type_file "./contracts/condition.ligo" in
   let make_input = e_int in
@@ -715,4 +745,6 @@ let main = test_suite "Integration (End to End)" [
     (* test "lambda2 mligo" lambda2_mligo ; *)
     test "website1 ligo" website1_ligo ;
     test "website2 ligo" website2_ligo ;
+    test "bytes" bytes_ligo ;
+    test "bytes (mligo)" bytes_mligo ;
   ]

@@ -41,6 +41,7 @@
 %token <string> Ident
 %token <string> Constr
 %token <string> Str
+%token <string * Hex.t> Bytes
 
 %token <string * Z.t> Int
 %token <string * Z.t> Mtz

@@ -106,6 +106,7 @@ let rec translate_type (t:AST.type_value) : type_value result =
   | T_constant ("address", []) -> ok (T_base Base_address)
   | T_constant ("timestamp", []) -> ok (T_base Base_timestamp)
   | T_constant ("unit", []) -> ok (T_base Base_unit)
+  | T_constant ("bytes", []) -> ok (T_base Base_bytes)
   | T_constant ("operation", []) -> ok (T_base Base_operation)
   | T_constant ("contract", [x]) ->
       let%bind x' = translate_type x in

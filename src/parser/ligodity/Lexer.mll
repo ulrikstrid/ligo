@@ -219,7 +219,7 @@ let ident    = small ichar* | '_' ichar+
 let uident   = capital ichar*
 let tparam   = "'" ident (* Type parameters. Unused yet *)
 
-let hexa     = digit | ['A'-'F']
+let hexa     = digit | ['a'-'f'] | ['A'-'F']
 let byte     = hexa hexa
 let byte_seq = byte | byte (byte | '_')* byte
 let bytes    = "0x" (byte_seq? as seq)
@@ -285,7 +285,7 @@ rule scan = parse
 | uident as id { Token.Constr id }
 | bytes {
     let norm = Str.(global_replace (regexp "_") "" seq)
-    in Token.Bytes (seq, Hex.of_string norm)
+    in Token.Bytes (seq, `Hex norm)
   }
 | "let%init"    { Token.Let                    }
 | "let%entry"   { Token.LetEntry               }

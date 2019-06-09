@@ -5,6 +5,7 @@ open Proto_alpha_utils.Trace
 open Protocol
 open Script_typed_ir
 open Script_ir_translator
+module MBytes = Tezos_stdlib.MBytes
 
 let rec translate_value (Ex_typed_value (ty, value)) : value result =
   match (ty, value) with
