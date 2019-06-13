@@ -22,9 +22,9 @@ let format_tz s =
       let num         = Z.of_string (integral ^ fractional)
       and den         = Z.of_string ("1" ^ String.make (len-index-1) '0')
       and million     = Q.of_string "1000000" in
-      let mtz         = Q.make num den |> Q.mul million in
-      let should_be_1 = Q.den mtz in
-      if Z.equal Z.one should_be_1 then Some (Q.num mtz) else None
+      let mutez       = Q.make num den |> Q.mul million in
+      let should_be_1 = Q.den mutez in
+      if Z.equal Z.one should_be_1 then Some (Q.num mutez) else None
   | exception Not_found -> assert false
 
 (* STRING PROCESSING *)

@@ -110,7 +110,7 @@ module type TOKEN =
     val mk_bytes  : lexeme -> Region.t -> token
     val mk_int    : lexeme -> Region.t -> (token,   int_err) result
     val mk_nat    : lexeme -> Region.t -> (token,   int_err) result
-    val mk_mtz    : lexeme -> Region.t -> (token,   int_err) result
+    val mk_mutez  : lexeme -> Region.t -> (token,   int_err) result
     val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
     val mk_constr : lexeme -> Region.t -> token
     val mk_sym    : lexeme -> Region.t -> token
@@ -424,9 +424,9 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       | Error Token.Non_canonical_zero ->
           fail region Non_canonical_zero
 
-    let mk_mtz state buffer =
+    let mk_mutez state buffer =
       let region, lexeme, state = sync state buffer in
-      match Token.mk_mtz lexeme region with
+      match Token.mk_mutez lexeme region with
         Ok token -> token, state
       | Error Token.Non_canonical_zero ->
           fail region Non_canonical_zero
@@ -502,7 +502,7 @@ and scan state = parse
 | constr        { mk_constr      state lexbuf |> enqueue   }
 | bytes         { (mk_bytes seq) state lexbuf |> enqueue   }
 | natural 'n'   { mk_nat         state lexbuf |> enqueue   }
-| natural "mtz" { mk_mtz       state lexbuf |> enqueue   }
+| natural "mutez" { mk_mutez     state lexbuf |> enqueue   }
 | integer       { mk_int         state lexbuf |> enqueue   }
 | symbol        { mk_sym         state lexbuf |> enqueue   }
 | eof           { mk_eof         state lexbuf |> enqueue   }
