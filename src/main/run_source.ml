@@ -96,7 +96,7 @@ let parsify_expression_ligodity = fun source ->
   ok simplified
 
 type s_syntax = Syntax_name of string
-type v_syntax =  [`pascaligo | `cameligo ]
+type v_syntax =  Pascaligo | Cameligo
 
 let syntax_to_variant : s_syntax -> string option -> v_syntax result =
   fun syntax source_filename ->
@@ -115,28 +115,28 @@ let syntax_to_variant : s_syntax -> string option -> v_syntax result =
           match source_filename with
           | Some source_filename
             when endswith source_filename ".ligo"
-            -> ok `pascaligo
+            -> ok Pascaligo
           | Some source_filename
             when endswith source_filename ".mligo"
-            -> ok `cameligo
+            -> ok Cameligo
           | _ -> simple_fail "cannot auto-detect syntax, pleas use -s name_of_syntax"
         end
-      else if String.equal syntax "pascaligo" then ok `pascaligo
-      else if String.equal syntax "cameligo" then ok `cameligo
+      else if String.equal syntax "pascaligo" then ok Pascaligo
+      else if String.equal syntax "cameligo" then ok Cameligo
       else simple_fail "unrecognized parser"
     end
 
 let parsify = fun (syntax : v_syntax) source_filename ->
   let%bind parsify = match syntax with
-    | `pascaligo -> ok parsify_pascaligo
-    | `cameligo -> ok parsify_ligodity
+    | Pascaligo -> ok parsify_pascaligo
+    | Cameligo -> ok parsify_ligodity
   in
   parsify source_filename
 
 let parsify_expression = fun syntax source ->
   let%bind parsify = match syntax with
-    | `pascaligo -> ok parsify_expression_pascaligo
-    | `cameligo -> ok parsify_expression_ligodity
+    | Pascaligo -> ok parsify_expression_pascaligo
+    | Cameligo -> ok parsify_expression_ligodity
   in
   parsify source
 
