@@ -6,6 +6,9 @@ stages:
   - build_docker
   - build_and_deploy_docker
   - build_and_deploy_website
+  # "remote-installer-job" needs to happen after the "build_and_deploy_docker" phase.
+  # If the order of the stages is changed, then "remote-installer-job" might need to
+  # be moved out of the "test" phase.
   - test
 
 .website_build: &website_build
@@ -128,6 +131,16 @@ remote-repo-job:
     #- opam user-setup install
   only:
     - master
+    - dev
+
+remote-installer-job:
+  stage: test
+  script:
+    - curl https://gitlab.com/ligolang/ligo/raw/dev/scripts/installer.sh | bash -s next
+  only:
+    - master
+    - dev
+    - feature/more-installer-test-and-fixes
 
 # Run a docker build without publishing to the registry
 build-current-docker-image:
@@ -150,7 +163,6 @@ build-and-publish-latest-docker-image:
   only:
     - dev
 
-
 # Pages are deployed from both master & dev, be careful not to override 'next'
 # in case something gets merged into 'dev' while releasing.
 pages:
@@ -158,4 +170,3 @@ pages:
   only:
     - master
     - dev
-    - feature/#3-add-odoc-to-website
