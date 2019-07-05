@@ -1,0 +1,2 @@
+1) install mi-cho-coq from the branch raphael@micheline + the patch from Tom Jack
+2) compile with coqc prototype.v
