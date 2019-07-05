@@ -24,12 +24,12 @@ and environment_element_definition =
 and free_variables = name list
 
 and environment_element = {
-  type_value : type_value ;
+  type_expression : type_expression ;
   source_environment : full_environment ;
   definition : environment_element_definition ;
 }
 and environment = (string * environment_element) list
-and type_environment = (string * type_value) list
+and type_environment = (string * type_expression) list
 and small_environment = (environment * type_environment)
 and full_environment = small_environment List.Ne.t
 
@@ -46,26 +46,18 @@ and named_expression = {
   annotated_expression: ae ;
 }
 
-and tv = type_value
+and tv = type_expression
 and ae = annotated_expression
-and tv_map = type_value type_name_map
+and tv_map = type_expression type_name_map
 and ae_map = annotated_expression name_map
 
-and type_value' =
-  | T_tuple of tv list
-  | T_sum of tv_map
-  | T_record of tv_map
-  | T_constant of type_name * tv list
-  | T_function of (tv * tv)
+and type_expression' = S.type_expression'
+xo
+and type_expression = S.type_expression
 
-and type_value = {
-  type_value' : type_value' ;
-  simplified : S.type_expression option ;
-}
-
-and named_type_value = {
+and named_type_expression = {
   type_name: name ;
-  type_value : type_value ;
+  type_expression : type_expression ;
 }
 
 and lambda = {
@@ -81,11 +73,13 @@ and let_in = {
   result: ae;
 }
 
+and variable = name
+
 and expression =
   (* Base *)
   | E_literal of literal
   | E_constant of (name * ae list) (* For language constants, like (Cons hd tl) or (plus i j) *)
-  | E_variable of name
+  | E_variable of variable
   | E_application of (ae * ae)
   | E_lambda of lambda
   | E_let_in of let_in
@@ -108,7 +102,7 @@ and expression =
   (* Replace Statements *)
   | E_sequence of (ae * ae)
   | E_loop of (ae * ae)
-  | E_assign of (named_type_value * access_path * ae)
+  | E_assign of (named_type_expression * access_path * ae)
 
 and value = annotated_expression (* todo (for refactoring) *)
 
@@ -142,10 +136,10 @@ and 'a matching =
     }
   | Match_option of {
       match_none : 'a ;
-      match_some : (name * type_value) * 'a ;
+      match_some : (name * type_expression) * 'a ;
     }
   | Match_tuple of (name list * 'a)
-  | Match_variant of (((constructor_name * name) * 'a) list * type_value)
+  | Match_variant of (((constructor_name * name) * 'a) list * type_expression)
 
 and matching_expr = ae matching
 
@@ -162,7 +156,7 @@ let get_entry (p:program) (entry : string) : annotated_expression result =
     List.find_map aux (List.map Location.unwrap p) in
   ok result
 
-let get_functional_entry (p:program) (entry : string) : (lambda * type_value) result =
+let get_functional_entry (p:program) (entry : string) : (lambda * type_expression) result =
   let%bind entry = get_entry p entry in
   match entry.expression with
   | E_lambda l -> ok (l , entry.type_annotation)

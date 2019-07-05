@@ -6,27 +6,26 @@ let list_sep_d x = list_sep x (const " , ")
 let smap_sep_d x = smap_sep x (const " , ")
 
 
-let rec type_value' ppf (tv':type_value') : unit =
+let rec type_expression' ppf (tv':type_expression') : unit =
   match tv' with
-  | T_tuple lst -> fprintf ppf "tuple[%a]" (list_sep_d type_value) lst
-  | T_sum m -> fprintf ppf "sum[%a]" (smap_sep_d type_value) m
-  | T_record m -> fprintf ppf "record[%a]" (smap_sep_d type_value) m
-  | T_function (a, b) -> fprintf ppf "%a -> %a" type_value a type_value b
+  | T_variable v -> fprintf ppf "%s" v
+  | T_tuple lst -> fprintf ppf "tuple[%a]" (list_sep_d type_expression) lst
+  | T_sum m -> fprintf ppf "sum[%a]" (smap_sep_d type_expression) m
+  | T_record m -> fprintf ppf "record[%a]" (smap_sep_d type_expression) m
+  | T_function (a, b) -> fprintf ppf "%a -> %a" type_expression a type_expression b
   | T_constant (c, []) -> fprintf ppf "%s" c
-  | T_constant (c, n) -> fprintf ppf "%s(%a)" c (list_sep_d type_value) n
+  | T_constant (c, n) -> fprintf ppf "%s(%a)" c (list_sep_d type_expression) n
 
-and type_value ppf (tv:type_value) : unit =
-  type_value' ppf tv.type_value'
+and type_expression ppf (tv:type_expression) : unit =
+  type_expression' ppf tv.type_expression'
 
 let rec annotated_expression ppf (ae:annotated_expression) : unit =
-  match ae.type_annotation.simplified with
-  | Some _ -> fprintf ppf "@[<v>%a:%a@]" expression ae.expression type_value ae.type_annotation
-  | _ -> fprintf ppf "@[<v>%a@]" expression ae.expression
+  fprintf ppf "@[<v>%a@]" expression ae.expression
 
 and lambda ppf l =
   let {binder;input_type;output_type;result} = l in
   fprintf ppf "lambda (%s:%a) : %a return %a"
-    binder type_value input_type type_value output_type
+    binder type_expression input_type type_expression output_type
     annotated_expression result
 
 and expression ppf (e:expression) : unit =

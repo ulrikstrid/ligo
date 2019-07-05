@@ -1,7 +1,7 @@
 open Trace
 open Types
 
-let make_t type_value' simplified = { type_value' ; simplified }
+let make_t type_expression' _source : type_expression = { type_expression' }
 let make_a_e ?(location = Location.generated) expression type_annotation environment = {
   expression ;
   type_annotation ;
@@ -10,113 +10,114 @@ let make_a_e ?(location = Location.generated) expression type_annotation environ
   location ;
 }
 let make_n_e name a_e = { name ; annotated_expression = a_e }
-let make_n_t type_name type_value = { type_name ; type_value }
+let make_n_t type_name type_expression = { type_name ; type_expression }
 
-let t_bool ?s () : type_value = make_t (T_constant ("bool", [])) s
-let t_string ?s () : type_value = make_t (T_constant ("string", [])) s
-let t_bytes ?s () : type_value = make_t (T_constant ("bytes", [])) s
-let t_key ?s () : type_value = make_t (T_constant ("key", [])) s
-let t_key_hash ?s () : type_value = make_t (T_constant ("key_hash", [])) s
-let t_int ?s () : type_value = make_t (T_constant ("int", [])) s
-let t_address ?s () : type_value = make_t (T_constant ("address", [])) s
-let t_operation ?s () : type_value = make_t (T_constant ("operation", [])) s
-let t_nat ?s () : type_value = make_t (T_constant ("nat", [])) s
-let t_tez ?s () : type_value = make_t (T_constant ("tez", [])) s
-let t_timestamp ?s () : type_value = make_t (T_constant ("timestamp", [])) s
-let t_unit ?s () : type_value = make_t (T_constant ("unit", [])) s
-let t_option o ?s () : type_value = make_t (T_constant ("option", [o])) s
-let t_tuple lst ?s () : type_value = make_t (T_tuple lst) s
-let t_list t ?s () : type_value = make_t (T_constant ("list", [t])) s
-let t_set t ?s () : type_value = make_t (T_constant ("set", [t])) s
-let t_contract t ?s () : type_value = make_t (T_constant ("contract", [t])) s
+let t_bool ?s () : type_expression = make_t (T_constant ("bool", [])) s
+let t_string ?s () : type_expression = make_t (T_constant ("string", [])) s
+let t_bytes ?s () : type_expression = make_t (T_constant ("bytes", [])) s
+let t_key ?s () : type_expression = make_t (T_constant ("key", [])) s
+let t_key_hash ?s () : type_expression = make_t (T_constant ("key_hash", [])) s
+let t_int ?s () : type_expression = make_t (T_constant ("int", [])) s
+let t_address ?s () : type_expression = make_t (T_constant ("address", [])) s
+let t_operation ?s () : type_expression = make_t (T_constant ("operation", [])) s
+let t_nat ?s () : type_expression = make_t (T_constant ("nat", [])) s
+let t_tez ?s () : type_expression = make_t (T_constant ("tez", [])) s
+let t_timestamp ?s () : type_expression = make_t (T_constant ("timestamp", [])) s
+let t_unit ?s () : type_expression = make_t (T_constant ("unit", [])) s
+let t_option o ?s () : type_expression = make_t (T_constant ("option", [o])) s
+let t_tuple lst ?s () : type_expression = make_t (T_tuple lst) s
+let t_list t ?s () : type_expression = make_t (T_constant ("list", [t])) s
+let t_variable t ?s () : type_expression = make_t (T_variable t) s
+let t_set t ?s () : type_expression = make_t (T_constant ("set", [t])) s
+let t_contract t ?s () : type_expression = make_t (T_constant ("contract", [t])) s
 let t_pair a b ?s () = t_tuple [a ; b] ?s ()
 
-let t_record m ?s () : type_value = make_t (T_record m) s
-let make_t_ez_record (lst:(string * type_value) list) : type_value =
+let t_record m ?s () : type_expression = make_t (T_record m) s
+let make_t_ez_record (lst:(string * type_expression) list) : type_expression =
   let aux prev (k, v) = SMap.add k v prev in
   let map = List.fold_left aux SMap.empty lst in
   make_t (T_record map) None
-let ez_t_record lst ?s () : type_value =
+let ez_t_record lst ?s () : type_expression =
   let m = SMap.of_list lst in
   t_record m ?s ()
 
 let t_map key value ?s () = make_t (T_constant ("map", [key ; value])) s
 
-let t_sum m ?s () : type_value = make_t (T_sum m) s
-let make_t_ez_sum (lst:(string * type_value) list) : type_value =
+let t_sum m ?s () : type_expression = make_t (T_sum m) s
+let make_t_ez_sum (lst:(string * type_expression) list) : type_expression =
   let aux prev (k, v) = SMap.add k v prev in
   let map = List.fold_left aux SMap.empty lst in
   make_t (T_sum map) None
 
-let t_function param result ?s () : type_value = make_t (T_function (param, result)) s
-let t_shallow_closure param result ?s () : type_value = make_t (T_function (param, result)) s
+let t_function param result ?s () : type_expression = make_t (T_function (param, result)) s
+let t_shallow_closure param result ?s () : type_expression = make_t (T_function (param, result)) s
 
 let get_type_annotation (x:annotated_expression) = x.type_annotation
-let get_type' (x:type_value) = x.type_value'
+let get_type' (x:type_expression) = x.type_expression'
 let get_environment (x:annotated_expression) = x.environment
 let get_expression (x:annotated_expression) = x.expression
 
-let get_t_bool (t:type_value) : unit result = match t.type_value' with
+let get_t_bool (t:type_expression) : unit result = match t.type_expression' with
   | T_constant ("bool", []) -> ok ()
   | _ -> simple_fail "not a bool"
 
-let get_t_int (t:type_value) : unit result = match t.type_value' with
+let get_t_int (t:type_expression) : unit result = match t.type_expression' with
   | T_constant ("int", []) -> ok ()
   | _ -> simple_fail "not a int"
 
-let get_t_nat (t:type_value) : unit result = match t.type_value' with
+let get_t_nat (t:type_expression) : unit result = match t.type_expression' with
   | T_constant ("nat", []) -> ok ()
   | _ -> simple_fail "not a nat"
 
-let get_t_unit (t:type_value) : unit result = match t.type_value' with
+let get_t_unit (t:type_expression) : unit result = match t.type_expression' with
   | T_constant ("unit", []) -> ok ()
   | _ -> simple_fail "not a unit"
 
-let get_t_tez (t:type_value) : unit result = match t.type_value' with
+let get_t_tez (t:type_expression) : unit result = match t.type_expression' with
   | T_constant ("tez", []) -> ok ()
   | _ -> simple_fail "not a tez"
 
-let get_t_bytes (t:type_value) : unit result = match t.type_value' with
+let get_t_bytes (t:type_expression) : unit result = match t.type_expression' with
   | T_constant ("bytes", []) -> ok ()
   | _ -> simple_fail "not a bytes"
 
-let get_t_string (t:type_value) : unit result = match t.type_value' with
+let get_t_string (t:type_expression) : unit result = match t.type_expression' with
   | T_constant ("string", []) -> ok ()
   | _ -> simple_fail "not a string"
 
-let get_t_contract (t:type_value) : type_value result = match t.type_value' with
+let get_t_contract (t:type_expression) : type_expression result = match t.type_expression' with
   | T_constant ("contract", [x]) -> ok x
   | _ -> simple_fail "not a contract"
 
-let get_t_option (t:type_value) : type_value result = match t.type_value' with
+let get_t_option (t:type_expression) : type_expression result = match t.type_expression' with
   | T_constant ("option", [o]) -> ok o
   | _ -> simple_fail "not a option"
 
-let get_t_list (t:type_value) : type_value result = match t.type_value' with
+let get_t_list (t:type_expression) : type_expression result = match t.type_expression' with
   | T_constant ("list", [o]) -> ok o
   | _ -> simple_fail "not a list"
 
-let get_t_set (t:type_value) : type_value result = match t.type_value' with
+let get_t_set (t:type_expression) : type_expression result = match t.type_expression' with
   | T_constant ("set", [o]) -> ok o
   | _ -> simple_fail "not a set"
 
-let get_t_key (t:type_value) : unit result = match t.type_value' with
+let get_t_key (t:type_expression) : unit result = match t.type_expression' with
   | T_constant ("key", []) -> ok ()
   | _ -> simple_fail "not a key"
 
-let get_t_signature (t:type_value) : unit result = match t.type_value' with
+let get_t_signature (t:type_expression) : unit result = match t.type_expression' with
   | T_constant ("signature", []) -> ok ()
   | _ -> simple_fail "not a signature"
 
-let get_t_key_hash (t:type_value) : unit result = match t.type_value' with
+let get_t_key_hash (t:type_expression) : unit result = match t.type_expression' with
   | T_constant ("key_hash", []) -> ok ()
   | _ -> simple_fail "not a key_hash"
 
-let get_t_tuple (t:type_value) : type_value list result = match t.type_value' with
+let get_t_tuple (t:type_expression) : type_expression list result = match t.type_expression' with
   | T_tuple lst -> ok lst
   | _ -> simple_fail "not a tuple"
 
-let get_t_pair (t:type_value) : (type_value * type_value) result = match t.type_value' with
+let get_t_pair (t:type_expression) : (type_expression * type_expression) result = match t.type_expression' with
   | T_tuple lst ->
       let%bind () =
         trace_strong (simple_error "not a pair") @@
@@ -124,28 +125,28 @@ let get_t_pair (t:type_value) : (type_value * type_value) result = match t.type_
       ok List.(nth lst 0 , nth lst 1)
   | _ -> simple_fail "not a tuple"
 
-let get_t_function (t:type_value) : (type_value * type_value) result = match t.type_value' with
+let get_t_function (t:type_expression) : (type_expression * type_expression) result = match t.type_expression' with
   | T_function ar -> ok ar
   | _ -> simple_fail "not a tuple"
 
-let get_t_sum (t:type_value) : type_value SMap.t result = match t.type_value' with
+let get_t_sum (t:type_expression) : type_expression SMap.t result = match t.type_expression' with
   | T_sum m -> ok m
   | _ -> simple_fail "not a sum"
 
-let get_t_record (t:type_value) : type_value SMap.t result = match t.type_value' with
+let get_t_record (t:type_expression) : type_expression SMap.t result = match t.type_expression' with
   | T_record m -> ok m
   | _ -> simple_fail "not a record type"
 
-let get_t_map (t:type_value) : (type_value * type_value) result =
-  match t.type_value' with
+let get_t_map (t:type_expression) : (type_expression * type_expression) result =
+  match t.type_expression' with
   | T_constant ("map", [k;v]) -> ok (k, v)
   | _ -> simple_fail "get: not a map"
 
-let get_t_map_key : type_value -> type_value result = fun t ->
+let get_t_map_key : type_expression -> type_expression result = fun t ->
   let%bind (key , _) = get_t_map t in
   ok key
 
-let get_t_map_value : type_value -> type_value result = fun t ->
+let get_t_map_value : type_expression -> type_expression result = fun t ->
   let%bind (_ , value) = get_t_map t in
   ok value
 
@@ -155,7 +156,7 @@ let assert_t_map = fun t ->
 
 let is_t_map = Function.compose to_bool get_t_map
 
-let assert_t_tez : type_value -> unit result = get_t_tez
+let assert_t_tez : type_expression -> unit result = get_t_tez
 let assert_t_key = get_t_key
 let assert_t_signature = get_t_signature
 let assert_t_key_hash = get_t_key_hash
@@ -173,25 +174,25 @@ let assert_t_bytes = fun t ->
   let%bind _ = get_t_bytes t in
   ok ()
 
-let assert_t_operation (t:type_value) : unit result =
-  match t.type_value' with
+let assert_t_operation (t:type_expression) : unit result =
+  match t.type_expression' with
   | T_constant ("operation" , []) -> ok ()
   | _ -> simple_fail "assert: not an operation"
 
-let assert_t_list_operation (t : type_value) : unit result =
+let assert_t_list_operation (t : type_expression) : unit result =
   let%bind t' = get_t_list t in
   assert_t_operation t'
 
-let assert_t_int : type_value -> unit result = fun t -> match t.type_value' with
+let assert_t_int : type_expression -> unit result = fun t -> match t.type_expression' with
   | T_constant ("int", []) -> ok ()
   | _ -> simple_fail "not an int"
 
-let assert_t_nat : type_value -> unit result = fun t -> match t.type_value' with
+let assert_t_nat : type_expression -> unit result = fun t -> match t.type_expression' with
   | T_constant ("nat", []) -> ok ()
   | _ -> simple_fail "not an nat"
 
-let assert_t_bool : type_value -> unit result = fun v -> get_t_bool v
-let assert_t_unit : type_value -> unit result = fun v -> get_t_unit v
+let assert_t_bool : type_expression -> unit result = fun v -> get_t_bool v
+let assert_t_unit : type_expression -> unit result = fun v -> get_t_unit v
 
 let e_record map : expression = E_record map
 let ez_e_record (lst : (string * ae) list) : expression =
@@ -209,6 +210,8 @@ let e_nat n : expression = E_literal (Literal_nat n)
 let e_tez n : expression = E_literal (Literal_tez n)
 let e_bool b : expression = E_literal (Literal_bool b)
 let e_string s : expression = E_literal (Literal_string s)
+let e_bytes s : expression = E_literal (Literal_bytes s)
+let e_timestamp s : expression = E_literal (Literal_timestamp s)
 let e_address s : expression = E_literal (Literal_address s)
 let e_operation s : expression = E_literal (Literal_operation s)
 let e_lambda l : expression = E_lambda l

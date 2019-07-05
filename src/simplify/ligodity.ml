@@ -219,8 +219,8 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te
   | TPar x -> simpl_type_expression x.value.inside
   | TAlias v -> (
       match List.assoc_opt v.value type_constants with
-      | Some s -> ok @@ T_constant (s , [])
-      | None -> ok @@ T_variable v.value
+      | Some s -> ok @@ t_constant (s , [])
+      | None -> ok @@ t_variable v.value
     )
   | TFun x -> (
       let%bind (a , b) =
@@ -229,7 +229,7 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te
         let%bind b = simpl_type_expression b in
         ok (a , b)
       in
-      ok @@ T_function (a , b)
+      ok @@ t_function (a , b)
     )
   | TApp x -> (
       let (name, tuple) = x.value in
@@ -239,7 +239,7 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te
         List.assoc_opt name.value type_constants
       in
       let%bind lst' = bind_map_list simpl_type_expression lst in
-      ok @@ T_constant (cst , lst')
+      ok @@ t_constant (cst , lst')
     )
   | TProd p -> (
       let%bind tpl = simpl_list_type_expression  @@ npseq_to_list p.value in
@@ -255,7 +255,7 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te
         @@ List.map apply
         @@ pseq_to_list r.value.elements in
       let m = List.fold_left (fun m (x, y) -> SMap.add x y m) SMap.empty lst in
-      ok @@ T_record m
+      ok @@ t_record m
   | TSum s ->
       let aux (v:Raw.variant Raw.reg) =
         let args =
@@ -271,7 +271,7 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te
         @@ List.map aux
         @@ npseq_to_list s.value in
       let m = List.fold_left (fun m (x, y) -> SMap.add x y m) SMap.empty lst in
-      ok @@ T_sum m
+      ok @@ t_sum m
 
 and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result =
   match lst with
@@ -279,29 +279,28 @@ and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result
   | [hd] -> simpl_type_expression hd
   | lst ->
       let%bind lst = bind_map_list simpl_type_expression lst in
-      ok @@ T_tuple lst
+      ok @@ t_tuple lst
 
 let rec simpl_expression :
   Raw.expr -> expr result = fun t ->
   let return x = ok x in
-  let simpl_projection = fun (p:Raw.projection Region.reg) ->
-    let (p , loc) = r_split p in
+  let simpl_projection = fun (p : Raw.projection Region.reg) ->
+    let (p' , loc) = r_split p in
     let var =
-      let name = p.struct_name.value in
-      e_variable name in
-    let path = p.field_path in
-    let path' =
-      let aux (s:Raw.selection) =
-        match s with
-        | FieldName property -> Access_record property.value
-        | Component index ->
-            let index = index.value.inside in
-            Access_tuple (Z.to_int (snd index.value))
+      let name = p'.struct_name.value in
+      e_variable ~loc name
+    in
+    let path = p'.field_path in
+    let aux prec (cur:Raw.selection) =
+      let (loc , cur') =
+        match cur with
+        | FieldName property -> (Location.lift property.region , Access_record property.value)
+        | Component index -> (Location.lift index.region , Access_tuple (Z.to_int (snd index.value.inside.value)))
       in
-      List.map aux @@ npseq_to_list path in
-    return @@ e_accessor ~loc var path'
+      e_accessor ~loc prec cur'
+    in
+    return @@ List.fold_left aux var @@ npseq_to_list path
   in
-
   trace (simplifying_expr t) @@
   match t with
   | Raw.ELetIn e -> (
@@ -515,7 +514,7 @@ and simpl_fun lamb' : expr result =
     let aux ((var : Raw.variable) , ty_opt) =
       match var.value , ty_opt with
       | "storage" , None ->
-        ok (var , T_variable "storage")
+        ok (var , t_variable "storage")
       | _ , None ->
           fail @@ untyped_fun_param var
       | _ , Some ty -> (
@@ -539,7 +538,7 @@ and simpl_fun lamb' : expr result =
   | _ -> (
       let arguments_name = "arguments" in
       let (binder , input_type) =
-        let type_expression = T_tuple (List.map snd args') in
+        let type_expression = t_tuple (List.map snd args') in
         (arguments_name , type_expression) in
       let%bind (body , body_type) = expr_to_typed_expr lamb.body in
       let%bind output_type =
@@ -547,7 +546,7 @@ and simpl_fun lamb' : expr result =
       let%bind result = simpl_expression body in
       let wrapped_result =
         let aux = fun i ((name : Raw.variable) , ty) wrapped ->
-          let accessor = e_accessor (e_variable arguments_name) [ Access_tuple i ] in
+          let accessor = e_accessor (e_variable arguments_name) (Access_tuple i) in
           e_let_in (name.value , Some ty) accessor wrapped
         in
         let wraps = List.mapi aux args' in

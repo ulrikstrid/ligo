@@ -32,6 +32,11 @@ them. please report this to the developers." in
     let content () = name in
     error title content
 
+  let no_type_variable name =
+    let title () = "type variables can't be transpiled" in
+    let content () = name in
+    error title content
+
   let unsupported_pattern_matching kind location =
     let title () = "unsupported pattern-matching" in
     let content () = Format.asprintf "%s patterns aren't supported yet" kind in
@@ -85,8 +90,9 @@ them. please report this to the developers." in
 end
 open Errors
 
-let rec translate_type (t:AST.type_value) : type_value result =
-  match t.type_value' with
+let rec translate_type (t:AST.type_expression) : type_value result =
+  match t.type_expression' with
+  | T_variable name -> fail @@ no_type_variable name
   | T_constant ("bool", []) -> ok (T_base Base_bool)
   | T_constant ("int", []) -> ok (T_base Base_int)
   | T_constant ("nat", []) -> ok (T_base Base_nat)
@@ -193,14 +199,14 @@ let rec translate_literal : AST.literal -> value = fun l -> match l with
   | Literal_unit -> D_unit
 
 and transpile_environment_element_type : AST.environment_element -> type_value result = fun ele ->
-  match (AST.get_type' ele.type_value , ele.definition) with
-  | (AST.T_function (f , arg) , ED_declaration (ae , ((_ :: _) as captured_variables)) ) ->
+  match (AST.get_type' ele.type_expression , ele.definition) with
+  | (T_function (f , arg) , ED_declaration (ae , ((_ :: _) as captured_variables)) ) ->
     let%bind f' = translate_type f in
     let%bind arg' = translate_type arg in
     let%bind env' = transpile_environment ae.environment in
     let sub_env = Mini_c.Environment.select captured_variables env' in
     ok @@ Combinators.t_deep_closure sub_env f' arg'
-  | _ -> translate_type ele.type_value
+  | _ -> translate_type ele.type_expression
 
 and transpile_small_environment : AST.small_environment -> Environment.t result = fun x ->
   let x' = AST.Environment.Small.get_environment x in
@@ -216,7 +222,7 @@ and transpile_environment : AST.full_environment -> Environment.t result = fun x
   let%bind nlst = bind_map_ne_list transpile_small_environment x in
   ok @@ Environment.concat @@ List.Ne.to_list nlst
 
-and tree_of_sum : AST.type_value -> (type_name * AST.type_value) Append_tree.t result = fun t ->
+and tree_of_sum : AST.type_expression -> (type_name * AST.type_expression) Append_tree.t result = fun t ->
   let%bind map_tv = get_t_sum t in
   ok @@ Append_tree.of_list @@ kv_list_of_map map_tv
 
@@ -260,7 +266,7 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
         if k = m then (
           let%bind _ =
             trace_strong (corner_case ~loc:__LOC__ "wrong type for constructor parameter")
-            @@ AST.assert_type_value_eq (tv, param.type_annotation) in
+            @@ AST.assert_type_expression_eq (tv, param.type_annotation) in
           ok (Some (param'_expr), param'_tv)
         ) else (
           let%bind tv = translate_type tv in
@@ -405,8 +411,8 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
       return @@ E_while (expr' , body')
     )
   | E_assign (typed_name , path , expr) -> (
-      let ty = typed_name.type_value in
-      let aux : ((AST.type_value * [`Left | `Right] list) as 'a) -> AST.access -> 'a result =
+      let ty = typed_name.type_expression in
+      let aux : ((AST.type_expression * [`Left | `Right] list) as 'a) -> AST.access -> 'a result =
         fun (prev, acc) cur ->
           let%bind ty' = translate_type prev in
           match cur with
@@ -570,7 +576,7 @@ let translate_main (l:AST.lambda) loc : anon_function result =
   | _ -> fail @@ not_functional_main loc
 
 (* From an expression [expr], build the expression [fun () -> expr] *)
-let functionalize (e:AST.annotated_expression) : AST.lambda * AST.type_value =
+let functionalize (e:AST.annotated_expression) : AST.lambda * AST.type_expression =
   let t = e.type_annotation in
   let open! AST in
   {
@@ -611,9 +617,9 @@ let translate_entry (lst:AST.program) (name:string) : anon_function result =
 
 open Combinators
 
-let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value * AST.type_value) result =
+let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value * AST.type_expression) result =
   let open Append_tree in
-  let rec aux tv : (string * value * AST.type_value) result=
+  let rec aux tv : (string * value * AST.type_expression) result=
     match tv with
     | Leaf (k, t), v -> ok (k, v, t)
     | Node {a}, D_left v -> aux (a, v)
@@ -623,9 +629,9 @@ let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value 
   let%bind (s, v, t) = aux (tree, v) in
   ok (s, v, t)
 
-let extract_tuple (v : value) (tree : AST.type_value Append_tree.t') : ((value * AST.type_value) list) result =
+let extract_tuple (v : value) (tree : AST.type_expression Append_tree.t') : ((value * AST.type_expression) list) result =
   let open Append_tree in
-  let rec aux tv : ((value * AST.type_value) list) result =
+  let rec aux tv : ((value * AST.type_expression) list) result =
     match tv with
     | Leaf t, v -> ok @@ [v, t]
     | Node {a;b}, D_pair (va, vb) ->
@@ -638,7 +644,7 @@ let extract_tuple (v : value) (tree : AST.type_value Append_tree.t') : ((value *
 
 let extract_record (v : value) (tree : _ Append_tree.t') : (_ list) result =
   let open Append_tree in
-  let rec aux tv : ((string * (value * AST.type_value)) list) result =
+  let rec aux tv : ((string * (value * AST.type_expression)) list) result =
     match tv with
     | Leaf (s, t), v -> ok @@ [s, (v, t)]
     | Node {a;b}, D_pair (va, vb) ->
@@ -649,10 +655,11 @@ let extract_record (v : value) (tree : _ Append_tree.t') : (_ list) result =
   in
   aux (tree, v)
 
-let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression result =
+let rec untranspile (v : value) (t : AST.type_expression) : AST.annotated_expression result =
   let open! AST in
   let return e = ok (make_a_e_empty e t) in
-  match t.type_value' with
+  match t.type_expression' with
+  | T_variable s -> return (E_variable s)
   | T_constant ("unit", []) -> (
       let%bind () =
         trace_strong (wrong_mini_c_value "unit" v) @@

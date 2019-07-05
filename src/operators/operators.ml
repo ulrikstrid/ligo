@@ -204,53 +204,53 @@ module Typer = struct
 
   let map_remove : typer = typer_2 "MAP_REMOVE" @@ fun k m ->
     let%bind (src , _) = get_t_map m in
-    let%bind () = assert_type_value_eq (src , k) in
+    let%bind () = assert_type_expression_eq (src , k) in
     ok m
 
   let map_add : typer = typer_3 "MAP_ADD" @@ fun k v m ->
     let%bind (src, dst) = get_t_map m in
-    let%bind () = assert_type_value_eq (src, k) in
-    let%bind () = assert_type_value_eq (dst, v) in
+    let%bind () = assert_type_expression_eq (src, k) in
+    let%bind () = assert_type_expression_eq (dst, v) in
     ok m
 
   let map_update : typer = typer_3 "MAP_UPDATE" @@ fun k v m ->
     let%bind (src, dst) = get_t_map m in
-    let%bind () = assert_type_value_eq (src, k) in
+    let%bind () = assert_type_expression_eq (src, k) in
     let%bind v' = get_t_option v in
-    let%bind () = assert_type_value_eq (dst, v') in
+    let%bind () = assert_type_expression_eq (dst, v') in
     ok m
 
   let map_mem : typer = typer_2 "MAP_MEM_TODO" @@ fun k m ->
     let%bind (src, _dst) = get_t_map m in
-    let%bind () = assert_type_value_eq (src, k) in
+    let%bind () = assert_type_expression_eq (src, k) in
     ok @@ t_bool ()
 
   let map_find : typer = typer_2 "MAP_FIND" @@ fun k m ->
     let%bind (src, dst) = get_t_map m in
-    let%bind () = assert_type_value_eq (src, k) in
+    let%bind () = assert_type_expression_eq (src, k) in
     ok @@ dst
 
   let map_find_opt : typer = typer_2 "MAP_FIND_OPT" @@ fun k m ->
     let%bind (src, dst) = get_t_map m in
-    let%bind () = assert_type_value_eq (src, k) in
+    let%bind () = assert_type_expression_eq (src, k) in
     ok @@ t_option dst ()
 
   let map_fold : typer = typer_3 "MAP_FOLD_TODO" @@ fun f m acc ->
     let%bind (src, dst) = get_t_map m in
     let expected_f_type = t_function (t_tuple [(t_tuple [src ; dst] ()) ; acc] ()) acc () in
-    let%bind () = assert_type_value_eq (f, expected_f_type) in
+    let%bind () = assert_type_expression_eq (f, expected_f_type) in
     ok @@ acc
 
   let map_map : typer = typer_2 "MAP_MAP_TODO" @@ fun f m ->
     let%bind (k, v) = get_t_map m in
     let%bind (input_type, result_type) = get_t_function f in
-    let%bind () = assert_type_value_eq (input_type, t_tuple [k ; v] ()) in
+    let%bind () = assert_type_expression_eq (input_type, t_tuple [k ; v] ()) in
     ok @@ t_map k result_type ()
 
   let map_map_fold : typer = typer_3 "MAP_MAP_TODO" @@ fun f m acc ->
     let%bind (k, v) = get_t_map m in
     let%bind (input_type, result_type) = get_t_function f in
-    let%bind () = assert_type_value_eq (input_type, t_tuple [t_tuple [k ; v] () ; acc] ()) in
+    let%bind () = assert_type_expression_eq (input_type, t_tuple [t_tuple [k ; v] () ; acc] ()) in
     let%bind ttuple = get_t_tuple result_type in
     match ttuple with
     | [result_acc ; result_dst ] ->
@@ -260,7 +260,7 @@ module Typer = struct
 
   let map_iter : typer = typer_2 "MAP_MAP_TODO" @@ fun f m ->
     let%bind (k, v) = get_t_map m in
-    let%bind () = assert_type_value_eq (f, t_function (t_tuple [k ; v] ()) (t_unit ()) ()) in
+    let%bind () = assert_type_expression_eq (f, t_function (t_tuple [k ; v] ()) (t_unit ()) ()) in
     ok @@ t_unit ()
 
   let size = typer_1 "SIZE" @@ fun t ->
@@ -283,7 +283,7 @@ module Typer = struct
 
   let get_force = typer_2 "MAP_GET_FORCE" @@ fun i m ->
     let%bind (src, dst) = get_t_map m in
-    let%bind _ = assert_type_value_eq (src, i) in
+    let%bind _ = assert_type_expression_eq (src, i) in
     ok dst
 
   let int : typer = typer_1 "INT" @@ fun t ->
@@ -335,7 +335,7 @@ module Typer = struct
   let transaction = typer_3 "CALL" @@ fun param amount contract ->
     let%bind () = assert_t_tez amount in
     let%bind contract_param = get_t_contract contract in
-    let%bind () = assert_type_value_eq (param , contract_param) in
+    let%bind () = assert_type_expression_eq (param , contract_param) in
     ok @@ t_operation ()
 
   let get_contract = typer_1_opt "CONTRACT" @@ fun _ tv_opt ->

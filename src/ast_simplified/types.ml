@@ -11,8 +11,10 @@ type 'a type_name_map = 'a Map.String.t
 
 type program = declaration Location.wrap list
 
+and type_declaration = (type_name * type_expression)
+
 and declaration =
-  | Declaration_type of (type_name * type_expression)
+  | Declaration_type of type_declaration
   | Declaration_constant of (name * type_expression option * expression)
   (* | Macro_declaration of macro_declaration *)
 
@@ -21,13 +23,19 @@ and te = type_expression
 and te_map = type_expression type_name_map
 and expr_map = expression name_map
 
-and type_expression =
-  | T_tuple of te list
-  | T_sum of te_map
-  | T_record of te_map
-  | T_function of te * te
+and 'a type_expression_ast =
+  | T_tuple of 'a list
+  | T_sum of 'a type_name_map
+  | T_record of 'a type_name_map
+  | T_function of ('a * 'a)
   | T_variable of type_name
-  | T_constant of type_name * te list
+  | T_constant of (type_name * 'a list)
+
+and type_expression = {
+  type_expression' : type_expression'
+}
+
+and type_expression' = type_expression type_expression_ast
 
 and lambda = {
   binder : (name * type_expression option) ;
@@ -42,38 +50,42 @@ and let_in = {
   result : expr ;
 }
 
-and expression' =
+and 'a expression_ast =
   (* Base *)
   | E_literal of literal
-  | E_constant of (name * expr list) (* For language constants, like (Cons hd tl) or (plus i j) *)
+  | E_constant of (name * 'a list) (* For language constants, like (Cons hd tl) or (plus i j) *)
   | E_variable of name
   | E_lambda of lambda
-  | E_application of (expr * expr)
+  | E_application of ('a * 'a)
   | E_let_in of let_in
   (* E_Tuple *)
-  | E_tuple of expr list
+  | E_tuple of 'a list
   (* Sum *)
-  | E_constructor of (name * expr) (* For user defined constructors *)
+  | E_constructor of (name * 'a) (* For user defined constructors *)
   (* E_record *)
-  | E_record of expr_map
-  | E_accessor of (expr * access_path)
+  | E_record of 'a name_map
+  | E_accessor of ('a * access)
   (* Data Structures *)
-  | E_map of (expr * expr) list
-  | E_list of expr list
-  | E_set of expr list
-  | E_look_up of (expr * expr)
+  | E_map of ('a * 'a) list
+  | E_list of 'a list
+  | E_set of 'a list
+  | E_look_up of ('a * 'a)
   (* Matching *)
-  | E_matching of (expr * matching_expr)
-  | E_failwith of expr
+  | E_matching of ('a * 'a matching)
+  | E_failwith of 'a
   (* Replace Statements *)
-  | E_sequence of (expr * expr)
-  | E_loop of (expr * expr)
-  | E_assign of (name * access_path * expr)
+  | E_sequence of ('a * 'a)
+  | E_loop of ('a * 'a)
+  | E_assign of (name * access_path * 'a)
   | E_skip
   (* Annotate *)
-  | E_annotation of expr * type_expression
+  | E_annotation of 'a * type_expression
 
-and expression = expression' Location.wrap
+and expression' = expression expression_ast
+and expression = {
+  expression' : expression' ;
+  location : Location.t ;
+}
 
 and access =
   | Access_tuple of int

@@ -14,7 +14,7 @@ let int () : unit result =
   let%bind post = type_expression e pre in
   let open! Typed in
   let open Combinators in
-  let%bind () = assert_type_value_eq (post.type_annotation, t_int ()) in
+  let%bind () = assert_type_expression_eq (post.type_annotation, t_int ()) in
   ok ()
 
 module TestExpressions = struct
@@ -25,7 +25,7 @@ module TestExpressions = struct
     let open Typer in
     let open! Typed in
     let%bind post = type_expression env pre in
-    let%bind () = assert_type_value_eq (post.type_annotation, test_expected_ty) in
+    let%bind () = assert_type_expression_eq (post.type_annotation, test_expected_ty) in
     ok ()
 
   module I = Simplified.Combinators

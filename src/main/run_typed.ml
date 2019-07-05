@@ -33,7 +33,7 @@ let run_typed
     let%bind (arg_ty , _) =
       trace_strong (simple_error "entry-point doesn't have a function type") @@
       get_t_function @@ get_type_annotation d.annotated_expression in
-    Ast_typed.assert_type_value_eq (arg_ty , (Ast_typed.get_type_annotation input))
+    Ast_typed.assert_type_expression_eq (arg_ty , (Ast_typed.get_type_annotation input))
   in
 
   let%bind mini_c_main =
@@ -57,7 +57,7 @@ let run_typed
   let%bind typed_result =
     let%bind main_result_type =
       let%bind typed_main = Ast_typed.get_functional_entry program entry in
-      match (snd typed_main).type_value' with
+      match (snd typed_main).type_expression' with
       | T_function (_, result) -> ok result
       | _ -> simple_fail "main doesn't have fun type" in
     Transpiler.untranspile mini_c_result main_result_type in

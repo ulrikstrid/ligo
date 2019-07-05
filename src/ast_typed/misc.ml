@@ -6,11 +6,19 @@ module Errors = struct
     let title = (thunk "different kinds") in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "%a" PP.type_value a) ;
-      ("b" , fun () -> Format.asprintf "%a" PP.type_value b )
+      ("a" , fun () -> Format.asprintf "%a" PP.type_expression a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.type_expression b )
     ] in
     error ~data title message ()
 
+  let wrong_kind a str () =
+    let title = (thunk "wrong kind in comparison") in
+    let message () = "can not compare " ^ str in
+    let data = [
+      ("type_expression" , fun () -> Format.asprintf "%a" PP.type_expression a) ;
+    ] in
+    error ~data title message ()
+  
   let different_constants a b () =
     let title = (thunk "different constants") in
     let message () = "" in
@@ -24,8 +32,8 @@ module Errors = struct
     let title () = name ^ " have different sizes" in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "%a" PP.type_value a) ;
-      ("b" , fun () -> Format.asprintf "%a" PP.type_value b )
+      ("a" , fun () -> Format.asprintf "%a" PP.type_expression a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.type_expression b )
     ] in
     error ~data title message ()
 
@@ -50,8 +58,8 @@ module Errors = struct
     let title () = name ^ " are different" in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "%a" PP.type_value a) ;
-      ("b" , fun () -> Format.asprintf "%a" PP.type_value b )
+      ("a" , fun () -> Format.asprintf "%a" PP.type_expression a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.type_expression b )
     ] in
     error ~data title message ()
 
@@ -272,12 +280,12 @@ end
 
 open Errors
 
-let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = match (a.type_value', b.type_value') with
+let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : unit result = match (a.type_expression', b.type_expression') with
   | T_tuple ta, T_tuple tb -> (
       let%bind _ =
         trace_strong (fun () -> (different_size_tuples a b ()))
         @@ Assert.assert_true List.(length ta = length tb) in
-      bind_list_iter assert_type_value_eq (List.combine ta tb)
+      bind_list_iter assert_type_expression_eq (List.combine ta tb)
     )
   | T_tuple _, _ -> fail @@ different_kinds a b
   | T_constant (ca, lsta), T_constant (cb, lstb) -> (
@@ -288,7 +296,7 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
         trace_strong (different_constants ca cb)
         @@ Assert.assert_true (ca = cb) in
       trace (different_types "constant sub-expression" a b)
-      @@ bind_list_iter assert_type_value_eq (List.combine lsta lstb)
+      @@ bind_list_iter assert_type_expression_eq (List.combine lsta lstb)
     )
   | T_constant _, _ -> fail @@ different_kinds a b
   | T_sum sa, T_sum sb -> (
@@ -298,7 +306,7 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
         let%bind _ =
           Assert.assert_true ~msg:"different keys in sum types"
           @@ (ka = kb) in
-        assert_type_value_eq (va, vb)
+        assert_type_expression_eq (va, vb)
       in
       let%bind _ =
         trace_strong (different_size_sums a b)
@@ -315,7 +323,7 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
           trace (different_types "records" a b) @@
           trace_strong (different_props_in_record ka kb) @@
           Assert.assert_true (ka = kb) in
-        assert_type_value_eq (va, vb)
+        assert_type_expression_eq (va, vb)
       in
       let%bind _ =
         trace_strong (different_size_records a b)
@@ -326,13 +334,16 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
     )
   | T_record _, _ -> fail @@ different_kinds a b
   | T_function (param, result), T_function (param', result') ->
-      let%bind _ = assert_type_value_eq (param, param') in
-      let%bind _ = assert_type_value_eq (result, result') in
+      let%bind _ = assert_type_expression_eq (param, param') in
+      let%bind _ = assert_type_expression_eq (result, result') in
       ok ()
   | T_function _, _ -> fail @@ different_kinds a b
+  | T_variable _ , _ -> (
+      fail @@ wrong_kind a "type var"
+    )
 
 (* No information about what made it fail *)
-let type_value_eq ab = Trace.to_bool @@ assert_type_value_eq ab
+let type_expression_eq ab = Trace.to_bool @@ assert_type_expression_eq ab
 
 let assert_literal_eq (a, b : literal * literal) : unit result =
   match (a, b) with
@@ -463,13 +474,11 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
   | (E_assign _ , _)
   | (E_sequence _, _) | (E_loop _, _)-> fail @@ error_uncomparable_values "can't compare sequences nor loops" a b
 
-let merge_annotation (a:type_value option) (b:type_value option) err : type_value result =
+let merge_annotation (a:type_expression option) (b:type_expression option) err : type_expression result =
   match a, b with
   | None, None -> fail @@ err
   | Some a, None -> ok a
   | None, Some b -> ok b
   | Some a, Some b ->
-      let%bind _ = assert_type_value_eq (a, b) in
-      match a.simplified, b.simplified with
-      | _, None -> ok a
-      | _, Some _ -> ok b
+      let%bind _ = assert_type_expression_eq (a, b) in
+      ok a

@@ -24,5 +24,5 @@ open Environment
 
 let env_sum_type ?(env = full_empty)
     ?(name = "a_sum_type")
-    (lst : (string * type_value) list) =
+    (lst : (string * type_expression) list) =
   add_type name (make_t_ez_sum lst) env

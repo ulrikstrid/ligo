@@ -11,13 +11,15 @@ let smap_sep_d x ppf m =
   then ()
   else fprintf ppf "@;  @[<v>%a@]@;" (smap_sep x (tag "@;")) m
 
-let rec type_expression ppf (te:type_expression) = match te with
+let rec type_expression' ppf (te:type_expression') = match te with
   | T_tuple lst -> fprintf ppf "tuple[%a]" (list_sep_d type_expression) lst
   | T_sum m -> fprintf ppf "sum[%a]" (smap_sep_d type_expression) m
   | T_record m -> fprintf ppf "record[%a]" (smap_sep_d type_expression) m
   | T_function (p, r) -> fprintf ppf "%a -> %a" type_expression p type_expression r
   | T_variable name -> fprintf ppf "%s" name
   | T_constant (name, lst) -> fprintf ppf "%s(%a)" name (list_sep_d type_expression) lst
+
+and type_expression ppf te = type_expression' ppf te.type_expression'
 
 let literal ppf (l:literal) = match l with
   | Literal_unit -> fprintf ppf "Unit"
@@ -31,14 +33,14 @@ let literal ppf (l:literal) = match l with
   | Literal_address s -> fprintf ppf "@%S" s
   | Literal_operation _ -> fprintf ppf "Operation(...bytes)"
 
-let rec expression ppf (e:expression) = match Location.unwrap e with
+let rec expression_ast expression ppf (e:'a expression_ast) = match e with
   | E_literal l -> literal ppf l
   | E_variable name -> fprintf ppf "%s" name
   | E_application (f, arg) -> fprintf ppf "(%a)@(%a)" expression f expression arg
   | E_constructor (name, ae) -> fprintf ppf "%s(%a)" name expression ae
   | E_constant (name, lst) -> fprintf ppf "%s(%a)" name (list_sep_d expression) lst
   | E_tuple lst -> fprintf ppf "tuple[%a]" (list_sep_d expression) lst
-  | E_accessor (ae, p) -> fprintf ppf "%a.%a" expression ae access_path p
+  | E_accessor (ae, p) -> fprintf ppf "%a.%a" expression ae access p
   | E_record m -> fprintf ppf "record[%a]" (smap_sep_d expression) m
   | E_map m -> fprintf ppf "map[%a]" (list_sep_d assoc_expression) m
   | E_list lst -> fprintf ppf "list[%a]" (list_sep_d expression) lst
@@ -71,6 +73,8 @@ let rec expression ppf (e:expression) = match Location.unwrap e with
   | E_skip -> fprintf ppf "skip"
   | E_annotation (expr , ty) -> fprintf ppf "%a : %a" expression expr type_expression ty
 
+and expression ppf e = expression_ast expression ppf e.expression'
+
 and option_type_name ppf ((name , ty_opt) : string * type_expression option) =
   match ty_opt with
   | None -> fprintf ppf "%s" name
@@ -84,9 +88,6 @@ and access ppf (a:access) =
   | Access_tuple n -> fprintf ppf "%d" n
   | Access_record s -> fprintf ppf "%s" s
   | Access_map s -> fprintf ppf "(%a)" expression s
-
-and access_path ppf (p:access_path) =
-  fprintf ppf "%a" (list_sep access (const ".")) p
 
 and type_annotation ppf (ta:type_expression option) = match ta with
   | None -> fprintf ppf ""

@@ -18,7 +18,7 @@ include struct
   open Ast_typed
   open Combinators
 
-  let get_entry_point_type : type_value -> (type_value * type_value) result = fun t ->
+  let get_entry_point_type : type_expression -> (type_expression * type_expression) result = fun t ->
     let%bind (arg , result) =
       trace_strong (simple_error "entry-point doesn't have a function type") @@
       get_t_function t in
@@ -33,10 +33,10 @@ include struct
       assert_t_list_operation ops in
     let%bind () =
       trace_strong (simple_error "entry-point doesn't identitcal type (storage) for second parameter and second result") @@
-      assert_type_value_eq (storage_param , storage_result) in
+      assert_type_expression_eq (storage_param , storage_result) in
     ok (arg' , storage_param)
 
-  let get_entry_point : program -> string -> (type_value * type_value) result = fun p e ->
+  let get_entry_point : program -> string -> (type_expression * type_expression) result = fun p e ->
     let%bind declaration = get_declaration_by_name p e in
     match declaration with
     | Declaration_constant (d , _) -> get_entry_point_type d.annotated_expression.type_annotation
@@ -183,7 +183,7 @@ let compile_contract_parameter : string -> string -> string -> s_syntax -> strin
       Typer.type_expression env simplified in
     let%bind () =
       trace (simple_error "expression type doesn't match type parameter") @@
-      Ast_typed.assert_type_value_eq (parameter_tv , typed.type_annotation) in
+      Ast_typed.assert_type_expression_eq (parameter_tv , typed.type_annotation) in
     let%bind mini_c =
       trace (simple_error "transpiling expression") @@
       transpile_value typed in
@@ -222,7 +222,7 @@ let compile_contract_storage : string -> string -> string -> s_syntax -> string 
       Typer.type_expression env simplified in
     let%bind () =
       trace (simple_error "expression type doesn't match type storage") @@
-      Ast_typed.assert_type_value_eq (storage_tv , typed.type_annotation) in
+      Ast_typed.assert_type_expression_eq (storage_tv , typed.type_annotation) in
     let%bind mini_c =
       trace (simple_error "transpiling expression") @@
       transpile_value typed in
