@@ -52,7 +52,7 @@ and tv_map = type_expression type_name_map
 and ae_map = annotated_expression name_map
 
 and type_expression' = S.type_expression'
-xo
+
 and type_expression = S.type_expression
 
 and named_type_expression = {

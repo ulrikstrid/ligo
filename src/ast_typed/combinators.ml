@@ -216,8 +216,10 @@ let e_address s : expression = E_literal (Literal_address s)
 let e_operation s : expression = E_literal (Literal_operation s)
 let e_lambda l : expression = E_lambda l
 let e_pair a b : expression = E_tuple [a; b]
+let e_tuple e_lst : expression = E_tuple e_lst
 let e_application a b : expression = E_application (a , b)
 let e_variable v : expression = E_variable v
+let e_failwith e : expression = E_failwith e
 let e_list lst : expression = E_list lst
 let e_let_in binder rhs result = E_let_in { binder ; rhs ; result }
 

@@ -381,20 +381,14 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
 
 and type_expression : environment -> Solver.state -> I.expression -> (O.annotated_expression * Solver.state) result = fun e state ae ->
   let open Solver in
-  let type_name = Core.fresh_type_variable () in
   let module L = Logger.Stateful() in
-  let return : _ -> Solver.state -> _ = fun expr state ->
+  let return : _ -> Solver.state -> _ -> _ (* return of type_expression *) = fun expr state constraints type_name ->
+    let%bind new_state = aggregate_constraints state constraints in
     let tv = t_variable type_name () in
     let location = ae.location in
     let expr' = make_a_e ~location expr tv e in
-    ok @@ (expr' , state) in
-  let add_type state t =
-    let constraints = Wrap.variable type_name t in
-    let%bind state' = aggregate_constraints state constraints in
-    ok state' in
-  let return_add_type ?(state = state) expr t =
-    let%bind state' = add_type state t in
-    return expr state' in
+    ok @@ (expr' , new_state) in
+  let return_wrapped expr state (constraints , expr_type) = return expr state constraints expr_type in
   let main_error =
     let title () = "typing expression" in
     let content () = "" in
@@ -407,42 +401,49 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
   trace main_error @@
   match ae.expression' with
   (* Basic *)
-  | E_failwith _ -> fail @@ needs_annotation ae "the failwith keyword"
+  | E_failwith expr -> (
+      let%bind (expr', state') = type_expression e state expr in
+      let (constraints , expr_type) = Wrap.failwith () in
+      let expr'' = e_failwith expr' in
+      return expr''  state' constraints expr_type
+    )
   | E_variable name -> (
       let%bind tv' =
         trace_option (unbound_variable e name ae.location)
         @@ Environment.get_opt name e in
-      return_add_type (e_variable name) tv'.type_expression
+      let (constraints , expr_type) = Wrap.variable name tv'.type_expression in
+      let expr' = e_variable name in
+      return expr' state constraints expr_type
     )
   | E_literal (Literal_bool b) -> (
-      return_add_type (e_bool b) (t_bool ())
+      return_wrapped (e_bool b) state @@ Wrap.literal_bool ()
     )
-  | E_literal (Literal_string b) -> (
-      return_add_type (e_string b) (t_string ())
+  | E_literal (Literal_string s) -> (
+      return_wrapped (e_string s) state @@ Wrap.literal_string ()
     )
   | E_literal (Literal_bytes b) -> (
-      return_add_type (e_bytes b) (t_bytes ())
+      return_wrapped (e_bytes b) state @@ Wrap.literal (t_bytes ())
     )
-  | E_literal (Literal_int b) -> (
-      return_add_type (e_int b) (t_int ())
+  | E_literal (Literal_int i) -> (
+      return_wrapped (e_int i) state @@ Wrap.literal (t_int ())
     )
-  | E_literal (Literal_nat b) -> (
-      return_add_type (e_nat b) (t_nat ())
+  | E_literal (Literal_nat n) -> (
+      return_wrapped (e_nat n) state @@ Wrap.literal (t_nat ())
     )
-  | E_literal (Literal_tez b) -> (
-      return_add_type (e_tez b) (t_tez ())
+  | E_literal (Literal_tez t) -> (
+      return_wrapped (e_tez t) state @@ Wrap.literal (t_tez ())
     )
-  | E_literal (Literal_address b) -> (
-      return_add_type (e_address b) (t_address ())
+  | E_literal (Literal_address a) -> (
+      return_wrapped (e_address a) state @@ Wrap.literal (t_address ())
     )
-  | E_literal (Literal_timestamp b) -> (
-      return_add_type (e_timestamp b) (t_timestamp ())
+  | E_literal (Literal_timestamp t) -> (
+      return_wrapped (e_timestamp t) state @@ Wrap.literal (t_timestamp ())
     )
-  | E_literal (Literal_operation b) -> (
-      return_add_type (e_operation b) (t_operation ())
+  | E_literal (Literal_operation o) -> (
+      return_wrapped (e_operation o) state @@ Wrap.literal (t_operation ())
     )
   | E_literal Literal_unit | E_skip -> (
-      return_add_type (e_unit) (t_unit ())
+      return_wrapped (e_unit) state @@ Wrap.literal (t_unit ())
     )
   (* | E_literal (Literal_string s) -> (
    *     L.log (Format.asprintf "literal_string option type: %a" PP_helpers.(option O.PP.type_expression) tv_opt) ;
@@ -459,28 +460,30 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
       in
       let%bind (lst' , state') = bind_fold_list aux ([] , state) lst in
       let tv_lst = List.map get_type_annotation lst' in
-      return_add_type ~state:state' (E_tuple lst') (t_tuple tv_lst ())
+      return_wrapped (e_tuple lst') state' @@ Wrap.tuple tv_lst
     )
-  | E_accessor (base, access) -> (
+  | E_accessor (base , Access_tuple index) -> (
       let%bind (base' , state') = type_expression e state base in
-      match access with
-      | Access_tuple index -> (
-          let constraints = Wrap.access_int ~base:base'.type_annotation ~index in
-          let%bind state' = aggregate_constraints state' constraints in
-          return (E_tuple_accessor (base' , index)) state'
-        )
-      | Access_record property -> (
-          let constraints = Wrap.access_string ~base:base'.type_annotation ~property in
-          let%bind state' = aggregate_constraints state' constraints in
-          return (E_record_accessor (base' , property)) state'
-        )
-      | Access_map ae' -> (
-          let%bind ae'' = type_expression e ae' in
-          let%bind (k , v) = get_t_map prev.type_annotation in
-          let%bind () =
-            Ast_typed.assert_type_expression_eq (k , get_type_annotation ae'') in
-          return (E_look_up (prev , ae'')) v
-        )
+      let wrapped = Wrap.access_int ~base:base'.type_annotation ~index in
+      return_wrapped (E_tuple_accessor (base' , index)) state' wrapped
+    )
+  | E_accessor (base , Access_record property) -> (
+      let%bind (base' , state') = type_expression e state base in
+      let wrapped = Wrap.access_string ~base:base'.type_annotation ~property in
+      return_wrapped (E_record_accessor (base' , property)) state' wrapped
+    )
+  | E_accessor (base , Access_map key_ae) -> (
+      let%bind (base' , state') = type_expression e state base in
+      let%bind (key_ae' , state'') = type_expression e state key_ae in
+      let wrapped = Wrap.access_map ~base:base'.type_annotation ~key:key_ae in
+      return_wrapped (E_look_up (base' , key_ae')) state' wrapped
+(*
+      let%bind ae'' = type_expression e ae' in
+      let%bind (k , v) = get_t_map prev.type_annotation in
+      let%bind () =
+        Ast_typed.assert_type_expression_eq (k , get_type_annotation ae'') in
+      return (E_look_up (prev , ae'')) v
+*)
     )
   (* Sum *)
   | E_constructor (c, expr) ->
