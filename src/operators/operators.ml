@@ -411,7 +411,7 @@ module Typer = struct
     if eq_1 elt (t_bool ())
     then ok @@ t_bool ()
     else simple_fail "bad parameter to not"
-  
+
   let constant_typers = Map.String.of_list [
       add ;
       times ;

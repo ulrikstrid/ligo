@@ -402,6 +402,13 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
     error ~data title content in
   trace main_error @@
   match ae.expression' with
+
+(* TODO: this file should take care only of the order in which program fragments
+   are translated by Wrap.xyz
+
+   TODO: produce an ordered list of sub-fragments, and use a common piece of code
+   to actually perform the recursive calls *)
+
   (* Basic *)
   | E_failwith expr -> (
       let%bind (expr', state') = type_expression e state expr in
@@ -531,20 +538,136 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
       return_wrapped (E_map map') state' wrapped
 
   | E_application (f, arg) ->
-      let%bind f' = type_expression e f in
-      let%bind arg = type_expression e arg in
-      let%bind tv = match f'.type_annotation.type_expression' with
-        | T_function (param, result) ->
-            let%bind _ = O.assert_type_expression_eq (param, arg.type_annotation) in
-            ok result
-        | _ ->
-          fail @@ type_error_approximate
-            ~expected:"should be a function type"
-            ~expression:f
-            ~actual:f'.type_annotation
-            f'.location
+      let%bind (f' , state') = type_expression e state f in
+      let%bind (arg , state'') = type_expression e state' arg in
+      let wrapped = Wrap.application f'.type_annotation arg.type_annotation in
+      return_wrapped (E_application (f' , arg)) state'' wrapped
+  | E_look_up dsi ->
+    let aux' state' elt = type_expression e state' elt >>? swap in
+    let%bind (state'' , (ds , ind)) = bind_fold_map_pair aux' state dsi in
+    (* T_constant ("map", [k;v])
+       result: (t_option dst ())  *)
+    let wrapped = Wrap.look_up ds.type_annotation ind.type_annotation in
+    return_wrapped (E_look_up (ds , ind)) state'' wrapped
+  | E_sequence (a , b) ->
+    let%bind (a' , state') = type_expression e state a in
+    let%bind (b' , state'') = type_expression e state' b in
+    (* constraint: 'a.type_annotation == unit *)
+    (* constraint: result == 'b.type_annotation *)
+    let wrapped = Wrap.sequence a'.type_annotation b'.type_annotation in
+    return_wrapped (O.E_sequence (a' , b')) state'' wrapped
+  | E_loop (expr , body) ->
+    let%bind (expr' , state') = type_expression e state expr in
+    let%bind (body' , state'') = type_expression e state' body in
+    (* constraint: expr'.type_annotation == bool *)
+    (* constraint: body'.type_annotation == unit *)
+    (* constraint: result == unit *)
+    let wrapped = Wrap.sequence expr'.type_annotation body'.type_annotation in
+    return_wrapped (O.E_loop (expr' , body')) state'' wrapped
+  | E_let_in {binder ; rhs ; result} ->
+    let%bind rhs_tv_opt = bind_map_option (evaluate_type e) (snd binder) in
+    (* TODO: the binder annotation should just be an annotation node *)
+    let%bind (rhs , state') = type_expression e state rhs in
+    (* constraint: ?tv_opt:rhs_tv_opt == binder *)
+    let e' = Environment.add_ez_declaration (fst binder) rhs e in
+    let%bind (result , state'') = type_expression e' state' result in
+    let wrapped =
+      Wrap.let_in rhs.type_annotation rhs_tv_opt result.type_annotation in
+    return_wrapped (E_let_in {binder = fst binder; rhs; result}) state'' wrapped
+  | E_assign (name , path , expr) ->
+    let%bind typed_name =
+      let%bind ele = Environment.get_trace name e in
+      ok @@ make_n_t name ele.type_expression in
+    let%bind (assign_tv , path') =
+      let aux : ((_ * O.access_path) as 'a) -> I.access -> 'a result = fun (prec_tv , prec_path) cur_path ->
+        match cur_path with
+        | Access_tuple index -> (
+            let%bind tpl = get_t_tuple prec_tv in
+            let%bind tv' =
+              trace_option (bad_tuple_index index ae prec_tv ae.location) @@
+              List.nth_opt tpl index in
+            ok (tv' , prec_path @ [O.Access_tuple index])
+          )
+        | Access_record property -> (
+            let%bind m = get_t_record prec_tv in
+            let%bind tv' =
+              trace_option (bad_record_access property ae prec_tv ae.location) @@
+              Map.String.find_opt property m in
+            ok (tv' , prec_path @ [O.Access_record property])
+          )
+        | Access_map _ ->
+          fail @@ not_supported_yet "assign expressions with maps are not supported yet" ae
       in
-      return (E_application (f' , arg)) tv
+      bind_fold_list aux (typed_name.type_expression , []) path in
+    let%bind (expr' , state') = type_expression e state expr in
+    (* constraint : assign_tv == t_expr' *)
+    (* constraint : result == (t_unit ()) *)
+    let wrapped = Wrap.assign assign_tv expr'.type_annotation in
+    return_wrapped (O.E_assign (typed_name , path' , expr')) state' wrapped
+  | E_annotation (expr , te) ->
+    let%bind tv = evaluate_type e te in
+    let%bind (expr' , state') = type_expression e state expr in
+    (* constraint: result == tv == expr'.type_annotation *)
+    let wrapped = Wrap.annotation expr'.type_annotation tv
+    (* TODO: we're probably discarding too much by using expr'.expression.
+       Previously: {expr' with type_annotation = the_explicit_type_annotation}
+       but then this case is not like the others and doesn't call return_wrapped,
+       which might do some necessary work *)
+    in return_wrapped expr'.expression state' wrapped
+
+  | E_matching (ex, m) -> (
+      let%bind (ex' , state') = type_expression e state ex in
+
+      let%bind m' = type_match type_expression e ex'.type_annotation m ae ae.location in
+      let tvs =
+        let aux (cur:O.value O.matching) =
+          match cur with
+          | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
+          | Match_list { match_nil ; match_cons = (_ , _ , match_cons) } -> [ match_nil ; match_cons ]
+          | Match_option { match_none ; match_some = (_ , match_some) } -> [ match_none ; match_some ]
+          | Match_tuple (_ , match_tuple) -> [ match_tuple ]
+          | Match_variant (lst , _) -> List.map snd lst in
+        List.map get_type_annotation @@ aux m' in
+      let aux prec cur =
+        let%bind () =
+          match prec with
+          | None -> ok ()
+          | Some cur' -> Ast_typed.assert_type_expression_eq (cur , cur') in
+        ok (Some cur) in
+      let%bind tv_opt = bind_fold_list aux None tvs in
+      let%bind tv =
+        trace_option (match_empty_variant m ae.location) @@
+        tv_opt in
+      return (O.E_matching (ex', m')) tv
+    )
+
+
+      (* match m with *)
+      (* Special case for assert-like failwiths. TODO: CLEAN THIS. *)
+      (* | I.Match_bool { match_false ; match_true } when I.is_e_failwith match_true -> ( *)
+      (*     let%bind fw = I.get_e_failwith match_true in *)
+      (*     let%bind fw' = type_expression e fw in *)
+      (*     let%bind mf' = type_expression e match_false in *)
+      (*     let t = get_type_annotation ex' in *)
+      (*     let%bind () = *)
+      (*       trace_strong (match_error ~expected:m ~actual:t ae.location) *)
+      (*       @@ assert_t_bool t in *)
+      (*     let%bind () = *)
+      (*       trace_strong (match_error *)
+      (*                       ~msg:"matching not-unit on an assert" *)
+      (*                       ~expected:m *)
+      (*                       ~actual:t *)
+      (*                       ae.location) *)
+      (*       @@ assert_t_unit (get_type_annotation mf') in *)
+      (*     let mt' = make_a_e *)
+      (*         (E_constant ("ASSERT_INFERRED" , [ex' ; fw'])) *)
+      (*         (t_unit ()) *)
+      (*         e *)
+      (*     in *)
+      (*     let m' = O.Match_bool { match_true = mt' ; match_false = mf' } in *)
+      (*     return (O.E_matching (ex' , m')) (t_unit ()) *)
+      (*   ) *)
+      (* | _ -> ( … ) *)
 
 
   | E_lambda {
@@ -587,155 +710,15 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
       let output_type = result.type_annotation in
       return (E_lambda {binder = fst binder;input_type;output_type;result}) (t_function input_type output_type ())
     )
+
   | E_constant (name, lst) ->
       let%bind lst' = bind_list @@ List.map (type_expression e) lst in
       let tv_lst = List.map get_type_annotation lst' in
       let%bind (name', tv) =
         type_constant name tv_lst tv_opt ae.location in
       return (E_constant (name' , lst')) tv
-  | E_look_up dsi ->
-      let%bind (ds, ind) = bind_map_pair (type_expression e) dsi in
-      let%bind (src, dst) = get_t_map ds.type_annotation in
-      let%bind _ = O.assert_type_expression_eq (ind.type_annotation, src) in
-      return (E_look_up (ds , ind)) (t_option dst ())
+
   (* Advanced *)
-  | E_matching (ex, m) -> (
-      let%bind ex' = type_expression e ex in
-      match m with
-      (* Special case for assert-like failwiths. TODO: CLEAN THIS. *)
-      | I.Match_bool { match_false ; match_true } when I.is_e_failwith match_true -> (
-          let%bind fw = I.get_e_failwith match_true in
-          let%bind fw' = type_expression e fw in
-          let%bind mf' = type_expression e match_false in
-          let t = get_type_annotation ex' in
-          let%bind () =
-            trace_strong (match_error ~expected:m ~actual:t ae.location)
-            @@ assert_t_bool t in
-          let%bind () =
-            trace_strong (match_error
-                            ~msg:"matching not-unit on an assert"
-                            ~expected:m
-                            ~actual:t
-                            ae.location)
-            @@ assert_t_unit (get_type_annotation mf') in
-          let mt' = make_a_e
-              (E_constant ("ASSERT_INFERRED" , [ex' ; fw']))
-              (t_unit ())
-              e
-          in
-          let m' = O.Match_bool { match_true = mt' ; match_false = mf' } in
-          return (O.E_matching (ex' , m')) (t_unit ())
-        )
-      | _ -> (
-          let%bind m' = type_match (type_expression ?tv_opt:None) e ex'.type_annotation m ae ae.location in
-          let tvs =
-            let aux (cur:O.value O.matching) =
-              match cur with
-              | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
-              | Match_list { match_nil ; match_cons = (_ , _ , match_cons) } -> [ match_nil ; match_cons ]
-              | Match_option { match_none ; match_some = (_ , match_some) } -> [ match_none ; match_some ]
-              | Match_tuple (_ , match_tuple) -> [ match_tuple ]
-              | Match_variant (lst , _) -> List.map snd lst in
-            List.map get_type_annotation @@ aux m' in
-          let aux prec cur =
-            let%bind () =
-              match prec with
-              | None -> ok ()
-              | Some cur' -> Ast_typed.assert_type_expression_eq (cur , cur') in
-            ok (Some cur) in
-          let%bind tv_opt = bind_fold_list aux None tvs in
-          let%bind tv =
-            trace_option (match_empty_variant m ae.location) @@
-            tv_opt in
-          return (O.E_matching (ex', m')) tv
-        )
-    )
-  | E_sequence (a , b) ->
-    let%bind a' = type_expression e a in
-    let%bind b' = type_expression e b in
-    let a'_type_annot = get_type_annotation a' in
-    let%bind () =
-      trace_strong (type_error
-                      ~msg:"first part of the sequence should be of unit type"
-                      ~expected:(O.t_unit ())
-                      ~actual:a'_type_annot
-                      ~expression:a
-                      a'.location) @@
-      Ast_typed.assert_type_expression_eq (t_unit () , a'_type_annot) in
-    return (O.E_sequence (a' , b')) (get_type_annotation b')
-  | E_loop (expr , body) ->
-    let%bind expr' = type_expression e expr in
-    let%bind body' = type_expression e body in
-    let t_expr' = get_type_annotation expr' in
-    let%bind () =
-      trace_strong (type_error
-                      ~msg:"while condition isn't of type bool"
-                      ~expected:(O.t_bool ())
-                      ~actual:t_expr'
-                      ~expression:expr
-                      expr'.location) @@
-      Ast_typed.assert_type_expression_eq (t_bool () , t_expr') in
-    let t_body' = get_type_annotation body' in
-    let%bind () =
-      trace_strong (type_error
-                     ~msg:"while body isn't of unit type"
-                     ~expected:(O.t_unit ())
-                     ~actual:t_body'
-                     ~expression:body
-                     body'.location) @@
-      Ast_typed.assert_type_expression_eq (t_unit () , t_body') in
-    return (O.E_loop (expr' , body')) (t_unit ())
-  | E_assign (name , path , expr) ->
-    let%bind typed_name =
-      let%bind ele = Environment.get_trace name e in
-      ok @@ make_n_t name ele.type_expression in
-    let%bind (assign_tv , path') =
-      let aux : ((_ * O.access_path) as 'a) -> I.access -> 'a result = fun (prec_tv , prec_path) cur_path ->
-        match cur_path with
-        | Access_tuple index -> (
-            let%bind tpl = get_t_tuple prec_tv in
-            let%bind tv' =
-              trace_option (bad_tuple_index index ae prec_tv ae.location) @@
-              List.nth_opt tpl index in
-            ok (tv' , prec_path @ [O.Access_tuple index])
-          )
-        | Access_record property -> (
-            let%bind m = get_t_record prec_tv in
-            let%bind tv' =
-              trace_option (bad_record_access property ae prec_tv ae.location) @@
-              Map.String.find_opt property m in
-            ok (tv' , prec_path @ [O.Access_record property])
-          )
-        | Access_map _ ->
-          fail @@ not_supported_yet "assign expressions with maps are not supported yet" ae
-      in
-      bind_fold_list aux (typed_name.type_expression , []) path in
-    let%bind expr' = type_expression e expr in
-    let t_expr' = get_type_annotation expr' in
-    let%bind () =
-      trace_strong (type_error
-                     ~msg:"type of the expression to assign doesn't match left-hand-side"
-                     ~expected:assign_tv
-                     ~actual:t_expr'
-                     ~expression:expr
-                     expr'.location) @@
-      Ast_typed.assert_type_expression_eq (assign_tv , t_expr') in
-    return (O.E_assign (typed_name , path' , expr')) (t_unit ())
-  | E_let_in {binder ; rhs ; result} ->
-    let%bind rhs_tv_opt = bind_map_option (evaluate_type e) (snd binder) in
-    let%bind rhs = type_expression ?tv_opt:rhs_tv_opt e rhs in
-    let e' = Environment.add_ez_declaration (fst binder) rhs e in
-    let%bind result = type_expression e' result in
-    return (E_let_in {binder = fst binder; rhs; result}) result.type_annotation
-  | E_annotation (expr , te) ->
-    let%bind tv = evaluate_type e te in
-    let%bind expr' = type_expression ~tv_opt:tv e expr in
-    let%bind type_annotation =
-      O.merge_annotation
-        (Some tv)
-        (Some expr'.type_annotation)
-        (internal_assertion_failure "merge_annotations (Some ...) (Some ...) failed") in
-    ok {expr' with type_annotation}
 
 (* Still to do:
   | E_lambda {binder;input_type;output_type;result} ->
