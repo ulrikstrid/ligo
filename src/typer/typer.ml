@@ -252,35 +252,35 @@ and type_declaration env state : I.declaration -> (environment * Solver.state * 
       ok (env', state' , Some (O.Declaration_constant ((make_n_e name ae') , (env , env'))))
     )
 
-and type_match : type i o . (environment -> i -> o result) -> environment -> O.type_expression -> i I.matching -> I.expression -> Location.t -> o O.matching result =
-  fun f e t i ae loc -> match i with
+and type_match : environment -> Solver.state -> O.type_expression -> 'i I.matching -> I.expression -> Location.t -> (O.value O.matching * Solver.state) result =
+  fun e state t i ae loc -> match i with
     | Match_bool {match_true ; match_false} ->
       let%bind _ =
         trace_strong (match_error ~expected:i ~actual:t loc)
         @@ get_t_bool t in
-      let%bind match_true = f e match_true in
-      let%bind match_false = f e match_false in
-      ok (O.Match_bool {match_true ; match_false})
+      let%bind (match_true , state') = type_expression e state match_true in
+      let%bind (match_false , state'') = type_expression e state' match_false in
+      ok (O.Match_bool {match_true ; match_false} , state'')
   | Match_option {match_none ; match_some} ->
       let%bind t_opt =
         trace_strong (match_error ~expected:i ~actual:t loc)
         @@ get_t_option t in
-      let%bind match_none = f e match_none in
+      let%bind (match_none , state') = type_expression e state match_none in
       let (n, b) = match_some in
       let n' = n, t_opt in
       let e' = Environment.add_ez_binder n t_opt e in
-      let%bind b' = f e' b in
-      ok (O.Match_option {match_none ; match_some = (n', b')})
+      let%bind (b' , state'') = type_expression e' state' b in
+      ok (O.Match_option {match_none ; match_some = (n', b')} , state'')
   | Match_list {match_nil ; match_cons} ->
       let%bind t_list =
         trace_strong (match_error ~expected:i ~actual:t loc)
         @@ get_t_list t in
-      let%bind match_nil = f e match_nil in
+      let%bind (match_nil , state') = type_expression e state match_nil in
       let (hd, tl, b) = match_cons in
       let e' = Environment.add_ez_binder hd t_list e in
       let e' = Environment.add_ez_binder tl t e' in
-      let%bind b' = f e' b in
-      ok (O.Match_list {match_nil ; match_cons = (hd, tl, b')})
+      let%bind (b' , state'') = type_expression e' state' b in
+      ok (O.Match_list {match_nil ; match_cons = (hd, tl, b')} , state'')
   | Match_tuple (lst, b) ->
       let%bind t_tuple =
         trace_strong (match_error ~expected:i ~actual:t loc)
@@ -290,8 +290,8 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
         @@ (fun () -> List.combine lst t_tuple) in
       let aux prev (name, tv) = Environment.add_ez_binder name tv prev in
       let e' = List.fold_left aux e lst' in
-      let%bind b' = f e' b in
-      ok (O.Match_tuple (lst, b'))
+      let%bind (b' , state') = type_expression e' state b in
+      ok (O.Match_tuple (lst, b') , state')
   | Match_variant lst ->
       let%bind variant_opt =
         let aux acc ((constructor_name , _) , _) =
@@ -334,17 +334,17 @@ and type_match : type i o . (environment -> i -> o result) -> environment -> O.t
           Assert.assert_true List.(length variant_cases = length match_cases) in
         ok ()
       in
-      let%bind lst' =
-        let aux ((constructor_name , name) , b) =
+      let%bind (state'' , lst') =
+        let aux state ((constructor_name , name) , b) =
           let%bind (constructor , _) =
             trace_option (unbound_constructor e constructor_name loc) @@
             Environment.get_constructor constructor_name e in
           let e' = Environment.add_ez_binder name constructor e in
-          let%bind b' = f e' b in
-          ok ((constructor_name , name) , b')
+          let%bind (b' , state') = type_expression e' state b in
+          ok (state' , ((constructor_name , name) , b'))
         in
-        bind_map_list aux lst in
-      ok (O.Match_variant (lst' , variant))
+        bind_fold_map_list aux state lst in
+      ok (O.Match_variant (lst' , variant) , state'')
 
 and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression result =
   let return tv' = ok (make_t tv' (Some t)) in
@@ -545,30 +545,22 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
   | E_look_up dsi ->
     let aux' state' elt = type_expression e state' elt >>? swap in
     let%bind (state'' , (ds , ind)) = bind_fold_map_pair aux' state dsi in
-    (* T_constant ("map", [k;v])
-       result: (t_option dst ())  *)
     let wrapped = Wrap.look_up ds.type_annotation ind.type_annotation in
     return_wrapped (E_look_up (ds , ind)) state'' wrapped
   | E_sequence (a , b) ->
     let%bind (a' , state') = type_expression e state a in
     let%bind (b' , state'') = type_expression e state' b in
-    (* constraint: 'a.type_annotation == unit *)
-    (* constraint: result == 'b.type_annotation *)
     let wrapped = Wrap.sequence a'.type_annotation b'.type_annotation in
     return_wrapped (O.E_sequence (a' , b')) state'' wrapped
   | E_loop (expr , body) ->
     let%bind (expr' , state') = type_expression e state expr in
     let%bind (body' , state'') = type_expression e state' body in
-    (* constraint: expr'.type_annotation == bool *)
-    (* constraint: body'.type_annotation == unit *)
-    (* constraint: result == unit *)
-    let wrapped = Wrap.sequence expr'.type_annotation body'.type_annotation in
+    let wrapped = Wrap.loop expr'.type_annotation body'.type_annotation in
     return_wrapped (O.E_loop (expr' , body')) state'' wrapped
   | E_let_in {binder ; rhs ; result} ->
     let%bind rhs_tv_opt = bind_map_option (evaluate_type e) (snd binder) in
     (* TODO: the binder annotation should just be an annotation node *)
     let%bind (rhs , state') = type_expression e state rhs in
-    (* constraint: ?tv_opt:rhs_tv_opt == binder *)
     let e' = Environment.add_ez_declaration (fst binder) rhs e in
     let%bind (result , state'') = type_expression e' state' result in
     let wrapped =
@@ -600,14 +592,11 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
       in
       bind_fold_list aux (typed_name.type_expression , []) path in
     let%bind (expr' , state') = type_expression e state expr in
-    (* constraint : assign_tv == t_expr' *)
-    (* constraint : result == (t_unit ()) *)
     let wrapped = Wrap.assign assign_tv expr'.type_annotation in
     return_wrapped (O.E_assign (typed_name , path' , expr')) state' wrapped
   | E_annotation (expr , te) ->
     let%bind tv = evaluate_type e te in
     let%bind (expr' , state') = type_expression e state expr in
-    (* constraint: result == tv == expr'.type_annotation *)
     let wrapped = Wrap.annotation expr'.type_annotation tv
     (* TODO: we're probably discarding too much by using expr'.expression.
        Previously: {expr' with type_annotation = the_explicit_type_annotation}
@@ -618,7 +607,7 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
   | E_matching (ex, m) -> (
       let%bind (ex' , state') = type_expression e state ex in
 
-      let%bind m' = type_match type_expression e ex'.type_annotation m ae ae.location in
+      let%bind (m' , state'') = type_match e state' ex'.type_annotation m ae ae.location in
       let tvs =
         let aux (cur:O.value O.matching) =
           match cur with
@@ -628,17 +617,17 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
           | Match_tuple (_ , match_tuple) -> [ match_tuple ]
           | Match_variant (lst , _) -> List.map snd lst in
         List.map get_type_annotation @@ aux m' in
-      let aux prec cur =
-        let%bind () =
-          match prec with
-          | None -> ok ()
-          | Some cur' -> Ast_typed.assert_type_expression_eq (cur , cur') in
-        ok (Some cur) in
-      let%bind tv_opt = bind_fold_list aux None tvs in
-      let%bind tv =
-        trace_option (match_empty_variant m ae.location) @@
-        tv_opt in
-      return (O.E_matching (ex', m')) tv
+
+      let%bind () = match tvs with
+          [] -> fail @@ match_empty_variant m ae.location
+        | _ -> ok () in
+
+      (* constraints:
+         all the items of tvs should be equal to the first one
+         result = first item of tvs
+      *)
+      let wrapped = Wrap.matching tvs in
+      return_wrapped (O.E_matching (ex', m')) state'' wrapped
     )
 
 

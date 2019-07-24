@@ -13,11 +13,14 @@ module Core = struct
       | Some name -> "tv_" ^ name ^ "_" ^ (string_of_int !id)
 
   type constant_tag =
-    | C_application
-    | C_tuple
-    | C_map
-    | C_list
-    | C_set
+    | C_arrow  (* * -> * -> * *)
+    | C_option (* * -> * *)
+    | C_tuple  (* * … -> * *)
+    | C_map    (* * -> * -> * *)
+    | C_list   (* * -> * *)
+    | C_set    (* * -> * *)
+    | C_unit   (* * *)
+    | C_bool   (* * *)
 
   type label =
     | L_int of int
@@ -166,6 +169,91 @@ module Wrap = struct
     O.[
       C_equation (P_variable whole_expr , O.P_constant (C_map , [k_type ; v_type]))
     ] @ equations_k @ equations_v , whole_expr
+
+  let application : I.type_expression -> I.type_expression -> (constraints * O.type_variable) =
+    fun f arg ->
+    let whole_expr = Core.fresh_type_variable () in
+    let f'   = type_expression_to_type_value f in
+    let arg' = type_expression_to_type_value arg in
+    O.[
+      C_equation (f' , P_constant (C_arrow , [arg' ; P_variable whole_expr]))
+    ] , whole_expr
+
+  let look_up : I.type_expression -> I.type_expression -> (constraints * O.type_variable) =
+    fun ds ind ->
+    let ds'  = type_expression_to_type_value ds in
+    let ind' = type_expression_to_type_value ind in
+    let whole_expr = Core.fresh_type_variable () in
+    let v = Core.fresh_type_variable () in
+    O.[
+      C_equation (ds' , P_constant (C_map, [ind' ; P_variable v])) ;
+      C_equation (P_variable whole_expr , P_constant (C_option , [P_variable v]))
+    ] , whole_expr
+
+  let sequence : I.type_expression -> I.type_expression -> (constraints * O.type_variable) =
+    fun a b ->
+    let a' = type_expression_to_type_value a in
+    let b' = type_expression_to_type_value b in
+    let whole_expr = Core.fresh_type_variable () in
+    O.[
+      C_equation (a' , P_constant (C_unit , [])) ;
+      C_equation (b' , P_variable whole_expr)
+    ] , whole_expr
+
+  let loop : I.type_expression -> I.type_expression -> (constraints * O.type_variable) =
+    fun expr body ->
+    let expr' = type_expression_to_type_value expr in
+    let body' = type_expression_to_type_value body in
+    let whole_expr = Core.fresh_type_variable () in
+    O.[
+      C_equation (expr'                 , P_constant (C_bool , [])) ;
+      C_equation (body'                 , P_constant (C_unit , [])) ;
+      C_equation (P_variable whole_expr , P_constant (C_unit , []))
+    ] , whole_expr
+
+  let let_in : I.type_expression -> I.type_expression option -> I.type_expression -> (constraints * O.type_variable) =
+    fun rhs rhs_tv_opt result ->
+    let rhs'        = type_expression_to_type_value rhs in
+    let result'     = type_expression_to_type_value result in
+    let rhs_tv_opt' = match rhs_tv_opt with
+        None -> []
+      | Some annot -> O.[C_equation (rhs' , type_expression_to_type_value annot)] in
+    let whole_expr = Core.fresh_type_variable () in
+    O.[
+      C_equation (result' , P_variable whole_expr)
+    ] @ rhs_tv_opt', whole_expr
+
+  let assign : I.type_expression -> I.type_expression -> (constraints * O.type_variable) =
+    fun v e ->
+    let v' = type_expression_to_type_value v in
+    let e' = type_expression_to_type_value e in
+    let whole_expr = Core.fresh_type_variable () in
+    O.[
+      C_equation (v' , e') ;
+      C_equation (P_variable whole_expr , P_constant (C_unit , []))
+    ] , whole_expr
+
+  let annotation : I.type_expression -> I.type_expression -> (constraints * O.type_variable) =
+    fun e annot ->
+    let e' = type_expression_to_type_value e in
+    let annot' = type_expression_to_type_value annot in
+    let whole_expr = Core.fresh_type_variable () in
+    O.[
+      C_equation (e' , annot') ;
+      C_equation (e' , P_variable whole_expr)
+    ] , whole_expr
+
+  let matching : I.type_expression list -> (constraints * O.type_variable) =
+    fun es ->
+    let aux prev e =
+      (e, O.C_equation (prev , e)) in
+    let whole_expr = Core.fresh_type_variable () in
+    let cs = match (List.map type_expression_to_type_value es) with
+        [] -> []
+      | hd::tl ->
+        O.[C_equation (hd , P_variable whole_expr)]
+        @ List.fold_map aux hd tl in
+    cs, whole_expr
 
 end
 
