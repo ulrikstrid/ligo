@@ -145,7 +145,7 @@ let compile_contract_file : string -> string -> s_syntax -> string result = fun 
   let%bind simplified = parsify syntax source_filename in
   let%bind () =
     assert_entry_point_defined simplified entry_point in
-  let%bind typed =
+  let%bind (env' , state' , typed) =
     trace (simple_error "typing") @@
     Typer.type_program simplified in
   let%bind mini_c =
@@ -156,31 +156,36 @@ let compile_contract_file : string -> string -> s_syntax -> string result = fun 
     Compiler.translate_contract mini_c in
   let str =
     Format.asprintf "%a" Michelson.pp_stripped michelson in
+  (* TODO: check that state' is consistent *)
+  ignore (env' , state') ;
   ok str
 
 let compile_contract_parameter : string -> string -> string -> s_syntax -> string result = fun source_filename entry_point expression syntax ->
   let%bind syntax = syntax_to_variant syntax (Some source_filename) in
-  let%bind (program , parameter_tv) =
+  let%bind (env' , state' , program , parameter_tv) =
     let%bind simplified = parsify syntax source_filename in
     let%bind () =
       assert_entry_point_defined simplified entry_point in
-    let%bind typed =
+    let%bind (env', state', typed) =
       trace (simple_error "typing file") @@
       Typer.type_program simplified in
     let%bind (param_ty , _) =
       get_entry_point typed entry_point in
-    ok (typed , param_ty)
+    ok (env' , state' , typed , param_ty)
   in
+
   let%bind expr =
-    let%bind typed =
+    let%bind (typed, state'') =
       let%bind simplified = parsify_expression syntax expression in
+      (* TODO: could we simply use env' here instead of extracting the env of the last declaration? *)
+      ignore env' ;
       let env =
         let last_declaration = Location.unwrap List.(hd @@ rev program) in
         match last_declaration with
         | Declaration_constant (_ , (_ , post_env)) -> post_env
       in
       trace (simple_error "typing expression") @@
-      Typer.type_expression env simplified in
+      Typer.type_expression env state' simplified in
     let%bind () =
       trace (simple_error "expression type doesn't match type parameter") @@
       Ast_typed.assert_type_expression_eq (parameter_tv , typed.type_annotation) in
@@ -192,34 +197,37 @@ let compile_contract_parameter : string -> string -> string -> s_syntax -> strin
       Compiler.translate_value mini_c in
     let str =
       Format.asprintf "%a" Michelson.pp_stripped michelson in
+    (* TODO: check that state'' is consistent *)
+    ignore state'' ;
     ok str
   in
   ok expr
 
-
 let compile_contract_storage : string -> string -> string -> s_syntax -> string result = fun source_filename entry_point expression syntax ->
   let%bind syntax = syntax_to_variant syntax (Some source_filename) in
-  let%bind (program , storage_tv) =
+  let%bind (env' , state' , program , storage_tv) =
     let%bind simplified = parsify syntax source_filename in
     let%bind () =
       assert_entry_point_defined simplified entry_point in
-    let%bind typed =
+    let%bind (env', state', typed) =
       trace (simple_error "typing file") @@
       Typer.type_program simplified in
     let%bind (_ , storage_ty) =
       get_entry_point typed entry_point in
-    ok (typed , storage_ty)
+    ok (env' , state' , typed , storage_ty)
   in
   let%bind expr =
     let%bind simplified = parsify_expression syntax expression in
-    let%bind typed =
+    let%bind (typed , state'') =
+      (* TODO: could we simply use env' here instead of extracting the env of the last declaration? *)
+      ignore env' ;
       let env =
         let last_declaration = Location.unwrap List.(hd @@ rev program) in
         match last_declaration with
         | Declaration_constant (_ , (_ , post_env)) -> post_env
       in
       trace (simple_error "typing expression") @@
-      Typer.type_expression env simplified in
+      Typer.type_expression env state' simplified in
     let%bind () =
       trace (simple_error "expression type doesn't match type storage") @@
       Ast_typed.assert_type_expression_eq (storage_tv , typed.type_annotation) in
@@ -231,6 +239,8 @@ let compile_contract_storage : string -> string -> string -> s_syntax -> string 
       Compiler.translate_value mini_c in
     let str =
       Format.asprintf "%a" Michelson.pp_stripped michelson in
+    (* TODO: check that state'' is consistent *)
+    ignore state'' ;
     ok str
   in
   ok expr
@@ -241,12 +251,14 @@ let type_file ?(debug_simplify = false) ?(debug_typed = false)
   (if debug_simplify then
      Format.(printf "Simplified : %a\n%!" Ast_simplified.PP.program simpl)
   ) ;
-  let%bind typed =
+  let%bind (env' , state' , typed) =
     trace (simple_error "typing") @@
     Typer.type_program simpl in
   (if debug_typed then (
       Format.(printf "Typed : %a\n%!" Ast_typed.PP.program typed)
     )) ;
+  (* TODO: check that state'' is consistent *)
+  ignore (env' , state') ;
   ok typed
 
 let run_contract ?amount source_filename entry_point storage input syntax =

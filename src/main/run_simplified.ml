@@ -5,16 +5,20 @@ let run_simplityped
     ?(debug_mini_c = false) ?(debug_michelson = false)
     (program : Ast_typed.program) (entry : string)
     (input : Ast_simplified.expression) : Ast_simplified.expression result =
-  let%bind typed_input =
+  (* This is more or less an entry point, we start with an empty state. *)
+  let state = Typer.Solver.initial_state in
+  let%bind (typed_input, state') =
     let env =
       let last_declaration = Location.unwrap List.(hd @@ rev program) in
       match last_declaration with
       | Declaration_constant (_ , (_ , post_env)) -> post_env
     in
-    Typer.type_expression env (* TODO: add "state" *) input in  
+    Typer.type_expression env state input in
   let%bind typed_result =
     Run_typed.run_typed ?options ~debug_mini_c ~debug_michelson entry program typed_input in
   let%bind annotated_result = Typer.untype_expression typed_result in
+  (* TODO: maybe check here that the typechecker state is consistent? *)
+  let () = ignore state' in
   ok annotated_result
 
 let evaluate_simplityped ?options (program : Ast_typed.program) (entry : string)

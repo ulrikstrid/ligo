@@ -8,6 +8,8 @@ module SMap = O.SMap
 
 module Environment = O.Environment
 
+module Solver = Solver
+
 type environment = Environment.t
 
 module Errors = struct
@@ -699,7 +701,7 @@ and type_constant (name:string) (lst:O.type_expression list) (tv_opt:O.type_expr
 (*     ) *)
 
 (* TODO: we ended up with two versions of type_program… ??? *)
-let type_program (p:I.program) : O.program result =
+let type_program (p:I.program) : (environment * Solver.state * O.program) result =
   let env = Ast_typed.Environment.full_empty in
   let state = Solver.initial_state in
   let aux ((e : environment), (s : Solver.state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
@@ -710,10 +712,11 @@ let type_program (p:I.program) : O.program result =
     in
     ok (e' , s' , ds')
   in
-  let%bind (_env' , _state' , declarations) =
+  let%bind (env' , state' , declarations) =
     trace (fun () -> program_error p ()) @@
     bind_fold_list aux (env , state , []) p in
-  ok declarations
+  let () = ignore (env' , state') in
+  ok (env', state', declarations)
 
 let type_program' : I.program -> O.program result = fun p ->
   let initial_state = Solver.initial_state in
