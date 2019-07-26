@@ -11,7 +11,7 @@ let run_simplityped
       match last_declaration with
       | Declaration_constant (_ , (_ , post_env)) -> post_env
     in
-    Typer.type_expression env input in  
+    Typer.type_expression env (* TODO: add "state" *) input in  
   let%bind typed_result =
     Run_typed.run_typed ?options ~debug_mini_c ~debug_michelson entry program typed_input in
   let%bind annotated_result = Typer.untype_expression typed_result in

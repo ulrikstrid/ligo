@@ -66,6 +66,7 @@ module Wrap = struct
     let pattern = type_expression_to_type_value expression in
     [C_equation (P_variable (name) , pattern)]
 
+  (* TODO: this should be renamed to failwith_ *)
   let failwith : unit -> (constraints * O.type_variable) = fun () ->
     let type_name = Core.fresh_type_variable () in
     [] , type_name
@@ -254,6 +255,31 @@ module Wrap = struct
         O.[C_equation (hd , P_variable whole_expr)]
         @ List.fold_map aux hd tl in
     cs, whole_expr
+
+  let fresh_binder () =
+    Core.fresh_type_variable ()
+
+  let lambda
+    : I.type_expression ->
+      I.type_expression option ->
+      I.type_expression option ->
+      (constraints * O.type_variable) =
+    fun fresh arg body ->
+    let whole_expr = Core.fresh_type_variable () in
+    let unification_arg = Core.fresh_type_variable () in
+    let unification_body = Core.fresh_type_variable () in
+    let arg'  = match arg with
+        None -> []
+      | Some arg -> O.[C_equation (P_variable unification_arg , type_expression_to_type_value arg)] in
+    let body'  = match body with
+        None -> []
+      | Some body -> O.[C_equation (P_variable unification_body , type_expression_to_type_value body)]
+    in O.[
+        C_equation (type_expression_to_type_value fresh , P_variable unification_arg) ;
+        C_equation (P_variable whole_expr ,
+                    P_constant (C_arrow , [P_variable unification_arg ;
+                                           P_variable unification_body]))
+      ] @ arg' @ body' , whole_expr
 
 end
 

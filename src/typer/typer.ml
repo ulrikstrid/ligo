@@ -218,27 +218,10 @@ module Errors = struct
 end
 
 open Errors
-open Solver.Wrap
 
 let swap (a,b) = ok (b,a)
 
-let rec type_program (p:I.program) : O.program result =
-  let env = Ast_typed.Environment.full_empty in
-  let state = Solver.initial_state in
-  let aux ((e : environment), (s : Solver.state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
-    let%bind (e' , s' , d'_opt) = type_declaration e s (Location.unwrap d) in
-    let ds' = match d'_opt with
-      | None -> ds
-      | Some d' -> ds @ [Location.wrap ~loc:(Location.get_location d) d']
-    in
-    ok (e' , s' , ds')
-  in
-  let%bind (_env' , _state' , declarations) =
-    trace (fun () -> program_error p ()) @@
-    bind_fold_list aux (env , state , []) p in
-  ok declarations
-
-and type_declaration env state : I.declaration -> (environment * Solver.state * O.declaration option) result = function
+let rec type_declaration env state : I.declaration -> (environment * Solver.state * O.declaration option) result = function
   | Declaration_type (type_name , type_expression) ->
       let%bind tv = evaluate_type env type_expression in
       let env' = Environment.add_type type_name tv env in
@@ -667,59 +650,30 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
     } -> (
       let%bind input_type' = bind_map_option (evaluate_type e) input_type in
       let%bind output_type' = bind_map_option (evaluate_type e) output_type in
-      (* TODO: add binder to env *)
-      (*  *)
 
-      (* let%bind input_type = *)
-      (*   let%bind input_type = *)
-      (*     (\* Hack to take care of let_in introduced by `simplify/ligodity.ml` in ECase's hack *\) *)
-      (*     let default_action e () = fail @@ (needs_annotation e "the returned value") in *)
-      (*     match input_type with *)
-      (*     | Some ty -> ok ty *)
-      (*     | None -> ( *)
-      (*         match Location.unwrap result with *)
-      (*         | I.E_let_in li -> ( *)
-      (*             match Location.unwrap li.rhs with *)
-      (*             | I.E_variable name when name = (fst binder) -> ( *)
-      (*                 match snd li.binder with *)
-      (*                 | Some ty -> ok ty *)
-      (*                 | None -> default_action li.rhs () *)
-      (*               ) *)
-      (*             | _ -> default_action li.rhs () *)
-      (*           ) *)
-      (*         | _ -> default_action result () *)
-      (*       ) *)
-      (*   in *)
-      (*   evaluate_type e input_type in *)
-      (* let%bind output_type = *)
-      (*   bind_map_option (evaluate_type e) output_type *)
-      (* in *)
-      let e' = Environment.add_ez_binder (fst binder) input_type e in
-      let%bind result = type_expression ?tv_opt:output_type e' result in
+      let fresh : O.type_expression = t_variable (Wrap.fresh_binder ()) () in
+      let e' = Environment.add_ez_binder (fst binder) fresh e in
+
+      let%bind (result , state') = type_expression e' state result in
       let output_type = result.type_annotation in
-      return (E_lambda {binder = fst binder;input_type;output_type;result}) (t_function input_type output_type ())
+      let wrapped = Wrap.lambda fresh input_type' output_type' in
+      return_wrapped
+        (E_lambda {binder = fst binder;input_type=fresh;output_type;result})
+        state' wrapped
     )
 
   | E_constant (name, lst) ->
+    let () = ignore (name , lst) in
+    Pervasives.failwith "TODO: E_constant"
+      (*
       let%bind lst' = bind_list @@ List.map (type_expression e) lst in
       let tv_lst = List.map get_type_annotation lst' in
       let%bind (name', tv) =
         type_constant name tv_lst tv_opt ae.location in
       return (E_constant (name' , lst')) tv
+    *)
 
   (* Advanced *)
-
-(* Still to do:
-  | E_lambda {binder;input_type;output_type;result} ->
-  | E_constant (name, lst) ->
-  | E_application (f, arg) ->
-  | E_look_up dsi ->
-  | E_matching (ex, m) -> (
-  | E_sequence (a , b) ->
-  | E_loop (expr , body) ->
-  | E_let_in {binder ; rhs ; result} ->
-  | E_annotation (expr , te) ->
-*)
 
 and type_constant (name:string) (lst:O.type_expression list) (tv_opt:O.type_expression option) (loc : Location.t) : (string * O.type_expression) result =
   (* Constant poorman's polymorphism *)
@@ -730,34 +684,61 @@ and type_constant (name:string) (lst:O.type_expression list) (tv_opt:O.type_expr
   trace (constant_error loc lst tv_opt) @@
   typer lst tv_opt
 
-let type_statement : I.declaration -> Solver.state -> Solver.state result = fun declaration state ->
-  match declaration with
-  | I.Declaration_type td -> (
-      let constraints = type_declaration td in
-      Solver.aggregate_constraints state constraints
-    )
-  | I.Declaration_constant ((_ , _ , expr) as cd) -> (
-      let%bind state' = type_expression expr in
-      let constraints = constant_declaration cd in
-      Solver.aggregate_constraints state' constraints
-    )
+(* let type_statement : environment -> I.declaration -> Solver.state -> (environment * O.declaration * Solver.state) result = fun env declaration state -> *)
+(*   match declaration with *)
+(*   | I.Declaration_type td -> ( *)
+(*       let%bind (env', state', declaration') = type_declaration env state td in *)
+(*       let%bind toto = Solver.aggregate_constraints state' constraints in *)
+(*       let declaration' = match declaration' with None -> Pervasives.failwith "TODO" | Some x -> x in *)
+(*       ok (env' , declaration' , toto) *)
+(*     ) *)
+(*   | I.Declaration_constant ((_ , _ , expr) as cd) -> ( *)
+(*       let%bind state' = type_expression expr in *)
+(*       let constraints = constant_declaration cd in *)
+(*       Solver.aggregate_constraints state' constraints *)
+(*     ) *)
 
-let rec type_program : I.program -> O.program result = fun p ->
+(* TODO: we ended up with two versions of type_program… ??? *)
+let type_program (p:I.program) : O.program result =
+  let env = Ast_typed.Environment.full_empty in
+  let state = Solver.initial_state in
+  let aux ((e : environment), (s : Solver.state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
+    let%bind (e' , s' , d'_opt) = type_declaration e s (Location.unwrap d) in
+    let ds' = match d'_opt with
+      | None -> ds
+      | Some d' -> ds @ [Location.wrap ~loc:(Location.get_location d) d']
+    in
+    ok (e' , s' , ds')
+  in
+  let%bind (_env' , _state' , declarations) =
+    trace (fun () -> program_error p ()) @@
+    bind_fold_list aux (env , state , []) p in
+  ok declarations
+
+let type_program' : I.program -> O.program result = fun p ->
   let initial_state = Solver.initial_state in
-  let aux prec statement =
-    let (prec_statements , prec_state) = prec in
-    let%bind (statement' , state) = type_statement statement prec_state in
-    let statements = prec_statements @ statement' in
-    ok (state , statements) in
-  let%bind (statements , final_state) = bind_fold_list aux ([] , initial_state) p in
-  ignore final_state ;
-  ok statements
+  let initial_env = Environment.full_empty in
+  let aux (env, state) (statement : I.declaration Location.wrap) =
+    let statement' = statement.wrap_content in (* TODO *)
+    let%bind (env' , state' , declaration') = type_declaration env state statement' in
+    let declaration'' = match declaration' with
+        None -> None
+      | Some x -> Some (Location.wrap ~loc:Location.(statement.location) x) in
+    ok ((env' , state') , declaration'')
+  in
+  let%bind ((env' , state') , p') = bind_fold_map_list aux (initial_env, initial_state) p in
+  let p' = List.fold_left (fun l e -> match e with None -> l | Some x -> x :: l) [] p' in
 
+  (* here, maybe ensure that there are no invalid things in env' and state' ? *)
+  let () = ignore (env' , state') in
+
+  ok p'
 
 let untype_type_expression (t:O.type_expression) : (I.type_expression) result =
-  match t.simplified with
-  | Some s -> ok s
-  | _ -> fail @@ internal_assertion_failure "trying to untype generated type"
+  ok t
+  (* match t.simplified with *)
+  (* | Some s -> ok s *)
+  (* | _ -> fail @@ internal_assertion_failure "trying to untype generated type" *)
 
 let untype_literal (l:O.literal) : I.literal result =
   let open I in
@@ -800,7 +781,7 @@ let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
       return (e_tuple lst')
   | E_tuple_accessor (tpl, ind)  ->
       let%bind tpl' = untype_expression tpl in
-      return (e_accessor tpl' [Access_tuple ind])
+      return (e_accessor tpl' (Access_tuple ind))
   | E_constructor (n, p) ->
       let%bind p' = untype_expression p in
       return (e_constructor n p')
@@ -810,7 +791,7 @@ let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
       return (e_record r')
   | E_record_accessor (r, s) ->
       let%bind r' = untype_expression r in
-      return (e_accessor r' [Access_record s])
+      return (e_accessor r' (Access_record s))
   | E_map m ->
       let%bind m' = bind_map_list (bind_map_pair untype_expression) m in
       return (e_map m')
