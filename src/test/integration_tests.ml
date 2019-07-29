@@ -134,6 +134,11 @@ let arithmetic () : unit result =
   let%bind () = expect_eq_n_pos program "div_op" e_int (fun n -> e_int (n / 2)) in
   ok ()
 
+let timestamp () : unit result =
+  let%bind program = type_file "./contracts/timestamp.ligo" in
+  let%bind () = expect_eq_evaluate program "t" (e_timestamp 0) in
+  ok ()
+
 let bitwise_arithmetic () : unit result =
   let%bind program = type_file "./contracts/bitwise_arithmetic.ligo" in
   let%bind () = expect_eq program "or_op" (e_nat 7) (e_nat 7) in
@@ -637,6 +642,7 @@ let main = test_suite "Integration (End to End)" [
     test "shadow" shadow ;
     test "annotation" annotation ;
     test "multiple parameters" multiple_parameters ;
+    test "timestamp" timestamp ;
     test "bool" bool_expression ;
     test "arithmetic" arithmetic ;
     test "bitiwse_arithmetic" bitwise_arithmetic ;

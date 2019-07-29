@@ -32,6 +32,15 @@ module Errors = struct
     ] in
     error ~data title message ()
 
+  let bad_timestamp_notation (n:string) (loc:Location.t) () =
+    let title = (thunk "bad timestamp notation") in
+    let message () = "" in
+    let data = [
+      ("notation" , fun () -> Format.asprintf "%s" n) ;
+      ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
+    ] in
+    error ~data title message ()
+
   let match_empty_variant : type a . a I.matching -> Location.t -> unit -> _ =
     fun matching loc () ->
     let title = (thunk "match with no cases") in
@@ -410,6 +419,13 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       L.log (Format.asprintf "literal_string option type: %a" PP_helpers.(option O.PP.type_value) tv_opt) ;
       match Option.map Ast_typed.get_type' tv_opt with
       | Some (T_constant ("address" , [])) -> return (E_literal (Literal_address s)) (t_address ())
+      | Some (T_constant ("timestamp" , [])) -> (
+          let%bind t =
+            trace_option (bad_timestamp_notation s ae.location) @@
+            Tezos_utils.Time.of_notation s in
+          let n = Int64.to_int @@ Tezos_utils.Time.to_seconds t in
+          return (E_literal (Literal_timestamp n)) (t_timestamp ())
+        )
       | _ -> return (E_literal (Literal_string s)) (t_string ())
     )
   | E_literal (Literal_bytes s) ->

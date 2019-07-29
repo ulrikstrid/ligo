@@ -725,7 +725,7 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
   | T_constant ("timestamp", []) -> (
       let%bind n =
         trace_strong (wrong_mini_c_value "timestamp" v) @@
-        get_timestamp v in      
+        get_timestamp v in
       return (E_literal (Literal_timestamp n))
     )
   | T_constant ("tez", []) -> (
