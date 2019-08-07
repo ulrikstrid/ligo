@@ -1,3 +1,4 @@
+(*
 open Cmdliner
 
 val main : unit Term.t * Term.info
@@ -23,3 +24,4 @@ val dry_run : unit Term.t * Term.info
 val run_function : unit Term.t * Term.info
 
 val evaluate_value : unit Term.t * Term.info
+*)
