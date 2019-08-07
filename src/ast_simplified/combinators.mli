@@ -1,5 +1,6 @@
 open Types
 open Simple_utils.Trace
+(*
 module Option = Simple_utils.Option
 
 module SMap = Map.String
@@ -7,7 +8,7 @@ module SMap = Map.String
 module Errors : sig
   val bad_kind : name -> Location.t -> unit -> error
 end
-
+*)
 val t_bool      : type_expression
 val t_string    : type_expression
 val t_bytes     : type_expression
@@ -17,11 +18,15 @@ val t_nat       : type_expression
 val t_tez       : type_expression
 val t_unit      : type_expression
 val t_address   : type_expression
+(*
 val t_option    : type_expression -> type_expression
 val t_list      : type_expression -> type_expression
+*)
 val t_variable  : type_name -> type_expression
+(*
 val t_tuple     : type_expression list -> type_expression
 val t_record    : te_map -> type_expression
+*)
 val t_pair : ( type_expression * type_expression ) -> type_expression
 
 val t_record_ez : (string * type_expression) list -> type_expression
@@ -30,11 +35,13 @@ val t_sum : te_map -> type_expression
 val ez_t_sum : ( string * type_expression ) list -> type_expression
 
 val t_function : type_expression -> type_expression -> type_expression
+(*
 val t_map : type_expression -> type_expression -> type_expression
 val t_set : type_expression -> type_expression
 
 val make_name : string -> name
 
+*)
 val e_var : ?loc:Location.t -> string -> expression
 val e_literal : ?loc:Location.t -> literal -> expression
 val e_unit : ?loc:Location.t -> unit -> expression
@@ -84,12 +91,12 @@ val e_typed_map : ?loc:Location.t -> ( expression * expression ) list  -> type_e
 val e_typed_set : ?loc:Location.t -> expression list -> type_expression -> expression
 
 val e_lambda : ?loc:Location.t -> string -> type_expression option -> type_expression option -> expression -> expression
-
 val e_record : ?loc:Location.t -> expr_map -> expression
 
 val e_ez_record : ?loc:Location.t -> ( string * expr ) list -> expression
-
+(*
 val get_e_accessor : expression' -> ( expression * access_path ) result
+*)
 
 val assert_e_accessor : expression' -> unit result
 
@@ -98,9 +105,7 @@ val get_access_record : access -> string result
 val get_e_pair : expression' -> ( expression * expression ) result
 
 val get_e_list : expression' -> ( expression list ) result
-
 val get_e_failwith : expression -> expression result 
-
 val is_e_failwith : expression -> bool
 
 val extract_pair : expression -> ( expression * expression ) result 
