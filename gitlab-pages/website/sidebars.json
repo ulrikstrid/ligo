@@ -16,6 +16,15 @@
     "Road Map": ["contributors/road-map/short-term", "contributors/road-map/long-term"]
   },
   "tutorials": {
-    "Get Started": ["tutorials/get-started/tezos-taco-shop-smart-contract", "tutorials/get-started/tezos-taco-shop-payout"]
+    "Get Started": ["tutorials/get-started/tezos-taco-shop-smart-contract", "tutorials/get-started/tezos-taco-shop-payout"],
+    "Beginner's Guide":[
+      "tutorials/beginners-guide/tezos-beginners-guide-chapter-one-what-is-ligo", 
+      "tutorials/beginners-guide/tezos-beginners-guide-chapter-two-ligo-dev-tools",
+      "tutorials/beginners-guide/tezos-beginners-guide-chapter-three-variables-and-constants",
+      "tutorials/beginners-guide/tezos-beginners-guide-chapter-four-records",
+      "tutorials/beginners-guide/tezos-beginners-guide-chapter-five-functions",
+      "tutorials/beginners-guide/tezos-beginners-guide-chapter-six-conditions-and-logic",
+      "tutorials/beginners-guide/tezos-beginners-guide-chapter-seven-loops-and-iterations"
+    ]
   }
 }
