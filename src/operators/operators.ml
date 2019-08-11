@@ -184,6 +184,52 @@ module Typer = struct
   open Helpers.Typer
   open Ast_typed
 
+  (* none         : ∀ a, option a *)
+  (* sub          : ∀ a b c, Subarg a b c => a -> b -> c *)
+  (* some         : ∀ a, a -> option a *)
+  (* map_remove   : ∀ src dst, src -> map src dst -> map src dst *)
+  (* map_add      : ∀ src dst, src -> dst -> map src dst -> map src dst *)
+  (* map_update   : ∀ src dst, src -> option dst -> map src dst -> map src dst *)
+  (* map_mem      : ∀ src dst, src -> map src dst -> bool*)
+  (* map_find     : ∀ src dst, src -> map src dst -> dst*)
+  (* map_find_opt : ∀ src dst, src -> map src dst -> option dst *)
+  (* map_fold     : ∀ src dst acc, ( ( (src * dst) * acc ) -> acc ) -> map src dst -> acc -> acc *)
+  (* map_map      : ∀ k v result, ((k * v) -> result) -> map k v -> map k result  *)
+  (* TODO: the type of map_map_fold might be wrong, check it. *)
+  (* map_map_fold : ∀ k v acc dst, ( ((k * v) * acc) -> acc * dst ) -> map k v (k * v) -> (map k dst * acc) *)
+  (* map_iter     : ∀ k v, ( (k * v) -> unit ) -> map k v -> unit *)
+  (* size         : ∀ c, Sizearg c => c -> nat *)
+  (* slice        : nat -> nat -> string -> string *)
+  (* failwith     : string -> unit *)
+  (* get_force    : ∀ src dst, src -> map src dst -> dst *)
+  (* int          : nat -> int *)
+  (* bytes_pack   : ∀ a, Packable a => a -> bytes *) (* TYPECLASS *)
+  (* bytes_unpack : ∀ a, Packable a => bytes -> a *)
+  (* hash256      : bytes -> bytes *)
+  (* hash512      : bytes -> bytes *)
+  (* blake2b      : bytes -> bytes *)
+  (* hash_key     : key -> key_hash *)
+  (* check_signature : key -> signature -> bytes -> bool *)
+  (* sender       : address *)
+  (* source       : address *)
+  (* unit         : unit *)
+  (* amount       : tez *)
+  (* address      : address *)
+  (* now          : timestamp *)
+  (* transaction  : ∀ a, a -> tez -> contract a -> operation *)
+  (* get_contract : ∀ a, t_contract a *)
+  (* abs          : int -> nat *)
+  (* cons         : ∀ a, a -> list a -> list a *)
+  (* assertion    : bool -> unit *)
+  (* times        : ∀ a b c, Timargs a b c => a -> b -> c *) (* TYPECLASS *)
+  (* div          : ∀ a b c, Divargs a b c => a -> b -> c *) (* TYPECLASS *)
+  (* mod          : ∀ a b c, Modargs a b c => a -> b -> c *) (* TYPECLASS *)
+  (* add          : ∀ a b c, Addargs a b c => a -> b -> c *) (* TYPECLASS *)
+  (* set_mem      : ∀ a, a -> set a -> bool *)
+  (* set_add      : ∀ a, a -> set a -> set a *)
+  (* set_remove   : ∀ a, a -> set a -> set a *)
+  (* not          : bool -> bool *)
+
   let none = typer_0 "NONE" @@ fun tv_opt ->
     match tv_opt with
     | None -> simple_fail "untyped NONE"
@@ -350,11 +396,15 @@ module Typer = struct
     let%bind () = assert_t_int t in
     ok @@ t_nat ()
 
+  let cons = typer_2 "CONS" @@ fun hd tl ->
+    let%bind () = assert_type_expression_eq (tl , t_list hd ()) in
+    ok @@ t_list tl ()
+
   let assertion = typer_1 "ASSERT" @@ fun a ->
     if eq_1 a (t_bool ())
     then ok @@ t_unit ()
     else simple_fail "Asserting a non-bool"
-  
+
   let times = typer_2 "TIMES" @@ fun a b ->
     if eq_2 (a , b) (t_nat ())
     then ok @@ t_nat () else
@@ -460,6 +510,7 @@ module Typer = struct
       transaction ;
       get_contract ;
       abs ;
+      cons ;
       now ;
       slice ;
       address ;

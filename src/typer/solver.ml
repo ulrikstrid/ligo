@@ -135,20 +135,25 @@ module Wrap = struct
     let () = ignore binder in
     let freshvar = O.fresh_type_variable () in
     f (O.P_variable freshvar)
+  let forall2 a b f =
+    forall a @@ fun a' ->
+    forall b @@ fun b' ->
+    f a' b'
+  let forall3 a b c f =
+    forall a @@ fun a' ->
+    forall b @@ fun b' ->
+    forall c @@ fun c' ->
+    f a' b' c'
   let pair a b = O.P_constant O.(C_tuple , [a; b])
   let map  k v = O.P_constant O.(C_map   , [k; v])
   let (-->) arg ret = O.P_constant O.(C_arrow  , [arg; ret])
 
-  let t = forall "k" @@ fun k ->
-          forall "v" @@ fun v ->
-          pair k v -->
-          map  k v -->
-          map  k v
+  let t_mapcons = forall2 "k" "v" @@ fun k v -> pair k v --> map  k v --> map  k v
 
   (* cons          : ∀ v, v -> list v -> list v            was: list *)
   (* setcons       : ∀ v, v -> set v  -> set v             was: set  *)
-  (* mapcons       : ∀ k v, (k , v) -> map k v -> map k v  was: map  *)
-  (* failwith      : 'a *)
+  (* mapcons       : ∀ k v, (k * v) -> map k v -> map k v  was: map  *)
+  (* failwith      : ∀ a, a *)
   (* literal_t     : t *)
   (* literal_bool  : bool *)
   (* literal_string : string *)
