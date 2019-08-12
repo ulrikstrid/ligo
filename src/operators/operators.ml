@@ -196,7 +196,7 @@ module Typer = struct
     let tc_addargs  a b c = tc [a;b;c] [ (*TODO…*) ]
 
     let t_none         = forall "a" @@ fun a -> option a
-    let t_sub          = forall3 "a" "b" "c" @@ fun a b c -> tc_subarg a b c => a --> b --> c (* TYPECLASS *)
+    let t_sub          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_subarg a b c] => a --> b --> c (* TYPECLASS *)
     let t_some         = forall "a" @@ fun a -> a --> option a
     let t_map_remove   = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> map src dst
     let t_map_add      = forall2 "src" "dst" @@ fun src dst -> src --> dst --> map src dst --> map src dst
@@ -210,13 +210,13 @@ module Typer = struct
     (* TODO: the type of map_map_fold might be wrong, check it. *)
     let t_map_map_fold = forall4 "k" "v" "acc" "dst" @@ fun k v acc dst -> ( ((k * v) * acc) --> acc * dst ) --> map k v --> (k * v) --> (map k dst * acc)
     let t_map_iter     = forall2 "k" "v" @@ fun k v -> ( (k * v) --> unit ) --> map k v --> unit
-    let t_size         = forall "c" @@ fun c -> tc_sizearg c => c --> nat (* TYPECLASS *)
+    let t_size         = forall_tc "c" @@ fun c -> [tc_sizearg c] => c --> nat (* TYPECLASS *)
     let t_slice        = nat --> nat --> string --> string
     let t_failwith     = string --> unit
     let t_get_force    = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> dst
     let t_int          = nat --> int
-    let t_bytes_pack   = forall "a" @@ fun a -> tc_packable a => a --> bytes (* TYPECLASS *)
-    let t_bytes_unpack = forall "a" @@ fun a -> tc_packable a => bytes --> a
+    let t_bytes_pack   = forall_tc "a" @@ fun a -> [tc_packable a] => a --> bytes (* TYPECLASS *)
+    let t_bytes_unpack = forall_tc "a" @@ fun a -> [tc_packable a] => bytes --> a (* TYPECLASS *)
     let t_hash256      = bytes --> bytes
     let t_hash512      = bytes --> bytes
     let t_blake2b      = bytes --> bytes
@@ -233,10 +233,10 @@ module Typer = struct
     let t_abs          = int --> nat
     let t_cons         = forall "a" @@ fun a -> a --> list a --> list a
     let t_assertion    = bool --> unit
-    let t_times        = forall3 "a" "b" "c" @@ fun a b c -> tc_timargs a b c => a --> b --> c (* TYPECLASS *)
-    let t_div          = forall3 "a" "b" "c" @@ fun a b c -> tc_divargs a b c => a --> b --> c (* TYPECLASS *)
-    let t_mod          = forall3 "a" "b" "c" @@ fun a b c -> tc_modargs a b c => a --> b --> c (* TYPECLASS *)
-    let t_add          = forall3 "a" "b" "c" @@ fun a b c -> tc_addargs a b c => a --> b --> c (* TYPECLASS *)
+    let t_times        = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_timargs a b c] => a --> b --> c (* TYPECLASS *)
+    let t_div          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_divargs a b c] => a --> b --> c (* TYPECLASS *)
+    let t_mod          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_modargs a b c] => a --> b --> c (* TYPECLASS *)
+    let t_add          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_addargs a b c] => a --> b --> c (* TYPECLASS *)
     let t_set_mem      = forall "a" @@ fun a -> a --> set a --> bool
     let t_set_add      = forall "a" @@ fun a -> a --> set a --> set a
     let t_set_remove   = forall "a" @@ fun a -> a --> set a --> set a

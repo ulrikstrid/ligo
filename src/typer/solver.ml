@@ -1,5 +1,7 @@
 open Trace
 
+module Core = Typesystem.Core
+
 module Wrap = struct
   let aa = 42
 
@@ -89,7 +91,7 @@ module Wrap = struct
   (* let t_access_string = record ('label:string , 'v) … -> 'label:string -> 'v *)
 
   module Prim_types = struct
-    open T
+    open Typesystem.Shorthands
 
     let t_cons           = forall "v" @@ fun v -> v --> list v --> list v                 (* was: list *)
     let t_setcons        = forall "v" @@ fun v -> v --> set v  --> set v                  (* was: set  *)
