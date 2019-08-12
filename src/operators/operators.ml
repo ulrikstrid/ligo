@@ -184,51 +184,64 @@ module Typer = struct
   open Helpers.Typer
   open Ast_typed
 
-  (* none         : ∀ a, option a *)
-  (* sub          : ∀ a b c, Subarg a b c => a -> b -> c *)
-  (* some         : ∀ a, a -> option a *)
-  (* map_remove   : ∀ src dst, src -> map src dst -> map src dst *)
-  (* map_add      : ∀ src dst, src -> dst -> map src dst -> map src dst *)
-  (* map_update   : ∀ src dst, src -> option dst -> map src dst -> map src dst *)
-  (* map_mem      : ∀ src dst, src -> map src dst -> bool*)
-  (* map_find     : ∀ src dst, src -> map src dst -> dst*)
-  (* map_find_opt : ∀ src dst, src -> map src dst -> option dst *)
-  (* map_fold     : ∀ src dst acc, ( ( (src * dst) * acc ) -> acc ) -> map src dst -> acc -> acc *)
-  (* map_map      : ∀ k v result, ((k * v) -> result) -> map k v -> map k result  *)
-  (* TODO: the type of map_map_fold might be wrong, check it. *)
-  (* map_map_fold : ∀ k v acc dst, ( ((k * v) * acc) -> acc * dst ) -> map k v (k * v) -> (map k dst * acc) *)
-  (* map_iter     : ∀ k v, ( (k * v) -> unit ) -> map k v -> unit *)
-  (* size         : ∀ c, Sizearg c => c -> nat *)
-  (* slice        : nat -> nat -> string -> string *)
-  (* failwith     : string -> unit *)
-  (* get_force    : ∀ src dst, src -> map src dst -> dst *)
-  (* int          : nat -> int *)
-  (* bytes_pack   : ∀ a, Packable a => a -> bytes *) (* TYPECLASS *)
-  (* bytes_unpack : ∀ a, Packable a => bytes -> a *)
-  (* hash256      : bytes -> bytes *)
-  (* hash512      : bytes -> bytes *)
-  (* blake2b      : bytes -> bytes *)
-  (* hash_key     : key -> key_hash *)
-  (* check_signature : key -> signature -> bytes -> bool *)
-  (* sender       : address *)
-  (* source       : address *)
-  (* unit         : unit *)
-  (* amount       : tez *)
-  (* address      : address *)
-  (* now          : timestamp *)
-  (* transaction  : ∀ a, a -> tez -> contract a -> operation *)
-  (* get_contract : ∀ a, t_contract a *)
-  (* abs          : int -> nat *)
-  (* cons         : ∀ a, a -> list a -> list a *)
-  (* assertion    : bool -> unit *)
-  (* times        : ∀ a b c, Timargs a b c => a -> b -> c *) (* TYPECLASS *)
-  (* div          : ∀ a b c, Divargs a b c => a -> b -> c *) (* TYPECLASS *)
-  (* mod          : ∀ a b c, Modargs a b c => a -> b -> c *) (* TYPECLASS *)
-  (* add          : ∀ a b c, Addargs a b c => a -> b -> c *) (* TYPECLASS *)
-  (* set_mem      : ∀ a, a -> set a -> bool *)
-  (* set_add      : ∀ a, a -> set a -> set a *)
-  (* set_remove   : ∀ a, a -> set a -> set a *)
-  (* not          : bool -> bool *)
+  module Operators_types = struct
+    open Typesystem.Shorthands
+
+    let tc_subarg   a b c = []          (* TODO *)
+    let tc_sizearg  a     = []          (* TODO *)
+    let tc_packable a     = []          (* TODO *)
+    let tc_timargs  a b c = []          (* TODO *)
+    let tc_divargs  a b c = []          (* TODO *)
+    let tc_modargs  a b c = []          (* TODO *)
+    let tc_addargs  a b c = []          (* TODO *)
+
+    let t_none         = forall "a" @@ fun a -> option a
+    let t_sub          = forall3 "a" "b" "c" @@ fun a b c -> tc_subarg a b c => a --> b --> c (* TYPECLASS *)
+    let t_some         = forall "a" @@ fun a -> a --> option a
+    let t_map_remove   = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> map src dst
+    let t_map_add      = forall2 "src" "dst" @@ fun src dst -> src --> dst --> map src dst --> map src dst
+    let t_map_update   = forall2 "src" "dst" @@ fun src dst -> src --> option dst --> map src dst --> map src dst
+    let t_map_mem      = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> bool
+    let t_map_find     = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> dst
+    let t_map_find_opt = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> option dst
+    let t_map_fold     = forall3 "src" "dst" "acc" @@ fun src dst acc -> ( ( (src * dst) * acc ) --> acc ) --> map src dst --> acc --> acc
+    let t_map_map      = forall3 "k" "v" "result" @@ fun k v result -> ((k * v) --> result) --> map k v --> map k result
+
+    (* TODO: the type of map_map_fold might be wrong, check it. *)
+    let t_map_map_fold = forall4 "k" "v" "acc" "dst" @@ fun k v acc dst -> ( ((k * v) * acc) --> acc * dst ) --> map k v --> (k * v) --> (map k dst * acc)
+    let t_map_iter     = forall2 "k" "v" @@ fun k v -> ( (k * v) --> unit ) --> map k v --> unit
+    let t_size         = forall "c" @@ fun c -> tc_sizearg c => c --> nat (* TYPECLASS *)
+    let t_slice        = nat --> nat --> string --> string
+    let t_failwith     = string --> unit
+    let t_get_force    = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> dst
+    let t_int          = nat --> int
+    let t_bytes_pack   = forall "a" @@ fun a -> tc_packable a => a --> bytes (* TYPECLASS *)
+    let t_bytes_unpack = forall "a" @@ fun a -> tc_packable a => bytes --> a
+    let t_hash256      = bytes --> bytes
+    let t_hash512      = bytes --> bytes
+    let t_blake2b      = bytes --> bytes
+    let t_hash_key     = key --> key_hash
+    let t_check_signature = key --> signature --> bytes --> bool
+    let t_sender       = address
+    let t_source       = address
+    let t_unit         = unit
+    let t_amount       = tez
+    let t_address      = address
+    let t_now          = timestamp
+    let t_transaction  = forall "a" @@ fun a -> a --> tez --> contract a --> operation
+    let t_get_contract = forall "a" @@ fun a -> contract a
+    let t_abs          = int --> nat
+    let t_cons         = forall "a" @@ fun a -> a --> list a --> list a
+    let t_assertion    = bool --> unit
+    let t_times        = forall3 "a" "b" "c" @@ fun a b c -> tc_timargs a b c => a --> b --> c (* TYPECLASS *)
+    let t_div          = forall3 "a" "b" "c" @@ fun a b c -> tc_divargs a b c => a --> b --> c (* TYPECLASS *)
+    let t_mod          = forall3 "a" "b" "c" @@ fun a b c -> tc_modargs a b c => a --> b --> c (* TYPECLASS *)
+    let t_add          = forall3 "a" "b" "c" @@ fun a b c -> tc_addargs a b c => a --> b --> c (* TYPECLASS *)
+    let t_set_mem      = forall "a" @@ fun a -> a --> set a --> bool
+    let t_set_add      = forall "a" @@ fun a -> a --> set a --> set a
+    let t_set_remove   = forall "a" @@ fun a -> a --> set a --> set a
+    let t_not          = bool --> bool
+  end
 
   let none = typer_0 "NONE" @@ fun tv_opt ->
     match tv_opt with

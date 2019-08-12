@@ -1,11 +1,10 @@
 (library
-  (name operators)
-  (public_name ligo.operators)
+  (name typesystem)
+  (public_name ligo.typesystem)
   (libraries
     simple-utils
     tezos-utils
     ast_typed
-    typesystem
     mini_c
   )
   (preprocess
@@ -13,3 +12,4 @@
   )
   (flags (:standard -open Simple_utils ))
 )
+

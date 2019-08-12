@@ -1,49 +1,5 @@
 open Trace
 
-module Core = struct
-
-  type type_variable = string
-  let fresh_type_variable =
-    let id = ref 0 in
-    let inc () = id := !id + 1 in
-    fun ?name () ->
-      inc () ;
-      match name with
-      | None -> "type_variable_" ^ (string_of_int !id)
-      | Some name -> "tv_" ^ name ^ "_" ^ (string_of_int !id)
-
-  type constant_tag =
-    | C_arrow   (* * -> * -> * *)
-    | C_option  (* * -> * *)
-    | C_tuple   (* * … -> * *)
-    | C_record  (* ( label , * ) … -> * *)
-    | C_variant (* ( label , * ) … -> * *)
-    | C_map     (* * -> * -> * *)
-    | C_list    (* * -> * *)
-    | C_set     (* * -> * *)
-    | C_unit    (* * *)
-    | C_bool    (* * *)
-
-  type label =
-    | L_int of int
-    | L_string of string
-
-  type type_value =
-    | P_forall   of (type_variable * type_constraint list * type_value)
-    | P_variable of type_variable
-    | P_constant of (constant_tag * type_value list)
-    | P_label    of (type_value * label)
-
-  and typeclass = type_value list
-
-  and type_constraint =
-    (* | C_assignment of (type_variable * type_pattern) *)
-    | C_equation of (type_value * type_value) (* TVA = TVB *)
-    | C_typeclass of (type_value * typeclass) (* TV ∈ TVL, for now in extension, later add intensional (rule-based system for inclusion in the typeclass) *)
-    (* | … *)
-
-end
-
 module Wrap = struct
   let aa = 42
 
@@ -84,6 +40,7 @@ module Wrap = struct
           | "set"    -> C_set
           | "unit"   -> C_unit
           | "bool"   -> C_bool
+          | "string" -> C_string
           | _        -> failwith "TODO")
       in
       P_constant (csttag, List.map type_expression_to_type_value args)
@@ -124,44 +81,29 @@ module Wrap = struct
     let type_name = Core.fresh_type_variable () in
     [C_equation (P_variable (type_name) , pattern)] , type_name
 
-  (* tuple   : ('label:int, 'v) … -> record ('label : 'v) … *)
-  (* constructor   : ('label:string, 'v) -> variant ('label : 'v) *)
-  (* record        : ('label:string, 'v) … -> record ('label : 'v) … with independent choices for each 'label and 'v *)
-  (* variable      : t_of_var_in_env *)
-  (* access_int    : record ('label:int ,    'v) … -> 'label:int    -> 'v *)
-  (* access_string : record ('label:string , 'v) … -> 'label:string -> 'v *)
+  (* let t_tuple         = ('label:int, 'v) … -> record ('label : 'v) … *)
+  (* let t_constructor   = ('label:string, 'v) -> variant ('label : 'v) *)
+  (* let t_record        = ('label:string, 'v) … -> record ('label : 'v) … with independent choices for each 'label and 'v *)
+  (* let t_variable      = t_of_var_in_env *)
+  (* let t_access_int    = record ('label:int ,    'v) … -> 'label:int    -> 'v *)
+  (* let t_access_string = record ('label:string , 'v) … -> 'label:string -> 'v *)
 
-  let forall binder f =
-    let () = ignore binder in
-    let freshvar = O.fresh_type_variable () in
-    f (O.P_variable freshvar)
-  let forall2 a b f =
-    forall a @@ fun a' ->
-    forall b @@ fun b' ->
-    f a' b'
-  let forall3 a b c f =
-    forall a @@ fun a' ->
-    forall b @@ fun b' ->
-    forall c @@ fun c' ->
-    f a' b' c'
-  let pair a b = O.P_constant O.(C_tuple , [a; b])
-  let map  k v = O.P_constant O.(C_map   , [k; v])
-  let (-->) arg ret = O.P_constant O.(C_arrow  , [arg; ret])
+  module Prim_types = struct
+    open T
 
-  let t_mapcons = forall2 "k" "v" @@ fun k v -> pair k v --> map  k v --> map  k v
-
-  (* cons          : ∀ v, v -> list v -> list v            was: list *)
-  (* setcons       : ∀ v, v -> set v  -> set v             was: set  *)
-  (* mapcons       : ∀ k v, (k * v) -> map k v -> map k v  was: map  *)
-  (* failwith      : ∀ a, a *)
-  (* literal_t     : t *)
-  (* literal_bool  : bool *)
-  (* literal_string : string *)
-  (* access_map    : ∀ k v, map k v -> k -> v              *)
-  (* application   : ∀ a b, (a -> b) -> a -> b             *)
-  (* look_up       : ∀ ind v, map ind v -> ind -> option v *)
-  (* sequence      : ∀ b, unit -> b -> b                   *)
-  (* loop          : bool -> unit -> unit                  *)
+    let t_cons           = forall "v" @@ fun v -> v --> list v --> list v                 (* was: list *)
+    let t_setcons        = forall "v" @@ fun v -> v --> set v  --> set v                  (* was: set  *)
+    let t_mapcons        = forall2 "k" "v" @@ fun k v -> (k * v) --> map k v --> map k v  (* was: map  *)
+    let t_failwith       = forall "a" @@ fun a -> a
+    (* let t_literal_t   = t *)
+    let t_literal_bool   = bool
+    let t_literal_string = string
+    let t_access_map     = forall2 "k" "v" @@ fun k v -> map k v --> k --> v
+    let t_application    = forall2 "a" "b" @@ fun a b -> (a --> b) --> a --> b
+    let t_look_up        = forall2 "ind" "v" @@ fun ind v -> map ind v --> ind --> option v
+    let t_sequence       = forall "b" @@ fun b -> unit --> b --> b
+    let t_loop           = bool --> unit --> unit
+  end
 
   (* TODO: I think we should take an I.expression for the base+label *)
   let access_label ~base ~label : (constraints * O.type_variable) =
