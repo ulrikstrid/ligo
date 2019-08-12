@@ -40,8 +40,8 @@ stages:
     - opam install -y --build-test --deps-only ./src/
     - dune build -p ligo
 
-    #cache opam odoc
-    #- mkdir snapshot_opam && cp ~/.opam snapshot_opam/ && ls
+    #make a snapshot of opam dir and put in cache
+    - ls && pwd && mkdir snapshot_opam && cp ~/.opam snapshot_opam/ && ls snapshot_opam
     # TODO: also try instead from time to time:
     #- (cd ./src/; dune build -p ligo)
 
