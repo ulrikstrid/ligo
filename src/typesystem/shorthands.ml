@@ -1,5 +1,8 @@
 open Core
 
+let tc type_vars allowed_list =
+  Core.C_typeclass (type_vars , allowed_list)
+
 let forall binder f =
   let () = ignore binder in
   let freshvar = fresh_type_variable () in

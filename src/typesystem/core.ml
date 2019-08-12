@@ -47,7 +47,7 @@
   and type_constraint =
     (* | C_assignment of (type_variable * type_pattern) *)
     | C_equation of (type_value * type_value) (* TVA = TVB *)
-    | C_typeclass of (type_value * typeclass) (* TV ∈ TVL, for now in extension, later add intensional (rule-based system for inclusion in the typeclass) *)
+    | C_typeclass of (type_value list * typeclass) (* TVL ∈ TVLs, for now in extension, later add intensional (rule-based system for inclusion in the typeclass) *)
     (* | … *)
 
-  and typeclass = type_value list
+  and typeclass = type_value list list

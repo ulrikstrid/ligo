@@ -187,13 +187,13 @@ module Typer = struct
   module Operators_types = struct
     open Typesystem.Shorthands
 
-    let tc_subarg   a b c = []          (* TODO *)
-    let tc_sizearg  a     = []          (* TODO *)
-    let tc_packable a     = []          (* TODO *)
-    let tc_timargs  a b c = []          (* TODO *)
-    let tc_divargs  a b c = []          (* TODO *)
-    let tc_modargs  a b c = []          (* TODO *)
-    let tc_addargs  a b c = []          (* TODO *)
+    let tc_subarg   a b c = tc [a;b;c] [ (*TODO…*) ]
+    let tc_sizearg  a     = tc [a]     [ [int] ]
+    let tc_packable a     = tc [a]     [ [int] ; [string] ; [bool] (*TODO…*) ]
+    let tc_timargs  a b c = tc [a;b;c] [ [nat;nat;nat] ; [int;int;int] (*TODO…*) ]
+    let tc_divargs  a b c = tc [a;b;c] [ (*TODO…*) ]
+    let tc_modargs  a b c = tc [a;b;c] [ (*TODO…*) ]
+    let tc_addargs  a b c = tc [a;b;c] [ (*TODO…*) ]
 
     let t_none         = forall "a" @@ fun a -> option a
     let t_sub          = forall3 "a" "b" "c" @@ fun a b c -> tc_subarg a b c => a --> b --> c (* TYPECLASS *)
