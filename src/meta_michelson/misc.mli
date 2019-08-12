@@ -5,6 +5,7 @@ module MBytes = Alpha_environment.MBytes
 module Error_monad = Proto_alpha_utils.Error_monad
 open Error_monad
 
+(*
 module Context_init : sig
 
   type account = {
@@ -104,6 +105,7 @@ module Context_init : sig
         ( Alpha_context.t * (account * Tez_repr.tez) list * Alpha_context.Contract.t list) tzresult Lwt.t
 
 end
+*)
 
 type identity = {
   public_key_hash : Signature.public_key_hash;
@@ -116,7 +118,6 @@ type environment = {
   tezos_context : Alpha_context.t ;
   identities : identity list ;
 }
-
 val init_environment : unit -> environment tzresult Lwt.t
 
 val contextualize : msg:string -> ?environment:environment -> 

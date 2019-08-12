@@ -5,10 +5,8 @@ module Types = Contract.Types
 module Option = Simple_utils.Option
 module MBytes = Alpha_environment.MBytes
 
-module Stack = struct
+module Stack : sig
   open Script_typed_ir
-
-  val descr : unit -> unit -> unit -> unit
 
   type nonrec 'a ty = 'a ty
   type 'a t = 'a stack_ty
@@ -19,25 +17,24 @@ module Stack = struct
   type ex_descr = Ex_descr : ('a, 'b) descr -> ex_descr
   type ex_code = Ex_code : ('a, 'b) code -> ex_code
 
-  val stack : ?annot:string -> unit -> unit -> unit
-
-  val nil : Empty_t
-  val head : 'a -> 'a
-  val tail : 'a -> 'a
-
-  val seq : 'a -> 'b -> unit
-
-  val (@>) : 'b t -> code : (('a, 'b) code)-> unit
-  val (@|) : unit
-  val (@:) : unit
-
+  val nil : unit t
+  val stack : ?annot:var_annot -> 'a ty -> 'b t -> ('a * 'b) t
+  val (@>) : 'a t -> ('a, 'a) code -> ('a, 'a) descr
+  val (@:) : ?annot:var_annot ->'a ty -> 'b t -> ('a * 'b) t
   val (!:) : ('a, 'b) descr -> ('a, 'b) code
 
-  val (<.) : stack:'a t -> code: ('a, 'b) code -> ('a, 'b) descr
-
+  (*
+  val descr : 'a stack_ty -> 'b stack_ty -> ('a, 'b) instr -> ('a, 'b) descr
+  val head : ( 'a * 'b ) t -> 'a ty
+  val tail : ( 'a * 'b ) t -> 'b t
+  val seq : ('a t -> ('a, 'b) descr) -> ('b t -> ('b, 'c) descr) -> 'a t -> ('a, 'c) descr
+  val (@|) : 
+           ('a t -> ('a, 'b) descr) ->
+           ('b t -> ('b, 'c) descr) -> 'a t -> ('a, 'c) descr
+  val (<.) : 'a t -> ('a, 'b) code -> ('a, 'b) descr
   val (<::) : ('a, 'b) descr -> ('b, 'c) descr -> ('a, 'c) descr
-
-  val (<:) : ab_descr:('a, 'b) descr -> code:('b, 'c) code -> ('a, 'c) descr
+  val (<:) : ('a, 'b) descr -> ('b, 'c) code -> ('a, 'c) descr
+  *)
 
 end
 
@@ -50,448 +47,282 @@ type address = AC.Contract.t Script_typed_ir.ty
 type mutez = AC.Tez.t Script_typed_ir.ty
 
 
-module Stack_ops = struct
-  open Script_typed_ir
-  let dup : ('a * 'rest, 'a * ('a * 'rest)) code = fun bef ->
-    let Item_t (ty, rest, _) = bef in
-    descr bef (Item_t (ty, Item_t (ty, rest, None), None)) Dup
-
-  let drop : ('a * 'rest, 'rest) code = fun bef ->
-    let aft = snd @@ unstack bef in
-    descr bef aft Drop
-
-  let swap (bef : (('a * ('b * 'c)) stack_ty)) =
-    let Item_t (a, Item_t (b, rest, _), _) = bef in
-    descr bef (Item_t (b, (Item_t (a, rest, None)), None)) Swap
-
-  let dip code (bef : ('ty * 'rest) stack_ty) =
-    let Item_t (ty, rest, _) = bef in
-    let applied = code rest in
-    let aft = Item_t (ty, applied.aft, None) in
-    descr bef aft (Dip (code rest))
-
-  let noop : ('r, 'r) code = fun bef ->
-    descr bef bef Nop
-
-  let exec : (_, _) code = fun bef ->
-    let lambda = head @@ tail bef in
-    let (_, ret) = Types.assert_lambda lambda in
-    let aft = ret @: (tail @@ tail bef) in
-    descr bef aft Exec
-
-  let fail aft : ('a * 'r, 'b) code = fun bef ->
-    let head = fst @@ unstack bef in
-    descr bef aft (Failwith head)
-
-  let push_string str (bef : 'rest stack_ty) : (_, (string * 'rest)) descr =
-    let aft = Item_t (Types.string, bef, None) in
-    descr bef aft (Const (str))
-
-  let push_none (a:'a ty) : ('rest, 'a option * 'rest) code = fun r ->
-    let aft = stack (Types.option a) r in
-    descr r aft (Const None)
-
-  let push_unit : ('rest, unit * 'rest) code = fun r ->
-    let aft = stack Types.unit r in
-    descr r aft (Const ())
-
-  let push_nat n (bef : 'rest stack_ty) : (_, (nat * 'rest)) descr =
-    let aft = Item_t (Types.nat, bef, None) in
-    descr bef aft (Const (Contract.Values.nat n))
-
-  let push_int n (bef : 'rest stack_ty) : (_, (int_num * 'rest)) descr =
-    let aft = Types.int @: bef in
-    descr bef aft (Const (Contract.Values.int n))
-
-  let push_tez n (bef : 'rest stack_ty) : (_, (AC.Tez.tez * 'rest)) descr =
-    let aft = Types.mutez @: bef in
-    descr bef aft (Const (Contract.Values.tez n))
-
-  let push_bool b : ('s, bool * 's) code = fun bef ->
-    let aft = stack Types.bool bef in
-    descr bef aft (Const b)
-
-  let push_generic ty v : ('s, _ * 's) code = fun bef ->
-    let aft = stack ty bef in
-    descr bef aft (Const v)
-
-  let failstring str aft =
-    push_string str @| fail aft
-
-end
-
-module Stack_shortcuts = struct
-  open Stack_ops
-
-  let diip c x = dip (dip c) x
-  let diiip c x = dip (diip c) x
-  let diiiip c x = dip (diiip c) x
-
-  let bubble_1 = swap
-  let bubble_down_1 = swap
-
-  let bubble_2 : ('a * ('b * ('c * 'r)), 'c * ('a * ('b * 'r))) code = fun bef ->
-    bef <. dip swap <: swap
-  let bubble_down_2 : ('a * ('b * ('c * 'r)), ('b * ('c * ('a * 'r)))) code = fun bef ->
-    bef <. swap <: dip swap
-
-  let bubble_3 : ('a * ('b * ('c * ('d * 'r))), 'd * ('a * ('b * ('c * 'r)))) code = fun bef ->
-    bef <. diip swap <: dip swap <: swap
-
-  let keep_1 : type r s . ('a * r, s) code -> ('a * r, 'a * s) code = fun code bef ->
-    bef <. dup <: dip code
-
-  let save_1_1 : type r . ('a * r, 'b * r) code -> ('a * r, 'b * ('a * r)) code = fun code s ->
-    s <. keep_1 code <: swap
-
-  let keep_2 : type r s . ('a * ('b * r), s) code -> ('a * ('b * r), ('a * ('b * s))) code = fun code bef ->
-    (dup @| dip (swap @| dup @| dip (swap @| code))) bef
-
-  let keep_2_1 : type r s . ('a * ('b * r), s) code -> ('a * ('b * r), 'b * s) code = fun code bef ->
-    (dip dup @| swap @| dip code) bef
-
-  let relativize_1_1 : ('a * unit, 'b * unit) descr -> ('a * 'r, 'b * 'r) code = fun d s ->
-    let aft = head d.aft @: tail s in
-    descr s aft d.instr
-
-end
-
-module Pair_ops = struct
-  let car (bef : (('a * 'b) * 'rest) Stack.t) =
-    let (pair, rest) = unstack bef in
-    let (a, _) = Contract.Types.assert_pair pair in
-    descr bef (stack a rest) Car
-
-  let cdr (bef : (('a * 'b) * 'rest) Stack.t) =
-    let (pair, rest) = unstack bef in
-    let (_, b) = Contract.Types.assert_pair pair in
-    descr bef (stack b rest) Cdr
-
-  let pair (bef : ('a * ('b * 'rest)) Stack.t) =
-    let (a, rest) = unstack bef in
-    let (b, rest) = unstack rest in
-    let aft = (Types.pair a b) @: rest in
-    descr bef aft Cons_pair
-
-  open Stack_ops
-  let carcdr s = s <. car <: Stack_ops.dip cdr
-
-  let cdrcar s = s <. cdr <: dip car
-
-  let cdrcdr s = s <. cdr <: dip cdr
-
-  let carcar s = s <. car <: dip car
-
-  let cdar s = s <. cdr <: car
-
-  let unpair s = s <. dup <: car <: dip cdr
-end
-
-module Option_ops = struct
+module Stack_ops : sig
   open Script_typed_ir
 
-  let cons bef =
-    let (hd, tl) = unstack bef in
-    descr bef (stack (Contract.Types.option hd) tl) Cons_some
+  val exec : ('a * (('a, 'b) lambda * 'c), 'b * 'c) code
+  val push_none : 'a ty -> (' rest, 'a option * 'rest ) code
+  val push_unit : ( 'rest, unit * 'rest ) code
+  val push_int : int -> 'rest t -> ( 'rest , (int_num * 'rest ) ) descr
+  val push_bool : bool -> ('s, bool * 's) code
+  val push_generic : 'a ty ->  'a -> ('s, 'a * 's) code
 
-  let cond ?target none_branch some_branch : ('a option * 'r, 'b) code = fun bef ->
-    let (a_opt, base) = unstack bef in
-    let a = Types.assert_option a_opt in
-    let target = Option.unopt ~default:(none_branch base).aft target in
-    descr bef target (If_none (none_branch base, some_branch (stack a base)))
+  (*
+  val dup :  ( 'a * 'rest, 'a * ( 'a * 'rest ) ) code
+  val drop : ('a * 'rest, 'rest) code
+  val swap : ('a * ('b * 'c)) t -> ('a * ('b * 'c), 'b * ('a * 'c)) descr
+  val dip : 
+      ('rest t -> ('rest, 'a) descr) ->
+      ('ty * 'rest) t -> ('ty * 'rest, 'ty * 'a) descr
+  val noop : ('r, 'r) code 
+  val fail : 'b t -> ('a * 'r, 'b) code
+  val push_string : string -> 'rest t -> ( 'rest , (string * 'rest)) descr
+  val push_nat : int -> 'rest t -> ( 'rest, ( nat * 'rest ) ) descr
+  val push_tez : int -> 'rest t -> ( 'rest , (AC.Tez.tez * 'rest ) ) descr
+  val failstring : string -> 'a t -> 'b t -> ( 'b, 'a ) descr
+  *)
 
-  let force_some ?msg : ('a option * 'r, 'a * 'r) code = fun s ->
-    let (a_opt, base) = unstack s in
-    let a = Types.assert_option a_opt in
-    let target = a @: base in
-    cond ~target
-      (Stack_ops.failstring ("force_some : " ^ Option.unopt ~default:"" msg) target)
-      Stack_ops.noop s
 end
 
-module Union_ops = struct
+module Stack_shortcuts : sig
+
+  val diiiip : 
+      ('a t -> ('a, 'b) descr) ->
+      ('c * ('d * ('e * ('f * 'a)))) t ->
+      ('c * ('d * ('e * ('f * 'a))), 'c * ('d * ('e * ('f * 'b)))) descr
+  val bubble_1 : ('a * ('b * 'c)) t -> ('a * ('b * 'c), 'b * ('a * 'c)) descr
+  val bubble_down_1 : ('a * ('b * 'c)) t -> ('a * ('b * 'c), 'b * ('a * 'c)) descr
+  val bubble_down_2 : ('a * ('b * ('c * 'r)), ('b * ('c * ('a * 'r)))) code
+  val bubble_3 : ('a * ('b * ('c * ('d * 'r))), 'd * ('a * ('b * ('c * 'r)))) code
+  val save_1_1 : ('a * 'r, 'b * 'r) code -> ('a * 'r, 'b * ('a * 'r)) code
+  val keep_2_1 : ('a * ('b * 'r), 's) code -> ('a * ('b * 'r), 'b * 's) code
+  val relativize_1_1 : ('a * unit, 'b * unit) descr -> ('a * unit, 'b * unit) code
+
+  (*
+  val diip : 
+      ('a t -> ('a, 'b) descr) ->
+      ('c * ('d * 'a)) t ->
+      ('c * ('d * 'a), 'c * ('d * 'b)) descr
+  val diiip : 
+      ('a t -> ('a, 'b) descr) ->
+      ('c * ('d * ('e * 'a))) t ->
+      ('c * ('d * ('e * 'a)), 'c * ('d * ('e * 'b))) descr
+  val bubble_2 : ('a * ('b * ('c * 'r)), 'c * ('a * ('b * 'r))) code
+  val keep_1 : ('a * 'r, 's) code -> ('a * 'r, 'a * 's) code
+  val keep_2 : ('a * ('b * 'r), 's) code -> ('a * ('b * 'r), ('a * ('b * 's))) code
+  *)
+
+end
+
+module Pair_ops : sig
+
+  val pair : ('a * ('b * 'rest)) t -> ('a * ('b * 'rest), ('a, 'b) Memory_proto_alpha.Script_typed_ir.pair * 'rest) descr
+  val carcdr : 
+      (('a, 'b) Memory_proto_alpha.Script_typed_ir.pair *
+      (('c, 'd) Memory_proto_alpha.Script_typed_ir.pair * 'e)) t ->
+      (('a, 'b) Memory_proto_alpha.Script_typed_ir.pair *
+      (('c, 'd) Memory_proto_alpha.Script_typed_ir.pair * 'e),
+      'a * ('d * 'e)) descr
+  val cdrcar :
+      (('a, 'b) Memory_proto_alpha.Script_typed_ir.pair *
+      (('c, 'd) Memory_proto_alpha.Script_typed_ir.pair * 'e)) t ->
+      (('a, 'b) Memory_proto_alpha.Script_typed_ir.pair *
+      (('c, 'd) Memory_proto_alpha.Script_typed_ir.pair * 'e),
+      'b * ('c * 'e)) descr
+  val cdrcdr :
+      (('a, 'b) Memory_proto_alpha.Script_typed_ir.pair *
+      (('c, 'd) Memory_proto_alpha.Script_typed_ir.pair * 'e)) t ->
+      (('a, 'b) Memory_proto_alpha.Script_typed_ir.pair *
+      (('c, 'd) Memory_proto_alpha.Script_typed_ir.pair * 'e),
+      'b * ('d * 'e)) descr
+  val carcar :
+      (('a, 'b) Memory_proto_alpha.Script_typed_ir.pair *
+      (('c, 'd) Memory_proto_alpha.Script_typed_ir.pair * 'e)) t ->
+      (('a, 'b) Memory_proto_alpha.Script_typed_ir.pair *
+      (('c, 'd) Memory_proto_alpha.Script_typed_ir.pair * 'e),
+      'a * ('c * 'e)) descr
+  val cdar :
+      (('a, ('b, 'c) Memory_proto_alpha.Script_typed_ir.pair)
+      Memory_proto_alpha.Script_typed_ir.pair * 'd) t ->
+      (('a, ('b, 'c) Memory_proto_alpha.Script_typed_ir.pair)
+      Memory_proto_alpha.Script_typed_ir.pair * 'd, 'b * 'd) descr
+  val unpair :
+      (('a, 'b) Memory_proto_alpha.Script_typed_ir.pair * 'c) t ->
+      (('a, 'b) Memory_proto_alpha.Script_typed_ir.pair * 'c, 'a * ('b * 'c)) descr
+
+  (*
+  val car : (('a * 'b) * 'rest) t -> (('a, 'b) Memory_proto_alpha.Script_typed_ir.pair * 'rest, 'a * 'rest) descr
+  val cdr : (('a * 'b) * 'rest) t -> (('a, 'b) Memory_proto_alpha.Script_typed_ir.pair * 'rest, 'b * 'rest) descr
+  *)
+
+end
+
+module Option_ops : sig
+
+  val cons : ('a * 'b) t -> ('a * 'b, 'a option * 'b) descr
+
+  (*
+  val cond : 
+      ?target:'b t ->
+      ('r t -> ('r, 'b) descr) ->
+      (('a * 'r) t -> ('a * 'r, 'b) descr) ->
+      ('a option * 'r, 'b) code
+  val force_some : ?msg:string -> ('a option * 'r, 'a * 'r) code
+  *)
+
+end
+
+module Union_ops : sig
   open Script_typed_ir
 
-  let left (b:'b ty) : ('a * 'r, ('a, 'b) union * 'r) code = fun bef ->
-    let (a, base) = unstack bef in
-    let aft = Types.union a b @: base in
-    descr bef aft Left
-
-  let right (a:'a ty) : ('b * 'r, ('a, 'b) union * 'r) code = fun bef ->
-    let (b, base) = unstack bef in
-    let aft = Types.union a b @: base in
-    descr bef aft Right
-
-
-  let loop ?after (code: ('a * 'r, ('a, 'b) union * 'r) code): (('a, 'b) union * 'r, 'b * 'r) code = fun bef ->
-    let (union, base) = unstack bef in
-    let (a, b) = Types.assert_union union in
-    let code_stack = a @: base in
-    let aft = Option.unopt ~default:(b @: base) after in
-    descr bef aft (Loop_left (code code_stack))
+  val left : 'b ty -> ('a * 'r, ('a, 'b) union * 'r) code
+  val right : 'a ty -> ('b * 'r, ('a, 'b) union * 'r) code 
+  val loop : ?after:('b * 'r) t -> ('a * 'r, ('a, 'b) union * 'r) code -> (('a, 'b) union * 'r, 'b * 'r) code
 
 end
 
-module Arithmetic = struct
-  let neq : (int_num * 'r, bool *'r) code = fun bef ->
-    let aft = stack Types.bool @@ snd @@ unstack bef in
-    descr bef aft Neq
+module Arithmetic : sig
 
-  let neg : (int_num * 'r, int_num *'r) code = fun bef ->
-    let aft = stack Types.int @@ snd @@ unstack bef in
-    descr bef aft Neg_int
+  val neg : (int_num * 'r, int_num *'r) code
+  val abs : (int_num * 'r, nat *'r) code
+  val nat_neq : (nat * 'a) t -> (nat * 'a, bool * 'a) descr
+  val add_intint : (int_num * (int_num * 'rest)) t ->
+      (int_num * (int_num * 'rest), int_num * 'rest) descr
 
-  let abs : (int_num * 'r, nat *'r) code = fun bef ->
-    let aft = stack Types.nat @@ snd @@ unstack bef in
-    descr bef aft Abs_int
+  val mul_natnat : (nat * (nat * 'rest)) t -> (nat * (nat * 'rest), nat * 'rest) descr
+  val mul_intint : (int_num * (int_num * 'rest)) t ->
+      (int_num * (int_num * 'rest), int_num * 'rest) descr
+  val force_ediv_tez : 
+      (AC.Tez.tez * ( nat * 'a )) t ->
+      (AC.Tez.tez * ( nat * 'a ),
+      (AC.Tez.tez, AC.Tez.tez) Memory_proto_alpha.Script_typed_ir.pair * 'a) descr
+  val div_n :  int -> (nat * 'a) t -> (nat * 'a, nat * 'a) descr
+  val add_n : int -> (nat * 'a) t -> (nat * 'a, nat * 'a) descr
+  val add_teztez_n : int -> (AC.Tez.tez * 'a) t -> (AC.Tez.tez * 'a, AC.Tez.tez * 'a) descr
+  val force_nat : (int_num * 'a) t -> (int_num * 'a, nat * 'a) descr
 
-  let int : (nat * 'r, int_num*'r) code = fun bef ->
-    let aft = stack Types.int @@ snd @@ unstack bef in
-    descr bef aft Int_nat
+  (*
+  val neq : (int_num * 'r, bool *'r) code
+  val int : (nat * 'r, int_num*'r) code
+  val nat_opt : (int_num * 'r, nat option * 'r) code
+  val add_natnat : (nat * (nat * 'rest)) t -> (nat * (nat * 'rest), nat * 'rest) descr
+  val add_teztez : (AC.Tez.tez * (AC.Tez.tez * 'rest), AC.Tez.tez * 'rest ) code
+  val sub_intint : (int_num * (int_num * 'r), int_num * 'r) code
+  val sub_natnat : (nat * (nat * 'r), int_num * 'r) code
+  val ediv : (nat * (nat * 'r), (nat * nat) option * 'r) code
+  val ediv_tez :
+      (AC.Tez.tez * ( nat * 'a )) t ->
+      (AC.Tez.tez * ( nat * 'a ),
+      (AC.Tez.tez, AC.Tez.tez) Memory_proto_alpha.Script_typed_ir.pair
+      option * 'a) descr
 
-  let nat_opt : (int_num * 'r, nat option * 'r) code = fun bef ->
-    let aft = stack Types.(option nat) @@ tail bef in
-    descr bef aft Is_nat
-
-  let nat_neq = fun s -> (int @| neq) s
-
-  let add_natnat (bef : (nat * (nat * 'rest)) Stack.t) =
-    let (nat, rest) = unstack bef in
-    let rest = tail rest in
-    let aft = stack nat rest in
-    descr bef aft Add_natnat
-
-  let add_intint (bef : (int_num * (int_num * 'rest)) Stack.t) =
-    let (nat, rest) = unstack bef in
-    let rest = tail rest in
-    let aft = stack nat rest in
-    descr bef aft Add_intint
-
-  let add_teztez : (AC.Tez.tez * (AC.Tez.tez * 'rest), _) code = fun bef ->
-    let aft = tail bef in
-    descr bef aft Add_tez
-
-  let mul_natnat (bef : (nat * (nat * 'rest)) Stack.t) =
-    let nat = head bef in
-    let rest = tail @@ tail bef in
-    let aft = stack nat rest in
-    descr bef aft Mul_natnat
-
-  let mul_intint (bef : (int_num * (int_num * 'rest)) Stack.t) =
-    let nat = head bef in
-    let rest = tail @@ tail bef in
-    let aft = stack nat rest in
-    descr bef aft Mul_intint
-
-  let sub_intint : (int_num * (int_num * 'r), int_num * 'r) code = fun bef ->
-    let aft = tail bef in
-    descr bef aft Sub_int
-
-  let sub_natnat : (nat * (nat * 'r), int_num * 'r) code =
-    fun bef -> bef <. int <: Stack_ops.dip int <: sub_intint
-
-  let ediv : (nat * (nat * 'r), (nat * nat) option * 'r) code = fun s ->
-    let (n, base) = unstack @@ snd @@ unstack s in
-    let aft = Types.option (Types.pair n n) @: base in
-    descr s aft Ediv_natnat
-
-  let ediv_tez = fun s ->
-    let aft = Types.(option @@ pair (head s) (head s)) @: tail @@ tail s in
-    descr s aft Ediv_teznat
-
-  open Option_ops
-  let force_ediv x = x <. ediv <: force_some
-  let force_ediv_tez x = (ediv_tez @| force_some) x
-
-  open Pair_ops
-  let div x = x <. force_ediv <: car
-
-  open Stack_ops
-  let div_n n s = s <. push_nat n <: swap <: div
-  let add_n n s = s <. push_nat n <: swap <: add_natnat
-  let add_teztez_n n s = s <. push_tez n <: swap <: add_teztez
-  let sub_n n s = s <. push_nat n <: swap <: sub_natnat
-
-  let force_nat s = s <. nat_opt <: force_some ~msg:"force nat"
-end
-
-module Boolean = struct
-  let bool_and (type r) : (bool * (bool * r), bool * r) code = fun bef ->
-    let aft = Types.bool @: tail @@ tail bef in
-    descr bef aft And
-
-  let bool_or (type r) : (bool * (bool * r), bool * r) code = fun bef ->
-    let aft = Types.bool @: tail @@ tail bef in
-    descr bef aft Or
-
-  open Script_typed_ir
-  let cond ?target true_branch false_branch : (bool * 'r, 's) code = fun bef ->
-    let base = tail bef in
-    let aft = Option.unopt ~default:((true_branch base).aft) target in
-    descr bef aft (If (true_branch base, false_branch base))
-
-  let loop (code : ('s, bool * 's) code) : ((bool * 's), 's) code = fun bef ->
-    let aft = tail bef in
-    descr bef aft @@ Loop (code aft)
+  val force_ediv : (nat * (nat * 'a)) t -> (nat * (nat * 'a), (nat * nat) * 'a) descr
+  val div : (nat * (nat * 'a)) t -> (nat * (nat * 'a), nat * 'a) descr
+  val sub_n : int -> (nat * 'a) t -> (nat * 'a, int_num * 'a) descr
+  *)
 
 end
 
-module Comparison_ops = struct
-  let cmp c_ty : _ code = fun bef ->
-    let aft = stack Contract.Types.int @@ tail @@ tail @@ bef in
-    descr bef aft (Compare c_ty)
+module Boolean : sig 
 
-  let cmp_bytes = fun x -> cmp (Bytes_key None) x
+  val bool_and : (bool * (bool * 'r), bool * 'r) code
+  val bool_or : (bool * (bool * 'r), bool * 'r) code
+  val loop : ('s, bool * 's) code -> ((bool * 's), 's) code
 
-  let eq : (int_num * 'r, bool *'r) code = fun bef ->
-    let aft = stack Contract.Types.bool @@ snd @@ unstack bef in
-    descr bef aft Eq
+  (*
+  val cond : ?target:'s t -> ('r t -> ('r, 's) descr) -> ('r t -> ('r, 's) descr) -> (bool * 'r, 's) code
+  *)
 
-  open Arithmetic
-  let eq_n n s = s <. sub_n n <: eq
+end
 
-  let ge : (int_num * 'r, bool * 'r) code = fun bef ->
-    let base = tail bef in
-    let aft = stack Types.bool base in
-    descr bef aft Ge
+module Comparison_ops : sig
 
-  let gt : (int_num * 'r, bool * 'r) code = fun bef ->
-    let base = tail bef in
-    let aft = stack Types.bool base in
-    descr bef aft Gt
+  val cmp_bytes : (bytes * (bytes * 'a)) t -> (bytes * (bytes * 'a), int_num * 'a) descr
+  val eq_n : int -> (nat * 'a) t -> (nat * 'a, bool * 'a) descr
+  val lt : (int_num * 'r, bool * 'r) code
+  val assert_positive_nat : (nat * 'a) t -> (nat * 'a, nat * 'a) descr
+  val assert_cmp_ge_nat : (nat * (nat * 'r), 'r) code
+  val assert_cmp_ge_timestamp : (AC.Script_timestamp.t * (AC.Script_timestamp.t * 'r), 'r) code
 
-  let lt : (int_num * 'r, bool * 'r) code = fun bef ->
-    let base = tail bef in
-    let aft = stack Types.bool base in
-    descr bef aft Lt
+  (*
+  val cmp : 
+      'a Memory_proto_alpha.Script_typed_ir.comparable_ty ->
+      ('a * ('a * 'b), int_num * 'b) code
 
-  let gt_nat s = s <. int <: gt
+  val eq : (int_num * 'r, bool * 'r) code
+  val ge : (int_num * 'r, bool * 'r) code
+  val gt : (int_num * 'r, bool * 'r) code
+  val gt_nat : (nat * 'a) t -> (nat * 'a, bool * 'a) descr
+  val cmp_ge_nat : (nat * (nat * 'r), bool * 'r) code
+  val cmp_ge_timestamp : (AC.Script_timestamp.t * (AC.Script_timestamp.t * 'r), bool * 'r) code
+  *)
 
-  open Stack_ops
-  let assert_positive_nat s = s <. dup <: gt_nat <: Boolean.cond noop (failstring "positive" s)
-
-  let cmp_ge_nat : (nat * (nat * 'r), bool * 'r) code = fun bef ->
-    bef <. sub_natnat <: ge
-
-  let cmp_ge_timestamp : (AC.Script_timestamp.t * (AC.Script_timestamp.t * 'r), bool * 'r) code = fun bef ->
-    bef <. cmp Types.timestamp_k <: ge
-
-  let assert_cmp_ge_nat : (nat * (nat * 'r), 'r) code = fun bef ->
-    bef <. cmp_ge_nat <: Boolean.cond noop (failstring "assert cmp ge nat" (tail @@ tail bef))
-
-  let assert_cmp_ge_timestamp : (AC.Script_timestamp.t * (AC.Script_timestamp.t * 'r), 'r) code = fun bef ->
-    bef <. cmp_ge_timestamp <: Boolean.cond noop (failstring "assert cmp ge timestamp" (tail @@ tail bef))
 end
 
 
-module Bytes = struct
+module Bytes : sig
 
+  val concat : (MBytes.t * (MBytes.t * 'rest), MBytes.t * 'rest) code
+  val sha256 : (MBytes.t * 'rest, MBytes.t * 'rest) code
+  val blake2b : (MBytes.t * 'rest, MBytes.t * 'rest) code
+
+  (*
   open Script_typed_ir
 
-  let pack (ty:'a ty) : ('a * 'r, bytes * 'r) code = fun bef ->
-    let aft = stack Types.bytes @@ tail bef in
-    descr bef aft (Pack ty)
+  val pack : 'a ty -> ('a * 'r, bytes * 'r) code
+  val unpack_opt : 'a ty -> (bytes * 'r, 'a option * 'r) code
+  val unpack : 'a ty -> (bytes * 'b) t -> (bytes * 'b, 'a * 'b) descr
+  *)
 
-  let unpack_opt : type a . a ty -> (bytes * 'r, a option * 'r) code = fun ty bef ->
-    let aft = stack (Types.option ty) (tail bef) in
-    descr bef aft (Unpack ty)
-
-  let unpack ty s = s <. unpack_opt ty <: Option_ops.force_some
-
-  let concat : (MBytes.t * (MBytes.t * 'rest), MBytes.t * 'rest) code = fun bef ->
-    let aft = tail bef in
-    descr bef aft Concat_bytes_pair
-
-  let sha256 : (MBytes.t * 'rest, MBytes.t * 'rest) code = fun bef ->
-    descr bef bef Sha256
-
-  let blake2b : (MBytes.t * 'rest, MBytes.t * 'rest) code = fun bef ->
-    descr bef bef Blake2b
 end
 
 
-module Map = struct
+module Map : sig
   open Script_typed_ir
 
   type ('a, 'b) t = ('a, 'b) map
 
-  let empty c_ty = Script_ir_translator.empty_map c_ty
-  let set (type a b) m (k:a) (v:b) = Script_ir_translator.map_update k (Some v) m
+  val empty : 'a comparable_ty -> ('a, 'b) t
+  val set : ( 'a , 'b ) t -> 'a -> 'b -> ( 'a , 'b ) t
 
-  module Ops = struct
-    let update (bef : (('a * ('b option * (('a, 'b) map * ('rest)))) Stack.t)) : (_, ('a, 'b) map * 'rest) descr =
-      let Item_t (_, Item_t (_, Item_t (map, rest, _), _), _) = bef in
-      let aft = Item_t (map, rest, None) in
-      descr bef aft Map_update
+  module Ops : sig
+    val update : 
+      ('a * ('b option * (('a, 'b) t * ('rest)))) Stack.t -> 
+      ('a * ('b option * (('a, 'b) t * 'rest)), ('a, 'b) t * 'rest) descr
 
-    let get : ?a:('a ty) -> 'b ty -> ('a * (('a, 'b) map * 'r), 'b option * 'r) code = fun ?a b bef ->
-      let _ = a in
-      let base = snd @@ unstack @@ snd @@ unstack bef in
-      let aft = stack (Types.option b) base in
-      descr bef aft Map_get
+    val get : ?a:('a ty) -> 'b ty -> ('a * (('a, 'b) map * 'r), 'b option * 'r) code
 
-    let big_get : 'a ty -> 'b ty -> ('a * (('a, 'b) big_map * 'r), 'b option * 'r) code = fun _a b bef ->
-      let base = snd @@ unstack @@ snd @@ unstack bef in
-      let aft = stack (Types.option b) base in
-      descr bef aft Big_map_get
+    val big_get : 'a ty -> 'b ty -> ('a * (('a, 'b) big_map * 'r), 'b option * 'r) code
 
-    let big_update : ('a * ('b option * (('a, 'b) big_map * 'r)), ('a, 'b) big_map * 'r) code = fun bef ->
-      let base = tail @@ tail bef in
-      descr bef base Big_map_update
+    val big_update : 
+      ('a * ('b option * (('a, 'b) big_map * 'r)), ('a, 'b) big_map * 'r) code
   end
 end
 
-module List_ops = struct
-  let nil ele bef =
-    let aft = stack (Types.list ele) bef in
-    descr bef aft Nil
+module List_ops : sig
+  val nil : 'a ty -> 'b t -> ('b, 'a list * 'b) descr
 
-  let cons bef =
-    let aft = tail bef in
-    descr bef aft Cons_list
+  val cons : 
+    ('a * ('a list * 'b)) t -> ('a * ('a list * 'b), 'a list * 'b) descr
 
-  let cond ~target cons_branch nil_branch bef =
-    let (lst, aft) = unstack bef in
-    let a = Types.assert_list lst in
-    let cons_descr = cons_branch (a @: Types.list a @: aft) in
-    let nil_descr = nil_branch aft in
-    descr bef target (If_cons (cons_descr, nil_descr))
+  val cond : target:'a t ->
+    (('b * ('b list * 'c)) t ->
+    ('b * ('b list * 'c), 'a) descr) ->
+    ('c t -> ('c, 'a) descr) ->
+    ('b list * 'c) t -> ('b list * 'c, 'a) descr
 
-  let list_iter : type a r . (a * r, r) code -> (a list * r, r) code = fun code bef ->
-    let (a_lst, aft) = unstack bef in
-    let a = Types.assert_list a_lst in
-    descr bef aft (List_iter (code (a @: aft)))
+  val list_iter : ('a * 'r, 'r) code -> ('a list * 'r, 'r) code
+end
+
+module Tez : sig
+
+  val tez_nat : (AC.Tez.tez * 'a) t -> (AC.Tez.tez * 'a, nat * 'a) descr
+  val amount_nat : 'a t -> ( 'a , nat * 'a ) descr
+  
+  (*
+  val amount : ('r, AC.Tez.t * 'r) code
+  *)
 
 end
 
-module Tez = struct
+module Misc : sig
 
-  let amount : ('r, AC.Tez.t * 'r) code = fun bef ->
-    let aft = Types.mutez @: bef in
-    descr bef aft Amount
+  val min_nat : (nat * (nat * 'r), nat * 'r) code 
+  val debug_msg : string -> 'a t -> ( 'a, 'a ) descr
+  val now : ('r, AC.Script_timestamp.t * 'r) code
 
-  open Bytes
-
-  let tez_nat s = s <. pack Types.mutez <: unpack Types.nat
-  let amount_nat s = s <. amount <: pack Types.mutez <: unpack Types.nat
-end
-
-module Misc = struct
-
-  open Stack_ops
-  open Stack_shortcuts
-  open Comparison_ops
-  let min_nat : (nat * (nat * 'r), nat * 'r) code = fun s ->
-    s <.
-    keep_2 cmp_ge_nat <: bubble_2 <:
-    Boolean.cond drop (dip drop)
-
-  let debug ~msg () s = s <. push_string msg <: push_string "_debug" <: noop <: drop <: drop
-
-  let debug_msg msg = debug ~msg ()
-
-  let now : ('r, AC.Script_timestamp.t * 'r) code = fun bef ->
-    let aft = stack Types.timestamp bef in
-    descr bef aft Now
+  (*
+  val debug : msg:string -> unit -> 'a t -> ( 'a , 'a ) descr
+  *)
 
 end
