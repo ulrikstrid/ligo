@@ -297,4 +297,39 @@ open Core
 
 type state = type_constraint list
 let initial_state : state = []
-let aggregate_constraints : state -> type_constraint list -> state result = fun a b -> ok (a @ b)
+
+let replace_var_in_state = fun (v : type_variable) (state : state) ->
+  let aux : type_value -> _ = function
+    | P_forall    (v , cs , tval) -> failwith "TODO"
+    | P_variable  (v)             -> failwith "TODO"
+    | P_constant  (c , args)      -> failwith "TODO"
+    | P_label     (tv , label)    -> failwith "TODO"
+  let aux : type_constraint -> _ = function
+    | C_equation  (l , r)         -> failwith "TODO"
+    | C_typeclass (l , rs)        -> failwith "TODO"
+  in List.map aux state
+
+let unify : type_value -> type_value -> type_constraint list result = fun a b ->
+  match (a, b) with
+  | (P_variable v       , P_constant y argsy) ->
+    failwith "TODO: replace v with the constant everywhere."
+  | (P_constant x argsx , P_variable w) ->
+    failwith "TODO: "
+  | (P_variable v       , P_variable w) ->
+    failwith "TODO: replace v with w everywhere"
+  | (P_constant x argsx , P_constant y argsy) ->
+    let%bind () = check_equal x y in
+    let%bind () = check_same_length argsx argsy in
+    let%bind () =  bind_map_list unify argsx argsy in
+    ok []
+
+  (* (\* unify a and b, possibly produce new constraints *\) *)
+  (* let () = ignore (a,b) in *)
+  (* ok [] *)
+
+(* This is the solver *)
+let aggregate_constraints : state -> type_constraint list -> state result = fun a b ->
+  (* Iterate over constraints *)
+  (* try to unify things:
+      if we have a = X and b = Y, try to unify X and Y *)
+  ok (a @ b)
