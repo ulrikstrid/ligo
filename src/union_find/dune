@@ -1,7 +1,7 @@
 (library
-  (name UnionFind)
-  (public_name union_find)
-  (wrapped false)
+  (name union_find)
+  ;; (public_name ligo.union_find)
+  ;; (wrapped false)
   (modules Partition0 Partition1 Partition2 Partition3 Partition)
   (modules_without_implementation Partition))
 
