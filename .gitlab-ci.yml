@@ -41,7 +41,7 @@ stages:
     - dune build -p ligo
 
     #make a snapshot of opam dir and put in cache
-    - ls && pwd && mkdir snapshot_opam && cp ~/.opam snapshot_opam/ && ls snapshot_opam
+    - ls && pwd && mkdir snapshot_opam && cp ~/.opam snapshot_opam/ && ls snapshot_opam 
     # TODO: also try instead from time to time:
     #- (cd ./src/; dune build -p ligo)
 
