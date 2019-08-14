@@ -295,41 +295,61 @@ end
 
 open Core
 
-type state = type_constraint list
-let initial_state : state = []
+let aaa = UnionFind.toto
 
-let replace_var_in_state = fun (v : type_variable) (state : state) ->
-  let aux : type_value -> _ = function
-    | P_forall    (v , cs , tval) -> failwith "TODO"
-    | P_variable  (v)             -> failwith "TODO"
-    | P_constant  (c , args)      -> failwith "TODO"
-    | P_label     (tv , label)    -> failwith "TODO"
-  let aux : type_constraint -> _ = function
-    | C_equation  (l , r)         -> failwith "TODO"
-    | C_typeclass (l , rs)        -> failwith "TODO"
-  in List.map aux state
+(* module UF = UnionFind.Partition0 *)
 
-let unify : type_value -> type_value -> type_constraint list result = fun a b ->
-  match (a, b) with
-  | (P_variable v       , P_constant y argsy) ->
+type 'a eqv_class = { representative : 'a ; elements : 'a list }
+type 'a unionfind = 'a eqv_class list
+
+type state = {
+  constraints : type_constraint list ;
+  eqv : type_variable unionfind
+}
+let initial_state : state = { constraints = [] ; eqv = [] }
+
+(* let replace_var_in_state = fun (v : type_variable) (state : state) -> *)
+(*   let aux_tv : type_value -> _ = function *)
+(*     | P_forall    (w  , cs , tval) -> failwith "TODO" *)
+(*     | P_variable  (w)              -> *)
+(*       if w = v then *)
+(*       (*…*) *)
+(*       else *)
+(*       (*…*) *)
+(*     | P_constant  (c  , args)      -> failwith "TODO" *)
+(*     | P_label     (tv , label)     -> failwith "TODO" in *)
+(*   let aux_tc tc = *)
+(*     List.map (fun l -> List.map aux_tv l) tc in *)
+(*   let aux : type_constraint -> _ = function *)
+(*     | C_equation  (l , r)          -> C_equation  (aux_tv l , aux_tv r) *)
+(*     | C_typeclass (l , rs)         -> C_typeclass (List.map aux_tv l , aux_tc rs) *)
+(*   in List.map aux state *)
+
+let check_equal a b = failwith "TODO"
+let check_same_length l1 l2 = failwith "TODO"
+
+let rec unify : type_value * type_value -> type_constraint list result = function
+  | (P_variable v           , P_constant (y , argsy)) ->
     failwith "TODO: replace v with the constant everywhere."
-  | (P_constant x argsx , P_variable w) ->
+  | (P_constant (x , argsx) , P_variable w) ->
     failwith "TODO: "
-  | (P_variable v       , P_variable w) ->
+  | (P_variable v           , P_variable w) ->
     failwith "TODO: replace v with w everywhere"
-  | (P_constant x argsx , P_constant y argsy) ->
+  | (P_constant (x , argsx) , P_constant (y , argsy)) ->
     let%bind () = check_equal x y in
     let%bind () = check_same_length argsx argsy in
-    let%bind () =  bind_map_list unify argsx argsy in
+    let%bind _ =  bind_map_list unify (List.combine argsx argsy) in
     ok []
+  | _ -> failwith "TODO"
 
   (* (\* unify a and b, possibly produce new constraints *\) *)
   (* let () = ignore (a,b) in *)
   (* ok [] *)
 
 (* This is the solver *)
-let aggregate_constraints : state -> type_constraint list -> state result = fun a b ->
-  (* Iterate over constraints *)
-  (* try to unify things:
-      if we have a = X and b = Y, try to unify X and Y *)
-  ok (a @ b)
+let aggregate_constraints : state -> type_constraint list -> state result = fun state newc ->
+  (* TODO: Iterate over constraints *)
+  (* TODO: try to unify things:
+             if we have a = X and b = Y, try to unify X and Y *)
+  let { constraints ; eqv } = state in
+  ok { constraints = constraints @ newc ; eqv }

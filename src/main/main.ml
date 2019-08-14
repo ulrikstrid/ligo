@@ -9,6 +9,7 @@ module Mini_c = Mini_c
 module Typer = Typer
 module Typesystem = Typesystem
 module Transpiler = Transpiler
+module UnionFind = UnionFind (* TODO: maybe don't export this *)
 
 module Run = struct
   include Run_source
