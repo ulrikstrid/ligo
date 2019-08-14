@@ -33,7 +33,7 @@ stages:
     - printf '' | ocaml
     - opam switch
 
-    # install deps for internal documentation
+    # install deps for internal documentation#
     - opam install -y odoc
     - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
     - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
