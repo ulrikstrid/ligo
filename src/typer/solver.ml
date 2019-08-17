@@ -295,9 +295,7 @@ end
 
 open Core
 
-let aaa = UnionFind.toto
-
-(* module UF = UnionFind.Partition0 *)
+module UF = Partition(* Union_find.Partition *)
 
 type 'a eqv_class = { representative : 'a ; elements : 'a list }
 type 'a unionfind = 'a eqv_class list

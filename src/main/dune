@@ -13,6 +13,7 @@
     mini_c
     operators
     compiler
+    union_find
   )
   (preprocess
     (pps simple-utils.ppx_let_generalized)
