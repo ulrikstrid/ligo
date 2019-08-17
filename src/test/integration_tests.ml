@@ -419,6 +419,12 @@ let counter_contract () : unit result =
   let make_expected = fun n -> e_pair (e_typed_list [] t_operation) (e_int (42 + n)) in
   expect_eq_n program "main" make_input make_expected
 
+let lambda3_contract () : unit result =
+  let%bind program = type_file "./contracts/lambda3.ligo" in
+  let make_input = fun n-> e_pair (e_int n) (e_int 42) in
+  let make_expected = fun n -> e_pair (e_typed_list [] t_operation) (e_int (42 + n)) in
+  expect_eq_n program "main" make_input make_expected
+
 let super_counter_contract () : unit result =
   let%bind program = type_file "./contracts/super-counter.ligo" in
   let make_input = fun n ->
@@ -546,6 +552,14 @@ let website2_ligo () : unit result =
     e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
+let lambda_type_ligo () : unit result =
+  let%bind program = type_file "./contracts/website2.ligo" in
+  let lam = e_lambda "x" (Some t_int) (Some t_int) (e_var "x") in
+  let make_input = lam in
+  let make_expected =
+    e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
+  expect_eq_n program "main" make_input make_expected
+
 let main = test_suite "Integration (End to End)" [
     test "type alias" type_alias ;
     test "function" function_ ;
@@ -575,6 +589,7 @@ let main = test_suite "Integration (End to End)" [
     test "quote declarations" quote_declarations ;
     test "#include directives" include_ ;
     test "counter contract" counter_contract ;
+    test "lambda3 contract" lambda3_contract ;
     test "super counter contract" super_counter_contract ;
     test "super counter contract" super_counter_contract_mligo ;
     test "dispatch counter contract" dispatch_counter_contract ;
@@ -595,4 +610,5 @@ let main = test_suite "Integration (End to End)" [
     (* test "lambda2 mligo" lambda2_mligo ; *)
     test "website1 ligo" website1_ligo ;
     test "website2 ligo" website2_ligo ;
+    test "lambda-type ligo" lambda_type_ligo ;
   ]
