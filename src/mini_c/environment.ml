@@ -58,8 +58,11 @@ module Environment (* : ENVIRONMENT *) = struct
   let closure_representation : t -> type_value = fun t ->
     match t with
     | [] -> T_base Base_unit
-    | [ a ] -> snd a
-    | hd :: tl -> List.fold_left (fun acc cur -> T_pair (acc , snd cur)) (snd hd) tl
+    | e ->
+       match (List.rev e) with
+       | hd :: tl ->
+          List.fold_left (fun acc cur -> T_pair (snd cur , acc)) (snd hd) tl
+       | _ -> assert false
 end
 
 include Environment
