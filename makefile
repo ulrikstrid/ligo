@@ -9,7 +9,6 @@ install-deps:
 #	Install ligo/tezos specific system-level dependencies
 	sudo scripts/install_native_dependencies.sh
 #   Install external binaries in a dedicated directory
-	mkdir -p $(GIT_ROOT)/_external_bin
 	scripts/install_opam.sh
 
 build-deps:

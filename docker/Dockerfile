@@ -3,6 +3,7 @@
 FROM ocaml/opam2:4.06
 
 USER root
+ENV GIT_ROOT="/ligo"
 
 # Add contents of the current directory to /ligo where it can be
 # accessed when building the image.
