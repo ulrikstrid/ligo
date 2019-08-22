@@ -3,6 +3,15 @@
 # Stop on error.
 set -e
 
+echo "PRINTF DEBUG HERE WE ARE"
+echo "PRINTF DEBUG HERE WE ARE"
+echo $GIT_ROOT
+echo "PRINTF DEBUG HERE WE ARE"
+escaped_project_root="$(printf %s "$PWD" | sed -e 's/\\/\\\\/' | sed -e 's/&/\\\&/' | sed -e 's/~/\\~/')"
+echo $escaped_project_root
+echo "PRINTF DEBUG HERE WE ARE"
+echo "PRINTF DEBUG HERE WE ARE"
+
 # Defensive checks. We're going to remove an entire folder so this script is somewhat dangerous. Better check in advance what can go wrong in the entire execution of the script.
 if test -e index.tar.gz && test -e packages && test -e repo && test -e urls.txt; then
   if test -d vendors/; then
