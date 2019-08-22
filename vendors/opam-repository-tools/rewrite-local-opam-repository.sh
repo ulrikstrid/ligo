@@ -15,9 +15,6 @@ if test -e index.tar.gz && test -e packages && test -e repo && test -e urls.txt;
       && command -v xargs >/dev/null 2>&1 \
       && command -v opam  >/dev/null 2>&1; then
 
-      # Escape the current directory, to be used as the replacement part of the sed regular expression
-      escaped_project_root="$(printf %s "$PWD" | sed -e 's/\\/\\\\/' | sed -e 's/&/\\\&/' | sed -e 's/~/\\~/')"
-
       # Recreate vendors/ligo-opam-repository-local-generated which contains a copy of the files related to the opam repository
       rm -fr vendors/ligo-opam-repository-local-generated
       mkdir vendors/ligo-opam-repository-local-generated
@@ -26,7 +23,7 @@ if test -e index.tar.gz && test -e packages && test -e repo && test -e urls.txt;
       # Rewrite the URLs in the opam repository to point to the project root
       (
         cd vendors/ligo-opam-repository-local-generated
-        find . -type f -name opam -print0 | xargs -0 sed -i -e 's~src:  *"https://gitlab.com/ligolang/ligo/-/archive/master/ligo\.tar\.gz"~src: "file://'"$escaped_project_root"'"~'
+        find . -type f -name opam -print0 | xargs -0 sed -i -e 's~src:  *"https://gitlab.com/ligolang/ligo/-/archive/master/ligo\.tar\.gz"~src: "file://'"$GIT_ROOT"'"~'
       )
 
       # Regenerate the index.tar.gz etc. in the local repo
