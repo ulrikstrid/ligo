@@ -1,4 +1,6 @@
 /_build/
+/_external_bin/ 
+/_opam/
 /dune-project
 *~
 cache/*

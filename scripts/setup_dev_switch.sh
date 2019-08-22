@@ -1,3 +1,7 @@
+#!/bin/sh
+set -e
+
+opam init --bare
 opam switch create . ocaml-base-compiler.4.06.1
-eval $(opam env)
-opam install -y ocp-indent tuareg merlin alcotest-lwt crowbar
+eval $(opam config env)
+opam install -y alcotest-lwt crowbar
