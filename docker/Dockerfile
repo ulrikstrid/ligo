@@ -18,15 +18,21 @@ ADD . /ligo
 WORKDIR /ligo
 
 # Install required native dependencies
-RUN sh scripts/install_native_dependencies.sh
+#RUN sh scripts/install_native_dependencies.sh
 
 # Setup a custom opam repository where ligo is published
-RUN sh scripts/setup_ligo_opam_repository.sh
+#RUN sh scripts/setup_ligo_opam_repository.sh
 
-RUN opam update
+#RUN opam update
 
 # Install ligo
-RUN sh scripts/install_ligo_with_dependencies.sh
+#RUN sh scripts/install_ligo_with_dependencies.sh
+
+# Try to use the makefile
+RUN make install-deps
+RUN make build-deps
+RUN make build
+RUN make test
 
 # Use the ligo binary as a default command
 ENTRYPOINT [ "/home/opam/.opam/4.06/bin/ligo" ]
