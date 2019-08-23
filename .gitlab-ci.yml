@@ -1,7 +1,3 @@
-# TODO: remove this as submodules aren't used anymore.
-variables:
-  GIT_SUBMODULE_STRATEGY: recursive
-
 stages:
   - build_docker
   - build_and_deploy_docker
