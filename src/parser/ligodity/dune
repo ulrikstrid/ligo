@@ -1,23 +1,31 @@
-(ocamllex Lexer)
+(ocamllex LexToken)
 
 (menhir
  (merge_into Parser)
  (modules ParToken Parser)
- (flags -la 1 --explain --external-tokens Token))
+ (flags -la 1 --explain --external-tokens LexToken))
 
 (library
  (name parser_ligodity)
  (public_name ligo.parser.ligodity)
- (modules AST ligodity Utils Version Lexer Parser Token)
-;; (modules_without_implementation Error)
+ (modules AST ligodity Parser LexToken)
  (libraries
+   parser_shared
    str
-   zarith
    simple-utils
-   tezos-utils
    getopt
  )
- (flags (:standard -open Simple_utils ))
+ (flags (:standard -open Simple_utils -open Parser_shared ))
+)
+
+(executable
+  (name LexerMain)
+  (libraries 
+   parser_ligodity)
+  (modules 
+    LexerMain
+  )
+  (flags (:standard -open Parser_shared -open Parser_ligodity))
 )
 
 ;; Les deux directives (rule) qui suivent sont pour le dev local.
@@ -34,9 +42,3 @@
 ;  (deps LexerMain.exe)
 ;  (action (copy LexerMain.exe Lexer.exe))
 ;  (mode promote-until-clean))
-
-(rule
-  (targets Version.ml)
-  (action
-    (progn (run "sh" "-c" "printf 'let version = \"%s\"'\\\\n \"$(echo UNKNOWN)\" > Version.ml")))
-  (mode promote-until-clean))
