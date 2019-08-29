@@ -13,7 +13,8 @@
    parser_shared
    str
    simple-utils
-   getopt
+   tezos-utils
+   getopt   
  )
  (flags (:standard -open Simple_utils -open Parser_shared ))
 )
