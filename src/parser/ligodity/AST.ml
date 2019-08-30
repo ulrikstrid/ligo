@@ -1,8 +1,19 @@
 [@@@warning "-30-40-42"]
 
+(* open Utils *)
+
 (* Abstract Syntax Tree (AST) for Mini-ML *)
 
 type 'a reg = 'a Region.reg
+
+let rec last to_region = function
+    [] -> Region.ghost
+|  [x] -> to_region x
+| _::t -> last to_region t
+
+let nsepseq_to_region to_region (hd,tl) =
+  let reg (_, item) = to_region item in
+  Region.cover (to_region hd) (last reg tl)
 
 (* Keywords of OCaml *)
 
@@ -136,7 +147,7 @@ and type_expr =
 | TSum    of (variant reg, vbar) Utils.nsepseq reg
 | TRecord of record_type
 | TApp    of (type_constr * type_tuple) reg
-| TFun    of (type_expr * arrow  * type_expr) reg
+| TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TAlias  of variable
 

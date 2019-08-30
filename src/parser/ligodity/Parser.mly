@@ -13,8 +13,8 @@ open AST
 
 (* Entry points *)
 
-%start program interactive_expr
-%type <AST.t> program
+%start contract interactive_expr
+%type <AST.t> contract
 %type <AST.expr> interactive_expr
 
 %%
@@ -101,10 +101,10 @@ sepseq(item,sep):
 
 (* Helpers *)
 
-type_name   : Ident  { $1 }
-field_name  : Ident  { $1 }
-module_name : Constr { $1 }
-struct_name : Ident  { $1 }
+%inline type_name   : Ident  { $1 }
+%inline field_name  : Ident  { $1 }
+%inline module_name : Constr { $1 }
+%inline struct_name : Ident  { $1 }
 
 (* Non-empty comma-separated values (at least two values) *)
 
@@ -129,23 +129,29 @@ list(item):
 
 (* Main *)
 
-program:
-  declarations EOF               { {decl = Utils.nseq_rev $1; eof=$2} }
-
-declarations:
-  declaration                                                    { $1 }
-| declaration declarations { Utils.(nseq_foldl (swap nseq_cons) $2 $1)}
+contract:
+  nseq(declaration) EOF {
+    {decl = $1; eof = $2}
+  }
 
 declaration:
-  LetEntry entry_binding                            { LetEntry $1, [] }
-| type_decl                                         { TypeDecl $1, [] }
-| let_declaration                                   {          $1, [] }
+  LetEntry entry_binding                            { LetEntry $1 }
+| type_decl                                         { TypeDecl $1 }
+| let_declaration                                   { Let      $1 }
 
 (* Type declarations *)
 
 type_decl:
-  Type type_name EQ type_expr {
-    {kwd_type=$1; name=$2; eq=$3; type_expr=$4} }
+  Type type_name EQ type_expr {    
+    let region = cover $1 (type_expr_to_region $4) in
+    let value = {
+      kwd_type   = $1;
+      name       = $2;
+      eq         = $3;
+      type_expr  = $4;
+    }
+    in {region; value}
+  }
 
 type_expr:
   cartesian                                              {   TProd $1 }
@@ -153,21 +159,38 @@ type_expr:
 | record_type                                            { TRecord $1 }
 
 cartesian:
-  nsepseq(fun_type, TIMES)                                       { $1 }
+  nsepseq(fun_type, TIMES)                                       { 
+    let region = nsepseq_to_region type_expr_to_region $1
+    in {region; value=$1}
+  }
 
 fun_type:
-  core_type                                                 {      $1 }
-| arrow_type                                                { TFun $1 }
-
-arrow_type:
-  core_type ARROW fun_type                                 { $1,$2,$3 }
+  core_type {      
+    $1 
+  }
+| core_type ARROW fun_type { 
+    let region = cover (type_expr_to_region $1)
+                       (type_expr_to_region $3)
+    in 
+    TFun {region; value = ($1, $2, $3)}
+  }
 
 core_type:
-  type_projection {
+  type_name {
     TAlias $1
   }
+| module_name DOT type_name {
+    let module_name = $1.value in
+    let type_name = $3.value in
+    let value = module_name.value ^ "." ^ type_name.value in 
+    let region = cover (type_expr_to_region $1)
+                       (type_expr_to_region $3)
+    in 
+    TAlias {region; value}
+  }
 | core_type type_constr {
-    let arg, constr = $1.value in
+    let arg = $1.value in
+    let constr = $2.value in
     let Region.{value=arg_val; _} = arg in
     let lpar, rpar = ghost, ghost in
     let value = {lpar; inside=arg_val,[]; rpar} in
@@ -175,22 +198,13 @@ core_type:
     TApp Region.{$1 with value = constr, arg}
   }
 | type_tuple type_constr {
-    let arg, constr = $1.value in
+    let arg = $1.value in
+    let constr = $2.value in
     TApp Region.{$1 with value = constr, arg}
   }
 | par(cartesian) {
     let Region.{value={inside=prod; _}; _} = $1 in
-    TPar {$1 with value={$1.value with inside = TProd prod}} }
-
-type_projection:
-  type_name {
-    $1
-  }
-| module_name DOT type_name {
-    let open Region in
-    let module_name,_ , type_name = $1.value in
-    let value = module_name.value ^ "." ^ type_name.value
-    in {$1 with value} }
+    TPar {$1 with value={$1.value with inside = TProd prod}} }  
 
 type_constr:
   type_name { $1                               }
@@ -202,23 +216,39 @@ type_tuple:
   par(tuple(type_expr)) { $1 }
 
 sum_type:
-  ioption(VBAR) nsepseq(variant,VBAR) { $2 }
+  ioption(VBAR) nsepseq(variant,VBAR) { 
+    let region = nsepseq_to_region (fun x -> x.region) $2
+    in {region; value = $2}
+  }
 
 variant:
-  Constr Of cartesian { {constr=$1; args = Some ($2,$3)} }
-| Constr                   { {constr=$1; args = None}         }
+  Constr Of cartesian {
+    let region = cover $1.region $3.region
+    and value = {constr = $1; args = Some ($2, $3)}
+    in {region; value}
+  }
+| Constr {
+    {region=$1.region; value= {constr=$1; args=None}} }
 
 record_type:
   LBRACE sep_or_term_list(field_decl,SEMI) RBRACE {
-    let elements, terminator = $2 in {
-      opening = LBrace $1;
-      elements = Some elements;
-      terminator;
-      closing = RBrace $3} }
+    let elements, terminator = $2 in
+    let region = cover $1 $3
+    and value  = {
+     opening = LBrace $1;
+     elements = Some elements;
+     terminator;
+     closing = RBrace $3}
+   in {region; value}  
+  }
 
 field_decl:
   field_name COLON type_expr {
-    {field_name=$1; colon=$2; field_type=$3} }
+    let stop   = type_expr_to_region $3 in
+    let region = cover $1.region stop
+    and value  = {field_name = $1; colon = $2; field_type = $3}
+    in {region; value} 
+  }
 
 (* Entry points *)
 
@@ -265,7 +295,12 @@ irrefutable:
 sub_irrefutable:
   Ident                                                  {    PVar $1 }
 | WILD                                                   {   PWild $1 }
-| unit                                                   {   PUnit $1 }
+| unit {   
+  let the_unit = ghost, ghost in
+  let region = cover $1 $1 in
+  let val_ = {value = the_unit; region } in
+  PUnit val_
+}
 | record_pattern                                         { PRecord $1 }
 | par(closed_irrefutable)                                {    PPar $1 }
 
@@ -302,10 +337,14 @@ core_pattern:
 record_pattern:
   LBRACE sep_or_term_list(field_pattern,SEMI) RBRACE {
     let elements, terminator = $2 in
-    {opening = LBrace $1;
+    let region = cover $1 $3 in
+    let value = {opening = LBrace $1;
      elements = Some elements;
      terminator;
-     closing = RBrace $3} }
+     closing = RBrace $3}
+    in
+    {region; value}  
+  }
 
 field_pattern:
   field_name EQ sub_pattern {
@@ -316,13 +355,24 @@ constr_pattern:
 | Constr                                               {  $1, None    }
 
 ptuple:
-  tuple(tail)                                            {  PTuple $1 }
+  tuple(tail) {  
+    let start  = Pos.from_byte $symbolstartpos
+    and stop   = Pos.from_byte $endpos in
+    let region = Region.make ~start ~stop in
+    let val_ = {value = $1; region } in
+    PTuple val_
+  }
 
 unit:
   LPAR RPAR                                                     { $1 }
 
 tail:
-  sub_pattern CONS tail                             { PList (PCons $1) }
+  sub_pattern CONS tail { 
+    let start = pattern_to_region $1 in
+    let end_ = pattern_to_region $3 in
+    let region = cover start end_ in
+    PList (PCons {value = ($1, $2, $3); region = ghost} )
+  }
 | sub_pattern                                      {               $1 }
 
 (* Expressions *)
@@ -509,16 +559,20 @@ mod_expr:
   bin_op(mult_expr_level, Mod, unary_expr_level)            { $1 }
 
 unary_expr_level:
-  MINUS call_expr_level                  {                
-    let region = cover $1 $2
-    and value  = $2
+   MINUS call_expr_level {
+    let start = $1 in
+    let end_ = expr_to_region $2 in
+    let region = cover start end_
+    and value  = {op = $1; arg = $2} 
     in EArith (Neg {region; value})      
 }
-| Not call_expr_level                    { 
-    let region = cover $1 $2
-    and value  = $2
-    in ELogic (BoolExpr (Not ({region; value})))
-}    
+| Not call_expr_level {
+    let start = $1 in
+    let end_ = expr_to_region $2 in
+    let region = cover start end_
+    and value  = {op = $1; arg = $2} in 
+    ELogic (BoolExpr (Not ({region; value})))
+}     
 | call_expr_level                        {                         $1 }
 
 call_expr_level:
@@ -556,13 +610,22 @@ projection:
   struct_name DOT nsepseq(selection,DOT) {
     {struct_name = $1; selector = $2; field_path = $3}
   }
-| module_name DOT field_name
-  DOT nsepseq(selection,DOT) {
+  (* 
+  | reg(module_name dot field_name {$1,$3})
+  dot nsepseq(selection,dot) {
     let open Region in
     let module_name, field_name = $1.value in
     let value = module_name.value ^ "." ^ field_name.value in
     let struct_name = {$1 with value} in
     {struct_name; selector = $2; field_path = $3} }
+  *)
+| module_name DOT field_name DOT nsepseq(selection,DOT) {
+    let open Region in
+    let module_name = $1 in
+    let field_name = $3 in
+    let value = module_name.value ^ "." ^ field_name.value in
+    let struct_name = {$1 with value} in
+    {struct_name; selector = $4; field_path = $5} }
 
 selection:
   field_name    { FieldName $1 }

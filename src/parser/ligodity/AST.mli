@@ -1,5 +1,7 @@
 [@@@warning "-30"]
 
+open Utils
+
 (* Abstract Syntax Tree (AST) for Mini-ML *)
 
 (* Regions
@@ -14,6 +16,8 @@
 *)
 
 type 'a reg = 'a Region.reg
+
+val nsepseq_to_region : ('a -> Region.t) -> ('a,'sep) nsepseq -> Region.t
 
 (* Some keywords of OCaml *)
 
