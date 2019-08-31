@@ -323,7 +323,19 @@ closed_irrefutable:
 | typed_pattern                                          {  PTyped $1 }
 
 typed_pattern:
-  irrefutable COLON type_expr  { {pattern=$1; colon=$2; type_expr=$3} }
+  irrefutable COLON type_expr  { 
+    let start = pattern_to_region $1 in 
+    let stop = type_expr_to_region $3 in
+    let region = cover start stop in
+    {
+      value = {
+        pattern = $1; 
+        colon = $2; 
+        type_expr = $3
+      };
+      region
+    }
+  }
 
 pattern:
   sub_pattern CONS tail { 
@@ -417,7 +429,7 @@ interactive_expr:
 expr:
   base_cond__open(expr)                                    {       $1 }
 | match_expr(base_cond) { 
-    ECase { value = $1; region = ghost } (* fixme *)
+    ECase $1 (* fixme *)
   }
 
 base_cond__open(x):
@@ -440,14 +452,37 @@ conditional(right_expr):
 if_then(right_expr):
   If expr Then right_expr {
     let the_unit = ghost, ghost in
+    let start = $1 in
+    let stop = expr_to_region $4 in
+    let region = cover start stop in
     let ifnot = EUnit {region=ghost; value=the_unit} in
-    {kwd_if=$1; test=$2; kwd_then=$3; ifso=$4;
-     kwd_else=ghost; ifnot} }
+    {
+      value = {
+        kwd_if = $1; 
+        test = $2; 
+        kwd_then = $3; 
+        ifso = $4;
+        kwd_else = ghost; 
+        ifnot
+      };
+      region 
+    }
+  }
 
 if_then_else(right_expr):
   If expr Then closed_if Else right_expr {
-    {kwd_if=$1; test=$2; kwd_then=$3; ifso=$4;
-     kwd_else=$5; ifnot = $6} }
+    { 
+      value = {
+        kwd_if = $1; 
+        test = $2; 
+        kwd_then = $3; 
+        ifso = $4;
+        kwd_else = $5; 
+        ifnot = $6
+      };
+      region = ghost (* TODO: fixme *) 
+    }
+  }
 
 base_if_then_else__open(x):
   base_expr(x)                                             {       $1 }
@@ -463,17 +498,21 @@ closed_if:
 match_expr(right_expr):
   Match expr With VBAR? cases(right_expr) {
     let cases = Utils.nsepseq_rev $5.value in
-    {kwd_match = $1; expr = $2; opening = With $3;
+    let start = $1 in 
+    let stop = ghost in (* TODO fixme *)
+    let region = cover start stop in
+    { value = {kwd_match = $1; expr = $2; opening = With $3;
      lead_vbar = $4; cases = {$5 with value=cases};
-     closing = End ghost}
+     closing = End ghost}; region }
   }
 | MatchNat expr With VBAR? cases(right_expr) {
     let cases = Utils.nsepseq_rev $5.value in
     let cast = EVar {region=ghost; value="assert_pos"} in
     let cast = ECall {region=ghost; value=cast,($2,[])} in
-    {kwd_match = $1; expr = cast; opening = With $3;
+    { value = {kwd_match = $1; expr = cast; opening = With $3;
      lead_vbar = $4; cases = {$5 with value=cases};
-     closing = End ghost} }
+     closing = End ghost}; region = ghost } (* TODO fixme *)
+  }
 
 cases(right_expr):
   case_clause(right_expr)                       { $1, [] }
