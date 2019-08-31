@@ -1,7 +1,5 @@
 [@@@warning "-30-40-42"]
 
-(* open Utils *)
-
 (* Abstract Syntax Tree (AST) for Mini-ML *)
 
 type 'a reg = 'a Region.reg
