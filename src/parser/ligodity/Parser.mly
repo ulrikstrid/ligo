@@ -109,7 +109,7 @@ sepseq(item,sep):
 (* Non-empty comma-separated values (at least two values) *)
 
 tuple(item):
-  item COMMA nsepseq(item,COMMA) { let h,t = $3 in $1,($2,h)::t }
+  item COMMA nsepseq(item,COMMA) { let h,t = $3 in { value = $1,($2,h)::t; region = ghost } } (* TODO fixme *)
 
 (* Possibly empty semicolon-separated values between brackets *)
 
@@ -302,11 +302,7 @@ type_annotation:
 
 irrefutable:
   tuple(sub_irrefutable)                                 {  
-    let (pattern, _) = $1 in
-    let region = pattern_to_region pattern in
-    let region = cover region region in
-    let val_ = {value = $1; region } in
-    PTuple val_
+    PTuple $1
   }
 | sub_irrefutable                                        {         $1 }
 
@@ -346,11 +342,7 @@ pattern:
     PList (PCons val_) 
   }
 | tuple(sub_pattern) {        
-    let (pattern, _) = $1 in
-    let region = pattern_to_region pattern in
-    let region = cover region region in
-    let val_ = {value = $1; region } in
-    PTuple val_
+    PTuple $1
   }
 | core_pattern                                      {               $1 }
 
@@ -398,11 +390,7 @@ constr_pattern:
 
 ptuple:
   tuple(tail) {  
-    let start  = Pos.from_byte $symbolstartpos
-    and stop   = Pos.from_byte $endpos in
-    let region = Region.make ~start ~stop in
-    let val_ = {value = $1; region } in
-    PTuple val_
+    PTuple $1
   }
 
 unit:
@@ -497,30 +485,39 @@ closed_if:
 
 match_expr(right_expr):
   Match expr With VBAR? cases(right_expr) {
-    let cases = Utils.nsepseq_rev $5.value in
+    let cases = Utils.nsepseq_rev $5 in
     let start = $1 in 
     let stop = ghost in (* TODO fixme *)
     let region = cover start stop in
     { value = {kwd_match = $1; expr = $2; opening = With $3;
-     lead_vbar = $4; cases = {$5 with value=cases};
+     lead_vbar = $4; cases = {value=cases; region=ghost}; (* todo: fixme *)
      closing = End ghost}; region }
   }
 | MatchNat expr With VBAR? cases(right_expr) {
-    let cases = Utils.nsepseq_rev $5.value in
+    let cases = Utils.nsepseq_rev $5 in
     let cast = EVar {region=ghost; value="assert_pos"} in
     let cast = ECall {region=ghost; value=cast,($2,[])} in
     { value = {kwd_match = $1; expr = cast; opening = With $3;
-     lead_vbar = $4; cases = {$5 with value=cases};
+     lead_vbar = $4; cases = {value=cases; region = ghost}; (* todo: fixme *)
      closing = End ghost}; region = ghost } (* TODO fixme *)
   }
 
 cases(right_expr):
-  case_clause(right_expr)                       { $1, [] }
-| cases(base_cond) VBAR case_clause(right_expr) {
-    let h,t = $1 in $3, ($2,h)::t }
+  case_clause(right_expr) { 
+    { value = $1; region = ghost }, [] (* TODO: fixme *)
+  }
+  | cases(base_cond) VBAR case_clause(right_expr) {
+    let h,t = $1 in { value = $3; region = ghost}, ($2, h)::t    
+  }  
 
 case_clause(right_expr):
-  pattern ARROW right_expr           { {pattern=$1; arrow=$2; rhs=$3} }
+  pattern ARROW right_expr {    
+    {
+      pattern = $1; 
+      arrow = $2; 
+      rhs=$3   
+    }
+  }
 
 let_expr(right_expr):
   Let let_binding In right_expr {
@@ -557,7 +554,9 @@ disj_expr_level:
 | conj_expr_level                                                { $1 }
 
 bin_op(arg1,op,arg2):
-  arg1 op arg2                            { {arg1=$1; op=$2; arg2=$3} }
+  arg1 op arg2                            { 
+    { value = { arg1=$1; op=$2; arg2=$3}; region = ghost } (* FIXME *)
+  }
 
 disj_expr:
   bin_op(disj_expr_level, BOOL_OR, conj_expr_level)
@@ -666,10 +665,21 @@ call_expr_level:
 | core_expr                                                      { $1 }
 
 constr_expr:
-  Constr core_expr?                                           { $1,$2 }
+  Constr core_expr? { 
+    let start = $1.region in
+    let stop = match $2 with 
+    | Some c -> expr_to_region c
+    | None -> start 
+    in
+    let region = cover start stop in
+    { value = $1,$2; region}
+  }
 
 call_expr:
-  core_expr nseq(core_expr) { $1,$2 }
+  core_expr nseq(core_expr) { 
+    let region = ghost in (* todo: fixme *) 
+    { value = $1,$2; region }
+  }
 
 core_expr:
   Int                                               { EArith (Int $1) }
