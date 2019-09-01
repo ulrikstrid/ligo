@@ -176,7 +176,7 @@ fun_type:
   }
 
 core_type:
-  type_name {
+   type_name {
     TAlias $1
   }
 | module_name DOT type_name {
@@ -199,17 +199,25 @@ core_type:
     let arg = {value; region = start} in
     TApp Region.{value = constr, arg; region}
   }
-| type_tuple type_constr {
-    let arg = $1 in
-    let constr = $2 in
-    let start = $1.region in
-    let stop = $2.region in
-    let region = cover start stop in
-    TApp Region.{value = constr, arg; region}
-  }
-| par(cartesian) {
-    let Region.{value={inside=prod; _}; _} = $1 in
-    TPar {$1 with value={$1.value with inside = TProd prod}} }  
+(* | type_tuple type_constr {
+    let total = cover $1.region $2.region in
+    let type_constr = $2 in
+    let {region; value = {lpar; inside; rpar}} = $1 in
+    let tuple = {region; value={lpar; inside=inside,[]; rpar}}
+    in TApp {region=total; value = type_constr, tuple}
+} *)
+   
+(* | reg(reg(core_type) type_constr {$1,$2}) {
+    let arg, constr = $1.value in
+    let Region.{value=arg_val; _} = arg in
+    let lpar, rpar = ghost, ghost in
+    let value = {lpar; inside=arg_val,[]; rpar} in
+    let arg = {arg with value} in
+    TApp Region.{$1 with value = constr, arg}
+  } *)
+  | par(cartesian) {
+      let Region.{value={inside=prod; _}; _} = $1 in
+      TPar {$1 with value={$1.value with inside = TProd prod}} }  
 
 type_constr:
   type_name { $1                               }
@@ -359,7 +367,7 @@ core_pattern:
 | False                                                  {  PFalse $1 }
 | Str                                                    { PString $1 }
 | par(ptuple)                                            {    PPar $1 }
-| list(tail)                                       { PList (Sugar $1) }
+| list(tail)                                       { PList (Sugar { value = $1; region = ghost}) } (* fixme *)
 | constr_pattern                                         { PConstr $1 }
 | record_pattern                                         { PRecord $1 }
 
@@ -405,7 +413,7 @@ tail:
     let start = pattern_to_region $1 in
     let end_ = pattern_to_region $3 in
     let region = cover start end_ in
-    PList (PCons {value = ($1, $2, $3); region = ghost} )
+    PList (PCons {value = ($1, $2, $3); region} )
   }
 | sub_pattern                                      {               $1 }
 
@@ -691,7 +699,7 @@ core_expr:
 | unit                                                     { EUnit $1 }
 | False                               {  ELogic (BoolExpr (False $1)) }
 | True                                {  ELogic (BoolExpr (True $1))  }
-| list(expr)                                        { EList (List $1) }
+| list(expr)                                        { EList (List { value = $1; region = ghost}) }
 | par(expr)                                              {    EPar $1 }
 | sequence                                               {    ESeq $1 }
 | record_expr                                            { ERecord $1 }
