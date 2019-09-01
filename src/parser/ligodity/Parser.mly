@@ -109,7 +109,9 @@ sepseq(item,sep):
 (* Non-empty comma-separated values (at least two values) *)
 
 tuple(item):
-  item COMMA nsepseq(item,COMMA) { let h,t = $3 in { value = $1,($2,h)::t; region = ghost } } (* TODO fixme *)
+  item COMMA nsepseq(item,COMMA) { 
+    let region = cover ghost ghost in
+    let h,t = $3 in { value = $1,($2,h)::t; region } } (* TODO fix in children *)
 
 (* Possibly empty semicolon-separated values between brackets *)
 
@@ -309,9 +311,7 @@ type_annotation:
 (* Patterns *)
 
 irrefutable:
-  tuple(sub_irrefutable)                                 {  
-    PTuple $1
-  }
+  tuple(sub_irrefutable)                                 {  PTuple $1 }
 | sub_irrefutable                                        {         $1 }
 
 sub_irrefutable:
@@ -349,10 +349,8 @@ pattern:
     let val_ = {value = $1, $2, $3; region} in
     PList (PCons val_) 
   }
-| tuple(sub_pattern) {        
-    PTuple $1
-  }
-| core_pattern                                      {               $1 }
+| tuple(sub_pattern)                                      { PTuple $1 }
+| core_pattern                                            {        $1 }
 
 sub_pattern:
   par(tail)                                              {    PPar $1 }
@@ -393,13 +391,13 @@ field_pattern:
   }
 
 constr_pattern:
-  Constr sub_pattern                                   {  { value = $1, Some $2; region = ghost (* todo fixme *) } }
+  Constr sub_pattern {  
+    let region = cover $1.region (pattern_to_region $2) in
+    { value = $1, Some $2; region } }
 | Constr                                               {  { value = $1, None; region = $1.region }    }
 
 ptuple:
-  tuple(tail) {  
-    PTuple $1
-  }
+  tuple(tail)                                          {  PTuple $1 }
 
 unit:
   LPAR RPAR { 
@@ -424,9 +422,7 @@ interactive_expr:
 
 expr:
   base_cond__open(expr)                                    {       $1 }
-| match_expr(base_cond) { 
-    ECase $1 (* fixme *)
-  }
+| match_expr(base_cond)                                    { ECase $1 }
 
 base_cond__open(x):
   base_expr(x)
@@ -467,6 +463,7 @@ if_then(right_expr):
 
 if_then_else(right_expr):
   If expr Then closed_if Else right_expr {
+    let region = cover $1 (expr_to_region $6) in
     { 
       value = {
         kwd_if = $1; 
@@ -476,7 +473,7 @@ if_then_else(right_expr):
         kwd_else = $5; 
         ifnot = $6
       };
-      region = ghost (* TODO: fixme *) 
+      region
     }
   }
 
@@ -512,7 +509,10 @@ match_expr(right_expr):
 
 cases(right_expr):
   case_clause(right_expr) { 
-    { value = $1; region = ghost }, [] (* TODO: fixme *)
+    let start = pattern_to_region $1.pattern in
+    let stop = expr_to_region $1.rhs in
+    let region = cover start stop in
+    { value = $1; region }, []
   }
   | cases(base_cond) VBAR case_clause(right_expr) {
     let h,t = $1 in { value = $3; region = ghost}, ($2, h)::t    
@@ -684,9 +684,11 @@ constr_expr:
   }
 
 call_expr:
-  core_expr nseq(core_expr) { 
-    let region = ghost in (* todo: fixme *) 
-    { value = $1,$2; region }
+  core_expr nseq(core_expr) {
+    (* let start = expr_to_region $1 in
+    let stop = nsepseq_to_region expr_to_region $2 in
+    let region = cover start stop in *)
+    { value = $1,$2; region = ghost} (* todo: fixme *)
   }
 
 core_expr:
