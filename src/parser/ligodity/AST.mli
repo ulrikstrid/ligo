@@ -17,6 +17,7 @@ open Utils
 
 type 'a reg = 'a Region.reg
 
+val last : ('a -> Region.t) -> 'a list -> Region.t
 val nsepseq_to_region : ('a -> Region.t) -> ('a,'sep) nsepseq -> Region.t
 
 (* Some keywords of OCaml *)

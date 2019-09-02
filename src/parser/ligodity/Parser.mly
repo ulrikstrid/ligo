@@ -110,24 +110,35 @@ sepseq(item,sep):
 
 tuple(item):
   item COMMA nsepseq(item,COMMA) { 
-    let region = cover ghost ghost in
-    let h,t = $3 in { value = $1,($2,h)::t; region } } (* TODO fix in children *)
+    let h,t = $3 in $1,($2,h)::t
+  }
 
 (* Possibly empty semicolon-separated values between brackets *)
 
 list(item):
   LBRACKET sep_or_term_list(item,SEMI) RBRACKET {
-    let elements, terminator = $2 in {
-      opening    = LBracket $1;
-      elements   = Some elements;
-      terminator;
-      closing    = RBracket $3}
+    let elements, terminator = $2 in 
+    { value =
+      {
+        opening    = LBracket $1;
+        elements   = Some elements;
+        terminator;
+        closing    = RBracket $3
+      };
+      region = cover $1 $3
+    }
   }
 | LBRACKET RBRACKET {
-     {opening    = LBracket $1;
-      elements   = None;
-      terminator = None;
-      closing    = RBracket $2} }
+    { value =
+       {
+         opening    = LBracket $1;
+         elements   = None;
+         terminator = None;
+         closing    = RBracket $2
+       };
+      region = cover $1 $2 
+    }
+  }
 
 (* Main *)
 
@@ -137,7 +148,12 @@ contract:
   }
 
 declaration:
-  LetEntry entry_binding                            { LetEntry { value = ($1, $2); region = ghost;} } (* TODO fixme *)
+  LetEntry entry_binding { 
+    let start = $1 in
+    let stop = expr_to_region $2.let_rhs in
+    let region = cover start stop in  
+    LetEntry { value = ($1, $2); region} 
+  }
 | type_decl                                         { TypeDecl $1 }
 | let_declaration                                   { Let      $1 }
 
@@ -195,28 +211,18 @@ core_type:
     let start = type_expr_to_region $1 in 
     let stop = $2.region in 
     let region = cover start stop in
-    (* let Region.{value=arg_val; _} = arg in *)
     let lpar, rpar = ghost, ghost in
     let value = {lpar; inside=arg_val,[]; rpar} in
     let arg = {value; region = start} in
     TApp Region.{value = constr, arg; region}
   }
-(* | type_tuple type_constr {
+ (* | type_tuple type_constr {
     let total = cover $1.region $2.region in
     let type_constr = $2 in
     let {region; value = {lpar; inside; rpar}} = $1 in
     let tuple = {region; value={lpar; inside=inside,[]; rpar}}
     in TApp {region=total; value = type_constr, tuple}
 } *)
-   
-(* | reg(reg(core_type) type_constr {$1,$2}) {
-    let arg, constr = $1.value in
-    let Region.{value=arg_val; _} = arg in
-    let lpar, rpar = ghost, ghost in
-    let value = {lpar; inside=arg_val,[]; rpar} in
-    let arg = {arg with value} in
-    TApp Region.{$1 with value = constr, arg}
-  } *)
   | par(cartesian) {
       let Region.{value={inside=prod; _}; _} = $1 in
       TPar {$1 with value={$1.value with inside = TProd prod}} }  
@@ -311,7 +317,13 @@ type_annotation:
 (* Patterns *)
 
 irrefutable:
-  tuple(sub_irrefutable)                                 {  PTuple $1 }
+  tuple(sub_irrefutable) {  
+    let h, t = $1 in    
+    let start = pattern_to_region h in
+    let stop = last (fun (region, _) -> region) t in
+    let region = cover start stop in    
+    PTuple { value = $1; region }
+  }
 | sub_irrefutable                                        {         $1 }
 
 sub_irrefutable:
@@ -349,7 +361,13 @@ pattern:
     let val_ = {value = $1, $2, $3; region} in
     PList (PCons val_) 
   }
-| tuple(sub_pattern)                                      { PTuple $1 }
+| tuple(sub_pattern) { 
+    let h, t = $1 in    
+    let start = pattern_to_region h in
+    let stop = last (fun (region, _) -> region) t in
+    let region = cover start stop in    
+    PTuple { value = $1; region }
+  }
 | core_pattern                                            {        $1 }
 
 sub_pattern:
@@ -365,7 +383,7 @@ core_pattern:
 | False                                                  {  PFalse $1 }
 | Str                                                    { PString $1 }
 | par(ptuple)                                            {    PPar $1 }
-| list(tail)                                       { PList (Sugar { value = $1; region = ghost}) } (* fixme *)
+| list(tail)                                       { PList (Sugar $1) } 
 | constr_pattern                                         { PConstr $1 }
 | record_pattern                                         { PRecord $1 }
 
@@ -397,12 +415,18 @@ constr_pattern:
 | Constr                                               {  { value = $1, None; region = $1.region }    }
 
 ptuple:
-  tuple(tail)                                          {  PTuple $1 }
+  tuple(tail) {  
+    let h, t = $1 in    
+    let start = pattern_to_region h in
+    let stop = last (fun (region, _) -> region) t in
+    let region = cover start stop in    
+    PTuple { value = $1; region } 
+  }
 
 unit:
   LPAR RPAR { 
     let the_unit = ghost, ghost in
-    let region = cover $1 $1 in
+    let region = cover $1 $2 in
     { value = the_unit; region }
   }
 
@@ -435,7 +459,13 @@ base_expr(right_expr):
   let_expr(right_expr)
 | fun_expr(right_expr)
 | disj_expr_level                                         {        $1 }
-| tuple(disj_expr_level)                                  { ETuple $1 }
+| tuple(disj_expr_level) {
+  let h, t = $1 in    
+  let start = expr_to_region h in
+  let stop = last (fun (region, _) -> region) t in
+  let region = cover start stop in    
+  ETuple { value = $1; region } 
+}
 
 conditional(right_expr):
   if_then_else(right_expr)
@@ -491,20 +521,50 @@ closed_if:
 match_expr(right_expr):
   Match expr With VBAR? cases(right_expr) {
     let cases = Utils.nsepseq_rev $5 in
-    let start = $1 in 
-    let stop = ghost in (* TODO fixme *)
+    let start = $1 in
+    let stop = match $5 with (* TODO: move to separate function *)
+    | {region; _}, [] -> region
+    | _, tl -> last (fun (region,_) -> region) tl 
+    in
     let region = cover start stop in
-    { value = {kwd_match = $1; expr = $2; opening = With $3;
-     lead_vbar = $4; cases = {value=cases; region=ghost}; (* todo: fixme *)
-     closing = End ghost}; region }
+    { value = {
+        kwd_match = $1; 
+        expr = $2; 
+        opening = With $3;
+        lead_vbar = $4; 
+        cases = {
+          value = cases; 
+          region = nsepseq_to_region (fun {region; _} -> region) $5
+        };
+        closing = End ghost
+      }; 
+      region 
+    }
   }
 | MatchNat expr With VBAR? cases(right_expr) {
     let cases = Utils.nsepseq_rev $5 in
     let cast = EVar {region=ghost; value="assert_pos"} in
     let cast = ECall {region=ghost; value=cast,($2,[])} in
-    { value = {kwd_match = $1; expr = cast; opening = With $3;
-     lead_vbar = $4; cases = {value=cases; region = ghost}; (* todo: fixme *)
-     closing = End ghost}; region = ghost } (* TODO fixme *)
+    let start = $1 in
+    let stop = match $5 with (* TODO: move to separate function *)
+    | {region; _}, [] -> region
+    | _, tl -> last (fun (region,_) -> region) tl 
+    in
+    let region = cover start stop in
+    { 
+      value = {
+        kwd_match = $1; 
+        expr = cast; 
+        opening = With $3;
+        lead_vbar = $4; 
+        cases = {
+          value = cases; 
+          region = nsepseq_to_region (fun {region; _} -> region) $5
+        };
+        closing = End ghost
+      }; 
+      region 
+    }
   }
 
 cases(right_expr):
@@ -515,7 +575,13 @@ cases(right_expr):
     { value = $1; region }, []
   }
   | cases(base_cond) VBAR case_clause(right_expr) {
-    let h,t = $1 in { value = $3; region = ghost}, ($2, h)::t    
+    let start = match $1 with
+    | {region; _}, [] -> region
+    | _, tl -> last (fun (region,_) -> region) tl 
+    in
+    let stop = expr_to_region $3.rhs in
+    let region = cover start stop in
+    let h,t = $1 in { value = $3; region}, ($2, h)::t    
   }  
 
 case_clause(right_expr):
@@ -563,7 +629,10 @@ disj_expr_level:
 
 bin_op(arg1,op,arg2):
   arg1 op arg2                            { 
-    { value = { arg1=$1; op=$2; arg2=$3}; region = ghost } (* FIXME *)
+    let start  = Pos.from_byte $symbolstartpos
+    and stop   = Pos.from_byte $endpos in
+    let region = Region.make ~start ~stop in
+    { value = { arg1=$1; op=$2; arg2=$3}; region }
   }
 
 disj_expr:
@@ -685,10 +754,13 @@ constr_expr:
 
 call_expr:
   core_expr nseq(core_expr) {
-    (* let start = expr_to_region $1 in
-    let stop = nsepseq_to_region expr_to_region $2 in
-    let region = cover start stop in *)
-    { value = $1,$2; region = ghost} (* todo: fixme *)
+    let start = expr_to_region $1 in
+    let stop = match $2 with 
+    | e, [] -> expr_to_region e
+    | _, l -> last expr_to_region l
+    in
+    let region = cover start stop in
+    { value = $1,$2; region }
   }
 
 core_expr:
@@ -701,7 +773,7 @@ core_expr:
 | unit                                                     { EUnit $1 }
 | False                               {  ELogic (BoolExpr (False $1)) }
 | True                                {  ELogic (BoolExpr (True $1))  }
-| list(expr)                                        { EList (List { value = $1; region = ghost}) }
+| list(expr)                                        { EList (List $1) }
 | par(expr)                                              {    EPar $1 }
 | sequence                                               {    ESeq $1 }
 | record_expr                                            { ERecord $1 }
@@ -716,8 +788,11 @@ module_field:
 
 projection:
   struct_name DOT nsepseq(selection,DOT) {
-    let start = $1.region in 
-    let stop = ghost in (* TODO: fixme! *)
+    let start = $1.region in     
+    let stop = nsepseq_to_region (function 
+    | FieldName f -> f.region 
+    | Component c -> c.region) $3 
+    in
     let region = cover start stop in
     { value = 
       {
@@ -728,28 +803,25 @@ projection:
       region
     }
   }
-  (* 
-  | reg(module_name dot field_name {$1,$3})
-  dot nsepseq(selection,dot) {
-    let open Region in
-    let module_name, field_name = $1.value in
-    let value = module_name.value ^ "." ^ field_name.value in
-    let struct_name = {$1 with value} in
-    {struct_name; selector = $2; field_path = $3} }
-  *)
 | module_name DOT field_name DOT nsepseq(selection,DOT) {
     let open Region in
     let module_name = $1 in
     let field_name = $3 in
     let value = module_name.value ^ "." ^ field_name.value in
     let struct_name = {$1 with value} in
+    let start = $1.region in
+    let stop = nsepseq_to_region (function 
+    | FieldName f -> f.region 
+    | Component c -> c.region) $5
+    in 
+    let region = cover start stop in
     { 
       value = {
         struct_name; 
         selector = $4; 
         field_path = $5
       };
-      region = ghost (* todo fixme *) 
+      region
     }
   }
   
