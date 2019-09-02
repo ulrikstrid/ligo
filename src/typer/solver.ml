@@ -295,16 +295,69 @@ end
 
 open Core
 
-module UF = Partition(* Union_find.Partition *)
+(* begin unionfind *)
 
-type 'a eqv_class = { representative : 'a ; elements : 'a list }
-type 'a unionfind = 'a eqv_class list
+module TV =
+  struct
+    type t = type_variable
+    let compare = String.compare
+    let to_string = (fun s -> s)
+  end
+
+module UF = Union_find.Partition0.Make(TV)
+
+type unionfind = UF.t
+
+let empty = UF.empty                           (* DEMO *)
+let representative_toto = UF.repr "toto" empty (* DEMO *)
+let merge x y = UF.equiv x y                   (* DEMO *)
+
+(* end unionfind *)
+
+module TypeVariable = String
+module TypeVariableMap = Map.Make(TypeVariable)
+
+type constraints = {
+  constructor : simple_c_constructor list ;
+  constant    : simple_c_constant    list ;
+  tc          : c_typeclass list ;
+}
+
+(*
+
+Components:
+* assignments (passive data structure).
+  Now: just a map from unification vars to types (pb: what about partial types?)
+  maybe just local assignments (allow only vars as children of pair(α,β))
+* constraint propagation: (buch of constraints) → (new constraints * assignments)
+  * sub-component: constraint selector (worklist / dynamic queries)
+    * sub-sub component: constraint normalizer: remove dupes and give structure
+      right now: union-find of unification vars
+      later: better database-like organisation of knowledge
+    * sub-sub component: lazy selector (don't re-try all selectors every time)
+      For now: just re-try everytime
+  * sub-component: propagation rule
+    For now: break pair(a, b) = pair(c, d) into a = c, b = d
+* generalizer
+  For now: ?
+*)
 
 type state = {
-  constraints : type_constraint list ;
-  eqv : type_variable unionfind
+  (* when α-renaming x to y, we put them in the same union-find class *)
+  unification_vars : unionfind ;
+
+  (* assigns a value to the representant in the unionfind *)
+  assignments : type_value TypeVariableMap.t ;
+
+  (* constraints related to a type variable *)
+  constraints : constraints TypeVariableMap.t ;
 }
-let initial_state : state = { constraints = [] ; eqv = [] }
+
+let initial_state : state = {
+  unification_vars = UF.empty ;
+  constraints = TypeVariableMap.empty ;
+  assignment = TypeVariableMap.empty ;
+}
 
 (* let replace_var_in_state = fun (v : type_variable) (state : state) -> *)
 (*   let aux_tv : type_value -> _ = function *)
@@ -323,7 +376,7 @@ let initial_state : state = { constraints = [] ; eqv = [] }
 (*     | C_typeclass (l , rs)         -> C_typeclass (List.map aux_tv l , aux_tc rs) *)
 (*   in List.map aux state *)
 
-let check_equal a b = failwith "TODO"
+let check_equal       a  b  = failwith "TODO"
 let check_same_length l1 l2 = failwith "TODO"
 
 let rec unify : type_value * type_value -> type_constraint list result = function
