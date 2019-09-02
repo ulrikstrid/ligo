@@ -1,3 +1,4 @@
+open Trace
 open Types
 (*
 
@@ -10,8 +11,8 @@ module Errors : sig
 end
 
 val assert_literal_eq : ( literal * literal ) -> unit result
+*)
 
 val assert_value_eq : ( expression * expression ) -> unit result
-*)
 
 val is_value_eq : ( expression * expression ) -> bool

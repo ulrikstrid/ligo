@@ -51,6 +51,6 @@ val syntax_to_variant : s_syntax -> string option -> v_syntax result
 val parsify : v_syntax -> string -> Ast_simplified.program result
 
 val parsify_expression : v_syntax -> string -> Ast_simplified.expression result
+*)
 
 val type_file : ?debug_simplify:bool -> ?debug_typed:bool -> v_syntax -> string -> Ast_typed.program result
-*)
