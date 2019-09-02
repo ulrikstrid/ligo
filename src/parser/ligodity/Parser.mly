@@ -216,13 +216,10 @@ core_type:
     let arg = {value; region = start} in
     TApp Region.{value = constr, arg; region}
   }
- (* | type_tuple type_constr {
-    let total = cover $1.region $2.region in
-    let type_constr = $2 in
-    let {region; value = {lpar; inside; rpar}} = $1 in
-    let tuple = {region; value={lpar; inside=inside,[]; rpar}}
-    in TApp {region=total; value = type_constr, tuple}
-} *)
+  | type_tuple type_constr {
+    let total = cover $1.region $2.region in    
+    TApp {region=total; value = $2, $1 }
+} 
   | par(cartesian) {
       let Region.{value={inside=prod; _}; _} = $1 in
       TPar {$1 with value={$1.value with inside = TProd prod}} }  
