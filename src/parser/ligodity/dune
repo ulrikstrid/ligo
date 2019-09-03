@@ -8,7 +8,7 @@
 (library
  (name parser_ligodity)
  (public_name ligo.parser.ligodity)
- (modules AST ligodity Parser LexToken)
+ (modules AST ligodity Parser ParserLog LexToken)
  (libraries
    parser_shared
    str
@@ -27,6 +27,16 @@
     LexerMain
   )
   (flags (:standard -open Parser_shared -open Parser_ligodity))
+)
+
+(executable
+  (name ParserMain)
+  (libraries 
+   parser_ligodity)
+  (modules    
+    ParserMain
+  )
+  (flags (:standard -open Simple_utils -open Parser_shared -open Parser_ligodity))
 )
 
 ;; Les deux directives (rule) qui suivent sont pour le dev local.

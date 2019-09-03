@@ -436,7 +436,9 @@ let mk_sym lexeme region =
   | ">="   ->   GE        region
   | "||"   ->   BOOL_OR   region
   | "&&"   ->   BOOL_AND  region
-  |     _ ->    assert false
+  | "("    ->   LPAR      region
+  | ")"    ->   RPAR      region
+  |  a  ->   failwith ("Not understood token: " ^ a)
 
 (* Identifiers *)
 

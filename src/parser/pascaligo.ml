@@ -1,8 +1,9 @@
 open Trace
-open Parser_pascaligo
+
 module Parser = Parser_pascaligo.Parser
 module AST = Parser_pascaligo.AST
 module ParserLog = Parser_pascaligo.ParserLog
+module LexToken = Parser_pascaligo.LexToken
 
 let parse_file (source: string) : AST.t result =  
   let pp_input =
@@ -54,7 +55,6 @@ let parse_file (source: string) : AST.t result =
   ok raw
 
 let parse_string (s:string) : AST.t result =
-  
   let lexbuf = Lexing.from_string s in
   let module Lexer = Lexer.Make(LexToken) in
   let Lexer.{read ; close ; _} =

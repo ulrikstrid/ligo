@@ -1,111 +1,149 @@
 open Trace
-open Parser_ligodity
-module Parser = Parser_ligodity.Parser
-module AST = Parser_ligodity.AST
 
-let parse_file (source: string) : AST.t result =
-  (* let pp_input =
-   *   let prefix = Filename.(source |> basename |> remove_extension)
-   *   and suffix = ".pp.ligo"
-   *   in prefix ^ suffix in *)
+module type LexToken = Lexer.TOKEN
 
-  (* let cpp_cmd = Printf.sprintf "cpp -traditional-cpp %s > %s"
-   *                              source pp_input in
-   * let%bind () = sys_command cpp_cmd in *)
+module type Lexing = sig
+  type lexbuf
+end
 
-  let pp_input =
-    source
-  in
-  let%bind channel =
-    generic_try (simple_error "error opening file") @@
-    (fun () -> open_in pp_input) in
-  let lexbuf = Lexing.from_channel channel in
-  let read = Lexer.get_token in
-  specific_try (function
-      | Parser.Error -> (
-          let start = Lexing.lexeme_start_p lexbuf in
-          let end_ = Lexing.lexeme_end_p lexbuf in
-          let str = Format.sprintf
-              "Parse error at \"%s\" from (%d, %d) to (%d, %d). In file \"%s|%s\"\n"
-              (Lexing.lexeme lexbuf)
-              start.pos_lnum (start.pos_cnum - start.pos_bol)
-              end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
-              start.pos_fname source
-          in
-          simple_error str
-        )
-      | Lexer.Error err -> (
-          let start = Lexing.lexeme_start_p lexbuf in
-          let end_ = Lexing.lexeme_end_p lexbuf in
-          let str = Format.sprintf
-              "Lexer error (%s) at \"%s\" from (%d, %d) to (%d, %d). In file \"%s|%s\"\n"
-              (err.value)
-              (Lexing.lexeme lexbuf)
-              start.pos_lnum (start.pos_cnum - start.pos_bol)
-              end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
-              start.pos_fname source
-          in
-          simple_error str
-        )
-      | exn ->
-          let start = Lexing.lexeme_start_p lexbuf in
-          let end_ = Lexing.lexeme_end_p lexbuf in
-          let str = Format.sprintf
-              "Unrecognized error (%s) at \"%s\" from (%d, %d) to (%d, %d). In file \"%s|%s\"\n"
-              (Printexc.to_string exn)
-              (Lexing.lexeme lexbuf)
-              start.pos_lnum (start.pos_cnum - start.pos_bol)
-              end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
-              start.pos_fname source
-          in
-          simple_error str
-    ) @@ (fun () -> Parser.program read lexbuf) >>? fun raw ->
-  ok raw
+module type AST = sig
+  type t
+  type expr
+end
 
-let parse_string (s:string) : AST.t result =
+module type Parser = sig
 
-  let lexbuf = Lexing.from_string s in
-  let read = Lexer.get_token in
-  specific_try (function
-      | Parser.Error -> (
-          let start = Lexing.lexeme_start_p lexbuf in
-          let end_ = Lexing.lexeme_end_p lexbuf in
-          let str = Format.sprintf
-              "Parse error at \"%s\" from (%d, %d) to (%d, %d)\n"
-              (Lexing.lexeme lexbuf)
-              start.pos_lnum (start.pos_cnum - start.pos_bol)
-              end_.pos_lnum (end_.pos_cnum - end_.pos_bol) in
-          simple_error str
-        )
-      | _ -> simple_error "unrecognized parse_ error"
-    ) @@ (fun () -> Parser.program read lexbuf)  >>? fun raw ->
-  ok raw
+  exception Error
+ 
+  val interactive_expr: (Lexing.lexbuf -> LexToken.token) -> Lexing.lexbuf -> (AST.expr)
 
-let parse_expression (s:string) : AST.expr result =
-  let lexbuf = Lexing.from_string s in
-  let read = Lexer.get_token in
-  specific_try (function
-      | Parser.Error -> (
-          let start = Lexing.lexeme_start_p lexbuf in
-          let end_ = Lexing.lexeme_end_p lexbuf in
-          let str = Format.sprintf
-              "Parse error at \"%s\" from (%d, %d) to (%d, %d)\n"
-              (Lexing.lexeme lexbuf)
-              start.pos_lnum (start.pos_cnum - start.pos_bol)
-              end_.pos_lnum (end_.pos_cnum - end_.pos_bol) in
-          simple_error str
-        )
-      | exn ->
-          let start = Lexing.lexeme_start_p lexbuf in
-          let end_ = Lexing.lexeme_end_p lexbuf in
-          let str = Format.sprintf
-              "Unrecognized error (%s) at \"%s\" from (%d, %d) to (%d, %d). In expression \"%s|%s\"\n"
-              (Printexc.to_string exn)
-              (Lexing.lexeme lexbuf)
-              start.pos_lnum (start.pos_cnum - start.pos_bol)
-              end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
-              start.pos_fname s
-          in
-          simple_error str
-    ) @@ (fun () -> Parser.interactive_expr read lexbuf) >>? fun raw ->
-  ok raw
+  val contract: (Lexing.lexbuf -> LexToken.token) -> Lexing.lexbuf -> (AST.t)
+
+end
+
+module type ParserLog = sig
+
+end
+
+module type LanguageParser = sig
+  module Parser: Parser
+  module AST : AST
+  module ParserLog : ParserLog
+  module LexToken : LexToken
+end
+
+module Make (LanguageParser: LanguageParser): S with module Lexing = Lexing  = 
+  struct
+    module Parser = LanguageParser.Parser
+    module AST = LanguageParser.AST
+    module ParserLog = LanguageParser.ParserLog
+    module LexToken = LanguageParser.LexToken
+
+    let parse_file (source: string) : AST.t result =
+      let pp_input =
+          let prefix = Filename.(source |> basename |> remove_extension)
+          and suffix = ".pp.ligo"
+          in prefix ^ suffix in
+
+      let cpp_cmd = Printf.sprintf "cpp -traditional-cpp %s > %s"
+                                    source pp_input in
+        let%bind () = sys_command cpp_cmd in
+      
+      let%bind channel =
+        generic_try (simple_error "error opening file") @@
+        (fun () -> open_in pp_input) in
+      let lexbuf = Lexing.from_channel channel in
+      let module Lexer = Lexer.Make(LexToken) in
+      let Lexer.{read ; close ; _} =
+        Lexer.open_token_stream None in
+      specific_try (function
+          | Parser.Error -> (
+              let start = Lexing.lexeme_start_p lexbuf in
+              let end_ = Lexing.lexeme_end_p lexbuf in
+              let str = Format.sprintf
+                  "Parse error at \"%s\" from (%d, %d) to (%d, %d). In file \"%s|%s\"\n"
+                  (Lexing.lexeme lexbuf)
+                  start.pos_lnum (start.pos_cnum - start.pos_bol)
+                  end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
+                  start.pos_fname source
+              in
+              simple_error str
+            )
+          | exn ->
+              let start = Lexing.lexeme_start_p lexbuf in
+              let end_ = Lexing.lexeme_end_p lexbuf in
+              let str = Format.sprintf
+                  "Unrecognized error (%s) at \"%s\" from (%d, %d) to (%d, %d). In file \"%s|%s\"\n"
+                  (Printexc.to_string exn)
+                  (Lexing.lexeme lexbuf)
+                  start.pos_lnum (start.pos_cnum - start.pos_bol)
+                  end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
+                  start.pos_fname source
+              in
+              simple_error str
+        ) @@ (fun () ->
+          let raw = Parser.contract read lexbuf in
+          close () ;
+          raw
+        ) >>? fun raw ->
+      ok raw
+
+    let parse_string (s:string) : AST.t result =
+      let lexbuf = Lexing.from_string s in
+      let module Lexer = Lexer.Make(LexToken) in
+      let Lexer.{read ; close ; _} =
+        Lexer.open_token_stream None in
+      specific_try (function
+          | Parser.Error -> (
+              let start = Lexing.lexeme_start_p lexbuf in
+              let end_ = Lexing.lexeme_end_p lexbuf in
+              let str = Format.sprintf
+                  "Parse error at \"%s\" from (%d, %d) to (%d, %d)\n"
+                  (Lexing.lexeme lexbuf)
+                  start.pos_lnum (start.pos_cnum - start.pos_bol)
+                  end_.pos_lnum (end_.pos_cnum - end_.pos_bol) in
+              simple_error str
+            )
+          | _ -> simple_error "unrecognized parse_ error"
+        ) @@ (fun () ->
+          let raw = Parser.contract read lexbuf in
+          close () ;
+          raw
+        ) >>? fun raw ->
+      ok raw
+
+    let parse_expression (s:string) : AST.expr result =
+      let lexbuf = Lexing.from_string s in
+      let module Lexer = Lexer.Make(LexToken) in
+      let Lexer.{read ; close; _} =
+        Lexer.open_token_stream None in
+      specific_try (function
+          | Parser.Error -> (
+              let start = Lexing.lexeme_start_p lexbuf in
+              let end_ = Lexing.lexeme_end_p lexbuf in
+              let str = Format.sprintf
+                  "Parse error at \"%s\" from (%d, %d) to (%d, %d)\n"
+                  (Lexing.lexeme lexbuf)
+                  start.pos_lnum (start.pos_cnum - start.pos_bol)
+                  end_.pos_lnum (end_.pos_cnum - end_.pos_bol) in
+              simple_error str
+            )
+          | exn ->
+              let start = Lexing.lexeme_start_p lexbuf in
+              let end_ = Lexing.lexeme_end_p lexbuf in
+              let str = Format.sprintf
+                  "Unrecognized error (%s) at \"%s\" from (%d, %d) to (%d, %d). In expression \"%s|%s\"\n"
+                  (Printexc.to_string exn)
+                  (Lexing.lexeme lexbuf)
+                  start.pos_lnum (start.pos_cnum - start.pos_bol)
+                  end_.pos_lnum (end_.pos_cnum - end_.pos_bol)
+                  start.pos_fname s
+              in
+              simple_error str
+        ) @@ (fun () ->
+          let raw = Parser.interactive_expr read lexbuf in
+          close () ;
+          raw
+        ) >>? fun raw ->
+      ok raw
+  end
