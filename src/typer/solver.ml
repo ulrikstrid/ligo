@@ -340,7 +340,30 @@ Components:
     For now: break pair(a, b) = pair(c, d) into a = c, b = d
 * generalizer
   For now: ?
+
+Workflow:
+  Start with empty assignments and structured database
+  Receive a new constraint
+  For each normalizer:
+    Use the pre-selector to see if it can be applied
+    Apply the normalizer, get some new items to insert in the structured database
+  For each propagator:
+    Use the selector to query the structured database and see if it can be applied
+    Apply the propagator, get some new constraints and assignments
+  Add the new assignments to the data structure.
+
+  At some point (when?)
+  For each generalizer:
+    Use the generalizer's selector to see if it can be applied
+    Apply the generalizer to produce a new type, possibly with some ∀s injected
+
 *)
+
+type structured_db = {
+  all_constraints     : type_constraint list ;
+  aliases             : unionfind ;
+  grouped_by_variable : constraints TypeVariableMap.t ; (* map from variables to constraints containing them *)
+}
 
 type state = {
   (* when α-renaming x to y, we put them in the same union-find class *)
