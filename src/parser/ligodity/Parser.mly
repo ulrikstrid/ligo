@@ -6,6 +6,12 @@
 open Region
 open AST
 
+let use_begin_end : bool option ref = ref None
+
+let check_use_begin_end check = match !use_begin_end with 
+| Some use_begin_end -> if use_begin_end = check then raise (ParserError.IncorrectStyle "You are mixing `begin` ... `end` with `{` ... `}` syntax. Please use one consistently.")
+| None -> use_begin_end := Some true
+
 (* END HEADER *)
 %}
 
@@ -50,16 +56,6 @@ par(X):
     in {region; value}
   }
   
-brackets(X):
-  LBRACKET X RBRACKET {
-    let region = cover $1 $3
-    and value  = {
-      lbracket = $1;
-      inside   = $2;
-      rbracket = $3}
-    in {region; value}
-  }
-
 (* Sequences
 
    Series of instances of the same syntactical category have often to
@@ -251,7 +247,7 @@ variant:
     {region=$1.region; value= {constr=$1; args=None}} }
 
 record_type:
-  LBRACE sep_or_term_list(field_decl,SEMI) RBRACE {
+  LBRACE sep_or_term_list(field_decl,SEMI) RBRACE {    
     let elements, terminator = $2 in
     let region = cover $1 $3
     and value  = {
@@ -774,7 +770,10 @@ core_expr:
 | True                                {  ELogic (BoolExpr (True $1))  }
 | list(expr)                                        { EList (List $1) }
 | par(expr)                                              {    EPar $1 }
-| sequence                                               {    ESeq $1 }
+| sequence {
+  check_use_begin_end true;
+  ESeq $1 
+}
 | record_expr                                            { ERecord $1 }
 | par(expr COLON type_expr {$1,$3}) {
     EAnnot {$1 with value=$1.value.inside} }
@@ -829,9 +828,10 @@ selection:
 | par(Int) { Component $1 }
 
 record_expr:
-  LBRACE sep_or_term_list(field_assignment,SEMI) RBRACE {
+  LBRACE sep_or_term_list(field_assignment,SEMI) RBRACE {    
     let elements, terminator = $2 in
     let region = cover $1 $3 in
+    check_use_begin_end false;
     {value = 
       {
         opening = LBrace $1;

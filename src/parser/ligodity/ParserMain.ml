@@ -29,9 +29,11 @@ let external_ text =
   Utils.highlight (Printf.sprintf "External error: %s" text); exit 1;;
 
 type Error.t += ParseError
+type Error.t += IncorrectStyle of string
 
 let error_to_string = function
-  ParseError -> "Syntax error.\n"
+| ParseError -> "Syntax error.\n"
+| IncorrectStyle s -> s ^ "\n"
 | _ -> assert false
 
 let print_error ?(offsets=true) mode Region.{region; value} ~file =
@@ -119,4 +121,10 @@ let () =
       let () = close_all () in
       print_error ~offsets:options.offsets
                   options.mode error ~file
+  | ParserError.IncorrectStyle msg ->
+    let region = get_last () in
+    let error = Region.{region; value=IncorrectStyle msg} in
+    let () = close_all () in
+    print_error ~offsets:options.offsets
+                options.mode error ~file
   | Sys_error msg -> Utils.highlight msg

@@ -17,6 +17,7 @@
     FQueue
     EvalOpt
     Version
+    ParserError
   )
   (modules_without_implementation Error)
 )
