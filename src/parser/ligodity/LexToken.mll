@@ -270,6 +270,8 @@ let keywords = [
   (fun reg -> True  reg);
   (fun reg -> Type  reg);
   (fun reg -> With  reg);
+  (fun reg -> LetEntry reg);
+  (fun reg -> MatchNat reg);
 ]
 
 let reserved =
@@ -349,7 +351,7 @@ let small   = ['a'-'z']
 let capital = ['A'-'Z']
 let letter  = small | capital
 let digit   = ['0'-'9']
-let ident   = small (letter | '_' | digit)*
+let ident   = small (letter | '_' | digit | '%')*
 let constr  = capital (letter | '_' | digit)*
 
 (* Rules *)
@@ -492,6 +494,8 @@ let is_kwd = function
   | Then _
   | True _
   | Type _
+  | LetEntry _
+  | MatchNat _
   | With _ -> true
   | _ -> false
 

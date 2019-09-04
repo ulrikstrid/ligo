@@ -465,7 +465,7 @@ let integer    = '-'? natural
 let small      = ['a'-'z']
 let capital    = ['A'-'Z']
 let letter     = small | capital
-let ident      = small (letter | '_' | digit)*
+let ident      = small (letter | '_' | digit | '%')*
 let constr     = capital (letter | '_' | digit)*
 let hexa_digit = digit | ['A'-'F']
 let byte       = hexa_digit hexa_digit
@@ -498,7 +498,6 @@ and scan state = parse
   nl            { scan (push_newline state lexbuf) lexbuf }
 | ' '+          { scan (push_space   state lexbuf) lexbuf }
 | '\t'+         { scan (push_tabs    state lexbuf) lexbuf }
-
 | ident         { mk_ident       state lexbuf |> enqueue   }
 | constr        { mk_constr      state lexbuf |> enqueue   }
 | bytes         { (mk_bytes seq) state lexbuf |> enqueue   }
