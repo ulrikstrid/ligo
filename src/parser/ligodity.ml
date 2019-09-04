@@ -9,7 +9,7 @@ module Lexer = Lexer.Make(LexToken)
 let parse_file (source: string) : AST.t result =
   let pp_input =
       let prefix = Filename.(source |> basename |> remove_extension)
-      and suffix = ".pp.ligo"
+      and suffix = ".pp.mligo"
       in prefix ^ suffix in
 
   let cpp_cmd = Printf.sprintf "cpp -traditional-cpp %s > %s"
