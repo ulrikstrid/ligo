@@ -15,7 +15,7 @@
    simple-utils
    tezos-utils
  )
- (flags (:standard -open Parser_shared -open Simple_utils))
+ (flags (:standard  -open Parser_shared -open Simple_utils))
 )
 
 (executable
