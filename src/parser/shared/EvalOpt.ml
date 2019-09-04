@@ -27,7 +27,7 @@ let abort msg =
 
 (* Help *)
 
-let help language extension =
+let help language extension () =
   let file = Filename.basename Sys.argv.(0) in
   printf "Usage: %s [<option> ...] [<input>%s | \"-\"]\n" file extension;
   printf "where <input>%s is the %s source file (default: stdin)," extension language;
@@ -174,7 +174,7 @@ let check extension =
 
 let read language extension =
   try
-    Getopt.parse_cmdline (specs language extension) anonymous;
+    Getopt.parse_cmdline (specs language extension) anonymous;    
     (verb_str :=
        let apply e a =
          if a <> "" then Printf.sprintf "%s, %s" e a else e

@@ -143,24 +143,26 @@ list(item):
 (* Main *)
 
 contract:
-  nseq(declaration) EOF {
-    {decl = $1; eof = $2}
-  }
+  declarations EOF               { {decl = Utils.nseq_rev $1; eof=$2} }
+
+declarations:
+  declaration                                                    { $1 }
+| declaration declarations { Utils.(nseq_foldl (swap nseq_cons) $2 $1)}
 
 declaration:
   LetEntry entry_binding { 
     let start = $1 in
     let stop = expr_to_region $2.let_rhs in
     let region = cover start stop in  
-    LetEntry { value = ($1, $2); region} 
+    LetEntry { value = ($1, $2); region}, []
   }
-| type_decl                                         { TypeDecl $1 }
-| let_declaration                                   { Let      $1 }
+| type_decl                                         { TypeDecl $1, [] }
+| let_declaration                                   { Let      $1, [] }
 
 (* Type declarations *)
 
 type_decl:
-  Type type_name EQ type_expr {    
+  Type type_name EQ type_expr {  
     let region = cover $1 (type_expr_to_region $4) in
     let value = {
       kwd_type   = $1;
@@ -300,10 +302,10 @@ let_binding:
     let region = cover start stop in
     ({bindings= (ident_pattern :: hd :: tl); lhs_type=$3; eq=$4; let_rhs}, region)
   }
-| irrefutable type_annotation? EQ expr {
+| irrefutable type_annotation? EQ expr {  
     let pattern = $1 in
     let start = pattern_to_region $1 in
-    let stop = expr_to_region $4 in
+    let stop = expr_to_region $4 in  
     let region = cover start stop in
     ({bindings = [pattern]; lhs_type=$2; eq=$3; let_rhs=$4}, region)
   }
@@ -626,9 +628,9 @@ disj_expr_level:
 
 bin_op(arg1,op,arg2):
   arg1 op arg2                            { 
-    let start  = Pos.from_byte $symbolstartpos
-    and stop   = Pos.from_byte $endpos in
-    let region = Region.make ~start ~stop in
+    let start  = expr_to_region $1 in
+    let stop   = expr_to_region $3 in
+    let region = cover start stop in
     { value = { arg1=$1; op=$2; arg2=$3}; region }
   }
 
