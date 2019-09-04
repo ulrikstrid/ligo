@@ -91,7 +91,7 @@ module Simplify = struct
   module Ligodity = struct
     let constants = [
       ("assert" , "ASSERT") ;
-      
+
       ("Current.balance", "BALANCE") ;
       ("balance", "BALANCE") ;
       ("Current.time", "NOW") ;
@@ -132,7 +132,7 @@ module Simplify = struct
       ("Map.update" , "MAP_UPDATE") ;
       ("Map.add" , "MAP_ADD") ;
       ("Map.remove" , "MAP_REMOVE") ;
-      
+
       ("String.length", "SIZE") ;
       ("String.size", "SIZE") ;
       ("String.slice", "SLICE") ;
@@ -187,13 +187,13 @@ module Typer = struct
   module Operators_types = struct
     open Typesystem.Shorthands
 
-    let tc_subarg   a b c = tc [a;b;c] [ (*TODO…*) ]
+    let tc_subarg   a b c = tc [a;b;c] [ [int,int,int] ; [int,nat,int] ; [nat,int,int] ; [nat,nat,int] ; [tez,tez,tez] ; [timestamp,int,timestamp] ; [timestamp,timestamp,int] ]
     let tc_sizearg  a     = tc [a]     [ [int] ]
     let tc_packable a     = tc [a]     [ [int] ; [string] ; [bool] (*TODO…*) ]
-    let tc_timargs  a b c = tc [a;b;c] [ [nat;nat;nat] ; [int;int;int] (*TODO…*) ]
-    let tc_divargs  a b c = tc [a;b;c] [ (*TODO…*) ]
-    let tc_modargs  a b c = tc [a;b;c] [ (*TODO…*) ]
-    let tc_addargs  a b c = tc [a;b;c] [ (*TODO…*) ]
+    let tc_timargs  a b c = tc [a;b;c] [ [int,int,int] ; [int,nat,int] ; [nat,int,int] ; [nat,nat,nat] ; [tez,nat,tez] ; [nat,tez,tez] ]
+    let tc_divargs  a b c = tc [a;b;c] [ [int,int,int] ; [int,nat,int] ; [nat,int,int] ; [nat,nat,nat] ; [tez,nat,tez] ; [tez,tez,nat] ]
+    let tc_modargs  a b c = tc [a;b;c] [ [int,int,nat] ; [int,nat,nat] ; [nat,int,nat] ; [nat,nat,nat] ; [tez,nat,tez] ; [tez,tez,tez] ]
+    let tc_addargs  a b c = tc [a;b;c] [ [int,int,int] ; [int,nat,int] ; [nat,int,int] ; [nat,nat,nat] ; [tez,tez,tez] ; [int,timestamp,timestamp] ; [timestamp,int,timestamp] ]
 
     let t_none         = forall "a" @@ fun a -> option a
     let t_sub          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_subarg a b c] => a --> b --> c (* TYPECLASS *)
@@ -333,7 +333,7 @@ module Typer = struct
       Assert.assert_true @@
       (is_t_nat i && is_t_nat j && is_t_string s) in
     ok @@ t_string ()
-  
+
   let failwith_ = typer_1 "FAILWITH" @@ fun t ->
     let%bind () =
       Assert.assert_true @@
@@ -378,7 +378,7 @@ module Typer = struct
     let%bind () = assert_t_signature s in
     let%bind () = assert_t_bytes b in
     ok @@ t_bool ()
-  
+
   let sender = constant "SENDER" @@ t_address ()
 
   let source = constant "SOURCE" @@ t_address ()
@@ -551,57 +551,57 @@ module Compiler = struct
   open Tezos_utils.Michelson
 
   let predicates = Map.String.of_list [
-    ("ADD" , simple_binary @@ prim I_ADD) ;
-    ("SUB" , simple_binary @@ prim I_SUB) ;
-    ("TIMES" , simple_binary @@ prim I_MUL) ;
-    ("DIV" , simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car]) ;
-    ("MOD" , simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "MOD by 0") ; i_cdr]) ;
-    ("NEG" , simple_unary @@ prim I_NEG) ;
-    ("OR" , simple_binary @@ prim I_OR) ;
-    ("AND" , simple_binary @@ prim I_AND) ;
-    ("XOR" , simple_binary @@ prim I_XOR) ;
-    ("NOT" , simple_unary @@ prim I_NOT) ;
-    ("PAIR" , simple_binary @@ prim I_PAIR) ;
-    ("CAR" , simple_unary @@ prim I_CAR) ;
-    ("CDR" , simple_unary @@ prim I_CDR) ;
-    ("EQ" , simple_binary @@ seq [prim I_COMPARE ; prim I_EQ]) ;
-    ("NEQ" , simple_binary @@ seq [prim I_COMPARE ; prim I_NEQ]) ;
-    ("LT" , simple_binary @@ seq [prim I_COMPARE ; prim I_LT]) ;
-    ("LE" , simple_binary @@ seq [prim I_COMPARE ; prim I_LE]) ;
-    ("GT" , simple_binary @@ seq [prim I_COMPARE ; prim I_GT]) ;
-    ("GE" , simple_binary @@ seq [prim I_COMPARE ; prim I_GE]) ;
-    ("UPDATE" , simple_ternary @@ prim I_UPDATE) ;
-    ("SOME" , simple_unary @@ prim I_SOME) ;
-    ("MAP_GET_FORCE" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "GET_FORCE")]) ;
-    ("MAP_FIND" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "MAP FIND")]) ;
-    ("MAP_GET" , simple_binary @@ prim I_GET) ;
-    ("SIZE" , simple_unary @@ prim I_SIZE) ;
-    ("FAILWITH" , simple_unary @@ prim I_FAILWITH) ;
-    ("ASSERT_INFERRED" , simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])) ;
-    ("ASSERT" , simple_unary @@ i_if (seq [i_push_unit ; i_failwith]) (seq [i_push_unit])) ;
-    ("INT" , simple_unary @@ prim I_INT) ;
-    ("ABS" , simple_unary @@ prim I_ABS) ;
-    ("CONS" , simple_binary @@ prim I_CONS) ;
-    ("UNIT" , simple_constant @@ prim I_UNIT) ;
-    ("AMOUNT" , simple_constant @@ prim I_AMOUNT) ;
-    ("ADDRESS" , simple_constant @@ prim I_ADDRESS) ;
-    ("NOW" , simple_constant @@ prim I_NOW) ;
-    ("CALL" , simple_ternary @@ prim I_TRANSFER_TOKENS) ;
-    ("SOURCE" , simple_constant @@ prim I_SOURCE) ;
-    ("SENDER" , simple_constant @@ prim I_SENDER) ;
-    ("MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]) ;
-    ("MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
-    ("SET_MEM" , simple_binary @@ prim I_MEM) ;
-    ("SET_ADD" , simple_binary @@ seq [dip (i_push (prim T_bool) (prim D_True)) ; prim I_UPDATE]) ;
-    ("SLICE" , simple_ternary @@ prim I_SLICE) ;
-    ("SHA256" , simple_unary @@ prim I_SHA256) ;
-    ("SHA512" , simple_unary @@ prim I_SHA512) ;
-    ("BLAKE2B" , simple_unary @@ prim I_BLAKE2B) ;
-    ("CHECK_SIGNATURE" , simple_ternary @@ prim I_CHECK_SIGNATURE) ;
-    ("HASH_KEY" , simple_unary @@ prim I_HASH_KEY) ;
-    ("PACK" , simple_unary @@ prim I_PACK) ;
-  ]
+      ("ADD" , simple_binary @@ prim I_ADD) ;
+      ("SUB" , simple_binary @@ prim I_SUB) ;
+      ("TIMES" , simple_binary @@ prim I_MUL) ;
+      ("DIV" , simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "DIV by 0") ; i_car]) ;
+      ("MOD" , simple_binary @@ seq [prim I_EDIV ; i_assert_some_msg (i_push_string "MOD by 0") ; i_cdr]) ;
+      ("NEG" , simple_unary @@ prim I_NEG) ;
+      ("OR" , simple_binary @@ prim I_OR) ;
+      ("AND" , simple_binary @@ prim I_AND) ;
+      ("XOR" , simple_binary @@ prim I_XOR) ;
+      ("NOT" , simple_unary @@ prim I_NOT) ;
+      ("PAIR" , simple_binary @@ prim I_PAIR) ;
+      ("CAR" , simple_unary @@ prim I_CAR) ;
+      ("CDR" , simple_unary @@ prim I_CDR) ;
+      ("EQ" , simple_binary @@ seq [prim I_COMPARE ; prim I_EQ]) ;
+      ("NEQ" , simple_binary @@ seq [prim I_COMPARE ; prim I_NEQ]) ;
+      ("LT" , simple_binary @@ seq [prim I_COMPARE ; prim I_LT]) ;
+      ("LE" , simple_binary @@ seq [prim I_COMPARE ; prim I_LE]) ;
+      ("GT" , simple_binary @@ seq [prim I_COMPARE ; prim I_GT]) ;
+      ("GE" , simple_binary @@ seq [prim I_COMPARE ; prim I_GE]) ;
+      ("UPDATE" , simple_ternary @@ prim I_UPDATE) ;
+      ("SOME" , simple_unary @@ prim I_SOME) ;
+      ("MAP_GET_FORCE" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "GET_FORCE")]) ;
+      ("MAP_FIND" , simple_binary @@ seq [prim I_GET ; i_assert_some_msg (i_push_string "MAP FIND")]) ;
+      ("MAP_GET" , simple_binary @@ prim I_GET) ;
+      ("SIZE" , simple_unary @@ prim I_SIZE) ;
+      ("FAILWITH" , simple_unary @@ prim I_FAILWITH) ;
+      ("ASSERT_INFERRED" , simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])) ;
+      ("ASSERT" , simple_unary @@ i_if (seq [i_push_unit ; i_failwith]) (seq [i_push_unit])) ;
+      ("INT" , simple_unary @@ prim I_INT) ;
+      ("ABS" , simple_unary @@ prim I_ABS) ;
+      ("CONS" , simple_binary @@ prim I_CONS) ;
+      ("UNIT" , simple_constant @@ prim I_UNIT) ;
+      ("AMOUNT" , simple_constant @@ prim I_AMOUNT) ;
+      ("ADDRESS" , simple_constant @@ prim I_ADDRESS) ;
+      ("NOW" , simple_constant @@ prim I_NOW) ;
+      ("CALL" , simple_ternary @@ prim I_TRANSFER_TOKENS) ;
+      ("SOURCE" , simple_constant @@ prim I_SOURCE) ;
+      ("SENDER" , simple_constant @@ prim I_SENDER) ;
+      ("MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE ]) ;
+      ("MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
+      ("SET_MEM" , simple_binary @@ prim I_MEM) ;
+      ("SET_ADD" , simple_binary @@ seq [dip (i_push (prim T_bool) (prim D_True)) ; prim I_UPDATE]) ;
+      ("SLICE" , simple_ternary @@ prim I_SLICE) ;
+      ("SHA256" , simple_unary @@ prim I_SHA256) ;
+      ("SHA512" , simple_unary @@ prim I_SHA512) ;
+      ("BLAKE2B" , simple_unary @@ prim I_BLAKE2B) ;
+      ("CHECK_SIGNATURE" , simple_ternary @@ prim I_CHECK_SIGNATURE) ;
+      ("HASH_KEY" , simple_unary @@ prim I_HASH_KEY) ;
+      ("PACK" , simple_unary @@ prim I_PACK) ;
+    ]
 
   (* Some complex predicates will need to be added in compiler/compiler_program *)
-  
+
 end
