@@ -5,9 +5,16 @@ module Core = Typesystem.Core
 module Wrap = struct
   let aa = 42
 
-  module Local = struct
+
+  (* Shouldn't this be simply ?
   module I = Ast_simplified
-  module O = Core
+  module 0 = Core
+
+  I don't understand the reason for a local module
+  *)
+  module Local = struct
+    module I = Ast_simplified
+    module O = Core
   end
   open Local
 
@@ -29,10 +36,10 @@ module Wrap = struct
       P_constant (C_variant, Map.String.to_list @@ Map.String.map type_expression_to_type_value kvmap)
     | T_record kvmap ->
       P_constant (C_record, Map.String.to_list @@ Map.String.map type_expression_to_type_value kvmap)
-    | T_function (arg , ret) ->
+    | T_function (arg , ret) ->                        
       P_constant (C_arrow, List.map type_expression_to_type_value [ arg ; ret ])
     | T_variable type_name -> P_variable type_name
-    | T_constant (type_name , args) ->
+    | T_constant (type_name , args) ->    
       let csttag = Core.(match type_name with
           | "arrow"  -> C_arrow
           | "option" -> C_option
@@ -67,6 +74,7 @@ module Wrap = struct
     let type_name = Core.fresh_type_variable () in
     [C_equation (P_variable (type_name) , pattern)] , type_name
 
+  (*
   let literal_bool : unit -> (constraints * O.type_variable) = fun () ->
     let pattern = type_expression_to_type_value I.t_bool in
     let type_name = Core.fresh_type_variable () in
@@ -76,6 +84,7 @@ module Wrap = struct
     let pattern = type_expression_to_type_value I.t_string in
     let type_name = Core.fresh_type_variable () in
     [C_equation (P_variable (type_name) , pattern)] , type_name
+   *)
 
   let tuple : I.type_expression list -> (constraints * O.type_variable) = fun tys ->
     let patterns = List.map type_expression_to_type_value tys in
@@ -359,11 +368,87 @@ Workflow:
 
 *)
 
+(* assignments (passive data structure).
+   Now: just a map from unification vars to types (pb: what about partial types?)
+   maybe just local assignments (allow only vars as children of pair(α,β)) *)
+
+(* TODO : we need a different type for user-level type variable and the representatives of the union-find, so that we don't accidentally mix them up *)
+
 type structured_db = {
   all_constraints     : type_constraint list ;
   aliases             : unionfind ;
-  grouped_by_variable : constraints TypeVariableMap.t ; (* map from variables to constraints containing them *)
+  grouped_by_variable : constraints TypeVariableMap.t ; (* map from (unionfind) variables to constraints containing them *)
+  cycle_detection_toposort : unit ; (* example of structured db that we'll add later *)
 }
+
+(* TODO: API for the structured db, to access it modulo unification variable aliases. *)
+let get_constraints_related_to : type_variable -> structured_db -> constraints =
+  fun variable db ->
+  failwith "TODO: use the aliases unionfind + grouped_by_variable"
+
+(* sub-sub component: constraint normalizer: remove dupes and give structure
+ * right now: union-find of unification vars
+ * later: better database-like organisation of knowledge *)
+
+let normalizer_all_constraints : type_constraint -> structured_db -> structured_db =
+  fun new_constraint db ->
+  { db with all_constraints = new_constraint :: db.all_constraints }
+
+let normalizer_grouped_by_variable : type_constraint -> structured_db -> structured_db =
+  fun new_constraint db ->
+  { db with grouped_by_variable = (failwith "TODO") db.grouped_by_variable }
+
+let normalizers : type_constraint -> structured_db -> structured_db =
+  fun new_constraint db ->
+  db
+  |> normalizer_all_constraints new_constraint
+  |> normalizer_grouped_by_variable new_constraint
+
+(* sub-sub component: lazy selector (don't re-try all selectors every time)
+ * For now: just re-try everytime *)
+
+type todo = unit
+type selector_input = todo (* some info about the constraint just added, so that we know what to look for *)
+type selector_output = todo
+type new_constraints = type_constraint list
+type new_assignments = todo
+
+(* selector / propagation rule for breaking down composite types
+ * For now: do something with ('a = 'b) constraints. Or maybe this one should be a normalizer. *)
+
+let selector_equality : selector_input -> structured_db -> selector_output =
+  fun todo db ->
+  failwith "TODO"
+
+let propagator_equality : selector_output -> structured_db -> new_constraints * new_assignments =
+  fun selected -> db ->
+  failwith "TODO"
+
+(* selector / propagation rule for breaking down composite types
+ * For now: break pair(a, b) = pair(c, d) into a = c, b = d *)
+
+let select_and_propagate_equality : selector_input -> structured_db -> selector_output =
+  fun todo db ->
+  match selector_equality todo db with
+    Selected -> failwith "Call the propagation rule, push the new constraints to some kind of work queue and store the new assignments"
+  | NotSelected -> failwith "carry on, nothing to see"
+
+let select_and_propagate_all : selector_input -> structured_db -> selector_output =
+  fun todo db ->
+  let blah = select_and_propagate_equality todo db in
+  (* let blah2 = select_ … in … *)
+  (* We should try each selector in turn. If multiple selectors work, what should we do? *)
+  failwith "TODO"
+
+(* sub-component: constraint selector (worklist / dynamic queries) *)
+
+(* constraint propagation: (buch of constraints) → (new constraints * assignments) *)
+
+
+
+
+
+(* Below is a draft *)
 
 type state = {
   (* when α-renaming x to y, we put them in the same union-find class *)
