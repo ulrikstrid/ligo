@@ -436,8 +436,11 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
   | E_literal (Literal_operation o) -> (
       return_wrapped (e_operation o) state @@ Wrap.literal (t_operation ())
     )
-  | E_literal Literal_unit | E_skip -> (
+  | E_literal (Literal_unit) -> (
       return_wrapped (e_unit) state @@ Wrap.literal (t_unit ())
+    )
+  | E_skip -> (
+    failwith "TODO: missing implementation for E_skip"
     )
   (* | E_literal (Literal_string s) -> (
    *     L.log (Format.asprintf "literal_string option type: %a" PP_helpers.(option O.PP.type_expression) tv_opt) ;
@@ -446,7 +449,7 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
    *     | _ -> return (E_literal (Literal_string s)) (t_string ())
    *   ) *)
   (* Tuple *)
-  | E_tuple lst -> (
+  | E_tuple lst  -> (
       let aux state hd = type_expression e state hd >>? swap in
       let%bind (state', lst') = bind_fold_map_list aux state lst in
       let tv_lst = List.map get_type_annotation lst' in

@@ -4,7 +4,7 @@ module Make (Item: Partition.Item) =
   struct
 
     type item = Item.t
-    type repr = item   (** Class representatives *)
+    type repr = Repr of item   (** Class representatives *)
 
     let equal i j = Item.compare i j = 0
 

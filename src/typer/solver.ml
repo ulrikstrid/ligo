@@ -5,7 +5,6 @@ module Core = Typesystem.Core
 module Wrap = struct
   let aa = 42
 
-
   (* Shouldn't this be simply ?
   module I = Ast_simplified
   module 0 = Core
@@ -36,10 +35,10 @@ module Wrap = struct
       P_constant (C_variant, Map.String.to_list @@ Map.String.map type_expression_to_type_value kvmap)
     | T_record kvmap ->
       P_constant (C_record, Map.String.to_list @@ Map.String.map type_expression_to_type_value kvmap)
-    | T_function (arg , ret) ->                        
+    | T_function (arg , ret) ->
       P_constant (C_arrow, List.map type_expression_to_type_value [ arg ; ret ])
     | T_variable type_name -> P_variable type_name
-    | T_constant (type_name , args) ->    
+    | T_constant (type_name , args) ->
       let csttag = Core.(match type_name with
           | "arrow"  -> C_arrow
           | "option" -> C_option
@@ -313,7 +312,7 @@ module TV =
     let to_string = (fun s -> s)
   end
 
-module UF = Union_find.Partition0.Make(TV)
+module UF = Union_find.Partition1.Make(TV)
 
 type unionfind = UF.t
 
@@ -323,14 +322,14 @@ let merge x y = UF.equiv x y                   (* DEMO *)
 
 (* end unionfind *)
 
-module TypeVariable = String
-module TypeVariableMap = Map.Make(TypeVariable)
-
-type constraints = {
-  constructor : simple_c_constructor list ;
-  constant    : simple_c_constant    list ;
-  tc          : c_typeclass list ;
-}
+(* representant for an equivalence class of type variables *)
+module TypeVariableRepr = struct
+  type t = UF.repr
+  let compare (UF.Repr a) (UF.Repr b) = String.compare a b
+  let to_string (UF.Repr a) = a
+end
+module TypeVariableMap = Map.Make(TypeVariableRepr)
+type type_variable_repr = UF.repr
 
 (*
 
@@ -374,33 +373,49 @@ Workflow:
 
 (* TODO : we need a different type for user-level type variable and the representatives of the union-find, so that we don't accidentally mix them up *)
 
-type structured_db = {
+type structured_dbs = {
   all_constraints     : type_constraint list ;
   aliases             : unionfind ;
   grouped_by_variable : constraints TypeVariableMap.t ; (* map from (unionfind) variables to constraints containing them *)
   cycle_detection_toposort : unit ; (* example of structured db that we'll add later *)
 }
 
-(* TODO: API for the structured db, to access it modulo unification variable aliases. *)
-let get_constraints_related_to : type_variable -> structured_db -> constraints =
-  fun variable db ->
-  failwith "TODO: use the aliases unionfind + grouped_by_variable"
+and constraints = {
+  constructor : simple_c_constructor list ;
+  constant    : simple_c_constant    list ;
+  tc          : c_typeclass list ;
+}
+
+(* copy-pasted from core.ml *)
+and c_constructor_repr = constant_tag * type_variable_repr list (* non-empty list *)
+and c_constant_repr = constant_tag (* for type constructors that do not take arguments *)
+and c_const = (type_variable * type_value)
+and c_equation = (type_value * type_value)
+and c_typeclass = (type_value list * typeclass)
+
+module UnionFindWrapper = struct
+  (* TODO: API for the structured db, to access it modulo unification variable aliases. *)
+  let get_constraints_related_to : type_variable -> structured_dbs -> constraints =
+    fun variable dbs ->
+    failwith "TODO: use the aliases unionfind + grouped_by_variable"
+
+end
 
 (* sub-sub component: constraint normalizer: remove dupes and give structure
  * right now: union-find of unification vars
  * later: better database-like organisation of knowledge *)
 
-let normalizer_all_constraints : type_constraint -> structured_db -> structured_db =
-  fun new_constraint db ->
-  { db with all_constraints = new_constraint :: db.all_constraints }
+let normalizer_all_constraints : type_constraint -> structured_dbs -> structured_dbs =
+  fun new_constraint dbs ->
+  { dbs with all_constraints = new_constraint :: dbs.all_constraints }
 
-let normalizer_grouped_by_variable : type_constraint -> structured_db -> structured_db =
-  fun new_constraint db ->
-  { db with grouped_by_variable = (failwith "TODO") db.grouped_by_variable }
+let normalizer_grouped_by_variable : type_constraint -> structured_dbs -> structured_dbs =
+  fun new_constraint dbs ->
+  { dbs with grouped_by_variable = (failwith "TODO") dbs.grouped_by_variable }
 
-let normalizers : type_constraint -> structured_db -> structured_db =
-  fun new_constraint db ->
-  db
+let normalizers : type_constraint -> structured_dbs -> structured_dbs =
+  fun new_constraint dbs ->
+  dbs
   |> normalizer_all_constraints new_constraint
   |> normalizer_grouped_by_variable new_constraint
 
@@ -409,33 +424,33 @@ let normalizers : type_constraint -> structured_db -> structured_db =
 
 type todo = unit
 type selector_input = todo (* some info about the constraint just added, so that we know what to look for *)
-type selector_output = todo
+type selector_output = WasSelected | WasNotSelected
 type new_constraints = type_constraint list
 type new_assignments = todo
 
 (* selector / propagation rule for breaking down composite types
  * For now: do something with ('a = 'b) constraints. Or maybe this one should be a normalizer. *)
 
-let selector_equality : selector_input -> structured_db -> selector_output =
-  fun todo db ->
+let selector_equality : selector_input -> structured_dbs -> selector_output =
+  fun todo dbs ->
   failwith "TODO"
 
-let propagator_equality : selector_output -> structured_db -> new_constraints * new_assignments =
-  fun selected -> db ->
+let propagator_equality : selector_output -> structured_dbs -> new_constraints * new_assignments =
+  fun selected dbs ->
   failwith "TODO"
 
 (* selector / propagation rule for breaking down composite types
  * For now: break pair(a, b) = pair(c, d) into a = c, b = d *)
 
-let select_and_propagate_equality : selector_input -> structured_db -> selector_output =
-  fun todo db ->
-  match selector_equality todo db with
-    Selected -> failwith "Call the propagation rule, push the new constraints to some kind of work queue and store the new assignments"
-  | NotSelected -> failwith "carry on, nothing to see"
+let select_and_propagate_equality : selector_input -> structured_dbs -> selector_output =
+  fun todo dbs ->
+  match selector_equality todo dbs with
+    WasSelected -> failwith "Call the propagation rule, push the new constraints to some kind of work queue and store the new assignments"
+  | WasNotSelected -> failwith "carry on, nothing to see"
 
-let select_and_propagate_all : selector_input -> structured_db -> selector_output =
-  fun todo db ->
-  let blah = select_and_propagate_equality todo db in
+let select_and_propagate_all : selector_input -> structured_dbs -> selector_output =
+  fun todo dbs ->
+  let blah = select_and_propagate_equality todo dbs in
   (* let blah2 = select_ … in … *)
   (* We should try each selector in turn. If multiple selectors work, what should we do? *)
   failwith "TODO"
@@ -464,7 +479,7 @@ type state = {
 let initial_state : state = {
   unification_vars = UF.empty ;
   constraints = TypeVariableMap.empty ;
-  assignment = TypeVariableMap.empty ;
+  assignments = TypeVariableMap.empty ;
 }
 
 (* let replace_var_in_state = fun (v : type_variable) (state : state) -> *)
@@ -510,5 +525,6 @@ let aggregate_constraints : state -> type_constraint list -> state result = fun 
   (* TODO: Iterate over constraints *)
   (* TODO: try to unify things:
              if we have a = X and b = Y, try to unify X and Y *)
-  let { constraints ; eqv } = state in
-  ok { constraints = constraints @ newc ; eqv }
+  failwith "TODO"
+  (*let { constraints ; eqv } = state in
+  ok { constraints = constraints @ newc ; eqv }*)

@@ -10,7 +10,7 @@ module Make (Item: Partition.Item) =
   struct
 
     type item = Item.t
-    type repr = item   (** Class representatives *)
+    type repr = Repr of item (** Class representatives *)
 
     let equal i j = Item.compare i j = 0
 
@@ -24,21 +24,23 @@ module Make (Item: Partition.Item) =
     let empty = ItemMap.empty
 
     let rec seek (i: item) (p: partition) : repr * height =
-      let j, _ as i' = ItemMap.find i p in
-      if equal i j then i' else seek j p
+      let j, height = ItemMap.find i p in
+      if equal i j then Repr j, height else seek j p
 
     let repr item partition = fst (seek item partition)
 
-    let is_equiv (i: item) (j: item) (p: partition) =
-      equal (repr i p) (repr j p)
+    let is_equiv (i: item) (j: item) (p: partition) : bool =
+      let Repr ri = (repr i p) in
+      let Repr rj = (repr j p) in
+      equal ri rj
 
     let get_or_set (i: item) (p: partition) =
       try seek i p, p with
-        Not_found -> let i' = i,0 in (i', ItemMap.add i i' p)
+        Not_found -> let i' = Repr i,0 in (i', ItemMap.add i (i,0) p)
 
     let equiv (i: item) (j: item) (p: partition) : partition =
-      let (ri,hi), p = get_or_set i p in
-      let (rj,hj), p = get_or_set j p in
+      let (Repr ri,hi), p = get_or_set i p in
+      let (Repr rj,hj), p = get_or_set j p in
       let add = ItemMap.add in
       if   equal ri rj
       then p
@@ -47,8 +49,8 @@ module Make (Item: Partition.Item) =
            else add ri (rj,hi) (if hi < hj then p else add rj (rj,hj+1) p)
 
     let alias (i: item) (j: item) (p: partition) : partition =
-      let (ri,hi), p = get_or_set i p in
-      let (rj,hj), p = get_or_set j p in
+      let (Repr ri,hi), p = get_or_set i p in
+      let (Repr rj,hj), p = get_or_set j p in
       let add = ItemMap.add in
       if   equal ri rj
       then p
