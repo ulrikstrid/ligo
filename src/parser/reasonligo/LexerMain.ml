@@ -43,10 +43,8 @@ let cpp_cmd =
       Printf.sprintf "cpp -traditional-cpp%s - > %s"
                      lib_path pp_input
   | Some file ->
-      Printf.sprintf  "cp%s %s %s" lib_path file pp_input
-      
-      (* Printf.sprintf "cpp -traditional-cpp%s %s > %s"
-                     lib_path file pp_input *)
+      Printf.sprintf "cpp -traditional-cpp%s %s > %s"
+                     lib_path file pp_input
 
 let () =
   if Utils.String.Set.mem "cpp" options.verbose
