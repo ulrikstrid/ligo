@@ -104,6 +104,11 @@ module type TOKEN =
     type   int_err = Non_canonical_zero
     type ident_err = Reserved_name
 
+    (* comments *)
+    val block_comment_start : lexeme -> bool
+    val block_comment_end   : lexeme -> bool
+    val line_comment_start  : lexeme -> bool
+
     (* Injections *)
 
     val mk_string : lexeme -> Region.t -> token
@@ -511,9 +516,16 @@ and scan state = parse
          let thread = {opening; len=1; acc=['"']} in
          scan_string thread state lexbuf |> mk_string |> enqueue }
 
-| "(*" { let opening, _, state = sync state lexbuf in
+| "(*" | "/*" 
+       { 
+         let opening, lexeme, state = sync state lexbuf in
          let thread = {opening; len=2; acc=['*';'(']} in
-         let state  = scan_block thread state lexbuf |> push_block
+         let next = if Token.block_comment_start lexeme then           
+           scan_block
+         else
+           assert false
+         in
+         let state  = next thread state lexbuf |> push_block
          in scan state lexbuf }
 
 | "//" { let opening, _, state = sync state lexbuf in
@@ -626,34 +638,55 @@ and scan_string thread state = parse
    of the first case of the scanner [scan_block].
 *)
 
+and scan_remaining thread state = parse
+  _ {
+    let () = rollback lexbuf in                               
+    let len    = thread.len in
+    let thread,
+        status = scan_utf8 thread state lexbuf in
+    let delta  = thread.len - len in
+    let pos    = state.pos#shift_one_uchar delta in
+    match status with
+      None -> 
+      scan_block thread {state with pos} lexbuf
+    | Some error ->
+        let region = Region.make ~start:state.pos ~stop:pos
+        in fail region error
+  }
+
 and scan_block thread state = parse
-  '"' | "(*" { let opening = thread.opening in
-               let opening', lexeme, state = sync state lexbuf in
-               let thread = push_string lexeme thread in
-               let thread = {thread with opening=opening'} in
-               let next   = if lexeme = "\"" then scan_string
-                            else scan_block in
-               let thread, state = next thread state lexbuf in
-               let thread = {thread with opening}
-               in scan_block thread state lexbuf }
-| "*)"       { let _, lexeme, state = sync state lexbuf
-               in push_string lexeme thread, state }
+  '"' | "(*" | "/*" 
+              { let opening = thread.opening in
+                let opening', lexeme, state = sync state lexbuf in               
+                if (lexeme = "\"" || Token.block_comment_start lexeme) then (
+                  let thread = push_string lexeme thread in
+                  let thread = {thread with opening=opening'} in
+                  let next = if lexeme = "\"" then 
+                    scan_string
+                  else 
+                    scan_block
+                  in
+                  let thread, state = next thread state lexbuf in
+                  let thread = {thread with opening}
+                  in scan_block thread state lexbuf
+                )
+                else                 
+                  scan_remaining thread state lexbuf                
+              }
+| "*)" | "*/"
+             { let _, lexeme, state = sync state lexbuf in
+               if Token.block_comment_end lexeme then 
+                 push_string lexeme thread, state
+               else                                               
+                 scan_remaining thread state lexbuf 
+             }
 | nl as nl   { let ()     = Lexing.new_line lexbuf
                and state  = {state with pos = state.pos#new_line nl}
                and thread = push_string nl thread
                in scan_block thread state lexbuf }
 | eof        { fail thread.opening Unterminated_comment }
 | _          { let ()     = rollback lexbuf in
-               let len    = thread.len in
-               let thread,
-                   status = scan_utf8 thread state lexbuf in
-               let delta  = thread.len - len in
-               let pos    = state.pos#shift_one_uchar delta in
-               match status with
-                 None -> scan_block thread {state with pos} lexbuf
-               | Some error ->
-                   let region = Region.make ~start:state.pos ~stop:pos
-                   in fail region error }
+               scan_remaining thread state lexbuf }
 
 (* Finishing a line comment *)
 

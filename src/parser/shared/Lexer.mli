@@ -63,6 +63,11 @@ module type TOKEN =
     type   int_err = Non_canonical_zero
     type ident_err = Reserved_name
 
+    (* comments *)
+    val block_comment_start : lexeme -> bool
+    val block_comment_end   : lexeme -> bool
+    val line_comment_start  : lexeme -> bool
+
     (* Injections *)
 
     val mk_string : lexeme -> Region.t -> token
