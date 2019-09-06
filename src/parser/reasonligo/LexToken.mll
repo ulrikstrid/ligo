@@ -29,7 +29,6 @@ type t =
 | LPAR of Region.t      (* "(" *)
 | RPAR of Region.t      (* ")" *)
 | LBRACKET of Region.t  (* "[" *)
-| LBRACKETAT of Region.t (* "[@" *)
 | RBRACKET of Region.t  (* "]" *)
 | LBRACE of Region.t    (* "{" *)
 | RBRACE of Region.t    (* "}" *)
@@ -94,7 +93,8 @@ type t =
 | With of Region.t
 
   (* Liquidity specific *)
-
+| LetEntry of Region.t
+| MatchNat of Region.t
 (*
 | Contract
 | Sig
@@ -117,7 +117,6 @@ let proj_token = function
   | LPAR region -> region, "LPAR"
   | RPAR region -> region, "RPAR"
   | LBRACKET region -> region, "LBRACKET"
-  | LBRACKETAT region -> region, "LBRACKETAT"
   | RBRACKET region -> region, "RBRACKET"
   | LBRACE region -> region, "LBRACE"
   | RBRACE region -> region, "RBRACE"
@@ -172,6 +171,8 @@ let proj_token = function
   | True region -> region, "True"
   | Type region -> region, "Type"
   | With region -> region, "With"    
+  | LetEntry region -> region, "LetEntry"
+  | MatchNat region -> region, "MatchNat"
   | EOF region -> region, "EOF"
 
 let to_lexeme = function
@@ -184,7 +185,6 @@ let to_lexeme = function
   | LPAR _ -> "("
   | RPAR _ -> ")"
   | LBRACKET _ -> "["
-  | LBRACKETAT _ -> "[@"
   | RBRACKET _ -> "]"
   | LBRACE _ -> "{"
   | RBRACE _ -> "}"
@@ -230,6 +230,8 @@ let to_lexeme = function
   | Type _ -> "type"
   | Then _ -> "then"
   | With _ -> "with"
+  | LetEntry _ -> "let%entry"
+  | MatchNat _ -> "match%nat"
   | EOF _ -> ""  
 
 let to_string token ?(offsets=true) mode =
@@ -266,6 +268,8 @@ let keywords = [
   (fun reg -> True  reg);
   (fun reg -> Type  reg);
   (fun reg -> With  reg);
+  (fun reg -> LetEntry reg);
+  (fun reg -> MatchNat reg);
 ]
 
 let reserved =
@@ -421,7 +425,6 @@ let mk_sym lexeme region =
   | "/"   ->    SLASH     region
   | "*"   ->    TIMES     region
   | "["   ->    LBRACKET  region
-  | "[@"   ->   LBRACKETAT region
   | "]"   ->    RBRACKET  region
   | "{"   ->    LBRACE    region
   | "}"  ->     RBRACE    region
@@ -496,6 +499,8 @@ let is_kwd = function
   | Then _
   | True _
   | Type _
+  | LetEntry _
+  | MatchNat _
   | With _   -> true
   | _ -> false
 
@@ -516,7 +521,6 @@ let is_sym = function
 | LPAR _
 | RPAR _
 | LBRACKET _
-| LBRACKETAT _
 | RBRACKET _
 | LBRACE _
 | RBRACE _

@@ -47,7 +47,6 @@ type t =
 | LPAR of Region.t    (* "(" *)
 | RPAR of Region.t   (* ")" *)
 | LBRACKET of Region.t (* "[" *)
-| LBRACKETAT of Region.t (* "[@" *)
 | RBRACKET of Region.t (* "]" *)
 | LBRACE of Region.t  (* "{" *)
 | RBRACE of Region.t  (* "}" *)
@@ -112,6 +111,8 @@ type t =
 | With of Region.t
 
   (* Liquidity specific *)
+| LetEntry of Region.t
+| MatchNat of Region.t
 (*
 | Contract
 | Sig
