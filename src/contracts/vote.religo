@@ -54,8 +54,7 @@ let z = switch (z) {
   | Z => o
 };
 
-[@entry]
-let main = (action: action, storage: storage) =>
+let%entry main = (action: action, storage: storage) =>
   switch (action) {
   | Vote(p) => vote(p, storage)
   | Init(ps) => init(ps, storage)
