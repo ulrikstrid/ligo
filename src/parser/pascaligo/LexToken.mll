@@ -466,6 +466,11 @@ and scan_constr region lexicon = parse
 {
 (* START TRAILER *)
 
+(* comments *)
+let block_comment_start lexeme = lexeme = "(*"
+let block_comment_end lexeme = lexeme = "*)"
+let line_comment_start lexeme = lexeme = "//"
+
 (* Smart constructors (injections) *)
 
 let mk_string lexeme region = String Region.{region; value=lexeme}

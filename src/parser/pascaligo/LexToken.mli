@@ -136,6 +136,11 @@ val to_lexeme : token -> lexeme
 val to_string : token -> ?offsets:bool -> [`Byte | `Point] -> string
 val to_region : token -> Region.t
 
+(* comments *)
+val block_comment_start : lexeme -> bool
+val block_comment_end   : lexeme -> bool
+val line_comment_start  : lexeme -> bool
+
 (* Injections *)
 
 type int_err =
