@@ -301,13 +301,11 @@ module Wrap = struct
 
 end
 
-open Core
-
 (* begin unionfind *)
 
 module TV =
   struct
-    type t = type_variable
+    type t = Core.type_variable
     let compare = String.compare
     let to_string = (fun s -> s)
   end
@@ -373,6 +371,8 @@ Workflow:
 
 (* TODO : we need a different type for user-level type variable and the representatives of the union-find, so that we don't accidentally mix them up *)
 
+open Core
+
 type structured_dbs = {
   all_constraints     : type_constraint list ;
   aliases             : unionfind ;
@@ -381,24 +381,54 @@ type structured_dbs = {
 }
 
 and constraints = {
-  constructor : simple_c_constructor list ;
-  constant    : simple_c_constant    list ;
-  tc          : c_typeclass list ;
+  constructor : c_constructor_repr list ;
+  constant    : c_constant_repr    list ;
+  tc          : c_typeclass_repr   list ;
 }
 
 (* copy-pasted from core.ml *)
-and c_constructor_repr = constant_tag * type_variable_repr list (* non-empty list *)
-and c_constant_repr = constant_tag (* for type constructors that do not take arguments *)
+and c_constructor_repr = type_variable_repr * constant_tag * type_variable_repr list (* non-empty list *)
+and c_constant_repr = (type_variable_repr * constant_tag) (* for type constructors that do not take arguments *)
 and c_const = (type_variable * type_value)
 and c_equation = (type_value * type_value)
-and c_typeclass = (type_value list * typeclass)
+and c_typeclass_repr = {
+  tva  : type_variable_repr ;
+  tc   : typeclass          ;
+  args : type_value list    ; (* TODO: should be a simpler form *)
+}
+and type_constraint_repr =
+    SC_Constructor of c_constructor_repr
+  | SC_Constant of c_constant_repr
+  | SC_Typeclass of c_typeclass_repr
 
 module UnionFindWrapper = struct
   (* TODO: API for the structured db, to access it modulo unification variable aliases. *)
   let get_constraints_related_to : type_variable -> structured_dbs -> constraints =
     fun variable dbs ->
-    failwith "TODO: use the aliases unionfind + grouped_by_variable"
-
+      let (variable_repr , _height) , aliases = UF.get_or_set variable dbs.aliases in
+      let dbs = { dbs with aliases } in
+      match TypeVariableMap.find_opt variable_repr dbs.grouped_by_variable with
+        Some l -> l
+      | None -> {
+          constructor = [] ;
+          constant    = [] ;
+          tc          = [] ;
+        }
+  let add_constraints_related_to : type_variable -> constraints -> structured_dbs -> structured_dbs =
+    fun variable c dbs ->
+    let (variable_repr , _height) , aliases = UF.get_or_set variable dbs.aliases in
+    let dbs = { dbs with aliases } in
+    let grouped_by_variable = TypeVariableMap.update variable_repr (function
+          None -> Some c
+        | Some x -> Some {
+            constructor = c.constructor @ x.constructor ;
+            constant    = c.constant @ x.constant ;
+            tc          = c.tc @ x.tc ;
+          })
+        dbs.grouped_by_variable
+    in
+    let dbs = { dbs with grouped_by_variable } in
+    dbs
 end
 
 (* sub-sub component: constraint normalizer: remove dupes and give structure
@@ -409,9 +439,18 @@ let normalizer_all_constraints : type_constraint -> structured_dbs -> structured
   fun new_constraint dbs ->
   { dbs with all_constraints = new_constraint :: dbs.all_constraints }
 
-let normalizer_grouped_by_variable : type_constraint -> structured_dbs -> structured_dbs =
+let normalizer_grouped_by_variable : type_constraint_repr -> structured_dbs -> structured_dbs =
   fun new_constraint dbs ->
-  { dbs with grouped_by_variable = (failwith "TODO") dbs.grouped_by_variable }
+  let tvars, lala = match new_constraint with
+      SC_Constructor ((tva , _ctorb , argsb) as c) -> tva :: argsb, { constructor = [c] ; constant = [] ; tc = [] }
+    | SC_Constant (tva , _constant as c) -> [tva], { constant = [c] ; constructor = [] ; tc = [] }
+    | SC_Typeclass ({tva ; tc=_ ; args} as c) -> [tva ; (* TODO: *) args ], { tc = [c] ; constructor = [] ; constant = [] }
+  in
+  let aux dbs tvar =
+    { dbs with grouped_by_variable =
+                 UnionFindWrapper.add_constraints_related_to
+                   tvar lala dbs } in
+  List.fold_left aux dbs tvars
 
 let normalizers : type_constraint -> structured_dbs -> structured_dbs =
   fun new_constraint dbs ->
