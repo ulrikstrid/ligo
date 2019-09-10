@@ -223,12 +223,18 @@ open Errors
 
 let swap (a,b) = ok (b,a)
 
+(*
+  Extract pairs of (name,type) in the declaration and add it to the environment
+*)
 let rec type_declaration env state : I.declaration -> (environment * Solver.state * O.declaration option) result = function
   | Declaration_type (type_name , type_expression) ->
-      let%bind tv = evaluate_type env type_expression in
-      let env' = Environment.add_type type_name tv env in
-      ok (env', state , None)
+    let%bind tv = evaluate_type env type_expression in
+    let env' = Environment.add_type type_name tv env in
+    ok (env', state , None)
   | Declaration_constant (name , tv_opt , expression) -> (
+    (*
+      Determine the type of the expression and add it to the environment
+    *)
       let%bind tv'_opt = bind_map_option (evaluate_type env) tv_opt in
       let%bind (ae' , state') =
         trace (constant_declaration_error name expression tv'_opt) @@
@@ -246,7 +252,7 @@ and type_match : environment -> Solver.state -> O.type_expression -> 'i I.matchi
       let%bind (match_true , state') = type_expression e state match_true in
       let%bind (match_false , state'') = type_expression e state' match_false in
       ok (O.Match_bool {match_true ; match_false} , state'')
-  | Match_option {match_none ; match_some} ->
+    | Match_option {match_none ; match_some} ->
       let%bind t_opt =
         trace_strong (match_error ~expected:i ~actual:t loc)
         @@ get_t_option t in
@@ -256,7 +262,7 @@ and type_match : environment -> Solver.state -> O.type_expression -> 'i I.matchi
       let e' = Environment.add_ez_binder n t_opt e in
       let%bind (b' , state'') = type_expression e' state' b in
       ok (O.Match_option {match_none ; match_some = (n', b')} , state'')
-  | Match_list {match_nil ; match_cons} ->
+    | Match_list {match_nil ; match_cons} ->
       let%bind t_list =
         trace_strong (match_error ~expected:i ~actual:t loc)
         @@ get_t_list t in
@@ -266,7 +272,7 @@ and type_match : environment -> Solver.state -> O.type_expression -> 'i I.matchi
       let e' = Environment.add_ez_binder tl t e' in
       let%bind (b' , state'') = type_expression e' state' b in
       ok (O.Match_list {match_nil ; match_cons = (hd, tl, b')} , state'')
-  | Match_tuple (lst, b) ->
+    | Match_tuple (lst, b) ->
       let%bind t_tuple =
         trace_strong (match_error ~expected:i ~actual:t loc)
         @@ get_t_tuple t in
@@ -277,7 +283,7 @@ and type_match : environment -> Solver.state -> O.type_expression -> 'i I.matchi
       let e' = List.fold_left aux e lst' in
       let%bind (b' , state') = type_expression e' state b in
       ok (O.Match_tuple (lst, b') , state')
-  | Match_variant lst ->
+    | Match_variant lst ->
       let%bind variant_opt =
         let aux acc ((constructor_name , _) , _) =
           let%bind (_ , variant) =
@@ -331,40 +337,44 @@ and type_match : environment -> Solver.state -> O.type_expression -> 'i I.matchi
         bind_fold_map_list aux state lst in
       ok (O.Match_variant (lst' , variant) , state'')
 
+(*
+  Recursively search the type_expression and return a result containing the
+  type_value at the leaves
+*)
 and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression result =
   let return tv' = ok (make_t tv' (Some t)) in
   match t.type_expression' with
   | T_function (a, b) ->
-      let%bind a' = evaluate_type e a in
-      let%bind b' = evaluate_type e b in
-      return (T_function (a', b'))
+    let%bind a' = evaluate_type e a in
+    let%bind b' = evaluate_type e b in
+    return (T_function (a', b'))
   | T_tuple lst ->
-      let%bind lst' = bind_list @@ List.map (evaluate_type e) lst in
-      return (T_tuple lst')
+    let%bind lst' = bind_list @@ List.map (evaluate_type e) lst in
+    return (T_tuple lst')
   | T_sum m ->
-      let aux k v prev =
-        let%bind prev' = prev in
-        let%bind v' = evaluate_type e v in
-        ok @@ SMap.add k v' prev'
-      in
-      let%bind m = SMap.fold aux m (ok SMap.empty) in
-      return (T_sum m)
+    let aux k v prev =
+      let%bind prev' = prev in
+      let%bind v' = evaluate_type e v in
+      ok @@ SMap.add k v' prev'
+    in
+    let%bind m = SMap.fold aux m (ok SMap.empty) in
+    return (T_sum m)
   | T_record m ->
-      let aux k v prev =
-        let%bind prev' = prev in
-        let%bind v' = evaluate_type e v in
-        ok @@ SMap.add k v' prev'
-      in
-      let%bind m = SMap.fold aux m (ok SMap.empty) in
-      return (T_record m)
+    let aux k v prev =
+      let%bind prev' = prev in
+      let%bind v' = evaluate_type e v in
+      ok @@ SMap.add k v' prev'
+    in
+    let%bind m = SMap.fold aux m (ok SMap.empty) in
+    return (T_record m)
   | T_variable name ->
-      let%bind tv =
-        trace_option (unbound_type_variable e name)
-        @@ Environment.get_type_opt name e in
-      ok tv
+    let%bind tv =
+      trace_option (unbound_type_variable e name)
+      @@ Environment.get_type_opt name e in
+    ok tv
   | T_constant (cst, lst) ->
-      let%bind lst' = bind_list @@ List.map (evaluate_type e) lst in
-      return (T_constant(cst, lst'))
+    let%bind lst' = bind_list @@ List.map (evaluate_type e) lst in
+    return (T_constant(cst, lst'))
 
 and type_expression : environment -> Solver.state -> I.expression -> (O.annotated_expression * Solver.state) result = fun e state ae ->
   let open Solver in
@@ -388,11 +398,11 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
   trace main_error @@
   match ae.expression' with
 
-(* TODO: this file should take care only of the order in which program fragments
-   are translated by Wrap.xyz
+  (* TODO: this file should take care only of the order in which program fragments
+     are translated by Wrap.xyz
 
-   TODO: produce an ordered list of sub-fragments, and use a common piece of code
-   to actually perform the recursive calls *)
+     TODO: produce an ordered list of sub-fragments, and use a common piece of code
+     to actually perform the recursive calls *)
 
   (* Basic *)
   | E_failwith expr -> (
@@ -481,55 +491,55 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
     )
   (* Sum *)
   | E_constructor (c, expr) ->
-      let%bind (c_tv, sum_tv) =
-        let error =
-          let title () = "no such constructor" in
-          let content () =
-            Format.asprintf "%s in:\n%a\n"
-              c O.Environment.PP.full_environment e
-          in
-          error title content in
-        trace_option error @@
-        Environment.get_constructor c e in
-      let%bind (expr' , state') = type_expression e state expr in
-      let%bind _assert = O.assert_type_expression_eq (expr'.type_annotation, c_tv) in
-      let wrapped = Wrap.constructor expr'.type_annotation c_tv sum_tv in
-      return_wrapped (E_constructor (c , expr')) state' wrapped
+    let%bind (c_tv, sum_tv) =
+      let error =
+        let title () = "no such constructor" in
+        let content () =
+          Format.asprintf "%s in:\n%a\n"
+            c O.Environment.PP.full_environment e
+        in
+        error title content in
+      trace_option error @@
+      Environment.get_constructor c e in
+    let%bind (expr' , state') = type_expression e state expr in
+    let%bind _assert = O.assert_type_expression_eq (expr'.type_annotation, c_tv) in
+    let wrapped = Wrap.constructor expr'.type_annotation c_tv sum_tv in
+    return_wrapped (E_constructor (c , expr')) state' wrapped
   (* Record *)
   | E_record m ->
-      let aux (acc, state) k expr =
-        let%bind (expr' , state') = type_expression e state expr in
-        ok (SMap.add k expr' acc , state')
-      in
-      let%bind (m' , state') = bind_fold_smap aux (ok (SMap.empty , state)) m in
-      let wrapped = Wrap.record (SMap.map get_type_annotation m') in
-      return_wrapped (E_record m') state' wrapped
+    let aux (acc, state) k expr =
+      let%bind (expr' , state') = type_expression e state expr in
+      ok (SMap.add k expr' acc , state')
+    in
+    let%bind (m' , state') = bind_fold_smap aux (ok (SMap.empty , state)) m in
+    let wrapped = Wrap.record (SMap.map get_type_annotation m') in
+    return_wrapped (E_record m') state' wrapped
   (* Data-structure *)
   | E_list lst ->
-      let%bind (state', lst') =
-        bind_fold_map_list (fun state' elt -> type_expression e state' elt >>? swap) state lst in
-      let wrapped = Wrap.list (List.map (fun x -> O.(x.type_annotation)) lst') in
-      return_wrapped (E_list lst') state' wrapped
+    let%bind (state', lst') =
+      bind_fold_map_list (fun state' elt -> type_expression e state' elt >>? swap) state lst in
+    let wrapped = Wrap.list (List.map (fun x -> O.(x.type_annotation)) lst') in
+    return_wrapped (E_list lst') state' wrapped
   | E_set set ->
     let aux = fun state' elt -> type_expression e state' elt >>? swap in
     let%bind (state', set') =
-        bind_fold_map_list aux state set in
-      let wrapped = Wrap.set (List.map (fun x -> O.(x.type_annotation)) set') in
-      return_wrapped (E_set set') state' wrapped
+      bind_fold_map_list aux state set in
+    let wrapped = Wrap.set (List.map (fun x -> O.(x.type_annotation)) set') in
+    return_wrapped (E_set set') state' wrapped
   | E_map map ->
     let aux' state' elt = type_expression e state' elt >>? swap in
     let aux = fun state' elt -> bind_fold_map_pair aux' state' elt in
-      let%bind (state', map') =
-        bind_fold_map_list aux state map in
+    let%bind (state', map') =
+      bind_fold_map_list aux state map in
     let aux (x, y) = O.(x.type_annotation , y.type_annotation) in
     let wrapped = Wrap.map (List.map aux map') in
-      return_wrapped (E_map map') state' wrapped
+    return_wrapped (E_map map') state' wrapped
 
   | E_application (f, arg) ->
-      let%bind (f' , state') = type_expression e state f in
-      let%bind (arg , state'') = type_expression e state' arg in
-      let wrapped = Wrap.application f'.type_annotation arg.type_annotation in
-      return_wrapped (E_application (f' , arg)) state'' wrapped
+    let%bind (f' , state') = type_expression e state f in
+    let%bind (arg , state'') = type_expression e state' arg in
+    let wrapped = Wrap.application f'.type_annotation arg.type_annotation in
+    return_wrapped (E_application (f' , arg)) state'' wrapped
   | E_look_up dsi ->
     let aux' state' elt = type_expression e state' elt >>? swap in
     let%bind (state'' , (ds , ind)) = bind_fold_map_pair aux' state dsi in
@@ -619,32 +629,32 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
     )
 
 
-      (* match m with *)
-      (* Special case for assert-like failwiths. TODO: CLEAN THIS. *)
-      (* | I.Match_bool { match_false ; match_true } when I.is_e_failwith match_true -> ( *)
-      (*     let%bind fw = I.get_e_failwith match_true in *)
-      (*     let%bind fw' = type_expression e fw in *)
-      (*     let%bind mf' = type_expression e match_false in *)
-      (*     let t = get_type_annotation ex' in *)
-      (*     let%bind () = *)
-      (*       trace_strong (match_error ~expected:m ~actual:t ae.location) *)
-      (*       @@ assert_t_bool t in *)
-      (*     let%bind () = *)
-      (*       trace_strong (match_error *)
-      (*                       ~msg:"matching not-unit on an assert" *)
-      (*                       ~expected:m *)
-      (*                       ~actual:t *)
-      (*                       ae.location) *)
-      (*       @@ assert_t_unit (get_type_annotation mf') in *)
-      (*     let mt' = make_a_e *)
-      (*         (E_constant ("ASSERT_INFERRED" , [ex' ; fw'])) *)
-      (*         (t_unit ()) *)
-      (*         e *)
-      (*     in *)
-      (*     let m' = O.Match_bool { match_true = mt' ; match_false = mf' } in *)
-      (*     return (O.E_matching (ex' , m')) (t_unit ()) *)
-      (*   ) *)
-      (* | _ -> ( … ) *)
+  (* match m with *)
+  (* Special case for assert-like failwiths. TODO: CLEAN THIS. *)
+  (* | I.Match_bool { match_false ; match_true } when I.is_e_failwith match_true -> ( *)
+  (*     let%bind fw = I.get_e_failwith match_true in *)
+  (*     let%bind fw' = type_expression e fw in *)
+  (*     let%bind mf' = type_expression e match_false in *)
+  (*     let t = get_type_annotation ex' in *)
+  (*     let%bind () = *)
+  (*       trace_strong (match_error ~expected:m ~actual:t ae.location) *)
+  (*       @@ assert_t_bool t in *)
+  (*     let%bind () = *)
+  (*       trace_strong (match_error *)
+  (*                       ~msg:"matching not-unit on an assert" *)
+  (*                       ~expected:m *)
+  (*                       ~actual:t *)
+  (*                       ae.location) *)
+  (*       @@ assert_t_unit (get_type_annotation mf') in *)
+  (*     let mt' = make_a_e *)
+  (*         (E_constant ("ASSERT_INFERRED" , [ex' ; fw'])) *)
+  (*         (t_unit ()) *)
+  (*         e *)
+  (*     in *)
+  (*     let m' = O.Match_bool { match_true = mt' ; match_false = mf' } in *)
+  (*     return (O.E_matching (ex' , m')) (t_unit ()) *)
+  (*   ) *)
+  (* | _ -> ( … ) *)
 
 
   | E_lambda {
@@ -678,7 +688,7 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
       return (E_constant (name' , lst')) tv
     *)
 
-  (* Advanced *)
+(* Advanced *)
 
 and type_constant (name:string) (lst:O.type_expression list) (tv_opt:O.type_expression option) (loc : Location.t) : (string * O.type_expression) result =
   (* Constant poorman's polymorphism *)
@@ -704,6 +714,9 @@ and type_constant (name:string) (lst:O.type_expression list) (tv_opt:O.type_expr
 (*     ) *)
 
 (* TODO: we ended up with two versions of type_program… ??? *)
+(*
+Apply type_declaration on all the node of the AST from the root p 
+*)
 let type_program (p:I.program) : (environment * Solver.state * O.program) result =
   let env = Ast_typed.Environment.full_empty in
   let state = Solver.initial_state in
@@ -711,7 +724,7 @@ let type_program (p:I.program) : (environment * Solver.state * O.program) result
     let%bind (e' , s' , d'_opt) = type_declaration e s (Location.unwrap d) in
     let ds' = match d'_opt with
       | None -> ds
-      | Some d' -> ds @ [Location.wrap ~loc:(Location.get_location d) d']
+      | Some d' -> ds @ [Location.wrap ~loc:(Location.get_location d) d'] (* take O(n) insted of O(1) *)
     in
     ok (e' , s' , ds')
   in
@@ -742,9 +755,9 @@ let type_program' : I.program -> O.program result = fun p ->
 
 let untype_type_expression (t:O.type_expression) : (I.type_expression) result =
   ok t
-  (* match t.simplified with *)
-  (* | Some s -> ok s *)
-  (* | _ -> fail @@ internal_assertion_failure "trying to untype generated type" *)
+(* match t.simplified with *)
+(* | Some s -> ok s *)
+(* | _ -> fail @@ internal_assertion_failure "trying to untype generated type" *)
 
 let untype_literal (l:O.literal) : I.literal result =
   let open I in
@@ -765,90 +778,90 @@ let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
   let return e = ok e in
   match e.expression with
   | E_literal l ->
-      let%bind l = untype_literal l in
-      return (e_literal l)
+    let%bind l = untype_literal l in
+    return (e_literal l)
   | E_constant (n, lst) ->
-      let%bind lst' = bind_map_list untype_expression lst in
-      return (e_constant n lst')
+    let%bind lst' = bind_map_list untype_expression lst in
+    return (e_constant n lst')
   | E_variable n ->
-      return (e_variable n)
+    return (e_variable n)
   | E_application (f, arg) ->
-      let%bind f' = untype_expression f in
-      let%bind arg' = untype_expression arg in
-      return (e_application f' arg')
+    let%bind f' = untype_expression f in
+    let%bind arg' = untype_expression arg in
+    return (e_application f' arg')
   | E_lambda {binder;input_type;output_type;result} ->
-      let%bind input_type = untype_type_expression input_type in
-      let%bind output_type = untype_type_expression output_type in
-      let%bind result = untype_expression result in
-      return (e_lambda binder (Some input_type) (Some output_type) result)
+    let%bind input_type = untype_type_expression input_type in
+    let%bind output_type = untype_type_expression output_type in
+    let%bind result = untype_expression result in
+    return (e_lambda binder (Some input_type) (Some output_type) result)
   | E_tuple lst ->
-      let%bind lst' = bind_list
-        @@ List.map untype_expression lst in
-      return (e_tuple lst')
+    let%bind lst' = bind_list
+      @@ List.map untype_expression lst in
+    return (e_tuple lst')
   | E_tuple_accessor (tpl, ind)  ->
-      let%bind tpl' = untype_expression tpl in
-      return (e_accessor tpl' (Access_tuple ind))
+    let%bind tpl' = untype_expression tpl in
+    return (e_accessor tpl' (Access_tuple ind))
   | E_constructor (n, p) ->
-      let%bind p' = untype_expression p in
-      return (e_constructor n p')
+    let%bind p' = untype_expression p in
+    return (e_constructor n p')
   | E_record r ->
-      let%bind r' = bind_smap
-        @@ SMap.map untype_expression r in
-      return (e_record r')
+    let%bind r' = bind_smap
+      @@ SMap.map untype_expression r in
+    return (e_record r')
   | E_record_accessor (r, s) ->
-      let%bind r' = untype_expression r in
-      return (e_accessor r' (Access_record s))
+    let%bind r' = untype_expression r in
+    return (e_accessor r' (Access_record s))
   | E_map m ->
-      let%bind m' = bind_map_list (bind_map_pair untype_expression) m in
-      return (e_map m')
+    let%bind m' = bind_map_list (bind_map_pair untype_expression) m in
+    return (e_map m')
   | E_list lst ->
-      let%bind lst' = bind_map_list untype_expression lst in
-      return (e_list lst')
+    let%bind lst' = bind_map_list untype_expression lst in
+    return (e_list lst')
   | E_set lst ->
-      let%bind lst' = bind_map_list untype_expression lst in
-      return (e_set lst')
+    let%bind lst' = bind_map_list untype_expression lst in
+    return (e_set lst')
   | E_look_up dsi ->
-      let%bind (a , b) = bind_map_pair untype_expression dsi in
-      return (e_look_up a b)
+    let%bind (a , b) = bind_map_pair untype_expression dsi in
+    return (e_look_up a b)
   | E_matching (ae, m) ->
-      let%bind ae' = untype_expression ae in
-      let%bind m' = untype_matching untype_expression m in
-      return (e_matching ae' m')
+    let%bind ae' = untype_expression ae in
+    let%bind m' = untype_matching untype_expression m in
+    return (e_matching ae' m')
   | E_failwith ae ->
-      let%bind ae' = untype_expression ae in
-      return (e_failwith ae')
+    let%bind ae' = untype_expression ae in
+    return (e_failwith ae')
   | E_sequence _
   | E_loop _
   | E_assign _ -> fail @@ not_supported_yet_untranspile "not possible to untranspile statements yet" e.expression
   | E_let_in {binder;rhs;result} ->
-      let%bind tv = untype_type_expression rhs.type_annotation in
-      let%bind rhs = untype_expression rhs in
-      let%bind result = untype_expression result in
-      return (e_let_in (binder , (Some tv)) rhs result)
+    let%bind tv = untype_type_expression rhs.type_annotation in
+    let%bind rhs = untype_expression rhs in
+    let%bind result = untype_expression result in
+    return (e_let_in (binder , (Some tv)) rhs result)
 
 and untype_matching : type o i . (o -> i result) -> o O.matching -> (i I.matching) result = fun f m ->
   let open I in
   match m with
   | Match_bool {match_true ; match_false} ->
-      let%bind match_true = f match_true in
-      let%bind match_false = f match_false in
-      ok @@ Match_bool {match_true ; match_false}
+    let%bind match_true = f match_true in
+    let%bind match_false = f match_false in
+    ok @@ Match_bool {match_true ; match_false}
   | Match_tuple (lst, b) ->
-      let%bind b = f b in
-      ok @@ Match_tuple (lst, b)
+    let%bind b = f b in
+    ok @@ Match_tuple (lst, b)
   | Match_option {match_none ; match_some = (v, some)} ->
-      let%bind match_none = f match_none in
-      let%bind some = f some in
-      let match_some = fst v, some in
-      ok @@ Match_option {match_none ; match_some}
+    let%bind match_none = f match_none in
+    let%bind some = f some in
+    let match_some = fst v, some in
+    ok @@ Match_option {match_none ; match_some}
   | Match_list {match_nil ; match_cons = (hd, tl, cons)} ->
-      let%bind match_nil = f match_nil in
-      let%bind cons = f cons in
-      let match_cons = hd, tl, cons in
-      ok @@ Match_list {match_nil ; match_cons}
+    let%bind match_nil = f match_nil in
+    let%bind cons = f cons in
+    let match_cons = hd, tl, cons in
+    ok @@ Match_list {match_nil ; match_cons}
   | Match_variant (lst , _) ->
-      let aux ((a,b),c) =
-        let%bind c' = f c in
-        ok ((a,b),c') in
-      let%bind lst' = bind_map_list aux lst in
-      ok @@ Match_variant lst'
+    let aux ((a,b),c) =
+      let%bind c' = f c in
+      ok ((a,b),c') in
+    let%bind lst' = bind_map_list aux lst in
+    ok @@ Match_variant lst'
