@@ -17,7 +17,7 @@
 %token <Region.t> CAT
 (*%token APPEND*)
 %token <Region.t> DOT
-%token <Region.t> DOTDOTDOT
+(* %token <Region.t> DOTDOTDOT *)
 
 %token <Region.t> COMMA
 %token <Region.t> SEMI
@@ -32,6 +32,7 @@
 %token <Region.t> GT
 %token <Region.t> LE
 %token <Region.t> GE
+%token <Region.t> EG
 
 %token <Region.t> BOOL_OR
 %token <Region.t> BOOL_AND
@@ -45,9 +46,7 @@
 %token <(string * Z.t) Region.reg> Mtz
 
 (*%token And*)
-%token <Region.t> Begin
 %token <Region.t> Else
-%token <Region.t> End
 %token <Region.t> False
 %token <Region.t> Fun
 %token <Region.t> If
@@ -60,12 +59,10 @@
 %token <Region.t> Of
 %token <Region.t> Or
 %token <Region.t> Set
-%token <Region.t> Then
 %token <Region.t> True
 %token <Region.t> Type
-%token <Region.t> With
 %token <Region.t> LetEntry
-%token <Region.t> MatchNat
+%token <Region.t> SwitchNat
 
 %token <Region.t> EOF
 

@@ -90,9 +90,7 @@ type t =
   (* Keywords *)
 
 (*| And*)
-| Begin of Region.t
 | Else of Region.t
-| End of Region.t
 | False of Region.t
 | Fun of Region.t
 | If of Region.t
@@ -105,14 +103,12 @@ type t =
 | Of of Region.t
 | Or of Region.t
 | Set of Region.t
-| Then of Region.t
 | True of Region.t
 | Type of Region.t
-| With of Region.t
 
   (* Liquidity specific *)
 | LetEntry of Region.t
-| MatchNat of Region.t
+| SwitchNat of Region.t
 (*
 | Contract
 | Sig

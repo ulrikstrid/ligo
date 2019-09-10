@@ -4,6 +4,7 @@
 [@@@warning "-42"]
 
 open Region
+module AST = Parser_ligodity.AST
 open AST
 
 let use_begin_end : bool option ref = ref None
@@ -55,7 +56,7 @@ par(X):
       rpar   = $3}
     in {region; value}
   }
-  
+
 (* Sequences
 
    Series of instances of the same syntactical category have often to
@@ -112,7 +113,7 @@ tuple(item):
 (* Possibly empty semicolon-separated values between brackets *)
 
 list(item):
-  LBRACKET sep_or_term_list(item,SEMI) RBRACKET {
+  LBRACKET sep_or_term_list(item, COMMA) RBRACKET {
     let elements, terminator = $2 in 
     { value =
       {
@@ -143,7 +144,7 @@ contract:
 
 declarations:
   declaration                                                    { $1 }
-| declaration declarations { Utils.(nseq_foldl (swap nseq_cons) $2 $1)}
+| declaration SEMI declarations { Utils.(nseq_foldl (swap nseq_cons) $3 $1)}
 
 declaration:
   LetEntry entry_binding { 
@@ -158,7 +159,7 @@ declaration:
 (* Type declarations *)
 
 type_decl:
-  Type type_name EQ type_expr {  
+  Type type_name COLON type_expr {  
     let region = cover $1 (type_expr_to_region $4) in
     let value = {
       kwd_type   = $1;
@@ -184,11 +185,9 @@ fun_type:
   core_type {      
     $1 
   }
-| core_type ARROW fun_type { 
-    let region = cover (type_expr_to_region $1)
-                       (type_expr_to_region $3)
-    in 
-    TFun {region; value = ($1, $2, $3)}
+| LPAR core_type EG fun_type RPAR { 
+    let region = cover $1 $5 in 
+    TFun {region; value = ($2, $3, $4)}
   }
 
 core_type:
@@ -232,7 +231,7 @@ type_tuple:
   par(tuple(type_expr)) { $1 }
 
 sum_type:
-  ioption(VBAR) nsepseq(variant,VBAR) { 
+  VBAR nsepseq(variant,VBAR) { 
     let region = nsepseq_to_region (fun x -> x.region) $2
     in {region; value = $2}
   }
@@ -247,7 +246,7 @@ variant:
     {region=$1.region; value= {constr=$1; args=None}} }
 
 record_type:
-  LBRACE sep_or_term_list(field_decl,SEMI) RBRACE {    
+  LBRACE sep_or_term_list(field_decl,COMMA) RBRACE {    
     let elements, terminator = $2 in
     let region = cover $1 $3
     and value  = {
@@ -269,13 +268,13 @@ field_decl:
 (* Entry points *)
 
 entry_binding:
-  Ident nseq(sub_irrefutable) type_annotation? EQ expr {
+  Ident nseq(sub_irrefutable) type_annotation? EG expr {
     let let_rhs = $5 in
     let pattern = PVar $1 in
     let (hd , tl) = $2 in
     {bindings = pattern :: hd :: tl; lhs_type=$3; eq=$4; let_rhs}
   }
-  | Ident type_annotation? EQ fun_expr(expr) {
+  | Ident type_annotation? EG fun_expr(expr) {
     let pattern = PVar $1 in
     {bindings = [pattern]; lhs_type=$2; eq=$3; let_rhs=$4} }
 
@@ -289,14 +288,14 @@ let_declaration:
   }
 
 let_binding:
-  Ident nseq(sub_irrefutable) type_annotation? EQ expr {
-    let let_rhs = $5 in
+  Ident LPAR nseq(sub_irrefutable) RPAR type_annotation? EG expr {
+    let let_rhs = $7 in
     let ident_pattern = PVar $1 in
-    let (hd , tl) = $2 in
+    let (hd , tl) = $3 in
     let start = $1.region in
-    let stop = expr_to_region $5 in
+    let stop = expr_to_region $7 in
     let region = cover start stop in
-    ({bindings= (ident_pattern :: hd :: tl); lhs_type=$3; eq=$4; let_rhs}, region)
+    ({bindings= (ident_pattern :: hd :: tl); lhs_type=$5; eq=$6; let_rhs}, region)
   }
 | irrefutable type_annotation? EQ expr {  
     let pattern = $1 in
@@ -383,7 +382,7 @@ core_pattern:
 | record_pattern                                         { PRecord $1 }
 
 record_pattern:
-  LBRACE sep_or_term_list(field_pattern,SEMI) RBRACE {
+  LBRACE sep_or_term_list(field_pattern,COMMA) RBRACE {
     let elements, terminator = $2 in
     let region = cover $1 $3 in
     let value = {
@@ -441,7 +440,7 @@ interactive_expr:
 
 expr:
   base_cond__open(expr)                                    {       $1 }
-| match_expr(base_cond)                                    { ECase $1 }
+| switch_expr(base_cond)                                   { ECase $1 }
 
 base_cond__open(x):
   base_expr(x)
@@ -454,49 +453,32 @@ base_expr(right_expr):
   let_expr(right_expr)
 | fun_expr(right_expr)
 | disj_expr_level                                         {        $1 }
-| tuple(disj_expr_level) {
-  let h, t = $1 in    
+| par(tuple(disj_expr_level)) {
+  let h, t = $1.value.inside in    
   let start = expr_to_region h in
   let stop = last (fun (region, _) -> region) t in
   let region = cover start stop in    
-  ETuple { value = $1; region } 
+  ETuple { value = $1.value.inside; region } 
 }
 
 conditional(right_expr):
-  if_then_else(right_expr)
-| if_then(right_expr)                                   {   ECond $1 }
+  if_then_else(right_expr)                              {   ECond $1 }
 
-if_then(right_expr):
-  If expr Then right_expr {
-    let the_unit = ghost, ghost in
-    let start = $1 in
-    let stop = expr_to_region $4 in
-    let region = cover start stop in
-    let ifnot = EUnit {region=ghost; value=the_unit} in
-    {
-      value = {
-        kwd_if = $1; 
-        test = $2; 
-        kwd_then = $3; 
-        ifso = $4;
-        kwd_else = ghost; 
-        ifnot
-      };
-      region 
-    }
-  }
+parenthesized_expr:
+  par (expr)                                            {    EPar $1 }
+
 
 if_then_else(right_expr):
-  If expr Then closed_if Else right_expr {
-    let region = cover $1 (expr_to_region $6) in
+  If parenthesized_expr LBRACE closed_if RBRACE Else LBRACE right_expr RBRACE {
+    let region = cover $1 $9 in
     { 
       value = {
         kwd_if = $1; 
-        test = $2; 
+        test = $2;  
         kwd_then = $3; 
         ifso = $4;
         kwd_else = $5; 
-        ifnot = $6
+        ifnot = $8
       };
       region
     }
@@ -511,37 +493,34 @@ base_if_then_else:
 
 closed_if:
   base_if_then_else__open(closed_if)                       {       $1 }
-| match_expr(base_if_then_else)                            { ECase $1 }
+| switch_expr(base_if_then_else)                           { ECase $1 }
 
-match_expr(right_expr):
-  Match expr With VBAR? cases(right_expr) {
-    let cases = Utils.nsepseq_rev $5 in
+switch_expr(right_expr):
+  Switch foo_expr LBRACE cases(right_expr) RBRACE {
+    let cases = Utils.nsepseq_rev $4 in
     let start = $1 in
-    let stop = match $5 with (* TODO: move to separate function *)
-    | {region; _}, [] -> region
-    | _, tl -> last (fun (region,_) -> region) tl 
-    in
+    let stop = $5 in
     let region = cover start stop in
     { value = {
         kwd_match = $1; 
         expr = $2; 
-        opening = With $3;
-        lead_vbar = $4; 
+        opening = LBrace $3;
+        lead_vbar = None; 
         cases = {
-          value = cases; 
-          region = nsepseq_to_region (fun {region; _} -> region) $5
+          value = cases;
+          region = nsepseq_to_region (fun {region; _} -> region) $4
         };
-        closing = End ghost
+        closing = RBrace $5
       }; 
       region 
     }
   }
-| MatchNat expr With VBAR? cases(right_expr) {
-    let cases = Utils.nsepseq_rev $5 in
+| SwitchNat foo_expr LBRACE cases(right_expr) RBRACE {
+    let cases = Utils.nsepseq_rev $4 in
     let cast = EVar {region=ghost; value="assert_pos"} in
     let cast = ECall {region=ghost; value=cast,($2,[])} in
     let start = $1 in
-    let stop = match $5 with (* TODO: move to separate function *)
+    let stop = match $4 with (* TODO: move to separate function *)
     | {region; _}, [] -> region
     | _, tl -> last (fun (region,_) -> region) tl 
     in
@@ -550,46 +529,47 @@ match_expr(right_expr):
       value = {
         kwd_match = $1; 
         expr = cast; 
-        opening = With $3;
-        lead_vbar = $4; 
+        opening = LBrace $3;
+        lead_vbar = None; 
         cases = {
           value = cases; 
-          region = nsepseq_to_region (fun {region; _} -> region) $5
+          region = nsepseq_to_region (fun {region; _} -> region) $4
         };
-        closing = End ghost
+        closing = RBrace $5
       }; 
       region 
     }
   }
 
-cases(right_expr):
-  case_clause(right_expr) { 
-    let start = pattern_to_region $1.pattern in
-    let stop = expr_to_region $1.rhs in
-    let region = cover start stop in
-    { value = $1; region }, []
+foo_expr: 
+  | par(expr) {
+    $1.value.inside
   }
-  | cases(base_cond) VBAR case_clause(right_expr) {
-    let start = match $1 with
-    | {region; _}, [] -> region
-    | _, tl -> last (fun (region,_) -> region) tl 
-    in
-    let stop = expr_to_region $3.rhs in
-    let region = cover start stop in
-    let h,t = $1 in { value = $3; region}, ($2, h)::t    
-  }  
+  | core_expr_2 {
+    $1
+  }
+
+cases(right_expr):
+  nseq(case_clause(right_expr)) { 
+    let (hd, tl) = $1 in
+    hd, (List.map (fun f -> ghost, f) tl) (* TODO: FIXME: ghost -> region *)
+  }
 
 case_clause(right_expr):
-  pattern ARROW right_expr {    
-    {
-      pattern = $1; 
-      arrow = $2; 
-      rhs=$3   
+  VBAR pattern EG right_expr {  
+    let region = cover (pattern_to_region $2) (expr_to_region $4) in
+    {value =   
+      {
+        pattern = $2; 
+        arrow = $3; 
+        rhs=$4   
+      };
+      region
     }
   }
 
 let_expr(right_expr):
-  Let let_binding In right_expr {
+  Let let_binding SEMI right_expr {
     let kwd_let = $1 in 
     let (binding, _) = $2 in
     let kwd_in = $3 in
@@ -600,7 +580,7 @@ let_expr(right_expr):
     in ELetIn {region; value=let_in} }
 
 fun_expr(right_expr):
-  Fun nseq(irrefutable) ARROW right_expr {
+  Fun nseq(irrefutable) EG right_expr {
     let kwd_fun = $1 in
     let bindings = $2 in 
     let arrow = $3  in
@@ -758,6 +738,20 @@ call_expr:
     { value = $1,$2; region }
   }
 
+core_expr_2:
+  Int                                               { EArith (Int $1) }
+| Mtz                                               { EArith (Mtz $1) }
+| Nat                                               { EArith (Nat $1) }
+| Ident | module_field                                      { EVar $1 }
+| projection                                               { EProj $1 }
+| Str                                           { EString (String $1) }
+| unit                                                     { EUnit $1 }
+| False                               {  ELogic (BoolExpr (False $1)) }
+| True                                {  ELogic (BoolExpr (True $1))  }
+| list(expr)                                        { EList (List $1) }
+| par(expr COLON type_expr {$1,$3}) {
+    EAnnot {$1 with value=$1.value.inside} }
+
 core_expr:
   Int                                               { EArith (Int $1) }
 | Mtz                                               { EArith (Mtz $1) }
@@ -770,10 +764,6 @@ core_expr:
 | True                                {  ELogic (BoolExpr (True $1))  }
 | list(expr)                                        { EList (List $1) }
 | par(expr)                                              {    EPar $1 }
-| sequence {
-  check_use_begin_end true;
-  ESeq $1 
-}
 | record_expr                                            { ERecord $1 }
 | par(expr COLON type_expr {$1,$3}) {
     EAnnot {$1 with value=$1.value.inside} }
@@ -828,7 +818,7 @@ selection:
 | par(Int) { Component $1 }
 
 record_expr:
-  LBRACE sep_or_term_list(field_assignment,SEMI) RBRACE {    
+  LBRACE sep_or_term_list(field_assignment,COMMA) RBRACE {    
     let elements, terminator = $2 in
     let region = cover $1 $3 in
     check_use_begin_end false;
@@ -843,7 +833,7 @@ record_expr:
   }
 
 field_assignment:
-  field_name EQ expr {
+  field_name COLON expr {
     let start = $1.region in 
     let stop = expr_to_region $3 in 
     let region = cover start stop in
@@ -855,21 +845,4 @@ field_assignment:
       };
       region
     } 
-  }
-
-sequence:
-  Begin sep_or_term_list(expr,SEMI) End {
-    let elements, terminator = $2 in
-    let start = $1 in 
-    let stop = $3 in 
-    let region = cover start stop in
-    {
-      value = {
-        opening = Begin $1;
-        elements = Some elements;
-        terminator;
-        closing = End $3
-      };
-      region
-    }
   }

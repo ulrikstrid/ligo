@@ -72,9 +72,7 @@ type t =
   (* Keywords *)
 
 (*| And*)
-| Begin of Region.t
 | Else of Region.t
-| End of Region.t
 | False of Region.t
 | Fun of Region.t
 | If of Region.t
@@ -87,14 +85,12 @@ type t =
 | Of of Region.t
 | Or of Region.t
 | Set of Region.t
-| Then of Region.t
 | True of Region.t
 | Type of Region.t
-| With of Region.t
 
   (* Liquidity specific *)
 | LetEntry of Region.t
-| MatchNat of Region.t
+| SwitchNat of Region.t
 (*
 | Contract
 | Sig
@@ -152,9 +148,7 @@ let proj_token = function
     region,
     sprintf "Bytes (\"%s\", \"0x%s\")"
       s (Hex.to_string b)
-  | Begin region -> region, "Begin"
   | Else region -> region, "Else"
-  | End region -> region, "End"
   | False region -> region, "False"
   | Fun region -> region, "Fun"
   | If region -> region, "If"
@@ -167,12 +161,10 @@ let proj_token = function
   | Of region -> region, "Of"
   | Or region -> region, "Or"
   | Set region -> region, "Set"
-  | Then region -> region, "Then"
   | True region -> region, "True"
   | Type region -> region, "Type"
-  | With region -> region, "With"    
   | LetEntry region -> region, "LetEntry"
-  | MatchNat region -> region, "MatchNat"
+  | SwitchNat region -> region, "SwitchNat"
   | EOF region -> region, "EOF"
 
 let to_lexeme = function
@@ -211,9 +203,7 @@ let to_lexeme = function
   | Mtz i -> fst i.Region.value
   | Str s -> s.Region.value
   | Bytes b -> fst b.Region.value
-  | Begin _ -> "begin"
   | Else _ -> "else"
-  | End _ -> "end"
   | False _ -> "false"
   | Fun _ -> "fun"
   | If _ -> "if"
@@ -228,10 +218,8 @@ let to_lexeme = function
   | Switch _ -> "switch"
   | True _ -> "true"
   | Type _ -> "type"
-  | Then _ -> "then"
-  | With _ -> "with"
   | LetEntry _ -> "let%entry"
-  | MatchNat _ -> "match%nat"
+  | SwitchNat _ -> "switch%nat"
   | EOF _ -> ""  
 
 let to_string token ?(offsets=true) mode =
@@ -249,9 +237,7 @@ type int_err =
 (* LEXIS *)
 
 let keywords = [
-  (fun reg -> Begin reg);
   (fun reg -> Else  reg);
-  (fun reg -> End   reg);
   (fun reg -> False reg);
   (fun reg -> Fun   reg);
   (fun reg -> If    reg);
@@ -264,12 +250,10 @@ let keywords = [
   (fun reg -> Of    reg);
   (fun reg -> Or    reg);
   (fun reg -> Set   reg);
-  (fun reg -> Then  reg);
   (fun reg -> True  reg);
   (fun reg -> Type  reg);
-  (fun reg -> With  reg);
   (fun reg -> LetEntry reg);
-  (fun reg -> MatchNat reg);
+  (fun reg -> SwitchNat reg);
 ]
 
 let reserved =
@@ -315,6 +299,7 @@ let reserved =
     |> add "while"
     |> add "in"
     |> add "match"
+    |> add "then"
 
 let constructors = [
   (fun reg -> False reg);
@@ -481,9 +466,7 @@ let is_ident = function
 |       _ -> false
 
 let is_kwd = function
-  | Begin _
   | Else _
-  | End _
   | False _
   | Fun _
   | If _
@@ -496,12 +479,10 @@ let is_kwd = function
   | Of _
   | Or _
   | Set _
-  | Then _
   | True _
   | Type _
   | LetEntry _
-  | MatchNat _
-  | With _   -> true
+  | SwitchNat _
   | _ -> false
 
 let is_constr = function
