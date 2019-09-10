@@ -6,10 +6,10 @@ module Wrap = struct
   let aa = 42
 
   (* Shouldn't this be simply ?
-  module I = Ast_simplified
-  module 0 = Core
+     module I = Ast_simplified
+     module 0 = Core
 
-  I don't understand the reason for a local module
+     I don't understand the reason for a local module
   *)
   module Local = struct
     module I = Ast_simplified
@@ -130,15 +130,15 @@ module Wrap = struct
     let mk_map_type key_type element_type =
       O.P_constant O.(C_map , [P_variable element_type; P_variable key_type]) in
     fun ~base ~key ->
-    let key_type = Core.fresh_type_variable () in
-    let element_type = Core.fresh_type_variable () in
-    let base' = type_expression_to_type_value base in
-    let key' = type_expression_to_type_value key in
-    let base_expected = mk_map_type key_type element_type in
-    let expr_type = Core.fresh_type_variable () in
-    O.[C_equation (base' , base_expected);
-       C_equation (key' , P_variable key_type);
-       C_equation (P_variable expr_type , P_variable element_type)] , expr_type
+      let key_type = Core.fresh_type_variable () in
+      let element_type = Core.fresh_type_variable () in
+      let base' = type_expression_to_type_value base in
+      let key' = type_expression_to_type_value key in
+      let base_expected = mk_map_type key_type element_type in
+      let expr_type = Core.fresh_type_variable () in
+      O.[C_equation (base' , base_expected);
+         C_equation (key' , P_variable key_type);
+         C_equation (P_variable expr_type , P_variable element_type)] , expr_type
 
   let constructor
     : I.type_expression -> I.type_expression -> I.type_expression -> (constraints * O.type_variable)
@@ -304,11 +304,11 @@ end
 (* begin unionfind *)
 
 module TV =
-  struct
-    type t = Core.type_variable
-    let compare = String.compare
-    let to_string = (fun s -> s)
-  end
+struct
+  type t = Core.type_variable
+  let compare = String.compare
+  let to_string = (fun s -> s)
+end
 
 module UF = Union_find.Partition1.Make(TV)
 
@@ -386,9 +386,16 @@ and constraints = {
   tc          : c_typeclass_repr   list ;
 }
 
+and c_constructor_repr = {
+  tv : type_variable_repr;
+  c_tag : constant_tag;
+  tvr_list : type_variable_repr list; (* non-empty list *)
+}
+and c_constant_repr = {
+  tvr : type_variable_repr;
+  c_tag : constant_tag; (* for type constructors that do not take arguments *)
+}
 (* copy-pasted from core.ml *)
-and c_constructor_repr = type_variable_repr * constant_tag * type_variable_repr list (* non-empty list *)
-and c_constant_repr = (type_variable_repr * constant_tag) (* for type constructors that do not take arguments *)
 and c_const = (type_variable * type_value)
 and c_equation = (type_value * type_value)
 and c_typeclass_repr = {
@@ -442,8 +449,8 @@ let normalizer_all_constraints : type_constraint -> structured_dbs -> structured
 let normalizer_grouped_by_variable : type_constraint_repr -> structured_dbs -> structured_dbs =
   fun new_constraint dbs ->
   let tvars, lala = match new_constraint with
-      SC_Constructor ((tva , _ctorb , argsb) as c) -> tva :: argsb, { constructor = [c] ; constant = [] ; tc = [] }
-    | SC_Constant (tva , _constant as c) -> [tva], { constant = [c] ; constructor = [] ; tc = [] }
+      SC_Constructor ({tva ; _ctorb ; argsb} as c) -> tva :: argsb, { constructor = [c] ; constant = [] ; tc = [] }
+    | SC_Constant ({tva ; _constant} as c) -> [tva], { constant = [c] ; constructor = [] ; tc = [] }
     | SC_Typeclass ({tva ; tc=_ ; args} as c) -> [tva ; (* TODO: *) args ], { tc = [c] ; constructor = [] ; constant = [] }
   in
   let aux dbs tvar =
@@ -555,9 +562,9 @@ let rec unify : type_value * type_value -> type_constraint list result = functio
     ok []
   | _ -> failwith "TODO"
 
-  (* (\* unify a and b, possibly produce new constraints *\) *)
-  (* let () = ignore (a,b) in *)
-  (* ok [] *)
+(* (\* unify a and b, possibly produce new constraints *\) *)
+(* let () = ignore (a,b) in *)
+(* ok [] *)
 
 (* This is the solver *)
 let aggregate_constraints : state -> type_constraint list -> state result = fun state newc ->
@@ -565,5 +572,5 @@ let aggregate_constraints : state -> type_constraint list -> state result = fun 
   (* TODO: try to unify things:
              if we have a = X and b = Y, try to unify X and Y *)
   failwith "TODO"
-  (*let { constraints ; eqv } = state in
+(*let { constraints ; eqv } = state in
   ok { constraints = constraints @ newc ; eqv }*)
