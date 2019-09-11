@@ -106,9 +106,9 @@ let () =
     let ast = Parser.contract tokeniser buffer in
     if Utils.String.Set.mem "ast" options.verbose
     then begin
-           ParserLog.offsets := options.offsets;
-           ParserLog.mode    := options.mode;
-           ParserLog.print_tokens ast
+           Parser_ligodity.ParserLog.offsets := options.offsets;
+           Parser_ligodity.ParserLog.mode    := options.mode;
+           Parser_ligodity.ParserLog.print_tokens ast
          end
   with
     Lexer.Error err ->

@@ -95,8 +95,26 @@ let parsify_expression_ligodity = fun source ->
     Simplify.Ligodity.simpl_expression raw in
   ok simplified
 
+let parsify_reasonligo = fun source ->  
+  let%bind raw =
+    trace (simple_error "parsing") @@
+    Parser.Reasonligo.parse_file source in
+  let%bind simplified =
+    trace (simple_error "simplifying") @@
+    Simplify.Ligodity.simpl_program raw in
+  ok simplified
+
+let parsify_expression_reasonligo = fun source ->
+  let%bind raw =
+    trace (simple_error "parsing expression") @@
+    Parser.Reasonligo.parse_expression source in
+  let%bind simplified =
+    trace (simple_error "simplifying expression") @@
+    Simplify.Ligodity.simpl_expression raw in
+  ok simplified
+
 type s_syntax = Syntax_name of string
-type v_syntax =  [`pascaligo | `cameligo ]
+type v_syntax =  [`pascaligo | `cameligo | `reasonligo]
 
 let syntax_to_variant : s_syntax -> string option -> v_syntax result =
   fun syntax source_filename ->
@@ -115,14 +133,18 @@ let syntax_to_variant : s_syntax -> string option -> v_syntax result =
           match source_filename with
           | Some source_filename
             when endswith source_filename ".ligo"
-            -> ok `pascaligo
+            -> ok `pascaligo          
           | Some source_filename
             when endswith source_filename ".mligo"
             -> ok `cameligo
+          | Some source_filename
+            when endswith source_filename ".religo"
+            -> ok `reasonligo            
           | _ -> simple_fail "cannot auto-detect syntax, pleas use -s name_of_syntax"
         end
       else if String.equal syntax "pascaligo" then ok `pascaligo
       else if String.equal syntax "cameligo" then ok `cameligo
+      else if String.equal syntax "reasonligo" then ok `reasonligo
       else simple_fail "unrecognized parser"
     end
 
@@ -130,6 +152,7 @@ let parsify = fun (syntax : v_syntax) source_filename ->
   let%bind parsify = match syntax with
     | `pascaligo -> ok parsify_pascaligo
     | `cameligo -> ok parsify_ligodity
+    | `reasonligo -> ok parsify_reasonligo
   in
   parsify source_filename
 
@@ -137,6 +160,7 @@ let parsify_expression = fun syntax source ->
   let%bind parsify = match syntax with
     | `pascaligo -> ok parsify_expression_pascaligo
     | `cameligo -> ok parsify_expression_ligodity
+    | `reasonligo -> ok parsify_expression_reasonligo
   in
   parsify source
 

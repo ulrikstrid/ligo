@@ -144,22 +144,22 @@ contract:
 
 declarations:
   declaration                                                    { $1 }
-| declaration SEMI declarations { Utils.(nseq_foldl (swap nseq_cons) $3 $1)}
+| declaration declarations { Utils.(nseq_foldl (swap nseq_cons) $2 $1)}
 
 declaration:
-  LetEntry entry_binding { 
+  LetEntry entry_binding SEMI { 
     let start = $1 in
-    let stop = expr_to_region $2.let_rhs in
+    let stop = $3 in
     let region = cover start stop in  
     LetEntry { value = ($1, $2); region}, []
   }
-| type_decl                                         { TypeDecl $1, [] }
-| let_declaration                                   { Let      $1, [] }
+| type_decl SEMI                                        { TypeDecl $1, [] }
+| let_declaration SEMI                                   { Let      $1, [] }
 
 (* Type declarations *)
 
 type_decl:
-  Type type_name COLON type_expr {  
+  Type type_name EQ type_expr {  
     let region = cover $1 (type_expr_to_region $4) in
     let value = {
       kwd_type   = $1;
