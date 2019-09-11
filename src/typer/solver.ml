@@ -387,12 +387,12 @@ and constraints = {
 }
 
 and c_constructor_repr = {
-  tv : type_variable_repr;
+  tva : type_variable_repr;
   c_tag : constant_tag;
-  tvr_list : type_variable_repr list; (* non-empty list *)
+  args : type_variable_repr list; (* non-empty list *)
 }
 and c_constant_repr = {
-  tvr : type_variable_repr;
+  tva : type_variable_repr;
   c_tag : constant_tag; (* for type constructors that do not take arguments *)
 }
 (* copy-pasted from core.ml *)
@@ -449,8 +449,8 @@ let normalizer_all_constraints : type_constraint -> structured_dbs -> structured
 let normalizer_grouped_by_variable : type_constraint_repr -> structured_dbs -> structured_dbs =
   fun new_constraint dbs ->
   let tvars, lala = match new_constraint with
-      SC_Constructor ({tva ; _ctorb ; argsb} as c) -> tva :: argsb, { constructor = [c] ; constant = [] ; tc = [] }
-    | SC_Constant ({tva ; _constant} as c) -> [tva], { constant = [c] ; constructor = [] ; tc = [] }
+      SC_Constructor ({tva ; c_tag ; args} as c) -> tva :: args, { constructor = [c] ; constant = [] ; tc = [] }
+    | SC_Constant ({tva ; c_tag} as c) -> [tva], { constant = [c] ; constructor = [] ; tc = [] }
     | SC_Typeclass ({tva ; tc=_ ; args} as c) -> [tva ; (* TODO: *) args ], { tc = [c] ; constructor = [] ; constant = [] }
   in
   let aux dbs tvar =
