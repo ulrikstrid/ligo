@@ -433,30 +433,38 @@ let list () : unit result =
 
 let bytes_ligo () : unit result =
   let%bind program = type_file "./contracts/bytes.ligo" in
+  let%bind param = e_bytes "ff84da27eb2552430ccfeca6078905d5" in
+  let%bind storage1 = e_bytes "b7e5193b8fbbb42d5e470e026e49ded4" in
+  let%bind storage2 = e_bytes "2030ab7fe38ce9cb2cd7e48c57fe3e6a" in
+  let%bind from_contract = e_bytes "626f6e006a6f7572" in
   let%bind () =
     expect_eq program "main"
       (e_tuple [
-         e_bytes "pa\000ram" ;
-         e_tuple [e_bytes "storage1" ; e_bytes "storage2"]
+         param ;
+         e_tuple [storage1 ; storage2]
       ])
       (e_tuple [
          e_list [] ;
-         e_tuple [e_bytes "bon\000jour" ; e_bytes "pa\000ram"]
+         e_tuple [from_contract ; param]
       ])
   in
   ok ()
 
 let bytes_mligo () : unit result =
   let%bind program = mtype_file "./contracts/bytes.mligo" in
+  let%bind param = e_bytes "ff84da27eb2552430ccfeca6078905d5" in
+  let%bind storage1 = e_bytes "b7e5193b8fbbb42d5e470e026e49ded4" in
+  let%bind storage2 = e_bytes "2030ab7fe38ce9cb2cd7e48c57fe3e6a" in
+  let%bind from_contract = e_bytes "626f6e006a6f7572" in
   let%bind () =
     expect_eq program "main"
       (e_tuple [
-         e_bytes "pa\000ram" ;
-         e_tuple [e_bytes "storage1" ; e_bytes "storage2"]
+         param ;
+         e_tuple [storage1 ; storage2]
       ])
       (e_tuple [
          e_list [] ;
-         e_tuple [e_bytes "bon\000jour" ; e_bytes "pa\000ram"]
+         e_tuple [from_contract ; param]
       ])
   in
   ok ()
