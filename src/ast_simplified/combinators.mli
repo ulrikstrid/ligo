@@ -52,7 +52,7 @@ val e_bool : ?loc:Location.t -> bool -> expression
 val e_string : ?loc:Location.t -> string -> expression
 val e_address : ?loc:Location.t -> string -> expression 
 val e_tez : ?loc:Location.t -> int -> expression
-val e_bytes : ?loc:Location.t -> string -> expression
+val e_bytes : ?loc:Location.t -> string -> expression result
 val e_tuple : ?loc:Location.t -> expression list -> expression
 val e_some : ?loc:Location.t -> expression -> expression
 val e_none : ?loc:Location.t -> unit -> expression

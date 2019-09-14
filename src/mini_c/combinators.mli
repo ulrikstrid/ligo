@@ -29,6 +29,7 @@ val get_set : value -> value list result
 val get_t_option : type_value -> type_value result
 val get_pair : value -> ( value * value ) result
 val get_t_pair : type_value -> ( type_value * type_value ) result
+val get_t_or : type_value -> ( type_value * type_value ) result
 val get_t_map : type_value -> ( type_value * type_value ) result
 val get_t_list : type_value -> type_value result
 val get_t_set : type_value -> type_value result
@@ -42,7 +43,7 @@ val get_t_left : type_value -> type_value result
 val get_t_right : type_value -> type_value result
 val get_t_contract : type_value -> type_value result
 val get_t_operation : type_value -> unit result
-val get_operation : value -> Memory_proto_alpha.Alpha_context.packed_internal_operation result
+val get_operation : value -> Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation result
 
 val t_int : type_value 
 (*
