@@ -110,7 +110,7 @@ val e_bool : bool -> expression
 val e_string : string -> expression
 *)
 val e_address : string -> expression
-val e_operation : Memory_proto_alpha.Alpha_context.packed_internal_operation -> expression
+val e_operation : Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation -> expression
 (*
 val e_lambda : lambda -> expression
 val e_pair : value -> value -> expression

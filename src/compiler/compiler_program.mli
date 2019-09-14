@@ -2,23 +2,29 @@ open Trace
 open Mini_c
 
 open Michelson
-open Memory_proto_alpha.Script_ir_translator
+open Memory_proto_alpha.Protocol.Script_ir_translator
+open Operators.Compiler
 
+(*
 module Contract_types = Meta_michelson.Types
 module Stack = Meta_michelson.Stack
+*)
 type compiled_program = {
   input : ex_ty ;
   output : ex_ty ;
   body : michelson ;
 }
 
-val translate_value : value -> michelson result 
+val get_predicate : string -> type_value -> expression list -> predicate result
+val translate_expression : expression -> environment -> michelson result
+val translate_function_body : anon_function -> environment_element list -> type_value -> michelson result
+val translate_value : value -> type_value -> michelson result 
 
 val translate_program : program -> string -> compiled_program result
 
-val translate_contract : anon_function -> michelson result
+val translate_contract : anon_function -> (type_value * type_value ) -> michelson result
 
-val translate_entry : anon_function -> compiled_program result
+val translate_entry : anon_function -> type_value * type_value -> compiled_program result
 
 (*
 
