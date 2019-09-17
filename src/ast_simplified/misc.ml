@@ -72,22 +72,6 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
       assert_literal_eq (a, b)
   | E_literal _ , _ ->
     simple_fail "comparing a literal with not a literal"
-  | E_constant (ca, lsta) , E_constant (cb, lstb) when ca = cb -> (
-      let%bind lst =
-        generic_try (simple_error "constants with different number of elements")
-          (fun () -> List.combine lsta lstb) in
-      let%bind _all = bind_list @@ List.map assert_value_eq lst in
-      ok ()
-    )
-  | E_constant _ , E_constant _ ->
-      simple_fail "different constants"
-  | E_constant _ , _ ->
-      let error_content () =
-        Format.asprintf "%a vs %a"
-          PP.expression a
-          PP.expression b
-      in
-      fail @@ (fun () -> error (thunk "comparing constant with other stuff") error_content ())
 
   | E_constructor (ca, a), E_constructor (cb, b) when ca = cb -> (
       let%bind _eq = assert_value_eq (a, b) in
@@ -97,6 +81,17 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
       simple_fail "different constructors"
   | E_constructor _, _ ->
       simple_fail "comparing constructor with other stuff"
+
+  | E_none, E_none -> ok ()
+  | E_none, _ ->
+      simple_fail "comparing None with other stuff"
+
+  | E_some a, E_some b -> (
+      let%bind _eq = assert_value_eq (a, b) in
+      ok ()
+    )
+  | E_some _, _ ->
+      simple_fail "comparing Some with other stuff"
 
   | E_tuple lsta, E_tuple lstb -> (
       let%bind lst =
@@ -160,6 +155,8 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
 
   | (E_annotation (a , _) ,  _b') -> assert_value_eq (a , b)
   | (_a' , E_annotation (b , _)) -> assert_value_eq (a , b)
+
+  | (E_constant _, _)
   | (E_variable _, _) | (E_lambda _, _)
   | (E_application _, _) | (E_let_in _, _)
   | (E_accessor _, _)

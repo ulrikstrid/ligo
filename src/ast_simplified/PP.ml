@@ -36,6 +36,8 @@ let rec expression ppf (e:expression) = match Location.unwrap e with
   | E_variable name -> fprintf ppf "%s" name
   | E_application (f, arg) -> fprintf ppf "(%a)@(%a)" expression f expression arg
   | E_constructor (name, ae) -> fprintf ppf "%s(%a)" name expression ae
+  | E_none -> fprintf ppf "None"
+  | E_some ae -> fprintf ppf "Some(%a)" expression ae
   | E_constant (name, lst) -> fprintf ppf "%s(%a)" name (list_sep_d expression) lst
   | E_tuple lst -> fprintf ppf "tuple[%a]" (list_sep_d expression) lst
   | E_accessor (ae, p) -> fprintf ppf "%a.%a" expression ae access_path p

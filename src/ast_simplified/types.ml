@@ -54,6 +54,8 @@ and expression' =
   | E_tuple of expr list
   (* Sum *)
   | E_constructor of (name * expr) (* For user defined constructors *)
+  | E_none
+  | E_some of expr
   (* E_record *)
   | E_record of expr_map
   | E_accessor of (expr * access_path)

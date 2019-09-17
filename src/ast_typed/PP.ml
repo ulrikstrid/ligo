@@ -34,6 +34,8 @@ and expression ppf (e:expression) : unit =
   | E_literal l -> literal ppf l
   | E_constant (c, lst) -> fprintf ppf "%s(%a)" c (list_sep_d annotated_expression) lst
   | E_constructor (c, lst) -> fprintf ppf "%s(%a)" c annotated_expression lst
+  | E_none -> fprintf ppf "None"
+  | E_some e -> fprintf ppf "Some(%a)" annotated_expression e
   | E_variable a -> fprintf ppf "%s" a
   | E_application (f, arg) -> fprintf ppf "(%a) (%a)" annotated_expression f annotated_expression arg
   | E_lambda l -> fprintf ppf "%a" lambda l

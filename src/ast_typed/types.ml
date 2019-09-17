@@ -94,6 +94,8 @@ and expression =
   | E_tuple_accessor of (ae * int) (* Access n'th tuple's element *)
   (* Sum *)
   | E_constructor of (name * ae) (* For user defined constructors *)
+  | E_none
+  | E_some of ae
   (* Record *)
   | E_record of ae_map
   | E_record_accessor of (ae * string)

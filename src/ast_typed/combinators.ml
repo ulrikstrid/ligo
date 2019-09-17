@@ -206,8 +206,8 @@ let ez_e_record (lst : (string * ae) list) : expression =
   let aux prev (k, v) = SMap.add k v prev in
   let map = List.fold_left aux SMap.empty lst in
   e_record map
-let e_some s : expression = E_constant ("SOME", [s])
-let e_none : expression = E_constant ("NONE", [])
+let e_some s : expression = E_some s
+let e_none : expression = E_none
 
 let e_map lst : expression = E_map lst
 

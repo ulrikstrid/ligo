@@ -292,6 +292,11 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
           ae_opt in
       return ~tv ae
     )
+  | E_none -> return (E_constant ("NONE", []))
+  | E_some a -> (
+      let%bind a = translate_annotated_expression a in
+      return (E_constant ("SOME", [a]))
+    )
   | E_tuple lst -> (
       let node = Append_tree.of_list lst in
       let aux (a:expression result) (b:expression result) : expression result =

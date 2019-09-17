@@ -100,8 +100,17 @@ module Errors = struct
     ] in
     error ~data title message ()
 
-  let error_uncomparable_values name a b () =
-    let title () = name ^ " are not comparable" in
+  let error_not_a_value a b () =
+    let title () = "when comparing values, got a non-value" in
+    let message () = "" in
+    let data = [
+      ("a" , fun () -> Format.asprintf "%a" PP.value a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP.value b )
+    ] in
+    error ~data title message ()
+
+  let error_lambda_comparison_not_implemented a b () =
+    let title () = "tried to compare a lambda value, not implemented" in
     let message () = "" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a" PP.value a) ;
@@ -151,6 +160,8 @@ module Free_variables = struct
     | E_application (a, b) -> unions @@ List.map self [ a ; b ]
     | E_tuple lst -> unions @@ List.map self lst
     | E_constructor (_ , a) -> self a
+    | E_some a -> self a
+    | E_none -> []
     | E_record m -> unions @@ List.map self @@ Map.String.to_list m
     | E_record_accessor (a, _) -> self a
     | E_tuple_accessor (a, _) -> self a
@@ -374,22 +385,13 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
   match (a.expression, b.expression) with
   | E_literal a, E_literal b ->
       assert_literal_eq (a, b)
-  | E_constant (ca, lsta), E_constant (cb, lstb) when ca = cb -> (
-      let%bind lst =
-        generic_try (different_size_values "constants with different number of elements" a b)
-          (fun () -> List.combine lsta lstb) in
-      let%bind _all = bind_list @@ List.map assert_value_eq lst in
-      ok ()
-    )
-  | E_constant _, E_constant _ ->
-      fail @@ different_values "constants" a b
-  | E_constant _, _ ->
-      let error_content () =
-        Format.asprintf "%a vs %a"
-          PP.annotated_expression a
-          PP.annotated_expression b
-      in
-      fail @@ (fun () -> error (thunk "comparing constant with other stuff") error_content ())
+  | E_literal _, _ ->
+    let error_content () =
+      Format.asprintf "%a vs %a"
+        PP.annotated_expression a
+        PP.annotated_expression b
+    in
+    fail @@ (fun () -> error (thunk "comparing literal with other stuff") error_content ())
 
   | E_constructor (ca, a), E_constructor (cb, b) when ca = cb -> (
       let%bind _eq = assert_value_eq (a, b) in
@@ -399,6 +401,18 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
       fail @@ different_values "constructors" a b
   | E_constructor _, _ ->
       fail @@ different_values_because_different_types "constructor vs. non-constructor" a b
+
+  | E_none, E_none -> ok ()
+  | E_none, E_some _ | E_some _, E_none ->
+      fail @@ different_values "constructors" a b
+  | E_some a, E_some b -> (
+      let%bind _eq = assert_value_eq (a, b) in
+      ok ()
+    )
+  | E_some _, _ ->
+      fail @@ different_values_because_different_types "option vs. non-option" a b
+  | E_none, _ ->
+      fail @@ different_values_because_different_types "option vs. non-option" a b
 
   | E_tuple lsta, E_tuple lstb -> (
       let%bind lst =
@@ -456,12 +470,18 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
     )
   | E_set _, _ ->
       fail @@ different_values_because_different_types "set vs. non-set" a b
-  | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
-  | (E_lambda _, _) | (E_let_in _, _) | (E_tuple_accessor _, _)
+
+  | E_lambda _, E_lambda _ ->
+      fail @@ error_lambda_comparison_not_implemented a b
+  | E_lambda _, _ ->
+      fail @@ different_values_because_different_types "lambda vs. non-lambda" a b
+
+  | (E_constant _, _) | (E_variable _, _) | (E_application _, _)
+  | (E_let_in _, _) | (E_tuple_accessor _, _)
   | (E_record_accessor _, _)
   | (E_look_up _, _) | (E_matching _, _) | (E_failwith _, _)
   | (E_assign _ , _)
-  | (E_sequence _, _) | (E_loop _, _)-> fail @@ error_uncomparable_values "can't compare sequences nor loops" a b
+  | (E_sequence _, _) | (E_loop _, _) -> fail @@ error_not_a_value a b
 
 let merge_annotation (a:type_value option) (b:type_value option) err : type_value result =
   match a, b with

@@ -475,6 +475,16 @@ and type_expression : environment -> ?tv_opt:O.type_value -> I.expression -> O.a
       let%bind expr' = type_expression e expr in
       let%bind _assert = O.assert_type_value_eq (expr'.type_annotation, c_tv) in
       return (E_constructor (c , expr')) sum_tv
+  | E_none -> (
+      match tv_opt with
+      | Some tv -> return E_none tv
+      | None -> fail @@ needs_annotation ae "none"
+    )
+  | E_some expr -> (
+      let%bind expr' = type_expression e expr in
+      return (E_some expr') (t_option expr'.type_annotation ())
+    )
+
   (* Record *)
   | E_record m ->
       let aux prev k expr =
@@ -816,6 +826,11 @@ let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
   | E_constructor (n, p) ->
       let%bind p' = untype_expression p in
       return (e_constructor n p')
+  | E_none ->
+      return @@ e_none ()
+  | E_some e ->
+      let%bind e' = untype_expression e in
+      return @@ e_some e'
   | E_record r ->
       let%bind r' = bind_smap
         @@ SMap.map untype_expression r in
