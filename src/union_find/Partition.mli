@@ -21,7 +21,6 @@ module type Item =
 module type S =
   sig
     type item
-    type repr = Repr of item
     type partition
     type t = partition
 

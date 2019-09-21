@@ -3,19 +3,8 @@ open Trace
 module Core = Typesystem.Core
 
 module Wrap = struct
-  let aa = 42
-
-  (* Shouldn't this be simply ?
-     module I = Ast_simplified
-     module 0 = Core
-
-     I don't understand the reason for a local module
-  *)
-  module Local = struct
-    module I = Ast_simplified
-    module O = Core
-  end
-  open Local
+  module I = Ast_simplified
+  module O = Core
 
   type constraints = O.type_constraint list
 
@@ -310,7 +299,7 @@ struct
   let to_string = (fun s -> s)
 end
 
-module UF = Union_find.Partition1.Make(TV)
+module UF = Union_find.Partition0.Make(TV)
 
 type unionfind = UF.t
 
@@ -321,13 +310,9 @@ let merge x y = UF.equiv x y                   (* DEMO *)
 (* end unionfind *)
 
 (* representant for an equivalence class of type variables *)
-module TypeVariableRepr = struct
-  type t = UF.repr
-  let compare (UF.Repr a) (UF.Repr b) = String.compare a b
-  let to_string (UF.Repr a) = a
-end
-module TypeVariableMap = Map.Make(TypeVariableRepr)
-type type_variable_repr = UF.repr
+module TypeVariable = String
+module TypeVariableMap = Map.Make(TypeVariable)
+
 
 (*
 
@@ -365,76 +350,93 @@ Workflow:
 
 *)
 
-(* assignments (passive data structure).
-   Now: just a map from unification vars to types (pb: what about partial types?)
-   maybe just local assignments (allow only vars as children of pair(α,β)) *)
-
-(* TODO : we need a different type for user-level type variable and the representatives of the union-find, so that we don't accidentally mix them up *)
-
 open Core
 
 type structured_dbs = {
-  all_constraints     : type_constraint list ;
+  all_constraints     : type_constraint_simpl list ;
   aliases             : unionfind ;
+  (* assignments (passive data structure).
+     Now: just a map from unification vars to types (pb: what about partial types?)
+     maybe just local assignments (allow only vars as children of pair(α,β)) *)
+  assignments         : c_constructor_simpl TypeVariableMap.t ;
   grouped_by_variable : constraints TypeVariableMap.t ; (* map from (unionfind) variables to constraints containing them *)
   cycle_detection_toposort : unit ; (* example of structured db that we'll add later *)
 }
 
 and constraints = {
-  constructor : c_constructor_repr list ;
-  constant    : c_constant_repr    list ;
-  tc          : c_typeclass_repr   list ;
+  constructor : c_constructor_simpl list ;
+  tc          : c_typeclass_simpl   list ;
 }
 
-and c_constructor_repr = {
-  tv : type_variable_repr;
+and c_constructor_simpl = {
+  tv : type_variable;
   c_tag : constant_tag;
-  tvr_list : type_variable_repr list; (* non-empty list *)
-}
-and c_constant_repr = {
-  tvr : type_variable_repr;
-  c_tag : constant_tag; (* for type constructors that do not take arguments *)
+  tv_list : type_variable list;
 }
 (* copy-pasted from core.ml *)
 and c_const = (type_variable * type_value)
 and c_equation = (type_value * type_value)
-and c_typeclass_repr = {
-  tva  : type_variable_repr ;
+and c_typeclass_simpl = {
+  tv   : type_variable ;
   tc   : typeclass          ;
-  args : type_value list    ; (* TODO: should be a simpler form *)
+  args : type_variable list    ; (* TODO: should be a simpler form *)
 }
-and type_constraint_repr =
-    SC_Constructor of c_constructor_repr
-  | SC_Constant of c_constant_repr
-  | SC_Typeclass of c_typeclass_repr
+and type_constraint_simpl =
+    SC_Constructor of c_constructor_simpl             (* α = ctor(β, …) *)
+  | SC_Alias       of (type_variable * type_variable) (* α = β *)
+  | SC_Typeclass   of c_typeclass_simpl               (* TC(α, …) *)
 
 module UnionFindWrapper = struct
   (* TODO: API for the structured db, to access it modulo unification variable aliases. *)
   let get_constraints_related_to : type_variable -> structured_dbs -> constraints =
     fun variable dbs ->
-      let (variable_repr , _height) , aliases = UF.get_or_set variable dbs.aliases in
+      let variable , aliases = UF.get_or_set variable dbs.aliases in
       let dbs = { dbs with aliases } in
-      match TypeVariableMap.find_opt variable_repr dbs.grouped_by_variable with
+      match TypeVariableMap.find_opt variable dbs.grouped_by_variable with
         Some l -> l
       | None -> {
           constructor = [] ;
-          constant    = [] ;
           tc          = [] ;
         }
   let add_constraints_related_to : type_variable -> constraints -> structured_dbs -> structured_dbs =
     fun variable c dbs ->
-    let (variable_repr , _height) , aliases = UF.get_or_set variable dbs.aliases in
+    (* let (variable_repr , _height) , aliases = UF.get_or_set variable dbs.aliases in
+       let dbs = { dbs with aliases } in *)
+    let variable_repr , aliases = UF.get_or_set variable dbs.aliases in
     let dbs = { dbs with aliases } in
     let grouped_by_variable = TypeVariableMap.update variable_repr (function
           None -> Some c
         | Some x -> Some {
             constructor = c.constructor @ x.constructor ;
-            constant    = c.constant @ x.constant ;
             tc          = c.tc @ x.tc ;
           })
         dbs.grouped_by_variable
     in
     let dbs = { dbs with grouped_by_variable } in
+    dbs
+  let merge_variables : type_variable -> type_variable -> structured_dbs -> structured_dbs =
+    fun variable_a variable_b dbs ->
+    let variable_repr_a , aliases = UF.get_or_set variable_a dbs.aliases in
+    let dbs = { dbs with aliases } in
+    let variable_repr_b , aliases = UF.get_or_set variable_b dbs.aliases in
+    let dbs = { dbs with aliases } in
+    let default d = function None -> d | Some y -> y in
+    let get_constraints ab =
+      TypeVariableMap.find_opt ab dbs.grouped_by_variable
+      |> default { constructor = [] ; tc = [] } in
+    let constraints_a = get_constraints variable_repr_a in
+    let constraints_b = get_constraints variable_repr_b in
+    let all_constraints = {
+      (* TODO: should be a Set.union, not @ *)
+      constructor = constraints_a.constructor @ constraints_b.constructor ;
+      tc          = constraints_a.tc          @ constraints_b.tc          ;
+    } in
+    let grouped_by_variable =
+      TypeVariableMap.add variable_repr_a all_constraints dbs.grouped_by_variable in
+    let dbs = { dbs with grouped_by_variable} in
+    let grouped_by_variable =
+      TypeVariableMap.remove variable_repr_b dbs.grouped_by_variable in
+    let dbs = { dbs with grouped_by_variable} in
     dbs
 end
 
@@ -442,64 +444,154 @@ end
  * right now: union-find of unification vars
  * later: better database-like organisation of knowledge *)
 
-let normalizer_all_constraints : type_constraint -> structured_dbs -> structured_dbs =
-  fun new_constraint dbs ->
-  { dbs with all_constraints = new_constraint :: dbs.all_constraints }
+(* Each normalizer returns a  *)
+type ('a , 'b) normalizer = structured_dbs -> 'a -> (structured_dbs * 'b list)
 
-let normalizer_grouped_by_variable : type_constraint_repr -> structured_dbs -> structured_dbs =
-  fun new_constraint dbs ->
-  let tvars, lala = match new_constraint with
-      SC_Constructor ({tva ; _ctorb ; argsb} as c) -> tva :: argsb, { constructor = [c] ; constant = [] ; tc = [] }
-    | SC_Constant ({tva ; _constant} as c) -> [tva], { constant = [c] ; constructor = [] ; tc = [] }
-    | SC_Typeclass ({tva ; tc=_ ; args} as c) -> [tva ; (* TODO: *) args ], { tc = [c] ; constructor = [] ; constant = [] }
+let normalizer_all_constraints : (type_constraint_simpl , type_constraint_simpl) normalizer =
+  fun dbs new_constraint ->
+  ({ dbs with all_constraints = new_constraint :: dbs.all_constraints } , [new_constraint])
+
+let normalizer_grouped_by_variable : (type_constraint_simpl , type_constraint_simpl) normalizer =
+  fun dbs new_constraint ->
+  let store_constraint tvars constraints =
+    let aux dbs (tvar : type_variable) =
+      UnionFindWrapper.add_constraints_related_to tvar constraints dbs
+    in List.fold_left aux dbs tvars
   in
-  let aux dbs tvar =
-    { dbs with grouped_by_variable =
-                 UnionFindWrapper.add_constraints_related_to
-                   tvar lala dbs } in
-  List.fold_left aux dbs tvars
+  let merge_constraints a b =
+    UnionFindWrapper.merge_variables a b dbs in
+  let dbs = match new_constraint with
+    SC_Constructor ({tv ; c_tag = _ ; tv_list} as c) -> store_constraint (tv :: tv_list) {constructor = [c] ; tc = []}
+  | SC_Typeclass   ({tv ; tc = _    ; args}    as c) -> store_constraint (tv :: args)    {constructor = [] ; tc = [c]}
+  | SC_Alias (a , b) -> merge_constraints a b
+  in (dbs , [new_constraint])
 
-let normalizers : type_constraint -> structured_dbs -> structured_dbs =
+(* Stores the first assinment ('a = ctor('b, …)) seen *)
+let normalizer_assignments : (type_constraint_simpl , type_constraint_simpl) normalizer =
+  fun dbs new_constraint ->
+  match new_constraint with
+  | SC_Constructor ({tv ; c_tag = _ ; tv_list = _} as c) ->
+    let assignments = TypeVariableMap.update tv (function None -> Some c | e -> e) dbs.assignments in
+    let dbs = {dbs with assignments} in
+    (dbs , [new_constraint])
+  | _ ->
+    (dbs , [new_constraint])
+
+let normalizer_simpl : (type_constraint , type_constraint_simpl) normalizer =
+  fun dbs new_constraint ->
+  let () = ignore dbs in
+  todo new_constraint
+
+(* placed outside of normalizers so that it's polymorphic *)
+let (|*>) (dbs, cs) (f : ('a, 'b) normalizer) =
+  let (dbs' , css') = List.fold_map (fun dbs c -> f dbs c) dbs cs in
+  (dbs' , List.flatten css')
+
+let normalizers : type_constraint -> structured_dbs -> (structured_dbs * 'modified_constraint list) =
   fun new_constraint dbs ->
-  dbs
-  |> normalizer_all_constraints new_constraint
-  |> normalizer_grouped_by_variable new_constraint
+  (dbs , [new_constraint])
+  |*> normalizer_simpl
+  |*> normalizer_all_constraints
+  |*> normalizer_assignments
+  (* TODO: we need to preprocess the user-defined constraints to break
+     them down into smaller constraints. *)
+  |*> normalizer_grouped_by_variable
 
 (* sub-sub component: lazy selector (don't re-try all selectors every time)
  * For now: just re-try everytime *)
 
 type todo = unit
-type selector_input = todo (* some info about the constraint just added, so that we know what to look for *)
-type selector_output = WasSelected | WasNotSelected
+let todo : todo = ()
+type 'old_constraint_type selector_input = 'old_constraint_type (* some info about the constraint just added, so that we know what to look for *)
+type 'selector_output selector_outputs =
+    WasSelected of 'selector_output list
+  | WasNotSelected
 type new_constraints = type_constraint list
-type new_assignments = todo
+type new_assignments = c_constructor_simpl list
+
+type ('old_constraint_type, 'selector_output) selector = 'old_constraint_type selector_input -> structured_dbs -> 'selector_output selector_outputs
 
 (* selector / propagation rule for breaking down composite types
- * For now: do something with ('a = 'b) constraints. Or maybe this one should be a normalizer. *)
+ * For now: do something with ('a = 'b) constraints.
 
-let selector_equality : selector_input -> structured_dbs -> selector_output =
-  fun todo dbs ->
-  failwith "TODO"
-
-let propagator_equality : selector_output -> structured_dbs -> new_constraints * new_assignments =
-  fun selected dbs ->
-  failwith "TODO"
+   Or maybe this one should be a normalizer. *)
 
 (* selector / propagation rule for breaking down composite types
  * For now: break pair(a, b) = pair(c, d) into a = c, b = d *)
 
-let select_and_propagate_equality : selector_input -> structured_dbs -> selector_output =
+type output_break_ctor = < a_k_var : c_constructor_simpl ; a_k'_var' : c_constructor_simpl >
+let selector_break_ctor : (type_constraint_simpl, output_break_ctor) selector =
+  (* find two rules with the shape a = k(var …) and a = k'(var' …) *)
   fun todo dbs ->
-  match selector_equality todo dbs with
-    WasSelected -> failwith "Call the propagation rule, push the new constraints to some kind of work queue and store the new assignments"
-  | WasNotSelected -> failwith "carry on, nothing to see"
+  match todo with
+    SC_Constructor c ->
+    let other_cs = (UnionFindWrapper.get_constraints_related_to c.tv dbs).constructor in
+    let cs_pairs = List.map (fun x -> object method a_k_var = c method a_k'_var' = x end) other_cs in
+    WasSelected cs_pairs
+  | SC_Alias       _                -> WasNotSelected (* TODO: ??? *)
+  | SC_Typeclass   _                -> WasNotSelected
 
-let select_and_propagate_all : selector_input -> structured_dbs -> selector_output =
+type 'selector_output propagator = 'selector_output -> structured_dbs -> new_constraints * new_assignments
+
+let propagator_break_ctor : output_break_ctor propagator =
+  fun selected dbs ->
+  let () = ignore (dbs) in (* this propagator doesn't need to use the dbs *)
+  let a = selected#a_k_var in
+  let b = selected#a_k'_var' in
+  (* produce constraints: *)
+
+  (* a.tv = b.tv *)
+  let eq1 = C_equation (P_variable a.tv, P_variable b.tv) in
+  (* a.c_tag = b.c_tag *)
+  if a.c_tag <> b.c_tag then
+    failwith "type error: incompatible types, not same ctor (TODO error message)"
+  else
+    (* a.tv_list = b.tv_list *)
+  if List.length a.tv_list <> List.length b.tv_list then
+    failwith "type error: incompatible types, not same length (TODO error message)"
+  else
+    let eqs3 = List.map2 (fun aa bb -> C_equation (P_variable aa, P_variable bb)) a.tv_list b.tv_list in
+    let eqs = eq1 :: eqs3 in
+    (eqs , []) (* no new assignments *)
+
+let select_and_propagate : ('old_input, 'selector_output) selector -> 'selector_output propagator -> 'a -> structured_dbs -> new_constraints * new_assignments =
+  fun selector propagator ->
   fun todo dbs ->
-  let blah = select_and_propagate_equality todo dbs in
+  match selector todo dbs with
+    WasSelected selected_outputs ->
+    (* Call the propagation rule *)
+    let new_contraints_and_assignments = List.map (fun s -> propagator s dbs) selected_outputs in
+    let (new_constraints , new_assignments) = List.split new_contraints_and_assignments in
+    (* return so that the new constraints are pushed to some kind of work queue and the new assignments stored *)
+    (List.flatten new_constraints , List.flatten new_assignments)
+  | WasNotSelected ->
+    ([] , [])
+
+let select_and_propagate_break_ctor = select_and_propagate selector_break_ctor propagator_break_ctor
+
+let select_and_propagate_all' : type_constraint_simpl selector_input -> structured_dbs -> 'todo_result =
+  fun new_constraint dbs ->
+  let (new_constraints, new_assignments) = select_and_propagate_break_ctor new_constraint dbs in
+  let dbs = failwith "TODO merge in the assignments directly here" in
   (* let blah2 = select_ … in … *)
   (* We should try each selector in turn. If multiple selectors work, what should we do? *)
-  failwith "TODO"
+  (new_constraints , dbs)
+
+let rec select_and_propagate_all : type_constraint selector_input list -> structured_dbs -> 'todo_result =
+  fun new_constraints dbs ->
+  match new_constraints with
+  | [] -> dbs
+  | new_constraint :: tl ->
+    let (dbs , modified_constraints) = normalizers new_constraint dbs in
+    let (new_constraints' , dbs) =
+      List.fold_left
+        (fun (nc , dbs) c ->
+           let (new_constraints' , dbs) = select_and_propagate_all' c dbs in
+           (new_constraints' @ nc , dbs))
+        ([] , dbs)
+        modified_constraints in
+    let new_constraints = new_constraints' @ tl in
+    select_and_propagate_all new_constraints dbs
 
 (* sub-component: constraint selector (worklist / dynamic queries) *)
 
