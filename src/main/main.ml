@@ -18,6 +18,8 @@ module Run = struct
   include Run_mini_c
 end
 
+module Display = Display
+
 (* module Parser_multifix = Multifix
  * module Simplify_multifix = Simplify_multifix *)
 

@@ -5,13 +5,13 @@ include struct
 
   let assert_entry_point_defined : program -> string -> unit result =
     fun program entry_point ->
-      let aux : declaration -> bool = fun declaration ->
-        match declaration with
-        | Declaration_type _ -> false
-        | Declaration_constant (name , _ , _) -> name = entry_point
-      in
-      trace_strong (simple_error "no entry-point with given name") @@
-      Assert.assert_true @@ List.exists aux @@ List.map Location.unwrap program
+    let aux : declaration -> bool = fun declaration ->
+      match declaration with
+      | Declaration_type _ -> false
+      | Declaration_constant (name , _ , _) -> name = entry_point
+    in
+    trace_strong (simple_error "no entry-point with given name") @@
+    Assert.assert_true @@ List.exists aux @@ List.map Location.unwrap program
 end
 
 include struct
@@ -47,8 +47,8 @@ include struct
 end
 
 let transpile_value
-    (e:Ast_typed.annotated_expression) : Mini_c.value result =
-  let%bind f =
+    (e:Ast_typed.annotated_expression) : (Mini_c.value * _) result =
+  let%bind (f , ty) =
     let open Transpiler in
     let (f , _) = functionalize e in
     let%bind main = translate_main f e.location in
@@ -56,8 +56,8 @@ let transpile_value
   in
 
   let input = Mini_c.Combinators.d_unit in
-  let%bind r = Run_mini_c.run_entry f input in
-  ok r
+  let%bind r = Run_mini_c.run_entry f ty input in
+  ok (r , snd ty)
 
 let parsify_pascaligo = fun source ->
   let%bind raw =
@@ -148,12 +148,12 @@ let compile_contract_file : string -> string -> s_syntax -> string result = fun 
   let%bind (env' , state' , typed) =
     trace (simple_error "typing") @@
     Typer.type_program simplified in
-  let%bind mini_c =
+  let%bind (mini_c , mini_c_ty) =
     trace (simple_error "transpiling") @@
     Transpiler.translate_entry typed entry_point in
   let%bind michelson =
     trace (simple_error "compiling") @@
-    Compiler.translate_contract mini_c in
+    Compiler.translate_contract mini_c mini_c_ty in
   let str =
     Format.asprintf "%a" Michelson.pp_stripped michelson in
   (* TODO: check that state' is consistent *)
@@ -188,13 +188,13 @@ let compile_contract_parameter : string -> string -> string -> s_syntax -> strin
       Typer.type_expression env state' simplified in
     let%bind () =
       trace (simple_error "expression type doesn't match type parameter") @@
-      Ast_typed.assert_type_expression_eq (parameter_tv , typed.type_annotation) in
-    let%bind mini_c =
+      Ast_typed.assert_type_value_eq (parameter_tv , typed.type_annotation) in
+    let%bind (mini_c , mini_c_ty) =
       trace (simple_error "transpiling expression") @@
       transpile_value typed in
     let%bind michelson =
       trace (simple_error "compiling expression") @@
-      Compiler.translate_value mini_c in
+      Compiler.translate_value mini_c mini_c_ty in
     let str =
       Format.asprintf "%a" Michelson.pp_stripped michelson in
     (* TODO: check that state'' is consistent *)
@@ -230,13 +230,13 @@ let compile_contract_storage : string -> string -> string -> s_syntax -> string 
       Typer.type_expression env state' simplified in
     let%bind () =
       trace (simple_error "expression type doesn't match type storage") @@
-      Ast_typed.assert_type_expression_eq (storage_tv , typed.type_annotation) in
-    let%bind mini_c =
+      Ast_typed.assert_type_value_eq (storage_tv , typed.type_annotation) in
+    let%bind (mini_c , mini_c_ty) =
       trace (simple_error "transpiling expression") @@
       transpile_value typed in
     let%bind michelson =
       trace (simple_error "compiling expression") @@
-      Compiler.translate_value mini_c in
+      Compiler.translate_value mini_c mini_c_ty in
     let str =
       Format.asprintf "%a" Michelson.pp_stripped michelson in
     (* TODO: check that state'' is consistent *)
@@ -271,7 +271,7 @@ let run_contract ?amount source_filename entry_point storage input syntax =
     parsify_expression syntax input in
   let options =
     let open Proto_alpha_utils.Memory_proto_alpha in
-    let amount = Option.bind (fun amount -> Alpha_context.Tez.of_string amount) amount in
+    let amount = Option.bind (fun amount -> Protocol.Alpha_context.Tez.of_string amount) amount in
     (make_options ?amount ()) in
   Run_simplified.run_simplityped ~options typed entry_point (Ast_simplified.e_pair storage_simpl input_simpl)
 
@@ -283,7 +283,7 @@ let run_function ?amount source_filename entry_point parameter syntax =
     parsify_expression syntax parameter in
   let options =
     let open Proto_alpha_utils.Memory_proto_alpha in
-    let amount = Option.bind (fun amount -> Alpha_context.Tez.of_string amount) amount in
+    let amount = Option.bind (fun amount -> Protocol.Alpha_context.Tez.of_string amount) amount in
     (make_options ?amount ()) in
   Run_simplified.run_simplityped ~options typed entry_point parameter'
 
@@ -293,6 +293,6 @@ let evaluate_value ?amount source_filename entry_point syntax =
     type_file syntax source_filename in
   let options =
     let open Proto_alpha_utils.Memory_proto_alpha in
-    let amount = Option.bind (fun amount -> Alpha_context.Tez.of_string amount) amount in
+    let amount = Option.bind (fun amount -> Protocol.Alpha_context.Tez.of_string amount) amount in
     (make_options ?amount ()) in
   Run_simplified.evaluate_simplityped ~options typed entry_point

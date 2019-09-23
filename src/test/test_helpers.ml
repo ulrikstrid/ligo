@@ -5,51 +5,30 @@ type test =
   | Test_suite of (string * test list)
   | Test of test_case
 
-let rec error_pp out (e : error) =
-    let open JSON_string_utils in
-  let message =
-    let opt = e |> member "message" |> string in
-    let msg = Option.unopt ~default:"" opt in
-    if msg = ""
-    then ""
-    else ": " ^ msg in
-  let error_code =
-    let error_code = e |> member "error_code" in
-    match error_code with
-    | `Null -> ""
-    | _ -> " (" ^ (J.to_string error_code) ^ ")" in
-  let title =
-    let opt = e |> member "title" |> string in
-    Option.unopt ~default:"" opt in
-  let data =
-    let data = e |> member "data" in
-    match data with
-    | `Null -> ""
-    | _ -> " " ^ (J.to_string data) ^ "\n" in
-  let infos =
-    let infos = e |> member "infos" in
-    match infos with
-    | `Null -> ""
-    | `List lst -> Format.asprintf "@[<v2>%a@]" PP_helpers.(list_sep error_pp (tag "@,")) lst
-    | _ -> " " ^ (J.to_string infos) ^ "\n" in
-  Format.fprintf out "%s%s%s.\n%s%s" title error_code message data infos
+let wrap_test name f =
+  let result =
+    trace (error (thunk "running test") (thunk name)) @@
+    f () in
+  match result with
+  | Ok ((), annotations) -> ignore annotations; ()
+  | Error err ->
+    Format.printf "%a\n%!" Ligo.Display.error_pp (err ()) ;
+    raise Alcotest.Test_error
 
+let wrap_test_raw f =
+  match f () with
+  | Trace.Ok ((), annotations) -> ignore annotations; ()
+  | Error err ->
+    Format.printf "%a\n%!" Ligo.Display.error_pp (err ())
 
 let test name f =
   Test (
     Alcotest.test_case name `Quick @@ fun () ->
-    let result =
-      trace (fun () -> error (thunk "running test") (thunk name) ()) @@
-    f () in
-    match result with
-    | Ok ((), annotations) -> ignore annotations; ()
-    | Error err ->
-      Format.printf "Errors : {\n%a}\n%!" error_pp (err ()) ;
-      raise Alcotest.Test_error
+    wrap_test name f
   )
 
 let test_suite name lst = Test_suite (name , lst)
-        
+
 open Ast_simplified.Combinators
 
 let expect ?options program entry_point input expecter =
@@ -61,6 +40,17 @@ let expect ?options program entry_point input expecter =
     trace run_error @@
     Ligo.Run.run_simplityped ~debug_michelson:true ?options program entry_point input in
   expecter result
+
+let expect_fail ?options program entry_point input =
+  let run_error =
+    let title () = "expect run" in
+    let content () = Format.asprintf "Entry_point: %s" entry_point in
+    error title content
+  in
+  trace run_error @@
+  Assert.assert_fail
+  @@ Ligo.Run.run_simplityped ~debug_michelson:true ?options program entry_point input
+
 
 let expect_eq ?options program entry_point input expected =
   let expecter = fun result ->
@@ -80,7 +70,7 @@ let expect_evaluate program entry_point expecter =
     let content () = Format.asprintf "Entry_point: %s" entry_point in
     error title content in
   trace error @@
-  let%bind result = Ligo.Run.evaluate_simplityped program entry_point in
+  let%bind result = Ligo.Run.evaluate_simplityped ~debug_mini_c:true ~debug_michelson:true program entry_point in
   expecter result
 
 let expect_eq_evaluate program entry_point expected =
@@ -107,7 +97,7 @@ let expect_eq_n_aux ?options lst program entry_point make_input make_expected =
     let result = expect_eq ?options program entry_point input expected in
     result
   in
-  let%bind _ = bind_map_list aux lst in
+  let%bind _ = bind_map_list_seq aux lst in
   ok ()
 
 let expect_eq_n ?options = expect_eq_n_aux ?options [0 ; 1 ; 2 ; 42 ; 163 ; -1]
@@ -126,7 +116,7 @@ let expect_eq_b program entry_point make_expected =
     let expected = make_expected b in
     expect_eq program entry_point input expected
   in
-  let%bind _ = bind_map_list aux [false ; true] in
+  let%bind _ = bind_map_list_seq aux [false ; true] in
   ok ()
 
 let expect_eq_n_int a b c =
@@ -135,3 +125,44 @@ let expect_eq_n_int a b c =
 let expect_eq_b_bool a b c =
   let open Ast_simplified.Combinators in
   expect_eq_b a b (fun bool -> e_bool (c bool))
+
+
+let rec test_height : test -> int = fun t ->
+  match t with
+  | Test _ -> 1
+  | Test_suite (_ , lst) -> (List.fold_left max 1 @@ List.map test_height lst) + 1
+
+let extract_test : test -> test_case = fun t ->
+  match t with
+  | Test tc -> tc
+  | _ -> assert false
+
+let extract_param : test -> (string * (string * test_case list) list) =
+  let extract_element = extract_test in
+  let extract_group : test -> (string * test_case list) = fun t ->
+    match t with
+    | Test tc -> ("isolated" , [ tc ])
+    | Test_suite (name , lst) -> (name , List.map extract_element lst) in
+  fun t ->
+      match t with
+      | Test tc -> ("" , [ ("isolated" , [ tc ] ) ])
+      | Test_suite (name , lst) -> (name , List.map extract_group lst)
+
+let x : _ -> (unit Alcotest.test) = fun x -> x
+
+(*
+  Alcotest.run parameters:
+  string * (string * f list) list
+*)
+
+let rec run_test ?(prefix = "") : test -> unit = fun t ->
+  match t with
+  | Test case -> Alcotest.run "isolated test" [ ("" , [ case ]) ]
+  | Test_suite (name , lst) -> (
+      if (test_height t <= 3) then (
+        let (name , tests) = extract_param t in
+        Alcotest.run (prefix ^ name) tests
+      ) else (
+        List.iter (run_test ~prefix:(prefix ^ name ^ "_")) lst
+      )
+    )

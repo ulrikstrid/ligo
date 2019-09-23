@@ -211,7 +211,10 @@ end (* end Trace_tutorial. *)
 module J = Yojson.Basic
 
 module JSON_string_utils = struct
-  let member = J.Util.member
+  let member = fun n x ->
+    match x with
+    | `Null -> `Null
+    | x -> J.Util.member n x
   let string = J.Util.to_string_option
   let to_list_option = fun x ->
     try ( Some (J.Util.to_list x))
@@ -540,7 +543,7 @@ let rec bind_list = function
       hd >>? fun hd ->
       bind_list tl >>? fun tl ->
       ok @@ hd :: tl
-    )  
+    )
 
 let bind_ne_list = fun (hd , tl) ->
   hd >>? fun hd ->
@@ -565,6 +568,13 @@ let bind_fold_smap f init (smap : _ X_map.String.t) =
 let bind_map_smap f smap = bind_smap (X_map.String.map f smap)
 
 let bind_map_list f lst = bind_list (List.map f lst)
+let rec bind_map_list_seq f lst = match lst with
+  | [] -> ok []
+  | hd :: tl -> (
+      let%bind hd' = f hd in
+      let%bind tl' = bind_map_list_seq f tl in
+      ok (hd' :: tl')
+    )
 let bind_map_ne_list : _ -> 'a X_list.Ne.t -> 'b X_list.Ne.t result = fun f lst -> bind_ne_list (X_list.Ne.map f lst)
 let bind_iter_list : (_ -> unit result) -> _ list -> unit result = fun f lst ->
   bind_map_list f lst >>? fun _ -> ok ()

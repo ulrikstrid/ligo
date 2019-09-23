@@ -119,10 +119,10 @@ let get_t_tuple (t:type_expression) : type_expression list result = match t.type
 
 let get_t_pair (t:type_expression) : (type_expression * type_expression) result = match t.type_expression' with
   | T_tuple lst ->
-      let%bind () =
-        trace_strong (simple_error "not a pair") @@
-        Assert.assert_list_size lst 2 in
-      ok List.(nth lst 0 , nth lst 1)
+    let%bind () =
+      trace_strong (simple_error "not a pair") @@
+      Assert.assert_list_size lst 2 in
+    ok List.(nth lst 0 , nth lst 1)
   | _ -> simple_fail "not a tuple"
 
 let get_t_function (t:type_expression) : (type_expression * type_expression) result = match t.type_expression' with
@@ -142,7 +142,12 @@ let get_t_map (t:type_expression) : (type_expression * type_expression) result =
   | T_constant ("map", [k;v]) -> ok (k, v)
   | _ -> simple_fail "get: not a map"
 
-let get_t_map_key : type_expression -> type_expression result = fun t ->
+let get_t_big_map (t:type_value) : (type_value * type_value) result =
+  match t.type_value' with
+  | T_constant ("big_map", [k;v]) -> ok (k, v)
+  | _ -> simple_fail "get: not a big_map"
+
+let get_t_map_key : type_value -> type_value result = fun t ->
   let%bind (key , _) = get_t_map t in
   ok key
 
@@ -155,6 +160,7 @@ let assert_t_map = fun t ->
   ok ()
 
 let is_t_map = Function.compose to_bool get_t_map
+let is_t_big_map = Function.compose to_bool get_t_big_map
 
 let assert_t_tez : type_expression -> unit result = get_t_tez
 let assert_t_key = get_t_key
@@ -166,8 +172,10 @@ let assert_t_list t =
   ok ()
 
 let is_t_list = Function.compose to_bool get_t_list
+let is_t_set = Function.compose to_bool get_t_set
 let is_t_nat = Function.compose to_bool get_t_nat
 let is_t_string = Function.compose to_bool get_t_string
+let is_t_bytes = Function.compose to_bool get_t_bytes
 let is_t_int = Function.compose to_bool get_t_int
 
 let assert_t_bytes = fun t ->
@@ -271,4 +279,3 @@ let get_declaration_by_name : program -> string -> declaration result = fun p na
   in
   trace_option (simple_error "no declaration with given name") @@
   List.find_opt aux @@ List.map Location.unwrap p
-

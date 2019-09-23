@@ -10,6 +10,7 @@ let lr = fun ppf -> function `Left -> fprintf ppf "L" | `Right -> fprintf ppf "R
 
 let type_base ppf : type_base -> _ = function
   | Base_unit -> fprintf ppf "unit"
+  | Base_void -> fprintf ppf "void"
   | Base_bool -> fprintf ppf "bool"
   | Base_int -> fprintf ppf "int"
   | Base_nat -> fprintf ppf "nat"
@@ -48,9 +49,11 @@ let rec value ppf : value -> unit = function
   | D_nat n -> fprintf ppf "+%d" n
   | D_timestamp n -> fprintf ppf "+%d" n
   | D_tez n -> fprintf ppf "%dtz" n
-  | D_unit -> fprintf ppf " "
+  | D_unit -> fprintf ppf "unit"
   | D_string s -> fprintf ppf "\"%s\"" s
-  | D_bytes _ -> fprintf ppf "[bytes]"
+  | D_bytes x ->
+     let (`Hex hex) = Hex.of_bytes x in
+     fprintf ppf "0x%s" hex
   | D_pair (a, b) -> fprintf ppf "(%a), (%a)" value a value b
   | D_left a -> fprintf ppf "L(%a)" value a
   | D_right b -> fprintf ppf "R(%a)" value b
@@ -65,15 +68,12 @@ and value_assoc ppf : (value * value) -> unit = fun (a, b) ->
   fprintf ppf "%a -> %a" value a value b
 
 and expression' ppf (e:expression') = match e with
-  | E_environment_capture s -> fprintf ppf "capture(%a)" (list_sep string (const " ; ")) s
-  | E_environment_load (expr , env) -> fprintf ppf "load %a in %a" expression expr environment env
-  | E_environment_select env -> fprintf ppf "select %a" environment env
-  | E_environment_return expr -> fprintf ppf "return %a" expression expr
   | E_skip -> fprintf ppf "skip"
-  | E_variable v -> fprintf ppf "%s" v
+  | E_closure x -> function_ ppf x
+  | E_variable v -> fprintf ppf "V(%s)" v
   | E_application(a, b) -> fprintf ppf "(%a)@(%a)" expression a expression b
   | E_constant(p, lst) -> fprintf ppf "%s %a" p (pp_print_list ~pp_sep:space_sep expression) lst
-  | E_literal v -> fprintf ppf "%a" value v
+  | E_literal v -> fprintf ppf "L(%a)" value v
   | E_make_empty_map _ -> fprintf ppf "map[]"
   | E_make_empty_list _ -> fprintf ppf "list[]"
   | E_make_empty_set _ -> fprintf ppf "set[]"
@@ -82,10 +82,11 @@ and expression' ppf (e:expression') = match e with
   | E_if_none (c, n, ((name, _) , s)) -> fprintf ppf "%a ?? %a : %s -> %a" expression c expression n name expression s
   | E_if_left (c, ((name_l, _) , l), ((name_r, _) , r)) ->
       fprintf ppf "%a ?? %s -> %a : %s -> %a" expression c name_l expression l name_r expression r
-  | E_sequence (a , b) -> fprintf ppf "%a ; %a" expression a expression b
-  (* | E_sequence_drop (a , b) -> fprintf ppf "%a ;- %a" expression a expression b *)
+  | E_sequence (a , b) -> fprintf ppf "%a ;; %a" expression a expression b
   | E_let_in ((name , _) , expr , body) ->
       fprintf ppf "let %s = %a in ( %a )" name expression expr expression body
+  | E_iterator (s , ((name , _) , body) , expr) ->
+      fprintf ppf "for_%s %s of %a do ( %a )" s name expression expr expression body
   | E_assignment (r , path , e) ->
       fprintf ppf "%s.%a := %a" r (list_sep lr (const ".")) path expression e
   | E_while (e , b) ->
@@ -99,11 +100,9 @@ and expression_with_type : _ -> expression -> _  = fun ppf e ->
     expression' e.content
     type_ e.type_value
 
-and function_ ppf ({binder ; input ; output ; result}:anon_function) =
-  fprintf ppf "fun (%s:%a) : %a (%a)"
+and function_ ppf ({binder ; result}:anon_function) =
+  fprintf ppf "fun %s -> (%a)"
     binder
-    type_ input
-    type_ output
     expression result
 
 and assignment ppf ((n, e):assignment) = fprintf ppf "%s = %a;" n expression e

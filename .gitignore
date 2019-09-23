@@ -1,5 +1,6 @@
 /_build/
-/dune-project
+dune-project
 *~
 cache/*
 Version.ml
+/_opam/

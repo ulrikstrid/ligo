@@ -13,7 +13,7 @@ let run_simplityped
       match last_declaration with
       | Declaration_constant (_ , (_ , post_env)) -> post_env
     in
-    Typer.type_expression env state input in
+    Typer.type_expression env input in
   let%bind typed_result =
     Run_typed.run_typed ?options ~debug_mini_c ~debug_michelson entry program typed_input in
   let%bind annotated_result = Typer.untype_expression typed_result in
@@ -21,8 +21,11 @@ let run_simplityped
   let () = ignore state' in
   ok annotated_result
 
-let evaluate_simplityped ?options (program : Ast_typed.program) (entry : string)
+let evaluate_simplityped
+    ?options
+    ?(debug_mini_c = false) ?(debug_michelson = false)
+    (program : Ast_typed.program) (entry : string)
   : Ast_simplified.expression result =
-  let%bind typed_result = Run_typed.evaluate_typed ?options entry program in
+  let%bind typed_result = Run_typed.evaluate_typed ?options ~debug_mini_c ~debug_michelson entry program in
   let%bind annotated_result = Typer.untype_expression typed_result in
   ok annotated_result

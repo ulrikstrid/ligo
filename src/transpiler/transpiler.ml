@@ -36,12 +36,21 @@ them. please report this to the developers." in
     let title () = "type variables can't be transpiled" in
     let content () = name in
     error title content
+  let row_loc l = ("location" , fun () -> Format.asprintf "%a" Location.pp l)
 
   let unsupported_pattern_matching kind location =
     let title () = "unsupported pattern-matching" in
     let content () = Format.asprintf "%s patterns aren't supported yet" kind in
     let data = [
-      ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
+      row_loc location ;
+    ] in
+    error ~data title content
+
+  let unsupported_iterator location =
+    let title () = "unsupported iterator" in
+    let content () = "only lambda are supported as iterators" in
+    let data = [
+      row_loc location ;
     ] in
     error ~data title content
 
@@ -98,50 +107,51 @@ let rec translate_type (t:AST.type_expression) : type_value result =
   | T_constant ("nat", []) -> ok (T_base Base_nat)
   | T_constant ("tez", []) -> ok (T_base Base_tez)
   | T_constant ("string", []) -> ok (T_base Base_string)
+  | T_constant ("bytes", []) -> ok (T_base Base_bytes)
   | T_constant ("address", []) -> ok (T_base Base_address)
   | T_constant ("timestamp", []) -> ok (T_base Base_timestamp)
   | T_constant ("unit", []) -> ok (T_base Base_unit)
   | T_constant ("operation", []) -> ok (T_base Base_operation)
   | T_constant ("contract", [x]) ->
-      let%bind x' = translate_type x in
-      ok (T_contract x')
+    let%bind x' = translate_type x in
+    ok (T_contract x')
   | T_constant ("map", [key;value]) ->
-      let%bind kv' = bind_map_pair translate_type (key, value) in
-      ok (T_map kv')
+    let%bind kv' = bind_map_pair translate_type (key, value) in
+    ok (T_map kv')
   | T_constant ("list", [t]) ->
-      let%bind t' = translate_type t in
-      ok (T_list t')
+    let%bind t' = translate_type t in
+    ok (T_list t')
   | T_constant ("set", [t]) ->
-      let%bind t' = translate_type t in
-      ok (T_set t')
+    let%bind t' = translate_type t in
+    ok (T_set t')
   | T_constant ("option", [o]) ->
-      let%bind o' = translate_type o in
-      ok (T_option o')
+    let%bind o' = translate_type o in
+    ok (T_option o')
   | T_constant (name , _lst) -> fail @@ unrecognized_type_constant name
   | T_sum m ->
-      let node = Append_tree.of_list @@ list_of_map m in
-      let aux a b : type_value result =
-        let%bind a = a in
-        let%bind b = b in
-        ok (T_or (a, b))
-      in
-      Append_tree.fold_ne translate_type aux node
+    let node = Append_tree.of_list @@ list_of_map m in
+    let aux a b : type_value result =
+      let%bind a = a in
+      let%bind b = b in
+      ok (T_or (a, b))
+    in
+    Append_tree.fold_ne translate_type aux node
   | T_record m ->
-      let node = Append_tree.of_list @@ list_of_map m in
-      let aux a b : type_value result =
-        let%bind a = a in
-        let%bind b = b in
-        ok (T_pair (a, b))
-      in
-      Append_tree.fold_ne translate_type aux node
+    let node = Append_tree.of_list @@ list_of_map m in
+    let aux a b : type_value result =
+      let%bind a = a in
+      let%bind b = b in
+      ok (T_pair (a, b))
+    in
+    Append_tree.fold_ne translate_type aux node
   | T_tuple lst ->
-      let node = Append_tree.of_list lst in
-      let aux a b : type_value result =
-        let%bind a = a in
-        let%bind b = b in
-        ok (T_pair (a, b))
-      in
-      Append_tree.fold_ne translate_type aux node
+    let node = Append_tree.of_list lst in
+    let aux a b : type_value result =
+      let%bind a = a in
+      let%bind b = b in
+      ok (T_pair (a, b))
+    in
+    Append_tree.fold_ne translate_type aux node
   | T_function (param, result) -> (
       let%bind param' = translate_type param in
       let%bind result' = translate_type result in
@@ -253,9 +263,9 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
       return ~tv @@ E_variable name
     )
   | E_application (a, b) ->
-      let%bind a = translate_annotated_expression a in
-      let%bind b = translate_annotated_expression b in
-      return @@ E_application (a, b)
+    let%bind a = translate_annotated_expression a in
+    let%bind b = translate_annotated_expression b in
+    return @@ E_application (a, b)
   | E_constructor (m, param) -> (
       let%bind param' = translate_annotated_expression param in
       let (param'_expr , param'_tv) = Combinators.Expression.(get_content param' , get_type param') in
@@ -331,31 +341,66 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
       Append_tree.fold_ne (translate_annotated_expression) aux node
     )
   | E_record_accessor (record, property) ->
-      let%bind ty' = translate_type (get_type_annotation record) in
-      let%bind ty_smap =
-        trace_strong (corner_case ~loc:__LOC__ "not a record") @@
-        get_t_record (get_type_annotation record) in
-      let%bind ty'_smap = bind_map_smap translate_type ty_smap in
-      let%bind path =
-        trace_strong (corner_case ~loc:__LOC__ "record access") @@
-        record_access_to_lr ty' ty'_smap property in
-      let aux = fun pred (ty, lr) ->
-        let c = match lr with
-          | `Left -> "CAR"
-          | `Right -> "CDR" in
-        Combinators.Expression.make_tpl (E_constant (c, [pred]) , ty) in
-      let%bind record' = translate_annotated_expression record in
-      let expr = List.fold_left aux record' path in
-      ok expr
-  | E_constant (name, lst) -> (
-      let%bind lst' = bind_map_list (translate_annotated_expression) lst in
-      match name, lst with
-      | "NONE", [] ->
-        let%bind o =
-          trace_strong (corner_case ~loc:__LOC__ "not an option") @@
-          Mini_c.Combinators.get_t_option tv in
-        return @@ E_make_none o
-      | _ -> return @@ E_constant (name, lst')
+    let%bind ty' = translate_type (get_type_annotation record) in
+    let%bind ty_smap =
+      trace_strong (corner_case ~loc:__LOC__ "not a record") @@
+      get_t_record (get_type_annotation record) in
+    let%bind ty'_smap = bind_map_smap translate_type ty_smap in
+    let%bind path =
+      trace_strong (corner_case ~loc:__LOC__ "record access") @@
+      record_access_to_lr ty' ty'_smap property in
+    let aux = fun pred (ty, lr) ->
+      let c = match lr with
+        | `Left -> "CAR"
+        | `Right -> "CDR" in
+      Combinators.Expression.make_tpl (E_constant (c, [pred]) , ty) in
+    let%bind record' = translate_annotated_expression record in
+    let expr = List.fold_left aux record' path in
+    ok expr
+  | E_constant (name , lst) -> (
+      let (iter , map) =
+        let iterator name = fun (lst : AST.annotated_expression list) -> match lst with
+          | [i ; f] -> (
+              let%bind f' = match f.expression with
+                | E_lambda l -> (
+                    let%bind body' = translate_annotated_expression l.result in
+                    let%bind input' = translate_type l.input_type in
+                    ok ((l.binder , input') , body')
+                  )
+                | E_variable v -> (
+                    let%bind elt =
+                      trace_option (corner_case ~loc:__LOC__ "missing var") @@
+                      AST.Environment.get_opt v f.environment in
+                    match elt.definition with
+                    | ED_declaration (f , _) -> (
+                        match f.expression with
+                        | E_lambda l -> (
+                            let%bind body' = translate_annotated_expression l.result in
+                            let%bind input' = translate_type l.input_type in
+                            ok ((l.binder , input') , body')
+                          )
+                        | _ -> fail @@ unsupported_iterator f.location
+                      )
+                    | _ -> fail @@ unsupported_iterator f.location
+                  )
+                | _ -> fail @@ unsupported_iterator f.location
+              in
+              let%bind i' = translate_annotated_expression i in
+              return @@ E_iterator (name , f' , i')
+            )
+          | _ -> fail @@ corner_case ~loc:__LOC__ "bad iterator arity"
+        in
+        iterator "ITER" , iterator "MAP" in
+      match (name , lst) with
+      | ("SET_ITER" , lst) -> iter lst
+      | ("LIST_ITER" , lst) -> iter lst
+      | ("MAP_ITER" , lst) -> iter lst
+      | ("LIST_MAP" , lst) -> map lst
+      | ("MAP_MAP" , lst) -> map lst
+      | _ -> (
+          let%bind lst' = bind_map_list (translate_annotated_expression) lst in
+          return @@ E_constant (name , lst')
+        )
     )
   | E_lambda l ->
     let%bind env =
@@ -370,7 +415,7 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
       let aux : expression -> expression -> expression result = fun prev cur ->
         return @@ E_constant ("CONS", [cur ; prev]) in
       let%bind (init : expression) = return @@ E_make_empty_list t in
-      bind_fold_list aux init lst'
+      bind_fold_right_list aux init lst'
     )
   | E_set lst -> (
       let%bind t =
@@ -378,7 +423,7 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
         Mini_c.Combinators.get_t_set tv in
       let%bind lst' = bind_map_list (translate_annotated_expression) lst in
       let aux : expression -> expression -> expression result = fun prev cur ->
-        return @@ E_constant ("CONS", [cur ; prev]) in
+        return @@ E_constant ("SET_ADD", [cur ; prev]) in
       let%bind (init : expression) = return @@ E_make_empty_set t in
       bind_fold_list aux init lst'
     )
@@ -426,14 +471,14 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
               ok (List.nth ty_lst ind, acc @ path')
             )
           | Access_record prop -> (
-            let%bind ty_map =
+              let%bind ty_map =
                 trace_strong (corner_case ~loc:__LOC__ "not a record") @@
                 AST.Combinators.get_t_record prev in
               let%bind ty'_map = bind_map_smap translate_type ty_map in
               let%bind path = record_access_to_lr ty' ty'_map prop in
               let path' = List.map snd path in
-            ok (Map.String.find prop ty_map, acc @ path')
-          )
+              ok (Map.String.find prop ty_map, acc @ path')
+            )
           | Access_map _k -> fail (corner_case ~loc:__LOC__ "no patch for map yet")
       in
       let%bind (_, path) = bind_fold_right_list aux (ty, []) path in
@@ -444,15 +489,15 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
       let%bind expr' = translate_annotated_expression expr in
       match m with
       | Match_bool {match_true ; match_false} ->
-          let%bind (t , f) = bind_map_pair (translate_annotated_expression) (match_true, match_false) in
-          return @@ E_if_bool (expr', t, f)
+        let%bind (t , f) = bind_map_pair (translate_annotated_expression) (match_true, match_false) in
+        return @@ E_if_bool (expr', t, f)
       | Match_option { match_none; match_some = ((name, tv), s) } ->
-          let%bind n = translate_annotated_expression match_none in
-          let%bind (tv' , s') =
-            let%bind tv' = translate_type tv in
-            let%bind s' = translate_annotated_expression s in
-            ok (tv' , s') in
-          return @@ E_if_none (expr' , n , ((name , tv') , s'))
+        let%bind n = translate_annotated_expression match_none in
+        let%bind (tv' , s') =
+          let%bind tv' = translate_type tv in
+          let%bind s' = translate_annotated_expression s in
+          ok (tv' , s') in
+        return @@ E_if_none (expr' , n , ((name , tv') , s'))
       | Match_variant (lst , variant) -> (
           let%bind tree =
             trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@
@@ -464,13 +509,13 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
             let rec aux t =
               match (t : _ Append_tree.t') with
               | Leaf (name , tv) ->
-                  let%bind tv' = translate_type tv in
-                  ok (`Leaf name , tv')
+                let%bind tv' = translate_type tv in
+                ok (`Leaf name , tv')
               | Node {a ; b} ->
-                  let%bind a' = aux a in
-                  let%bind b' = aux b in
-                  let tv' = Mini_c.t_union (snd a') (snd b') in
-                  ok (`Node (a' , b') , tv')
+                let%bind a' = aux a in
+                let%bind b' = aux b in
+                let tv' = Mini_c.t_union (snd a') (snd b') in
+                ok (`Node (a' , b') , tv')
             in aux tree'
           in
 
@@ -484,19 +529,19 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
                 return @@ E_let_in ((name , tv) , top , body')
               )
             | ((`Node (a , b)) , tv) ->
-                let%bind a' =
-                  let%bind a_ty = get_t_left tv in
-                  let a_var = "left" , a_ty in
-                  let%bind e = aux (((Expression.make (E_variable "left") a_ty))) a in
-                  ok (a_var , e)
-                in
-                let%bind b' =
-                  let%bind b_ty = get_t_right tv in
-                  let b_var = "right" , b_ty in
-                  let%bind e = aux (((Expression.make (E_variable "right") b_ty))) b in
-                  ok (b_var , e)
-                in
-                return @@ E_if_left (top , a' , b')
+              let%bind a' =
+                let%bind a_ty = get_t_left tv in
+                let a_var = "left" , a_ty in
+                let%bind e = aux (((Expression.make (E_variable "left") a_ty))) a in
+                ok (a_var , e)
+              in
+              let%bind b' =
+                let%bind b_ty = get_t_right tv in
+                let b_var = "right" , b_ty in
+                let%bind e = aux (((Expression.make (E_variable "right") b_ty))) b in
+                ok (b_var , e)
+              in
+              return @@ E_if_left (top , a' , b')
           in
           trace_strong (corner_case ~loc:__LOC__ "building constructor") @@
           aux expr' tree''
@@ -508,29 +553,18 @@ and translate_annotated_expression (ae:AST.annotated_expression) : expression re
 and translate_lambda_deep : Mini_c.Environment.t -> AST.lambda -> Mini_c.expression result = fun env l ->
   let { binder ; input_type ; output_type ; result } : AST.lambda = l in
   (* Deep capture. Capture the relevant part of the environment. *)
-  let%bind (fv , c_env , c_tv) =
+  let%bind c_env =
     let free_variables = Ast_typed.Free_variables.lambda [] l in
     let sub_env = Mini_c.Environment.select free_variables env in
-    let tv = Environment.closure_representation sub_env in
-    ok (free_variables , sub_env , tv) in
-  let%bind (f_expr , input_tv , output_tv) =
+    ok sub_env in
+  let%bind (f_expr' , input_tv , output_tv) =
     let%bind raw_input = translate_type input_type in
-    let init_env = Environment.(add (binder , raw_input) c_env) in
-    let input = Environment.closure_representation init_env in
     let%bind output = translate_type output_type in
     let%bind result = translate_annotated_expression result in
-    let result =
-      let load_expr = Expression.make_tpl (E_variable binder , input) in
-      ez_e_return @@ ez_e_sequence (E_environment_load (load_expr , init_env)) result in
-    let tv = Mini_c.t_function input output in
-    let f_literal = D_function { binder ; input ; output ; result } in
-    let expr = Expression.make_tpl (E_literal f_literal , tv) in
-    ok (expr , raw_input , output) in
-  let%bind c_expr =
-    ok @@ Expression.make_tpl (E_environment_capture fv , c_tv) in
-  let expr = Expression.pair f_expr c_expr in
+    let expr' = E_closure { binder ; result } in
+    ok (expr' , raw_input , output) in
   let tv = Mini_c.t_deep_closure c_env input_tv output_tv in
-  ok @@ Expression.make_tpl (expr , tv)
+  ok @@ Expression.make_tpl (f_expr' , tv)
 
 and translate_lambda env l =
   let { binder ; input_type ; output_type ; result } : AST.lambda = l in
@@ -544,8 +578,8 @@ and translate_lambda env l =
         let%bind input = translate_type input_type in
         let%bind output = translate_type output_type in
         let tv = Combinators.t_function input output in
-        let content = D_function {binder;input;output;result=result'} in
-        ok @@ Combinators.Expression.make_tpl (E_literal content, tv)
+        let content = D_function {binder;result=result'} in
+        ok @@ Combinators.Expression.make_tpl (E_literal content , tv)
       )
     | _ -> (
         translate_lambda_deep env l
@@ -555,10 +589,10 @@ and translate_lambda env l =
 let translate_declaration env (d:AST.declaration) : toplevel_statement result =
   match d with
   | Declaration_constant ({name;annotated_expression} , _) ->
-      let%bind expression = translate_annotated_expression annotated_expression in
-      let tv = Combinators.Expression.get_type expression in
-      let env' = Environment.add (name, tv) env in
-      ok @@ ((name, expression), environment_wrap env env')
+    let%bind expression = translate_annotated_expression annotated_expression in
+    let tv = Combinators.Expression.get_type expression in
+    let env' = Environment.add (name, tv) env in
+    ok @@ ((name, expression), environment_wrap env env')
 
 let translate_program (lst:AST.program) : program result =
   let aux (prev:(toplevel_statement list * Environment.t) result) cur =
@@ -569,10 +603,10 @@ let translate_program (lst:AST.program) : program result =
   let%bind (statements, _) = List.fold_left aux (ok ([], Environment.empty)) (temp_unwrap_loc_list lst) in
   ok statements
 
-let translate_main (l:AST.lambda) loc : anon_function result =
+let translate_main (l:AST.lambda) loc : (anon_function * _) result =
   let%bind expr = translate_lambda Environment.empty l in
-  match Combinators.Expression.get_content expr with
-  | E_literal (D_function f) -> ok f
+  match expr.content , expr.type_value with
+  | E_literal (D_function f) , T_function ty -> ok (f , ty)
   | _ -> fail @@ not_functional_main loc
 
 (* From an expression [expr], build the expression [fun () -> expr] *)
@@ -586,7 +620,7 @@ let functionalize (e:AST.annotated_expression) : AST.lambda * AST.type_expressio
     result = e ;
   }, Combinators.(t_function (t_unit ()) t ())
 
-let translate_entry (lst:AST.program) (name:string) : anon_function result =
+let translate_entry (lst:AST.program) (name:string) : (anon_function * _) result =
   let rec aux acc (lst:AST.program) =
     let%bind acc = acc in
     match lst with
@@ -635,9 +669,9 @@ let extract_tuple (v : value) (tree : AST.type_expression Append_tree.t') : ((va
     match tv with
     | Leaf t, v -> ok @@ [v, t]
     | Node {a;b}, D_pair (va, vb) ->
-        let%bind a' = aux (a, va) in
-        let%bind b' = aux (b, vb) in
-        ok (a' @ b')
+      let%bind a' = aux (a, va) in
+      let%bind b' = aux (b, vb) in
+      ok (a' @ b')
     | _ -> fail @@ internal_assertion_failure "bad tuple path"
   in
   aux (tree, v)
@@ -648,9 +682,9 @@ let extract_record (v : value) (tree : _ Append_tree.t') : (_ list) result =
     match tv with
     | Leaf (s, t), v -> ok @@ [s, (v, t)]
     | Node {a;b}, D_pair (va, vb) ->
-        let%bind a' = aux (a, va) in
-        let%bind b' = aux (b, vb) in
-        ok (a' @ b')
+      let%bind a' = aux (a, va) in
+      let%bind b' = aux (b, vb) in
+      ok (a' @ b')
     | _ -> fail @@ internal_assertion_failure "bad record path"
   in
   aux (tree, v)
@@ -681,13 +715,13 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.annotated_expres
   | T_constant ("nat", []) -> (
       let%bind n =
         trace_strong (wrong_mini_c_value "nat" v) @@
-        get_nat v in      
+        get_nat v in
       return (E_literal (Literal_nat n))
     )
   | T_constant ("timestamp", []) -> (
       let%bind n =
         trace_strong (wrong_mini_c_value "timestamp" v) @@
-        get_timestamp v in      
+        get_timestamp v in
       return (E_literal (Literal_timestamp n))
     )
   | T_constant ("tez", []) -> (
@@ -702,6 +736,12 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.annotated_expres
         get_string v in
       return (E_literal (Literal_string n))
     )
+  | T_constant ("bytes", []) -> (
+      let%bind n =
+        trace_strong (wrong_mini_c_value "bytes" v) @@
+        get_bytes v in
+      return (E_literal (Literal_bytes n))
+    )
   | T_constant ("address", []) -> (
       let%bind n =
         trace_strong (wrong_mini_c_value "address" v) @@
@@ -715,8 +755,8 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.annotated_expres
       match opt with
       | None -> ok (e_a_empty_none o)
       | Some s ->
-          let%bind s' = untranspile s o in
-          ok (e_a_empty_some s')
+        let%bind s' = untranspile s o in
+        ok (e_a_empty_some s')
     )
   | T_constant ("map", [k_ty;v_ty]) -> (
       let%bind lst =
@@ -759,36 +799,36 @@ let rec untranspile (v : value) (t : AST.type_expression) : AST.annotated_expres
   | T_constant (name , _lst) ->
     fail @@ unknown_untranspile name v
   | T_sum m ->
-      let lst = kv_list_of_map m in
-      let%bind node = match Append_tree.of_list lst with
-        | Empty -> fail @@ corner_case ~loc:__LOC__ "empty sum type"
-        | Full t -> ok t
-      in
-      let%bind (name, v, tv) =
-        trace_strong (corner_case ~loc:__LOC__ "sum extract constructor") @@
-        extract_constructor v node in
-      let%bind sub = untranspile v tv in
-      return (E_constructor (name, sub))
+    let lst = kv_list_of_map m in
+    let%bind node = match Append_tree.of_list lst with
+      | Empty -> fail @@ corner_case ~loc:__LOC__ "empty sum type"
+      | Full t -> ok t
+    in
+    let%bind (name, v, tv) =
+      trace_strong (corner_case ~loc:__LOC__ "sum extract constructor") @@
+      extract_constructor v node in
+    let%bind sub = untranspile v tv in
+    return (E_constructor (name, sub))
   | T_tuple lst ->
-      let%bind node = match Append_tree.of_list lst with
-        | Empty -> fail @@ corner_case ~loc:__LOC__ "empty tuple"
-        | Full t -> ok t in
-      let%bind tpl =
-        trace_strong (corner_case ~loc:__LOC__ "tuple extract") @@
-        extract_tuple v node in
-      let%bind tpl' = bind_list
-        @@ List.map (fun (x, y) -> untranspile x y) tpl in
-      return (E_tuple tpl')
+    let%bind node = match Append_tree.of_list lst with
+      | Empty -> fail @@ corner_case ~loc:__LOC__ "empty tuple"
+      | Full t -> ok t in
+    let%bind tpl =
+      trace_strong (corner_case ~loc:__LOC__ "tuple extract") @@
+      extract_tuple v node in
+    let%bind tpl' = bind_list
+      @@ List.map (fun (x, y) -> untranspile x y) tpl in
+    return (E_tuple tpl')
   | T_record m ->
-      let lst = kv_list_of_map m in
-      let%bind node = match Append_tree.of_list lst with
-        | Empty -> fail @@ corner_case ~loc:__LOC__ "empty record"
-        | Full t -> ok t in
-      let%bind lst =
-        trace_strong (corner_case ~loc:__LOC__ "record extract") @@
-        extract_record v node in
-      let%bind lst = bind_list
-        @@ List.map (fun (x, (y, z)) -> let%bind yz = untranspile y z in ok (x, yz)) lst in
-      let m' = map_of_kv_list lst in
-      return (E_record m')
+    let lst = kv_list_of_map m in
+    let%bind node = match Append_tree.of_list lst with
+      | Empty -> fail @@ corner_case ~loc:__LOC__ "empty record"
+      | Full t -> ok t in
+    let%bind lst =
+      trace_strong (corner_case ~loc:__LOC__ "record extract") @@
+      extract_record v node in
+    let%bind lst = bind_list
+      @@ List.map (fun (x, (y, z)) -> let%bind yz = untranspile y z in ok (x, yz)) lst in
+    let m' = map_of_kv_list lst in
+    return (E_record m')
   | T_function _ -> fail @@ bad_untranspile "function" v

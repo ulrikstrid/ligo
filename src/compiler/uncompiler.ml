@@ -1,6 +1,8 @@
 open Mini_c.Types
-open Memory_proto_alpha
+open Proto_alpha_utils.Memory_proto_alpha
+open X
 open Proto_alpha_utils.Trace
+open Protocol
 open Script_typed_ir
 open Script_ir_translator
 
@@ -43,6 +45,8 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
       ok @@ D_bool b
   | (String_t _), s ->
       ok @@ D_string s
+  | (Bytes_t _), b ->
+      ok @@ D_bytes (Tezos_stdlib.MBytes.to_bytes b)
   | (Address_t _), s ->
       ok @@ D_string (Alpha_context.Contract.to_b58check s)
   | (Unit_t _), () ->
@@ -68,15 +72,11 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
       in
       ok @@ D_map lst'
   | (List_t (ty, _)), lst ->
-      let lst' =
-        let aux acc cur = cur :: acc in
-        let lst = List.fold_left aux lst [] in
-        List.rev lst in
-      let%bind lst'' =
+      let%bind lst' =
         let aux = fun t -> translate_value (Ex_typed_value (ty, t)) in
-        bind_map_list aux lst'
+        bind_map_list aux lst
       in
-      ok @@ D_list lst''
+      ok @@ D_list lst'
   | (Set_t (ty, _)), (module S) -> (
       let lst = S.OPS.elements S.boxed in
       let lst' =

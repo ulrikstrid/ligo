@@ -1,7 +1,7 @@
 type type_name = string
 
 type type_base =
-  | Base_unit
+  | Base_unit | Base_void
   | Base_bool
   | Base_int | Base_nat | Base_tez
   | Base_timestamp
@@ -11,7 +11,7 @@ type type_base =
 type type_value =
   | T_pair of (type_value * type_value)
   | T_or of type_value * type_value
-  | T_function of type_value * type_value
+  | T_function of (type_value * type_value)
   | T_deep_closure of environment * type_value * type_value
   | T_base of type_base
   | T_map of (type_value * type_value)
@@ -51,16 +51,13 @@ type value =
   | D_set of value list
   (* | `Macro of anon_macro ... The future. *)
   | D_function of anon_function
-  | D_operation of Memory_proto_alpha.Alpha_context.packed_internal_operation
+  | D_operation of Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
 
 and selector = var_name list
 
 and expression' =
   | E_literal of value
-  | E_environment_capture of selector
-  | E_environment_select of environment
-  | E_environment_load of (expression * environment)
-  | E_environment_return of expression
+  | E_closure of anon_function
   | E_skip
   | E_constant of string * expression list
   | E_application of expression * expression
@@ -69,12 +66,12 @@ and expression' =
   | E_make_empty_list of type_value
   | E_make_empty_set of type_value
   | E_make_none of type_value
+  | E_iterator of (string * ((var_name * type_value) * expression) * expression)
   | E_if_bool of expression * expression * expression
   | E_if_none of expression * expression * ((var_name * type_value) * expression)
   | E_if_left of expression * ((var_name * type_value) * expression) * ((var_name * type_value) * expression)
   | E_let_in of ((var_name * type_value) * expression * expression)
   | E_sequence of (expression * expression)
-  (* | E_sequence_drop of (expression * expression) *)
   | E_assignment of (string * [`Left | `Right] list * expression)
   | E_while of expression * expression
 
@@ -90,8 +87,6 @@ and toplevel_statement = assignment * environment_wrap
 
 and anon_function = {
   binder : string ;
-  input : type_value ;
-  output : type_value ;
   result : expression ;
 }
 
