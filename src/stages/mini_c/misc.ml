@@ -140,7 +140,7 @@ let rec expression_to_value (exp: expression) : value result =
      ok @@ D_left x
   | E_constant ("RIGHT", [x]) ->
      let%bind x = expression_to_value x in
-     ok @@ D_left x
+     ok @@ D_right x
   | E_make_empty_set _ ->
      ok @@ D_set []
   | E_constant ("SET_ADD", [el; els]) ->

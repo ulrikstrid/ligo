@@ -1,4 +1,24 @@
-type storage_ is big_map(int, int) * unit
+type variant is
+| X of unit
+| Y of unit
+
+// Feels quite silly, but, we are testing that Mini_c
+// expression_to_value works on different kinds of literal values, when
+// --bigmap is used.
+type rest_of_storage is record
+  x : variant ;
+  y : variant ;
+  foo : list(nat) ;
+  bar : set(nat) ;
+  baz : nat * nat ;
+  baz2 : record baz3 : nat ; baz4 : nat end ;
+  toto : map(nat, nat) ;
+  titi : option(nat) ;
+  tata : option(nat) ;
+  tutu : unit ;
+end
+
+type storage_ is big_map(int, int) * rest_of_storage
 
 function main(const p : unit; const s : storage_) : list(operation) * storage_ is
   var r : big_map(int, int) := s.0 ;

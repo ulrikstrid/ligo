@@ -412,7 +412,22 @@ let big_map () : unit result =
   let ez lst =
     let open Ast_simplified.Combinators in
     let lst' = List.map (fun (x, y) -> e_int x, e_int y) lst in
-    e_pair (e_typed_big_map lst' t_int t_int) (e_unit ())
+    e_pair
+      (e_typed_big_map lst' t_int t_int)
+      (e_ez_record
+         [ ("x", e_constructor "X" (e_unit ())) ;
+           ("y", e_constructor "Y" (e_unit ())) ;
+           ("foo", e_list [e_nat 42; e_nat 43]) ;
+           ("bar", e_set [e_nat 42; e_nat 43]) ;
+           ("baz", e_pair (e_nat 42) (e_nat 43)) ;
+           ("baz2", e_ez_record [("baz3", e_nat 42) ;
+                                 ("baz4", e_nat 43)]) ;
+           ("toto", e_map [ (e_nat 42, e_nat 42) ;
+                            (e_nat 43, e_nat 43) ]) ;
+           ("titi", e_some (e_nat 42)) ;
+           ("tata", e_typed_none t_nat) ;
+           ("tutu", e_unit ()) ;
+         ])
   in
   let%bind () =
     let make_input = fun n -> ez [(23, n) ; (42, 4)] in
