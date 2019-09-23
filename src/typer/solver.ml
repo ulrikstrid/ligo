@@ -107,10 +107,8 @@ module Wrap = struct
   (* TODO: I think we should take an I.expression for the base+label *)
   let access_label ~base ~label : (constraints * O.type_variable) =
     let base' = type_expression_to_type_value base in
-    let left_pattern = O.P_label (base' , label) in
-    let right_pattern = O.P_variable (O.fresh_type_variable ()) in
     let expr_type = Core.fresh_type_variable () in
-    [O.C_equation (left_pattern , right_pattern)] , expr_type
+    [O.C_access_label (base' , label , expr_type)] , expr_type
 
   let access_int ~base ~index = access_label ~base ~label:(L_int index)
   let access_string ~base ~property = access_label ~base ~label:(L_string property)
@@ -253,15 +251,10 @@ module Wrap = struct
 
   let matching : I.type_expression list -> (constraints * O.type_variable) =
     fun es ->
-    let aux prev e =
-      (e, O.C_equation (prev , e)) in
     let whole_expr = Core.fresh_type_variable () in
-    let cs = match (List.map type_expression_to_type_value es) with
-        [] -> []
-      | hd::tl ->
-        O.[C_equation (hd , P_variable whole_expr)]
-        @ List.fold_map aux hd tl in
-    cs, whole_expr
+    let type_values = (List.map type_expression_to_type_value es) in
+    let cs = List.map (fun e -> O.C_equation (P_variable whole_expr , e)) type_values
+    in cs, whole_expr
 
   let fresh_binder () =
     Core.fresh_type_variable ()
@@ -377,9 +370,8 @@ and c_constructor_simpl = {
 and c_const = (type_variable * type_value)
 and c_equation = (type_value * type_value)
 and c_typeclass_simpl = {
-  tv   : type_variable ;
   tc   : typeclass          ;
-  args : type_variable list    ; (* TODO: should be a simpler form *)
+  args : type_variable list ;
 }
 and type_constraint_simpl =
     SC_Constructor of c_constructor_simpl             (* α = ctor(β, …) *)
@@ -462,7 +454,7 @@ let normalizer_grouped_by_variable : (type_constraint_simpl , type_constraint_si
     UnionFindWrapper.merge_variables a b dbs in
   let dbs = match new_constraint with
     SC_Constructor ({tv ; c_tag = _ ; tv_list} as c) -> store_constraint (tv :: tv_list) {constructor = [c] ; tc = []}
-  | SC_Typeclass   ({tv ; tc = _    ; args}    as c) -> store_constraint (tv :: args)    {constructor = [] ; tc = [c]}
+  | SC_Typeclass   ({tc = _ ; args}            as c) -> store_constraint args            {constructor = [] ; tc = [c]}
   | SC_Alias (a , b) -> merge_constraints a b
   in (dbs , [new_constraint])
 
@@ -477,25 +469,68 @@ let normalizer_assignments : (type_constraint_simpl , type_constraint_simpl) nor
   | _ ->
     (dbs , [new_constraint])
 
-let normalizer_simpl : (type_constraint , type_constraint_simpl) normalizer =
+let rec normalizer_simpl : (type_constraint , type_constraint_simpl) normalizer =
   fun dbs new_constraint ->
-  let () = ignore dbs in
-  todo new_constraint
+  match new_constraint with
+  | C_equation (P_forall _, P_forall _)                   -> failwith "TODO"
+  | C_equation ((P_forall _ as a), (P_variable _ as b))   -> normalizer_simpl dbs (C_equation (b , a))
+  | C_equation (P_forall _, P_constant _)                 -> failwith "TODO"
+  | C_equation (P_variable _, P_forall _)                 -> failwith "TODO"
+  | C_equation (P_variable a, P_variable b)               -> (dbs , [SC_Alias (a, b)])
+  | C_equation (P_variable a, P_constant (c_tag, args))   ->
+    let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
+    let fresh_eqns = List.map (fun (v,t) -> C_equation (P_variable v, t)) (List.combine fresh_vars args) in
+    let (dbs , recur) = List.fold_map normalizer_simpl dbs fresh_eqns in
+    (dbs , [SC_Constructor {tv=a;c_tag;tv_list=fresh_vars}] @ List.flatten recur)
+  | C_equation (P_constant _, P_forall _)                 -> failwith "TODO"
+  | C_equation ((P_constant _ as a), (P_variable _ as b)) -> normalizer_simpl dbs (C_equation (b , a))
+  | C_equation ((P_constant _ as a), (P_constant _ as b)) ->
+    (* break down c(args) = c'(args') into 'a = c(args) and 'a = c'(args') *)
+    let fresh = Core.fresh_type_variable () in
+    let (dbs , cs1) = normalizer_simpl dbs (C_equation (P_variable fresh, a)) in
+    let (dbs , cs2) = normalizer_simpl dbs (C_equation (P_variable fresh, b)) in
+    (dbs , cs1 @ cs2) (* TODO: O(n) concatenation! *)
+  | C_typeclass (args, tc)                                ->
+    (* break down TC(args) into TC('a, …) and ('a = arg) … *)
+    let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
+    let fresh_eqns = List.map (fun (v,t) -> C_equation (P_variable v, t)) (List.combine fresh_vars args) in
+    let (dbs , recur) = List.fold_map normalizer_simpl dbs fresh_eqns in
+    (dbs, [SC_Typeclass { tc ; args = fresh_vars }] @ List.flatten recur)
+  | C_access_label (tv, label, result) -> let _todo = ignore (tv, label, result) in failwith "TODO"
 
-(* placed outside of normalizers so that it's polymorphic *)
-let (|*>) (dbs, cs) (f : ('a, 'b) normalizer) =
-  let (dbs' , css') = List.fold_map (fun dbs c -> f dbs c) dbs cs in
-  (dbs' , List.flatten css')
+type ('state, 'elt) state_list_monad = { state: 'state ; list : 'elt list }
+let lift_state_list_monad ~state ~list = { state ; list }
+let lift f =
+  fun { state ; list } ->
+  let (new_state , new_lists) = List.fold_map f state list in
+  { state = new_state ; list = List.flatten new_lists }
 
-let normalizers : type_constraint -> structured_dbs -> (structured_dbs * 'modified_constraint list) =
+(* TODO: move this to the List module *)
+let named_fold_left f ~acc ~lst = List.fold_left (fun acc lst -> f ~acc ~lst) acc lst
+
+(* TODO: place the list of normalizers in a map *)
+(* (\* cons for heterogeneous lists *\)
+ * type 'b f = { f : 'a . ('a -> 'b) -> 'a -> 'b }
+ * type ('hd , 'tl) hcons = { hd : 'hd ; tl : 'tl ; map : 'b . 'b f -> ('b , 'tl) hcons }
+ * let (+::) hd tl = { hd ; tl ; map = fun x ->  }
+ *
+ * let list_of_normalizers =
+ *   normalizer_simpl +::
+ *   normalizer_all_constraints +::
+ *   normalizer_assignments +::
+ *   normalizer_grouped_by_variable +::
+ *   () *)
+
+module Fun = struct let id x = x end (* in stdlib as of 4.08, we're in 4.07 for now *)
+
+let normalizers : type_constraint -> structured_dbs -> (structured_dbs , 'modified_constraint) state_list_monad =
   fun new_constraint dbs ->
-  (dbs , [new_constraint])
-  |*> normalizer_simpl
-  |*> normalizer_all_constraints
-  |*> normalizer_assignments
-  (* TODO: we need to preprocess the user-defined constraints to break
-     them down into smaller constraints. *)
-  |*> normalizer_grouped_by_variable
+  Fun.id
+  @@ lift normalizer_grouped_by_variable
+  @@ lift normalizer_assignments
+  @@ lift normalizer_all_constraints
+  @@ lift normalizer_simpl
+  @@ lift_state_list_monad ~state:dbs ~list:[new_constraint]
 
 (* sub-sub component: lazy selector (don't re-try all selectors every time)
  * For now: just re-try everytime *)
@@ -572,7 +607,8 @@ let select_and_propagate_break_ctor = select_and_propagate selector_break_ctor p
 let select_and_propagate_all' : type_constraint_simpl selector_input -> structured_dbs -> 'todo_result =
   fun new_constraint dbs ->
   let (new_constraints, new_assignments) = select_and_propagate_break_ctor new_constraint dbs in
-  let dbs = failwith "TODO merge in the assignments directly here" in
+  let assignments = List.fold_left (fun acc ({tv;c_tag=_;tv_list=_} as ele) -> TypeVariableMap.update tv (function None -> Some ele | x -> x) acc) dbs.assignments new_assignments in
+  let dbs = { dbs with assignments } in
   (* let blah2 = select_ … in … *)
   (* We should try each selector in turn. If multiple selectors work, what should we do? *)
   (new_constraints , dbs)
@@ -582,7 +618,7 @@ let rec select_and_propagate_all : type_constraint selector_input list -> struct
   match new_constraints with
   | [] -> dbs
   | new_constraint :: tl ->
-    let (dbs , modified_constraints) = normalizers new_constraint dbs in
+    let { state = dbs ; list = modified_constraints } = normalizers new_constraint dbs in
     let (new_constraints' , dbs) =
       List.fold_left
         (fun (nc , dbs) c ->
@@ -628,8 +664,8 @@ let initial_state : state = {
 (*       (*…*) *)
 (*       else *)
 (*       (*…*) *)
-(*     | P_constant  (c  , args)      -> failwith "TODO" *)
-(*     | P_label     (tv , label)     -> failwith "TODO" in *)
+(*     | P_constant     (c  , args)      -> failwith "TODO" *)
+(*     | P_access_label (tv , label)     -> failwith "TODO" in *)
 (*   let aux_tc tc = *)
 (*     List.map (fun l -> List.map aux_tv l) tc in *)
 (*   let aux : type_constraint -> _ = function *)
@@ -637,22 +673,22 @@ let initial_state : state = {
 (*     | C_typeclass (l , rs)         -> C_typeclass (List.map aux_tv l , aux_tc rs) *)
 (*   in List.map aux state *)
 
-let check_equal       a  b  = failwith "TODO"
-let check_same_length l1 l2 = failwith "TODO"
-
-let rec unify : type_value * type_value -> type_constraint list result = function
-  | (P_variable v           , P_constant (y , argsy)) ->
-    failwith "TODO: replace v with the constant everywhere."
-  | (P_constant (x , argsx) , P_variable w) ->
-    failwith "TODO: "
-  | (P_variable v           , P_variable w) ->
-    failwith "TODO: replace v with w everywhere"
-  | (P_constant (x , argsx) , P_constant (y , argsy)) ->
-    let%bind () = check_equal x y in
-    let%bind () = check_same_length argsx argsy in
-    let%bind _ =  bind_map_list unify (List.combine argsx argsy) in
-    ok []
-  | _ -> failwith "TODO"
+(* let check_equal       a  b  = failwith "TODO"
+ * let check_same_length l1 l2 = failwith "TODO"
+ * 
+ * let rec unify : type_value * type_value -> type_constraint list result = function
+ *   | (P_variable v           , P_constant (y , argsy)) ->
+ *     failwith "TODO: replace v with the constant everywhere."
+ *   | (P_constant (x , argsx) , P_variable w) ->
+ *     failwith "TODO: "
+ *   | (P_variable v           , P_variable w) ->
+ *     failwith "TODO: replace v with w everywhere"
+ *   | (P_constant (x , argsx) , P_constant (y , argsy)) ->
+ *     let%bind () = check_equal x y in
+ *     let%bind () = check_same_length argsx argsy in
+ *     let%bind _ =  bind_map_list unify (List.combine argsx argsy) in
+ *     ok []
+ *   | _ -> failwith "TODO" *)
 
 (* (\* unify a and b, possibly produce new constraints *\) *)
 (* let () = ignore (a,b) in *)
@@ -663,6 +699,7 @@ let aggregate_constraints : state -> type_constraint list -> state result = fun 
   (* TODO: Iterate over constraints *)
   (* TODO: try to unify things:
              if we have a = X and b = Y, try to unify X and Y *)
+  let _todo = ignore (state, newc) in
   failwith "TODO"
 (*let { constraints ; eqv } = state in
   ok { constraints = constraints @ newc ; eqv }*)

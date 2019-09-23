@@ -420,10 +420,10 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
       return expr' state constraints expr_type
     )
   | E_literal (Literal_bool b) -> (
-      return_wrapped (e_bool b) state @@ Wrap.literal_bool ()
+      return_wrapped (e_bool b) state @@ Wrap.literal (t_bool ())
     )
   | E_literal (Literal_string s) -> (
-      return_wrapped (e_string s) state @@ Wrap.literal_string ()
+      return_wrapped (e_string s) state @@ Wrap.literal (t_string ())
     )
   | E_literal (Literal_bytes b) -> (
       return_wrapped (e_bytes b) state @@ Wrap.literal (t_bytes ())
