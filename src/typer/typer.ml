@@ -450,7 +450,7 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
       return_wrapped (e_unit) state @@ Wrap.literal (t_unit ())
     )
   | E_skip -> (
-    failwith "TODO: missing implementation for E_skip"
+      failwith "TODO: missing implementation for E_skip"
     )
   (* | E_literal (Literal_string s) -> (
    *     L.log (Format.asprintf "literal_string option type: %a" PP_helpers.(option O.PP.type_expression) tv_opt) ;
@@ -714,8 +714,9 @@ and type_constant (name:string) (lst:O.type_expression list) (tv_opt:O.type_expr
 (*     ) *)
 
 (* TODO: we ended up with two versions of type_program… ??? *)
+
 (*
-Apply type_declaration on all the node of the AST from the root p 
+Apply type_declaration on all the node of the AST_simplified from the root p 
 *)
 let type_program (p:I.program) : (environment * Solver.state * O.program) result =
   let env = Ast_typed.Environment.full_empty in
@@ -734,6 +735,9 @@ let type_program (p:I.program) : (environment * Solver.state * O.program) result
   let () = ignore (env' , state') in
   ok (env', state', declarations)
 
+ (*
+ Similar to type_program but use a fold_map_list and List.fold_left and add element to the left or the list which gives a better complexity
+ *)
 let type_program' : I.program -> O.program result = fun p ->
   let initial_state = Solver.initial_state in
   let initial_env = Environment.full_empty in
@@ -750,15 +754,21 @@ let type_program' : I.program -> O.program result = fun p ->
 
   (* here, maybe ensure that there are no invalid things in env' and state' ? *)
   let () = ignore (env' , state') in
-
   ok p'
 
+(*
+  Tranform a Ast_typed type_expression into an ast_simplified type_expression
+*)
 let untype_type_expression (t:O.type_expression) : (I.type_expression) result =
   ok t
 (* match t.simplified with *)
 (* | Some s -> ok s *)
 (* | _ -> fail @@ internal_assertion_failure "trying to untype generated type" *)
 
+
+(*
+  Tranform a Ast_typed literal into an ast_simplified literal
+*)
 let untype_literal (l:O.literal) : I.literal result =
   let open I in
   match l with
@@ -773,6 +783,9 @@ let untype_literal (l:O.literal) : I.literal result =
   | Literal_address s -> ok (Literal_address s)
   | Literal_operation s -> ok (Literal_operation s)
 
+(*
+  Tranform a Ast_typed expression into an ast_simplified matching
+*)
 let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
   let open I in
   let return e = ok e in
@@ -839,6 +852,9 @@ let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
     let%bind result = untype_expression result in
     return (e_let_in (binder , (Some tv)) rhs result)
 
+(*
+  Tranform a Ast_typed matching into an ast_simplified matching
+*)
 and untype_matching : type o i . (o -> i result) -> o O.matching -> (i I.matching) result = fun f m ->
   let open I in
   match m with
