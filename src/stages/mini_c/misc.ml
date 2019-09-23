@@ -20,6 +20,12 @@ module Errors = struct
     ] in
     error ~data title content
 
+  let not_transpiled_literal exp =
+    let title () = "not transpiled literal" in
+    let content () = "Expression does not appear to be a transpiled literal value. When using --bigmap you must provide a literal value for the storage." in
+    let data =
+      [ ("val" , fun () -> Format.asprintf "%a" PP.expression exp) ] in
+    error ~data title content
 end
 
 (*
@@ -109,58 +115,61 @@ let aggregate_entry (lst : program) (name : string) (to_functionalize : bool) : 
 
 let rec expression_to_value (exp: expression) : value result =
   match exp.content with
-    | E_literal v -> ok @@ v
-    | E_constant ("map" , lst) ->
-      let aux el =
-        let%bind l = expression_to_value el in
-        match l with
-          | D_pair (a , b) -> ok @@ (a , b)
-          | _ -> fail @@ simple_error "??" in
-      let%bind lstl = bind_map_list aux lst in
-      ok @@ D_map lstl
-    | E_constant ("big_map" , lst) ->
-      let aux el =
-        let%bind l = expression_to_value el in
-        match l with
-          | D_pair (a , b) -> ok @@ (a , b)
-          | _ -> fail @@ simple_error "??" in
-      let%bind lstl = bind_map_list aux lst in
-      ok @@ D_big_map lstl
-    | E_constant ("PAIR" , fst::snd::[]) ->
-      let%bind fstl = expression_to_value fst in
-      let%bind sndl = expression_to_value snd in
-      ok @@ D_pair (fstl , sndl)
-    | E_constant ("UNIT", _) -> ok @@ D_unit
-    | E_constant ("UPDATE", _) ->
-      let rec handle_prev upd =
-        match upd.content with
-        | E_constant ("UPDATE" , [k;v;prev]) ->
-          begin
-            match v.content with
-              | E_constant ("SOME" , [i]) ->
-                let%bind kl = expression_to_value k in
-                let%bind il  = expression_to_value i in
-                let%bind prevl = handle_prev prev in
-                ok @@ (kl,il)::prevl
-              | E_constant ("NONE" , []) ->
-                let%bind prevl = handle_prev prev in
-                ok @@ prevl
-              | _ -> failwith "UPDATE second parameter is not an option"
+  | E_literal v -> ok @@ v
+  | E_constant ("PAIR" , fst::snd::[]) ->
+     let%bind fstl = expression_to_value fst in
+     let%bind sndl = expression_to_value snd in
+     ok @@ D_pair (fstl , sndl)
+  | E_constant ("UNIT", _) -> ok @@ D_unit
+  | E_make_empty_list _ ->
+     ok @@ D_list []
+  | E_constant ("CONS", [el; els]) ->
+     let%bind el = expression_to_value el in
+     let%bind els = expression_to_value els in
+     begin match els with
+     | D_list els -> ok @@ D_list (el :: els)
+     | _ -> fail @@ Errors.not_transpiled_literal exp
+     end
+  | E_constant ("NONE", []) ->
+     ok @@ D_none
+  | E_constant ("SOME", [x]) ->
+     let%bind x = expression_to_value x in
+     ok @@ D_some x
+  | E_constant ("LEFT", [x]) ->
+     let%bind x = expression_to_value x in
+     ok @@ D_left x
+  | E_constant ("RIGHT", [x]) ->
+     let%bind x = expression_to_value x in
+     ok @@ D_left x
+  | E_make_empty_set _ ->
+     ok @@ D_set []
+  | E_constant ("SET_ADD", [el; els]) ->
+     let%bind el = expression_to_value el in
+     let%bind els = expression_to_value els in
+     begin match els with
+     | D_set els -> ok @@ D_set (el :: els)
+     | _ -> fail @@ Errors.not_transpiled_literal exp
+     end
+  | E_make_empty_map _ ->
+     begin
+       match exp.type_value with
+       | T_big_map _ -> ok @@ D_big_map []
+       | T_map _ -> ok @@ D_map []
+       | _ -> fail @@ Errors.not_transpiled_literal exp
+     end
+  | E_constant ("UPDATE", [k;v;prev]) ->
+     begin
+       match v.content with
+       | E_constant ("SOME" , [i]) ->
+          let%bind kl = expression_to_value k in
+          let%bind il  = expression_to_value i in
+          let%bind prevl = expression_to_value prev in
+          begin match prevl with
+          | D_map kvl -> ok @@ D_map ((kl, il) :: kvl)
+          | D_big_map kvl -> ok @@ D_big_map ((kl, il) :: kvl)
+          | _ -> fail @@ Errors.not_transpiled_literal exp
           end
-        | E_make_empty_map _ ->
-          ok @@ []
-        | _ -> failwith "Ill-constructed map"
-      in
-      begin
-      match exp.type_value with
-        | T_big_map _ ->
-          let%bind kvl = handle_prev exp in
-          ok @@ D_big_map kvl
-        | T_map _ ->
-          let%bind kvl = handle_prev exp in
-          ok @@ D_map kvl
-        | _ -> failwith "UPDATE with a non-map type_value"
-      end
-    | _ as nl ->
-      let expp = Format.asprintf "'%a'" PP.expression' nl in
-      fail @@ simple_error ("Can not convert expression "^expp^" to literal")
+       | _ -> fail @@ Errors.not_transpiled_literal exp
+     end
+  | _ ->
+     fail @@ Errors.not_transpiled_literal exp
