@@ -10,6 +10,7 @@ let strip_annots = fun e ->
 let strip_nops = fun e ->
   match e with
   | Seq(l, [Prim (_, I_UNIT, _, _) ; Prim(_, I_DROP, _, _)]) -> ok @@ Seq (l, [])
+  | Seq(l, [Prim (_, I_PUSH, _, _) ; Prim(_, I_DROP, _, _)]) -> ok @@ Seq (l, [])
   | x -> ok x
 
 
