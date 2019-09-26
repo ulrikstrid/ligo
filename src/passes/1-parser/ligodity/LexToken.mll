@@ -79,14 +79,11 @@ type t =
 | If of Region.t
 | In of Region.t
 | Let of Region.t
-| List of Region.t
-| Map of Region.t
 | Match of Region.t
 | Mod of Region.t
 | Not of Region.t
 | Of of Region.t
 | Or of Region.t
-| Set of Region.t
 | Then of Region.t
 | True of Region.t
 | Type of Region.t
@@ -160,14 +157,11 @@ let proj_token = function
   | If region -> region, "If"
   | In region -> region, "In"
   | Let region -> region, "Let"
-  | List region -> region, "List"
-  | Map region -> region, "Map"
   | Match region -> region, "Match"
   | Mod region -> region, "Mod"
   | Not region -> region, "Not"
   | Of region -> region, "Of"
   | Or region -> region, "Or"
-  | Set region -> region, "Set"
   | Then region -> region, "Then"
   | True region -> region, "True"
   | Type region -> region, "Type"
@@ -219,14 +213,11 @@ let to_lexeme = function
   | If _ -> "if"
   | In _ -> "in"
   | Let _ -> "let"
-  | List _ -> "list"
-  | Map _ -> "map"
   | Match _ -> "match"
   | Mod _ -> "mod"
   | Not _ -> "not"
   | Of _ -> "of"
   | Or _ -> "or"
-  | Set _ -> "set"
   | True _ -> "true"
   | Type _ -> "type"
   | Then _ -> "then"
@@ -258,14 +249,11 @@ let keywords = [
   (fun reg -> If    reg);
   (fun reg -> In    reg);
   (fun reg -> Let   reg);
-  (fun reg -> List  reg);
-  (fun reg -> Map   reg);
   (fun reg -> Match reg);
   (fun reg -> Mod   reg);
   (fun reg -> Not   reg);
   (fun reg -> Of    reg);
   (fun reg -> Or    reg);
-  (fun reg -> Set   reg);
   (fun reg -> Then  reg);
   (fun reg -> True  reg);
   (fun reg -> Type  reg);
@@ -483,14 +471,11 @@ let is_kwd = function
   | If _
   | In _
   | Let _
-  | List _
-  | Map _
   | Match _
   | Mod _
   | Not _
   | Of _
   | Or _
-  | Set _
   | Then _
   | True _
   | Type _

@@ -228,9 +228,6 @@ core_type:
 
 type_constr:
   type_name { $1                               }
-| Set       { Region.{value="set";  region=$1} }
-| Map       { Region.{value="map";  region=$1} }
-| List      { Region.{value="list"; region=$1} }
 
 type_tuple:
   par(tuple(type_expr)) { $1 }

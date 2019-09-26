@@ -97,14 +97,11 @@ type t =
 | If of Region.t
 | In of Region.t
 | Let of Region.t
-| List of Region.t
-| Map of Region.t
 | Match of Region.t
 | Mod of Region.t
 | Not of Region.t
 | Of of Region.t
 | Or of Region.t
-| Set of Region.t
 | Then of Region.t
 | True of Region.t
 | Type of Region.t
