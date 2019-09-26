@@ -36,6 +36,7 @@ type t =
 | Int    of (lexeme * Z.t) Region.reg
 | Nat    of (lexeme * Z.t) Region.reg
 | Mtz    of (lexeme * Z.t) Region.reg
+| Mutez of (lexeme * Z.t) Region.reg
 | Ident  of lexeme Region.reg
 | Constr of lexeme Region.reg
 

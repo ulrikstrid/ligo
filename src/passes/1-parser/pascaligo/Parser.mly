@@ -864,6 +864,7 @@ core_expr:
   Int              { EArith (Int $1)              }
 | Nat              { EArith (Nat $1)              }
 | Mtz              { EArith (Mtz $1)              }
+| Mutez { EArith (Mutez $1) }
 | var              { EVar $1                      }
 | String           { EString (String $1)          }
 | Bytes            { EBytes $1                    }

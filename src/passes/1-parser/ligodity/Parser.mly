@@ -562,6 +562,7 @@ call_expr:
 core_expr:
   reg(Int)                                          { EArith (Int $1) }
 | reg(Mtz)                                          { EArith (Mtz $1) }
+| reg(Mutez) { EArith (Mutez $1) }
 | reg(Nat)                                          { EArith (Nat $1) }
 | ident | reg(module_field)                                 { EVar $1 }
 | reg(projection)                                          { EProj $1 }

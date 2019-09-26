@@ -174,6 +174,15 @@ module Errors = struct
     ] in
     error ~data title content
 
+  let mtz_literals_are_deprecated expr =
+    let title () = "mtz literals are deprecated, use mutez instead" in
+    let message () = "" in
+    let loc = Raw.expr_to_region expr in
+    let data = [
+      ("loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ loc)
+    ] in
+    error ~data title message
 end
 
 open Errors
@@ -431,7 +440,10 @@ let rec simpl_expression :
       let n = Z.to_int @@ snd @@ n in
       return @@ e_literal ~loc (Literal_nat n)
     )
-  | EArith (Mtz n) -> (
+  | EArith (Mtz _) as e -> (
+      fail @@ mtz_literals_are_deprecated e
+    )
+  | EArith (Mutez n) -> (
       let (n , loc) = r_split n in
       let n = Z.to_int @@ snd @@ n in
       return @@ e_literal ~loc (Literal_mutez n)

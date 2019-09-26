@@ -296,6 +296,15 @@ module Errors = struct
        fun () -> Format.asprintf "%a" PP_helpers.(printer Parser.Pascaligo.ParserLog.print_instruction) t)
     ] in
     error ~data title message
+
+  let mtz_literals_are_deprecated thing =
+    let title () = "mtz literals are deprecated, use mutez instead" in
+    let message () = "" in
+    let data = [
+      ("loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ thing.Region.region)
+    ] in
+    error ~data title message
 end
 
 open Errors
@@ -498,6 +507,9 @@ let rec simpl_expression (t:Raw.expr) : expr result =
       return @@ e_literal ~loc (Literal_nat n)
     )
   | EArith (Mtz n) -> (
+      fail @@ mtz_literals_are_deprecated n
+    )
+  | EArith (Mutez n) -> (
     let (n , loc) = r_split n in
     let n = Z.to_int @@ snd @@ n in
     return @@ e_literal ~loc (Literal_mutez n)

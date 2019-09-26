@@ -523,7 +523,8 @@ and print_arith_expr = function
     print_token op "-"; print_expr arg
 | Int i
 | Nat i
-| Mtz i -> print_int i
+| Mtz i
+| Mutez i -> print_int i
 
 and print_string_expr = function
   Cat {value = {arg1; op; arg2}; _} ->

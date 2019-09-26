@@ -39,6 +39,7 @@ type t =
 | Int    of (string * Z.t)
 | Nat    of (string * Z.t)
 | Mtz    of (string * Z.t)
+| Mutez of (string * Z.t)
 | Str    of string
 | Bytes  of (string * Hex.t)
 
@@ -117,6 +118,7 @@ let to_string = function
 | Int (lex,z) -> sprintf "Int %s (%s)" lex (Z.to_string z)
 | Nat (lex,z) -> sprintf "Nat %s (%s)" lex (Z.to_string z)
 | Mtz (lex,z) -> sprintf "Mtz %s (%s)" lex (Z.to_string z)
+| Mutez (lex,z) -> sprintf "Mutez %s (%s)" lex (Z.to_string z)
 | Str n    -> sprintf "Str \"%s\"" n
 | Bytes (lex,h) -> sprintf "Bytes %s (0x%s)" lex (Hex.to_string h)
 (*| And      -> "and"*)

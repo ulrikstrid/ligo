@@ -55,6 +55,7 @@ type t =
 | Int    of (string * Z.t)
 | Nat    of (string * Z.t)
 | Mtz    of (string * Z.t)
+| Mutez    of (string * Z.t)
 | Str    of string
 | Bytes  of (string * Hex.t)
 

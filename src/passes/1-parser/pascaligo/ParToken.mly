@@ -10,6 +10,7 @@
 %token   <(LexToken.lexeme * Z.t) Region.reg> Int
 %token   <(LexToken.lexeme * Z.t) Region.reg> Nat
 %token   <(LexToken.lexeme * Z.t) Region.reg> Mtz
+%token   <(LexToken.lexeme * Z.t) Region.reg> Mutez
 %token           <LexToken.lexeme Region.reg> Ident
 %token           <LexToken.lexeme Region.reg> Constr
 

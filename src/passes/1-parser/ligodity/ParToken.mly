@@ -44,6 +44,7 @@
 
 %token <string * Z.t> Int
 %token <string * Z.t> Mtz
+%token <string * Z.t> Mutez
 %token <string * Z.t> Nat
 
 (*%token And*)

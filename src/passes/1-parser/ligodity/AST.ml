@@ -252,6 +252,7 @@ and arith_expr =
 | Int  of (string * Z.t) reg
 | Nat  of (string * Z.t) reg
 | Mtz  of (string * Z.t) reg
+| Mutez of (string * Z.t) reg
 
 and logic_expr =
   BoolExpr of bool_expr
@@ -384,7 +385,7 @@ let logic_expr_to_region = function
 let arith_expr_to_region = function
   Add {region;_} | Sub {region;_} | Mult {region;_}
 | Div {region;_} | Mod {region;_} | Neg {region;_}
-| Int {region;_} | Mtz {region; _}
+| Int {region;_} | Mtz {region; _} | Mutez {region; _}
 | Nat {region; _} -> region
 
 let string_expr_to_region = function
@@ -659,6 +660,8 @@ and print_arith_expr = function
     print_token region (sprintf "Int %s (%s)" lex (Z.to_string z))
 | Mtz {region; value=lex,z} ->
     print_token region (sprintf "Mtz %s (%s)" lex (Z.to_string z))
+| Mutez {region; value=lex,z} ->
+    print_token region (sprintf "Mutez %s (%s)" lex (Z.to_string z))
 | Nat {region; value=lex,z} ->
     print_token region (sprintf "Nat %s (%s)" lex (Z.to_string z))
 

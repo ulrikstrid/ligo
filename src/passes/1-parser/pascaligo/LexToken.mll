@@ -34,6 +34,7 @@ type t =
 | Int    of (lexeme * Z.t) Region.reg
 | Nat    of (lexeme * Z.t) Region.reg
 | Mtz    of (lexeme * Z.t) Region.reg
+| Mutez of (lexeme * Z.t) Region.reg
 | Ident  of lexeme Region.reg
 | Constr of lexeme Region.reg
 
@@ -164,6 +165,9 @@ let proj_token = function
 | Mtz Region.{region; value = s,n} ->
     region, sprintf "Mtz (\"%s\", %s)" s (Z.to_string n)
 
+| Mutez Region.{region; value = s,n} ->
+    region, sprintf "Mutez (\"%s\", %s)" s (Z.to_string n)
+
 | Ident Region.{region; value} ->
     region, sprintf "Ident \"%s\"" value
 
@@ -260,7 +264,8 @@ let to_lexeme = function
 | Bytes b   -> fst b.Region.value
 | Int i
 | Nat i
-| Mtz i     -> fst i.Region.value
+| Mtz i
+| Mutez i   -> fst i.Region.value
 | Ident id
 | Constr id -> id.Region.value
 
@@ -500,7 +505,7 @@ let mk_mutez lexeme region =
     Z.of_string in
   if Z.equal z Z.zero && lexeme <> "0mutez"
   then Error Non_canonical_zero
-  else Ok (Mtz Region.{region; value = lexeme, z})
+  else Ok (Mutez Region.{region; value = lexeme, z})
 
 let eof region = EOF region
 
