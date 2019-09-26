@@ -780,6 +780,7 @@ let tez_mligo () : unit result =
   let%bind _ = expect_eq_evaluate program "add_tez" (e_mutez 42) in
   let%bind _ = expect_eq_evaluate program "sub_tez" (e_mutez 1) in
   let%bind _ = expect_eq_evaluate program "not_enough_tez" (e_mutez 4611686018427387903) in
+  let%bind _ = expect_eq_evaluate program "add_more_tez" (e_mutez 111111000) in
   ok ()
 
 let main = test_suite "Integration (End to End)" [
