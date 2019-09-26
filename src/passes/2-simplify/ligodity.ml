@@ -770,12 +770,7 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result =
         ok @@ Match_variant constrs
       in
       let as_option () =
-        let aux (x , y) =
-          let error =
-            let title () = "Pattern" in
-            let content () =
-              Format.asprintf "Pattern : %a" PP_helpers.(printer Parser.Ligodity.ParserLog.print_pattern) x in
-            error title content in
+        let aux (x , y) =          
           let%bind x' =
             trace (error x) @@
             get_constr_opt x
