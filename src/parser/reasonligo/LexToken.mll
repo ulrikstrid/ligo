@@ -82,7 +82,6 @@ type t =
 | Switch of Region.t
 | Mod of Region.t
 | Not of Region.t
-| Of of Region.t
 | Or of Region.t
 | Set of Region.t
 | True of Region.t
@@ -158,7 +157,6 @@ let proj_token = function
   | Switch region -> region, "Switch"
   | Mod region -> region, "Mod"
   | Not region -> region, "Not"
-  | Of region -> region, "Of"
   | Or region -> region, "Or"
   | Set region -> region, "Set"
   | True region -> region, "True"
@@ -212,7 +210,6 @@ let to_lexeme = function
   | Map _ -> "map"  
   | Mod _ -> "mod"
   | Not _ -> "not"
-  | Of _ -> "of"
   | Or _ -> "or"
   | Set _ -> "set"
   | Switch _ -> "switch"
@@ -247,7 +244,6 @@ let keywords = [
   (fun reg -> Switch reg);
   (fun reg -> Mod   reg);
   (fun reg -> Not   reg);
-  (fun reg -> Of    reg);
   (fun reg -> Or    reg);
   (fun reg -> Set   reg);
   (fun reg -> True  reg);
@@ -476,7 +472,6 @@ let is_kwd = function
   | Switch _
   | Mod _
   | Not _
-  | Of _
   | Or _
   | Set _
   | True _

@@ -57,6 +57,17 @@ par(X):
     in {region; value}
   }
 
+braces(X):
+  LBRACE X RBRACE {
+    let region = cover $1 $3
+    and value  = {
+      lpar   = $1;
+      inside = $2;
+      rpar   = $3}
+    in {region; value}
+  }
+
+
 (* Sequences
 
    Series of instances of the same syntactical category have often to
@@ -237,7 +248,7 @@ sum_type:
   }
 
 variant:
-  Constr Of cartesian {
+  Constr LPAR cartesian RPAR {
     let region = cover $1.region $3.region
     and value = {constr = $1; args = Some ($2, $3)}
     in {region; value}
@@ -288,22 +299,62 @@ let_declaration:
   }
 
 let_binding:
-  Ident LPAR nseq(sub_irrefutable) RPAR type_annotation? EG expr {
-    let let_rhs = $7 in
+  Ident EQ LPAR nsepseq(sub_irrefutable, COMMA) RPAR type_annotation? EG expr {
+    let let_rhs = $8 in
     let ident_pattern = PVar $1 in
-    let (hd , tl) = $3 in
+    let (hd , tl) = $4 in
     let start = $1.region in
-    let stop = expr_to_region $7 in
+    let stop = expr_to_region $8 in
     let region = cover start stop in
-    ({bindings= (ident_pattern :: hd :: tl); lhs_type=$5; eq=$6; let_rhs}, region)
+    ({bindings= (ident_pattern :: hd :: (List.map (fun (_, p) -> p) tl)); lhs_type=$6; eq=$7; let_rhs}, region)
   }
-| irrefutable type_annotation? EQ expr {  
-    let pattern = $1 in
-    let start = pattern_to_region $1 in
+| Ident type_annotation? EQ expr {         
+    let pattern = PVar $1 in
+    let start = pattern_to_region pattern in
+    let stop = expr_to_region $4 in  
+    let region = cover start stop in
+    ({bindings = [pattern]; lhs_type=$2; eq=$3; let_rhs=$4}, region)
+}
+| tuple(sub_irrefutable) type_annotation? EQ expr {  
+    let h, t = $1 in    
+    let start = pattern_to_region h in
+    let stop = last (fun (region, _) -> region) t in
+    let region = cover start stop in    
+    let pattern = PTuple { value = $1; region } in
+    let start = region in
+    let stop = expr_to_region $4 in  
+    let region = cover start stop in
+    ({bindings = [pattern]; lhs_type=$2; eq=$3; let_rhs=$4}, region)
+}
+| WILD type_annotation? EQ expr {         
+    let pattern = PWild $1 in
+    let start = pattern_to_region pattern in
     let stop = expr_to_region $4 in  
     let region = cover start stop in
     ({bindings = [pattern]; lhs_type=$2; eq=$3; let_rhs=$4}, region)
   }
+| unit type_annotation? EQ expr {         
+    let pattern = PUnit $1 in
+    let start = pattern_to_region pattern in
+    let stop = expr_to_region $4 in  
+    let region = cover start stop in
+    ({bindings = [pattern]; lhs_type=$2; eq=$3; let_rhs=$4}, region)
+  }
+| record_pattern type_annotation? EQ expr {         
+    let pattern = PRecord $1 in
+    let start = pattern_to_region pattern in
+    let stop = expr_to_region $4 in  
+    let region = cover start stop in
+    ({bindings = [pattern]; lhs_type=$2; eq=$3; let_rhs=$4}, region)
+  }
+| par(closed_irrefutable)  type_annotation? EQ expr {         
+    let pattern = PPar $1 in
+    let start = pattern_to_region pattern in
+    let stop = expr_to_region $4 in  
+    let region = cover start stop in
+    ({bindings = [pattern]; lhs_type=$2; eq=$3; let_rhs=$4}, region)
+  }
+
 
 type_annotation:
   COLON type_expr { $1,$2 }
@@ -763,7 +814,7 @@ core_expr:
 | False                               {  ELogic (BoolExpr (False $1)) }
 | True                                {  ELogic (BoolExpr (True $1))  }
 | list(expr)                                        { EList (List $1) }
-| par(expr)                                              {    EPar $1 }
+| braces(expr)                                              {    EPar $1 }
 | record_expr                                            { ERecord $1 }
 | par(expr COLON type_expr {$1,$3}) {
     EAnnot {$1 with value=$1.value.inside} }

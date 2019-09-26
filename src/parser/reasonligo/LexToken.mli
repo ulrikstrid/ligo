@@ -100,7 +100,6 @@ type t =
 | Switch of Region.t
 | Mod of Region.t
 | Not of Region.t
-| Of of Region.t
 | Or of Region.t
 | Set of Region.t
 | True of Region.t

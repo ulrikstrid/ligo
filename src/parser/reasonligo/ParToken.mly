@@ -56,7 +56,6 @@
 %token <Region.t> Switch
 %token <Region.t> Mod
 %token <Region.t> Not
-%token <Region.t> Of
 %token <Region.t> Or
 %token <Region.t> Set
 %token <Region.t> True
