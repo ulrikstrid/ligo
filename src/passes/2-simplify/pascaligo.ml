@@ -145,7 +145,7 @@ module Errors = struct
   let unsupported_for_loops region =
     let title () = "bounded iterators" in
     let message () =
-      Format.asprintf "only simple for loops are supported yet" in
+      Format.asprintf "only simple for loops are supported for now" in
     let data = [
       ("loop_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
@@ -786,10 +786,6 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       | Some s ->
           let%bind lst = bind_map_list simpl_expression args' in
           return_statement @@ e_constant ~loc s lst
-    )
-  | Fail e -> (
-      let%bind expr = simpl_expression e.value.fail_expr in
-      return_statement @@ e_failwith expr
     )
   | Skip reg -> (
       let loc = Location.lift reg in
