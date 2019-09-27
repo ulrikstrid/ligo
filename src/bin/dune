@@ -1,6 +1,9 @@
 (library 
   (name cli_helpers)
   (modules cli_helpers)
+  (preprocess
+    (pps ppx_let)
+  )
 )
 
 (executable
