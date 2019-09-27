@@ -1,9 +1,13 @@
 (library 
   (name cli_helpers)
+  (libraries
+    simple-utils
+    main)
   (modules cli_helpers)
   (preprocess
     (pps ppx_let)
   )
+  (flags (:standard -open Simple_utils))
 )
 
 (executable
