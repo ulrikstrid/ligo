@@ -101,15 +101,18 @@ module type TOKEN =
 
     (* Errors *)
 
-    type   int_err = Non_canonical_zero
-    type ident_err = Reserved_name
+    type   int_err       = Non_canonical_zero
+    type ident_err       = Reserved_name
+    type invalid_natural = 
+      | Invalid_natural
+      | Non_canonical_zero_nat
 
     (* Injections *)
 
     val mk_string : lexeme -> Region.t -> token
     val mk_bytes  : lexeme -> Region.t -> token
     val mk_int    : lexeme -> Region.t -> (token,   int_err) result
-    val mk_nat    : lexeme -> Region.t -> (token,   int_err) result
+    val mk_nat    : lexeme -> Region.t -> (token,   invalid_natural) result
     val mk_mtz    : lexeme -> Region.t -> (token,   int_err) result
     val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
     val mk_constr : lexeme -> Region.t -> token
@@ -340,6 +343,7 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
     type Error.t += Broken_string
     type Error.t += Invalid_character_in_string
     type Error.t += Reserved_name
+    type Error.t += Invalid_natural
 
     let error_to_string = function
       Invalid_utf8_sequence ->
@@ -382,6 +386,8 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
     | Reserved_name ->
         "Reserved named.\n\
          Hint: Change the name.\n"
+    | Invalid_natural ->
+        "Invalid natural."
     | _ -> assert false
 
     exception Error of Error.t Region.reg
@@ -421,8 +427,10 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       let region, lexeme, state = sync state buffer in
       match Token.mk_nat lexeme region with
         Ok token -> token, state
-      | Error Token.Non_canonical_zero ->
+      | Error Token.Non_canonical_zero_nat ->
           fail region Non_canonical_zero
+      | Error Token.Invalid_natural ->
+          fail region Invalid_natural
 
     let mk_mtz state buffer =
       let region, lexeme, state = sync state buffer in
@@ -502,6 +510,7 @@ and scan state = parse
 | constr        { mk_constr      state lexbuf |> enqueue   }
 | bytes         { (mk_bytes seq) state lexbuf |> enqueue   }
 | natural 'n'   { mk_nat         state lexbuf |> enqueue   }
+| natural 'p'   { mk_nat         state lexbuf |> enqueue   }
 | natural "mtz" { mk_mtz       state lexbuf |> enqueue   }
 | integer       { mk_int         state lexbuf |> enqueue   }
 | symbol        { mk_sym         state lexbuf |> enqueue   }
