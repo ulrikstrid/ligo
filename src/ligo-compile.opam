@@ -1,0 +1,23 @@
+name: "ligo-compile"
+opam-version: "2.0"
+maintainer: "ligolang@gmail.com"
+authors: [ "Galfour" ]
+homepage: "https://gitlab.com/ligolang/tezos"
+bug-reports: "https://gitlab.com/ligolang/tezos/issues"
+synopsis: "A higher-level language which compiles to Michelson"
+dev-repo: "git+https://gitlab.com/ligolang/tezos.git"
+license: "MIT"
+depends: [
+  "ocamlfind" { build }
+  "dune" { build & >= "1.0.1" }
+  "menhir"
+  "ppx_let"
+  "ppx_deriving"
+  "tezos-utils"
+  "yojson"
+  "alcotest" { with-test }
+  "getopt"
+]
+build: [
+  [ "dune" "build" "-p" name "-j" jobs ]
+]

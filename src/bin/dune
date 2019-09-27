@@ -1,14 +1,38 @@
+(library 
+  (name cli_helpers)
+  (modules cli_helpers)
+)
+
 (executable
   (name cli)
   (public_name ligo)
   (libraries
-    simple-utils
+    simple_utils
     cmdliner
+    cli_helpers
     ligo
   )
   (package ligo)
   (preprocess
     (pps ppx_let)
   )
+  (modules cli)
+  (flags (:standard -open Simple_utils))
+)
+
+(executable
+  (name cli-js)
+  (public_name ligo-js)
+  (libraries
+    simple_utils
+    cmdliner
+    cli_helpers
+    ligo-compile
+  )
+  (package ligo-compile)
+  (preprocess
+    (pps ppx_let)
+  )
+  (modules cli-js)
   (flags (:standard -open Simple_utils))
 )

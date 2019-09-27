@@ -1,14 +1,14 @@
 (dirs (:standard \ toto))
-(library
+(library 
   (name ligo)
-  (public_name ligo)
   (libraries
     simple-utils
     tezos-utils
-    tezos-micheline
+    tezos-micheline 
     main
   )
   (preprocess
     (pps ppx_let)
   )
 )
+
