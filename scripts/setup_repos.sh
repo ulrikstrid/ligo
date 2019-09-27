@@ -8,4 +8,4 @@ eval $(opam config env)
 opam repository remove tezos-opam-repository
 
 # Add ligolang tezos repo
-opam repository add ligolang-tezos-opam-repository https://gitlab.com/ligolang/tezos-opam-repository.git
+opam repository add ligolang-tezos-opam-repository https://gitlab.com/ligolang/tezos-opam-repository.git#upgrade
