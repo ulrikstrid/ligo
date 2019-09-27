@@ -657,54 +657,27 @@ and type_expression : environment -> Solver.state -> I.expression -> (O.annotate
   (* Advanced *)
   | E_matching (ex, m) -> (
       let%bind ex' = type_expression e ex in
-      match m with
-      (* Special case for assert-like failwiths. TODO: CLEAN THIS. *)
-      | I.Match_bool { match_false ; match_true } when I.is_e_failwith match_true -> (
-          let%bind fw = I.get_e_failwith match_true in
-          let%bind fw' = type_expression e fw in
-          let%bind mf' = type_expression e match_false in
-          let t = get_type_annotation ex' in
-          let%bind () =
-            trace_strong (match_error ~expected:m ~actual:t ae.location)
-            @@ assert_t_bool t in
-          let%bind () =
-            trace_strong (match_error
-                            ~msg:"matching not-unit on an assert"
-                            ~expected:m
-                            ~actual:t
-                            ae.location)
-            @@ assert_t_unit (get_type_annotation mf') in
-          let mt' = make_a_e
-              (E_constant ("ASSERT_INFERRED" , [ex' ; fw']))
-              (t_unit ())
-              e
-          in
-          let m' = O.Match_bool { match_true = mt' ; match_false = mf' } in
-          return (O.E_matching (ex' , m')) (t_unit ())
-        )
-      | _ -> (
-          let%bind m' = type_match (type_expression ?tv_opt:None) e ex'.type_annotation m ae ae.location in
-          let tvs =
-            let aux (cur:O.value O.matching) =
-              match cur with
-              | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
-              | Match_list { match_nil ; match_cons = ((_ , _) , match_cons) } -> [ match_nil ; match_cons ]
-              | Match_option { match_none ; match_some = (_ , match_some) } -> [ match_none ; match_some ]
-              | Match_tuple (_ , match_tuple) -> [ match_tuple ]
-              | Match_variant (lst , _) -> List.map snd lst in
-            List.map get_type_annotation @@ aux m' in
-          let aux prec cur =
-            let%bind () =
-              match prec with
-              | None -> ok ()
-              | Some cur' -> Ast_typed.assert_type_value_eq (cur , cur') in
-            ok (Some cur) in
-          let%bind tv_opt = bind_fold_list aux None tvs in
-          let%bind tv =
-            trace_option (match_empty_variant m ae.location) @@
-            tv_opt in
-          return (O.E_matching (ex', m')) tv
-        )
+      let%bind m' = type_match (type_expression ?tv_opt:None) e ex'.type_annotation m ae ae.location in
+      let tvs =
+        let aux (cur:O.value O.matching) =
+          match cur with
+          | Match_bool { match_true ; match_false } -> [ match_true ; match_false ]
+          | Match_list { match_nil ; match_cons = ((_ , _) , match_cons) } -> [ match_nil ; match_cons ]
+          | Match_option { match_none ; match_some = (_ , match_some) } -> [ match_none ; match_some ]
+          | Match_tuple (_ , match_tuple) -> [ match_tuple ]
+          | Match_variant (lst , _) -> List.map snd lst in
+        List.map get_type_annotation @@ aux m' in
+      let aux prec cur =
+        let%bind () =
+          match prec with
+          | None -> ok ()
+          | Some cur' -> Ast_typed.assert_type_value_eq (cur , cur') in
+        ok (Some cur) in
+      let%bind tv_opt = bind_fold_list aux None tvs in
+      let%bind tv =
+        trace_option (match_empty_variant m ae.location) @@
+        tv_opt in
+      return (O.E_matching (ex', m')) tv
     )
   | E_sequence (a , b) ->
     let%bind (a' , state') = type_expression e state a in

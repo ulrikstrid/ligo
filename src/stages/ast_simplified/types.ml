@@ -72,8 +72,7 @@ and 'a expression_ast =
   | E_set of expr list
   | E_look_up of (expr * expr)
   (* Matching *)
-  | E_matching of ('a * 'a matching)
-  | E_failwith of 'a
+  | E_matching of (expr * matching_expr)
   (* Replace Statements *)
   | E_sequence of ('a * 'a)
   | E_loop of ('a * 'a)
