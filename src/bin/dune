@@ -10,7 +10,7 @@
   (name cli)
   (public_name ligo)
   (libraries
-    simple_utils
+    simple-utils
     cmdliner
     cli_helpers
     ligo
@@ -27,7 +27,7 @@
   (name cli-js)
   (public_name ligo-js)
   (libraries
-    simple_utils
+    simple-utils
     cmdliner
     cli_helpers
     ligo-compile
