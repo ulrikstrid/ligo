@@ -53,14 +53,11 @@
 %token <Region.t> If
 %token <Region.t> In
 %token <Region.t> Let
-%token <Region.t> List
-%token <Region.t> Map
 %token <Region.t> Match
 %token <Region.t> Mod
 %token <Region.t> Not
 %token <Region.t> Of
 %token <Region.t> Or
-%token <Region.t> Set
 %token <Region.t> Then
 %token <Region.t> True
 %token <Region.t> Type

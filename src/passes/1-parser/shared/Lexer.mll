@@ -439,6 +439,43 @@ module Make (Token: TOKEN) : (S with module Token = Token) =
       | Error Token.Non_canonical_zero ->
           fail region Non_canonical_zero
 
+    let mk_tz state buffer =
+      let region, lexeme, state = sync state buffer in
+      let lexeme = Str.string_before lexeme (String.index lexeme 't') in
+      let lexeme = Z.mul (Z.of_int 1_000_000) (Z.of_string lexeme) in
+      match Token.mk_mtz (Z.to_string lexeme ^ "mtz") region with
+        Ok token -> token, state
+      | Error Token.Non_canonical_zero ->
+          fail region Non_canonical_zero
+
+    let format_tz s =
+      match String.index s '.' with
+        index ->
+          let len         = String.length s in
+          let integral    = Str.first_chars s index
+          and fractional  = Str.last_chars s (len-index-1) in
+          let num         = Z.of_string (integral ^ fractional)
+          and den         = Z.of_string ("1" ^ String.make (len-index-1) '0')
+          and million     = Q.of_string "1000000" in
+          let mtz         = Q.make num den |> Q.mul million in
+          let should_be_1 = Q.den mtz in
+          if Z.equal Z.one should_be_1 then Some (Q.num mtz) else None
+      | exception Not_found -> assert false
+
+    let mk_tz_decimal state buffer =
+      let region, lexeme, state = sync state buffer in
+      let lexeme = Str.string_before lexeme (String.index lexeme 't') in
+      match format_tz lexeme with 
+      | Some tz -> (
+        match Token.mk_mtz (Z.to_string tz ^ "mtz") region with
+          Ok token -> 
+          token, state
+        | Error Token.Non_canonical_zero ->
+            fail region Non_canonical_zero
+        )
+      | None -> assert false
+      
+      
     let mk_ident state buffer =
       let region, lexeme, state = sync state buffer in
       match Token.mk_ident lexeme region with
@@ -470,6 +507,7 @@ let blank      = ' ' | '\t'
 let digit      = ['0'-'9']
 let natural    = digit | digit (digit | '_')* digit
 let integer    = '-'? natural
+let decimal    = digit+ '.' digit+
 let small      = ['a'-'z']
 let capital    = ['A'-'Z']
 let letter     = small | capital
@@ -511,7 +549,9 @@ and scan state = parse
 | bytes         { (mk_bytes seq) state lexbuf |> enqueue   }
 | natural 'n'   { mk_nat         state lexbuf |> enqueue   }
 | natural 'p'   { mk_nat         state lexbuf |> enqueue   }
-| natural "mtz" { mk_mtz       state lexbuf |> enqueue   }
+| natural "mtz" { mk_mtz         state lexbuf |> enqueue   }
+| natural "tz"  { mk_tz          state lexbuf |> enqueue   }
+| decimal "tz"  { mk_tz_decimal  state lexbuf |> enqueue   }
 | integer       { mk_int         state lexbuf |> enqueue   }
 | symbol        { mk_sym         state lexbuf |> enqueue   }
 | eof           { mk_eof         state lexbuf |> enqueue   }
