@@ -284,7 +284,7 @@ let multiple_parameters () : unit result  =
 
 let record () : unit result  =
   let%bind program = type_file "./contracts/record.ligo" in
-  let%bind () =
+  (*let%bind () =
     let expected = record_ez_int ["foo" ; "bar"] 0 in
     expect_eq_evaluate program "fb" expected
   in
@@ -303,7 +303,7 @@ let record () : unit result  =
     let make_input = record_ez_int ["foo" ; "bar"] in
     let make_expected = fun n -> ez_e_record [("foo" , e_int 256) ; ("bar" , e_int n) ] in
     expect_eq_n program "modify" make_input make_expected
-  in
+  in *)
   let%bind () =
     let make_input = record_ez_int ["a" ; "b" ; "c"] in
     let make_expected = fun n -> ez_e_record [
@@ -313,11 +313,12 @@ let record () : unit result  =
       ] in
     expect_eq_n program "modify_abc" make_input make_expected
   in
-  let%bind () =
+  (* let%bind () =
     let expected = record_ez_int ["a";"b";"c";"d";"e"] 23 in
     expect_eq_evaluate program "br" expected
-  in
-  ok ()
+  in *)
+  (* ok () *)
+  fail @@ simple_error "Fail to have printf on stdout"
 
 let tuple () : unit result  =
   let%bind program = type_file "./contracts/tuple.ligo" in
@@ -821,66 +822,5 @@ let tez_mligo () : unit result =
   ok ()
 
 let main = test_suite "Integration (End to End)" [
-    test "type alias" type_alias ;
-    test "function" function_ ;
-    (* test "procedure"  procedure ; *)
-    test "assign" assign ;
-    test "declaration local" declaration_local ;
-    test "complex function" complex_function ;
-    test "closure" closure ;
-    test "shared function" shared_function ;
-    test "higher order" higher_order ;
-    test "variant" variant ;
-    test "variant (mligo)" variant_mligo ;
-    test "variant matching" variant_matching ;
-    test "tuple" tuple ;
     test "record" record ;
-    test "condition simple" condition_simple ;
-    test "condition" condition ;
-    test "shadow" shadow ;
-    test "annotation" annotation ;
-    test "multiple parameters" multiple_parameters ;
-    test "bool" bool_expression ;
-    test "arithmetic" arithmetic ;
-    test "bitiwse_arithmetic" bitwise_arithmetic ;
-    test "string_arithmetic" string_arithmetic ;
-    test "bytes_arithmetic" bytes_arithmetic ;
-    test "set_arithmetic" set_arithmetic ;
-    test "unit" unit_expression ;
-    test "string" string_expression ;
-    test "option" option ;
-    test "option (mligo)" moption ;
-    test "map" map ;
-    test "map (mligo)" mmap ;
-    test "big_map" big_map ;
-    test "big_map (mligo)" mbig_map ;
-    test "list" list ;
-    test "loop" loop ;
-    test "matching" matching ;
-    test "declarations" declarations ;
-    test "quote declaration" quote_declaration ;
-    test "quote declarations" quote_declarations ;
-    test "#include directives" include_ ;
-    test "counter contract" counter_contract ;
-    test "super counter contract" super_counter_contract ;
-    test "super counter contract" super_counter_contract_mligo ;
-    test "dispatch counter contract" dispatch_counter_contract ;
-    test "basic (mligo)" basic_mligo ;
-    test "counter contract (mligo)" counter_mligo ;
-    test "let-in (mligo)" let_in_mligo ;
-    test "match variant (mligo)" match_variant ;
-    test "match variant 2 (mligo)" match_matej ;
-    test "list matching (mligo)" mligo_list ;
-    (* test "guess the hash mligo" guess_the_hash_mligo ; WIP? *)
-    test "failwith ligo" failwith_ligo ;
-    test "failwith mligo" failwith_mligo ;
-    test "assert mligo" assert_mligo ;
-    (* test "guess string mligo" guess_string_mligo ; WIP? *)
-    test "lambda mligo" lambda_mligo ;
-    test "lambda ligo" lambda_ligo ;
-    (* test "lambda2 mligo" lambda2_mligo ; *)
-    test "tez (ligo)" tez_ligo ;
-    test "tez (mligo)" tez_mligo ;
-    test "website1 ligo" website1_ligo ;
-    test "website2 ligo" website2_ligo ;
   ]

@@ -26,6 +26,7 @@ let compile_function : annotated_expression -> _ result = fun e ->
 
 let compile_function_entry : program -> string -> _ = fun p entry ->
   let%bind prog_mini_c = Transpiler.transpile_program p in
+  let _ = Format.printf " some mini_c %a\n" Mini_c.PP.program prog_mini_c in
   Of_mini_c.compile_function_entry prog_mini_c entry
 
 let compile_contract_entry : program -> string -> _ = fun p entry ->
