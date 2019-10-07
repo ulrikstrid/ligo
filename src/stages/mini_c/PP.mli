@@ -15,8 +15,8 @@ val value : formatter -> value -> unit
 
 (*
 val value_assoc : formatter -> (value * value) -> unit
-val expression' : formatter -> expression' -> unit
 *)
+val expression' : formatter -> expression' -> unit
 
 val expression : formatter -> expression -> unit
 val expression_with_type : formatter -> expression -> unit

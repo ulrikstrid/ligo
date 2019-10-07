@@ -20,8 +20,8 @@ val t_unit      : type_expression
 val t_address   : type_expression
 (*
 val t_option    : type_expression -> type_expression
-val t_list      : type_expression -> type_expression
 *)
+val t_list      : type_expression -> type_expression
 val t_variable  : type_name -> type_expression
 (*
 val t_tuple     : type_expression list -> type_expression
@@ -35,8 +35,8 @@ val t_sum : te_map -> type_expression
 val ez_t_sum : ( string * type_expression ) list -> type_expression
 
 val t_function : type_expression -> type_expression -> type_expression
-(*
 val t_map : type_expression -> type_expression -> type_expression
+(*
 val t_set : type_expression -> type_expression
 
 val make_name : string -> name
@@ -51,8 +51,13 @@ val e_timestamp : ?loc:Location.t -> int -> expression
 val e_bool : ?loc:Location.t -> bool -> expression
 val e_string : ?loc:Location.t -> string -> expression
 val e_address : ?loc:Location.t -> string -> expression 
-val e_tez : ?loc:Location.t -> int -> expression
+val e_mutez : ?loc:Location.t -> int -> expression
+val e'_bytes : string -> expression' result
 val e_bytes : ?loc:Location.t -> string -> expression result
+val e_big_map : ?loc:Location.t -> ( expr * expr ) list -> expression
+(*
+val e_record  : ?loc:Location.t -> ( expr * expr ) list -> expression
+*)
 val e_tuple : ?loc:Location.t -> expression list -> expression
 val e_some : ?loc:Location.t -> expression -> expression
 val e_none : ?loc:Location.t -> unit -> expression
@@ -67,7 +72,6 @@ val e_matching_bool : ?loc:Location.t -> expression -> expression -> expression 
 val e_accessor : ?loc:Location.t -> expression -> access_path -> expression
 val e_accessor_props : ?loc:Location.t -> expression -> name list -> expression
 val e_variable : ?loc:Location.t -> name -> expression
-val e_failwith : ?loc:Location.t -> expression -> expression
 val e_skip : ?loc:Location.t -> unit -> expression
 val e_loop : ?loc:Location.t -> expression -> expression -> expression
 val e_sequence : ?loc:Location.t -> expression -> expression -> expression
@@ -87,6 +91,7 @@ val e_typed_none : ?loc:Location.t -> type_expression -> expression
 val e_typed_list : ?loc:Location.t -> expression list -> type_expression -> expression
 
 val e_typed_map : ?loc:Location.t -> ( expression * expression ) list  -> type_expression -> type_expression -> expression
+val e_typed_big_map : ?loc:Location.t -> ( expression * expression ) list  -> type_expression -> type_expression -> expression
 
 val e_typed_set : ?loc:Location.t -> expression list -> type_expression -> expression
 
@@ -105,9 +110,11 @@ val get_access_record : access -> string result
 val get_e_pair : expression' -> ( expression * expression ) result
 
 val get_e_list : expression' -> ( expression list ) result
+val get_e_tuple : expression' -> ( expression list ) result
+(*
 val get_e_failwith : expression -> expression result 
 val is_e_failwith : expression -> bool
-
+*)
 val extract_pair : expression -> ( expression * expression ) result 
 
 val extract_list : expression -> (expression list) result

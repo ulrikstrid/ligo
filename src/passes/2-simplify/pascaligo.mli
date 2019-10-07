@@ -20,6 +20,9 @@ module Errors : sig
   val unsupported_ass_None : Raw.wild -> unit -> error
   val unsupported_entry_decl : 'a Raw.reg -> unit -> error
   val unsupported_proc_decl : 'a Raw.reg -> unit -> error
+  *)
+  val bad_bytes : Location.t -> string -> unit -> error
+  (*
   val unsupported_local_proc : Raw.wild -> unit -> error
   val corner_case : loc:string -> string -> unit -> error
   val unknown_predefined_type : string Raw.reg -> unit -> error
@@ -27,8 +30,8 @@ module Errors : sig
   val unsupported_arith_op : Raw.expr -> unit -> error
   (*
   val unsupported_string_catenation : Raw.expr -> unit -> error
-  *)
   val unsupported_set_expr : Raw.expr -> unit -> error
+  *)
   val unsupported_proc_calls : 'a Raw.reg -> unit -> error
   (*
   val unsupported_for_loops : Raw.wild -> unit -> error

@@ -6,7 +6,7 @@ open Michelson
 (*
 module Stack = Meta_michelson.Stack
 *)
-
+val empty: environment
 val get : environment -> string -> michelson result
 val set : environment -> string -> michelson result
 

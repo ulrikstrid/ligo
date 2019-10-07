@@ -38,13 +38,11 @@ module Typer : sig
   val map_iter : typer 
   val map_map : typer 
   val map_fold : typer 
-  *)
   val big_map_remove : typer 
   val big_map_add : typer 
   val big_map_update : typer 
   val big_map_mem : typer 
   val big_map_find : typer 
-  (*
   val size : typer
   val slice : typer
   val failwith_ : typer
@@ -116,6 +114,7 @@ module Compiler : sig
     | Tetrary of michelson
     | Pentary of michelson
     | Hexary of michelson
+  val operators : predicate Map.String.t
   val simple_constant : t -> predicate
   val simple_unary : t -> predicate
   val simple_binary : t -> predicate
@@ -124,6 +123,7 @@ module Compiler : sig
   val simple_pentary : t -> predicate
   val simple_hexary : t -> predicate
 
+(*
   val predicates : predicate Map.String.t
-
+*)
 end

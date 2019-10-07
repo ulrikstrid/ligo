@@ -31,6 +31,7 @@ val ez_t_record : ( string * type_value ) list -> ?s:S.type_expression -> unit -
 *)
 
 val t_map : type_value -> type_value -> ?s:S.type_expression -> unit -> type_value
+val t_big_map : type_value -> type_value -> ?s:S.type_expression -> unit -> type_value
 val t_sum : tv_map -> ?s:S.type_expression -> unit -> type_value
 val make_t_ez_sum : ( string * type_value ) list -> type_value
 val t_function : type_value -> type_value -> ?s:S.type_expression -> unit -> type_value
@@ -39,6 +40,8 @@ val get_type_annotation : annotated_expression -> type_value
 val get_type' : type_value -> type_value'
 val get_environment : annotated_expression -> full_environment
 val get_expression : annotated_expression -> expression
+val get_lambda : expression -> lambda result
+val get_lambda_with_type : annotated_expression -> (lambda * ( tv * tv) ) result
 val get_t_bool : type_value -> unit result
 (*
 val get_t_int : type_value -> unit result
@@ -66,6 +69,8 @@ val get_t_map : type_value -> ( type_value * type_value ) result
 val get_t_big_map : type_value -> ( type_value * type_value ) result
 val get_t_map_key : type_value -> type_value result
 val get_t_map_value : type_value -> type_value result
+val get_t_big_map_key : type_value -> type_value result
+val get_t_big_map_value : type_value -> type_value result
 
 val assert_t_map : type_value -> unit result
 
@@ -123,13 +128,13 @@ val e_let_in : string -> value -> value -> expression
 val e_a_unit : full_environment -> annotated_expression
 val e_a_int : int -> full_environment -> annotated_expression
 val e_a_nat : int -> full_environment -> annotated_expression
-val e_a_tez : int -> full_environment -> annotated_expression
+val e_a_mutez : int -> full_environment -> annotated_expression
 val e_a_bool : bool -> full_environment -> annotated_expression
 val e_a_string : string -> full_environment -> annotated_expression
 val e_a_address : string -> full_environment -> annotated_expression
 val e_a_pair : annotated_expression -> annotated_expression -> full_environment -> annotated_expression
 val e_a_some : annotated_expression -> full_environment -> annotated_expression
-val e_a_lambda : lambda -> full_environment -> annotated_expression
+val e_a_lambda : lambda -> tv -> tv -> full_environment -> annotated_expression
 val e_a_none : type_value -> full_environment -> annotated_expression
 val e_a_tuple : annotated_expression list -> full_environment -> annotated_expression
 val e_a_record : ae_map -> full_environment -> annotated_expression

@@ -53,8 +53,9 @@ module Ty : sig
   val timestamp : Alpha_context.Script_timestamp.t ty
   val map : 'a comparable_ty -> 'b ty -> ( 'a , 'b ) map ty
   val pair : 'a ty -> 'b ty -> ('a , 'b ) pair ty
+  *)
   val union : 'a ty -> 'b ty -> ( 'a , 'b ) union ty
-
+  (*
   val not_comparable : string -> unit -> error
   val not_compilable_type : string -> unit -> error
 

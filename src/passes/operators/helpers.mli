@@ -48,7 +48,7 @@ module Typer : sig
 
   val eq_1 : type_value -> type_value -> bool
   val eq_2 : ( type_value * type_value ) -> type_value -> bool
-  val assert_eq_1 : type_value -> type_value -> unit result
+  val assert_eq_1 : ?msg:string -> type_value -> type_value -> unit result
 
   val comparator : name -> typer
   val boolean_operator_2 : name -> typer
