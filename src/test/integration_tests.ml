@@ -702,6 +702,12 @@ let quote_declarations () : unit result =
   let make_expected = fun n -> e_int (74 + 2 * n) in
   expect_eq_n program "main" make_input make_expected
 
+let sub_blocks () : unit result = 
+  let%bind program = type_file "./contracts/blocks.ligo" in
+  let input = e_int 10 in
+  let expected = e_int 30 in
+  expect_eq program "sub_block_simple" input expected
+
 let counter_contract () : unit result =
   let%bind program = type_file "./contracts/counter.ligo" in
   let make_input = fun n-> e_pair (e_int n) (e_int 42) in
@@ -931,6 +937,7 @@ let main = test_suite "Integration (End to End)" [
     test "declarations" declarations ;
     test "quote declaration" quote_declaration ;
     test "quote declarations" quote_declarations ;
+    test "sub blocks" sub_blocks ;
     test "#include directives" include_ ;
     test "counter contract" counter_contract ;
     test "super counter contract" super_counter_contract ;
