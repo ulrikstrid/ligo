@@ -8,7 +8,6 @@ open Combinators
 
 let nseq_to_list (hd, tl) = hd :: tl
 let npseq_to_list (hd, tl) = hd :: (List.map snd tl)
-let npseq_to_nelist (hd, tl) = hd, (List.map snd tl)
 let pseq_to_list = function
   | None -> []
   | Some lst -> npseq_to_list lst
@@ -23,16 +22,6 @@ module Errors = struct
     let data = [
       ("pattern_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
-    ] in
-    error ~data title message
-
-  let unsupported_ass_None region =
-    let title () = "assignment of None" in
-    let message () =
-      Format.asprintf "assignments of None are not supported yet" in
-    let data = [
-      ("none_expr",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
     ] in
     error ~data title message
 
@@ -99,17 +88,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_string_catenation expr =
-    let title () = "string expressions" in
-    let message () =
-      Format.asprintf "string concatenation is not supported yet" in
-    let expr_loc = Raw.expr_to_region expr in
-    let data = [
-      ("expr_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ expr_loc)
-    ] in
-    error ~data title message
-
   let unsupported_proc_calls call =
     let title () = "procedure calls" in
     let message () =
@@ -130,17 +108,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_deep_map_assign v =
-    let title () = "map assignments" in
-    let message () =
-      Format.asprintf "assignments to embedded maps are not \
-                       supported yet" in
-    let data = [
-      ("lhs_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ v.Region.region)
-    ] in
-    error ~data title message
-
   let unsupported_empty_record_patch record_expr =
     let title () = "empty record patch" in
     let message () =
@@ -151,48 +118,14 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_map_patches patch =
-    let title () = "map patches" in
+  let unsupported_deep_set_rm path =
+    let title () = "set removals" in
     let message () =
-      Format.asprintf "map patches (a.k.a. functional updates) are \
-                       not supported yet" in
-    let data = [
-      ("patch_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ patch.Region.region)
-    ] in
-    error ~data title message
-
-  let unsupported_set_patches patch =
-    let title () = "set patches" in
-    let message () =
-      Format.asprintf "set patches (a.k.a. functional updates) are \
-                       not supported yet" in
-    let data = [
-      ("patch_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ patch.Region.region)
-    ] in
-    error ~data title message
-
-  let unsupported_deep_map_rm path =
-    let title () = "binding removals" in
-    let message () =
-      Format.asprintf "removal of bindings from embedded maps \
-                       are not supported yet" in
+      Format.asprintf "removal of members from embedded sets is not supported yet" in
     let data = [
       ("path_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ path.Region.region)
-    ] in
-    error ~data title message
-
-  let unsupported_set_removal remove =
-    let title () = "set removals" in
-    let message () =
-      Format.asprintf "removal of elements in a set is not \
-                       supported yet" in
-    let data = [
-      ("removal_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ remove.Region.region)
-    ] in
+      ] in
     error ~data title message
 
   let unsupported_non_var_pattern p =
@@ -227,7 +160,7 @@ module Errors = struct
       ("pattern_loc",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc) ;
       ("pattern",
-       fun () -> Format.asprintf "%a" (Simple_utils.PP_helpers.printer Parser.Pascaligo.ParserLog.print_pattern) p) ;
+       fun () -> Parser.Pascaligo.ParserLog.pattern_to_string p)
     ] in
     error ~data title message
 
@@ -271,7 +204,7 @@ module Errors = struct
     let message () = "" in
     let data = [
       ("instruction",
-       fun () -> Format.asprintf "%a" PP_helpers.(printer Parser.Pascaligo.ParserLog.print_instruction) t)
+       fun () -> Parser.Pascaligo.ParserLog.instruction_to_string t)
     ] in
     error ~data title message
 end
@@ -488,8 +421,11 @@ let rec simpl_expression (t:Raw.expr) : expr result =
         String.(sub s 1 (length s - 2))
       in
       return @@ e_literal ~loc (Literal_string s')
-  | EString (Cat _) as e ->
-      fail @@ unsupported_string_catenation e
+  | EString (Cat bo) ->
+    let (bo , loc) = r_split bo in
+    let%bind sl = simpl_expression bo.arg1 in
+    let%bind sr = simpl_expression bo.arg2 in
+    return @@ e_string_cat ~loc sl sr
   | ELogic l -> simpl_logic_expression l
   | EList l -> simpl_list_expression l
   | ESet s -> simpl_set_expression s
@@ -790,10 +726,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
     )
   | Assign a -> (
       let (a , loc) = r_split a in
-      let%bind value_expr = match a.rhs with
-        | Expr e -> simpl_expression e
-        | NoneExpr reg -> fail @@ unsupported_ass_None reg
-      in
+      let%bind value_expr = simpl_expression a.rhs in
       match a.lhs with
         | Path path -> (
             let (name , path') = simpl_path path in
@@ -801,13 +734,16 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
           )
         | MapPath v -> (
             let v' = v.value in
-            let%bind name = match v'.path with
-              | Name name -> ok name
-              | _ -> fail @@ unsupported_deep_map_assign v in
+            let%bind (varname,map,path) = match v'.path with
+              | Name name -> ok (name.value , e_variable name.value, [])
+              | Path p ->
+                let (name,p') = simpl_path v'.path in
+                let%bind accessor = simpl_projection p in 
+                ok @@ (name , accessor , p')
+            in
             let%bind key_expr = simpl_expression v'.index.value.inside in
-            let old_expr = e_variable name.value in
-            let expr' = e_map_add key_expr value_expr old_expr in
-            return_statement @@ e_assign ~loc name.value [] expr'
+            let expr' = e_map_add key_expr value_expr map in
+            return_statement @@ e_assign ~loc varname path expr'
           )
     )
   | CaseInstr c -> (
@@ -847,21 +783,69 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       in
       return_statement @@ expr
     )
-  | MapPatch patch ->
-      fail @@ unsupported_map_patches patch
-  | SetPatch patch ->
-      fail @@ unsupported_set_patches patch
+  | MapPatch patch -> (
+      let (map_p, loc) = r_split patch in
+      let (name, access_path) = simpl_path map_p.path in
+      let%bind inj = bind_list
+          @@ List.map (fun (x:Raw.binding Region.reg) ->
+            let x = x.value in
+            let (key, value) = x.source, x.image in
+            let%bind key' = simpl_expression key in
+            let%bind value' = simpl_expression value
+            in ok @@ (key', value')
+          )
+        @@ pseq_to_list map_p.map_inj.value.elements in
+      let expr =
+        match inj with
+        | [] -> e_skip ~loc ()
+        | _ :: _ ->
+          let assigns = List.fold_right
+              (fun (key, value) map -> (e_map_add key value map))
+              inj
+              (e_accessor ~loc (e_variable name) access_path)
+          in e_assign ~loc name access_path assigns
+      in return_statement @@ expr
+    )
+  | SetPatch patch -> (
+      let (setp, loc) = r_split patch in
+      let (name , access_path) = simpl_path setp.path in
+      let%bind inj =
+        bind_list @@
+        List.map simpl_expression @@
+        pseq_to_list setp.set_inj.value.elements in
+      let expr =
+        match inj with
+        | [] -> e_skip ~loc ()
+        | _ :: _ ->
+          let assigns = List.fold_right
+            (fun hd s -> e_constant "SET_ADD" [hd ; s])
+            inj (e_accessor ~loc (e_variable name) access_path) in
+          e_assign ~loc name access_path assigns in
+      return_statement @@ expr
+    )
   | MapRemove r -> (
       let (v , loc) = r_split r in
       let key = v.key in
-      let%bind map = match v.map with
-        | Name v -> ok v.value
-        | Path path -> fail @@ unsupported_deep_map_rm path in
+      let%bind (varname,map,path) = match v.map with
+        | Name v -> ok (v.value , e_variable v.value , [])
+        | Path p ->
+          let (name,p') = simpl_path v.map in
+          let%bind accessor = simpl_projection p in 
+          ok @@ (name , accessor , p')
+      in
       let%bind key' = simpl_expression key in
-      let expr = e_constant ~loc "MAP_REMOVE" [key' ; e_variable map] in
-      return_statement @@ e_assign ~loc map [] expr
+      let expr = e_constant ~loc "MAP_REMOVE" [key' ; map] in
+      return_statement @@ e_assign ~loc varname path expr
     )
-  | SetRemove r -> fail @@ unsupported_set_removal r
+  | SetRemove r -> (
+      let (set_rm, loc) = r_split r in
+      let%bind set = match set_rm.set with
+        | Name v -> ok v.value
+        | Path path -> fail @@ unsupported_deep_set_rm path in
+      let%bind removed' = simpl_expression set_rm.element in
+      let expr = e_constant ~loc "SET_REMOVE" [removed' ; e_variable set] in
+      return_statement @@ e_assign ~loc set [] expr
+    )
 
 and simpl_path : Raw.path -> string * Ast_simplified.access_path = fun p ->
   match p with
@@ -959,7 +943,8 @@ and simpl_cases : type a . (Raw.pattern * a) list -> a matching result = fun t -
           let error =
             let title () = "Pattern" in
             let content () =
-              Format.asprintf "Pattern : %a" (PP_helpers.printer Parser.Pascaligo.ParserLog.print_pattern) x in
+              Printf.sprintf "Pattern : %s"
+                (Parser.Pascaligo.ParserLog.pattern_to_string x) in
             error title content in
           let%bind x' =
             trace error @@
