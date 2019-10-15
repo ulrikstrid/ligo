@@ -324,6 +324,20 @@ let record () : unit result  =
     expect_eq_n program "modify_abc" make_input make_expected
   in
   let%bind () =
+    let make_input = record_ez_int ["a" ; "b" ; "c"] in
+    let make_expected = fun n -> ez_e_record [
+        ("a", e_int n) ;
+        ("b", e_int 2) ;
+        ("c", e_int 3) ;
+      ] in
+    expect_eq_n program "patch_abc" make_input make_expected
+  in 
+  let%bind () =
+    let input = record_ez_int ["a";"b";"c";"d";"e"] 10 in
+    let expected = record_ez_int ["a";"b";"c";"d";"e"] 10 in
+    expect_eq program "empty_patch_abc" input expected
+  in
+  let%bind () =
     let expected = record_ez_int ["a";"b";"c";"d";"e"] 23 in
     expect_eq_evaluate program "br" expected
   in

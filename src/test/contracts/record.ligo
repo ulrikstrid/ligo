@@ -41,6 +41,16 @@ function modify_abc (const r : abc) : abc is
     r.b := 2048 ;
   } with r
 
+function patch_abc (const r : abc) : abc is
+  block {
+    patch r with record [b = 2; c = 3] ;
+  } with r
+
+function empty_patch_abc (const r : abc) : abc is
+  block {
+    patch r with record [] ;
+} with r
+
 type big_record is record
      a : int ;
      b : int ;

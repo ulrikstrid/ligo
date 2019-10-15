@@ -109,16 +109,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_empty_record_patch record_expr =
-    let title () = "empty record patch" in
-    let message () =
-      Format.asprintf "empty record patches are not supported yet" in
-    let data = [
-      ("record_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ record_expr.Region.region)
-    ] in
-    error ~data title message
-
   let unsupported_map_patches patch =
     let title () = "map patches" in
     let message () =
@@ -795,7 +785,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
       return_statement @@ e_matching ~loc expr m
     )
   | RecordPatch r -> (
-      let r = r.value in
+      let (r, loc) = r_split r in
       let (name , access_path) = simpl_path r.path in
       let%bind inj = bind_list
         @@ List.map (fun (x:Raw.field_assign Region.reg) ->
@@ -809,7 +799,7 @@ and simpl_single_instruction : Raw.single_instr -> (_ -> expression result) resu
           e_assign ~loc name (access_path @ [ Access_record access ]) v in
         let assigns = List.map aux inj in
         match assigns with
-        | [] -> fail @@ unsupported_empty_record_patch r.record_inj
+        | [] -> ok @@ e_skip ~loc ()
         | hd :: tl -> (
             let aux acc cur = e_sequence acc cur in
             ok @@ List.fold_left aux hd tl
