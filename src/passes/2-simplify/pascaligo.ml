@@ -108,16 +108,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_deep_set_rm path =
-    let title () = "set removals" in
-    let message () =
-      Format.asprintf "removal of members from embedded sets is not supported yet" in
-    let data = [
-      ("path_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ path.Region.region)
-      ] in
-    error ~data title message
-
   let unsupported_non_var_pattern p =
     let title () = "pattern is not a variable" in
     let message () =
