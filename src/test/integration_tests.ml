@@ -704,9 +704,22 @@ let quote_declarations () : unit result =
 
 let sub_blocks () : unit result = 
   let%bind program = type_file "./contracts/blocks.ligo" in
-  let input = e_int 10 in
-  let expected = e_int 30 in
-  expect_eq program "sub_block_simple" input expected
+  let%bind () = 
+    let input = e_int 10 in
+    let expected = e_int 30 in
+    expect_eq program "sub_block_simple" input expected 
+  in
+  let%bind () =
+    let input = e_int 10 in
+    let expected = e_int 40 in
+    expect_eq program "sub_block_triple" input expected 
+  in
+  let%bind () =
+    let input = e_int 10 in
+    let expected = e_int 20 in
+    expect_eq program "sub_block_shadow" input expected 
+  in
+  ok ()
 
 let counter_contract () : unit result =
   let%bind program = type_file "./contracts/counter.ligo" in
