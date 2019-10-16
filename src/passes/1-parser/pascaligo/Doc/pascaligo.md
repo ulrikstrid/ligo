@@ -1319,6 +1319,53 @@ as follows:
 PascaLIGO has an explicit keyword for the non-operation: `skip`. Using
 `skip` makes it clear that there was no omission.
 
+### Sub-Blocks
+
+PascaLIGO supports sub-blocks of instructions. Sub-blocks are useful when you
+want to shadow a variable without getting rid of its old value, or when you want to
+define variables which are only used temporarily without polluting the scope. The
+following code uses a sub-block:
+
+    function sub_block_simple (var n : nat) : nat is
+      begin 
+        block { n := n + 10;
+          block { n := n + 10; } } 
+      end with n
+
+When PascaLIGO searches for variables, it looks for the variable name in the closest
+block. If it's not found there, PascaLIGO ascends the programs syntax tree until a
+relevant declaration is found or root is reached, the latter case producing an error.
+In the above program, PascaLIGO searches the second block for a variable called `n`,
+which does not exist. 
+
+    function sub_block_simple (var n : nat) : nat is
+      begin 
+        block { n := n + 10;
+      >>> block { n := n + 10; } } // No variable 'n' defined here
+      end with n
+
+It then ascends to the parent block, which inherits `n` from
+the function parameters but does not itself have `n`.
+
+    function sub_block_simple (var n : nat) : nat is
+      begin 
+    >>> block { n := n + 10; // 'n' isn't defined here either
+          block { n := n + 10; } } 
+      end with n
+
+Variable `n` is found in scope because the function declaration includes it.
+
+    >>> function sub_block_simple (var n : nat) : nat is // sub_block_simple declares 'n'
+          begin 
+            block { n := n + 10;
+              block { n := n + 10; } } 
+          end with n
+
+Because the blocks in this function do not define type information for n, PascaLIGO's
+parser takes them to refer to an existing variable `n`. In this way, the argument 
+passed as `n` is modified by the blocks sequentially without being shadowed by them.
+An input of `20` to this function should return `40`.
+
 ## Unsupported Functionalities
 
 ### Major Functionalities
