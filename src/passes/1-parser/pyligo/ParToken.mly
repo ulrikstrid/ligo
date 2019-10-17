@@ -1,7 +1,8 @@
 %{
+
 %}
 
-(* Tokens (mirroring thise defined in module LexToken) *)
+(* Tokens (mirroring those defined in module LexToken) *)
 
   (* Literals *)
 
@@ -12,7 +13,6 @@
 %token (*  <(LexToken.lexeme * Z.t)> *)  <LexToken.lexeme> Mtz
 %token           <LexToken.lexeme> Ident
 %token           <LexToken.lexeme> Uident
-%token           <LexToken.lexeme> Constr
 
   (* Symbols *)
 
@@ -24,7 +24,7 @@
 %token RBRACE      (* "}"   *)
 %token LBRACKET    (* "["   *)
 %token RBRACKET    (* "]"   *)
-%token VBAR        (* "|"   *)
+(* %token VBAR        (* "|"   *) *)
 %token ARROW       (* "->"  *)
 %token ASS         (* ":="  *)
 %token EQ          (* "="   *)
@@ -40,33 +40,28 @@
 %token SLASH       (* "/"   *)
 %token TIMES       (* "*"   *)
 %token DOT         (* "."   *)
-%token WILD        (* "_"   *)
-%token CAT         (* "^"   *)
+(* %token WILD        (* "_"   *) *)
+(* %token CAT         (* "^"   *) *)
 
   (* Keywords *)
 
 %token And         (* "and"        *)
-%token Block       (* "block"      *)
+%token Assert      (* "assert"     *)
 %token Def         (* "def"        *)
-%token Down        (* "down"       *)
 %token Elif        (* "elif"       *)
 %token Else        (* "else"       *)
-%token Entrypoint  (* "entrypoint" *)
-%token Fail        (* "fail"       *)
 %token For         (* "for"        *)
-%token From        (* "from"       *)
+(* %token From        (* "from"       *) // No imports yet *)
 %token If          (* "if"         *)
 %token In          (* "in"         *)
 %token Is          (* "is"         *)
-%token List        (* "list"       *)
-%token Nil         (* "nil"        *)
 %token Not         (* "not"        *)
 %token Of          (* "of"         *)
 %token Or          (* "or"         *)
 %token Raise       (* "raise"      *)
 %token Pass        (* "pass"       *)
 %token While       (* "while"      *)
-%token With        (* "with"       *)
+(* %token With        (* "with"       *) *)
 
   (* Data constructors *)
 (*

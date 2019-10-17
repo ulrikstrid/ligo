@@ -175,10 +175,14 @@ single_instr:
 | assignment   { }
 | loop         { }
 | fail_instr   { }
+| assertion    { }
 | Pass         { }
 
 fail_instr:
   Raise expr { }
+
+assertion:
+  Assert expr option(pair(COMMA,expr)) { }
 
 conditional:
   If control_clause sepseq(control_clause, Elif) option(pair(Else, pair(COLON,block))) { }
