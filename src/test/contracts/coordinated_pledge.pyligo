@@ -1,0 +1,42 @@
+"""This program implements the first part of a hypothetical contract which might 
+be described as "beeminder for collective action". The basic idea is that someone 
+makes a proposal (which is probably vetted by a human being so as to prohibit illegal/
+unethical proposals), which is only to be acted on if N other people also agree to the
+proposal. The interesting part is that each person involved pledges a certain amount 
+of money as collateral. When the activation threshold is reached, an oracle evaluates 
+proof that each person did the action. If they didn't, the oracle charges them the 
+pledge amount and does something reasonable with the money."""
+
+proposals := Dict[str, proposal]
+proposal := Record[
+                   ("description", str),
+                   ("pledge_amount", float),
+                   ("pledge_goal", int),
+                   ("pledges", List[addr])]
+
+def propose(name: str, description: str,
+                  pledge_amount: float, pledge_goal: int) -> proposals:
+    """Create a new proposal for collective action. New proposals must have the 
+    author make an initial pledge for the pledge_amount.""" 
+    if name in proposals:
+        raise "A contract with the name " + name + " already exists."
+    # This requirement is both common sense, and prevents the activation from
+    # being reached by a call to propose()
+    if pledge_goal < 2:
+        raise "Must have a pledge goal of at least two people."
+    # TODO: Cap the pledge_amount in some reasonable way, right now implicitly capped
+    # by requirement that user making proposal must pledge
+    proposals[name] = ["description":description,
+                       "pledge_amount":pledge_amount,
+                       "pledge_goal":pledge_goal,
+                       "pledges":[contract.sender]]
+    return proposals
+
+    
+def pledge(proposal_name:str) -> proposals:
+    """Add the senders address to the list of pledges."""
+    if proposal_name not in proposals:
+        raise "The proposal " + proposal_name + " doesn't seem to exist!"
+    proposals[proposal_name]["pledges"].append(contract.sender)
+    # TODO: Implement activation, proof, & payment logic
+    return proposals
