@@ -1,10 +1,8 @@
 type store is
   record [
     goal     : tez;
-    // goal     : mutez;
     deadline : timestamp;
     backers  : map (address, tez);
-    // backers  : map (address, nat);
     funded   : bool;
   ]
 
@@ -17,7 +15,6 @@ function back (var store : store) : list (operation) * store is
       case store.backers[sender] of
       [
       | None -> store.backers[sender] := amount
- // or: None -> patch store.backers with map sender -> amount end
       | Some (s) -> skip
       ]
   end with (operations, store)
@@ -43,17 +40,17 @@ function claim (var store : store) : list (operation) * store is
       end
   end with (operations, store)
 
-// function withdraw (var store : store) : list (operation) * store is
-//   var operations : list (operation) := list end
-//   begin
-//     if sender = owner then
-//       if now >= store.deadline then
-//         if balance >= store.goal then {
-//              store.funded := True;
-//  // or:      patch store with record funded = True end;
-//              operations := list [Transfer (owner, balance)];
-//         };
-//         else failwith("Below target.")
-//       else failwith("Too soon.");
-//     else skip
-//   end with (operations, store)
+function withdraw (var store : store) : list (operation) * store is
+  var operations : list (operation) := list end
+  const receiver : contract(unit) = get_contract(source) ;
+  begin
+    if sender = source then
+      if now >= store.deadline then
+        if amount >= store.goal then {
+             store.funded := True;
+             operations := list [transaction (unit, amount, receiver)];
+        };
+        else failwith("Below target.")
+      else failwith("Too soon.");
+    else skip
+  end with (operations, store)
