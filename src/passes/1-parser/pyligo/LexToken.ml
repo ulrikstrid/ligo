@@ -49,7 +49,10 @@ type t =
       
 type token = t
 
-let to_string = function
+let to_string =
+  let param_token (name: string) (s: string) : string =
+  String.concat " " [name ; "(" ; s ; ")" ] in
+  function
   | ASS -> ":="
   | ARROW -> "->"
   | DOT -> "."
@@ -78,12 +81,12 @@ let to_string = function
   | SLASH -> "/"
   | MOD -> "%"
   | EOF -> "End of File"
-  | Ident _ -> "Ident" (* TODO: Include actual token text *)
-  | Uident _ -> "Uident"
-  | Int _ -> "Integer"
-  | Float _ -> "Float"
+  | Ident s -> param_token "Ident" s
+  | Uident s -> param_token "Uident" s
+  | Int s -> param_token "Integer" s
+  | Float s -> param_token "Float" s
   | Mtz _ -> "Mtz"
-  | Str _ -> "String"
+  | Str s -> param_token "String" s
   | Bytes _ -> "Bytes"
   | Def -> "def"
   | Elif -> "elif"
@@ -96,3 +99,4 @@ let to_string = function
   | Raise -> "raise"
   | Return -> "return"
   | While -> "while"
+

@@ -69,6 +69,12 @@ exception Whitespace_Error
 exception Unexpected_Indent
 exception Unterminated_String
 
+let track_paren (state: lex_state) : lex_state =
+  let () = assert (state.paren >= 0) in
+  let () = assert (state.bracket >= 0) in
+  let () = assert (state.brace >= 0) in
+  state 
+
 let is_paren_expr state =
   if state.paren >= 1 then true
   else if state.bracket >= 1 then true
@@ -101,6 +107,12 @@ let line_terminator indent_str state =
   else {state with indent_level = indent_level indent_str;
                    last_token = Token.END; }, [Token.SEMI] @ (list_of Token.END deindent_level [])
 
+let simple_update (state: lex_state) (t: Token.t) : lex_state * Token.t list =
+  {state with last_token = t;}, [t] 
+
+let paren_update (state: lex_state) (t: Token.t) : lex_state * Token.t list =
+  simple_update (track_paren state) t
+
 }
 
 let newline = ['\n' '\r']
@@ -120,7 +132,8 @@ let letter = small | capital
 let ichar = letter | digit | '_'
 let ident = ichar ichar* | '_' ichar+
 let uident = capital (capital | '_')* 
-               
+
+
 rule scan state =
   (* In python, we want to insert a line terminator only if a line is not part
      of a parenthesized expression *)
@@ -129,33 +142,27 @@ rule scan state =
                             ((String.length (Lexing.lexeme lexbuf)) - 1)
                    in if is_paren_expr state 
                       then (Lexing.new_line lexbuf; scan state lexbuf)
-                      else if state.last_token = Token.COLON 
+                      else if state.last_token = Token.COLON
                       then expected_indent indent_str state
                       else line_terminator indent_str state }
       | white+ {scan state lexbuf }
-      | "{"  { {state with last_token = Token.LBRACE;
-                           brace = state.brace + 1;}, [Token.LBRACE]}
-      | "}"  { {state with last_token = Token.RBRACE;
-                           brace = state.brace - 1;}, [Token.RBRACE]}
-      | "["  { {state with last_token = Token.LBRACKET;
-                           bracket = state.bracket + 1;}, [Token.LBRACKET]}
-      | "]"  { {state with last_token = Token.RBRACKET;
-                           bracket = state.bracket - 1;}, [Token.RBRACKET]}
-      | "("  { {state with last_token = Token.LPAR; 
-                           paren = state.paren + 1;}, [Token.LPAR]}
-      | ")"  { {state with last_token = Token.RPAR;
-                           paren = state.paren - 1;}, [Token.RPAR]}
-      | "."  { {state with last_token = Token.DOT;}, [Token.DOT]}
-      | "="  { {state with last_token = Token.EQ;}, [Token.EQ]}
-      | ":=" { {state with last_token = Token.ASS;}, [Token.ASS]}
-      | ":"  { {state with last_token = Token.COLON;}, [Token.COLON]}
-      | ","  { {state with last_token = Token.COMMA;}, [Token.COMMA]}
-      | ";"  { {state with last_token = Token.SEMI;}, [Token.SEMI]}
-      | "->" { {state with last_token = Token.IMPLIES;}, [Token.IMPLIES]}
-      | "<"  { {state with last_token = Token.LT;}, [Token.LT]}
-      | "+"  { {state with last_token = Token.PLUS;}, [Token.PLUS]}
-      | "-"  { {state with last_token = Token.MINUS;}, [Token.MINUS]}
-      | eof  { {state with last_token = Token.EOF;}, [Token.EOF]}
+      | "{"  { paren_update {state with brace = state.brace + 1;} Token.LBRACE }
+      | "}"  { paren_update {state with brace = state.brace - 1;} Token.RBRACE }
+      | "["  { paren_update {state with bracket = state.bracket + 1;} Token.LBRACKET }
+      | "]"  { paren_update {state with bracket = state.bracket - 1;} Token.RBRACKET }
+      | "("  { paren_update {state with paren = state.paren + 1;} Token.LPAR }
+      | ")"  { paren_update {state with paren = state.paren - 1;} Token.RPAR }
+      | "."  { simple_update state Token.DOT }
+      | "="  { simple_update state Token.EQ }
+      | ":=" { simple_update state Token.ASS }
+      | ":"  { simple_update state Token.COLON }
+      | ","  { simple_update state Token.COMMA }
+      | ";"  { simple_update state Token.SEMI }
+      | "->" { simple_update state Token.IMPLIES }
+      | "<"  { simple_update state Token.LT }
+      | "+"  { simple_update state Token.PLUS }
+      | "-"  { simple_update state Token.MINUS }
+      | eof  { simple_update state Token.EOF }
           (* TODO: Fix types here *)
       | integer as n { {state with last_token = Token.Int ((*int_of_string*) n);},
                        [Token.Int ((*int_of_string*) n)] }
@@ -173,18 +180,20 @@ and scan_comment state = parse
   newline { scan state lexbuf }
   | _ { scan_comment state lexbuf }
 
+and scan_string_block string_list = parse
+  | eof   { raise Unterminated_String }
+  | '"' '"' '"' { [Token.Str (String.concat "" (List.rev string_list))] }
+  (* TODO: Implement escape sequences *)
+  | _ as char { scan_string_block ((String.make 1 char) :: string_list) lexbuf } 
+
 and scan_string string_list = parse
   newline { raise Unterminated_String }       
   | eof   { raise Unterminated_String }
-  | '"'   { [Token.Str (String.concat "" string_list)] }
+  | '"'   { [Token.Str (String.concat "" (List.rev string_list))] }
   (* TODO: Implement escape sequences *)
   | _ as char { scan_string ((String.make 1 char) :: string_list) lexbuf } 
 
-and scan_string_block string_list = parse
-  | eof   { raise Unterminated_String }
-  | '"' '"' '"' { [Token.Str (String.concat "" string_list)] }
-  (* TODO: Implement escape sequences *)
-  | _ as char { scan_string_block ((String.make 1 char) :: string_list) lexbuf } 
+
 
 
 {
@@ -204,7 +213,7 @@ let get_token : Lexing.lexbuf -> Token.t =
              tokens := tokens';
              read buffer
            end
-    | token::others -> tokens := others; token
+    | token :: others -> tokens := others; token
   in read
 
 exception Eof
