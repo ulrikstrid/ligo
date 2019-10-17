@@ -1,7 +1,9 @@
-let rec driver reader lexbuf = 
-   match reader lexbuf with
-     | LexToken.EOF -> exit 0
-     | _ -> (print_string (LexToken.to_string (reader lexbuf)) ; print_string "\n" ; driver reader lexbuf)
+let rec driver reader lexbuf =
+  let token = reader lexbuf in 
+  let () = print_string (LexToken.to_string token) ; print_string "\n" in
+  match token with 
+  | LexToken.EOF -> exit 0
+  |  _ -> driver reader lexbuf
 
 let lexbuf = (Lexing.from_channel stdin)
 let () = let read = Lexer.get_token in (driver read lexbuf)

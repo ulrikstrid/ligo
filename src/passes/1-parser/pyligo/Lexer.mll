@@ -86,6 +86,12 @@ let indent_level indent_str =
   then raise Whitespace_Error
   else (String.length indent_str) / 4
 
+let simple_update (state: lex_state) (t: Token.t) : lex_state * Token.t list =
+  {state with last_token = t;}, [t] 
+
+let paren_update (state: lex_state) (t: Token.t) : lex_state * Token.t list =
+  simple_update (track_paren state) t
+
 let expected_indent indent_str state = 
   if indent_level indent_str = (state.indent_level + 1)
   then {state with indent_level = state.indent_level + 1; 
@@ -100,18 +106,10 @@ let line_terminator indent_str state =
   then state, []
   else if indent_level indent_str > state.indent_level
   then raise Unexpected_Indent
-  else if state.last_token = Token.SEMI
-  then {state with last_token = Token.END;}, [Token.END]
   else if indent_level indent_str = state.indent_level
-  then {state with last_token = Token.SEMI}, [Token.SEMI]
+  then simple_update state Token.SEMI
   else {state with indent_level = indent_level indent_str;
                    last_token = Token.END; }, [Token.SEMI] @ (list_of Token.END deindent_level [])
-
-let simple_update (state: lex_state) (t: Token.t) : lex_state * Token.t list =
-  {state with last_token = t;}, [t] 
-
-let paren_update (state: lex_state) (t: Token.t) : lex_state * Token.t list =
-  simple_update (track_paren state) t
 
 }
 
@@ -142,9 +140,11 @@ rule scan state =
                             ((String.length (Lexing.lexeme lexbuf)) - 1)
                    in if is_paren_expr state 
                       then (Lexing.new_line lexbuf; scan state lexbuf)
-                      else if state.last_token = Token.COLON
-                      then expected_indent indent_str state
-                      else line_terminator indent_str state }
+                      else 
+                        match state.last_token with 
+                        | Token.COLON -> expected_indent indent_str state
+                        | Token.SEMI -> (Lexing.new_line lexbuf; scan state lexbuf)
+                        | _ -> line_terminator indent_str state }
       | white+ {scan state lexbuf }
       | "{"  { paren_update {state with brace = state.brace + 1;} Token.LBRACE }
       | "}"  { paren_update {state with brace = state.brace - 1;} Token.RBRACE }
@@ -166,15 +166,17 @@ rule scan state =
           (* TODO: Fix types here *)
       | integer as n { {state with last_token = Token.Int ((*int_of_string*) n);},
                        [Token.Int ((*int_of_string*) n)] }
-      | uident as var { { state with last_token = Token.Ident var;}, [Token.Uident var] }
+      | uident as var { simple_update state (Token.Uident var) }
       | ident as var {
-          match Keywords.find var keyword_map with
-          | exception Not_found -> {state with last_token = Token.Ident var;}, [Token.Ident var]
-          | kwd -> {state with last_token = kwd;}, [kwd]
+          let token = 
+            match Keywords.find var keyword_map with
+            | exception Not_found -> Token.Ident var
+            | kwd -> kwd
+          in simple_update state token
         }
       | "#" { scan_comment state lexbuf }
-      | '"' '"' '"' { state, scan_string_block [] lexbuf }
-      | '"' { state, scan_string [] lexbuf }
+      | '"' '"' '"' { simple_update state (scan_string_block [] lexbuf) }
+      | '"' { simple_update state (scan_string [] lexbuf) }
 
 and scan_comment state = parse
   newline { scan state lexbuf }
@@ -182,14 +184,14 @@ and scan_comment state = parse
 
 and scan_string_block string_list = parse
   | eof   { raise Unterminated_String }
-  | '"' '"' '"' { [Token.Str (String.concat "" (List.rev string_list))] }
+  | '"' '"' '"' { Token.Str (String.concat "" (List.rev string_list)) }
   (* TODO: Implement escape sequences *)
   | _ as char { scan_string_block ((String.make 1 char) :: string_list) lexbuf } 
 
 and scan_string string_list = parse
   newline { raise Unterminated_String }       
   | eof   { raise Unterminated_String }
-  | '"'   { [Token.Str (String.concat "" (List.rev string_list))] }
+  | '"'   { Token.Str (String.concat "" (List.rev string_list)) }
   (* TODO: Implement escape sequences *)
   | _ as char { scan_string ((String.make 1 char) :: string_list) lexbuf } 
 
