@@ -1,26 +1,128 @@
 {
 
 module Keywords = Map.Make(String)
-module Token = LexToken
 
+type lexeme = string
+
+type t =
+  | ASS
+  | ARROW
+  | DOT
+  | LBRACE
+  | RBRACE
+  | LBRACKET
+  | RBRACKET
+  | LPAR
+  | RPAR
+  | START
+  | END
+  | EQ
+  | GEQ
+  | LEQ
+  | NEQ
+  | COLON
+  | COMMA
+  | SEMI
+  | IMPLIES
+  | GT
+  | LT
+  | PLUS
+  | MINUS
+  | TIMES
+  | SLASH
+  | MOD
+  | EOF
+  | Ident of string
+  | Uident of string
+  | Int of (* int *) string
+  | Float of (* float *) string
+  | Mtz of string
+  | Str of string
+  | Bytes of (* bytes *) string
+  | Assert
+  | Def
+  | Elif
+  | Else
+  | For
+  | If
+  | In
+  | Not
+  | Pass
+  | Raise
+  | Return
+  | While
+      
+type token = t
+
+let to_string =
+  let param_token (name: string) (s: string) : string =
+  String.concat " " [name ; "(" ; s ; ")" ] in
+  function
+  | ASS -> ":="
+  | ARROW -> "->"
+  | DOT -> "."
+  | LBRACE -> "{"
+  | RBRACE -> "}"
+  | LBRACKET -> "["
+  | RBRACKET -> "]"
+  | LPAR -> "("
+  | RPAR -> ")"
+  (* Unsure if having these is a good idea... *)
+  | START  -> "START"
+  | END    ->  "END"
+  | EQ -> "="
+  | GEQ -> ">="
+  | LEQ -> "<="
+  | NEQ -> "!="
+  | COLON -> ":"
+  | COMMA -> ","
+  | SEMI -> ";"
+  | IMPLIES -> "->"
+  | GT -> ">"
+  | LT -> "<"
+  | PLUS -> "+"
+  | MINUS -> "-"
+  | TIMES -> "*"
+  | SLASH -> "/"
+  | MOD -> "%"
+  | EOF -> "End of File"
+  | Ident s -> param_token "Ident" s
+  | Uident s -> param_token "Uident" s
+  | Int s -> param_token "Integer" s
+  | Float s -> param_token "Float" s
+  | Mtz _ -> "Mtz"
+  | Str s -> param_token "String" s
+  | Bytes _ -> "Bytes"
+  | Assert -> "assert"
+  | Def -> "def"
+  | Elif -> "elif"
+  | Else -> "else"
+  | For -> "for"
+  | If -> "if"
+  | In -> "in"
+  | Not -> "not"
+  | Pass -> "pass"
+  | Raise -> "raise"
+  | Return -> "return"
+  | While -> "while"
 
 let keyword_list = [
-  ("def", Token.Def);
-  ("if",  Token.If);
-  ("elif", Token.Elif);
-  ("else", Token.Else);
-  ("for",  Token.For);
-  ("in",  Token.In);
-  ("raise", Token.Raise);
-  ("return", Token.Return);
+  ("def", Def);
+  ("if",  If);
+  ("elif", Elif);
+  ("else", Else);
+  ("for",  For);
+  ("in",  In);
+  ("raise", Raise);
+  ("return", Return);
 ]
 
 exception NonPair of string
 
 let keyword_map =
   let add_pair
-      (kwd_map: Token.t Map.Make(String).t)
-      (pair: (Keywords.key * Token.t)) =
+      (kwd_map: t Map.Make(String).t)
+      (pair: (Keywords.key * t)) =
     let (a, b) = pair in 
     Keywords.add a b kwd_map
   in List.fold_left add_pair Keywords.empty keyword_list
@@ -62,7 +164,7 @@ type lex_state = {
   mutable bracket: int;
   mutable brace: int;
   mutable indent_level: int;
-  mutable last_token: Token.t;
+  mutable last_token: t;
 }
 
 exception Whitespace_Error
@@ -86,30 +188,30 @@ let indent_level indent_str =
   then raise Whitespace_Error
   else (String.length indent_str) / 4
 
-let simple_update (state: lex_state) (t: Token.t) : lex_state * Token.t list =
+let simple_update (state: lex_state) (t: t) : lex_state * t list =
   {state with last_token = t;}, [t] 
 
-let paren_update (state: lex_state) (t: Token.t) : lex_state * Token.t list =
+let paren_update (state: lex_state) (t: t) : lex_state * t list =
   simple_update (track_paren state) t
 
 let expected_indent indent_str state = 
   if indent_level indent_str = (state.indent_level + 1)
   then {state with indent_level = state.indent_level + 1; 
-                   last_token = Token.START; }, [Token.START]
+                   last_token = START; }, [START]
   else raise Unexpected_Indent
 
 let line_terminator indent_str state = 
   let rec list_of value n lst = 
     if n <= 0 then lst else list_of value (n - 1) (value :: lst)
   in let deindent_level = (state.indent_level - (indent_level indent_str)) in
-  if state.last_token = Token.END 
+  if state.last_token = END 
   then state, []
   else if indent_level indent_str > state.indent_level
   then raise Unexpected_Indent
   else if indent_level indent_str = state.indent_level
-  then simple_update state Token.SEMI
+  then simple_update state SEMI
   else {state with indent_level = indent_level indent_str;
-                   last_token = Token.END; }, [Token.SEMI] @ (list_of Token.END deindent_level [])
+                   last_token = END; }, [SEMI] @ (list_of END deindent_level [])
 
 }
 
@@ -142,35 +244,35 @@ rule scan state =
                       then (Lexing.new_line lexbuf; scan state lexbuf)
                       else 
                         match state.last_token with 
-                        | Token.COLON -> expected_indent indent_str state
-                        | Token.SEMI -> (Lexing.new_line lexbuf; scan state lexbuf)
+                        | COLON -> expected_indent indent_str state
+                        | SEMI -> (Lexing.new_line lexbuf; scan state lexbuf)
                         | _ -> line_terminator indent_str state }
       | white+ {scan state lexbuf }
-      | "{"  { paren_update {state with brace = state.brace + 1;} Token.LBRACE }
-      | "}"  { paren_update {state with brace = state.brace - 1;} Token.RBRACE }
-      | "["  { paren_update {state with bracket = state.bracket + 1;} Token.LBRACKET }
-      | "]"  { paren_update {state with bracket = state.bracket - 1;} Token.RBRACKET }
-      | "("  { paren_update {state with paren = state.paren + 1;} Token.LPAR }
-      | ")"  { paren_update {state with paren = state.paren - 1;} Token.RPAR }
-      | "."  { simple_update state Token.DOT }
-      | "="  { simple_update state Token.EQ }
-      | ":=" { simple_update state Token.ASS }
-      | ":"  { simple_update state Token.COLON }
-      | ","  { simple_update state Token.COMMA }
-      | ";"  { simple_update state Token.SEMI }
-      | "->" { simple_update state Token.IMPLIES }
-      | "<"  { simple_update state Token.LT }
-      | "+"  { simple_update state Token.PLUS }
-      | "-"  { simple_update state Token.MINUS }
-      | eof  { simple_update state Token.EOF }
+      | "{"  { paren_update {state with brace = state.brace + 1;} LBRACE }
+      | "}"  { paren_update {state with brace = state.brace - 1;} RBRACE }
+      | "["  { paren_update {state with bracket = state.bracket + 1;} LBRACKET }
+      | "]"  { paren_update {state with bracket = state.bracket - 1;} RBRACKET }
+      | "("  { paren_update {state with paren = state.paren + 1;} LPAR }
+      | ")"  { paren_update {state with paren = state.paren - 1;} RPAR }
+      | "."  { simple_update state DOT }
+      | "="  { simple_update state EQ }
+      | ":=" { simple_update state ASS }
+      | ":"  { simple_update state COLON }
+      | ","  { simple_update state COMMA }
+      | ";"  { simple_update state SEMI }
+      | "->" { simple_update state IMPLIES }
+      | "<"  { simple_update state LT }
+      | "+"  { simple_update state PLUS }
+      | "-"  { simple_update state MINUS }
+      | eof  { simple_update state EOF }
           (* TODO: Fix types here *)
-      | integer as n { {state with last_token = Token.Int ((*int_of_string*) n);},
-                       [Token.Int ((*int_of_string*) n)] }
-      | uident as var { simple_update state (Token.Uident var) }
+      | integer as n { {state with last_token = Int ((*int_of_string*) n);},
+                       [Int ((*int_of_string*) n)] }
+      | uident as var { simple_update state (Uident var) }
       | ident as var {
           let token = 
             match Keywords.find var keyword_map with
-            | exception Not_found -> Token.Ident var
+            | exception Not_found -> Ident var
             | kwd -> kwd
           in simple_update state token
         }
@@ -184,14 +286,14 @@ and scan_comment state = parse
 
 and scan_string_block string_list = parse
   | eof   { raise Unterminated_String }
-  | '"' '"' '"' { Token.Str (String.concat "" (List.rev string_list)) }
+  | '"' '"' '"' { Str (String.concat "" (List.rev string_list)) }
   (* TODO: Implement escape sequences *)
   | _ as char { scan_string_block ((String.make 1 char) :: string_list) lexbuf } 
 
 and scan_string string_list = parse
   newline { raise Unterminated_String }       
   | eof   { raise Unterminated_String }
-  | '"'   { Token.Str (String.concat "" (List.rev string_list)) }
+  | '"'   { Str (String.concat "" (List.rev string_list)) }
   (* TODO: Implement escape sequences *)
   | _ as char { scan_string ((String.make 1 char) :: string_list) lexbuf } 
 
@@ -200,13 +302,13 @@ and scan_string string_list = parse
 
 {
 
-let get_token : Lexing.lexbuf -> Token.t =
+let get_token : Lexing.lexbuf -> t =
   let state = ref {paren = 0;
                    bracket = 0;
                    brace = 0;
                    indent_level = 0;
-                   last_token = Token.EOF} (* Initial state *) in
-  let tokens = ref ([] : Token.t list) in (* Buffer of tokens *)
+                   last_token = EOF} (* Initial state *) in
+  let tokens = ref ([] : t list) in (* Buffer of tokens *)
   let rec read (buffer: Lexing.lexbuf) =
     match !tokens with
       [] -> let state', tokens' = scan !state buffer in

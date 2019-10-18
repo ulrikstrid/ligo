@@ -2,17 +2,17 @@
 
 %}
 
-(* Tokens (mirroring those defined in module LexToken) *)
+(* Tokens (mirroring those defined in module Lexer) *)
 
   (* Literals *)
 
-%token           <LexToken.lexeme> Str
-%token (* <(LexToken.lexeme * Hex.t)> *) <LexToken.lexeme> Bytes
-%token (*  <(LexToken.lexeme * Z.t)> *)  <LexToken.lexeme> Int
-%token (*  <(LexToken.lexeme * Z.t)> *)  <LexToken.lexeme> Float
-%token (*  <(LexToken.lexeme * Z.t)> *)  <LexToken.lexeme> Mtz
-%token           <LexToken.lexeme> Ident
-%token           <LexToken.lexeme> Uident
+%token           <Lexer.lexeme> Str
+%token (* <(Lexer.lexeme * Hex.t)> *) <Lexer.lexeme> Bytes
+%token (*  <(Lexer.lexeme * Z.t)> *)  <Lexer.lexeme> Int
+%token (*  <(Lexer.lexeme * Z.t)> *)  <Lexer.lexeme> Float
+%token (*  <(Lexer.lexeme * Z.t)> *)  <Lexer.lexeme> Mtz
+%token           <Lexer.lexeme> Ident
+%token           <Lexer.lexeme> Uident
 
   (* Symbols *)
 
