@@ -15,6 +15,11 @@ let function_ () : unit result =
   let make_expect = fun n -> n in
   expect_eq_n_int program "main" make_expect
 
+let blockless () : unit result =
+  let%bind program = type_file "./contracts/blockless.ligo" in
+  let make_expect = fun n-> n + 10 in
+  expect_eq_n_int program "blockless" make_expect
+
 (* Procedures are not supported yet 
   let procedure () : unit result =
   let%bind program = type_file "./contracts/procedure.ligo" in
@@ -113,9 +118,9 @@ let higher_order () : unit result =
   let make_expect = fun n -> n in
   let%bind _ = expect_eq_n_int program "foobar" make_expect in
   let%bind _ = expect_eq_n_int program "foobar2" make_expect in
-  (* not supported yet:
-  let%bind _ = expect_eq_n_int program "foobar3" make_expect in *)
+  let%bind _ = expect_eq_n_int program "foobar3" make_expect in
   let%bind _ = expect_eq_n_int program "foobar4" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar5" make_expect in
   ok () 
 
 let shared_function () : unit result =
@@ -245,6 +250,15 @@ let set_arithmetic () : unit result =
     expect_eq program "remove_syntax"
       (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
       (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
+    expect_eq program "remove_deep" 
+      (e_pair 
+         (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+         (e_nat 42))
+      (e_pair 
+        (e_set [e_string "foo" ; e_string "bar"])
+        (e_nat 42))
+  in
   let%bind () =
     expect_eq program "patch_op"
       (e_set [e_string "foo" ; e_string "bar"])
@@ -885,6 +899,7 @@ let tez_mligo () : unit result =
 let main = test_suite "Integration (End to End)" [
     test "type alias" type_alias ;
     test "function" function_ ;
+    test "blockless function" blockless;
     (* test "procedure"  procedure ; *)
     test "assign" assign ;
     test "declaration local" declaration_local ;

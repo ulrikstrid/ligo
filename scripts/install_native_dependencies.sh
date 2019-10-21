@@ -11,4 +11,5 @@ apt-get -y -qq install \
     m4 \
     libcap-dev \
     bubblewrap \
-    rsync
+    rsync \
+    pandoc
