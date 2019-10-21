@@ -16,7 +16,7 @@ function buy_taco (const taco_kind_index: nat ; var taco_shop_storage : taco_sho
 
     if amount =/= current_purchase_price then
       // we won't sell tacos if the amount isn't correct
-      fail("Sorry, the taco you're trying to purchase has a different price");
+      failwith("Sorry, the taco you're trying to purchase has a different price");
     else
       // Decrease the stock by 1n, because we've just sold one
       taco_kind.current_stock := abs(taco_kind.current_stock - 1n);

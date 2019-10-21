@@ -35,7 +35,7 @@ Each taco kind, has its own `max_price` that it sells for, and a finite supply f
 
 Current purchase price is calculated with the following equation:
 
-```pascaligo
+```pascaligo skip
 current_purchase_price = max_price / available_stock
 ```
 
@@ -129,7 +129,7 @@ ligo dry-run taco-shop.ligo --syntax pascaligo main 4 3
 We know that Pedro's Taco Shop serves two kinds of tacos, so we'll need to manage stock individually, per kind. Let's define a type, that will keep the `stock` & `max_price` per kind - in a record with two fields. Additionally, we'll want to combine our `taco_supply` type into a map, consisting of the entire offer of Pedro's shop.
 
 **Taco shop's storage**
-```pascaligo
+```pascaligo skip
 type taco_supply is record
     current_stock : nat;
     max_price : tez;
@@ -208,7 +208,7 @@ Let's start by customizing our contract a bit, we will:
 - change `taco_shop_storage` to a `var` instead of a `const`, because we'll want to modify it
 
 **`taco-shop.ligo`**
-```pascaligo
+```pascaligo entry=buy_taco
 type taco_supply is record
     current_stock : nat;
     max_price : tez;
@@ -231,7 +231,7 @@ In order to decrease the stock in our contract's storage for a specific taco kin
 
 **`taco-shop.ligo`**
 
-```pascaligo
+```pascaligo entry=buy_taco
 type taco_supply is record
     current_stock : nat;
     max_price : tez;
@@ -266,7 +266,7 @@ To make sure we get paid, we will:
   - if yes, stock for the given `taco_kind` will be decreased and the payment accepted
 
 **`taco-shop.ligo`**
-```pascaligo
+```pascaligo entry=buy_taco
 type taco_supply is record
     current_stock : nat;
     max_price : tez;
@@ -282,7 +282,7 @@ function buy_taco (const taco_kind_index: nat ; var taco_shop_storage : taco_sho
 
     if amount =/= current_purchase_price then
       // we won't sell tacos if the amount isn't correct
-      fail("Sorry, the taco you're trying to purchase has a different price");
+      failwith("Sorry, the taco you're trying to purchase has a different price");
     else
       // Decrease the stock by 1n, because we've just sold one
       taco_kind.current_stock := abs(taco_kind.current_stock - 1n);
@@ -327,11 +327,11 @@ end"
 If you'd like to accept tips in your contract as well, simply change the following line, depending on which behavior do you prefer.
 
 **Without tips**
-```pascaligo
+```pascaligo skip
 if amount =/= current_purchase_price then
 ```
 
 **With tips**
-```pascaligo
+```pascaligo skip
 if amount >= current_purchase_price then
 ```

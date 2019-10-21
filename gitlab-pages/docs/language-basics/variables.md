@@ -14,7 +14,7 @@ Variables in LIGO can be defined in two ways - by using either the `const` or `v
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```Pascal
+```pascaligo skip
 const four: int = 4;
 ```
 
@@ -26,7 +26,7 @@ const four: int = 4;
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```Pascal
+```pascaligo skip
 // won't work, use const for global values instead
 var four: int = 4;
 

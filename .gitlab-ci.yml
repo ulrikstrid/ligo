@@ -87,6 +87,7 @@ local-dune-job:
   script:
     - scripts/install_vendors_deps.sh
     - scripts/build_ligo_local.sh
+    - scripts/test_docs.sh
     - dune build @ligo-test
 
 # Run a docker build without publishing to the registry

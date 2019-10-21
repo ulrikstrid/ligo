@@ -1,0 +1,103 @@
+(alias 
+  (name runtest)
+  (deps 
+    (:e language-basics/cheat-sheet.md) 
+  )
+  (action
+    (progn
+      (run ocaml-mdx test %{e})
+      (diff? %{e} %{e}.corrected)
+    )
+  )
+)
+
+(alias 
+  (name runtest)
+  (deps 
+    (:e language-basics/entrypoints.md) 
+  )  
+  (action
+    (progn
+      (run ocaml-mdx test %{e})
+      (diff? %{e} %{e}.corrected)
+    )
+  )
+)
+
+(alias 
+  (name runtest)
+  (deps 
+    (:e language-basics/functions.md) 
+  )  
+  (action
+    (progn
+      (run ocaml-mdx test %{e})
+      (diff? %{e} %{e}.corrected)
+    )
+  )
+)
+
+(alias 
+  (name runtest)
+  (deps 
+    (:e language-basics/operators.md) 
+  )  
+  (action
+    (progn
+      (run ocaml-mdx test %{e})
+      (diff? %{e} %{e}.corrected)
+    )
+  )
+)
+
+(alias 
+  (name runtest)
+  (deps 
+    (:e language-basics/types.md) 
+  )  
+  (action
+    (progn
+      (run ocaml-mdx test %{e})
+      (diff? %{e} %{e}.corrected)
+    )
+  )
+)
+
+(alias 
+  (name runtest)
+  (deps 
+    (:e tutorials/get-started/tezos-taco-shop-payout.md) 
+  )  
+  (action
+    (progn
+      (run ocaml-mdx test %{e})
+      (diff? %{e} %{e}.corrected)
+    )
+  )
+)
+
+(alias 
+  (name runtest)
+  (deps 
+    (:e tutorials/get-started/tezos-taco-shop-smart-contract.md) 
+  )  
+  (action
+    (progn
+      (run ocaml-mdx test %{e})
+      (diff? %{e} %{e}.corrected)
+    )
+  )
+)
+
+(alias 
+  (name runtest)  
+  (deps 
+    (:e language-basics/variables.md) 
+  )  
+  (action
+    (progn
+      (run ocaml-mdx test %{e})
+      (diff? %{e} %{e}.corrected)
+    )
+  )
+)

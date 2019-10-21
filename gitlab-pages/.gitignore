@@ -13,3 +13,5 @@ website/node_modules
 website/i18n/*
 website/versioned_docs/version-next
 website/versioned_sidebars/version-next-sidebars.json
+_build
+dune-project
