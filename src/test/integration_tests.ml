@@ -393,6 +393,13 @@ let tuple () : unit result  =
   in
   ok ()
 
+let tuple_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/tuple.mligo" in
+  let%bind () = expect_eq program "tuple_pattern"
+      (e_tuple [e_int 0; e_int 0; e_int 10])
+      (e_int 25) in
+  ok ()
+
 let option () : unit result =
   let%bind program = type_file "./contracts/option.ligo" in
   let%bind () =
@@ -911,6 +918,7 @@ let main = test_suite "Integration (End to End)" [
     test "variant (mligo)" variant_mligo ;
     test "variant matching" variant_matching ;
     test "tuple" tuple ;
+    test "tuple (mligo)" tuple_mligo;
     test "record" record ;
     test "condition simple" condition_simple ;
     test "condition" condition ;
