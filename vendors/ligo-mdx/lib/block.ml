@@ -84,16 +84,17 @@ let dump_relation ppf = function
 let dump_labels =
   Fmt.(Dump.(list (pair dump_string (option (pair dump_relation dump_string)))))
 
-let dump ppf { file; line; section; labels; header; contents; value } =
+let dump ppf { file; line; section; labels; header; contents; value; entry } =
   Fmt.pf ppf
     "{@[file: %s;@ line: %d;@ section: %a;@ labels: %a;@ header: %a;@
-        contents: %a;@ value: %a@]}"
+        contents: %a;@ value: %a@;@ entry: %a]}"
     file line
     Fmt.(Dump.option dump_section) section
     dump_labels labels
     Fmt.(Dump.option string) header
     Fmt.(Dump.list dump_string) contents
     dump_value value
+    dump_string entry
 
 let pp_lines syntax =
   let pp =
@@ -164,7 +165,7 @@ let labels = [
   `Label "require-package"  , [`Any];
   `Prefix "set-"            , [`Any];
   `Prefix "unset-"          , [`None];
-  `Label "entry"      , [`Any]
+  `Label "entry"            , [`Any]
 ]
 
 let pp_value ppf = function
