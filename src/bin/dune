@@ -12,3 +12,5 @@
   )
   (flags (:standard -open Simple_utils))
 )
+
+(ocamllex md)
