@@ -1042,12 +1042,9 @@ let main = test_suite "Integration (End to End)" [
     test "match variant (mligo)" match_variant ;
     test "match variant (religo)" match_variant_re ;
     test "match variant 2 (mligo)" match_matej ;
-<<<<<<< ours
     test "match variant 2 (religo)" match_matej_re ;
     (* test "list matching (mligo)" mligo_list ; *)
-=======
     test "list matching (mligo)" mligo_list ;
->>>>>>> theirs
     (* test "guess the hash mligo" guess_the_hash_mligo ; WIP? *)
     test "failwith ligo" failwith_ligo ;
     test "failwith mligo" failwith_mligo ;
