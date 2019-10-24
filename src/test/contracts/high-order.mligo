@@ -1,4 +1,4 @@
-// Test a function which takes another function as an argument
+(* Test a function which takes another function as an argument *)
 let foobar (i : int) : int =
   let foo (i : int) : int = i
   in
@@ -6,7 +6,7 @@ let foobar (i : int) : int =
   in
   bar foo
 
-// higher order function with more than one argument
+(* higher order function with more than one argument *)
 let higher2 (i: int) (f: int -> int): int =
   let ii: int = f i in ii
 
@@ -37,4 +37,4 @@ let foobar5 (i : int) : int =
   in
   let goo (i : int) : int = foo i
   in
-  higher3 (i (foo goo))
+  higher3 i foo goo
