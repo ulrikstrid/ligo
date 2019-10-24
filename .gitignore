@@ -1,5 +1,10 @@
 /_build/
-/dune-project
+dune-project
 *~
+*.merlin
 cache/*
 Version.ml
+/_opam/
+/*.pp.ligo
+**/.DS_Store
+.vscode/

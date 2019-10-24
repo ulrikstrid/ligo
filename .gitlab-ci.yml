@@ -1,49 +1,50 @@
 # TODO: remove this as submodules aren't used anymore.
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
+  build_binary_script: "./scripts/distribution/generic/build.sh"
+  package_binary_script: "./scripts/distribution/generic/package.sh"
 
 stages:
   - build_docker
-  - build_and_deploy_docker
-  - build_and_deploy_website
   - test
+  - build_and_deploy_docker
+  - build_and_package_binaries
+  - build_and_deploy_website
+
+.build_binary: &build_binary
+  stage: build_and_package_binaries
+  script:
+    - $build_binary_script "$target_os_family" "$target_os" "$target_os_version"
+    - $package_binary_script "$target_os_family" "$target_os" "$target_os_version"
+  artifacts:
+    paths:
+      - dist/package/**/*
+  only:
+    - master
+    - dev
 
 .website_build: &website_build
   stage: build_and_deploy_website
   image: node:8
   before_script:
     - scripts/install_native_dependencies.sh
-    # TODO: these things are moved to scripts in other branches.
-    - wget https://github.com/ocaml/opam/releases/download/2.0.1/opam-2.0.1-x86_64-linux -O opam-2.0.1-x86_64-linux
-    - cp opam-2.0.1-x86_64-linux /usr/local/bin/opam
-    - chmod +x /usr/local/bin/opam
+    - scripts/install_opam.sh # TODO: or scripts/install_build_environment.sh ?
     - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
-
-    # Initialise opam
-    - printf '' | opam init --bare
     - eval $(opam config env)
-
-    # Create switch
-    - printf '' | opam switch create toto ocaml-base-compiler.4.06.1
+    - scripts/setup_switch.sh
     - eval $(opam config env)
-
-    # Show versions and current switch
-    - echo "$PATH"
-    - opam --version
-    - printf '' | ocaml
-    - opam switch
+    - scripts/setup_repos.sh
 
     # install deps for internal documentation
+    - scripts/install_vendors_deps.sh
     - opam install -y odoc
-    - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
-    - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
-    - opam install -y --build-test --deps-only ./src/
-    - dune build -p ligo
-    # TODO: also try instead from time to time:
-    #- (cd ./src/; dune build -p ligo)
+    - scripts/build_ligo_local.sh
 
     # build with odoc
     - dune build @doc
+
+    # copy .deb packages into website
+    - find dist -name \*.deb -exec sh -c 'cp {} gitlab-pages/website/static/deb/ligo_$(basename $(dirname {})).deb' \;
 
     # npm
     - cd gitlab-pages/website
@@ -67,74 +68,34 @@ stages:
   services:
     - docker:dind
 
-.docker_build: &docker_build
-  script:
-    - docker build -t $LIGO_REGISTRY_IMAGE:next -f ./docker/Dockerfile .
 
 .before_script: &before_script
   before_script:
     # Install dependencies
     # rsync is needed by opam to sync a package installed from a local directory with the copy in ~/.opam
-    - apt-get update -qq
     - scripts/install_native_dependencies.sh
-    - scripts/install_opam.sh
+    - scripts/install_opam.sh # TODO: or scripts/install_build_environment.sh ?
     - export PATH="/usr/local/bin${PATH:+:}${PATH:-}"
-
-    # Initialise opam, create switch, load opam environment variables
-    - printf '' | opam init --bare
-    - printf '' | opam switch create ligo-switch ocaml-base-compiler.4.06.1
     - eval $(opam config env)
-
-    # Show versions and current switch
-    - echo "$PATH"
-    - opam --version
-    - printf '' | ocaml
-    - opam switch
+    - scripts/setup_switch.sh
+    - eval $(opam config env)
+    - scripts/setup_repos.sh
 
 local-dune-job:
   <<: *before_script
   stage: test
   script:
-    - scripts/setup_ligo_opam_repository.sh
-    - opam install -y --build-test --deps-only ./src/
-    - dune build -p ligo
-    # TODO: also try instead from time to time:
-    #- (cd ./src/; dune build -p ligo)
+    - scripts/install_vendors_deps.sh
+    - scripts/build_ligo_local.sh
     - dune build @ligo-test
-#   artifacts:
-#     paths:
-#       - src/ligo/bin/cli.ml
-
-local-repo-job:
-  <<: *before_script
-  stage: test
-  script:
-    - vendors/opam-repository-tools/rewrite-local-opam-repository.sh
-    - opam repository add localrepo "file://$PWD/vendors/ligo-opam-repository-local-generated/"
-    #--build-test
-    - opam install -y ligo
-
-remote-repo-job:
-  <<: *before_script
-  stage: test
-  script:
-    # Add repository
-    - opam repository add ligo-repository https://gitlab.com/ligolang/ligo.git
-    - eval $(opam config env)
-    - opam install -y ligo
-    # Used in the IDE
-    #- opam install -y user-setup
-    #- opam install -y merlin
-    #- opam install -y ocp-indent
-    #- opam user-setup install
-  only:
-    - master
 
 # Run a docker build without publishing to the registry
 build-current-docker-image:
   stage: build_docker
   <<: *docker
-  <<: *docker_build
+  script:
+    - sh scripts/build_docker_image.sh
+    - sh scripts/test_cli.sh
   except:
     - master
     - dev
@@ -144,13 +105,51 @@ build-current-docker-image:
 build-and-publish-latest-docker-image:
   stage: build_and_deploy_docker
   <<: *docker
-  <<: *docker_build
-  after_script:
+  script:
+    - sh scripts/build_docker_image.sh
+    - sh scripts/test_cli.sh
     - docker login -u $LIGO_REGISTRY_USER -p $LIGO_REGISTRY_PASSWORD
     - docker push $LIGO_REGISTRY_IMAGE:next
   only:
     - dev
 
+# It'd be a good idea to generate those jobs dynamically,
+# based on desired targets
+build-and-package-debian-9:
+  <<: *docker
+  stage: build_and_package_binaries
+  variables: 
+    target_os_family: "debian"
+    target_os: "debian"
+    target_os_version: "9"
+  <<: *build_binary
+
+build-and-package-debian-10:
+  <<: *docker
+  stage: build_and_package_binaries
+  variables: 
+    target_os_family: "debian"
+    target_os: "debian"
+    target_os_version: "10"
+  <<: *build_binary
+
+build-and-package-ubuntu-18-04:
+  <<: *docker
+  stage: build_and_package_binaries
+  variables: 
+    target_os_family: "debian"
+    target_os: "ubuntu"
+    target_os_version: "18.04"
+  <<: *build_binary
+
+build-and-package-ubuntu-19-04:
+  <<: *docker
+  stage: build_and_package_binaries
+  variables: 
+    target_os_family: "debian"
+    target_os: "ubuntu"
+    target_os_version: "19.04"
+  <<: *build_binary
 
 # Pages are deployed from both master & dev, be careful not to override 'next'
 # in case something gets merged into 'dev' while releasing.
@@ -159,4 +158,3 @@ pages:
   only:
     - master
     - dev
-    - feature/website-fixes

@@ -1,1 +1,0 @@
-exception IncorrectStyle of string

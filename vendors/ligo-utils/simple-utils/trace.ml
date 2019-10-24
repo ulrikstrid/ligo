@@ -543,7 +543,7 @@ let rec bind_list = function
       hd >>? fun hd ->
       bind_list tl >>? fun tl ->
       ok @@ hd :: tl
-    )  
+    )
 
 let bind_ne_list = fun (hd , tl) ->
   hd >>? fun hd ->
@@ -568,6 +568,13 @@ let bind_fold_smap f init (smap : _ X_map.String.t) =
 let bind_map_smap f smap = bind_smap (X_map.String.map f smap)
 
 let bind_map_list f lst = bind_list (List.map f lst)
+let rec bind_map_list_seq f lst = match lst with
+  | [] -> ok []
+  | hd :: tl -> (
+      let%bind hd' = f hd in
+      let%bind tl' = bind_map_list_seq f tl in
+      ok (hd' :: tl')
+    )
 let bind_map_ne_list : _ -> 'a X_list.Ne.t -> 'b X_list.Ne.t result = fun f lst -> bind_ne_list (X_list.Ne.map f lst)
 let bind_iter_list : (_ -> unit result) -> _ list -> unit result = fun f lst ->
   bind_map_list f lst >>? fun _ -> ok ()
@@ -584,6 +591,20 @@ let bind_fold_list f init lst =
     f x y
   in
   List.fold_left aux (ok init) lst
+
+let bind_fold_pair f init (a,b) = 
+  let aux x y =
+    x >>? fun x ->
+    f x y
+  in
+  List.fold_left aux (ok init) [a;b]
+
+let bind_fold_triple f init (a,b,c) = 
+  let aux x y =
+    x >>? fun x ->
+    f x y
+  in
+  List.fold_left aux (ok init) [a;b;c]
 
 let bind_fold_map_list = fun f acc lst ->
   let rec aux (acc , prev) f = function
@@ -632,6 +653,8 @@ let bind_or (a, b) =
   match a with
   | Ok _ as o -> o
   | _ -> b
+let bind_map_or (fa , fb) c =
+  bind_or (fa c , fb c)
 
 let bind_lr (type a b) ((a : a result), (b:b result)) : [`Left of a | `Right of b] result =
   match (a, b) with
@@ -652,10 +675,17 @@ let bind_and (a, b) =
   a >>? fun a ->
   b >>? fun b ->
   ok (a, b)
+let bind_and3 (a, b, c) =
+  a >>? fun a ->
+  b >>? fun b ->
+  c >>? fun c ->
+  ok (a, b, c)
 
 let bind_pair = bind_and
 let bind_map_pair f (a, b) =
   bind_pair (f a, f b)
+let bind_map_triple f (a, b, c) =
+  bind_and3 (f a, f b, f c)
 
 
 (**
