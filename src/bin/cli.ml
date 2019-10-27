@@ -85,7 +85,7 @@ let michelson_code_format =
     info ~docv ~doc ["michelson-format"] in
   value @@ opt string "michelson" info
 
-let compile_file =
+let compile_contract =
   let f source_file entry_point syntax display_format michelson_format =
     toplevel ~display_format @@
     let%bind michelson_format = Main.Display.michelson_format_of_string michelson_format in
@@ -104,7 +104,7 @@ let compile_parameter =
   let f source_file entry_point expression syntax display_format =
     toplevel ~display_format @@
     let%bind value =
-      trace (simple_error "compile-input") @@
+      trace (simple_error "compile-parameter") @@
       Ligo.Run.Of_source.compile_file_contract_parameter source_file entry_point expression (Syntax_name syntax) in
     ok @@ Format.asprintf "%a\n" Tezos_utils.Michelson.pp value
   in
@@ -190,7 +190,7 @@ let compile_expression =
 
 
 let () = Term.exit @@ Term.eval_choice main [
-    compile_file ;
+    compile_contract ;
     compile_parameter ;
     compile_storage ;
     compile_expression ;

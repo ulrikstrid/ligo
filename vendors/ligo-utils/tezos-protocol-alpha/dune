@@ -10,11 +10,3 @@
     %{libexec:tezos-protocol-compiler:replace}
     %{libexec:tezos-protocol-compiler:dune_protocol.template}
     "dune.inc.gen")))
-
-(alias
- (name   runtest_dune_template)
- (action (diff dune.inc dune.inc.gen)))
-
-(alias
- (name runtest)
- (deps (alias runtest_dune_template)))

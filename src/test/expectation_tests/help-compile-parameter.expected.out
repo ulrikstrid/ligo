@@ -1,0 +1,43 @@
+LIGO-COMPILE-PARAMETER(1)         Ligo Manual        LIGO-COMPILE-PARAMETER(1)
+
+
+
+NNAAMMEE
+       ligo-compile-parameter
+
+SSYYNNOOPPSSIISS
+       lliiggoo ccoommppiillee--ppaarraammeetteerr [_O_P_T_I_O_N]... _S_O_U_R_C_E___F_I_L_E _E_N_T_R_Y___P_O_I_N_T
+       _P_A_R_A_M_E_T_E_R___E_X_P_R_E_S_S_I_O_N
+
+AARRGGUUMMEENNTTSS
+       _E_N_T_R_Y___P_O_I_N_T (required)
+           _E_N_T_R_Y___P_O_I_N_T is entry-point that will be compiled.
+
+       _P_A_R_A_M_E_T_E_R___E_X_P_R_E_S_S_I_O_N (required)
+           _P_A_R_A_M_E_T_E_R___E_X_P_R_E_S_S_I_O_N is the expression that will be compiled.
+
+       _S_O_U_R_C_E___F_I_L_E (required)
+           _S_O_U_R_C_E___F_I_L_E is the path to the .ligo or .mligo file of the
+           contract.
+
+OOPPTTIIOONNSS
+       ----ffoorrmmaatt=_D_I_S_P_L_A_Y___F_O_R_M_A_T, ----ddiissppllaayy--ffoorrmmaatt=_D_I_S_P_L_A_Y___F_O_R_M_A_T
+       (absent=human-readable)
+           _D_I_S_P_L_A_Y___F_O_R_M_A_T is the format that will be used by the CLI.
+           Available formats are 'dev', 'json', and 'human-readable'
+           (default). When human-readable lacks details (we are still tweaking
+           it), please contact us and use another format in the meanwhile.
+
+       ----hheellpp[=_F_M_T] (default=auto)
+           Show this help in format _F_M_T. The value _F_M_T must be one of `auto',
+           `pager', `groff' or `plain'. With `auto', the format is `pager` or
+           `plain' whenever the TTEERRMM env var is `dumb' or undefined.
+
+       --ss _S_Y_N_T_A_X, ----ssyynnttaaxx=_S_Y_N_T_A_X (absent=auto)
+           _S_Y_N_T_A_X is the syntax that will be used. Currently supported
+           syntaxes are "pascaligo" and "cameligo". By default, the syntax is
+           guessed from the extension (.ligo and .mligo, respectively).
+
+
+
+Ligo                                                 LIGO-COMPILE-PARAMETER(1)

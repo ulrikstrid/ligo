@@ -1,0 +1,55 @@
+LIGO(1)                           Ligo Manual                          LIGO(1)
+
+
+
+NNAAMMEE
+       ligo
+
+SSYYNNOOPPSSIISS
+       lliiggoo _C_O_M_M_A_N_D ...
+
+SSuubbccoommmmaanndd:: ccoommppiillee aa ccoonnttrraacctt.. SSeeee ``lliiggoo ccoommppiillee--ccoonnttrraacctt ----hheellpp'' ffoorr aa lliisstt
+       ooff ooppttiioonnss ssppeecciiffiicc ttoo tthhiiss ssuubbccoommmmaanndd..
+       ccoommppiillee--ccoonnttrraacctt
+
+
+SSuubbccoommmmaanndd:: ccoommppiillee aann iinniittiiaall ssttoorraaggee iinn lliiggoo ssyynnttaaxx ttoo aa mmiicchheellssoonn
+       eexxpprreessssiioonn.. TThhee rreessuullttiinngg mmiicchheellssoonn eexxpprreessssiioonn ccaann bbee ppaasssseedd aass aann
+       aarrgguummeenntt iinn aa ttrraannssaaccttiioonn wwhhiicchh oorriiggiinnaatteess aa ccoonnttrraacctt.. SSeeee ``lliiggoo
+       ccoommppiillee--ssttoorraaggee ----hheellpp'' ffoorr aa lliisstt ooff ooppttiioonnss ssppeecciiffiicc ttoo tthhiiss
+       ssuubbccoommmmaanndd..
+       ccoommppiillee--ssttoorraaggee
+
+
+SSuubbccoommmmaanndd:: ccoommppiillee ppaarraammeetteerrss ttoo aa mmiicchheellssoonn eexxpprreessssiioonn.. TThhee rreessuullttiinngg
+       mmiicchheellssoonn eexxpprreessssiioonn ccaann bbee ppaasssseedd aass aann aarrgguummeenntt iinn aa ttrraannssaaccttiioonn
+       wwhhiicchh ccaallllss aa ccoonnttrraacctt.. SSeeee ``lliiggoo ccoommppiillee--ppaarraammeetteerr ----hheellpp'' ffoorr aa lliisstt
+       ooff ooppttiioonnss ssppeecciiffiicc ttoo tthhiiss ssuubbccoommmmaanndd..
+       ccoommppiillee--ppaarraammeetteerr
+
+
+SSuubbccoommmmaanndd:: ccoommppiillee ttoo aa mmiicchheellssoonn vvaalluuee..
+       ccoommppiillee--eexxpprreessssiioonn
+
+
+SSuubbccoommmmaanndd:: eevvaalluuaattee aa ggiivveenn ddeeffiinniittiioonn..
+       eevvaalluuaattee--vvaalluuee
+
+
+SSuubbccoommmmaanndd:: rruunn aa ffuunnccttiioonn wwiitthh tthhee ggiivveenn ppaarraammeetteerr..
+       rruunn--ffuunnccttiioonn
+
+
+SSuubbccoommmmaanndd:: rruunn aa ssmmaarrtt--ccoonnttrraacctt wwiitthh tthhee ggiivveenn ssttoorraaggee aanndd iinnppuutt..
+       ddrryy--rruunn
+
+
+OOPPTTIIOONNSS
+       ----hheellpp[=_F_M_T] (default=auto)
+           Show this help in format _F_M_T. The value _F_M_T must be one of `auto',
+           `pager', `groff' or `plain'. With `auto', the format is `pager` or
+           `plain' whenever the TTEERRMM env var is `dumb' or undefined.
+
+
+
+Ligo                                                                   LIGO(1)

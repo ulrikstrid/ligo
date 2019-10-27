@@ -103,7 +103,3 @@ include Tezos_raw_protocol_005_PsBabyM1.Main
  (flags (:standard -w +a-4-6-7-9-29-32-40..42-44-45-48
                    -warn-error -a+8))
  (modules Registerer))
-
-(alias
- (name runtest_sandbox)
- (deps .tezos_protocol_005_PsBabyM1.objs/native/tezos_protocol_005_PsBabyM1.cmx))

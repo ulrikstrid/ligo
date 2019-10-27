@@ -1,0 +1,102 @@
+(* -*- tuareg -*- *)
+
+(* TODO ugh...
+
+   I would much rather avoid all of this dune nonsense, just writing
+   the test in OCaml.
+
+   However, we want to be able to "promote" the output of the
+   expectation tests. How can we do that from a test written in OCaml?
+   *)
+
+(* Add new tests here: *)
+
+let ligo_tests =
+  [ ("help",
+     [ ("toplevel", [ "--help" ]) ;
+       ("compile-contract", [ "compile-contract" ; "--help" ]) ;
+       ("compile-parameter", [ "compile-parameter" ; "--help" ]) ;
+       ("compile-storage", [ "compile-storage" ; "--help" ]) ;
+       ("compile-expression", [ "compile-expression" ; "--help" ]) ;
+       ("dry-run", [ "dry-run" ; "--help" ]) ;
+       ("run-function", [ "run-function" ; "--help" ]) ;
+       ("evaluate-value", [ "evaluate-value" ; "--help" ]) ;
+     ]) ;
+
+    ("compile-contract",
+     [ ("coase", [ "compile-contract" ; "../contracts/coase.ligo" ; "main" ]) ;
+       ("super-counter-ligo", [ "compile-contract" ; "../contracts/super-counter.ligo" ; "main" ]) ;
+       ("super-counter-mligo", [ "compile-contract" ; "../contracts/super-counter.mligo" ; "main" ]) ;
+     ]) ;
+
+    ("compile-storage",
+     [ ("big-map-ligo", [ "compile-storage" ; "../contracts/big_map.ligo" ; "main" ; "\"(map 1 -> 2 end, unit)\"" ]) ;
+       (* ("big-map-mligo", [ "compile-storage" ; "../contracts/big_map.mligo" ; "main" ; "\"(map 1 -> 2 end, unit)\"" ]) ; *)
+     ]) ;
+
+    ("dry-run",
+     [ ("big-map-ligo", [ "dry-run" ; "../contracts/big_map.ligo" ; "main" ; "unit" ; "\"(map 1 -> 2 end, unit)\"" ]) ;
+       ("big-map-empty-ligo", [ "dry-run" ; "../contracts/big_map.ligo" ; "main" ; "unit" ; "\"((map end : map(int,int)), unit)\"" ]) ;
+       ("big-map-mligo", [ "dry-run" ; "../contracts/big_map.mligo" ; "main" ; "unit" ; "\"Map [ (1, 2) ]\"" ]) ;
+       ("big-map-empty-mligo", [ "dry-run" ; "../contracts/big_map.mligo" ; "main" ; "unit" ; "\"(Map[] : (int,int) map)\"" ]) ;
+     ])
+  ]
+
+
+let test_dune name run = 
+  Format.sprintf "
+(rule
+ (with-stderr-to
+  %s.err
+  (with-stdout-to
+   %s.out
+   (run %s))))
+
+(alias
+ (name %s-out)
+ (action (diff %s.expected.out %s.out)))
+
+(alias
+ (name %s-err)
+ (action (diff %s.expected.err %s.err)))
+"
+    name name run name name name name name name
+
+let test_deps_dune name =
+  Format.sprintf "
+(alias %s-out)
+(alias %s-err)
+"
+    name name
+
+let dune tests =
+  Format.sprintf "
+%s
+
+(alias
+ (name runtest_expectation)
+ (deps %s))
+
+(alias
+ (name runtest)
+ (deps (alias runtest_expectation)))  
+"
+    (String.concat "\n" (List.map (fun (name, run) -> test_dune name run) tests))
+    (String.concat "\n" (List.map (fun (name, _) -> test_deps_dune name) tests))
+
+let tests =
+  List.concat @@
+  List.map
+    (fun (suite, tests) ->
+      List.map
+        (fun (name, ligo_args) ->
+           let name = Format.sprintf "%s-%s" suite name in
+           let run =
+             Format.asprintf "%%{bin:ligo} %a"
+               Format.(pp_print_list ~pp_sep:(fun ppf () -> pp_print_string ppf " ") pp_print_string)
+               ligo_args in
+           (name, run))
+        tests)
+    ligo_tests
+
+let () = Jbuild_plugin.V1.send (dune tests)
