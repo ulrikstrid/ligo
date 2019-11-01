@@ -4,42 +4,36 @@ This series of annotated files will show you how to use CameLIGO. CameLIGO is a
 syntax based on the OCaml programming language. Excepting some corner cases, it is
 mostly compatible with the OCaml syntax and should be familiar to an OCaml user.
 
+This file demonstrates how to use the arithmetic operators in CameLIGO.
+
  *)
 
 (**
 
-For this first file, we're going to go through the basic arithmetic operators
-and demonstrate the editor features you'll use through the rest of this series.
+The 'let' statement allows you to bind a variable to the value of the expression
+on the righthand side of the equal sign. Importantly, these bindings are not
+mutable state. The only way to change the value once bound is to shadow with a
+new value.
 
 *)
+let plus_op: int  = 10 + 42
+
+let minus_op: int = 82 - 42
+
+let times_op: int = 2 * 42
+
+let div_op: int = 42 / 2
 
 (**
 
-The function `plus_op` takes an integer n and adds 42 to it. At various points in
-these tutorials you'll be asked to use functions as an *entrypoint*, or place
-where the program begins execution. You can do that with `plus_op` now by typing
-`plus_op` into the 'entrypoint' box at the top of the editor. `plus_op` also
-requires a parameter, which can be given below the entrypoint box. Try running
-`plus_op` with `1` and make sure you get 43 back.
-
-*)
-let plus_op (n : int) : int =
-  n + 42
-
-(**
-
-These other functions show the different arithmetic operators in CameLIGO.
-
-*)
-
-let minus_op (n : int) : int =
-  n - 42
-
-let times_op (n : int) : int =
-  n * 42
-
-let div_op (n : int) : int =
-  n / 2
+Notice that the name of the variable is followed by `: int`, this is the variables
+*type signature*. In a language which emphasizes its type system, signatures
+can become quite complex. In ordinary OCaml a type inference system is used to
+figure out the type of many variables without the user providing a signature.
+LIGO doesn't do this yet, so for now all CameLIGO code needs to provide
+explicit type signatures where in OCaml they might be optional. When type
+inference is supported later, code written with explicit types will still run
+without issues.
 
 (**
 
@@ -48,11 +42,9 @@ reports the remainder of evenly dividing X into Y pieces. So `10 mod 2` is
 zero, and `11 mod 2` is one.
 
 *)
-let mod_op (n : int) : nat =
-  n mod 2
+let mod_op  = 10 mod 2
 
-let neg_op (n : int) : int =
-  -n
+let neg_op  = -(10)
 
 (**
 
