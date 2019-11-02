@@ -17,11 +17,9 @@ false || true = true
 false || false = false
 
 *)
-let or_true (b : bool) : bool =
-   b || true
+let or_true: bool = true || false
 
-let or_false (b : bool) : bool =
-   b || false
+let or_false: bool = false || false
 
 (**
 
@@ -34,11 +32,9 @@ false || true = false
 false || false = false
 
 *)
-let and_true (b : bool) : bool =
-   b && true
+let and_true: bool = true && true
 
-let and_false (b : bool) : bool =
-   b && false
+let and_false: bool = true && false
 
 (**
 
@@ -49,5 +45,4 @@ not true = false
 not false = true
 
 *)
-let not_bool (b: bool) : bool =
-   not b
+let not_bool: bool = not true

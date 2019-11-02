@@ -18,3 +18,13 @@ construction.
 *)
 let s : foobar = Some 42
 let n : foobar = None
+
+(**
+
+It is typical to unwrap an option using pattern matching.
+
+*)
+let matched: int =
+  match s with
+    Some n -> n
+  | None -> 0

@@ -87,9 +87,11 @@ it is 1. For example:
 --------
 10111011
 
+As a note: `10p` has the suffix `p` because that's the format for natural number
+literals in CameLIGO.
+
 *)
-let or_op (n : nat) : nat =
-  Bitwise.lor n 4p
+let or_op: nat = Bitwise.lor 10p 4p
 
 (**
 
@@ -102,8 +104,7 @@ The bitwise AND puts 1 in the resulting number if both bits in that column are
 10000010
 
 *)
-let and_op (n : nat) : nat =
-  Bitwise.land n 7p
+let and_op: nat = Bitwise.land 14p 7p
 
 (**
 
@@ -116,5 +117,4 @@ different, if they're the same it puts 0.
 00111001
 
 *)
-let xor_op (n : nat) : nat =
-  Bitwise.lxor n 7p
+let xor_op: nat = Bitwise.lxor 19p 7p

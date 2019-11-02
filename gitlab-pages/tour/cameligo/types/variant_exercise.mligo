@@ -1,7 +1,3 @@
-type storage = int
-
-(* variant defining pseudo multi-entrypoint actions *)
-
 type action =
 | Increment of int
 | Decrement of int

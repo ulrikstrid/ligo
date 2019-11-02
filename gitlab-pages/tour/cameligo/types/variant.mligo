@@ -15,3 +15,15 @@ let foo : foobar = Foo 42
 let bar : foobar = Bar true
 
 let kee : foobar = Kee 23p
+
+(**
+
+We can work with the specific type that a variant happens to be using pattern
+matching.
+
+*)
+let matched: int =
+  match foo with
+    Foo i -> i
+  | Bar b -> if b then 50 else 25
+  | Kee n -> int n
