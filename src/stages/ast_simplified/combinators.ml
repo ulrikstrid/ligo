@@ -73,6 +73,7 @@ let e_record ?loc map : expression = location_wrap ?loc @@ E_record map
 let e_tuple ?loc lst : expression = location_wrap ?loc @@ E_tuple lst
 let e_some ?loc s : expression = location_wrap ?loc @@ E_constant ("SOME", [s])
 let e_none ?loc () : expression = location_wrap ?loc @@ E_constant ("NONE", [])
+let e_string_cat ?loc sl sr : expression = location_wrap ?loc @@ E_constant ("CONCAT" , [sl ; sr ])
 let e_map_add ?loc k v old : expression = location_wrap ?loc @@ E_constant ("MAP_ADD" , [k ; v ; old])
 let e_map ?loc lst : expression = location_wrap ?loc @@ E_map lst
 let e_set ?loc lst : expression = location_wrap ?loc @@ E_set lst
@@ -84,7 +85,6 @@ let e_matching_bool ?loc a b c : expression = e_matching ?loc a (Match_bool {mat
 let e_accessor ?loc a b = location_wrap ?loc @@ E_accessor (a , b)
 let e_accessor_props ?loc a b = e_accessor ?loc a (List.map (fun x -> Access_record x) b)
 let e_variable ?loc v = location_wrap ?loc @@ E_variable v
-let e_failwith ?loc v = location_wrap ?loc @@ E_failwith v
 let e_skip ?loc () = location_wrap ?loc @@ E_skip
 let e_loop ?loc cond body = location_wrap ?loc @@ E_loop (cond , body)
 let e_sequence ?loc a b = location_wrap ?loc @@ E_sequence (a , b)
@@ -166,13 +166,6 @@ let get_e_tuple = fun t ->
   match t with
   | E_tuple lst -> ok lst
   | _ -> simple_fail "not a tuple"
-
-let get_e_failwith = fun e ->
-  match e.expression with
-  | E_failwith fw -> ok fw
-  | _ -> simple_fail "not a failwith"
-
-let is_e_failwith e = to_bool @@ get_e_failwith e
 
 let extract_pair : expression -> (expression * expression) result = fun e ->
   match e.expression with

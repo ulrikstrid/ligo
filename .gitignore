@@ -6,3 +6,5 @@ cache/*
 Version.ml
 /_opam/
 /*.pp.ligo
+**/.DS_Store
+.vscode/

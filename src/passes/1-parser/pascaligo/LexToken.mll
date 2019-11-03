@@ -33,7 +33,7 @@ type t =
 | Bytes  of (lexeme * Hex.t) Region.reg
 | Int    of (lexeme * Z.t) Region.reg
 | Nat    of (lexeme * Z.t) Region.reg
-| Mtz    of (lexeme * Z.t) Region.reg
+| Mutez    of (lexeme * Z.t) Region.reg
 | Ident  of lexeme Region.reg
 | Constr of lexeme Region.reg
 
@@ -51,13 +51,13 @@ type t =
 | VBAR     of Region.t
 | ARROW    of Region.t
 | ASS      of Region.t
-| EQUAL    of Region.t
+| EQ       of Region.t
 | COLON    of Region.t
 | LT       of Region.t
-| LEQ      of Region.t
+| LE       of Region.t
 | GT       of Region.t
-| GEQ      of Region.t
-| NEQ      of Region.t
+| GE       of Region.t
+| NE       of Region.t
 | PLUS     of Region.t
 | MINUS    of Region.t
 | SLASH    of Region.t
@@ -70,6 +70,7 @@ type t =
 
 | And        of Region.t  (* "and"        *)
 | Begin      of Region.t  (* "begin"      *)
+| BigMap     of Region.t  (* "big_map"    *)
 | Block      of Region.t  (* "block"      *)
 | Case       of Region.t  (* "case"       *)
 | Const      of Region.t  (* "const"      *)
@@ -77,7 +78,6 @@ type t =
 | Down       of Region.t  (* "down"       *)
 | Else       of Region.t  (* "else"       *)
 | End        of Region.t  (* "end"        *)
-| Entrypoint of Region.t  (* "entrypoint" *)
 | Fail       of Region.t  (* "fail"       *)
 | For        of Region.t  (* "for"        *)
 | From       of Region.t  (* "from"       *)
@@ -99,7 +99,6 @@ type t =
 | Set        of Region.t  (* "set"        *)
 | Skip       of Region.t  (* "skip"       *)
 | Step       of Region.t  (* "step"       *)
-| Storage    of Region.t  (* "storage"    *)
 | Then       of Region.t  (* "then"       *)
 | To         of Region.t  (* "to"         *)
 | Type       of Region.t  (* "type"       *)
@@ -161,8 +160,8 @@ let proj_token = function
 | Nat Region.{region; value = s,n} ->
     region, sprintf "Nat (\"%s\", %s)" s (Z.to_string n)
 
-| Mtz Region.{region; value = s,n} ->
-    region, sprintf "Mtz (\"%s\", %s)" s (Z.to_string n)
+| Mutez Region.{region; value = s,n} ->
+    region, sprintf "Mutez (\"%s\", %s)" s (Z.to_string n)
 
 | Ident Region.{region; value} ->
     region, sprintf "Ident \"%s\"" value
@@ -184,13 +183,13 @@ let proj_token = function
 | VBAR     region -> region, "VBAR"
 | ARROW    region -> region, "ARROW"
 | ASS      region -> region, "ASS"
-| EQUAL    region -> region, "EQUAL"
+| EQ       region -> region, "EQ"
 | COLON    region -> region, "COLON"
 | LT       region -> region, "LT"
-| LEQ      region -> region, "LEQ"
+| LE       region -> region, "LE"
 | GT       region -> region, "GT"
-| GEQ      region -> region, "GEQ"
-| NEQ      region -> region, "NEQ"
+| GE       region -> region, "GE"
+| NE       region -> region, "NE"
 | PLUS     region -> region, "PLUS"
 | MINUS    region -> region, "MINUS"
 | SLASH    region -> region, "SLASH"
@@ -203,6 +202,7 @@ let proj_token = function
 
 | And        region -> region, "And"
 | Begin      region -> region, "Begin"
+| BigMap     region -> region, "BigMap"
 | Block      region -> region, "Block"
 | Case       region -> region, "Case"
 | Const      region -> region, "Const"
@@ -210,7 +210,6 @@ let proj_token = function
 | Down       region -> region, "Down"
 | Else       region -> region, "Else"
 | End        region -> region, "End"
-| Entrypoint region -> region, "Entrypoint"
 | Fail       region -> region, "Fail"
 | For        region -> region, "For"
 | From       region -> region, "From"
@@ -232,7 +231,6 @@ let proj_token = function
 | Set        region -> region, "Set"
 | Skip       region -> region, "Skip"
 | Step       region -> region, "Step"
-| Storage    region -> region, "Storage"
 | Then       region -> region, "Then"
 | To         region -> region, "To"
 | Type       region -> region, "Type"
@@ -260,7 +258,7 @@ let to_lexeme = function
 | Bytes b   -> fst b.Region.value
 | Int i
 | Nat i
-| Mtz i     -> fst i.Region.value
+| Mutez i     -> fst i.Region.value
 | Ident id
 | Constr id -> id.Region.value
 
@@ -278,13 +276,13 @@ let to_lexeme = function
 | VBAR     _ -> "|"
 | ARROW    _ -> "->"
 | ASS      _ -> ":="
-| EQUAL    _ -> "="
+| EQ       _ -> "="
 | COLON    _ -> ":"
 | LT       _ -> "<"
-| LEQ      _ -> "<="
+| LE       _ -> "<="
 | GT       _ -> ">"
-| GEQ      _ -> ">="
-| NEQ      _ -> "=/="
+| GE       _ -> ">="
+| NE       _ -> "=/="
 | PLUS     _ -> "+"
 | MINUS    _ -> "-"
 | SLASH    _ -> "/"
@@ -297,6 +295,7 @@ let to_lexeme = function
 
 | And        _ -> "and"
 | Begin      _ -> "begin"
+| BigMap     _ -> "big_map"
 | Block      _ -> "block"
 | Case       _ -> "case"
 | Const      _ -> "const"
@@ -304,7 +303,6 @@ let to_lexeme = function
 | Down       _ -> "down"
 | Else       _ -> "else"
 | End        _ -> "end"
-| Entrypoint _ -> "entrypoint"
 | Fail       _ -> "fail"
 | For        _ -> "for"
 | From       _ -> "from"
@@ -326,7 +324,6 @@ let to_lexeme = function
 | Set        _ -> "set"
 | Skip       _ -> "skip"
 | Step       _ -> "step"
-| Storage    _ -> "storage"
 | Then       _ -> "then"
 | To         _ -> "to"
 | Type       _ -> "type"
@@ -359,6 +356,7 @@ let to_region token = proj_token token |> fst
 let keywords = [
   (fun reg -> And        reg);
   (fun reg -> Begin      reg);
+  (fun reg -> BigMap     reg);
   (fun reg -> Block      reg);
   (fun reg -> Case       reg);
   (fun reg -> Const      reg);
@@ -366,7 +364,6 @@ let keywords = [
   (fun reg -> Down       reg);
   (fun reg -> Else       reg);
   (fun reg -> End        reg);
-  (fun reg -> Entrypoint reg);
   (fun reg -> For        reg);
   (fun reg -> From       reg);
   (fun reg -> Function   reg);
@@ -388,7 +385,6 @@ let keywords = [
   (fun reg -> Set        reg);
   (fun reg -> Skip       reg);
   (fun reg -> Step       reg);
-  (fun reg -> Storage    reg);
   (fun reg -> Then       reg);
   (fun reg -> To         reg);
   (fun reg -> Type       reg);
@@ -484,55 +480,70 @@ let mk_int lexeme region =
   then Error Non_canonical_zero
   else Ok (Int Region.{region; value = lexeme, z})
 
-let mk_nat lexeme region =
-  let z =
-    Str.(global_replace (regexp "_") "" lexeme) |>
-    Str.(global_replace (regexp "n") "") |>
-    Z.of_string in
-  if Z.equal z Z.zero && lexeme <> "0n"
-  then Error Non_canonical_zero
-  else Ok (Nat Region.{region; value = lexeme, z})
+type nat_err =
+  Invalid_natural
+| Non_canonical_zero_nat
 
-let mk_mtz lexeme region =
+let mk_nat lexeme region =
+  match (String.index_opt lexeme 'n') with
+  | None -> Error Invalid_natural
+  | Some _ -> (
+    let z =
+      Str.(global_replace (regexp "_") "" lexeme) |>
+      Str.(global_replace (regexp "n") "") |>
+      Z.of_string in
+    if Z.equal z Z.zero && lexeme <> "0n"
+    then Error Non_canonical_zero_nat
+    else Ok (Nat Region.{region; value = lexeme, z})
+  )
+
+let mk_mutez lexeme region =
   let z =
     Str.(global_replace (regexp "_") "" lexeme) |>
-    Str.(global_replace (regexp "mtz") "") |>
+    Str.(global_replace (regexp "mutez") "") |>
     Z.of_string in
-  if Z.equal z Z.zero && lexeme <> "0mtz"
+  if Z.equal z Z.zero && lexeme <> "0mutez"
   then Error Non_canonical_zero
-  else Ok (Mtz Region.{region; value = lexeme, z})
+  else Ok (Mutez Region.{region; value = lexeme, z})
 
 let eof region = EOF region
 
+type sym_err = Invalid_symbol
+
 let mk_sym lexeme region =
   match lexeme with
-    ";"   -> SEMI     region
-  | ","   -> COMMA    region
-  | "("   -> LPAR     region
-  | ")"   -> RPAR     region
-  | "{"   -> LBRACE   region
-  | "}"   -> RBRACE   region
-  | "["   -> LBRACKET region
-  | "]"   -> RBRACKET region
-  | "#"   -> CONS     region
-  | "|"   -> VBAR     region
-  | "->"  -> ARROW    region
-  | ":="  -> ASS      region
-  | "="   -> EQUAL    region
-  | ":"   -> COLON    region
-  | "<"   -> LT       region
-  | "<="  -> LEQ      region
-  | ">"   -> GT       region
-  | ">="  -> GEQ      region
-  | "=/=" -> NEQ      region
-  | "+"   -> PLUS     region
-  | "-"   -> MINUS    region
-  | "/"   -> SLASH    region
-  | "*"   -> TIMES    region
-  | "."   -> DOT      region
-  | "_"   -> WILD     region
-  | "^"   -> CAT      region
-  |     _ -> assert false
+  (* Lexemes in common with all concrete syntaxes *)
+    ";"   -> Ok (SEMI     region)
+  | ","   -> Ok (COMMA    region)
+  | "("   -> Ok (LPAR     region)
+  | ")"   -> Ok (RPAR     region)
+  | "["   -> Ok (LBRACKET region)
+  | "]"   -> Ok (RBRACKET region)
+  | "{"   -> Ok (LBRACE   region)
+  | "}"   -> Ok (RBRACE   region)
+  | "="   -> Ok (EQ       region)
+  | ":"   -> Ok (COLON    region)
+  | "|"   -> Ok (VBAR     region)
+  | "->"  -> Ok (ARROW    region)
+  | "."   -> Ok (DOT      region)
+  | "_"   -> Ok (WILD     region)
+  | "^"   -> Ok (CAT      region)
+  | "+"   -> Ok (PLUS     region)
+  | "-"   -> Ok (MINUS    region)
+  | "*"   -> Ok (TIMES    region)
+  | "/"   -> Ok (SLASH    region)
+  | "<"   -> Ok (LT       region)
+  | "<="  -> Ok (LE      region)
+  | ">"   -> Ok (GT       region)
+  | ">="  -> Ok (GE      region)
+
+  (* Lexemes specific to PascaLIGO *)
+  | "=/=" -> Ok (NE       region)
+  | "#"   -> Ok (CONS     region)
+  | ":="  -> Ok (ASS      region)
+
+  (* Invalid lexemes *)
+  |     _ -> Error Invalid_symbol
 
 (* Identifiers *)
 
@@ -569,6 +580,7 @@ let is_ident = function
 let is_kwd = function
   And        _
 | Begin      _
+| BigMap     _
 | Block      _
 | Case       _
 | Const      _
@@ -576,7 +588,6 @@ let is_kwd = function
 | Down       _
 | Else       _
 | End        _
-| Entrypoint _
 | Fail       _
 | For        _
 | From       _
@@ -598,7 +609,6 @@ let is_kwd = function
 | Set        _
 | Skip       _
 | Step       _
-| Storage    _
 | Then       _
 | To         _
 | Type       _
@@ -629,13 +639,13 @@ let is_sym = function
 | VBAR     _
 | ARROW    _
 | ASS      _
-| EQUAL    _
+| EQ       _
 | COLON    _
 | LT       _
-| LEQ      _
+| LE       _
 | GT       _
-| GEQ      _
-| NEQ      _
+| GE       _
+| NE       _
 | PLUS     _
 | MINUS    _
 | SLASH    _

@@ -49,8 +49,6 @@ type kwd_contains   = Region.t
 type kwd_down       = Region.t
 type kwd_else       = Region.t
 type kwd_end        = Region.t
-type kwd_entrypoint = Region.t
-type kwd_fail       = Region.t
 type kwd_for        = Region.t
 type kwd_from       = Region.t
 type kwd_function   = Region.t
@@ -65,13 +63,11 @@ type kwd_not        = Region.t
 type kwd_of         = Region.t
 type kwd_or         = Region.t
 type kwd_patch      = Region.t
-type kwd_procedure  = Region.t
 type kwd_record     = Region.t
 type kwd_remove     = Region.t
 type kwd_set        = Region.t
 type kwd_skip       = Region.t
 type kwd_step       = Region.t
-type kwd_storage    = Region.t
 type kwd_then       = Region.t
 type kwd_to         = Region.t
 type kwd_type       = Region.t
@@ -164,9 +160,9 @@ type t = {
 and ast = t
 
 and declaration =
-  TypeDecl   of type_decl reg
-| ConstDecl  of const_decl reg
-| LambdaDecl of lambda_decl
+  TypeDecl  of type_decl reg
+| ConstDecl of const_decl reg
+| FunDecl   of fun_decl reg
 
 and const_decl = {
   kwd_const  : kwd_const;
@@ -191,9 +187,9 @@ and type_decl = {
 and type_expr =
   TProd   of cartesian
 | TSum    of (variant reg, vbar) nsepseq reg
-| TRecord of record_type
+| TRecord of field_decl reg ne_injection reg
 | TApp    of (type_name * type_tuple) reg
-| TFun    of (type_expr * arrow  * type_expr) reg
+| TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TAlias  of variable
 
@@ -201,10 +197,8 @@ and cartesian = (type_expr, times) nsepseq reg
 
 and variant = {
   constr : constr;
-  args   : (kwd_of * cartesian) option
+  args   : (kwd_of * type_expr) option
 }
-
-and record_type = field_decl reg injection reg
 
 and field_decl = {
   field_name : field_name;
@@ -216,64 +210,20 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 
 (* Function and procedure declarations *)
 
-and lambda_decl =
-  FunDecl   of fun_decl   reg
-| ProcDecl  of proc_decl  reg
-| EntryDecl of entry_decl reg
-
 and fun_decl = {
-  kwd_function : kwd_function;
-  name         : variable;
-  param        : parameters;
-  colon        : colon;
-  ret_type     : type_expr;
-  kwd_is       : kwd_is;
-  local_decls  : local_decl list;
-  block        : block reg;
-  kwd_with     : kwd_with;
-  return       : expr;
-  terminator   : semi option
-}
-
-and proc_decl = {
-  kwd_procedure : kwd_procedure;
-  name          : variable;
-  param         : parameters;
-  kwd_is        : kwd_is;
-  local_decls   : local_decl list;
-  block         : block reg;
-  terminator    : semi option
-}
-
-and entry_decl = {
-  kwd_entrypoint : kwd_entrypoint;
-  name           : variable;
-  param          : entry_params;
-  colon          : colon;
-  ret_type       : type_expr;
-  kwd_is         : kwd_is;
-  local_decls    : local_decl list;
-  block          : block reg;
-  kwd_with       : kwd_with;
-  return         : expr;
-  terminator     : semi option
-}
+    kwd_function : kwd_function;
+    name         : variable;
+    param        : parameters;
+    colon        : colon;
+    ret_type     : type_expr;
+    kwd_is       : kwd_is;
+    local_decls  : local_decl list;
+    block        : block reg option;
+    kwd_with     : kwd_with option;
+    return       : expr;
+    terminator   : semi option }
 
 and parameters = (param_decl, semi) nsepseq par reg
-
-and entry_params = (entry_param_decl, semi) nsepseq par reg
-
-and entry_param_decl =
-  EntryConst of param_const reg
-| EntryVar   of param_var reg
-| EntryStore of storage reg
-
-and storage = {
-  kwd_storage  : kwd_storage;
-  var          : variable;
-  colon        : colon;
-  storage_type : type_expr
-}
 
 and param_decl =
   ParamConst of param_const reg
@@ -316,7 +266,6 @@ and statement =
 
 and local_decl =
   LocalFun  of fun_decl reg
-| LocalProc of proc_decl reg
 | LocalData of data_decl
 
 and data_decl =
@@ -334,16 +283,11 @@ and var_decl = {
 }
 
 and instruction =
-  Single of single_instr
-| Block  of block reg
-
-and single_instr =
   Cond        of conditional reg
-| CaseInstr   of instruction case reg
+| CaseInstr   of if_clause case reg
 | Assign      of assignment reg
 | Loop        of loop
 | ProcCall    of fun_call
-| Fail        of fail_instr reg
 | Skip        of kwd_skip
 | RecordPatch of record_patch reg
 | MapPatch    of map_patch reg
@@ -371,14 +315,14 @@ and set_patch  = {
   kwd_patch : kwd_patch;
   path      : path;
   kwd_with  : kwd_with;
-  set_inj   : expr injection reg
+  set_inj   : expr ne_injection reg
 }
 
 and map_patch  = {
   kwd_patch : kwd_patch;
   path      : path;
   kwd_with  : kwd_with;
-  map_inj   : binding reg injection reg
+  map_inj   : binding reg ne_injection reg
 }
 
 and binding = {
@@ -391,12 +335,17 @@ and record_patch = {
   kwd_patch  : kwd_patch;
   path       : path;
   kwd_with   : kwd_with;
-  record_inj : record_expr
+  record_inj : field_assign reg ne_injection reg
 }
 
-and fail_instr = {
-  kwd_fail  : kwd_fail;
-  fail_expr : expr
+and cond_expr = {
+  kwd_if     : kwd_if;
+  test       : expr;
+  kwd_then   : kwd_then;
+  ifso       : expr;
+  terminator : semi option;
+  kwd_else   : kwd_else;
+  ifnot      : expr
 }
 
 and conditional = {
@@ -411,7 +360,11 @@ and conditional = {
 
 and if_clause =
   ClauseInstr of instruction
-| ClauseBlock of (statements * semi option) braces reg
+| ClauseBlock of clause_block
+
+and clause_block =
+  LongBlock  of block reg
+| ShortBlock of (statements * semi option) braces reg
 
 and set_membership = {
   set          : expr;
@@ -444,9 +397,7 @@ and lhs =
   Path    of path
 | MapPath of map_lookup reg
 
-and rhs =
-      Expr of expr
-| NoneExpr of c_None
+and rhs = expr
 
 and loop =
   While of while_loop reg
@@ -465,10 +416,8 @@ and for_loop =
 and for_int = {
   kwd_for : kwd_for;
   assign  : var_assign reg;
-  down    : kwd_down option;
   kwd_to  : kwd_to;
   bound   : expr;
-  step    : (kwd_step * expr) option;
   block   : block reg
 }
 
@@ -479,18 +428,27 @@ and var_assign = {
 }
 
 and for_collect = {
-  kwd_for : kwd_for;
-  var     : variable;
-  bind_to : (arrow * variable) option;
-  kwd_in  : kwd_in;
-  expr    : expr;
-  block   : block reg
+  kwd_for    : kwd_for;
+  var        : variable;
+  bind_to    : (arrow * variable) option;
+  colon      : colon;
+  elt_type   : type_expr;
+  kwd_in     : kwd_in;
+  collection : collection;
+  expr       : expr;
+  block      : block reg
 }
+
+and collection =
+  Map  of kwd_map
+| Set  of kwd_set
+| List of kwd_list
 
 (* Expressions *)
 
 and expr =
-| ECase   of expr case reg
+  ECase   of expr case reg
+| ECond   of cond_expr reg
 | EAnnot  of annot_expr reg
 | ELogic  of logic_expr
 | EArith  of arith_expr
@@ -521,6 +479,13 @@ and 'a injection = {
   closing    : closing
 }
 
+and 'a ne_injection = {
+  opening     : opening;
+  ne_elements : ('a, semi) nsepseq;
+  terminator  : semi option;
+  closing     : closing
+}
+
 and opening =
   Kwd        of keyword
 | KwdBracket of keyword * lbracket
@@ -532,6 +497,7 @@ and closing =
 and map_expr =
   MapLookUp of map_lookup reg
 | MapInj    of binding reg injection reg
+| BigMapInj    of binding reg injection reg
 
 and map_lookup = {
   path  : path;
@@ -581,7 +547,7 @@ and arith_expr =
 | Neg  of minus    un_op reg
 | Int  of (Lexer.lexeme * Z.t) reg
 | Nat  of (Lexer.lexeme * Z.t) reg
-| Mtz  of (Lexer.lexeme * Z.t) reg
+| Mutez  of (Lexer.lexeme * Z.t) reg
 
 and string_expr =
   Cat    of cat bin_op reg
@@ -617,16 +583,13 @@ and selection =
   FieldName of field_name
 | Component of (Lexer.lexeme * Z.t) reg
 
-and tuple_expr =
-  TupleInj of tuple_injection
-
-and tuple_injection = (expr, comma) nsepseq par reg
+and tuple_expr = (expr, comma) nsepseq par reg
 
 and none_expr = c_None
 
 and fun_call = (fun_name * arguments) reg
 
-and arguments = tuple_injection
+and arguments = tuple_expr
 
 (* Patterns *)
 
@@ -636,6 +599,7 @@ and pattern =
 | PVar    of Lexer.lexeme reg
 | PWild   of wild
 | PInt    of (Lexer.lexeme * Z.t) reg
+| PNat    of (Lexer.lexeme * Z.t) reg
 | PBytes  of (Lexer.lexeme * Hex.t) reg
 | PString of Lexer.lexeme reg
 | PUnit   of c_Unit
@@ -683,14 +647,15 @@ let rec expr_to_region = function
 | EBytes {region; _}
 | EUnit   region
 | ECase  {region;_}
+| ECond  {region; _}
 | EPar   {region; _} -> region
 
-and tuple_expr_to_region = function
-  TupleInj {region; _} -> region
+and tuple_expr_to_region {region; _} = region
 
 and map_expr_to_region = function
   MapLookUp {region; _}
 | MapInj    {region; _} -> region
+| BigMapInj {region; _} -> region
 
 and set_expr_to_region = function
   SetInj {region; _}
@@ -716,7 +681,7 @@ and comp_expr_to_region = function
 | Neq   {region; _} -> region
 
 and arith_expr_to_region = function
-| Add  {region; _}
+  Add  {region; _}
 | Sub  {region; _}
 | Mult {region; _}
 | Div  {region; _}
@@ -724,13 +689,13 @@ and arith_expr_to_region = function
 | Neg  {region; _}
 | Int  {region; _}
 | Nat  {region; _}
-| Mtz  {region; _} -> region
+| Mutez  {region; _} -> region
 
 and string_expr_to_region = function
   Cat    {region; _}
 | String {region; _} -> region
 
-and annot_expr_to_region ({region; _}) = region
+and annot_expr_to_region {region; _} = region
 
 and list_expr_to_region = function
   Cons {region; _}
@@ -749,31 +714,34 @@ let path_to_region = function
 | Path {region; _} -> region
 
 let instr_to_region = function
-  Single Cond                {region; _}
-| Single CaseInstr           {region; _}
-| Single Assign              {region; _}
-| Single Loop While          {region; _}
-| Single Loop For ForInt     {region; _}
-| Single Loop For ForCollect {region; _}
-| Single ProcCall            {region; _}
-| Single Skip                region
-| Single Fail                {region; _}
-| Single RecordPatch         {region; _}
-| Single MapPatch            {region; _}
-| Single SetPatch            {region; _}
-| Single MapRemove           {region; _}
-| Single SetRemove           {region; _}
-| Block                      {region; _} -> region
+  Cond                {region; _}
+| CaseInstr           {region; _}
+| Assign              {region; _}
+| Loop While          {region; _}
+| Loop For ForInt     {region; _}
+| Loop For ForCollect {region; _}
+| ProcCall            {region; _}
+| Skip                region
+| RecordPatch         {region; _}
+| MapPatch            {region; _}
+| SetPatch            {region; _}
+| MapRemove           {region; _}
+| SetRemove           {region; _} -> region
+
+let clause_block_to_region = function
+  LongBlock {region; _}
+| ShortBlock {region; _} -> region
 
 let if_clause_to_region = function
   ClauseInstr instr       -> instr_to_region instr
-| ClauseBlock {region; _} -> region
+| ClauseBlock clause_block -> clause_block_to_region clause_block
 
 let pattern_to_region = function
   PCons       {region; _}
 | PVar        {region; _}
 | PWild        region
 | PInt        {region; _}
+| PNat        {region; _}
 | PBytes      {region; _}
 | PString     {region; _}
 | PUnit        region
@@ -789,7 +757,6 @@ let pattern_to_region = function
 
 let local_decl_to_region = function
   LocalFun             {region; _}
-| LocalProc            {region; _}
 | LocalData LocalConst {region; _}
 | LocalData LocalVar   {region; _} -> region
 
@@ -797,9 +764,7 @@ let lhs_to_region : lhs -> Region.t = function
   Path path -> path_to_region path
 | MapPath {region; _} -> region
 
-let rhs_to_region = function
-      Expr e -> expr_to_region e
-| NoneExpr r -> r
+let rhs_to_region = expr_to_region
 
 let selection_to_region = function
   FieldName {region; _}

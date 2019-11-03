@@ -32,17 +32,24 @@ module Ty = struct
   let mutez = Mutez_t None
   let string = String_t None
   let key = Key_t None
-  let list a = List_t (a, None)
+  let list a = List_t (a, None , has_big_map a)
   let set a = Set_t (a, None)
   let address = Address_t None
-  let option a = Option_t ((a, None), None, None)
+  let option a = Option_t (a, None , has_big_map a)
   let contract a = Contract_t (a, None)
   let lambda a b = Lambda_t (a, b, None)
   let timestamp = Timestamp_t None
-  let map a b = Map_t (a, b, None)
-  let pair a b = Pair_t ((a, None, None), (b, None, None), None)
-  let union a b = Union_t ((a, None), (b, None), None)
+  let map a b = Map_t (a, b, None , has_big_map b)
+  let pair a b = Pair_t ((a, None, None), (b, None, None), None , has_big_map a || has_big_map b)
+  let union a b = Union_t ((a, None), (b, None), None , has_big_map a || has_big_map b)
 
+  let field_annot = Option.map (fun ann -> `Field_annot ann)
+
+  let union_ann (anna, a) (annb, b) =
+    Union_t ((a, field_annot anna), (b, field_annot annb), None , has_big_map a || has_big_map b)
+
+  let pair_ann (anna, a) (annb, b) =
+    Pair_t ((a, field_annot anna, None), (b, field_annot annb, None), None , has_big_map a || has_big_map b)
 
   let not_comparable name () = error (thunk "not a comparable type") (fun () -> name) ()
   let not_compilable_type name () = error (thunk "not a compilable type") (fun () -> name) ()
@@ -61,6 +68,7 @@ module Ty = struct
     | Base_timestamp -> return timestamp_k
     | Base_bytes -> return bytes_k
     | Base_operation -> fail (not_comparable "operation")
+    | Base_signature -> fail (not_comparable "signature")
 
   let comparable_type : type_value -> ex_comparable_ty result = fun tv ->
     match tv with
@@ -90,29 +98,29 @@ module Ty = struct
     | Base_timestamp -> return timestamp
     | Base_bytes -> return bytes
     | Base_operation -> return operation
+    | Base_signature -> return signature
 
   let rec type_ : type_value -> ex_ty result =
     function
     | T_base b -> base_type b
     | T_pair (t, t') -> (
-        type_ t >>? fun (Ex_ty t) ->
-        type_ t' >>? fun (Ex_ty t') ->
-        ok @@ Ex_ty (pair t t')
+        annotated t >>? fun (ann, Ex_ty t) ->
+        annotated t' >>? fun (ann', Ex_ty t') ->
+        ok @@ Ex_ty (pair_ann (ann, t) (ann', t'))
       )
     | T_or (t, t') -> (
-        type_ t >>? fun (Ex_ty t) ->
-        type_ t' >>? fun (Ex_ty t') ->
-        ok @@ Ex_ty (union t t')
+        annotated t >>? fun (ann, Ex_ty t) ->
+        annotated t' >>? fun (ann', Ex_ty t') ->
+        ok @@ Ex_ty (union_ann (ann, t) (ann', t'))
       )
     | T_function (arg, ret) ->
         let%bind (Ex_ty arg) = type_ arg in
         let%bind (Ex_ty ret) = type_ ret in
         ok @@ Ex_ty (lambda arg ret)
-    | T_deep_closure (c, arg, ret) ->
-        let%bind (Ex_ty capture) = environment_representation c in
+    | T_deep_closure (_, arg, ret) ->
         let%bind (Ex_ty arg) = type_ arg in
         let%bind (Ex_ty ret) = type_ ret in
-        ok @@ Ex_ty (pair (lambda (pair arg capture) ret) capture)
+        ok @@ Ex_ty (lambda arg ret)
     | T_map (k, v) ->
         let%bind (Ex_comparable_ty k') = comparable_type k in
         let%bind (Ex_ty v') = type_ v in
@@ -134,6 +142,10 @@ module Ty = struct
     | T_contract t ->
         let%bind (Ex_ty t') = type_ t in
         ok @@ Ex_ty (contract t')
+
+  and annotated : type_value annotated -> ex_ty annotated result =
+    fun (ann, a) -> let%bind a = type_ a in
+                    ok @@ (ann, a)
 
   and environment_representation = fun e ->
     match List.rev_uncons_opt e with
@@ -172,18 +184,19 @@ let base_type : type_base -> O.michelson result =
   | Base_timestamp -> ok @@ O.prim T_timestamp
   | Base_bytes -> ok @@ O.prim T_bytes
   | Base_operation -> ok @@ O.prim T_operation
+  | Base_signature -> ok @@ O.prim T_signature
 
 let rec type_ : type_value -> O.michelson result =
   function
   | T_base b -> base_type b
   | T_pair (t, t') -> (
-      type_ t >>? fun t ->
-      type_ t' >>? fun t' ->
+      annotated t >>? fun t ->
+      annotated t' >>? fun t' ->
       ok @@ O.prim ~children:[t;t'] O.T_pair
     )
   | T_or (t, t') -> (
-      type_ t >>? fun t ->
-      type_ t' >>? fun t' ->
+      annotated t >>? fun t ->
+      annotated t' >>? fun t' ->
       ok @@ O.prim ~children:[t;t'] O.T_or
     )
   | T_map kv ->
@@ -208,10 +221,17 @@ let rec type_ : type_value -> O.michelson result =
       let%bind arg = type_ arg in
       let%bind ret = type_ ret in
       ok @@ O.prim ~children:[arg;ret] T_lambda
-  | T_deep_closure (c , arg , ret) ->
-      let%bind capture = environment_closure c in
-      let%bind lambda = lambda_closure (c , arg , ret) in
-      ok @@ O.t_pair lambda capture
+  | T_deep_closure (_ , arg , ret) ->
+      let%bind arg = type_ arg in
+      let%bind ret = type_ ret in
+      ok @@ O.prim ~children:[arg;ret] T_lambda
+
+and annotated : type_value annotated -> O.michelson result =
+  function
+  | (Some ann, o) ->
+     let%bind o' = type_ o in
+     ok (O.annotate ("%" ^ ann) o')
+  | (None, o) -> type_ o
 
 and environment_element (name, tyv) =
   let%bind michelson_type = type_ tyv in
@@ -225,7 +245,7 @@ and lambda_closure = fun (c , arg , ret) ->
   let%bind capture = environment_closure c in
   let%bind arg = type_ arg in
   let%bind ret = type_ ret in
-  ok @@ O.t_lambda (O.t_pair arg capture) ret
+  ok @@ O.t_lambda (O.t_pair capture arg) ret
 
 and environment_closure =
   function

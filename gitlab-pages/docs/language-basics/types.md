@@ -13,7 +13,7 @@ Type aliasing is a great choice when working towards a readable / maintainable s
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```Pascal
+```pascaligo
 type animalBreed is string;
 
 const dogBreed: animalBreed = "Saluki"; 
@@ -26,12 +26,12 @@ const dogBreed: animalBreed = "Saluki";
 ### Simple types
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```Pascal
+```pascaligo
 // accountBalances is a simple type, a map of address <-> tez
 type accountBalances is map(address, tez);
 
 const ledger: accountBalances = map
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) -> 10mtz
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) -> 10mutez
 end
 ```
 
@@ -46,7 +46,7 @@ In the example below you can see definition of data types for a ledger, that kee
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```Pascal
+```pascaligo
 // alias two types
 type account is address;
 type numberOfTransactions is nat;
@@ -60,10 +60,10 @@ end
 type accountBalances is map(account, accountData);
 
 // pseudo-JSON representation of our map 
-// { "tz1...": {balance: 10mtz, numberOfTransactions: 5n} }
+// { "tz1...": {balance: 10mutez, numberOfTransactions: 5n} }
 const ledger: accountBalances = map
     ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) -> record
-      balance = 10mtz;
+      balance = 10mutez;
       numberOfTransactions = 5n;
     end
 end

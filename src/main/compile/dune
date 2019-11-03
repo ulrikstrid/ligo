@@ -12,8 +12,8 @@
     ast_typed
     transpiler
     mini_c
-    operators
     compiler
+    self_michelson
   )
   (preprocess
     (pps ppx_let)

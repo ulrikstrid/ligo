@@ -20,10 +20,11 @@ let type_base ppf : type_base -> _ = function
   | Base_timestamp -> fprintf ppf "timestamp"
   | Base_bytes -> fprintf ppf "bytes"
   | Base_operation -> fprintf ppf "operation"
+  | Base_signature -> fprintf ppf "signature"
 
 let rec type_ ppf : type_value -> _ = function
-  | T_or(a, b) -> fprintf ppf "(%a) | (%a)" type_ a type_ b
-  | T_pair(a, b) -> fprintf ppf "(%a) & (%a)" type_ a type_ b
+  | T_or(a, b) -> fprintf ppf "(%a) | (%a)" annotated a annotated b
+  | T_pair(a, b) -> fprintf ppf "(%a) & (%a)" annotated a annotated b
   | T_base b -> type_base ppf b
   | T_function(a, b) -> fprintf ppf "(%a) -> (%a)" type_ a type_ b
   | T_map(k, v) -> fprintf ppf "map(%a -> %a)" type_ k type_ v
@@ -37,6 +38,10 @@ let rec type_ ppf : type_value -> _ = function
         environment c
         type_ arg type_ ret
 
+and annotated ppf : type_value annotated -> _ = function
+  | (Some ann, a) -> fprintf ppf "(%a %%%s)" type_ a ann
+  | (None, a) -> type_ ppf a
+
 and environment_element ppf ((s, tv) : environment_element) =
   Format.fprintf ppf "%s : %a" s type_ tv
 
@@ -49,7 +54,7 @@ let rec value ppf : value -> unit = function
   | D_int n -> fprintf ppf "%d" n
   | D_nat n -> fprintf ppf "+%d" n
   | D_timestamp n -> fprintf ppf "+%d" n
-  | D_mutez n -> fprintf ppf "%dmtz" n
+  | D_mutez n -> fprintf ppf "%dmutez" n
   | D_unit -> fprintf ppf "unit"
   | D_string s -> fprintf ppf "\"%s\"" s
   | D_bytes x ->

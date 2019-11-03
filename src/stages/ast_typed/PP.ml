@@ -47,7 +47,6 @@ and expression ppf (e:expression) : unit =
   | E_look_up (ds, i) -> fprintf ppf "(%a)[%a]" annotated_expression ds annotated_expression i
   | E_matching (ae, m) ->
       fprintf ppf "match %a with %a" annotated_expression ae (matching annotated_expression) m
-  | E_failwith ae -> fprintf ppf "failwith %a" annotated_expression ae
   | E_sequence (a , b) -> fprintf ppf "%a ; %a" annotated_expression a annotated_expression b
   | E_loop (expr , body) -> fprintf ppf "while %a { %a }" annotated_expression expr annotated_expression body
   | E_assign (name , path , expr) ->
@@ -70,7 +69,7 @@ and literal ppf (l:literal) : unit =
   | Literal_int n -> fprintf ppf "%d" n
   | Literal_nat n -> fprintf ppf "+%d" n
   | Literal_timestamp n -> fprintf ppf "+%d" n
-  | Literal_mutez n -> fprintf ppf "%dmtz" n
+  | Literal_mutez n -> fprintf ppf "%dmutez" n
   | Literal_string s -> fprintf ppf "%s" s
   | Literal_bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
   | Literal_address s -> fprintf ppf "@%s" s

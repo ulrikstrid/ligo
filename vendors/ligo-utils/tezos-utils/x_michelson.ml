@@ -1,7 +1,8 @@
 open Tezos_micheline
 open Micheline
 
-include Memory_proto_alpha.Protocol.Michelson_v1_primitives
+open Memory_proto_alpha.Protocol
+include Michelson_v1_primitives
 
 type michelson = (int, prim) node
 type t = michelson
@@ -45,6 +46,8 @@ let i_push ty code = prim ~children:[ty;code] I_PUSH
 let i_push_unit = i_push t_unit d_unit
 let i_push_string str = i_push t_string (string str)
 
+let i_apply = prim I_APPLY
+
 let i_comment s : michelson = seq [ i_push_string s ; prim I_DROP ]
 
 let i_none ty = prim ~children:[ty] I_NONE
@@ -56,6 +59,7 @@ let i_some = prim I_SOME
 let i_lambda arg ret body = prim ~children:[arg;ret;body] I_LAMBDA
 let i_empty_map src dst = prim ~children:[src;dst] I_EMPTY_MAP
 let i_drop = prim I_DROP
+let i_dropn n = prim I_DROP ~children:[int (Z.of_int n)]
 let i_exec = prim I_EXEC
 
 let i_if a b = prim ~children:[seq [a] ; seq[b]] I_IF
@@ -67,18 +71,15 @@ let i_assert_some = i_if_none (seq [i_push_string "ASSERT_SOME" ; i_failwith]) (
 let i_assert_some_msg msg = i_if_none (seq [msg ; i_failwith]) (seq [])
 
 let dip code : michelson = prim ~children:[seq [code]] I_DIP
+let dipn n code = prim ~children:[Int (0 , Z.of_int n) ; seq [code]] I_DIP
+let i_dig n : michelson = prim ~children:[Int (0 , Z.of_int n)] I_DIG
+let i_dug n : michelson = prim ~children:[Int (0 , Z.of_int n)] I_DUG
 let i_unpair = seq [i_dup ; i_car ; dip i_cdr]
 let i_unpiar = seq [i_dup ; i_cdr ; dip i_car]
 
 let rec strip_annots : michelson -> michelson = function
   | Seq(l, s) -> Seq(l, List.map strip_annots s)
   | Prim (l, p, lst, _) -> Prim (l, p, List.map strip_annots lst, [])
-  | x -> x
-
-let rec strip_nops : michelson -> michelson = function
-  | Seq(l, [Prim (_, I_UNIT, _, _) ; Prim(_, I_DROP, _, _)]) -> Seq (l, [])
-  | Seq(l, s) -> Seq(l, List.map strip_nops s)
-  | Prim (l, p, lst, a) -> Prim (l, p, List.map strip_nops lst, a)
   | x -> x
 
 let pp ppf (michelson:michelson) =
@@ -99,14 +100,8 @@ let pp_json ppf (michelson : michelson) =
   in
   Format.fprintf ppf "%a" Tezos_data_encoding.Json.pp json
 
-let pp_stripped ppf (michelson:michelson) =
-  let open Micheline_printer in
-  let michelson' = strip_nops @@ strip_annots michelson in
-  let canonical = strip_locations michelson' in
-  let node = printable string_of_prim canonical in
-  print_expr ppf node
-
-let pp_naked ppf m =
-  let naked = strip_annots m in
-  pp ppf naked
-
+let pp_hex ppf (michelson : michelson) =
+  let canonical = strip_locations michelson in
+  let bytes = Tezos_data_encoding.Binary_writer.to_bytes_exn Script_repr.expr_encoding canonical in
+  let hex = Hex.of_bytes bytes in
+  Format.fprintf ppf "%a" Hex.pp hex

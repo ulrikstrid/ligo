@@ -25,7 +25,7 @@ let literal ppf (l:literal) = match l with
   | Literal_int n -> fprintf ppf "%d" n
   | Literal_nat n -> fprintf ppf "+%d" n
   | Literal_timestamp n -> fprintf ppf "+%d" n
-  | Literal_mutez n -> fprintf ppf "%dmtz" n
+  | Literal_mutez n -> fprintf ppf "%dmutez" n
   | Literal_string s -> fprintf ppf "%S" s
   | Literal_bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
   | Literal_address s -> fprintf ppf "@%S" s
@@ -52,8 +52,6 @@ let rec expression ppf (e:expression) = match e.expression with
         expression result
   | E_matching (ae, m) ->
       fprintf ppf "match %a with %a" expression ae (matching expression) m
-  | E_failwith ae ->
-      fprintf ppf "failwith %a" expression ae
   | E_sequence (a , b) ->
     fprintf ppf "%a ; %a"
       expression a
