@@ -1,13 +1,12 @@
 {
   "docs": {
-    "Setup": ["setup/installation", "setup/editor-support"],
+    "Intro": ["intro/what-and-why", "intro/installation", "intro/editor-support"],
     "Language Basics": [
       "language-basics/cheat-sheet",
       "language-basics/types",
-      "language-basics/variables",
-      "language-basics/functions",
-      "language-basics/entrypoints",
-      "language-basics/operators"
+      "language-basics/constants-and-variables",
+      "language-basics/working-with-numbers",
+      "language-basics/working-with-strings"
     ],
     "API": ["api-cli-commands"]
   },

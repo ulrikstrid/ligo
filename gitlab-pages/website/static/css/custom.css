@@ -63,6 +63,8 @@ h1 {
 }
 h2 {
   font-size: 2.25rem;
+  margin-bottom: 0.5rem;
+  margin-top: 1.5rem;
 }
 .landing h2 {
   font-size: 3rem;
@@ -255,21 +257,30 @@ footnote {
 }
 
 blockquote {
-  background-color: rgba(26, 26, 26, 0.3);
+  background-color: rgba(26, 26, 26, 0.15);
   border-left: 8px solid rgba(26, 26, 26, 0.1);
-  color: rgba(255, 255, 255, 1);
+  color: rgba(26, 26, 26, 1);
+}
+
+blockquote p {
+  opacity: 0.9;
 }
 
 blockquote code {
-  opacity: 0.5;
+  opacity: 1;
 }
 
-a {
-  color: var(--color-primary-text);
-}
-
-a:hover {
+a, a:hover {
   color: var(--color-primary-brand);
+}
+
+/* blockquote a {
+  color: rgba(255, 255, 255, 1);
+  opacity: 0.9;
+} */
+
+.docMainWrapper a:hover {
+  text-decoration: underline;
 }
 
 .landing a {
@@ -329,7 +340,6 @@ html {
 
 body {
   margin: 0 auto;
-  max-width: 1500px;
 }
 
 .copyright a {
@@ -358,8 +368,10 @@ body {
 }
 
 code {
-  background: rgb(240, 240, 240);
+  background: white;
   color: #444;
+  margin-left: 2px;
+  margin-right: 2px;
 }
 
 body
@@ -767,7 +779,7 @@ input#search_input_react::placeholder {
   display:block;
   overflow-x:hidden;
   padding:.5em;
-  background:white;
+  background: var(--color-light-gray);
   color:black;
  }
  .hljs-comment,
