@@ -130,6 +130,7 @@ let rec transpile_type (t:AST.type_value) : type_value result =
   | T_constant (Type_name "unit", []) -> ok (T_base Base_unit)
   | T_constant (Type_name "operation", []) -> ok (T_base Base_operation)
   | T_constant (Type_name "signature", []) -> ok (T_base Base_signature)
+  | T_constant (Type_name "key", []) -> ok (T_base Base_signature)
   | T_constant (Type_name "contract", [x]) ->
       let%bind x' = transpile_type x in
       ok (T_contract x')
