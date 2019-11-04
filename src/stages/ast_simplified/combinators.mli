@@ -18,6 +18,8 @@ val t_nat       : type_expression
 val t_tez       : type_expression
 val t_unit      : type_expression
 val t_address   : type_expression
+val t_key   : type_expression
+val t_signature : type_expression
 (*
 val t_option    : type_expression -> type_expression
 *)
