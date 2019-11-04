@@ -95,6 +95,7 @@ and literal =
   | Literal_bytes of bytes
   | Literal_address of string
   | Literal_timestamp of int
+  | Literal_signature of string
   | Literal_operation of Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
 
 and 'a matching =

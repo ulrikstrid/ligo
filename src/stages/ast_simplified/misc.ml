@@ -61,6 +61,9 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_address _, _ -> fail @@ different_literals_because_different_types "address vs non-address" a b
   | Literal_operation _, Literal_operation _ -> fail @@ error_uncomparable_literals "can't compare operations" a b
   | Literal_operation _, _ -> fail @@ different_literals_because_different_types "operation vs non-operation" a b
+  | Literal_signature a, Literal_signature b when a = b -> ok ()
+  | Literal_signature _, Literal_signature _ -> fail @@ different_literals "different signature" a b
+  | Literal_signature _, _ -> fail @@ different_literals_because_different_types "address vs non-address" a b
 
 let rec assert_value_eq (a, b: (expression * expression )) : unit result =
   let error_content () =

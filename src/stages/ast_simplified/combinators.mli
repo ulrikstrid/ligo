@@ -51,6 +51,7 @@ val e_timestamp : ?loc:Location.t -> int -> expression
 val e_bool : ?loc:Location.t -> bool -> expression
 val e_string : ?loc:Location.t -> string -> expression
 val e_address : ?loc:Location.t -> string -> expression 
+val e_signature : ?loc:Location.t -> string -> expression 
 val e_mutez : ?loc:Location.t -> int -> expression
 val e'_bytes : string -> expression' result
 val e_bytes : ?loc:Location.t -> string -> expression result
