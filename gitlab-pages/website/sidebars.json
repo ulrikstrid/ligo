@@ -5,8 +5,16 @@
       "language-basics/cheat-sheet",
       "language-basics/types",
       "language-basics/constants-and-variables",
-      "language-basics/working-with-numbers",
-      "language-basics/working-with-strings"
+      "language-basics/math-numbers-tez",
+      "language-basics/strings",
+      "language-basics/boolean-if-else",
+      "language-basics/unit-option-pattern-matching",
+      "language-basics/functions",
+      "language-basics/maps-records",
+      "language-basics/sets-lists-touples"
+    ],
+    "Advanced": [
+      "advanced/entrypoints-contracts"
     ],
     "API": ["api-cli-commands"]
   },

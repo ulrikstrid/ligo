@@ -1,6 +1,6 @@
 ---
-id: working-with-numbers
-title: Working with numbers
+id: math-numbers-tez
+title: Math, Numbers & Tez
 ---
 
 LIGO offers three built-in numerical types, and those are `int`, `nat` and `tez`.
@@ -30,6 +30,7 @@ const e: nat = 5n + 10n;
 const g: int = 1_000_000;
 ```
 
+<br/>
 > A pro tip is that you can also use underscores for readability when defining numbers like this:
 >
 >```pascaligo
@@ -41,12 +42,12 @@ const g: int = 1_000_000;
 
 ## Subtraction
 
-> ⚠️ Even when substracting two `nats`, the result is an `int`
+The simpliest substraction looks like this:
+
+> ⚠️ Even when subtracting two `nats`, the result is an `int`
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-
-The simpliest substraction looks like this:
 ```pascaligo
 const a: int = 5 - 10;
 // substraction of two nats, yields an int
@@ -82,11 +83,14 @@ In LIGO, you can divide `int`, `nat` and `tez`, here's how:
 
 > ⚠️ Division of two `tez` values results into a `nat`
 
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
 ```pascaligo
 const a: int = 10 / 3;
 const b: nat = 10n / 3n;
 const c: nat = 10mutez / 3mutez;
 ```
+<!--END_DOCUSAURUS_CODE_TABS-->
 
 ---
 ## 🛠 Exercises

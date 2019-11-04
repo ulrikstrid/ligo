@@ -3,41 +3,37 @@ id: functions
 title: Functions
 ---
 
-## Defining a function
+Writing code is fun, as long as it doesn't get out of hand. To make sure our code stays put, and doesn't turn into spaghetti, we can group certain logic into functions.
 
-Body of a function consists of two parts, the first part (**`block {}`** or **`begin ... end`**) - normally consists of logic *(flow conditions, variable declarations, etc.)*, and the second part (**`with ...`**) usually defines the return value of your function.
+# Defining a function
+
+Functions in LIGO are defined using the `function` keyword followed by their `name`, `parameters` and `return` type definitions.
+
+Here's how you define a basic function that accepts two `ints` and returns an `int` as well:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
-const availableSupply: nat = 15n;
-const totalSupply: nat = 100n;
-
-function calculatePrice(const available: nat; const total: nat): nat is
-    begin
-        const price: nat = total / available
-    end with price
-
-const price: nat = calculatePrice(availableSupply, totalSupply);
+function add(const a: int; const b: int): int is 
+    block { skip } with a + b
 ```
-
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-### Functions without an explicit body (shorter syntax)
+Function body consists of two parts:
 
-A short hand syntax for the same function as above can inline the price calculation directly into the return statement.
-While this approach can have it's benefits, it can decrease readability.
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```pascaligo
-const availableSupply: nat = 15n;
-const totalSupply: nat = 100n;
+- `block {<code>}` - logic of the function
+- `with <value>` - can be viewed as a return value of the function
 
-function calculatePrice(const available: nat; const total: nat): nat is
-    block { skip } with total / available
+> 💡 `skip` can be used as a placeholder for empty function blocks, when all the neccessary logic fits into `with` at the end.
 
-const price: nat = calculatePrice(availableSupply, totalSupply);
-```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+---
+
+## 🛠 Excercise
+
+Now it's time to combine our knowledge from the previous sections of the docs, we know that `vars` can be used within functions, the same applies for `pattern matching` and `if statements`. 
+
+### #1 Build a function, that returns an optional reward
+
+Build a function `check_reward(age: nat): option(reward)` where `reward is string`, that checks if the user is over `25 years old`. If the 'user' (age provided) is over `25n` then grant a reward, otherwise do not grant a reward. Try splitting up the logic into smaller functions.
