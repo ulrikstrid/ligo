@@ -230,6 +230,7 @@ let rec type_program (p:I.program) : O.program result =
   let%bind (_, lst) =
     trace (fun () -> program_error p ()) @@
     bind_fold_list aux (Environment.full_empty, []) p in
+  (Format.printf "%a" I.PP.program p);
   ok @@ List.rev lst
 
 and type_declaration env : I.declaration -> (environment * O.declaration option) result = function

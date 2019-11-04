@@ -48,7 +48,6 @@
 (*%token And*)
 %token <Region.t> Else
 %token <Region.t> False
-%token <Region.t> Fun
 %token <Region.t> If
 %token <Region.t> Let
 %token <Region.t> List

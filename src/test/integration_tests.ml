@@ -3,7 +3,7 @@ open Test_helpers
 
 open Ast_simplified.Combinators
 
-let retype_file ?debug_simplify ?debug_typed = type_file ?debug_simplify ?debug_typed (Syntax_name "reasonligo")
+let retype_file ?debug_simplify ?debug_typed = Ligo.Compile.Of_source.type_file ?debug_simplify ?debug_typed (Syntax_name "reasonligo")
 let mtype_file ?debug_simplify ?debug_typed = Ligo.Compile.Of_source.type_file ?debug_simplify ?debug_typed (Syntax_name "cameligo")
 let type_file = Ligo.Compile.Of_source.type_file (Syntax_name "pascaligo")
 
@@ -817,9 +817,9 @@ let basic_mligo () : unit result =
 
 let basic_religo () : unit result =
   let%bind typed = retype_file ~debug_simplify:true "./contracts/basic.religo" in
-  let%bind result = evaluate_typed "foo" typed in
-  Ligo.AST_Typed.assert_value_eq
-    (Ligo.AST_Typed.Combinators.e_a_empty_int (42 + 127), result)
+  let%bind result = Run.Of_typed.evaluate_entry typed "foo" in
+  Ast_typed.assert_value_eq
+    (Ast_typed.Combinators.e_a_empty_int (42 + 127), result)
 
 let counter_mligo () : unit result =
   let%bind program = mtype_file "./contracts/counter.mligo" in

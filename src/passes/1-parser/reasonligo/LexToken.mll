@@ -228,8 +228,11 @@ let to_region token = proj_token token |> fst
 
 (* Injections *)
 
-type int_err =
-  Non_canonical_zero
+type   int_err = Non_canonical_zero
+type ident_err = Reserved_name
+type   nat_err = Invalid_natural
+               | Non_canonical_zero_nat
+type   sym_err = Invalid_symbol
 
 (* LEXIS *)
 
@@ -320,8 +323,6 @@ let lexicon : lexis =
       cstr = build constructors;
       res  = reserved}
 
-type ident_err = Reserved_name
-
 }
 
 (* START LEXER DEFINITION *)
@@ -383,7 +384,7 @@ let mk_nat lexeme region =
     Str.(global_replace (regexp "n") "") |>
     Z.of_string in
   if Z.equal z Z.zero && lexeme <> "0n"
-  then Error Non_canonical_zero
+  then Error Non_canonical_zero_nat
   else Ok (Nat Region.{region; value = lexeme, z})
 
 let mk_mtz lexeme region =
@@ -399,35 +400,35 @@ let eof region = EOF region
 
 let mk_sym lexeme region =
   match lexeme with
-    "::"   ->   CONS      region
-  | "++"   ->   CAT       region
-  | "-"   ->    MINUS     region
-  | "+"   ->    PLUS      region
-  | "/"   ->    SLASH     region
-  | "*"   ->    TIMES     region
-  | "["   ->    LBRACKET  region
-  | "]"   ->    RBRACKET  region
-  | "{"   ->    LBRACE    region
-  | "}"  ->     RBRACE    region
-  | ","  ->     COMMA     region
-  | ";"   ->    SEMI      region
-  | "|"   ->    VBAR      region
-  | ":"   ->    COLON     region
-  | "."  ->     DOT       region
-  | "..."->     DOTDOTDOT region
-  | "_"   ->    WILD      region
-  | "="  ->     EQ        region
-  | "<>" ->     NE        region
-  | "<"   ->    LT        region
-  | ">"   ->    GT        region
-  | "=<"   ->   LE        region
-  | ">="   ->   GE        region
-  | "||"   ->   BOOL_OR   region
-  | "&&"   ->   BOOL_AND  region
-  | "("    ->   LPAR      region
-  | ")"    ->   RPAR      region
-  | "=>"    ->  EG      region
-  |  a  ->   failwith ("Not understood token: " ^ a)
+    "::"   ->   Ok (CONS      region)
+  | "++"   ->   Ok (CAT       region)
+  | "-"   ->    Ok (MINUS     region)
+  | "+"   ->    Ok (PLUS      region)
+  | "/"   ->    Ok (SLASH     region)
+  | "*"   ->    Ok (TIMES     region)
+  | "["   ->    Ok (LBRACKET  region)
+  | "]"   ->    Ok (RBRACKET  region)
+  | "{"   ->    Ok (LBRACE    region)
+  | "}"  ->     Ok (RBRACE    region)
+  | ","  ->     Ok (COMMA     region)
+  | ";"   ->    Ok (SEMI      region)
+  | "|"   ->    Ok (VBAR      region)
+  | ":"   ->    Ok (COLON     region)
+  | "."  ->     Ok (DOT       region)
+  | "..."->     Ok (DOTDOTDOT region)
+  | "_"   ->    Ok (WILD      region)
+  | "="  ->     Ok (EQ        region)
+  | "<>" ->     Ok (NE        region)
+  | "<"   ->    Ok (LT        region)
+  | ">"   ->    Ok (GT        region)
+  | "=<"   ->   Ok (LE        region)
+  | ">="   ->   Ok (GE        region)
+  | "||"   ->   Ok (BOOL_OR   region)
+  | "&&"   ->   Ok (BOOL_AND  region)
+  | "("    ->   Ok (LPAR      region)
+  | ")"    ->   Ok (RPAR      region)
+  | "=>"    ->  Ok (EG      region)
+  |  _  ->  Error Invalid_symbol
 
 (* Identifiers *)
 
@@ -477,7 +478,7 @@ let is_kwd = function
   | True _
   | Type _
   | LetEntry _
-  | SwitchNat _
+  | SwitchNat _ -> true
   | _ -> false
 
 let is_constr = function

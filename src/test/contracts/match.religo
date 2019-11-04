@@ -4,7 +4,7 @@ type param =
   | Add(int)
   | Sub(int);
 
-let%entry main = (p: param, storage) => {
+let%entry main = ((p: param), storage) => {
   let storage =
     storage
     + (
@@ -12,6 +12,6 @@ let%entry main = (p: param, storage) => {
       | Add(n) => n
       | Sub(n) => 0 - n
       }
-    );
-  ([]: list(operation), storage);
+  );
+  (([]: list(operation)), storage);
 };

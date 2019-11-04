@@ -7,12 +7,6 @@ open Region
 module AST = Parser_ligodity.AST
 open AST
 
-let use_begin_end : bool option ref = ref None
-
-let check_use_begin_end check = match !use_begin_end with 
-| Some use_begin_end -> if use_begin_end = check then raise (ParserError.IncorrectStyle "You are mixing `begin` ... `end` with `{` ... `}` syntax. Please use one consistently.")
-| None -> use_begin_end := Some true
-
 (* END HEADER *)
 %}
 
@@ -155,7 +149,9 @@ contract:
 
 declarations:
   declaration                                                    { $1 }
-| declaration declarations { Utils.(nseq_foldl (swap nseq_cons) $2 $1)}
+| declaration declarations { 
+  Utils.(nseq_foldl (swap nseq_cons) $2 $1)
+}
 
 declaration:
   LetEntry entry_binding SEMI { 
@@ -165,7 +161,7 @@ declaration:
     LetEntry { value = ($1, $2); region}, []
   }
 | type_decl SEMI                                        { TypeDecl $1, [] }
-| let_declaration SEMI                                   { Let      $1, [] }
+| let_declaration SEMI                                      { Let      $1, [] }
 
 (* Type declarations *)
 
@@ -185,9 +181,10 @@ type_expr:
   cartesian                                              {   TProd $1 }
 | sum_type                                               {    TSum $1 }
 | record_type                                            { TRecord $1 }
+(* | core_type EG fun_type { failwith "a1" } *)
 
 cartesian:
-  nsepseq(fun_type, TIMES)                                       { 
+  nsepseq(fun_type, COMMA) { 
     let region = nsepseq_to_region type_expr_to_region $1
     in {region; value=$1}
   }
@@ -196,9 +193,9 @@ fun_type:
   core_type {      
     $1 
   }
-| LPAR core_type EG fun_type RPAR { 
-    let region = cover $1 $5 in 
-    TFun {region; value = ($2, $3, $4)}
+| core_type EG fun_type { 
+    let region = cover (type_expr_to_region $1) (type_expr_to_region $3) in 
+    TFun {region; value = ($1, $2, $3)}
   }
 
 core_type:
@@ -213,24 +210,44 @@ core_type:
     in 
     TAlias {region; value}
   }
+
+(*
 | core_type type_constr {
     let arg_val = $1 in
     let constr = $2 in
-    let start = type_expr_to_region $1 in 
-    let stop = $2.region in 
+    let start = type_expr_to_region $1 in
+    let stop = $2.region in
     let region = cover start stop in
     let lpar, rpar = ghost, ghost in
     let value = {lpar; inside=arg_val,[]; rpar} in
     let arg = {value; region = start} in
     TApp Region.{value = constr, arg; region}
   }
-  | type_tuple type_constr {
-    let total = cover $1.region $2.region in    
-    TApp {region=total; value = $2, $1 }
-} 
+*)
+
+| type_constr LPAR core_type RPAR {   
+    print_endline ("a1:" ^ $1.value);
+    (match $3 with 
+    | TAlias s -> print_endline s.value
+    | _ -> ());
+    let arg_val = $3 in
+    let constr = $1 in
+    let start = $1.region in 
+    let stop = $4 in 
+    let region = cover start stop in
+    let lpar, rpar = $2, $4 in
+    let value = {lpar; inside=arg_val,[]; rpar} in
+    let arg = {value; region = start} in
+    TApp Region.{value = constr, arg; region}
+  }
+  (* | type_constr LPAR type_tuple RPAR {
+    let total = cover $1.region $4 in    
+    TApp {region=total; value = $1, $3 }
+  }  *)
   | par(cartesian) {
       let Region.{value={inside=prod; _}; _} = $1 in
-      TPar {$1 with value={$1.value with inside = TProd prod}} }  
+      TPar {$1 with value={$1.value with inside = TProd prod}} 
+  }  
 
 type_constr:
   type_name { $1                               }
@@ -238,8 +255,8 @@ type_constr:
 | Map       { Region.{value="map";  region=$1} }
 | List      { Region.{value="list"; region=$1} }
 
-type_tuple:
-  par(tuple(type_expr)) { $1 }
+(* type_tuple:
+  par(tuple(type_expr)) { $1 } *)
 
 sum_type:
   VBAR nsepseq(variant,VBAR) { 
@@ -268,8 +285,14 @@ record_type:
    in {region; value}  
   }
 
+type_expr_field:
+  par(cartesian)                                              {   TProd $1.value.inside }
+| sum_type                                               {    TSum $1 }
+| record_type                                            { TRecord $1 }
+
+
 field_decl:
-  field_name COLON type_expr {
+  field_name COLON type_expr_field {
     let stop   = type_expr_to_region $3 in
     let region = cover $1.region stop
     and value  = {field_name = $1; colon = $2; field_type = $3}
@@ -279,15 +302,12 @@ field_decl:
 (* Entry points *)
 
 entry_binding:
-  Ident nseq(sub_irrefutable) type_annotation? EG expr {
-    let let_rhs = $5 in
+  Ident type_annotation? EQ LPAR nsepseq(sub_irrefutable, COMMA) RPAR EG expr {
+    let let_rhs = $8 in
     let pattern = PVar $1 in
-    let (hd , tl) = $2 in
-    {bindings = pattern :: hd :: tl; lhs_type=$3; eq=$4; let_rhs}
-  }
-  | Ident type_annotation? EG fun_expr(expr) {
-    let pattern = PVar $1 in
-    {bindings = [pattern]; lhs_type=$2; eq=$3; let_rhs=$4} }
+    let (hd , tl) = $5 in
+    {bindings = pattern :: hd :: (List.map (fun (_, p) -> p) tl); lhs_type=$2; eq=$7; let_rhs}
+  }  
 
 (* Top-level non-recursive definitions *)
 
@@ -297,23 +317,42 @@ let_declaration:
     let binding, region = $2 in
     {value = kwd_let, binding; region}
   }
+ 
+args:
+  LPAR nsepseq(sub_irrefutable, COMMA) RPAR type_annotation? {
+    let (hd , tl) = $2 in
+    let lhs_type = $4 in
+    (hd, tl, lhs_type)
+  }
+   
+
+
+(* tuple or let binding?*)
 
 let_binding:
-  Ident EQ LPAR nsepseq(sub_irrefutable, COMMA) RPAR type_annotation? EG expr {
-    let let_rhs = $8 in
+  Ident EQ args EG expr {
+    let let_rhs = $5 in
     let ident_pattern = PVar $1 in
-    let (hd , tl) = $4 in
+    let (hd , tl, lhs_type) = $3 in 
     let start = $1.region in
-    let stop = expr_to_region $8 in
+    let stop = expr_to_region $5 in
     let region = cover start stop in
-    ({bindings= (ident_pattern :: hd :: (List.map (fun (_, p) -> p) tl)); lhs_type=$6; eq=$7; let_rhs}, region)
-  }
-| Ident type_annotation? EQ expr {         
+    ({bindings= (ident_pattern :: hd :: (List.map (fun (_, p) -> p) tl)); lhs_type; eq=$4; let_rhs}, region)
+  } 
+ | Ident EQ expr {   
+    (* TODO: properly handle func_or_not *)      
+    let pattern = PVar $1 in
+    let start = pattern_to_region pattern in
+    let stop = expr_to_region $3 in  
+    let region = cover start stop in
+    ({bindings = [pattern]; lhs_type=None; eq=$2; let_rhs=$3}, region)
+}
+ | Ident type_annotation EQ expr {         
     let pattern = PVar $1 in
     let start = pattern_to_region pattern in
     let stop = expr_to_region $4 in  
     let region = cover start stop in
-    ({bindings = [pattern]; lhs_type=$2; eq=$3; let_rhs=$4}, region)
+    ({bindings = [pattern]; lhs_type=Some $2; eq=$3; let_rhs=$4}, region)
 }
 | tuple(sub_irrefutable) type_annotation? EQ expr {  
     let h, t = $1 in    
@@ -490,8 +529,8 @@ interactive_expr:
   expr EOF                                                       { $1 }
 
 expr:
-  base_cond__open(expr)                                    {       $1 }
-| switch_expr(base_cond)                                   { ECase $1 }
+  base_cond__open(expr)                                   {       $1 }
+| switch_expr(base_cond)                                  { ECase $1 }
 
 base_cond__open(x):
   base_expr(x)
@@ -502,8 +541,7 @@ base_cond:
 
 base_expr(right_expr):
   let_expr(right_expr)
-| fun_expr(right_expr)
-| disj_expr_level                                         {        $1 }
+| disj_expr_level                                        {        $1 }
 | par(tuple(disj_expr_level)) {
   let h, t = $1.value.inside in    
   let start = expr_to_region h in
@@ -620,34 +658,16 @@ case_clause(right_expr):
   }
 
 let_expr(right_expr):
-  Let let_binding SEMI right_expr {
+  Let let_binding SEMI right_expr SEMI {
+    print_endline "Let let_binding SEMI right_expr SEMI";
     let kwd_let = $1 in 
     let (binding, _) = $2 in
     let kwd_in = $3 in
     let body = $4 in
-    let stop = expr_to_region $4 in
+    let stop = $5 in
     let region = cover $1 stop in
     let let_in = {kwd_let; binding; kwd_in; body}
     in ELetIn {region; value=let_in} }
-
-fun_expr(right_expr):
-  Fun nseq(irrefutable) EG right_expr {
-    let kwd_fun = $1 in
-    let bindings = $2 in 
-    let arrow = $3  in
-    let body = $4 in
-    let stop = expr_to_region $4 in
-    let region = cover $1 stop in
-    let (hd , tl) = bindings in
-    let f = {
-      kwd_fun ;
-      params = hd :: tl ;
-      p_annot = None ;
-      arrow ;
-      body ;
-    } in
-    EFun { region; value=f }
-  }
 
 disj_expr_level:
   disj_expr                               { ELogic (BoolExpr (Or $1)) }
@@ -778,15 +798,19 @@ constr_expr:
     { value = $1,$2; region}
   }
 
+(* 
+type        'a    nseq = 'a * 'a list
+type ('a,'sep) nsepseq = 'a * ('sep * 'a) list
+*)
+
 call_expr:
-  core_expr nseq(core_expr) {
+  core_expr LPAR nsepseq(COMMA, core_expr) RPAR {
     let start = expr_to_region $1 in
-    let stop = match $2 with 
-    | e, [] -> expr_to_region e
-    | _, l -> last expr_to_region l
-    in
+    let stop = $4 in
     let region = cover start stop in
-    { value = $1,$2; region }
+    let _, tl = $3 in
+    let foo = (List.map (fun (a, _) -> a) tl) in
+    { value = $1, (List.hd foo, List.tl foo); region }
   }
 
 core_expr_2:
@@ -814,7 +838,8 @@ core_expr:
 | False                               {  ELogic (BoolExpr (False $1)) }
 | True                                {  ELogic (BoolExpr (True $1))  }
 | list(expr)                                        { EList (List $1) }
-| braces(expr)                                              {    EPar $1 }
+| braces(expr)                                           {    EPar $1 }
+| par(expr)                                           {    EPar $1 }
 | record_expr                                            { ERecord $1 }
 | par(expr COLON type_expr {$1,$3}) {
     EAnnot {$1 with value=$1.value.inside} }
@@ -825,24 +850,65 @@ module_field:
     { value = $1.value ^ "." ^ $3.value; region } 
   }
 
+(* nsepseq(item,sep):
+  item                       {                        $1, [] }
+| item sep nsepseq(item,sep) { let h,t = $3 in $1, ($2,h)::t } *)
+
+selection:
+  | LBRACKET Int RBRACKET selection {
+    let h, t = $4 in
+    let brackets = {
+      value = {
+        lpar = $1;
+        inside = $2;
+        rpar = $3;
+      };
+      region = cover $1 $3
+    }
+    in
+    let result:((selection, dot) Utils.nsepseq) = (Component brackets), (Region.ghost, h) :: t in
+    result
+  }
+  | DOT field_name selection {
+    let h, t = $3 in
+    let result:((selection, dot) Utils.nsepseq) = (FieldName $2), ($1, h) :: t  in 
+    result
+  }
+   | DOT field_name {
+    (FieldName $2), []
+  }
+  | LBRACKET Int RBRACKET {
+    let brackets = {
+      value = {
+        lpar = $1;
+        inside = $2;
+        rpar = $3;
+      };
+      region = cover $1 $3
+    }
+    in
+    (Component brackets), []
+  }
+
 projection:
-  struct_name DOT nsepseq(selection,DOT) {
+  (* struct_name DOT nsepseq(selection,DOT) { *)
+  struct_name selection {
     let start = $1.region in     
     let stop = nsepseq_to_region (function 
     | FieldName f -> f.region 
-    | Component c -> c.region) $3 
+    | Component c -> c.region) $2 
     in
     let region = cover start stop in
     { value = 
       {
         struct_name = $1; 
-        selector = $2; 
-        field_path = $3
+        selector = Region.ghost; 
+        field_path = $2
       };
       region
     }
   }
-| module_name DOT field_name DOT nsepseq(selection,DOT) {
+(* | module_name DOT field_name DOT nsepseq(selection,DOT) {
     let open Region in
     let module_name = $1 in
     let field_name = $3 in
@@ -862,17 +928,12 @@ projection:
       };
       region
     }
-  }
-  
-selection:
-  field_name    { FieldName $1 }
-| par(Int) { Component $1 }
+  } *)
 
 record_expr:
   LBRACE sep_or_term_list(field_assignment,COMMA) RBRACE {    
     let elements, terminator = $2 in
     let region = cover $1 $3 in
-    check_use_begin_end false;
     {value = 
       {
         opening = LBrace $1;
