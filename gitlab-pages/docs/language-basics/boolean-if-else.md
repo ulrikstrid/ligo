@@ -15,6 +15,11 @@ Here's how to define a boolean:
 const a: bool = True;
 const b: bool = False;
 ```
+<!--Cameligo-->
+```cameligo
+let a: bool = true
+let b: bool = false
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -31,6 +36,13 @@ const a: string = "Alice";
 const b: string = "Alice";
 // True
 const c: bool = (a = b);
+```
+<!--Cameligo-->
+```cameligo
+let a: string = "Alice"
+let b: string = "Alice"
+// true
+let c: bool = (a = b)
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -49,6 +61,17 @@ const f: bool = (a <= b);
 const g: bool = (a >= b);
 const h: bool = (a =/= b);
 ```
+<!--Cameligo-->
+```cameligo
+let a: int = 5
+let b: int = 4
+let c: bool = (a = b)
+let d: bool = (a > b)
+let e: bool = (a < b)
+let f: bool = (a <= b)
+let g: bool = (a >= b)
+let h: bool = (a =/= b)
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -63,12 +86,19 @@ const a: tez = 5mtz;
 const b: tez = 10mtz;
 const c: bool = (a = b);
 ```
+<!--Cameligo-->
+```cameligo
+let a: tez = 5mtz
+let b: tez = 10mtz
+// false
+let c: bool = (a = b)
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
 ## Conditionals, if staments and more
- 
-Conditional logic is an important part of real world every program. 
+
+Conditional logic is an important part of every real world program.
 
 ### If/else statements
 
@@ -78,13 +108,13 @@ Conditional logic is an important part of real world every program.
 const min_age: nat = 16n;
 
 (*
-    This function is a really obnoxious, but it serves a purpose of
+    This function is really obnoxious, but it serves the purpose of
     showcasing how the if statement and it's syntax can be used.
 
     Normally, you'd do `with (age > min_age)` instead.
 *)
-function is_adult(const age: nat): bool is 
-    block { 
+function is_adult(const age: nat): bool is
+    block {
         var is_adult: bool := False;
         if (age > min_age) then begin
             is_adult := True;
@@ -100,6 +130,30 @@ function is_adult(const age: nat): bool is
 > ```
 > ligo run-function -s pascaligo src/if-else.ligo is_adult 21n
 > ```
+
+<!--Cameligo-->
+```cameligo
+let min_age: nat = 16n
+
+(**
+
+    This function is really obnoxious, but it serves the purpose of
+    showcasing how the if statement and it's syntax can be used.
+
+    Normally, you'd do `with (age > min_age)` instead.
+
+*)
+let is_adult (age: nat) : bool =
+  if (age > min_age) then true else false
+```
+
+<br/>
+
+> You can run the function above with
+> ```
+> ligo run-function -s cameligo src/if-else.mligo is_adult 21n
+> ```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 

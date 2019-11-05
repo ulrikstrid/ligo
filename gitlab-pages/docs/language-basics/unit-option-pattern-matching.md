@@ -18,6 +18,12 @@ Here's how they're defined:
 ```pascaligo
 const n: unit = Unit;
 ```
+
+<!--Cameligo-->
+```cameligo
+let n: unit = ()
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Variants
@@ -38,6 +44,7 @@ type user is
 const u: user = Admin(1000n);
 const g: user = Guest(Unit);
 ```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 <br/>
