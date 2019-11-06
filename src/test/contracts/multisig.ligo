@@ -23,7 +23,7 @@ function check_message (const param : check_message_pt;
   var valid : nat := 0n ;
   var message : (unit -> list(operation)) := param.message ;
   var ops : list(operation) := message(unit) ;
-  var packed_msg : bytes := bytes_pack(ops) ;
+  var packed_msg : bytes := bytes_pack(message) ;
   var ret : list(operation) := (nil : list(operation));
   //TODO: replace with for_collect_loops
     function sig_it (const valid : nat; const cur_sig : signature) : nat is
