@@ -4,7 +4,7 @@ type param =
   | Add(int)
   | Sub(int);
 
-let%entry main = ((p: param), storage) => {
+let main = ((p: param), storage) => {
   let storage =
     storage
     + (

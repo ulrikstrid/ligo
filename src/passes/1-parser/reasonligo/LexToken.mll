@@ -88,8 +88,6 @@ type t =
 | Type of Region.t
 
   (* Liquidity specific *)
-| LetEntry of Region.t
-| SwitchNat of Region.t
 (*
 | Contract
 | Sig
@@ -161,8 +159,6 @@ let proj_token = function
   | Set region -> region, "Set"
   | True region -> region, "True"
   | Type region -> region, "Type"
-  | LetEntry region -> region, "LetEntry"
-  | SwitchNat region -> region, "SwitchNat"
   | EOF region -> region, "EOF"
 
 let to_lexeme = function
@@ -215,8 +211,6 @@ let to_lexeme = function
   | Switch _ -> "switch"
   | True _ -> "true"
   | Type _ -> "type"
-  | LetEntry _ -> "let%entry"
-  | SwitchNat _ -> "switch%nat"
   | EOF _ -> ""  
 
 let to_string token ?(offsets=true) mode =
@@ -250,9 +244,7 @@ let keywords = [
   (fun reg -> Or    reg);
   (fun reg -> Set   reg);
   (fun reg -> True  reg);
-  (fun reg -> Type  reg);
-  (fun reg -> LetEntry reg);
-  (fun reg -> SwitchNat reg);
+  (fun reg -> Type  reg);  
 ]
 
 let reserved =
@@ -477,8 +469,6 @@ let is_kwd = function
   | Set _
   | True _
   | Type _
-  | LetEntry _
-  | SwitchNat _ -> true
   | _ -> false
 
 let is_constr = function

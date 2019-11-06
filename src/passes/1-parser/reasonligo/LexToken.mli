@@ -106,8 +106,6 @@ type t =
 | Type of Region.t
 
   (* Liquidity specific *)
-| LetEntry of Region.t
-| SwitchNat of Region.t
 (*
 | Contract
 | Sig

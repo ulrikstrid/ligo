@@ -59,8 +59,6 @@
 %token <Region.t> Set
 %token <Region.t> True
 %token <Region.t> Type
-%token <Region.t> LetEntry
-%token <Region.t> SwitchNat
 
 %token <Region.t> EOF
 

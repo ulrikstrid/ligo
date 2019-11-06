@@ -1,6 +1,6 @@
 type storage = (int, int);
 
-let%entry main = ((n : int), storage) => {
+let main = ((n : int), storage) => {
   let x: (int, int) = {
     let x: int = 7;
     (x + n, storage[0] + storage[1]);

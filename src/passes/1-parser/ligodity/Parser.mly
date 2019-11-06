@@ -207,11 +207,7 @@ core_type:
     in
     TAlias {region; value}
   }
-| core_type type_constr {
-    print_endline ("a2:" ^ $2.value);
-    (match $1 with 
-    | TAlias s -> print_endline s.value
-    | _ -> ());
+| core_type type_constr {    
     let arg_val = $1 in
     let constr = $2 in
     let start = type_expr_to_region $1 in
@@ -288,7 +284,6 @@ entry_binding:
 
 let_declaration:
   Let let_binding {
-    print_endline "Let let_binding...";
     let kwd_let = $1 in
     let binding, region = $2 in
     {value = kwd_let, binding; region}
@@ -596,7 +591,6 @@ case_clause(right_expr):
 
 let_expr(right_expr):
   Let let_binding In right_expr {
-    print_endline "Let let_binding SEMI right_expr SEMI (cameligo)";
     let kwd_let = $1 in
     let (binding, _) = $2 in
     let kwd_in = $3 in
