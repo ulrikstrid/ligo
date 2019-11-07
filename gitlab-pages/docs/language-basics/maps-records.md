@@ -3,11 +3,11 @@ id: maps-records
 title: Maps, Records
 ---
 
-So far we've seen pretty basic data types, however LIGO offers a bit more in terms of built-in constructs, such as Maps and Records.
+So far we've seen pretty basic data types. LIGO also offers more complex built-in constructs, such as Maps and Records.
 
 ## Maps
 
-Maps are natively available in Michelson, and LIGO builds on top of them. A strong requirement for a Map is that it's keys need to be of the same type, and that type must be comparable.
+Maps are natively available in Michelson, and LIGO builds on top of them. A requirement for a Map is that its keys be of the same type, and that type must be comparable.
 
 Here's how a custom map type is defined:
 
@@ -35,7 +35,7 @@ const ledger: ledger = map
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) -> 2000mtz;
 end
 ```
-> Notice the `->` between the key an it's value and `;` to separate individual map entries.
+> Notice the `->` between the key and its value and `;` to separate individual map entries.
 >
 > `("<string value>": address)` means that we type-cast a string into an address.
 
@@ -55,7 +55,7 @@ let ledger: ledger = Map.literal
 
 ### Accessing map values by key
 
-If we want to access a balance from our ledger above, we can use the `[]` operator/accessor to read the associated `tez` value. However, the value we'll get will be wrapped as an optional, so in our case `option(tez)`, here's an example:
+If we want to access a balance from our ledger above, we can use the `[]` operator/accessor to read the associated `tez` value. However, the value we'll get will be wrapped as an optional; in our case `option(tez)`. Here's an example:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->

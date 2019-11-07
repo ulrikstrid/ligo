@@ -25,7 +25,7 @@ let b: bool = false
 
 ## Comparing two values
 
-In LIGO, only values of a certain type can be compared together, we call those of a comparable type. Comparable types include e.g. `int`, `nat`, `string`, `tez`, `timestamp`, `address`, ...
+In LIGO, only values of the same type can be compared. We call these "comparable types." Comparable types include e.g. `int`, `nat`, `string`, `tez`, `timestamp`, `address`, ...
 
 ### Comparing strings
 
@@ -77,7 +77,7 @@ let h: bool = (a =/= b)
 
 ### Comparing tez
 
-> 💡 Comparing `tez` values is especially useful, when dealing with an `amount` sent in a transaction.
+> 💡 Comparing `tez` values is especially useful when dealing with an `amount` sent in a transaction.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -96,7 +96,7 @@ let c: bool = (a = b)
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-## Conditionals, if staments and more
+## Conditionals, if staments, and more
 
 Conditional logic is an important part of every real world program.
 
@@ -108,10 +108,10 @@ Conditional logic is an important part of every real world program.
 const min_age: nat = 16n;
 
 (*
-    This function is really obnoxious, but it serves the purpose of
-    showcasing how the if statement and it's syntax can be used.
+    This function is really obnoxious, but it showcases
+    how the if statement and it's syntax can be used.
 
-    Normally, you'd do `with (age > min_age)` instead.
+    Normally, you'd use `with (age > min_age)` instead.
 *)
 function is_adult(const age: nat): bool is
     block {
@@ -135,10 +135,10 @@ let min_age: nat = 16n
 
 (**
 
-    This function is really obnoxious, but it serves the purpose of
-    showcasing how the if statement and it's syntax can be used.
+    This function is really obnoxious, but it showcases
+    how the if statement and it's syntax can be used.
 
-    Normally, you'd do `with (age > min_age)` instead.
+    Normally, you'd use `with (age > min_age)` instead.
 
 *)
 let is_adult (age: nat) : bool =

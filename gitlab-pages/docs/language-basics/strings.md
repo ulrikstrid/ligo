@@ -5,7 +5,7 @@ title: Strings
 
 
 
-Strings can be defined using the built-in `string` type like this:
+Strings are defined using the built-in `string` type like this:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -21,7 +21,7 @@ let a: string = "Hello Alice"
 
 ## Concatenating strings
 
-Strings are concatenated using the `^` operator.
+Strings can be concatenated using the `^` operator.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -64,7 +64,7 @@ let slice: string = String.slice 0n 1n name
 
 ## Aquiring the length of a string
 
-Length of a string can be found using the syntax specific built-in function:
+The length of a string can be found using the syntax specific built-in function:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
