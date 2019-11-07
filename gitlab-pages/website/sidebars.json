@@ -14,7 +14,9 @@
       "language-basics/sets-lists-touples"
     ],
     "Advanced": [
-      "advanced/entrypoints-contracts"
+      "advanced/timestamps-addresses",
+      "advanced/entrypoints-contracts",
+      "advanced/first-contract"
     ],
     "API": ["api-cli-commands"]
   },

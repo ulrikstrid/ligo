@@ -33,6 +33,17 @@ let my_set: int_set =
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
+### Empty sets
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo
+const my_set: int_set = set end;
+const my_set_2: int_set = set_empty;
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+
 
 ### Checking if set contains an element
 

@@ -70,6 +70,23 @@ let balance: tez option = Map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": 
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
+#### Obtaining a map value forcefully
+
+Accessing a value in a map yields an option, however you can also get the value directly:
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo
+const balance: tez = get_force(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), ledger);
+```
+
+<!--Cameligo-->
+
+```cameligo
+let balance: tez = Map.find ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) ledger
+```
+<!--END_DOCUSAURUS_CODE_TABS-->
+
 
 ## Records
 

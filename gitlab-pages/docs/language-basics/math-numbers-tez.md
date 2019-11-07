@@ -140,3 +140,16 @@ let c: nat = 10mutez / 3mutez
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
+
+## From `int` to `nat` and back
+
+You can *cast* an `int` to a `nat` and vice versa, here's how:
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo
+const a: int = int(1n);
+const b: nat = abs(1);
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->

@@ -30,6 +30,8 @@ const name: string = "Alice";
 const greeting: string = "Hello";
 // Hello Alice
 const full_greeting: string = greeting ^ " " ^ name;
+// Hello Alice! (alternatively)
+const full_greeting_exclamation: string = string_concat(full_greeting, "!");
 ```
 <!--Cameligo-->
 ```cameligo
@@ -60,7 +62,7 @@ let slice: string = String.slice 0n 1n name
 
 > ⚠️ Notice that the `offset` and slice `length` are `nats`
 
-## Aquiring a length of a string
+## Aquiring the length of a string
 
 Length of a string can be found using the syntax specific built-in function:
 

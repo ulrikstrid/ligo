@@ -1,42 +1,11 @@
 ---
-id: entrypoints-contracts
-title: Entrypoints, Contracts
+id: first-contract
+title: First contract
 ---
 
 So far so good, we've learned enough of the LIGO language, we're confident enough to write out first smart contract.
 
 We'll be implementing a counter contract, let's go.
-
-## Entrypoints
-
-Each LIGO smart contract is essentially a single function, that has the following *(pseudo)* type signature:
-
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```
-(const parameter: my_type, const store: my_store_type): (list(operation), my_store_type)
-```
-<!--END_DOCUSAURUS_CODE_TABS-->
-
-This means that every smart contract needs at least one entrypoint function, here's an example:
-
-> 💡 The contract below literally does *nothing*
-
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```
-type parameter is unit;
-type store is unit;
-function main(const parameter: parameter; const store: store): (list(operation) * store) is
-    block { skip } with ((nil : list(operation)), store)
-```
-<!--END_DOCUSAURUS_CODE_TABS-->
-
-Each entrypoint function receives two arguments:
-- `parameter` - this is the parameter received in the invocation operation
-- `storage` - this is the current (real) on-chain storage value
-
-Storage can only be modified by running the smart contract entrypoint, which is responsible for returning a list of operations, and a new storage at the end of it's execution.
 
 ## Dry-running a contract
 

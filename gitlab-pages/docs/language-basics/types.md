@@ -5,6 +5,10 @@ title: Types
 
 LIGO is strongly and statically typed, which means that the compiler checks your program at compilation time and makes sure there won't be any type related runtime errors. The language itself features types built on top of Michelson's type system.
 
+## Built-in types
+
+For quick referrence, you can find all the built-in types [here](https://gitlab.com/ligolang/ligo/blob/dev/src/passes/operators/operators.ml#L35).
+
 ## Type aliases
 
 Type aliasing is a great choice when working towards a readable / maintainable smart contract. One well typed type/variable is worth a thousand words. For example we can choose to *alias* a string, as an animal breed - this will allow us to comunicate our intent with added clarity.
