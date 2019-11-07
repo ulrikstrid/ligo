@@ -52,7 +52,6 @@ let not_enough_signature () =
     program "main" (e_pair test_param (init_storage 3)) in *)
   (* let%bind _result = Ligo.Run.Of_simplified.run_typed_program
     program "main" (e_pair test_param (init_storage 3)) in *)
-  let _ = Format.printf "___ %s \n" _result in 
   fail @@ simple_error "FAKE ERROR"
 
 let main = test_suite "Multisig" [

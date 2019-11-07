@@ -35,7 +35,7 @@ let run ?options (* ?(is_input_value = false) *) (program:compiled_program) (inp
     Memory_proto_alpha.interpret ?options descr (Item(input, Empty)) in
   ok (Ex_typed_value (output_ty, output))
 
-let get_exec_error ?options (program:compiled_program) (input_michelson:Michelson.t) : ex_typed_value result =
+let get_exec_error ?options (program:compiled_program) (input_michelson:Michelson.t) : string result =
   let Compiler.Program.{input;output;body} : compiled_program = program in
   let (Ex_ty input_ty) = input in
   let (Ex_ty output_ty) = output in
@@ -55,9 +55,15 @@ let get_exec_error ?options (program:compiled_program) (input_michelson:Michelso
   | Memory_proto_alpha.Succeed _ -> simple_fail "an error of execution was expected" 
   | Memory_proto_alpha.Fail expr ->
     (* simple_fail (Memory_proto_alpha.totito expr) *)
-    match Memory_proto_alpha.strings_of_prims expr with
-    | Tezos_micheline.Micheline.Canonical s ->  simple_fail s
-    | _ -> simple_fail "lol"
+    let _a = Memory_proto_alpha.strings_of_prims expr in
+    let (_a : (int,string) Micheline.Micheline.node )  = Tezos_micheline.Micheline.root _a in
+    (*TODO: This branch was left here, had to work on other things*)
+    match _a with
+    | Int (_ , _) -> simple_fail "lol"
+    | String (_ , s) -> ok s
+    | Bytes (_,_) -> simple_fail "lol"
+    | Prim _ -> simple_fail "lol"
+    | Seq _ -> simple_fail "lol"
 
 let evaluate ?options program = run ?options program Michelson.d_unit
 

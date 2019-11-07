@@ -51,6 +51,9 @@ let expect_fail ?options program entry_point input =
   Assert.assert_fail
   @@ Ligo.Run.Of_simplified.run_typed_program ?options program Typer.Solver.initial_state entry_point input
 
+(* let expect_error ?options program entry_point input expected_error =
+  let%bind err = Ligo.Run.Of_simplified.error_from_typed_program ?options program entry_point input in
+  Assert.assert_equal expected_error err *)
 
 let expect_eq ?input_to_value ?options program entry_point input expected =
   let expecter = fun result ->
