@@ -12,7 +12,7 @@ let subtract = ((a: int), (b: int)): int => a - b;
 
 /* real entrypoint that re-routes the flow based on the action provided */
 
-let%entry main = ((p: action), storage) => {
+let main = ((p: action), storage) => {
   let storage =
     switch (p) {
     | Increment(n) => add(storage, n)

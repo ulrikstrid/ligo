@@ -5,4 +5,4 @@ type storage = unit;
      (fun x -> ()) ()
    */
 
-let%entry main = (p: unit, storage) => ((x: unit) => ())();
+let main = ((p: unit), storage) => ((x: unit) => ())();

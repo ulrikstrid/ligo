@@ -213,11 +213,7 @@ core_type_parens:
     in 
     TAlias {region; value}
   }
-| type_constr LPAR core_type RPAR {   
-    print_endline ("a1:" ^ $1.value);
-    (match $3 with 
-    | TAlias s -> print_endline s.value
-    | _ -> ());
+| type_constr LPAR core_type RPAR {       
     let arg_val = $3 in
     let constr = $1 in
     let start = $1.region in 
@@ -241,11 +237,7 @@ core_type:
     in 
     TAlias {region; value}
   }
-| type_constr LPAR core_type RPAR {   
-    print_endline ("a1:" ^ $1.value);
-    (match $3 with 
-    | TAlias s -> print_endline s.value
-    | _ -> ());
+| type_constr LPAR core_type RPAR {       
     let arg_val = $3 in
     let constr = $1 in
     let start = $1.region in 
@@ -342,8 +334,7 @@ let_binding:
           let region = cover start stop in
           let (hd, tl) = et.value in
           let expr_to_pattern = (function
-          | EVar val_ -> 
-            PVar val_          
+          | EVar val_ -> PVar val_          
           | EAnnot {value = (EVar v, typ); region} ->
             PTyped {value = {
               pattern = PVar v; 
@@ -597,7 +588,7 @@ closed_if:
 
 switch_expr(right_expr):
   Switch foo_expr LBRACE cases(right_expr) RBRACE {
-    let cases = Utils.nsepseq_rev $4 in
+    let cases = $4 in
     let start = $1 in
     let stop = $5 in
     let region = cover start stop in
@@ -631,7 +622,7 @@ cases(right_expr):
   }
 
 case_clause(right_expr):
-  VBAR pattern EG right_expr {  
+  VBAR pattern EG right_expr {
     let region = cover (pattern_to_region $2) (expr_to_region $4) in
     {value =   
       {
@@ -645,7 +636,6 @@ case_clause(right_expr):
 
 let_expr(right_expr):
   Let let_binding SEMI right_expr SEMI {
-    print_endline "Let let_binding SEMI right_expr SEMI";
     let kwd_let = $1 in 
     let (binding, _) = $2 in
     let kwd_in = $3 in
@@ -785,13 +775,13 @@ constr_expr:
   }
 
 call_expr:
-  core_expr LPAR nsepseq(COMMA, core_expr) RPAR {
+  core_expr LPAR nsepseq(core_expr, COMMA) RPAR {
     let start = expr_to_region $1 in
     let stop = $4 in
     let region = cover start stop in
-    let _, tl = $3 in
-    let foo = (List.map (fun (a, _) -> a) tl) in
-    { value = $1, (List.hd foo, List.tl foo); region }
+    let hd, tl = $3 in
+    let foo = (List.map (fun (_, a) -> a) tl) in
+    { value = $1, (hd, foo); region }
   }
 
 core_expr_2:

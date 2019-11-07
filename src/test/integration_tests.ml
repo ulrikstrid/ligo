@@ -911,7 +911,7 @@ let lambda_mligo () : unit result =
   expect_eq program "main" make_input make_expected
 
 let lambda_religo () : unit result =
-  let%bind program = mtype_file "./contracts/lambda.religo" in
+  let%bind program = retype_file "./contracts/lambda.religo" in
   let make_input = e_pair (e_unit ()) (e_unit ()) in
   let make_expected = (e_unit ()) in
   expect_eq program "main" make_input make_expected
