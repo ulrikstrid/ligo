@@ -3,12 +3,12 @@ id: functions
 title: Functions
 ---
 
-Writing code is fun, as long as it doesn't get out of hand. To make sure our code stays put, and doesn't turn into spaghetti, we can group certain logic into functions.
+Writing code is fun as long as it doesn't get out of hand. To make sure our code doesn't turn into spaghetti we can group some logic into functions.
 
 ## Instruction blocks
 
-With `block`(s) you can wrap up *instructions* and *expressions* into an isolated scope.
-Each `block` needs to include at least one `instruction`, or at least a *placeholder* instruction called `skip`.
+With `block`(s) you can wrap *instructions* and *expressions* into an isolated scope.
+Each `block` needs to include at least one `instruction`, or a *placeholder* instruction called `skip`.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -31,7 +31,7 @@ end
 
 Functions in PascaLIGO are defined using the `function` keyword followed by their `name`, `parameters` and `return` type definitions.
 
-Here's how you define a basic function that accepts two `ints` and returns an `int` as well:
+Here's how you define a basic function that accepts two `ints` and returns a single `int`:
 
 
 ```pascaligo
@@ -39,12 +39,12 @@ function add(const a: int; const b: int): int is
     block { skip } with a + b
 ```
 
-Function body consists of two parts:
+The function body consists of two parts:
 
 - `block {<code>}` - logic of the function
-- `with <value>` - can be viewed as a return value of the function
+- `with <value>` - the return value of the function
 
-> 💡 `skip` can be used as a placeholder for empty function blocks, when all the neccessary logic fits into `with` at the end. It is also possible to omit the `block { skip } with`
+> 💡 `skip` can be used as a placeholder for empty function blocks, when all the neccessary logic fits into `with` at the end. It is also possible to omit `block { skip } with`
 in the above example, leaving only `a + b`.
 
 
