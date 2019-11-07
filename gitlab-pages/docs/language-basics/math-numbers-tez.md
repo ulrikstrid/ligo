@@ -3,13 +3,13 @@ id: math-numbers-tez
 title: Math, Numbers & Tez
 ---
 
-LIGO offers three built-in numerical types, and those are `int`, `nat` and `tez`.
+LIGO offers three built-in numerical types: `int`, `nat` and `tez`.
 
 ## Addition
 
-Addition in ligo is acomplished by using the `+` operator, however some type constraints apply, for example you can't add `tez + nat`.
+Addition in ligo is acomplished by using the `+` operator. Some type constraints apply; for example you can't add `tez + nat`.
 
-In the following example you can find a series of arithmetic operations including various numerical types, however some bits of the following example wouldn't compile, because adding an `int` with a `nat` produces an `int`, not a `nat`, similiar rules apply for `tez`:
+In the following example you can find a series of arithmetic operations, including various numerical types. However, some bits of the example won't compile because adding an `int` to a `nat` produces an `int`, not a `nat`. Similiar rules apply for `tez`:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -30,7 +30,7 @@ const e: nat = 5n + 10n;
 const g: int = 1_000_000;
 ```
 
-> A pro tip is that you can also use underscores for readability when defining numbers like this:
+> Pro tip: you can use underscores for readability when defining large numbers
 >
 >```pascaligo
 >const g: int = 1_000_000;
@@ -54,8 +54,7 @@ let e: nat = 5n + 10n
 let g: int = 1_000_000
 ```
 
-<br/>
-> A pro tip is that you can also use underscores for readability when defining numbers like this:
+> Pro tip: you can use underscores for readability when defining large numbers
 >
 >```cameligo
 >let g: int = 1_000_000;
@@ -120,7 +119,7 @@ let c: tez = 5n * 5mutez
 
 ## Division
 
-In LIGO, you can divide `int`, `nat` and `tez`, here's how:
+In LIGO you can divide `int`, `nat`, and `tez`. Here's how:
 
 > ⚠️ Division of two `tez` values results into a `nat`
 
