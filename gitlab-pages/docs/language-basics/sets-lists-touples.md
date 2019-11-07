@@ -5,11 +5,11 @@ title: Sets, Lists, Tuples
 
 Apart from complex data types such as `maps` and `records`, ligo also exposes `sets`, `lists` and `tuples`.
 
-> ⚠️ Make sure to pick the appropriate data type for your use case, as it carries not only semantical, but also gas related costs.
+> ⚠️ Make sure to pick the appropriate data type for your use case; it carries not only semantic but also gas related costs.
 
 ## Sets
 
-Sets are similar to lists, the main difference is that elements of a `set` are supposed to be *unique*.
+Sets are similar to lists. The main difference is that elements of a `set` must be *unique*.
 
 ### Defining a set
 
@@ -104,7 +104,7 @@ let sum_of_a_set: int = Set.fold my_set 0 sum
 
 ## Lists
 
-Lists are similar to sets, but their elements don't need to be unique, and they don't offer the same range of built-in functions.
+Lists are similar to sets, but their elements don't need to be unique and they don't offer the same range of built-in functions.
 
 > 💡 Lists are useful when returning operations from a smart contract's entrypoint.
 
@@ -193,7 +193,7 @@ let sum_of_a_list: int = List.fold my_list 0 sum
 
 ## Tuples
 
-Tuples are useful for carrying data that belong together, but don't necessarily have an index or a specific name.
+Tuples are useful for data that belong together but don't have an index or a specific name.
 
 ### Defining a tuple
 
