@@ -228,7 +228,6 @@ footnote {
 .tabs {
   margin: 0 auto;
   border-top: none;
-  border-bottom: 4px solid #e0e0e0;
 }
 
 .tabs .nav-tabs > div {
@@ -238,6 +237,13 @@ footnote {
   padding-bottom: 8px;
 }
 
+/* .tabs blockquote {
+  margin-top: 16px;
+}
+
+.tabs p {
+  margin-top: 16px;
+} */
 
 .tabs .nav-tabs > div.active {
   border-bottom: 4px solid #1a1a1a;
@@ -245,6 +251,9 @@ footnote {
 
 .tab-content {
   border-top: 4px solid #e0e0e0;
+  padding-top: 16px;
+  border-bottom: 4px solid #e0e0e0;
+  margin-bottom: 16px;
 }
 
 .nav-tabs {
@@ -897,6 +906,7 @@ input#search_input_react::placeholder {
   padding:20px;
   background: var(--color-code-background1);
   color:black;
+  margin-bottom: 16px;
  }
  .hljs-comment,
  .hljs-quote,

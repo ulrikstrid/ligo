@@ -30,7 +30,6 @@ const e: nat = 5n + 10n;
 const g: int = 1_000_000;
 ```
 
-<br/>
 > A pro tip is that you can also use underscores for readability when defining numbers like this:
 >
 >```pascaligo
@@ -141,11 +140,3 @@ let c: nat = 10mutez / 3mutez
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
-
----
-## 🛠 Exercises
-
-
-### #1 Chaining mathematical operations
-
-For the sake of exercise, try chaining multiplication and division, or other math combinations.

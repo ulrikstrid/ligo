@@ -124,8 +124,6 @@ function is_adult(const age: nat): bool is
     } with is_adult
 ```
 
-<br/>
-
 > You can run the function above with
 > ```
 > ligo run-function -s pascaligo src/if-else.ligo is_adult 21n
@@ -147,21 +145,9 @@ let is_adult (age: nat) : bool =
   if (age > min_age) then true else false
 ```
 
-<br/>
-
 > You can run the function above with
 > ```
 > ligo run-function -s cameligo src/if-else.mligo is_adult 21n
 > ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
-
-
----
-
-## 🛠 Excercise
-
-### Implement a name length validator function
-
-Let's pretend we're trying to implement a contract, where we require a minimal string length for a name, in case the name is not long enough, our validation function will return `False`.
-Your task is to implement a function, same as the `is_adult` in the example above, that will return `False` in case the provided parameter of type `string` will not be at least `5` characters long. Your function should be callable as `is_long_enough("name goes here")`.

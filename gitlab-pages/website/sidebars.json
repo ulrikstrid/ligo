@@ -7,9 +7,9 @@
       "language-basics/constants-and-variables",
       "language-basics/math-numbers-tez",
       "language-basics/strings",
+      "language-basics/functions",
       "language-basics/boolean-if-else",
       "language-basics/unit-option-pattern-matching",
-      "language-basics/functions",
       "language-basics/maps-records",
       "language-basics/sets-lists-touples"
     ],

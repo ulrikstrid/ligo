@@ -54,6 +54,7 @@ function add(const a: int; const b: int) : int is
      } with c
 ```
 
+
 > ⚠️ Notice the different assignment operator `:=`
 
 You can run the `add` function defined above using the LIGO compiler like this:

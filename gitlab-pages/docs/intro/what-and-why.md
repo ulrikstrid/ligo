@@ -66,7 +66,8 @@ Unfortunately (???), we **can't run Javascript on the Tezos blockchain** at this
 
 Let's take a look at how a similar LIGO program would look like, don't worry if it's a little confusing at first, we'll explain all the syntactical bits in the upcoming sections of the documentation.
 
-**`ligo-counter.ligo`**
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
 ```pascaligo
 type action is
 | Increment of int
@@ -81,6 +82,9 @@ function main (const p : action ; const s : int) : (list(operation) * int) is
   | Reset(n) -> 0
  end)
 ```
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+
 
 > 💡 You can find the Michelson compilation output of the contract above in **`ligo-counter.tz`**
 

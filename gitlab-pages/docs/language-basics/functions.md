@@ -5,7 +5,26 @@ title: Functions
 
 Writing code is fun, as long as it doesn't get out of hand. To make sure our code stays put, and doesn't turn into spaghetti, we can group certain logic into functions.
 
-# Defining a function
+## Instruction blocks
+
+With `block`(s) you can wrap up *instructions* and *expressions* into an isolated scope.
+Each `block` needs to include at least one `instruction`, or at least a *placeholder* instruction called `skip`.
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+
+```pascaligo
+// shorthand syntax
+block { skip }
+// verbose syntax
+begin
+    skip
+end
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
+
+## Defining a function
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -46,12 +65,3 @@ value.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
----
-
-## 🛠 Excercise
-
-Now it's time to combine our knowledge from the previous sections of the docs, we know that `vars` can be used within functions, the same applies for `pattern matching` and `if statements`. 
-
-### #1 Build a function, that returns an optional reward
-
-Build a function `check_reward(age: nat): option(reward)` where `reward is string`, that checks if the user is over `25 years old`. If the 'user' (age provided) is over `25n` then grant a reward, otherwise do not grant a reward. Try splitting up the logic into smaller functions.

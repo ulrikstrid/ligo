@@ -25,14 +25,14 @@ Strings are concatenated using the `^` operator.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```
+```pascaligo
 const name: string = "Alice";
 const greeting: string = "Hello";
 // Hello Alice
 const full_greeting: string = greeting ^ " " ^ name;
 ```
 <!--Cameligo-->
-```
+```cameligo
 let name: string = "Alice"
 let greeting: string = "Hello"
 let full_greeting: string = greeting ^ " " ^ name
@@ -42,48 +42,38 @@ let full_greeting: string = greeting ^ " " ^ name
 
 ## Slicing strings
 
-Strings can be sliced using the built-in function `string_slice(offset, length, string)`
+Strings can be sliced using the syntax specific built-in built-in function:
 
-Here's how:
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```
+```pascaligo
 const name: string = "Alice";
 // slice = "A"
 const slice: string = string_slice(0n, 1n, name);
 ```
 <!--Cameligo-->
-```
+```cameligo
 let name: string = "Alice"
 let slice: string = String.slice 0n 1n name
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-<br/>
 > ⚠️ Notice that the `offset` and slice `length` are `nats`
 
 ## Aquiring a length of a string
 
-Length of a string can be found using the built-in function `size(string)`:
+Length of a string can be found using the syntax specific built-in function:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```
+```pascaligo
 const name: string = "Alice";
 // length = 5
 const length: nat = size(name);
 ```
 <!--Cameligo-->
-```
+```cameligo
 let name: string = "Alice"
 let length: nat = String.size name
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
-
----
-
-## 🛠 Exercises
-
-### Slice a word in half
-
-Find a sentence/name/word with an even number of characters, and combine your LIGO math skills, with your newly learned string skills to split it in half.

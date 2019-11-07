@@ -101,17 +101,3 @@ let ledger: account_balances = Map.literal
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
-
-
----
-
-## 🛠 Exercises
-
-### #1 Defining a voting contract storage type
-
-Best way to learn, is by practice, so let's try to define a new type called `voting_storage`,
-which will represent the storage of our contract. Let's pretend we're running a presidential election on the chain, our storage needs to be a `map` of candidates, where the map key is an `address` of a candidate, and the value associated in this map is a `record`, which holds two `nat`(ural numbers) representing the number of votes, where voters can vote for `yay` or `nay` for the respective candidate.
-
-#### Advanced
-
-To spice things up, try using a `tuple` instead of a record, where the first element represents a *yay* vote, and the second element a *nay* vote.

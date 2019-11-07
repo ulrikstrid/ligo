@@ -227,15 +227,3 @@ let first_name: string = full_name.1
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
-
----
-
-## 🛠 Exercises
-
-### #1 Access control functions
-
-Implement a program, that stores a set of `addresses` as owners, and implement a function, that checks if the provided address is indeed an `owner` of this program.
-
-### #2 Find the oldest person in a list
-
-Implement a program which stores a `list` of `persons`, where `person` is a `record` with `name` and `age` fields. Use `list_fold` to find the oldest person in the list.

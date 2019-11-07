@@ -24,7 +24,6 @@ type ledger = (address, tez) map
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-<br/>
 And here's how a map value is populated:
 
 <!--DOCUSAURUS_CODE_TABS-->
@@ -36,7 +35,6 @@ const ledger: ledger = map
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) -> 2000mtz;
 end
 ```
-<br/>
 > Notice the `->` between the key an it's value and `;` to separate individual map entries.
 >
 > `("<string value>": address)` means that we type-cast a string into an address.
@@ -49,7 +47,6 @@ let ledger: ledger = Map.literal
     (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), 2000mtz) ;
   ]
 ```
-<br/>
 > Map.literal constructs the map from a list of key-value pair tuples, `(<key>, <value>)`.
 > Note also the `;` to separate individual map entries.
 >
@@ -101,7 +98,6 @@ type user = {
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-<br/>
 And here's how a record value is populated:
 
 <!--DOCUSAURUS_CODE_TABS-->
@@ -142,16 +138,3 @@ let is_admin: bool = user.is_admin
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
-
-
----
-
-## 🛠 Excercise
-
-### #1 Building a simple ledger
-
-You should now be able to build a simple token ledger. The task is to build a ledger, that holds a map of `address -> ledger_entry_map` where `ledger_entry_map` is a `map(string, ledger_entry)` where the key in this map is a `token_id` representing a token name, e.g. `XTZ`. While `ledger_entry` itself is just a `nat` balance.
-
-Second task is to implement a function `get_balance`, that returns a `nat` balance when given an `address` and a `token_id`.
-
-

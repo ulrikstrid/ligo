@@ -59,7 +59,6 @@ let g: user = Guest ()
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-<br/>
 This can be extremely useful when trying to build semantically appealing contracts. We'll learn how to use variants for 'logic purposes' shortly.
 
 ## Optional values
@@ -115,17 +114,3 @@ let is_hungry (d: dinner) : bool =
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
-
-
----
-
-## 🛠 Exercise
-
-### #1 Implement an access control function for an elevator
-
-Implement a `has_access(user, floor_id): bool` function, that accepts two parameters:
-
-- `user` - a variant of three possible values `Admin`, `Manager`, `Guest`
-- `floor_id` a `nat`, describing the floor the user is trying to access
-
-Admin should have access to any `floor_id`, `Manager` should be able to access all floors up to (including) floor `10`, and guest should only be able to access the first `3` floors.
