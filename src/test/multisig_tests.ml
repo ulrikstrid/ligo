@@ -15,16 +15,16 @@ let get_program =
 
 open Ast_simplified
 
-let init_storage = ez_e_record [
-    ("threshold" , e_nat 3) ;
+let init_storage threshold = ez_e_record [
+    ("threshold" , e_nat threshold) ;
     ("auth" , e_typed_list [
-      e_key "edpkteDwHwoNPB18tKToFKeSCykvr1ExnoMV5nawTJy9Y9nLTfQ541"
+      e_key "edpkteDwHwoNPB18tKToFKeSCykvr1ExnoMV5nawTJy9Y9nLTfQ541";
       ] t_key ) ;
   ]
 
 let msg = e_lambda "arguments"
   (Some t_unit) (Some (t_list t_operation))
-  (e_list [])
+  (e_typed_list [] t_operation)
 
 let test_param = 
   e_constructor
@@ -38,22 +38,24 @@ let test_param =
       ) ;
     ])
 
-let init_vote () =
+let compile_main () = 
   let%bind program = get_program () in
-  (* let _ = Format.printf "--> \n %a \n" Ast_typed.PP.program program in *)
-  let%bind result = Ligo.Run.Of_simplified.run_typed_program
-    program "main" (e_pair test_param init_storage) in
-  let _ = Format.printf "--> \n %a \n" Ast_simplified.PP.expression result in
-  (* let%bind (_ , storage) = extract_pair result in
-  let%bind storage' = extract_record storage in
-  let votes = List.assoc "candidates" storage' in
-  let%bind votes' = extract_map votes in
-  let%bind (_ , yess) =
-    trace_option (simple_error "") @@
-    List.find_opt (fun (k , _) -> Ast_simplified.Misc.is_value_eq (k , e_string "Yes")) votes' in
-  let%bind () = Ast_simplified.Misc.assert_value_eq (yess , e_int 1) in *)
+  let%bind () =
+    Ligo.Run.Of_simplified.compile_program
+    program "main" in
   ok ()
 
+let not_enough_signature () =
+  let%bind program = get_program () in
+
+  (* let%bind _result = Ligo.Run.Of_simplified.error_from_typed_program
+    program "main" (e_pair test_param (init_storage 3)) in *)
+  (* let%bind _result = Ligo.Run.Of_simplified.run_typed_program
+    program "main" (e_pair test_param (init_storage 3)) in *)
+  let _ = Format.printf "___ %s \n" _result in 
+  fail @@ simple_error "FAKE ERROR"
+
 let main = test_suite "Multisig" [
-    test "type" init_vote ;
+    test "compile" compile_main ;
+    test "compile" not_enough_signature ;
   ]
