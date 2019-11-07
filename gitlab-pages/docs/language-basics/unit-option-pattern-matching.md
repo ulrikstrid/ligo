@@ -3,7 +3,7 @@ id: unit-option-pattern-matching
 title: Unit, Option, Pattern matching
 ---
 
-Optionals are a programing pattern seen e.g. in OCaml, and since Michelson and LIGO are both inspired from OCaml, you'll have the *option* to use them with LIGO as well.
+Optionals are a programing pattern seen in OCaml. Since Michelson and LIGO are both inspired by OCaml, you'll have the *option* to use them in LIGO as well.
 
 ## Type unit
 
@@ -11,7 +11,7 @@ Units in Michelson or LIGO represent *for the lack of better words* - an empty/u
 
 Here's how they're defined:
 
-> 💡 Units will come in handy when we try pattern matching on custom variants below.
+> 💡 Units come in handy when we try pattern matching on custom variants below.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -28,7 +28,7 @@ let n: unit = ()
 
 ## Variants
 
-Variant is a user-defined, or a built-in type (in case of optionals), that can be compared to e.g. an Enum (from javascript).
+Variant is a user-defined or a built-in type (in case of optionals) that can be compared to Enum (from javascript).
 
 Here's how to define a new variant type:
 
@@ -59,11 +59,11 @@ let g: user = Guest ()
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-This can be extremely useful when trying to build semantically appealing contracts. We'll learn how to use variants for 'logic purposes' shortly.
+Defining a varient can be extremely useful for building semantically appealing contracts. We'll learn how to use variants for 'logic purposes' shortly.
 
 ## Optional values
 
-Optionals are a type of a built-in variant, that can be used to determine if a variable holds a certain value or not. This is especially useful, e.g. your program's state allows for a certain variable value to be empty, like this:
+Optionals are a type of built-in variant that can be used to determine if a variable holds a certain value or not. This is especially useful when (for example) your program's state allows for a certain variable value to be empty, like this:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
