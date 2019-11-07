@@ -1,6 +1,6 @@
 ---
 id: sets-lists-touples
-title: Sets, Lists, Touples
+title: Sets, Lists, Tuples
 ---
 
 Apart from complex data types such as `maps` and `records`, ligo also exposes `sets`, `lists` and `tuples`.
@@ -23,6 +23,14 @@ const my_set: int_set = set
     3; 
 end
 ```
+
+<!--Cameligo-->
+```cameligo
+type int_set = int set
+let my_set: int_set =
+  Set.add 3 (Set.add 2 (Set.add 1 Set.empty))
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -35,6 +43,12 @@ const contains_three: bool = my_set contains 3;
 // or alternatively
 const contains_three_fn: bool = set_mem(3, my_set);
 ```
+
+<!--Cameligo-->
+```cameligo
+let contains_three: bool = Set.mem 3 my_set
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -44,6 +58,12 @@ const contains_three_fn: bool = set_mem(3, my_set);
 ```pascaligo
 const set_size: nat = size(my_set);
 ```
+
+<!--Cameligo-->
+```cameligo
+let set_size: nat = Set.size my_set
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -54,6 +74,14 @@ const set_size: nat = size(my_set);
 const larger_set: int_set = set_add(4, my_set);
 const smaller_set: int_set = set_remove(3, my_set);
 ```
+
+<!--Cameligo-->
+
+```cameligo
+let larger_set: int_set = Set.add 4 my_set
+let smaller_set: int_set = Set.remove 3 my_set
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -61,10 +89,17 @@ const smaller_set: int_set = set_remove(3, my_set);
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
-function sum(const result: int; const i: int): int is block { skip } with result + i;
+function sum(const result: int; const i: int): int is result + i;
 // Outputs 6
 const sum_of_a_set: int = set_fold(my_set, 0, sum);
 ```
+
+<!--Cameligo-->
+```cameligo
+let sum (result: int) (i: int) : int = result + i
+let sum_of_a_set: int = Set.fold my_set 0 sum
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Lists
@@ -85,6 +120,13 @@ const my_list: int_list = list
     3;
 end
 ```
+
+<!--Cameligo-->
+```cameligo
+type int_list = int list
+let my_list: int_list = [1; 2; 3]
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -96,6 +138,13 @@ end
 const larger_list: int_list = cons(4, my_list);
 const even_larger_list: int_list = 5 # larger_list;
 ```
+
+<!--Cameligo-->
+```cameligo
+let larger_list: int_list = 4 :: my_list
+(* CameLIGO doesn't have a List.cons *)
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 <br/>
@@ -110,6 +159,15 @@ function increment(const i: int): int is block { skip } with i + 1;
 // Creates a new list with elements incremented by 1
 const incremented_list: int_list = list_map(even_larger_list, increment);
 ```
+
+<!--Cameligo-->
+
+```cameligo
+let increment (i: int) : int = i + 1
+(* Creates a new list with elements incremented by 1 *)
+let incremented_list: int_list = List.map larger_list increment
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -121,6 +179,15 @@ function sum(const result: int; const i: int): int is block { skip } with result
 // Outputs 6
 const sum_of_a_list: int = list_fold(my_list, 0, sum);
 ```
+
+<!--Cameligo-->
+
+```cameligo
+let sum (result: int) (i: int) : int = result + i
+// Outputs 6
+let sum_of_a_list: int = List.fold my_list 0 sum
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -128,7 +195,7 @@ const sum_of_a_list: int = list_fold(my_list, 0, sum);
 
 Tuples are useful for carrying data that belong together, but don't necessarily have an index or a specific name.
 
-### Defining a touple
+### Defining a tuple
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -136,15 +203,29 @@ Tuples are useful for carrying data that belong together, but don't necessarily 
 type full_name is string * string;
 const full_name: full_name = ("Alice", "Johnson");
 ```
+
+<!--Cameligo-->
+```cameligo
+type full_name = string * string
+(* The parenthesis here are optional *)
+let full_name: full_name = ("Alice", "Johnson")
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-### Accessing an element in a touple
+### Accessing an element in a tuple
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 ```pascaligo
 const first_name: string = full_name.1;
 ```
+
+<!--Cameligo-->
+```cameligo
+let first_name: string = full_name.1
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ---

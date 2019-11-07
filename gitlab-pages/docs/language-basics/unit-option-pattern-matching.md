@@ -45,6 +45,18 @@ const u: user = Admin(1000n);
 const g: user = Guest(Unit);
 ```
 
+<!--Cameligo-->
+```cameligo
+type id = nat
+type user =
+| Admin of id
+| Manager of id
+| Guest of unit
+
+let u: user = Admin 1000n
+let g: user = Guest ()
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 <br/>
@@ -64,6 +76,15 @@ const p1: dinner = None;
 // have some hamburgers
 const p2: dinner = Some("Hamburgers")
 ```
+
+<!--Cameligo-->
+```cameligo
+type dinner = string option
+
+let p1: dinner = None
+let p2: dinner = Some "Hamburgers"
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -83,8 +104,17 @@ function is_hungry(const dinner: dinner): bool is block { skip }
         end
     )
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
 
+<!--Cameligo-->
+```cameligo
+type dinner = string option
+let is_hungry (d: dinner) : bool =
+  match d with
+  | None -> true
+  | Some s -> false
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
 
 
 ---

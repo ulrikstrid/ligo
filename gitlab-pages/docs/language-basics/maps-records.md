@@ -16,6 +16,12 @@ Here's how a custom map type is defined:
 ```pascaligo
 type ledger is map(address, tez);
 ```
+
+<!--Cameligo-->
+```cameligo
+type ledger = (address, tez) map
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 <br/>
@@ -35,6 +41,19 @@ end
 >
 > `("<string value>": address)` means that we type-cast a string into an address.
 
+<!--Cameligo-->
+
+```cameligo
+let ledger: ledger = Map.literal
+  [ (("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address), 1000mtz) ;
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), 2000mtz) ;
+  ]
+```
+<br/>
+> Map.literal constructs the map from a list of key-value pair tuples, `(<key>, <value>)`.
+> Note also the `;` to separate individual map entries.
+>
+> `("<string value>": address)` means that we type-cast a string into an address.
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ### Accessing map values by key
@@ -45,6 +64,12 @@ If we want to access a balance from our ledger above, we can use the `[]` operat
 <!--Pascaligo-->
 ```pascaligo
 const balance: option(tez) = ledger[("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)];
+```
+
+<!--Cameligo-->
+
+```cameligo
+let balance: tez option = Map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) ledger
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -64,6 +89,16 @@ type user is record
     name: string;
 end
 ```
+
+<!--Cameligo-->
+```cameligo
+type user = {
+  id: nat;
+  is_admin: bool;
+  name: string;
+}
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 <br/>
@@ -78,6 +113,16 @@ const user: user = record
     name = "Alice";
 end
 ```
+
+<!--Cameligo-->
+```cameligo
+let user: user = {
+  id = 1n;
+  is_admin = true;
+  name = "Alice";
+}
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -90,6 +135,12 @@ If we want to obtain a value from a record for a given key, we can do the follow
 ```pascaligo
 const is_admin: bool = user.is_admin;
 ```
+
+<!--Cameligo-->
+```cameligo
+let is_admin: bool = user.is_admin
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 

@@ -37,6 +37,30 @@ const g: int = 1_000_000;
 >const g: int = 1_000_000;
 >```
 
+<!--Cameligo-->
+
+```cameligo
+// int + int produces int
+let a: int = 5 + 10
+// nat + int produces int
+let b: int = 5n + 10
+// tez + tez produces tez
+let c: tez = 5mutez + 10mutez
+// you can't add tez + int or tez + nat, this won't compile
+// const d: tez = 5mutez + 10n
+// two nats produce a nat
+let e: nat = 5n + 10n
+// nat + int produces an int, this won't compile
+// const f: nat = 5n + 10
+let g: int = 1_000_000
+```
+
+<br/>
+> A pro tip is that you can also use underscores for readability when defining numbers like this:
+>
+>```cameligo
+>let g: int = 1_000_000;
+>```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -57,6 +81,16 @@ const b: int = 5n - 2n;
 const d: tez = 5mutez - 1mt;
 ```
 
+<!--Cameligo-->
+```cameligo
+let a: int = 5 - 10
+// substraction of two nats, yields an int
+let b: int = 5n - 2n
+// won't compile, result is an int, not a nat
+// const c: nat = 5n - 2n
+let d: tez = 5mutez - 1mt
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -72,6 +106,14 @@ const a: int = 5 * 5;
 const b: nat = 5n * 5n;
 // you can also multiply `nat` and `tez`
 const c: tez = 5n * 5mutez;
+```
+
+<!--Cameligo-->
+```cameligo
+let a: int = 5 * 5
+let b: nat = 5n * 5n
+// you can also multiply `nat` and `tez`
+let c: tez = 5n * 5mutez
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -90,6 +132,14 @@ const a: int = 10 / 3;
 const b: nat = 10n / 3n;
 const c: nat = 10mutez / 3mutez;
 ```
+
+<!--Cameligo-->
+```cameligo
+let a: int = 10 / 3
+let b: nat = 10n / 3n
+let c: nat = 10mutez / 3mutez
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ---
