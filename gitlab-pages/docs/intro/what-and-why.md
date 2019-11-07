@@ -3,9 +3,9 @@ id: what-and-why
 title: What & Why
 ---
 
-Before we get into what is LIGO and why does LIGO need to exist in the first place, let's take a look at what options does the Tezos blockchain offer us out of the box. If you were to implement smart contracts natively on Tezos, you'd have to learn [Michelson](https://tezos.gitlab.io/whitedoc/michelson.html).
+Before we get into what LIGO is and why LIGO needs to exist, let's take a look at what options the Tezos blockchain offers us out of the box. If you want to implement smart contracts natively on Tezos, you have to learn [Michelson](https://tezos.gitlab.io/whitedoc/michelson.html).
 
-> 💡 The (Michelson) language is stack-based, with high level data types and primitives, and strict static type checking.
+> 💡 The (Michelson) language is stack-based, with high level data types and primitives and strict static type checking.
 
 
 Here's an example of Michelson code:
@@ -21,21 +21,21 @@ Here's an example of Michelson code:
          NIL operation ; PAIR } }
 ```
 
-The contract above maintains an `int` in its storage. It has two entrypoints *(functions)* `add` and `sub` to modify it, and the default *entrypoint*, of type unit will reset it to 0.
+The contract above maintains an `int` in its storage. It has two entrypoints *(functions)* `add` and `sub` to modify it, and the default *entrypoint* of type unit will reset it to 0.
 
 The contract itself contains three main parts:
 
-- `parameter` - Argument that is provided by a transaction invoking the contract
+- `parameter` - Argument provided by a transaction invoking the contract
 - `storage` - Type definition for the contract's data storage.
-- `code` - Actual Michelson code, that has the provided parameter & the current storage value in it's initial stack, and outputs a pair of operations & a new storage value as it's resulting stack.
+- `code` - Actual Michelson code that has the provided parameter & the current storage value in its initial stack. It outputs a pair of operations and a new storage value as its resulting stack.
 
 Michelson code consists of *instructions* like `IF_LEFT`, `PUSH ...`, `UNPAIR` that are bundled togeter in what is called a *sequence*. Stack represents an intermediate state of the program, while **storage represents a persistent state**. Instructions are used to modify the run-time stack in order to yield a desired stack value when the program terminates. 
 
-> 💡 A michelson program ran on the Tezos blockchain is meant to output a pair of values including a `list of operations` to emit and a new `storage` value to persist
+> 💡 A Michelson program running on the Tezos blockchain is meant to output a pair of values including a `list of operations` to emit and a new `storage` value to persist
 
 ## Differences between a stack and traditional variable management
 
-Stack management might be a little bit challanging, especially if you're coming from a *C-like language*. Let's implement a similar program as above, in Javascript:
+Stack management might be a little bit challanging, especially if you're coming from a *C-like language*. Let's implement a similar program in Javascript:
 
 **`counter.js`**
 ```javascript
@@ -56,15 +56,15 @@ function reset() {
 }
 ```
 
-In our javascript program, the initial `storage` value is `0`, and it can be modified by running the functions `add(a)`, `sub(a)` and `reset()`.
+In our javascript program the initial `storage` value is `0` and it can be modified by running the functions `add(a)`, `sub(a)` and `reset()`.
 
-Unfortunately (???), we **can't run Javascript on the Tezos blockchain** at this moment, however we can opt-in for LIGO, which will abstract the stack management, and allow us to write readable, type-safe and efficient smart contracts.
+Unfortunately (???), we **can't run Javascript on the Tezos blockchain** at the moment. But we can choose LIGO, which will abstract the stack management and allow us to create readable, type-safe, and efficient smart contracts.
 
 > 💡 You can try running the javascript program [here](https://codepen.io/maht0rz/pen/dyyvoPQ?editors=0012)
 
 ## C-like smart contracts instead of Michelson
 
-Let's take a look at how a similar LIGO program would look like, don't worry if it's a little confusing at first, we'll explain all the syntactical bits in the upcoming sections of the documentation.
+Let's take a look at a similar LIGO program. Don't worry if it's a little confusing at first; we'll explain all the syntax in the upcoming sections of the documentation.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -88,7 +88,7 @@ function main (const p : action ; const s : int) : (list(operation) * int) is
 
 > 💡 You can find the Michelson compilation output of the contract above in **`ligo-counter.tz`**
 
-The LIGO contract behaves exactly* like the Michelson contract we've seen first, and it accepts the following LIGO expressions/values: `Increment(n)`, `Decrement(n)` and `Reset(n)`. Those serve as `entrypoint` identification, same as `%add` `%sub` or `%default` in the Michelson contract.
+The LIGO contract behaves exactly* like the Michelson contract we've saw first, and it accepts the following LIGO expressions/values: `Increment(n)`, `Decrement(n)` and `Reset(n)`. Those serve as `entrypoint` identification, same as `%add` `%sub` or `%default` in the Michelson contract.
 
 **not exactly, the Michelson contract also checks if the `AMOUNT` sent is `0`*
 
