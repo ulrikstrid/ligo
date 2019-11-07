@@ -3,11 +3,11 @@ id: types
 title: Types
 ---
 
-LIGO is strongly and statically typed, which means that the compiler checks your program at compilation time and makes sure there won't be any type related runtime errors. The language itself features types built on top of Michelson's type system.
+LIGO is strongly and statically typed. This means that the compiler checks your program at compilation time and makes sure there won't be any type related runtime errors. LIGO types are built on top of Michelson's type system.
 
 ## Type aliases
 
-Type aliasing is a great choice when working towards a readable / maintainable smart contract. One well typed type/variable is worth a thousand words. For example we can choose to *alias* a string, as an animal breed - this will allow us to comunicate our intent with added clarity.
+Type aliasing is great for creating a readable / maintainable smart contract. One well typed type/variable is worth a thousand words. For example we can choose to *alias* a string as an animal breed - this will allow us to comunicate our intent with added clarity.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -50,9 +50,9 @@ let ledger: account_balances = Map.literal
 
 ## Composed types
 
-Often our contracts will require complex data structures, which will in turn require a well-typed storage, or functions to work with. LIGO offers a simple way to compose simple types, into larger & more expressive composed types.
+Often contracts require complex data structures, which in turn require well-typed storage or functions to work with. LIGO offers a simple way to compose simple types into larger & more expressive composed types.
 
-In the example below you can see definition of data types for a ledger, that keeps a balance & number of previous transactions for a given account.
+In the example below you can see the definition of data types for a ledger that keeps the balance and number of previous transactions for a given account.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
