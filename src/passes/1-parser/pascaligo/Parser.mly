@@ -647,32 +647,25 @@ for_loop:
       block   = $5}
     in For (ForInt {region; value})
   }
-| For var option(arrow_clause)
-  In collection expr block {
-    let region = cover $1 $7.region in
+| For for_collect_elt In expr block {
+    let region = cover $1 $5.region in
     let value = {
-      kwd_for    = $1;
-      var        = $2;
-      bind_to    = $3;
-      kwd_in     = $4;
-      collection = $5;
-      expr       = $6;
-      block      = $7}
+      kwd_for         = $1;
+      var             = $2;
+      kwd_in          = $3;
+      expr            = $4;
+      block           = $5}
     in For (ForCollect {region; value})}
 
-collection:
-  Map  { Map  $1 }
-| Set  { Set  $1 }
-| List { List $1 }
+for_collect_elt:
+  var ARROW var { MapElt ($1,$2,$3) }
+| var { ListOrSetElt $1 }
 
 var_assign:
   var ASS expr {
     let region = cover $1.region (expr_to_region $3)
     and value  = {name = $1; assign = $2; expr = $3}
     in {region; value}}
-
-arrow_clause:
-  ARROW var { $1,$2 }
 
 (* Expressions *)
 

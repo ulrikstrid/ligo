@@ -359,29 +359,21 @@ and print_var_assign buffer {value; _} =
   print_expr  buffer expr
 
 and print_for_collect buffer ({value; _} : for_collect reg) =
-  let {kwd_for; var; bind_to;
-       kwd_in; collection; expr; block} = value in
-  print_token      buffer kwd_for "for";
-  print_var        buffer var;
-  print_bind_to    buffer bind_to;
-  print_token      buffer kwd_in "in";
-  print_collection buffer collection;
-  print_expr       buffer expr;
-  print_block      buffer (Some block)
+  let {kwd_for; var;
+       kwd_in; expr; block} = value in
+  print_token           buffer kwd_for "for";
+  print_for_collect_var buffer var;
+  print_token           buffer kwd_in "in";
+  print_expr            buffer expr;
+  print_block           buffer (Some block)
 
-and print_collection buffer = function
-  Map kwd_map ->
-    print_token buffer kwd_map "map"
-| Set kwd_set ->
-    print_token buffer kwd_set "set"
-| List kwd_list ->
-    print_token buffer kwd_list "list"
-
-and print_bind_to buffer = function
-  Some (arrow, variable) ->
+and print_for_collect_var buffer = function
+  ListOrSetElt lsv ->
+    print_var buffer lsv
+| MapElt (k, arrow, v)  ->
+    print_var buffer k;
     print_token buffer arrow "->";
-    print_var   buffer variable
-| None -> ()
+    print_var buffer v;
 
 and print_expr buffer = function
   ECase   {value;_} -> print_case_expr buffer value
@@ -1217,8 +1209,10 @@ and pp_var_assign buffer ~pad:(_,pc) asgn =
   let pad = mk_pad 2 1 pc in
   pp_expr buffer ~pad asgn.expr
 
-and pp_for_collect buffer ~pad:(_,pc) collect =
-  let () =
+(*TODO : Christian, HEEEELLLLP !*)
+and pp_for_collect _buffer ~pad:(_,_pc) _collect =
+  ()
+  (* let () =
     let pad = mk_pad 3 0 pc in
     match collect.bind_to with
       None ->
@@ -1235,17 +1229,17 @@ and pp_for_collect buffer ~pad:(_,pc) collect =
       let statements = collect.block.value.statements in
       pp_node buffer ~pad "<statements>";
       pp_statements buffer ~pad statements
-  in ()
+  in () *)
 
-and pp_collection buffer ~pad = function
+(* and pp_collection buffer ~pad = function
   Map  region -> pp_loc_node buffer ~pad "map"  region
 | Set  region -> pp_loc_node buffer ~pad "set"  region
-| List region -> pp_loc_node buffer ~pad "list" region
+| List region -> pp_loc_node buffer ~pad "list" region *)
 
-and pp_var_binding buffer ~pad:(_,pc as pad) (source, image) =
+(* and pp_var_binding buffer ~pad:(_,pc as pad) (source, image) =
   pp_node buffer ~pad "<binding>";
   pp_ident buffer ~pad:(mk_pad 2 0 pc) source;
-  pp_ident buffer ~pad:(mk_pad 2 1 pc) image
+  pp_ident buffer ~pad:(mk_pad 2 1 pc) image *)
 
 and pp_fun_call buffer ~pad:(_,pc) (name, args) =
   let args  = Utils.nsepseq_to_list args.value.inside in

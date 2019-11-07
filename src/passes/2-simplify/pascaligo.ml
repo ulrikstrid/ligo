@@ -1073,24 +1073,20 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
       if (List.mem name captured_name_list) then
         (* replace references to fold accumulator as lhs *)
         ok @@ e_accessor (e_variable "#COMPILER#acc") [Access_record name]
-      else match fc.collection with
+      else match fc.var with
       (* loop on map *)
-      | Map _ ->
+      | MapElt ( kvalue , _ , vvalue ) ->
         let k' = e_variable "#COMPILER#collec_elt_k" in
-        if ( name = fc.var.value ) then
-          ok @@ k' (* replace references to the the key *)
-        else (
-          match fc.bind_to with
-          | Some (_,v) ->
-            let v' = e_variable "#COMPILER#collec_elt_v" in
-            if ( name = v.value ) then
-              ok @@ v' (* replace references to the the value *)
-            else ok @@ exp
-          | None -> ok @@ exp
-      )
+        let v' = e_variable "#COMPILER#collec_elt_v" in
+        if ( name = kvalue.value ) then
+          ok @@ k' (* references to the the key *)
+        else if ( name = vvalue.value ) then
+          ok @@ v' (* references to the the value *)
+        else
+          ok @@ exp
       (* loop on set or list *)
-      | (Set _ | List _) ->
-        if (name = fc.var.value ) then
+      | (ListOrSetElt v) ->
+        if (name = v.value ) then
           (* replace references to the collection element *)
           ok @@ (e_variable "#COMPILER#collec_elt")
         else ok @@ exp
@@ -1105,8 +1101,8 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
   (* STEP 6 *)
   let for_body =
     let ( arg_access: Types.access_path -> expression ) = e_accessor (e_variable "arguments") in
-    ( match fc.collection with
-      | Map _ ->
+    ( match fc.var with
+      | MapElt _ ->
         (* let acc          = arg_access [Access_tuple 0 ; Access_tuple 0] in
         let collec_elt_v = arg_access [Access_tuple 1 ; Access_tuple 0] in
         let collec_elt_k = arg_access [Access_tuple 1 ; Access_tuple 1] in *)
@@ -1119,7 +1115,7 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
         e_let_in ("#COMPILER#temp_kv", None) temp_kv @@
         e_let_in ("#COMPILER#collec_elt_k", None) collec_elt_v @@
         e_let_in ("#COMPILER#collec_elt_v", None) collec_elt_k (for_body)
-      | _ ->
+      | ListOrSetElt _ ->
         let acc        = arg_access [Access_tuple 0] in
         let collec_elt = arg_access [Access_tuple 1] in
         e_let_in ("#COMPILER#acc", None) acc @@

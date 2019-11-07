@@ -420,18 +420,15 @@ and var_assign = {
 
 and for_collect = {
   kwd_for    : kwd_for;
-  var        : variable;
-  bind_to    : (arrow * variable) option;
+  var        : for_collect_elt;
   kwd_in     : kwd_in;
-  collection : collection;
   expr       : expr;
   block      : block reg
 }
 
-and collection =
-  Map  of kwd_map
-| Set  of kwd_set
-| List of kwd_list
+and for_collect_elt =
+  ListOrSetElt of variable
+| MapElt of variable * arrow * variable
 
 (* Expressions *)
 
