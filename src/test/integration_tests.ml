@@ -3,8 +3,14 @@ open Test_helpers
 
 open Ast_simplified.Combinators
 
-let mtype_file ?debug_simplify ?debug_typed = Ligo.Compile.Of_source.type_file ?debug_simplify ?debug_typed (Syntax_name "cameligo")
-let type_file = Ligo.Compile.Of_source.type_file (Syntax_name "pascaligo")
+let mtype_file ?debug_simplify ?debug_typed f =
+  let%bind (typed , state) = Ligo.Compile.Of_source.type_file ?debug_simplify ?debug_typed (Syntax_name "cameligo") f in
+  let () = Typer.Solver.discard_state state in
+  ok typed
+let type_file f =
+  let%bind (typed , state) = Ligo.Compile.Of_source.type_file (Syntax_name "pascaligo") f in
+  let () = Typer.Solver.discard_state state in
+  ok typed
 
 let type_alias () : unit result =
   let%bind program = type_file "./contracts/type-alias.ligo" in
@@ -277,9 +283,29 @@ let bytes_arithmetic () : unit result =
   let%bind () = expect_eq program "slice_op" tata at in
   let%bind () = expect_fail program "slice_op" foo in
   let%bind () = expect_fail program "slice_op" ba in
-  let%bind b1 = Run.Of_simplified.run_typed_program program "hasherman" foo in
+  let%bind b1 = Run.Of_simplified.run_typed_program program Typer.Solver.initial_state "hasherman" foo in
   let%bind () = expect_eq program "hasherman" foo b1 in
-  let%bind b3 = Run.Of_simplified.run_typed_program program "hasherman" foototo in
+  let%bind b3 = Run.Of_simplified.run_typed_program program Typer.Solver.initial_state "hasherman" foototo in
+  let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b3 , b1) in
+  ok ()
+
+let bytes_arithmetic_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/bytes_arithmetic.mligo" in
+  let%bind foo = e_bytes "0f00" in
+  let%bind foototo = e_bytes "0f007070" in
+  let%bind toto = e_bytes "7070" in
+  let%bind empty = e_bytes "" in
+  let%bind tata = e_bytes "7a7a7a7a" in
+  let%bind at = e_bytes "7a7a" in
+  let%bind ba = e_bytes "ba" in
+  let%bind () = expect_eq program "concat_op" foo foototo in
+  let%bind () = expect_eq program "concat_op" empty toto in
+  let%bind () = expect_eq program "slice_op" tata at in
+  let%bind () = expect_fail program "slice_op" foo in
+  let%bind () = expect_fail program "slice_op" ba in
+  let%bind b1 = Run.Of_simplified.run_typed_program program Typer.Solver.initial_state "hasherman" foo in
+  let%bind () = expect_eq program "hasherman" foo b1 in
+  let%bind b3 = Run.Of_simplified.run_typed_program program Typer.Solver.initial_state "hasherman" foototo in
   let%bind () = Assert.assert_fail @@ Ast_simplified.Misc.assert_value_eq (b3 , b1) in
   ok ()
 
@@ -805,6 +831,24 @@ let for_fail () : unit result =
   let%bind () = expect_fail program "main" (e_nat 0)
   in ok () *)
 
+let loop_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/loop.mligo" in
+  let%bind () =
+    let input = e_int 0 in
+    let expected = e_int 100 in
+    expect_eq program "counter_simple" input expected
+  in
+  let%bind () =
+    let input = e_int 100 in
+    let expected = e_int 5050 in
+    expect_eq program "counter" input expected
+  in
+  let%bind () =
+    let input = e_int 100 in
+    let expected = e_int 10000 in
+    expect_eq program "counter_nest" input expected
+  in ok ()
+
 let matching () : unit result =
   let%bind program = type_file "./contracts/match.ligo" in
   let%bind () =
@@ -1106,6 +1150,12 @@ let website2_mligo () : unit result =
     e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
+let balance_constant () : unit result =
+  let%bind program = mtype_file "./contracts/balance_constant.mligo" in
+  let input = e_tuple [e_unit () ; e_mutez 0]  in
+  let expected = e_tuple [e_list []; e_mutez 4000000000000] in
+  expect_eq program "main" input expected
+
 let main = test_suite "Integration (End to End)" [
     test "type alias" type_alias ;
     test "function" function_ ;
@@ -1140,6 +1190,7 @@ let main = test_suite "Integration (End to End)" [
     test "string_arithmetic" string_arithmetic ;
     test "string_arithmetic (mligo)" string_arithmetic_mligo ;
     test "bytes_arithmetic" bytes_arithmetic ;
+    test "bytes_arithmetic (mligo)" bytes_arithmetic_mligo ;
     test "set_arithmetic" set_arithmetic ;
     test "set_arithmetic (mligo)" set_arithmetic_mligo ;
     test "unit" unit_expression ;
@@ -1152,6 +1203,7 @@ let main = test_suite "Integration (End to End)" [
     test "big_map (mligo)" mbig_map ;
     test "list" list ;
     test "loop" loop ;
+    test "loop (mligo)" loop_mligo ;
     test "matching" matching ;
     test "declarations" declarations ;
     test "quote declaration" quote_declaration ;
@@ -1184,4 +1236,5 @@ let main = test_suite "Integration (End to End)" [
     test "website1 ligo" website1_ligo ;
     test "website2 ligo" website2_ligo ;
     test "website2 (mligo)" website2_mligo ;
+    test "balance constant (mligo)" balance_constant ;
   ]

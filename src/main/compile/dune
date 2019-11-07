@@ -8,10 +8,12 @@
     simplify
     ast_simplified
     self_ast_simplified
+    typer_new
     typer
     ast_typed
     transpiler
     mini_c
+    self_mini_c
     compiler
     self_michelson
   )
