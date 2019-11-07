@@ -3,12 +3,12 @@ id: constants-and-variables
 title: Constants & Variables
 ---
 
-The basic building block right after types, are constants and variables.
+The next building block after types are constants and variables.
 
 ## Constants
 
 Constants are immutable by design, which means their values can't be reassigned.
-When defining a constant, you need to provide a `name`, `type` and a `value`:
+When defining a constant you need to provide a `name`, `type` and a `value`:
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -16,7 +16,7 @@ When defining a constant, you need to provide a `name`, `type` and a `value`:
 const age : int = 25;
 ```
 
-You can evaluate the constant definition above, using the following CLI command:
+You can evaluate the constant definition above using the following CLI command:
 ```shell
 ligo evaluate-value -s pascaligo gitlab-pages/docs/language-basics/src/variables-and-constants/const.ligo age
 # Outputs: 25
@@ -26,7 +26,7 @@ ligo evaluate-value -s pascaligo gitlab-pages/docs/language-basics/src/variables
 let age: int = 25
 ```
 
-You can evaluate the constant definition above, using the following CLI command:
+You can evaluate the constant definition above using the following CLI command:
 ```shell
 ligo evaluate-value -s cameligo gitlab-pages/docs/language-basics/src/variables-and-constants/const.mligo age
 # Outputs: 25
@@ -39,9 +39,9 @@ ligo evaluate-value -s cameligo gitlab-pages/docs/language-basics/src/variables-
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 
-Variables, unlike constants are mutable, but can't be used in a *global scope*, however they can be used within functions, or function arguments.
+Variables, unlike constants, are mutable. They can't be used in a *global scope*, but they can be used within functions, or function arguments.
 
-> 💡 Don't worry if you don't understand the function syntax yet, we'll get to it in the upcoming sections of the docs
+> 💡 Don't worry if you don't understand the function syntax yet. We'll get to it in upcoming sections of the docs.
 
 
 ```pascaligo
@@ -66,11 +66,11 @@ ligo run-function -s pascaligo gitlab-pages/docs/language-basics/src/variables-a
 
 <!--Cameligo-->
 
-As would be expected from a functional language, CameLIGO uses the value-binding
-notion of variables rather than assignment. Variables are changed by replacement,
+As expected from a functional language, CameLIGO uses value-binding
+for variables rather than assignment. Variables are changed by replacement,
 with a new value being bound in place of the old one.
 
-> 💡 Don't worry if you don't understand the function syntax yet, we'll get to it in the upcoming sections of the docs
+> 💡 Don't worry if you don't understand the function syntax yet. We'll get to it in upcoming sections of the docs.
 
 ```cameligo
 
