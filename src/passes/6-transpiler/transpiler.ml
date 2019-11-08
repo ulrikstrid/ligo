@@ -32,6 +32,11 @@ them. please report this to the developers." in
     let content () = name in
     error title content
 
+  let no_type_variable name =
+    let title () = "type variables can't be transpiled" in
+    let content () = name in
+    error title content
+
   let row_loc l = ("location" , fun () -> Format.asprintf "%a" Location.pp l)
 
   let unsupported_pattern_matching kind location =
@@ -101,41 +106,49 @@ them. please report this to the developers." in
       ("value" , fun () -> Format.asprintf "%a" Mini_c.PP.value value) ;
     ] in
     error ~data title content
+
+  let not_found content =
+    let title () = "Not_found" in
+    let content () = content in
+    let data = [
+    ] in
+    error ~data title content
 end
 open Errors
 
 let rec transpile_type (t:AST.type_value) : type_value result =
   match t.type_value' with
-  | T_constant ("bool", []) -> ok (T_base Base_bool)
-  | T_constant ("int", []) -> ok (T_base Base_int)
-  | T_constant ("nat", []) -> ok (T_base Base_nat)
-  | T_constant ("tez", []) -> ok (T_base Base_tez)
-  | T_constant ("string", []) -> ok (T_base Base_string)
-  | T_constant ("bytes", []) -> ok (T_base Base_bytes)
-  | T_constant ("address", []) -> ok (T_base Base_address)
-  | T_constant ("timestamp", []) -> ok (T_base Base_timestamp)
-  | T_constant ("unit", []) -> ok (T_base Base_unit)
-  | T_constant ("operation", []) -> ok (T_base Base_operation)
-  | T_constant ("signature", []) -> ok (T_base Base_signature)
-  | T_constant ("contract", [x]) ->
+  | T_variable (Type_name name) -> fail @@ no_type_variable name
+  | T_constant (Type_name "bool", []) -> ok (T_base Base_bool)
+  | T_constant (Type_name "int", []) -> ok (T_base Base_int)
+  | T_constant (Type_name "nat", []) -> ok (T_base Base_nat)
+  | T_constant (Type_name "tez", []) -> ok (T_base Base_tez)
+  | T_constant (Type_name "string", []) -> ok (T_base Base_string)
+  | T_constant (Type_name "bytes", []) -> ok (T_base Base_bytes)
+  | T_constant (Type_name "address", []) -> ok (T_base Base_address)
+  | T_constant (Type_name "timestamp", []) -> ok (T_base Base_timestamp)
+  | T_constant (Type_name "unit", []) -> ok (T_base Base_unit)
+  | T_constant (Type_name "operation", []) -> ok (T_base Base_operation)
+  | T_constant (Type_name "signature", []) -> ok (T_base Base_signature)
+  | T_constant (Type_name "contract", [x]) ->
       let%bind x' = transpile_type x in
       ok (T_contract x')
-  | T_constant ("map", [key;value]) ->
+  | T_constant (Type_name "map", [key;value]) ->
       let%bind kv' = bind_map_pair transpile_type (key, value) in
       ok (T_map kv')
-  | T_constant ("big_map", [key;value] ) ->
+  | T_constant (Type_name "big_map", [key;value] ) ->
       let%bind kv' = bind_map_pair transpile_type (key, value) in
       ok (T_big_map kv')
-  | T_constant ("list", [t]) ->
+  | T_constant (Type_name "list", [t]) ->
       let%bind t' = transpile_type t in
       ok (T_list t')
-  | T_constant ("set", [t]) ->
+  | T_constant (Type_name "set", [t]) ->
       let%bind t' = transpile_type t in
       ok (T_set t')
-  | T_constant ("option", [o]) ->
+  | T_constant (Type_name "option", [o]) ->
       let%bind o' = transpile_type o in
       ok (T_option o')
-  | T_constant (name , _lst) -> fail @@ unrecognized_type_constant name
+  | T_constant (Type_name name , _lst) -> fail @@ unrecognized_type_constant name
   (* TODO hmm *)
   | T_sum m ->
       let node = Append_tree.of_list @@ kv_list_of_map m in
@@ -228,36 +241,7 @@ let rec transpile_literal : AST.literal -> value = fun l -> match l with
   | Literal_unit -> D_unit
 
 and transpile_environment_element_type : AST.environment_element -> type_value result = fun ele ->
-  match (AST.get_type' ele.type_value , ele.definition) with
-  | (AST.T_function (arg , ret) , ED_declaration (ae , ((_ :: _) as captured_variables)) ) ->
-  begin
-    match ae.expression with
-    | E_lambda _ ->
-      let%bind ret' = transpile_type ret in
-      let%bind arg' = transpile_type arg in
-      let%bind env' = transpile_environment ae.environment in
-      let sub_env = Mini_c.Environment.select captured_variables env' in
-      if sub_env = [] then
-        transpile_type ele.type_value
-      else
-        ok @@ Combinators.t_deep_closure sub_env arg' ret'
-    | _ -> transpile_type ele.type_value
-  end
-  | _ -> transpile_type ele.type_value
-
-and transpile_small_environment : AST.small_environment -> Environment.t result = fun x ->
-  let x' = AST.Environment.Small.get_environment x in
-  let aux prec (name , (ele : AST.environment_element)) =
-    let%bind tv' = transpile_environment_element_type ele in
-    ok @@ Environment.add (name , tv') prec
-  in
-  let%bind result =
-    bind_fold_right_list aux Environment.empty x' in
-  ok result
-
-and transpile_environment : AST.full_environment -> Environment.t result = fun x ->
-  let%bind nlst = bind_map_ne_list transpile_small_environment x in
-  ok @@ Environment.concat @@ List.Ne.to_list nlst
+  transpile_type ele.type_value
 
 and tree_of_sum : AST.type_value -> (type_name * AST.type_value) Append_tree.t result = fun t ->
   let%bind map_tv = get_t_sum t in
@@ -435,11 +419,8 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
         )
     )
   | E_lambda l ->
-    let%bind env =
-      trace_strong (corner_case ~loc:__LOC__ "environment") @@
-      transpile_environment ae.environment in
     let%bind io = AST.get_t_function ae.type_annotation in
-    transpile_lambda env l io
+    transpile_lambda l io
   | E_list lst -> (
       let%bind t =
         trace_strong (corner_case ~loc:__LOC__ "not a list") @@
@@ -524,7 +505,10 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
               let%bind ty'_map = bind_map_smap transpile_type ty_map in
               let%bind path = record_access_to_lr ty' ty'_map prop in
               let path' = List.map snd path in
-            ok (Map.String.find prop ty_map, acc @ path')
+            let%bind prop_in_ty_map = trace_option
+                (Errors.not_found "acessing prop in ty_map [TODO: better error message]")
+                (Map.String.find_opt prop ty_map) in
+            ok (prop_in_ty_map, acc @ path')
           )
           | Access_map _k -> fail (corner_case ~loc:__LOC__ "no patch for map yet")
       in
@@ -610,40 +594,14 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
       | AST.Match_tuple _ -> fail @@ unsupported_pattern_matching "tuple" ae.location
     )
 
-and transpile_lambda_deep : Mini_c.Environment.t -> AST.lambda -> _ -> Mini_c.expression result =
-  fun env l (input_type , output_type)->
+and transpile_lambda l (input_type , output_type) =
   let { binder ; body } : AST.lambda = l in
-  (* Deep capture. Capture the relevant part of the environment. *)
-  let%bind c_env =
-    let free_variables = Ast_typed.Free_variables.lambda [] l in
-    let sub_env = Mini_c.Environment.select free_variables env in
-    ok sub_env in
-  let%bind (f_expr' , input_tv , output_tv) =
-    let%bind raw_input = transpile_type input_type in
-    let%bind output = transpile_type output_type in
-    let%bind body = transpile_annotated_expression body in
-    let expr' = E_closure { binder ; body } in
-    ok (expr' , raw_input , output) in
-  let tv = Mini_c.t_deep_closure c_env input_tv output_tv in
-  ok @@ Expression.make_tpl (f_expr' , tv)
-
-and transpile_lambda env l (input_type , output_type) =
-  let { binder ; body } : AST.lambda = l in
-  let fvs = AST.Free_variables.(annotated_expression (singleton binder) body) in
-  let%bind result =
-    match fvs with
-    | [] -> (
-        let%bind result' = transpile_annotated_expression body in
-        let%bind input = transpile_type input_type in
-        let%bind output = transpile_type output_type in
-        let tv = Combinators.t_function input output in
-        let content = D_function { binder ; body = result'} in
-        ok @@ Combinators.Expression.make_tpl (E_literal content , tv)
-      )
-    | _ -> (
-        transpile_lambda_deep env l (input_type , output_type)
-      ) in
-  ok result
+  let%bind result' = transpile_annotated_expression body in
+  let%bind input = transpile_type input_type in
+  let%bind output = transpile_type output_type in
+  let tv = Combinators.t_function input output in
+  let closure = E_closure { binder ; body = result'} in
+  ok @@ Combinators.Expression.make_tpl (closure , tv)
 
 let transpile_declaration env (d:AST.declaration) : toplevel_statement result =
   match d with
@@ -671,7 +629,6 @@ let check_storage f ty loc : (anon_function * _) result =
       | T_pair (a , b) -> (aux (snd a) true) && (aux (snd b) false)
       | T_or (a,b) -> (aux (snd a) false) && (aux (snd b) false)
       | T_function (a,b) -> (aux a false) && (aux b false)
-      | T_deep_closure (_,a,b) -> (aux a false) && (aux b false)
       | T_map (a,b) -> (aux a false) && (aux b false)
       | T_list a -> (aux a false)
       | T_set a -> (aux a false)
