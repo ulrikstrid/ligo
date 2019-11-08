@@ -8,7 +8,7 @@ let is_pure : expression -> bool = fun e ->
   | E_closure _ -> true
   | _ -> false
 
-let rec elim_dead_lets : bool ref -> expression -> expression result = fun changed e ->
+let elim_dead_lets : bool ref -> expression -> expression result = fun changed e ->
   let mapper : Helpers.mapper = fun e ->
     match e.content with
     | E_let_in ((x, _), e1, e2) when is_pure e1 ->
@@ -106,7 +106,7 @@ let rec fix : (bool ref -> 'a -> 'a result) -> 'a -> 'a result = fun f x ->
   then fix f x
   else ok x
 
-let rec all_expression : expression -> expression result =
+let all_expression : expression -> expression result =
   fix
     (fun changed e ->
        let%bind e = elim_dead_lets changed e in
