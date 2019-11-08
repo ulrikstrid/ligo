@@ -57,7 +57,7 @@ current_purchase_price = max_price / available_stock
 
 ## Installing LIGO
 
-In this tutorial, we'll use LIGO's dockerized version for the sake of simplicity. You can find the installation instructions [here](setup/installation.md#dockerized-installation-recommended).
+In this tutorial, we'll use LIGO's dockerized version for the sake of simplicity. You can find the installation instructions [here](intro/installation.md#dockerized-installation-recommended).
 
 The best way to install the dockerized LIGO is as a **global executable** through the installation script, as shown in the screenshot below:
 
