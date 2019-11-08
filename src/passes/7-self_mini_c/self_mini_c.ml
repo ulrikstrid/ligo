@@ -8,7 +8,7 @@ let is_pure : expression -> bool = fun e ->
   | E_closure _ -> true
   | _ -> false
 
-let rec elim_dead_lambdas : bool ref -> expression -> expression result = fun changed e ->
+let rec elim_dead_lets : bool ref -> expression -> expression result = fun changed e ->
   let mapper : Helpers.mapper = fun e ->
     match e.content with
     | E_let_in ((x, _), e1, e2) when is_pure e1 ->
@@ -84,14 +84,16 @@ let inline_lambda : bool ref -> var_name -> anon_function -> expression -> expre
 let inline_lambdas : bool ref -> expression -> expression result = fun changed e ->
   let mapper : Helpers.mapper = fun e ->
     match e.content with
-    | E_let_in ((f, tv), ({ content = E_closure anon ; _ } as lam), e2) ->
-      let%bind e2 = inline_lambda changed f anon e2 in
+    | E_let_in ((f, _), { content = E_closure anon ; _ }, e2) ->
+      let%bind e2' = inline_lambda changed f anon e2 in
       ok @@
-      let fvs = Free_variables.expression [] e2 in
+      let fvs = Free_variables.expression [] e2' in
       if Free_variables.mem f fvs
-      then { e with content = E_let_in ((f, tv), lam, e2) }
-      else
-        (changed := true ; e2)
+      (* function was still used after inlining, so don't inline *)
+      then e
+      (* function was no longer used, so accept inlined version and
+         eliminate dead let *)
+      else (changed := true ; e2')
     | _ -> ok e in
   Helpers.map_expression mapper e
 
@@ -107,6 +109,6 @@ let rec fix : (bool ref -> 'a -> 'a result) -> 'a -> 'a result = fun f x ->
 let rec all_expression : expression -> expression result =
   fix
     (fun changed e ->
-       let%bind e = elim_dead_lambdas changed e in
+       let%bind e = elim_dead_lets changed e in
        let%bind e = inline_lambdas changed e in
        ok e)
