@@ -85,12 +85,13 @@ let inline_lambdas : bool ref -> expression -> expression result = fun changed e
   let mapper : Helpers.mapper = fun e ->
     match e.content with
     | E_let_in ((f, _), { content = E_closure anon ; _ }, e2) ->
+      let was_changed = !changed in
       let%bind e2' = inline_lambda changed f anon e2 in
       ok @@
       let fvs = Free_variables.expression [] e2' in
       if Free_variables.mem f fvs
       (* function was still used after inlining, so don't inline *)
-      then e
+      then (changed := was_changed ; e)
       (* function was no longer used, so accept inlined version and
          eliminate dead let *)
       else (changed := true ; e2')
