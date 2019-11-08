@@ -51,7 +51,7 @@ module Wrap = struct
           (* record *)
           (* variant *)
           | "map"       -> C_map
-          | "big_map"   -> C_map
+          | "big_map"   -> C_big_map
           | "list"      -> C_list
           | "set"       -> C_set
           | "unit"      -> C_unit
