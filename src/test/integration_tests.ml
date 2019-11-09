@@ -484,7 +484,7 @@ let record () : unit result  =
   ok ()
 
 let record_mligo () : unit result  =
-  let%bind program = type_file "./contracts/record.mligo" in
+  let%bind program = mtype_file "./contracts/record.mligo" in
   let%bind () =
     let expected = record_ez_int ["foo" ; "bar"] 0 in
     expect_eq_evaluate program "fb" expected
