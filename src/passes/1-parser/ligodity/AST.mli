@@ -324,7 +324,7 @@ and field_assign = {
 and record_patch = {
   path : expr;
   kwd_with : kwd_with;
-  updates: field_assign injection reg;
+  updates: field_assign reg ne_injection reg;
 }
 
 and 'a case = {

@@ -278,6 +278,7 @@ and print_expr buffer = function
 | EList e       -> print_list_expr buffer e
 | ESeq seq      -> print_sequence buffer seq
 | ERecord e     -> print_record_expr buffer e
+| ERecordPatch e -> print_record_patch buffer e
 | EConstr e     -> print_constr_expr buffer e
 
 and print_constr_expr buffer = function
@@ -425,6 +426,9 @@ and print_comp_expr buffer = function
 
 and print_record_expr buffer e =
   print_ne_injection buffer print_field_assign e
+
+and print_record_patch buffer e =
+  print_ne_injection buffer print_field_assign e.value.updates
 
 and print_field_assign buffer {value; _} =
   let {field_name; assignment; field_expr} = value in
@@ -706,6 +710,9 @@ and pp_expr buffer ~pad:(_,pc as pad) = function
 | ERecord {value; region} ->
     pp_loc_node buffer ~pad "ERecord" region;
     pp_ne_injection pp_field_assign buffer ~pad value
+| ERecordPatch {value; region} ->
+  pp_loc_node buffer ~pad "ERecordPatch" region;
+  pp_ne_injection pp_field_assign buffer ~pad value.updates.value
 | EProj {value; region} ->
     pp_loc_node buffer ~pad "EProj" region;
     pp_projection buffer ~pad value

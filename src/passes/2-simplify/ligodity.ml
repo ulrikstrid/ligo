@@ -316,12 +316,13 @@ let rec simpl_expression :
         | E_record er -> ok @@ er
         | _ -> fail @@ simplifying_expr r.path
       in
-      let updates = pseq_to_list r.updates.value.elements in
-      let update_record (pr: Ast_simplified.expr_map Trace.result) (field_assign: Raw.field_assign) =
-        (let%bind update_expr = simpl_expression field_assign.field_expr in
+      let updates = npseq_to_list r.updates.value.ne_elements in
+      let update_record (pr: Ast_simplified.expr_map Trace.result)
+                        (field_assign: Raw.field_assign Raw.reg) =
+        (let%bind update_expr = simpl_expression field_assign.value.field_expr in
          let%bind pr = pr in
            ok @@ SMap.add
-                   field_assign.field_name.value
+                   field_assign.value.field_name.value
                    update_expr
                    pr)
       in
