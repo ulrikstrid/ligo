@@ -515,6 +515,15 @@ let record_mligo () : unit result  =
     expect_eq_n program "modify_abc" make_input make_expected
   in
   let%bind () =
+    let make_input = record_ez_int ["a" ; "b" ; "c"] in
+    let make_expected = fun n -> ez_e_record [
+        ("a" , e_int n) ;
+        ("b" , e_int 2048) ;
+        ("c" , e_int n)
+      ] in
+    expect_eq_n program "patch_abc" make_input make_expected
+  in
+  let%bind () =
     let expected = record_ez_int ["a";"b";"c";"d";"e"] 23 in
     expect_eq_evaluate program "br" expected
   in

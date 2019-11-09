@@ -30,6 +30,8 @@ let modify (r : foobar) : foobar = {foo = 256; bar = r.bar}
 
 let modify_abc (r : abc) : abc = {a = r.a; b = 2048; c = r.c}
 
+let patch_abc (r : abc) : abc = {r with b = 2048;}
+
 type big_record = {
      a : int ;
      b : int ;

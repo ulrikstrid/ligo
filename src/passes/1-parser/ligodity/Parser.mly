@@ -359,15 +359,17 @@ record_pattern:
     in {region; value} }
 
 record_patch:
-  LBRACE expr With sep_or_term_list(field_pattern, SEMI) RBRACE {
+  LBRACE expr With sep_or_term_list(field_assignment, SEMI) RBRACE {
     let ne_elements, terminator = $4 in
     let region = cover $1 $5 in
     let value = {
-        path_expr = $2;
+        path = $2;
         kwd_with = $3;
-        updates = { compound = Braces ($1,$5);
-                    ne_elements;
-                    terminator};
+        updates = {region = region;
+                   value =
+                     { compound = Braces ($1,$5);
+                       ne_elements;
+                       terminator}};
         }
     in {region; value} }
 
@@ -448,6 +450,8 @@ base_expr(right_expr):
 | fun_expr(right_expr)
 | disj_expr_level {
     $1 }
+| record_patch {  ERecordPatch $1 }
+
 
 conditional(right_expr):
   if_then_else(right_expr)
