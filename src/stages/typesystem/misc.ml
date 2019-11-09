@@ -70,20 +70,25 @@ module Substitution = struct
           let%bind type_name = s_type_name_constant ~v ~expr type_name in
           let%bind type_value_list = bind_map_list (s_type_value ~v ~expr) type_value_list in
           ok @@ T.T_constant (type_name, type_value_list)
-        | T.T_variable _ -> failwith "TODO: T_variable"
+        | T.T_variable (Type_name variable) ->
+           if String.equal variable v
+           then ok @@ expr
+           else ok @@ T.T_variable (Type_name variable)
         | T.T_function _ ->
           let _TODO = (v, expr) in
           failwith "TODO: T_function"
 
     and s_type_expression ~v ~expr : Ast_simplified.type_expression w = function
-      | Ast_simplified.T_tuple _ -> failwith "TODO: subst: unimplemented case s_type_expression"
-      | Ast_simplified.T_sum _ -> failwith "TODO: subst: unimplemented case s_type_expression"
-      | Ast_simplified.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression"
-      | Ast_simplified.T_function (_, _) -> failwith "TODO: subst: unimplemented case s_type_expression"
-      | Ast_simplified.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression"
-      | Ast_simplified.T_constant (_, _) ->
-        let _TODO = (v, expr) in
-        failwith "TODO: subst: unimplemented case s_type_expression"
+      | Ast_simplified.T_tuple _ -> failwith "TODO: subst: unimplemented case s_type_expression tuple"
+      | Ast_simplified.T_sum _ -> failwith "TODO: subst: unimplemented case s_type_expression sum"
+      | Ast_simplified.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression record"
+      | Ast_simplified.T_function (_, _) -> failwith "TODO: subst: unimplemented case s_type_expression function"
+      | Ast_simplified.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression variable"
+      | Ast_simplified.T_constant (variable, te_list) ->
+         let () = if String.equal v variable then Printf.printf "TODO: s_type_expression variable : not substituing, is this the right thing to do?" in
+         let variable : string = variable in
+         let%bind te_list = bind_map_list (s_type_expression ~v ~expr) te_list in
+         ok @@ Ast_simplified.T_constant (variable, te_list)
 
     and s_type_value ~v ~expr : T.type_value w = fun { type_value'; simplified } ->
       let%bind type_value' = s_type_value' ~v ~expr type_value' in
