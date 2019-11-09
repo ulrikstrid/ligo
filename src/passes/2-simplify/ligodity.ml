@@ -308,6 +308,26 @@ let rec simpl_expression :
         @@ npseq_to_list r.ne_elements in
       let map = SMap.of_list fields in
       return @@ e_record ~loc map
+  | ERecordPatch r  -> (
+      let r = r.value in
+      let%bind prev_record = simpl_expression r.path in
+      let prev_record =
+        match prev_record.expression with
+        | E_record er -> ok @@ er
+        | _ -> fail @@ simplifying_expr r.path
+      in
+      let updates = pseq_to_list r.updates.value.elements in
+      let update_record (pr: Ast_simplified.expr_map Trace.result) (field_assign: Raw.field_assign) =
+        (let%bind update_expr = simpl_expression field_assign.field_expr in
+         let%bind pr = pr in
+           ok @@ SMap.add
+                   field_assign.field_name.value
+                   update_expr
+                   pr)
+      in
+      let%bind map = List.fold_left update_record prev_record updates in
+      return @@ e_record map
+  )
   | EProj p -> simpl_projection p
   | EConstr (ESomeApp a) ->
       let (_, args), loc = r_split a in
