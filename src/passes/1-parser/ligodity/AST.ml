@@ -224,25 +224,26 @@ and field_pattern = {
 }
 
 and expr =
-  ECase   of expr case reg
-| ECond   of cond_expr reg
-| EAnnot  of (expr * type_expr) reg
-| ELogic  of logic_expr
-| EArith  of arith_expr
-| EString of string_expr
-| EList   of list_expr
-| EConstr of constr_expr
-| ERecord of field_assign reg ne_injection reg
-| EProj   of projection reg
-| EVar    of variable
-| ECall   of (expr * expr nseq) reg
-| EBytes  of (string * Hex.t) reg
-| EUnit   of the_unit reg
-| ETuple  of (expr, comma) nsepseq reg
-| EPar    of expr par reg
-| ELetIn  of let_in reg
-| EFun    of fun_expr reg
-| ESeq    of expr injection reg
+  ECase        of expr case reg
+| ECond        of cond_expr reg
+| EAnnot       of (expr * type_expr) reg
+| ELogic       of logic_expr
+| EArith       of arith_expr
+| EString      of string_expr
+| EList        of list_expr
+| EConstr      of constr_expr
+| ERecord      of field_assign reg ne_injection reg
+| ERecordPatch of record_patch reg
+| EProj        of projection reg
+| EVar         of variable
+| ECall        of (expr * expr nseq) reg
+| EBytes       of (string * Hex.t) reg
+| EUnit        of the_unit reg
+| ETuple       of (expr, comma) nsepseq reg
+| EPar         of expr par reg
+| ELetIn       of let_in reg
+| EFun         of fun_expr reg
+| ESeq         of expr injection reg
 
 and 'a injection = {
   compound   : compound;
@@ -330,6 +331,12 @@ and field_assign = {
   field_name : field_name;
   assignment : equal;
   field_expr : expr
+}
+
+and record_patch = {
+  path_expr : expr;
+  kwd_with : kwd_with;
+  updates: field_assign injection reg;
 }
 
 and 'a case = {
@@ -443,7 +450,7 @@ let expr_to_region = function
 | ECond {region;_} | ETuple {region;_} | ECase {region;_}
 | ECall {region;_} | EVar {region; _} | EProj {region; _}
 | EUnit {region;_} | EPar {region;_} | EBytes {region; _}
-| ESeq {region; _} | ERecord {region; _} -> region
+| ESeq {region; _} | ERecord {region; _} | ERecordPatch {region; _} -> region
 
 let selection_to_region = function
   FieldName f -> f.region

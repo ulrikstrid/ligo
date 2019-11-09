@@ -358,6 +358,19 @@ record_pattern:
       terminator}
     in {region; value} }
 
+record_patch:
+  LBRACE expr With sep_or_term_list(field_pattern, SEMI) RBRACE {
+    let ne_elements, terminator = $4 in
+    let region = cover $1 $5 in
+    let value = {
+        path_expr = $2;
+        kwd_with = $3;
+        updates = { compound = Braces ($1,$5);
+                    ne_elements;
+                    terminator};
+        }
+    in {region; value} }
+
 field_pattern:
   field_name EQ sub_pattern {
     let start  = $1.region

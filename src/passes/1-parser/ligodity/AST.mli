@@ -221,6 +221,7 @@ and expr =
 | EList   of list_expr                                 (* x::y::l [1;2;3] *)
 | EConstr of constr_expr                               (* A  B(1,A) (C A) *)
 | ERecord of field_assign reg ne_injection reg           (* {f1=e1; ... } *)
+| ERecordPatch of record_patch reg                     (* { r with n = e1; ... } *)
 | EProj   of projection reg                               (* x.y.z  M.x.y *)
 | EVar    of variable                                                (* x *)
 | ECall   of (expr * expr nseq) reg                        (* e e1 ... en *)
@@ -318,6 +319,12 @@ and field_assign = {
   field_name : field_name;
   assignment : equal;
   field_expr : expr
+}
+
+and record_patch = {
+  path_expr : expr;
+  kwd_with : kwd_with;
+  updates: field_assign injection reg;
 }
 
 and 'a case = {
