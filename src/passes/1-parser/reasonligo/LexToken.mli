@@ -92,7 +92,6 @@ type t =
 (*| And*)
 | Else of Region.t
 | False of Region.t
-| Fun of Region.t
 | If of Region.t
 | Let of Region.t
 | List of Region.t

@@ -31,7 +31,7 @@ let external_ text =
 type Error.t += ParseError
 
 let error_to_string = function
-| ParseError -> "Syntax error.\n"
+  ParseError -> "Syntax error.\n"
 | _ -> assert false
 
 let print_error ?(offsets=true) mode Region.{region; value} ~file =
@@ -103,10 +103,12 @@ let () =
   try
     let ast = Parser.contract tokeniser buffer in
     if Utils.String.Set.mem "ast" options.verbose
-    then begin
+    then let buffer = Buffer.create 131 in
+         begin
            Parser_ligodity.ParserLog.offsets := options.offsets;
            Parser_ligodity.ParserLog.mode    := options.mode;
-           Parser_ligodity.ParserLog.print_tokens ast
+           Parser_ligodity.ParserLog.print_tokens buffer ast;
+           Buffer.output_buffer stdout buffer
          end
   with
     Lexer.Error err ->

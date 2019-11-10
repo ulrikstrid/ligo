@@ -74,7 +74,6 @@ type t =
 (*| And*)
 | Else of Region.t
 | False of Region.t
-| Fun of Region.t
 | If of Region.t
 | Let of Region.t
 | List of Region.t
@@ -147,7 +146,6 @@ let proj_token = function
       s (Hex.to_string b)
   | Else region -> region, "Else"
   | False region -> region, "False"
-  | Fun region -> region, "Fun"
   | If region -> region, "If"
   | Let region -> region, "Let"
   | List region -> region, "List"
@@ -199,7 +197,6 @@ let to_lexeme = function
   | Bytes b -> fst b.Region.value
   | Else _ -> "else"
   | False _ -> "false"
-  | Fun _ -> "fun"
   | If _ -> "if"
   | Let _ -> "let"
   | List _ -> "list"
@@ -233,7 +230,6 @@ type   sym_err = Invalid_symbol
 let keywords = [
   (fun reg -> Else  reg);
   (fun reg -> False reg);
-  (fun reg -> Fun   reg);
   (fun reg -> If    reg);
   (fun reg -> Let   reg);
   (fun reg -> List  reg);
@@ -457,7 +453,6 @@ let is_ident = function
 let is_kwd = function
   | Else _
   | False _
-  | Fun _
   | If _
   | Let _
   | List _

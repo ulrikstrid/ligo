@@ -461,7 +461,7 @@ sub_pattern:
 | core_pattern                                           {         $1 }
 
 core_pattern:
-  Ident                                                  {    PVar $1 }
+  Ident                                                  {    print_endline "a4"; PVar $1 }
 | WILD                                                   {   PWild $1 }
 | unit                                                   {   PUnit $1 }
 | Int                                                    {    PInt $1 }
@@ -544,7 +544,7 @@ base_cond:
 base_expr(right_expr):
   let_expr(right_expr)
 | disj_expr_level                                        {        $1 }
-| par(tuple(disj_expr_level)) {
+| par(tuple(disj_expr_level)) { (* es6_func here introduces a shift/reduce issue... *)
   let h, t = $1.value.inside in    
   let start = expr_to_region h in
   let stop = last (fun (region, _) -> region) t in
@@ -557,7 +557,6 @@ conditional(right_expr):
 
 parenthesized_expr:
   par (expr)                                            {    EPar $1 }
-
 
 if_then_else(right_expr):
   If parenthesized_expr LBRACE closed_if RBRACE Else LBRACE right_expr RBRACE {
@@ -798,6 +797,11 @@ core_expr_2:
 | par(expr COLON type_expr {$1,$3}) {
     EAnnot {$1 with value=$1.value.inside} }
 
+(* es6_arguments:
+  | Ident type_annotation? { }
+  | module_field type_annotation? { }
+  |  *)
+
 core_expr:
   Int                                               { EArith (Int $1) }
 | Mtz                                               { EArith (Mtz $1) }
@@ -809,7 +813,7 @@ core_expr:
 | False                               {  ELogic (BoolExpr (False $1)) }
 | True                                {  ELogic (BoolExpr (True $1))  }
 | list(expr)                                        { EList (List $1) }
-| braces(expr)                                           {    EPar $1 }
+| braces(expr)   
 | par(expr)                                              {    EPar $1 }
 | record_expr                                            { ERecord $1 }
 | par(expr COLON type_expr {$1,$3}) {
