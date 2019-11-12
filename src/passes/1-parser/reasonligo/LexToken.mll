@@ -375,7 +375,7 @@ let mk_nat lexeme region =
   then Error Non_canonical_zero_nat
   else Ok (Nat Region.{region; value = lexeme, z})
 
-let mk_mtz lexeme region =
+let mk_mutez lexeme region =
   let z =
     Str.(global_replace (regexp "_") "" lexeme) |>
     Str.(global_replace (regexp "mtz") "") |>

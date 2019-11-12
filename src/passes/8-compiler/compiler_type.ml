@@ -68,11 +68,11 @@ module Ty = struct
     | Base_timestamp -> return timestamp_k
     | Base_bytes -> return bytes_k
     | Base_operation -> fail (not_comparable "operation")
+    | Base_signature -> fail (not_comparable "signature")
 
   let comparable_type : type_value -> ex_comparable_ty result = fun tv ->
     match tv with
     | T_base b -> comparable_type_base b
-    | T_deep_closure _ -> fail (not_comparable "deep closure")
     | T_function _ -> fail (not_comparable "function")
     | T_or _ -> fail (not_comparable "or")
     | T_pair _ -> fail (not_comparable "pair")
@@ -97,6 +97,7 @@ module Ty = struct
     | Base_timestamp -> return timestamp
     | Base_bytes -> return bytes
     | Base_operation -> return operation
+    | Base_signature -> return signature
 
   let rec type_ : type_value -> ex_ty result =
     function
@@ -112,10 +113,6 @@ module Ty = struct
         ok @@ Ex_ty (union_ann (ann, t) (ann', t'))
       )
     | T_function (arg, ret) ->
-        let%bind (Ex_ty arg) = type_ arg in
-        let%bind (Ex_ty ret) = type_ ret in
-        ok @@ Ex_ty (lambda arg ret)
-    | T_deep_closure (_, arg, ret) ->
         let%bind (Ex_ty arg) = type_ arg in
         let%bind (Ex_ty ret) = type_ ret in
         ok @@ Ex_ty (lambda arg ret)
@@ -182,6 +179,7 @@ let base_type : type_base -> O.michelson result =
   | Base_timestamp -> ok @@ O.prim T_timestamp
   | Base_bytes -> ok @@ O.prim T_bytes
   | Base_operation -> ok @@ O.prim T_operation
+  | Base_signature -> ok @@ O.prim T_signature
 
 let rec type_ : type_value -> O.michelson result =
   function
@@ -218,10 +216,6 @@ let rec type_ : type_value -> O.michelson result =
       let%bind arg = type_ arg in
       let%bind ret = type_ ret in
       ok @@ O.prim ~children:[arg;ret] T_lambda
-  | T_deep_closure (_ , arg , ret) ->
-      let%bind arg = type_ arg in
-      let%bind ret = type_ ret in
-      ok @@ O.prim ~children:[arg;ret] T_lambda
 
 and annotated : type_value annotated -> O.michelson result =
   function
@@ -239,10 +233,13 @@ and environment = fun env ->
   @@ List.map snd env
 
 and lambda_closure = fun (c , arg , ret) ->
-  let%bind capture = environment_closure c in
   let%bind arg = type_ arg in
   let%bind ret = type_ ret in
-  ok @@ O.t_lambda (O.t_pair capture arg) ret
+  match c with
+  | [] -> ok @@ O.t_lambda arg ret
+  | _ :: _ ->
+    let%bind capture = environment_closure c in
+    ok @@ O.t_lambda (O.t_pair capture arg) ret
 
 and environment_closure =
   function

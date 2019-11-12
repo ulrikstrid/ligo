@@ -1,7 +1,8 @@
 open Tezos_micheline
 open Micheline
 
-include Memory_proto_alpha.Protocol.Michelson_v1_primitives
+open Memory_proto_alpha.Protocol
+include Michelson_v1_primitives
 
 type michelson = (int, prim) node
 type t = michelson
@@ -58,6 +59,7 @@ let i_some = prim I_SOME
 let i_lambda arg ret body = prim ~children:[arg;ret;body] I_LAMBDA
 let i_empty_map src dst = prim ~children:[src;dst] I_EMPTY_MAP
 let i_drop = prim I_DROP
+let i_dropn n = prim I_DROP ~children:[int (Z.of_int n)]
 let i_exec = prim I_EXEC
 
 let i_if a b = prim ~children:[seq [a] ; seq[b]] I_IF
@@ -97,3 +99,9 @@ let pp_json ppf (michelson : michelson) =
     )
   in
   Format.fprintf ppf "%a" Tezos_data_encoding.Json.pp json
+
+let pp_hex ppf (michelson : michelson) =
+  let canonical = strip_locations michelson in
+  let bytes = Tezos_data_encoding.Binary_writer.to_bytes_exn Script_repr.expr_encoding canonical in
+  let hex = Hex.of_bytes bytes in
+  Format.fprintf ppf "%a" Hex.pp hex

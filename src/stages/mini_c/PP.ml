@@ -20,6 +20,7 @@ let type_base ppf : type_base -> _ = function
   | Base_timestamp -> fprintf ppf "timestamp"
   | Base_bytes -> fprintf ppf "bytes"
   | Base_operation -> fprintf ppf "operation"
+  | Base_signature -> fprintf ppf "signature"
 
 let rec type_ ppf : type_value -> _ = function
   | T_or(a, b) -> fprintf ppf "(%a) | (%a)" annotated a annotated b
@@ -32,10 +33,6 @@ let rec type_ ppf : type_value -> _ = function
   | T_set(t) -> fprintf ppf "set(%a)" type_ t
   | T_option(o) -> fprintf ppf "option(%a)" type_ o
   | T_contract(t) -> fprintf ppf "contract(%a)" type_ t
-  | T_deep_closure(c, arg, ret) ->
-      fprintf ppf "[%a](%a)->(%a)"
-        environment c
-        type_ arg type_ ret
 
 and annotated ppf : type_value annotated -> _ = function
   | (Some ann, a) -> fprintf ppf "(%a %%%s)" type_ a ann
@@ -53,7 +50,7 @@ let rec value ppf : value -> unit = function
   | D_int n -> fprintf ppf "%d" n
   | D_nat n -> fprintf ppf "+%d" n
   | D_timestamp n -> fprintf ppf "+%d" n
-  | D_mutez n -> fprintf ppf "%dmtz" n
+  | D_mutez n -> fprintf ppf "%dmutez" n
   | D_unit -> fprintf ppf "unit"
   | D_string s -> fprintf ppf "\"%s\"" s
   | D_bytes x ->
@@ -62,7 +59,6 @@ let rec value ppf : value -> unit = function
   | D_pair (a, b) -> fprintf ppf "(%a), (%a)" value a value b
   | D_left a -> fprintf ppf "L(%a)" value a
   | D_right b -> fprintf ppf "R(%a)" value b
-  | D_function x -> function_ ppf x
   | D_none -> fprintf ppf "None"
   | D_some s -> fprintf ppf "Some (%a)" value s
   | D_map m -> fprintf ppf "Map[%a]" (list_sep_d value_assoc) m

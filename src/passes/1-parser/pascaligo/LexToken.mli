@@ -35,7 +35,7 @@ type t =
 | Bytes  of (lexeme * Hex.t) Region.reg
 | Int    of (lexeme * Z.t) Region.reg
 | Nat    of (lexeme * Z.t) Region.reg
-| Mtz    of (lexeme * Z.t) Region.reg
+| Mutez    of (lexeme * Z.t) Region.reg
 | Ident  of lexeme Region.reg
 | Constr of lexeme Region.reg
 
@@ -70,51 +70,50 @@ type t =
 
   (* Keywords *)
 
-| And        of Region.t  (* "and"        *)
-| Begin      of Region.t  (* "begin"      *)
-| BigMap     of Region.t  (* "big_map"    *)
-| Block      of Region.t  (* "block"      *)
-| Case       of Region.t  (* "case"       *)
-| Const      of Region.t  (* "const"      *)
-| Contains   of Region.t  (* "contains"   *)
-| Down       of Region.t  (* "down"       *)
-| Else       of Region.t  (* "else"       *)
-| End        of Region.t  (* "end"        *)
-| Fail       of Region.t  (* "fail"       *)
-| For        of Region.t  (* "for"        *)
-| From       of Region.t  (* "from"       *)
-| Function   of Region.t  (* "function"   *)
-| If         of Region.t  (* "if"         *)
-| In         of Region.t  (* "in"         *)
-| Is         of Region.t  (* "is"         *)
-| List       of Region.t  (* "list"       *)
-| Map        of Region.t  (* "map"        *)
-| Mod        of Region.t  (* "mod"        *)
-| Nil        of Region.t  (* "nil"        *)
-| Not        of Region.t  (* "not"        *)
-| Of         of Region.t  (* "of"         *)
-| Or         of Region.t  (* "or"         *)
-| Patch      of Region.t  (* "patch"      *)
-| Procedure  of Region.t  (* "procedure"  *)
-| Record     of Region.t  (* "record"     *)
-| Remove     of Region.t  (* "remove"     *)
-| Set        of Region.t  (* "set"        *)
-| Skip       of Region.t  (* "skip"       *)
-| Step       of Region.t  (* "step"       *)
-| Then       of Region.t  (* "then"       *)
-| To         of Region.t  (* "to"         *)
-| Type       of Region.t  (* "type"       *)
-| Var        of Region.t  (* "var"        *)
-| While      of Region.t  (* "while"      *)
-| With       of Region.t  (* "with"       *)
+| And        of Region.t  (* "and"      *)
+| Begin      of Region.t  (* "begin"    *)
+| BigMap     of Region.t  (* "big_map"  *)
+| Block      of Region.t  (* "block"    *)
+| Case       of Region.t  (* "case"     *)
+| Const      of Region.t  (* "const"    *)
+| Contains   of Region.t  (* "contains" *)
+| Down       of Region.t  (* "down"     *)
+| Else       of Region.t  (* "else"     *)
+| End        of Region.t  (* "end"      *)
+| Fail       of Region.t  (* "fail"     *)
+| False      of Region.t  (* "False"    *)
+| For        of Region.t  (* "for"      *)
+| From       of Region.t  (* "from"     *)
+| Function   of Region.t  (* "function" *)
+| If         of Region.t  (* "if"       *)
+| In         of Region.t  (* "in"       *)
+| Is         of Region.t  (* "is"       *)
+| List       of Region.t  (* "list"     *)
+| Map        of Region.t  (* "map"      *)
+| Mod        of Region.t  (* "mod"      *)
+| Nil        of Region.t  (* "nil"      *)
+| Not        of Region.t  (* "not"      *)
+| Of         of Region.t  (* "of"       *)
+| Or         of Region.t  (* "or"       *)
+| Patch      of Region.t  (* "patch"    *)
+| Record     of Region.t  (* "record"   *)
+| Remove     of Region.t  (* "remove"   *)
+| Set        of Region.t  (* "set"      *)
+| Skip       of Region.t  (* "skip"     *)
+| Step       of Region.t  (* "step"     *)
+| Then       of Region.t  (* "then"     *)
+| To         of Region.t  (* "to"       *)
+| True       of Region.t  (* "True"     *)
+| Type       of Region.t  (* "type"     *)
+| Unit       of Region.t  (* "Unit"     *)
+| Var        of Region.t  (* "var"      *)
+| While      of Region.t  (* "while"    *)
+| With       of Region.t  (* "with"     *)
 
   (* Data constructors *)
 
-| C_False of Region.t  (* "False" *)
 | C_None  of Region.t  (* "None"  *)
 | C_Some  of Region.t  (* "Some"  *)
-| C_True  of Region.t  (* "True"  *)
-| C_Unit  of Region.t  (* "Unit"  *)
 
   (* Virtual tokens *)
 
@@ -145,7 +144,7 @@ type   sym_err = Invalid_symbol
 
 val mk_int    : lexeme -> Region.t -> (token,   int_err) result
 val mk_nat    : lexeme -> Region.t -> (token,   nat_err) result
-val mk_mtz    : lexeme -> Region.t -> (token,   int_err) result
+val mk_mutez  : lexeme -> Region.t -> (token,   int_err) result
 val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
 val mk_sym    : lexeme -> Region.t -> (token,   sym_err) result
 val mk_string : lexeme -> Region.t -> token
