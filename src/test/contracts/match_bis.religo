@@ -6,9 +6,9 @@ type action =
   | Increment(int)
   | Decrement(int);
 
-let add = ((a: int), (b: int)): int => a + b;
+let add = ((a: int), (b: int)) => a + b;
 
-let subtract = ((a: int), (b: int)): int => a - b;
+let subtract = ((a: int), (b: int)) => a - b;
 
 /* real entrypoint that re-routes the flow based on the action provided */
 
