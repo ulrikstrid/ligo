@@ -82,8 +82,8 @@ type t =
 | Constr of string Region.reg
 | Int    of (string * Z.t) Region.reg
 | Nat    of (string * Z.t) Region.reg
-| Mtz    of (string * Z.t) Region.reg
-| Str    of string Region.reg
+| Mutez  of (string * Z.t) Region.reg
+| String of string Region.reg
 | Bytes  of (string * Hex.t) Region.reg
 
   (* Keywords *)
@@ -107,15 +107,10 @@ type t =
 | Type  of Region.t
 | With  of Region.t
 
-  (* Liquidity-specific *)
+(* Data constructors *)
 
-| LetEntry of Region.t
-| MatchNat of Region.t
-(*
-| Contract
-| Sig
-| Struct
-*)
+| C_None  of Region.t  (* "None"  *)
+| C_Some  of Region.t  (* "Some"  *)
 
 (* Virtual tokens *)
 
@@ -145,7 +140,7 @@ type   sym_err = Invalid_symbol
 
 val mk_int    : lexeme -> Region.t -> (token,   int_err) result
 val mk_nat    : lexeme -> Region.t -> (token,   nat_err) result
-val mk_mtz    : lexeme -> Region.t -> (token,   int_err) result
+val mk_mutez  : lexeme -> Region.t -> (token,   int_err) result
 val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
 val mk_sym    : lexeme -> Region.t -> (token,   sym_err) result
 val mk_string : lexeme -> Region.t -> token

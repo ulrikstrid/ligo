@@ -12,8 +12,9 @@ let rec type_value' ppf (tv':type_value') : unit =
   | T_sum m -> fprintf ppf "sum[%a]" (smap_sep_d type_value) m
   | T_record m -> fprintf ppf "record[%a]" (smap_sep_d type_value) m
   | T_function (a, b) -> fprintf ppf "%a -> %a" type_value a type_value b
-  | T_constant (c, []) -> fprintf ppf "%s" c
-  | T_constant (c, n) -> fprintf ppf "%s(%a)" c (list_sep_d type_value) n
+  | T_constant (Type_name c, []) -> fprintf ppf "%s" c
+  | T_constant (Type_name c, n) -> fprintf ppf "%s(%a)" c (list_sep_d type_value) n
+  | T_variable (Type_name name) -> fprintf ppf "%s" name
 
 and type_value ppf (tv:type_value) : unit =
   type_value' ppf tv.type_value'
@@ -69,7 +70,7 @@ and literal ppf (l:literal) : unit =
   | Literal_int n -> fprintf ppf "%d" n
   | Literal_nat n -> fprintf ppf "+%d" n
   | Literal_timestamp n -> fprintf ppf "+%d" n
-  | Literal_mutez n -> fprintf ppf "%dmtz" n
+  | Literal_mutez n -> fprintf ppf "%dmutez" n
   | Literal_string s -> fprintf ppf "%s" s
   | Literal_bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
   | Literal_address s -> fprintf ppf "@%s" s

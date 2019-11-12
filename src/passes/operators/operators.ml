@@ -76,6 +76,7 @@ module Simplify = struct
       ("string_slice" , "SLICE") ;
       ("bytes_concat" , "CONCAT") ;
       ("bytes_slice" , "SLICE") ;
+      ("bytes_pack" , "PACK") ;
       ("set_empty" , "SET_EMPTY") ;
       ("set_mem" , "SET_MEM") ;
       ("set_add" , "SET_ADD") ;
@@ -85,6 +86,7 @@ module Simplify = struct
       ("list_iter" , "LIST_ITER") ;
       ("list_fold" , "LIST_FOLD") ;
       ("list_map" , "LIST_MAP") ;
+      (*ici*)
       ("map_iter" , "MAP_ITER") ;
       ("map_map" , "MAP_MAP") ;
       ("map_fold" , "MAP_FOLD") ;
@@ -168,6 +170,18 @@ module Simplify = struct
       ("Map.literal" , "MAP_LITERAL" ) ;
       ("Map.size" , "SIZE" ) ;
 
+      ("Big_map.find_opt" , "MAP_FIND_OPT") ;
+      ("Big_map.find" , "MAP_FIND") ;
+      ("Big_map.update" , "MAP_UPDATE") ;
+      ("Big_map.add" , "MAP_ADD") ;
+      ("Big_map.remove" , "MAP_REMOVE") ;
+      ("Big_map.literal" , "BIG_MAP_LITERAL" ) ;
+      ("Big_map.empty" , "BIG_MAP_EMPTY" ) ;
+
+      ("Bitwise.lor" , "OR") ;
+      ("Bitwise.land" , "AND") ;
+      ("Bitwise.lxor" , "XOR") ;
+
       ("String.length", "SIZE") ;
       ("String.size", "SIZE") ;
       ("String.slice", "SLICE") ;
@@ -179,6 +193,10 @@ module Simplify = struct
       ("List.iter", "LIST_ITER") ;
       ("List.map" , "LIST_MAP") ;
       ("List.fold" , "LIST_FOLD") ;
+
+      ("Loop.fold_while" , "FOLD_WHILE") ;
+      ("continue" , "CONTINUE") ;
+      ("stop" , "STOP") ;
 
       ("Operation.transaction" , "CALL") ;
       ("Operation.get_contract" , "CONTRACT") ;
@@ -221,6 +239,65 @@ module Typer = struct
   open Helpers.Typer
   open Ast_typed
 
+  module Operators_types = struct
+    open Typesystem.Shorthands
+
+    let tc_subarg   a b c = tc [a;b;c] [ (*TODO…*) ]
+    let tc_sizearg  a     = tc [a]     [ [int] ]
+    let tc_packable a     = tc [a]     [ [int] ; [string] ; [bool] (*TODO…*) ]
+    let tc_timargs  a b c = tc [a;b;c] [ [nat;nat;nat] ; [int;int;int] (*TODO…*) ]
+    let tc_divargs  a b c = tc [a;b;c] [ (*TODO…*) ]
+    let tc_modargs  a b c = tc [a;b;c] [ (*TODO…*) ]
+    let tc_addargs  a b c = tc [a;b;c] [ (*TODO…*) ]
+
+    let t_none         = forall "a" @@ fun a -> option a
+    let t_sub          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_subarg a b c] => a --> b --> c (* TYPECLASS *)
+    let t_some         = forall "a" @@ fun a -> a --> option a
+    let t_map_remove   = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> map src dst
+    let t_map_add      = forall2 "src" "dst" @@ fun src dst -> src --> dst --> map src dst --> map src dst
+    let t_map_update   = forall2 "src" "dst" @@ fun src dst -> src --> option dst --> map src dst --> map src dst
+    let t_map_mem      = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> bool
+    let t_map_find     = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> dst
+    let t_map_find_opt = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> option dst
+    let t_map_fold     = forall3 "src" "dst" "acc" @@ fun src dst acc -> ( ( (src * dst) * acc ) --> acc ) --> map src dst --> acc --> acc
+    let t_map_map      = forall3 "k" "v" "result" @@ fun k v result -> ((k * v) --> result) --> map k v --> map k result
+
+    (* TODO: the type of map_map_fold might be wrong, check it. *)
+    let t_map_map_fold = forall4 "k" "v" "acc" "dst" @@ fun k v acc dst -> ( ((k * v) * acc) --> acc * dst ) --> map k v --> (k * v) --> (map k dst * acc)
+    let t_map_iter     = forall2 "k" "v" @@ fun k v -> ( (k * v) --> unit ) --> map k v --> unit
+    let t_size         = forall_tc "c" @@ fun c -> [tc_sizearg c] => c --> nat (* TYPECLASS *)
+    let t_slice        = nat --> nat --> string --> string
+    let t_failwith     = string --> unit
+    let t_get_force    = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> dst
+    let t_int          = nat --> int
+    let t_bytes_pack   = forall_tc "a" @@ fun a -> [tc_packable a] => a --> bytes (* TYPECLASS *)
+    let t_bytes_unpack = forall_tc "a" @@ fun a -> [tc_packable a] => bytes --> a (* TYPECLASS *)
+    let t_hash256      = bytes --> bytes
+    let t_hash512      = bytes --> bytes
+    let t_blake2b      = bytes --> bytes
+    let t_hash_key     = key --> key_hash
+    let t_check_signature = key --> signature --> bytes --> bool
+    let t_sender       = address
+    let t_source       = address
+    let t_unit         = unit
+    let t_amount       = tez
+    let t_address      = address
+    let t_now          = timestamp
+    let t_transaction  = forall "a" @@ fun a -> a --> tez --> contract a --> operation
+    let t_get_contract = forall "a" @@ fun a -> contract a
+    let t_abs          = int --> nat
+    let t_cons         = forall "a" @@ fun a -> a --> list a --> list a
+    let t_assertion    = bool --> unit
+    let t_times        = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_timargs a b c] => a --> b --> c (* TYPECLASS *)
+    let t_div          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_divargs a b c] => a --> b --> c (* TYPECLASS *)
+    let t_mod          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_modargs a b c] => a --> b --> c (* TYPECLASS *)
+    let t_add          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_addargs a b c] => a --> b --> c (* TYPECLASS *)
+    let t_set_mem      = forall "a" @@ fun a -> a --> set a --> bool
+    let t_set_add      = forall "a" @@ fun a -> a --> set a --> set a
+    let t_set_remove   = forall "a" @@ fun a -> a --> set a --> set a
+    let t_not          = bool --> bool
+  end
+
   let none = typer_0 "NONE" @@ fun tv_opt ->
     match tv_opt with
     | None -> simple_fail "untyped NONE"
@@ -240,8 +317,8 @@ module Typer = struct
     then ok @@ t_int () else
     if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ()))
     then ok @@ t_timestamp () else
-    if (eq_2 (a , b) (t_tez ()))
-    then ok @@ t_tez () else
+    if (eq_2 (a , b) (t_mutez ()))
+    then ok @@ t_mutez () else
       fail (simple_error "Typing substraction, bad parameters.")
 
   let some = typer_1 "SOME" @@ fun a -> ok @@ t_option a ()
@@ -371,16 +448,16 @@ module Typer = struct
 
   let unit = constant "UNIT" @@ t_unit ()
 
-  let amount = constant "AMOUNT" @@ t_tez ()
+  let amount = constant "AMOUNT" @@ t_mutez ()
 
-  let balance = constant "BALANCE" @@ t_tez ()
+  let balance = constant "BALANCE" @@ t_mutez ()
 
   let address = constant "ADDRESS" @@ t_address ()
 
   let now = constant "NOW" @@ t_timestamp ()
 
   let transaction = typer_3 "CALL" @@ fun param amount contract ->
-    let%bind () = assert_t_tez amount in
+    let%bind () = assert_t_mutez amount in
     let%bind contract_param = get_t_contract contract in
     let%bind () = assert_type_value_eq (param , contract_param) in
     ok @@ t_operation ()
@@ -390,7 +467,7 @@ module Typer = struct
     let%bind () = assert_eq_1 delegate_opt (t_option (t_key_hash ()) ()) in
     let%bind () = assert_eq_1 spendable (t_bool ()) in
     let%bind () = assert_eq_1 delegatable (t_bool ()) in
-    let%bind () = assert_t_tez init_balance in
+    let%bind () = assert_t_mutez init_balance in
     let%bind (arg , res) = get_t_function code in
     let%bind (_param , storage) = get_t_pair arg in
     let%bind (storage' , op_lst) = get_t_pair res in
@@ -398,7 +475,10 @@ module Typer = struct
     let%bind () = assert_eq_1 op_lst (t_list (t_operation ()) ()) in
     ok @@ (t_pair (t_operation ()) (t_address ()) ())
 
-  let get_contract = typer_1_opt "CONTRACT" @@ fun _ tv_opt ->
+  let get_contract = typer_1_opt "CONTRACT" @@ fun addr_tv tv_opt ->
+    if not (type_value_eq (addr_tv, t_address ()))
+    then fail @@ simple_error (Format.asprintf "get_contract expects an address, got %a" PP.type_value addr_tv)
+    else
     let%bind tv =
       trace_option (simple_error "get_contract needs a type annotation") tv_opt in
     let%bind tv' =
@@ -428,8 +508,8 @@ module Typer = struct
     then ok @@ t_nat () else
     if eq_2 (a , b) (t_int ())
     then ok @@ t_int () else
-    if (eq_1 a (t_nat ()) && eq_1 b (t_tez ())) || (eq_1 b (t_nat ()) && eq_1 a (t_tez ()))
-    then ok @@ t_tez () else
+    if (eq_1 a (t_nat ()) && eq_1 b (t_mutez ())) || (eq_1 b (t_nat ()) && eq_1 a (t_mutez ()))
+    then ok @@ t_mutez () else
       simple_fail "Multiplying with wrong types"
 
   let div = typer_2 "DIV" @@ fun a b ->
@@ -437,17 +517,17 @@ module Typer = struct
     then ok @@ t_nat () else
     if eq_2 (a , b) (t_int ())
     then ok @@ t_int () else
-    if eq_1 a (t_tez ()) && eq_1 b (t_nat ())
-    then ok @@ t_tez () else
-    if eq_1 a (t_tez ()) && eq_1 b (t_tez ())
+    if eq_1 a (t_mutez ()) && eq_1 b (t_nat ())
+    then ok @@ t_mutez () else
+    if eq_1 a (t_mutez ()) && eq_1 b (t_mutez ())
     then ok @@ t_nat () else
       simple_fail "Dividing with wrong types"
 
   let mod_ = typer_2 "MOD" @@ fun a b ->
     if (eq_1 a (t_nat ()) || eq_1 a (t_int ())) && (eq_1 b (t_nat ()) || eq_1 b (t_int ()))
     then ok @@ t_nat () else
-    if eq_1 a (t_tez ()) && eq_1 b (t_tez ())
-    then ok @@ t_tez () else
+    if eq_1 a (t_mutez ()) && eq_1 b (t_mutez ())
+    then ok @@ t_mutez () else
       simple_fail "Computing modulo with wrong types"
 
   let add = typer_2 "ADD" @@ fun a b ->
@@ -455,8 +535,8 @@ module Typer = struct
     then ok @@ t_nat () else
     if eq_2 (a , b) (t_int ())
     then ok @@ t_int () else
-    if eq_2 (a , b) (t_tez ())
-    then ok @@ t_tez () else
+    if eq_2 (a , b) (t_mutez ())
+    then ok @@ t_mutez () else
     if (eq_1 a (t_nat ()) && eq_1 b (t_int ())) || (eq_1 b (t_nat ()) && eq_1 a (t_int ()))
     then ok @@ t_int () else
     if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ())) || (eq_1 b (t_timestamp ()) && eq_1 a (t_int ()))
@@ -546,6 +626,25 @@ module Typer = struct
     let%bind () = assert_eq_1 ~msg:"res init" res init in
     ok res
 
+  (** FOLD_WHILE is a fold operation that takes an initial value of a certain type
+      and then iterates on it until a condition is reached. The auxillary function
+      that does the fold returns either boolean true or boolean false to indicate
+      whether the fold should continue or not. Necessarily then the initial value
+      must match the input parameter of the auxillary function, and the auxillary
+      should return type (bool * input) *)
+  let fold_while = typer_2 "FOLD_WHILE" @@ fun init body ->
+    let%bind (arg, result) = get_t_function body in
+    let%bind () = assert_eq_1 arg init in
+    let%bind () = assert_eq_1 (t_pair (t_bool ()) init ()) result
+    in ok init
+
+  (* Continue and Stop are just syntactic sugar for building a pair (bool * a') *)
+  let continue = typer_1 "CONTINUE" @@ fun arg ->
+    ok @@ t_pair (t_bool ()) arg ()
+
+  let stop = typer_1 "STOP" @@ fun arg ->
+    ok (t_pair (t_bool ()) arg ())
+
   let not_ = typer_1 "NOT" @@ fun elt ->
     if eq_1 elt (t_bool ())
     then ok @@ t_bool ()
@@ -624,6 +723,9 @@ module Typer = struct
       map_find_opt ;
       map_map ;
       map_fold ;
+      fold_while ;
+      continue ;
+      stop ;
       map_iter ;
       map_get_force ;
       map_get ;
@@ -649,11 +751,13 @@ module Typer = struct
       sender ;
       source ;
       unit ;
+      balance ;
       amount ;
       transaction ;
       get_contract ;
       neg ;
       abs ;
+      cons ;
       now ;
       slice ;
       address ;
@@ -709,6 +813,13 @@ module Compiler = struct
     ("MAP_FIND_OPT" , simple_binary @@ prim I_GET) ;
     ("MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE]) ;
     ("MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
+    ("FOLD_WHILE" , simple_binary @@ seq [(i_push (prim T_bool) (prim D_True)) ;
+                                          prim ~children:[seq [dip i_dup; i_exec; i_unpair]] I_LOOP ;
+                                          i_swap ; i_drop]) ;
+    ("CONTINUE" , simple_unary @@ seq [(i_push (prim T_bool) (prim D_True)) ;
+                                       i_pair]) ;
+    ("STOP" , simple_unary @@ seq [(i_push (prim T_bool) (prim D_False)) ;
+                                   i_pair]) ;
     ("SIZE" , simple_unary @@ prim I_SIZE) ;
     ("FAILWITH" , simple_unary @@ prim I_FAILWITH) ;
     ("ASSERT_INFERRED" , simple_binary @@ i_if (seq [i_failwith]) (seq [i_drop ; i_push_unit])) ;
@@ -717,6 +828,7 @@ module Compiler = struct
     ("ABS" , simple_unary @@ prim I_ABS) ;
     ("CONS" , simple_binary @@ prim I_CONS) ;
     ("UNIT" , simple_constant @@ prim I_UNIT) ;
+    ("BALANCE" , simple_constant @@ prim I_BALANCE) ;
     ("AMOUNT" , simple_constant @@ prim I_AMOUNT) ;
     ("ADDRESS" , simple_constant @@ prim I_ADDRESS) ;
     ("NOW" , simple_constant @@ prim I_NOW) ;
