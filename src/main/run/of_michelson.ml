@@ -40,7 +40,7 @@ type failwith_res =
   | Failwith_string of string
   | Failwith_bytes of bytes
 
-let get_exec_error ?options (program:compiled_program) (input_michelson:Michelson.t) : failwith_res result =
+let get_exec_error_aux ?options (program:compiled_program) (input_michelson:Michelson.t) : Memory_proto_alpha.Protocol.Script_repr.expr result =
   let Compiler.Program.{input;output;body} : compiled_program = program in
   let (Ex_ty input_ty) = input in
   let (Ex_ty output_ty) = output in
@@ -59,12 +59,15 @@ let get_exec_error ?options (program:compiled_program) (input_michelson:Michelso
   match err with
   | Memory_proto_alpha.Succeed _ -> simple_fail "an error of execution was expected" 
   | Memory_proto_alpha.Fail expr ->
-    match Tezos_micheline.Micheline.root @@ Memory_proto_alpha.strings_of_prims expr with
-    | Int (_ , i)    -> ok (Failwith_int (Z.to_int i))
-    | String (_ , s) -> ok (Failwith_string s)
-    | Bytes (_,b)    -> ok (Failwith_bytes b)
-    | Prim _ -> simple_fail "Program failed with a primitive"
-    | Seq _  -> simple_fail "Program failed with a sequence"
+    ok expr
+
+let get_exec_error ?options (program:compiled_program) (input_michelson:Michelson.t) : failwith_res result =
+  let%bind expr = get_exec_error_aux ?options program input_michelson in
+  match Tezos_micheline.Micheline.root @@ Memory_proto_alpha.strings_of_prims expr with
+  | Int (_ , i)    -> ok (Failwith_int (Z.to_int i))
+  | String (_ , s) -> ok (Failwith_string s)
+  | Bytes (_,b)    -> ok (Failwith_bytes b)
+  | _  -> simple_fail "Unknown failwith" (*TODO: error could be improved*)
 
 let evaluate ?options program = run ?options program Michelson.d_unit
 
