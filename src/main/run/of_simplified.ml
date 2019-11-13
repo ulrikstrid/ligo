@@ -23,18 +23,16 @@ let run_typed_program           (* TODO: this runs an *untyped* program, not a t
   let%bind ex_ty_value = Of_michelson.run ?options code input in
   Compile.Of_simplified.uncompile_typed_program_entry_function_result program entry ex_ty_value
 
-(* let error_from_typed_program
+let run_failwith_program
     ?options ?input_to_value
-    (program : Ast_typed.program) (entry : string)
-    (input : expression) : string result =
+    (program : Ast_typed.program) (state : Typer.Solver.state) (entry : string)
+    (input : expression) : Of_michelson.failwith_res result =
   let%bind code = Compile.Of_typed.compile_function_entry program entry in
   let%bind input =
     let env = Ast_typed.program_environment program in
-    compile_expression ?value:input_to_value ~env input
+    compile_expression ?value:input_to_value ~env ~state input
   in
-  let%bind mb_err = Of_michelson.get_exec_error ?options code input in
-  ok mb_err *)
-  (* Compile.Of_simplified.uncompile_typed_program_entry_function_result program entry ex_ty_value *)
+  Of_michelson.get_exec_error ?options code input
 
 let evaluate_typed_program_entry
     ?options
