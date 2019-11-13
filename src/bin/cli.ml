@@ -14,14 +14,6 @@ let source_file n =
     info ~docv ~doc [] in
   required @@ pos n (some string) None info
 
-let md_file n =
-  let open Arg in
-  let info =
-    let docv = "SOURCE_FILE" in
-    let doc = "$(docv) is the path to a .md file" in
-    info ~docv ~doc [] in
-  required @@ pos n (some string) None info
-
 let entry_point n =
   let open Arg in
   let info =
@@ -204,57 +196,6 @@ let compile_expression =
   let docs = "Subcommand: compile to a michelson value." in
   (term , Term.info ~docs cmdname)
 
-let run_doc = 
-  let f md_file = (
-    let channel = open_in md_file in
-    let lexbuf = Lexing.from_channel channel in
-    let file = Md.token lexbuf in
-    let code_blocks = List.fold_left (fun result curr -> 
-      match curr with 
-      | Ast.Block block -> result @ [block]
-      | _ -> result
-    ) [] file 
-    in
-    List.iter (fun (b: Ast.block) ->
-      let contents = (String.concat "\n" b.contents) in 
-      match b.header with 
-      | Some s ->          
-        let compile = Ligo.Compile.Of_source.compile_string_contract_entry contents "main"  in
-        if s = "pascaligo" then (
-          let result = compile Ligo.Compile.Helpers.Pascaligo in
-          match result with 
-          | Ok _ -> ()
-          | Error e -> (
-            print_endline (md_file ^ ":" ^ (string_of_int b.line) ^ ": ");      
-            Format.printf "%a\n%!" error_pp (e ()))
-        ) 
-        else if s = "cameligo" then (
-          let result = compile Ligo.Compile.Helpers.Cameligo in 
-          match result with 
-          | Ok _ -> ()
-          | Error e -> (
-            print_endline (md_file ^ ":" ^ (string_of_int b.line) ^ ": ");      
-            Format.printf "%a\n%!" error_pp (e ()))
-        )
-        else if s = "reasonligo" then (
-          let result = compile Ligo.Compile.Helpers.Reasonligo in 
-          match result with 
-          | Ok _ -> ()
-          | Error e -> (
-            print_endline (md_file ^ ":" ^ (string_of_int b.line) ^ ": ");      
-            Format.printf "%a\n%!" error_pp (e ()))
-        )
-        else 
-          ()
-        
-      | None -> ()
-    ) code_blocks)
-  in
-  let term = Term.(const f $ md_file 0) in
-  let cmdname = "run-doc" in
-  let docs = "Subcommand: run LIGO examples in a .md file." in
-  (term, Term.info ~docs cmdname)
-
 let () = Term.exit @@ Term.eval_choice main [
     compile_file ;
     compile_parameter ;
@@ -263,5 +204,4 @@ let () = Term.exit @@ Term.eval_choice main [
     dry_run ;
     run_function ;
     evaluate_value ;
-    run_doc;
   ]
