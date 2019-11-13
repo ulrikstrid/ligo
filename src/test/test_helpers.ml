@@ -55,7 +55,9 @@ let expect_string_failwith ?options program entry_point input expected_failwith 
   let%bind err = Ligo.Run.Of_simplified.run_failwith_program
       ?options program Typer.Solver.initial_state entry_point input in
   match err with
-    | Ligo.Run.Of_michelson.Failwith_string s -> Assert.assert_equal expected_failwith s
+    | Ligo.Run.Of_michelson.Failwith_string s ->
+      let msg = Format.asprintf "Expected \"%s\" but got \"%s\"" expected_failwith s in
+      Assert.assert_equal ~msg expected_failwith s
     | _ -> simple_fail "Expected to fail with a string"
 
 let expect_eq ?input_to_value ?options program entry_point input expected =
