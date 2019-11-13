@@ -1,6 +1,10 @@
 open Mini_c
 
-(* Computes `body[x := expr]` *)
+(**
+   Computes `body[x := expr]`.
+   This raises Bad_argument in the case of assignments with a name clash. (`x <- 42[x := 23]` makes no sense.)
+**)
+exception Bad_argument
 let rec subst_expression : body:expression -> x:var_name -> expr:expression -> expression =
   fun ~body ~x ~expr ->
   let self body = subst_expression ~body ~x ~expr in
@@ -46,6 +50,30 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
       return @@ E_fold (((name , tv) , body) , col', init')
     )
   )
+  | E_if_none (c, n, ((name, tv) , s)) -> (
+    if name <> x then (
+      let (c',n',s') = Tuple.map3 self (c,n,s) in
+      return @@ E_if_none (c', n', ((name, tv) , s'))
+    ) else (
+      let (c',n') = Tuple.map2 self (c,n) in
+      return @@ E_if_none (c', n', ((name, tv) , s))
+    )
+  )
+  | E_if_cons (c, n, (((hd, hdtv) , (tl, tltv)) , cons)) -> (
+    if hd <> x && tl <> x then (
+      let (c',n',cons') = Tuple.map3 self (c,n,cons) in
+      return @@ E_if_cons (c', n', (((hd, hdtv) , (tl, tltv)) , cons'))
+    ) else (
+      let (c',n') = Tuple.map2 self (c,n) in
+      return @@ E_if_cons (c', n', (((hd, hdtv) , (tl, tltv)) , cons))
+    )
+  )
+  | E_if_left (c, ((name_l, tvl) , l), ((name_r, tvr) , r)) -> (
+    let l' = if x <> name_l then self l else l in
+    let r' = if x <> name_r then self r else r in
+    let c' = self c in
+    return @@ E_if_left (c', ((name_l, tvl) , l'), ((name_r, tvr) , r'))
+  )
   (* All that follows is boilerplate *)
   | E_literal _ | E_skip | E_make_none _
   | E_make_empty_map (_,_) | E_make_empty_list _ | E_make_empty_set _ as em -> return em
@@ -65,23 +93,12 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
       let cab' = Tuple.map3 self cab in
       return @@ E_if_bool cab'
   )
-  | E_if_none (c, n, ((name, tv) , s)) -> (
-      let (c',n',s') = Tuple.map3 self (c,n,s) in
-      return @@ E_if_none (c', n', ((name, tv) , s'))
-  )
-  | E_if_cons (c, n, (((hd, hdtv) , (tl, tltv)) , cons)) -> (
-      let (c',n',cons') = Tuple.map3 self (c,n,cons) in
-      return @@ E_if_cons (c', n', (((hd, hdtv) , (tl, tltv)) , cons'))
-  )
-  | E_if_left (c, ((name_l, tvl) , l), ((name_r, tvr) , r)) -> (
-      let (c',l',r') = Tuple.map3 self (c,l,r) in
-      return @@ E_if_left (c', ((name_l, tvl) , l'), ((name_r, tvr) , r'))
-  )
   | E_sequence ab -> (
       let ab' = Tuple.map2 self ab in
       return @@ E_sequence ab'
   )
   | E_assignment (s, lrl, exp) -> (
       let exp' = self exp in
+      if s = x then raise Bad_argument ;
       return @@ E_assignment (s, lrl, exp')
   )
