@@ -122,6 +122,27 @@ let rec translate_value (v:value) ty : michelson result = match v with
   | D_operation _ ->
       simple_fail "can't compile an operation"
 
+and translate_to_lambda_code (expr:expression) (env:environment) : michelson result =
+  let (expr' , ty) = Combinators.Expression.(get_content expr , get_type expr) in
+  let error_message () =
+    Format.asprintf  "\n- expr: %a\n- type: %a\n" PP.expression expr PP.type_ ty
+  in
+
+  trace (error (thunk "compiling expression") error_message) @@
+  match expr' with
+  | E_closure anon -> (
+      match ty with
+      | T_function (input_ty , _output_ty) ->
+        let fvs = Mini_c.Free_variables.lambda [] anon in
+        let small_env = Mini_c.Environment.select fvs env in
+        (* let%bind lambda_ty = Compiler_type.lambda_closure (small_env , input_ty , output_ty) in *)
+        let%bind lambda_body_code = translate_function_body anon small_env input_ty in
+        (* ok @@ (lambda_body_code, lambda_ty) *)
+        ok lambda_body_code
+      | _ -> simple_fail "expected function type"
+    )
+  | _ -> simple_fail "expected closure"
+
 and translate_expression (expr:expression) (env:environment) : michelson result =
   let (expr' , ty) = Combinators.Expression.(get_content expr , get_type expr) in
   let error_message () =

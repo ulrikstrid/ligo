@@ -31,6 +31,10 @@ let compile_function = fun e ->
   let open! Compiler.Program in
   ok { input ; output ; body }
 
+let compile_to_lambda = fun e ->
+  let%bind body = Compiler.Program.translate_to_lambda_code e Compiler.Environment.empty in
+  ok body
+
 let compile_expression_as_function_entry = fun program name ->
   let%bind aggregated = aggregate_entry program name true in
   let%bind aggregated = Self_mini_c.all_expression aggregated in

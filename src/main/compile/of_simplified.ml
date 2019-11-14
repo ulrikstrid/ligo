@@ -29,6 +29,16 @@ let compile_expression_as_value ?(env = Ast_typed.Environment.full_empty) ~(stat
   in
   Of_typed.compile_expression_as_value typed
 
+let get_lambda_code ?(env = Ast_typed.Environment.full_empty) ~(state : Typer.Solver.state) ae : Michelson.t result =
+  let%bind (typed , state) = Typer.type_expression env state ae in
+  let typed =
+    if Typer.use_new_typer then
+      let () = failwith "TODO : subst all" in let _todo = ignore (env, state) in typed
+    else
+      typed
+  in
+  Of_typed.compile_to_lambda_code typed
+
 let compile_expression_as_function ?(env = Ast_typed.Environment.full_empty) ~(state : Typer.Solver.state) (ae : Ast_simplified.expression) : _ result =
   let%bind (typed , state) = Typer.type_expression env state ae in
   (* TODO: move this to typer.ml *)

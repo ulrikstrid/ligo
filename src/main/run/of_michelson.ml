@@ -88,5 +88,5 @@ let pack_message_lambda (lambda:Michelson.t) =
     Memory_proto_alpha.parse_michelson_data lambda input_ty in
   let%bind data =
     Trace.trace_tzresult_lwt (simple_error "error packing message") @@
-    Memory_proto_alpha.pack_data input_ty lambda in
+    Memory_proto_alpha.pack input_ty lambda in
   ok @@ data

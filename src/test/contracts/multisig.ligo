@@ -46,7 +46,8 @@ function check_message (const param : check_message_pt;
       if valid >= s.threshold then
         ret := ops
       else 
-        failwith ("Not enough signatures passed the check")
+        failwith ("Not enough signatures passed the check");
+    s.counter := s.counter + 1n ;
 
 end with (ret, s)
 
