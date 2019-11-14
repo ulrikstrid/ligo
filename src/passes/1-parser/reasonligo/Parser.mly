@@ -543,23 +543,42 @@ base_expr(right_expr):
 | fun_expr                                               {        $1 }
 
 conditional(right_expr):
-  if_then_else(right_expr)                              {   ECond $1 }
+    if_then_else(right_expr)
+  | if_then(right_expr)                                    { ECond $1 }
 
 parenthesized_expr:
-  braces (expr)                                            {    EPar $1 }
+    braces (expr)                                            {    EPar $1 }
   | par (expr)                                             {    EPar $1 }
 
-if_then_else(right_expr):
-  If parenthesized_expr LBRACE closed_if RBRACE Else LBRACE right_expr RBRACE {
-    let region = cover $1 $9 in
+if_then(right_expr):
+  If parenthesized_expr LBRACE closed_if RBRACE {
+    let the_unit = ghost, ghost in
+    let ifnot    = EUnit {region=ghost; value=the_unit} in
+    let region = cover $1 $5 in
     { 
       value = {
         kwd_if = $1; 
         test = $2;  
         kwd_then = $3; 
         ifso = $4;
-        kwd_else = $5; 
-        ifnot = $8
+        kwd_else = Region.ghost; 
+        ifnot;
+      };
+      region
+    }
+  }
+
+if_then_else(right_expr):
+  If parenthesized_expr LBRACE closed_if SEMI  RBRACE Else LBRACE right_expr SEMI RBRACE {
+    let region = cover $1 $11 in
+    { 
+      value = {
+        kwd_if = $1; 
+        test = $2;  
+        kwd_then = $3; 
+        ifso = $4;
+        kwd_else = $6; 
+        ifnot = $9
       };
       region
     }
@@ -611,7 +630,7 @@ cases(right_expr):
   }
 
 case_clause(right_expr):
-  VBAR pattern EG right_expr {
+  VBAR pattern EG right_expr SEMI? {
     let region = cover (pattern_to_region $2) (expr_to_region $4) in
     {value =   
       {
@@ -624,12 +643,12 @@ case_clause(right_expr):
   }
 
 let_expr(right_expr):
-  Let let_binding SEMI right_expr SEMI {
+  Let let_binding SEMI right_expr {
     let kwd_let = $1 in 
     let (binding, _) = $2 in
     let kwd_in = $3 in
     let body = $4 in
-    let stop = $5 in
+    let stop = expr_to_region $4 in
     let region = cover $1 stop in
     let let_in = {kwd_let; binding; kwd_in; body}
     in ELetIn {region; value=let_in} }
@@ -804,8 +823,8 @@ core_expr:
 | False                               {  ELogic (BoolExpr (False $1)) }
 | True                                {  ELogic (BoolExpr (True $1))  }
 | list(expr)                                   { EList (EListComp $1) }
-| braces(expr)   
 | par(expr)                                              {    EPar $1 }
+| sequence                                               {    ESeq $1 }
 | record_expr                                            { ERecord $1 }
 | par(expr COLON type_expr {$1,$3}) {
     EAnnot {$1 with value=$1.value.inside} }
@@ -899,4 +918,15 @@ field_assignment:
       };
       region
     } 
+  }
+
+sequence:
+  LBRACE sep_or_term_list(expr,SEMI) RBRACE {
+    let ne_elements, terminator = $2 in
+    let value  = {
+      compound = BeginEnd ($1,$3);
+      elements = Some ne_elements;
+      terminator} in
+    let region = cover $1 $3
+    in {value; region}
   }
