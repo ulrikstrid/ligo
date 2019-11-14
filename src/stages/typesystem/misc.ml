@@ -48,7 +48,7 @@ module Substitution = struct
 
     and s_type_variable ~v ~expr : T.name w = fun tvar ->
       let _TODO = ignore (v, expr) in
-      Printf.printf "TODO: subst: unimplemented case s_type_variable";
+      Printf.printf "TODO: subst: unimplemented case s_type_variable\n";
       ok @@ tvar
       (* if String.equal tvar v then
        *   expr
@@ -232,7 +232,8 @@ module Substitution = struct
 
     (* Replace the type variable ~v with ~expr everywhere within the
        program ~p. TODO: issues with scoping/shadowing. *)
-    and program ~(p : Ast_typed.program) ~(v:string (* this string is a type_name or type_variable I think *)) ~expr : Ast_typed.program Trace.result =
+    and s_program ~(p : Ast_typed.program) ~(v:string (* this string is a type_name or type_variable I think *)) ~expr : Ast_typed.program Trace.result =
+      let () = Printf.printf "subst %s with %s\n" v (Format.asprintf "%a" Ast_typed.PP.type_value' expr) in
       Trace.bind_map_list (s_declaration_wrap ~v ~expr) p
 
     (*
@@ -280,6 +281,8 @@ module Substitution = struct
 
     and typeclass ~tc ~v ~expr =
       List.map (List.map (fun tv -> type_value ~tv ~v ~expr)) tc
+
+    let program = s_program
 
     (* Performs beta-reduction at the root of the type *)
     let eval_beta_root ~(tv : type_value) =

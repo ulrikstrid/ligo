@@ -229,7 +229,7 @@ let e_none : expression = E_constant ("NONE", [])
 
 let e_map lst : expression = E_map lst
 
-let e_unit : expression = E_literal (Literal_unit)
+let e_unit () : expression = E_literal (Literal_unit)
 let e_int n : expression = E_literal (Literal_int n)
 let e_nat n : expression = E_literal (Literal_nat n)
 let e_mutez n : expression = E_literal (Literal_mutez n)
@@ -247,7 +247,7 @@ let e_list lst : expression = E_list lst
 let e_let_in binder rhs result = E_let_in { binder ; rhs ; result }
 let e_tuple lst : expression = E_tuple lst
 
-let e_a_unit = make_a_e e_unit (t_unit ())
+let e_a_unit = make_a_e (e_unit ()) (t_unit ())
 let e_a_int n = make_a_e (e_int n) (t_int ())
 let e_a_nat n = make_a_e (e_nat n) (t_nat ())
 let e_a_mutez n = make_a_e (e_mutez n) (t_mutez ())

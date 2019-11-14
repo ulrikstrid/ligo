@@ -6,10 +6,13 @@ let fresh_type_variable : ?name:string -> unit -> type_variable =
   let inc () = id := !id + 1 in
   fun ?name () ->
     inc () ;
-    match name with
+    let fresh_name = match name with
     | None -> (*Type_variable*) "type_variable_" ^ (string_of_int !id)
     | Some name -> (*Type_variable*)"tv_" ^ name ^ "_" ^ (string_of_int !id)
-
+    in
+    let () = Printf.printf "Generated variable %s\n%!%s\n%!" fresh_name (Printexc.get_backtrace ()) in
+    let _ = raise Exit in
+    fresh_name
 
 (* add information on the type or the kind for operator*)
 type constant_tag =

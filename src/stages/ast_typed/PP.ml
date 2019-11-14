@@ -21,8 +21,8 @@ and type_value ppf (tv:type_value) : unit =
 
 let rec annotated_expression ppf (ae:annotated_expression) : unit =
   match ae.type_annotation.simplified with
-  | Some _ -> fprintf ppf "@[<v>%a:%a@]" expression ae.expression type_value ae.type_annotation
-  | _ -> fprintf ppf "@[<v>%a@]" expression ae.expression
+  | (*Some*) _ -> fprintf ppf "@[<v>%a:%a@]" expression ae.expression type_value ae.type_annotation
+  (* | _ -> fprintf ppf "@[<v>%a@]" expression ae.expression *)
 
 and lambda ppf l =
   let ({ binder ; body } : lambda) = l in

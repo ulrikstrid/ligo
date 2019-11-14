@@ -4,6 +4,7 @@ open Format
 val value : formatter -> annotated_expression -> unit
 
 val type_value : formatter -> type_value -> unit
+val type_value' : formatter -> type_value' -> unit (* TODO: used only for debugging *)
 
 val single_record_patch : formatter -> ( string * ae ) -> unit
 

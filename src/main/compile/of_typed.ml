@@ -25,6 +25,7 @@ let compile_function : annotated_expression -> _ result = fun e ->
  *)
 
 let compile_function_entry : program -> string -> _ = fun p entry ->
+let () = Printf.printf "%s" @@ Format.asprintf "Typed program is:\n%a\n%!" Ast_typed.PP.program p in
   let%bind prog_mini_c = Transpiler.transpile_program p in
   Of_mini_c.compile_function_entry prog_mini_c entry
 
