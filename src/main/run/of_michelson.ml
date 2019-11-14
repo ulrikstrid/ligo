@@ -79,3 +79,14 @@ let ex_value_ty_to_michelson (v : ex_typed_value) : Michelson.t result =
 let evaluate_michelson ?options program =
   let%bind etv = evaluate ?options program in
   ex_value_ty_to_michelson etv
+
+let pack_message_lambda (lambda:Michelson.t) =
+  let open Memory_proto_alpha.Protocol.Script_ir_translator in
+  let input_ty = lambda_message_t in
+  let%bind lambda =
+    Trace.trace_tzresult_lwt (simple_error "error parsing message") @@
+    Memory_proto_alpha.parse_michelson_data lambda input_ty in
+  let%bind data =
+    Trace.trace_tzresult_lwt (simple_error "error packing message") @@
+    Memory_proto_alpha.pack_data input_ty lambda in
+  ok @@ data

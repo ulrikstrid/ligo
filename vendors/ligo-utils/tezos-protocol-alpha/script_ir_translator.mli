@@ -49,6 +49,7 @@ type unparsing_mode = Optimized | Readable
 type type_logger =
   int -> (Script.expr * Script.annot) list -> (Script.expr * Script.annot)  list -> unit
 
+val lambda_message_t : (Script_typed_ir.end_of_stack, Script_typed_ir.operation list) Script_typed_ir.lambda Script_typed_ir.ty
 (* ---- Sets and Maps -------------------------------------------------------*)
 
 val empty_set : 'a Script_typed_ir.comparable_ty -> 'a Script_typed_ir.set

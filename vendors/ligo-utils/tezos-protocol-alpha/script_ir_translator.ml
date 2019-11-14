@@ -53,6 +53,9 @@ let add_dip ty annot prev =
   | Lambda | Toplevel _ -> Dip (Item_t (ty, Empty_t, annot), prev)
   | Dip (stack, _) -> Dip (Item_t (ty, stack, annot), prev)
 
+
+let lambda_message_t = Lambda_t (Unit_t None , List_t ((Operation_t None),None,false) , None)
+
 (* ---- Type size accounting ------------------------------------------------*)
 
 let rec comparable_type_size : type t a. (t, a) comparable_struct -> int = fun ty ->
