@@ -476,10 +476,22 @@ base_cond__open(x):
 base_cond:
   base_cond__open(base_cond)                                     { $1 }
 
+type_expr_simple_args:
+  LPAR nsepseq(Ident, COMMA) RPAR { () }
+
+type_expr_simple: 
+  core_expr type_expr_simple_args? { () }
+  | LPAR nsepseq(type_expr_simple, COMMA) RPAR { () }
+  | LPAR type_expr_simple EG type_expr_simple RPAR { () }
+
+type_annotation_simple:
+  COLON type_expr_simple { $1 }
+
+
 (* TODO: add type annotation *)
 fun_expr:
-  par(tuple(expr)) es6_func? { 
-    match $2 with 
+  par(tuple(expr)) type_annotation_simple? es6_func? { 
+    match $3 with 
     | Some (arrow, body) ->   
       let kwd_fun = Region.ghost in
       let bindings = $1.value.inside in
@@ -511,8 +523,8 @@ fun_expr:
       let region = cover start stop in
       ETuple { value = $1.value.inside; region }
   }
-| par(expr) es6_func { 
-  let arrow, body = $2 in
+| par(expr) type_annotation_simple? es6_func { 
+  let arrow, body = $3 in
   let kwd_fun = Region.ghost in
   let stop = expr_to_region body in
   let region = cover $1.region stop in
@@ -809,8 +821,8 @@ core_expr_2:
 | False                               {  ELogic (BoolExpr (False $1)) }
 | True                                {  ELogic (BoolExpr (True $1))  }
 | list(expr)                                   { EList (EListComp $1) }
-| par(expr COLON type_expr {$1,$3}) {
-    EAnnot {$1 with value=$1.value.inside} }
+(* | par(expr COLON type_expr {$1,$3}) {
+    EAnnot {$1 with value=$1.value.inside} } *)
 
 core_expr:
   Int                                               { EArith (Int $1) }
@@ -823,11 +835,13 @@ core_expr:
 | False                               {  ELogic (BoolExpr (False $1)) }
 | True                                {  ELogic (BoolExpr (True $1))  }
 | list(expr)                                   { EList (EListComp $1) }
-| par(expr)                                              {    EPar $1 }
+(* | par(expr)                                              {    EPar $1 } *)
 | sequence                                               {    ESeq $1 }
 | record_expr                                            { ERecord $1 }
-| par(expr COLON type_expr {$1,$3}) {
-    EAnnot {$1 with value=$1.value.inside} }
+(* | Ident type_annotation_simple?  {
+    failwith "f1"  
+    (* EAnnot {$1 with value=$1.value.inside}  *)
+  } *)
 
 module_field:
   module_name DOT field_name { 
