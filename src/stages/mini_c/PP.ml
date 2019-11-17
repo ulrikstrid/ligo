@@ -124,3 +124,16 @@ let tl_statement ppf (ass, _) = assignment ppf ass
 
 let program ppf (p:program) =
   fprintf ppf "Program:\n---\n%a" (pp_print_list ~pp_sep:pp_print_newline tl_statement) p
+
+let%expect_test _ =
+  let pp = expression' Format.std_formatter in
+  let dummy_type = T_base Base_unit in
+  let wrap e = { content = e ; type_value = dummy_type } in
+  pp @@ E_closure { binder = Var.of_name "y" ; body = wrap (E_variable (Var.of_name "y")) } ;
+  [%expect{|
+    C(fun y -> (V(y)))
+  |}] ;
+  pp @@ E_closure { binder = Var.of_name "z" ; body = wrap (E_variable (Var.of_name "z")) } ;
+  [%expect{|
+    C(fun z -> (V(z)))
+  |}]
