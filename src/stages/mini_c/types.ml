@@ -22,7 +22,7 @@ type type_value =
   | T_contract of type_value
   | T_option of type_value
 
-and environment_element = string * type_value
+and environment_element = Var.t * type_value
 
 and environment = environment_element list
 
@@ -31,8 +31,8 @@ type environment_wrap = {
   post_environment : environment ;
 }
 
-type var_name = string
-type fun_name = string
+type var_name = Var.t
+type fun_name = Var.t
 
 type value =
   | D_unit
@@ -76,7 +76,7 @@ and expression' =
   | E_if_left of expression * ((var_name * type_value) * expression) * ((var_name * type_value) * expression)
   | E_let_in of ((var_name * type_value) * expression * expression)
   | E_sequence of (expression * expression)
-  | E_assignment of (string * [`Left | `Right] list * expression)
+  | E_assignment of (var_name * [`Left | `Right] list * expression)
   | E_while of (expression * expression)
 
 and expression = {
@@ -89,7 +89,7 @@ and assignment = var_name * expression
 and toplevel_statement = assignment * environment_wrap
 
 and anon_function = {
-  binder : string ;
+  binder : var_name ;
   body : expression ;
 }
 
