@@ -35,8 +35,11 @@ let sign_message (msg : expression) : string result =
   let open Tezos_crypto in
   let (_,raw_sk) = keys () in
   let (sk : Signature.secret_key) = Signature.Ed25519 raw_sk in
+  let%bind program,_ = get_program () in
   let%bind (msg : Tezos_utils.Michelson.michelson) =
-    Compile.Of_simplified.get_lambda_code ~state:(Typer.Solver.initial_state) msg in
+    let env = Ast_typed.program_environment program in
+    Ligo.Run.Of_simplified.compile_expression ~env ~state:(Typer.Solver.initial_state) msg
+  in
   let%bind msg' = Ligo.Run.Of_michelson.pack_message_lambda msg in
   let (signed_data:Signature.t) = Signature.sign sk msg' in
   let signature_str = Signature.to_b58check signed_data in
@@ -44,7 +47,6 @@ let sign_message (msg : expression) : string result =
 
 let init_storage threshold =
   let (pk,_) = str_keys () in
-  let _ = Format.printf "\n ----> %s\n" pk in
   ez_e_record [
     ("counter" , e_nat 0 ) ;
     ("threshold" , e_nat threshold) ;
@@ -58,9 +60,14 @@ let msg = e_lambda "arguments"
   (Some t_unit) (Some (t_list t_operation))
   (e_typed_list [] t_operation)
 
-let test_param () = 
-  let%bind signed_msg = sign_message msg in
-  let _ = Format.printf "\n----> %s\n" signed_msg in
+let test_param is_valid = 
+  let%bind signed_msg =
+    if is_valid then 
+      let%bind signature = sign_message msg in
+      ok @@ e_signature signature
+     else 
+      ok @@ e_signature "edsigtXomBKi5CTRf5cjATJWSyaRvhfYNHqSUGrn4SdbYRcGwQrUGjzEfQDTuqHhuA8b2d8NarZjz8TRf65WkpQmo423BtomS8Q"
+  in
   ok @@ e_constructor
     "CheckMessage"
     (ez_e_record [
@@ -68,8 +75,7 @@ let test_param () =
       ("message" , msg) ;
       ("signatures" ,
         e_typed_list [
-          e_signature signed_msg ;
-          (* e_signature "edsigtXomBKi5CTRf5cjATJWSyaRvhfYNHqSUGrn4SdbYRcGwQrUGjzEfQDTuqHhuA8b2d8NarZjz8TRf65WkpQmo423BtomS8Q" ; *)
+          signed_msg ;
         ] t_signature
       ) ;
     ])
@@ -85,7 +91,7 @@ let compile_main () =
 let not_enough_signature () =
   let%bind program,_ = get_program () in
   let exp_failwith = "Not enough signatures passed the check" in
-  let%bind test_params = test_param () in
+  let%bind test_params = test_param true in
   let%bind () = expect_string_failwith
     program "main" (e_pair test_params (init_storage 2)) exp_failwith in
   ok ()
@@ -94,7 +100,7 @@ let not_enough_signature () =
 let invalid_signature () =
   let%bind program,_ = get_program () in
   let exp_failwith = "Invalid signature" in
-  let%bind test_params = test_param () in
+  let%bind test_params = test_param false in
   let%bind () = expect_string_failwith
     program "main" (e_pair test_params (init_storage 1)) exp_failwith in
   ok ()
