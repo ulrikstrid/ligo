@@ -18,11 +18,6 @@ let compile_function : annotated_expression -> _ result = fun e ->
   let%bind expr = Of_mini_c.compile_function mini_c_expression in
   ok expr
 
-let compile_to_lambda_code : annotated_expression -> _ result = fun e ->
-  let%bind mini_c_expression = Transpiler.transpile_annotated_expression e in
-  let%bind expr = Of_mini_c.compile_to_lambda mini_c_expression in
-  ok expr
-
 (*
    val compile_value : annotated_expression -> Michelson.t result
    This requires writing a function

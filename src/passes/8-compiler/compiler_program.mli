@@ -25,7 +25,6 @@ val translate_program : program -> string -> compiled_program result
 val translate_contract : anon_function -> (type_value * type_value ) -> michelson result
 
 val translate_entry : anon_function -> type_value * type_value -> compiled_program result
-val translate_to_lambda_code : expression -> environment -> michelson result
 
 (*
 
