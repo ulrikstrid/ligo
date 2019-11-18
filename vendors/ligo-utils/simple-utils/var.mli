@@ -5,3 +5,6 @@ val fresh : ?name:string -> unit -> t
 val of_name : string -> t
 val name_of : t -> string
 val pp : Format.formatter -> t -> unit
+
+(* danger, do not use.. *)
+val reset_counter : unit -> unit

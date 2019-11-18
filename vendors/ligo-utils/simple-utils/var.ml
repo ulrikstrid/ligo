@@ -23,6 +23,8 @@ let compare v1 v2 =
 
 let global_counter = ref 0
 
+let reset_counter () = global_counter := 0
+
 let fresh ?name () =
   let name = Option.unopt ~default:"" name in
   let counter = incr global_counter ; Some !global_counter in

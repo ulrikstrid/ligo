@@ -223,6 +223,7 @@ let%expect_test _ =
   let unit = wrap (E_literal D_unit) in
 
   (* substituted var *)
+  Var.reset_counter () ;
   show_subst
     ~body:(var x)
     ~x:x
@@ -232,6 +233,7 @@ let%expect_test _ =
     L(unit) |}] ;
 
   (* other var *)
+  Var.reset_counter () ;
   show_subst
     ~body:(var y)
     ~x:x
@@ -242,6 +244,7 @@ let%expect_test _ =
   |}] ;
 
   (* closure shadowed *)
+  Var.reset_counter () ;
   show_subst
     ~body:(lam x (var x))
     ~x:x
@@ -252,6 +255,7 @@ let%expect_test _ =
   |}] ;
 
   (* closure not shadowed *)
+  Var.reset_counter () ;
   show_subst
     ~body:(lam y (var x))
     ~x:x
@@ -262,16 +266,18 @@ let%expect_test _ =
   |}] ;
 
   (* closure capture-avoidance *)
+  Var.reset_counter () ;
   show_subst
     ~body:(lam y (app (var x) (var y)))
     ~x:x
     ~expr:(wrap (E_variable y)) ;
   [%expect{|
     (C(fun y -> ((V(x))@(V(y)))))[x := V(y)] =
-    C(fun y#0 -> ((V(y))@(V(y#0))))
+    C(fun y#1 -> ((V(y))@(V(y#1))))
   |}] ;
 
   (* let-in shadowed (not in rhs) *)
+  Var.reset_counter () ;
   show_subst
     ~body:(wrap (E_let_in ((x, dummy_type), var x, var x)))
     ~x:x
@@ -282,6 +288,7 @@ let%expect_test _ =
   |}] ;
 
   (* let-in not shadowed *)
+  Var.reset_counter () ;
   show_subst
     ~body:(wrap (E_let_in ((y, dummy_type), var x, var x)))
     ~x:x
@@ -292,6 +299,7 @@ let%expect_test _ =
   |}] ;
 
   (* let-in capture avoidance *)
+  Var.reset_counter () ;
   show_subst
     ~body:(wrap (E_let_in ((y, dummy_type), var x,
                            app (var x) (var y))))
@@ -299,10 +307,11 @@ let%expect_test _ =
     ~expr:(var y) ;
   [%expect{|
     (let y = V(x) in ( (V(x))@(V(y)) ))[x := V(y)] =
-    let y#0 = V(y) in ( (V(y))@(V(y#0)) )
+    let y#1 = V(y) in ( (V(y))@(V(y#1)) )
   |}] ;
 
   (* iter shadowed *)
+  Var.reset_counter () ;
   show_subst
     ~body:(wrap (E_iterator ("ITER", ((x , dummy_type) , var x) , var x)))
     ~x:x
@@ -313,6 +322,7 @@ let%expect_test _ =
   |}] ;
 
   (* iter not shadowed *)
+  Var.reset_counter () ;
   show_subst
     ~body:(wrap (E_iterator ("ITER", ((y , dummy_type) , var x) , var x)))
     ~x:x
@@ -323,16 +333,18 @@ let%expect_test _ =
   |}] ;
 
   (* iter capture-avoiding *)
+  Var.reset_counter () ;
   show_subst
     ~body:(wrap (E_iterator ("ITER", ((y , dummy_type) , app (var x) (var y)), app (var x) (var y))))
     ~x:x
     ~expr:(var y) ;
   [%expect{|
     (for_ITER y of (V(x))@(V(y)) do ( (V(x))@(V(y)) ))[x := V(y)] =
-    for_ITER y#0 of (V(y))@(V(y)) do ( (V(y))@(V(y#0)) )
+    for_ITER y#1 of (V(y))@(V(y)) do ( (V(y))@(V(y#1)) )
   |}] ;
 
   (* if_cons shadowed 1 *)
+  Var.reset_counter () ;
   show_subst
     ~body:(wrap (E_if_cons (var x,
                             var x,
@@ -346,6 +358,7 @@ let%expect_test _ =
   |}] ;
 
   (* if_cons shadowed 2 *)
+  Var.reset_counter () ;
   show_subst
     ~body:(wrap (E_if_cons (var x,
                             var x,
@@ -359,6 +372,7 @@ let%expect_test _ =
   |}] ;
 
   (* if_cons not shadowed *)
+  Var.reset_counter () ;
   show_subst
     ~body:(wrap (E_if_cons (var x,
                             var x,
@@ -372,6 +386,7 @@ let%expect_test _ =
   |}] ;
 
   (* if_cons capture avoidance 1 *)
+  Var.reset_counter () ;
   show_subst
     ~body:(wrap (E_if_cons (var x,
                             var x,
@@ -381,10 +396,11 @@ let%expect_test _ =
     ~expr:(var y) ;
   [%expect{|
     (V(x) ?? V(x) : (y :: z) -> (V(x))@((V(y))@(V(z))))[x := V(y)] =
-    V(y) ?? V(y) : (y#0 :: z) -> (V(y))@((V(y#0))@(V(z)))
+    V(y) ?? V(y) : (y#1 :: z) -> (V(y))@((V(y#1))@(V(z)))
   |}] ;
 
   (* if_cons capture avoidance 2 *)
+  Var.reset_counter () ;
   show_subst
     ~body:(wrap (E_if_cons (var x,
                             var x,
@@ -394,16 +410,17 @@ let%expect_test _ =
     ~expr:(var z) ;
   [%expect{|
     (V(x) ?? V(x) : (y :: z) -> (V(x))@((V(y))@(V(z))))[x := V(z)] =
-    V(z) ?? V(z) : (y :: z#0) -> (V(z))@((V(y))@(V(z#0)))
+    V(z) ?? V(z) : (y :: z#1) -> (V(z))@((V(y))@(V(z#1)))
   |}] ;
 
-  (* TODO bug? *)
+  (* old bug *)
+  Var.reset_counter () ;
   let y0 = Var.fresh ~name:"y" () in
   show_subst
     ~body:(lam y (lam y0 (app (var x) (app (var y) (var y0)))))
     ~x:x
     ~expr:(var y) ;
   [%expect{|
-    (C(fun y -> (C(fun y#0 -> ((V(x))@((V(y))@(V(y#0))))))))[x := V(y)] =
-    C(fun y#0 -> (C(fun y#0 -> ((V(y))@((V(y#0))@(V(y#0)))))))
+    (C(fun y -> (C(fun y#1 -> ((V(x))@((V(y))@(V(y#1))))))))[x := V(y)] =
+    C(fun y#2 -> (C(fun y#1 -> ((V(y))@((V(y#2))@(V(y#1)))))))
   |}] ;
