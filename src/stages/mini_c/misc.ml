@@ -121,7 +121,7 @@ end
    Converts `expr` in `fun () -> expr`.
 *)
 let functionalize (body : expression) : expression =
-  let content = E_closure { binder = Var.fresh () ; body } in
+  let content = E_closure { binder = Var.fresh [] ; body } in
   let type_value = t_function t_unit body.type_value in
   { content ; type_value }
 
