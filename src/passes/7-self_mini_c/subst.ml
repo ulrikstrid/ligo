@@ -110,16 +110,14 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
     (* if x is shadowed, binder doesn't change *)
     if Var.equal x y
     then (y, expr')
+    (* else, if no capture, subst in binder *)
+    else if not (Free_variables.mem y (Free_variables.expression [] expr))
+    then (y, self expr')
+    (* else, avoid capture and subst in binder *)
     else
-      let fvs = Free_variables.expression [] expr in
-      (* else, if no capture, subst in binder *)
-      if not (Free_variables.mem y fvs)
-      then (y, self expr')
-      (* else, avoid capture and subst in binder *)
-      else
-        let fresh = Var.fresh ~name:(Var.name_of y) fvs in
-        let new_body = replace expr' y fresh in
-        (fresh, self new_body) in
+      let fresh = Var.fresh ~name:(Var.name_of y) () in
+      let new_body = replace expr' y fresh in
+      (fresh, self new_body) in
   (* hack to avoid reimplementing subst_binder for 2-ary binder in E_if_cons:
      intuitively, we substitute in \hd tl. expr' as if it were \hd. \tl. expr *)
   let subst_binder2 y z expr' =
@@ -400,7 +398,7 @@ let%expect_test _ =
   |}] ;
 
   (* TODO bug? *)
-  let y0 = Var.fresh ~name:"y" [] in
+  let y0 = Var.fresh ~name:"y" () in
   show_subst
     ~body:(lam y (lam y0 (app (var x) (app (var y) (var y0)))))
     ~x:x
