@@ -115,7 +115,7 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
     then (y, self expr')
     (* else, avoid capture and subst in binder *)
     else
-      let fresh = Var.fresh ~name:(Var.name_of y) () in
+      let fresh = Var.fresh_like y in
       let new_body = replace expr' y fresh in
       (fresh, self new_body) in
   (* hack to avoid reimplementing subst_binder for 2-ary binder in E_if_cons:
