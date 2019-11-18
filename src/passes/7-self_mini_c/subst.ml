@@ -221,6 +221,7 @@ let%expect_test _ =
 
   let var x = wrap (E_variable x) in
   let app f x = wrap (E_application (f, x)) in
+  let lam x u = wrap (E_closure { binder = x ; body = u }) in
   let unit = wrap (E_literal D_unit) in
 
   (* substituted var *)
@@ -244,7 +245,7 @@ let%expect_test _ =
 
   (* closure shadowed *)
   show_subst
-    ~body:(wrap (E_closure { binder = x ; body = var x }))
+    ~body:(lam x (var x))
     ~x:x
     ~expr:unit ;
   [%expect{|
@@ -254,7 +255,7 @@ let%expect_test _ =
 
   (* closure not shadowed *)
   show_subst
-    ~body:(wrap (E_closure { binder = y ; body = var x }))
+    ~body:(lam y (var x))
     ~x:x
     ~expr:unit ;
   [%expect{|
@@ -264,7 +265,7 @@ let%expect_test _ =
 
   (* closure capture-avoidance *)
   show_subst
-    ~body:(wrap (E_closure { binder = y ; body = app (var x) (var y) }))
+    ~body:(lam y (app (var x) (var y)))
     ~x:x
     ~expr:(wrap (E_variable y)) ;
   [%expect{|
@@ -396,4 +397,15 @@ let%expect_test _ =
   [%expect{|
     (V(x) ?? V(x) : (y :: z) -> (V(x))@((V(y))@(V(z))))[x := V(z)] =
     V(z) ?? V(z) : (y :: z#0) -> (V(z))@((V(y))@(V(z#0)))
+  |}] ;
+
+  (* TODO bug? *)
+  let y0 = Var.fresh ~name:"y" [] in
+  show_subst
+    ~body:(lam y (lam y0 (app (var x) (app (var y) (var y0)))))
+    ~x:x
+    ~expr:(var y) ;
+  [%expect{|
+    (C(fun y -> (C(fun y#0 -> ((V(x))@((V(y))@(V(y#0))))))))[x := V(y)] =
+    C(fun y#0 -> (C(fun y#0 -> ((V(y))@((V(y#0))@(V(y#0)))))))
   |}] ;
