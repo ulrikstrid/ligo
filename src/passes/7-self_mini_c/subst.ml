@@ -203,3 +203,197 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
       if Var.equal s x then raise Bad_argument ;
       return @@ E_assignment (s, lrl, exp')
   )
+
+let%expect_test _ =
+  let dummy_type = T_base Base_unit in
+  let wrap e = { content = e ; type_value = dummy_type } in
+
+  let show_subst ~body ~x ~expr =
+    Format.printf "(%a)[%a := %a] =@ %a"
+      PP.expression body
+      Var.pp x
+      PP.expression expr
+      PP.expression (subst_expression ~body ~x ~expr) in
+
+  let x = Var.of_name "x" in
+  let y = Var.of_name "y" in
+  let z = Var.of_name "z" in
+
+  let var x = wrap (E_variable x) in
+  let app f x = wrap (E_application (f, x)) in
+  let unit = wrap (E_literal D_unit) in
+
+  (* substituted var *)
+  show_subst
+    ~body:(var x)
+    ~x:x
+    ~expr:unit ;
+  [%expect{|
+    (V(x))[x := L(unit)] =
+    L(unit) |}] ;
+
+  (* other var *)
+  show_subst
+    ~body:(var y)
+    ~x:x
+    ~expr:unit ;
+  [%expect{|
+    (V(y))[x := L(unit)] =
+    V(y)
+  |}] ;
+
+  (* closure shadowed *)
+  show_subst
+    ~body:(wrap (E_closure { binder = x ; body = var x }))
+    ~x:x
+    ~expr:unit ;
+  [%expect{|
+    (C(fun x -> (V(x))))[x := L(unit)] =
+    C(fun x -> (V(x)))
+  |}] ;
+
+  (* closure not shadowed *)
+  show_subst
+    ~body:(wrap (E_closure { binder = y ; body = var x }))
+    ~x:x
+    ~expr:unit ;
+  [%expect{|
+    (C(fun y -> (V(x))))[x := L(unit)] =
+    C(fun y -> (L(unit)))
+  |}] ;
+
+  (* closure capture-avoidance *)
+  show_subst
+    ~body:(wrap (E_closure { binder = y ; body = app (var x) (var y) }))
+    ~x:x
+    ~expr:(wrap (E_variable y)) ;
+  [%expect{|
+    (C(fun y -> ((V(x))@(V(y)))))[x := V(y)] =
+    C(fun y#0 -> ((V(y))@(V(y#0))))
+  |}] ;
+
+  (* let-in shadowed (not in rhs) *)
+  show_subst
+    ~body:(wrap (E_let_in ((x, dummy_type), var x, var x)))
+    ~x:x
+    ~expr:unit ;
+  [%expect{|
+    (let x = V(x) in ( V(x) ))[x := L(unit)] =
+    let x = L(unit) in ( V(x) )
+  |}] ;
+
+  (* let-in not shadowed *)
+  show_subst
+    ~body:(wrap (E_let_in ((y, dummy_type), var x, var x)))
+    ~x:x
+    ~expr:unit ;
+  [%expect{|
+    (let y = V(x) in ( V(x) ))[x := L(unit)] =
+    let y = L(unit) in ( L(unit) )
+  |}] ;
+
+  (* let-in capture avoidance *)
+  show_subst
+    ~body:(wrap (E_let_in ((y, dummy_type), var x,
+                           app (var x) (var y))))
+    ~x:x
+    ~expr:(var y) ;
+  [%expect{|
+    (let y = V(x) in ( (V(x))@(V(y)) ))[x := V(y)] =
+    let y#0 = V(y) in ( (V(y))@(V(y#0)) )
+  |}] ;
+
+  (* iter shadowed *)
+  show_subst
+    ~body:(wrap (E_iterator ("ITER", ((x , dummy_type) , var x) , var x)))
+    ~x:x
+    ~expr:unit ;
+  [%expect{|
+    (for_ITER x of V(x) do ( V(x) ))[x := L(unit)] =
+    for_ITER x of L(unit) do ( V(x) )
+  |}] ;
+
+  (* iter not shadowed *)
+  show_subst
+    ~body:(wrap (E_iterator ("ITER", ((y , dummy_type) , var x) , var x)))
+    ~x:x
+    ~expr:unit ;
+  [%expect{|
+    (for_ITER y of V(x) do ( V(x) ))[x := L(unit)] =
+    for_ITER y of L(unit) do ( L(unit) )
+  |}] ;
+
+  (* iter capture-avoiding *)
+  show_subst
+    ~body:(wrap (E_iterator ("ITER", ((y , dummy_type) , app (var x) (var y)), app (var x) (var y))))
+    ~x:x
+    ~expr:(var y) ;
+  [%expect{|
+    (for_ITER y of (V(x))@(V(y)) do ( (V(x))@(V(y)) ))[x := V(y)] =
+    for_ITER y#0 of (V(y))@(V(y)) do ( (V(y))@(V(y#0)) )
+  |}] ;
+
+  (* if_cons shadowed 1 *)
+  show_subst
+    ~body:(wrap (E_if_cons (var x,
+                            var x,
+                            (((x, dummy_type), (y, dummy_type)),
+                             var x))))
+    ~x:x
+    ~expr:unit ;
+  [%expect{|
+    (V(x) ?? V(x) : (x :: y) -> V(x))[x := L(unit)] =
+    L(unit) ?? L(unit) : (x :: y) -> V(x)
+  |}] ;
+
+  (* if_cons shadowed 2 *)
+  show_subst
+    ~body:(wrap (E_if_cons (var x,
+                            var x,
+                            (((y, dummy_type), (x, dummy_type)),
+                             var x))))
+    ~x:x
+    ~expr:unit ;
+  [%expect{|
+    (V(x) ?? V(x) : (y :: x) -> V(x))[x := L(unit)] =
+    L(unit) ?? L(unit) : (y :: x) -> V(x)
+  |}] ;
+
+  (* if_cons not shadowed *)
+  show_subst
+    ~body:(wrap (E_if_cons (var x,
+                            var x,
+                            (((y, dummy_type), (z, dummy_type)),
+                             var x))))
+    ~x:x
+    ~expr:unit ;
+  [%expect{|
+    (V(x) ?? V(x) : (y :: z) -> V(x))[x := L(unit)] =
+    L(unit) ?? L(unit) : (y :: z) -> L(unit)
+  |}] ;
+
+  (* if_cons capture avoidance 1 *)
+  show_subst
+    ~body:(wrap (E_if_cons (var x,
+                            var x,
+                            (((y, dummy_type), (z, dummy_type)),
+                             app (var x) (app (var y) (var z))))))
+    ~x:x
+    ~expr:(var y) ;
+  [%expect{|
+    (V(x) ?? V(x) : (y :: z) -> (V(x))@((V(y))@(V(z))))[x := V(y)] =
+    V(y) ?? V(y) : (y#0 :: z) -> (V(y))@((V(y#0))@(V(z)))
+  |}] ;
+
+  (* if_cons capture avoidance 2 *)
+  show_subst
+    ~body:(wrap (E_if_cons (var x,
+                            var x,
+                            (((y, dummy_type), (z, dummy_type)),
+                             app (var x) (app (var y) (var z))))))
+    ~x:x
+    ~expr:(var z) ;
+  [%expect{|
+    (V(x) ?? V(x) : (y :: z) -> (V(x))@((V(y))@(V(z))))[x := V(z)] =
+    V(z) ?? V(z) : (y :: z#0) -> (V(z))@((V(y))@(V(z#0)))
+  |}] ;
