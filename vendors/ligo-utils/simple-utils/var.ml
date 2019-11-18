@@ -6,7 +6,7 @@ type var = {
 let pp ppf v =
   match v.counter with
   | None -> Format.fprintf ppf "%s" v.name
-  | Some i -> Format.fprintf ppf "__%s#%d" v.name i
+  | Some i -> Format.fprintf ppf "%s#%d" v.name i
 
 module Int = X_int
 module Option = X_option
