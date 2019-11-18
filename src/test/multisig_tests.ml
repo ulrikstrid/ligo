@@ -45,22 +45,26 @@ let sign_message (msg : expression) : string result =
   let signature_str = Signature.to_b58check signed_data in
   ok signature_str
 
-let init_storage threshold =
-  let (pk,_) = str_keys () in
+let init_storage is_valid threshold counter =
+  let keys = 
+    if is_valid then
+      e_key @@ fst @@ str_keys ()
+    else
+      e_key "edpkteDwHwoNPB18tKToFKeSCykvr1ExnoMV5nawTJy9Y9nLTfQ541" in
   ez_e_record [
-    ("counter" , e_nat 0 ) ;
+    ("counter" , e_nat counter ) ;
     ("threshold" , e_nat threshold) ;
-    ("auth" , e_typed_list [
-      (* e_key "edpkteDwHwoNPB18tKToFKeSCykvr1ExnoMV5nawTJy9Y9nLTfQ541"; *)
-      e_key pk
-      ] t_key ) ;
+    ("auth" , e_typed_list [ keys ] t_key ) ;
   ]
 
 let msg = e_lambda "arguments"
   (Some t_unit) (Some (t_list t_operation))
   (e_typed_list [] t_operation)
 
-let test_param is_valid = 
+let expected_return threshold counter =
+  e_pair (e_typed_list [] t_operation) (init_storage true threshold counter)
+
+let test_param is_valid counter = 
   let%bind signed_msg =
     if is_valid then 
       let%bind signature = sign_message msg in
@@ -71,13 +75,9 @@ let test_param is_valid =
   ok @@ e_constructor
     "CheckMessage"
     (ez_e_record [
-      ("counter" , e_nat 0 ) ;
+      ("counter" , e_nat counter ) ;
       ("message" , msg) ;
-      ("signatures" ,
-        e_typed_list [
-          signed_msg ;
-        ] t_signature
-      ) ;
+      ("signatures" , e_typed_list [ signed_msg ; ] t_signature ) ;
     ])
 
 let compile_main () = 
@@ -91,22 +91,44 @@ let compile_main () =
 let not_enough_signature () =
   let%bind program,_ = get_program () in
   let exp_failwith = "Not enough signatures passed the check" in
-  let%bind test_params = test_param true in
+  let%bind test_params = test_param true 0 in
   let%bind () = expect_string_failwith
-    program "main" (e_pair test_params (init_storage 2)) exp_failwith in
+    program "main" (e_pair test_params (init_storage true 2 0)) exp_failwith in
+  ok ()
+
+(* Provide one valid signature when the threshold is one with unmatching counters *)
+let unmatching_counters () =
+  let%bind program,_ = get_program () in
+  let exp_failwith = "Counters does not match" in
+  let%bind test_params = test_param true 1 in
+  let%bind () = expect_string_failwith
+    program "main" (e_pair test_params (init_storage true 1 0)) exp_failwith in
   ok ()
 
 (* Provide one invalid signature when the threshold is one *)
 let invalid_signature () =
   let%bind program,_ = get_program () in
   let exp_failwith = "Invalid signature" in
-  let%bind test_params = test_param false in
+  let%bind test_params = test_param false 0 in
   let%bind () = expect_string_failwith
-    program "main" (e_pair test_params (init_storage 1)) exp_failwith in
+    program "main" (e_pair test_params (init_storage true 1 0)) exp_failwith in
+  ok ()
+
+(* Provide one valid signature when the threshold is one *)
+let valid_signature () =
+  let%bind program,_ = get_program () in
+  let%bind () = expect_eq_n_trace_aux [0;1;2] program "main"
+      (fun n ->
+        let%bind params = test_param true n in
+        ok @@ e_pair params (init_storage true 1 n)
+      )
+      (fun n -> ok @@ expected_return 1 (n+1)) in
   ok ()
 
 let main = test_suite "Multisig" [
     test "compile"              compile_main         ;
     test "not_enough_signature" not_enough_signature ;
+    test "unmatching_counters"  unmatching_counters  ;
     test "invalid_signature"    invalid_signature    ;
+    test "valid_signature"      valid_signature      ;
   ]
