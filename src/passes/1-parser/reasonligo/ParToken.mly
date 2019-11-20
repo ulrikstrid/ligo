@@ -50,13 +50,10 @@
 %token <Region.t> False
 %token <Region.t> If
 %token <Region.t> Let
-%token <Region.t> List
-%token <Region.t> Map
 %token <Region.t> Switch
 %token <Region.t> Mod
 %token <Region.t> Not
 %token <Region.t> Or
-%token <Region.t> Set
 %token <Region.t> True
 %token <Region.t> Type
 

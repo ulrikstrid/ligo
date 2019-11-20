@@ -170,6 +170,9 @@ type_expr:
 | sum_type                                               {    TSum $1 }
 | record_type                                            { TRecord $1 }
 
+cartesian_parens:
+  core_type { $1 }
+
 cartesian:
   fun_type COMMA nsepseq(fun_type,COMMA) {
     let value  = Utils.nsepseq_cons $1 $2 $3 in
@@ -199,8 +202,8 @@ core_type:
     in 
     TVar {region; value}
   }
-| type_constr LPAR core_type RPAR {       
-    let arg_val = $3 in
+| type_constr LPAR nsepseq(core_type, COMMA) RPAR {       
+    (* let arg_val = $3 in
     let constr = $1 in
     let start = $1.region in 
     let stop = $4 in 
@@ -208,7 +211,8 @@ core_type:
     let lpar, rpar = $2, $4 in
     let value = {lpar; inside=arg_val,[]; rpar} in
     let arg = {value; region = start} in
-    TApp Region.{value = constr, arg; region}
+    TApp Region.{value = constr, arg; region} *)
+    TVar {value = "aaa"; region = Region.ghost }
   }  
   | par(type_expr) {
       TPar $1 
@@ -216,9 +220,6 @@ core_type:
 
 type_constr:
   type_name { $1                               }
-| Set       { Region.{value="set";  region=$1} }
-| Map       { Region.{value="map";  region=$1} }
-| List      { Region.{value="list"; region=$1} }
 
 sum_type:
   VBAR nsepseq(variant,VBAR) { 
@@ -248,7 +249,7 @@ record_type:
   }
 
 type_expr_field:
-  par(cartesian)                                  {   $1.value.inside }
+  cartesian_parens                                             {   $1 }
 | sum_type                                               {    TSum $1 }
 | record_type                                            { TRecord $1 }
 
@@ -476,11 +477,11 @@ base_cond__open(x):
 base_cond:
   base_cond__open(base_cond)                                     { $1 }
 
-type_expr_simple_args:
-  LPAR nsepseq(Ident, COMMA) RPAR { () }
+ type_expr_simple_args:
+  LPAR nsepseq(Ident, COMMA) RPAR { () } 
 
 type_expr_simple: 
-  core_expr type_expr_simple_args? { () }
+  core_expr_2 type_expr_simple_args? { () }
   | LPAR nsepseq(type_expr_simple, COMMA) RPAR { () }
   | LPAR type_expr_simple EG type_expr_simple RPAR { () }
 
@@ -488,10 +489,12 @@ type_annotation_simple:
   COLON type_expr_simple { $1 }
 
 
-(* TODO: add type annotation *)
 fun_expr:
-  par(tuple(expr)) type_annotation_simple? es6_func? { 
-    match $3 with 
+  disj_expr_level es6_func {
+    $1
+  }
+  (* par(tuple(expr)) type_annotation_simple? es6_func? { 
+    match $3 with
     | Some (arrow, body) ->   
       let kwd_fun = Region.ghost in
       let bindings = $1.value.inside in
@@ -546,11 +549,11 @@ fun_expr:
     body ;
   } in
   EFun { region; value=f }  
-}
+} *)
 
 
 base_expr(right_expr):
-  let_expr(right_expr)
+ let_expr(right_expr)
 | disj_expr_level                                        {        $1 }
 | fun_expr                                               {        $1 }
 
@@ -668,6 +671,10 @@ let_expr(right_expr):
 disj_expr_level:
   disj_expr                               { ELogic (BoolExpr (Or $1)) }
 | conj_expr_level                                                { $1 }
+| par(tuple(disj_expr_level)) type_annotation_simple? {
+    let region = $1.region
+    in ETuple {value=$1.value.inside; region}
+  }
 
 bin_op(arg1,op,arg2):
   arg1 op arg2                            { 
@@ -784,7 +791,7 @@ call_expr_level:
 | core_expr                                                      { $1 }
 
 constr_expr:
-  Constr core_expr? { 
+  Constr core_expr_in? { 
     let start = $1.region in
     let stop = match $2 with 
     | Some c -> expr_to_region c
@@ -795,7 +802,7 @@ constr_expr:
   }
 
 call_expr:
-  core_expr LPAR nsepseq(core_expr, COMMA) RPAR {
+  core_expr_in LPAR nsepseq(expr, COMMA) RPAR {
     let start = expr_to_region $1 in
     let stop = $4 in
     let region = cover start stop in
@@ -803,7 +810,7 @@ call_expr:
     let tl = (List.map (fun (_, a) -> a) tl) in
     { value = $1, (hd, tl); region }
   }
-  | core_expr unit {
+  | core_expr_in unit {
     let start = expr_to_region $1 in
     let stop = $2.region in
     let region = cover start stop in
@@ -825,6 +832,14 @@ core_expr_2:
     EAnnot {$1 with value=$1.value.inside} } *)
 
 core_expr:
+  core_expr_in type_annotation_simple? {    
+    $1 
+  }
+  | core_expr_in COLON sequence { 
+    $1
+  }
+
+core_expr_in:
   Int                                               { EArith (Int $1) }
 | Mtz                                             { EArith (Mutez $1) }
 | Nat                                               { EArith (Nat $1) }
@@ -835,8 +850,9 @@ core_expr:
 | False                               {  ELogic (BoolExpr (False $1)) }
 | True                                {  ELogic (BoolExpr (True $1))  }
 | list(expr)                                   { EList (EListComp $1) }
-(* | par(expr)                                              {    EPar $1 } *)
-| sequence                                               {    ESeq $1 }
+| par(expr)                                              {    EPar $1 }
+| sequence                                               {    EVar {value = "k"; region = Region.ghost} }
+(* | sequence_or_record                                               { EVar {value = "a"; region = Region.ghost} } *)
 | record_expr                                            { ERecord $1 }
 (* | Ident type_annotation_simple?  {
     failwith "f1"  
@@ -906,7 +922,7 @@ projection:
     }
   } *)
 
-record_expr:
+ record_expr:
   LBRACE sep_or_term_list(field_assignment,COMMA) RBRACE {    
     let ne_elements, terminator = $2 in
     let region = cover $1 $3 in
@@ -933,14 +949,33 @@ field_assignment:
       region
     } 
   }
+(* 
+inn_comma:
+  expr COMMA inn_comma {}
+  | expr COMMA? {}
+
+inn_semi:
+  expr SEMI inn_semi {}
+  | expr SEMI? {}
+
+inn: 
+  expr SEMI inn_semi {}
+  | expr COMMA inn_comma {}
+
+sequence_or_record:
+  LBRACE inn RBRACE {
+    ()
+    (* let ne_elements, terminator = $2 in
+    let value  = {
+      compound = BeginEnd ($1,$3);
+    elements = Some ne_elements;
+      terminator} in
+    let region = cover $1 $3
+    in ESeq {value; region} *)
+  } *)
+
 
 sequence:
   LBRACE sep_or_term_list(expr,SEMI) RBRACE {
-    let ne_elements, terminator = $2 in
-    let value  = {
-      compound = BeginEnd ($1,$3);
-      elements = Some ne_elements;
-      terminator} in
-    let region = cover $1 $3
-    in {value; region}
+   ()
   }

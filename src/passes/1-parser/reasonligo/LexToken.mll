@@ -76,13 +76,10 @@ type t =
 | False of Region.t
 | If of Region.t
 | Let of Region.t
-| List of Region.t
-| Map of Region.t
 | Switch of Region.t
 | Mod of Region.t
 | Not of Region.t
 | Or of Region.t
-| Set of Region.t
 | True of Region.t
 | Type of Region.t
 
@@ -148,13 +145,10 @@ let proj_token = function
   | False region -> region, "False"
   | If region -> region, "If"
   | Let region -> region, "Let"
-  | List region -> region, "List"
-  | Map region -> region, "Map"
   | Switch region -> region, "Switch"
   | Mod region -> region, "Mod"
   | Not region -> region, "Not"
   | Or region -> region, "Or"
-  | Set region -> region, "Set"
   | True region -> region, "True"
   | Type region -> region, "Type"
   | EOF region -> region, "EOF"
@@ -199,12 +193,9 @@ let to_lexeme = function
   | False _ -> "false"
   | If _ -> "if"
   | Let _ -> "let"
-  | List _ -> "list"
-  | Map _ -> "map"  
   | Mod _ -> "mod"
   | Not _ -> "not"
   | Or _ -> "or"
-  | Set _ -> "set"
   | Switch _ -> "switch"
   | True _ -> "true"
   | Type _ -> "type"
@@ -232,13 +223,10 @@ let keywords = [
   (fun reg -> False reg);
   (fun reg -> If    reg);
   (fun reg -> Let   reg);
-  (fun reg -> List  reg);
-  (fun reg -> Map   reg);
   (fun reg -> Switch reg);
   (fun reg -> Mod   reg);
   (fun reg -> Not   reg);
   (fun reg -> Or    reg);
-  (fun reg -> Set   reg);
   (fun reg -> True  reg);
   (fun reg -> Type  reg);  
 ]
@@ -455,13 +443,10 @@ let is_kwd = function
   | False _
   | If _
   | Let _
-  | List _
-  | Map _
   | Switch _
   | Mod _
   | Not _
   | Or _
-  | Set _
   | True _
   | Type _
   | _ -> false

@@ -94,13 +94,10 @@ type t =
 | False of Region.t
 | If of Region.t
 | Let of Region.t
-| List of Region.t
-| Map of Region.t
 | Switch of Region.t
 | Mod of Region.t
 | Not of Region.t
 | Or of Region.t
-| Set of Region.t
 | True of Region.t
 | Type of Region.t
 
