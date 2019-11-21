@@ -42,6 +42,7 @@ module Free_variables = struct
     | E_application (f, x) -> unions @@ [ self f ; self x ]
     | E_variable n -> var_name b n
     | E_make_empty_map _ -> empty
+    | E_make_empty_big_map _ -> empty
     | E_make_empty_list _ -> empty
     | E_make_empty_set _ -> empty
     | E_make_none _ -> empty
@@ -237,6 +238,8 @@ let rec expression_to_value (exp: expression) : value result =
               | _ -> failwith "UPDATE second parameter is not an option"
           end
         | E_make_empty_map _ ->
+          ok @@ []
+        | E_make_empty_big_map _ ->
           ok @@ []
         | _ -> failwith "Ill-constructed map"
       in
