@@ -174,7 +174,7 @@ let to_lexeme = function
   | DOTDOTDOT _ -> "..."
   | WILD _ -> "_"
   | EQ _ -> "="
-  | NE _ -> "<>"
+  | NE _ -> "!="
   | LT _ -> "<"
   | GT _ -> ">"
   | LE _ -> "=<"
@@ -394,7 +394,7 @@ let mk_sym lexeme region =
   | "..."->     Ok (DOTDOTDOT region)
   | "_"   ->    Ok (WILD      region)
   | "="  ->     Ok (EQ        region)
-  | "<>" ->     Ok (NE        region)
+  | "!=" ->     Ok (NE        region)
   | "<"   ->    Ok (LT        region)
   | ">"   ->    Ok (GT        region)
   | "=<"   ->   Ok (LE        region)

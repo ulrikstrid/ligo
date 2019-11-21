@@ -8,6 +8,21 @@ module AST = Parser_ligodity.AST
 open AST
 
 (* END HEADER *)
+
+type 'a sequence_elements = {
+  selements : ('a, semi) Utils.nsepseq;
+  sterminator  : semi option
+}
+
+type 'a record_elements = {
+  relements : (field_assign reg, semi) Utils.nsepseq;
+  rterminator  : semi option
+}
+
+type 'a sequence_or_record =
+  PaSequence of 'a sequence_elements
+| PaRecord of 'a record_elements
+| PaSingleExpr of expr
 %}
 
 (* See [ParToken.mly] for the definition of tokens. *)
@@ -278,6 +293,7 @@ es6_func:
 
 let_binding:
  | Ident type_annotation? EQ expr {
+   print_endline ("here:" ^ $1.value);
    let pattern = PVar $1 in
    let start = pattern_to_region pattern in
    let stop = expr_to_region $4 in
@@ -464,7 +480,6 @@ tail:
 interactive_expr:
   expr EOF                                                       { $1 }
 
-
 expr:
   base_cond__open(expr)                                   {       $1 }
 | switch_expr(base_cond)                                  { ECase $1 }
@@ -477,21 +492,43 @@ base_cond__open(x):
 base_cond:
   base_cond__open(base_cond)                                     { $1 }
 
- type_expr_simple_args:
-  LPAR nsepseq(Ident, COMMA) RPAR { () } 
+type_expr_simple_args:
+  LPAR nsepseq(type_expr_simple, COMMA) RPAR { 
+    $2
+   } 
 
 type_expr_simple: 
-  core_expr_2 type_expr_simple_args? { () }
-  | LPAR nsepseq(type_expr_simple, COMMA) RPAR { () }
-  | LPAR type_expr_simple EG type_expr_simple RPAR { () }
+  core_expr_2 type_expr_simple_args? { 
+     (* let x = $2 in
+    let t1 = match $1 with 
+    | EVar i -> i
+    | _ -> failwith "Not supported yet"
+    in
+    match x with 
+      Some s -> (
+        (* let start = expr_to_region $1 in *)
+        (* let stop = s.region in *)
+        (* let region = cover start stop in *)
+        TApp {value = t1, {value = s; region = Region.ghost}; region = Region.ghost}
+      )
+    | None -> TVar t1  *)
+    failwith "no"
+  }
+  | LPAR nsepseq(type_expr_simple, COMMA) RPAR {  
+    TProd {value = $2; region = cover $1 $3}
+  }
+  | LPAR type_expr_simple EG type_expr_simple RPAR { 
+    TFun {value = $2, $3, $4; region = cover $1 $5}
+   }
 
 type_annotation_simple:
-  COLON type_expr_simple { $1 }
-
+  COLON type_expr_simple { $2 }
 
 fun_expr:
   disj_expr_level es6_func {
-    $1
+    match $1 with 
+    | ETuple _ -> failwith "tuple yes"
+    | _ -> failwith "Not supported"
   }
   (* par(tuple(expr)) type_annotation_simple? es6_func? { 
     match $3 with
@@ -786,8 +823,8 @@ unary_expr_level:
 | call_expr_level                        {                         $1 }
 
 call_expr_level:
-  call_expr                                              {   ECall $1 }
-| constr_expr                                            { EConstr $1 }
+  call_expr type_annotation_simple?                                              {   ECall $1 }
+| constr_expr type_annotation_simple?                                            { EConstr $1 }
 | core_expr                                                      { $1 }
 
 constr_expr:
@@ -828,14 +865,14 @@ core_expr_2:
 | False                               {  ELogic (BoolExpr (False $1)) }
 | True                                {  ELogic (BoolExpr (True $1))  }
 | list(expr)                                   { EList (EListComp $1) }
-(* | par(expr COLON type_expr {$1,$3}) {
-    EAnnot {$1 with value=$1.value.inside} } *)
 
 core_expr:
   core_expr_in type_annotation_simple? {    
-    $1 
+    match $2 with
+    | Some t -> EAnnot { value = $1, t; region = Region.ghost }     
+    | None -> $1
   }
-  | core_expr_in COLON sequence { 
+  | core_expr_in COLON record_expr { 
     $1
   }
 
@@ -851,13 +888,7 @@ core_expr_in:
 | True                                {  ELogic (BoolExpr (True $1))  }
 | list(expr)                                   { EList (EListComp $1) }
 | par(expr)                                              {    EPar $1 }
-| sequence                                               {    EVar {value = "k"; region = Region.ghost} }
-(* | sequence_or_record                                               { EVar {value = "a"; region = Region.ghost} } *)
-| record_expr                                            { ERecord $1 }
-(* | Ident type_annotation_simple?  {
-    failwith "f1"  
-    (* EAnnot {$1 with value=$1.value.inside}  *)
-  } *)
+| sequence_or_record                                          {    $1 }
 
 module_field:
   module_name DOT field_name { 
@@ -922,7 +953,64 @@ projection:
     }
   } *)
 
- record_expr:
+inn: 
+  expr SEMI sep_or_term_list(expr,SEMI) {
+    let (e, _region) = $3 in
+    let e = Utils.nsepseq_cons $1 $2 e in
+    PaSequence { selements = e; sterminator = None}
+  }
+   | expr COMMA sep_or_term_list(field_assignment,COMMA) {
+    let expr = (match $1 with 
+    | EAnnot ({value = ((EVar e), _t); region}) -> (
+      let field_assignment = {
+        value = {
+          field_name = e;
+          assignment = Region.ghost;
+          field_expr = EVar e
+        };
+        region
+      }
+      in 
+      field_assignment      
+    )
+    | _ -> failwith "Parser error")
+    in
+    let (e, _) = $3 in
+    let e = Utils.nsepseq_cons expr $2 e in
+    PaRecord { relements = e; rterminator = None}
+  } 
+  | expr SEMI? {
+    PaSingleExpr $1
+  }
+
+sequence_or_record:
+  LBRACE inn RBRACE {
+    let compound = Braces($1, $3) in
+    let region = cover $1 $3 in
+    match $2 with 
+    | PaSequence s -> (
+      let value: expr injection = {
+        compound;
+        elements = Some s.selements;
+        terminator = s.sterminator;
+      }
+      in
+      ESeq {value; region}
+    )
+    | PaRecord r -> (
+      let value: field_assign reg ne_injection = {
+        compound;
+        ne_elements = r.relements;
+        terminator = r.rterminator;
+      }
+      in ERecord {value; region}
+    )
+    | PaSingleExpr e -> (
+      e
+    )
+  }
+
+record_expr:
   LBRACE sep_or_term_list(field_assignment,COMMA) RBRACE {    
     let ne_elements, terminator = $2 in
     let region = cover $1 $3 in
@@ -948,34 +1036,4 @@ field_assignment:
       };
       region
     } 
-  }
-(* 
-inn_comma:
-  expr COMMA inn_comma {}
-  | expr COMMA? {}
-
-inn_semi:
-  expr SEMI inn_semi {}
-  | expr SEMI? {}
-
-inn: 
-  expr SEMI inn_semi {}
-  | expr COMMA inn_comma {}
-
-sequence_or_record:
-  LBRACE inn RBRACE {
-    ()
-    (* let ne_elements, terminator = $2 in
-    let value  = {
-      compound = BeginEnd ($1,$3);
-    elements = Some ne_elements;
-      terminator} in
-    let region = cover $1 $3
-    in ESeq {value; region} *)
-  } *)
-
-
-sequence:
-  LBRACE sep_or_term_list(expr,SEMI) RBRACE {
-   ()
   }
