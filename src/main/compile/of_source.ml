@@ -6,10 +6,6 @@ let parse_file_program source_filename syntax =
   let%bind simplified = parsify syntax source_filename in
   ok simplified
 
-let parse_string_program source_filename syntax =
-  let%bind simplified = parsify_string syntax source_filename in
-  ok simplified
-
 let compile_file_entry : string -> string -> s_syntax -> _ result =
   fun source_filename entry_point syntax ->
   let%bind simplified = parse_file_program source_filename syntax in
@@ -18,12 +14,6 @@ let compile_file_entry : string -> string -> s_syntax -> _ result =
 let compile_file_contract_entry : string -> string -> s_syntax -> _ result =
   fun source_filename entry_point syntax ->
   let%bind simplified = parse_file_program source_filename syntax in
-  let%bind compiled_contract = Of_simplified.compile_contract_entry simplified entry_point in
-  ok compiled_contract
-
-let compile_string_contract_entry : string -> string -> v_syntax -> _ result =
-  fun input entry_point syntax ->
-  let%bind simplified = parse_string_program input syntax in
   let%bind compiled_contract = Of_simplified.compile_contract_entry simplified entry_point in
   ok compiled_contract
 

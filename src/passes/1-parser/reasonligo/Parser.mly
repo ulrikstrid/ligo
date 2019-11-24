@@ -303,16 +303,6 @@ let_binding:
    let start = pattern_to_region pattern in
    let stop = expr_to_region $4 in
    let region = cover start stop in
-   
-   (* type        'a    nseq = 'a * 'a list *)
-   (* pattern nseq *)
-   
-(* pattern, pattern list *)
-
-(*  Ident nseq(sub_irrefutable) type_annotation? EQ expr {
-    let binders = Utils.nseq_cons (PVar $1) $2 in
-    {binders; lhs_type=$3; eq=$4; let_rhs=$5} *)
-
    let result = match $4 with 
    | EFun f ->
     ({binders = Utils.nseq_cons pattern f.value.binders; lhs_type=$2; eq=f.value.arrow; let_rhs=f.value.body}, region)
@@ -534,7 +524,7 @@ type_expr_simple:
           ) 
         in
         {value = path; region }
-    | _ -> failwith "Not supported 2"
+    | _ -> failwith "Not supported"
     in
     match args with 
       Some (lpar, args, rpar) -> (
@@ -708,6 +698,7 @@ let_expr(right_expr):
   Let let_binding SEMI right_expr {
     let kwd_let = $1 in 
     let (binding: let_binding), _ = $2 in
+
     (* necessary as multiple patterns are not yet supported *)
     let binding = {
       binding with 
@@ -1003,7 +994,7 @@ inn:
       in 
       field_assignment      
     )
-    | _ -> failwith "Parser error")
+    | _ -> failwith "Not supported")
     in
     let (e, _) = $3 in
     let e = Utils.nsepseq_cons expr $2 e in

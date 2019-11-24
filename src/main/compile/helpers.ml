@@ -32,15 +32,6 @@ let parsify_pascaligo = fun source ->
     Simplify.Pascaligo.simpl_program raw in
   ok simplified
 
-let parsify_string_pascaligo = fun source ->
-  let%bind raw =
-    trace (simple_error "parsing") @@
-    Parser.Pascaligo.parse_string source in
-  let%bind simplified =
-    trace (simple_error "simplifying") @@
-    Simplify.Pascaligo.simpl_program raw in
-  ok simplified
-
 let parsify_expression_pascaligo = fun source ->
   let%bind raw =
     trace (simple_error "parsing expression") @@
@@ -54,15 +45,6 @@ let parsify_ligodity = fun source ->
   let%bind raw =
     trace (simple_error "parsing") @@
     Parser.Ligodity.parse_file source in
-  let%bind simplified =
-    trace (simple_error "simplifying") @@
-    Simplify.Ligodity.simpl_program raw in
-  ok simplified
-
-  let parsify_string_ligodity = fun source ->
-  let%bind raw =
-    trace (simple_error "parsing") @@
-    Parser.Ligodity.parse_string source in
   let%bind simplified =
     trace (simple_error "simplifying") @@
     Simplify.Ligodity.simpl_program raw in
@@ -86,7 +68,7 @@ let parsify_reasonligo = fun source ->
     Simplify.Ligodity.simpl_program raw in
   ok simplified
 
-  let parsify_string_reasonligo = fun source ->
+let parsify_string_reasonligo = fun source ->
   let%bind raw =
     trace (simple_error "parsing") @@
     Parser.Reasonligo.parse_string source in
@@ -109,16 +91,6 @@ let parsify = fun (syntax : v_syntax) source_filename ->
     | Pascaligo -> ok parsify_pascaligo
     | Cameligo -> ok parsify_ligodity
     | Reasonligo -> ok parsify_reasonligo
-  in
-  let%bind parsified = parsify source_filename in
-  let%bind applied = Self_ast_simplified.all_program parsified in
-  ok applied
-
-let parsify_string = fun (syntax : v_syntax) source_filename ->
-  let%bind parsify = match syntax with
-    | Pascaligo -> ok parsify_string_pascaligo
-    | Cameligo -> ok parsify_string_ligodity
-    | Reasonligo -> ok parsify_string_reasonligo
   in
   let%bind parsified = parsify source_filename in
   let%bind applied = Self_ast_simplified.all_program parsified in
