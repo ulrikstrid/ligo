@@ -56,6 +56,26 @@ let complex_function () : unit result =
   let make_expect = fun n -> (3 * n + 2) in
   expect_eq_n_int program "main" make_expect
 
+let anon_function () : unit result =
+  let%bind program = type_file "./contracts/function-anon.ligo" in
+  let%bind () =
+    expect_eq_evaluate program "x" (e_int 42)
+  in
+  ok ()
+
+let application () : unit result =
+  let%bind program = type_file "./contracts/application.ligo" in
+  let%bind () =
+    let expected = e_int 42 in
+    expect_eq_evaluate program "x" expected in
+  let%bind () =
+    let expected = e_int 42 in
+    expect_eq_evaluate program "y" expected in
+  let%bind () =
+    let expected = e_int 42 in
+    expect_eq_evaluate program "z" expected in
+  ok ()
+
 let variant () : unit result =
   let%bind program = type_file "./contracts/variant.ligo" in
   let%bind () =
@@ -118,6 +138,15 @@ let closure () : unit result =
   in
   ok ()
 
+let closure_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/closure.mligo" in
+  let%bind _ =
+    let input = e_int 0 in
+    let expected = e_int 25 in
+    expect_eq program "test" input expected
+  in
+  ok ()
+
 let shadow () : unit result =
   let%bind program = type_file "./contracts/shadow.ligo" in
   let make_expect = fun _ -> 0 in
@@ -132,6 +161,17 @@ let higher_order () : unit result =
   let%bind _ = expect_eq_n_int program "foobar4" make_expect in
   let%bind _ = expect_eq_n_int program "foobar5" make_expect in
   ok ()
+
+let higher_order_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/high-order.mligo" in
+  let make_expect = fun n -> n in
+  let%bind _ = expect_eq_n_int program "foobar" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar2" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar3" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar4" make_expect in
+  let%bind _ = expect_eq_n_int program "foobar5" make_expect in
+  ok ()
+
 
 let shared_function () : unit result =
   let%bind program = type_file "./contracts/function-shared.ligo" in
@@ -669,7 +709,7 @@ let big_map_ type_f path : unit result =
   let%bind () =
     let make_input = fun n -> ez [(23, n) ; (42, 4)] in
     let make_expected = e_int in
-    expect_eq_n ~input_to_value:true program "gf" make_input make_expected
+    expect_eq_n program "gf" make_input make_expected
   in
   let%bind () =
     let make_input = fun n ->
@@ -677,17 +717,17 @@ let big_map_ type_f path : unit result =
       e_tuple [(e_int n) ; m]
     in
     let make_expected = fun n -> ez [(23 , n) ; (42 , 0)] in
-    expect_eq_n_pos_small ?input_to_value:(Some true) program "set_" make_input make_expected
+    expect_eq_n_pos_small program "set_" make_input make_expected
   in
   let%bind () =
     let make_input = fun n -> ez [(23, n) ; (42, 4)] in
     let make_expected = fun _ -> e_some @@ e_int 4 in
-    expect_eq_n ?input_to_value:(Some true) program "get" make_input make_expected
+    expect_eq_n program "get" make_input make_expected
   in
   let%bind () =
     let input = ez [(23, 23) ; (42, 42)] in
     let expected = ez [23, 23] in
-    expect_eq ?input_to_value:(Some true) program "rm" input expected
+    expect_eq program "rm" input expected
   in
   ok ()
 
@@ -724,6 +764,11 @@ let list () : unit result =
   let%bind () =
     let expected = ez [144 ; 51 ; 42 ; 120 ; 421] in
     expect_eq_evaluate program "bl" expected
+  in
+  let%bind () =
+    expect_eq program "fold_op"
+      (e_list [e_int 2 ; e_int 4 ; e_int 7])
+      (e_int 23)
   in
   let%bind () =
     expect_eq program "iter_op"
@@ -816,9 +861,17 @@ let loop () : unit result =
   let%bind () =
     let expected = (e_int 20) in
     expect_eq program "for_collection_comp_with_acc" input expected in
-  (* let%bind () =
-    let expected = e_pair (e_int 6) (e_string "123123123") in
-    expect_eq program "nested_for_collection" input expected in *)
+  let%bind () =
+    let expected = e_pair (e_int 24)
+      (e_string "1 one,two 2 one,two 3 one,two 1 one,two 2 one,two 3 one,two 1 one,two 2 one,two 3 one,two ") in
+    expect_eq program "nested_for_collection" input expected in
+  let%bind () =
+    let expected = e_pair (e_int 24)
+      (e_string "123123123") in
+    expect_eq program "nested_for_collection_local_var" input expected in
+  let%bind () =
+    let expected = e_pair (e_bool true) (e_int 4) in
+    expect_eq program "inner_capture_in_conditional_block"  input expected in
   let%bind () =
     let ez lst =
       let open Ast_simplified.Combinators in
@@ -1201,13 +1254,105 @@ let website2_mligo () : unit result =
     e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
+let mligo_let_multiple () : unit result =
+  let%bind program = mtype_file "./contracts/let_multiple.mligo" in
+  let%bind () =
+    let input = e_unit () in
+    let expected = e_int 3 in
+    expect_eq program "main" input expected
+  in
+  let%bind () =
+    let input = e_unit () in
+    let expected = e_int 6 in
+    expect_eq program "main_paren" input expected
+  in
+  let%bind () =
+    let input = e_unit () in
+    let expected = e_int 65 in
+    expect_eq program "non_tuple_rhs" input expected
+  in
+  ok ()
+
 let balance_constant () : unit result =
+  let%bind program = type_file "./contracts/balance_constant.ligo" in
+  let input = e_tuple [e_unit () ; e_mutez 0]  in
+  let expected = e_tuple [e_list []; e_mutez 4000000000000] in
+  expect_eq program "main" input expected
+
+
+let balance_constant_mligo () : unit result =
   let%bind program = mtype_file "./contracts/balance_constant.mligo" in
   let input = e_tuple [e_unit () ; e_mutez 0]  in
   let expected = e_tuple [e_list []; e_mutez 4000000000000] in
   expect_eq program "main" input expected
 
+let is_nat () : unit result =
+  let%bind program = type_file "./contracts/isnat.ligo" in
+  let%bind () = 
+    let input = e_int 10 in
+    let expected = e_some (e_nat 10) in
+    expect_eq program "main" input expected
+  in
+  let%bind () =
+    let input = e_int (-10) in
+    let expected = e_none () in
+    expect_eq program "main" input expected
+  in ok ()
+
+let is_nat_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/isnat.mligo" in
+  let%bind () = 
+    let input = e_int 10 in
+    let expected = e_some (e_nat 10) in
+    expect_eq program "main" input expected
+  in
+  let%bind () =
+    let input = e_int (-10) in
+    let expected = e_none () in
+    expect_eq program "main" input expected
+  in ok ()
+
+let simple_access_ligo () : unit result =
+  let%bind program = type_file "./contracts/simple_access.ligo" in
+  let make_input = e_tuple [e_int 0; e_int 1] in
+  let make_expected = e_int 2 in
+  expect_eq program "main" make_input make_expected
+
+let deep_access_ligo () : unit result =
+  let%bind program = type_file "./contracts/deep_access.ligo" in
+  let make_input = e_unit () in
+  let make_expected = e_int 2 in
+  expect_eq program "main" make_input make_expected
+
+let entrypoints_ligo () : unit result =
+  let%bind _program = type_file "./contracts/entrypoints.ligo" in
+  (* hmm... *)
+  ok ()
+
+let chain_id () : unit result =
+  let%bind program = type_file "./contracts/chain_id.ligo" in
+  let pouet = Tezos_crypto.Base58.simple_encode
+    Tezos_base__TzPervasives.Chain_id.b58check_encoding
+    Tezos_base__TzPervasives.Chain_id.zero in
+  let make_input = e_chain_id pouet in
+  let make_expected = e_chain_id pouet in
+  let%bind () = expect_eq program "get_chain_id" make_input make_expected in
+  ok ()
+
+let key_hash () : unit result =
+  let open Tezos_crypto in
+  let (raw_pkh,raw_pk,_) = Signature.generate_key () in
+  let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
+  let pk_str = Signature.Public_key.to_b58check raw_pk in
+  let%bind program = type_file "./contracts/key_hash.ligo" in
+  let make_input = e_pair (e_key_hash pkh_str) (e_key pk_str) in
+  let make_expected = e_pair (e_bool true) (e_key_hash pkh_str) in
+  let%bind () = expect_eq program "check_hash_key" make_input make_expected in
+  ok ()
+
 let main = test_suite "Integration (End to End)" [
+    test "key hash" key_hash ;
+    test "chain id" chain_id ;
     test "type alias" type_alias ;
     test "function" function_ ;
     test "blockless function" blockless;
@@ -1215,10 +1360,14 @@ let main = test_suite "Integration (End to End)" [
     test "assign" assign ;
     test "declaration local" declaration_local ;
     test "complex function" complex_function ;
+    test "anon function" anon_function ;
+    test "various applications" application ;
     test "closure" closure ;
+    test "closure (mligo)" closure_mligo ;
     test "shared function" shared_function ;
     test "shared function (mligo)" shared_function_mligo ;
     test "higher order" higher_order ;
+    test "higher order (mligo)" higher_order_mligo ;
     test "variant" variant ;
     test "variant (mligo)" variant_mligo ;
     test "variant matching" variant_matching ;
@@ -1294,5 +1443,12 @@ let main = test_suite "Integration (End to End)" [
     test "website1 ligo" website1_ligo ;
     test "website2 ligo" website2_ligo ;
     test "website2 (mligo)" website2_mligo ;
-    test "balance constant (mligo)" balance_constant ;
+    test "let multiple (mligo)" mligo_let_multiple ;
+    test "balance constant" balance_constant ;
+    test "balance constant (mligo)" balance_constant_mligo ;
+    test "is_nat" is_nat ;
+    test "is_not (mligo)" is_nat_mligo ;
+    test "simple_access (ligo)" simple_access_ligo;
+    test "deep_access (ligo)" deep_access_ligo;
+    test "entrypoints (ligo)" entrypoints_ligo ;
   ]

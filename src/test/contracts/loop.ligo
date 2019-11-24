@@ -134,21 +134,60 @@ function for_collection_map_k (var nee : unit) : string is block {
     end
 } with st
 
-// function nested_for_collection (var nee : unit) : (int*string) is block {
-//   var myint : int := 0;
-//   var myst : string := "";
-//   var mylist : list(int) := list 1 ; 2 ; 3 end ;
-//   for i : int in list mylist
-//   begin
-//     myint := myint + i ;
-//     var myset : set(string) := set "1" ; "2" ; "3" end ;
-//     for st : string in set myset
-//     begin
-//       myst := myst ^ st ;
-//     end
-//   end
-// } with (myint,myst)
+function nested_for_collection (var nee : unit) : (int*string) is block {
+  var myint : int := 0;
+  var mystoo : string := "";
+  var mylist : list(int) := list 1 ; 2 ; 3 end ;
+  var mymap : map(string,string) := map " one" -> "," ; "two" -> " " end ;
+
+  for i in list mylist
+  begin
+    myint := myint + i ;
+    var myset : set(string) := set "1" ; "2" ; "3" end ;
+    for st in set myset
+    begin
+      myint := myint + i ;
+      mystoo := mystoo ^ st ;
+      for k -> v in map mymap
+      begin
+        mystoo := mystoo ^ k ^ v ;
+      end
+    end
+  end
+} with (myint,mystoo)
+
+function nested_for_collection_local_var (var nee : unit) : (int*string) is block {
+  var myint : int := 0;
+  var myst : string := "";
+  var mylist : list(int) := list 1 ; 2 ; 3 end ;
+
+  for i in list mylist
+  begin
+    var myst_loc : string := "" ;
+    myint := myint + i ;
+    var myset : set(string) := set "1" ; "2" ; "3" end ;
+    for st in set myset
+    begin
+      myint := myint + i ;
+      myst_loc := myst_loc ^ st ;
+    end;
+    myst := myst_loc ^ myst ;
+  end
+} with (myint,myst)
 
 function dummy (const n : nat) : nat is block {
   while False block { skip }
 } with n
+
+function inner_capture_in_conditional_block (var nee : unit) : bool*int is block {
+  var count : int := 1 ;
+  var ret : bool := False ;
+  var mylist : list(int) := list 1 ; 2 ; 3 end ;
+  for it1 in list mylist block {
+    for it2 in list mylist block {
+      if count = it2 then ret := not (ret)
+      else skip;
+    };
+    count := count + 1;
+  }
+} with (ret,count)

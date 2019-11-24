@@ -29,16 +29,36 @@ let test name f =
 
 let test_suite name lst = Test_suite (name , lst)
 
+
+open Ast_simplified
+
+let pack_payload (program:Ast_typed.program) (payload:expression) : bytes result =
+  let%bind code =
+    let env = Ast_typed.program_environment program in
+    Compile.Of_simplified.compile_expression_as_function
+      ~env ~state:(Typer.Solver.initial_state) payload in
+  let Compiler.Program.{input=_;output=(Ex_ty payload_ty);body=_} = code in
+  let%bind (payload: Tezos_utils.Michelson.michelson) =
+    Ligo.Run.Of_michelson.evaluate_michelson code in
+  Ligo.Run.Of_michelson.pack_payload payload payload_ty
+
+let sign_message (program:Ast_typed.program) (payload : expression) sk : string result =
+  let open Tezos_crypto in
+  let%bind packed_payload = pack_payload program payload in
+  let signed_data = Signature.sign sk packed_payload in
+  let signature_str = Signature.to_b58check signed_data in
+  ok signature_str
+
 open Ast_simplified.Combinators
 
-let expect ?input_to_value ?options program entry_point input expecter =
+let expect ?options program entry_point input expecter =
   let%bind result =
     let run_error =
       let title () = "expect run" in
       let content () = Format.asprintf "Entry_point: %s" entry_point in
       error title content in
     trace run_error @@
-    Ligo.Run.Of_simplified.run_typed_program ?input_to_value ?options program Typer.Solver.initial_state entry_point input in
+    Ligo.Run.Of_simplified.run_typed_program ?options program Typer.Solver.initial_state entry_point input in
   expecter result
 
 let expect_fail ?options program entry_point input =
@@ -51,8 +71,14 @@ let expect_fail ?options program entry_point input =
   Assert.assert_fail
   @@ Ligo.Run.Of_simplified.run_typed_program ?options program Typer.Solver.initial_state entry_point input
 
+let expect_string_failwith ?options program entry_point input expected_failwith =
+  let%bind err = Ligo.Run.Of_simplified.run_failwith_program
+      ?options program Typer.Solver.initial_state entry_point input in
+  match err with
+    | Ligo.Run.Of_michelson.Failwith_string s -> Assert.assert_equal_string expected_failwith s
+    | _ -> simple_fail "Expected to fail with a string"
 
-let expect_eq ?input_to_value ?options program entry_point input expected =
+let expect_eq ?options program entry_point input expected =
   let expecter = fun result ->
     let expect_error =
       let title () = "expect result" in
@@ -62,7 +88,7 @@ let expect_eq ?input_to_value ?options program entry_point input expected =
       error title content in
     trace expect_error @@
     Ast_simplified.Misc.assert_value_eq (expected , result) in
-  expect ?input_to_value ?options program entry_point input expecter
+  expect ?options program entry_point input expecter
 
 let expect_evaluate program entry_point expecter =
   let error =
@@ -89,23 +115,34 @@ let expect_n_aux ?options lst program entry_point make_input make_expecter =
   let%bind _ = bind_map_list aux lst in
   ok ()
 
-let expect_eq_n_aux ?input_to_value ?options lst program entry_point make_input make_expected =
+let expect_eq_n_trace_aux ?options lst program entry_point make_input make_expected =
   let aux n =
-    let input = make_input n in
-    let expected = make_expected n in
+    let%bind input = make_input n in
+    let%bind expected = make_expected n in
     trace (simple_error ("expect_eq_n " ^ (string_of_int n))) @@
-    let result = expect_eq ?input_to_value ?options program entry_point input expected in
+    let result = expect_eq ?options program entry_point input expected in
     result
   in
   let%bind _ = bind_map_list_seq aux lst in
   ok ()
 
-let expect_eq_n ?input_to_value ?options = expect_eq_n_aux ?input_to_value ?options [0 ; 1 ; 2 ; 42 ; 163 ; -1]
-let expect_eq_n_pos ?input_to_value ?options = expect_eq_n_aux ?input_to_value ?options [0 ; 1 ; 2 ; 42 ; 163]
-let expect_eq_n_strict_pos ?input_to_value ?options = expect_eq_n_aux ?input_to_value ?options [2 ; 42 ; 163]
-let expect_eq_n_pos_small ?input_to_value ?options = expect_eq_n_aux ?input_to_value ?options [0 ; 1 ; 2 ; 10]
-let expect_eq_n_strict_pos_small ?input_to_value ?options = expect_eq_n_aux ?input_to_value ?options [1 ; 2 ; 10]
-let expect_eq_n_pos_mid ?input_to_value = expect_eq_n_aux ?input_to_value [0 ; 1 ; 2 ; 10 ; 33]
+let expect_eq_n_aux ?options lst program entry_point make_input make_expected =
+  let aux n =
+    let input = make_input n in
+    let expected = make_expected n in
+    trace (simple_error ("expect_eq_n " ^ (string_of_int n))) @@
+    let result = expect_eq ?options program entry_point input expected in
+    result
+  in
+  let%bind _ = bind_map_list_seq aux lst in
+  ok ()
+
+let expect_eq_n ?options = expect_eq_n_aux ?options [0 ; 1 ; 2 ; 42 ; 163 ; -1]
+let expect_eq_n_pos ?options = expect_eq_n_aux ?options [0 ; 1 ; 2 ; 42 ; 163]
+let expect_eq_n_strict_pos ?options = expect_eq_n_aux ?options [2 ; 42 ; 163]
+let expect_eq_n_pos_small ?options = expect_eq_n_aux ?options [0 ; 1 ; 2 ; 10]
+let expect_eq_n_strict_pos_small ?options = expect_eq_n_aux ?options [1 ; 2 ; 10]
+let expect_eq_n_pos_mid = expect_eq_n_aux [0 ; 1 ; 2 ; 10 ; 33]
 
 let expect_n_pos_small ?options = expect_n_aux ?options [0 ; 2 ; 10]
 let expect_n_strict_pos_small ?options = expect_n_aux ?options [2 ; 10]

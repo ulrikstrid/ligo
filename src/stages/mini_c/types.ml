@@ -5,8 +5,9 @@ type type_base =
   | Base_bool
   | Base_int | Base_nat | Base_tez
   | Base_timestamp
-  | Base_string | Base_bytes | Base_address
+  | Base_string | Base_bytes | Base_address | Base_key
   | Base_operation | Base_signature
+  | Base_chain_id | Base_key_hash
 
 type 'a annotated = string option * 'a
 
@@ -65,6 +66,7 @@ and expression' =
   | E_application of (expression * expression)
   | E_variable of var_name
   | E_make_empty_map of (type_value * type_value)
+  | E_make_empty_big_map of (type_value * type_value)
   | E_make_empty_list of type_value
   | E_make_empty_set of type_value
   | E_make_none of type_value

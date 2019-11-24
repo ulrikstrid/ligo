@@ -3,6 +3,7 @@ open Ast_simplified
 
 module Raw = Parser.Pascaligo.AST
 module SMap = Map.String
+module SSet = Set.Make (String)
 
 open Combinators
 
@@ -12,6 +13,55 @@ let pseq_to_list = function
   | None -> []
   | Some lst -> npseq_to_list lst
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
+let is_compiler_generated = fun name -> String.contains name '#'
+
+let detect_local_declarations (for_body : expression) =
+  let%bind aux = Self_ast_simplified.fold_expression
+    (fun (nlist, cur_loop : type_name list * bool) (ass_exp : expression) ->
+      if cur_loop then 
+        match ass_exp.expression with
+        | E_let_in {binder;rhs = _;result = _} ->
+          let (name,_) = binder in
+          ok (name::nlist, cur_loop)
+        |   E_constant ("MAP_FOLD", _)
+          | E_constant ("SET_FOLD", _)
+          | E_constant ("LIST_FOLD", _) -> ok @@ (nlist, false)
+        | _ -> ok (nlist, cur_loop)
+      else
+        ok @@ (nlist, cur_loop)
+    )
+    ([], true)
+    for_body in
+  ok @@ fst aux
+
+let detect_free_variables (for_body : expression) (local_decl_names : string list) =
+  let%bind captured_names = Self_ast_simplified.fold_expression
+    (fun (prev : type_name list) (ass_exp : expression) ->
+      match ass_exp.expression with
+      | E_assign ( name , _ , _ ) ->
+        if is_compiler_generated name then ok prev
+        else ok (name::prev)
+      | E_constant (n, [a;b])
+        when n="OR" || n="AND" || n="LT" || n="GT" ||
+             n="LE" || n="GE"  || n="EQ" || n="NEQ" -> (
+          match (a.expression,b.expression) with
+          | E_variable na , E_variable nb -> 
+            let ret = [] in
+            let ret = if not (is_compiler_generated na) then
+              na::ret else ret in
+            let ret = if not (is_compiler_generated nb) then
+              nb::ret else ret in
+            ok (ret@prev)
+          | E_variable n , _ 
+          | _            , E_variable n ->
+            if not (is_compiler_generated n) then
+            ok (n::prev) else ok prev
+          | _ -> ok prev)
+      | _ -> ok prev )
+    []
+    for_body in
+  ok @@ SSet.elements
+     @@ SSet.diff (SSet.of_list captured_names) (SSet.of_list local_decl_names)
 
 module Errors = struct
   let unsupported_cst_constr p =
@@ -116,15 +166,20 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let unsupported_deep_access_for_collection for_col =
-    let title () = "deep access in loop over collection" in
-    let message () =
-      Format.asprintf "currently, we do not support deep \
-                       accesses in loops over collection" in
+  let unexpected_anonymous_function loc =
+    let title () = "unexpected anonymous function" in
+    let message () = "you provided a function declaration without name" in
     let data = [
-      ("pattern_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ for_col.Region.region)
-    ] in
+        ("loc" , fun () -> Format.asprintf "%a" Location.pp @@ loc)
+      ] in
+    error ~data title message
+
+  let unexpected_named_function loc =
+    let title () = "unexpected named function" in
+    let message () = "you provided a function expression with a name (remove it)" in
+    let data = [
+        ("loc" , fun () -> Format.asprintf "%a" Location.pp @@ loc)
+      ] in
     error ~data title message
 
   (* Logging *)
@@ -263,17 +318,25 @@ let rec simpl_expression (t:Raw.expr) : expr result =
       | Some s -> return @@ e_constant ~loc s []
     )
   | ECall x -> (
-      let ((name, args) , loc) = r_split x in
-      let (f , f_loc) = r_split name in
+      let ((f, args) , loc) = r_split x in
       let (args , args_loc) = r_split args in
       let args' = npseq_to_list args.inside in
-      match List.assoc_opt f constants with
-      | None ->
-          let%bind arg = simpl_tuple_expression ~loc:args_loc args' in
-          return @@ e_application ~loc (e_variable ~loc:f_loc f) arg
-      | Some s ->
-          let%bind lst = bind_map_list simpl_expression args' in
-          return @@ e_constant ~loc s lst
+      match f with
+      | EVar name -> (
+        let (f_name , f_loc) = r_split name in
+        match List.assoc_opt f_name constants with
+        | None ->
+           let%bind arg = simpl_tuple_expression ~loc:args_loc args' in
+           return @@ e_application ~loc (e_variable ~loc:f_loc f_name) arg
+        | Some s ->
+           let%bind lst = bind_map_list simpl_expression args' in
+           return @@ e_constant ~loc s lst
+      )
+      | f -> (
+        let%bind f' = simpl_expression f in
+        let%bind arg = simpl_tuple_expression ~loc:args_loc args' in
+        return @@ e_application ~loc f' arg
+      )
     )
   | EPar x -> simpl_expression x.value.inside
   | EUnit reg ->
@@ -412,6 +475,13 @@ let rec simpl_expression (t:Raw.expr) : expr result =
       let%bind index = simpl_expression lu.index.value.inside in
       return @@ e_look_up ~loc path index
     )
+  | EFun f -> (
+    let (f , loc) = r_split f in
+    let%bind ((name_opt , _ty_opt) , f') = simpl_fun_expression ~loc f in
+    match name_opt with
+    | None -> return @@ f'
+    | Some _ -> fail @@ unexpected_named_function loc
+  )
 
 and simpl_logic_expression (t:Raw.logic_expr) : expression result =
   let return x = ok x in
@@ -499,10 +569,6 @@ and simpl_local_declaration : Raw.local_decl -> _ result = fun t ->
   match t with
   | LocalData d ->
       simpl_data_declaration d
-  | LocalFun f  ->
-      let (f , loc) = r_split f in
-      let%bind (name , e) = simpl_fun_declaration ~loc f in
-      return_let_in ~loc name e
 
 and simpl_data_declaration : Raw.data_decl -> _ result = fun t ->
   match t with
@@ -518,6 +584,11 @@ and simpl_data_declaration : Raw.data_decl -> _ result = fun t ->
       let%bind t = simpl_type_expression x.const_type in
       let%bind expression = simpl_expression x.init in
       return_let_in ~loc (name , Some t) expression
+  | LocalFun f  ->
+      let (f , loc) = r_split f in
+      let%bind ((name_opt , ty_opt) , e) = simpl_fun_expression ~loc f.fun_expr.value in
+      let%bind name = trace_option (unexpected_anonymous_function loc) name_opt in
+      return_let_in ~loc (name , ty_opt) e
 
 and simpl_param : Raw.param_decl -> (type_name * type_expression) result =
   fun t ->
@@ -533,11 +604,11 @@ and simpl_param : Raw.param_decl -> (type_name * type_expression) result =
       let%bind type_expression = simpl_type_expression c.param_type in
       ok (type_name , type_expression)
 
-and simpl_fun_declaration :
-  loc:_ -> Raw.fun_decl -> ((name * type_expression option) * expression) result =
+and simpl_fun_expression :
+  loc:_ -> Raw.fun_expr -> ((name option * type_expression option) * expression) result =
   fun ~loc x ->
   let open! Raw in
-  let {name;param;ret_type;local_decls;block;return} : fun_decl = x in
+  let {name;param;ret_type;local_decls;block;return} : fun_expr = x in
   let statements =
     match block with
     | Some block -> npseq_to_list block.value.statements
@@ -546,7 +617,7 @@ and simpl_fun_declaration :
   (match param.value.inside with
      a, [] -> (
        let%bind input = simpl_param a in
-       let name = name.value in
+       let name = Option.map (fun (x : _ reg) -> x.value) name in
        let (binder , input_type) = input in
        let%bind local_declarations =
          bind_map_list simpl_local_declaration local_decls in
@@ -593,7 +664,8 @@ and simpl_fun_declaration :
        let expression =
          e_lambda ~loc binder (Some input_type) (Some output_type) result in
        let type_annotation = Some (T_function (input_type, output_type)) in
-       ok ((name.value , type_annotation) , expression)
+       let name = Option.map (fun (x : _ reg) -> x.value) name in
+       ok ((name , type_annotation) , expression)
      )
   )
 and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
@@ -616,7 +688,8 @@ and simpl_declaration : Raw.declaration -> declaration Location.wrap result =
       bind_map_location simpl_const_decl (Location.lift_region x)
   | FunDecl x -> (
       let (x , loc) = r_split x in
-      let%bind ((name , ty_opt) , expr) = simpl_fun_declaration ~loc x in
+      let%bind ((name_opt , ty_opt) , expr) = simpl_fun_expression ~loc x.fun_expr.value in
+      let%bind name = trace_option (unexpected_anonymous_function loc) name_opt in
       ok @@ Location.wrap ~loc (Declaration_constant (name , ty_opt , expr))
     )
 
@@ -630,18 +703,26 @@ and simpl_single_instruction : Raw.instruction -> (_ -> expression result) resul
   fun t ->
   match t with
   | ProcCall x -> (
-      let ((name, args) , loc) = r_split x in
-      let (f , f_loc) = r_split name in
-      let (args , args_loc) = r_split args in
-      let args' = npseq_to_list args.inside in
-      match List.assoc_opt f constants with
+    let ((f, args) , loc) = r_split x in
+    let (args , args_loc) = r_split args in
+    let args' = npseq_to_list args.inside in
+    match f with
+    | EVar name -> (
+      let (f_name , f_loc) = r_split name in
+      match List.assoc_opt f_name constants with
       | None ->
-          let%bind arg = simpl_tuple_expression ~loc:args_loc args' in
-          return_statement @@ e_application ~loc (e_variable ~loc:f_loc f) arg
+         let%bind arg = simpl_tuple_expression ~loc:args_loc args' in
+         return_statement @@ e_application ~loc (e_variable ~loc:f_loc f_name) arg
       | Some s ->
-          let%bind lst = bind_map_list simpl_expression args' in
-          return_statement @@ e_constant ~loc s lst
+         let%bind lst = bind_map_list simpl_expression args' in
+         return_statement @@ e_constant ~loc s lst
     )
+    | f -> (
+      let%bind f' = simpl_expression f in
+      let%bind arg = simpl_tuple_expression ~loc:args_loc args' in
+      return_statement @@ e_application ~loc f' arg
+    )
+  )
   | Skip reg -> (
       let loc = Location.lift reg in
       return_statement @@ e_skip ~loc ()
@@ -984,8 +1065,8 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
                                   record st = st; acc = acc; end;
                                   lamby = fun arguments -> (
                                       let #COMPILER#acc = arguments.0 in
-                                      let #COMPILER#elt = arguments.1 in
-                                      #COMPILER#acc.myint := #COMPILER#acc.myint + #COMPILER#elt ;
+                                      let #COMPILER#elt_x = arguments.1 in
+                                      #COMPILER#acc.myint := #COMPILER#acc.myint + #COMPILER#elt_x ;
                                       #COMPILER#acc.myst  := #COMPILER#acc.myst ^ "to" ;
                                       #COMPILER#acc
                                   )
@@ -1001,6 +1082,17 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
 
     2) Detect the free variables and build a list of their names
        (myint and myst in the previous example)
+       Free variables are simply variables being assigned but not defined
+       locally.
+       Note:  In the case of a nested loops, assignements to a compiler
+              generated value (#COMPILER#acc) correspond to variables
+              that were already renamed in the inner loop.
+              e.g :
+              ```
+              #COMPILER#acc.myint := #COMPILER#acc.myint + #COMPILER#elt_x ;
+              #COMPILER#acc.myst  := #COMPILER#acc.myst ^ "to" ;
+              ```
+              They must not be considered as free variables
 
     3) Build the initial record (later passed as 2nd argument of
       `MAP/SET/LIST_FOLD`) capturing the environment using the
@@ -1009,11 +1101,15 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
     4) In the filtered body of (1), replace occurences:
         - free variable of name X as rhs ==> accessor `#COMPILER#acc.X`
         - free variable of name X as lhs ==> accessor `#COMPILER#acc.X`
-        And, in the case of a map:
-             - references to the iterated key   ==> variable `#COMPILER#elt_key`
-             - references to the iterated value ==> variable `#COMPILER#elt_value`
-             in the case of a set/list:
-             - references to the iterated value ==> variable `#COMPILER#elt`
+       And, in the case of a map:
+            - references to the iterated key   ==> variable `#COMPILER#elt_K`
+            - references to the iterated value ==> variable `#COMPILER#elt_V`
+            in the case of a set/list:
+            - references to the iterated value ==> variable `#COMPILER#elt_X`
+       Note: In the case of an inner loop capturing variable from an outer loop
+             the free variable name can be `#COMPILER#acc.Y` and because we do not
+             capture the accumulator record in the inner loop, we don't want to 
+             generate `#COMPILER#acc.#COMPILER#acc.Y` but `#COMPILER#acc.Y`
 
     5) Append the return value to the body
 
@@ -1023,10 +1119,11 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
        tuple holding:
         * In the case of `list` or ̀set`:
           ( folding record , current list/set element ) as
-          ( #COMPILER#acc  , #COMPILER#elt            )
+          ( #COMPILER#acc  , #COMPILER#elt_X          )
         * In the case of `map`:
           ( folding record , current map key ,   current map value   ) as
-          ( #COMPILER#acc  , #COMPILER#elt_key , #COMPILER#elt_value )
+          ( #COMPILER#acc  , #COMPILER#elt_K ,   #COMPILER#elt_V     )
+       Note: X , K and V above have to be replaced with their given name
 
     7) Build the lambda using the final body of (6)
 
@@ -1039,21 +1136,19 @@ and simpl_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
 
 **)
 and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun fc ->
+  let elt_name = "#COMPILER#elt_"^fc.var.value in
+  let elt_v_name = match fc.bind_to with
+    | Some v -> "#COMPILER#elt"^(snd v).value
+    | None -> "#COMPILER#elt_unused" in
+  let element_names = ok @@ match fc.bind_to with 
+    | Some v -> [fc.var.value;(snd v).value]
+    | None -> [fc.var.value] in
   (* STEP 1 *)
   let%bind for_body = simpl_block fc.block.value in
   let%bind for_body = for_body None in
   (* STEP 2 *)
-  let%bind captured_name_list = Self_ast_simplified.fold_expression
-    (fun (prev : type_name list) (ass_exp : expression) ->
-      match ass_exp.expression with
-      | E_assign ( name , _ , _ ) ->
-        if (String.contains name '#') then
-          ok prev
-        else
-          ok (name::prev)
-      | _ -> ok prev )
-    []
-    for_body in
+  let%bind local_decl_name_list = bind_concat (detect_local_declarations for_body) element_names in
+  let%bind captured_name_list = detect_free_variables for_body local_decl_name_list in
   (* STEP 3 *)
   let add_to_record (prev: expression type_name_map) (captured_name: string) =
     SMap.add captured_name (e_variable captured_name) prev in
@@ -1061,28 +1156,32 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
   (* STEP 4 *)
   let replace exp =
     match exp.expression with
-    (* replace references to fold accumulator as rhs *)
+    (* replace references to fold accumulator as lhs *)
     | E_assign ( name , path , expr ) -> (
-      match path with
-      | [] -> ok @@ e_assign "#COMPILER#acc" [Access_record name] expr
-      (* This fails for deep accesses, see LIGO-131 LIGO-134 *)
-      | _ ->
-        (* ok @@ e_assign "#COMPILER#acc" ((Access_record name)::path) expr) *)
-        fail @@ unsupported_deep_access_for_collection fc.block )
+      if (List.mem name local_decl_name_list ) then
+        ok @@ exp
+      else
+        let path' = List.filter
+          ( fun el ->
+            match el with
+            | Access_record name -> not @@ is_compiler_generated name
+            | _ -> true )
+          ((Access_record name)::path) in
+        ok @@ e_assign "#COMPILER#acc" path' expr )
     | E_variable name -> (
       if (List.mem name captured_name_list) then
-        (* replace references to fold accumulator as lhs *)
+        (* replace references to fold accumulator as rhs *)
         ok @@ e_accessor (e_variable "#COMPILER#acc") [Access_record name]
       else match fc.collection with
       (* loop on map *)
       | Map _ ->
-        let k' = e_variable "#COMPILER#collec_elt_k" in
+        let k' = e_variable elt_name in
         if ( name = fc.var.value ) then
           ok @@ k' (* replace references to the the key *)
         else (
           match fc.bind_to with
           | Some (_,v) ->
-            let v' = e_variable "#COMPILER#collec_elt_v" in
+            let v' = e_variable elt_v_name in
             if ( name = v.value ) then
               ok @@ v' (* replace references to the the value *)
             else ok @@ exp
@@ -1092,7 +1191,7 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
       | (Set _ | List _) ->
         if (name = fc.var.value ) then
           (* replace references to the collection element *)
-          ok @@ (e_variable "#COMPILER#collec_elt")
+          ok @@ (e_variable elt_name)
         else ok @@ exp
     )
     | _ -> ok @@ exp in
@@ -1107,30 +1206,24 @@ and simpl_for_collect : Raw.for_collect -> (_ -> expression result) result = fun
     let ( arg_access: Types.access_path -> expression ) = e_accessor (e_variable "arguments") in
     ( match fc.collection with
       | Map _ ->
-        (* let acc          = arg_access [Access_tuple 0 ; Access_tuple 0] in
+        let acc          = arg_access [Access_tuple 0 ] in
         let collec_elt_v = arg_access [Access_tuple 1 ; Access_tuple 0] in
-        let collec_elt_k = arg_access [Access_tuple 1 ; Access_tuple 1] in *)
-        (* The above should work, but not yet (see LIGO-131) *)
-        let temp_kv      = arg_access [Access_tuple 1] in
-        let acc          = arg_access [Access_tuple 0] in
-        let collec_elt_v = e_accessor (e_variable "#COMPILER#temp_kv") [Access_tuple 0] in
-        let collec_elt_k = e_accessor (e_variable "#COMPILER#temp_kv") [Access_tuple 1] in
+        let collec_elt_k = arg_access [Access_tuple 1 ; Access_tuple 1] in
         e_let_in ("#COMPILER#acc", None) acc @@
-        e_let_in ("#COMPILER#temp_kv", None) temp_kv @@
-        e_let_in ("#COMPILER#collec_elt_k", None) collec_elt_v @@
-        e_let_in ("#COMPILER#collec_elt_v", None) collec_elt_k (for_body)
+        e_let_in (elt_name, None) collec_elt_v @@
+        e_let_in (elt_v_name, None) collec_elt_k (for_body)
       | _ ->
         let acc        = arg_access [Access_tuple 0] in
         let collec_elt = arg_access [Access_tuple 1] in
         e_let_in ("#COMPILER#acc", None) acc @@
-        e_let_in ("#COMPILER#collec_elt", None) collec_elt (for_body)
+        e_let_in (elt_name, None) collec_elt (for_body)
     ) in
   (* STEP 7 *)
   let%bind collect = simpl_expression fc.expr in
   let lambda = e_lambda "arguments" None None for_body in
   let op_name = match fc.collection with
    | Map _ -> "MAP_FOLD" | Set _ -> "SET_FOLD" | List _ -> "LIST_FOLD" in
-  let fold = e_constant op_name [collect ; init_record ; lambda] in
+  let fold = e_constant op_name [lambda; collect ; init_record] in
   (* STEP 8 *)
   let assign_back (prev : expression option) (captured_varname : string) : expression option =
     let access = e_accessor (e_variable "#COMPILER#folded_record")

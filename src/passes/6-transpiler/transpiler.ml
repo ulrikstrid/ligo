@@ -130,6 +130,9 @@ let rec transpile_type (t:AST.type_value) : type_value result =
   | T_constant (Type_name "unit", []) -> ok (T_base Base_unit)
   | T_constant (Type_name "operation", []) -> ok (T_base Base_operation)
   | T_constant (Type_name "signature", []) -> ok (T_base Base_signature)
+  | T_constant (Type_name "key_hash", []) -> ok (T_base Base_key_hash)
+  | T_constant (Type_name "key", []) -> ok (T_base Base_key)
+  | T_constant (Type_name "chain_id", []) -> ok (T_base Base_chain_id)
   | T_constant (Type_name "contract", [x]) ->
       let%bind x' = transpile_type x in
       ok (T_contract x')
@@ -237,6 +240,10 @@ let rec transpile_literal : AST.literal -> value = fun l -> match l with
   | Literal_bytes s -> D_bytes s
   | Literal_string s -> D_string s
   | Literal_address s -> D_string s
+  | Literal_signature s -> D_string s
+  | Literal_key s -> D_string s
+  | Literal_key_hash s -> D_string s
+  | Literal_chain_id s -> D_string s
   | Literal_operation op -> D_operation op
   | Literal_unit -> D_unit
 
@@ -390,12 +397,12 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
           | _ -> fail @@ unsupported_iterator f.location
         in
         fun (lst : AST.annotated_expression list) -> match (lst , iterator_name) with
-          | [i ; f] , "ITER" | [i ; f] , "MAP" -> (
+          | [f ; i] , "ITER" | [f ; i] , "MAP" -> (
               let%bind f' = expression_to_iterator_body f in
               let%bind i' = transpile_annotated_expression i in
               return @@ E_iterator (iterator_name , f' , i')
             )
-          | [ collection ; initial ; f ] , "FOLD" -> (
+          | [ f ; collection ; initial ] , "FOLD" -> (
               let%bind f' = expression_to_iterator_body f in
               let%bind initial' = transpile_annotated_expression initial in
               let%bind collection' = transpile_annotated_expression collection in
@@ -466,7 +473,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
           bind_map_pair (transpile_annotated_expression) (k , v') in
         return @@ E_constant ("UPDATE", [k' ; v' ; prev'])
       in
-      let init = return @@ E_make_empty_map (src, dst) in
+      let init = return @@ E_make_empty_big_map (src, dst) in
       List.fold_left aux init m
     )
   | E_look_up dsi -> (
@@ -510,7 +517,6 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
                 (Map.String.find_opt prop ty_map) in
             ok (prop_in_ty_map, acc @ path')
           )
-          | Access_map _k -> fail (corner_case ~loc:__LOC__ "no patch for map yet")
       in
       let%bind (_, path) = bind_fold_right_list aux (ty, []) path in
       let%bind expr' = transpile_annotated_expression expr in

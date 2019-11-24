@@ -18,6 +18,9 @@ val t_nat       : type_expression
 val t_tez       : type_expression
 val t_unit      : type_expression
 val t_address   : type_expression
+val t_key       : type_expression
+val t_key_hash  : type_expression
+val t_signature : type_expression
 (*
 val t_option    : type_expression -> type_expression
 *)
@@ -36,8 +39,8 @@ val ez_t_sum : ( string * type_expression ) list -> type_expression
 
 val t_function : type_expression -> type_expression -> type_expression
 val t_map : type_expression -> type_expression -> type_expression
-(*
 val t_set : type_expression -> type_expression
+(*
 
 val make_name : string -> name
 
@@ -51,9 +54,14 @@ val e_timestamp : ?loc:Location.t -> int -> expression
 val e_bool : ?loc:Location.t -> bool -> expression
 val e_string : ?loc:Location.t -> string -> expression
 val e_address : ?loc:Location.t -> string -> expression 
+val e_signature : ?loc:Location.t -> string -> expression 
+val e_key : ?loc:Location.t -> string -> expression 
+val e_key_hash : ?loc:Location.t -> string -> expression 
+val e_chain_id : ?loc:Location.t -> string -> expression 
 val e_mutez : ?loc:Location.t -> int -> expression
 val e'_bytes : string -> expression' result
 val e_bytes : ?loc:Location.t -> string -> expression result
+val e_bytes_ofbytes : ?loc:Location.t -> bytes -> expression result
 val e_big_map : ?loc:Location.t -> ( expr * expr ) list -> expression
 (*
 val e_record  : ?loc:Location.t -> ( expr * expr ) list -> expression

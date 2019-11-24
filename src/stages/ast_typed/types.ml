@@ -126,12 +126,15 @@ and literal =
   | Literal_string of string
   | Literal_bytes of bytes
   | Literal_address of string
+  | Literal_signature of string
+  | Literal_key of string
+  | Literal_key_hash of string
+  | Literal_chain_id of string
   | Literal_operation of Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
 
 and access =
   | Access_tuple of int
   | Access_record of string
-  | Access_map of ae
 
 and access_path = access list
 

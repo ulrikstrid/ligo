@@ -21,6 +21,9 @@ let type_base ppf : type_base -> _ = function
   | Base_bytes -> fprintf ppf "bytes"
   | Base_operation -> fprintf ppf "operation"
   | Base_signature -> fprintf ppf "signature"
+  | Base_key -> fprintf ppf "key"
+  | Base_key_hash -> fprintf ppf "key_hash"
+  | Base_chain_id -> fprintf ppf "chain_id"
 
 let rec type_ ppf : type_value -> _ = function
   | T_or(a, b) -> fprintf ppf "(%a) | (%a)" annotated a annotated b
@@ -77,6 +80,7 @@ and expression' ppf (e:expression') = match e with
   | E_constant(p, lst) -> fprintf ppf "%s %a" p (pp_print_list ~pp_sep:space_sep expression) lst
   | E_literal v -> fprintf ppf "L(%a)" value v
   | E_make_empty_map _ -> fprintf ppf "map[]"
+  | E_make_empty_big_map _ -> fprintf ppf "big_map[]"
   | E_make_empty_list _ -> fprintf ppf "list[]"
   | E_make_empty_set _ -> fprintf ppf "set[]"
   | E_make_none _ -> fprintf ppf "none"

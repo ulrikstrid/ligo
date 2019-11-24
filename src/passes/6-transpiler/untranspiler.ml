@@ -150,6 +150,24 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         bind_map_list aux lst in
       return (E_list lst')
     )
+  | T_constant (Type_name "key", []) -> (
+    let%bind n =
+      trace_strong (wrong_mini_c_value "key" v) @@
+      get_string v in
+    return (E_literal (Literal_key n))
+  )
+  | T_constant (Type_name "key_hash", []) -> (
+    let%bind n =
+      trace_strong (wrong_mini_c_value "key_hash" v) @@
+      get_string v in
+    return (E_literal (Literal_key_hash n))
+  )
+  | T_constant (Type_name "chain_id", []) -> (
+    let%bind n =
+      trace_strong (wrong_mini_c_value "chain_id" v) @@
+      get_string v in
+    return (E_literal (Literal_chain_id n))
+  )
   | T_constant (Type_name "set", [ty]) -> (
       let%bind lst =
         trace_strong (wrong_mini_c_value "set" v) @@
@@ -202,5 +220,9 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         @@ List.map (fun (x, (y, z)) -> let%bind yz = untranspile y z in ok (x, yz)) lst in
       let m' = map_of_kv_list lst in
       return (E_record m')
-  | T_function _ -> fail @@ bad_untranspile "function" v
+  | T_function _ ->
+      let%bind n =
+        trace_strong (wrong_mini_c_value "lambda as string" v) @@
+        get_string v in
+      return (E_literal (Literal_string n))
   | T_variable (Type_name v) -> return (E_variable v)

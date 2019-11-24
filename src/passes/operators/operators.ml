@@ -52,18 +52,23 @@ module Simplify = struct
     ("set" , "set") ;
     ("map" , "map") ;
     ("big_map" , "big_map") ;
+    ("chain_id" , "chain_id") ;
   ]
 
   module Pascaligo = struct
 
     let constants = [
       ("get_force" , "MAP_GET_FORCE") ;
+      ("get_chain_id", "CHAIN_ID");
       ("transaction" , "CALL") ;
       ("get_contract" , "CONTRACT") ;
+      ("get_entrypoint" , "CONTRACT_ENTRYPOINT") ;
       ("size" , "SIZE") ;
       ("int" , "INT") ;
       ("abs" , "ABS") ;
+      ("is_nat", "ISNAT") ;
       ("amount" , "AMOUNT") ;
+      ("balance", "BALANCE") ;
       ("now" , "NOW") ;
       ("unit" , "UNIT") ;
       ("source" , "SOURCE") ;
@@ -74,6 +79,8 @@ module Simplify = struct
       ("bitwise_xor" , "XOR") ;
       ("string_concat" , "CONCAT") ;
       ("string_slice" , "SLICE") ;
+      ("crypto_check", "CHECK_SIGNATURE") ;
+      ("crypto_hash_key", "HASH_KEY") ;
       ("bytes_concat" , "CONCAT") ;
       ("bytes_slice" , "SLICE") ;
       ("bytes_pack" , "PACK") ;
@@ -86,7 +93,6 @@ module Simplify = struct
       ("list_iter" , "LIST_ITER") ;
       ("list_fold" , "LIST_FOLD") ;
       ("list_map" , "LIST_MAP") ;
-      (*ici*)
       ("map_iter" , "MAP_ITER") ;
       ("map_map" , "MAP_MAP") ;
       ("map_fold" , "MAP_FOLD") ;
@@ -200,10 +206,13 @@ module Simplify = struct
 
       ("Operation.transaction" , "CALL") ;
       ("Operation.get_contract" , "CONTRACT") ;
+      ("Operation.get_entrypoint" , "CONTRACT_ENTRYPOINT") ;
       ("int" , "INT") ;
       ("abs" , "ABS") ;
       ("unit" , "UNIT") ;
       ("source" , "SOURCE") ;
+
+      ("Michelson.is_nat" , "ISNAT") ;
     ]
 
     let type_constants = type_constants
@@ -363,14 +372,14 @@ module Typer = struct
     let%bind () = assert_type_value_eq (src, k) in
     ok @@ t_option dst ()
 
-  let map_iter : typer = typer_2 "MAP_ITER" @@ fun m f ->
+  let map_iter : typer = typer_2 "MAP_ITER" @@ fun f m ->
     let%bind (k, v) = get_t_map m in
     let%bind (arg , res) = get_t_function f in
     let%bind () = assert_eq_1 arg (t_pair k v ()) in
     let%bind () = assert_eq_1 res (t_unit ()) in
     ok @@ t_unit ()
 
-  let map_map : typer = typer_2 "MAP_MAP" @@ fun m f ->
+  let map_map : typer = typer_2 "MAP_MAP" @@ fun f m ->
     let%bind (k, v) = get_t_map m in
     let%bind (arg , res) = get_t_function f in
     let%bind () = assert_eq_1 arg (t_pair k v ()) in
@@ -452,7 +461,11 @@ module Typer = struct
 
   let balance = constant "BALANCE" @@ t_mutez ()
 
-  let address = constant "ADDRESS" @@ t_address ()
+  let chain_id = constant "CHAIN_ID" @@ t_chain_id ()
+
+  let address = typer_1 "ADDRESS" @@ fun contract ->
+    let%bind () = assert_t_contract contract in
+    ok @@ t_address ()
 
   let now = constant "NOW" @@ t_timestamp ()
 
@@ -486,6 +499,20 @@ module Typer = struct
       get_t_contract tv in
     ok @@ t_contract tv' ()
 
+  let get_entrypoint = typer_2_opt "CONTRACT_ENTRYPOINT" @@ fun entry_tv addr_tv tv_opt ->
+    if not (type_value_eq (entry_tv, t_string ()))
+    then fail @@ simple_error (Format.asprintf "get_entrypoint expects a string entrypoint label for first argument, got %a" PP.type_value entry_tv)
+    else
+    if not (type_value_eq (addr_tv, t_address ()))
+    then fail @@ simple_error (Format.asprintf "get_entrypoint expects an address for second argument, got %a" PP.type_value addr_tv)
+    else
+    let%bind tv =
+      trace_option (simple_error "get_entrypoint needs a type annotation") tv_opt in
+    let%bind tv' =
+      trace_strong (simple_error "get_entrypoint has a not-contract annotation") @@
+      get_t_contract tv in
+    ok @@ t_contract tv' ()
+
   let set_delegate = typer_1 "SET_DELEGATE" @@ fun delegate_opt ->
     let%bind () = assert_eq_1 delegate_opt (t_option (t_key_hash ()) ()) in
     ok @@ t_operation ()
@@ -493,6 +520,10 @@ module Typer = struct
   let abs = typer_1 "ABS" @@ fun t ->
     let%bind () = assert_t_int t in
     ok @@ t_nat ()
+
+  let is_nat = typer_1 "ISNAT" @@ fun t ->
+    let%bind () = assert_t_int t in
+    ok @@ t_option (t_nat ()) ()
 
   let neg = typer_1 "NEG" @@ fun t ->
     let%bind () = Assert.assert_true (eq_1 t (t_nat ()) || eq_1 t (t_int ())) in
@@ -561,7 +592,7 @@ module Typer = struct
     then ok set
     else simple_fail "Set_remove: elt and set don't match"
 
-  let set_iter = typer_2 "SET_ITER" @@ fun set body ->
+  let set_iter = typer_2 "SET_ITER" @@ fun body set ->
     let%bind (arg , res) = get_t_function body in
     let%bind () = Assert.assert_true (eq_1 res (t_unit ())) in
     let%bind key = get_t_set set in
@@ -569,7 +600,7 @@ module Typer = struct
     then ok (t_unit ())
     else simple_fail "bad set iter"
 
-  let list_iter = typer_2 "LIST_ITER" @@ fun lst body ->
+  let list_iter = typer_2 "LIST_ITER" @@ fun body lst ->
     let%bind (arg , res) = get_t_function body in
     let%bind () = Assert.assert_true (eq_1 res (t_unit ())) in
     let%bind key = get_t_list lst in
@@ -577,14 +608,14 @@ module Typer = struct
     then ok (t_unit ())
     else simple_fail "bad list iter"
 
-  let list_map = typer_2 "LIST_MAP" @@ fun lst body ->
+  let list_map = typer_2 "LIST_MAP" @@ fun body lst ->
     let%bind (arg , res) = get_t_function body in
     let%bind key = get_t_list lst in
     if eq_1 key arg
     then ok (t_list res ())
     else simple_fail "bad list map"
 
-  let list_fold = typer_3 "LIST_FOLD" @@ fun lst init body ->
+  let list_fold = typer_3 "LIST_FOLD" @@ fun body lst init ->
     let%bind (arg , res) = get_t_function body in
     let%bind (prec , cur) = get_t_pair arg in
     let%bind key = get_t_list lst in
@@ -598,7 +629,7 @@ module Typer = struct
     let%bind () = assert_eq_1 ~msg:"res init" res init in
     ok res
 
-  let set_fold = typer_3 "SET_FOLD" @@ fun lst init body ->
+  let set_fold = typer_3 "SET_FOLD" @@ fun body lst init ->
     let%bind (arg , res) = get_t_function body in
     let%bind (prec , cur) = get_t_pair arg in
     let%bind key = get_t_set lst in
@@ -612,7 +643,7 @@ module Typer = struct
     let%bind () = assert_eq_1 ~msg:"res init" res init in
     ok res
 
-  let map_fold = typer_3 "MAP_FOLD" @@ fun map init body ->
+  let map_fold = typer_3 "MAP_FOLD" @@ fun body map init ->
     let%bind (arg , res) = get_t_function body in
     let%bind (prec , cur) = get_t_pair arg in
     let%bind (key , value) = get_t_map map in
@@ -632,7 +663,7 @@ module Typer = struct
       whether the fold should continue or not. Necessarily then the initial value
       must match the input parameter of the auxillary function, and the auxillary
       should return type (bool * input) *)
-  let fold_while = typer_2 "FOLD_WHILE" @@ fun init body ->
+  let fold_while = typer_2 "FOLD_WHILE" @@ fun body init ->
     let%bind (arg, result) = get_t_function body in
     let%bind () = assert_eq_1 arg init in
     let%bind () = assert_eq_1 (t_pair (t_bool ()) init ()) result
@@ -750,13 +781,16 @@ module Typer = struct
       check_signature ;
       sender ;
       source ;
+      chain_id ;
       unit ;
       balance ;
       amount ;
       transaction ;
       get_contract ;
+      get_entrypoint ;
       neg ;
       abs ;
+      is_nat ;
       cons ;
       now ;
       slice ;
@@ -813,7 +847,7 @@ module Compiler = struct
     ("MAP_FIND_OPT" , simple_binary @@ prim I_GET) ;
     ("MAP_ADD" , simple_ternary @@ seq [dip (i_some) ; prim I_UPDATE]) ;
     ("MAP_UPDATE" , simple_ternary @@ prim I_UPDATE) ;
-    ("FOLD_WHILE" , simple_binary @@ seq [(i_push (prim T_bool) (prim D_True)) ;
+    ("FOLD_WHILE" , simple_binary @@ seq [i_swap ; (i_push (prim T_bool) (prim D_True)) ;
                                           prim ~children:[seq [dip i_dup; i_exec; i_unpair]] I_LOOP ;
                                           i_swap ; i_drop]) ;
     ("CONTINUE" , simple_unary @@ seq [(i_push (prim T_bool) (prim D_True)) ;
@@ -826,11 +860,12 @@ module Compiler = struct
     ("ASSERT" , simple_unary @@ i_if (seq [i_push_unit]) (seq [i_push_unit ; i_failwith])) ;
     ("INT" , simple_unary @@ prim I_INT) ;
     ("ABS" , simple_unary @@ prim I_ABS) ;
+    ("ISNAT", simple_unary @@ prim I_ISNAT) ;
     ("CONS" , simple_binary @@ prim I_CONS) ;
     ("UNIT" , simple_constant @@ prim I_UNIT) ;
     ("BALANCE" , simple_constant @@ prim I_BALANCE) ;
     ("AMOUNT" , simple_constant @@ prim I_AMOUNT) ;
-    ("ADDRESS" , simple_constant @@ prim I_ADDRESS) ;
+    ("ADDRESS" , simple_unary @@ prim I_ADDRESS) ;
     ("NOW" , simple_constant @@ prim I_NOW) ;
     ("CALL" , simple_ternary @@ prim I_TRANSFER_TOKENS) ;
     ("SOURCE" , simple_constant @@ prim I_SOURCE) ;
@@ -847,6 +882,7 @@ module Compiler = struct
     ("PACK" , simple_unary @@ prim I_PACK) ;
     ("CONCAT" , simple_binary @@ prim I_CONCAT) ;
     ("CONS" , simple_binary @@ prim I_CONS) ;
+    ("CHAIN_ID", simple_constant @@ prim I_CHAIN_ID ) ;
   ]
 
   (*

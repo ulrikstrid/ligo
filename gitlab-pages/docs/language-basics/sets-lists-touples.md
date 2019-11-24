@@ -28,7 +28,7 @@ end
 ```cameligo
 type int_set = int set
 let my_set: int_set =
-  Set.add 3 (Set.add 2 (Set.add 1 Set.empty))
+  Set.add 3 (Set.add 2 (Set.add 1 (Set.empty: int set)))
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -41,9 +41,12 @@ let my_set: int_set =
 const my_set: int_set = set end;
 const my_set_2: int_set = set_empty;
 ```
+<!--Cameligo-->
+```cameligo
+let my_set: int_set = (Set.empty: int set)
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
-
-
 
 ### Checking if set contains an element
 
@@ -102,13 +105,13 @@ let smaller_set: int_set = Set.remove 3 my_set
 ```pascaligo
 function sum(const result: int; const i: int): int is result + i;
 // Outputs 6
-const sum_of_a_set: int = set_fold(my_set, 0, sum);
+const sum_of_a_set: int = set_fold(sum, my_set, 0);
 ```
 
 <!--Cameligo-->
 ```cameligo
 let sum (result: int) (i: int) : int = result + i
-let sum_of_a_set: int = Set.fold my_set 0 sum
+let sum_of_a_set: int = Set.fold sum my_set 0
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -168,7 +171,7 @@ let larger_list: int_list = 4 :: my_list
 ```pascaligo
 function increment(const i: int): int is block { skip } with i + 1;
 // Creates a new list with elements incremented by 1
-const incremented_list: int_list = list_map(even_larger_list, increment);
+const incremented_list: int_list = list_map(increment, even_larger_list);
 ```
 
 <!--Cameligo-->
@@ -176,7 +179,7 @@ const incremented_list: int_list = list_map(even_larger_list, increment);
 ```cameligo
 let increment (i: int) : int = i + 1
 (* Creates a new list with elements incremented by 1 *)
-let incremented_list: int_list = List.map larger_list increment
+let incremented_list: int_list = List.map increment larger_list
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -188,7 +191,7 @@ let incremented_list: int_list = List.map larger_list increment
 ```pascaligo
 function sum(const result: int; const i: int): int is block { skip } with result + i;
 // Outputs 6
-const sum_of_a_list: int = list_fold(my_list, 0, sum);
+const sum_of_a_list: int = list_fold(sum, my_list, 0);
 ```
 
 <!--Cameligo-->
@@ -196,7 +199,7 @@ const sum_of_a_list: int = list_fold(my_list, 0, sum);
 ```cameligo
 let sum (result: int) (i: int) : int = result + i
 // Outputs 6
-let sum_of_a_list: int = List.fold my_list 0 sum
+let sum_of_a_list: int = List.fold sum my_list 0
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->

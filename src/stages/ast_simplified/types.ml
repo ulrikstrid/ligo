@@ -56,6 +56,7 @@ and expression' =
   | E_constructor of (name * expr) (* For user defined constructors *)
   (* E_record *)
   | E_record of expr_map
+  (* TODO: Change it to (expr * access) *)
   | E_accessor of (expr * access_path)
   (* Data Structures *)
   | E_map of (expr * expr) list
@@ -81,7 +82,6 @@ and expression = {
 and access =
   | Access_tuple of int
   | Access_record of string
-  | Access_map of expr
 
 and access_path = access list
 
@@ -95,6 +95,10 @@ and literal =
   | Literal_bytes of bytes
   | Literal_address of string
   | Literal_timestamp of int
+  | Literal_signature of string
+  | Literal_key of string
+  | Literal_key_hash of string
+  | Literal_chain_id of string
   | Literal_operation of Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
 
 and 'a matching =

@@ -567,6 +567,11 @@ let bind_fold_smap f init (smap : _ X_map.String.t) =
 
 let bind_map_smap f smap = bind_smap (X_map.String.map f smap)
 
+let bind_concat (l1:'a list result) (l2: 'a list result) =
+  let%bind l1' = l1 in
+  let%bind l2' = l2 in
+  ok @@ (l1' @ l2')
+
 let bind_map_list f lst = bind_list (List.map f lst)
 let rec bind_map_list_seq f lst = match lst with
   | [] -> ok []
@@ -763,6 +768,12 @@ module Assert = struct
 
   let assert_equal ?msg expected actual =
     assert_true ?msg (expected = actual)
+
+  let assert_equal_string ?msg expected actual =
+    let msg =
+      let default = Format.asprintf "Not equal string : expected \"%s\", got \"%s\"" expected actual in
+      X_option.unopt ~default msg in
+    assert_equal ~msg expected actual
 
   let assert_equal_int ?msg expected actual =
     let msg =

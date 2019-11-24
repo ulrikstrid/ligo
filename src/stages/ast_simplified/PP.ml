@@ -29,6 +29,10 @@ let literal ppf (l:literal) = match l with
   | Literal_string s -> fprintf ppf "%S" s
   | Literal_bytes b -> fprintf ppf "0x%s" @@ Bytes.to_string @@ Bytes.escaped b
   | Literal_address s -> fprintf ppf "@%S" s
+  | Literal_signature s -> fprintf ppf "@%S" s
+  | Literal_key s -> fprintf ppf "@%S" s
+  | Literal_key_hash s -> fprintf ppf "@%S" s
+  | Literal_chain_id s -> fprintf ppf "@%S" s
   | Literal_operation _ -> fprintf ppf "Operation(...bytes)"
 
 let rec expression ppf (e:expression) = match e.expression with
@@ -82,7 +86,6 @@ and access ppf (a:access) =
   match a with
   | Access_tuple n -> fprintf ppf "%d" n
   | Access_record s -> fprintf ppf "%s" s
-  | Access_map s -> fprintf ppf "(%a)" expression s
 
 and access_path ppf (p:access_path) =
   fprintf ppf "%a" (list_sep access (const ".")) p
