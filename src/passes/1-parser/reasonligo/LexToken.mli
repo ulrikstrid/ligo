@@ -32,7 +32,7 @@ type t =
   (* Symbols *)
 
   CONS of Region.t     (* "::" *)
-| CAT of Region.t      (* "^"  *)
+| CAT of Region.t      (* "++"  *)
   (*| APPEND   (* "@"  *)*)
 
   (* Arithmetics *)
@@ -67,7 +67,8 @@ type t =
   (* Comparisons *)
 
 | EQ of Region.t      (* "="  *)
-| NE of Region.t       (* "<>" *)
+| EQEQ of Region.t      (* "="  *)
+| NE of Region.t       (* "!=" *)
 | LT of Region.t       (* "<"  *)
 | GT of Region.t    (* ">"  *)
 | LE of Region.t      (* "=<" *)

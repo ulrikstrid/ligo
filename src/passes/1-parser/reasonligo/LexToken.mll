@@ -49,6 +49,7 @@ type t =
   (* Comparisons *)
 
 | EQ of Region.t        (* "="  *)
+| EQEQ of Region.t      (* "=="  *)
 | NE of Region.t        (* "!=" *)
 | LT of Region.t        (* "<"  *)
 | GT of Region.t        (* ">"  *)
@@ -117,6 +118,7 @@ let proj_token = function
   | DOTDOTDOT region -> region, "DOTDOTDOT"
   | WILD region -> region, "WILD"
   | EQ region -> region, "EQ"
+  | EQEQ region -> region, "EQEQ"
   | NE region -> region, "NE"
   | LT region -> region, "LT"
   | GT region -> region, "GT"
@@ -155,7 +157,7 @@ let proj_token = function
 
 let to_lexeme = function
   | CONS _ -> "::"
-  | CAT _ -> "^"
+  | CAT _ -> "++"
   | MINUS _ -> "-"
   | PLUS _ -> "+"
   | SLASH _ -> "/"
@@ -174,6 +176,7 @@ let to_lexeme = function
   | DOTDOTDOT _ -> "..."
   | WILD _ -> "_"
   | EQ _ -> "="
+  | EQEQ _ -> "=="
   | NE _ -> "!="
   | LT _ -> "<"
   | GT _ -> ">"
@@ -394,6 +397,7 @@ let mk_sym lexeme region =
   | "..."->     Ok (DOTDOTDOT region)
   | "_"   ->    Ok (WILD      region)
   | "="  ->     Ok (EQ        region)
+  | "=="  ->    Ok (EQEQ      region)
   | "!=" ->     Ok (NE        region)
   | "<"   ->    Ok (LT        region)
   | ">"   ->    Ok (GT        region)
@@ -479,6 +483,7 @@ let is_sym = function
 | DOTDOTDOT _
 | WILD _
 | EQ _
+| EQEQ _
 | NE _
 | LT _
 | GT _

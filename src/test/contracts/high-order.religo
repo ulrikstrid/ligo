@@ -2,13 +2,13 @@
 let foobar = (i: int): int => {
   let foo: int => int = (i: int) => i;
 
-  let bar: (int => int) => int = (f: int => int) => f(i);
+  let bar: (int => int) => int = (f: (int => int)) => f(i);
 
   bar(foo);
 };
 
 /* higher order function with more than one argument */
-let higher2 = (i: int, f: int => int): int => {
+let higher2 = (i: int, f: (int => int)): int => {
   let ii: int = f(i);
   ii;
 };
@@ -33,7 +33,7 @@ let g = (i: int): int => f(i);
 
 let foobar4 = (i: int): int => g(g(i));
 
-let higher3 = (i: int, f: int => int, g: int => int): int => {
+let higher3 = (i: int, f: (int => int), g: (int => int)): int => {
   let ii: int = f(g(i));
   ii;
 };

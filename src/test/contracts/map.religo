@@ -22,7 +22,7 @@ let patch_empty = (m: foobar): foobar =>
 /* Third dummy test, see above */
 let patch_deep = (m: (foobar, nat)): (foobar, nat) => (
   Map.literal([(0, 0), (1, 9), (2, 2)]),
-  10n,
+  10n
 );
 
 let size_ = (m: foobar): nat => Map.size(m);
@@ -38,18 +38,18 @@ let iter_op = (m: foobar): unit => {
 };
 
 let map_op = (m: foobar): foobar => {
-  let increment = (_: int, j: int) => j + 1;
+  let increment = (z: int, j: int) => j + 1;
   Map.map(increment, m);
 };
 
 let fold_op = (m: foobar): foobar => {
-  let aggregate = (i: int, j: (int, int)) => i + j.0 + j.1;
+  let aggregate = (i: int, j: (int, int)) => i + j[0] + j[1];
   Map.fold(aggregate, m, 10);
 };
 
 let deep_op = (m: foobar): foobar => {
   let coco = (0, m);
-  let coco = (0, Map.remove(42, coco.1));
-  let coco = (0, Map.update(32, Some(16), coco.1));
+  let coco = (0, Map.remove(42, coco[1]));
+  let coco = (0, Map.update(32, Some(16), coco[1]));
   coco;
 };

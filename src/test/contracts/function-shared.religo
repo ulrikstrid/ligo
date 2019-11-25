@@ -1,4 +1,4 @@
-/* Test use of multiple subroutines in a CameLIGO function */
+/* Test use of multiple subroutines in a Reasonligo function */
 
 let foo = (i: int): int => i + 20;
 

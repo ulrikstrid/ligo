@@ -27,6 +27,7 @@
 %token <Region.t> WILD
 
 %token <Region.t> EQ
+%token <Region.t> EQEQ
 %token <Region.t> NE
 %token <Region.t> LT
 %token <Region.t> GT

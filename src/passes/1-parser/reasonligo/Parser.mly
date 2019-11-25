@@ -548,7 +548,7 @@ type_annotation_simple:
 fun_expr:
   disj_expr_level es6_func {
     let arrow, body = $2 in
-    let value = function
+    let rec value = function
     | ETuple t -> 
       t.value, None
     | EAnnot ({value = EVar _, _; _}) as expr ->
@@ -558,8 +558,8 @@ fun_expr:
     | EAnnot ({value = EPar t, typ; region}) -> 
       (t.value.inside, []), Some (region, typ) 
     | EPar e ->       
-       (EPar e, []), None
-    | _ -> failwith "Not supported 2"
+       value e.value.inside
+    | _ -> failwith "Not supported Z"
     in
     let bindings, lhs_type = value $1 in
     let kwd_fun = Region.ghost in
@@ -584,26 +584,8 @@ fun_expr:
           };
           region
         }
-      | ETuple _ -> failwith "ETuple"
-      | EConstr _ -> failwith "ETuple"
-      | EAnnot _ -> failwith "EAnnot else"
-      | EUnit _ -> failwith "EUnit"
-
-      | ELogic _ -> failwith "ELogic"
-      | ERecord _ -> failwith "ERecord"
-
-      | ECall _ -> failwith "ECall"
-      | EProj _ -> failwith "EProj"
-
-      | ECond _ -> failwith "ECond"
-      | ELetIn _ -> failwith "ELetIn" 
-      | EList _ -> failwith "EList" 
-      | ESeq _ -> failwith "ESeq" 
-      | ECase _ -> failwith "ECase" 
-      | EArith _ -> failwith "EArith" 
-      | EBytes _ -> failwith "EBytes" 
-      (* | ESeq _ -> failwith "ESeq"  *)
-      | _ -> failwith "Not supported 3"
+      | EFun _ -> failwith "efun"
+      | _ -> failwith "Not supported"
       )
       in
 
@@ -801,7 +783,7 @@ ge_expr:
   bin_op(comp_expr_level, GE, cat_expr_level)  { $1 }
 
 eq_expr:
-  bin_op(comp_expr_level, EQ, cat_expr_level)  { $1 }
+  bin_op(comp_expr_level, EQEQ, cat_expr_level)  { $1 }
 
 ne_expr:
   bin_op(comp_expr_level, NE, cat_expr_level) { $1 }
@@ -938,7 +920,7 @@ core_expr_in:
 | False                               {  ELogic (BoolExpr (False $1)) }
 | True                                {  ELogic (BoolExpr (True $1))  }
 | list(expr)                                   { EList (EListComp $1) }
-| par(expr)                                              {    EPar $1 }
+| par(expr)                                                 { EPar $1 }
 | sequence_or_record                                          {    $1 }
 
 module_field:
@@ -958,7 +940,7 @@ selection:
     let result:((selection, dot) Utils.nsepseq) = (FieldName $2), ($1, h) :: t  in 
     result
   }
-   | DOT field_name {
+  | DOT field_name {
     (FieldName $2), []
   }
   | LBRACKET Int RBRACKET {
@@ -982,27 +964,27 @@ projection:
       region
     }
   }
-(* TODO: | module_name DOT field_name DOT nsepseq(selection,DOT) {
-    let open Region in
+| module_name DOT field_name selection {
     let module_name = $1 in
     let field_name = $3 in
     let value = module_name.value ^ "." ^ field_name.value in
     let struct_name = {$1 with value} in
-    let start = $1.region in
+
+    let start = $1.region in     
     let stop = nsepseq_to_region (function 
     | FieldName f -> f.region 
-    | Component c -> c.region) $5
-    in 
+    | Component c -> c.region) $4 
+    in
     let region = cover start stop in
-    { 
-      value = {
+    { value = 
+      {
         struct_name; 
-        selector = $4; 
-        field_path = $5
+        selector = Region.ghost; 
+        field_path = $4
       };
       region
-    }
-  } *)
+    }  
+  }
 
 inn: 
   expr SEMI sep_or_term_list(expr,SEMI) {
