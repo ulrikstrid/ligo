@@ -524,7 +524,7 @@ type_expr_simple:
           ) 
         in
         {value = path; region }
-    | _ -> failwith "Not supported"
+    | _ -> failwith "Not supported 1"
     in
     match args with 
       Some (lpar, args, rpar) -> (
@@ -548,7 +548,7 @@ type_annotation_simple:
 fun_expr:
   disj_expr_level es6_func {
     let arrow, body = $2 in
-    let rec value = function
+    let value = function
     | ETuple t -> 
       t.value, None
     | EAnnot ({value = EVar _, _; _}) as expr ->
@@ -557,9 +557,9 @@ fun_expr:
       t.value, Some (region, typ)
     | EAnnot ({value = EPar t, typ; region}) -> 
       (t.value.inside, []), Some (region, typ) 
-    | EPar p -> 
-      value p.value.inside
-    | _ -> failwith "Not supported"
+    | EPar e ->       
+       (EPar e, []), None
+    | _ -> failwith "Not supported 2"
     in
     let bindings, lhs_type = value $1 in
     let kwd_fun = Region.ghost in
@@ -575,13 +575,43 @@ fun_expr:
           colon = Region.ghost;
           type_expr = typ;
         } ; region}
-      | EPar e -> expr_to_pattern e.value.inside
-      | _ -> failwith "Not supported")
+      | EPar {value = {lpar; rpar; inside}; region} -> 
+        PPar {
+          value = {
+            lpar;
+            rpar;
+            inside = expr_to_pattern inside;
+          };
+          region
+        }
+      | ETuple _ -> failwith "ETuple"
+      | EConstr _ -> failwith "ETuple"
+      | EAnnot _ -> failwith "EAnnot else"
+      | EUnit _ -> failwith "EUnit"
+
+      | ELogic _ -> failwith "ELogic"
+      | ERecord _ -> failwith "ERecord"
+
+      | ECall _ -> failwith "ECall"
+      | EProj _ -> failwith "EProj"
+
+      | ECond _ -> failwith "ECond"
+      | ELetIn _ -> failwith "ELetIn" 
+      | EList _ -> failwith "EList" 
+      | ESeq _ -> failwith "ESeq" 
+      | ECase _ -> failwith "ECase" 
+      | EArith _ -> failwith "EArith" 
+      | EBytes _ -> failwith "EBytes" 
+      (* | ESeq _ -> failwith "ESeq"  *)
+      | _ -> failwith "Not supported 3"
+      )
       in
-      
+
+    let binders = expr_to_pattern hd, (List.map (fun (_, a) -> expr_to_pattern a) tl) in
+     
     let f = {
       kwd_fun ;
-      binders = expr_to_pattern hd, (List.map (fun (_, a) -> expr_to_pattern a) tl);
+      binders ;
       lhs_type;
       arrow ;
       body ;
@@ -699,16 +729,20 @@ let_expr(right_expr):
     let kwd_let = $1 in 
     let (binding: let_binding), _ = $2 in
 
-    (* necessary as multiple patterns are not yet supported *)
+    (* necessary as multiple patterns are not yet supported *)    
+    (* 
+        let binders = binding.binders in
+
     let binding = {
       binding with 
       binders = fst binding.binders, []
-    } in
+    } in *)
     let kwd_in = $3 in
     let body = $4 in
     let stop = expr_to_region $4 in    
     let region = cover $1 stop in
     let let_in = {kwd_let; binding; kwd_in; body}
+
     in ELetIn {region; value=let_in} }
 
 disj_expr_level:
@@ -981,7 +1015,7 @@ inn:
     | EAnnot ({value = ((EVar e), t); region}) -> (
       let type_expr_to_field_expr = function
       | TVar e -> EVar e
-      | _ -> failwith "Not supported"
+      | _ -> failwith "Not supported 4"
       in
       let field_assignment = {
         value = {
@@ -994,7 +1028,7 @@ inn:
       in 
       field_assignment      
     )
-    | _ -> failwith "Not supported")
+    | _ -> failwith "Not supported 5")
     in
     let (e, _) = $3 in
     let e = Utils.nsepseq_cons expr $2 e in
