@@ -53,12 +53,14 @@ type t =
 | NE of Region.t        (* "!=" *)
 | LT of Region.t        (* "<"  *)
 | GT of Region.t        (* ">"  *)
-| LE of Region.t        (* "=<" *)
+| LE of Region.t        (* "<=" *)
 | GE of Region.t        (* ">=" *)
 | EG of Region.t        (* "=>" *)
 
 | BOOL_OR of Region.t   (* "||" *)
 | BOOL_AND of Region.t  (* "&&" *)
+
+| NOT of Region.t (* ! *)
 
   (* Identifiers, labels, numbers and strings *)
 
@@ -79,7 +81,6 @@ type t =
 | Let of Region.t
 | Switch of Region.t
 | Mod of Region.t
-| Not of Region.t
 | Or of Region.t
 | True of Region.t
 | Type of Region.t
@@ -149,7 +150,7 @@ let proj_token = function
   | Let region -> region, "Let"
   | Switch region -> region, "Switch"
   | Mod region -> region, "Mod"
-  | Not region -> region, "Not"
+  | NOT region -> region, "!"
   | Or region -> region, "Or"
   | True region -> region, "True"
   | Type region -> region, "Type"
@@ -180,7 +181,7 @@ let to_lexeme = function
   | NE _ -> "!="
   | LT _ -> "<"
   | GT _ -> ">"
-  | LE _ -> "=<"
+  | LE _ -> "<="
   | GE _ -> ">="
   | EG _ -> "=>"
   | BOOL_OR _ -> "||"
@@ -197,7 +198,7 @@ let to_lexeme = function
   | If _ -> "if"
   | Let _ -> "let"
   | Mod _ -> "mod"
-  | Not _ -> "not"
+  | NOT _ -> "!"
   | Or _ -> "or"
   | Switch _ -> "switch"
   | True _ -> "true"
@@ -228,7 +229,6 @@ let keywords = [
   (fun reg -> Let   reg);
   (fun reg -> Switch reg);
   (fun reg -> Mod   reg);
-  (fun reg -> Not   reg);
   (fun reg -> Or    reg);
   (fun reg -> True  reg);
   (fun reg -> Type  reg);  
@@ -401,13 +401,14 @@ let mk_sym lexeme region =
   | "!=" ->     Ok (NE        region)
   | "<"   ->    Ok (LT        region)
   | ">"   ->    Ok (GT        region)
-  | "=<"   ->   Ok (LE        region)
+  | "<="   ->   Ok (LE        region)
   | ">="   ->   Ok (GE        region)
   | "||"   ->   Ok (BOOL_OR   region)
   | "&&"   ->   Ok (BOOL_AND  region)
   | "("    ->   Ok (LPAR      region)
   | ")"    ->   Ok (RPAR      region)
   | "=>"    ->  Ok (EG      region)
+  | "!"    ->   Ok (NOT      region)
   |  _  ->  Error Invalid_symbol
 
 (* Identifiers *)
@@ -449,7 +450,6 @@ let is_kwd = function
   | Let _
   | Switch _
   | Mod _
-  | Not _
   | Or _
   | True _
   | Type _
@@ -491,6 +491,7 @@ let is_sym = function
 | GE _
 | EG _
 | BOOL_OR _
+| NOT _
 | BOOL_AND _ -> true
 |          _ -> false
 

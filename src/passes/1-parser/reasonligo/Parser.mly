@@ -23,6 +23,33 @@ type 'a sequence_or_record =
   PaSequence of 'a sequence_elements
 | PaRecord of 'a record_elements
 | PaSingleExpr of expr
+
+let type_expr_to_field_expr = function
+| TVar e -> 
+  (match int_of_string_opt e.value with 
+  | Some _ -> EArith (Int {value = (e.value, Z.of_string e.value); region = e.region});
+  | None -> 
+    (* TODO: nat, ?,  *)
+    let proj = String.index_opt e.value '.' in
+    (match proj with 
+    | Some _ -> 
+      let elements = String.split_on_char '.' e.value in
+      let hd = List.hd elements in
+      let tl = List.tl elements in
+      let field_hd, field_tl = List.hd tl, List.tl tl in
+      EProj {value = {
+        struct_name = { 
+          value = hd; 
+          region = Region.ghost 
+        };
+        selector = Region.ghost;
+        field_path = (FieldName { value = field_hd; region = Region.ghost}), (List.map (fun f -> Region.ghost, (FieldName { value = f; region = Region.ghost})) field_tl);
+      }; region = e.region}
+    | None -> EVar e)
+  )
+| _ -> failwith "Not supported 4"
+
+
 %}
 
 (* See [ParToken.mly] for the definition of tokens. *)
@@ -511,19 +538,18 @@ type_expr_simple:
     | EVar i -> i
     | EProj {value = {struct_name; field_path; _}; region} -> 
         let path = 
-          struct_name.value ^ 
-          "." ^ 
           (Utils.nsepseq_foldl 
             (fun a e -> 
               match e with 
               | FieldName v -> a ^ "." ^ v.value
               | Component {value = c, _; _} -> a ^ "." ^ c
             ) 
-            ""
+            struct_name.value
             field_path
           ) 
         in
         {value = path; region }
+    | EArith (Int {value = s, _; region }) -> { value = s; region = region }
     | _ -> failwith "Not supported 1"
     in
     match args with 
@@ -531,7 +557,15 @@ type_expr_simple:
         let start = expr_to_region $1 in
         let stop = rpar in
         let region = cover start stop in        
-        TApp {value = constr, {value = {inside = args; lpar; rpar}; region}; region}        
+        TApp {
+          value = constr, {
+            value = {
+              inside = args; 
+              lpar; 
+              rpar
+            }; 
+          region}; 
+        region}
       )
     | None -> TVar constr
   }
@@ -728,8 +762,8 @@ let_expr(right_expr):
     in ELetIn {region; value=let_in} }
 
 disj_expr_level:
-  disj_expr                               { ELogic (BoolExpr (Or $1)) }
-| conj_expr_level                                                { $1 }
+  disj_expr                                                    { ELogic (BoolExpr (Or $1)) }
+| conj_expr_level                                                {                      $1 }
 | par(tuple(disj_expr_level)) type_annotation_simple? {
     let region = $1.region in    
     let tuple = ETuple {value=$1.value.inside; region} in
@@ -802,7 +836,7 @@ append_expr:
  *)
 
 cons_expr_level:
-  cons_expr                                    { EList (ECons $1) }
+  cons_expr                                        { EList (ECons $1) }
 | add_expr_level                                    {              $1 }
 
 cons_expr:
@@ -842,7 +876,7 @@ unary_expr_level:
     and value  = {op = $1; arg = $2} 
     in EArith (Neg {region; value})      
 }
-| Not call_expr_level {
+| NOT call_expr_level {
     let start = $1 in
     let end_ = expr_to_region $2 in
     let region = cover start end_
@@ -854,7 +888,7 @@ unary_expr_level:
 call_expr_level:
   call_expr type_annotation_simple?                                              {   ECall $1 }
 | constr_expr type_annotation_simple?                                            { EConstr $1 }
-| core_expr                                                      { $1 }
+| core_expr                                                                              { $1 }
 
 constr_expr:
   Constr core_expr_in? { 
@@ -898,14 +932,16 @@ core_expr_2:
 core_expr:
   core_expr_in type_annotation_simple? {   
     let region = match $2 with 
-    | Some s -> cover (expr_to_region $1) (type_expr_to_region s)
+    | Some s -> 
+      cover (expr_to_region $1) (type_expr_to_region s)
     | None -> expr_to_region $1
     in        
     match $2 with
-    | Some t -> EAnnot { value = $1, t; region }     
+    | Some t -> 
+      EAnnot { value = $1, t; region }     
     | None -> $1
   }
-  | core_expr_in COLON record_expr { 
+| core_expr_in COLON record_expr { 
     $1
   }
 
@@ -931,20 +967,20 @@ module_field:
 
 selection:
   | LBRACKET Int RBRACKET selection {
-    let h, t = $4 in
+    let r, (h, t) = $4 in
     let result:((selection, dot) Utils.nsepseq) = (Component $2), (Region.ghost, h) :: t in
-    result
+    r, result
   }
   | DOT field_name selection {
-    let h, t = $3 in
+    let r, (h, t) = $3 in
     let result:((selection, dot) Utils.nsepseq) = (FieldName $2), ($1, h) :: t  in 
-    result
+    r, result
   }
   | DOT field_name {
-    (FieldName $2), []
+    $1, ((FieldName $2), [])
   }
   | LBRACKET Int RBRACKET {
-    (Component $2), []
+    Region.ghost, ((Component $2), [])
   }
 
 projection:
@@ -952,14 +988,15 @@ projection:
     let start = $1.region in     
     let stop = nsepseq_to_region (function 
     | FieldName f -> f.region 
-    | Component c -> c.region) $2 
+    | Component c -> c.region) (snd $2)
     in
     let region = cover start stop in
+    print_endline ("checkme3:" ^ $1.value);
     { value = 
       {
         struct_name = $1; 
-        selector = Region.ghost; 
-        field_path = $2
+        selector = fst $2;
+        field_path = snd $2
       };
       region
     }
@@ -973,14 +1010,15 @@ projection:
     let start = $1.region in     
     let stop = nsepseq_to_region (function 
     | FieldName f -> f.region 
-    | Component c -> c.region) $4 
+    | Component c -> c.region) (snd $4)
     in
     let region = cover start stop in
+    print_endline ("check me:" ^ struct_name.value);
     { value = 
       {
         struct_name; 
-        selector = Region.ghost; 
-        field_path = $4
+        selector = fst $4; 
+        field_path = snd $4
       };
       region
     }  
@@ -992,13 +1030,9 @@ inn:
     let e = Utils.nsepseq_cons $1 $2 e in
     PaSequence { selements = e; sterminator = None}
   }
-   | expr COMMA sep_or_term_list(field_assignment,COMMA) {
+| expr COMMA sep_or_term_list(field_assignment,COMMA) {
     let expr = (match $1 with 
-    | EAnnot ({value = ((EVar e), t); region}) -> (
-      let type_expr_to_field_expr = function
-      | TVar e -> EVar e
-      | _ -> failwith "Not supported 4"
-      in
+    | EAnnot ({value = ((EVar e), t); region}) -> (      
       let field_assignment = {
         value = {
           field_name = e;
@@ -1010,6 +1044,39 @@ inn:
       in 
       field_assignment      
     )
+    | EArith fml ->
+      (* To handle cases such as: `{counter: x + 1 + z; other: 1}` where 
+         `counter: x` is seen as an EAnnot. This is a result of how we
+         handle function arguments.  
+      *)
+     let rec extract = function 
+     | Add {value = {arg1 = EAnnot {value = ((EVar v)), t; region = r}; op; arg2}; region} -> v, r, op, Add {value = { arg1 = type_expr_to_field_expr t; op; arg2}; region}
+     | Sub {value = {arg1 = EAnnot {value = ((EVar v)), t; region = r}; op; arg2}; region} -> v, r, op, Sub {value = { arg1 = type_expr_to_field_expr t; op; arg2}; region}
+     | Mult {value = {arg1 = EAnnot {value = ((EVar v)), t; region = r}; op; arg2}; region} -> v, r, op, Mult {value = { arg1 = type_expr_to_field_expr t; op; arg2}; region}
+     | Div {value = {arg1 = EAnnot {value = ((EVar v)), t; region = r}; op; arg2}; region} -> v, r, op, Div {value = { arg1 = type_expr_to_field_expr t; op; arg2}; region}
+     | Add {value = {arg1 = EArith e; op; arg2}; region} -> 
+       let (field_name, reg, oper, arg1) = extract e in
+       field_name, reg, oper, Add {value = {arg1 = EArith arg1; op; arg2}; region}
+     | Sub {value = {arg1 = EArith e; op; arg2}; region} ->
+       let (field_name, reg, oper, arg1) = extract e in
+       field_name, reg, oper, Sub {value = {arg1 = EArith arg1; op; arg2}; region}
+     | Mult {value = {arg1 = EArith e; op; arg2}; region} ->
+       let (field_name, reg, oper, arg1) = extract e in
+       field_name, reg, oper, Mult {value = {arg1 = EArith arg1; op; arg2}; region}
+     | Div {value = {arg1 = EArith e; op; arg2}; region} -> 
+       let (field_name, reg, oper, arg1) = extract e in
+       field_name, reg, oper, Div {value = {arg1 = EArith arg1; op; arg2}; region}  
+     | _ -> failwith "Not supported"
+      in
+      let (field_name, region, assignment, field_expr) = extract fml in
+      {
+        value = {
+          field_name;
+          assignment;
+          field_expr = EArith field_expr;
+        };
+        region
+      }       
     | _ -> failwith "Not supported 5")
     in
     let (e, _) = $3 in
@@ -1040,7 +1107,8 @@ sequence_or_record:
         ne_elements = r.relements;
         terminator = r.rterminator;
       }
-      in ERecord {value; region}
+      in 
+      ERecord {value; region}
     )
     | PaSingleExpr e -> (
       e

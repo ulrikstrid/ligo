@@ -78,6 +78,8 @@ type t =
 | BOOL_OR of Region.t (* "||" *)
 | BOOL_AND of Region.t(* "&&" *)
 
+| NOT of Region.t (* ! *)
+
   (* Identifiers, labels, numbers and strings *)
 
 | Ident  of string Region.reg
@@ -97,7 +99,6 @@ type t =
 | Let of Region.t
 | Switch of Region.t
 | Mod of Region.t
-| Not of Region.t
 | Or of Region.t
 | True of Region.t
 | Type of Region.t

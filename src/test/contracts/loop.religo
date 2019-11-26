@@ -24,7 +24,7 @@ let counter = (n: int): int => {
         } else {
           stop({counter: prev.counter, sum: prev.sum});
         },
-      initial,
+      initial
     );
   out.sum;
 };

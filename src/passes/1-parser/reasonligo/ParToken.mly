@@ -35,6 +35,8 @@
 %token <Region.t> GE
 %token <Region.t> EG
 
+%token <Region.t> NOT
+
 %token <Region.t> BOOL_OR
 %token <Region.t> BOOL_AND
 
@@ -53,7 +55,6 @@
 %token <Region.t> Let
 %token <Region.t> Switch
 %token <Region.t> Mod
-%token <Region.t> Not
 %token <Region.t> Or
 %token <Region.t> True
 %token <Region.t> Type
