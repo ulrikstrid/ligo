@@ -252,12 +252,9 @@ let reserved =
     |> add "functor"
     |> add "inherit"
     |> add "initializer"
-    |> add "land"
     |> add "lazy"
-    |> add "lor"
     |> add "lsl"
     |> add "lsr"    
-    |> add "lxor"
     |> add "method"
     |> add "module"
     |> add "mutable"
@@ -275,9 +272,6 @@ let reserved =
     |> add "virtual"
     |> add "when"
     |> add "while"
-    |> add "in"
-    |> add "match"
-    |> add "then"
 
 let constructors = [
   (fun reg -> False reg);

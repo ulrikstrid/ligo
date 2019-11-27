@@ -743,7 +743,7 @@ let tuple_mligo () : unit result  =
 
 
 let tuple_religo () : unit result  =
-  let%bind program = mtype_file "./contracts/tuple.religo" in
+  let%bind program = retype_file "./contracts/tuple.religo" in
   let ez n =
     e_tuple (List.map e_int n) in
   let%bind () =
@@ -1427,6 +1427,27 @@ let mligo_list () : unit result =
   let%bind () = expect_eq program "iter_op" (aux [2 ; 3 ; 4 ; 5]) (e_unit ()) in
   ok ()
 
+let religo_list () : unit result =
+  let%bind program = retype_file "./contracts/list.religo" in
+  let aux lst = e_list @@ List.map e_int lst in
+  let%bind () = expect_eq program "fold_op" (aux [ 1 ; 2 ; 3 ]) (e_int 16) in
+  let%bind () =
+    let make_input n =
+      e_pair (e_list [e_int n; e_int (2*n)])
+        (e_pair (e_int 3) (e_list [e_int 8])) in
+    let make_expected n =
+      e_pair (e_typed_list [] t_operation)
+        (e_pair (e_int (n+3)) (e_list [e_int (2*n)]))
+    in
+    expect_eq_n program "main" make_input make_expected
+  in
+  let%bind () = expect_eq_evaluate program "x" (e_list []) in
+  let%bind () = expect_eq_evaluate program "y" (e_list @@ List.map e_int [3 ; 4 ; 5]) in
+  let%bind () = expect_eq_evaluate program "z" (e_list @@ List.map e_int [2 ; 3 ; 4 ; 5]) in
+  let%bind () = expect_eq program "map_op" (aux [2 ; 3 ; 4 ; 5]) (aux [3 ; 4 ; 5 ; 6]) in
+  let%bind () = expect_eq program "iter_op" (aux [2 ; 3 ; 4 ; 5]) (e_unit ()) in
+  ok ()
+
 let lambda_mligo () : unit result =
   let%bind program = mtype_file "./contracts/lambda.mligo" in
   let make_input = e_pair (e_unit ()) (e_unit ()) in
@@ -1630,12 +1651,12 @@ let main = test_suite "Integration (End to End)" [
     test "variant matching" variant_matching ;
     test "tuple" tuple ;
     test "tuple (mligo)" tuple_mligo ;
-    (* test "tuple (religo)" tuple_religo ; *)
+    test "tuple (religo)" tuple_religo ;
     test "record" record ;
     test "condition simple" condition_simple ;
     test "condition (ligo)" condition ;
     test "condition (mligo)" condition_mligo ;
-    (* test "condition (religo)" condition_religo ; *)
+    test "condition (religo)" condition_religo ;
     test "shadow" shadow ;
     test "annotation" annotation ;
     test "multiple parameters" multiple_parameters ;
@@ -1649,7 +1670,7 @@ let main = test_suite "Integration (End to End)" [
     test "arithmetic (religo)" arithmetic_religo ;
     test "bitwise_arithmetic" bitwise_arithmetic ;
     test "bitwise_arithmetic (mligo)" bitwise_arithmetic_mligo;
-    (* test "bitwise_arithmetic (religo)" bitwise_arithmetic_religo; *)
+    test "bitwise_arithmetic (religo)" bitwise_arithmetic_religo;
     test "string_arithmetic" string_arithmetic ;
     test "string_arithmetic (mligo)" string_arithmetic_mligo ;
     test "string_arithmetic (religo)" string_arithmetic_religo ;
@@ -1666,7 +1687,7 @@ let main = test_suite "Integration (End to End)" [
     test "option (religo)" reoption ;
     test "map" map ;
     test "map (mligo)" mmap ;
-    (* test "map (religo)" remap ; *)
+    test "map (religo)" remap ;
     test "big_map" big_map ;
     test "big_map (mligo)" mbig_map ;
     test "big_map (religo)" rebig_map ;
@@ -1695,6 +1716,7 @@ let main = test_suite "Integration (End to End)" [
     test "match variant 2 (religo)" match_matej_re ;
     (* test "list matching (mligo)" mligo_list ; *)
     test "list matching (mligo)" mligo_list ;
+    test "list matching (religo)" religo_list ;
     (* test "guess the hash mligo" guess_the_hash_mligo ; WIP? *)
     test "failwith ligo" failwith_ligo ;
     test "failwith mligo" failwith_mligo ;

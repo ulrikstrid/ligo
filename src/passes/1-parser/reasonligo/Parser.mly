@@ -192,8 +192,7 @@ declarations:
 
 declaration:
 | type_decl SEMI                                            { TypeDecl $1 }
-| let_declaration SEMI                                      { 
-  Let      $1 }
+| let_declaration SEMI                                      { Let      $1 }
 
 (* Type declarations *)
 
@@ -211,8 +210,9 @@ type_decl:
 
 type_expr:
   cartesian                                              {   $1 }
-| sum_type                                               {    TSum $1 }
+| sum_type                                               {  TSum $1 }
 | record_type                                            { TRecord $1 }
+| par (type_expr)                                        { TPar $1 }
 
 cartesian_parens:
   core_type { $1 }
@@ -222,7 +222,7 @@ cartesian:
     let value  = Utils.nsepseq_cons $1 $2 $3 in
     let region = nsepseq_to_region type_expr_to_region value
     in TProd {region; value}
-  }
+  }  
 | fun_type { ($1 : type_expr) }
   
 fun_type:
@@ -235,7 +235,7 @@ fun_type:
   }
 
 core_type:
-   type_name {
+  type_name {
     TVar $1
   }
 | module_name DOT type_name {
@@ -261,10 +261,7 @@ core_type:
       };
       region = cover lpar rpar;
     }; region}
-  }  
-  | par(type_expr) {
-      TPar $1 
-  }  
+  }
 
 type_constr:
   type_name { $1                               }
@@ -991,7 +988,6 @@ projection:
     | Component c -> c.region) (snd $2)
     in
     let region = cover start stop in
-    print_endline ("checkme3:" ^ $1.value);
     { value = 
       {
         struct_name = $1; 
@@ -1013,7 +1009,6 @@ projection:
     | Component c -> c.region) (snd $4)
     in
     let region = cover start stop in
-    print_endline ("check me:" ^ struct_name.value);
     { value = 
       {
         struct_name; 
