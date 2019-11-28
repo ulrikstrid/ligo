@@ -281,50 +281,6 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the dry-run transaction will use. |} ] ;
 
-  run_ligo_good [ "evaluate-value" ; "--help" ] ;
-  [%expect {|
-    NAME
-           ligo-evaluate-value
-
-    SYNOPSIS
-           ligo evaluate-value [OPTION]... SOURCE_FILE ENTRY_POINT
-
-    ARGUMENTS
-           ENTRY_POINT (required)
-               ENTRY_POINT is entry-point that will be compiled.
-
-           SOURCE_FILE (required)
-               SOURCE_FILE is the path to the .ligo or .mligo file of the
-               contract.
-
-    OPTIONS
-           --amount=AMOUNT (absent=0)
-               AMOUNT is the amount the dry-run transaction will use.
-
-           --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
-           (absent=human-readable)
-               DISPLAY_FORMAT is the format that will be used by the CLI.
-               Available formats are 'dev', 'json', and 'human-readable'
-               (default). When human-readable lacks details (we are still
-               tweaking it), please contact us and use another format in the
-               meanwhile.
-
-           --help[=FMT] (default=auto)
-               Show this help in format FMT. The value FMT must be one of `auto',
-               `pager', `groff' or `plain'. With `auto', the format is `pager` or
-               `plain' whenever the TERM env var is `dumb' or undefined.
-
-           -s SYNTAX, --syntax=SYNTAX (absent=auto)
-               SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively).
-
-           --sender=SENDER
-               SENDER is the sender the dry-run transaction will use.
-
-           --source=SOURCE
-               SOURCE is the source the dry-run transaction will use. |} ] ;
-
   run_ligo_good [ "compile-expression" ; "--help" ] ;
   [%expect {|
     NAME
