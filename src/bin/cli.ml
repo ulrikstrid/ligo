@@ -92,15 +92,6 @@ let michelson_code_format =
     (enum [("text", `Text); ("json", `Json); ("hex", `Hex)])
     `Text info
 
-let source_to_typed syntax source_file =
-  let%bind simplified  = Ligo.Compile.Of_source.just_compile     source_file syntax in
-  let%bind typed,state = Ligo.Compile.Of_simplified.just_compile simplified         in
-  (*move to of_typed?*)
-  let env = Ast_typed.program_environment typed in
-  (*move to ?*)
-  let%bind syntax = Ligo.Compile.Helpers.syntax_to_variant syntax (Some source_file) in
-  ok (typed,state,syntax,env)
-
 let compile_file_contract_args_bis ~env ~state storage parameter syntax =
   let%bind simplified = Ligo.Compile.Of_source.just_compile_contract_input storage parameter syntax in
   let%bind typed,_    = Ligo.Compile.Of_simplified.just_compile_expression ~env ~state simplified in
@@ -148,7 +139,8 @@ let compile_file =
 let dry_run =
   let f source_file entry_point storage input amount sender source syntax display_format =
     toplevel ~display_format @@
-    let%bind (typed_program,state,v_syntax,env) = source_to_typed (Syntax_name syntax) source_file in 
+    let%bind (typed_program,state,env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name syntax) source_file in 
+    let%bind v_syntax = Ligo.Compile.Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
     let%bind args_michelson = compile_file_contract_args_bis ~env ~state  storage input v_syntax in
     let%bind michelson = typed_to_michelson_program typed_program entry_point in (*TODO: Use that in the run command instead of the compiled_program*)
     let%bind options = Ligo.Run.Of_source.make_dry_run_options {amount ; sender ; source } in
@@ -165,7 +157,8 @@ let dry_run =
 let run_function =
   let f source_file entry_point parameter amount sender source syntax display_format =
     toplevel ~display_format @@
-    let%bind (typed_program,state,v_syntax,env) = source_to_typed (Syntax_name syntax) source_file in 
+    let%bind (typed_program,state,env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name syntax) source_file in 
+    let%bind v_syntax = Ligo.Compile.Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
     let%bind args_michelson = compile_file_function_arg ~env ~state parameter v_syntax in
     let%bind michelson = typed_to_michelson_program typed_program entry_point in (*TODO: Use that in the run command instead of the compiled_program*)
     let%bind options = Ligo.Run.Of_source.make_dry_run_options {amount ; sender ; source } in

@@ -1,7 +1,9 @@
 open Trace
 open Test_helpers
 
-let type_file = Ligo.Compile.Of_source.type_file (Syntax_name "cameligo")
+let type_file f =
+  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "cameligo") f in
+  ok @@ (typed,state)
 
 let get_program =
   let s = ref None in
