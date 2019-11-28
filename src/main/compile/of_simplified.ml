@@ -1,6 +1,21 @@
 open Ast_simplified
 open Trace
 
+(*here*)
+let just_compile (program : Ast_simplified.program) : (Ast_typed.program * Typer.Solver.state) result =
+  let%bind (prog_typed , state) = Typer.type_program program in
+  let () = Typer.Solver.discard_state state in
+  ok @@ (prog_typed, state)
+
+let just_compile_expression ?(env = Ast_typed.Environment.full_empty) ~(state : Typer.Solver.state) (ae : Ast_simplified.expression) : (Ast_typed.value * Typer.Solver.state) result =
+  Typer.type_expression env state ae
+
+let just_pair_storage_parameter : (Ast_simplified.expression * Ast_simplified.expression) -> Ast_simplified.expression result =
+    fun (storage,parameter) ->
+  ok @@ e_pair storage parameter
+
+(**)
+
 let compile_contract_entry (program : program) entry_point =
   let%bind (prog_typed , state) = Typer.type_program program in
   let () = Typer.Solver.discard_state state in

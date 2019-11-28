@@ -2,6 +2,7 @@ open Trace
 open Mini_c
 open Tezos_utils
 
+(*here*)
 let compile_expression_as_function : expression -> _ result = fun e ->
   let (input , output) = t_unit , e.type_value in
   let%bind body = Compiler.Program.translate_expression e Compiler.Environment.empty in
@@ -30,6 +31,7 @@ let compile_function_entry = fun program name ->
   let%bind aggregated = Self_mini_c.all_expression aggregated in
   compile_function aggregated
 
+(*here*)
 let compile_contract_entry = fun program name ->
   let%bind aggregated = aggregate_entry program name false in
   let%bind aggregated = Self_mini_c.all_expression aggregated in
