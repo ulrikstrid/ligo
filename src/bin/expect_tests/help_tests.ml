@@ -36,10 +36,6 @@ let%expect_test _ =
            compile-expression
 
 
-    Subcommand: evaluate a given definition.
-           evaluate-value
-
-
     Subcommand: run a function with the given parameter.
            run-function
 
@@ -100,19 +96,16 @@ let%expect_test _ =
            ligo-compile-parameter
 
     SYNOPSIS
-           ligo compile-parameter [OPTION]... SOURCE_FILE ENTRY_POINT
-           PARAMETER_EXPRESSION
+           ligo compile-parameter [OPTION]... PARAMETER_EXPRESSION SYNTAX
 
     ARGUMENTS
-           ENTRY_POINT (required)
-               ENTRY_POINT is entry-point that will be compiled.
-
            PARAMETER_EXPRESSION (required)
                PARAMETER_EXPRESSION is the expression that will be compiled.
 
-           SOURCE_FILE (required)
-               SOURCE_FILE is the path to the .ligo or .mligo file of the
-               contract.
+           SYNTAX (required)
+               SYNTAX is the syntax that will be used. Currently supported
+               syntaxes are "pascaligo" and "cameligo". By default, the syntax is
+               guessed from the extension (.ligo and .mligo, respectively).
 
     OPTIONS
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
@@ -131,12 +124,7 @@ let%expect_test _ =
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
-               are 'text' (default), 'json' and 'hex'.
-
-           -s SYNTAX, --syntax=SYNTAX (absent=auto)
-               SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively). |} ] ;
+               are 'text' (default), 'json' and 'hex'. |} ] ;
 
   run_ligo_good [ "compile-storage" ; "--help" ] ;
   [%expect {|
@@ -287,11 +275,16 @@ let%expect_test _ =
            ligo-compile-expression
 
     SYNOPSIS
-           ligo compile-expression [OPTION]... _EXPRESSION
+           ligo compile-expression [OPTION]... _EXPRESSION SYNTAX
 
     ARGUMENTS
            _EXPRESSION (required)
                _EXPRESSION is the expression that will be compiled.
+
+           SYNTAX (required)
+               SYNTAX is the syntax that will be used. Currently supported
+               syntaxes are "pascaligo" and "cameligo". By default, the syntax is
+               guessed from the extension (.ligo and .mligo, respectively).
 
     OPTIONS
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
@@ -310,9 +303,4 @@ let%expect_test _ =
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
-               are 'text' (default), 'json' and 'hex'.
-
-           -s SYNTAX, --syntax=SYNTAX (absent=auto)
-               SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively). |} ] ;
+               are 'text' (default), 'json' and 'hex'. |} ] ;
