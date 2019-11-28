@@ -1,4 +1,3 @@
-module Of_source = Of_source
 module Of_typed = Of_typed
 module Of_simplified = Of_simplified
 module Of_mini_c = Of_mini_c

@@ -143,7 +143,7 @@ let dry_run =
     let%bind v_syntax = Ligo.Compile.Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
     let%bind args_michelson = compile_file_contract_args_bis ~env ~state  storage input v_syntax in
     let%bind michelson = typed_to_michelson_program typed_program entry_point in (*TODO: Use that in the run command instead of the compiled_program*)
-    let%bind options = Ligo.Run.Of_source.make_dry_run_options {amount ; sender ; source } in
+    let%bind options = Ligo.Run.Of_michelson.make_dry_run_options {amount ; sender ; source } in
     let%bind michelson_output = Ligo.Run.Of_michelson.run ~options michelson args_michelson in
     let%bind simplified_output = Compile.Of_simplified.uncompile_typed_program_entry_function_result typed_program entry_point michelson_output in
     ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
@@ -161,7 +161,7 @@ let run_function =
     let%bind v_syntax = Ligo.Compile.Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
     let%bind args_michelson = compile_file_function_arg ~env ~state parameter v_syntax in
     let%bind michelson = typed_to_michelson_program typed_program entry_point in (*TODO: Use that in the run command instead of the compiled_program*)
-    let%bind options = Ligo.Run.Of_source.make_dry_run_options {amount ; sender ; source } in
+    let%bind options = Ligo.Run.Of_michelson.make_dry_run_options {amount ; sender ; source } in
     let%bind michelson_output = Ligo.Run.Of_michelson.run ~options michelson args_michelson in
     let%bind simplified_output = Compile.Of_simplified.uncompile_typed_program_entry_function_result typed_program entry_point michelson_output in
     ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
