@@ -414,11 +414,11 @@ typed_pattern:
   }
 
 pattern:
-  sub_pattern DOTDOTDOT tail { 
-    let start = pattern_to_region $1 in
-    let stop = pattern_to_region $3 in 
+  LBRACKET sub_pattern COMMA DOTDOTDOT sub_pattern RBRACKET { 
+    let start = pattern_to_region $2 in
+    let stop = pattern_to_region $5 in 
     let region = cover start stop in
-    let val_ = {value = $1, $2, $3; region} in
+    let val_ = {value = $2, $3, $5; region} in
     PList (PCons val_) 
   }
 | tuple(sub_pattern) { 
@@ -431,7 +431,7 @@ pattern:
 | core_pattern                                            {        $1 }
 
 sub_pattern:
-  par(tail)                                              {    PPar $1 }
+  par(sub_pattern)                                              {    PPar $1 }
 | core_pattern                                           {         $1 }
 
 core_pattern:
@@ -443,7 +443,7 @@ core_pattern:
 | False                                                  {  PFalse $1 }
 | Str                                                    { PString $1 }
 | par(ptuple)                                            {    PPar $1 }
-| list(tail)                                   { PList (PListComp $1) } 
+| list(sub_pattern)                                      { PList (PListComp $1) } 
 | constr_pattern                                         { PConstr $1 }
 | record_pattern                                         { PRecord $1 }
 
@@ -478,7 +478,7 @@ constr_pattern:
 
 
 ptuple:
-  tuple(tail) {  
+  tuple(sub_pattern) {  
     let h, t = $1 in    
     let start = pattern_to_region h in
     let stop = last (fun (region, _) -> region) t in
@@ -492,15 +492,6 @@ unit:
     let region = cover $1 $2 in
     { value = the_unit; region }
   }
-
-tail:
-  sub_pattern DOTDOTDOT tail { 
-    let start = pattern_to_region $1 in
-    let end_ = pattern_to_region $3 in
-    let region = cover start end_ in
-    PList (PCons {value = ($1, $2, $3); region} )
-  }
-| sub_pattern                                      {               $1 }
 
 (* Expressions *)
 
@@ -799,22 +790,15 @@ ne_expr:
 cat_expr_level:
   cat_expr                                        {  EString (Cat $1) }
 (*| reg(append_expr)                                { EList (Append $1) } *)
-| cons_expr_level                                 {                $1 }
+| add_expr_level                                 {                $1 }
 
 cat_expr:
-  bin_op(cons_expr_level, CAT, cat_expr_level)              { $1 }
+  bin_op(add_expr_level, CAT, add_expr_level)              { $1 }
 
 (*
 append_expr:
   cons_expr_level sym(APPEND) cat_expr_level               { $1,$2,$3 }
  *)
-
-cons_expr_level:
-  cons_expr                                        { EList (ECons $1) }
-| add_expr_level                                    {              $1 }
-
-cons_expr:
-  bin_op(add_expr_level, DOTDOTDOT, cons_expr_level)                  { $1 }
 
 add_expr_level:
   plus_expr                                         { EArith (Add $1) }
@@ -915,6 +899,42 @@ core_expr:
     | None -> $1
   }
 
+list_or_spread:
+  LBRACKET expr COMMA sep_or_term_list(expr, COMMA) RBRACKET {
+    let (e, terminator) = $4 in
+    let e = Utils.nsepseq_cons $2 $3 e in
+    EList (EListComp ({ value =
+      {
+        compound = Brackets ($1,$5);
+        elements   = Some e;
+        terminator;
+      };
+      region = cover $1 $5
+    }))
+  }
+  | LBRACKET expr COMMA DOTDOTDOT expr RBRACKET {
+    let region = cover $1 $6 in
+    EList (ECons {value={arg1=$2; op=$4; arg2=$5}; region})
+  }
+  | LBRACKET expr RBRACKET {
+    EList (EListComp ({ value =
+      {
+        compound = Brackets ($1,$3);
+        elements   = Some ($2, []);
+        terminator = None;
+      };
+      region = cover $1 $3
+    }))
+  }
+  | LBRACKET RBRACKET {
+     let value = {
+      compound   = Brackets ($1,$2);
+      elements   = None;
+      terminator = None} in
+    let region = cover $1 $2
+    in EList (EListComp ( {value; region}))
+  }
+
 core_expr_in:
   Int                                               { EArith (Int $1) }
 | Mtz                                             { EArith (Mutez $1) }
@@ -925,7 +945,7 @@ core_expr_in:
 | unit                                                     { EUnit $1 }
 | False                               {  ELogic (BoolExpr (False $1)) }
 | True                                {  ELogic (BoolExpr (True $1))  }
-| list(expr)                                   { EList (EListComp $1) }
+| list_or_spread                                                  { $1 }
 | par(expr)                                                 { EPar $1 }
 | sequence_or_record                                          {    $1 }
 

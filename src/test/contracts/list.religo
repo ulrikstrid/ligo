@@ -24,6 +24,6 @@ let map_op = (s: list(int)): list(int) =>
   List.map((cur: int) => cur + 1, s);
 
 let iter_op = (s: list(int)): unit => {
-  let do_nothing = (_: int) => unit;
+  let do_nothing = (z: int) => unit;
   List.iter(do_nothing, s);
 };
