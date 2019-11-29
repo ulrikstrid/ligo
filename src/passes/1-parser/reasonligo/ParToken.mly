@@ -13,11 +13,10 @@
 %token <Region.t> LBRACE
 %token <Region.t> RBRACE
 
-%token <Region.t> CONS
 %token <Region.t> CAT
 (*%token APPEND*)
 %token <Region.t> DOT
-(* %token <Region.t> DOTDOTDOT *)
+%token <Region.t> DOTDOTDOT
 
 %token <Region.t> COMMA
 %token <Region.t> SEMI

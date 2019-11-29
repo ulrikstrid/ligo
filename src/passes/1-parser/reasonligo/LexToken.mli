@@ -31,8 +31,7 @@ type lexeme = string
 type t =
   (* Symbols *)
 
-  CONS of Region.t     (* "::" *)
-| CAT of Region.t      (* "++"  *)
+  CAT of Region.t      (* "++"  *)
   (*| APPEND   (* "@"  *)*)
 
   (* Arithmetics *)

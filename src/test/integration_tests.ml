@@ -814,7 +814,7 @@ let map_ type_f path : unit result =
     let lst' = List.map (fun (x, y) -> e_int x, e_int y) lst in
     e_typed_map lst' t_int t_int
   in
-  let%bind () =
+   let%bind () =
     let make_input = fun n ->
       let m = ez [(23 , 0) ; (42 , 0)] in
       e_tuple [(e_int n) ; m]
@@ -1638,13 +1638,13 @@ let main = test_suite "Integration (End to End)" [
     test "various applications" application ;
     test "closure" closure ;
     test "closure (mligo)" closure_mligo ;
-    (* test "closure (religo)" closure_religo ; *)
+    test "closure (religo)" closure_religo ;
     test "shared function" shared_function ;
     test "shared function (mligo)" shared_function_mligo ;
     test "shared function (religo)" shared_function_religo ;
     test "higher order" higher_order ;
     test "higher order (mligo)" higher_order_mligo ;
-    (* test "higher order (religo)" higher_order_religo ; *)
+    test "higher order (religo)" higher_order_religo ;
     test "variant" variant ;
     test "variant (mligo)" variant_mligo ;
     test "variant (religo)" variant_religo ;

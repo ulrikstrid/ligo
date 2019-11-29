@@ -51,5 +51,5 @@ let deep_op = (m: foobar): foobar => {
   let coco = (0, m);
   let coco = (0, Map.remove(42, coco[1]));
   let coco = (0, Map.update(32, Some(16), coco[1]));
-  coco;
+  coco[1];
 };

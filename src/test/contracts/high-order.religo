@@ -2,7 +2,7 @@
 let foobar = (i: int): int => {
   let foo: int => int = (i: int) => i;
 
-  let bar: (int => int) => int = (f: (int => int)) => f(i);
+  let bar: ((int => int) => int) = (f: (int => int)) => f(i);
 
   bar(foo);
 };

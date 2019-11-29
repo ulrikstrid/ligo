@@ -13,8 +13,7 @@ module SSet   = Utils.String.Set
 type t =
   (* Symbols *)
 
-  CONS of Region.t      (* "::" *)
-| CAT of Region.t       (* "++"  *)
+  CAT of Region.t       (* "++"  *)
   (*| APPEND   (* "@"  *)*)
 
   (* Arithmetics *)
@@ -99,7 +98,6 @@ type t =
 type token = t
 
 let proj_token = function
-  | CONS region -> region, "CONS"
   | CAT region -> region, "CAT"
   | MINUS region -> region, "MINUS"
   | PLUS region -> region, "PLUS"
@@ -157,7 +155,6 @@ let proj_token = function
   | EOF region -> region, "EOF"
 
 let to_lexeme = function
-  | CONS _ -> "::"
   | CAT _ -> "++"
   | MINUS _ -> "-"
   | PLUS _ -> "+"
@@ -373,8 +370,7 @@ let eof region = EOF region
 
 let mk_sym lexeme region =
   match lexeme with
-    "::"   ->   Ok (CONS      region)
-  | "++"   ->   Ok (CAT       region)
+    "++"   ->   Ok (CAT       region)
   | "-"   ->    Ok (MINUS     region)
   | "+"   ->    Ok (PLUS      region)
   | "/"   ->    Ok (SLASH     region)
@@ -457,7 +453,6 @@ let is_constr = function
 | _         -> false
 
 let is_sym = function
-| CONS _
 | CAT _
 | MINUS _
 | PLUS _
