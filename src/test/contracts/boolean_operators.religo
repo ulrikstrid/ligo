@@ -1,4 +1,4 @@
-// Test CameLIGO boolean operators
+// Test Reasonligo boolean operators
 
 let or_true = (b: bool): bool => b || true;
 

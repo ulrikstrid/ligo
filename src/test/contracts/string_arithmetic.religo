@@ -1,4 +1,4 @@
-/* Test that the string concatenation syntax in CameLIGO works */
+/* Test that the string concatenation syntax in Reasonligo works */
 
 let size_op = (s: string): nat => String.size(s);
 

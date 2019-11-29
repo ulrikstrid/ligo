@@ -1,4 +1,4 @@
-/* Test CameLIGO arithmetic operators */
+/* Test Reasonligo arithmetic operators */
 
 let mod_op = (n: int): nat => n mod 42;
 
