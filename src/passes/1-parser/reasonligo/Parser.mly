@@ -7,7 +7,6 @@ open Region
 module AST = Parser_ligodity.AST
 open AST
 
-(* END HEADER *)
 
 type 'a sequence_elements = {
   selements : ('a, semi) Utils.nsepseq;
@@ -47,9 +46,9 @@ let type_expr_to_field_expr = function
       }; region = e.region}
     | None -> EVar e)
   )
-| _ -> failwith "Not supported 4"
+| _ -> failwith "Not supported"
 
-
+(* END HEADER *)
 %}
 
 (* See [ParToken.mly] for the definition of tokens. *)
@@ -300,7 +299,6 @@ type_expr_field:
 | sum_type                                               {    TSum $1 }
 | record_type                                            { TRecord $1 }
 
-
 field_decl:
   field_name COLON type_expr_field {
     let stop   = type_expr_to_region $3 in
@@ -534,7 +532,7 @@ type_expr_simple:
         in
         {value = path; region }
     | EArith (Int {value = s, _; region }) -> { value = s; region = region }
-    | _ -> failwith "Not supported 1"
+    | _ -> failwith "Not supported"
     in
     match args with 
       Some (lpar, args, rpar) -> (
@@ -580,7 +578,7 @@ fun_expr:
         } ; region}
       | EPar {value = {inside; lpar; rpar}; region} -> 
         PPar {value = {inside = arg_to_pattern inside; lpar; rpar}; region}
-      | _ -> failwith "Not supported 9"
+      | _ -> failwith "Not supported"
     )
     in 
     let fun_args_to_pattern = (function
@@ -595,7 +593,7 @@ fun_expr:
       | ETuple {value = fun_args; _} -> 
         let bindings = List.map (fun arg -> arg_to_pattern (snd arg)) (snd fun_args) in
         (arg_to_pattern (fst fun_args), bindings)
-      | _ -> failwith "Not supported 10"
+      | _ -> failwith "Not supported"
       )
       in
     let binders = fun_args_to_pattern $1 in
@@ -723,7 +721,6 @@ let_expr(right_expr):
     let stop = expr_to_region $4 in    
     let region = cover $1 stop in
     let let_in = {kwd_let; binding; kwd_in; body}
-
     in ELetIn {region; value=let_in} }
 
 disj_expr_level:
@@ -789,16 +786,10 @@ ne_expr:
 
 cat_expr_level:
   cat_expr                                        {  EString (Cat $1) }
-(*| reg(append_expr)                                { EList (Append $1) } *)
-| add_expr_level                                 {                $1 }
+| add_expr_level                                  {                $1 }
 
 cat_expr:
   bin_op(add_expr_level, CAT, add_expr_level)              { $1 }
-
-(*
-append_expr:
-  cons_expr_level sym(APPEND) cat_expr_level               { $1,$2,$3 }
- *)
 
 add_expr_level:
   plus_expr                                         { EArith (Add $1) }
@@ -841,12 +832,14 @@ unary_expr_level:
     and value  = {op = $1; arg = $2} in 
     ELogic (BoolExpr (Not ({region; value})))
 }     
-| call_expr_level                        {                         $1 }
+| call_expr_level {
+    $1 
+  }
 
 call_expr_level:
-  call_expr type_annotation_simple?                                              {   ECall $1 }
-| constr_expr type_annotation_simple?                                            { EConstr $1 }
-| core_expr                                                                              { $1 }
+  call_expr                                              {   ECall $1 }
+| constr_expr                                            { EConstr $1 }
+| core_expr                                                      { $1 }
 
 constr_expr:
   Constr core_expr_in? { 
@@ -884,7 +877,7 @@ core_expr_2:
 | Str                                           { EString (StrLit $1) }
 | unit                                                     { EUnit $1 }
 | False                               {  ELogic (BoolExpr (False $1)) }
-| True                                {  ELogic (BoolExpr (True $1))  }
+| True                                {   ELogic (BoolExpr (True $1)) }
 | list(expr)                                   { EList (EListComp $1) }
 
 core_expr:
@@ -945,7 +938,7 @@ core_expr_in:
 | unit                                                     { EUnit $1 }
 | False                               {  ELogic (BoolExpr (False $1)) }
 | True                                {  ELogic (BoolExpr (True $1))  }
-| list_or_spread                                                  { $1 }
+| list_or_spread                                                 { $1 }
 | par(expr)                                                 { EPar $1 }
 | sequence_or_record                                          {    $1 }
 
@@ -995,7 +988,6 @@ projection:
     let field_name = $3 in
     let value = module_name.value ^ "." ^ field_name.value in
     let struct_name = {$1 with value} in
-
     let start = $1.region in     
     let stop = nsepseq_to_region (function 
     | FieldName f -> f.region 
@@ -1065,7 +1057,7 @@ inn:
         };
         region
       }       
-    | _ -> failwith "Not supported 5")
+    | _ -> failwith "Not supported")
     in
     let (e, _) = $3 in
     let e = Utils.nsepseq_cons expr $2 e in
@@ -1098,23 +1090,8 @@ sequence_or_record:
       in 
       ERecord {value; region}
     )
-    | PaSingleExpr e -> (
-      e
-    )
+    | PaSingleExpr e -> e    
   }
-
-(* record_expr:
-  LBRACE sep_or_term_list(field_assignment,COMMA) RBRACE {    
-    let ne_elements, terminator = $2 in
-    let region = cover $1 $3 in
-    {value = 
-      {
-        compound = Braces ($1,$3);
-        ne_elements;
-        terminator;
-      }; 
-    region}
-  } *)
 
 field_assignment:
   field_name COLON expr {
