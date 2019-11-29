@@ -589,7 +589,7 @@ fun_expr:
         (arg_to_pattern fun_arg, [])
       | EPar {value = {inside = fun_arg; _ }; _} -> 
         (arg_to_pattern fun_arg, [])
-      | EAnnot _ -> failwith "EAnnot other..."
+      | EAnnot e -> (arg_to_pattern (EAnnot e), [])
       | ETuple {value = fun_args; _} -> 
         let bindings = List.map (fun arg -> arg_to_pattern (snd arg)) (snd fun_args) in
         (arg_to_pattern (fst fun_args), bindings)

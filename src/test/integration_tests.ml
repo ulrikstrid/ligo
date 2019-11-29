@@ -1305,7 +1305,7 @@ let guess_the_hash_mligo () : unit result =
   expect_eq_n program "main" make_input make_expected
 
 let guess_string_mligo () : unit result =
-  let%bind program = mtype_file "./contracts/guess_string.mligo" in
+  let%bind program = type_file "./contracts/guess_string.mligo" in
   let make_input = fun n -> e_pair (e_int n) (e_int 42) in
   let make_expected = fun n -> e_pair (e_typed_list [] t_operation) (e_int (42 + n))
   in expect_eq_n program "main" make_input make_expected
@@ -1473,6 +1473,13 @@ let lambda2_mligo () : unit result =
   let make_expected = (e_unit ()) in
   expect_eq program "main" make_input make_expected
 
+let lambda2_religo () : unit result =
+  let%bind program = retype_file "./contracts/lambda2.religo" in
+  let make_input = e_pair (e_unit ()) (e_unit ()) in
+  let make_expected = (e_unit ()) in
+  expect_eq program "main" make_input make_expected
+
+
 let fibo_mligo () : unit result =
   let%bind program = mtype_file "./contracts/fibo.mligo" in
   let make_input = e_pair (e_unit ()) (e_unit ()) in
@@ -1528,8 +1535,38 @@ let website2_mligo () : unit result =
     e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
   expect_eq_n program "main" make_input make_expected
 
+let website2_religo () : unit result =
+  let%bind program = retype_file "./contracts/website2.religo" in
+  let make_input = fun n ->
+    let action = if n mod 2 = 0 then "Increment" else "Decrement" in
+    e_pair (e_constructor action (e_int n)) (e_int 42) in
+  let make_expected = fun n ->
+    let op = if n mod 2 = 0 then (+) else (-) in
+    e_pair (e_typed_list [] t_operation) (e_int (op 42 n)) in
+  expect_eq_n program "main" make_input make_expected
+
+
 let mligo_let_multiple () : unit result =
   let%bind program = mtype_file "./contracts/let_multiple.mligo" in
+  let%bind () =
+    let input = e_unit () in
+    let expected = e_int 3 in
+    expect_eq program "main" input expected
+  in
+  let%bind () =
+    let input = e_unit () in
+    let expected = e_int 6 in
+    expect_eq program "main_paren" input expected
+  in
+  let%bind () =
+    let input = e_unit () in
+    let expected = e_int 65 in
+    expect_eq program "non_tuple_rhs" input expected
+  in
+  ok ()
+
+let religo_let_multiple () : unit result =
+  let%bind program = retype_file "./contracts/let_multiple.religo" in
   let%bind () =
     let input = e_unit () in
     let expected = e_int 3 in
@@ -1740,6 +1777,7 @@ let main = test_suite "Integration (End to End)" [
     test "tez (ligo)" tez_ligo ;
     test "tez (mligo)" tez_mligo ;
     test "lambda2 mligo" lambda2_mligo ;
+    test "lambda2 religo" lambda2_religo ;
     (* test "fibo (mligo)" fibo_mligo ; *)
     (* test "fibo2 (mligo)" fibo2_mligo ; *)
     (* test "fibo3 (mligo)" fibo3_mligo ; *)
@@ -1747,7 +1785,9 @@ let main = test_suite "Integration (End to End)" [
     test "website1 ligo" website1_ligo ;
     test "website2 ligo" website2_ligo ;
     test "website2 (mligo)" website2_mligo ;
+    test "website2 (religo)" website2_religo ;
     test "let multiple (mligo)" mligo_let_multiple ;
+    test "let multiple (mligo)" religo_let_multiple ;
     test "balance constant" balance_constant ;
     test "balance constant (mligo)" balance_constant_mligo ;
     test "is_nat" is_nat ;
