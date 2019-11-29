@@ -37,6 +37,9 @@ let%expect_test _ =
            evaluate-value
                Subcommand: evaluate a given definition.
 
+           measure-contract
+               Subcommand: measure a contract's compiled size in bytes.
+
            run-function
                Subcommand: run a function with the given parameter.
 
@@ -80,6 +83,9 @@ let%expect_test _ =
 
            evaluate-value
                Subcommand: evaluate a given definition.
+
+           measure-contract
+               Subcommand: measure a contract's compiled size in bytes.
 
            run-function
                Subcommand: run a function with the given parameter.
