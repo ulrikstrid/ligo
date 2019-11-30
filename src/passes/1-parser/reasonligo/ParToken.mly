@@ -14,7 +14,6 @@
 %token <Region.t> RBRACE
 
 %token <Region.t> CAT
-(*%token APPEND*)
 %token <Region.t> DOT
 %token <Region.t> DOTDOTDOT
 
@@ -47,7 +46,6 @@
 %token <(string * Z.t) Region.reg> Nat
 %token <(string * Z.t) Region.reg> Mtz
 
-(*%token And*)
 %token <Region.t> Else
 %token <Region.t> False
 %token <Region.t> If

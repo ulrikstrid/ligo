@@ -91,7 +91,6 @@ type t =
 
   (* Keywords *)
 
-(*| And*)
 | Else of Region.t
 | False of Region.t
 | If of Region.t
@@ -101,13 +100,6 @@ type t =
 | Or of Region.t
 | True of Region.t
 | Type of Region.t
-
-  (* Liquidity specific *)
-(*
-| Contract
-| Sig
-| Struct
-*)
 
 (* Virtual tokens *)
 

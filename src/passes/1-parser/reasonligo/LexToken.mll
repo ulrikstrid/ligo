@@ -14,7 +14,6 @@ type t =
   (* Symbols *)
 
   CAT of Region.t       (* "++"  *)
-  (*| APPEND   (* "@"  *)*)
 
   (* Arithmetics *)
 
@@ -83,13 +82,6 @@ type t =
 | Or of Region.t
 | True of Region.t
 | Type of Region.t
-
-  (* Liquidity specific *)
-(*
-| Contract
-| Sig
-| Struct
-*)
 
 (* Virtual tokens *)
 
