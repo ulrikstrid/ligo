@@ -23,7 +23,7 @@ type 'a sequence_or_record =
 | PaRecord of 'a record_elements
 | PaSingleExpr of expr
 
-let type_expr_to_field_expr = function
+let type_expr_to_expr = function
 | TVar e -> 
   (match int_of_string_opt e.value with 
   | Some _ -> EArith (Int {value = (e.value, Z.of_string e.value); region = e.region});
@@ -1017,7 +1017,7 @@ inn:
         value = {
           field_name = e;
           assignment = region;
-          field_expr = type_expr_to_field_expr t
+          field_expr = type_expr_to_expr t
         };
         region
       }
@@ -1030,10 +1030,10 @@ inn:
          handle function arguments.  
       *)
      let rec extract = function 
-     | Add {value = {arg1 = EAnnot {value = ((EVar v)), t; region = r}; op; arg2}; region} -> v, r, op, Add {value = { arg1 = type_expr_to_field_expr t; op; arg2}; region}
-     | Sub {value = {arg1 = EAnnot {value = ((EVar v)), t; region = r}; op; arg2}; region} -> v, r, op, Sub {value = { arg1 = type_expr_to_field_expr t; op; arg2}; region}
-     | Mult {value = {arg1 = EAnnot {value = ((EVar v)), t; region = r}; op; arg2}; region} -> v, r, op, Mult {value = { arg1 = type_expr_to_field_expr t; op; arg2}; region}
-     | Div {value = {arg1 = EAnnot {value = ((EVar v)), t; region = r}; op; arg2}; region} -> v, r, op, Div {value = { arg1 = type_expr_to_field_expr t; op; arg2}; region}
+     | Add {value = {arg1 = EAnnot {value = ((EVar v)), t; region = r}; op; arg2}; region} -> v, r, op, Add {value = { arg1 = type_expr_to_expr t; op; arg2}; region}
+     | Sub {value = {arg1 = EAnnot {value = ((EVar v)), t; region = r}; op; arg2}; region} -> v, r, op, Sub {value = { arg1 = type_expr_to_expr t; op; arg2}; region}
+     | Mult {value = {arg1 = EAnnot {value = ((EVar v)), t; region = r}; op; arg2}; region} -> v, r, op, Mult {value = { arg1 = type_expr_to_expr t; op; arg2}; region}
+     | Div {value = {arg1 = EAnnot {value = ((EVar v)), t; region = r}; op; arg2}; region} -> v, r, op, Div {value = { arg1 = type_expr_to_expr t; op; arg2}; region}
      | Add {value = {arg1 = EArith e; op; arg2}; region} -> 
        let (field_name, reg, oper, arg1) = extract e in
        field_name, reg, oper, Add {value = {arg1 = EArith arg1; op; arg2}; region}
