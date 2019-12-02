@@ -39,7 +39,7 @@ module Errors : sig
   *)
 end
 
-val type_program : I.program -> (O.program * Solver.state) result
+val type_program : I.program -> Solver.state -> (O.program * Solver.state) result
 val type_program' : I.program -> (O.program) result (* TODO: merge with type_program *)
 val type_declaration : environment -> Solver.state -> I.declaration -> (environment * Solver.state * O.declaration option) result
 (* val type_match : (environment -> 'i -> 'o result) -> environment -> O.type_value -> 'i I.matching -> I.expression -> Location.t -> 'o O.matching result *)

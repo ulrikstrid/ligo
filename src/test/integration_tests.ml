@@ -4,12 +4,14 @@ open Test_helpers
 open Ast_simplified.Combinators
 
 let mtype_file f =
-  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "cameligo") f in
-  let () = Typer.discard_state state in
+  let state = Typer.initial_state in
+  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "cameligo") f state in
+  Typer.discard_state state ;
   ok typed
 let type_file f =
-  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "pascaligo") f in
-  let () = Typer.discard_state state in
+  let state = Typer.initial_state in
+  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "pascaligo") f state in
+  Typer.discard_state state ;
   ok typed
 
 let type_alias () : unit result =

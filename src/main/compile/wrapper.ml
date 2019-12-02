@@ -1,8 +1,8 @@
 open Trace
 
-let source_to_typed syntax source_file =
+let source_to_typed syntax source_file state =
   let%bind simplified  = Of_source.compile source_file syntax in
-  let%bind (typed, state) = Typer.type_program simplified in
+  let%bind (typed, state) = Typer.type_program simplified state in
   let env = Ast_typed.program_environment typed in
   ok (typed, state, env)
 
@@ -37,8 +37,8 @@ let typed_to_michelson_contract
   let%bind mini_c = Of_typed.compile typed in
   Of_mini_c.compile_contract_entry mini_c entry_point
 
-let source_to_michelson_contract syntax source_file entry_point =
-  let%bind (typed, state, _env) = source_to_typed syntax source_file in
+let source_to_michelson_contract syntax source_file entry_point state =
+  let%bind (typed, state, _env) = source_to_typed syntax source_file state in
   let%bind compiled = typed_to_michelson_contract typed entry_point in
   ok (compiled, state)
 

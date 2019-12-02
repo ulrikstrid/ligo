@@ -211,7 +211,7 @@ module Errors = struct
 end
 open Errors
 
-let rec type_program (p:I.program) : (O.program * Solver.state) result =
+let rec type_program (p:I.program) _state : (O.program * Solver.state) result =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let%bind ed' = (bind_map_location (type_declaration e (Solver.placeholder_for_state_of_new_typer ()))) d in
     let loc : 'a . 'a Location.wrap -> _ -> _ = fun x v -> Location.wrap ~loc:x.location v in

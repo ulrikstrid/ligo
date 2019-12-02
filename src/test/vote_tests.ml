@@ -2,7 +2,8 @@ open Trace
 open Test_helpers
 
 let type_file f =
-  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "cameligo") f in
+  let state = Typer.initial_state in
+  let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "cameligo") f state in
   ok @@ (typed,state)
 
 let get_program =

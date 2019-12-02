@@ -916,9 +916,8 @@ let untype_type_value (t:O.type_value) : (I.type_expression) result =
 (*
 Apply type_declaration on all the node of the AST_simplified from the root p
 *)
-let type_program_returns_state (p:I.program) : (environment * Solver.state * O.program) result =
+let type_program_returns_state (p:I.program) state : (environment * Solver.state * O.program) result =
   let env = Ast_typed.Environment.full_empty in
-  let state = Solver.initial_state in
   let aux ((e : environment), (s : Solver.state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let%bind (e' , s' , d'_opt) = type_declaration e s (Location.unwrap d) in
     let ds' = match d'_opt with
@@ -935,8 +934,8 @@ let type_program_returns_state (p:I.program) : (environment * Solver.state * O.p
 
 module TSMap = TMap(Solver.TypeVariable)
 
-let type_program (p : I.program) : (O.program * Solver.state) result =
-  let%bind (env, state, program) = type_program_returns_state p in
+let type_program (p : I.program) state : (O.program * Solver.state) result =
+  let%bind (env, state, program) = type_program_returns_state p state in
   let subst_all =
     let assignments = state.structured_dbs.assignments in
     let aux (v : string (* this string is a type_name or type_variable I think *)) (expr : Solver.c_constructor_simpl) (p:O.program result) =
