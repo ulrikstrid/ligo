@@ -300,7 +300,11 @@ type_expr_field:
 | record_type                                            { TRecord $1 }
 
 field_decl:
-  field_name COLON type_expr_field {
+  field_name {
+    let value  = {field_name = $1; colon = Region.ghost; field_type = TVar $1}
+    in {region = $1.region; value} 
+  }
+  | field_name COLON type_expr_field {
     let stop   = type_expr_to_region $3 in
     let region = cover $1.region stop
     and value  = {field_name = $1; colon = $2; field_type = $3}
