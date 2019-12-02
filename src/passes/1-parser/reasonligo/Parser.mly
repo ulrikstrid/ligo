@@ -471,7 +471,14 @@ field_pattern:
   }
 
 constr_pattern:
-   Constr {       
+  C_None { PNone $1 }
+| C_Some sub_pattern {
+    let stop   = pattern_to_region $2 in
+    let region = cover $1 stop
+    and value  = $1, $2
+    in PSomeApp {value; region}
+  }
+|  Constr {       
      PConstrApp { value = $1, None; region = $1.region }     }
 |  Constr sub_pattern {  
     let region = cover $1.region (pattern_to_region $2) in
@@ -842,18 +849,37 @@ unary_expr_level:
 
 call_expr_level:
   call_expr                                              {   ECall $1 }
-| constr_expr                                            { EConstr $1 }
+| constr_expr                                                   {  $1 }
 | core_expr                                                      { $1 }
 
 constr_expr:
-  Constr core_expr_in? { 
+  constr_expr_in type_annotation_simple? {
+    let region = match $2 with 
+    | Some s -> cover (expr_to_region $1) (type_expr_to_region s)
+    | None -> expr_to_region $1
+    in        
+    match $2 with
+    | Some t -> 
+      EAnnot { value = $1, t; region }     
+    | None -> $1
+  }
+
+constr_expr_in:
+  C_None {
+    EConstr (ENone $1)
+  }
+  | C_Some core_expr_in {
+    let region = cover $1 (expr_to_region $2)
+    in EConstr (ESomeApp {value = $1,$2; region})
+  }  
+  | Constr core_expr_in? { 
     let start = $1.region in
     let stop = match $2 with 
     | Some c -> expr_to_region c
     | None -> start 
     in
     let region = cover start stop in
-    EConstrApp { value = $1,$2; region}
+    EConstr (EConstrApp { value = $1,$2; region})
   }
 
 call_expr:
@@ -1068,7 +1094,15 @@ inn:
           field_expr = EArith field_expr;
         };
         region
-      }       
+      } 
+    | EVar v -> {
+        value = {
+          field_name = v;
+          assignment = Region.ghost;
+          field_expr = EVar v;
+        };
+        region = v.region
+      }
     | _ -> failwith "Not supported")
     in
     let (e, _) = $3 in

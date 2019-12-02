@@ -100,6 +100,11 @@ type t =
 | True of Region.t
 | Type of Region.t
 
+(* Data constructors *)
+
+| C_None  of Region.t  (* "None"  *)
+| C_Some  of Region.t  (* "Some"  *)
+
 (* Virtual tokens *)
 
 | EOF of Region.t (* End of file *)

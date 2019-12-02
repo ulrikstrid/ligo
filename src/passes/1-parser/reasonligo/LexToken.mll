@@ -82,6 +82,10 @@ type t =
 | Or of Region.t
 | True of Region.t
 | Type of Region.t
+  (* Data constructors *)
+
+| C_None  of Region.t  (* "None"  *)
+| C_Some  of Region.t  (* "Some"  *)
 
 (* Virtual tokens *)
 
@@ -144,6 +148,8 @@ let proj_token = function
   | Or region -> region, "Or"
   | True region -> region, "True"
   | Type region -> region, "Type"
+| C_None  region -> region, "C_None"
+| C_Some  region -> region, "C_Some"
   | EOF region -> region, "EOF"
 
 let to_lexeme = function
@@ -192,6 +198,8 @@ let to_lexeme = function
   | Switch _ -> "switch"
   | True _ -> "true"
   | Type _ -> "type"
+  | C_None  _ -> "None"
+  | C_Some  _ -> "Some"
   | EOF _ -> ""  
 
 let to_string token ?(offsets=true) mode =
@@ -263,8 +271,8 @@ let reserved =
     |> add "while"
 
 let constructors = [
-  (fun reg -> False reg);
-  (fun reg -> True  reg);  
+  (fun reg -> C_None reg);
+  (fun reg -> C_Some reg);  
 ]
 
 let add map (key, value) = SMap.add key value map
