@@ -1593,6 +1593,13 @@ let balance_constant_mligo () : unit result =
   let expected = e_tuple [e_list []; e_mutez 4000000000000] in
   expect_eq program "main" input expected
 
+let balance_constant_religo () : unit result =
+  let%bind program = retype_file "./contracts/balance_constant.religo" in
+  let input = e_tuple [e_unit () ; e_mutez 0]  in
+  let expected = e_tuple [e_list []; e_mutez 4000000000000] in
+  expect_eq program "main" input expected
+
+
 let address () : unit result =
   let%bind _ = type_file "./contracts/address.ligo" in
   ok ()
@@ -1600,6 +1607,11 @@ let address () : unit result =
 let address_mligo () : unit result =
   let%bind _ = mtype_file "./contracts/address.mligo" in
   ok ()
+
+let address_religo () : unit result =
+  let%bind _ = retype_file "./contracts/address.religo" in
+  ok ()
+
 
 let self_address () : unit result =
   let%bind _ = type_file "./contracts/self_address.ligo" in
@@ -1609,12 +1621,21 @@ let self_address_mligo () : unit result =
   let%bind _ = mtype_file "./contracts/self_address.mligo" in
   ok ()
 
+let self_address_religo () : unit result =
+  let%bind _ = retype_file "./contracts/self_address.religo" in
+  ok ()
+
 let implicit_account () : unit result =
   let%bind _ = type_file "./contracts/implicit_account.ligo" in
   ok ()
 
 let implicit_account_mligo () : unit result =
   let%bind _ = mtype_file "./contracts/implicit_account.mligo" in
+  ok ()
+
+
+let implicit_account_religo () : unit result =
+  let%bind _ = retype_file "./contracts/implicit_account.religo" in
   ok ()
 
 let is_nat () : unit result =
@@ -1642,6 +1663,20 @@ let is_nat_mligo () : unit result =
     let expected = e_none () in
     expect_eq program "main" input expected
   in ok ()
+
+let is_nat_religo () : unit result =
+  let%bind program = retype_file "./contracts/isnat.religo" in
+  let%bind () = 
+    let input = e_int 10 in
+    let expected = e_some (e_nat 10) in
+    expect_eq program "main" input expected
+  in
+  let%bind () =
+    let input = e_int (-10) in
+    let expected = e_none () in
+    expect_eq program "main" input expected
+  in ok ()
+
 
 let simple_access_ligo () : unit result =
   let%bind program = type_file "./contracts/simple_access.ligo" in
@@ -1811,13 +1846,17 @@ let main = test_suite "Integration (End to End)" [
     test "balance constant" balance_constant ;
     test "balance constant (mligo)" balance_constant_mligo ;
     test "address" address ;
-    test "address_mligo" address_mligo ;
+    test "address (mligo)" address_mligo ;
+    test "address (religo)" address_religo ;
     test "self address" self_address ;
     test "self address (mligo)" self_address_mligo ;
+    test "self address (religo)" self_address_religo ;
     test "implicit account" implicit_account ;
     test "implicit account (mligo)" implicit_account_mligo ;
+    test "implicit account (religo)" implicit_account_religo ;
     test "is_nat" is_nat ;
-    test "is_not (mligo)" is_nat_mligo ;
+    test "is_nat (mligo)" is_nat_mligo ;
+    test "is_nat (religo)" is_nat_religo ;
     test "simple_access (ligo)" simple_access_ligo;
     test "deep_access (ligo)" deep_access_ligo;
     test "entrypoints (ligo)" entrypoints_ligo ;
