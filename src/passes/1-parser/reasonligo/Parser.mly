@@ -1028,6 +1028,14 @@ inn:
       (* To handle cases such as: `{counter: x + 1 + z; other: 1}` where 
          `counter: x` is seen as an EAnnot. This is a result of how we
          handle function arguments.  
+
+         As Reason implements ES6 functions, we also need to support this 
+         for Reasonligo. ES6 functions, tuples, and sequences, however don't 
+         mix well with LR1 parsers. Reason as a result has a complicated
+         lexer process, we have chosen to solve this in the Parser instead with
+         help of pattern matching.
+
+         It also means we have functions that convert expr to other types.
       *)
      let rec extract = function 
      | Add {value = {arg1 = EAnnot {value = ((EVar v)), t; region = r}; op; arg2}; region} -> v, r, op, Add {value = { arg1 = type_expr_to_expr t; op; arg2}; region}

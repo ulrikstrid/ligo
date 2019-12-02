@@ -32,7 +32,6 @@ type t =
   (* Symbols *)
 
   CAT of Region.t      (* "++"  *)
-  (*| APPEND   (* "@"  *)*)
 
   (* Arithmetics *)
 
