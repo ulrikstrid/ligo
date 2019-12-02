@@ -6,7 +6,9 @@ module O = Ast_typed
 module SMap = O.SMap
 module Environment = O.Environment
 
-module Solver = Typer_new.Solver (* Both the old typer and the new typer use the same solver state. *)
+type state = Typer_new.Solver.state (* Both the old typer and the new typer use the same solver state. *)
+let initial_state = Typer_new.Solver.initial_state
+let discard_state = Typer_new.Solver.discard_state
 
 type environment = Environment.t
 

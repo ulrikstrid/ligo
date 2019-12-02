@@ -11,7 +11,7 @@ let get_program =
     | Some s -> ok s
     | None -> (
         let%bind (program , state) = type_file "./contracts/heap-instance.ligo" in
-        let () = Typer.Solver.discard_state state in
+        let () = Typer.discard_state state in
         s := Some program ;
         ok program
       )

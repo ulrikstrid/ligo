@@ -5,11 +5,11 @@ open Ast_simplified.Combinators
 
 let mtype_file f =
   let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "cameligo") f in
-  let () = Typer.Solver.discard_state state in
+  let () = Typer.discard_state state in
   ok typed
 let type_file f =
   let%bind (typed , state , _env) = Ligo.Compile.Wrapper.source_to_typed (Syntax_name "pascaligo") f in
-  let () = Typer.Solver.discard_state state in
+  let () = Typer.discard_state state in
   ok typed
 
 let type_alias () : unit result =

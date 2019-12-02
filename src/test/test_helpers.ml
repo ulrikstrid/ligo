@@ -33,10 +33,11 @@ let test_suite name lst = Test_suite (name , lst)
 open Ast_simplified
 
 let pack_payload (program:Ast_typed.program) (payload:expression) : bytes result =
-  let%bind code =
+  let%bind (code, state) =
     let env = Ast_typed.program_environment program in
     Compile.Wrapper.simplified_to_compiled_program
-      ~env ~state:(Typer.Solver.initial_state) payload in
+      ~env ~state:(Typer.initial_state) payload in
+  Typer.discard_state state ;
   let Compiler.Program.{input=_;output=(Ex_ty payload_ty);body=_} = code in
   let%bind (payload: Tezos_utils.Michelson.michelson) =
     Ligo.Run.Of_michelson.evaluate_michelson code in
@@ -80,7 +81,8 @@ let run_typed_program_with_simplified_input ?options
     (program: Ast_typed.program) (entry_point: string)
     (input: Ast_simplified.expression) : Ast_simplified.expression result =
   let env = Ast_typed.program_environment program in
-  let%bind michelson_exp = Compile.Wrapper.simplified_to_compiled_program ~env ~state:(Typer.Solver.initial_state) input in
+  let%bind (michelson_exp, state) = Compile.Wrapper.simplified_to_compiled_program ~env ~state:(Typer.initial_state) input in
+  Typer.discard_state state ;
   let%bind evaluated_exp = Ligo.Run.Of_michelson.evaluate_michelson michelson_exp in
   let%bind michelson_program = Compile.Wrapper.typed_to_michelson_program program entry_point in
   let%bind michelson_output = Ligo.Run.Of_michelson.run ?options michelson_program evaluated_exp in
@@ -90,7 +92,8 @@ let expect_fail_typed_program_with_simplified_input ?options
     (program: Ast_typed.program) (entry_point: string)
     (input: Ast_simplified.expression) : Ligo.Run.Of_michelson.failwith_res Simple_utils__Trace.result =
   let env = Ast_typed.program_environment program in
-  let%bind michelson_exp = Compile.Wrapper.simplified_to_compiled_program ~env ~state:(Typer.Solver.initial_state) input in
+  let%bind (michelson_exp, state) = Compile.Wrapper.simplified_to_compiled_program ~env ~state:(Typer.initial_state) input in
+  Typer.discard_state state ;
   let%bind evaluated_exp = Ligo.Run.Of_michelson.evaluate_michelson michelson_exp in
   let%bind michelson_program = Compile.Wrapper.typed_to_michelson_program program entry_point in
   Ligo.Run.Of_michelson.get_exec_error ?options michelson_program evaluated_exp

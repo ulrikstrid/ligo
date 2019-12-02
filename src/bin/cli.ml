@@ -102,7 +102,8 @@ module Run = Ligo.Run.Of_michelson
 let compile_file =
   let f source_file entry_point syntax display_format michelson_format =
     toplevel ~display_format @@
-    let%bind contract = Compile.source_to_michelson_contract (Syntax_name syntax) source_file entry_point in
+    let%bind (contract, state) = Compile.source_to_michelson_contract (Syntax_name syntax) source_file entry_point in
+    Typer.discard_state state ;
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) contract
   in
   let term =
@@ -114,7 +115,8 @@ let compile_file =
 let measure_contract =
   let f source_file entry_point syntax display_format  =
     toplevel ~display_format @@
-    let%bind contract = Compile.source_to_michelson_contract (Syntax_name syntax) source_file entry_point in
+    let%bind (contract, state) = Compile.source_to_michelson_contract (Syntax_name syntax) source_file entry_point in
+    Typer.discard_state state ;
     let open Tezos_utils in
     ok @@ Format.asprintf "%d bytes\n" (Michelson.measure contract)
   in
@@ -129,7 +131,8 @@ let compile_parameter =
     toplevel ~display_format @@
     let%bind v_syntax      = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
     let%bind (_,state,env) = Compile.source_to_typed (Syntax_name syntax) source_file in
-    let%bind compiled_exp  = Compile.source_expression_to_michelson_value_as_function ~env ~state expression v_syntax in
+    let%bind (compiled_exp, state) = Compile.source_expression_to_michelson_value_as_function ~env ~state expression v_syntax in
+    Typer.discard_state state ;
     let%bind value         = Run.evaluate_michelson compiled_exp in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
@@ -147,7 +150,8 @@ let compile_storage =
     toplevel ~display_format @@
     let%bind v_syntax      = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
     let%bind (_,state,env) = Compile.source_to_typed (Syntax_name syntax) source_file in
-    let%bind compiled      = Compile.source_expression_to_michelson_value_as_function ~env ~state expression v_syntax in
+    let%bind (compiled, state) = Compile.source_expression_to_michelson_value_as_function ~env ~state expression v_syntax in
+    Typer.discard_state state ;
     let%bind value         = Run.evaluate_michelson compiled in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
@@ -162,7 +166,8 @@ let dry_run =
     toplevel ~display_format @@
     let%bind v_syntax                  = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
     let%bind (typed_program,state,env) = Compile.source_to_typed (Syntax_name syntax) source_file in
-    let%bind compiled_param            = Compile.source_contract_input_to_michelson_value_as_function ~env ~state (storage,input) v_syntax in
+    let%bind (compiled_param, state) = Compile.source_contract_input_to_michelson_value_as_function ~env ~state (storage,input) v_syntax in
+    Typer.discard_state state ;
     let%bind michelson                 = Compile.typed_to_michelson_program typed_program entry_point in
     let%bind args_michelson            = Run.evaluate_michelson compiled_param in
     let%bind options                   = Run.make_dry_run_options {amount ; sender ; source } in
@@ -181,7 +186,8 @@ let run_function =
     toplevel ~display_format @@
     let%bind v_syntax                  = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
     let%bind (typed_program,state,env) = Compile.source_to_typed (Syntax_name syntax) source_file in
-    let%bind compiled_parameter        = Compile.source_expression_to_michelson_value_as_function ~env ~state parameter v_syntax in
+    let%bind (compiled_parameter, state) = Compile.source_expression_to_michelson_value_as_function ~env ~state parameter v_syntax in
+    Typer.discard_state state ;
     let%bind michelson                 = Compile.typed_to_michelson_program typed_program entry_point in
     let%bind args_michelson            = Run.evaluate_michelson compiled_parameter in
     let%bind options                   = Run.make_dry_run_options {amount ; sender ; source } in
@@ -215,9 +221,10 @@ let compile_expression =
   let f expression syntax display_format michelson_format =
     toplevel ~display_format @@
     let%bind v_syntax = Helpers.syntax_to_variant (Syntax_name syntax) (None) in
-    let%bind compiled = Compile.source_expression_to_michelson_value_as_function
-      ~env:(Ast_typed.Environment.full_empty) ~state:(Typer.Solver.initial_state)
+    let%bind (compiled, state) = Compile.source_expression_to_michelson_value_as_function
+      ~env:(Ast_typed.Environment.full_empty) ~state:(Typer.initial_state)
       expression v_syntax in
+    Typer.discard_state state ;
     let%bind value    = Run.evaluate_michelson compiled in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
