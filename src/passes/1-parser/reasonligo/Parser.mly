@@ -848,7 +848,7 @@ unary_expr_level:
   }
 
 call_expr_level:
-  call_expr                                              {   ECall $1 }
+  call_expr                                                     {  $1 }
 | constr_expr                                                   {  $1 }
 | core_expr                                                      { $1 }
 
@@ -883,19 +883,33 @@ constr_expr_in:
   }
 
 call_expr:
+  call_expr_in type_annotation_simple? {
+    let region = match $2 with 
+    | Some s -> cover (expr_to_region $1) (type_expr_to_region s)
+    | None -> expr_to_region $1
+    in        
+    match $2 with
+    | Some t -> 
+      EAnnot { value = $1, t; region }     
+    | None -> $1
+  }
+
+
+
+call_expr_in:
   core_expr_in LPAR nsepseq(expr, COMMA) RPAR {
     let start = expr_to_region $1 in
     let stop = $4 in
     let region = cover start stop in
     let hd, tl = $3 in
     let tl = (List.map (fun (_, a) -> a) tl) in
-    { value = $1, (hd, tl); region }
+    ECall { value = $1, (hd, tl); region }
   }
   | core_expr_in unit {
     let start = expr_to_region $1 in
     let stop = $2.region in
     let region = cover start stop in
-    { value = $1, (EUnit $2, []); region }
+    ECall { value = $1, (EUnit $2, []); region }
   }
 
 core_expr_2:
