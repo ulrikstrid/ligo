@@ -23,12 +23,24 @@ type 'a sequence_or_record =
 | PaRecord of 'a record_elements
 | PaSingleExpr of expr
 
+let ends_with str end_ = (
+  let str_length = String.length str in
+  let end_length = String.length end_ in
+  if str_length >= end_length && 
+        (String.sub str (str_length - end_length) end_length) = end_ then 
+    let result = (String.sub str 0 (str_length - end_length)) in 
+    (match int_of_string_opt result with 
+    | Some _ -> Some result 
+    | None -> None )
+  else 
+    None
+)
+
 let type_expr_to_expr = function
 | TVar e -> 
   (match int_of_string_opt e.value with 
-  | Some _ -> EArith (Int {value = (e.value, Z.of_string e.value); region = e.region});
+  | Some v -> EArith (Int {value = (string_of_int v, Z.of_int v); region = e.region});
   | None -> 
-    (* TODO: nat, ?,  *)
     let proj = String.index_opt e.value '.' in
     (match proj with 
     | Some _ -> 
@@ -44,7 +56,19 @@ let type_expr_to_expr = function
         selector = Region.ghost;
         field_path = (FieldName { value = field_hd; region = Region.ghost}), (List.map (fun f -> Region.ghost, (FieldName { value = f; region = Region.ghost})) field_tl);
       }; region = e.region}
-    | None -> EVar e)
+    | None -> (
+      let v = e.value in
+      let mutez_opt = ends_with v "mutez" in
+      match mutez_opt with 
+      | Some mutez -> EArith (Mutez {value = (mutez, Z.of_string mutez); region = e.region});
+      | None -> (
+        let nat_opt = ends_with v "nat" in 
+        match nat_opt with 
+        | Some nat ->  EArith (Nat {value = (nat, Z.of_string nat); region = e.region});
+        | None -> EVar e
+      )
+    )
+  )
   )
 | _ -> failwith "Not supported"
 
@@ -894,8 +918,6 @@ call_expr:
     | None -> $1
   }
 
-
-
 call_expr_in:
   core_expr_in LPAR nsepseq(expr, COMMA) RPAR {
     let start = expr_to_region $1 in
@@ -934,7 +956,7 @@ core_expr:
     | Some t -> 
       EAnnot { value = $1, t; region }     
     | None -> $1
-  }
+  }  
 
 list_or_spread:
   LBRACKET expr COMMA sep_or_term_list(expr, COMMA) RBRACKET {
@@ -1153,8 +1175,35 @@ sequence_or_record:
     | PaSingleExpr e -> e    
   }
 
+(* record_expr:
+  LBRACE sep_or_term_list(field_assignment,COMMA) RBRACE {    
+    let ne_elements, terminator = $2 in
+    let region = cover $1 $3 in
+    {value = 
+      {
+        compound = Braces ($1,$3);
+        ne_elements;
+        terminator;
+      }; 
+    region}
+  } *) 
+
+expr_or_record_expr:
+  expr { $1 }
+  (* | record_expr { assert false } *)
+
 field_assignment:
-  field_name COLON expr {
+  field_name {    
+    { value = 
+      {
+        field_name = $1; 
+        assignment = Region.ghost; 
+        field_expr = EVar $1
+      };
+      region = $1.region
+    }
+  }
+  | field_name COLON expr_or_record_expr {
     let start = $1.region in 
     let stop = expr_to_region $3 in 
     let region = cover start stop in

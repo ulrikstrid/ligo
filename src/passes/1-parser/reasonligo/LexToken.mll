@@ -131,7 +131,7 @@ let proj_token = function
   | Nat Region.{region; value = s,n} ->
     region, sprintf "Nat (\"%s\", %s)" s (Z.to_string n)
   | Mtz Region.{region; value = s,n} ->
-    region, sprintf "Mtz (\"%s\", %s)" s (Z.to_string n)
+    region, sprintf "Mutez (\"%s\", %s)" s (Z.to_string n)
   | Str Region.{region; value} ->
     region, sprintf "Str %s" value
   | Bytes Region.{region; value = s,b} ->
@@ -360,9 +360,9 @@ let mk_nat lexeme region =
 let mk_mutez lexeme region =
   let z =
     Str.(global_replace (regexp "_") "" lexeme) |>
-    Str.(global_replace (regexp "mtz") "") |>
+    Str.(global_replace (regexp "mutez") "") |>
     Z.of_string in
-  if Z.equal z Z.zero && lexeme <> "0mtz"
+  if Z.equal z Z.zero && lexeme <> "0mutez"
   then Error Non_canonical_zero
   else Ok (Mtz Region.{region; value = lexeme, z})
 
