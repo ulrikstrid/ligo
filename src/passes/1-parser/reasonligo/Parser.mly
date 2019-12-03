@@ -566,7 +566,12 @@ type_expr_simple:
           ) 
         in
         {value = path; region }
-    | EArith (Int {value = s, _; region }) -> { value = s; region = region }
+    | EArith (Mutez {value = s, _; region })
+    | EArith (Int {value = s, _; region })
+    | EArith (Nat {value = s, _; region }) -> { value = s; region }
+    | EString (StrLit {value = s; region}) -> { value = s; region }
+    | ELogic (BoolExpr (True t)) -> { value = "true"; region = t }
+    | ELogic (BoolExpr (False f)) -> { value = "false"; region = f }
     | _ -> failwith "Not supported"
     in
     match args with 
@@ -956,7 +961,7 @@ core_expr:
     | Some t -> 
       EAnnot { value = $1, t; region }     
     | None -> $1
-  }  
+  } 
 
 list_or_spread:
   LBRACKET expr COMMA sep_or_term_list(expr, COMMA) RBRACKET {
@@ -1070,7 +1075,7 @@ projection:
     }  
   }
 
-inn: 
+inn:  
   expr SEMI sep_or_term_list(expr,SEMI) {
     let (e, _region) = $3 in
     let e = Utils.nsepseq_cons $1 $2 e in
@@ -1175,23 +1180,6 @@ sequence_or_record:
     | PaSingleExpr e -> e    
   }
 
-(* record_expr:
-  LBRACE sep_or_term_list(field_assignment,COMMA) RBRACE {    
-    let ne_elements, terminator = $2 in
-    let region = cover $1 $3 in
-    {value = 
-      {
-        compound = Braces ($1,$3);
-        ne_elements;
-        terminator;
-      }; 
-    region}
-  } *) 
-
-expr_or_record_expr:
-  expr { $1 }
-  (* | record_expr { assert false } *)
-
 field_assignment:
   field_name {    
     { value = 
@@ -1203,7 +1191,7 @@ field_assignment:
       region = $1.region
     }
   }
-  | field_name COLON expr_or_record_expr {
+  | field_name COLON expr {
     let start = $1.region in 
     let stop = expr_to_region $3 in 
     let region = cover start stop in
