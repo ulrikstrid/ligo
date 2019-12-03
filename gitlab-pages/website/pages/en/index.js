@@ -82,6 +82,34 @@ let%entry main(p : action) storage =
   in (([] : operation list), storage)
 ${pre}`;
 
+const reasonligoExampleSmall = `${pre}js
+type storage = int;
+
+/* variant defining pseudo multi-entrypoint
+   actions */
+type action =
+  | Increment(int)
+  | Decrement(int);
+
+let add = (a: int, b: int): int => a + b;
+
+let subtract = (a: int, b: int): int => a - b;
+
+/* real entrypoint that re-routes the flow
+   based on the action provided */
+let main = (p: action, storage) => {
+  let storage =
+    switch (p) {
+    | Increment(n) => add(storage, n)
+    | Decrement(n) => subtract(storage, n)
+    };
+  ([]: list(operation), storage);
+};
+
+${pre}`;
+
+const reasonligoExample = reasonligoExampleSmall
+
 const PascalLIGOTab = () => (
   <div
     id="tab-group-3-content-4"
@@ -103,6 +131,18 @@ const CamelLIGOTab = () => (
   >
     <MarkdownBlock>{cameligoExampleSmall}</MarkdownBlock>
     <MarkdownBlock>{cameligoExample}</MarkdownBlock>
+  </div>
+);
+
+const ReasonLIGOTab = () => (
+  <div
+    id="tab-group-3-content-6"
+    className="tab-pane code-snippet"
+    data-group="group_3"
+    tabIndex="-1"
+  >
+    <MarkdownBlock>{reasonligoExampleSmall}</MarkdownBlock>
+    <MarkdownBlock>{reasonligoExample}</MarkdownBlock>
   </div>
 );
 
@@ -140,11 +180,18 @@ class HomeSplash extends React.Component {
               >
                 CameLIGO
               </div>
-              <div className="disabled">ReasonLIGO (coming soon) </div>
+              <div
+                className="nav-link"
+                data-group="group_3"
+                data-tab="tab-group-3-content-6"
+              >
+                ReasonLIGO
+              </div>
             </div>
             <div className="tab-content">
               {PascalLIGOTab()}
               {CamelLIGOTab()}
+              {ReasonLIGOTab()}
             </div>
           </div>
         </div>
@@ -347,7 +394,7 @@ class Index extends React.Component {
               <p>We're not alone in this world.</p>
             </div>
           </div>
-          
+
         </div>
       );
     };
