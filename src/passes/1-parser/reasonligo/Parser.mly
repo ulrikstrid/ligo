@@ -876,13 +876,8 @@ unary_expr_level:
     $1 
   }
 
-call_expr_level:
-  call_expr                                                     {  $1 }
-| constr_expr                                                   {  $1 }
-| core_expr                                                      { $1 }
-
-constr_expr:
-  constr_expr_in type_annotation_simple? {
+call_expr_level: 
+  call_expr_level_in type_annotation_simple? {
     let region = match $2 with 
     | Some s -> cover (expr_to_region $1) (type_expr_to_region s)
     | None -> expr_to_region $1
@@ -893,15 +888,20 @@ constr_expr:
     | None -> $1
   }
 
-constr_expr_in:
+call_expr_level_in:
+  call_expr                                                     {  $1 }
+| constr_expr                                                   {  $1 }
+| core_expr                                                      { $1 }
+
+constr_expr:
   C_None {
     EConstr (ENone $1)
   }
-  | C_Some core_expr_in {
+  | C_Some core_expr {
     let region = cover $1 (expr_to_region $2)
     in EConstr (ESomeApp {value = $1,$2; region})
   }  
-  | Constr core_expr_in? { 
+  | Constr core_expr? { 
     let start = $1.region in
     let stop = match $2 with 
     | Some c -> expr_to_region c
@@ -912,19 +912,7 @@ constr_expr_in:
   }
 
 call_expr:
-  call_expr_in type_annotation_simple? {
-    let region = match $2 with 
-    | Some s -> cover (expr_to_region $1) (type_expr_to_region s)
-    | None -> expr_to_region $1
-    in        
-    match $2 with
-    | Some t -> 
-      EAnnot { value = $1, t; region }     
-    | None -> $1
-  }
-
-call_expr_in:
-  core_expr_in LPAR nsepseq(expr, COMMA) RPAR {
+  core_expr LPAR nsepseq(expr, COMMA) RPAR {
     let start = expr_to_region $1 in
     let stop = $4 in
     let region = cover start stop in
@@ -932,7 +920,7 @@ call_expr_in:
     let tl = (List.map (fun (_, a) -> a) tl) in
     ECall { value = $1, (hd, tl); region }
   }
-  | core_expr_in unit {
+  | core_expr unit {
     let start = expr_to_region $1 in
     let stop = $2.region in
     let region = cover start stop in
@@ -950,18 +938,6 @@ core_expr_2:
 | False                               {  ELogic (BoolExpr (False $1)) }
 | True                                {   ELogic (BoolExpr (True $1)) }
 | list(expr)                                   { EList (EListComp $1) }
-
-core_expr:
-  core_expr_in type_annotation_simple? {
-    let region = match $2 with 
-    | Some s -> cover (expr_to_region $1) (type_expr_to_region s)
-    | None -> expr_to_region $1
-    in        
-    match $2 with
-    | Some t -> 
-      EAnnot { value = $1, t; region }     
-    | None -> $1
-  } 
 
 list_or_spread:
   LBRACKET expr COMMA sep_or_term_list(expr, COMMA) RBRACKET {
@@ -999,7 +975,7 @@ list_or_spread:
     in EList (EListComp ( {value; region}))
   }
 
-core_expr_in:
+core_expr:
   Int                                               { EArith (Int $1) }
 | Mtz                                             { EArith (Mutez $1) }
 | Nat                                               { EArith (Nat $1) }
@@ -1075,13 +1051,16 @@ projection:
     }  
   }
 
+record_expr_or_expr: 
+ expr {$1}
+
 inn:  
   expr SEMI sep_or_term_list(expr,SEMI) {
     let (e, _region) = $3 in
     let e = Utils.nsepseq_cons $1 $2 e in
     PaSequence { selements = e; sterminator = None}
   }
-| expr COMMA sep_or_term_list(field_assignment,COMMA) {
+| record_expr_or_expr COMMA sep_or_term_list(field_assignment,COMMA) {
     let expr = (match $1 with 
     | EAnnot ({value = ((EVar e), t); region}) -> (      
       let field_assignment = {
