@@ -6,7 +6,7 @@ let main =
   let man =
     [ `S "MORE HELP";
       `P "Use `$(mname) $(i,COMMAND) --help' for help on a single command." ] in
-  (Term.(ret (const (`Help (`Auto, None)))), Term.info "ligo" ~man)
+  (Term.(ret (const (`Help (`Auto, None)))), Term.info "ligo" ~version:"%%VERSION%%" ~man)
 
 let source_file n =
   let open Arg in
