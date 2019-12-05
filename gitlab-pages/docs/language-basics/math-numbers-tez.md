@@ -79,7 +79,7 @@ let g: int = 1_000_000;
 
 > Pro tip: you can use underscores for readability when defining large numbers
 >
->```cameligo
+>```reasonligo
 >let g: int = 1_000_000;
 >```
 
