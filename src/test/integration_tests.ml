@@ -1653,6 +1653,10 @@ let implicit_account_religo () : unit result =
   let%bind _ = retype_file "./contracts/implicit_account.religo" in
   ok ()
 
+let tuples_sequences_functions_religo () : unit result =
+  let%bind _ = retype_file "./contracts/tuples_sequences_functions.religo" in    
+  ok ()
+
 let is_nat () : unit result =
   let%bind program = type_file "./contracts/isnat.ligo" in
   let%bind () = 
@@ -1857,9 +1861,10 @@ let main = test_suite "Integration (End to End)" [
     test "website2 (mligo)" website2_mligo ;
     test "website2 (religo)" website2_religo ;
     test "let multiple (mligo)" mligo_let_multiple ;
-    test "let multiple (mligo)" religo_let_multiple ;
+    test "let multiple (religo)" religo_let_multiple ;
     test "balance constant" balance_constant ;
     test "balance constant (mligo)" balance_constant_mligo ;
+    test "balance constant (religo)" balance_constant_religo ;
     test "address" address ;
     test "address (mligo)" address_mligo ;
     test "address (religo)" address_religo ;
@@ -1872,6 +1877,7 @@ let main = test_suite "Integration (End to End)" [
     test "is_nat" is_nat ;
     test "is_nat (mligo)" is_nat_mligo ;
     test "is_nat (religo)" is_nat_religo ;
+    test "tuples_sequences_functions (religo)" tuples_sequences_functions_religo ;
     test "simple_access (ligo)" simple_access_ligo;
     test "deep_access (ligo)" deep_access_ligo;
     test "entrypoints (ligo)" entrypoints_ligo ;

@@ -8,7 +8,7 @@ Which results in this error when you attempt to compile this contract:
 generated. unrecognized constant: {"constant":"BALANCE","location":"generated"}
 
 
-*/;
+*/
 
 type storage = tez;
 

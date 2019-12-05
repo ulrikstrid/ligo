@@ -572,6 +572,7 @@ fun_expr:
         } ; region}
       | EPar {value = {inside; lpar; rpar}; region} -> 
         PPar {value = {inside = arg_to_pattern inside; lpar; rpar}; region}
+      | EUnit u -> PUnit u
       | _ -> failwith "Not supported"
     )
     in 
@@ -587,6 +588,8 @@ fun_expr:
       | ETuple {value = fun_args; _} -> 
         let bindings = List.map (fun arg -> arg_to_pattern (snd arg)) (snd fun_args) in
         (arg_to_pattern (fst fun_args), bindings)
+      | EUnit e ->
+        (arg_to_pattern (EUnit e), [])
       | _ -> failwith "Not supported"
       )
       in
