@@ -23,55 +23,6 @@ type 'a sequence_or_record =
 | PaRecord of 'a record_elements
 | PaSingleExpr of expr
 
-let ends_with str end_ = (
-  let str_length = String.length str in
-  let end_length = String.length end_ in
-  if str_length >= end_length && 
-        (String.sub str (str_length - end_length) end_length) = end_ then 
-    let result = (String.sub str 0 (str_length - end_length)) in 
-    (match int_of_string_opt result with 
-    | Some _ -> Some result 
-    | None -> None )
-  else 
-    None
-)
-
-let type_expr_to_expr = function
-| TVar e -> 
-  (match int_of_string_opt e.value with 
-  | Some v -> EArith (Int {value = (string_of_int v, Z.of_int v); region = e.region});
-  | None -> 
-    let proj = String.index_opt e.value '.' in
-    (match proj with 
-    | Some _ -> 
-      let elements = String.split_on_char '.' e.value in
-      let hd = List.hd elements in
-      let tl = List.tl elements in
-      let field_hd, field_tl = List.hd tl, List.tl tl in
-      EProj {value = {
-        struct_name = { 
-          value = hd; 
-          region = Region.ghost 
-        };
-        selector = Region.ghost;
-        field_path = (FieldName { value = field_hd; region = Region.ghost}), (List.map (fun f -> Region.ghost, (FieldName { value = f; region = Region.ghost})) field_tl);
-      }; region = e.region}
-    | None -> (
-      let v = e.value in
-      let mutez_opt = ends_with v "mutez" in
-      match mutez_opt with 
-      | Some mutez -> EArith (Mutez {value = (mutez, Z.of_string mutez); region = e.region});
-      | None -> (
-        let nat_opt = ends_with v "nat" in 
-        match nat_opt with 
-        | Some nat ->  EArith (Nat {value = (nat, Z.of_string nat); region = e.region});
-        | None -> EVar e
-      )
-    )
-  )
-  )
-| _ -> failwith "Not supported"
-
 (* END HEADER *)
 %}
 
@@ -83,8 +34,8 @@ let type_expr_to_expr = function
 %type <AST.t> contract
 %type <AST.expr> interactive_expr
 
-%right Ident
-%left COLON
+%nonassoc Ident
+%nonassoc COLON
 
 %%
 
