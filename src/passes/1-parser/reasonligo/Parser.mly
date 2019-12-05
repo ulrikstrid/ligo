@@ -83,6 +83,9 @@ let type_expr_to_expr = function
 %type <AST.t> contract
 %type <AST.expr> interactive_expr
 
+%right Ident
+%left COLON
+
 %%
 
 (* RULES *)
@@ -1051,82 +1054,15 @@ projection:
     }  
   }
 
-record_expr_or_expr: 
- expr {$1}
-
 inn:  
   expr SEMI sep_or_term_list(expr,SEMI) {
     let (e, _region) = $3 in
     let e = Utils.nsepseq_cons $1 $2 e in
     PaSequence { selements = e; sterminator = None}
   }
-| record_expr_or_expr COMMA sep_or_term_list(field_assignment,COMMA) {
-    let expr = (match $1 with 
-    | EAnnot ({value = ((EVar e), t); region}) -> (      
-      let field_assignment = {
-        value = {
-          field_name = e;
-          assignment = region;
-          field_expr = type_expr_to_expr t
-        };
-        region
-      }
-      in 
-      field_assignment      
-    )
-    | EArith fml ->
-      (* To handle cases such as: `{counter: x + 1 + z; other: 1}` where 
-         `counter: x` is seen as an EAnnot. This is a result of how we
-         handle function arguments.  
-
-         As Reason implements ES6 functions, we also need to support this 
-         for Reasonligo. ES6 functions, tuples, and sequences, however don't 
-         mix well with LR1 parsers. Reason as a result has a complicated
-         lexer process, we have chosen to solve this in the Parser instead with
-         help of pattern matching.
-
-         It also means we have functions that convert expr to other types.
-      *)
-     let rec extract = function 
-     | Add {value = {arg1 = EAnnot {value = ((EVar v)), t; region = r}; op; arg2}; region} -> v, r, op, Add {value = { arg1 = type_expr_to_expr t; op; arg2}; region}
-     | Sub {value = {arg1 = EAnnot {value = ((EVar v)), t; region = r}; op; arg2}; region} -> v, r, op, Sub {value = { arg1 = type_expr_to_expr t; op; arg2}; region}
-     | Mult {value = {arg1 = EAnnot {value = ((EVar v)), t; region = r}; op; arg2}; region} -> v, r, op, Mult {value = { arg1 = type_expr_to_expr t; op; arg2}; region}
-     | Div {value = {arg1 = EAnnot {value = ((EVar v)), t; region = r}; op; arg2}; region} -> v, r, op, Div {value = { arg1 = type_expr_to_expr t; op; arg2}; region}
-     | Add {value = {arg1 = EArith e; op; arg2}; region} -> 
-       let (field_name, reg, oper, arg1) = extract e in
-       field_name, reg, oper, Add {value = {arg1 = EArith arg1; op; arg2}; region}
-     | Sub {value = {arg1 = EArith e; op; arg2}; region} ->
-       let (field_name, reg, oper, arg1) = extract e in
-       field_name, reg, oper, Sub {value = {arg1 = EArith arg1; op; arg2}; region}
-     | Mult {value = {arg1 = EArith e; op; arg2}; region} ->
-       let (field_name, reg, oper, arg1) = extract e in
-       field_name, reg, oper, Mult {value = {arg1 = EArith arg1; op; arg2}; region}
-     | Div {value = {arg1 = EArith e; op; arg2}; region} -> 
-       let (field_name, reg, oper, arg1) = extract e in
-       field_name, reg, oper, Div {value = {arg1 = EArith arg1; op; arg2}; region}  
-     | _ -> failwith "Not supported"
-      in
-      let (field_name, region, assignment, field_expr) = extract fml in
-      {
-        value = {
-          field_name;
-          assignment;
-          field_expr = EArith field_expr;
-        };
-        region
-      } 
-    | EVar v -> {
-        value = {
-          field_name = v;
-          assignment = Region.ghost;
-          field_expr = EVar v;
-        };
-        region = v.region
-      }
-    | _ -> failwith "Not supported")
-    in
-    let (e, _) = $3 in
-    let e = Utils.nsepseq_cons expr $2 e in
+| field_assignment COMMA sep_or_term_list(field_assignment,COMMA)  {  
+    let (e, _region) = $3 in
+    let e = Utils.nsepseq_cons $1 $2 e in
     PaRecord { relements = e; rterminator = None}
   } 
   | expr SEMI? {

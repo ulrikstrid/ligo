@@ -256,6 +256,7 @@ module Simplify = struct
       | "LT"                       -> ok C_LT
       | "LE"                       -> ok C_LE
       | "CONS"                     -> ok C_CONS
+      | "NEQ"                      -> ok C_NEQ
 
       | "Michelson.is_nat"         -> ok C_IS_NAT
       | _                          -> simple_fail "Not a Ligodity constant"
