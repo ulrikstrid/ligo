@@ -324,7 +324,7 @@ module Typer = struct
     let t_map_iter     = forall2 "k" "v" @@ fun k v -> ( (k * v) --> unit ) --> map k v --> unit
     let t_size         = forall_tc "c" @@ fun c -> [tc_sizearg c] => c --> nat (* TYPECLASS *)
     let t_slice        = nat --> nat --> string --> string
-    let t_failwith     = string --> unit
+    let t_failwith     = forall2 "a" "b" @@ fun a b -> a --> b
     let t_get_force    = forall2 "src" "dst" @@ fun src dst -> src --> map src dst --> dst
     let t_int          = nat --> int
     let t_bytes_pack   = forall_tc "a" @@ fun a -> [tc_packable a] => a --> bytes (* TYPECLASS *)
@@ -447,10 +447,7 @@ module Typer = struct
     then ok @@ t_bytes ()
     else simple_fail "bad slice"
 
-  let failwith_ = typer_1_opt "FAILWITH" @@ fun t opt ->
-    let%bind () =
-      Assert.assert_true @@
-      (is_t_string t) in
+  let failwith_ = typer_1_opt "FAILWITH" @@ fun _t opt ->
     let default = t_unit () in
     ok @@ Simple_utils.Option.unopt ~default opt
 

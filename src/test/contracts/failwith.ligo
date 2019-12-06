@@ -18,16 +18,16 @@ function foobar (const i : int) : int is
       i := i + 1 ;
       if i > 10 then block {
         i := 20 ;
-        failwith ("who knows") ;
+        failwith (("who", "knows")) ;
         i := 30 ;
       } else skip
     } else block {
       case p of
-      | Zero (n) -> failwith ("wooo")
+      | Zero (n) -> failwith(123n)
       | Pos (n) -> skip
       end
     }
   } with case p of
   | Zero (n) -> i
-  | Pos (n) -> (failwith ("waaaa") : int)
+  | Pos (n) -> (failwith(Zero(0n)) : int)
   end
