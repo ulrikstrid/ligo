@@ -19,12 +19,12 @@ let compile_expression_as_function_entry (program : program) entry_point : _ res
 
 (* TODO: do we need to thread the state here? Also, make the state arg. optional. *)
 let compile_expression_as_value ?(env = Ast_typed.Environment.full_empty) ~(state : Typer.Solver.state) ae : Michelson.t result =
-  let%bind (typed , state) = Typer.type_expression env state ae in
+  let%bind (typed , state) = Typer.type_expression_subst env state ae in
   let () = Typer.Solver.discard_state state in
   Of_typed.compile_expression_as_value typed
 
 let compile_expression_as_function ?(env = Ast_typed.Environment.full_empty) ~(state : Typer.Solver.state) (ae : Ast_simplified.expression) : _ result =
-  let%bind (typed , state) = Typer.type_expression env state ae in
+  let%bind (typed , state) = Typer.type_expression_subst env state ae in
   let () = Typer.Solver.discard_state state in
   Of_typed.compile_expression_as_function typed
 
