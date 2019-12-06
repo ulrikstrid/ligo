@@ -32,6 +32,8 @@ let gf = (m: foobar): int => Map.find(23, m);
 let get = (m: foobar): option(int) => Map.find_opt(42, m);
 let get_ = (m: foobar): option(int) => Map.find_opt(42, m);
 
+let mem = (km: (int, foobar)): bool => Map.mem(km[0], km[1]);
+
 let iter_op = (m: foobar): unit => {
   let assert_eq = (i: int, j: int) => assert(i == j);
   Map.iter(assert_eq, m);
