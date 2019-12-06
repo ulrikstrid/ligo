@@ -26,6 +26,7 @@ let compile_expression_as_value ?(env = Ast_typed.Environment.full_empty) ~(stat
 let compile_expression_as_function ?(env = Ast_typed.Environment.full_empty) ~(state : Typer.Solver.state) (ae : Ast_simplified.expression) : _ result =
   let%bind (typed , state) = Typer.type_expression_subst env state ae in
   let () = Typer.Solver.discard_state state in
+  let () = Printf.printf "\nINPUT = %s\n\n%!" (Format.asprintf "%a" Ast_typed.PP.value typed) in
   Of_typed.compile_expression_as_function typed
 
 let uncompile_typed_program_entry_expression_result program entry ex_ty_value =

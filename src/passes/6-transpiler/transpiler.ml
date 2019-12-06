@@ -118,7 +118,8 @@ open Errors
 
 let rec transpile_type (t:AST.type_value) : type_value result =
   match t.type_value' with
-  | T_variable (Type_name name) -> fail @@ no_type_variable name
+  | T_variable (Type_name name) -> let _ = failwith "debugggggg" in
+fail @@ no_type_variable name
   | T_constant (Type_name "bool", []) -> ok (T_base Base_bool)
   | T_constant (Type_name "int", []) -> ok (T_base Base_int)
   | T_constant (Type_name "nat", []) -> ok (T_base Base_nat)
@@ -278,6 +279,7 @@ and tree_of_sum : AST.type_value -> (type_name * AST.type_value) Append_tree.t r
   ok @@ Append_tree.of_list @@ kv_list_of_map map_tv
 
 and transpile_annotated_expression (ae:AST.annotated_expression) : expression result =
+  let () = Printf.printf "zzz: %s\n%!" (Format.asprintf "%a" Ast_typed.PP.annotated_expression ae) in
   let%bind tv = transpile_type ae.type_annotation in
   let return ?(tv = tv) expr = ok @@ Combinators.Expression.make_tpl (expr, tv) in
   let f = transpile_annotated_expression in

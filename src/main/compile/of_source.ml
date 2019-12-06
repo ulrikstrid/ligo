@@ -33,7 +33,7 @@ let type_file ?(debug_simplify = false) ?(debug_typed = false)
   let%bind (typed, state) =
     trace (simple_error "typing") @@
     Typer.type_program simpl in
-  (if debug_typed then (
+  (if debug_typed || true then (
       Format.(printf "Typed : %a\n%!" Ast_typed.PP.program typed)
     )) ;
   ok (typed, state)

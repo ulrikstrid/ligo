@@ -244,6 +244,8 @@ module Substitution = struct
     (* Replace the type variable ~v with ~expr everywhere within the
        program ~p. TODO: issues with scoping/shadowing. *)
     and s_program : Ast_typed.program w = fun ~substs p ->
+      (* let (v, expr) = substs in *)
+      (* let () = Printf.printf "subst %s with %s\n" v (Format.asprintf "%a" Ast_typed.PP.type_value' expr) in *)
       Trace.bind_map_list (s_declaration_wrap ~substs) p
 
     (*

@@ -18,6 +18,7 @@ let run_typed_program           (* TODO: this runs an *untyped* program, not a t
   let%bind code = Compile.Of_typed.compile_function_entry program entry in
   let%bind input =
     let env = Ast_typed.program_environment program in
+    let () = Printf.printf "\nINPUT = %s\n\n%!" (Format.asprintf "%a" Ast_simplified.PP.expression input) in
     compile_expression ?value:input_to_value ~env ~state input
   in
   let%bind ex_ty_value = Of_michelson.run ?options code input in

@@ -945,21 +945,25 @@ let type_and_subst_xyz (env_state_node : environment * Solver.state * 'a) (apply
     let assignments = state.structured_dbs.assignments in
     let substs : variable:string (* type_variable *) -> _ = fun ~variable ->
       to_option @@
+      let () = Printf.printf "TRY   %s\n" variable in
       let%bind root =
         trace_option (simple_error (Printf.sprintf "can't find alias root of variable %s" variable)) @@
           (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
           try Some (Solver.UF.repr variable aliases) with Not_found -> None in
+      let () = Printf.printf "TRYR  %s (%s)\n" variable root in
       let%bind assignment =
         trace_option (simple_error (Printf.sprintf "can't find assignment for root %s" root)) @@
           (Solver.TypeVariableMap.find_opt root assignments) in
       let Solver.{ tv ; c_tag ; tv_list } = assignment in
       let () = ignore tv (* I think there is an issue where the tv is stored twice (as a key and in the element itself) *) in
       let expr : O.type_value' = T_constant (Type_name (PP.c_tag_to_string c_tag) , (List.map (fun s -> O.{ type_value' = T_variable (Type_name s) ; simplified = None }) tv_list)) in
+      let () = Printf.printf "SUBST %s (%s)\n" variable root in
       ok @@ expr
     in
     let p = apply_substs ~substs program in
 
     p in
+  let () = Printf.printf "\n%s\n\n%!" (Format.asprintf "%a" PP.state state) in
   let%bind program = subst_all in
   let () = ignore env in        (* TODO: shouldn't we use the `env` somewhere? *)
   ok (program, state)
