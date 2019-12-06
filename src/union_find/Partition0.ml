@@ -38,10 +38,11 @@ module Make (Item: Partition.Item) =
 
    (* Printing *)
 
-    let print p =
+    let print ppf p =
+
       let print src dst =
-        Printf.printf "%s -> %s\n"
-          (Item.to_string src) (Item.to_string dst)
+        Format.fprintf ppf "%s -> %s (%s)\n"
+          (Item.to_string src) (Item.to_string dst) (Item.to_string (repr src p))
       in ItemMap.iter print p
 
   end

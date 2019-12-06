@@ -124,7 +124,7 @@ let get_t_key_hash (t:type_value) : unit result = match t.type_value' with
 
 let get_t_tuple (t:type_value) : type_value list result = match t.type_value' with
   | T_tuple lst -> ok lst
-  | _ -> simple_fail "not a tuple"
+  | _ -> simple_fail "ast_typed: get_t_tuple: not a tuple"
 
 let get_t_pair (t:type_value) : (type_value * type_value) result = match t.type_value' with
   | T_tuple lst ->
@@ -132,11 +132,12 @@ let get_t_pair (t:type_value) : (type_value * type_value) result = match t.type_
         trace_strong (simple_error "not a pair") @@
         Assert.assert_list_size lst 2 in
       ok List.(nth lst 0 , nth lst 1)
-  | _ -> simple_fail "not a tuple"
+  | _ -> simple_fail "ast_typed: get_t_pair: not a tuple"
 
 let get_t_function (t:type_value) : (type_value * type_value) result = match t.type_value' with
   | T_function ar -> ok ar
-  | _ -> simple_fail "not a tuple"
+  | T_constant (Type_name "arrow", [a ; b]) -> ok (a , b)
+  | _ -> simple_fail "ast_typed: get_t_function: not a function type"
 
 let get_t_sum (t:type_value) : type_value SMap.t result = match t.type_value' with
   | T_sum m -> ok m
@@ -229,7 +230,7 @@ let e_none : expression = E_constant ("NONE", [])
 
 let e_map lst : expression = E_map lst
 
-let e_unit : expression = E_literal (Literal_unit)
+let e_unit () : expression = E_literal (Literal_unit)
 let e_int n : expression = E_literal (Literal_int n)
 let e_nat n : expression = E_literal (Literal_nat n)
 let e_mutez n : expression = E_literal (Literal_mutez n)
@@ -247,7 +248,7 @@ let e_list lst : expression = E_list lst
 let e_let_in binder rhs result = E_let_in { binder ; rhs ; result }
 let e_tuple lst : expression = E_tuple lst
 
-let e_a_unit = make_a_e e_unit (t_unit ())
+let e_a_unit = make_a_e (e_unit ()) (t_unit ())
 let e_a_int n = make_a_e (e_int n) (t_int ())
 let e_a_nat n = make_a_e (e_nat n) (t_nat ())
 let e_a_mutez n = make_a_e (e_mutez n) (t_mutez ())

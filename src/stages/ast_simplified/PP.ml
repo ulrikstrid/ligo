@@ -32,7 +32,7 @@ let literal ppf (l:literal) = match l with
   | Literal_operation _ -> fprintf ppf "Operation(...bytes)"
 
 let rec expression ppf (e:expression) = match e.expression with
-  | E_literal l -> literal ppf l
+  | E_literal l -> fprintf ppf "(E_literal %a)" literal l
   | E_variable name -> fprintf ppf "%s" name
   | E_application (f, arg) -> fprintf ppf "(%a)@(%a)" expression f expression arg
   | E_constructor (name, ae) -> fprintf ppf "%s(%a)" name expression ae

@@ -28,8 +28,7 @@ let compile_function = fun e ->
   let%bind body = compile_value body (t_function input output) in
   let body = Self_michelson.optimize body in
   let%bind (input , output) = bind_map_pair Compiler.Type.Ty.type_ (input , output) in
-  let open! Compiler.Program in
-  ok { input ; output ; body }
+  ok ({ input ; output ; body } : Compiler.Program.compiled_program)
 
 let compile_expression_as_function_entry = fun program name ->
   let%bind aggregated = aggregate_entry program name true in

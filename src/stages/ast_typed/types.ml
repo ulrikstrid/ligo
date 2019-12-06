@@ -51,7 +51,7 @@ and tv_map = type_value type_name_map
 and ae_map = annotated_expression name_map
 
 and type_value' =
-  | T_tuple of tv list
+  | T_tuple of tv list (* TODO: remove this case *)
   | T_sum of tv_map
   | T_record of tv_map
   | T_constant of type_name * tv list (* SUBST ??? I think not, at least not necessary for now and the types don't match *)

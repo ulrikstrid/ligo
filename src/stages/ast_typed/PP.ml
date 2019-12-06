@@ -8,12 +8,12 @@ let smap_sep_d x = smap_sep x (const " , ")
 
 let rec type_value' ppf (tv':type_value') : unit =
   match tv' with
-  | T_tuple lst -> fprintf ppf "tuple[%a]" (list_sep_d type_value) lst
-  | T_sum m -> fprintf ppf "sum[%a]" (smap_sep_d type_value) m
-  | T_record m -> fprintf ppf "record[%a]" (smap_sep_d type_value) m
-  | T_function (a, b) -> fprintf ppf "%a -> %a" type_value a type_value b
+  | T_tuple lst -> fprintf ppf "(type_value tuple[%a])" (list_sep_d type_value) lst
+  | T_sum m -> fprintf ppf "(type_value sum[%a])" (smap_sep_d type_value) m
+  | T_record m -> fprintf ppf "(type_value record[%a])" (smap_sep_d type_value) m
+  | T_function (a, b) -> fprintf ppf "(type_value function %a -> %a)" type_value a type_value b
   | T_constant (Type_name c, []) -> fprintf ppf "%s" c
-  | T_constant (Type_name c, n) -> fprintf ppf "%s(%a)" c (list_sep_d type_value) n
+  | T_constant (Type_name c, n) -> fprintf ppf "(T_constant %s(%a))" c (list_sep_d type_value) n
   | T_variable (Type_name name) -> fprintf ppf "%s" name
 
 and type_value ppf (tv:type_value) : unit =
@@ -21,20 +21,19 @@ and type_value ppf (tv:type_value) : unit =
 
 let rec annotated_expression ppf (ae:annotated_expression) : unit =
   match ae.type_annotation.simplified with
-  | Some _ -> fprintf ppf "@[<v>%a:%a@]" expression ae.expression type_value ae.type_annotation
-  | _ -> fprintf ppf "@[<v>%a@]" expression ae.expression
+  | _ -> fprintf ppf "@[<v>%a:%a@]" expression ae.expression type_value ae.type_annotation
 
 and lambda ppf l =
   let ({ binder ; body } : lambda) = l in
-  fprintf ppf "lambda (%s) -> %a"
+  fprintf ppf "(lambda (%s) -> %a)"
     binder annotated_expression body
 
 and expression ppf (e:expression) : unit =
   match e with
   | E_literal l -> literal ppf l
-  | E_constant (c, lst) -> fprintf ppf "%s(%a)" c (list_sep_d annotated_expression) lst
-  | E_constructor (c, lst) -> fprintf ppf "%s(%a)" c annotated_expression lst
-  | E_variable a -> fprintf ppf "%s" a
+  | E_constant (c, lst) -> fprintf ppf "(E_constant %s(%a))" c (list_sep_d annotated_expression) lst
+  | E_constructor (c, lst) -> fprintf ppf "(E_constructor %s(%a))" c annotated_expression lst
+  | E_variable a -> fprintf ppf "(e_var %s)" a
   | E_application (f, arg) -> fprintf ppf "(%a) (%a)" annotated_expression f annotated_expression arg
   | E_lambda l -> fprintf ppf "%a" lambda l
   | E_tuple_accessor (ae, i) -> fprintf ppf "%a.%d" annotated_expression ae i
@@ -48,7 +47,7 @@ and expression ppf (e:expression) : unit =
   | E_look_up (ds, i) -> fprintf ppf "(%a)[%a]" annotated_expression ds annotated_expression i
   | E_matching (ae, m) ->
       fprintf ppf "match %a with %a" annotated_expression ae (matching annotated_expression) m
-  | E_sequence (a , b) -> fprintf ppf "%a ; %a" annotated_expression a annotated_expression b
+  | E_sequence (a , b) -> fprintf ppf "(e_seq %a ; %a)" annotated_expression a annotated_expression b
   | E_loop (expr , body) -> fprintf ppf "while %a { %a }" annotated_expression expr annotated_expression body
   | E_assign (name , path , expr) ->
     fprintf ppf "%s.%a := %a"
