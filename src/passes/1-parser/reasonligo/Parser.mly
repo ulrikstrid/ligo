@@ -34,8 +34,10 @@ type 'a sequence_or_record =
 %type <AST.t> contract
 %type <AST.expr> interactive_expr
 
+
 %nonassoc Ident
-%nonassoc COLON
+%nonassoc COLON (* Solves a shift/reduce problem that happens with record 
+                   and sequences *)
 
 %%
 
@@ -186,12 +188,9 @@ type_decl:
   }
 
 type_expr:
-  cartesian                                              { $1 }
-| sum_type                                               { TSum $1 }
+  cartesian                                                      { $1 }
+| sum_type                                                  { TSum $1 }
 | record_type                                            { TRecord $1 }
-
-cartesian_parens:
-  core_type { $1 }
 
 cartesian:
   fun_type COMMA nsepseq(fun_type,COMMA) {
@@ -273,7 +272,7 @@ record_type:
   }
 
 type_expr_field:
-  cartesian_parens                                             {   $1 }
+  core_type                                             {   $1 }
 | sum_type                                               {    TSum $1 }
 | record_type                                            { TRecord $1 }
 
@@ -1008,7 +1007,7 @@ projection:
     }  
   }
 
-inn:  
+sequence_or_record_in:  
   expr SEMI sep_or_term_list(expr,SEMI) {
     let (e, _region) = $3 in
     let e = Utils.nsepseq_cons $1 $2 e in
@@ -1024,7 +1023,7 @@ inn:
   }
 
 sequence_or_record:
-  LBRACE inn RBRACE {
+  LBRACE sequence_or_record_in RBRACE {
     let compound = Braces($1, $3) in
     let region = cover $1 $3 in
     match $2 with 
