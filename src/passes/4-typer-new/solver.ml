@@ -34,8 +34,6 @@ module Wrap = struct
 
   let rec type_expression_to_type_value : T.type_value -> O.type_value = fun te ->
     match te.type_value' with
-    | T_tuple types ->
-      P_constant (C_tuple, List.map type_expression_to_type_value types)
     | T_sum kvmap ->
       P_constant (C_variant, Map.String.to_list @@ Map.String.map type_expression_to_type_value kvmap)
     | T_record kvmap ->

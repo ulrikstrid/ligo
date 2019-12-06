@@ -351,7 +351,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_value result =
       return (T_function (a', b'))
   | T_tuple lst ->
       let%bind lst' = bind_list @@ List.map (evaluate_type e) lst in
-      return (T_tuple lst')
+      return @@ T_constant (Type_name "tuple" , lst')
   | T_sum m ->
       let aux k v prev =
         let%bind prev' = prev in

@@ -365,7 +365,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_value result =
     return (T_function (a', b'))
   | T_tuple lst ->
     let%bind lst' = bind_list @@ List.map (evaluate_type e) lst in
-    return (T_tuple lst')
+    return @@ T_constant (Type_name "tuple" , lst')
   | T_sum m ->
     let aux k v prev =
       let%bind prev' = prev in
@@ -1005,7 +1005,7 @@ let type_program' : I.program -> O.program result = fun p ->
 let rec untype_type_expression (t:O.type_value) : (I.type_expression) result =
   (* TODO: or should we use t.simplified if present? *)
   match t.type_value' with
-  | O.T_tuple x ->
+  | O.T_constant (Type_name "tuple" , x) ->
     let%bind x' = bind_map_list untype_type_expression x in
     ok @@ I.T_tuple x'
   | O.T_sum x ->

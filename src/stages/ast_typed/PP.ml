@@ -8,7 +8,6 @@ let smap_sep_d x = smap_sep x (const " , ")
 
 let rec type_value' ppf (tv':type_value') : unit =
   match tv' with
-  | T_tuple lst -> fprintf ppf "(type_value tuple[%a])" (list_sep_d type_value) lst
   | T_sum m -> fprintf ppf "(type_value sum[%a])" (smap_sep_d type_value) m
   | T_record m -> fprintf ppf "(type_value record[%a])" (smap_sep_d type_value) m
   | T_function (a, b) -> fprintf ppf "(type_value function %a -> %a)" type_value a type_value b

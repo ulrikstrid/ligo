@@ -63,9 +63,9 @@ module Substitution = struct
       ok @@ type_name
 
     and s_type_value' : T.type_value' w = fun ~substs -> function
-        | T.T_tuple type_value_list ->
+        | T.T_constant (Type_name "tuple" , type_value_list) ->
           let%bind type_value_list = bind_map_list (s_type_value ~substs) type_value_list in
-          ok @@ T.T_tuple type_value_list
+          ok @@ T.T_constant (Type_name "tuple" , type_value_list)
         | T.T_sum _ -> failwith "TODO: T_sum"
         | T.T_record _ -> failwith "TODO: T_record"
         | T.T_constant (type_name, type_value_list) ->

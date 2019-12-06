@@ -40,8 +40,6 @@ module Errors = struct
 
   let different_size_constants = different_size_type "constants"
 
-  let different_size_tuples = different_size_type "tuples"
-
   let different_size_sums = different_size_type "sums"
 
   let different_size_records = different_size_type "records"
@@ -289,13 +287,6 @@ end
 open Errors
 
 let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = match (a.type_value', b.type_value') with
-  | T_tuple ta, T_tuple tb -> (
-      let%bind _ =
-        trace_strong (fun () -> (different_size_tuples a b ()))
-        @@ Assert.assert_true List.(length ta = length tb) in
-      bind_list_iter assert_type_value_eq (List.combine ta tb)
-    )
-  | T_tuple _, _ -> fail @@ different_kinds a b
   | T_constant (Type_name ca, lsta), T_constant (Type_name cb, lstb) -> (
       let%bind _ =
         trace_strong (different_size_constants a b)

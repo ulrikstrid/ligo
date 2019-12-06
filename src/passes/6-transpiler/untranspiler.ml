@@ -167,8 +167,6 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         get_operation v in
       return (E_literal (Literal_operation op))
     )
-  | T_constant (Type_name name , _lst) ->
-    fail @@ unknown_untranspile name v
   | T_sum m ->
       let lst = kv_list_of_map m in
       let%bind node = match Append_tree.of_list lst with
@@ -180,7 +178,7 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         extract_constructor v node in
       let%bind sub = untranspile v tv in
       return (E_constructor (name, sub))
-  | T_tuple lst ->
+  | T_constant (Type_name "tuple" , lst) ->
       let%bind node = match Append_tree.of_list lst with
         | Empty -> fail @@ corner_case ~loc:__LOC__ "empty tuple"
         | Full t -> ok t in
@@ -190,6 +188,8 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
       let%bind tpl' = bind_list
         @@ List.map (fun (x, y) -> untranspile x y) tpl in
       return (E_tuple tpl')
+  | T_constant (Type_name name , _lst) ->
+    fail @@ unknown_untranspile name v
   | T_record m ->
       let lst = kv_list_of_map m in
       let%bind node = match Append_tree.of_list lst with

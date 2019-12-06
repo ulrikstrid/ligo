@@ -148,7 +148,6 @@ let rec transpile_type (t:AST.type_value) : type_value result =
   | T_constant (Type_name "option", [o]) ->
       let%bind o' = transpile_type o in
       ok (T_option o')
-  | T_constant (Type_name name , _lst) -> fail @@ unrecognized_type_constant name
   (* TODO hmm *)
   | T_sum m ->
       let node = Append_tree.of_list @@ kv_list_of_map m in
@@ -176,7 +175,7 @@ let rec transpile_type (t:AST.type_value) : type_value result =
                         ok (Some ann, a))
                       aux node in
       ok @@ snd m'
-  | T_tuple lst ->
+  | T_constant (Type_name "tuple" , lst) ->
       let node = Append_tree.of_list lst in
       let aux a b : type_value result =
         let%bind a = a in
@@ -189,6 +188,7 @@ let rec transpile_type (t:AST.type_value) : type_value result =
       let%bind result' = transpile_type result in
       ok (T_function (param', result'))
     )
+  | T_constant (Type_name name , _lst) -> fail @@ unrecognized_type_constant name
 
 let tuple_access_to_lr : type_value -> type_value list -> int -> (type_value * [`Left | `Right]) list result = fun ty tys ind ->
   let node_tv = Append_tree.of_list @@ List.mapi (fun i a -> (i, a)) tys in

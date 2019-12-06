@@ -24,7 +24,7 @@ let t_mutez ?s () : type_value = make_t (T_constant (Type_name "tez", [])) s
 let t_timestamp ?s () : type_value = make_t (T_constant (Type_name "timestamp", [])) s
 let t_unit ?s () : type_value = make_t (T_constant (Type_name "unit", [])) s
 let t_option o ?s () : type_value = make_t (T_constant (Type_name "option", [o])) s
-let t_tuple lst ?s () : type_value = make_t (T_tuple lst) s
+let t_tuple lst ?s () : type_value = make_t (T_constant (Type_name "tuple" , lst)) s
 let t_variable t ?s () : type_value = make_t (T_variable t) s
 let t_list t ?s () : type_value = make_t (T_constant (Type_name "list", [t])) s
 let t_set t ?s () : type_value = make_t (T_constant (Type_name "set", [t])) s
@@ -123,11 +123,11 @@ let get_t_key_hash (t:type_value) : unit result = match t.type_value' with
   | _ -> simple_fail "not a key_hash"
 
 let get_t_tuple (t:type_value) : type_value list result = match t.type_value' with
-  | T_tuple lst -> ok lst
+  | T_constant (Type_name "tuple",  lst) -> ok lst
   | _ -> simple_fail "ast_typed: get_t_tuple: not a tuple"
 
 let get_t_pair (t:type_value) : (type_value * type_value) result = match t.type_value' with
-  | T_tuple lst ->
+  | T_constant (Type_name "tuple",  lst) ->
       let%bind () =
         trace_strong (simple_error "not a pair") @@
         Assert.assert_list_size lst 2 in
