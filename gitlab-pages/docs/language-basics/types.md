@@ -105,3 +105,18 @@ let ledger: account_balances = Map.literal
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
+
+## Annotations
+
+In certain cases, type of an expression cannot be properly determined. This can be circumvented by annotating an expression with it's desired type, here's an example:
+
+<!--DOCUSAURUS_CODE_TABS-->
+<!--Pascaligo-->
+```pascaligo
+type int_map is map(int, int);
+function get_first(const int_map: int_map): option(int) is int_map[1]
+// empty map needs a type annotation
+const first: option(int) = get_first(((map end) : int_map ));
+```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
