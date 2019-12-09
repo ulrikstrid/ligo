@@ -3,7 +3,7 @@ id: types
 title: Types
 ---
 
-LIGO is strongly and statically typed. This means that the compiler checks your program at compilation time and makes sure there won't be any type related runtime errors. LIGO types are built on top of Michelson's type system.
+LIGO is strongly and statically typed. This means that the compiler checks your program at compilation time and makes sure there won't be any type related runtime errors. LIGO types are built on top of Michelson's type system. 
 
 ## Built-in types
 
@@ -29,6 +29,8 @@ let dog_breed: animal_breed = "Saluki"
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
+> Types in LIGO are `structural`, which means that `animalBreed`/`animal_breed` and `string` are interchangable and are handled equally. This becomes noticable when defining types for e.g. function arguments.
+
 ## Simple types
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
@@ -40,6 +42,8 @@ const ledger: accountBalances = map
     ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address) -> 10mutez
 end
 ```
+
+
 
 <!--Cameligo-->
 ```cameligo
