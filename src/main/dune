@@ -4,6 +4,7 @@
   (libraries
     run
     compile
+    uncompile
   )
   (preprocess
     (pps ppx_let)

@@ -58,6 +58,7 @@ let i_map body = prim ~children:[body] I_MAP
 let i_some = prim I_SOME
 let i_lambda arg ret body = prim ~children:[arg;ret;body] I_LAMBDA
 let i_empty_map src dst = prim ~children:[src;dst] I_EMPTY_MAP
+let i_empty_big_map src dst = prim ~children:[src;dst] I_EMPTY_BIG_MAP
 let i_drop = prim I_DROP
 let i_dropn n = prim I_DROP ~children:[int (Z.of_int n)]
 let i_exec = prim I_EXEC
@@ -105,3 +106,8 @@ let pp_hex ppf (michelson : michelson) =
   let bytes = Tezos_data_encoding.Binary_writer.to_bytes_exn Script_repr.expr_encoding canonical in
   let hex = Hex.of_bytes bytes in
   Format.fprintf ppf "%a" Hex.pp hex
+
+let measure (michelson : michelson) =
+  let canonical = strip_locations michelson in
+  let bytes = Tezos_data_encoding.Binary_writer.to_bytes_exn Script_repr.expr_encoding canonical in
+  Bytes.length bytes

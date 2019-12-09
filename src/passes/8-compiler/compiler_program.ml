@@ -4,32 +4,56 @@ open Michelson
 open Memory_proto_alpha.Protocol.Script_ir_translator
 open Operators.Compiler
 
-let get_operator : string -> type_value -> expression list -> predicate result = fun s ty lst ->
-  match Map.String.find_opt s Operators.Compiler.operators with
-  | Some x -> ok x
-  | None -> (
+module Errors = struct
+  let corner_case ~loc message =
+    let title () = "corner case" in
+    let content () = "we don't have a good error message for this case. we are
+striving find ways to better report them and find the use-cases that generate
+them. please report this to the developers." in
+    let data = [
+      ("location" , fun () -> loc) ;
+      ("message" , fun () -> message) ;
+    ] in
+    error ~data title content
+
+  let contract_entrypoint_must_be_literal ~loc =
+    let title () = "contract entrypoint must be literal" in
+    let content () = "For get_entrypoint, entrypoint must be given as a literal string" in
+    let data =
+      [ ("location", fun () -> loc) ;
+      ] in
+    error ~data title content
+end
+open Errors
+
+(* This does not makes sense to me *)
+let get_operator : constant -> type_value -> expression list -> predicate result = fun s ty lst ->
+  match Operators.Compiler.get_operators s with
+  | Trace.Ok (x,_) -> ok x
+  | Trace.Error _ -> (
       match s with
-      | "NONE" -> (
+      | C_NONE -> (
           let%bind ty' = Mini_c.get_t_option ty in
           let%bind m_ty = Compiler_type.type_ ty' in
           ok @@ simple_constant @@ prim ~children:[m_ty] I_NONE
+
         )
-      | "NIL" -> (
+      | C_NIL -> (
           let%bind ty' = Mini_c.get_t_list ty in
           let%bind m_ty = Compiler_type.type_ ty' in
           ok @@ simple_unary @@ prim ~children:[m_ty] I_NIL
         )
-      | "SET_EMPTY" -> (
+      | C_SET_EMPTY -> (
           let%bind ty' = Mini_c.get_t_set ty in
           let%bind m_ty = Compiler_type.type_ ty' in
           ok @@ simple_constant @@ prim ~children:[m_ty] I_EMPTY_SET
         )
-      | "UNPACK" -> (
+      | C_BYTES_UNPACK -> (
           let%bind ty' = Mini_c.get_t_option ty in
           let%bind m_ty = Compiler_type.type_ ty' in
           ok @@ simple_unary @@ prim ~children:[m_ty] I_UNPACK
         )
-      | "MAP_REMOVE" ->
+      | C_MAP_REMOVE ->
           let%bind v = match lst with
             | [ _ ; expr ] ->
                 let%bind (_, v) = Mini_c.Combinators.(bind_map_or (get_t_map , get_t_big_map) (Expression.get_type expr)) in
@@ -37,28 +61,40 @@ let get_operator : string -> type_value -> expression list -> predicate result =
             | _ -> simple_fail "mini_c . MAP_REMOVE" in
           let%bind v_ty = Compiler_type.type_ v in
           ok @@ simple_binary @@ seq [dip (i_none v_ty) ; prim I_UPDATE ]
-      | "LEFT" ->
+      | C_LEFT ->
           let%bind r = match lst with
             | [ _ ] -> get_t_right ty
             | _ -> simple_fail "mini_c . LEFT" in
           let%bind r_ty = Compiler_type.type_ r in
           ok @@ simple_unary @@ prim ~children:[r_ty] I_LEFT
-      | "RIGHT" ->
+      | C_RIGHT ->
           let%bind l = match lst with
             | [ _ ] -> get_t_left ty
             | _ -> simple_fail "mini_c . RIGHT" in
           let%bind l_ty = Compiler_type.type_ l in
           ok @@ simple_unary @@ prim ~children:[l_ty] I_RIGHT
-      | "CONTRACT" ->
-          let%bind r = match lst with
-            | [ _ ] -> get_t_contract ty
-            | _ -> simple_fail "mini_c . CONTRACT" in
+      | C_CONTRACT ->
+          let%bind r = get_t_contract ty in
           let%bind r_ty = Compiler_type.type_ r in
           ok @@ simple_unary @@ seq [
             prim ~children:[r_ty] I_CONTRACT ;
             i_assert_some_msg (i_push_string "bad address for get_contract") ;
           ]
-      | x -> simple_fail ("predicate \"" ^ x ^ "\" doesn't exist")
+      | C_CONTRACT_ENTRYPOINT ->
+          let%bind r = get_t_contract ty in
+          let%bind r_ty = Compiler_type.type_ r in
+          let%bind entry = match lst with
+            | [ { content = E_literal (D_string entry); type_value = _ } ; _addr ] -> ok entry
+            | [ _entry ; _addr ] ->
+               fail @@ contract_entrypoint_must_be_literal ~loc:__LOC__
+            | _ ->
+               fail @@ corner_case ~loc:__LOC__ "mini_c . CONTRACT_ENTRYPOINT" in
+          ok @@ simple_binary @@ seq [
+            i_drop ; (* drop the entrypoint... *)
+            prim ~annot:[entry] ~children:[r_ty] I_CONTRACT ;
+            i_assert_some_msg (i_push_string @@ Format.sprintf "bad address for get_entrypoint (%s)" entry) ;
+          ]
+      | x -> simple_fail (Format.asprintf "predicate \"%a\" doesn't exist" Stage_common.PP.constant x)
     )
 
 let rec translate_value (v:value) ty : michelson result = match v with
@@ -125,7 +161,7 @@ let rec translate_value (v:value) ty : michelson result = match v with
 and translate_expression (expr:expression) (env:environment) : michelson result =
   let (expr' , ty) = Combinators.Expression.(get_content expr , get_type expr) in
   let error_message () =
-    Format.asprintf  "\n- expr: %a\n- type: %a\n" PP.expression expr PP.type_ ty
+    Format.asprintf  "\n- expr: %a\n- type: %a\n" PP.expression expr PP.type_variable ty
   in
   let return code = ok code in
 
@@ -193,7 +229,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
             pre_code ;
             f ;
           ]
-        | _ -> simple_fail "bad arity"
+        | _ -> simple_fail (Format.asprintf "bad arity for %a"  Stage_common.PP.constant str)
       in
       let error =
         let title () = "error compiling constant" in
@@ -204,6 +240,9 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
   | E_make_empty_map sd ->
       let%bind (src, dst) = bind_map_pair Compiler_type.type_ sd in
       return @@ i_empty_map src dst
+  | E_make_empty_big_map sd ->
+      let%bind (src, dst) = bind_map_pair Compiler_type.type_ sd in
+      return @@ i_empty_big_map src dst
   | E_make_empty_list t ->
       let%bind t' = Compiler_type.type_ t in
       return @@ i_nil t'
@@ -292,7 +331,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       let%bind expr' = translate_expression expr env in
       let%bind body' = translate_expression body (Environment.add v env) in
       match name with
-      | "ITER" -> (
+      | C_ITER -> (
           let%bind code = ok (seq [
               expr' ;
               i_iter (seq [body' ; i_drop ; i_drop]) ;
@@ -300,7 +339,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
             ]) in
           return code
         )
-      | "MAP" -> (
+      | C_MAP -> (
           let%bind code = ok (seq [
               expr' ;
               i_map (seq [body' ; dip i_drop]) ;
@@ -308,7 +347,8 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
           return code
         )
       | s -> (
-          let error = error (thunk "bad iterator") (thunk s) in
+          let iter = Format.asprintf "iter %a" Stage_common.PP.constant s in
+          let error = error (thunk "bad iterator") (thunk iter) in
           fail error
         )
     )
@@ -417,10 +457,10 @@ type compiled_program = {
 }
 
 let get_main : program -> string -> (anon_function * _) result = fun p entry ->
-  let is_main (((name , expr), _):toplevel_statement) =
+  let is_main ((( name , expr), _):toplevel_statement) =
     match Combinators.Expression.(get_content expr , get_type expr)with
     | (E_closure content , T_function ty)
-      when name = entry ->
+      when Var.equal name (Var.of_name entry) ->
         Some (content , ty)
     | _ ->  None
   in
@@ -445,20 +485,6 @@ let translate_entry (p:anon_function) ty : compiled_program result =
   let%bind input = Compiler_type.Ty.type_ input in
   let%bind output = Compiler_type.Ty.type_ output in
   ok ({input;output;body}:compiled_program)
-
-module Errors = struct
-  let corner_case ~loc message =
-    let title () = "corner case" in
-    let content () = "we don't have a good error message for this case. we are
-striving find ways to better report them and find the use-cases that generate
-them. please report this to the developers." in
-    let data = [
-      ("location" , fun () -> loc) ;
-      ("message" , fun () -> message) ;
-    ] in
-    error ~data title content
-end
-open Errors
 
 let translate_contract : anon_function -> _ -> michelson result = fun f ty ->
   let%bind compiled_program =

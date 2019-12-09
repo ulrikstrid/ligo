@@ -1,11 +1,27 @@
-(executable
+(library
   (name cli)
-  (public_name ligo)
   (libraries
     simple-utils
     cmdliner
     ligo
   )
+  (modules cli cli_helpers)
+  (preprocess
+    (pps ppx_let)
+  )
+  (flags (:standard -open Simple_utils))
+)
+
+(executable
+  (name runligo)
+  (public_name ligo)
+  (libraries
+    simple-utils
+    cmdliner
+    ligo
+    cli
+  )
+  (modules runligo)
   (package ligo)
   (preprocess
     (pps ppx_let)

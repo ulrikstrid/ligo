@@ -5,6 +5,7 @@
     simple-utils
     tezos-utils
     ast_simplified ; Is that a good idea?
+    stage_common
   )
   (preprocess
     (pps ppx_let)

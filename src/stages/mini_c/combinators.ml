@@ -18,7 +18,7 @@ module Expression = struct
     type_value = t ;
   }
 
-  let pair : t -> t -> t' = fun a b -> E_constant ("PAIR" , [ a ; b ])
+  let pair : t -> t -> t' = fun a b -> E_constant (C_PAIR , [ a ; b ])
 
 end
 
@@ -136,7 +136,7 @@ let get_or (v:value) = match v with
 
 let wrong_type name t =
   let title () = "not a " ^ name in
-  let content () = Format.asprintf "%a" PP.type_ t in
+  let content () = Format.asprintf "%a" PP.type_variable t in
   error title content
 
 let get_t_left t = match t with
@@ -168,13 +168,6 @@ let t_function x y : type_value = T_function ( x , y )
 let t_pair x y : type_value = T_pair ( x , y )
 let t_union x y : type_value = T_or ( x , y )
 
-let quote binder body : anon_function =
-  {
-    binder ;
-    body ;
-  }
-
-
 let e_int expr : expression = Expression.make_tpl (expr, t_int)
 let e_unit : expression = Expression.make_tpl (E_literal D_unit, t_unit)
 let e_skip : expression = Expression.make_tpl (E_skip, t_unit)
@@ -187,13 +180,6 @@ let e_let_in v tv expr body : expression = Expression.(make_tpl (
 let ez_e_sequence a b : expression = Expression.(make_tpl (E_sequence (make_tpl (a , t_unit) , b) , get_type b))
 
 let d_unit : value = D_unit
-
-let basic_quote expr in_ty out_ty : expression result =
-  let expr' = E_closure (quote "input" expr) in
-  ok @@ Expression.make_tpl (expr' , t_function in_ty out_ty)
-
-let basic_int_quote expr : expression result =
-  basic_quote expr t_int t_int
 
 
 let environment_wrap pre_environment post_environment = { pre_environment ; post_environment }

@@ -1,0 +1,12 @@
+(library
+  (name stage_common)
+  (public_name ligo.stage_common)
+  (libraries
+    simple-utils
+    tezos-utils
+  )
+  (preprocess
+    (pps ppx_let)
+  )
+  (flags (:standard -open Simple_utils))
+)

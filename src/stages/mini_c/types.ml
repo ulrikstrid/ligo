@@ -1,12 +1,5 @@
-type type_name = string
+include Stage_common.Types
 
-type type_base =
-  | Base_unit | Base_void
-  | Base_bool
-  | Base_int | Base_nat | Base_tez
-  | Base_timestamp
-  | Base_string | Base_bytes | Base_address
-  | Base_operation | Base_signature
 
 type 'a annotated = string option * 'a
 
@@ -22,7 +15,7 @@ type type_value =
   | T_contract of type_value
   | T_option of type_value
 
-and environment_element = string * type_value
+and environment_element = expression_variable * type_value
 
 and environment = environment_element list
 
@@ -31,8 +24,8 @@ type environment_wrap = {
   post_environment : environment ;
 }
 
-type var_name = string
-type fun_name = string
+type var_name = expression_variable
+type fun_name = expression_variable
 
 type value =
   | D_unit
@@ -61,14 +54,15 @@ and expression' =
   | E_literal of value
   | E_closure of anon_function
   | E_skip
-  | E_constant of string * expression list
+  | E_constant of constant * expression list
   | E_application of (expression * expression)
   | E_variable of var_name
   | E_make_empty_map of (type_value * type_value)
+  | E_make_empty_big_map of (type_value * type_value)
   | E_make_empty_list of type_value
   | E_make_empty_set of type_value
   | E_make_none of type_value
-  | E_iterator of (string * ((var_name * type_value) * expression) * expression)
+  | E_iterator of (constant * ((var_name * type_value) * expression) * expression)
   | E_fold of (((var_name * type_value) * expression) * expression * expression)
   | E_if_bool of (expression * expression * expression)
   | E_if_none of expression * expression * ((var_name * type_value) * expression)
@@ -76,7 +70,7 @@ and expression' =
   | E_if_left of expression * ((var_name * type_value) * expression) * ((var_name * type_value) * expression)
   | E_let_in of ((var_name * type_value) * expression * expression)
   | E_sequence of (expression * expression)
-  | E_assignment of (string * [`Left | `Right] list * expression)
+  | E_assignment of (expression_variable * [`Left | `Right] list * expression)
   | E_while of (expression * expression)
 
 and expression = {
@@ -89,7 +83,7 @@ and assignment = var_name * expression
 and toplevel_statement = assignment * environment_wrap
 
 and anon_function = {
-  binder : string ;
+  binder : expression_variable ;
   body : expression ;
 }
 

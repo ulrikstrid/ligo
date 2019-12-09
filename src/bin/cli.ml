@@ -3,8 +3,10 @@ open Trace
 open Cli_helpers
 
 let main =
-  let term = Term.(const print_endline $ const "Ligo needs a command. Do ligo --help") in
-  (term , Term.info "ligo")
+  let man =
+    [ `S "MORE HELP";
+      `P "Use `$(mname) $(i,COMMAND) --help' for help on a single command." ] in
+  (Term.(ret (const (`Help (`Auto, None)))), Term.info "ligo" ~man)
 
 let source_file n =
   let open Arg in
@@ -37,13 +39,13 @@ let syntax =
     info ~docv ~doc ["syntax" ; "s"] in
   value @@ opt string "auto" info
 
-let bigmap =
+let req_syntax n =
   let open Arg in
   let info =
-    let docv = "BIGMAP" in
-    let doc = "$(docv) is necessary when your storage embeds a big_map." in
-    info ~docv ~doc ["bigmap"] in
-  value @@ flag info
+    let docv = "SYNTAX" in
+    let doc = "$(docv) is the syntax that will be used. Currently supported syntaxes are \"pascaligo\" and \"cameligo\". By default, the syntax is guessed from the extension (.ligo and .mligo, respectively)." in
+    info ~docv ~doc [] in
+  required @@ pos n (some string) None info
 
 let amount =
   let open Arg in
@@ -92,113 +94,143 @@ let michelson_code_format =
     (enum [("text", `Text); ("json", `Json); ("hex", `Hex)])
     `Text info
 
+module Helpers = Ligo.Compile.Helpers
+module Compile = Ligo.Compile.Wrapper
+module Uncompile = Ligo.Uncompile
+module Run = Ligo.Run.Of_michelson
+
 let compile_file =
   let f source_file entry_point syntax display_format michelson_format =
     toplevel ~display_format @@
-    let%bind contract =
-      trace (simple_info "compiling contract to michelson") @@
-      Ligo.Compile.Of_source.compile_file_contract_entry source_file entry_point (Syntax_name syntax) in
+    let%bind contract = Compile.source_to_michelson_contract (Syntax_name syntax) source_file entry_point in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) contract
   in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format $ michelson_code_format) in
   let cmdname = "compile-contract" in
-  let docs = "Subcommand: compile a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
-  (term , Term.info ~docs cmdname)
+  let doc = "Subcommand: compile a contract." in
+  (term , Term.info ~doc cmdname)
+
+let measure_contract =
+  let f source_file entry_point syntax display_format  =
+    toplevel ~display_format @@
+    let%bind contract = Compile.source_to_michelson_contract (Syntax_name syntax) source_file entry_point in
+    let open Tezos_utils in
+    ok @@ Format.asprintf "%d bytes\n" (Michelson.measure contract)
+  in
+  let term =
+    Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format) in
+  let cmdname = "measure-contract" in
+  let doc = "Subcommand: measure a contract's compiled size in bytes." in
+  (term , Term.info ~doc cmdname)
 
 let compile_parameter =
-  let f source_file entry_point expression syntax display_format michelson_format =
+  let f source_file _entry_point expression syntax display_format michelson_format =
     toplevel ~display_format @@
-    let%bind value =
-      trace (simple_error "compile-input") @@
-      Ligo.Run.Of_source.compile_file_contract_parameter source_file entry_point expression (Syntax_name syntax) in
+    let%bind v_syntax      = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
+    let%bind (_,state,env) = Compile.source_to_typed (Syntax_name syntax) source_file in
+    let%bind compiled_exp  = Compile.source_expression_to_michelson_value_as_function ~env ~state expression v_syntax in
+    let%bind value         = Run.evaluate_michelson compiled_exp in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ syntax $ display_format $ michelson_code_format) in
   let cmdname = "compile-parameter" in
-  let docs = "Subcommand: compile parameters to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which calls a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
-  (term , Term.info ~docs cmdname)
+  let doc = "Subcommand: compile parameters to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which calls a contract." in
+  (term , Term.info ~doc cmdname)
 
+(*-------------------------------------------------------------------------------------------------------------------------------------
+TODO: This function does not typecheck anything, add the typecheck against the given entrypoint. For now: does the same as compile_parameter
+-------------------------------------------------------------------------------------------------------------------------------------- *)
 let compile_storage =
-  let f source_file entry_point expression syntax display_format michelson_format bigmap =
+  let f source_file _entry_point expression syntax display_format michelson_format =
     toplevel ~display_format @@
-    let%bind value =
-      trace (simple_error "compile-storage") @@
-      Ligo.Run.Of_source.compile_file_contract_storage ~value:bigmap source_file entry_point expression (Syntax_name syntax) in
+    let%bind v_syntax      = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
+    let%bind (_,state,env) = Compile.source_to_typed (Syntax_name syntax) source_file in
+    let%bind compiled      = Compile.source_expression_to_michelson_value_as_function ~env ~state expression v_syntax in
+    let%bind value         = Run.evaluate_michelson compiled in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2 $ syntax $ display_format $ michelson_code_format $ bigmap) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2 $ syntax $ display_format $ michelson_code_format) in
   let cmdname = "compile-storage" in
-  let docs = "Subcommand: compile an initial storage in ligo syntax to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which originates a contract. See `ligo " ^ cmdname ^ " --help' for a list of options specific to this subcommand." in
-  (term , Term.info ~docs cmdname)
+  let doc = "Subcommand: compile an initial storage in ligo syntax to a michelson expression. The resulting michelson expression can be passed as an argument in a transaction which originates a contract." in
+  (term , Term.info ~doc cmdname)
 
 let dry_run =
-  let f source_file entry_point storage input amount sender source syntax display_format bigmap =
+  let f source_file entry_point storage input amount sender source syntax display_format =
     toplevel ~display_format @@
-    let%bind output =
-      Ligo.Run.Of_source.run_contract
-        ~options:{ amount ; sender ; source }
-        ~storage_value:bigmap
-        source_file entry_point storage input (Syntax_name syntax) in
-    ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression output
+    let%bind v_syntax                  = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
+    let%bind (typed_program,state,env) = Compile.source_to_typed (Syntax_name syntax) source_file in
+    let%bind compiled_param            = Compile.source_contract_input_to_michelson_value_as_function ~env ~state (storage,input) v_syntax in
+    let%bind michelson                 = Compile.typed_to_michelson_program typed_program entry_point in
+    let%bind args_michelson            = Run.evaluate_michelson compiled_param in
+    let%bind options                   = Run.make_dry_run_options {amount ; sender ; source } in
+    let%bind michelson_output          = Run.run ~options michelson args_michelson in
+    let%bind simplified_output         = Uncompile.uncompile_typed_program_entry_function_result typed_program entry_point michelson_output in
+    ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ amount $ sender $ source $ syntax $ display_format $ bigmap) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ amount $ sender $ source $ syntax $ display_format) in
   let cmdname = "dry-run" in
-  let docs = "Subcommand: run a smart-contract with the given storage and input." in
-  (term , Term.info ~docs cmdname)
+  let doc = "Subcommand: run a smart-contract with the given storage and input." in
+  (term , Term.info ~doc cmdname)
 
 let run_function =
   let f source_file entry_point parameter amount sender source syntax display_format =
     toplevel ~display_format @@
-    let%bind output =
-      Ligo.Run.Of_source.run_function_entry
-        ~options:{ amount ; sender ; source }
-        source_file entry_point parameter (Syntax_name syntax) in
-    ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression output
+    let%bind v_syntax                  = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
+    let%bind (typed_program,state,env) = Compile.source_to_typed (Syntax_name syntax) source_file in
+    let%bind compiled_parameter        = Compile.source_expression_to_michelson_value_as_function ~env ~state parameter v_syntax in
+    let%bind michelson                 = Compile.typed_to_michelson_program typed_program entry_point in
+    let%bind args_michelson            = Run.evaluate_michelson compiled_parameter in
+    let%bind options                   = Run.make_dry_run_options {amount ; sender ; source } in
+    let%bind michelson_output          = Run.run ~options michelson args_michelson in
+    let%bind simplified_output         = Uncompile.uncompile_typed_program_entry_function_result typed_program entry_point michelson_output in
+    ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ amount $ sender $ source $ syntax $ display_format) in
   let cmdname = "run-function" in
-  let docs = "Subcommand: run a function with the given parameter." in
-  (term , Term.info ~docs cmdname)
+  let doc = "Subcommand: run a function with the given parameter." in
+  (term , Term.info ~doc cmdname)
 
 let evaluate_value =
   let f source_file entry_point amount sender source syntax display_format =
     toplevel ~display_format @@
-    let%bind output =
-      Ligo.Run.Of_source.evaluate_entry
-        ~options:{ amount ; sender ; source }
-        source_file entry_point (Syntax_name syntax) in
-    ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression output
+    let%bind (typed_program,_,_) = Compile.source_to_typed (Syntax_name syntax) source_file in
+    let%bind contract            = Compile.typed_to_michelson_value_as_function typed_program entry_point in
+    let%bind options             = Run.make_dry_run_options {amount ; sender ; source } in
+    let%bind michelson_output    = Run.evaluate ~options contract in
+    let%bind simplified_output   = Uncompile.uncompile_typed_program_entry_expression_result typed_program entry_point michelson_output in
+    ok @@ Format.asprintf "%a\n" Ast_simplified.PP.expression simplified_output
   in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ amount $ sender $ source $ syntax $ display_format) in
   let cmdname = "evaluate-value" in
-  let docs = "Subcommand: evaluate a given definition." in
-  (term , Term.info ~docs cmdname)
+  let doc = "Subcommand: evaluate a given definition." in
+  (term , Term.info ~doc cmdname)
 
 let compile_expression =
   let f expression syntax display_format michelson_format =
     toplevel ~display_format @@
-    (* This is an actual compiler entry-point, so we start with a blank state *)
-    let state = Typer.Solver.initial_state in
-    let%bind value =
-      trace (simple_error "compile-input") @@
-      Ligo.Run.Of_source.compile_expression expression state (Syntax_name syntax) in
+    let%bind v_syntax = Helpers.syntax_to_variant (Syntax_name syntax) (None) in
+    let%bind compiled = Compile.source_expression_to_michelson_value_as_function
+      ~env:(Ast_typed.Environment.full_empty) ~state:(Typer.Solver.initial_state)
+      expression v_syntax in
+    let%bind value    = Run.evaluate_michelson compiled in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
   let term =
-    Term.(const f $ expression "" 0 $ syntax $ display_format $ michelson_code_format) in
+    Term.(const f $ expression "" 1 $ req_syntax 0 $ display_format $ michelson_code_format) in
   let cmdname = "compile-expression" in
-  let docs = "Subcommand: compile to a michelson value." in
-  (term , Term.info ~docs cmdname)
+  let doc = "Subcommand: compile to a michelson value." in
+  (term , Term.info ~doc cmdname)
 
-
-let () = Term.exit @@ Term.eval_choice main [
+let run ?argv () =
+  Term.eval_choice ?argv main [
     compile_file ;
+    measure_contract ;
     compile_parameter ;
     compile_storage ;
     compile_expression ;

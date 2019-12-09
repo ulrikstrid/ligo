@@ -24,16 +24,26 @@ const bl : foobar = list
   421 ;
 end
 
+function fold_op (const s: list(int)) : int is
+  begin
+    function aggregate (const prec: int; const cur: int) : int is
+    begin
+      skip
+    end with prec + cur
+  end with list_fold(aggregate, s, 10)
+
+
 function iter_op (const s : list(int)) : int is
-  var r : int := 0 ;
-  function aggregate (const i : int) : unit is
   begin
-    r := r + i ;
-  end with unit
-  begin
-    list_iter(s , aggregate) ;
+    var r : int := 0 ;
+    function aggregate (const i : int) : unit is
+      begin
+        r := r + i ;
+      end with unit ;
+    list_iter(aggregate, s) ;
   end with r
 
 function map_op (const s : list(int)) : list(int) is
-  function increment (const i : int) : int is block { skip } with i + 1
-  block { skip } with list_map(s , increment)
+  block {
+    function increment (const i : int) : int is block { skip } with i + 1
+  } with list_map(increment, s)
