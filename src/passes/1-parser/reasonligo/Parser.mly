@@ -9,13 +9,13 @@ open AST
 
 
 type 'a sequence_elements = {
-  selements : ('a, semi) Utils.nsepseq;
-  sterminator  : semi option
+  s_elts : ('a, semi) Utils.nsepseq;
+  s_terminator  : semi option
 }
 
 type 'a record_elements = {
-  relements : (field_assign reg, semi) Utils.nsepseq;
-  rterminator  : semi option
+  r_elts : (field_assign reg, semi) Utils.nsepseq;
+  r_terminator  : semi option
 }
 
 type 'a sequence_or_record =
@@ -37,8 +37,11 @@ type 'a sequence_or_record =
 
 %nonassoc Ident
 %nonassoc COLON (* Solves a shift/reduce problem that happens with record 
-                   and sequences *)
-
+                   and sequences. To elaborate: 
+                   - sequence_or_record_in can be reduced to 
+                     expr -> Ident, but also to 
+                     field_assignment -> Ident.                     
+                    *)
 %%
 
 (* RULES *)
@@ -204,7 +207,7 @@ fun_type:
   core_type {      
     $1 
   }
-| core_type EG fun_type { 
+| core_type ARROW fun_type { 
     let region = cover (type_expr_to_region $1) (type_expr_to_region $3) in 
     TFun {region; value = ($1, $2, $3)}
 }
@@ -298,7 +301,7 @@ let_declaration:
   }
    
 es6_func:
-  EG expr {
+  ARROW expr {
    $1, $2
   }
 
@@ -547,7 +550,7 @@ type_expr_simple:
   | LPAR nsepseq(type_expr_simple, COMMA) RPAR {  
     TProd {value = $2; region = cover $1 $3}
   }
-  | LPAR type_expr_simple EG type_expr_simple RPAR { 
+  | LPAR type_expr_simple ARROW type_expr_simple RPAR { 
     TFun {value = $2, $3, $4; region = cover $1 $5}
    }
 
@@ -696,7 +699,7 @@ cases(right_expr):
   }
 
 case_clause(right_expr):
-  VBAR pattern EG right_expr SEMI? {
+  VBAR pattern ARROW right_expr SEMI? {
     let region = cover (pattern_to_region $2) (expr_to_region $4) in
     {value =   
       {
@@ -1011,12 +1014,12 @@ sequence_or_record_in:
   expr SEMI sep_or_term_list(expr,SEMI) {
     let (e, _region) = $3 in
     let e = Utils.nsepseq_cons $1 $2 e in
-    PaSequence { selements = e; sterminator = None}
+    PaSequence { s_elts = e; s_terminator = None}
   }
 | field_assignment COMMA sep_or_term_list(field_assignment,COMMA)  {  
     let (e, _region) = $3 in
     let e = Utils.nsepseq_cons $1 $2 e in
-    PaRecord { relements = e; rterminator = None}
+    PaRecord { r_elts = e; r_terminator = None}
   } 
   | expr SEMI? {
     PaSingleExpr $1
@@ -1030,8 +1033,8 @@ sequence_or_record:
     | PaSequence s -> (
       let value: expr injection = {
         compound;
-        elements = Some s.selements;
-        terminator = s.sterminator;
+        elements = Some s.s_elts;
+        terminator = s.s_terminator;
       }
       in
       ESeq {value; region}
@@ -1039,8 +1042,8 @@ sequence_or_record:
     | PaRecord r -> (
       let value: field_assign reg ne_injection = {
         compound;
-        ne_elements = r.relements;
-        terminator = r.rterminator;
+        ne_elements = r.r_elts;
+        terminator = r.r_terminator;
       }
       in 
       ERecord {value; region}

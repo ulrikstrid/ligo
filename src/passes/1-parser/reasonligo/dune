@@ -3,7 +3,7 @@
 (menhir
  (merge_into Parser)
  (modules ParToken Parser)
- (flags -la 1 --explain --dump --strict --external-tokens LexToken --explain))
+ (flags -la 1 --explain --dump --strict --external-tokens LexToken))
 
 (library
  (name parser_reasonligo)

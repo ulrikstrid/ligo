@@ -1,4 +1,4 @@
-/* Test loops in Reasonligo */
+/* Test loops in ReasonLIGO */
 
 let aux_simple = (i: int): (bool, int) =>
   if (i < 100) {

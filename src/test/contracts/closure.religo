@@ -1,4 +1,4 @@
-/* Test whether closures retain values in Reasonligo */
+/* Test whether closures retain values in ReasonLIGO */
 
 let test = (k: int): int => {
   let j: int = k + 5;

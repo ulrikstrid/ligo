@@ -1,4 +1,4 @@
-(* Driver for the parser of Reasonligo *)
+(* Driver for the parser of ReasonLIGO *)
 
 (* Error printing and exception tracing *)
 
@@ -6,7 +6,7 @@ let () = Printexc.record_backtrace true
 
 (* Reading the command-line options *)
 
-let options = EvalOpt.read "Reasonligo" ".religo"
+let options = EvalOpt.read "ReasonLIGO" ".religo"
 
 open EvalOpt
 

@@ -44,7 +44,7 @@
 %token <Region.t> GT
 %token <Region.t> LE
 %token <Region.t> GE
-%token <Region.t> EG
+%token <Region.t> ARROW
 
 %token <Region.t> NOT
 

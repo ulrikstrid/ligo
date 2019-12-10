@@ -1,7 +1,7 @@
 open Trace
 
 type s_syntax = Syntax_name of string
-type v_syntax = Pascaligo | Cameligo | Reasonligo
+type v_syntax = Pascaligo | Cameligo | ReasonLIGO
 
 let syntax_to_variant : s_syntax -> string option -> v_syntax result =
   fun syntax source_filename ->
@@ -16,11 +16,11 @@ let syntax_to_variant : s_syntax -> string option -> v_syntax result =
   match (syntax , source_filename) with
   | "auto" , Some sf when endswith sf ".ligo" -> ok Pascaligo
   | "auto" , Some sf when endswith sf ".mligo" -> ok Cameligo
-  | "auto" , Some sf when endswith sf ".religo" -> ok Reasonligo
+  | "auto" , Some sf when endswith sf ".religo" -> ok ReasonLIGO
   | "auto" , _ -> simple_fail "cannot auto-detect syntax, pleas use -s name_of_syntax"
   | "pascaligo" , _ -> ok Pascaligo
   | "cameligo" , _ -> ok Cameligo
-  | "reasonligo", _ -> ok Reasonligo
+  | "reasonligo", _ -> ok ReasonLIGO
   | _ -> simple_fail "unrecognized parser"
 
 let parsify_pascaligo = fun source ->
@@ -90,7 +90,7 @@ let parsify = fun (syntax : v_syntax) source_filename ->
   let%bind parsify = match syntax with
     | Pascaligo -> ok parsify_pascaligo
     | Cameligo -> ok parsify_ligodity
-    | Reasonligo -> ok parsify_reasonligo
+    | ReasonLIGO -> ok parsify_reasonligo
   in
   let%bind parsified = parsify source_filename in
   let%bind applied = Self_ast_simplified.all_program parsified in
@@ -100,7 +100,7 @@ let parsify_expression = fun syntax source ->
   let%bind parsify = match syntax with
     | Pascaligo -> ok parsify_expression_pascaligo
     | Cameligo -> ok parsify_expression_ligodity
-    | Reasonligo -> ok parsify_expression_reasonligo
+    | ReasonLIGO -> ok parsify_expression_reasonligo
   in
   let%bind parsified = parsify source in
   let%bind applied = Self_ast_simplified.all_expression parsified in

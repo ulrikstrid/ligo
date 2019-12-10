@@ -1,4 +1,4 @@
-/* Test conditional in Reasonligo */
+/* Test conditional in ReasonLIGO */
 
 let main = (i: int) =>
   if (i == 2) {

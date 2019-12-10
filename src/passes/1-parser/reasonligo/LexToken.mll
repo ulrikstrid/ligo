@@ -53,7 +53,7 @@ type t =
 | GT of Region.t        (* ">"  *)
 | LE of Region.t        (* "<=" *)
 | GE of Region.t        (* ">=" *)
-| EG of Region.t        (* "=>" *)
+| ARROW of Region.t     (* "=>" *)
 
 | BOOL_OR of Region.t   (* "||" *)
 | BOOL_AND of Region.t  (* "&&" *)
@@ -119,7 +119,7 @@ let proj_token = function
   | GT region -> region, "GT"
   | LE region -> region, "LE"
   | GE region -> region, "GE"
-  | EG region -> region, "EG"
+  | ARROW region -> region, "ARROW"
   | BOOL_OR region -> region, "BOOL_OR"
   | BOOL_AND region -> region, "BOOL_AND"
   | Ident Region.{region; value} ->
@@ -148,8 +148,8 @@ let proj_token = function
   | Or region -> region, "Or"
   | True region -> region, "True"
   | Type region -> region, "Type"
-| C_None  region -> region, "C_None"
-| C_Some  region -> region, "C_Some"
+  | C_None  region -> region, "C_None"
+  | C_Some  region -> region, "C_Some"
   | EOF region -> region, "EOF"
 
 let to_lexeme = function
@@ -178,7 +178,7 @@ let to_lexeme = function
   | GT _ -> ">"
   | LE _ -> "<="
   | GE _ -> ">="
-  | EG _ -> "=>"
+  | ARROW _ -> "=>"
   | BOOL_OR _ -> "||"
   | BOOL_AND _ -> "&&"
   | Ident id -> id.Region.value
@@ -228,20 +228,24 @@ let keywords = [
   (fun reg -> Mod   reg);
   (fun reg -> Or    reg);
   (fun reg -> True  reg);
-  (fun reg -> Type  reg);  
+  (fun reg -> Type  reg);
 ]
 
+(* See: http://caml.inria.fr/pub/docs/manual-ocaml/lex.html#sec86 and 
+   https://github.com/facebook/reason/blob/master/src/reason-parser/reason_parser.mly *)
 let reserved =
   let open SSet in
-  empty 
+  empty     
     |> add "and"
     |> add "as"
     |> add "asr"
+    |> add "begin"
     |> add "class"
     |> add "constraint"
     |> add "do"
     |> add "done"
     |> add "downto"
+    |> add "end"
     |> add "exception"
     |> add "external"
     |> add "for"
@@ -249,26 +253,34 @@ let reserved =
     |> add "functor"
     |> add "inherit"
     |> add "initializer"
+    (* |> add "land"  - see https://ligo.atlassian.net/browse/LIGO-263 *)
     |> add "lazy"
+    (* |> add "lor"  - see https://ligo.atlassian.net/browse/LIGO-263 *)
     |> add "lsl"
-    |> add "lsr"    
+    |> add "lsr"  
+    (* |> add "lxor"  - see https://ligo.atlassian.net/browse/LIGO-263 *)
+    |> add "match"  
     |> add "method"
     |> add "module"
     |> add "mutable"
     |> add "new"
     |> add "nonrec"
     |> add "object"
+    |> add "of"
     |> add "open"
     |> add "private"
     |> add "rec"
     |> add "sig"
     |> add "struct"
+    |> add "then"
     |> add "to"
     |> add "try"
     |> add "val"
     |> add "virtual"
     |> add "when"
     |> add "while"
+    |> add "pri"
+    |> add "pub"
 
 let constructors = [
   (fun reg -> C_None reg);
@@ -303,7 +315,7 @@ let small   = ['a'-'z']
 let capital = ['A'-'Z']
 let letter  = small | capital
 let digit   = ['0'-'9']
-let ident   = (small (letter | '_' | digit | '%')*) | '@' small*
+let ident   = small (letter | '_' | digit)*
 let constr  = capital (letter | '_' | digit)*
 
 (* Rules *)
@@ -369,9 +381,8 @@ let mk_mutez lexeme region =
 let eof region = EOF region
 
 let mk_sym lexeme region =
-  match lexeme with
-    "++"   ->   Ok (CAT       region)
-  | "-"   ->    Ok (MINUS     region)
+  match lexeme with    
+    "-"   ->    Ok (MINUS     region)
   | "+"   ->    Ok (PLUS      region)
   | "/"   ->    Ok (SLASH     region)
   | "*"   ->    Ok (TIMES     region)
@@ -383,11 +394,9 @@ let mk_sym lexeme region =
   | ";"   ->    Ok (SEMI      region)
   | "|"   ->    Ok (VBAR      region)
   | ":"   ->    Ok (COLON     region)
-  | "."  ->     Ok (DOT       region)
-  | "..."->     Ok (DOTDOTDOT region)
+  | "."  ->     Ok (DOT       region)  
   | "_"   ->    Ok (WILD      region)
-  | "="  ->     Ok (EQ        region)
-  | "=="  ->    Ok (EQEQ      region)
+  | "="  ->     Ok (EQ        region)  
   | "!=" ->     Ok (NE        region)
   | "<"   ->    Ok (LT        region)
   | ">"   ->    Ok (GT        region)
@@ -397,8 +406,13 @@ let mk_sym lexeme region =
   | "&&"   ->   Ok (BOOL_AND  region)
   | "("    ->   Ok (LPAR      region)
   | ")"    ->   Ok (RPAR      region)
-  | "=>"    ->  Ok (EG      region)
-  | "!"    ->   Ok (NOT      region)
+  
+  (* Symbols specific to ReasonLIGO *)
+  | "..."->     Ok (DOTDOTDOT region)
+  | "=>"    ->  Ok (ARROW     region)  
+  | "=="  ->    Ok (EQEQ      region)
+  | "!"    ->   Ok (NOT       region)
+  | "++"   ->   Ok (CAT       region)
   |  _  ->  Error Invalid_symbol
 
 (* Identifiers *)
@@ -478,7 +492,7 @@ let is_sym = function
 | GT _
 | LE _
 | GE _
-| EG _
+| ARROW _
 | BOOL_OR _
 | NOT _
 | BOOL_AND _ -> true

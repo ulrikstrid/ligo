@@ -71,7 +71,7 @@ type t =
 | GT of Region.t    (* ">"  *)
 | LE of Region.t      (* "=<" *)
 | GE of Region.t       (* ">=" *)
-| EG of Region.t       (* "=>" *)
+| ARROW of Region.t       (* "=>" *)
 
 | BOOL_OR of Region.t (* "||" *)
 | BOOL_AND of Region.t(* "&&" *)

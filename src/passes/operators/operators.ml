@@ -261,7 +261,7 @@ module Simplify = struct
       | "NEQ"                      -> ok C_NEQ
 
       | "Michelson.is_nat"         -> ok C_IS_NAT
-      | _                          -> simple_fail "Not a Ligodity constant"
+      | _                          -> simple_fail "Not a constant"
 
     let type_constants = type_constants
     let type_operators = type_operators

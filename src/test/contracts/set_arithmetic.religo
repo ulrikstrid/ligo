@@ -1,4 +1,4 @@
-/* Test set operations in Reasonligo */
+/* Test set operations in ReasonLIGO */
 
 let add_op = (s: set(string)): set(string) => Set.add("foobar", s);
 

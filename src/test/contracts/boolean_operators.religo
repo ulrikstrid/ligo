@@ -1,4 +1,4 @@
-// Test Reasonligo boolean operators
+// Test ReasonLIGO boolean operators
 
 let or_true = (b: bool): bool => b || true;
 
