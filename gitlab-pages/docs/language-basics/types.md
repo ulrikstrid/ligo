@@ -27,7 +27,7 @@ type animal_breed = string
 let dog_breed: animal_breed = "Saluki"
 ```
 
-<!--Reasonligo-->
+<!--ReasonLIGO-->
 
 ```reasonligo
 type animal_breed = string;
