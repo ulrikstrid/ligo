@@ -62,8 +62,8 @@ let ledger: ledger = Map.literal
 ```reasonligo
 let ledger: ledger =
   Map.literal([
-    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address, 1000(mutez)),
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, 2000(mutez)),
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address, 1000mutez),
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, 2000mutez),
   ]);
 
 > Map.literal constructs the map from a list of key-value pair tuples, `(<key>, <value>)`.
