@@ -29,7 +29,7 @@ let dog_breed: animal_breed = "Saluki"
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-> Types in LIGO are `structural`, which means that `animalBreed`/`animal_breed` and `string` are interchangable and are handled equally. This becomes noticable when defining types for e.g. function arguments.
+> Types in LIGO are `structural`, which means that `animalBreed`/`animal_breed` and `string` are interchangable and are considered equal.
 
 ## Simple types
 <!--DOCUSAURUS_CODE_TABS-->
