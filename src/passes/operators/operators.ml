@@ -137,22 +137,8 @@ module Simplify = struct
     let type_operators = type_operators
   end
 
-  module Camligo = struct
-    let constants = function
-      | "Bytes.pack"             -> ok C_BYTES_PACK
-      | "Crypto.hash"            -> ok C_HASH    (* TODO : Check if right *)
-      | "Operation.transaction"  -> ok C_CALL
-      | "Operation.get_contract" -> ok C_CONTRACT
-      | "sender"                 -> ok C_SENDER
-      | "unit"                   -> ok C_UNIT
-      | "source"                 -> ok C_SOURCE
-      | _                        -> simple_fail "Not a CamLIGO constant"
 
-    let type_constants = type_constants
-    let type_operators = type_operators
-  end
-
-  module Ligodity = struct
+  module Cameligo = struct
     let constants = function
       | "assert"                   -> ok C_ASSERTION
       | "Current.balance"          -> ok C_BALANCE
@@ -258,9 +244,10 @@ module Simplify = struct
       | "LT"                       -> ok C_LT
       | "LE"                       -> ok C_LE
       | "CONS"                     -> ok C_CONS
+      | "NEQ"                      -> ok C_NEQ
 
       | "Michelson.is_nat"         -> ok C_IS_NAT
-      | _                          -> simple_fail "Not a Ligodity constant"
+      | _                          -> simple_fail "Not a constant"
 
     let type_constants = type_constants
     let type_operators = type_operators
@@ -933,8 +920,9 @@ module Compiler = struct
     | C_UNIT            -> ok @@ simple_constant @@ prim I_UNIT
     | C_BALANCE         -> ok @@ simple_constant @@ prim I_BALANCE
     | C_AMOUNT          -> ok @@ simple_constant @@ prim I_AMOUNT
-    | C_ADDRESS         -> ok @@ simple_constant @@ prim I_ADDRESS
+    | C_ADDRESS         -> ok @@ simple_unary @@ prim I_ADDRESS
     | C_SELF_ADDRESS    -> ok @@ simple_constant @@ seq [prim I_SELF; prim I_ADDRESS]
+    | C_IMPLICIT_ACCOUNT -> ok @@ simple_unary @@ prim I_IMPLICIT_ACCOUNT
     | C_NOW             -> ok @@ simple_constant @@ prim I_NOW
     | C_CALL            -> ok @@ simple_ternary @@ prim I_TRANSFER_TOKENS
     | C_SOURCE          -> ok @@ simple_constant @@ prim I_SOURCE

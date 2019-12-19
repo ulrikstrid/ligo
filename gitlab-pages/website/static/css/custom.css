@@ -858,6 +858,13 @@ a:hover {
   }
 }
 
+@media (min-width: 1500px) {
+  .centered {
+    max-width: 1400px;
+  }
+}
+
+
 @media (max-width: 1023px) {
   .centered {
     flex-direction: column;
@@ -939,3 +946,19 @@ a:hover {
     width: 15em;
   }
 }
+
+
+/* ReasonLIGO specific syntax highlighting */
+.language-reasonligo .hljs-operator {
+  color: #a626a4;
+}
+.language-reasonligo .hljs-character {
+  color: #50a14f;
+}
+.language-reasonligo .hljs-module-identifier {
+  color: #00f;
+}
+.language-reasonligo .hljs-constructor {
+  color: #a31515;
+}
+

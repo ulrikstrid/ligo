@@ -17,9 +17,14 @@ Here's how a custom map type is defined:
 type ledger is map(address, tez);
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 type ledger = (address, tez) map
+```
+
+<!--ReasonLIGO-->
+```reasonligo
+type ledger = map(address, tez);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -39,7 +44,7 @@ end
 >
 > `("<string value>": address)` means that we type-cast a string into an address.
 
-<!--Cameligo-->
+<!--CameLIGO-->
 
 ```cameligo
 let ledger: ledger = Map.literal
@@ -51,6 +56,20 @@ let ledger: ledger = Map.literal
 > Note also the `;` to separate individual map entries.
 >
 > `("<string value>": address)` means that we type-cast a string into an address.
+
+<!--ReasonLIGO-->
+
+```reasonligo
+let ledger: ledger =
+  Map.literal([
+    ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address, 1000mutez),
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, 2000mutez),
+  ]);
+```
+> Map.literal constructs the map from a list of key-value pair tuples, `(<key>, <value>)`.
+>
+> `("<string value>": address)` means that we type-cast a string into an address.
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ### Accessing map values by key
@@ -63,10 +82,17 @@ If we want to access a balance from our ledger above, we can use the `[]` operat
 const balance: option(tez) = ledger[("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)];
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 
 ```cameligo
 let balance: tez option = Map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) ledger
+```
+
+<!--ReasonLIGO-->
+
+```reasonligo
+let balance: option(tez) =
+  Map.find_opt("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, ledger);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -80,10 +106,17 @@ Accessing a value in a map yields an option, however you can also get the value 
 const balance: tez = get_force(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), ledger);
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 
 ```cameligo
 let balance: tez = Map.find ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) ledger
+```
+
+<!--ReasonLIGO-->
+
+```reasonligo
+let balance: tez =
+  Map.find("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address, ledger);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -106,11 +139,19 @@ function iter_op (const m : ledger) : unit is
   } with map_iter(aggregate, m) ;
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let iter_op (m : ledger) : unit =
   let assert_eq = fun (i: address) (j: tez) -> assert (j > 100)
   in Map.iter assert_eq m
+```
+
+<!--ReasonLIGO-->
+```reasonligo
+let iter_op = (m: ledger): unit => {
+  let assert_eq = (i: address, j: tez) => assert(j > 100);
+  Map.iter(assert_eq, m);
+};
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -125,11 +166,19 @@ function map_op (const m : ledger) : ledger is
   } with map_map(increment, m) ;
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let map_op (m : ledger) : ledger =
   let increment = fun (_: address) (j: tez) -> j+1
   in Map.map increment m
+```
+
+<!--ReasonLIGO-->
+```reasonligo
+let map_op = (m: ledger): ledger => {
+  let increment = (ignore: address, j: tez) => j + 1;
+  Map.map(increment, m);
+};
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -151,11 +200,20 @@ function fold_op (const m : ledger) : tez is
   } with map_fold(aggregate, m , 10)
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let fold_op (m : ledger) : ledger =
-  let aggregate = fun (_: address) (j: tez * tez) -> j.0 + j.1
+  let aggregate = fun (ignore: address) (j: tez * tez) -> j.0 + j.1
   in Map.fold aggregate m 10
+```
+
+<!--ReasonLIGO-->
+```reasonligo
+let fold_op = (m: ledger): ledger => {
+  let aggregate = (ignore: address, j: (tez, tez)) => j[0] + j[1];
+  Map.fold(aggregate, m, 10);
+};
+
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -176,13 +234,22 @@ type user is record
 end
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 type user = {
   id: nat;
   is_admin: bool;
   name: string;
 }
+```
+
+<!--ReasonLIGO-->
+```reasonligo
+type user = {
+  id: nat,
+  is_admin: bool,
+  name: string
+};
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -199,7 +266,7 @@ const user: user = record
 end
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let user: user = {
   id = 1n;
@@ -208,6 +275,14 @@ let user: user = {
 }
 ```
 
+<!--ReasonLIGO-->
+```reasonligo
+let user: user = {
+  id: 1n, 
+  is_admin: true, 
+  name: "Alice"
+};
+```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
@@ -221,9 +296,14 @@ If we want to obtain a value from a record for a given key, we can do the follow
 const is_admin: bool = user.is_admin;
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let is_admin: bool = user.is_admin
+```
+
+<!--ReasonLIGO-->
+```reasonligo
+let is_admin: bool = user.is_admin;
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->

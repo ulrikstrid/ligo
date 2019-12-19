@@ -128,6 +128,11 @@ let lmap_sep value sep ppf m =
   let new_pp ppf (k, v) = fprintf ppf "%a -> %a" label k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst
 
+let lrecord_sep value sep ppf m =
+  let lst = Types.LMap.to_kv_list m in
+  let new_pp ppf (k, v) = fprintf ppf "%a = %a" label k value v in
+  fprintf ppf "%a" (list_sep new_pp sep) lst
+
 let list_sep_d x = list_sep x (const " , ")
 let cmap_sep_d x = cmap_sep x (const " , ")
 let lmap_sep_d x = lmap_sep x (const " , ")
@@ -144,7 +149,7 @@ let rec type_expression' : type a . (formatter -> a -> unit) -> formatter -> a t
     | T_operator to_ -> type_operator f ppf to_
 
 and type_constant ppf (tc:type_constant) : unit =
-  let s = match tc with 
+  let s = match tc with
     | TC_unit      -> "unit"
     | TC_string    -> "string"
     | TC_bytes     -> "bytes"
@@ -160,7 +165,7 @@ and type_constant ppf (tc:type_constant) : unit =
     | TC_timestamp -> "timestamp"
     | TC_chain_id  -> "chain_id"
     in
-  fprintf ppf "(TC %s)" s
+  fprintf ppf "%s" s
 
 
 and type_operator : type a . (formatter -> a -> unit) -> formatter -> a type_operator -> unit =

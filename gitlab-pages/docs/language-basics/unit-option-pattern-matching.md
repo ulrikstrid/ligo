@@ -19,9 +19,14 @@ Here's how they're defined:
 const n: unit = Unit;
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let n: unit = ()
+```
+
+<!--ReasonLIGO-->
+```reasonligo
+let n: unit = ();
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -45,7 +50,7 @@ const u: user = Admin(1000n);
 const g: user = Guest(Unit);
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 type id = nat
 type user =
@@ -55,6 +60,18 @@ type user =
 
 let u: user = Admin 1000n
 let g: user = Guest ()
+```
+
+<!--ReasonLIGO-->
+```reasonligo
+type id = nat;
+type user =
+  | Admin(id)
+  | Manager(id)
+  | Guest(unit);
+
+let u: user = Admin(1000n);
+let g: user = Guest();
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -76,12 +93,20 @@ const p1: dinner = None;
 const p2: dinner = Some("Hamburgers")
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 type dinner = string option
 
 let p1: dinner = None
 let p2: dinner = Some "Hamburgers"
+```
+
+<!--ReasonLIGO-->
+```reasonligo
+type dinner = option(string);
+
+let p1: dinner = None;
+let p2: dinner = Some("Hamburgers");
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -104,13 +129,23 @@ function is_hungry(const dinner: dinner): bool is block { skip }
     )
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 type dinner = string option
 let is_hungry (d: dinner) : bool =
   match d with
   | None -> true
   | Some s -> false
+```
+
+<!--ReasonLIGO-->
+```reasonligo
+type dinner = option(string);
+let is_hungry = (d: dinner): bool =>
+  switch (d) {
+  | None => true
+  | Some(s) => false
+  };
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->

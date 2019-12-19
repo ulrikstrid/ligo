@@ -1096,6 +1096,19 @@ let interpret ?(options = default_options) (instr:('a, 'b) descr) (bef:'a stack)
   Script_interpreter.step tezos_context step_constants instr bef >>=??
   fun (stack, _) -> return stack
 
+let unparse_ty_michelson ty =
+  Script_ir_translator.unparse_ty dummy_environment.tezos_context ty >>=??
+  fun (n,_) -> return n
+
+let typecheck_contract contract =
+  let contract' = Tezos_micheline.Micheline.strip_locations contract in
+  Script_ir_translator.typecheck_code dummy_environment.tezos_context contract' >>=??
+  fun _ -> return ()
+
+let assert_equal_michelson_type ty1 ty2 =
+  (* alpha_wrap (Script_ir_translator.ty_eq tezos_context a b) >>? fun (Eq, _) -> *)
+  alpha_wrap (Script_ir_translator.ty_eq dummy_environment.tezos_context ty1 ty2)
+
 type 'a interpret_res =
   | Succeed of 'a stack
   | Fail of Script_repr.expr
