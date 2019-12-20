@@ -148,7 +148,8 @@ let aggregate_entry (lst : program) (form : form_t) : expression result =
   let wrapper =
     let aux prec cur =
       let (((name , expr) , _)) = cur in
-      e_let_in name expr.type_value expr prec
+      let should_inline = false (* TODO *) in
+      e_let_in name expr.type_value ~should_inline expr prec
     in
     fun expr -> List.fold_right' aux expr lst
   in
