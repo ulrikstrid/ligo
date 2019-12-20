@@ -22,7 +22,12 @@ let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 module Errors = struct
   let wrong_pattern expected_name actual =
     let title () = "wrong pattern" in
-    let message () = "" in
+    let message () =
+      match actual with
+      | Raw.PVar v -> v.value
+      | Raw.PTuple _ -> "tuple"
+      | _ -> "non-variable pattern"
+    in
     let data = [
       ("expected", fun () -> expected_name);
       ("actual_loc" , fun () -> Format.asprintf "%a" Location.pp_lift @@ Raw.pattern_to_region actual)
@@ -141,7 +146,7 @@ let rec pattern_to_var : Raw.pattern -> _ = fun p ->
   | Raw.PPar p -> pattern_to_var p.value.inside
   | Raw.PVar v -> ok v
   | Raw.PWild r -> ok @@ ({ region = r ; value = "_" } : Raw.variable)
-  | _ -> fail @@ wrong_pattern "var" p
+  | _ -> fail @@ wrong_pattern "single var" p
 
 let rec pattern_to_typed_var : Raw.pattern -> _ = fun p ->
   match p with
@@ -153,7 +158,7 @@ let rec pattern_to_typed_var : Raw.pattern -> _ = fun p ->
     )
   | Raw.PVar v -> ok (v , None)
   | Raw.PWild r -> ok (({ region = r ; value = "_" } : Raw.variable) , None)
-  | _ -> fail @@ wrong_pattern "typed variable" p
+  | _ -> fail @@ wrong_pattern "single typed variable" p
 
 let rec expr_to_typed_expr : Raw.expr -> _ = function
   EPar e -> expr_to_typed_expr e.value.inside
