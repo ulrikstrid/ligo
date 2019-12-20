@@ -26,10 +26,10 @@ let rec replace : expression -> var_name -> var_name -> expression =
     else v in
   match e.content with
   | E_literal _ -> e
-  | E_closure { binder ; body } ->
+  | E_closure { binder ; should_inline ; body } ->
     let body = replace body in
     let binder = replace_var binder in
-    return @@ E_closure { binder ; body }
+    return @@ E_closure { binder ; should_inline ; body }
   | E_skip -> e
   | E_constant (c, args) ->
     let args = List.map replace args in
@@ -81,11 +81,11 @@ let rec replace : expression -> var_name -> var_name -> expression =
     let v2 = replace_var v2 in
     let bt = replace bt in
     return @@ E_if_left (c, ((v1, tv1), bt), ((v2, tv2), bf))
-  | E_let_in ((v, tv), e1, e2) ->
+  | E_let_in ((v, tv), e1, should_inline, e2) ->
     let v = replace_var v in
     let e1 = replace e1 in
     let e2 = replace e2 in
-    return @@ E_let_in ((v, tv), e1, e2)
+    return @@ E_let_in ((v, tv), e1, should_inline, e2)
   | E_sequence (e1, e2) ->
     let e1 = replace e1 in
     let e2 = replace e2 in
@@ -123,7 +123,7 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
      intuitively, we substitute in \hd tl. expr' as if it were \hd. \tl. expr *)
   let subst_binder2 y z expr' =
     let dummy = T_base Base_unit in
-    let hack = { content = E_closure { binder = z ; body = expr' } ;
+    let hack = { content = E_closure { binder = z ; should_inline = false ; body = expr' } ;
                  type_value = dummy } in
     match subst_binder y hack with
     | (y', { content = E_closure { binder = z' ; body = body } ; type_value = _dummy }) ->
@@ -136,14 +136,14 @@ let rec subst_expression : body:expression -> x:var_name -> expr:expression -> e
      if x' = x
      then expr
      else return_id
-  | E_closure { binder; body } -> (
+  | E_closure { binder ; should_inline ; body } -> (
     let (binder, body) = subst_binder binder body in
-    return @@ E_closure { binder ; body }
+    return @@ E_closure { binder ; should_inline ; body }
   )
-  | E_let_in ((v , tv) , expr , body) -> (
+  | E_let_in ((v , tv) , expr , should_inline , body) -> (
     let expr = self expr in
     let (v, body) = subst_binder v body in
-    return @@ E_let_in ((v , tv) , expr , body)
+    return @@ E_let_in ((v , tv) , expr , should_inline , body)
   )
   | E_iterator (s, ((name , tv) , body) , collection) -> (
     let (name, body) = subst_binder name body in
@@ -223,7 +223,7 @@ let%expect_test _ =
 
   let var x = wrap (E_variable x) in
   let app f x = wrap (E_application (f, x)) in
-  let lam x u = wrap (E_closure { binder = x ; body = u }) in
+  let lam x u = wrap (E_closure { binder = x ; should_inline = false ; body = u }) in
   let unit = wrap (E_literal D_unit) in
 
   (* substituted var *)
@@ -283,7 +283,7 @@ let%expect_test _ =
   (* let-in shadowed (not in rhs) *)
   Var.reset_counter () ;
   show_subst
-    ~body:(wrap (E_let_in ((x, dummy_type), var x, var x)))
+    ~body:(wrap (E_let_in ((x, dummy_type), var x, false, var x)))
     ~x:x
     ~expr:unit ;
   [%expect{|
@@ -294,7 +294,7 @@ let%expect_test _ =
   (* let-in not shadowed *)
   Var.reset_counter () ;
   show_subst
-    ~body:(wrap (E_let_in ((y, dummy_type), var x, var x)))
+    ~body:(wrap (E_let_in ((y, dummy_type), var x, false, var x)))
     ~x:x
     ~expr:unit ;
   [%expect{|
@@ -305,7 +305,7 @@ let%expect_test _ =
   (* let-in capture avoidance *)
   Var.reset_counter () ;
   show_subst
-    ~body:(wrap (E_let_in ((y, dummy_type), var x,
+    ~body:(wrap (E_let_in ((y, dummy_type), var x, false,
                            app (var x) (var y))))
     ~x:x
     ~expr:(var y) ;

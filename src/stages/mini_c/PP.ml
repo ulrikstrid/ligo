@@ -90,8 +90,13 @@ and expression' ppf (e:expression') = match e with
   | E_if_left (c, ((name_l, _) , l), ((name_r, _) , r)) ->
       fprintf ppf "%a ?? %a -> %a : %a -> %a" expression c Stage_common.PP.name name_l expression l Stage_common.PP.name name_r expression r
   | E_sequence (a , b) -> fprintf ppf "%a ;; %a" expression a expression b
-  | E_let_in ((name , _) , expr , body) ->
-      fprintf ppf "let %a = %a in ( %a )" Stage_common.PP.name name expression expr expression body
+  | E_let_in ((name , _) , expr , should_inline , body) ->
+    fprintf ppf "let%s %a = %a in ( %a )"
+      (* TODO? *)
+      (if should_inline then "[@inline]" else "")
+      Stage_common.PP.name name
+      expression expr
+      expression body
   | E_iterator (b , ((name , _) , body) , expr) ->
       fprintf ppf "for_%a %a of %a do ( %a )" Stage_common.PP.constant b Stage_common.PP.name name expression expr expression body
   | E_fold (((name , _) , body) , collection , initial) ->
@@ -109,9 +114,11 @@ and expression_with_type : _ -> expression -> _  = fun ppf e ->
     expression' e.content
     type_variable e.type_value
 
-and function_ ppf ({binder ; body}:anon_function) =
-  fprintf ppf "fun %a -> (%a)"
+and function_ ppf ({binder ; should_inline ; body}:anon_function) =
+  (* TODO? *)
+  fprintf ppf "fun %a%s -> (%a)"
     Stage_common.PP.name binder
+    (if should_inline then "[@inline]" else "")
     expression body
 
 and assignment ppf ((n, e):assignment) = fprintf ppf "%a = %a;" Stage_common.PP.name n expression e
@@ -131,11 +138,15 @@ let%expect_test _ =
   let pp = expression' Format.std_formatter in
   let dummy_type = T_base Base_unit in
   let wrap e = { content = e ; type_value = dummy_type } in
-  pp @@ E_closure { binder = Var.of_name "y" ; body = wrap (E_variable (Var.of_name "y")) } ;
+  pp @@ E_closure { binder = Var.of_name "y" ;
+                    should_inline = false ;
+                    body = wrap (E_variable (Var.of_name "y")) } ;
   [%expect{|
     C(fun y -> (V(y)))
   |}] ;
-  pp @@ E_closure { binder = Var.of_name "z" ; body = wrap (E_variable (Var.of_name "z")) } ;
+  pp @@ E_closure { binder = Var.of_name "z" ;
+                    should_inline = true ;
+                    body = wrap (E_variable (Var.of_name "z")) } ;
   [%expect{|
     C(fun z -> (V(z)))
   |}]

@@ -74,7 +74,7 @@ module Free_variables = struct
                expression (union (singleton l) b) bl ;
                expression (union (singleton r) b) br ;
              ]
-    | E_let_in ((v , _) , expr , body) ->
+    | E_let_in ((v , _) , expr , _ , body) ->
       unions [ self expr ;
                expression (union (singleton v) b) body ;
              ]

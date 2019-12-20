@@ -68,7 +68,7 @@ and expression' =
   | E_if_none of expression * expression * ((var_name * type_value) * expression)
   | E_if_cons of (expression * expression * (((var_name * type_value) * (var_name * type_value)) * expression))
   | E_if_left of expression * ((var_name * type_value) * expression) * ((var_name * type_value) * expression)
-  | E_let_in of ((var_name * type_value) * expression * expression)
+  | E_let_in of ((var_name * type_value) * expression * bool * expression)
   | E_sequence of (expression * expression)
   | E_assignment of (expression_variable * [`Left | `Right] list * expression)
   | E_while of (expression * expression)
@@ -84,6 +84,7 @@ and toplevel_statement = assignment * environment_wrap
 
 and anon_function = {
   binder : expression_variable ;
+  should_inline : bool ;
   body : expression ;
 }
 

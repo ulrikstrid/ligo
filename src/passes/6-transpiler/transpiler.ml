@@ -261,7 +261,8 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
   | E_let_in {binder; rhs; result} ->
     let%bind rhs' = transpile_annotated_expression rhs in
     let%bind result' = transpile_annotated_expression result in
-    return (E_let_in ((binder, rhs'.type_value), rhs', result'))
+    let should_inline = false in (* TODO *)
+    return (E_let_in ((binder, rhs'.type_value), rhs', should_inline, result'))
   | E_literal l -> return @@ E_literal (transpile_literal l)
   | E_variable name -> (
       let%bind ele =
@@ -570,7 +571,8 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
                   trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
                   List.find_opt (fun ((constructor_name' , _) , _) -> constructor_name' = constructor_name) lst in
                 let%bind body' = transpile_annotated_expression body in
-                return @@ E_let_in ((name , tv) , top , body')
+                let should_inline = false in (* TODO *)
+                return @@ E_let_in ((name , tv) , top , should_inline , body')
               )
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
@@ -599,7 +601,8 @@ and transpile_lambda l (input_type , output_type) =
   let%bind input = transpile_type input_type in
   let%bind output = transpile_type output_type in
   let tv = Combinators.t_function input output in
-  let closure = E_closure { binder; body = result'} in
+  let should_inline = false (* TODO *) in
+  let closure = E_closure { binder ; should_inline ; body = result'} in
   ok @@ Combinators.Expression.make_tpl (closure , tv)
 
 let transpile_declaration env (d:AST.declaration) : toplevel_statement result =
