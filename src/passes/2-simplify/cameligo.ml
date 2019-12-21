@@ -434,7 +434,24 @@ and simpl_fun lamb' : expr result =
   let (lamb , loc) = r_split lamb' in
   let%bind args' =
     let args = nseq_to_list lamb.binders in
+    let args = (* Handle case where we have tuple destructure in params *)
+      match (List.hd args) with
+      (* We can get the original tuple again later from the lambda *)
+      | Raw.PPar pp ->
+        let pt = pp.value.inside in
+        (match pt with
+        | Raw.PTyped pt ->
+          [Raw.PTyped
+             {region=Region.ghost;
+              value=
+                { pt.value with pattern=
+                                  Raw.PVar {region=Region.ghost;
+                                            value="#P"}}}]
+        | _ -> args)
+      | _ -> args
+    in
     let%bind p_args = bind_map_list pattern_to_typed_var args in
+    print_string "SUCCESS" ;
     let aux ((var : Raw.variable) , ty_opt) =
       match var.value , ty_opt with
       | "storage" , None ->
@@ -452,7 +469,40 @@ and simpl_fun lamb' : expr result =
   | [ single ] -> (
       let (binder , input_type) =
         (Var.of_name (fst single).value , snd single) in
-      let%bind (body , body_type) = expr_to_typed_expr lamb.body in
+      let%bind body =
+        let original_args = nseq_to_list lamb.binders in
+        let destruct = List.hd original_args in
+        match destruct with (* Handle tuple parameter destructuring *)
+        | Raw.PPar pp ->
+          (match pp.value.inside with
+           | Raw.PTyped pt ->
+             let vars = pt.value in
+             (match vars.pattern with
+             | PTuple vars ->
+               let let_in_binding: Raw.let_binding =
+                 {binders=npseq_to_nelist vars.value;
+                  lhs_type=None;
+                  eq=Region.ghost;
+                  let_rhs=(Raw.EVar {region=Region.ghost; value="#P"});
+                 }
+               in
+               let let_in: Raw.let_in =
+                 {kwd_let= Region.ghost;
+                  binding= let_in_binding;
+                  kwd_in= Region.ghost;
+                  body= lamb.body;
+                 }
+               in
+               ok (Raw.ELetIn
+                     {
+                       region=Region.ghost;
+                       value=let_in
+                     })
+             | _ -> ok lamb.body)
+           | _ -> print_string "WHY"; ok lamb.body)
+        | _ -> print_string "BOO"; ok lamb.body
+      in
+      let%bind (body , body_type) = expr_to_typed_expr body in
       let%bind output_type =
         bind_map_option simpl_type_expression body_type in
       let%bind result = simpl_expression body in

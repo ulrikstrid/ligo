@@ -1776,7 +1776,7 @@ let tuple_param_destruct () : unit result =
   let%bind () = expect_eq program "tuple_param_d" (e_tuple [e_int 10; e_int 10]) (e_int 20)
   in ok ()
 
-let main = test_suite "Integration (End to End)" [
+let main = test_suite "Integration (End to End)" [ (*
     test "key hash" key_hash ;
     test "chain id" chain_id ;
     test "type alias" type_alias ;
@@ -1910,6 +1910,6 @@ let main = test_suite "Integration (End to End)" [
     test "simple_access (ligo)" simple_access_ligo;
     test "deep_access (ligo)" deep_access_ligo;
     test "entrypoints (ligo)" entrypoints_ligo ;
-    test "type tuple destruct (mligo)" type_tuple_destruct ;
+    test "type tuple destruct (mligo)" type_tuple_destruct ; *)
     test "tuple param destruct (mligo)" tuple_param_destruct ;
   ]
