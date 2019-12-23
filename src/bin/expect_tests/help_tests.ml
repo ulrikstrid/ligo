@@ -548,3 +548,16 @@ let%expect_test _ =
           `cameligo' or `reasonligo'
     Usage: ligo compile-contract [OPTION]... SOURCE_FILE ENTRY_POINT
     Try `ligo compile-contract --help' or `ligo --help' for more information. |}]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; "foo.nonligo" ; "foo" ] ;
+  [%expect {|
+    ligo: cannot auto-detect syntax, recognized file extensions are .ligo, .mligo, .religo (alternatively, use -s name_of_syntax, one of pascaligo, cameligo, reasonligo)
+
+     If you're not sure how to fix this error, you can
+     do one of the following:
+
+    * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
+    * Ask a question on our Discord: https://discord.gg/9rhYaEt
+    * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+    * Check the changelog by running 'ligo changelog' |}]

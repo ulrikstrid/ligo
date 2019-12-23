@@ -34,7 +34,6 @@ let detect_syntax : syntax option -> string option -> syntax result =
     (  String.length s >= suffixlen
        && String.equal (subr s suffixlen) suffix)
   in
-  let cannot_detect = simple_fail "cannot auto-detect syntax, please use -s name_of_syntax" in
   match (syntax , source_filename) with
   | Some syntax , _ -> ok syntax
   | None , Some sf ->
@@ -49,9 +48,15 @@ let detect_syntax : syntax option -> string option -> syntax result =
     begin
       match syntax with
       | Some syntax -> ok syntax
-      | None -> cannot_detect
+      | None -> simple_fail (Format.asprintf
+                               "cannot auto-detect syntax, recognized file extensions are %s (alternatively, use -s name_of_syntax, one of %s)"
+                               (String.concat ", " (List.map fst syntax_extension_enum))
+                               (String.concat ", " (List.map fst syntax_enum)))
     end
-  | None, None -> cannot_detect
+  | None, None ->
+    simple_fail (Format.asprintf
+                   "cannot auto-detect syntax, please use -s name_of_syntax, one of %s"
+                   (String.concat ", " (List.map fst syntax_enum)))
 
 let parsify_pascaligo source =
   let%bind raw =
