@@ -188,10 +188,10 @@ let%expect_test _ =
                compile-contract for the resulting Michelson. Available formats
                are 'text' (default), 'json' and 'hex'.
 
-           -s SYNTAX, --syntax=SYNTAX (absent=auto)
-               SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
+           -s SYNTAX, --syntax=SYNTAX
+               SYNTAX is the syntax that will be used, one of `pascaligo',
+               `cameligo' or `reasonligo'. By default, the syntax is guessed from
+               the file extension (one of `.ligo', `.mligo' or `.religo',
                respectively).
 
            --version
@@ -245,10 +245,10 @@ let%expect_test _ =
                minus one minute) the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
-           -s SYNTAX, --syntax=SYNTAX (absent=auto)
-               SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
+           -s SYNTAX, --syntax=SYNTAX
+               SYNTAX is the syntax that will be used, one of `pascaligo',
+               `cameligo' or `reasonligo'. By default, the syntax is guessed from
+               the file extension (one of `.ligo', `.mligo' or `.religo',
                respectively).
 
            --sender=SENDER
@@ -311,10 +311,10 @@ let%expect_test _ =
                minus one minute) the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
-           -s SYNTAX, --syntax=SYNTAX (absent=auto)
-               SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
+           -s SYNTAX, --syntax=SYNTAX
+               SYNTAX is the syntax that will be used, one of `pascaligo',
+               `cameligo' or `reasonligo'. By default, the syntax is guessed from
+               the file extension (one of `.ligo', `.mligo' or `.religo',
                respectively).
 
            --sender=SENDER
@@ -373,10 +373,10 @@ let%expect_test _ =
                minus one minute) the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
-           -s SYNTAX, --syntax=SYNTAX (absent=auto)
-               SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
+           -s SYNTAX, --syntax=SYNTAX
+               SYNTAX is the syntax that will be used, one of `pascaligo',
+               `cameligo' or `reasonligo'. By default, the syntax is guessed from
+               the file extension (one of `.ligo', `.mligo' or `.religo',
                respectively).
 
            --sender=SENDER
@@ -432,10 +432,10 @@ let%expect_test _ =
                minus one minute) the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
-           -s SYNTAX, --syntax=SYNTAX (absent=auto)
-               SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
+           -s SYNTAX, --syntax=SYNTAX
+               SYNTAX is the syntax that will be used, one of `pascaligo',
+               `cameligo' or `reasonligo'. By default, the syntax is guessed from
+               the file extension (one of `.ligo', `.mligo' or `.religo',
                respectively).
 
            --sender=SENDER
@@ -486,10 +486,10 @@ let%expect_test _ =
                minus one minute) the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
-           -s SYNTAX, --syntax=SYNTAX (absent=auto)
-               SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
+           -s SYNTAX, --syntax=SYNTAX
+               SYNTAX is the syntax that will be used, one of `pascaligo',
+               `cameligo' or `reasonligo'. By default, the syntax is guessed from
+               the file extension (one of `.ligo', `.mligo' or `.religo',
                respectively).
 
            --sender=SENDER
@@ -516,9 +516,8 @@ let%expect_test _ =
                _EXPRESSION is the expression that will be compiled.
 
            SYNTAX (required)
-               SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively).
+               SYNTAX is the syntax that will be used, one of `pascaligo',
+               `cameligo' or `reasonligo'.
 
     OPTIONS
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
@@ -540,4 +539,12 @@ let%expect_test _ =
                are 'text' (default), 'json' and 'hex'.
 
            --version
-               Show version information. |} ] ;
+               Show version information. |} ]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile-contract" ; "-s" ; "not_a_syntax" ; "foo" ; "foo" ] ;
+  [%expect {|
+    ligo: option `-s': invalid value `not_a_syntax', expected one of `pascaligo',
+          `cameligo' or `reasonligo'
+    Usage: ligo compile-contract [OPTION]... SOURCE_FILE ENTRY_POINT
+    Try `ligo compile-contract --help' or `ligo --help' for more information. |}]
