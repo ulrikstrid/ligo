@@ -84,6 +84,16 @@ module Errors = struct
     ] in
     error ~data title message
 
+  let unsupported_empty_constr region = 
+    let title () = "empty constructor" in
+    let message () =
+      Format.asprintf "empty constructors are not supported yet" in
+    let data = [
+      ("pattern_loc",
+       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
+    ] in
+    error ~data title message
+  
   let unsupported_non_var_pattern p =
     let title () = "pattern is not a variable" in
     let message () =
@@ -128,6 +138,7 @@ module Errors = struct
        fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
     ] in
     error ~data title message
+
 end
 
 open Errors
@@ -214,8 +225,11 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te
             None -> []
           | Some (_, TProd product) -> npseq_to_list product.value
           | Some (_, t_expr) -> [t_expr] in
-        let%bind te = simpl_list_type_expression @@ args in
-        ok (v.value.constr.value, te) in
+        if args = [] then 
+          fail @@ unsupported_empty_constr v.region
+        else 
+          let%bind te = simpl_list_type_expression @@ args in
+          ok (v.value.constr.value, te) in
       let%bind lst = bind_list
         @@ List.map aux
         @@ npseq_to_list s.value in
