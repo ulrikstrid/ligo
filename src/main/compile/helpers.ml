@@ -199,8 +199,7 @@ let pretty_print_reasonligo = fun source ->
   ok buffer
 
 let pretty_print = fun syntax source_filename ->
-  let%bind v_syntax = detect_syntax syntax (Some source_filename) in
-  (match v_syntax with
+  (match syntax with
   | Pascaligo -> pretty_print_pascaligo
   | Cameligo -> pretty_print_cameligo
   | ReasonLIGO -> pretty_print_reasonligo)

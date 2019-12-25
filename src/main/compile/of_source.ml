@@ -2,7 +2,6 @@ open Trace
 open Helpers
 
 let compile (source_filename:string) syntax : Ast_simplified.program result =
-  let%bind syntax = detect_syntax syntax (Some source_filename) in
   let%bind simplified = parsify syntax source_filename in
   ok simplified
 
