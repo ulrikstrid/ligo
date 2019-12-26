@@ -83,16 +83,6 @@ module Errors = struct
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
     error ~data title message
-
-  let unsupported_empty_constr region = 
-    let title () = "empty constructor" in
-    let message () =
-      Format.asprintf "empty constructors are not supported yet" in
-    let data = [
-      ("pattern_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
-    ] in
-    error ~data title message
   
   let unsupported_non_var_pattern p =
     let title () = "pattern is not a variable" in
@@ -225,11 +215,8 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te
             None -> []
           | Some (_, TProd product) -> npseq_to_list product.value
           | Some (_, t_expr) -> [t_expr] in
-        if args = [] then 
-          fail @@ unsupported_empty_constr v.region
-        else 
-          let%bind te = simpl_list_type_expression @@ args in
-          ok (v.value.constr.value, te) in
+        let%bind te = simpl_list_type_expression @@ args in
+        ok (v.value.constr.value, te) in
       let%bind lst = bind_list
         @@ List.map aux
         @@ npseq_to_list s.value in
@@ -238,7 +225,7 @@ let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te
 
 and simpl_list_type_expression (lst:Raw.type_expr list) : type_expression result =
   match lst with
-  | [] -> assert false
+  | [] -> ok @@ make_t @@ T_constant TC_unit 
   | [hd] -> simpl_type_expression hd
   | lst ->
       let%bind lst = bind_map_list simpl_type_expression lst in
