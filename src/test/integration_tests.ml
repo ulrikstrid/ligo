@@ -1631,7 +1631,10 @@ let addr_test program =
   let open Tezos_crypto in
   let key_hash = Signature.Public_key_hash.to_b58check @@
       (List.nth dummy_environment.identities 0).public_key_hash in
-  expect_eq program "main" (e_key_hash key_hash) (e_address addr)
+  let%bind () = expect_eq program "main" (e_key_hash key_hash) (e_address addr) in
+  let%bind () = expect_eq program "shadow_builtin1" (e_address addr) (e_address addr) in
+  let%bind () = expect_eq program "shadow_builtin2" (e_address addr) (e_address addr) in
+  ok ()
 
 let address () : unit result =
   let%bind program = type_file "./contracts/address.ligo" in
