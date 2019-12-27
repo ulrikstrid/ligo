@@ -607,6 +607,32 @@ and simpl_param : Raw.param_decl -> (expression_variable * type_expression) resu
       let%bind type_expression = simpl_type_expression c.param_type in
       ok (type_name , type_expression)
 
+and shadow_built_in :
+    Raw.param_decl list -> Ast_simplified.expression -> Ast_simplified.expression result =
+    fun pdecl_list exp_simplified ->
+  let (shadowl_l: (constant*Location.t) list) = List.fold_left
+    (fun acc e -> match e with
+      | Raw.ParamConst e -> (
+          match constants e.value.var.value with
+          | Error _ -> acc
+          | Ok (s,_) -> (s , snd @@ r_split e)::acc )
+      | Raw.ParamVar e -> (
+          match constants e.value.var.value with
+          | Error _ -> acc
+          | Ok (s,_) -> (s , snd @@ r_split e)::acc )
+    )
+    [] pdecl_list in
+  let%bind result = Self_ast_simplified.map_expression
+    (fun exp -> match exp.expression with
+      | E_constant (cst , []) -> (
+          match List.assoc_opt cst shadowl_l with
+          | Some loc ->
+            ok @@ e_variable ~loc @@ Var.of_name @@ "source"
+          | None -> ok exp )
+      | _ -> ok exp)
+    exp_simplified in
+  ok result
+
 and simpl_fun_expression :
   loc:_ -> Raw.fun_expr -> ((expression_variable option * type_expression option) * expression) result =
   fun ~loc x ->
@@ -631,8 +657,9 @@ and simpl_fun_expression :
        let%bind result =
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
+       let%bind result' = shadow_built_in [a] result in
        let expression : expression = e_lambda ~loc binder (Some input_type)
-           (Some output_type) result in
+           (Some output_type) result' in
        let type_annotation = Some (make_t @@ T_arrow (input_type, output_type)) in
        ok ((name , type_annotation) , expression)
      )
@@ -660,8 +687,9 @@ and simpl_fun_expression :
        let%bind result =
          let aux prec cur = cur (Some prec) in
          bind_fold_right_list aux result body in
+       let%bind result' = shadow_built_in lst result in
        let expression =
-         e_lambda ~loc binder (Some (make_t @@ input_type)) (Some output_type) result in
+         e_lambda ~loc binder (Some (make_t @@ input_type)) (Some output_type) result' in
        let type_annotation = Some (make_t @@ T_arrow (make_t input_type, output_type)) in
        let name = Option.map (fun (x : _ reg) -> Var.of_name x.value) name in
        ok ((name , type_annotation) , expression)
