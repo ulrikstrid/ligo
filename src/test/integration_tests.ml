@@ -1765,6 +1765,30 @@ let key_hash () : unit result =
   let%bind () = expect_eq program "check_hash_key" make_input make_expected in
   ok ()
 
+let set_delegate () : unit result =
+  let open Tezos_crypto in
+  let (raw_pkh,_,_) = Signature.generate_key () in
+  let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
+  let%bind program = type_file "./contracts/set_delegate.ligo" in
+  let%bind () = expect_eq program "main" (e_key_hash pkh_str) (e_typed_list [] t_operation)
+  in ok ()
+
+let set_delegate_mligo () : unit result =
+  let open Tezos_crypto in
+  let (raw_pkh,_,_) = Signature.generate_key () in
+  let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
+  let%bind program = mtype_file "./contracts/set_delegate.mligo" in
+  let%bind () = expect_eq program "main" (e_key_hash pkh_str) (e_typed_list [] t_operation)
+  in ok ()
+
+let set_delegate_religo () : unit result =
+  let open Tezos_crypto in
+  let (raw_pkh,_,_) = Signature.generate_key () in
+  let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
+  let%bind program = retype_file "./contracts/set_delegate.religo" in
+  let%bind () = expect_eq program "main" (e_key_hash pkh_str) (e_typed_list [] t_operation)
+  in ok ()
+
 let type_tuple_destruct () : unit result =
   let%bind program = mtype_file "./contracts/type_tuple_destruct.mligo" in
   let%bind () = expect_eq program "type_tuple_d" (e_unit ()) (e_int 35) in
@@ -1776,7 +1800,19 @@ let tuple_param_destruct () : unit result =
   let%bind () = expect_eq program "tuple_param_d" (e_tuple [e_int 10; e_int 10]) (e_int 20)
   in ok ()
 
-let main = test_suite "Integration (End to End)" [ (*
+let let_in_multi_bind () : unit result =
+  let%bind program = mtype_file "./contracts/let_in_multi_bind.mligo" in
+  let%bind () = expect_eq program "sum" (e_tuple [e_int 10; e_int 10]) (e_int 20) in
+  let%bind () = expect_eq program "sum2"
+      (e_tuple
+         [e_string "my" ;
+          e_string "name" ;
+          e_string "is" ;
+          e_string "bob" ])
+      (e_string "mynameisbob")
+  in ok ()
+
+let main = test_suite "Integration (End to End)" [
     test "key hash" key_hash ;
     test "chain id" chain_id ;
     test "type alias" type_alias ;
@@ -1903,6 +1939,9 @@ let main = test_suite "Integration (End to End)" [ (*
     test "implicit account" implicit_account ;
     test "implicit account (mligo)" implicit_account_mligo ;
     test "implicit account (religo)" implicit_account_religo ;
+    test "set delegate" set_delegate ;
+    test "set delegate (mligo)" set_delegate_mligo ;
+    test "set delegate (religo)" set_delegate_religo ;
     test "is_nat" is_nat ;
     test "is_nat (mligo)" is_nat_mligo ;
     test "is_nat (religo)" is_nat_religo ;
@@ -1910,6 +1949,6 @@ let main = test_suite "Integration (End to End)" [ (*
     test "simple_access (ligo)" simple_access_ligo;
     test "deep_access (ligo)" deep_access_ligo;
     test "entrypoints (ligo)" entrypoints_ligo ;
-    test "type tuple destruct (mligo)" type_tuple_destruct ; *)
-    test "tuple param destruct (mligo)" tuple_param_destruct ;
+    test "type tuple destruct (mligo)" type_tuple_destruct ;
+    test "let in multi-bind (mligo)" let_in_multi_bind ;
   ]
