@@ -10,7 +10,6 @@ module Option = Simple_utils.Option
 
 open Combinators
 
-type 'a nseq = 'a * 'a list
 let nseq_to_list (hd, tl) = hd :: tl
 let npseq_to_list (hd, tl) = hd :: (List.map snd tl)
 let npseq_to_nelist (hd, tl) = hd, (List.map snd tl)
@@ -37,15 +36,14 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let multiple_patterns construct (patterns: Raw.pattern list) =
-    let title () = "multiple patterns" in
-    let message () =
-      Format.asprintf "multiple patterns in \"%s\" are not supported yet" construct in
+  let unsuppported_let_in_function (patterns : Raw.pattern list) =
+    let title () = "unsupported 'let ... in' function" in
+    let message () = "defining functions via 'let ... in' is not supported yet" in
     let patterns_loc =
       List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p))
         Region.ghost patterns in
     let data = [
-      ("patterns_loc", fun () -> Format.asprintf "%a" Location.pp_lift @@ patterns_loc)
+      ("loc", fun () -> Format.asprintf "%a" Location.pp_lift @@ patterns_loc)
     ] in
     error ~data title message
 
@@ -174,17 +172,12 @@ let rec expr_to_typed_expr : Raw.expr -> _ = function
 | EAnnot {value={inside=e,_,t; _}; _} -> ok (e, Some t)
 | e -> ok (e , None)
 
-let rec patterns_to_typed_vars : Raw.pattern nseq -> _ = fun ps ->
-  match ps with
-  | pattern, [] ->
-    begin
-    match pattern with
-    | Raw.PPar pp -> patterns_to_typed_vars (pp.value.inside, [])
-    | Raw.PTuple pt -> bind_map_list pattern_to_typed_var (npseq_to_list pt.value)
-    | Raw.PVar _ -> bind_list [pattern_to_typed_var pattern]
-    | other -> (fail @@ wrong_pattern "parenthetical, tuple, or variable" other)
-    end
-  | _ -> fail @@ multiple_patterns "let" (nseq_to_list ps)
+let rec tuple_pattern_to_typed_vars : Raw.pattern -> _ = fun pattern ->
+  match pattern with
+  | Raw.PPar pp -> tuple_pattern_to_typed_vars pp.value.inside
+  | Raw.PTuple pt -> bind_map_list pattern_to_typed_var (npseq_to_list pt.value)
+  | Raw.PVar _ -> bind_list [pattern_to_typed_var pattern]
+  | other -> (fail @@ wrong_pattern "parenthetical, tuple, or variable" other)
 
 let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te ->
   trace (simple_info "simplifying this type expression...") @@
@@ -275,7 +268,10 @@ let rec simpl_expression :
     Raw.ELetIn e ->
       let Raw.{binding; body; _} = e.value in
       let Raw.{binders; lhs_type; let_rhs; _} = binding in
-      let%bind variables = patterns_to_typed_vars binders in
+      begin match binders with
+      (* let p = rhs in body *)
+      | (p, []) ->
+      let%bind variables = tuple_pattern_to_typed_vars p in
       let%bind ty_opt =
         bind_map_option (fun (_,te) -> simpl_type_expression te) lhs_type in
       let%bind rhs = simpl_expression let_rhs in
@@ -320,6 +316,11 @@ let rec simpl_expression :
       then ok (chain_let_in prep_vars body)
       (* Bind the right hand side so we only evaluate it once *)
       else ok (e_let_in (rhs_b, ty_opt) rhs' (chain_let_in prep_vars body))
+
+      (* let f p1 ps... = rhs in body *)
+      | (f, p1 :: ps) ->
+        fail @@ unsuppported_let_in_function (f :: p1 :: ps)
+      end
   | Raw.EAnnot a ->
       let Raw.{inside=expr, _, type_expr; _}, loc = r_split a in
       let%bind expr' = simpl_expression expr in
