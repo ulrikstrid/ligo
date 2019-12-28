@@ -37,18 +37,6 @@ module Errors = struct
     ] in
     error ~data title message
 
-  let multiple_patterns construct (patterns: Raw.pattern list) =
-    let title () = "multiple patterns" in
-    let message () =
-      Format.asprintf "multiple patterns in \"%s\" are not supported yet" construct in
-    let patterns_loc =
-      List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p))
-        Region.ghost patterns in
-    let data = [
-      ("patterns_loc", fun () -> Format.asprintf "%a" Location.pp_lift @@ patterns_loc)
-    ] in
-    error ~data title message
-
   let unknown_predefined_type name =
     let title () = "type constants" in
     let message () =
@@ -184,7 +172,7 @@ let rec patterns_to_typed_vars : Raw.pattern nseq -> _ = fun ps ->
     | Raw.PVar _ -> bind_list [pattern_to_typed_var pattern]
     | other -> (fail @@ wrong_pattern "parenthetical, tuple, or variable" other)
     end
-  | _ -> fail @@ multiple_patterns "let" (nseq_to_list ps)
+  | hd, tl -> bind_list (List.map pattern_to_typed_var ([hd] @ tl))
 
 let rec simpl_type_expression : Raw.type_expr -> type_expression result = fun te ->
   trace (simple_info "simplifying this type expression...") @@
