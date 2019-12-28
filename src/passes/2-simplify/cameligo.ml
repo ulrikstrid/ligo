@@ -536,7 +536,7 @@ and simpl_fun lamb' : expr result =
              (match vars.pattern with
              | PTuple vars ->
                let let_in_binding: Raw.let_binding =
-                 {binders=npseq_to_nelist vars.value;
+                 {binders = (PTuple vars, []) ;
                   lhs_type=None;
                   eq=Region.ghost;
                   let_rhs=(Raw.EVar {region=Region.ghost; value="#P"});
