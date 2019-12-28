@@ -492,12 +492,18 @@ and simpl_fun lamb' : expr result =
         let pt = pp.value.inside in
         (match pt with
         | Raw.PTyped pt ->
-          [Raw.PTyped
-             {region=Region.ghost;
-              value=
-                { pt.value with pattern=
-                                  Raw.PVar {region=Region.ghost;
-                                            value="#P"}}}]
+          begin
+          match pt.value.pattern with
+          | Raw.PVar _ -> args
+          | Raw.PTuple _ ->
+            [Raw.PTyped
+               {region=Region.ghost;
+                value=
+                  { pt.value with pattern=
+                                    Raw.PVar {region=Region.ghost;
+                                              value="#P"}}}]
+          | _ -> args
+        end
         | _ -> args)
       | _ -> args
     in
@@ -549,7 +555,8 @@ and simpl_fun lamb' : expr result =
                        region=Region.ghost;
                        value=let_in
                      })
-             | _ -> ok lamb.body)
+             | Raw.PVar pv -> print_string pv.value ; ok lamb.body
+             | _ -> print_string "UGH" ; ok lamb.body)
            | _ -> print_string "WHY"; ok lamb.body)
         | _ -> print_string "BOO"; ok lamb.body
       in

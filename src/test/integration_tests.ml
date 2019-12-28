@@ -1812,7 +1812,7 @@ let let_in_multi_bind () : unit result =
       (e_string "mynameisbob")
   in ok ()
 
-let main = test_suite "Integration (End to End)" [
+let main = test_suite "Integration (End to End)" [ (*
     test "key hash" key_hash ;
     test "chain id" chain_id ;
     test "type alias" type_alias ;
@@ -1948,7 +1948,8 @@ let main = test_suite "Integration (End to End)" [
     test "tuples_sequences_functions (religo)" tuples_sequences_functions_religo ;
     test "simple_access (ligo)" simple_access_ligo;
     test "deep_access (ligo)" deep_access_ligo;
-    test "entrypoints (ligo)" entrypoints_ligo ;
+    test "entrypoints (ligo)" entrypoints_ligo ; *)
     test "type tuple destruct (mligo)" type_tuple_destruct ;
     test "let in multi-bind (mligo)" let_in_multi_bind ;
+    test "tuple param destruct (mligo)" tuple_param_destruct ;
   ]
