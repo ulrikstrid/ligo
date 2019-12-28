@@ -496,7 +496,6 @@ and simpl_fun lamb' : expr result =
       | _ -> args
     in
     let%bind p_args = bind_map_list pattern_to_typed_var args in
-    print_string "SUCCESS" ;
     let aux ((var : Raw.variable) , ty_opt) =
       match var.value , ty_opt with
       | "storage" , None ->
@@ -543,10 +542,10 @@ and simpl_fun lamb' : expr result =
                        region=Region.ghost;
                        value=let_in
                      })
-             | Raw.PVar pv -> print_string pv.value ; ok lamb.body
-             | _ -> print_string "UGH" ; ok lamb.body)
-           | _ -> print_string "WHY"; ok lamb.body)
-        | _ -> print_string "BOO"; ok lamb.body
+             | Raw.PVar _ -> ok lamb.body
+             | _ ->  ok lamb.body)
+           | _ ->  ok lamb.body)
+        | _ ->  ok lamb.body
       in
       let%bind (body , body_type) = expr_to_typed_expr body in
       let%bind output_type =
