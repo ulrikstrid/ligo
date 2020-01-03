@@ -80,10 +80,12 @@ let rec untranspile (v : value) (t : AST.type_value) : AST.annotated_expression 
         return (E_literal (Literal_nat n))
       )
     | TC_timestamp -> (
-        let%bind n =
+        let%bind s =
           trace_strong (wrong_mini_c_value "timestamp" v) @@
           get_timestamp v in
-        return (E_literal (Literal_timestamp n))
+        let stime = Memory_proto_alpha.Protocol.Alpha_context.Timestamp.to_notation
+          @@ Tezos_utils.Time.Protocol.of_seconds @@ Int64.of_int s in
+        return (E_literal (Literal_timestamp stime))
       )
     | TC_mutez -> (
         let%bind n =

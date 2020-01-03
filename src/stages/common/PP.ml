@@ -186,7 +186,7 @@ let literal ppf (l:literal) = match l with
   | Literal_bool b -> fprintf ppf "%b" b
   | Literal_int n -> fprintf ppf "%d" n
   | Literal_nat n -> fprintf ppf "+%d" n
-  | Literal_timestamp n -> fprintf ppf "+%d" n
+  | Literal_timestamp s -> fprintf ppf "%S" s
   | Literal_mutez n -> fprintf ppf "%dmutez" n
   | Literal_string s -> fprintf ppf "%S" s
   | Literal_bytes b -> fprintf ppf "0x%a" Hex.pp (Hex.of_bytes b)

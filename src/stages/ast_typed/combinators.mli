@@ -120,7 +120,7 @@ val e_mutez : int -> expression
 val e_bool : bool -> expression
 val e_string : string -> expression
 val e_bytes : bytes -> expression
-val e_timestamp : int -> expression
+val e_timestamp : string -> expression
 val e_address : string -> expression
 val e_signature : string -> expression
 val e_key : string -> expression

@@ -50,7 +50,7 @@ val e_literal : ?loc:Location.t -> literal -> expression
 val e_unit : ?loc:Location.t -> unit -> expression
 val e_int : ?loc:Location.t -> int -> expression 
 val e_nat : ?loc:Location.t -> int -> expression
-val e_timestamp : ?loc:Location.t -> int -> expression
+val e_timestamp : ?loc:Location.t -> string -> expression
 val e_bool : ?loc:Location.t -> bool -> expression
 val e_string : ?loc:Location.t -> string -> expression
 val e_address : ?loc:Location.t -> string -> expression 

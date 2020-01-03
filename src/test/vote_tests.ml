@@ -25,8 +25,8 @@ let init_storage name = ez_e_record [
         (e_string "No" , e_int 0) ;
       ]) ;
     ("voters" , e_typed_set [] t_address) ;
-    ("beginning_time" , e_timestamp 0) ;
-    ("finish_time" , e_timestamp 1000000000) ;
+    ("beginning_time" , e_timestamp "2000-01-01T10:10:10Z") ;
+    ("finish_time" , e_timestamp "2010-01-01T10:10:10Z") ;
   ]
 
 let init title beginning_time finish_time =

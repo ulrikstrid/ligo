@@ -15,6 +15,9 @@ let pseq_to_list = function
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 let is_compiler_generated name = String.contains (Var.to_name name) '#'
 
+let get_string s = (* s in EString (String s) contains quotes *)
+  String.(sub s 1 (length s - 2))
+
 let detect_local_declarations (for_body : expression) =
   let%bind aux = Self_ast_simplified.fold_expression
     (fun (nlist, cur_loop : expression_variable list * bool) (ass_exp : expression) ->
@@ -307,14 +310,12 @@ let simpl_projection : Raw.projection Region.reg -> _ = fun p ->
     List.map aux @@ npseq_to_list path in
   ok @@ e_accessor ~loc var path'
 
-
 let rec simpl_expression (t:Raw.expr) : expr result =
   let return x = ok x in
   match t with
   | EAnnot a -> (
       let ((expr , type_expr) , loc) = r_split a in
-      let%bind expr' = simpl_expression expr in
-      let%bind type_expr' = simpl_type_expression type_expr in
+      let%bind expr', type_expr' = simpl_annotated_literals expr type_expr in
       return @@ e_annotation ~loc expr' type_expr'
     )
   | EVar c -> (
@@ -518,6 +519,16 @@ and simpl_logic_expression (t:Raw.logic_expr) : expression result =
       simpl_binop "EQ" c
   | CompExpr (Neq c) ->
       simpl_binop "NEQ" c
+
+and simpl_annotated_literals (exp:Raw.expr) (t:Raw.type_expr) : (expression * type_expression) result = 
+  match exp, t with
+  | EString (String s) , TVar v -> (
+      let%bind te = simpl_type_expression t in
+      match v.value with
+      | "timestamp" -> ok @@ (e_literal (Literal_timestamp (get_string s.value)), te)
+      | _ -> bind_pair (simpl_expression exp, simpl_type_expression t)
+  )
+  | _ -> bind_pair (simpl_expression exp, simpl_type_expression t)
 
 and simpl_list_expression (t:Raw.list_expr) : expression result =
   let return x = ok x in

@@ -39,7 +39,7 @@ let get_mutez (v:value) = match v with
   | _ -> simple_fail "not a mutez"
 
 let get_timestamp (v:value) = match v with
-  | D_timestamp n -> ok n
+  | D_timestamp s -> ok s
   | _ -> simple_fail "not a timestamp"
 
 let get_string (v:value) = match v with

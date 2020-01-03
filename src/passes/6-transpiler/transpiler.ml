@@ -225,21 +225,26 @@ let record_access_to_lr : type_value -> type_value AST.label_map -> string -> (t
     bind_fold_list aux (ty , []) lr_path in
   ok lst
 
-let rec transpile_literal : AST.literal -> value = fun l -> match l with
-  | Literal_bool b -> D_bool b
-  | Literal_int n -> D_int n
-  | Literal_nat n -> D_nat n
-  | Literal_timestamp n -> D_timestamp n
-  | Literal_mutez n -> D_mutez n
-  | Literal_bytes s -> D_bytes s
-  | Literal_string s -> D_string s
-  | Literal_address s -> D_string s
-  | Literal_signature s -> D_string s
-  | Literal_key s -> D_string s
-  | Literal_key_hash s -> D_string s
-  | Literal_chain_id s -> D_string s
-  | Literal_operation op -> D_operation op
-  | Literal_unit -> D_unit
+let rec transpile_literal : AST.literal -> value result = fun l -> match l with
+  | Literal_bool b -> ok @@ D_bool b
+  | Literal_int n -> ok @@ D_int n
+  | Literal_nat n -> ok @@ D_nat n
+  | Literal_timestamp s ->
+    let%bind time =
+      trace_option (simple_error "bad timestamp notation") @@
+      Memory_proto_alpha.Protocol.Alpha_context.Timestamp.of_notation s in
+    let itime = Int64.to_int @@ Tezos_utils.Time.Protocol.to_seconds time in
+    ok @@ D_timestamp itime
+  | Literal_mutez n -> ok @@ D_mutez n
+  | Literal_bytes s -> ok @@ D_bytes s
+  | Literal_string s -> ok @@ D_string s
+  | Literal_address s -> ok @@ D_string s
+  | Literal_signature s -> ok @@ D_string s
+  | Literal_key s -> ok @@ D_string s
+  | Literal_key_hash s -> ok @@ D_string s
+  | Literal_chain_id s -> ok @@ D_string s
+  | Literal_operation op -> ok @@ D_operation op
+  | Literal_unit -> ok @@ D_unit
 
 and transpile_environment_element_type : AST.environment_element -> type_value result = fun ele ->
   transpile_type ele.type_value
@@ -262,7 +267,9 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
     let%bind rhs' = transpile_annotated_expression rhs in
     let%bind result' = transpile_annotated_expression result in
     return (E_let_in ((binder, rhs'.type_value), rhs', result'))
-  | E_literal l -> return @@ E_literal (transpile_literal l)
+  | E_literal l ->
+    let%bind l' = transpile_literal l in
+    return @@ E_literal l'
   | E_variable name -> (
       let%bind ele =
         trace_option (corner_case ~loc:__LOC__ "name not in environment") @@

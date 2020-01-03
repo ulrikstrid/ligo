@@ -39,12 +39,12 @@ let mk_time st =
   | Some s -> ok s
   | None -> simple_fail "bad timestamp notation"
 let to_sec t = Tezos_utils.Time.Protocol.to_seconds t
-let storage st = e_timestamp (Int64.to_int @@ to_sec st)
+let storage st = e_timestamp st
 
 let early_call () =
   let%bind program,_ = get_program () in
   let%bind predecessor_timestamp = mk_time "2000-01-01T00:10:10Z" in
-  let%bind lock_time = mk_time "2000-01-01T10:10:10Z" in
+  let lock_time = "2000-01-01T10:10:10Z" in
   let init_storage = storage lock_time in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options ~predecessor_timestamp () in
@@ -55,7 +55,7 @@ let early_call () =
 let call_on_time () =
   let%bind program,_ = get_program () in
   let%bind predecessor_timestamp = mk_time "2000-01-01T10:10:10Z" in
-  let%bind lock_time = mk_time "2000-01-01T00:10:10Z" in
+  let lock_time = "2000-01-01T00:10:10Z" in
   let init_storage = storage lock_time in
   let options =
     Proto_alpha_utils.Memory_proto_alpha.make_options ~predecessor_timestamp () in
