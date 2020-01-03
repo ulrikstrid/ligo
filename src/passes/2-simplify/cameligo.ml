@@ -781,19 +781,8 @@ and simpl_cases : type a . (Raw.pattern * a) list -> (a, unit) matching result =
          match v with
            PConstrApp {value; _} -> 
            (match value with
-           | constr, None ->
-              let par =
-                PPar {
-                  value = 
-                    {
-                      lpar = Region.ghost; 
-                      inside = (PVar {value = "unit"; region = Region.ghost}); 
-                      rpar = Region.ghost
-                    }; 
-                  region = Region.ghost
-                }
-              in
-              constr, Some par
+           | constr, None ->              
+              constr, Some (PVar {value = "unit"; region = Region.ghost})
            | _ -> value)
          | PSomeApp {value=region,pat; _} ->
             {value="Some"; region}, Some pat
