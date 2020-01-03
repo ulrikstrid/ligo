@@ -101,8 +101,10 @@ let skip (p: unit) = ()
 
 let whois_id (query, storage: id * storage) =
   let identities, last_id = storage in
-  let result: id_details =
-    match Big_map.find_opt query identities with
-    | Some id_details -> id_details
-    | None -> failwith "This ID doesn't exist in the system."
-  in () (* Not entirely sure how to return the result here *)
+  let result: (unit -> id_details) =
+    let id_details: id_details = 
+      match Big_map.find_opt query identities with
+      | Some details -> details
+      | None -> failwith "This ID doesn't exist in the system.")
+    in (fun () -> id_details)
+  in ([result]: instruction, storage)
