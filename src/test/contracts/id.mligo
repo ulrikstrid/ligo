@@ -1,4 +1,4 @@
-type id = string
+type id = int
 
 type id_details = {
   owner: address;
@@ -24,22 +24,18 @@ something so people don't eat up the address space. 256 ^ 5 means you have a lot
 of address space, but if people troll by skipping a lot that could be eaten up.
 Should probably do some napkin calculations for how expensive skipping needs to
 be to deter people from doing it just to chew up address space.
-*)  
+*)
 
-let buy (parameter: (bytes * address option) * storage) =
+let buy (parameter, storage: (bytes * address option) * storage) =
   assert (amount = price) ;
-  let profile: bytes = parameter.0.0 in
+  let profile, initial_controller = parameter in
+  let identities, last_id = storage in
   let controller: address =
-    match parameter.0.1 with
+    match initial_controller with
     | Some addr -> addr
     | None -> sender
   in
-  let new_id: id = parameter.1.1 + 1 in
-  let untaken: bool =
-    match Big_map.find_opt new_name parameter.1.0 with
-    | Some name -> failwith("The name " ^ new_id ^ "has already been registered.") 
-    | None -> true
-  in
+  let new_id: id = last_id + 1 in
   let new_id_details: id_details = {
     owner = sender ;
     controller = controller ;
@@ -47,18 +43,18 @@ let buy (parameter: (bytes * address option) * storage) =
   }
   in
   let updated_identities: (id, id_details) big_map =
-    Big_map.update new_id new_id_details parameter.1.0
+    Big_map.update new_id new_id_details identities
   in
-  in ([]: instruction, (updated_identities, new_id))
+  ([]: instruction, (updated_identities, new_id))
 
-let update_owner (parameter: (id * address) * storage) =
-  let (id: id), (new_owner: address) = paramater.0 in
-  let identities = parameter.1.0 in
+let update_owner (parameter, storage: (id * address) * storage) =
+  let id, new_owner = parameter in
+  let identities, _ = storage in
   let current_id_details = Bip_map.find_opt id identities in
   let is_allowed: bool =
     if sender = current_id_details.owner
     then true
-    else failwith "You are not the owner of the ID " ^ id
+    else failwith "You are not the owner of the ID " ^ (string_of_int id)
   in
   let updated_id_details = {
     owner = new_owner;
@@ -69,21 +65,26 @@ let update_owner (parameter: (id * address) * storage) =
   let updated_identities = Big_map.update id updated_id_details identities in
   ([]: instruction, updated_identities)
 
-let update_details (parameter: (id * bytes * address option) * storage) =
-  let current_id_details = Big_map.find_opt parameter.0.0 parameter.1.0 in
+let update_details (parameter, storage: (id * bytes option * address option) * storage) =
+  let id, new_profile, new_controller = parameter in
+  let identities, last_id = storage in
+  let current_id_details = Big_map.find_opt id identities in
   let is_allowed: bool =
     if
       match current_id_details with
       | Some id_details -> (sender = id_details.controller) || (sender = id_details.owner)
-      | None -> failwith ("No such ID " + parameter.0.0)
+      | None -> failwith ("No such ID " + id)
     then true
-    else failwith ("You are not the owner or controller of the ID " ^ parameter.0.0)
+    else failwith ("You are not the owner or controller of the ID " ^ id)
   in
-  let identities: (id, id_details) big_map = parameter.1.0 in
-  let (id: id), (profile: bytes), (controller: address) = parameter.0 in
   let owner: address = current_id_details.owner in
+  let profile: bytes =
+    match new_profile with
+    | None -> (* Default *) current_id_details.profile
+    | Some new_profile -> new_profile
+  in
   let controller: address =
-    match parameter.0.2 with
+    match new_controller with
     | None -> (* Default *) current_id_details.controller
     | Some new_controller -> new_controller
   in
@@ -98,9 +99,8 @@ let update_details (parameter: (id * bytes * address option) * storage) =
 (* Let someone skip the next identity so nobody has to take one that's undesirable *)
 let skip (p: unit) = ()
 
-let whois_id (parameter: id * storage) =
-  let query: id = parameter.0 in
-  let identities: (id, id_details) big_map = parameter.1.0 in
+let whois_id (query, storage: id * storage) =
+  let identities, last_id = storage in
   let result: id_details =
     match Big_map.find_opt query identities with
     | Some id_details -> id_details
