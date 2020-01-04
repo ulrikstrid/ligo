@@ -6,10 +6,9 @@ type id_details = {
   profile: bytes;
 }
 
-type storage = (id, id_details) big_map * int
-
-(* TODO: Figure out how to keep this price reasonable even as cost of tz fluctuates *)
-let price = 10tz
+(* The prices kept in storage can be changed by bakers, though they should only be
+   adjusted down over time, not up. *)
+type storage = (id, id_details) big_map * int * (tez * tez)
 
 (** Preliminary thoughts on ids:
 
@@ -27,9 +26,9 @@ be to deter people from doing it just to chew up address space.
 *)
 
 let buy (parameter, storage: (bytes * address option) * storage) =
-  assert (amount = price) ;
+  assert (amount = storage.2.0) ;
   let profile, initial_controller = parameter in
-  let identities, last_id = storage in
+  let identities, last_id, prices = storage in
   let controller: address =
     match initial_controller with
     | Some addr -> addr
@@ -45,7 +44,7 @@ let buy (parameter, storage: (bytes * address option) * storage) =
   let updated_identities: (id, id_details) big_map =
     Big_map.update new_id new_id_details identities
   in
-  ([]: instruction, (updated_identities, new_id))
+  ([]: instruction, (updated_identities, new_id, prices))
 
 let update_owner (parameter, storage: (id * address) * storage) =
   let id, new_owner = parameter in
@@ -97,12 +96,15 @@ let update_details (parameter, storage: (id * bytes option * address option) * s
   ([]: instruction, updated_identities)
 
 (* Let someone skip the next identity so nobody has to take one that's undesirable *)
-let skip (p: unit) = ()
+let skip (p,s: unit * storage) =
+  assert (amount = storage.2.1);
+  let identities, last_id, prices = storage in
+  ([]: instruction, (identities, last_id + 1, prices))
 
 let whois_id (query, storage: id * storage) =
-  let identities, last_id = storage in
+  let identities, last_id, _ = storage in
   let result: (unit -> id_details) =
-    let id_details: id_details = 
+    let id_details: id_details =
       match Big_map.find_opt query identities with
       | Some details -> details
       | None -> failwith "This ID doesn't exist in the system.")
