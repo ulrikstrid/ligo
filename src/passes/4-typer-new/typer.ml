@@ -23,10 +23,11 @@ module Errors = struct
     error ~data title message ()
 
   let unbound_variable (e:environment) (n:I.expression_variable) (loc:Location.t) () =
-    let title = (thunk "unbound variable") in
+    let name () = Format.asprintf "%a" Stage_common.PP.name n in
+    let title = (thunk ("unbound variable "^(name ()))) in
     let message () = "" in
     let data = [
-      ("variable" , fun () -> Format.asprintf "%a" Stage_common.PP.name n) ;
+      ("variable" , name) ;
       ("environment" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
@@ -54,7 +55,7 @@ module Errors = struct
 
   let match_redundant_case : type a . (a, unit) I.matching -> Location.t -> unit -> _ =
     fun matching loc () ->
-      let title = (thunk "missing case in match") in
+      let title = (thunk "redundant case in match") in
       let message () = "" in
       let data = [
         ("variant" , fun () -> Format.asprintf "%a" I.PP.matching_type matching) ;
@@ -672,7 +673,7 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.e
    *   } -> (
    *     let%bind input_type =
    *       let%bind input_type =
-   *         (\* Hack to take care of let_in introduced by `simplify/ligodity.ml` in ECase's hack *\)
+   *         (\* Hack to take care of let_in introduced by `simplify/cameligo.ml` in ECase's hack *\)
    *         let default_action e () = fail @@ (needs_annotation e "the returned value") in
    *         match input_type with
    *         | Some ty -> ok ty

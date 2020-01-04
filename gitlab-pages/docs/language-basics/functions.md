@@ -13,7 +13,7 @@ Each `block` needs to include at least one `instruction`, or a *placeholder* ins
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
 
-```pascaligo
+```pascaligo skip
 // shorthand syntax
 block { skip }
 // verbose syntax
@@ -34,7 +34,7 @@ Functions in PascaLIGO are defined using the `function` keyword followed by thei
 Here's how you define a basic function that accepts two `ints` and returns a single `int`:
 
 
-```pascaligo
+```pascaligo group=a
 function add(const a: int; const b: int): int is 
     begin
         const result: int = a + b;
@@ -51,11 +51,11 @@ The function body consists of two parts:
 Functions that can contain all of their logic into a single instruction/expression, can be defined without the surrounding `block`.
 Instead, you can inline the necessary logic directly, like this:
 
-```pascaligo
+```pascaligo group=b
 function add(const a: int; const b: int): int is a + b
 ```
 
-<!--Cameligo-->
+<!--CameLIGO-->
 
 Functions in CameLIGO are defined using the `let` keyword, like value bindings.
 The difference is that after the value name a list of function parameters is provided,
@@ -63,8 +63,24 @@ along with a return type.
 
 Here's how you define a basic function that accepts two `ints` and returns an `int` as well:
 
-```cameligo
+```cameligo group=b
 let add (a: int) (b: int) : int = a + b
+```
+
+The function body is a series of expressions, which are evaluated to give the return
+value.
+
+
+<!--ReasonLIGO-->
+
+Functions in ReasonLIGO are defined using the `let` keyword, like value bindings.
+The difference is that after the value name a list of function parameters is provided,
+along with a return type.
+
+Here's how you define a basic function that accepts two `ints` and returns an `int` as well:
+
+```reasonligo group=b
+let add = (a: int, b: int) : int => a + b;
 ```
 
 The function body is a series of expressions, which are evaluated to give the return
@@ -74,7 +90,7 @@ value.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```pascaligo
+```pascaligo group=b
 const increment : (int -> int) = (function (const i : int) : int is i + 1);
 // a = 2
 const a: int = increment(1);
@@ -88,15 +104,20 @@ Functions without a name, also known as anonymous functions are useful in cases 
 Here's how to define an anonymous function assigned to a variable `increment`, with it's appropriate function type signature.
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```pascaligo
+```pascaligo group=c
 const increment : (int -> int) = (function (const i : int) : int is i + 1);
 // a = 2
 const a: int = increment(1);
 ```
 
-<!--Cameligo-->
-```cameligo
+<!--CameLIGO-->
+```cameligo group=c
 let increment : (int -> int) = fun (i: int) -> i + 1
+```
+
+<!--ReasonLIGO-->
+```reasonligo group=c
+let increment: (int => int) = (i: int) => i + 1;
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->

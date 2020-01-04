@@ -37,6 +37,10 @@ let%expect_test _ =
            evaluate-value
                Subcommand: evaluate a given definition.
 
+           interpret
+               Subcommand: interpret the expression in the context initialized by
+               the provided source file.
+
            measure-contract
                Subcommand: measure a contract's compiled size in bytes.
 
@@ -47,7 +51,10 @@ let%expect_test _ =
            --help[=FMT] (default=auto)
                Show this help in format FMT. The value FMT must be one of `auto',
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
-               `plain' whenever the TERM env var is `dumb' or undefined. |} ] ;
+               `plain' whenever the TERM env var is `dumb' or undefined.
+
+           --version
+               Show version information. |} ] ;
 
   run_ligo_good [ "--help" ] ;
   [%expect {|
@@ -84,6 +91,10 @@ let%expect_test _ =
            evaluate-value
                Subcommand: evaluate a given definition.
 
+           interpret
+               Subcommand: interpret the expression in the context initialized by
+               the provided source file.
+
            measure-contract
                Subcommand: measure a contract's compiled size in bytes.
 
@@ -94,7 +105,10 @@ let%expect_test _ =
            --help[=FMT] (default=auto)
                Show this help in format FMT. The value FMT must be one of `auto',
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
-               `plain' whenever the TERM env var is `dumb' or undefined. |} ] ;
+               `plain' whenever the TERM env var is `dumb' or undefined.
+
+           --version
+               Show version information. |} ] ;
 
   run_ligo_good [ "compile-contract" ; "--help" ] ;
   [%expect {|
@@ -134,7 +148,10 @@ let%expect_test _ =
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively). |} ] ;
+               guessed from the extension (.ligo and .mligo, respectively).
+
+           --version
+               Show version information. |} ] ;
 
   run_ligo_good [ "compile-parameter" ; "--help" ] ;
   [%expect {|
@@ -159,6 +176,9 @@ let%expect_test _ =
                contract.
 
     OPTIONS
+           --amount=AMOUNT (absent=0)
+               AMOUNT is the amount the michelson interpreter will use.
+
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
                DISPLAY_FORMAT is the format that will be used by the CLI.
@@ -177,10 +197,25 @@ let%expect_test _ =
                compile-contract for the resulting Michelson. Available formats
                are 'text' (default), 'json' and 'hex'.
 
+           --predecessor-timestamp=PREDECESSOR_TIMESTAMP
+               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value) the
+               michelson interpreter will use (e.g. '2000-01-01T10:10:10Z')
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively). |} ] ;
+               guessed from the extension (.ligo and .mligo, respectively).
+
+           --sender=SENDER
+               SENDER is the sender the michelson interpreter transaction will
+               use.
+
+           --source=SOURCE
+               SOURCE is the source the michelson interpreter transaction will
+               use.
+
+           --version
+               Show version information. |} ] ;
 
   run_ligo_good [ "compile-storage" ; "--help" ] ;
   [%expect {|
@@ -206,6 +241,9 @@ let%expect_test _ =
                STORAGE_EXPRESSION is the expression that will be compiled.
 
     OPTIONS
+           --amount=AMOUNT (absent=0)
+               AMOUNT is the amount the michelson interpreter will use.
+
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
                DISPLAY_FORMAT is the format that will be used by the CLI.
@@ -224,10 +262,25 @@ let%expect_test _ =
                compile-contract for the resulting Michelson. Available formats
                are 'text' (default), 'json' and 'hex'.
 
+           --predecessor-timestamp=PREDECESSOR_TIMESTAMP
+               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value) the
+               michelson interpreter will use (e.g. '2000-01-01T10:10:10Z')
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo" and "cameligo". By default, the syntax is
-               guessed from the extension (.ligo and .mligo, respectively). |} ] ;
+               guessed from the extension (.ligo and .mligo, respectively).
+
+           --sender=SENDER
+               SENDER is the sender the michelson interpreter transaction will
+               use.
+
+           --source=SOURCE
+               SOURCE is the source the michelson interpreter transaction will
+               use.
+
+           --version
+               Show version information. |} ] ;
 
   run_ligo_good [ "dry-run" ; "--help" ] ;
   [%expect {|
@@ -255,7 +308,7 @@ let%expect_test _ =
 
     OPTIONS
            --amount=AMOUNT (absent=0)
-               AMOUNT is the amount the dry-run transaction will use.
+               AMOUNT is the amount the michelson interpreter will use.
 
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
@@ -270,16 +323,25 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --predecessor-timestamp=PREDECESSOR_TIMESTAMP
+               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value) the
+               michelson interpreter will use (e.g. '2000-01-01T10:10:10Z')
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo" and "cameligo". By default, the syntax is
                guessed from the extension (.ligo and .mligo, respectively).
 
            --sender=SENDER
-               SENDER is the sender the dry-run transaction will use.
+               SENDER is the sender the michelson interpreter transaction will
+               use.
 
            --source=SOURCE
-               SOURCE is the source the dry-run transaction will use. |} ] ;
+               SOURCE is the source the michelson interpreter transaction will
+               use.
+
+           --version
+               Show version information. |} ] ;
 
   run_ligo_good [ "run-function" ; "--help" ] ;
   [%expect {|
@@ -304,7 +366,7 @@ let%expect_test _ =
 
     OPTIONS
            --amount=AMOUNT (absent=0)
-               AMOUNT is the amount the dry-run transaction will use.
+               AMOUNT is the amount the michelson interpreter will use.
 
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
@@ -319,16 +381,25 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --predecessor-timestamp=PREDECESSOR_TIMESTAMP
+               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value) the
+               michelson interpreter will use (e.g. '2000-01-01T10:10:10Z')
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo" and "cameligo". By default, the syntax is
                guessed from the extension (.ligo and .mligo, respectively).
 
            --sender=SENDER
-               SENDER is the sender the dry-run transaction will use.
+               SENDER is the sender the michelson interpreter transaction will
+               use.
 
            --source=SOURCE
-               SOURCE is the source the dry-run transaction will use. |} ] ;
+               SOURCE is the source the michelson interpreter transaction will
+               use.
+
+           --version
+               Show version information. |} ] ;
 
   run_ligo_good [ "evaluate-value" ; "--help" ] ;
   [%expect {|
@@ -348,7 +419,7 @@ let%expect_test _ =
 
     OPTIONS
            --amount=AMOUNT (absent=0)
-               AMOUNT is the amount the dry-run transaction will use.
+               AMOUNT is the amount the michelson interpreter will use.
 
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
            (absent=human-readable)
@@ -363,16 +434,25 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --predecessor-timestamp=PREDECESSOR_TIMESTAMP
+               PREDECESSOR_TIMESTAMP is the pedecessor_timestamp (now value) the
+               michelson interpreter will use (e.g. '2000-01-01T10:10:10Z')
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo" and "cameligo". By default, the syntax is
                guessed from the extension (.ligo and .mligo, respectively).
 
            --sender=SENDER
-               SENDER is the sender the dry-run transaction will use.
+               SENDER is the sender the michelson interpreter transaction will
+               use.
 
            --source=SOURCE
-               SOURCE is the source the dry-run transaction will use. |} ] ;
+               SOURCE is the source the michelson interpreter transaction will
+               use.
+
+           --version
+               Show version information. |} ] ;
 
   run_ligo_good [ "compile-expression" ; "--help" ] ;
   [%expect {|
@@ -408,4 +488,7 @@ let%expect_test _ =
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
-               are 'text' (default), 'json' and 'hex'. |} ] ;
+               are 'text' (default), 'json' and 'hex'.
+
+           --version
+               Show version information. |} ] ;

@@ -9,18 +9,19 @@
     getopt
     zarith
   )
+  (preprocess
+    (pps bisect_ppx --conditional)
+  )
   (modules
-    Error
     Lexer
     LexerLog
     Utils
     Markup
     FQueue
     EvalOpt
-    Version
-  )
-  (modules_without_implementation Error)
-)
+    Version  
+    ))
+
 
 (rule
   (targets Version.ml)

@@ -92,6 +92,7 @@ module Simplify = struct
       | "bytes_concat"    -> ok C_CONCAT
       | "bytes_slice"     -> ok C_SLICE
       | "bytes_pack"      -> ok C_BYTES_PACK
+      | "bytes_unpack"    -> ok C_BYTES_UNPACK
       | "set_empty"       -> ok C_SET_EMPTY
       | "set_mem"         -> ok C_SET_MEM
       | "set_add"         -> ok C_SET_ADD
@@ -131,28 +132,15 @@ module Simplify = struct
       | "address"         -> ok C_ADDRESS
       | "self_address"    -> ok C_SELF_ADDRESS
       | "implicit_account"-> ok C_IMPLICIT_ACCOUNT
+      | "set_delegate"    -> ok C_SET_DELEGATE
       | _                 -> simple_fail "Not a PascaLIGO constant"
 
     let type_constants = type_constants
     let type_operators = type_operators
   end
 
-  module Camligo = struct
-    let constants = function
-      | "Bytes.pack"             -> ok C_BYTES_PACK
-      | "Crypto.hash"            -> ok C_HASH    (* TODO : Check if right *)
-      | "Operation.transaction"  -> ok C_CALL
-      | "Operation.get_contract" -> ok C_CONTRACT
-      | "sender"                 -> ok C_SENDER
-      | "unit"                   -> ok C_UNIT
-      | "source"                 -> ok C_SOURCE
-      | _                        -> simple_fail "Not a CamLIGO constant"
 
-    let type_constants = type_constants
-    let type_operators = type_operators
-  end
-
-  module Ligodity = struct
+  module Cameligo = struct
     let constants = function
       | "assert"                   -> ok C_ASSERTION
       | "Current.balance"          -> ok C_BALANCE
@@ -238,6 +226,7 @@ module Simplify = struct
       | "stop"                     -> ok C_STOP
 
       | "Operation.transaction"    -> ok C_CALL
+      | "Operation.set_delegate"   -> ok C_SET_DELEGATE
       | "Operation.get_contract"   -> ok C_CONTRACT
       | "Operation.get_entrypoint" -> ok C_CONTRACT_ENTRYPOINT
       | "int"                      -> ok C_INT
@@ -255,12 +244,14 @@ module Simplify = struct
       | "AND"                      -> ok C_AND
       | "OR"                       -> ok C_OR
       | "GT"                       -> ok C_GT
+      | "GE"                       -> ok C_GE
       | "LT"                       -> ok C_LT
       | "LE"                       -> ok C_LE
       | "CONS"                     -> ok C_CONS
+      | "NEQ"                      -> ok C_NEQ
 
       | "Michelson.is_nat"         -> ok C_IS_NAT
-      | _                          -> simple_fail "Not a Ligodity constant"
+      | _                          -> simple_fail "Not a constant"
 
     let type_constants = type_constants
     let type_operators = type_operators
@@ -864,6 +855,7 @@ module Typer = struct
     | C_ADDRESS             -> ok @@ address ;
     | C_SELF_ADDRESS        -> ok @@ self_address;
     | C_IMPLICIT_ACCOUNT    -> ok @@ implicit_account;
+    | C_SET_DELEGATE        -> ok @@ set_delegate ;
     | _                     -> simple_fail @@ Format.asprintf "Typer not implemented for consant %a" Stage_common.PP.constant c
 
 
@@ -933,8 +925,10 @@ module Compiler = struct
     | C_UNIT            -> ok @@ simple_constant @@ prim I_UNIT
     | C_BALANCE         -> ok @@ simple_constant @@ prim I_BALANCE
     | C_AMOUNT          -> ok @@ simple_constant @@ prim I_AMOUNT
-    | C_ADDRESS         -> ok @@ simple_constant @@ prim I_ADDRESS
+    | C_ADDRESS         -> ok @@ simple_unary @@ prim I_ADDRESS
     | C_SELF_ADDRESS    -> ok @@ simple_constant @@ seq [prim I_SELF; prim I_ADDRESS]
+    | C_IMPLICIT_ACCOUNT -> ok @@ simple_unary @@ prim I_IMPLICIT_ACCOUNT
+    | C_SET_DELEGATE    -> ok @@ simple_unary @@ prim I_SET_DELEGATE
     | C_NOW             -> ok @@ simple_constant @@ prim I_NOW
     | C_CALL            -> ok @@ simple_ternary @@ prim I_TRANSFER_TOKENS
     | C_SOURCE          -> ok @@ simple_constant @@ prim I_SOURCE

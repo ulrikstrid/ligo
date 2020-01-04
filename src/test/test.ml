@@ -8,10 +8,11 @@ let () =
     Integration_tests.main ;
     Transpiler_tests.main ;
     Typer_tests.main ;
-    Heap_tests.main ;
     Coase_tests.main ;
     Vote_tests.main ;
     Multisig_tests.main ;
     Multisig_v2_tests.main ;
+    Replaceable_id_tests.main ;
+    Time_lock_tests.main ;
   ] ;
   ()

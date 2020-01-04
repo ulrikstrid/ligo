@@ -1,0 +1,31 @@
+name: "ligo"
+opam-version: "2.0"
+maintainer: "ligolang@gmail.com"
+authors: [ "Galfour" ]
+homepage: "https://gitlab.com/ligolang/tezos"
+bug-reports: "https://gitlab.com/ligolang/tezos/issues"
+synopsis: "A higher-level language which compiles to Michelson"
+dev-repo: "git+https://gitlab.com/ligolang/tezos.git"
+license: "MIT"
+depends: [
+  "ocamlfind" { build }
+  "dune" { build & = "1.11.4" }
+  "menhir" { = "20190626" }
+  "bisect_ppx" {dev & >= "2.0.0"}
+  "ppx_let"
+  "ppx_deriving"
+  "ppx_expect"
+  "tezos-utils"
+  "proto-alpha-utils"
+  "yojson"
+  "alcotest" { with-test }
+  "getopt"
+  # work around upstream in-place update
+  "ocaml-migrate-parsetree" { = "1.4.0" }
+]
+pin-depends: [
+  ["bisect_ppx.git" "git+https://github.com/aantron/bisect_ppx.git#02dfb10188033a26d07d23480c2bc44a3a670357"]
+]
+build: [
+  [ "dune" "build" "-p" name "-j" jobs ]
+]

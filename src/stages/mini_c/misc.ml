@@ -120,14 +120,6 @@ module Free_variables = struct
 
 end
 
-(*
-   Converts `expr` in `fun () -> expr`.
-*)
-let functionalize (body : expression) : expression =
-  let content = E_closure { binder = Var.fresh () ; body } in
-  let type_value = t_function t_unit body.type_value in
-  { content ; type_value }
-
 let get_entry (lst : program) (name : string) : (expression * int) result =
   let%bind entry_expression =
     trace_option (Errors.missing_entry_point name) @@
@@ -148,54 +140,29 @@ let get_entry (lst : program) (name : string) : (expression * int) result =
   in
   ok (entry_expression , entry_index)
 
+type form_t =
+  | ContractForm of expression
+  | ExpressionForm of expression
 
-(*
-   Assume the following code:
-   ```
-     const x = 42
-     const y = 120
-     const z = 423
-     const f = () -> x + y
-   ```
-   It is transformed in:
-   ```
-     const f = () ->
-       let x = 42 in
-       let y = 120 in
-       let z = 423 in
-       x + y
-   ```
-
-   The entry-point can be an expression, which is then functionalized if
-   `to_functionalize` is set to true.
-*)
-let aggregate_entry (lst : program) (name : string) (to_functionalize : bool) : expression result =
-  let%bind (entry_expression , entry_index) = get_entry lst name in
-  let pre_declarations = List.until entry_index lst in
+let aggregate_entry (lst : program) (form : form_t) : expression result =
   let wrapper =
     let aux prec cur =
       let (((name , expr) , _)) = cur in
       e_let_in name expr.type_value expr prec
     in
-    fun expr -> List.fold_right' aux expr pre_declarations
+    fun expr -> List.fold_right' aux expr lst
   in
-  match (entry_expression.content , to_functionalize) with
-  | (E_closure l , false) -> (
-      let l' = { l with body = wrapper l.body } in
-      let%bind t' =
-        let%bind (input_ty , output_ty) = get_t_function entry_expression.type_value in
-        ok (t_function input_ty output_ty)
-      in
-      let e' = {
-        content = E_closure l' ;
-        type_value = t' ;
-      } in
-      ok e'
-    )
-  | (_ , true) -> (
-      ok @@ functionalize @@ wrapper entry_expression
-    )
-  | _ -> (
-      Format.printf "Not functional: %a\n" PP.expression entry_expression ;
-      fail @@ Errors.not_functional_main name
-  )
+  match form with
+  | ContractForm entry_expression -> (
+    match (entry_expression.content) with
+    | (E_closure l) -> (
+        let l' = { l with body = wrapper l.body } in
+        let e' = {
+          content = E_closure l' ;
+          type_value = entry_expression.type_value ;
+        } in
+        ok e'
+      )
+    | _ -> simple_fail "a contract must be a closure" )
+  | ExpressionForm entry_expression ->
+    ok @@ wrapper entry_expression

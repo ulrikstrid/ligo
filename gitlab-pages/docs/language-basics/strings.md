@@ -12,19 +12,23 @@ Strings are defined using the built-in `string` type like this:
 ```
 const a: string = "Hello Alice";
 ```
-<!--Cameligo-->
+<!--CameLIGO-->
 ```
 let a: string = "Hello Alice"
+```
+<!--ReasonLIGO-->
+```reasonligo
+let a: string = "Hello Alice";
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
 ## Concatenating strings
 
-Strings can be concatenated using the `^` operator.
-
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
+Strings can be concatenated using the `^` operator.
+
 ```pascaligo
 const name: string = "Alice";
 const greeting: string = "Hello";
@@ -33,11 +37,21 @@ const full_greeting: string = greeting ^ " " ^ name;
 // Hello Alice! (alternatively)
 const full_greeting_exclamation: string = string_concat(full_greeting, "!");
 ```
-<!--Cameligo-->
+<!--CameLIGO-->
+Strings can be concatenated using the `^` operator.
+
 ```cameligo
 let name: string = "Alice"
 let greeting: string = "Hello"
 let full_greeting: string = greeting ^ " " ^ name
+```
+<!--ReasonLIGO-->
+Strings can be concatenated using the `++` operator.
+
+```reasonligo
+let name: string = "Alice";
+let greeting: string = "Hello";
+let full_greeting: string = greeting ++ " " ++ name;
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -53,10 +67,15 @@ const name: string = "Alice";
 // slice = "A"
 const slice: string = string_slice(0n, 1n, name);
 ```
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let name: string = "Alice"
 let slice: string = String.slice 0n 1n name
+```
+<!--ReasonLIGO-->
+```reasonligo
+let name: string = "Alice";
+let slice: string = String.slice(0n, 1n, name);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -73,9 +92,14 @@ const name: string = "Alice";
 // length = 5
 const length: nat = size(name);
 ```
-<!--Cameligo-->
+<!--CameLIGO-->
 ```cameligo
 let name: string = "Alice"
 let length: nat = String.size name
+```
+<!--ReasonLIGO-->
+```reasonligo
+let name: string = "Alice";
+let length: nat = String.size(name);
 ```
 <!--END_DOCUSAURUS_CODE_TABS-->
