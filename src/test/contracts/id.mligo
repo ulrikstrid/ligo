@@ -26,7 +26,7 @@ be to deter people from doing it just to chew up address space.
 *)
 
 let buy (parameter, storage: (bytes * address option) * storage) =
-  assert (amount = storage.2.0) ;
+  let void: unit = assert (amount = storage.2.0) in
   let profile, initial_controller = parameter in
   let identities, last_id, prices = storage in
   let controller: address =
@@ -44,11 +44,11 @@ let buy (parameter, storage: (bytes * address option) * storage) =
   let updated_identities: (id, id_details) big_map =
     Big_map.update new_id new_id_details identities
   in
-  ([]: instruction, (updated_identities, new_id, prices))
+  ([]: instruction), (updated_identities, new_id, prices)
 
 let update_owner (parameter, storage: (id * address) * storage) =
   let id, new_owner = parameter in
-  let identities, _ = storage in
+  let identities, last_id, prices = storage in
   let current_id_details = Bip_map.find_opt id identities in
   let is_allowed: bool =
     if sender = current_id_details.owner
@@ -62,11 +62,11 @@ let update_owner (parameter, storage: (id * address) * storage) =
   }
   in
   let updated_identities = Big_map.update id updated_id_details identities in
-  ([]: instruction, updated_identities)
+  ([]: instruction), (updated_identities, last_id, prices)
 
 let update_details (parameter, storage: (id * bytes option * address option) * storage) =
   let id, new_profile, new_controller = parameter in
-  let identities, last_id = storage in
+  let identities, last_id, prices = storage in
   let current_id_details = Big_map.find_opt id identities in
   let is_allowed: bool =
     if
@@ -92,21 +92,24 @@ let update_details (parameter, storage: (id * bytes option * address option) * s
     controller = controller;
     profile = profile;
   }
+  in
   let updated_identities = Big_map.update id updated_id_details identities in
-  ([]: instruction, updated_identities)
+  ([]: instruction), (updated_identities, last_id, prices)
 
 (* Let someone skip the next identity so nobody has to take one that's undesirable *)
 let skip (p,s: unit * storage) =
-  assert (amount = storage.2.1);
+  let void: unit = assert (amount = storage.2.1) in
   let identities, last_id, prices = storage in
-  ([]: instruction, (identities, last_id + 1, prices))
+  ([]: instruction), (identities, last_id + 1, prices)
 
 let whois_id (query, storage: id * storage) =
   let identities, last_id, _ = storage in
   let result: (unit -> id_details) =
     let id_details: id_details =
+      begin
       match Big_map.find_opt query identities with
       | Some details -> details
-      | None -> failwith "This ID doesn't exist in the system.")
-    in (fun () -> id_details)
-  in ([result]: instruction, storage)
+      | None -> failwith "This ID doesn't exist in the system."
+      end
+    in (fun (x: unit) -> id_details)
+  in ([result]: instruction), storage
