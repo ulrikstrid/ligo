@@ -67,6 +67,13 @@ let anon_function () : unit result =
   in
   ok ()
 
+let id_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/id.mligo" in
+  let%bind () =
+    expect_eq_evaluate program "x" (e_int 42)
+  in
+  ok ()
+
 let application () : unit result =
   let%bind program = type_file "./contracts/application.ligo" in
   let%bind () =
@@ -1884,6 +1891,7 @@ let main = test_suite "Integration (End to End)" [
     test "declaration local" declaration_local ;
     test "complex function" complex_function ;
     test "anon function" anon_function ;
+    test "id (mligo)" id_mligo ;
     test "various applications" application ;
     test "closure" closure ;
     test "closure (mligo)" closure_mligo ;
