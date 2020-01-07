@@ -1,3 +1,0 @@
-ligo: lexer error: Unexpected character '\239'.
-       {"parser_loc":"in file \"unexpected_character.religo\", line 1, characters 8-9"}
-      
