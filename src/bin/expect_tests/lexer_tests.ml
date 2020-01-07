@@ -107,11 +107,4 @@ run_ligo_bad [ "compile-contract" ; "../../test/lexer/invalid_character_in_strin
 ligo: lexer error: Invalid character in string.
       Hint: Remove or replace the character.
        {"parser_loc":"in file \"invalid_character_in_string.religo\", line 1, characters 9-10"}
- |} ];
-
- run_ligo_bad [ "compile-contract" ; "../../test/lexer/orphan_minus.religo" ; "main" ] ;
-  [%expect {| 
-ligo: lexer error: Invalid character in string.
-      Hint: Remove or replace the character.
-       {"parser_loc":"in file \"invalid_character_in_string.religo\", line 1, characters 9-10"}
- |} ];
+ |} ]
