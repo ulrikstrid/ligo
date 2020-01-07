@@ -1,12 +1,12 @@
 open Cli_expect
 
 let%expect_test _ =
+
     run_ligo_bad [ "compile-contract" ; "../../test/lexer/broken_string.mligo" ; "main" ] ;
   [%expect {| 
 ligo: lexer error: The string starting here is interrupted by a line break.
       Hint: Remove the break, close the string before or insert a backslash.
-       {"parser_loc":"in file \"broken_string.mligo\", line 1, characters 8-9"}
-      
+       {"parser_loc":"in file \"broken_string.mligo\", line 1, characters 8-9"}      
  |} ];
 
  run_ligo_bad [ "compile-contract" ; "../../test/lexer/broken_string.religo" ; "main" ] ;
@@ -14,8 +14,6 @@ ligo: lexer error: The string starting here is interrupted by a line break.
 ligo: lexer error: The string starting here is interrupted by a line break.
       Hint: Remove the break, close the string before or insert a backslash.
        {"parser_loc":"in file \"broken_string.religo\", line 1, characters 8-9"}
-      
-
  |} ];
 
 run_ligo_bad [ "compile-contract" ; "../../test/lexer/negative_byte_sequence.mligo" ; "main" ] ;
@@ -83,9 +81,37 @@ ligo: lexer error: Invalid symbol.
        {"parser_loc":"in file \"invalid_symbol.religo\", line 1, characters 10-11"}
  |} ];
 
+ run_ligo_bad [ "compile-contract" ; "../../test/lexer/missing_break.mligo" ; "main" ] ;
+  [%expect {| 
+ligo: lexer error: Missing break.
+      Hint: Insert some space.
+       {"parser_loc":"in file \"missing_break.mligo\", line 1, characters 11-11"}
+ |} ];
+
  run_ligo_bad [ "compile-contract" ; "../../test/lexer/missing_break.religo" ; "main" ] ;
   [%expect {| 
 ligo: lexer error: Missing break.
       Hint: Insert some space.
        {"parser_loc":"in file \"missing_break.religo\", line 1, characters 11-11"}
- |} ]
+ |} ];
+
+run_ligo_bad [ "compile-contract" ; "../../test/lexer/invalid_character_in_string.mligo" ; "main" ] ;
+  [%expect {| 
+ligo: lexer error: Invalid character in string.
+      Hint: Remove or replace the character.
+       {"parser_loc":"in file \"invalid_character_in_string.mligo\", line 1, characters 9-10"}
+ |} ];
+
+run_ligo_bad [ "compile-contract" ; "../../test/lexer/invalid_character_in_string.religo" ; "main" ] ;
+  [%expect {| 
+ligo: lexer error: Invalid character in string.
+      Hint: Remove or replace the character.
+       {"parser_loc":"in file \"invalid_character_in_string.religo\", line 1, characters 9-10"}
+ |} ];
+
+ run_ligo_bad [ "compile-contract" ; "../../test/lexer/orphan_minus.religo" ; "main" ] ;
+  [%expect {| 
+ligo: lexer error: Invalid character in string.
+      Hint: Remove or replace the character.
+       {"parser_loc":"in file \"invalid_character_in_string.religo\", line 1, characters 9-10"}
+ |} ];
