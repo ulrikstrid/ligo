@@ -3,13 +3,6 @@ open Cli_expect
 let%expect_test _ =
     run_ligo_bad [ "compile-contract" ; "../../test/lexer/broken_string.mligo" ; "main" ] ;
   [%expect {| 
-../../test/lexer/broken_string.mligo:1:9: warning: missing terminating '"' character [-Winvalid-pp-token]
-let a = "broken
-        ^
-../../test/lexer/broken_string.mligo:4:6: warning: missing terminating '"' character [-Winvalid-pp-token]
-lines";
-     ^
-2 warnings generated.
 ligo: lexer error: The string starting here is interrupted by a line break.
       Hint: Remove the break, close the string before or insert a backslash.
        {"parser_loc":"in file \"broken_string.mligo\", line 1, characters 8-9"}
@@ -18,13 +11,6 @@ ligo: lexer error: The string starting here is interrupted by a line break.
 
  run_ligo_bad [ "compile-contract" ; "../../test/lexer/broken_string.religo" ; "main" ] ;
   [%expect {| 
-../../test/lexer/broken_string.religo:1:9: warning: missing terminating '"' character [-Winvalid-pp-token]
-let a = "broken
-        ^
-../../test/lexer/broken_string.religo:4:6: warning: missing terminating '"' character [-Winvalid-pp-token]
-lines";
-     ^
-2 warnings generated.
 ligo: lexer error: The string starting here is interrupted by a line break.
       Hint: Remove the break, close the string before or insert a backslash.
        {"parser_loc":"in file \"broken_string.religo\", line 1, characters 8-9"}
@@ -54,7 +40,13 @@ run_ligo_bad [ "compile-contract" ; "../../test/lexer/reserved_name.religo" ; "m
 ligo: lexer error: Reserved name: end.
       Hint: Change the name.
        {"parser_loc":"in file \"reserved_name.religo\", line 1, characters 4-7"}
-        
+ |} ];
+
+run_ligo_bad [ "compile-contract" ; "../../test/lexer/reserved_name.mligo" ; "main" ] ;
+  [%expect {| 
+ligo: lexer error: Reserved name: object.
+      Hint: Change the name.
+       {"parser_loc":"in file \"reserved_name.mligo\", line 1, characters 4-10"}
  |} ];
 
  run_ligo_bad [ "compile-contract" ; "../../test/lexer/unexpected_character.mligo" ; "main" ] ;
@@ -68,4 +60,32 @@ ligo: lexer error: Unexpected character '\239'.
   [%expect {| 
 ligo: lexer error: Unexpected character '\239'.
        {"parser_loc":"in file \"unexpected_character.religo\", line 1, characters 8-9"}
+ |} ];
+
+ run_ligo_bad [ "compile-contract" ; "../../test/lexer/unterminated_comment.mligo" ; "main" ] ;
+  [%expect {| 
+ligo: lexer error: Unterminated comment.
+      Hint: Close with "*)".
+       {"parser_loc":"in file \"unterminated_comment.mligo\", line 1, characters 0-2"}
+ |} ];
+
+run_ligo_bad [ "compile-contract" ; "../../test/lexer/invalid_symbol.mligo" ; "main" ] ;
+  [%expect {| 
+ligo: lexer error: Invalid symbol.
+      Hint: Check the LIGO syntax you use.
+       {"parser_loc":"in file \"invalid_symbol.mligo\", line 1, characters 10-13"}
+ |} ];
+
+run_ligo_bad [ "compile-contract" ; "../../test/lexer/invalid_symbol.religo" ; "main" ] ;
+  [%expect {| 
+ligo: lexer error: Invalid symbol.
+      Hint: Check the LIGO syntax you use.
+       {"parser_loc":"in file \"invalid_symbol.religo\", line 1, characters 10-11"}
+ |} ];
+
+ run_ligo_bad [ "compile-contract" ; "../../test/lexer/missing_break.religo" ; "main" ] ;
+  [%expect {| 
+ligo: lexer error: Missing break.
+      Hint: Insert some space.
+       {"parser_loc":"in file \"missing_break.religo\", line 1, characters 11-11"}
  |} ]
