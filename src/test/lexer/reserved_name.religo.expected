@@ -1,4 +1,0 @@
-ligo: lexer error: Reserved name: end.
-      Hint: Change the name.
-       {"parser_loc":"in file \"reserved_name.religo\", line 1, characters 4-7"}
-      

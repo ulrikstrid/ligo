@@ -1,4 +1,0 @@
-ligo: lexer error: Negative byte sequence.
-      Hint: Remove the leading minus sign.
-       {"parser_loc":"in file \"negative_byte_sequence.religo\", line 1, characters 8-13"}
-      
