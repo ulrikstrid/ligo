@@ -108,6 +108,7 @@ let constant ppf : constant -> unit = function
   (* Blockchain *)
   | C_CALL                  -> fprintf ppf "CALL"
   | C_CONTRACT              -> fprintf ppf "CONTRACT"
+  | C_CONTRACT_OPT
   | C_CONTRACT_ENTRYPOINT   -> fprintf ppf "CONTRACT_ENTRYPOINT"
   | C_CONTRACT_ENTRYPOINT_OPT -> fprintf ppf "CONTRACT_ENTRYPOINT_OPT"
   | C_AMOUNT                -> fprintf ppf "AMOUNT"

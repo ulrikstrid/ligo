@@ -224,6 +224,7 @@ type constant =
   (* Blockchain *)
   | C_CALL
   | C_CONTRACT
+  | C_CONTRACT_OPT
   | C_CONTRACT_ENTRYPOINT
   | C_CONTRACT_ENTRYPOINT_OPT
   | C_AMOUNT
