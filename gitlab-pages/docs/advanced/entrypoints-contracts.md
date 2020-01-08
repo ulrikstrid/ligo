@@ -95,7 +95,7 @@ type action is
 | Reset of unit
 ```
 
-```pascaligo gorup=d
+```pascaligo gruop=d
 // proxy.ligo
 #include "counter.types.ligo"
 
@@ -111,4 +111,66 @@ function proxy(const param: action; const store: unit): (list(operation) * unit)
         const opList: list(operation) = list op; end;
     } with (opList, store)
 ```
+<!--CameLIGO-->
+```cameligo group=dup
+
+// counter.types.mligo
+
+type action = 
+| Increment of int
+| Decrement of int
+| Reset of unit
+```
+
+```cameligo group=d
+
+// counter.mligo
+type action = 
+| Increment of int
+| Decrement of int
+| Reset of unit
+```
+
+```cameligo group=d
+// proxy.mligo
+
+let address: address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3": address)
+
+let proxy (param, storage: action * unit): operation list * unit =
+  let counter: action contract = Operation.get_contract address in
+  let op: operation = Operation.transaction param 0mutez counter in
+  [op], storage
+```
+
+<!--ReasonLIGO-->
+```reasonligo group=dup
+
+// counter.types.religo
+
+type action =
+  | Increment(int)
+  | Decrement(int)
+  | Reset(unit);
+```
+
+```reasonligo group=d
+// counter.religo
+
+type action =
+  | Increment(int)
+  | Decrement(int)
+  | Reset(unit);
+```
+
+```reasonligo group=d
+// proxy.religo
+
+let address: address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3": address);
+
+let proxy = (param_s: (action, unit)): (list(operation), unit) =>
+  let counter: contract(action) = Operation.get_contract(address);
+  let op: operation = Operation.transaction(param_s[0], 0mutez, counter);
+  ([op], param_s[1]);
+```
+
 <!--END_DOCUSAURUS_CODE_TABS-->
