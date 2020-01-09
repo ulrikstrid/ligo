@@ -79,31 +79,29 @@ In our case, we have a `counter.ligo` contract that accepts a parameter of type 
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--Pascaligo-->
-```pascaligo group=dup
-// counter.types.ligo
-type action is
-| Increment of int
-| Decrement of int
-| Reset of unit
-```
-
-```pascaligo group=d
+```pascaligo
 // counter.ligo
 type action is
 | Increment of int
 | Decrement of int
 | Reset of unit
+
+// ...
 ```
 
-```pascaligo gruop=d
+```pascaligo
 // proxy.ligo
-#include "counter.types.ligo"
 
-const address: address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3": address);
+type action is
+| Increment of int
+| Decrement of int
+| Reset of unit
+
+const dest: address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3": address);
 
 function proxy(const param: action; const store: unit): (list(operation) * unit)
     is block {
-        const counter: contract(action) = get_contract(address);
+        const counter: contract(action) = get_contract(dest);
         // re-use the param passed to the proxy in the subsequent transaction
         // e.g.:
         // const mockParam: action = Increment(5);
@@ -112,63 +110,56 @@ function proxy(const param: action; const store: unit): (list(operation) * unit)
     } with (opList, store)
 ```
 <!--CameLIGO-->
-```cameligo group=dup
-
-// counter.types.mligo
-
-type action = 
-| Increment of int
-| Decrement of int
-| Reset of unit
-```
-
-```cameligo group=d
-
+```cameligo
 // counter.mligo
 type action = 
 | Increment of int
 | Decrement of int
 | Reset of unit
+
+// ...
 ```
 
-```cameligo group=d
+```cameligo
 // proxy.mligo
 
-let address: address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3": address)
+type action = 
+| Increment of int
+| Decrement of int
+| Reset of unit
+
+let dest: address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3": address)
 
 let proxy (param, storage: action * unit): operation list * unit =
-  let counter: action contract = Operation.get_contract address in
+  let counter: action contract = Operation.get_contract dest in
   let op: operation = Operation.transaction param 0mutez counter in
   [op], storage
 ```
 
 <!--ReasonLIGO-->
-```reasonligo group=dup
-
-// counter.types.religo
-
-type action =
-  | Increment(int)
-  | Decrement(int)
-  | Reset(unit);
-```
-
-```reasonligo group=d
+```reasonligo
 // counter.religo
 
 type action =
   | Increment(int)
   | Decrement(int)
   | Reset(unit);
+
+// ...
 ```
 
-```reasonligo group=d
+```reasonligo
 // proxy.religo
 
-let address: address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3": address);
+type action =
+  | Increment(int)
+  | Decrement(int)
+  | Reset(unit);
+
+let dest: address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3": address);
 
 let proxy = (param_s: (action, unit)): (list(operation), unit) =>
-  let counter: contract(action) = Operation.get_contract(address);
+  let counter: contract(action) = Operation.get_contract(dest);
   let op: operation = Operation.transaction(param_s[0], 0mutez, counter);
   ([op], param_s[1]);
 ```
