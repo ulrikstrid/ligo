@@ -1752,6 +1752,13 @@ let entrypoints_ligo () : unit result =
   (* hmm... *)
   ok ()
 
+let get_contract () : unit result =
+  let%bind program = type_file "./contracts/get_contract.ligo" in
+  let dummy_contract_addr = addr 5 in
+  let dummy_contract = contract 5 in
+  let%bind () = expect_eq program "main" (e_address dummy_contract_addr) (e_contract dummy_contract)
+  in ok ()
+
 let chain_id () : unit result =
   let%bind program = type_file "./contracts/chain_id.ligo" in
   let pouet = Tezos_crypto.Base58.simple_encode
