@@ -86,7 +86,6 @@ val type_ : type_value -> O.t result
 val environment_element : string * type_value -> (int, O.prim) Tezos_micheline.Micheline.node result
 
 val environment : ( 'a * type_value ) list -> O.t list result
-val lambda_closure : environment * type_value  * type_value -> (int, O.prim) Tezos_micheline.Micheline.node result
 
 val environment_closure : environment -> (int , O.prim ) Tezos_micheline.Micheline.node result
 (*

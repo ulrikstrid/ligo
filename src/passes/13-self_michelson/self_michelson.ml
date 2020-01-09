@@ -424,7 +424,6 @@ let rec opt_combine_drops (x : michelson) : michelson =
 
 let optimize : michelson -> michelson =
   fun x ->
-  let x = use_lambda_instr x in
   let x = flatten_seqs x in
   let x = opt_tail_fail x in
   let optimizers = [ peephole @@ peep2 opt_drop2 ;
@@ -436,4 +435,5 @@ let optimize : michelson -> michelson =
                    ] in
   let x = iterate_optimizer (sequence_optimizers optimizers) x in
   let x = opt_combine_drops x in
+  let x = use_lambda_instr x in
   x

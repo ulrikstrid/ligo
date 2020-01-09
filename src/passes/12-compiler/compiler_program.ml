@@ -497,16 +497,18 @@ and translate_function_body ({body ; binder} : anon_function) lst input : michel
 and translate_function anon env input_ty output_ty : michelson result =
   let fvs = Mini_c.Free_variables.lambda [] anon in
   let small_env = Mini_c.Environment.select fvs env in
-  let%bind lambda_ty = Compiler_type.lambda_closure (small_env , input_ty , output_ty) in
+  let%bind arg_ty = Compiler_type.type_ input_ty in
+  let%bind ret_ty = Compiler_type.type_ output_ty in
   let%bind lambda_body_code = translate_function_body anon small_env input_ty in
   match fvs with
-  | [] -> ok @@ seq [ i_push lambda_ty lambda_body_code ]
+  | [] -> ok @@ seq [ i_lambda arg_ty ret_ty lambda_body_code ]
   | _ :: _ ->
+    let%bind captured_ty = Compiler_type.environment_closure small_env in
     let selector = List.map fst small_env in
     let%bind closure_pack_code = Compiler_environment.pack_closure env selector in
     ok @@ seq [
       closure_pack_code ;
-      i_push lambda_ty lambda_body_code ;
+      i_lambda (t_pair captured_ty arg_ty) ret_ty lambda_body_code ;
       i_swap ;
       i_apply ;
     ]

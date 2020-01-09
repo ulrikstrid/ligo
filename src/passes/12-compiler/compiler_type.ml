@@ -264,15 +264,6 @@ and environment = fun env ->
   bind_map_list type_
   @@ List.map snd env
 
-and lambda_closure = fun (c , arg , ret) ->
-  let%bind arg = type_ arg in
-  let%bind ret = type_ ret in
-  match c with
-  | [] -> ok @@ O.t_lambda arg ret
-  | _ :: _ ->
-    let%bind capture = environment_closure c in
-    ok @@ O.t_lambda (O.t_pair capture arg) ret
-
 and environment_closure =
   function
   | [] -> simple_fail "Type of empty env"
