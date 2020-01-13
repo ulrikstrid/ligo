@@ -9,54 +9,54 @@ module SyntaxError = Parser_pascaligo.SyntaxError
 
 module Errors = struct
 
-  let lexer_error (e: Lexer.error AST.reg) =
+  let lexer_error ~loc_form (e: Lexer.error AST.reg) =
     let title () = "lexer error" in
     let message () = Lexer.error_to_string e.value in
     let data = [
       ("parser_loc",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ e.region
+       fun () -> Format.asprintf "%a" Location.pp @@ loc_form e.region
       )
     ] in
     error ~data title message
 
-  let reserved_name Region.{value; region} =
+  let reserved_name ~loc_form Region.{value; region} =
     let title () = Printf.sprintf "reserved name \"%s\"" value in
     let message () = "" in
     let data = [
       ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
+       fun () -> Format.asprintf "%a" Location.pp @@ loc_form region)
     ] in
     error ~data title message
 
-  let non_linear_pattern Region.{value; region} =
+  let non_linear_pattern ~loc_form Region.{value; region} =
     let title () = Printf.sprintf "repeated variable \"%s\" in this pattern" value in
     let message () = "" in
     let data = [
       ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
+       fun () -> Format.asprintf "%a" Location.pp @@ loc_form region)
     ] in
     error ~data title message
 
-  let duplicate_parameter Region.{value; region} =
+  let duplicate_parameter ~loc_form Region.{value; region} =
     let title () = Printf.sprintf "duplicate parameter \"%s\"" value in
     let message () = "" in
     let data = [
       ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
+       fun () -> Format.asprintf "%a" Location.pp @@ loc_form region)
     ] in
     error ~data title message
 
-  let duplicate_variant Region.{value; region} =
+  let duplicate_variant ~loc_form Region.{value; region} =
     let title () = Printf.sprintf "duplicate variant \"%s\" in this\
                                    type declaration" value in
     let message () = "" in
     let data = [
       ("location",
-       fun () -> Format.asprintf "%a" Location.pp_lift @@ region)
+       fun () -> Format.asprintf "%a" Location.pp @@ loc_form region)
     ] in
     error ~data title message
 
-  let parser_error source (start: Lexing.position) (end_: Lexing.position) lexbuf =
+  let parser_error ~loc_form source (start: Lexing.position) (end_: Lexing.position) lexbuf =
     let title () = "parser error" in
     let file = if source = "" then
         ""
@@ -83,13 +83,13 @@ module Errors = struct
     let data =
       [
         ("parser_loc",
-          fun () -> Format.asprintf "%a" Location.pp_lift @@ loc
+          fun () -> Format.asprintf "%a" Location.pp (loc_form loc)
         )
       ]    
     in
     error ~data title message
 
-  let unrecognized_error source (start: Lexing.position) (end_: Lexing.position) lexbuf =
+  let unrecognized_error ~loc_form source (start: Lexing.position) (end_: Lexing.position) lexbuf =
     let title () = "unrecognized error" in
     let file = if source = "" then
         ""
@@ -110,7 +110,7 @@ module Errors = struct
     in
     let data = [
       ("unrecognized_loc",
-        fun () -> Format.asprintf "%a" Location.pp_lift @@ loc
+        fun () -> Format.asprintf "%a" Location.pp (loc_form loc)
       )
     ] in
     error ~data title message
@@ -121,36 +121,36 @@ open Errors
 
 type 'a parser = (Lexing.lexbuf -> LexToken.token) -> Lexing.lexbuf -> 'a
 
-let parse (parser: 'a parser) source lexbuf =
+let parse ~loc_form (parser: 'a parser) source lexbuf =
   let Lexer.{read ; close ; _} = Lexer.open_token_stream None in
   let result =
     try
       ok (parser read lexbuf)
     with
       SyntaxError.Error (Non_linear_pattern var) ->
-        fail @@ (non_linear_pattern var)
+        fail @@ (non_linear_pattern ~loc_form var)
     | SyntaxError.Error (Duplicate_parameter name) ->
-        fail @@ (duplicate_parameter name)
+        fail @@ (duplicate_parameter ~loc_form name)
     | SyntaxError.Error (Duplicate_variant name) ->
-        fail @@ (duplicate_variant name)
+        fail @@ (duplicate_variant ~loc_form name)
     | SyntaxError.Error (Reserved_name name) ->
-        fail @@ (reserved_name name)
+        fail @@ (reserved_name ~loc_form name)
     | Parser.Error ->
         let start = Lexing.lexeme_start_p lexbuf in
         let end_ = Lexing.lexeme_end_p lexbuf in
-        fail @@ (parser_error source start end_ lexbuf)
+        fail @@ (parser_error ~loc_form source start end_ lexbuf)
     | Lexer.Error e ->
-        fail @@ (lexer_error e)
+        fail @@ (lexer_error ~loc_form e)
     | _ ->
         let _ = Printexc.print_backtrace Pervasives.stdout in
         let start = Lexing.lexeme_start_p lexbuf in
         let end_ = Lexing.lexeme_end_p lexbuf in
-        fail @@ (unrecognized_error source start end_ lexbuf)
+        fail @@ (unrecognized_error ~loc_form source start end_ lexbuf)
   in
   close ();
   result
 
-let parse_file (source: string) : AST.t result =
+let parse_file ~loc_form (source: string) : AST.t result =
   let pp_input =
     let prefix = Filename.(source |> basename |> remove_extension)
     and suffix = ".pp.ligo"
@@ -164,12 +164,12 @@ let parse_file (source: string) : AST.t result =
     generic_try (simple_error "error opening file") @@
     (fun () -> open_in pp_input) in
   let lexbuf = Lexing.from_channel channel in
-  parse (Parser.contract) source lexbuf
+  parse ~loc_form (Parser.contract) source lexbuf
 
-let parse_string (s:string) : AST.t result =
+let parse_string ~loc_form (s:string) : AST.t result =
   let lexbuf = Lexing.from_string s in
-  parse (Parser.contract) "" lexbuf
+  parse ~loc_form (Parser.contract) "" lexbuf
 
-let parse_expression (s:string) : AST.expr result =
+let parse_expression ~loc_form (s:string) : AST.expr result =
   let lexbuf = Lexing.from_string s in
-  parse (Parser.interactive_expr) "" lexbuf
+  parse ~loc_form (Parser.interactive_expr) "" lexbuf

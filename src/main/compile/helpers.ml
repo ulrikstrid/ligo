@@ -23,22 +23,22 @@ let syntax_to_variant : s_syntax -> string option -> v_syntax result =
   | "reasonligo", _ -> ok ReasonLIGO
   | _ -> simple_fail "unrecognized parser"
 
-let parsify_pascaligo = fun source ->
+let parsify_pascaligo ~loc_form = fun source ->
   let%bind raw =
     trace (simple_error "parsing") @@
-    Parser.Pascaligo.parse_file source in
+    Parser.Pascaligo.parse_file ~loc_form source in
   let%bind simplified =
     trace (simple_error "simplifying") @@
-    Simplify.Pascaligo.simpl_program raw in
+    Simplify.Pascaligo.simpl_program ~loc_form raw in
   ok simplified
 
-let parsify_expression_pascaligo = fun source ->
+let parsify_expression_pascaligo ~loc_form = fun source ->
   let%bind raw =
     trace (simple_error "parsing expression") @@
-    Parser.Pascaligo.parse_expression source in
+    Parser.Pascaligo.parse_expression ~loc_form source in
   let%bind simplified =
     trace (simple_error "simplifying expression") @@
-    Simplify.Pascaligo.simpl_expression raw in
+    Simplify.Pascaligo.simpl_expression ~loc_form raw in
   ok simplified
 
 let parsify_cameligo = fun source ->
@@ -77,21 +77,21 @@ let parsify_expression_reasonligo = fun source ->
     Simplify.Cameligo.simpl_expression raw in
   ok simplified
 
-let parsify = fun (syntax : v_syntax) source_filename ->
-  let%bind parsify = match syntax with
-    | Pascaligo -> ok parsify_pascaligo
-    | Cameligo -> ok parsify_cameligo
-    | ReasonLIGO -> ok parsify_reasonligo
+let parsify = fun ~loc_form (syntax : v_syntax) source_filename ->
+  let parsify = match syntax with
+    | Pascaligo -> parsify_pascaligo ~loc_form
+    | Cameligo -> parsify_cameligo
+    | ReasonLIGO -> parsify_reasonligo
   in
   let%bind parsified = parsify source_filename in
   let%bind applied = Self_ast_simplified.all_program parsified in
   ok applied
 
-let parsify_expression = fun syntax source ->
-  let%bind parsify = match syntax with
-    | Pascaligo -> ok parsify_expression_pascaligo
-    | Cameligo -> ok parsify_expression_cameligo
-    | ReasonLIGO -> ok parsify_expression_reasonligo
+let parsify_expression ~loc_form = fun syntax source ->
+  let parsify = match syntax with
+    | Pascaligo -> parsify_expression_pascaligo ~loc_form
+    | Cameligo -> parsify_expression_cameligo
+    | ReasonLIGO -> parsify_expression_reasonligo
   in
   let%bind parsified = parsify source in
   let%bind applied = Self_ast_simplified.all_expression parsified in
@@ -106,13 +106,13 @@ let parsify_string_reasonligo = fun source ->
     Simplify.Cameligo.simpl_program raw in
   ok simplified
 
-let parsify_string_pascaligo = fun source ->
+let parsify_string_pascaligo ~loc_form = fun source ->
   let%bind raw =
     trace (simple_error "parsing") @@
-    Parser.Pascaligo.parse_string source in
+    Parser.Pascaligo.parse_string ~loc_form source in
   let%bind simplified =
     trace (simple_error "simplifying") @@
-    Simplify.Pascaligo.simpl_program raw in
+    Simplify.Pascaligo.simpl_program ~loc_form raw in
   ok simplified
 
 let parsify_string_cameligo = fun source ->
@@ -124,11 +124,11 @@ let parsify_string_cameligo = fun source ->
     Simplify.Cameligo.simpl_program raw in
   ok simplified
 
-let parsify_string = fun (syntax : v_syntax) source_filename ->
-  let%bind parsify = match syntax with
-    | Pascaligo -> ok parsify_string_pascaligo
-    | Cameligo -> ok parsify_string_cameligo
-    | ReasonLIGO -> ok parsify_string_reasonligo
+let parsify_string ~loc_form = fun (syntax : v_syntax) source_filename ->
+  let parsify = match syntax with
+    | Pascaligo -> parsify_string_pascaligo ~loc_form
+    | Cameligo -> parsify_string_cameligo
+    | ReasonLIGO -> parsify_string_reasonligo
   in
   let%bind parsified = parsify source_filename in
   let%bind applied = Self_ast_simplified.all_program parsified in

@@ -4,7 +4,7 @@ open Trace
 type 'a sdata = { erroneous_source_file : string ; parser : string -> 'a result } 
 let pascaligo_sdata = {
   erroneous_source_file = "../passes/1-parser/pascaligo/all.ligo" ;
-  parser = Parser.Pascaligo.parse_expression }
+  parser = Parser.Pascaligo.parse_expression ~loc_form:(Location.file) }
 let cameligo_sdata = {
   erroneous_source_file = "../passes/1-parser/cameligo/all.ligo" ;
   parser = Parser.Cameligo.parse_expression }

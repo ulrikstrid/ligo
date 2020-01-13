@@ -407,7 +407,7 @@ let rec simpl_expression :
       let%bind arg = simpl_expression args in
       return @@ e_constant ~loc C_SOME [arg]
   | EConstr (ENone reg) ->
-      let loc = Location.lift reg in
+      let loc = Location.file reg in
       return @@ e_none ~loc ()
   | EConstr (EConstrApp c) ->
       let (c_name, args), loc = r_split c in
@@ -628,11 +628,11 @@ and simpl_logic_expression ?te_annot (t:Raw.logic_expr) : expr result =
   let return x = ok @@ make_option_typed x te_annot in
   match t with
   | BoolExpr (False reg) -> (
-      let loc = Location.lift reg in
+      let loc = Location.file reg in
       return @@ e_literal ~loc (Literal_bool false)
     )
   | BoolExpr (True reg) -> (
-      let loc = Location.lift reg in
+      let loc = Location.file reg in
       return @@ e_literal ~loc (Literal_bool true)
     )
   | BoolExpr (Or b) ->

@@ -9,13 +9,13 @@ module LexToken = Parser_pascaligo.LexToken
 
 
 (** Open a PascaLIGO filename given by string and convert into an abstract syntax tree. *)
-val parse_file : string -> (AST.t result)
+val parse_file : loc_form:(Region.t -> Location.t) ->  string -> (AST.t result)
 
 (** Convert a given string into a PascaLIGO abstract syntax tree *)
-val parse_string : string -> AST.t result
+val parse_string : loc_form:(Region.t -> Location.t) ->  string -> AST.t result
 
 (** Parse a given string as a PascaLIGO expression and return an expression AST.
 
 This is intended to be used for interactive interpreters, or other scenarios 
 where you would want to parse a PascaLIGO expression outside of a contract. *)
-val parse_expression : string -> AST.expr result
+val parse_expression : loc_form:(Region.t -> Location.t) ->  string -> AST.expr result
