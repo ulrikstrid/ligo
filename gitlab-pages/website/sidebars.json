@@ -17,7 +17,8 @@
       "advanced/timestamps-addresses",
       "advanced/entrypoints-contracts",
       "advanced/include",
-      "advanced/first-contract"
+      "advanced/first-contract",
+      "advanced/testing-ligo-contracts"
     ],
     "API": [
       "api/cli-commands",
