@@ -3,7 +3,6 @@ open Mini_c
 
 open Michelson
 open Memory_proto_alpha.Protocol.Script_ir_translator
-open Operators.Compiler
 
 (*
 module Contract_types = Meta_michelson.Types
@@ -14,7 +13,6 @@ type compiled_expression = {
   expr : michelson ;
 }
 
-val get_operator : constant -> type_value -> expression list -> predicate result
 val translate_expression : expression -> environment -> michelson result
 val translate_function_body : anon_function -> environment_element list -> type_value -> michelson result
 val translate_value : value -> type_value -> michelson result 
@@ -22,6 +20,8 @@ val translate_value : value -> type_value -> michelson result
 (*
 
 open Operators.Compiler
+
+val get_operator : constant -> type_value -> expression list -> predicate result
 
 val get_predicate : string -> type_value -> expression list -> predicate result
 
