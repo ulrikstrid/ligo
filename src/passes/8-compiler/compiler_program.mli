@@ -39,3 +39,8 @@ module Errors : sig
 end
 
 *)
+
+type translate_expression_t = expression -> environment -> michelson result
+val exp_if_none : translate_expression_t ->
+                  expression * expression * ((var_name * type_value) * expression) ->
+                  environment -> michelson result

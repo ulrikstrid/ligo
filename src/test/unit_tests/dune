@@ -1,0 +1,7 @@
+(library
+ (name unit_tests)
+ (public_name ligo.unit_tests)
+ (libraries simple-utils alcotest ligo)
+ (modules Helpers)
+ (preprocess (pps ppx_let ))
+ (flags (:standard -open Simple_utils)))
