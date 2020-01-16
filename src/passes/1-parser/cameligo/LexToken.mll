@@ -1,4 +1,6 @@
 {
+  (* START HEADER *)
+
 type lexeme = string
 
 let sprintf = Printf.sprintf
@@ -143,7 +145,7 @@ let proj_token = function
 | Bytes Region.{region; value = s,b} ->
     region,
     sprintf "Bytes (\"%s\", \"0x%s\")"
-      s (Hex.to_string b)
+      s (Hex.show b)
 | Begin region -> region, "Begin"
 | Else region -> region, "Else"
 | End region -> region, "End"
@@ -236,8 +238,7 @@ let to_region token = proj_token token |> fst
 
 (* Injections *)
 
-type int_err =
-  Non_canonical_zero
+type int_err = Non_canonical_zero
 
 (* LEXIS *)
 
@@ -258,8 +259,7 @@ let keywords = [
   (fun reg -> Then  reg);
   (fun reg -> True  reg);
   (fun reg -> Type  reg);
-  (fun reg -> With  reg)
-]
+  (fun reg -> With  reg)]
 
 let reserved =
   let open SSet in
@@ -323,8 +323,20 @@ let lexicon : lexis =
       cstr = build constructors;
       res  = reserved}
 
+(* Keywords *)
+
+type kwd_err = Invalid_keyword
+
+let mk_kwd ident region =
+  match SMap.find_opt ident lexicon.kwd with
+    Some mk_kwd -> Ok (mk_kwd region)
+  |        None -> Error Invalid_keyword
+
+(* Identifiers *)
+
 type ident_err = Reserved_name
 
+(* END OF HEADER *)
 }
 
 (* START LEXER DEFINITION *)
@@ -366,7 +378,7 @@ let mk_string lexeme region =
 
 let mk_bytes lexeme region =
   let norm = Str.(global_replace (regexp "_") "" lexeme) in
-  let value = lexeme, Hex.of_string norm
+  let value = lexeme, `Hex norm
   in Bytes Region.{region; value}
 
 let mk_int lexeme region =

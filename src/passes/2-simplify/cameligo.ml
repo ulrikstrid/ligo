@@ -262,6 +262,40 @@ let rec simpl_expression :
       List.map aux @@ npseq_to_list path in
     return @@ e_accessor ~loc var path'
   in
+  let simpl_path : Raw.path -> string * Ast_simplified.access_path = fun p ->
+    match p with
+    | Raw.Name v -> (v.value , [])
+    | Raw.Path p -> (
+        let p' = p.value in
+        let var = p'.struct_name.value in
+        let path = p'.field_path in
+        let path' =
+          let aux (s:Raw.selection) =
+            match s with
+            | FieldName property -> Access_record property.value
+            | Component index -> Access_tuple (Z.to_int (snd index.value))
+          in
+          List.map aux @@ npseq_to_list path in
+        (var , path')
+      )
+  in
+  let simpl_update = fun (u:Raw.update Region.reg) ->
+    let (u, loc) = r_split u in
+    let (name, path) = simpl_path u.record in
+    let record = match path with 
+    | [] -> e_variable (Var.of_name name)
+    | _ -> e_accessor (e_variable (Var.of_name name)) path in 
+    let updates = u.updates.value.ne_elements in
+    let%bind updates' =
+      let aux (f:Raw.field_assign Raw.reg) =
+        let (f,_) = r_split f in
+        let%bind expr = simpl_expression f.field_expr in
+        ok (f.field_name.value, expr)
+      in
+      bind_map_list aux @@ npseq_to_list updates 
+    in
+    return @@ e_update ~loc record updates'
+  in
 
   trace (simplifying_expr t) @@
   match t with
@@ -334,28 +368,29 @@ let rec simpl_expression :
   | ECall x -> (
       let ((e1 , e2) , loc) = r_split x in
       let%bind args = bind_map_list simpl_expression (nseq_to_list e2) in
+      let rec chain_application (f: expression) (args: expression list) =
+        match args with
+        | hd :: tl ->  chain_application (e_application ~loc f hd) tl
+        | [] -> f
+      in
       match e1 with
       | EVar f -> (
           let (f , f_loc) = r_split f in
           match constants f with
-          | Error _ -> (
-              let%bind arg = simpl_tuple_expression (nseq_to_list e2) in
-              return @@ e_application ~loc (e_variable ~loc:f_loc (Var.of_name f)) arg
-            )
-          | Ok (s,_) -> return @@ e_constant ~loc s args
-        )
+          | Error _ -> return @@ chain_application (e_variable ~loc:f_loc (Var.of_name f)) args
+          | Ok (s, _) -> return @@ e_constant ~loc s args
+              )
       | e1 ->
           let%bind e1' = simpl_expression e1 in
-          let%bind arg = simpl_tuple_expression (nseq_to_list e2) in
-          return @@ e_application ~loc e1' arg
-    )
+          return @@ chain_application e1' args
+  )
   | EPar x -> simpl_expression x.value.inside
   | EUnit reg ->
       let (_ , loc) = r_split reg in
       return @@ e_literal ~loc Literal_unit
   | EBytes x ->
       let (x , loc) = r_split x in
-      return @@ e_literal ~loc (Literal_bytes (Bytes.of_string @@ fst x))
+      return @@ e_literal ~loc (Literal_bytes (Hex.to_bytes @@ snd x))
   | ETuple tpl -> simpl_tuple_expression @@ (npseq_to_list tpl.value)
   | ERecord r ->
       let (r , loc) = r_split r in
@@ -366,6 +401,7 @@ let rec simpl_expression :
       let map = SMap.of_list fields in
       return @@ e_record ~loc map
   | EProj p -> simpl_projection p
+  | EUpdate u -> simpl_update u
   | EConstr (ESomeApp a) ->
       let (_, args), loc = r_split a in
       let%bind arg = simpl_expression args in
@@ -484,9 +520,19 @@ let rec simpl_expression :
 and simpl_fun lamb' : expr result =
   let return x = ok x in
   let (lamb , loc) = r_split lamb' in
-  let%bind args' =
-    let args = nseq_to_list lamb.binders in
-    let args = (* Handle case where we have tuple destructure in params *)
+  let%bind params' =
+    let params = nseq_to_list lamb.binders in
+    let params = (* Handle case where we have tuple destructure in params *)
+      (* So basically the transformation we're doing is:
+
+         let sum (result, i: int * int) : int = result + i
+
+         TO:
+
+         let sum (#P: int * int) : int =
+           let result, i = #P in result + i
+
+         In this first section we replace `result, i` with `#P`. *)
       match lamb.binders with
       (* TODO: currently works only if there is one param *)
       | (Raw.PPar pp, []) ->
@@ -495,7 +541,7 @@ and simpl_fun lamb' : expr result =
         | Raw.PTyped pt ->
           begin
           match pt.value.pattern with
-          | Raw.PVar _ -> args
+          | Raw.PVar _ -> params
           | Raw.PTuple _ ->
             [Raw.PTyped
                {region=Region.ghost;
@@ -503,12 +549,12 @@ and simpl_fun lamb' : expr result =
                   { pt.value with pattern=
                                     Raw.PVar {region=Region.ghost;
                                               value="#P"}}}]
-          | _ -> args
+          | _ -> params
         end
-        | _ -> args)
-      | _ -> args
+        | _ -> params)
+      | _ -> params
     in
-    let%bind p_args = bind_map_list pattern_to_typed_var args in
+    let%bind p_params = bind_map_list pattern_to_typed_var params in
     let aux ((var : Raw.variable) , ty_opt) =
       match var.value , ty_opt with
       | "storage" , None ->
@@ -520,71 +566,62 @@ and simpl_fun lamb' : expr result =
         ok (var , ty')
       )
     in
-    bind_map_list aux p_args
+    bind_map_list aux p_params
   in
-  match args' with
-  | [ single ] -> (
+  let%bind body =
+    if (List.length params' > 1) then ok lamb.body
+    else
+    let original_params = nseq_to_list lamb.binders in
+    let%bind destruct =
+      match original_params with
+      | hd :: _ -> ok @@ hd
+      | [] -> fail @@ corner_case "Somehow have no parameters in function during tuple param destructure"
+    in
+    match destruct with (* Handle tuple parameter destructuring *)
+    (* In this section we create a let ... in that binds the original parameters *)
+    | Raw.PPar pp ->
+      (match pp.value.inside with
+       | Raw.PTyped pt ->
+         let vars = pt.value in
+         (match vars.pattern with
+          | PTuple vars ->
+            let let_in_binding: Raw.let_binding =
+              {binders = (PTuple vars, []) ;
+               lhs_type=None;
+               eq=Region.ghost;
+               let_rhs=(Raw.EVar {region=Region.ghost; value="#P"});
+              }
+            in
+            let let_in: Raw.let_in =
+              {kwd_let= Region.ghost;
+               binding= let_in_binding;
+               kwd_in= Region.ghost;
+               body= lamb.body;
+              }
+            in
+            ok (Raw.ELetIn
+                  {
+                    region=Region.ghost;
+                    value=let_in
+                  })
+          | Raw.PVar _ -> ok lamb.body
+          | _ ->  ok lamb.body)
+       | _ ->  ok lamb.body)
+    | _ ->  ok lamb.body
+  in
+  let%bind (body , body_type) = expr_to_typed_expr body in
+  let%bind output_type =
+    bind_map_option simpl_type_expression body_type in
+  let%bind body = simpl_expression body in
+  let rec layer_arguments (arguments: (Raw.variable * type_expression) list) =
+    match arguments with
+    | hd :: tl ->
       let (binder , input_type) =
-        (Var.of_name (fst single).value , snd single) in
-      let%bind body =
-        let original_args = nseq_to_list lamb.binders in
-        let destruct = List.hd original_args in
-        match destruct with (* Handle tuple parameter destructuring *)
-        | Raw.PPar pp ->
-          (match pp.value.inside with
-           | Raw.PTyped pt ->
-             let vars = pt.value in
-             (match vars.pattern with
-             | PTuple vars ->
-               let let_in_binding: Raw.let_binding =
-                 {binders = (PTuple vars, []) ;
-                  lhs_type=None;
-                  eq=Region.ghost;
-                  let_rhs=(Raw.EVar {region=Region.ghost; value="#P"});
-                 }
-               in
-               let let_in: Raw.let_in =
-                 {kwd_let= Region.ghost;
-                  binding= let_in_binding;
-                  kwd_in= Region.ghost;
-                  body= lamb.body;
-                 }
-               in
-               ok (Raw.ELetIn
-                     {
-                       region=Region.ghost;
-                       value=let_in
-                     })
-             | Raw.PVar _ -> ok lamb.body
-             | _ ->  ok lamb.body)
-           | _ ->  ok lamb.body)
-        | _ ->  ok lamb.body
-      in
-      let%bind (body , body_type) = expr_to_typed_expr body in
-      let%bind output_type =
-        bind_map_option simpl_type_expression body_type in
-      let%bind result = simpl_expression body in
-      return @@ e_lambda ~loc binder (Some input_type) output_type result
-
-    )
-  | _ -> (
-      let arguments_name = Var.of_name "arguments" in (* TODO wrong, should be fresh? *)
-      let (binder , input_type) =
-        let type_expression = T_tuple (List.map snd args') in
-        (arguments_name , type_expression) in
-      let%bind (body , body_type) = expr_to_typed_expr lamb.body in
-      let%bind output_type =
-        bind_map_option simpl_type_expression body_type in
-      let%bind result = simpl_expression body in
-      let wrapped_result =
-        let aux = fun i ((name : Raw.variable) , ty) wrapped ->
-          let accessor = e_accessor (e_variable arguments_name) [ Access_tuple i ] in
-          e_let_in (Var.of_name name.value , Some ty) accessor wrapped
-        in
-        let wraps = List.mapi aux args' in
-        List.fold_right' (fun x f -> f x) result wraps in
-      return @@ e_lambda ~loc binder (Some (make_t @@ input_type)) output_type wrapped_result
-    )
+        (Var.of_name (fst hd).value , snd hd) in
+      e_lambda ~loc (binder) (Some input_type) output_type (layer_arguments tl)
+    | [] -> body
+  in
+  return @@ layer_arguments params'
 
 
 and simpl_logic_expression ?te_annot (t:Raw.logic_expr) : expr result =

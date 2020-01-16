@@ -51,7 +51,7 @@ let annotation () : unit result =
     expect_eq_evaluate program "lst" (e_list [])
   in
   let%bind () =
-    expect_eq_evaluate program "address" (e_address "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx")
+    expect_eq_evaluate program "my_address" (e_address "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx")
   in
   ok ()
 
@@ -682,13 +682,114 @@ let record () : unit result  =
     let make_expected = fun n -> ez_e_record [
         ("a" , e_int n) ;
         ("b" , e_int 2048) ;
-        ("c" , e_int n)
+        ("c" , e_int 42)
       ] in
     expect_eq_n program "modify_abc" make_input make_expected
   in
   let%bind () =
     let expected = record_ez_int ["a";"b";"c";"d";"e"] 23 in
     expect_eq_evaluate program "br" expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez_e_record [("inner", record_ez_int ["a";"b";"c"] n)] in
+    let make_expected = fun n -> ez_e_record [("inner", ez_e_record[
+        ("a" , e_int n) ;
+        ("b" , e_int 2048) ;
+        ("c" , e_int n)
+    ])] in
+    expect_eq_n program "modify_inner" make_input make_expected
+  in
+  ok ()
+
+let record_mligo () : unit result  =
+  let%bind program = mtype_file "./contracts/record.mligo" in
+  let%bind () =
+    let expected = record_ez_int ["foo" ; "bar"] 0 in
+    expect_eq_evaluate program "fb" expected
+  in
+  let%bind () =
+    let%bind () = expect_eq_evaluate program "a" (e_int 42) in
+    let%bind () = expect_eq_evaluate program "b" (e_int 142) in
+    let%bind () = expect_eq_evaluate program "c" (e_int 242) in
+    ok ()
+  in
+  let%bind () =
+    let make_input = record_ez_int ["foo" ; "bar"] in
+    let make_expected = fun n -> e_int (2 * n) in
+    expect_eq_n program "projection" make_input make_expected
+  in
+  let%bind () =
+    let make_input = record_ez_int ["foo" ; "bar"] in
+    let make_expected = fun n -> ez_e_record [("foo" , e_int 256) ; ("bar" , e_int n) ] in
+    expect_eq_n program "modify" make_input make_expected
+  in
+  let%bind () =
+    let make_input = record_ez_int ["a" ; "b" ; "c"] in
+    let make_expected = fun n -> ez_e_record [
+        ("a" , e_int n) ;
+        ("b" , e_int 2048) ;
+        ("c" , e_int 42)
+      ] in
+    expect_eq_n program "modify_abc" make_input make_expected
+  in
+  let%bind () =
+    let expected = record_ez_int ["a";"b";"c";"d";"e"] 23 in
+    expect_eq_evaluate program "br" expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez_e_record [("inner", record_ez_int ["a";"b";"c"] n)] in
+    let make_expected = fun n -> ez_e_record [("inner", ez_e_record[
+        ("a" , e_int n) ;
+        ("b" , e_int 2048) ;
+        ("c" , e_int n)
+    ])] in
+    expect_eq_n program "modify_inner" make_input make_expected
+  in
+  ok ()
+
+let record_religo () : unit result  =
+  let%bind program = retype_file "./contracts/record.religo" in
+  let%bind () =
+    let expected = record_ez_int ["foo" ; "bar"] 0 in
+    expect_eq_evaluate program "fb" expected
+  in
+  let%bind () =
+    let%bind () = expect_eq_evaluate program "a" (e_int 42) in
+    let%bind () = expect_eq_evaluate program "b" (e_int 142) in
+    let%bind () = expect_eq_evaluate program "c" (e_int 242) in
+    ok ()
+  in
+  let%bind () =
+    let make_input = record_ez_int ["foo" ; "bar"] in
+    let make_expected = fun n -> e_int (2 * n) in
+    expect_eq_n program "projection" make_input make_expected
+  in
+  let%bind () =
+    let make_input = record_ez_int ["foo" ; "bar"] in
+    let make_expected = fun n -> ez_e_record [("foo" , e_int 256) ; ("bar" , e_int n) ] in
+    expect_eq_n program "modify" make_input make_expected
+  in
+  let%bind () =
+    let make_input = record_ez_int ["a" ; "b" ; "c"] in
+    let make_expected = fun n -> ez_e_record [
+        ("a" , e_int n) ;
+        ("b" , e_int 2048) ;
+        ("c" , e_int 42)
+      ] in
+    expect_eq_n program "modify_abc" make_input make_expected
+  in
+  let%bind () =
+    let expected = record_ez_int ["a";"b";"c";"d";"e"] 23 in
+    expect_eq_evaluate program "br" expected
+  in
+  let%bind () =
+    let make_input = fun n -> ez_e_record [("inner", record_ez_int ["a";"b";"c"] n)] in
+    let make_expected = fun n -> ez_e_record [("inner", ez_e_record[
+        ("a" , e_int n) ;
+        ("b" , e_int 2048) ;
+        ("c" , e_int n)
+    ])] in
+    expect_eq_n program "modify_inner" make_input make_expected
   in
   ok ()
 
@@ -870,7 +971,7 @@ let map_ type_f path : unit result =
     let make_expected = fun _ -> e_some @@ e_int 4 in
     expect_eq_n program "get_" make_input make_expected
   in
-  let%bind () = 
+  let%bind () =
     let input_map = ez [(23, 10) ; (42, 4)] in
     expect_eq program "mem" (e_tuple [(e_int 23) ; input_map]) (e_bool true)
   in
@@ -1057,27 +1158,27 @@ let loop () : unit result =
     let make_input = e_nat in
     let make_expected = fun n -> e_nat (n * (n + 1) / 2) in
     expect_eq_n_pos_mid program "while_sum" make_input make_expected in
-  let%bind () = 
+  let%bind () =
     let make_input = e_nat in
     let make_expected = fun n -> e_int (n * (n + 1) / 2) in
     expect_eq_n_pos_mid program "for_sum" make_input make_expected in
   let input = e_unit () in
-  let%bind () = 
+  let%bind () =
     let expected = e_pair (e_int 3) (e_string "totototo") in
     expect_eq program "for_collection_list" input expected in
-  let%bind () = 
+  let%bind () =
     let expected = e_pair (e_int 6) (e_string "totototo") in
     expect_eq program "for_collection_set" input expected in
-  let%bind () = 
+  let%bind () =
     let expected = e_pair (e_int 6) (e_string "123") in
     expect_eq program "for_collection_map_kv" input expected in
-  let%bind () = 
+  let%bind () =
     let expected = (e_string "123") in
     expect_eq program "for_collection_map_k" input expected in
-  let%bind () = 
+  let%bind () =
     let expected = (e_int 0) in
     expect_eq program "for_collection_empty" input expected in
-  let%bind () = 
+  let%bind () =
     let expected = (e_int 13) in
     expect_eq program "for_collection_if_and_local_var" input expected in
   let%bind () =
@@ -1680,12 +1781,12 @@ let implicit_account_religo () : unit result =
   ok ()
 
 let tuples_sequences_functions_religo () : unit result =
-  let%bind _ = retype_file "./contracts/tuples_sequences_functions.religo" in    
+  let%bind _ = retype_file "./contracts/tuples_sequences_functions.religo" in
   ok ()
 
 let is_nat () : unit result =
   let%bind program = type_file "./contracts/isnat.ligo" in
-  let%bind () = 
+  let%bind () =
     let input = e_int 10 in
     let expected = e_some (e_nat 10) in
     expect_eq program "main" input expected
@@ -1698,7 +1799,7 @@ let is_nat () : unit result =
 
 let is_nat_mligo () : unit result =
   let%bind program = mtype_file "./contracts/isnat.mligo" in
-  let%bind () = 
+  let%bind () =
     let input = e_int 10 in
     let expected = e_some (e_nat 10) in
     expect_eq program "main" input expected
@@ -1711,7 +1812,7 @@ let is_nat_mligo () : unit result =
 
 let is_nat_religo () : unit result =
   let%bind program = retype_file "./contracts/isnat.religo" in
-  let%bind () = 
+  let%bind () =
     let input = e_int 10 in
     let expected = e_some (e_nat 10) in
     expect_eq program "main" input expected
@@ -1745,7 +1846,7 @@ let deep_access_ligo () : unit result =
     let make_expected = e_string "one" in
     expect_eq program "nested_record" make_input make_expected in
   ok ()
-  
+
 
 let entrypoints_ligo () : unit result =
   let%bind _program = type_file "./contracts/entrypoints.ligo" in
@@ -1766,7 +1867,7 @@ let chain_id () : unit result =
     Tezos_base__TzPervasives.Chain_id.zero in
   let make_input = e_chain_id pouet in
   let make_expected = e_chain_id pouet in
-  let%bind () = expect_eq program "get_chain_id" make_input make_expected in
+  let%bind () = expect_eq program "chain_id" make_input make_expected in
   ok ()
 
 let key_hash () : unit result =
@@ -1778,6 +1879,16 @@ let key_hash () : unit result =
   let make_input = e_pair (e_key_hash pkh_str) (e_key pk_str) in
   let make_expected = e_pair (e_bool true) (e_key_hash pkh_str) in
   let%bind () = expect_eq program "check_hash_key" make_input make_expected in
+  ok ()
+
+let curry () : unit result =
+  let%bind program = mtype_file "./contracts/curry.mligo" in
+  let%bind () =
+    expect_eq program "main" (e_int 2) (e_int 12)
+  in
+  let%bind () =
+    expect_eq program "partial_apply" (e_int 2) (e_int 12)
+  in
   ok ()
 
 let set_delegate () : unit result =
@@ -1837,46 +1948,46 @@ let bytes_unpack () : unit result =
   let%bind () = expect_eq program "id_address" (e_address addr) (e_some (e_address addr)) in
   ok ()
 
-let empty_case () : unit result = 
+let empty_case () : unit result =
   let%bind program = type_file "./contracts/empty_case.ligo" in
   let%bind () =
     let input _ = e_constructor "Bar" (e_int 1) in
-    let expected _ = e_int 1 in 
+    let expected _ = e_int 1 in
     expect_eq_n program "main" input expected
-  in 
+  in
   let%bind () =
     let input _ = e_constructor "Baz" (e_unit ()) in
-    let expected _ = e_int (-1) in 
+    let expected _ = e_int (-1) in
     expect_eq_n program "main" input expected
-  in 
+  in
   ok ()
 
-let empty_case_mligo () : unit result = 
+let empty_case_mligo () : unit result =
   let%bind program = mtype_file "./contracts/empty_case.mligo" in
   let%bind () =
     let input _ = e_constructor "Bar" (e_int 1) in
-    let expected _ = e_int 1 in 
+    let expected _ = e_int 1 in
     expect_eq_n program "main" input expected
-  in 
+  in
   let%bind () =
     let input _ = e_constructor "Baz" (e_unit ()) in
-    let expected _ = e_int (-1) in 
+    let expected _ = e_int (-1) in
     expect_eq_n program "main" input expected
-  in 
+  in
   ok ()
 
-let empty_case_religo () : unit result = 
+let empty_case_religo () : unit result =
   let%bind program = retype_file "./contracts/empty_case.religo" in
   let%bind () =
     let input _ = e_constructor "Bar" (e_int 1) in
-    let expected _ = e_int 1 in 
+    let expected _ = e_int 1 in
     expect_eq_n program "main" input expected
-  in 
+  in
   let%bind () =
     let input _ = e_constructor "Baz" (e_unit ()) in
-    let expected _ = e_int (-1) in 
+    let expected _ = e_int (-1) in
     expect_eq_n program "main" input expected
-  in 
+  in
   ok ()
 
 let main = test_suite "Integration (End to End)" [
@@ -1909,6 +2020,8 @@ let main = test_suite "Integration (End to End)" [
     test "tuple (mligo)" tuple_mligo ;
     test "tuple (religo)" tuple_religo ;
     test "record" record ;
+    test "record (mligo)" record_mligo ;
+    test "record (religo)" record_religo ;
     test "condition simple" condition_simple ;
     test "condition (ligo)" condition ;
     test "condition (mligo)" condition_mligo ;
@@ -1943,7 +2056,7 @@ let main = test_suite "Integration (End to End)" [
     test "option (religo)" reoption ;
     test "map" map ;
     test "map (mligo)" mmap ;
-    test "map (religo)" remap ;
+    (* test "map (religo)" remap ; *)
     test "big_map" big_map ;
     test "big_map (mligo)" mbig_map ;
     test "big_map (religo)" rebig_map ;
@@ -2019,6 +2132,7 @@ let main = test_suite "Integration (End to End)" [
     test "simple_access (ligo)" simple_access_ligo;
     test "deep_access (ligo)" deep_access_ligo;
     test "entrypoints (ligo)" entrypoints_ligo ;
+    test "curry (mligo)" curry ;
     test "type tuple destruct (mligo)" type_tuple_destruct ;
     test "let in multi-bind (mligo)" let_in_multi_bind ;
     test "tuple param destruct (mligo)" tuple_param_destruct ;

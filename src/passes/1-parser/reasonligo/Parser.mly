@@ -370,7 +370,7 @@ ptuple:
     in PTuple {value=$1; region} }
 
 unit:
-  "(" ")" { {region = cover $1 $2; value = ghost, ghost} }
+  "(" ")" { {region = cover $1 $2; value = $1, $2} }
 
 (* Expressions *)
 
@@ -689,6 +689,7 @@ common_expr:
 | "<bytes>"                           {                     EBytes $1 }
 | "<ident>" | module_field            {                       EVar $1 }
 | projection                          {                      EProj $1 }
+| update_record                       {                    EUpdate $1 }
 | "<string>"                          {           EString (String $1) }
 | unit                                {                      EUnit $1 }
 | "false"                             {  ELogic (BoolExpr (False $1)) }
@@ -775,6 +776,25 @@ projection:
                        field_path = snd $4}
     in {region; value} }
 
+path :
+ "<ident>"  {Name $1}
+| projection { Path $1}
+
+update_record : 
+  "{""..."path "," sep_or_term_list(field_assignment,",") "}" {
+    let region = cover $1 $6 in
+    let ne_elements, terminator = $5 in
+    let value = {
+      lbrace = $1;
+      record = $3;
+      kwd_with = $4;
+      updates  = { value = {compound = Braces($1,$6);
+                  ne_elements;
+                  terminator};
+                  region = cover $4 $6};
+      rbrace = $6}
+    in {region; value} }
+
 sequence_or_record_in:
   expr ";" sep_or_term_list(expr,";") {
     let elts, _region = $3 in
@@ -790,7 +810,7 @@ sequence_or_record_in:
 
 sequence_or_record:
   "{" sequence_or_record_in "}" {
-    let compound = Braces($1, $3) in
+    let compound = Braces ($1,$3) in
     let region   = cover $1 $3 in
     match $2 with
       PaSequence s ->

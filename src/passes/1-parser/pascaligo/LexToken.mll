@@ -126,7 +126,7 @@ let proj_token = function
 | Bytes Region.{region; value = s,b} ->
     region,
     sprintf "Bytes (\"%s\", \"0x%s\")"
-      s (Hex.to_string b)
+      s (Hex.show b)
 
 | Int Region.{region; value = s,n} ->
     region, sprintf "Int (\"%s\", %s)" s (Z.to_string n)
@@ -389,6 +389,15 @@ let lexicon : lexis =
       cstr = build constructors;
       res  = reserved}
 
+(* Keywords *)
+
+type kwd_err = Invalid_keyword
+
+let mk_kwd ident region =
+  match SMap.find_opt ident lexicon.kwd with
+    Some mk_kwd -> Ok (mk_kwd region)
+  |        None -> Error Invalid_keyword
+
 (* Identifiers *)
 
 type ident_err = Reserved_name
@@ -434,7 +443,7 @@ let mk_string lexeme region = String Region.{region; value=lexeme}
 
 let mk_bytes lexeme region =
   let norm = Str.(global_replace (regexp "_") "" lexeme) in
-  let value = lexeme, Hex.of_string norm
+  let value = lexeme, `Hex norm
   in Bytes Region.{region; value}
 
 type int_err = Non_canonical_zero
