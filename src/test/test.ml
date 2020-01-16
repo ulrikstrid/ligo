@@ -16,5 +16,6 @@ let () =
     Time_lock_tests.main ;
     Testing_example_pascaligo.main ;
     Testing_example_cameligo.main ;
+    Testing_example_religo.main
   ] ;
   ()
