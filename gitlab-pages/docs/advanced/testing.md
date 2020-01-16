@@ -62,6 +62,7 @@ Next you'll want to create a file `src/test/my_tests.ml`:
 
 open Trace
 open Test_helpers
+open Ast_simplified
 
 let type_file f =
   (* Change this line to use the name of your syntax, e.g. pascaligo, cameligo... *)
@@ -124,6 +125,10 @@ You are now ready to begin testing your contract.
 In order to demonstrate testing a contract, we'll need an example. Lets try
 testing a simple access control module:
 
+<!--DOCUSAURUS_CODE_TABS-->
+
+<!--CameLIGO-->
+
 ```cameligo
 (* access_control.mligo *)
 
@@ -142,9 +147,14 @@ let at_least_owner (parameter, storage: address * storage) : bool =
   then true
   else false
 
-(* Main function omitted *)
+let main (parameter, storage: auth * storage) : bool =
+  match parameter with
+  | At_least_controller addr -> at_least_controller (addr, storage)
+  | At_least_owner addr -> at_least_owner (addr, storage)
 
 ```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
 
 To thoroughly test a contract like this we aim for full 
 [code coverage](https://en.wikipedia.org/wiki/Code_coverage). Full code coverage does
@@ -213,8 +223,9 @@ let at_least_controller_not () =
                              ("controller", e_address controller_addr)]
   in
   let%bind () = expect_eq program "at_least_controller"
-    (e_pair us_addr storage)
-    (e_pair (e_list []) (e_bool false))
+    (e_pair (e_address us_addr) storage)
+    (e_bool false)
+  in ok ()
 
 (* Test this returns true when we're controller *)
 let at_least_controller_c () =
@@ -225,8 +236,9 @@ let at_least_controller_c () =
                              ("controller", e_address controller_addr)]
   in
   let%bind () = expect_eq program "at_least_controller"
-    (e_pair us_addr storage)
-    (e_pair (e_list []) (e_bool true))
+    (e_pair (e_address us_addr) storage)
+    (e_bool true)
+  in ok ()
 
 (* Test this returns true when we're owner *)
 let at_least_controller_owner () =
@@ -237,8 +249,9 @@ let at_least_controller_owner () =
                              ("controller", e_address controller_addr)]
   in
   let%bind () = expect_eq program "at_least_controller"
-    (e_pair us_addr storage)
-    (e_pair (e_list []) (e_bool true))
+    (e_pair (e_address us_addr) storage)
+    (e_bool true)
+  in ok ()
 ```
 
 Once we're ready to try running our tests, entries have to be added to the test
@@ -261,5 +274,7 @@ Then run the makefile at the top of the LIGO source tree, and you should see
 pass/fail for your tests:
 
 ```
-Set all this up and run tests for it.
+[OK]            Access Control                 0   at_least_controller false when not.
+[OK]            Access Control                 1   at_least_controller true when controller.
+[OK]            Access Control                 2   at_least_controller true when owner.
 ```
