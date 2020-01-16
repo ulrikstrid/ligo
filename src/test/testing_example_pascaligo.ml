@@ -2,9 +2,9 @@ open Trace
 open Test_helpers
 open Ast_simplified
 
-let type_file f =
+let mtype_file f =
   (* Change this line to use the name of your syntax, e.g. pascaligo, cameligo... *)
-  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "cameligo") in
+  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "pascaligo") in
   let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
   ok @@ (typed,state)
 
@@ -14,14 +14,14 @@ let get_program =
     | Some s -> ok s
     | None -> (
         (* Change this line to use the relative path to your contract *)
-        let%bind (program , state) = type_file "./contracts/access_control.mligo" in
+        let%bind (program , state) = mtype_file "./contracts/access_control.ligo" in
         s := Some (program , state) ;
         ok (program , state)
       )
 
 let compile_main () =
   (* Change this line to use the relative path to your contract and your syntax name *)
-  let%bind simplified      = Ligo.Compile.Of_source.compile "./contracts/access_control.mligo" (Syntax_name "cameligo") in
+  let%bind simplified      = Ligo.Compile.Of_source.compile "./contracts/access_control.ligo" (Syntax_name "cameligo") in
   let%bind typed_prg,_ = Ligo.Compile.Of_simplified.compile simplified in
   let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
   (* Possibly change this line to use the entrypoint name of your contract *)
@@ -77,7 +77,7 @@ let at_least_controller_owner () =
   in ok ()
 
 (* Change this line to use a name you'll recognize for your test suite *)
-let main = test_suite "Access Control" [
+let main = test_suite "Access Control (PascaLIGO)" [
     test "at_least_controller false when not" at_least_controller_not ;
     test "at_least_controller true when controller" at_least_controller_c ;
     test "at_least_controller true when owner" at_least_controller_owner ;

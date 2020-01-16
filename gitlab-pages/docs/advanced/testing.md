@@ -127,6 +127,46 @@ testing a simple access control module:
 
 <!--DOCUSAURUS_CODE_TABS-->
 
+<!--PascaLIGO-->
+
+```pascaligo
+(* access_control.ligo *)
+
+type storage is record [
+  owner: address;
+  controller: address;
+]
+
+type auth is
+| At_least_controller of address
+| At_least_owner of address
+
+function at_least_controller (const parameter: address; const storage: storage) : bool is
+  begin
+    var result: bool := False ;
+    if (parameter = storage.owner) or (parameter = storage.controller)
+    then result := True
+    else result := False
+  end with result
+
+function at_least_owner (const parameter: address; const storage: storage) : bool is
+  begin
+    var result: bool := False ;
+    if parameter = storage.owner
+    then result := True
+    else result := False
+  end with result
+
+function main (const parameter: auth; const storage: storage) : (list(operation) * bool) is
+  begin
+    var result : bool := False ;
+    case parameter of
+    | At_least_controller(addr) -> result := at_least_controller(addr, storage)
+    | At_least_owner(addr) -> result := at_least_owner(addr, storage)
+    end
+  end with ((nil: list(operation)), result)
+```
+
 <!--CameLIGO-->
 
 ```cameligo
@@ -162,12 +202,30 @@ not necessarily mean we've tested every case, but it's the bare minimum requirem
 for us to have even *possibly* tested every case. So we have to consider every case
 for these entrypoints.
 
+<!--DOCUSAURUS_CODE_TABS-->
+
+<!--PascaLIGO-->
+
+```pascaligo
+function at_least_controller (const parameter: address; const storage: storage) : bool is
+  begin
+    var result: bool := False ;
+    if (parameter = storage.owner) or (parameter = storage.controller)
+    then result := True
+    else result := False
+  end with result
+```
+
+<!--CameLIGO-->
+
 ```cameligo
 let at_least_controller (parameter, storage: address * storage) : bool =
   if (parameter = storage.owner || parameter = storage.controller)
   then true
   else false
 ```
+
+<!--END_DOCUSAURUS_CODE_TABS-->
 
 The cases we have for this entrypoint are:
 

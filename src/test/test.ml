@@ -14,6 +14,7 @@ let () =
     Multisig_v2_tests.main ;
     Replaceable_id_tests.main ;
     Time_lock_tests.main ;
-    Testing_example.main ;
+    Testing_example_pascaligo.main ;
+    Testing_example_cameligo.main ;
   ] ;
   ()
