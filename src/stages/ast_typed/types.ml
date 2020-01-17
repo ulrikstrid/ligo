@@ -5,8 +5,10 @@ include Stage_common.Types
 
 type program = declaration Location.wrap list
 
+and inline = bool
+
 and declaration =
-  | Declaration_constant of (named_expression * (full_environment * full_environment))
+  | Declaration_constant of (named_expression * inline * (full_environment * full_environment))
   (* | Macro_declaration of macro_declaration *)
 
 and environment_element_definition =
@@ -64,6 +66,7 @@ and let_in = {
   binder: expression_variable;
   rhs: ae;
   result: ae;
+  inline: inline;
 }
 
 and 'a expression' =
@@ -82,6 +85,7 @@ and 'a expression' =
   (* Record *)
   | E_record of ('a) label_map
   | E_record_accessor of (('a) * label)
+  | E_record_update of ('a * (label* 'a) list)
   (* Data Structures *)
   | E_map of (('a) * ('a)) list
   | E_big_map of (('a) * ('a)) list

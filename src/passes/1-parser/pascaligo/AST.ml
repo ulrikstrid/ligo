@@ -2,7 +2,7 @@
 
 (* To disable warning about multiply-defined record labels. *)
 
-[@@@warning "-30-42"]
+[@@@warning "-30-40-42"]
 
 (* Utilities *)
 
@@ -20,22 +20,6 @@ open Utils
 *)
 
 type 'a reg = 'a Region.reg
-
-let rec last to_region = function
-    [] -> Region.ghost
-|  [x] -> to_region x
-| _::t -> last to_region t
-
-let nseq_to_region to_region (hd,tl) =
-  Region.cover (to_region hd) (last to_region tl)
-
-let nsepseq_to_region to_region (hd,tl) =
-  let reg (_, item) = to_region item in
-  Region.cover (to_region hd) (last reg tl)
-
-let sepseq_to_region to_region = function
-      None -> Region.ghost
-| Some seq -> nsepseq_to_region to_region seq
 
 (* Keywords of LIGO *)
 
@@ -85,32 +69,32 @@ type c_Unit  = Region.t
 
 (* Symbols *)
 
-type semi     = Region.t
-type comma    = Region.t
-type lpar     = Region.t
-type rpar     = Region.t
-type lbrace   = Region.t
-type rbrace   = Region.t
-type lbracket = Region.t
-type rbracket = Region.t
-type cons     = Region.t
-type vbar     = Region.t
-type arrow    = Region.t
-type assign   = Region.t
-type equal    = Region.t
-type colon    = Region.t
-type lt       = Region.t
-type leq      = Region.t
-type gt       = Region.t
-type geq      = Region.t
-type neq      = Region.t
-type plus     = Region.t
-type minus    = Region.t
-type slash    = Region.t
-type times    = Region.t
-type dot      = Region.t
-type wild     = Region.t
-type cat      = Region.t
+type semi     = Region.t  (* ";"   *)
+type comma    = Region.t  (* ","   *)
+type lpar     = Region.t  (* "("   *)
+type rpar     = Region.t  (* ")"   *)
+type lbrace   = Region.t  (* "{"   *)
+type rbrace   = Region.t  (* "}"   *)
+type lbracket = Region.t  (* "["   *)
+type rbracket = Region.t  (* "]"   *)
+type cons     = Region.t  (* "#"   *)
+type vbar     = Region.t  (* "|"   *)
+type arrow    = Region.t  (* "->"  *)
+type assign   = Region.t  (* ":="  *)
+type equal    = Region.t  (* "="   *)
+type colon    = Region.t  (* ":"   *)
+type lt       = Region.t  (* "<"   *)
+type leq      = Region.t  (* "<="  *)
+type gt       = Region.t  (* ">"   *)
+type geq      = Region.t  (* ">="  *)
+type neq      = Region.t  (* "=/=" *)
+type plus     = Region.t  (* "+"   *)
+type minus    = Region.t  (* "-"   *)
+type slash    = Region.t  (* "/"   *)
+type times    = Region.t  (* "*"   *)
+type dot      = Region.t  (* "."   *)
+type wild     = Region.t  (* "_"   *)
+type cat      = Region.t  (* "^"   *)
 
 (* Virtual tokens *)
 
@@ -125,6 +109,7 @@ type field_name = string reg
 type map_name   = string reg
 type set_name   = string reg
 type constr     = string reg
+type attribute   = string reg
 
 (* Parentheses *)
 
@@ -159,6 +144,8 @@ type t = {
 
 and ast = t
 
+and attributes = attribute list reg
+
 and declaration =
   TypeDecl  of type_decl reg
 | ConstDecl of const_decl reg
@@ -171,7 +158,8 @@ and const_decl = {
   const_type : type_expr;
   equal      : equal;
   init       : expr;
-  terminator : semi option
+  terminator : semi option;
+  attributes : attributes;
 }
 
 (* Type declarations *)
@@ -212,18 +200,24 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 
 and fun_expr = {
   kwd_function : kwd_function;
-  name         : variable option;
+  param        : parameters;
+  colon        : colon;
+  ret_type     : type_expr;
+  kwd_is       : kwd_is;
+  return       : expr
+}
+
+and fun_decl = {
+  kwd_function : kwd_function;
+  fun_name     : variable;
   param        : parameters;
   colon        : colon;
   ret_type     : type_expr;
   kwd_is       : kwd_is;
   block_with   : (block reg * kwd_with) option;
-  return       : expr
-}
-
-and fun_decl = {
-  fun_expr   : fun_expr reg;
-  terminator : semi option
+  return       : expr;
+  terminator   : semi option;
+  attributes   : attributes;
 }
 
 and parameters = (param_decl, semi) nsepseq par reg
@@ -279,7 +273,7 @@ and var_decl = {
   var_type   : type_expr;
   assign     : assign;
   init       : expr;
-  terminator : semi option
+  terminator : semi option;
 }
 
 and instruction =
@@ -335,7 +329,7 @@ and record_patch = {
   kwd_patch  : kwd_patch;
   path       : path;
   kwd_with   : kwd_with;
-  record_inj : field_assign reg ne_injection reg
+  record_inj : record reg
 }
 
 and cond_expr = {
@@ -454,8 +448,9 @@ and expr =
 | EList   of list_expr
 | ESet    of set_expr
 | EConstr of constr_expr
-| ERecord of field_assign reg ne_injection reg
+| ERecord of record reg
 | EProj   of projection reg
+| EUpdate of update reg
 | EMap    of map_expr
 | EVar    of Lexer.lexeme reg
 | ECall   of fun_call
@@ -567,11 +562,18 @@ and field_assign = {
   equal      : equal;
   field_expr : expr
 }
+and record = field_assign reg ne_injection
 
 and projection = {
   struct_name : variable;
   selector    : dot;
   field_path  : (selection, dot) nsepseq
+}
+
+and update = {
+  record : path;
+  kwd_with : kwd_with;
+  updates : record reg;
 }
 
 and selection =
@@ -613,9 +615,24 @@ and list_pattern =
 | PParCons  of (pattern * cons * pattern) par reg
 | PCons     of (pattern, cons) nsepseq reg
 
+
 (* Projecting regions *)
 
-open! Region
+let rec last to_region = function
+    [] -> Region.ghost
+|  [x] -> to_region x
+| _::t -> last to_region t
+
+let nseq_to_region to_region (hd,tl) =
+  Region.cover (to_region hd) (last to_region tl)
+
+let nsepseq_to_region to_region (hd,tl) =
+  let reg (_, item) = to_region item in
+  Region.cover (to_region hd) (last reg tl)
+
+let sepseq_to_region to_region = function
+      None -> Region.ghost
+| Some seq -> nsepseq_to_region to_region seq
 
 let type_expr_to_region = function
   TProd   {region; _}
@@ -637,6 +654,7 @@ let rec expr_to_region = function
 | ERecord e -> record_expr_to_region e
 | EMap    e -> map_expr_to_region e
 | ETuple  e -> tuple_expr_to_region e
+| EUpdate {region; _}
 | EProj  {region; _}
 | EVar   {region; _}
 | ECall  {region; _}

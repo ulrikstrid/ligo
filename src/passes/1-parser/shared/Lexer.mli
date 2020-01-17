@@ -65,6 +65,7 @@ module type TOKEN =
     type   nat_err = Invalid_natural
                    | Non_canonical_zero_nat
     type   sym_err = Invalid_symbol
+    type  attr_err = Invalid_attribute
 
     (* Injections *)
 
@@ -76,6 +77,8 @@ module type TOKEN =
     val mk_string : lexeme -> Region.t -> token
     val mk_bytes  : lexeme -> Region.t -> token
     val mk_constr : lexeme -> Region.t -> token
+    val mk_attr   : lexeme -> Region.t -> (token,  attr_err) result
+    val mk_attr2  : lexeme -> Region.t -> (token,  attr_err) result
     val eof       : Region.t -> token
 
     (* Predicates *)
@@ -124,9 +127,17 @@ module type S =
     type file_path = string
     type logger = Markup.t list -> token -> unit
 
+    type window =
+      Nil
+    | One of token
+    | Two of token * token
+
+    val slide : token -> window -> window
+
     type instance = {
       read     : ?log:logger -> Lexing.lexbuf -> token;
       buffer   : Lexing.lexbuf;
+      get_win  : unit -> window;
       get_pos  : unit -> Pos.t;
       get_last : unit -> Region.t;
       close    : unit -> unit
@@ -138,11 +149,13 @@ module type S =
 
     type error
 
+    val error_to_string : error -> string
+
     exception Error of error Region.reg
 
-    val print_error :
+    val format_error :
       ?offsets:bool -> [`Byte | `Point] ->
-      error Region.reg -> file:bool -> unit
+      error Region.reg -> file:bool -> string
 
   end
 

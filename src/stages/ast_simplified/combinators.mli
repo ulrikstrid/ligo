@@ -42,7 +42,7 @@ val ez_t_sum : ( string * type_expression ) list -> type_expression
 val t_function : type_expression -> type_expression -> type_expression
 val t_map : type_expression -> type_expression -> type_expression
 
-val t_operator : 'a type_operator -> type_expression list -> type_expression
+val t_operator : type_expression type_operator -> type_expression list -> type_expression result
 val t_set : type_expression -> type_expression
 
 val e_var : ?loc:Location.t -> string -> expression
@@ -84,7 +84,7 @@ val e_variable : ?loc:Location.t -> expression_variable -> expression
 val e_skip : ?loc:Location.t -> unit -> expression
 val e_loop : ?loc:Location.t -> expression -> expression -> expression
 val e_sequence : ?loc:Location.t -> expression -> expression -> expression
-val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option ) -> expression -> expression -> expression
+val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option ) -> inline -> expression -> expression -> expression
 val e_annotation : ?loc:Location.t -> expression -> type_expression -> expression
 val e_application : ?loc:Location.t -> expression -> expression -> expression
 val e_binop    : ?loc:Location.t -> constant -> expression -> expression -> expression
@@ -108,6 +108,7 @@ val e_typed_set : ?loc:Location.t -> expression list -> type_expression -> expre
 
 val e_lambda : ?loc:Location.t -> expression_variable -> type_expression option -> type_expression option -> expression -> expression
 val e_record : ?loc:Location.t -> expr Map.String.t -> expression
+val e_update : ?loc:Location.t -> expression -> (string * expression) list -> expression
 
 val e_ez_record : ?loc:Location.t -> ( string * expr ) list -> expression
 (*

@@ -217,7 +217,7 @@ let record_access_to_lr : type_value -> type_value AST.label_map -> string -> (t
   let%bind (_ , lst) =
     let aux = fun (ty , acc) cur ->
       let%bind (a , b) =
-        trace_strong (corner_case ~loc:__LOC__ "recard access pair") @@
+        trace_strong (corner_case ~loc:__LOC__ "record access pair") @@
         Mini_c.get_t_pair ty in
       match cur with
       | `Left -> ok (a , acc @ [(a , `Left)])
@@ -258,10 +258,10 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
     info title content in
   trace info @@
   match ae.expression with
-  | E_let_in {binder; rhs; result} ->
+  | E_let_in {binder; rhs; result; inline} ->
     let%bind rhs' = transpile_annotated_expression rhs in
     let%bind result' = transpile_annotated_expression result in
-    return (E_let_in ((binder, rhs'.type_value), rhs', result'))
+    return (E_let_in ((binder, rhs'.type_value), inline, rhs', result'))
   | E_literal l -> return @@ E_literal (transpile_literal l)
   | E_variable name -> (
       let%bind ele =
@@ -365,6 +365,23 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
       let%bind record' = transpile_annotated_expression record in
       let expr = List.fold_left aux record' path in
       ok expr
+  | E_record_update (record, updates) -> 
+      let%bind ty' = transpile_type (get_type_annotation record) in 
+      let%bind ty_lmap =
+        trace_strong (corner_case ~loc:__LOC__ "not a record") @@
+        get_t_record (get_type_annotation record) in
+      let%bind ty'_lmap = AST.bind_map_lmap transpile_type ty_lmap in
+      let aux (Label l, expr) =
+        let%bind path = 
+          trace_strong (corner_case ~loc:__LOC__ "record access") @@
+          record_access_to_lr ty' ty'_lmap l in
+        let path' = List.map snd path in
+        let%bind expr' = transpile_annotated_expression expr in
+        ok (path',expr') 
+      in
+      let%bind updates = bind_map_list aux updates in
+      let%bind record = transpile_annotated_expression record in
+      return @@ E_update (record, updates) 
   | E_constant (name , lst) -> (
       let iterator_generator iterator_name =
         let lambda_to_iterator_body (f : AST.annotated_expression) (l : AST.lambda) =
@@ -570,7 +587,7 @@ and transpile_annotated_expression (ae:AST.annotated_expression) : expression re
                   trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
                   List.find_opt (fun ((constructor_name' , _) , _) -> constructor_name' = constructor_name) lst in
                 let%bind body' = transpile_annotated_expression body in
-                return @@ E_let_in ((name , tv) , top , body')
+                return @@ E_let_in ((name , tv) , false , top , body')
               )
             | ((`Node (a , b)) , tv) ->
                 let%bind a' =
@@ -604,11 +621,11 @@ and transpile_lambda l (input_type , output_type) =
 
 let transpile_declaration env (d:AST.declaration) : toplevel_statement result =
   match d with
-  | Declaration_constant ({name;annotated_expression} , _) ->
+  | Declaration_constant ({name;annotated_expression} , inline , _) ->
       let%bind expression = transpile_annotated_expression annotated_expression in
       let tv = Combinators.Expression.get_type expression in
       let env' = Environment.add (name, tv) env in
-      ok @@ ((name, expression), environment_wrap env env')
+      ok @@ ((name, inline, expression), environment_wrap env env')
 
 let transpile_program (lst : AST.program) : program result =
   let aux (prev:(toplevel_statement list * Environment.t) result) cur =

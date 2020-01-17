@@ -1,4 +1,5 @@
 [@@@warning "-42"]
+[@@@coverage exclude_file]
 
 open AST
 open! Region
@@ -89,7 +90,7 @@ let print_bytes state {region; value} =
   let line =
     sprintf "%s: Bytes (\"%s\", \"0x%s\")\n"
             (compact state region) lexeme
-            (Hex.to_string abstract)
+            (Hex.show abstract)
   in Buffer.add_string state#buffer line
 
 let print_int state {region; value} =
@@ -113,6 +114,13 @@ let rec print_tokens state ast =
   Utils.nseq_iter (print_decl state) decl;
   print_token state eof "EOF"
 
+and print_attributes state attributes = 
+  let attributes = List.fold_left (fun all a -> all ^ a.value ^ ";") "" attributes.value in
+  let line =
+    sprintf "attributes[%s]"
+            attributes
+  in Buffer.add_string state#buffer line
+
 and print_decl state = function
   TypeDecl  decl -> print_type_decl  state decl
 | ConstDecl decl -> print_const_decl state decl
@@ -120,14 +128,15 @@ and print_decl state = function
 
 and print_const_decl state {value; _} =
   let {kwd_const; name; colon; const_type;
-       equal; init; terminator} = value in
+       equal; init; terminator; attributes} = value in
   print_token      state kwd_const "const";
   print_var        state name;
   print_token      state colon ":";
   print_type_expr  state const_type;
   print_token      state equal "=";
   print_expr       state init;
-  print_terminator state terminator
+  print_terminator state terminator;
+  print_attributes state attributes
 
 and print_type_decl state {value; _} =
   let {kwd_type; name; kwd_is;
@@ -194,13 +203,12 @@ and print_type_tuple state {value; _} =
   print_nsepseq state "," print_type_expr inside;
   print_token state rpar ")"
 
-and print_fun_expr state {value; _} =
-  let {kwd_function; name; param; colon;
-       ret_type; kwd_is; block_with; return} = value in
-  print_token state kwd_function "function";
-  (match name with
-     None -> print_var state (Region.wrap_ghost "#anon")
-   | Some var -> print_var state var);
+and print_fun_decl state {value; _} =
+  let {kwd_function; fun_name; param; colon;
+       ret_type; kwd_is; block_with;
+       return; terminator; attributes } = value in
+  print_token       state kwd_function "function";
+  print_var         state fun_name;
   print_parameters  state param;
   print_token       state colon ":";
   print_type_expr   state ret_type;
@@ -211,11 +219,18 @@ and print_fun_expr state {value; _} =
      print_block state block;
      print_token state kwd_with "with");
   print_expr state return;
-
-and print_fun_decl state {value; _} =
-  let {fun_expr ; terminator;} = value in
-  print_fun_expr state fun_expr;
   print_terminator state terminator;
+  print_attributes state attributes
+
+and print_fun_expr state {value; _} =
+  let {kwd_function; param; colon;
+       ret_type; kwd_is; return} : fun_expr = value in
+  print_token       state kwd_function "function";
+  print_parameters  state param;
+  print_token       state colon ":";
+  print_type_expr   state ret_type;
+  print_token       state kwd_is "is";
+  print_expr        state return
 
 and print_parameters state {value; _} =
   let {lpar; inside; rpar} = value in
@@ -427,6 +442,7 @@ and print_expr state = function
 | ESet    e -> print_set_expr state e
 | EConstr e -> print_constr_expr state e
 | ERecord e -> print_record_expr state e
+| EUpdate e -> print_update_expr state e
 | EProj   e -> print_projection state e
 | EMap    e -> print_map_expr state e
 | EVar    v -> print_var state v
@@ -590,6 +606,12 @@ and print_field_assign state {value; _} =
   print_var   state field_name;
   print_token state equal "=";
   print_expr  state field_expr
+
+and print_update_expr state {value; _} = 
+  let {record; kwd_with; updates} = value in
+  print_path state record;
+  print_token state kwd_with "with";
+  print_record_expr state updates
 
 and print_projection state {value; _} =
   let {struct_name; selector; field_path} = value in
@@ -825,7 +847,33 @@ and pp_declaration state = function
     pp_const_decl state value
 | FunDecl {value; region} ->
     pp_loc_node state "FunDecl" region;
-    pp_fun_expr state value.fun_expr.value
+    pp_fun_decl state value
+
+and pp_fun_decl state decl =
+  let () =
+    let state = state#pad 5 0 in
+    pp_ident state decl.fun_name in
+  let () =
+    let state = state#pad 5 1 in
+    pp_node state "<parameters>";
+    pp_parameters state decl.param in
+  let () =
+    let state = state#pad 5 2 in
+    pp_node state "<return type>";
+    pp_type_expr (state#pad 1 0) decl.ret_type in
+  let () =
+    let state = state#pad 5 3 in
+    pp_node state "<body>";
+    let statements =
+      match decl.block_with with
+        Some (block,_) -> block.value.statements
+      | None -> Instr (Skip Region.ghost), [] in
+    pp_statements state statements in
+  let () =
+    let state = state#pad 5 4 in
+    pp_node state "<return>";
+    pp_expr (state#pad 1 0) decl.return
+  in ()
 
 and pp_const_decl state decl =
   pp_ident (state#pad 3 0) decl.name;
@@ -887,32 +935,19 @@ and pp_type_tuple state {value; _} =
   let apply len rank = pp_type_expr (state#pad len rank)
   in List.iteri (List.length components |> apply) components
 
-and pp_fun_expr state decl =
+and pp_fun_expr state (expr: fun_expr) =
   let () =
-    let state = state#pad 5 0 in
-    match decl.name with
-      None -> pp_ident state (Region.wrap_ghost "#anon")
-    | Some var -> pp_ident state var in
-  let () =
-    let state = state#pad 5 1 in
+    let state = state#pad 3 0 in
     pp_node state "<parameters>";
-    pp_parameters state decl.param in
+    pp_parameters state expr.param in
   let () =
-    let state = state#pad 5 2 in
+    let state = state#pad 3 1 in
     pp_node state "<return type>";
-    pp_type_expr (state#pad 1 0) decl.ret_type in
+    pp_type_expr (state#pad 1 0) expr.ret_type in
   let () =
-    let state = state#pad 5 3 in
-    pp_node state "<body>";
-    let statements =
-      match decl.block_with with
-        Some (block,_) -> block.value.statements
-      | None -> Instr (Skip Region.ghost), [] in
-    pp_statements state statements in
-  let () =
-    let state = state#pad 5 4 in
+    let state = state#pad 3 2 in
     pp_node state "<return>";
-    pp_expr (state#pad 1 0) decl.return
+    pp_expr (state#pad 1 0) expr.return
   in ()
 
 and pp_parameters state {value; _} =
@@ -1074,7 +1109,7 @@ and pp_pattern state = function
 
 and pp_bytes state {value=lexeme,hex; region} =
   pp_loc_node (state#pad 2 0) lexeme region;
-  pp_node     (state#pad 2 1) (Hex.to_string hex)
+  pp_node     (state#pad 2 1) (Hex.show hex)
 
 and pp_int state {value=lexeme,z; region} =
   pp_loc_node (state#pad 2 0) lexeme region;
@@ -1171,6 +1206,10 @@ and pp_projection state proj =
   let apply len rank = pp_selection (state#pad len rank) in
   pp_ident (state#pad (1+len) 0) proj.struct_name;
   List.iteri (apply len) selections
+
+and pp_update state update =
+  pp_path state update.record;
+  pp_ne_injection pp_field_assign state update.updates.value
 
 and pp_selection state = function
   FieldName name ->
@@ -1306,7 +1345,7 @@ and pp_data_decl state = function
     pp_var_decl state value
 | LocalFun {value; region} ->
     pp_loc_node state "LocalFun" region;
-    pp_fun_expr state value.fun_expr.value
+    pp_fun_decl state value
 
 and pp_var_decl state decl =
   pp_ident     (state#pad 3 0) decl.name;
@@ -1347,6 +1386,9 @@ and pp_expr state = function
 | EProj {value; region} ->
     pp_loc_node state "EProj" region;
     pp_projection state value
+| EUpdate {value; region} ->
+    pp_loc_node state "EUpdate" region;
+    pp_update state value
 | EMap e_map ->
     pp_node state "EMap";
     pp_map_expr (state#pad 1 0) e_map

@@ -4,7 +4,7 @@
 # Menhir and generates minimal inputs that cover all of them and only
 # them.
 
-set -x
+# set -x
 
 # ====================================================================
 # General Settings and wrappers
@@ -78,12 +78,26 @@ while : ; do
       ;;
       # Help
       #
+    --concatenate*)
+      if test -n "$dir_opt"; then
+        fatal_error "Repeated option --concatenate."; fi
+      concatenate=yes
+      ;;
     --unlexer=*)
       if test -n "$unlexer"; then
         fatal_error "Repeated option --unlexer."; fi
       unlexer=$(expr "$1" : "[^=]*=\(.*\)")
       ;;
     --unlexer)
+      no_eq=$1
+      break
+      ;;
+    --messages=*)
+      if test -n "$messages"; then
+        fatal_error "Repeated option --messages."; fi
+      messages=$(expr "$1" : "[^=]*=\(.*\)")
+      ;;
+    --messages)
       no_eq=$1
       break
       ;;
@@ -110,9 +124,10 @@ done
 #
 usage () {
   cat <<EOF
-Usage: $(basename $0) [-h|--help]
-                --par-tokens=<par_tolens>.mly
-                --lex-tokens=<par_tokens>.mli
+Usage: $(basename $0) [-h|--help] [--concatenate]
+                --par-tokens=<par_tokens>.mly
+                --lex-tokens=<lex_tokens>.mli
+                --messages=<parser>.msg
                 --unlexer=<binary>
                 --ext=<extension>
                 --dir=<path>
@@ -121,11 +136,13 @@ Usage: $(basename $0) [-h|--help]
 Generates in directory <path> a set of LIGO source files with
 extension <extension> covering all erroneous states of the LR
 automaton produced by Menhir from <parser>.mly, <par_tokens>.mly,
-<lex_tokens>.mli and <parser>.msg (see script `messages.sh` for
+<lex_tokens>.mli and <parser>.msg (see script messages.sh for
 generating the latter). The LIGO files will be numbered with their
 corresponding state number in the automaton. The executable <binary>
 reads a line on stdin of tokens and produces a line of corresponding
 lexemes.
+If option --concatenate is used a single file 'all.<extension>' will
+be produced, containing the concatenation of all the erroneous expressions
 
 The following options, if given, must be given only once.
 
@@ -135,6 +152,7 @@ Display control:
 Mandatory options:
       --lex-tokens=<name>.mli the lexical tokens
       --par-tokens=<name>.mly the syntactical tokens
+      --messages=<parser>.msg the complete errors messages
       --ext=EXT               Unix file extension for the
                               generated LIGO files
                               (no starting period)
@@ -160,6 +178,9 @@ fi
 
 # Checking options
 
+if test -z "$messages"; then
+  fatal_error "Messages not found (use --messages)."; fi
+
 if test -z "$unlexer"; then
   fatal_error "Unlexer binary not found (use --unlexer)."; fi
 
@@ -171,6 +192,9 @@ if test -z "$par_tokens"; then
 
 if test -z "$lex_tokens"; then
   fatal_error "No lexical tokens specification (use --lex-tokens)."; fi
+
+if test ! -e "$messages"; then
+  fatal_error "Error messages \"$messages\" not found (use messages.sh)."; fi
 
 if test ! -e "$parser"; then
   fatal_error "Parser specification \"$parser\" not found."; fi
@@ -218,12 +242,6 @@ if test "$ext_start" != "0"
 then fatal_error "LIGO extensions must not start with a period."
 fi
 
-# Checking the presence of the messages
-
-msg=$parser_base.msg
-if test ! -e $msg; then
-  fatal_error "File $msg not found."; fi
-
 # ====================================================================
 # Menhir's flags
 
@@ -233,7 +251,7 @@ flags="--table --strict --external-tokens $lex_tokens_base \
 # ====================================================================
 # Producing erroneous sentences from Menhir's error messages
 
-msg=$parser_base.msg
+msg=$messages
 raw=$parser_base.msg.raw
 printf "Making $raw from $msg... "
 menhir --echo-errors $parser_base.msg $flags $mly > $raw 2>/dev/null
@@ -251,7 +269,11 @@ paste -d ':' $states $raw > $map
 rm -f $dir/*.$ext
 while read -r line; do
   state=$(echo $line | sed -n 's/\(.*\):.*/\1/p')
-  filename=$(printf "$dir/%04d.$ext" $state)
+  if test "$concatenate" = "yes"; then
+    filename="$dir/all.$ext"
+  else
+    filename=$(printf "$dir/%04d.$ext" $state)
+  fi
   sentence=$(echo $line | sed -n 's/.*:\(.*\)/\1/p')
   echo $sentence | $unlexer >> $filename
 done < $map

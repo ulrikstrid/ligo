@@ -226,12 +226,13 @@ field_decl:
 (* Top-level non-recursive definitions *)
 
 let_declaration:
-  "let" let_binding {
-    let kwd_let = $1 in
-    let binding = $2 in
-    let value   = kwd_let, binding in
+  seq(Attr) "let" let_binding {    
+    let attributes = $1 in
+    let kwd_let = $2 in    
+    let binding = $3 in
+    let value   = kwd_let, binding, attributes in
     let stop    = expr_to_region binding.let_rhs in
-    let region  = cover $1 stop
+    let region  = cover $2 stop
     in {region; value} }
 
 es6_func:
@@ -320,6 +321,8 @@ core_pattern:
 | "_"                                                    {   PWild $1 }
 | unit                                                   {   PUnit $1 }
 | "<int>"                                                {    PInt $1 }
+| "<nat>"                                                {    PNat $1 }
+| "<bytes>"                                              {  PBytes $1 }
 | "true"                                                 {   PTrue $1 }
 | "false"                                                {  PFalse $1 }
 | "<string>"                                             { PString $1 }
@@ -368,7 +371,7 @@ ptuple:
     in PTuple {value=$1; region} }
 
 unit:
-  "(" ")" { {region = cover $1 $2; value = ghost, ghost} }
+  "(" ")" { {region = cover $1 $2; value = $1, $2} }
 
 (* Expressions *)
 
@@ -406,6 +409,7 @@ type_expr_simple:
 type_annotation_simple:
   ":" type_expr_simple { $1,$2 }
 
+
 fun_expr:
   disj_expr_level es6_func {
     let arrow, body = $2 in
@@ -424,7 +428,8 @@ fun_expr:
           {p.value with inside = arg_to_pattern p.value.inside}
         in PPar {p with value}
     | EUnit u -> PUnit u
-    | _ -> raise (SyntaxError.Error WrongFunctionArguments)
+    | e -> let open! SyntaxError
+          in raise (Error (WrongFunctionArguments e))
     in
     let fun_args_to_pattern = function
       EAnnot {
@@ -453,14 +458,16 @@ fun_expr:
           in arg_to_pattern (fst fun_args), bindings
       | EUnit e ->
           arg_to_pattern (EUnit e), []
-      | _ -> raise (SyntaxError.Error WrongFunctionArguments)
+      | e -> let open! SyntaxError
+            in raise (Error (WrongFunctionArguments e))
     in
     let binders = fun_args_to_pattern $1 in
     let f = {kwd_fun;
              binders;
              lhs_type=None;
              arrow;
-             body}
+             body
+            }
     in EFun {region; value=f} }
 
 base_expr(right_expr):
@@ -541,14 +548,15 @@ case_clause(right_expr):
     in {region; value} }
 
 let_expr(right_expr):
-  "let" let_binding ";" right_expr {
-    let kwd_let = $1 in
-    let binding = $2 in
-    let kwd_in  = $3 in
-    let body    = $4 in
-    let stop    = expr_to_region $4 in
-    let region  = cover $1 stop
-    and value   = {kwd_let; binding; kwd_in; body}
+  seq(Attr) "let" let_binding ";" right_expr {
+    let attributes = $1 in    
+    let kwd_let = $2 in    
+    let binding = $3 in
+    let kwd_in  = $4 in
+    let body    = $5 in
+    let stop    = expr_to_region $5 in
+    let region  = cover $2 stop
+    and value   = {kwd_let; binding; kwd_in; body; attributes}
     in ELetIn {region; value} }
 
 disj_expr_level:
@@ -601,7 +609,7 @@ comp_expr_level:
 | cat_expr_level { $1 }
 
 cat_expr_level:
-  bin_op(add_expr_level, "++", add_expr_level)    {  EString (Cat $1) }
+  bin_op(add_expr_level, "++", cat_expr_level)    {  EString (Cat $1) }
 | add_expr_level                                  {                $1 }
 
 add_expr_level:
@@ -682,8 +690,10 @@ common_expr:
   "<int>"                             {               EArith (Int $1) }
 | "<mutez>"                           {             EArith (Mutez $1) }
 | "<nat>"                             {               EArith (Nat $1) }
+| "<bytes>"                           {                     EBytes $1 }
 | "<ident>" | module_field            {                       EVar $1 }
 | projection                          {                      EProj $1 }
+| update_record                       {                    EUpdate $1 }
 | "<string>"                          {           EString (String $1) }
 | unit                                {                      EUnit $1 }
 | "false"                             {  ELogic (BoolExpr (False $1)) }
@@ -770,6 +780,25 @@ projection:
                        field_path = snd $4}
     in {region; value} }
 
+path :
+ "<ident>"  {Name $1}
+| projection { Path $1}
+
+update_record : 
+  "{""..."path "," sep_or_term_list(field_assignment,",") "}" {
+    let region = cover $1 $6 in
+    let ne_elements, terminator = $5 in
+    let value = {
+      lbrace = $1;
+      record = $3;
+      kwd_with = $4;
+      updates  = { value = {compound = Braces($1,$6);
+                  ne_elements;
+                  terminator};
+                  region = cover $4 $6};
+      rbrace = $6}
+    in {region; value} }
+
 sequence_or_record_in:
   expr ";" sep_or_term_list(expr,";") {
     let elts, _region = $3 in
@@ -785,7 +814,7 @@ sequence_or_record_in:
 
 sequence_or_record:
   "{" sequence_or_record_in "}" {
-    let compound = Braces($1, $3) in
+    let compound = Braces ($1,$3) in
     let region   = cover $1 $3 in
     match $2 with
       PaSequence s ->

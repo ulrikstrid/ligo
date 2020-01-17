@@ -1,3 +1,4 @@
+[@@@coverage exclude_file]
 open Types
 open Format
 open PP_helpers
@@ -23,6 +24,12 @@ and lambda ppf l =
     name binder 
     annotated_expression body
 
+and option_inline ppf inline = 
+  if inline then 
+    fprintf ppf "[@inline]"
+  else
+    fprintf ppf ""
+
 and expression ppf (e:expression) : unit =
   match e with
   | E_literal l -> Stage_common.PP.literal ppf l
@@ -33,6 +40,7 @@ and expression ppf (e:expression) : unit =
   | E_lambda l -> fprintf ppf "%a" lambda l
   | E_tuple_accessor (ae, i) -> fprintf ppf "%a.%d" annotated_expression ae i
   | E_record_accessor (ae, l) -> fprintf ppf "%a.%a" annotated_expression ae label l
+  | E_record_update (ae, ups) -> fprintf ppf "%a with record[%a]" annotated_expression ae (lmap_sep annotated_expression (const " , ")) (LMap.of_list ups)
   | E_tuple lst -> fprintf ppf "tuple[@;  @[<v>%a@]@;]" (list_sep annotated_expression (tag ",@;")) lst
   | E_record m -> fprintf ppf "record[%a]" (lmap_sep annotated_expression (const " , ")) m
   | E_map m -> fprintf ppf "map[@;  @[<v>%a@]@;]" (list_sep assoc_annotated_expression (tag ",@;")) m
@@ -49,7 +57,8 @@ and expression ppf (e:expression) : unit =
       Stage_common.PP.name name.type_name
       PP_helpers.(list_sep pre_access (const ".")) path
       annotated_expression expr
-  | E_let_in { binder; rhs; result } -> fprintf ppf "let %a = %a in %a" name binder annotated_expression rhs annotated_expression result
+  | E_let_in { binder; rhs; result; inline } ->
+    fprintf ppf "let %a = %a%a in %a" name binder annotated_expression rhs option_inline inline annotated_expression result
 
 and value ppf v = annotated_expression ppf v
 
@@ -81,8 +90,8 @@ and pre_access ppf (a:access) = match a with
 
 let declaration ppf (d:declaration) =
   match d with
-  | Declaration_constant ({name ; annotated_expression = ae} , _) ->
-      fprintf ppf "const %a = %a" Stage_common.PP.name name annotated_expression ae
+  | Declaration_constant ({name ; annotated_expression = ae} , inline, _) ->
+      fprintf ppf "const %a = %a%a" Stage_common.PP.name name annotated_expression ae option_inline inline
 
 let program ppf (p:program) =
   fprintf ppf "@[<v>%a@]" (list_sep declaration (tag "@;")) (List.map Location.unwrap p)

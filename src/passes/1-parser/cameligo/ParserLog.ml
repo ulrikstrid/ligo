@@ -1,4 +1,5 @@
 [@@@warning "-42"]
+[@@@coverage exclude_file]
 
 open AST
 open! Region
@@ -104,7 +105,7 @@ let print_bytes state {region; value} =
   let line =
     sprintf "%s: Bytes (\"%s\", \"0x%s\")\n"
             (compact state region) lexeme
-            (Hex.to_string abstract)
+            (Hex.show abstract)
   in Buffer.add_string state#buffer line
 
 let print_int state {region; value} =
@@ -127,10 +128,18 @@ let rec print_tokens state {decl;eof} =
   Utils.nseq_iter (print_statement state) decl;
   print_token state eof "EOF"
 
+and print_attributes state attributes =  
+  List.iter (
+    fun ({value = attribute; region}) -> 
+      let attribute_formatted = sprintf "[@%s]" attribute in
+      print_token state region attribute_formatted
+   ) attributes
+
 and print_statement state = function
-  Let {value=kwd_let, let_binding; _} ->
+  Let {value=kwd_let, let_binding, attributes; _} ->    
     print_token       state kwd_let "let";
-    print_let_binding state let_binding
+    print_let_binding state let_binding;
+    print_attributes  state attributes
 | TypeDecl {value={kwd_type; name; eq; type_expr}; _} ->
     print_token     state kwd_type "type";
     print_var       state name;
@@ -173,6 +182,18 @@ and print_projection state {value; _} =
   print_var     state struct_name;
   print_token   state selector ".";
   print_nsepseq state "." print_selection field_path
+
+and print_update state {value; _} =
+ let {lbrace; record; kwd_with; updates; rbrace} = value in
+ print_token state lbrace "{";
+ print_path   state record;
+ print_token state kwd_with "with";
+ print_record_expr state updates;
+ print_token state rbrace "}"
+
+and print_path state = function
+  Name var  -> print_var        state var
+| Path path -> print_projection state path
 
 and print_selection state = function
   FieldName id -> print_var state id
@@ -328,6 +349,7 @@ and print_expr state = function
 | ECall e       -> print_fun_call state e
 | EVar v        -> print_var state v
 | EProj p       -> print_projection state p
+| EUpdate u     -> print_update state u
 | EUnit e       -> print_unit state e
 | EBytes b      -> print_bytes state b
 | EPar e        -> print_expr_par state e
@@ -516,9 +538,10 @@ and print_case_clause state {value; _} =
   print_expr    state rhs
 
 and print_let_in state {value; _} =
-  let {kwd_let; binding; kwd_in; body} = value in
+  let {kwd_let; binding; kwd_in; body; attributes} = value in  
   print_token       state kwd_let "let";
   print_let_binding state binding;
+  print_attributes  state attributes;
   print_token       state kwd_in "in";
   print_expr        state body
 
@@ -587,9 +610,9 @@ let rec pp_ast state {decl; _} =
   List.iteri (List.length decls |> apply) decls
 
 and pp_declaration state = function
-  Let {value; region} ->
+  Let {value = (_, let_binding, _); region} ->
     pp_loc_node    state "Let" region;
-    pp_let_binding state (snd value)
+    pp_let_binding state let_binding
 | TypeDecl {value; region} ->
     pp_loc_node  state "TypeDecl" region;
     pp_type_decl state value
@@ -711,7 +734,7 @@ and pp_ne_injection :
 
 and pp_bytes state {value=lexeme,hex; region} =
   pp_loc_node (state#pad 2 0) lexeme region;
-  pp_node     (state#pad 2 1) (Hex.to_string hex)
+  pp_node     (state#pad 2 1) (Hex.show hex)
 
 and pp_int state {value=lexeme,z; region} =
   pp_loc_node (state#pad 2 0) lexeme region;
@@ -764,6 +787,9 @@ and pp_expr state = function
 | EProj {value; region} ->
     pp_loc_node state "EProj" region;
     pp_projection state value
+| EUpdate {value; region} ->
+    pp_loc_node state "EUpdate" region;
+    pp_update state value
 | EVar v ->
     pp_node  state "EVar";
     pp_ident (state#pad 1 0) v
@@ -855,6 +881,18 @@ and pp_projection state proj =
   let apply len rank = pp_selection (state#pad len rank) in
   pp_ident (state#pad (1+len) 0) proj.struct_name;
   List.iteri (apply len) selections
+
+and pp_update state update =
+  pp_path state update.record;
+  pp_ne_injection pp_field_assign state update.updates.value
+
+and pp_path state = function
+  Name name ->
+    pp_node state "Name";
+    pp_ident (state#pad 1 0) name
+| Path {value; region} ->
+    pp_loc_node state "Path" region;
+    pp_projection state value
 
 and pp_selection state = function
   FieldName fn ->

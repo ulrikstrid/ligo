@@ -23,10 +23,11 @@ module Errors = struct
     error ~data title message ()
 
   let unbound_variable (e:environment) (n:I.expression_variable) (loc:Location.t) () =
-    let title = (thunk "unbound variable") in
+    let name () = Format.asprintf "%a" Stage_common.PP.name n in
+    let title = (thunk ("unbound variable "^(name ()))) in
     let message () = "" in
     let data = [
-      ("variable" , fun () -> Format.asprintf "%a" Stage_common.PP.name n) ;
+      ("variable" , name) ;
       ("environment" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
@@ -54,7 +55,7 @@ module Errors = struct
 
   let match_redundant_case : type a . (a, unit) I.matching -> Location.t -> unit -> _ =
     fun matching loc () ->
-      let title = (thunk "missing case in match") in
+      let title = (thunk "redundant case in match") in
       let message () = "" in
       let data = [
         ("variant" , fun () -> Format.asprintf "%a" I.PP.matching_type matching) ;
@@ -217,7 +218,7 @@ let rec type_declaration env state : I.declaration -> (environment * Solver.stat
     let%bind tv = evaluate_type env type_expression in
     let env' = Environment.add_type type_name tv env in
     ok (env', state , None)
-  | Declaration_constant (name , tv_opt , expression) -> (
+  | Declaration_constant (name , tv_opt , inline, expression) -> (
     (*
       Determine the type of the expression and add it to the environment
     *)
@@ -226,7 +227,7 @@ let rec type_declaration env state : I.declaration -> (environment * Solver.stat
         trace (constant_declaration_error name expression tv'_opt) @@
         type_expression env state expression in
       let env' = Environment.add_ez_ae name ae' env in
-      ok (env', state' , Some (O.Declaration_constant ((make_n_e name ae') , (env , env'))))
+      ok (env', state' , Some (O.Declaration_constant ((make_n_e name ae') , inline, (env , env'))))
     )
 
 and type_match : environment -> Solver.state -> O.type_value -> ('i, unit) I.matching -> I.expression -> Location.t -> ((O.value, O.type_value) O.matching * Solver.state) result =
@@ -528,6 +529,27 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.e
     let%bind (m' , state') = I.bind_fold_lmap aux (ok (I.LMap.empty , state)) m in
     let wrapped = Wrap.record (I.LMap.map get_type_annotation m') in
     return_wrapped (E_record m') state' wrapped
+  | E_update {record; updates} ->
+    let%bind (record, state) = type_expression e state record in
+    let aux (lst,state) (k, expr) =
+      let%bind (expr', state) = type_expression e state expr in
+      ok ((k,expr')::lst, state)
+    in 
+    let%bind (updates, state) = bind_fold_list aux ([], state) updates in
+    let wrapped = get_type_annotation record in
+    let%bind wrapped = match wrapped.type_value' with 
+    | T_record record ->
+        let aux (k, e) =
+          let field_op = I.LMap.find_opt k record in
+          match field_op with
+          | None -> failwith @@ Format.asprintf "field %a is not part of record" Stage_common.PP.label k
+          | Some tv -> O.assert_type_value_eq (tv, get_type_annotation e)
+        in
+        let%bind () = bind_iter_list aux updates in
+        ok (record)
+    | _ -> failwith "Update an expression which is not a record"
+    in
+    return_wrapped (E_record_update (record, updates)) state (Wrap.record wrapped)
   (* Data-structure *)
 
 (*
@@ -759,7 +781,7 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.e
     let%bind (body' , state'') = type_expression e state' body in
     let wrapped = Wrap.loop expr'.type_annotation body'.type_annotation in
     return_wrapped (O.E_loop (expr' , body')) state'' wrapped
-  | E_let_in {binder ; rhs ; result} ->
+  | E_let_in {binder ; rhs ; result ; inline} ->
     let%bind rhs_tv_opt = bind_map_option (evaluate_type e) (snd binder) in
     (* TODO: the binder annotation should just be an annotation node *)
     let%bind (rhs , state') = type_expression e state rhs in
@@ -767,7 +789,7 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_value -> I.e
     let%bind (result , state'') = type_expression e' state' result in
     let wrapped =
       Wrap.let_in rhs.type_annotation rhs_tv_opt result.type_annotation in
-    return_wrapped (E_let_in {binder = fst binder; rhs; result}) state'' wrapped
+    return_wrapped (E_let_in {binder = fst binder; rhs; result; inline}) state'' wrapped
   | E_assign (name , path , expr) ->
     let%bind typed_name =
       let%bind ele = Environment.get_trace name e in
@@ -1088,6 +1110,14 @@ let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
   | E_record_accessor (r, Label s) ->
     let%bind r' = untype_expression r in
     return (e_accessor r' [Access_record s])
+  | E_record_update (r, updates) ->
+    let%bind r' = untype_expression r in
+    let aux (Label l,e) =
+      let%bind e = untype_expression e in 
+      ok (l, e)
+    in
+    let%bind updates = bind_map_list aux updates in
+    return (e_update r' updates)
   | E_map m ->
     let%bind m' = bind_map_list (bind_map_pair untype_expression) m in
     return (e_map m')
@@ -1113,11 +1143,11 @@ let rec untype_expression (e:O.annotated_expression) : (I.expression) result =
   | E_sequence _
   | E_loop _
   | E_assign _ -> fail @@ not_supported_yet_untranspile "not possible to untranspile statements yet" e.expression
-  | E_let_in {binder; rhs;result} ->
+  | E_let_in {binder; rhs; result; inline} ->
     let%bind tv = untype_type_value rhs.type_annotation in
     let%bind rhs = untype_expression rhs in
     let%bind result = untype_expression result in
-    return (e_let_in (binder , (Some tv)) rhs result)
+    return (e_let_in (binder , (Some tv)) inline rhs result)
 
 (*
   Tranform a Ast_typed matching into an ast_simplified matching

@@ -1,4 +1,6 @@
 {
+  (* START HEADER *)
+
 type lexeme = string
 
 let sprintf = Printf.sprintf
@@ -67,6 +69,7 @@ type t =
 | Mutez  of (string * Z.t) Region.reg
 | String of string Region.reg
 | Bytes  of (string * Hex.t) Region.reg
+| Attr2  of string Region.reg
 
   (* Keywords *)
 
@@ -143,7 +146,7 @@ let proj_token = function
 | Bytes Region.{region; value = s,b} ->
     region,
     sprintf "Bytes (\"%s\", \"0x%s\")"
-      s (Hex.to_string b)
+      s (Hex.show b)
 | Begin region -> region, "Begin"
 | Else region -> region, "Else"
 | End region -> region, "End"
@@ -161,10 +164,9 @@ let proj_token = function
 | True region -> region, "True"
 | Type region -> region, "Type"
 | With region -> region, "With"
-
 | C_None  region -> region, "C_None"
 | C_Some  region -> region, "C_Some"
-
+| Attr2 Region.{region; value} -> region, sprintf "Attr2 %s" value
 | EOF region -> region, "EOF"
 
 let to_lexeme = function
@@ -201,7 +203,7 @@ let to_lexeme = function
 | Int i
 | Nat i
 | Mutez i   -> fst i.Region.value
-| String s  -> s.Region.value
+| String s  -> String.escaped s.Region.value
 | Bytes b   -> fst b.Region.value
 
 | Begin _ -> "begin"
@@ -224,7 +226,7 @@ let to_lexeme = function
 
 | C_None  _ -> "None"
 | C_Some  _ -> "Some"
-
+| Attr2 a -> a.Region.value
 | EOF _ -> ""
 
 let to_string token ?(offsets=true) mode =
@@ -236,8 +238,7 @@ let to_region token = proj_token token |> fst
 
 (* Injections *)
 
-type int_err =
-  Non_canonical_zero
+type int_err = Non_canonical_zero
 
 (* LEXIS *)
 
@@ -258,8 +259,7 @@ let keywords = [
   (fun reg -> Then  reg);
   (fun reg -> True  reg);
   (fun reg -> Type  reg);
-  (fun reg -> With  reg)
-]
+  (fun reg -> With  reg)]
 
 let reserved =
   let open SSet in
@@ -323,8 +323,20 @@ let lexicon : lexis =
       cstr = build constructors;
       res  = reserved}
 
+(* Keywords *)
+
+type kwd_err = Invalid_keyword
+
+let mk_kwd ident region =
+  match SMap.find_opt ident lexicon.kwd with
+    Some mk_kwd -> Ok (mk_kwd region)
+  |        None -> Error Invalid_keyword
+
+(* Identifiers *)
+
 type ident_err = Reserved_name
 
+(* END OF HEADER *)
 }
 
 (* START LEXER DEFINITION *)
@@ -366,7 +378,7 @@ let mk_string lexeme region =
 
 let mk_bytes lexeme region =
   let norm = Str.(global_replace (regexp "_") "" lexeme) in
-  let value = lexeme, Hex.of_string norm
+  let value = lexeme, `Hex norm
   in Bytes Region.{region; value}
 
 let mk_int lexeme region =
@@ -405,6 +417,8 @@ let mk_mutez lexeme region =
 let eof region = EOF region
 
 type sym_err = Invalid_symbol
+
+type attr_err = Invalid_attribute
 
 let mk_sym lexeme region =
   match lexeme with
@@ -452,6 +466,14 @@ let mk_ident lexeme region =
 
 let mk_constr lexeme region =
   Lexing.from_string lexeme |> scan_constr region lexicon
+
+(* Attributes *)
+
+let mk_attr _lexeme _region = 
+  Error Invalid_attribute
+
+let mk_attr2 lexeme region = 
+  Ok (Attr2 { value = lexeme; region })
 
 (* Predicates *)
 

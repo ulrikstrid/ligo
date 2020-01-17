@@ -74,13 +74,14 @@ module Free_variables = struct
                expression (union (singleton l) b) bl ;
                expression (union (singleton r) b) br ;
              ]
-    | E_let_in ((v , _) , expr , body) ->
+    | E_let_in ((v , _) , _, expr , body) ->
       unions [ self expr ;
                expression (union (singleton v) b) body ;
              ]
     | E_sequence (x, y) -> union (self x) (self y)
     (* NB different from ast_typed... *)
     | E_assignment (v, _, e) -> unions [ var_name b v ; self e ]
+    | E_update (e, updates) -> union (self e) (unions @@ List.map (fun (_,e) -> self e) updates)
     | E_while (cond , body) -> union (self cond) (self body)
 
   and var_name : bindings -> var_name -> bindings = fun b n ->
@@ -124,19 +125,19 @@ let get_entry (lst : program) (name : string) : (expression * int) result =
   let%bind entry_expression =
     trace_option (Errors.missing_entry_point name) @@
     let aux x =
-      let (((decl_name , decl_expr) , _)) = x in
+      let (((decl_name , _, decl_expr) , _)) = x in
       if (Var.equal decl_name (Var.of_name name))
       then Some decl_expr
       else None
     in
-    List.find_map aux lst
+    List.find_map aux (List.rev lst)
   in
   let entry_index =
     let aux x =
-      let (((decl_name , _) , _)) = x in
+      let (((decl_name , _, _) , _)) = x in
       Var.equal decl_name (Var.of_name name)
     in
-    List.find_index aux lst
+    (List.length lst) - (List.find_index aux (List.rev lst)) - 1
   in
   ok (entry_expression , entry_index)
 
@@ -147,8 +148,8 @@ type form_t =
 let aggregate_entry (lst : program) (form : form_t) : expression result =
   let wrapper =
     let aux prec cur =
-      let (((name , expr) , _)) = cur in
-      e_let_in name expr.type_value expr prec
+      let (((name , inline, expr) , _)) = cur in
+      e_let_in name expr.type_value inline expr prec
     in
     fun expr -> List.fold_right' aux expr lst
   in

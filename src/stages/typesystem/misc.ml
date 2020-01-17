@@ -147,11 +147,11 @@ module Substitution = struct
         let%bind binder = s_variable ~v ~expr binder in
         let%bind body = s_annotated_expression ~v ~expr body in
         ok @@ T.E_lambda { binder; body }
-      | T.E_let_in          { binder; rhs; result } ->
+      | T.E_let_in          { binder; rhs; result; inline } ->
         let%bind binder = s_variable ~v ~expr binder in
         let%bind rhs = s_annotated_expression ~v ~expr rhs in
         let%bind result = s_annotated_expression ~v ~expr result in
-        ok @@ T.E_let_in { binder; rhs; result }
+        ok @@ T.E_let_in { binder; rhs; result; inline }
       | T.E_tuple           vals ->
         let%bind vals = bind_map_list (s_annotated_expression ~v ~expr) vals in
         ok @@ T.E_tuple vals
@@ -175,6 +175,10 @@ module Substitution = struct
         let%bind val_ = s_annotated_expression ~v ~expr val_ in
         let%bind l = s_label ~v ~expr l in
         ok @@ T.E_record_accessor (val_, l)
+      | T.E_record_update (r, ups) ->
+        let%bind r = s_annotated_expression ~v ~expr r in
+        let%bind ups = bind_map_list (fun (l,e) -> let%bind e = s_annotated_expression ~v ~expr e in ok (l,e)) ups in
+        ok @@ T.E_record_update (r,ups)
       | T.E_map             val_val_list ->
         let%bind val_val_list = bind_map_list (fun (val1 , val2) ->
             let%bind val1 = s_annotated_expression ~v ~expr val1 in
@@ -231,11 +235,11 @@ module Substitution = struct
 
     and s_declaration ~v ~expr : T.declaration w =
       function
-        Ast_typed.Declaration_constant (e, (env1, env2)) ->
+        Ast_typed.Declaration_constant (e, i, (env1, env2)) ->
         let%bind e = s_named_expression ~v ~expr e in
         let%bind env1 = s_full_environment ~v ~expr env1 in
         let%bind env2 = s_full_environment ~v ~expr env2 in
-        ok @@ Ast_typed.Declaration_constant (e, (env1, env2))
+        ok @@ Ast_typed.Declaration_constant (e, i, (env1, env2))
 
     and s_declaration_wrap ~v ~expr : T.declaration Location.wrap w = fun d ->
       Trace.bind_map_location (s_declaration ~v ~expr) d

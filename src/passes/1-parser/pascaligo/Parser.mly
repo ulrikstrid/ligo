@@ -6,6 +6,39 @@
 open Region
 open AST
 
+type statement_attributes_mixed = 
+  PInstr of instruction
+| PData  of data_decl
+| PAttributes of attributes
+
+let attributes_to_statement (statement, statements)  =
+  if (List.length statements = 0) then 
+    match statement with 
+    | PInstr i -> Instr i, []
+    | PData d -> Data d, []
+    | PAttributes a -> 
+      let open! SyntaxError in
+      raise (Error (Detached_attributes a))
+  else (
+    let statements = (Region.ghost, statement) :: statements in
+    let rec inner result = function
+    | (t, PData  (LocalConst const)) :: (_, PAttributes a) :: rest -> 
+      inner (result @ [(t, Data (LocalConst {const with value = {const.value with attributes = a}}))]) rest
+    | (t, PData  (LocalFun func)) :: (_, PAttributes a) :: rest ->
+      inner (result @ [(t, Data (LocalFun {func with value = {func.value with attributes = a}}))]) rest  
+    | (t, PData d) :: rest ->
+      inner (result @ [(t, Data d)]) rest
+    | (t, PInstr i) :: rest ->
+      inner (result @ [(t, Instr i)]) rest
+    | (_, PAttributes _) :: rest ->
+      inner result rest
+    | [] -> 
+      result
+    in 
+    let result = inner [] statements in
+    (snd (List.hd result), List.tl result)
+  )
+
 (* END HEADER *)
 %}
 
@@ -112,12 +145,13 @@ contract:
 declaration:
   type_decl  {   TypeDecl $1 }
 | const_decl {  ConstDecl $1 }
-| fun_decl   {    FunDecl $1 }
+| fun_decl  {    FunDecl $1 }
 
 (* Type declarations *)
 
 type_decl:
   "type" type_name "is" type_expr ";"? {
+    ignore (SyntaxError.check_reserved_name $2);
     let stop =
       match $5 with
         Some region -> region
@@ -185,6 +219,7 @@ type_tuple:
 
 sum_type:
   "|"? nsepseq(variant,"|") {
+    SyntaxError.check_variants (Utils.nsepseq_to_list $2);
     let region = nsepseq_to_region (fun x -> x.region) $2
     in TSum {region; value=$2} }
 
@@ -198,6 +233,8 @@ variant:
 record_type:
   "record" sep_or_term_list(field_decl,";") "end" {
     let ne_elements, terminator = $2 in
+    let () = Utils.nsepseq_to_list ne_elements
+             |> SyntaxError.check_fields in
     let region = cover $1 $3
     and value  = {opening = Kwd $1;
                   ne_elements;
@@ -221,68 +258,86 @@ field_decl:
     and value  = {field_name=$1; colon=$2; field_type=$3}
     in {region; value} }
 
+  
 fun_expr:
-  "function" fun_name? parameters ":" type_expr "is"
-     block
-  "with" expr {
-    let stop   = expr_to_region $9 in
+  "function" parameters ":" type_expr "is" expr {
+    let stop   = expr_to_region $6 in
     let region = cover $1 stop
     and value  = {kwd_function = $1;
-                  name         = $2;
-                  param        = $3;
-                  colon        = $4;
-                  ret_type     = $5;
-                  kwd_is       = $6;
-                  block_with   = Some ($7, $8);
-                  return       = $9}
+                  param        = $2;
+                  colon        = $3;
+                  ret_type     = $4;
+                  kwd_is       = $5;
+                  return       = $6
+                  }
     in {region; value} }
-| "function" fun_name? parameters ":" type_expr "is" expr {
-    let stop   = expr_to_region $7 in
-    let region = cover $1 stop
-    and value  = {kwd_function = $1;
-                  name         = $2;
-                  param        = $3;
-                  colon        = $4;
-                  ret_type     = $5;
-                  kwd_is       = $6;
-                  block_with   = None;
-                  return       = $7}
-    in {region; value} }
-
 
 (* Function declarations *)
 
-fun_decl:
-  open_fun_decl { $1 }
-| fun_expr ";"  {
-    let region = cover $1.region $2
-    and value  = {fun_expr=$1; terminator= Some $2}
+open_fun_decl:
+  "function" fun_name parameters ":" type_expr "is"
+     block
+  "with" expr {
+    let fun_name = SyntaxError.check_reserved_name $2 in
+    let stop     = expr_to_region $9 in
+    let region   = cover $1 stop
+    and value    = {kwd_function = $1;
+                    fun_name;
+                    param        = $3;
+                    colon        = $4;
+                    ret_type     = $5;
+                    kwd_is       = $6;
+                    block_with   = Some ($7, $8);
+                    return       = $9;
+                    terminator   = None;
+                    attributes   = {value = []; region = Region.ghost}}
+    in {region; value} }
+| "function" fun_name parameters ":" type_expr "is" expr {
+    let fun_name = SyntaxError.check_reserved_name $2 in
+    let stop     = expr_to_region $7 in
+    let region   = cover $1 stop
+    and value    = {kwd_function = $1;
+                    fun_name;
+                    param        = $3;
+                    colon        = $4;
+                    ret_type     = $5;
+                    kwd_is       = $6;
+                    block_with   = None;
+                    return       = $7;
+                    terminator   = None;
+                    attributes   = {value = []; region = Region.ghost}}
     in {region; value} }
 
-open_fun_decl:
-  fun_expr {
-    let region = $1.region
-    and value  = {fun_expr=$1; terminator=None}
-    in {region; value} }
+fun_decl:
+  open_fun_decl semi_attributes {
+    let attributes, terminator = $2 in
+    {$1 with value = {$1.value with terminator = terminator; attributes = attributes}}
+  }
 
 parameters:
-  par(nsepseq(param_decl,";")) { $1 }
+  par(nsepseq(param_decl,";")) {
+    let params =
+      Utils.nsepseq_to_list ($1.value: _ par).inside
+    in SyntaxError.check_parameters params;
+       $1 }
 
 param_decl:
   "var" var ":" param_type {
+    let var    = SyntaxError.check_reserved_name $2 in
     let stop   = type_expr_to_region $4 in
     let region = cover $1 stop
     and value  = {kwd_var    = $1;
-                  var        = $2;
+                  var;
                   colon      = $3;
                   param_type = $4}
     in ParamVar {region; value}
   }
 | "const" var ":" param_type {
+    let var    = SyntaxError.check_reserved_name $2 in
     let stop   = type_expr_to_region $4 in
     let region = cover $1 stop
     and value  = {kwd_const  = $1;
-                  var        = $2;
+                  var;
                   colon      = $3;
                   param_type = $4}
     in ParamConst {region; value} }
@@ -295,7 +350,7 @@ block:
      let statements, terminator = $2 in
      let region = cover $1 $3
      and value  = {opening    = Begin $1;
-                   statements;
+                   statements = attributes_to_statement statements;
                    terminator;
                    closing    = End $3}
      in {region; value}
@@ -304,14 +359,15 @@ block:
      let statements, terminator = $3 in
      let region = cover $1 $4
      and value  = {opening    = Block ($1,$2);
-                   statements;
+                   statements = attributes_to_statement statements;
                    terminator;
                    closing    = Block $4}
      in {region; value} }
 
 statement:
-  instruction     { Instr $1 }
-| open_data_decl  { Data  $1 }
+  instruction     { PInstr $1 }
+| open_data_decl  { PData  $1 }
+| attributes      { PAttributes $1 }
 
 open_data_decl:
   open_const_decl { LocalConst $1 }
@@ -328,8 +384,10 @@ open_const_decl:
                   const_type;
                   equal;
                   init;
-                  terminator = None}
+                  terminator = None;
+                  attributes = {value = []; region = Region.ghost}}
     in {region; value} }
+
 
 open_var_decl:
   "var" unqualified_decl(":=") {
@@ -341,18 +399,33 @@ open_var_decl:
                   var_type;
                   assign;
                   init;
-                  terminator = None}
+                  terminator = None;
+                  }
     in {region; value} }
 
 unqualified_decl(OP):
   var ":" type_expr OP expr {
+    let var    = SyntaxError.check_reserved_name $1 in
     let region = expr_to_region $5
-    in $1, $2, $3, $4, $5, region }
+    in var, $2, $3, $4, $5, region }
+
+attributes: 
+  "attributes" "[" nsepseq(String,";") "]" {
+    let region = cover $1 $4 in
+    let value = (Utils.nsepseq_to_list $3) in
+    {region; value}
+  }
+
+semi_attributes: 
+   /* empty */ { {value = []; region = Region.ghost}, None }
+  | ";" { {value = []; region = Region.ghost}, Some $1 }
+  | ";" attributes ";" { $2, Some $1 }
 
 const_decl:
-  open_const_decl { $1 }
-| open_const_decl ";" {
-    {$1 with value = {$1.value with terminator = Some $2}} }
+  open_const_decl semi_attributes {
+    let attributes, terminator = $2 in
+    {$1 with value = {$1.value with terminator = terminator; attributes = attributes }} 
+  }
 
 instruction:
   conditional  {        Cond $1 }
@@ -513,9 +586,10 @@ if_clause:
 clause_block:
   block { LongBlock $1 }
 | "{" sep_or_term_list(statement,";") "}" {
+    let statements, terminator = $2 in
     let region = cover $1 $3 in
     let value  = {lbrace = $1;
-                  inside = $2;
+                  inside = attributes_to_statement statements, terminator;
                   rbrace = $3} in
     ShortBlock {value; region} }
 
@@ -555,6 +629,7 @@ cases(rhs):
 
 case_clause(rhs):
   pattern "->" rhs {
+    SyntaxError.check_pattern $1;
     fun rhs_to_region ->
       let start  = pattern_to_region $1 in
       let region = cover start (rhs_to_region $3)
@@ -596,9 +671,10 @@ for_loop:
     in For (ForInt {region; value})
   }
 | "for" var arrow_clause? "in" collection expr block {
+    let var    = SyntaxError.check_reserved_name $2 in
     let region = cover $1 $7.region in
     let value  = {kwd_for    = $1;
-                  var        = $2;
+                  var;
                   bind_to    = $3;
                   kwd_in     = $4;
                   collection = $5;
@@ -613,12 +689,13 @@ collection:
 
 var_assign:
   var ":=" expr {
-    let region = cover $1.region (expr_to_region $3)
-    and value  = {name=$1; assign=$2; expr=$3}
+    let name   = SyntaxError.check_reserved_name $1 in
+    let region = cover name.region (expr_to_region $3)
+    and value  = {name; assign=$2; expr=$3}
     in {region; value} }
 
 arrow_clause:
-  "->" var { $1,$2 }
+  "->" var { $1, SyntaxError.check_reserved_name $2 }
 
 (* Expressions *)
 
@@ -646,7 +723,7 @@ cond_expr:
 
 disj_expr:
   conj_expr { $1 }
-|  disj_expr "or" conj_expr {
+| disj_expr "or" conj_expr {
     let start  = expr_to_region $1
     and stop   = expr_to_region $3 in
     let region = cover start stop
@@ -810,6 +887,7 @@ core_expr:
 | map_expr                      { EMap $1                      }
 | set_expr                      { ESet $1                      }
 | record_expr                   { ERecord $1                   }
+| update_record                 { EUpdate $1                   }
 | "<constr>" arguments {
     let region = cover $1.region $2.region in
     EConstr (ConstrApp {region; value = $1, Some $2})
@@ -901,6 +979,16 @@ record_expr:
      terminator;
      closing = RBracket $4}
    in {region; value} }
+
+update_record:
+  path "with" ne_injection("record",field_assignment){
+    let region = cover (path_to_region $1) $3.region in
+    let value = {
+      record = $1;
+      kwd_with = $2;
+      updates = $3}
+    in {region; value} }
+
 
 field_assignment:
   field_name "=" expr {

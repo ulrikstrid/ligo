@@ -4,20 +4,24 @@
   (name parser_shared)
   (public_name ligo.parser.shared)
   (libraries
+    menhirLib
     simple-utils
     uutf
     getopt
     zarith)
+  (preprocess
+    (pps bisect_ppx --conditional))
   (modules
+    LexerUnit
+    ParserUnit
+    ParserAPI
     Lexer
     LexerLog
     Utils
     Markup
     FQueue
     EvalOpt
-    Version
-    SyntaxError))
-
+    Version))
 
 (rule
   (targets Version.ml)

@@ -1,3 +1,4 @@
+[@@@coverage exclude_file]
 open Simple_utils.PP_helpers
 open Types
 open Format
@@ -58,8 +59,7 @@ let rec value ppf : value -> unit = function
   | D_unit -> fprintf ppf "unit"
   | D_string s -> fprintf ppf "\"%s\"" s
   | D_bytes x ->
-     let (`Hex hex) = Hex.of_bytes x in
-     fprintf ppf "0x%s" hex
+     fprintf ppf "0x%a" Hex.pp @@ Hex.of_bytes x
   | D_pair (a, b) -> fprintf ppf "(%a), (%a)" value a value b
   | D_left a -> fprintf ppf "L(%a)" value a
   | D_right b -> fprintf ppf "R(%a)" value b
@@ -91,14 +91,16 @@ and expression' ppf (e:expression') = match e with
   | E_if_left (c, ((name_l, _) , l), ((name_r, _) , r)) ->
       fprintf ppf "%a ?? %a -> %a : %a -> %a" expression c Stage_common.PP.name name_l expression l Stage_common.PP.name name_r expression r
   | E_sequence (a , b) -> fprintf ppf "%a ;; %a" expression a expression b
-  | E_let_in ((name , _) , expr , body) ->
-      fprintf ppf "let %a = %a in ( %a )" Stage_common.PP.name name expression expr expression body
+  | E_let_in ((name , _) , inline, expr , body) ->
+      fprintf ppf "let %a = %a%a in ( %a )" Stage_common.PP.name name expression expr option_inline inline expression body
   | E_iterator (b , ((name , _) , body) , expr) ->
       fprintf ppf "for_%a %a of %a do ( %a )" Stage_common.PP.constant b Stage_common.PP.name name expression expr expression body
   | E_fold (((name , _) , body) , collection , initial) ->
       fprintf ppf "fold %a on %a with %a do ( %a )" expression collection expression initial Stage_common.PP.name name expression body
   | E_assignment (r , path , e) ->
       fprintf ppf "%a.%a := %a" Stage_common.PP.name r (list_sep lr (const ".")) path expression e
+  | E_update (r, updates) ->
+      fprintf ppf "%a with {%a}" expression r (list_sep_d (fun ppf (path, e) -> fprintf ppf "%a = %a" (list_sep lr (const ".")) path expression e)) updates
   | E_while (e , b) ->
       fprintf ppf "while (%a) %a" expression e expression b
 
@@ -115,14 +117,26 @@ and function_ ppf ({binder ; body}:anon_function) =
     Stage_common.PP.name binder
     expression body
 
-and assignment ppf ((n, e):assignment) = fprintf ppf "%a = %a;" Stage_common.PP.name n expression e
+and assignment ppf ((n, i, e):assignment) = 
+  fprintf ppf "%a = %a%a;" Stage_common.PP.name n expression e option_inline i
 
-and declaration ppf ((n, e):assignment) = fprintf ppf "let %a = %a;" Stage_common.PP.name n expression e
+and option_inline ppf inline = 
+  if inline then 
+    fprintf ppf "[@inline]"
+  else
+    fprintf ppf ""
+
+and declaration ppf ((n, i, e):assignment) = 
+  fprintf ppf "let %a = %a%a;" Stage_common.PP.name n expression e option_inline i
 
 let tl_statement ppf (ass, _) = assignment ppf ass
 
 let program ppf (p:program) =
   fprintf ppf "Program:\n---\n%a" (pp_print_list ~pp_sep:pp_print_newline tl_statement) p
+
+let%expect_test _ =
+  Format.printf "%a" value (D_bytes (Bytes.of_string "foo")) ;
+  [%expect{| 0x666f6f |}]
 
 let%expect_test _ =
   let pp = expression' Format.std_formatter in

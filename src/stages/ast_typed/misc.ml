@@ -56,7 +56,7 @@ module Errors = struct
 
   let different_types name a b () =
     let title () = name ^ " are different" in
-    let message () = "" in
+    let message () = "Expected these two types to be the same, but they're different" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a" PP.type_value a) ;
       ("b" , fun () -> Format.asprintf "%a" PP.type_value b )
@@ -178,6 +178,7 @@ module Free_variables = struct
     | E_constructor (_ , a) -> self a
     | E_record m -> unions @@ List.map self @@ LMap.to_list m
     | E_record_accessor (a, _) -> self a
+    | E_record_update (r,ups) -> union (self r) @@ unions @@ List.map (fun (_,e) -> self e) ups
     | E_tuple_accessor (a, _) -> self a
     | E_list lst -> unions @@ List.map self lst
     | E_set lst -> unions @@ List.map self lst
@@ -187,7 +188,7 @@ module Free_variables = struct
     | E_sequence (a , b) -> unions @@ List.map self [ a ; b ]
     | E_loop (expr , body) -> unions @@ List.map self [ expr ; body ]
     | E_assign (_ , _ , expr) -> self expr
-    | E_let_in { binder; rhs; result } ->
+    | E_let_in { binder; rhs; result; _ } ->
       let b' = union (singleton binder) b in
       union
         (annotated_expression b' result)
@@ -321,7 +322,7 @@ let rec assert_type_value_eq (a, b: (type_value * type_value)) : unit result = m
       | TC_big_map (ka,va), TC_big_map (kb,vb) -> ok @@ ([ka;va] ,[kb;vb]) 
       | _,_ -> fail @@ different_operators opa opb
       in
-    trace (different_types "constant sub-expression" a b)
+    trace (different_types "arguments to type operators" a b)
       @@ bind_list_iter (fun (a,b) -> assert_type_value_eq (a,b) )(List.combine lsta lstb)
   )
   | T_operator _, _ -> fail @@ different_kinds a b
@@ -508,6 +509,7 @@ let rec assert_value_eq (a, b: (value*value)) : unit result =
       fail @@ different_values_because_different_types "set vs. non-set" a b
   | (E_literal _, _) | (E_variable _, _) | (E_application _, _)
   | (E_lambda _, _) | (E_let_in _, _) | (E_tuple_accessor _, _)
+  | (E_record_update _,_)
   | (E_record_accessor _, _)
   | (E_look_up _, _) | (E_matching _, _)
   | (E_assign _ , _)
@@ -527,7 +529,7 @@ let merge_annotation (a:type_value option) (b:type_value option) err : type_valu
 let get_entry (lst : program) (name : string) : annotated_expression result =
   trace_option (Errors.missing_entry_point name) @@
   let aux x =
-    let (Declaration_constant (an , _)) = Location.unwrap x in
+    let (Declaration_constant (an , _, _)) = Location.unwrap x in
     if (an.name = Var.of_name name)
     then Some an.annotated_expression
     else None
@@ -537,4 +539,4 @@ let get_entry (lst : program) (name : string) : annotated_expression result =
 let program_environment (program : program) : full_environment =
   let last_declaration = Location.unwrap List.(hd @@ rev program) in
   match last_declaration with
-  | Declaration_constant (_ , (_ , post_env)) -> post_env
+  | Declaration_constant (_ , _, (_ , post_env)) -> post_env

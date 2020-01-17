@@ -12,6 +12,10 @@ module Errors = struct
       ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
     ] in
     error ~data title message
+  let bad_type_operator type_op =
+    let title () = Format.asprintf "bad type operator %a" (Stage_common.PP.type_operator PP.type_expression) type_op in
+    let message () = "" in
+    error title message
 end
 open Errors
 
@@ -57,14 +61,15 @@ let t_set key               : type_expression = make_t @@ T_operator (TC_set key
 let t_contract contract     : type_expression = make_t @@ T_operator (TC_contract contract)
 
 (* TODO find a better way than using list*)
-let t_operator op lst: type_expression =
-  match op with 
-  | TC_set _ -> t_set (List.hd lst)
-  | TC_list _ -> t_list (List.hd lst)
-  | TC_option _ -> t_option (List.hd lst)
-  | TC_map (_,_) -> let tl = List.tl lst in t_map (List.hd lst) (List.hd tl)
-  | TC_big_map (_,_) -> let tl = List.tl lst in t_big_map (List.hd lst) (List.hd tl)
-  | TC_contract _ -> t_contract (List.hd lst)
+let t_operator op lst: type_expression result =
+  match op,lst with 
+  | TC_set _         , [t] -> ok @@ t_set t
+  | TC_list _        , [t] -> ok @@ t_list t
+  | TC_option _      , [t] -> ok @@ t_option t
+  | TC_map (_,_)     , [kt;vt] -> ok @@ t_map kt vt
+  | TC_big_map (_,_) , [kt;vt] -> ok @@ t_big_map kt vt
+  | TC_contract _    , [t] -> ok @@ t_contract t
+  | _ , _ -> fail @@ bad_type_operator op
 
 let location_wrap ?(loc = Location.generated) expression =
   let location = loc in
@@ -112,7 +117,7 @@ let e_variable ?loc v = location_wrap ?loc @@ E_variable v
 let e_skip ?loc () = location_wrap ?loc @@ E_skip
 let e_loop ?loc cond body = location_wrap ?loc @@ E_loop (cond , body)
 let e_sequence ?loc a b = location_wrap ?loc @@ E_sequence (a , b)
-let e_let_in ?loc (binder, ascr) rhs result = location_wrap ?loc @@ E_let_in { binder = (binder, ascr) ; rhs ; result }
+let e_let_in ?loc (binder, ascr) inline rhs result = location_wrap ?loc @@ E_let_in { binder = (binder, ascr) ; rhs ; result ; inline }
 let e_annotation ?loc expr ty = location_wrap ?loc @@ E_ascription (expr , ty)
 let e_application ?loc a b = location_wrap ?loc @@ E_application (a , b)
 let e_binop ?loc name a b  = location_wrap ?loc @@ E_constant (name , [a ; b])
@@ -167,6 +172,9 @@ let e_ez_record ?loc (lst : (string * expr) list) : expression =
 let e_record ?loc map =
   let lst = Map.String.to_kv_list map in
   e_ez_record ?loc lst 
+let e_update ?loc record updates = 
+  let updates = List.map (fun (x,y) -> (Label x, y)) updates in
+  location_wrap ?loc @@ E_update {record; updates}
 
 let get_e_accessor = fun t ->
   match t with

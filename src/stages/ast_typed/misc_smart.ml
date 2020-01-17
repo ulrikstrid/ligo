@@ -8,7 +8,7 @@ let program_to_main : program -> string -> lambda result = fun p s ->
   let%bind (main , input_type , _) =
     let pred = fun d ->
       match d with
-      | Declaration_constant (d , _) when d.name = Var.of_name s -> Some d.annotated_expression
+      | Declaration_constant (d , _, _) when d.name = Var.of_name s -> Some d.annotated_expression
       | Declaration_constant _ -> None
     in
     let%bind main =
@@ -23,7 +23,7 @@ let program_to_main : program -> string -> lambda result = fun p s ->
   let env =
     let aux = fun _ d ->
       match d with
-      | Declaration_constant (_ , (_ , post_env)) -> post_env in
+      | Declaration_constant (_ , _, (_ , post_env)) -> post_env in
     List.fold_left aux Environment.full_empty (List.map Location.unwrap p) in
   let binder = Var.of_name "@contract_input" in
   let body =
@@ -72,6 +72,14 @@ module Captured_variables = struct
       let%bind lst' = bind_map_list self @@ LMap.to_list m in
       ok @@ unions lst'
     | E_record_accessor (a, _) -> self a
+    | E_record_update (r,ups) -> 
+      let%bind r = self r in
+      let aux (_, e) =
+        let%bind e = self e in
+        ok e
+      in
+      let%bind lst = bind_map_list aux ups in
+      ok @@ union r @@ unions lst
     | E_tuple_accessor (a, _) -> self a
     | E_list lst ->
       let%bind lst' = bind_map_list self lst in

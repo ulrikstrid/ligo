@@ -1,135 +1,44 @@
-(** Driver for the LIGO parser *)
+(** Driver for the ReasonLIGO parser *)
 
-let extension = ".religo"
-let options = EvalOpt.read "ReasonLIGO" extension
+module IO =
+  struct
+    let ext = ".religo"
+    let options = EvalOpt.read "ReasonLIGO" ext
+  end
 
-(** Error printing and exception tracing
-*)
-let () = Printexc.record_backtrace true
+module ExtParser =
+  struct
+    type ast = AST.t
+    type expr = AST.expr
+    include Parser
+  end
 
-(** Auxiliary functions
-*)
-let sprintf = Printf.sprintf
+module ExtParserLog =
+  struct
+    type ast = AST.t
+    include ParserLog
+  end
 
-(** Extracting the input file
-*)
-let file =
-  match options#input with
-    None | Some "-" -> false
-  |         Some _  -> true
+module MyLexer = Lexer.Make (LexToken)
 
-(** {1 Error printing and exception tracing} *)
+module Unit =
+  ParserUnit.Make (IO)(MyLexer)(AST)(ExtParser)(ParErr)(ExtParserLog)
 
-let () = Printexc.record_backtrace true
-
-let external_ text =
-  Utils.highlight (Printf.sprintf "External error: %s" text); exit 1;;
-
-type error = SyntaxError
-
-let error_to_string = function
-  SyntaxError -> "Syntax error.\n"
-
-let print_error ?(offsets=true) mode Region.{region; value} ~file =
-  let msg = error_to_string value
-  and reg = region#to_string ~file ~offsets mode in
-  Utils.highlight (sprintf "Parse error %s:\n%s%!" reg msg)
-
-(** {1 Preprocessing the input source and opening the input channels} *)
-
-(** Path for CPP inclusions (#include)
-*)
-let lib_path =
-  match options#libs with
-      [] -> ""
-  | libs -> let mk_I dir path = Printf.sprintf " -I %s%s" dir path
-           in List.fold_right mk_I libs ""
-
-let prefix =
-  match options#input with
-    None | Some "-" -> "temp"
-  | Some file ->  Filename.(file |> basename |> remove_extension)
-
-let suffix = ".pp" ^ extension
-
-let pp_input =
-  if Utils.String.Set.mem "cpp" options#verbose
-  then prefix ^ suffix
-  else let pp_input, pp_out = Filename.open_temp_file prefix suffix
-       in close_out pp_out; pp_input
-
-let cpp_cmd =
-  match options#input with
-    None | Some "-" ->
-      Printf.sprintf "cpp -traditional-cpp%s - > %s"
-                     lib_path pp_input
-  | Some file ->
-      Printf.sprintf "cpp -traditional-cpp%s %s > %s"
-                     lib_path file pp_input
+(* Main *)
 
 let () =
-  if Utils.String.Set.mem "cpp" options#verbose
-  then Printf.eprintf "%s\n%!" cpp_cmd;
-  if Sys.command cpp_cmd <> 0 then
-    external_ (Printf.sprintf "the command \"%s\" failed." cpp_cmd)
+  try Unit.run () with
+    (* Ad hoc errors from the parsers *)
 
-(** {1 Instanciating the lexer} *)
-
-module Lexer = Lexer.Make (LexToken)
-module Log = LexerLog.Make (Lexer)
-module ParserFront = ParserAPI.Make (Lexer) (Parser)
-
-let lexer_inst = Lexer.open_token_stream (Some pp_input)
-let Lexer.{read; buffer; get_pos; get_last; close} = lexer_inst
-
-and cout = stdout
-
-let log = Log.output_token ~offsets:options#offsets
-                           options#mode options#cmd cout
-
-and close_all () = close (); close_out cout
-
-(** {1 Tokeniser} *)
-
-let tokeniser = read ~log
-
-(** {1 Main} *)
-
-let () =
-  try
-    (* The incremental API *)
-    let ast = ParserFront.incr_contract lexer_inst in
-    (* The monolithic API *)
-    (* let ast = ParserFront.mono_contract tokeniser buffer in *)
-    if Utils.String.Set.mem "ast" options#verbose
-    then let buffer = Buffer.create 131 in
-         let state = ParserLog.mk_state
-           ~offsets:options#offsets
-           ~mode:options#mode
-           ~buffer in
-         begin
-           ParserLog.pp_ast state ast;
-           Buffer.output_buffer stdout buffer
-         end
-    else if Utils.String.Set.mem "ast-tokens" options#verbose
-    then let buffer = Buffer.create 131 in
-         let state = ParserLog.mk_state
-           ~offsets:options#offsets
-           ~mode:options#mode
-           ~buffer in
-         begin
-           ParserLog.print_tokens state ast;
-           Buffer.output_buffer stdout buffer
-         end
-  with
-    Lexer.Error err ->
-      close_all ();
-      Lexer.print_error ~offsets:options#offsets
-                        options#mode err ~file
-  | Parser.Error ->
-      let region = get_last () in
-      let error = Region.{region; value=SyntaxError} in
-      let () = close_all () in
-      print_error ~offsets:options#offsets
-                  options#mode error ~file
-  | Sys_error msg -> Utils.highlight msg
+    SyntaxError.Error (SyntaxError.WrongFunctionArguments expr) ->
+      let () = Unit.close_all () in
+      let msg = "It looks like you are defining a function, \
+                 however we do not\n\
+                 understand the parameters declaration.\n\
+                 Examples of valid functions:\n\
+                 let x = (a: string, b: int) : int => 3;\n\
+                 let x = (a: string) : string => \"Hello, \" ++ a;\n"
+      and reg = AST.expr_to_region expr in
+      let error = Unit.short_error ~offsets:IO.options#offsets
+                                   IO.options#mode msg reg
+      in Printf.eprintf "\027[31m%s\027[0m%!" error

@@ -92,6 +92,7 @@ module Simplify = struct
       | "bytes_concat"    -> ok C_CONCAT
       | "bytes_slice"     -> ok C_SLICE
       | "bytes_pack"      -> ok C_BYTES_PACK
+      | "bytes_unpack"    -> ok C_BYTES_UNPACK
       | "set_empty"       -> ok C_SET_EMPTY
       | "set_mem"         -> ok C_SET_MEM
       | "set_add"         -> ok C_SET_ADD
@@ -131,6 +132,7 @@ module Simplify = struct
       | "address"         -> ok C_ADDRESS
       | "self_address"    -> ok C_SELF_ADDRESS
       | "implicit_account"-> ok C_IMPLICIT_ACCOUNT
+      | "set_delegate"    -> ok C_SET_DELEGATE
       | _                 -> simple_fail "Not a PascaLIGO constant"
 
     let type_constants = type_constants
@@ -224,6 +226,7 @@ module Simplify = struct
       | "stop"                     -> ok C_STOP
 
       | "Operation.transaction"    -> ok C_CALL
+      | "Operation.set_delegate"   -> ok C_SET_DELEGATE
       | "Operation.get_contract"   -> ok C_CONTRACT
       | "Operation.get_entrypoint" -> ok C_CONTRACT_ENTRYPOINT
       | "int"                      -> ok C_INT
@@ -241,6 +244,7 @@ module Simplify = struct
       | "AND"                      -> ok C_AND
       | "OR"                       -> ok C_OR
       | "GT"                       -> ok C_GT
+      | "GE"                       -> ok C_GE
       | "LT"                       -> ok C_LT
       | "LE"                       -> ok C_LE
       | "CONS"                     -> ok C_CONS
@@ -256,6 +260,27 @@ module Simplify = struct
 end
 
 module Typer = struct
+  module Operator_errors = struct
+    let type_error msg expected_type actual_type () =
+      let message () =
+        Format.asprintf "Expected an expression of type %a but got an expression of type %a"
+          Ast_typed.PP.type_value expected_type
+          Ast_typed.PP.type_value actual_type in
+      error (thunk msg) message
+
+    open PP_helpers
+
+    let print_f_args f printer ppf args =
+      Format.fprintf ppf "%s(%a)" f (list_sep printer (const " , ")) args
+
+    (* These are handled by typeclasses in the new typer *)
+    let typeclass_error msg f expected_types actual_types () =
+      let message () =
+        Format.asprintf "Expected arguments with one of the following combinations of types: %a but got this combination instead: %a"
+          (list_sep (print_f_args f Ast_typed.PP.type_value) (const " or ")) expected_types
+          (print_f_args f Ast_typed.PP.type_value) actual_types in
+      error (thunk msg) message
+  end
   (*
     Each constant has its own type.
 
@@ -432,7 +457,12 @@ module Typer = struct
     then ok @@ t_string ()
     else if eq_1 s (t_bytes ())
     then ok @@ t_bytes ()
-    else simple_fail "bad slice"
+    else fail @@ Operator_errors.typeclass_error "Computing slice with wrong types" "slice"
+                   [
+                     [t_nat();t_nat();t_string()] ;
+                     [t_nat();t_nat();t_bytes()] ;
+                   ]
+                   [i ; j ; s] ()
 
   let failwith_ = typer_1_opt "FAILWITH" @@ fun t opt ->
     let%bind () =
@@ -573,7 +603,7 @@ module Typer = struct
   let assertion = typer_1 "ASSERT" @@ fun a ->
     if eq_1 a (t_bool ())
     then ok @@ t_unit ()
-    else simple_fail "Asserting a non-bool"
+    else fail @@ Operator_errors.type_error "Asserting a non-bool" a (t_bool ()) ()
 
   let times = typer_2 "TIMES" @@ fun a b ->
     if eq_2 (a , b) (t_nat ())
@@ -582,7 +612,14 @@ module Typer = struct
     then ok @@ t_int () else
     if (eq_1 a (t_nat ()) && eq_1 b (t_mutez ())) || (eq_1 b (t_nat ()) && eq_1 a (t_mutez ()))
     then ok @@ t_mutez () else
-      simple_fail "Multiplying with wrong types"
+      fail @@ Operator_errors.typeclass_error "Multiplying with wrong types" "multiply"
+                [
+                  [t_nat();t_nat()] ;
+                  [t_int();t_int()] ;
+                  [t_nat();t_mutez()] ;
+                  [t_mutez();t_nat()] ;
+                ]
+                [a; b] ()
 
   let div = typer_2 "DIV" @@ fun a b ->
     if eq_2 (a , b) (t_nat ())
@@ -593,14 +630,29 @@ module Typer = struct
     then ok @@ t_mutez () else
     if eq_1 a (t_mutez ()) && eq_1 b (t_mutez ())
     then ok @@ t_nat () else
-      simple_fail "Dividing with wrong types"
+      fail @@ Operator_errors.typeclass_error "Dividing with wrong types" "divide"
+                [
+                  [t_nat();t_nat()] ;
+                  [t_int();t_int()] ;
+                  [t_mutez();t_nat()] ;
+                  [t_mutez();t_mutez()] ;
+                ]
+                [a; b] ()
 
   let mod_ = typer_2 "MOD" @@ fun a b ->
     if (eq_1 a (t_nat ()) || eq_1 a (t_int ())) && (eq_1 b (t_nat ()) || eq_1 b (t_int ()))
     then ok @@ t_nat () else
     if eq_1 a (t_mutez ()) && eq_1 b (t_mutez ())
     then ok @@ t_mutez () else
-      simple_fail "Computing modulo with wrong types"
+      fail @@ Operator_errors.typeclass_error "Computing modulo with wrong types" "modulo"
+                [
+                  [t_nat();t_nat()] ;
+                  [t_nat();t_int()] ;
+                  [t_int();t_nat()] ;
+                  [t_int();t_int()] ;
+                  [t_mutez();t_mutez()] ;
+                ]
+                [a; b] ()
 
   let add = typer_2 "ADD" @@ fun a b ->
     if eq_2 (a , b) (t_nat ())
@@ -613,25 +665,35 @@ module Typer = struct
     then ok @@ t_int () else
     if (eq_1 a (t_timestamp ()) && eq_1 b (t_int ())) || (eq_1 b (t_timestamp ()) && eq_1 a (t_int ()))
     then ok @@ t_timestamp () else
-      simple_fail "Adding with wrong types. Expected nat, int or tez."
+      fail @@ Operator_errors.typeclass_error "Adding modulo with wrong types" "add"
+                [
+                  [t_nat();t_nat()] ;
+                  [t_int();t_int()] ;
+                  [t_mutez();t_mutez()] ;
+                  [t_nat();t_int()] ;
+                  [t_int();t_nat()] ;
+                  [t_timestamp();t_int()] ;
+                  [t_int();t_timestamp()] ;
+                ]
+                [a; b] ()
 
   let set_mem = typer_2 "SET_MEM" @@ fun elt set ->
     let%bind key = get_t_set set in
     if eq_1 elt key
     then ok @@ t_bool ()
-    else simple_fail "Set_mem: elt and set don't match"
+    else fail @@ Operator_errors.type_error "Set_mem: elt and set don't match" elt key ()
 
   let set_add = typer_2 "SET_ADD" @@ fun elt set ->
     let%bind key = get_t_set set in
     if eq_1 elt key
     then ok set
-    else simple_fail "Set_add: elt and set don't match"
+    else fail @@ Operator_errors.type_error "Set_add: elt and set don't match" elt key ()
 
   let set_remove = typer_2 "SET_REMOVE" @@ fun elt set ->
     let%bind key = get_t_set set in
     if eq_1 elt key
     then ok set
-    else simple_fail "Set_remove: elt and set don't match"
+    else fail @@ Operator_errors.type_error "Set_remove: elt and set don't match" key elt ()
 
   let set_iter = typer_2 "SET_ITER" @@ fun body set ->
     let%bind (arg , res) = get_t_function body in
@@ -639,7 +701,7 @@ module Typer = struct
     let%bind key = get_t_set set in
     if eq_1 key arg
     then ok (t_unit ())
-    else simple_fail "bad set iter"
+    else fail @@ Operator_errors.type_error "bad set iter" key arg ()
 
   let list_iter = typer_2 "LIST_ITER" @@ fun body lst ->
     let%bind (arg , res) = get_t_function body in
@@ -647,14 +709,14 @@ module Typer = struct
     let%bind key = get_t_list lst in
     if eq_1 key arg
     then ok (t_unit ())
-    else simple_fail "bad list iter"
+    else fail @@ Operator_errors.type_error "bad list iter" key arg ()
 
   let list_map = typer_2 "LIST_MAP" @@ fun body lst ->
     let%bind (arg , res) = get_t_function body in
     let%bind key = get_t_list lst in
     if eq_1 key arg
     then ok (t_list res ())
-    else simple_fail "bad list map"
+    else fail @@ Operator_errors.type_error "bad list map" key arg ()
 
   let list_fold = typer_3 "LIST_FOLD" @@ fun body lst init ->
     let%bind (arg , res) = get_t_function body in
@@ -722,45 +784,74 @@ module Typer = struct
     then ok @@ t_bool ()
     else if eq_1 elt (t_nat ()) || eq_1 elt (t_int ())
     then ok @@ t_int ()
-    else simple_fail "bad parameter to not"
+    else fail @@ Operator_errors.type_error "bad parameter to not" elt (t_bool ()) ()
 
   let or_ = typer_2 "OR" @@ fun a b ->
     if eq_2 (a , b) (t_bool ())
     then ok @@ t_bool ()
     else if eq_2 (a , b) (t_nat ())
     then ok @@ t_nat ()
-    else simple_fail "bad or"
+    else fail @@ Operator_errors.typeclass_error "OR with wrong types" "or"
+                   [
+                     [t_bool();t_bool()] ;
+                     [t_nat();t_nat()] ;
+                   ]
+                   [a; b] ()
 
   let xor = typer_2 "XOR" @@ fun a b ->
     if eq_2 (a , b) (t_bool ())
     then ok @@ t_bool ()
     else if eq_2 (a , b) (t_nat ())
     then ok @@ t_nat ()
-    else simple_fail "bad xor"
+    else fail @@ Operator_errors.typeclass_error "XOR with wrong types" "xor"
+                   [
+                     [t_bool();t_bool()] ;
+                     [t_nat();t_nat()] ;
+                   ]
+                   [a; b] ()
 
   let and_ = typer_2 "AND" @@ fun a b ->
     if eq_2 (a , b) (t_bool ())
     then ok @@ t_bool ()
     else if eq_2 (a , b) (t_nat ()) || (eq_1 b (t_nat ()) && eq_1 a (t_int ()))
     then ok @@ t_nat ()
-    else simple_fail "bad end"
+    else fail @@ Operator_errors.typeclass_error "AND with wrong types" "and"
+                   [
+                     [t_bool();t_bool()] ;
+                     [t_nat();t_nat()] ;
+                     [t_int();t_nat()] ;
+                   ]
+                   [a; b] ()
 
   let lsl_ = typer_2 "LSL" @@ fun a b ->
     if eq_2 (a , b) (t_nat ())
     then ok @@ t_nat ()
-    else simple_fail "bad lsl"
+    else fail @@ Operator_errors.typeclass_error "LSL with wrong types" "lsl"
+                   [
+                     [t_nat();t_nat()] ;
+                   ]
+                   [a; b] ()
 
   let lsr_ = typer_2 "LSR" @@ fun a b ->
     if eq_2 (a , b) (t_nat ())
     then ok @@ t_nat ()
-    else simple_fail "bad lsr"
+    else fail @@ Operator_errors.typeclass_error "LSR with wrong types" "lsr"
+                   [
+                     [t_nat();t_nat()] ;
+                   ]
+                   [a; b] ()
 
   let concat = typer_2 "CONCAT" @@ fun a b ->
     if eq_2 (a , b) (t_string ())
     then ok @@ t_string ()
     else if eq_2 (a , b) (t_bytes ())
     then ok @@ t_bytes ()
-    else simple_fail "bad concat"
+    else fail @@ Operator_errors.typeclass_error "Concatenation with wrong types" "concat"
+                   [
+                     [t_string();t_string()] ;
+                     [t_bytes();t_bytes()] ;
+                   ]
+                   [a; b] ()
 
   let cons = typer_2 "CONS" @@ fun hd tl ->
     let%bind elt = get_t_list tl in
@@ -851,6 +942,7 @@ module Typer = struct
     | C_ADDRESS             -> ok @@ address ;
     | C_SELF_ADDRESS        -> ok @@ self_address;
     | C_IMPLICIT_ACCOUNT    -> ok @@ implicit_account;
+    | C_SET_DELEGATE        -> ok @@ set_delegate ;
     | _                     -> simple_fail @@ Format.asprintf "Typer not implemented for consant %a" Stage_common.PP.constant c
 
 
@@ -923,6 +1015,7 @@ module Compiler = struct
     | C_ADDRESS         -> ok @@ simple_unary @@ prim I_ADDRESS
     | C_SELF_ADDRESS    -> ok @@ simple_constant @@ seq [prim I_SELF; prim I_ADDRESS]
     | C_IMPLICIT_ACCOUNT -> ok @@ simple_unary @@ prim I_IMPLICIT_ACCOUNT
+    | C_SET_DELEGATE    -> ok @@ simple_unary @@ prim I_SET_DELEGATE
     | C_NOW             -> ok @@ simple_constant @@ prim I_NOW
     | C_CALL            -> ok @@ simple_ternary @@ prim I_TRANSFER_TOKENS
     | C_SOURCE          -> ok @@ simple_constant @@ prim I_SOURCE

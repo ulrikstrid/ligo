@@ -202,12 +202,13 @@ field_decl:
 (* Top-level non-recursive definitions *)
 
 let_declaration:
-  "let" let_binding {
-    let kwd_let = $1 in
-    let binding = $2 in
-    let value   = kwd_let, binding in
-    let stop    = expr_to_region binding.let_rhs in
-    let region  = cover $1 stop
+  "let" let_binding seq(Attr2) {
+    let kwd_let    = $1 in
+    let attributes = $3 in
+    let binding    = $2 in    
+    let value      = kwd_let, binding, attributes in
+    let stop       = expr_to_region binding.let_rhs in
+    let region     = cover $1 stop
     in {region; value} }
 
 let_binding:
@@ -443,25 +444,27 @@ case_clause(right_expr):
   pattern "->" right_expr { {pattern=$1; arrow=$2; rhs=$3} }
 
 let_expr(right_expr):
-  "let" let_binding "in" right_expr {
-    let kwd_let = $1
-    and binding = $2
-    and kwd_in  = $3
-    and body    = $4 in
-    let stop    = expr_to_region body in
-    let region  = cover kwd_let stop
-    and value   = {kwd_let; binding; kwd_in; body}
+  "let" let_binding seq(Attr2) "in" right_expr  {
+    let kwd_let    = $1 
+    and binding    = $2
+    and attributes = $3   
+    and kwd_in     = $4
+    and body       = $5 in
+    let stop       = expr_to_region body in
+    let region     = cover kwd_let stop
+    and value      = {kwd_let; binding; kwd_in; body; attributes}
     in ELetIn {region; value} }
 
 fun_expr(right_expr):
   "fun" nseq(irrefutable) "->" right_expr {
     let stop   = expr_to_region $4 in
     let region = cover $1 stop in
-    let value  = {kwd_fun  = $1;
-                  binders  = $2;
-                  lhs_type = None;
-                  arrow    = $3;
-                  body     = $4}
+    let value  = {kwd_fun    = $1;
+                  binders    = $2;
+                  lhs_type   = None;
+                  arrow      = $3;
+                  body       = $4
+                 }
     in EFun {region; value} }
 
 disj_expr_level:
@@ -566,6 +569,7 @@ core_expr:
   "<int>"                             {               EArith (Int $1) }
 | "<mutez>"                           {             EArith (Mutez $1) }
 | "<nat>"                             {               EArith (Nat $1) }
+| "<bytes>"                           {                     EBytes $1 }
 | "<ident>" | module_field            {                       EVar $1 }
 | projection                          {                      EProj $1 }
 | "<string>"                          {           EString (String $1) }
@@ -575,6 +579,7 @@ core_expr:
 | list(expr)                          {          EList (EListComp $1) }
 | sequence                            {                       ESeq $1 }
 | record_expr                         {                    ERecord $1 }
+| update_record                       {                    EUpdate $1 }
 | par(expr)                           {                       EPar $1 }
 | par(expr ":" type_expr {$1,$2,$3})  {                     EAnnot $1 }
 
@@ -613,6 +618,21 @@ record_expr:
                   terminator}
     in {region; value} }
 
+update_record:
+  "{" path "with" sep_or_term_list(field_assignment,";") "}" {
+    let region = cover $1 $5 in
+    let ne_elements, terminator = $4 in
+    let value = {
+      lbrace   = $1;
+      record   = $2;
+      kwd_with = $3;
+      updates  = { value = {compound = Braces($1,$5);
+                  ne_elements;
+                  terminator};
+                  region = cover $3 $5};
+      rbrace   = $5}
+    in {region; value} }
+
 field_assignment:
   field_name "=" expr {
     let start  = $1.region in
@@ -634,3 +654,7 @@ sequence:
          Some ne_elements, terminator in
     let value = {compound; elements; terminator}
     in {region; value} }
+
+path :
+ "<ident>"  {Name $1}
+| projection { Path $1}

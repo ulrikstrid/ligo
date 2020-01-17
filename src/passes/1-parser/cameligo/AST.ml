@@ -119,6 +119,7 @@ type type_name   = string reg
 type field_name  = string reg
 type type_constr = string reg
 type constr      = string reg
+type attribute   = string reg
 
 (* Parentheses *)
 
@@ -139,8 +140,10 @@ type t = {
 
 and ast = t
 
+and attributes = attribute list 
+
 and declaration =
-  Let      of (kwd_let * let_binding) reg
+  Let      of (kwd_let * let_binding * attributes) reg
 | TypeDecl of type_decl reg
 
 (* Non-recursive values *)
@@ -232,8 +235,9 @@ and expr =
 | EString of string_expr
 | EList   of list_expr
 | EConstr of constr_expr
-| ERecord of field_assign reg ne_injection reg
+| ERecord of record reg
 | EProj   of projection reg
+| EUpdate of update reg
 | EVar    of variable
 | ECall   of (expr * expr nseq) reg
 | EBytes  of (string * Hex.t) reg
@@ -316,6 +320,7 @@ and comp_expr =
 | Equal of equal bin_op reg
 | Neq   of neq   bin_op reg
 
+and record = field_assign reg ne_injection
 and projection = {
   struct_name : variable;
   selector    : dot;
@@ -332,6 +337,17 @@ and field_assign = {
   field_expr : expr
 }
 
+and update = {
+  lbrace : lbrace;
+  record : path;
+  kwd_with : kwd_with;
+  updates : record reg;
+  rbrace : rbrace;
+}
+and path =
+  Name of variable
+| Path of projection reg
+
 and 'a case = {
   kwd_match : kwd_match;
   expr      : expr;
@@ -347,18 +363,19 @@ and 'a case_clause = {
 }
 
 and let_in = {
-  kwd_let : kwd_let;
-  binding : let_binding;
-  kwd_in  : kwd_in;
-  body    : expr
+  kwd_let    : kwd_let;
+  binding    : let_binding;
+  kwd_in     : kwd_in;
+  body       : expr;
+  attributes : attributes
 }
 
 and fun_expr = {
-  kwd_fun  : kwd_fun;
-  binders  : pattern nseq;
-  lhs_type : (colon * type_expr) option;
-  arrow    : arrow;
-  body     : expr
+  kwd_fun    : kwd_fun;
+  binders    : pattern nseq;
+  lhs_type   : (colon * type_expr) option;
+  arrow      : arrow;
+  body       : expr;
 }
 
 and cond_expr = {
@@ -443,8 +460,12 @@ let expr_to_region = function
 | ECond {region;_} | ETuple {region;_} | ECase {region;_}
 | ECall {region;_} | EVar {region; _} | EProj {region; _}
 | EUnit {region;_} | EPar {region;_} | EBytes {region; _}
-| ESeq {region; _} | ERecord {region; _} -> region
+| ESeq {region; _} | ERecord {region; _} | EUpdate {region; _} -> region
 
 let selection_to_region = function
   FieldName f -> f.region
 | Component c -> c.region
+
+let path_to_region = function
+  Name var -> var.region
+| Path {region; _} -> region

@@ -41,6 +41,15 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
     let%bind res = bind_fold_lmap aux (ok init') m in
     ok res
   )
+  | E_update {record;updates} -> (
+    let%bind res = self init' record in
+    let aux res (_, expr) =
+      let%bind res = fold_expression self res expr in
+      ok res
+    in
+    let%bind res = bind_fold_list aux res updates in
+    ok res 
+  )
   | E_let_in { binder = _ ; rhs ; result } -> (
       let%bind res = self init' rhs in
       let%bind res = self res result in
@@ -131,6 +140,11 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
     let%bind m' = bind_map_lmap self m in
     return @@ E_record m'
   )
+  | E_update {record; updates} -> (
+    let%bind record = self record in
+    let%bind updates = bind_map_list (fun(l,e) -> let%bind e = self e in ok (l,e)) updates in
+    return @@ E_update {record;updates}
+  )
   | E_constructor (name , e) -> (
       let%bind e' = self e in
       return @@ E_constructor (name , e')
@@ -143,10 +157,10 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
       let%bind ab' = bind_map_pair self ab in
       return @@ E_application ab'
     )
-  | E_let_in { binder ; rhs ; result } -> (
+  | E_let_in { binder ; rhs ; result; inline } -> (
       let%bind rhs = self rhs in
       let%bind result = self result in
-      return @@ E_let_in { binder ; rhs ; result }
+      return @@ E_let_in { binder ; rhs ; result; inline }
     )
   | E_lambda { binder ; input_type ; output_type ; result } -> (
       let%bind result = self result in
@@ -192,9 +206,9 @@ and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
 and map_program : mapper -> program -> program result = fun m p ->
   let aux = fun (x : declaration) ->
     match x with
-    | Declaration_constant (t , o , e) -> (
+    | Declaration_constant (t , o , i, e) -> (
         let%bind e' = map_expression m e in
-        ok (Declaration_constant (t , o , e'))
+        ok (Declaration_constant (t , o , i, e'))
       )
     | Declaration_type _ -> ok x
   in
