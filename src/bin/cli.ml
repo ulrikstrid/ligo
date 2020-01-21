@@ -217,6 +217,19 @@ let interpret =
   let doc = "Subcommand: interpret the expression in the context initialized by the provided source file." in
   (Term.ret term , Term.info ~doc cmdname)
 
+let interpret_file =
+  let f source_file _entry_point syntax display_format =
+    toplevel ~display_format @@
+    let%bind simplified = Compile.Of_source.compile source_file (Syntax_name syntax) in
+    let%bind typed,_    = Compile.Of_simplified.compile simplified in
+    let%bind toto = Compile.Of_typed.secd_interpret typed in
+    ok @@ Format.asprintf "%s\n" toto
+  in
+  let term =
+    Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format ) in
+  let cmdname = "interpret-file" in
+  let doc = "Subcommand: uses LIGO interpret." in
+  (Term.ret term , Term.info ~doc cmdname)
 
 let compile_storage =
   let f source_file entry_point expression syntax amount sender source predecessor_timestamp display_format michelson_format =
@@ -361,6 +374,7 @@ let dump_changelog =
 
 let run ?argv () =
   Term.eval_choice ?argv main [
+    interpret_file ;
     compile_file ;
     measure_contract ;
     compile_parameter ;

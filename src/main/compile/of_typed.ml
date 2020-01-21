@@ -22,3 +22,5 @@ let assert_equal_contract_type : check_type -> string -> Ast_typed.program -> As
       | _ -> dummy_fail
   )
   | _ -> dummy_fail )
+
+let secd_interpret = Interpreter.dummy
