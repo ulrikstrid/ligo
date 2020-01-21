@@ -2010,6 +2010,12 @@ let empty_case_religo () : unit result =
   in
   ok ()
 
+let michelson_literals_mligo () : unit result =
+  let%bind program = mtype_file "./contracts/michelson_literals.mligo" in
+  let%bind () =
+    expect_eq program "main" (e_int 10) (e_int (-10))
+  in ok ()
+
 let main = test_suite "Integration (End to End)" [
     test "bytes unpack" bytes_unpack ;
     test "key hash" key_hash ;
@@ -2162,4 +2168,5 @@ let main = test_suite "Integration (End to End)" [
     test "empty case" empty_case ;
     test "empty case (mligo)" empty_case_mligo ;
     test "empty case (religo)" empty_case_religo ;
+    test "michelson literals (mligo)" michelson_literals_mligo ;
   ]
