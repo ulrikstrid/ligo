@@ -85,6 +85,7 @@ let typed_program_with_simplified_input_to_michelson
   Printexc.record_backtrace true;
   let env = Ast_typed.program_environment program in
   let state = Typer.Solver.initial_state in
+  let () = Printf.printf "\nINPUT = %s\n\n%!" (Format.asprintf "%a" Ast_simplified.PP.expression input) in
   let%bind app              = Compile.Of_simplified.apply entry_point input in
   let%bind (typed_app,_)    = Compile.Of_simplified.compile_expression ~env ~state app in
   let%bind compiled_applied = Compile.Of_typed.compile_expression typed_app in

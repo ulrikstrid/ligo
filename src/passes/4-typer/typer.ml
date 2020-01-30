@@ -1,4 +1,4 @@
-let use_new_typer = false
+let use_new_typer = true
 
 module I = Ast_simplified
 module O = Ast_typed
