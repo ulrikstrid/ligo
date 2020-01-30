@@ -93,6 +93,7 @@ let typed_program_with_imperative_input_to_michelson
   let state = Typer.Solver.initial_state in
   let%bind sugar            = Compile.Of_imperative.compile_expression input in
   let%bind core             = Compile.Of_sugar.compile_expression sugar in
+  let () = Printf.printf "\nINPUT = %s\n\n%!" (Format.asprintf "%a" Ast_core.PP.expression core) in
   let%bind app              = Compile.Of_core.apply entry_point core in
   let%bind (typed_app,_)    = Compile.Of_core.compile_expression ~env ~state app in
   let%bind compiled_applied = Compile.Of_typed.compile_expression typed_app in
