@@ -2352,6 +2352,7 @@ let loop_bugs_ligo () : unit result =
   ok ()
 
 let main = test_suite "Integration (End to End)" [
+    test "chain id" chain_id ;
     test "bytes unpack" bytes_unpack ;
     test "bytes unpack (mligo)" bytes_unpack_mligo ;
     test "bytes unpack (religo)" bytes_unpack_religo ;
@@ -2361,7 +2362,6 @@ let main = test_suite "Integration (End to End)" [
     test "check signature" check_signature ;
     test "check signature (mligo)" check_signature_mligo ;
     test "check signature (religo)" check_signature_religo ;
-    test "chain id" chain_id ;
     test "type alias" type_alias ;
     test "function" function_ ;
     test "blockless function" blockless;
