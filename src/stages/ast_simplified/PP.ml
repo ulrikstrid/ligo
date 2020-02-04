@@ -13,9 +13,9 @@ let expression_variable ppf (ev : expression_variable) : unit =
 let rec expression ppf (e : expression) =
   match e.expression_content with
   | E_literal l ->
-      fprintf ppf "literal(%a)" literal l
+      literal ppf l
   | E_variable n ->
-      fprintf ppf "variable(%a)" expression_variable n
+      fprintf ppf "%a" expression_variable n
   | E_application app ->
       fprintf ppf "(%a)@(%a)" expression app.expr1 expression app.expr2
   | E_constructor c ->

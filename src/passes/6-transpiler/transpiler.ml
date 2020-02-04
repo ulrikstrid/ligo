@@ -107,8 +107,7 @@ open Errors
 
 let rec transpile_type (t:AST.type_expression) : type_value result =
   match t.type_content with
-  | T_variable (name) -> let _ = failwith "debugggggg" in
-                         fail @@ no_type_variable @@ name
+  | T_variable (name) -> fail @@ no_type_variable @@ name
   | T_constant (TC_bool) -> ok (T_base TC_bool)
   | T_constant (TC_int) -> ok (T_base TC_int)
   | T_constant (TC_nat) -> ok (T_base TC_nat)
@@ -224,7 +223,6 @@ and tree_of_sum : AST.type_expression -> (AST.constructor' * AST.type_expression
   ok @@ Append_tree.of_list @@ kv_list_of_cmap map_tv
 
 and transpile_annotated_expression (ae:AST.expression) : expression result =
-  let () = Printf.printf "zzz: %s\n%!" (Format.asprintf "%a" Ast_typed.PP.expression ae) in
   let%bind tv = transpile_type ae.type_expression in
   let return ?(tv = tv) expr = ok @@ Combinators.Expression.make_tpl (expr, tv) in
   let f = transpile_annotated_expression in

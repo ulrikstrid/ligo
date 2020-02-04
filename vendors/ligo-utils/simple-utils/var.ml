@@ -47,5 +47,3 @@ let fresh ?name () =
 
 let fresh_like v =
   fresh ~name:v.name ()
-
-let debug v = match v.counter with Some c -> Printf.sprintf "%s(%d)" v.name c | None -> Printf.sprintf "%s(None)" v.name

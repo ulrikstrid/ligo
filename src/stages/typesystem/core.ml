@@ -3,10 +3,9 @@ type type_variable = Ast_typed.type_variable
 type type_expression = Ast_typed.type_expression
 
 (* generate a new type variable and gave it an id *)
-let fresh_type_variable : ?name:string -> unit -> type_variable = fun ?name () ->
-  let fresh_name = Var.fresh ?name () in
-  let () = Printf.printf "Generated variable %s\n%!%s\n%!" (Var.debug fresh_name) (Printexc.get_backtrace ()) in
-  fresh_name
+let fresh_type_variable : ?name:string -> unit -> type_variable =
+    Var.fresh
+
 
 (* add information on the type or the kind for operator*)
 type constant_tag =
