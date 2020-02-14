@@ -1,6 +1,10 @@
 {
   "docs": {
-    "Intro": ["intro/what-and-why", "intro/installation", "intro/editor-support"],
+    "Intro": [
+      "intro/what-and-why", 
+      "intro/installation", 
+      "intro/editor-support"
+      ],
     "Language Basics": [
       "language-basics/types",
       "language-basics/constants-and-variables",
