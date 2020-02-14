@@ -18,15 +18,24 @@
       "language-basics/sets-lists-tuples",
       "language-basics/tezos-specific"
     ],
-    "Advanced": [
+    "API": [
+      "reference/big_map",
+      "reference/bytes",
+      "reference/crypto",
+      "reference/list",
+      "reference/map",
+      "reference/set",
+      "reference/string",
+      "api/cli-commands",
+      "api/cheat-sheet"
+    ],
+    "Tutorials": [
+      "tutorials/get-started/tezos-taco-shop-smart-contract",
+      "tutorials/get-started/tezos-taco-shop-payout",
       "advanced/timestamps-addresses",
       "advanced/entrypoints-contracts",
       "advanced/include",
       "advanced/first-contract"
-    ],
-    "API": [
-      "api/cli-commands",
-      "api/cheat-sheet"
     ]
   },
   "contributors-docs": {
@@ -47,11 +56,6 @@
       "contributors/road-map/short-term",
       "contributors/road-map/long-term"
     ]
-  },
-  "tutorials": {
-    "Get Started": [
-      "tutorials/get-started/tezos-taco-shop-smart-contract",
-      "tutorials/get-started/tezos-taco-shop-payout"
-    ]
   }
+
 }
