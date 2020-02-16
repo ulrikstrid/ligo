@@ -2,7 +2,7 @@
 
 dockerfile_name="build"
 # Generic dockerfile
-dockerfile="./docker/distribution/generic/build.Dockerfile"
+dockerfile="./scripts/distribution/generic/build.Dockerfile"
 . ./scripts/distribution/generic/parameters.sh
 
 echo "Building LIGO for $target"

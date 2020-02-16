@@ -21,12 +21,12 @@ tag_package_dockerized="$LIGO_REGISTRY_IMAGE_BASE_NAME-$target:$version"
 
 # Check if there's a specific dockerfile override for 
 # the current target_os_family (e.g. debian-ish distros) or target_os (ubuntu, xubuntu, ...) and use it if there is one
-target_os_family_specific_dockerfile="./docker/distribution/$target_os_family/$dockerfile_name.Dockerfile"
+target_os_family_specific_dockerfile="./scripts/distribution/$target_os_family/$dockerfile_name.Dockerfile"
 if test -f "$target_os_family_specific_dockerfile"; then
     dockerfile="$target_os_family_specific_dockerfile"
 fi
 
-target_os_specific_dockerfile="./docker/distribution/$target_os_family/$target_os/$dockerfile_name.Dockerfile"
+target_os_specific_dockerfile="./scripts/distribution/$target_os_family/$target_os/$dockerfile_name.Dockerfile"
 if test -f "$target_os_specific_dockerfile"; then
     dockerfile="$target_os_specific_dockerfile"
 fi
