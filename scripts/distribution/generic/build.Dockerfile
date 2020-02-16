@@ -1,23 +1,13 @@
 ARG target
 FROM ocaml/opam2:${target}
 
-ARG ci_job_id
-ENV CI_JOB_ID=$ci_job_id
+USER root
 
 RUN opam switch 4.07 && eval $(opam env)
 
-USER root
+COPY scripts /ligo_prebuild/scripts
 
-# Add contents of the current directory to /ligo where it can be
-# accessed when building the image.
-#
-# This is useful when building either locally, or on the CI
-# because the currently checkout out version (from git) will be used
-# to build the image
-ADD . /ligo
-# Set the current working directory to /ligo for
-# the upcoming scripts
-WORKDIR /ligo
+WORKDIR /ligo_prebuild
 
 # Install required native dependencies
 RUN sh scripts/install_native_dependencies.sh
@@ -27,8 +17,21 @@ RUN sh scripts/setup_repos.sh
 
 RUN opam update
 
-# Install ligo
+COPY ligo.opam /ligo_prebuild/ligo.opam
+COPY vendors /ligo_prebuild/vendors
+
+# Install opam deps
 RUN sh scripts/install_vendors_deps.sh
+
+# Now copy rest of repo (making above steps more cacheable)
+COPY . /ligo
+
+WORKDIR /ligo
+
+ARG ci_job_id
+ENV CI_JOB_ID=$ci_job_id
+
+# Install ligo
 RUN opam install -y .
 
 # Use the ligo binary as a default command
