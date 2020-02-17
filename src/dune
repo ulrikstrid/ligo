@@ -1,11 +1,7 @@
-(dirs (:standard \ toto))
 (library
   (name ligo)
   (public_name ligo)
   (libraries
-    simple-utils
-    tezos-utils
-    tezos-micheline
     main
   )
   (preprocess
