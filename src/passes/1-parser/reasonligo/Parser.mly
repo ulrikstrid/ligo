@@ -181,11 +181,11 @@ fun_type:
     let region = cover $1.region (type_expr_to_region $3)
     in TFun {region; value = TVar $1, $2, $3}
   }
-| "(" cartesian ")" "=>" fun_type {
+| "(" fun_type ")" "=>" fun_type {
     let region = cover $1 (type_expr_to_region $5)
     in TFun {region; value = $2,$4,$5}
   }
-| "(" tuple(cartesian) ")" "=>" fun_type {
+| "(" tuple(fun_type) ")" "=>" fun_type {
     let hd, rest = $2 in curry hd (rest @ [($4,$5)])
   }
 | "(" tuple(fun_type) ")" {
@@ -193,23 +193,13 @@ fun_type:
   }
 | core_type { $1 }
 
-cartesian:
-  "(" tuple(fun_type) ")" {
-    TProd {region = cover $1 $3; value = $2}
-  }
-| core_type { $1 }
-
 type_args:
-  "(" tuple(fun_type) ")" {
-    let region = cover $1 $3
-    in TProd {region; value=$2}, []
-  }
-| tuple(fun_type) { $1 }
+  tuple(fun_type) {     $1 }
 | fun_type        { $1, [] }
 
 core_type:
   type_name      { TVar $1 }
-| par(cartesian) { TPar $1 }  (* par(type_expr) yields a conflict *)
+| par(fun_type)  { TPar $1 }
 | module_name "." type_name {
     let module_name = $1.value in
     let type_name   = $3.value in
@@ -229,7 +219,7 @@ sum_type:
 
 variant:
   "<constr>" { {$1 with value={constr=$1; arg=None}} }
-| "<constr>" "(" cartesian ")" {
+| "<constr>" "(" fun_type ")" {
     let region = cover $1.region $4
     and value  = {constr=$1; arg = Some (ghost,$3)}
     in {region; value} }
