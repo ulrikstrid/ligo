@@ -179,39 +179,37 @@ type_expr:
 fun_type:
   type_name "=>" fun_type {
     let region = cover $1.region (type_expr_to_region $3)
-    and value  = TVar $1, $2, $3
-    in TFun {region; value}
+    in TFun {region; value = TVar $1, $2, $3}
   }
 | "(" cartesian ")" "=>" fun_type {
     let region = cover $1 (type_expr_to_region $5)
-    and value  = $2,$4,$5
-    in TFun {region; value}
+    in TFun {region; value = $2,$4,$5}
   }
 | "(" tuple(cartesian) ")" "=>" fun_type {
-    let hd, rest = $2 in
-    curry hd (rest @ [($4,$5)])
+    let hd, rest = $2 in curry hd (rest @ [($4,$5)])
   }
-| "(" tuple(cartesian) ")" {
-   TProd {region = cover $1 $3; value = $2}
+| "(" tuple(fun_type) ")" {
+    TProd {region = cover $1 $3; value = $2}
   }
 | core_type { $1 }
 
 cartesian:
-  "(" tuple(core_type) ")" {
+  "(" tuple(fun_type) ")" {
     TProd {region = cover $1 $3; value = $2}
   }
 | core_type { $1 }
 
 type_args:
-  "(" tuple(core_type) ")" {
+  "(" tuple(fun_type) ")" {
     let region = cover $1 $3
     in TProd {region; value=$2}, []
   }
-| tuple(core_type) { $1 }
+| tuple(fun_type) { $1 }
+| fun_type        { $1, [] }
 
 core_type:
   type_name      { TVar $1 }
-| par(fun_type) { TPar $1 }  (* par(type_expr) yields a conflict *)
+| par(cartesian) { TPar $1 }  (* par(type_expr) yields a conflict *)
 | module_name "." type_name {
     let module_name = $1.value in
     let type_name   = $3.value in
