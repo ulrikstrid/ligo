@@ -3568,24 +3568,6 @@ contract: Type Ident EQ Constr LPAR Ident RPAR WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ Constr LPAR Ident Type
-##
-## Ends in an error in state: 39.
-##
-## variant -> Constr LPAR cartesian . RPAR [ VBAR Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
-##
-## The known suffix of the stack is as follows:
-## Constr LPAR cartesian
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 8, spurious reduction of production core_type -> Ident 
-## In state 15, spurious reduction of production cartesian -> core_type 
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Type Ident EQ Constr LPAR WILD
 ##
@@ -3699,38 +3681,6 @@ contract: Type Ident EQ Ident LPAR Ident RBRACE
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 18, spurious reduction of production core_type -> Ident 
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Type Ident EQ Ident LPAR Ident WILD
-##
-## Ends in an error in state: 18.
-##
-## core_type -> Ident . [ RPAR RBRACE COMMA ]
-## core_type -> Ident . par(__anonymous_1) [ RPAR RBRACE COMMA ]
-##
-## The known suffix of the stack is as follows:
-## Ident
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Type Ident EQ Ident LPAR LPAR Ident Type
-##
-## Ends in an error in state: 16.
-##
-## par(cartesian) -> LPAR cartesian . RPAR [ RPAR RBRACE COMMA ]
-##
-## The known suffix of the stack is as follows:
-## LPAR cartesian
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 8, spurious reduction of production core_type -> Ident 
-## In state 15, spurious reduction of production cartesian -> core_type 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3965,27 +3915,6 @@ contract: Type Ident EQ LPAR Ident RPAR WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LPAR Ident Type
-##
-## Ends in an error in state: 28.
-##
-## cartesian -> LPAR cartesian . RPAR type_expr_func [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
-## cartesian -> LPAR cartesian . COMMA nsepseq(cartesian,COMMA) RPAR option(type_expr_func) [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
-## par(cartesian) -> LPAR cartesian . RPAR [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
-##
-## The known suffix of the stack is as follows:
-## LPAR cartesian
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 8, spurious reduction of production core_type -> Ident 
-## In state 15, spurious reduction of production cartesian -> core_type 
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 contract: Type Ident EQ LPAR WILD
 ##
 ## Ends in an error in state: 7.
@@ -4072,4 +4001,3 @@ contract: WILD
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
-

@@ -164,6 +164,8 @@ and type_expr =
 | TPar    of type_expr par reg
 | TVar    of variable
 
+and type_tuple = (type_expr, comma) nsepseq par reg
+
 and cartesian = (type_expr, times) nsepseq reg
 
 and variant = {
@@ -176,8 +178,6 @@ and field_decl = {
   colon      : colon;
   field_type : type_expr
 }
-
-and type_tuple = (type_expr, comma) nsepseq par reg
 
 and pattern =
   PConstr of constr_pattern
