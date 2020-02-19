@@ -3709,20 +3709,6 @@ contract: Type Ident EQ Ident LPAR WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ Ident WILD
-##
-## Ends in an error in state: 8.
-##
-## cartesian -> Ident . type_expr_func [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
-## core_type -> Ident . [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
-## core_type -> Ident . par(__anonymous_1) [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
-##
-## The known suffix of the stack is as follows:
-## Ident
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 contract: Type Ident EQ LBRACE Ident COLON Constr Type
 ##
 ## Ends in an error in state: 58.
@@ -3890,18 +3876,6 @@ contract: Type Ident EQ LPAR Ident COMMA Ident Type
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LPAR Ident COMMA WILD
-##
-## Ends in an error in state: 31.
-##
-## cartesian -> LPAR cartesian COMMA . nsepseq(cartesian,COMMA) RPAR option(type_expr_func) [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
-##
-## The known suffix of the stack is as follows:
-## LPAR cartesian COMMA
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 contract: Type Ident EQ LPAR Ident RPAR WILD
 ##
 ## Ends in an error in state: 29.
@@ -3911,20 +3885,6 @@ contract: Type Ident EQ LPAR Ident RPAR WILD
 ##
 ## The known suffix of the stack is as follows:
 ## LPAR cartesian RPAR
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Type Ident EQ LPAR WILD
-##
-## Ends in an error in state: 7.
-##
-## cartesian -> LPAR . cartesian RPAR type_expr_func [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
-## cartesian -> LPAR . cartesian COMMA nsepseq(cartesian,COMMA) RPAR option(type_expr_func) [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
-## par(cartesian) -> LPAR . cartesian RPAR [ Type SEMI RPAR Let EQ EOF COMMA Attr ]
-##
-## The known suffix of the stack is as follows:
-## LPAR
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
