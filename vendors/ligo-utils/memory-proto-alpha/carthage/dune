@@ -1,6 +1,6 @@
 (library
   (name memory_proto_alpha)
-  (public_name tezos-memory-proto-alpha)
+  (public_name tezos-memory-proto-alpha-carthage)
   (libraries
     tezos-protocol-environment
     tezos-protocol-006-PsCARTHA

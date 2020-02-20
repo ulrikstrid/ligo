@@ -1,5 +1,5 @@
 opam-version: "2.0"
-name: "memory-proto-alpha"
+name: "memory-proto-alpha-carthage"
 version: "1.0"
 synopsis: "Tezos Protocol Alpha in memory"
 maintainer: "Galfour <ligolang@gmail.com>"
