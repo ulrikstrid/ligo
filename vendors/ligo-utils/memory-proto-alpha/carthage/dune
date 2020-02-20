@@ -1,5 +1,5 @@
 (library
-  (name memory_proto_alpha)
+  (name memory_proto_alpha_carthage)
   (public_name tezos-memory-proto-alpha-carthage)
   (libraries
     tezos-protocol-environment

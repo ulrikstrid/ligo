@@ -1,2 +1,2 @@
 (lang dune 1.11)
-(name tezos-memory-proto-alpha)
+(name tezos-memory-proto-alpha-carthage)
