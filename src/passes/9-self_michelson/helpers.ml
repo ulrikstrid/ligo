@@ -18,7 +18,7 @@ let rec map_expression : mapper -> michelson -> michelson result = fun f e ->
     )
   | x -> ok x
 
-open Memory_proto_alpha.Protocol.Script_ir_translator
+open Memory_proto_alpha_carthage.Protocol.Script_ir_translator
 let fetch_contract_inputs : ex_ty -> (ex_ty * ex_ty) result =
   let error ()  = simple_fail "Invalid contract: Failed to fetch parameter and storage" in
   function

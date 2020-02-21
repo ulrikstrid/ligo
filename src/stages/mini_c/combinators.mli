@@ -50,7 +50,7 @@ val get_t_left : type_value -> type_value result
 val get_t_right : type_value -> type_value result
 val get_t_contract : type_value -> type_value result
 val get_t_operation : type_value -> unit result
-val get_operation : value -> Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation result
+val get_operation : value -> Memory_proto_alpha_carthage.Protocol.Alpha_context.packed_internal_operation result
 
 val t_int : type_value 
 val t_unit : type_value 

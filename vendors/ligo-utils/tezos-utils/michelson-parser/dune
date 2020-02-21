@@ -3,7 +3,7 @@
  (public_name michelson-parser)
  (libraries
   tezos-base
-  tezos-memory-proto-alpha
+  tezos-memory-proto-alpha-carthage
  )
  (flags (:standard -w -9-32 -safe-string
           -open Tezos_base__TzPervasives

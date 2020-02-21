@@ -165,7 +165,7 @@ type literal =
   | Literal_chain_id of string
   | Literal_void
   | Literal_operation of
-      Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
+      Memory_proto_alpha_carthage.Protocol.Alpha_context.packed_internal_operation
 and ('a,'tv) matching_content =
   | Match_bool of {
       match_true : 'a ;

@@ -9,7 +9,7 @@ license: "MIT"
 depends: [
   "ocamlfind" { build }
   "dune"
-  "tezos-memory-proto-alpha"
+  "tezos-memory-proto-alpha-carthage"
 ]
 build: [
   [ "dune" "build" "-p" name "-j" jobs ]

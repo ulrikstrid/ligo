@@ -1,7 +1,7 @@
 open Tezos_micheline
 open Micheline
 
-open Memory_proto_alpha.Protocol
+open Memory_proto_alpha_carthage.Protocol
 include Michelson_v1_primitives
 
 type michelson = (int, prim) node
