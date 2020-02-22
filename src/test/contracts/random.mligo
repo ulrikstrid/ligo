@@ -11,6 +11,11 @@ type commits = (address, bytes) map
 
 type reveals = (address, nat) map
 
+type parameter =
+| Commit of bytes
+| Reveal of nat
+| Result of unit
+
 type storage = {
   commits: commits;
   reveals: reveals;
@@ -33,7 +38,7 @@ let commit (p,s: bytes * storage) =
           reveals = reveals;
           end_phase_one = s.end_phase_one;
           end_phase_two = s.end_phase_two;
-          min_players: s.min_players;
+          min_players = s.min_players;
          }
     else (failwith "This game has passed the commit stage.": storage)
   in ([]: operation list), s
@@ -88,3 +93,9 @@ let result (p,s: unit * storage) =
       [return_ops], s
     else (failwith "Minimum player threshold not met for this game.")
   else (failwith "The reveal stage has not finished yet.")
+
+let main (p,s: parameter * storage) =
+  match p with
+  | Commit c -> commit (c, s)
+  | Reveal r -> reveal (r, s)
+  | Result -> result ((), s)
