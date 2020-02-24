@@ -1,7 +1,7 @@
 open Trace
 open Mini_c
 open Michelson
-open Memory_proto_alpha.Protocol.Script_ir_translator
+open Memory_proto_alpha_carthage.Protocol.Script_ir_translator
 open Operators.Compiler
 
 module Errors = struct

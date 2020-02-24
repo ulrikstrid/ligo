@@ -1,4 +1,4 @@
-open! Memory_proto_alpha
+open! Memory_proto_alpha_carthage
 module Signature = Tezos_base.TzPervasives.Signature
 module Data_encoding = Alpha_environment.Data_encoding
 module MBytes = Alpha_environment.MBytes

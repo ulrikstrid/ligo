@@ -1,6 +1,6 @@
 module Michelson = Tezos_utils.Michelson
 
-include Memory_proto_alpha
+include Memory_proto_alpha_carthage
 let init_environment = Init_proto_alpha.init_environment
 let dummy_environment = Init_proto_alpha.dummy_environment
 

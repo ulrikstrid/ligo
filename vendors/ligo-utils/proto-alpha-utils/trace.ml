@@ -1,6 +1,6 @@
 include Simple_utils.Trace
 
-module AE = Memory_proto_alpha.Alpha_environment
+module AE = Memory_proto_alpha_carthage.Alpha_environment
 module TP = Tezos_base__TzPervasives
 
 let of_tz_error (err:X_error_monad.error) : error_thunk =

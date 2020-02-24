@@ -5,7 +5,7 @@
     tezos-error-monad
     tezos-stdlib-unix
     tezos-protocol-006-PsCARTHA-parameters
-    tezos-memory-proto-alpha
+    tezos-memory-proto-alpha-carthage
     simple-utils
     tezos-utils
   )

@@ -1975,7 +1975,7 @@ let get_contract_ligo () : unit result =
       Ast_simplified.Misc.assert_value_eq (expected_storage , storage)
       in
     let%bind () =
-      let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in
+      let amount = Memory_proto_alpha_carthage.Protocol.Alpha_context.Tez.zero in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
       let%bind () = expect_n_strict_pos_small ~options program "cb" make_input make_expected in
       expect_n_strict_pos_small ~options program "cbo" make_input make_expected in

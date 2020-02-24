@@ -126,13 +126,13 @@ let buy () =
     let%bind () =
       let%bind amount =
         trace_option (simple_error "getting amount for run") @@
-        Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez @@ Int64.of_int 10000000000 in
+        Memory_proto_alpha_carthage.Protocol.Alpha_context.Tez.of_mutez @@ Int64.of_int 10000000000 in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~sender:second_contract () in
       expect_eq_n_pos_small ~options program "buy_single" make_input make_expected in
     let%bind () =
       let%bind amount =
         trace_option (simple_error "getting amount for run") @@
-        Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez @@ Int64.of_int 0 in
+        Memory_proto_alpha_carthage.Protocol.Alpha_context.Tez.of_mutez @@ Int64.of_int 0 in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~sender:second_contract () in
       trace_strong (simple_error "could buy without money") @@
       Assert.assert_fail
@@ -165,13 +165,13 @@ let dispatch_buy () =
     let%bind () =
       let%bind amount =
         trace_option (simple_error "getting amount for run") @@
-        Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez @@ Int64.of_int 10000000000 in
+        Memory_proto_alpha_carthage.Protocol.Alpha_context.Tez.of_mutez @@ Int64.of_int 10000000000 in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~sender:second_contract () in
       expect_eq_n_pos_small ~options program "main" make_input make_expected in
     let%bind () =
       let%bind amount =
         trace_option (simple_error "getting amount for run") @@
-        Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez @@ Int64.of_int 0 in
+        Memory_proto_alpha_carthage.Protocol.Alpha_context.Tez.of_mutez @@ Int64.of_int 0 in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~sender:second_contract () in
       trace_strong (simple_error "could buy without money") @@
       Assert.assert_fail
@@ -203,7 +203,7 @@ let transfer () =
       e_pair ops storage
     in
     let%bind () =
-      let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in
+      let amount = Memory_proto_alpha_carthage.Protocol.Alpha_context.Tez.zero in
       let sender = first_contract in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~sender () in
       expect_eq_n_strict_pos_small ~options program "transfer_single" make_input make_expected in
@@ -233,7 +233,7 @@ let sell () =
       Ast_simplified.Misc.assert_value_eq (expected_storage , storage)
     in
     let%bind () =
-      let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in
+      let amount = Memory_proto_alpha_carthage.Protocol.Alpha_context.Tez.zero in
       let sender = first_contract in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~sender () in
       expect_n_strict_pos_small ~options program "sell_single" make_input make_expecter in
