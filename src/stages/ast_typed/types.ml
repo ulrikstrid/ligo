@@ -13,13 +13,20 @@ type program = declaration Location.wrap list
 
 and inline = bool
 
+and declaration_constant = {
+  expr_var : expression_variable ;
+  expr : expression ;
+  inline : inline ;
+  environment: full_environment ;
+}
+
 and declaration =
   (* A Declaration_constant is described by
    *   a name + a type-annotated expression
    *   a boolean indicating whether it should be inlined
    *   the environment before the declaration (the original environment)
    *   the environment after the declaration (i.e. with that new declaration added to the original environment). *)
-  | Declaration_constant of (expression_variable * expression * inline * full_environment)
+  | Declaration_constant of declaration_constant
   (*
   | Declaration_type of (type_variable * type_expression)
   | Declaration_constant of (named_expression * (full_environment * full_environment))

@@ -8,7 +8,7 @@ let program_to_main : program -> string -> lambda result = fun p s ->
   let%bind (main , input_type , _) =
     let pred = fun d ->
       match d with
-      | Declaration_constant (d , expr, _, _) when d = Var.of_name s -> Some expr
+      | Declaration_constant {expr_var ; expr ; inline=_; environment=_} when expr_var = Var.of_name s -> Some expr
       | Declaration_constant _ -> None
     in
     let%bind main =
@@ -23,7 +23,7 @@ let program_to_main : program -> string -> lambda result = fun p s ->
   let env =
     let aux = fun _ d ->
       match d with
-      | Declaration_constant (_ , _, _, post_env) -> post_env in
+      | Declaration_constant {expr_var=_ ; expr=_ ; inline=_; environment} -> environment in
     List.fold_left aux Environment.full_empty (List.map Location.unwrap p) in
   let binder = Var.of_name "@contract_input" in
   let result =

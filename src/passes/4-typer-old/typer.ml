@@ -214,7 +214,7 @@ and type_declaration env (_placeholder_for_state_of_new_typer : Solver.state) : 
         trace (constant_declaration_error name expression tv'_opt) @@
         type_expression' ?tv_opt:tv'_opt env expression in
       let env' = Environment.add_ez_ae name ae' env in
-      ok (env', (Solver.placeholder_for_state_of_new_typer ()) , Some (O.Declaration_constant (name,ae', inline, env')))
+      ok (env', (Solver.placeholder_for_state_of_new_typer ()) , Some (O.Declaration_constant {expr_var=name ; expr=ae' ; inline=inline; environment=env'} ))
     )
 
 and type_match : (environment -> I.expression -> O.expression result) -> environment -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> O.matching_expr result =

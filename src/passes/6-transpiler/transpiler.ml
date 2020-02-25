@@ -525,12 +525,11 @@ and transpile_lambda l (input_type , output_type) =
 
 let transpile_declaration env (d:AST.declaration) : toplevel_statement result =
   match d with
-  | Declaration_constant (name,expression, inline, _) ->
-      let name = name in
-      let%bind expression = transpile_annotated_expression expression in
+  | Declaration_constant {expr_var ; expr ; inline ; environment=_} ->
+      let%bind expression = transpile_annotated_expression expr in
       let tv = Combinators.Expression.get_type expression in
-      let env' = Environment.add (name, tv) env in
-      ok @@ ((name, inline, expression), environment_wrap env env')
+      let env' = Environment.add (expr_var, tv) env in
+      ok @@ ((expr_var, inline, expression), environment_wrap env env')
 
 let transpile_program (lst : AST.program) : program result =
   let aux (prev:(toplevel_statement list * Environment.t) result) cur =

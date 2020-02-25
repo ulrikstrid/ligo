@@ -226,11 +226,11 @@ module Substitution = struct
 
     and s_declaration : T.declaration w = fun ~substs ->
       function
-        Ast_typed.Declaration_constant (ev,e,i,env) ->
-        let%bind ev = s_variable ~substs ev in
-        let%bind e = s_expression ~substs e in
-        let%bind env = s_full_environment ~substs env in
-        ok @@ Ast_typed.Declaration_constant (ev, e, i, env)
+        Ast_typed.Declaration_constant {expr_var ; expr ; inline; environment} ->
+          let%bind expr_var = s_variable ~substs expr_var in
+          let%bind expr = s_expression ~substs expr in
+          let%bind environment = s_full_environment ~substs environment in
+          ok @@ Ast_typed.Declaration_constant {expr_var; expr; inline; environment}
 
     and s_declaration_wrap :T.declaration Location.wrap w = fun ~substs d ->
       Trace.bind_map_location (s_declaration ~substs) d    

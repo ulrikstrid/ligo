@@ -549,8 +549,8 @@ let merge_annotation (a:type_expression option) (b:type_expression option) err :
 let get_entry (lst : program) (name : string) : expression result =
   trace_option (Errors.missing_entry_point name) @@
   let aux x =
-    let (Declaration_constant (an , expr, _, _)) = Location.unwrap x in
-    if (an = Var.of_name name)
+    let (Declaration_constant {expr_var ; expr ; inline=_ ; environment=_}) = Location.unwrap x in
+    if (expr_var = Var.of_name name)
     then Some expr
     else None
   in
@@ -559,4 +559,4 @@ let get_entry (lst : program) (name : string) : expression result =
 let program_environment (program : program) : full_environment =
   let last_declaration = Location.unwrap List.(hd @@ rev program) in
   match last_declaration with
-  | Declaration_constant (_ , _, _, post_env) -> post_env
+  | Declaration_constant {expr_var=_ ; expr=_ ; inline=_ ; environment=post_env} -> post_env

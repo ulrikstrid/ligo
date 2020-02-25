@@ -81,7 +81,7 @@ and matching : type a . (formatter -> a -> unit) -> _ -> (a, 'var) matching_cont
 
 let declaration ppf (d : declaration) =
   match d with
-  | Declaration_constant (name, expr, inline,_) ->
+  | Declaration_constant {expr_var=name ; expr ; inline ; _} ->
       fprintf ppf "const %a = %a%a" expression_variable name expression expr option_inline inline
 
 let program ppf (p : program) =

@@ -379,16 +379,17 @@ let dummy : Ast_typed.program -> string result =
   fun prg ->
     let%bind (res,_) = bind_fold_list
       (fun (pp,top_env) el ->
-        let (Ast_typed.Declaration_constant (exp_name, exp , _ , _)) = Location.unwrap el in
+        (* let (Ast_typed.Declaration_constant (exp_name, exp , _ , _)) = Location.unwrap el in *)
+        let (Ast_typed.Declaration_constant {expr_var ; expr ; inline=_; environment=_}) = Location.unwrap el in
         let%bind v =
         (*TODO This TRY-CATCH is here until we properly implement effects*)
         try
-          eval exp top_env
+          eval expr top_env
         with Temporary_hack s -> ok @@ V_Failure s
         (*TODO This TRY-CATCH is here until we properly implement effects*)
         in
-        let pp' = pp^"\n val "^(Var.to_name exp_name)^" = "^(Ligo_interpreter.PP.pp_value v) in
-        let top_env' = Env.extend top_env (exp_name, v) in
+        let pp' = pp^"\n val "^(Var.to_name expr_var)^" = "^(Ligo_interpreter.PP.pp_value v) in
+        let top_env' = Env.extend top_env (expr_var, v) in
         ok @@ (pp',top_env')
       )
       ("",Env.empty_env) prg in
