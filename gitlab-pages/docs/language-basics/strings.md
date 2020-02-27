@@ -51,30 +51,36 @@ let full_greeting : string = greeting ++ " " ++ name;
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 
-## Slicing Strings
+## Extracting Substrings
 
-Strings can be sliced using a built-in function:
+Substrings can be extracted using the predefined function
+`String.sub`. The first character has index 0 and the interval of
+indices for the substring has inclusive bounds.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--PascaLIGO-->
 ```pascaligo group=b
 const name  : string = "Alice"
-const slice : string = String.slice (0n, 1n, name)
+const slice : string = String.sub (0n, 1n, name)
 ```
 
-> Note that `string_slide` is *deprecated*.
+> Note that `string_slice` is *deprecated*. Use `String.sub`.
 
 <!--CameLIGO-->
 ```cameligo group=b
 let name  : string = "Alice"
-let slice : string = String.slice 0n 1n name
+let slice : string = String.sub 0n 1n name
 ```
+
+> Note that `String.slice` is *deprecated*. Use `String.sub`.
 
 <!--ReasonLIGO-->
 ```reasonligo group=b
 let name  : string = "Alice";
-let slice : string = String.slice (0n, 1n, name);
+let slice : string = String.sub (0n, 1n, name);
 ```
+
+> Note that `String.slice` is *deprecated*. Use `String.sub`.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -92,17 +98,22 @@ const name : string = "Alice"
 const length : nat = String.length (name) // length = 5
 ```
 
-> Note that `size` is *deprecated*.
+> Note that `size` is *deprecated*. Use `String.length`.
 
 <!--CameLIGO-->
 ```cameligo group=c
 let name : string = "Alice"
-let length : nat = String.size name  // length = 5
+let length : nat = String.length name  // length = 5
 ```
+
+> Note that `String.size` is *deprecated*. Use `String.length`.
 
 <!--ReasonLIGO-->
 ```reasonligo group=c
 let name : string = "Alice";
-let length : nat = String.size (name);  // length == 5
+let length : nat = String.length (name);  // length == 5
 ```
+
+> Note that `String.size` is *deprecated*. Use `String.length`.
+
 <!--END_DOCUSAURUS_CODE_TABS-->

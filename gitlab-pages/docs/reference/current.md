@@ -1,9 +1,9 @@
 ---
 id: current-reference
-title: Tezos - Things relating to the current execution context
+title: Tezos
 ---
 
-# Tezos.balance
+## Balance
 
 Get the balance for the contract.
 
@@ -15,14 +15,16 @@ function main (const p : unit; const s: tez) : list (operation) * tez is
   ((nil : list (operation)), Tezos.balance)
 ```
 
-> Note that `balance` and `Current.balance` are *deprecated*.
+> Note that `balance` and `Current.balance` are *deprecated*. Use
+> `Tezos.balance`.
 
 <!--CameLIGO-->
 ```cameligo
 let main (p,s : unit * tez) = ([] : operation list), Tezos.balance
 ```
 
-> Note that `balance` and `Current.balance` are *deprecated*.
+> Note that `balance` and `Current.balance` are *deprecated*. Use
+> `Tezos.balance`.
 
 <!--ReasonLIGO-->
 ```reasonligo
@@ -30,11 +32,12 @@ let main = ((p,s) : (unit, tez)) =>
   ([]: list (operation), Tezos.balance);
 ```
 
-> Note that `balance` and `Current.balance` are *deprecated*.
+> Note that `balance` and `Current.balance` are *deprecated*. Use
+> `Tezos.balance`.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-## Tezos.now
+## Current Time
 
 Returns the current time as a [unix timestamp](https://en.wikipedia.org/wiki/Unix_time).
 
@@ -42,11 +45,11 @@ In LIGO, timestamps are type compatible in operations with
 integers. This lets you set for instance time constraints for your
 smart contracts like this:
 
-### Examples
+#### Examples
 
-#### 24 hours from now
+##### 24 hours from now
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=b
 const today: timestamp = Tezos.now;
 const one_day: int = 86_400;
@@ -55,7 +58,7 @@ const some_date: timestamp = ("2000-01-01T10:10:10Z" : timestamp);
 const one_day_later: timestamp = some_date + one_day;
 ```
 
-> Note that `now` is *deprecated*.
+> Note that `now` is *deprecated*. Use `Tezos.now`.
 
 <!--CameLIGO-->
 ```cameligo group=b
@@ -66,7 +69,7 @@ let some_date: timestamp = ("2000-01-01t10:10:10Z" : timestamp)
 let one_day_later: timestamp = some_date + one_day
 ```
 
-> Note that `Current.time` is *deprecated*.
+> Note that `Current.time` is *deprecated*. Use `Tezos.now`.
 
 <!--ReasonLIGO-->
 ```reasonligo group=b
@@ -77,21 +80,21 @@ let some_date: timestamp = ("2000-01-01t10:10:10Z" : timestamp);
 let one_day_later: timestamp = some_date + one_day;
 ```
 
-> Note that `Current.time` is *deprecated*.
+> Note that `Current.time` is *deprecated*. Use `Tezos.now`.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-#### 24 hours ago
+##### 24 hours ago
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=c
 const today: timestamp = Tezos.now;
 const one_day: int = 86_400;
 const in_24_hrs: timestamp = today - one_day;
 ```
 
-> Note that `now` is *deprecated*.
+> Note that `now` is *deprecated*. Use `Tezos.now`.
 
 <!--CameLIGO-->
 ```cameligo group=c
@@ -100,7 +103,7 @@ let one_day: int = 86_400
 let in_24_hrs: timestamp = today - one_day
 ```
 
-> Note that `Current.time` is *deprecated*.
+> Note that `Current.time` is *deprecated*. Use `Tezos.now`.
 
 <!--ReasonLIGO-->
 ```reasonligo group=c
@@ -109,36 +112,36 @@ let one_day: int = 86_400;
 let in_24_hrs: timestamp = today - one_day;
 ```
 
-> Note that `Current.time` is *deprecated*.
+> Note that `Current.time` is *deprecated*. Use `Tezos.now`.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-#### Comparing Timestamps
+##### Comparing Timestamps
 
 You can also compare timestamps using the same comparison operators as
 for numbers
 
 <!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<!--PascaLIGO-->
 ```pascaligo group=c
 const not_tommorow: bool = (Tezos.now = in_24_hrs)
 ```
 
-> Note that `now` is *deprecated*.
+> Note that `now` is *deprecated*. Use `Tezos.now`.
 
 <!--CameLIGO-->
 ```cameligo group=c
 let not_tomorrow: bool = (Tezos.now = in_24_hrs)
 ```
 
-> Note that `Current.time` is *deprecated*.
+> Note that `Current.time` is *deprecated*. Use `Tezos.now`.
 
 <!--ReasonLIGO-->
 ```reasonligo group=c
 let not_tomorrow: bool = (Tezos.now == in_24_hrs);
 ```
 
-> Note that `Current.time` is *deprecated*.
+> Note that `Current.time` is *deprecated*. Use `Tezos.now`.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -156,14 +159,14 @@ function threshold (const p : unit) : int is
   if Tezos.amount = 100tz then 42 else 0
 ```
 
-> Note that `amount` is *deprecated*.
+> Note that `amount` is *deprecated*. Use `Tezos.amount`.
 
 <!--CameLIGO-->
 ```cameligo
 let threshold (p : unit) : int = if Tezos.amount = 100tz then 42 else 0
 ```
 
-> Note that `Current.amount` is *deprecated*.
+> Note that `Current.amount` is *deprecated*. Use `Tezos.amount`.
 
 <!--ReasonLIGO-->
 ```reasonligo
@@ -171,7 +174,7 @@ let threshold = (p : unit) : int =>
   if (Tezos.amount == 100tz) { 42; } else { 0; };
 ```
 
-> Note that `Current.amount` is *deprecated*.
+> Note that `Current.amount` is *deprecated*. Use `Tezos.amount`.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -186,21 +189,21 @@ Get the address that initiated the current transaction.
 function main (const p : unit) : address is Tezos.sender
 ```
 
-> Note that `sender` is *deprecated*.
+> Note that `sender` is *deprecated*. Use `Tezos.sender`.
 
 <!--CameLIGO-->
 ```cameligo
 let main (p: unit) : address = Tezos.sender
 ```
 
-> Note that `Current.sender` is *deprecated*.
+> Note that `Current.sender` is *deprecated*. Use `Tezos.sender`.
 
 <!--ReasonLIGO-->
 ```reasonligo
 let main = (p : unit) : address => Tezos.sender;
 ```
 
-> Note that `Current.sender` is *deprecated*.
+> Note that `Current.sender` is *deprecated*. Use `Tezos.sender`.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -218,7 +221,8 @@ function main (const p : key_hash) : address is block {
 } with Tezos.address(c)
 ```
 
-> Note that `implicit_account` and `address` are *deprecated*.
+> Note that `implicit_account` and `address` are *deprecated*. Use
+> `Tezos.implicit_account` and `Tezos.address`.
 
 <!--CameLIGO-->
 ```cameligo
@@ -228,7 +232,7 @@ let main (p : key_hash) =
 ```
 
 > Note that `Current.implicit_account` and `Current.address` are
-> *deprecated*.
+> *deprecated*. Use `Tezos.implicit_account` and `Tezos.address`.
 
 <!--ReasonLIGO-->
 ```reasonligo
@@ -239,7 +243,7 @@ let main = (p : key_hash) : address => {
 ```
 
 > Note that `Current.implicit_account` and `Current.address` are
-> *deprecated*.
+> *deprecated*. Use `Tezos.implicit_account` and `Tezos.address`.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -254,21 +258,23 @@ Get the address of the currently running contract.
 function main (const p : unit) : address is Tezos.self_address
 ```
 
-> Note that `self_address` is *deprecated*.
+> Note that `self_address` is *deprecated*. Use `Tezos.self_address`.
 
 <!--CameLIGO-->
 ```cameligo
 let main (p : unit) : address = Tezos.self_address
 ```
 
-> Note that `Current.self_address` is *deprecated*.
+> Note that `Current.self_address` is *deprecated*. Use
+> `Tezos.self_address`.
 
 <!--ReasonLIGO-->
 ```reasonligo
 let main = (p : unit) : address => Tezos.self_address;
 ```
 
-> Note that `Current.self_address` is *deprecated*.
+> Note that `Current.self_address` is *deprecated*. Use
+> `Tezos.self_address`.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -286,14 +292,16 @@ function main (const kh: key_hash) : contract (unit) is
   Tezos.implicit_account (kh)
 ```
 
-> Note that `implicit_account` is *deprecated*.
+> Note that `implicit_account` is *deprecated*. Use
+> `Tezos.implicit_account`.
 
 <!--CameLIGO-->
 ```cameligo
 let main (kh : key_hash) : unit contract = Tezos.implicit_account kh
 ```
 
-> Note that `Current.implicit_account` is *deprecated*.
+> Note that `Current.implicit_account` is *deprecated*. Use
+> `Tezos.implicit_account`.
 
 <!--ReasonLIGO-->
 ```reasonligo
@@ -301,7 +309,8 @@ let main = (kh : key_hash): contract (unit) =>
   Tezos.implicit_account (kh);
 ```
 
-> Note that `Current.implicit_account` is *deprecated*.
+> Note that `Current.implicit_account` is *deprecated*. Use
+> `Tezos.implicit_account`.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -338,21 +347,22 @@ current transaction.
 function main (const p: unit) : address is Tezos.source
 ```
 
-> Note that `source` is *deprecated*.
+> Note that `source` is *deprecated*. Use `Tezos.source`.
 
 <!--CameLIGO-->
 ```cameligo
 let main (p : unit) : address = Tezos.source
 ```
 
-> Note that `Current.source` is *deprecated*.
+> Note that `Current.source` is *deprecated*. Use `Tezos.source`.
 
 <!--ReasonLIGO-->
 ```reasonligo
 let main = (p : unit) : address => Tezos.source;
 ```
 
-> Note that `Current.source` is *deprecated*.
+> Note that `Current.source` is *deprecated*. Use `Tezos.source`.
+
 <!--END_DOCUSAURUS_CODE_TABS-->
 
 ## Failwith

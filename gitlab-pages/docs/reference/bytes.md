@@ -1,127 +1,115 @@
 ---
 id: bytes-reference
-title: Bytes — Manipulate bytes data
+title: Bytes
 ---
 
-## Bytes.concat(b1: bytes, b2: bytes) : bytes
+## Concatenating two Bytes
 
-Concatenate together two `bytes` arguments and return the result.
+The predefined function `Bytes.concat` concatenates two sequences of
+bytes (that is, two values of type `bytes`), yielding a new sequence
+containing both in the given order.
 
 <!--DOCUSAURUS_CODE_TABS-->
 
 <!--PascaLIGO-->
 
-```pascaligo
-function concat_op (const s : bytes) : bytes is
-  begin skip end with bytes_concat(s , 0x7070)
+```pascaligo group=bytes
+function concat (const b : bytes) : bytes is Bytes.concat (b, 0x7070)
 ```
+
+> Note that `bytes_concat` is *deprecated*. Use `Bytes.concat`.
 
 <!--CameLIGO-->
 
-```cameligo
-let concat_op (s : bytes) : bytes =
-   Bytes.concat s 0x7070
+```cameligo group=bytes
+let concat (b : bytes) : bytes = Bytes.concat b 0x7070
 ```
 
 <!--ReasonLIGO-->
 
-```reasonligo
-let concat_op = (s: bytes): bytes => Bytes.concat(s, 0x7070);
+```reasonligo group=bytes
+let concat = (b : bytes): bytes => Bytes.concat (b, 0x7070);
 ```
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-## Bytes.slice(pos1: nat, pos2: nat, data: bytes) : bytes
+## Extracting Subsequences of Bytes
 
-Extract the bytes between `pos1` and `pos2`. **Positions are zero indexed and
-inclusive**. For example if you gave the input "ff7a7aff" to the following:
+Bytes in a sequence of bytes, that is, a value of type `bytes` can be
+extracted by slicing the original sequence between two positions
+thanks to the predefined function `Bytes.sub`. *The first byte has
+position 0 and both positions are inclusive*. So, for example, slicing
+`0xff7a7aff` between positions `1n` and `2n` (they cannot be negative)
+yields the sequence `0x7a7a`. If any of the two positions is invalid,
+the call to `Bytes.sub` fails.
 
 <!--DOCUSAURUS_CODE_TABS-->
 
 <!--PascaLIGO-->
 
-```pascaligo
-function slice_op (const s : bytes) : bytes is
-  begin skip end with bytes_slice(1n , 2n , s)
+```pascaligo group=bytes
+function slice (const b : bytes) : bytes is Bytes.sub (1n, 2n, b)
 ```
+
+> Note that `bytes_slice` is *deprecated*. Use `Bytes.sub`.
 
 <!--CameLIGO-->
 
-```cameligo
-let slice_op (s : bytes) : bytes =
-   Bytes.slice 1n 2n s
+```cameligo group=bytes
+let slice (b : bytes) : bytes = Bytes.sub 1n 2n b
 ```
+
+> Note that `Bytes.slice` is *deprecated*. Use `Bytes.sub`.
 
 <!--ReasonLIGO-->
 
+```reasonligo group=bytes
+let slice = (b : bytes): bytes => Bytes.sub (1n, 2n, b);
 ```
-let slice_op = (s: bytes): bytes => Bytes.slice(1n, 2n, s);
-```
+
+> Note that `Bytes.slice` is *deprecated*. Use `Bytes.sub`.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
-It would return "7a7a" rather than "ff7a" or "ff" or "7a".
 
-## Bytes.pack(data: a') : bytes
+## Pack and Unpack
 
-Converts Michelson data structures to a binary format for serialization.
+As Michelson provides the `PACK` and `UNPACK` instructions for data
+serialization, so does LIGO with `Bytes.pack` and `Bytes.unpack`.  The
+former serializes Michelson data structures into a binary format, and
+the latter reverses that transformation. Unpacking may fail, so the
+return type of `Byte.unpack` is an option that needs to be annotated.
 
-> ⚠️ `PACK` and `UNPACK` are features of Michelson that are intended to be used by people that really know what they're doing. There are several failure cases (such as `UNPACK`ing a lambda from an untrusted source), most of which are beyond the scope of this document. Don't use these functions without doing your homework first.
+> ⚠️ `PACK` and `UNPACK` are Michelson instructions that are intended
+> to be used by people that really know what they are doing. There are
+> several risks and failure cases, such as unpacking a lambda from an
+> untrusted source or casting the result to the wrong type. Do not use
+> the corresponding LIGO functions without doing your homework first.
 
 <!--DOCUSAURUS_CODE_TABS-->
 
 <!--PascaLIGO-->
-```pascaligo
-function id_string (const p : string) : option(string) is block {
-  const packed : bytes = bytes_pack(p) ;
-} with (bytes_unpack(packed): option(string))
+```pascaligo group=a
+function id_string (const p : string) : option (string) is block {
+  const packed : bytes = Bytes.pack (p)
+} with (Bytes.unpack (packed) : option (string))
 ```
 
+> Note that `bytes_pack` and `bytes_unpack` are *deprecated*. Use
+> `Bytes.pack` and `Bytes.unpack`.
+
 <!--CameLIGO-->
-```cameligo
-let id_string (p: string) : string option =
+```cameligo group=a
+let id_string (p : string) : string option =
   let packed: bytes = Bytes.pack p in
-  ((Bytes.unpack packed): string option)
+  (Bytes.unpack packed : string option)
 ```
 
 <!--ReasonLIGO-->
-```reasonligo
-let id_string = (p: string) : option(string) => {
-  let packed : bytes = Bytes.pack(p);
-  ((Bytes.unpack(packed)): option(string));
-};
-```
-
-<!--END_DOCUSAURUS_CODE_TABS-->
-
-## Bytes.unpack(packed: bytes) : a'
-
-Reverses the result of using `unpack` on data, going from Michelson's binary
-serialization format to the `option` type annotated on the call.
-
-> ⚠️ `PACK` and `UNPACK` are features of Michelson that are intended to be used by people that really know what they're doing. There are several failure cases (such as `UNPACK`ing a lambda from an untrusted source), most of which are beyond the scope of this document. Don't use these functions without doing your homework first.
-
-<!--DOCUSAURUS_CODE_TABS-->
-
-<!--PascaLIGO-->
-```pascaligo
-function id_string (const p : string) : option(string) is block {
-  const packed : bytes = bytes_pack(p) ;
-} with (bytes_unpack(packed): option(string))
-```
-
-<!--CameLIGO-->
-```cameligo
-let id_string (p: string) : string option =
-  let packed: bytes = Bytes.pack p in
-  ((Bytes.unpack packed): string option)
-```
-
-<!--ReasonLIGO-->
-```reasonligo
-let id_string = (p: string) : option(string) => {
-  let packed : bytes = Bytes.pack(p);
-  ((Bytes.unpack(packed)): option(string));
+```reasonligo group=a
+let id_string = (p : string) : option (string) => {
+  let packed : bytes = Bytes.pack (p);
+  (Bytes.unpack(packed) : option (string));
 };
 ```
 

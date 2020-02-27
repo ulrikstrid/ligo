@@ -211,7 +211,7 @@ function deny (const action : parameter; const store : storage) : return is
   else ((nil : list (operation)), store)
 ```
 
-> Note that `amount` is *deprecated*.
+> Note that `amount` is *deprecated*. Use `Tezos.amount`.
 
 <!--CameLIGO-->
 ```cameligo group=c
@@ -225,7 +225,7 @@ let deny (action, store : parameter * storage) : return =
   else (([] : operation list), store)
 ```
 
-> Note that `amount` is *deprecated*.
+> Note that `amount` is *deprecated*. Use `Tezos.amount`.
 
 <!--ReasonLIGO-->
 ```reasonligo group=c
@@ -240,7 +240,7 @@ let deny = ((action, store): (parameter, storage)) : return => {
 };
 ```
 
-> Note that `amount` is *deprecated*.
+> Note that `amount` is *deprecated*. Use `Tezos.amount`.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -259,7 +259,7 @@ function main (const action : parameter; const store : storage) : return is
   else ((nil : list (operation)), store)
 ```
 
-> Note that `source` is *deprecated*.
+> Note that `source` is *deprecated*. Use `Tezos.source`.
 
 <!--CameLIGO-->
 ```cameligo group=c
@@ -270,7 +270,7 @@ let main (action, store: parameter * storage) : return =
   else (([] : operation list), store)
 ```
 
-> Note that `source` is *deprecated*.
+> Note that `source` is *deprecated*. Use `Tezos.source`.
 
 <!--ReasonLIGO-->
 ```reasonligo group=c
@@ -282,7 +282,7 @@ let main = ((action, store) : (parameter, storage)) : storage => {
 };
 ```
 
-> Note that `source` is *deprecated*.
+> Note that `source` is *deprecated*. Use `Tezos.source`.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -392,8 +392,9 @@ let proxy (action, store : parameter * storage) : return =
   in [op], store
 ```
 
-> Note that `Operation.get_contract` and `Operation.transaction` are
-> *deprecated*.
+> Note that `Operation.get_contract_opt` and `Operation.transaction`
+> are *deprecated*. Use `Tezos.get_contract_opt` and
+> `Tezos.transaction`.
 
 <!--ReasonLIGO-->
 ```reasonligo skip
@@ -435,7 +436,8 @@ let proxy = ((action, store): (parameter, storage)) : return => {
 };
 ```
 
-> Note that `Operation.get_contract` and `Operation.transaction` are
-> *deprecated*.
+> Note that `Operation.get_contract_opt` and `Operation.transaction`
+> are *deprecated*. Use `Tezos.get_contract_opt` and
+> `Tezos.transaction`.
 
 <!--END_DOCUSAURUS_CODE_TABS-->

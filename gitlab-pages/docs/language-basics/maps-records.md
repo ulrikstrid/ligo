@@ -608,7 +608,7 @@ function iter_op (const m : register) : unit is
   } with Map.iter (iterated, m)
 ```
 
-> Note that `map_iter` is *deprecated*.
+> Note that `map_iter` is *deprecated*. Use `Map.iter`.
 
 <!--CameLIGO-->
 
@@ -649,7 +649,7 @@ function map_op (const m : register) : register is
   } with Map.map (increment, m)
 ```
 
-> Note that `map_map` is *deprecated*.
+> Note that `map_map` is *deprecated*. Use `Map.map`.
 
 <!--CameLIGO-->
 
@@ -692,7 +692,7 @@ function fold_op (const m : register) : int is
   } with Map.fold (folded, m, 5)
 ```
 
-> Note that `map_fold` is *deprecated*.
+> Note that `map_fold` is *deprecated*. Use `Map.fold`.
 
 <!--CameLIGO-->
 
@@ -862,12 +862,23 @@ The values of a PascaLIGO big map can be updated using the
 assignment syntax for ordinary maps
 
 ```pascaligo group=big_maps
-function add (var m : register) : register is
+function assign (var m : register) : register is
   block {
     m [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address)] := (4,9)
   } with m
+```
 
-const updated_map : register = add (moves)
+If multiple bindings need to be updated, PascaLIGO offers a *patch
+instruction* for maps, similar to that for records.
+
+```pascaligo group=big_maps
+function assignments (var m : register) : register is
+  block {
+    patch m with map [
+      ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (4,9);
+      ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> (1,2)
+    ]
+  } with m
 ```
 
 <!--CameLIGO-->

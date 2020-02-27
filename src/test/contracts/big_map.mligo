@@ -6,8 +6,6 @@ let add (n,m : int * foo) : foo = Big_map.add 23 n m
 
 let rm (m : foo) : foo = Big_map.remove 42 m
 
-let gf (m : foo) : int = Big_map.find 23 m
-
 let get (m: foo): int option = Big_map.find_opt 42 m
 
 let empty_map : foo = Big_map.empty

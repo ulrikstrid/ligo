@@ -92,8 +92,8 @@ let gcd (x,y : nat * nat) : nat =
   in x
 ```
 
-> Note that `stop` and `continue` (now `Loop.resume`) are
-> *deprecated*.
+> Note that `stop` and `continue` are *deprecated*. Use `Loop.stop`
+> and `Loop.resume`.
 
 You can call the function `gcd` defined above using the LIGO compiler
 like so:
@@ -150,8 +150,8 @@ let gcd = ((x,y) : (nat, nat)) : nat => {
 };
 ```
 
-> Note that `stop` and `continue` (now `Loop.resume`) are
-> *deprecated*.
+> Note that `stop` and `continue` are *deprecated*. Use `Loop.stop`
+> and `Loop.resume`.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 

@@ -11,9 +11,9 @@ providing the given current timestamp for the contract.
 
 ### Current Time
 
-You can obtain the current time using the built-in syntax specific
-expression, please be aware that it is up to the baker to set the
-current timestamp value.
+You can obtain the current time using the built-in `Tezos.now`. Please
+be aware that it is up to the baker to set the current timestamp
+value.
 
 <!--DOCUSAURUS_CODE_TABS-->
 <!--PascaLIGO-->
@@ -21,21 +21,21 @@ current timestamp value.
 const today : timestamp = Tezos.now
 ```
 
-> Note that `now` is *deprecated*.
+> Note that `now` is *deprecated*. Use `Tezos.now`.
 
 <!--CameLIGO-->
 ```cameligo group=a
 let today : timestamp = Tezos.now
 ```
 
-> Note that `Current.time` is *deprecated*.
+> Note that `Current.time` is *deprecated*. Use `Tezos.now`.
 
 <!--ReasonLIGO-->
 ```reasonligo group=a
 let today : timestamp = Tezos.now;
 ```
 
-> Note that `Current.time` is *deprecated*.
+> Note that `Current.time` is *deprecated*. Use `Tezos.now`.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -53,35 +53,35 @@ constraints on your smart contracts. Consider the following scenarios.
 <!--PascaLIGO-->
 ```pascaligo group=b
 const today : timestamp = Tezos.now
-const one_day : int = 86400
+const one_day : int = 86_400
 const in_24_hrs : timestamp = today + one_day
 const some_date : timestamp = ("2000-01-01T10:10:10Z" : timestamp)
 const one_day_later : timestamp = some_date + one_day
 ```
 
-> Note that `now` is *deprecated*.
+> Note that `now` is *deprecated*. Use `Tezos.now`.
 
 <!--CameLIGO-->
 ```cameligo group=b
 let today : timestamp = Tezos.now
-let one_day : int = 86400
+let one_day : int = 86_400
 let in_24_hrs : timestamp = today + one_day
 let some_date : timestamp = ("2000-01-01t10:10:10Z" : timestamp)
 let one_day_later : timestamp = some_date + one_day
 ```
 
-> Note that `Current.time` is *deprecated*.
+> Note that `Current.time` is *deprecated*. Use `Tezos.now`.
 
 <!--ReasonLIGO-->
 ```reasonligo group=b
 let today : timestamp = Tezos.now;
-let one_day : int = 86400;
+let one_day : int = 86_400;
 let in_24_hrs : timestamp = today + one_day;
 let some_date : timestamp = ("2000-01-01t10:10:10Z" : timestamp);
 let one_day_later : timestamp = some_date + one_day;
 ```
 
-> Note that `Current.time` is *deprecated*.
+> Note that `Current.time` is *deprecated*. Use `Tezos.now`.
 
 <!--END_DOCUSAURUS_CODE_TABS-->
 
@@ -91,29 +91,29 @@ let one_day_later : timestamp = some_date + one_day;
 <!--PascaLIGO-->
 ```pascaligo group=c
 const today : timestamp = Tezos.now
-const one_day : int = 86400
+const one_day : int = 86_400
 const in_24_hrs : timestamp = today - one_day
 ```
 
-> Note that `now` is *deprecated*.
+> Note that `now` is *deprecated*. Use `Tezos.now`.
 
 <!--CameLIGO-->
 ```cameligo group=c
 let today : timestamp = Tezos.now
-let one_day : int = 86400
+let one_day : int = 86_400
 let in_24_hrs : timestamp = today - one_day
 ```
 
-> Note that `Current.time` is *deprecated*.
+> Note that `Current.time` is *deprecated*. Use `Tezos.now`.
 
 <!--ReasonLIGO-->
 ```reasonligo group=c
 let today : timestamp = Tezos.now;
-let one_day : int = 86400;
+let one_day : int = 86_400;
 let in_24_hrs : timestamp = today - one_day;
 ```
 
-> Note that `Current.time` is *deprecated*.
+> Note that `Current.time` is *deprecated*. Use `Tezos.now`.
 
 
 <!--END_DOCUSAURUS_CODE_TABS-->
@@ -129,21 +129,21 @@ applying to numbers.
 const not_tommorow : bool = (Tezos.now = in_24_hrs)
 ```
 
-> Note that `now` is *deprecated*.
+> Note that `now` is *deprecated*. Use `Tezos.now`.
 
 <!--CameLIGO-->
 ```cameligo group=c
 let not_tomorrow : bool = (Tezos.now = in_24_hrs)
 ```
 
-> Note that `Current.time` is *deprecated*.
+> Note that `Current.time` is *deprecated*. Use `Tezos.now`.
 
 <!--ReasonLIGO-->
 ```reasonligo group=c
 let not_tomorrow : bool = (Tezos.now == in_24_hrs);
 ```
 
-> Note that `Current.time` is *deprecated*.
+> Note that `Current.time` is *deprecated*. Use `Tezos.now`.
 
 
 <!--END_DOCUSAURUS_CODE_TABS-->

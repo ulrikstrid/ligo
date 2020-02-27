@@ -147,7 +147,7 @@ module Simplify = struct
     | "Bytes.size"   -> ok C_SIZE
     | "bytes_concat" -> ok C_CONCAT        (* Deprecated *)
     | "Bytes.concat" -> ok C_CONCAT
-    | "Bytes.slice"  -> ok C_SLICE
+    | "Bytes.slice"  -> ok C_SLICE         (* Deprecated *)
     | "bytes_slice"  -> ok C_SLICE         (* Deprecated *)
     | "Bytes.sub"    -> ok C_SLICE
 
@@ -165,19 +165,20 @@ module Simplify = struct
 
     (* Set module *)
 
-    | "Set.size"    -> ok C_SIZE
-    | "set_size"    -> ok C_SIZE        (* Deprecated *)
-    | "set_empty"   -> ok C_SET_EMPTY   (* Deprecated *)
-    | "Set.mem"     -> ok C_SET_MEM
-    | "set_mem"     -> ok C_SET_MEM     (* Deprecated *)
-    | "Set.add"     -> ok C_SET_ADD
-    | "set_add"     -> ok C_SET_ADD     (* Deprecated *)
-    | "Set.remove"  -> ok C_SET_REMOVE
-    | "set_remove"  -> ok C_SET_REMOVE  (* Deprecated *)
-    | "Set.iter"    -> ok C_SET_ITER
-    | "set_iter"    -> ok C_SET_ITER    (* Deprecated *)
-    | "Set.fold"    -> ok C_SET_FOLD
-    | "set_fold"    -> ok C_SET_FOLD    (* Deprecated *)
+    | "Set.size"     -> ok C_SIZE        (* Deprecated *)
+    | "set_size"     -> ok C_SIZE        (* Deprecated *)
+    | "Set.cardinal" -> ok C_SIZE
+    | "set_empty"    -> ok C_SET_EMPTY   (* Deprecated *)
+    | "Set.mem"      -> ok C_SET_MEM
+    | "set_mem"      -> ok C_SET_MEM     (* Deprecated *)
+    | "Set.add"      -> ok C_SET_ADD
+    | "set_add"      -> ok C_SET_ADD     (* Deprecated *)
+    | "Set.remove"   -> ok C_SET_REMOVE
+    | "set_remove"   -> ok C_SET_REMOVE  (* Deprecated *)
+    | "Set.iter"     -> ok C_SET_ITER
+    | "set_iter"     -> ok C_SET_ITER    (* Deprecated *)
+    | "Set.fold"     -> ok C_SET_FOLD
+    | "set_fold"     -> ok C_SET_FOLD    (* Deprecated *)
 
     (* Map module *)
 
@@ -206,10 +207,8 @@ module Simplify = struct
     | "Big_map.empty"    -> ok C_BIG_MAP_EMPTY
     | "Big_map.size"     -> ok C_SIZE
     | "Big_map.mem"      -> ok C_MAP_MEM
-    | "Big_map.iter"     -> ok C_MAP_ITER
-    | "Big_map.map"      -> ok C_MAP_MAP
-    | "Big_map.fold"     -> ok C_MAP_FOLD
     | "Big_map.remove"   -> ok C_MAP_REMOVE
+    | "Big_map.add"      -> ok C_MAP_ADD
 
     (* Bitwise module *)
 
@@ -228,7 +227,7 @@ module Simplify = struct
 
     | "String.length"   -> ok C_SIZE
     | "String.size"     -> ok C_SIZE
-    | "String.slice"    -> ok C_SLICE
+    | "String.slice"    -> ok C_SLICE    (* Deprecated *)
     | "string_slice"    -> ok C_SLICE    (* Deprecated *)
     | "String.sub"      -> ok C_SLICE
     | "String.concat"   -> ok C_CONCAT
@@ -326,27 +325,28 @@ module Simplify = struct
     | "Bytes.length" -> ok C_SIZE
     | "Bytes.size"   -> ok C_SIZE
     | "Bytes.concat" -> ok C_CONCAT
-    | "Bytes.slice"  -> ok C_SLICE
+    | "Bytes.slice"  -> ok C_SLICE    (* Deprecated *)
     | "Bytes.sub"    -> ok C_SLICE
 
     (* List module *)
 
     | "List.length" -> ok C_SIZE
-    | "List.size"   -> ok C_SIZE
+    | "List.size"   -> ok C_SIZE       (* Deprecated *)
     | "List.iter"   -> ok C_LIST_ITER
     | "List.map"    -> ok C_LIST_MAP
     | "List.fold"   -> ok C_LIST_FOLD
 
     (* Set module *)
 
-    | "Set.mem"     -> ok C_SET_MEM
-    | "Set.iter"    -> ok C_SET_ITER
-    | "Set.empty"   -> ok C_SET_EMPTY
-    | "Set.literal" -> ok C_SET_LITERAL
-    | "Set.add"     -> ok C_SET_ADD
-    | "Set.remove"  -> ok C_SET_REMOVE
-    | "Set.fold"    -> ok C_SET_FOLD
-    | "Set.size"    -> ok C_SIZE
+    | "Set.mem"      -> ok C_SET_MEM
+    | "Set.iter"     -> ok C_SET_ITER
+    | "Set.empty"    -> ok C_SET_EMPTY
+    | "Set.literal"  -> ok C_SET_LITERAL
+    | "Set.add"      -> ok C_SET_ADD
+    | "Set.remove"   -> ok C_SET_REMOVE
+    | "Set.fold"     -> ok C_SET_FOLD
+    | "Set.size"     -> ok C_SIZE         (* Deprecated *)
+    | "Set.cardinal" -> ok C_SIZE
 
     (* Map module *)
 
@@ -366,12 +366,13 @@ module Simplify = struct
     (* Big_map module *)
 
     | "Big_map.find_opt" -> ok C_MAP_FIND_OPT
-    | "Big_map.find"     -> ok C_MAP_FIND
     | "Big_map.update"   -> ok C_MAP_UPDATE
-    | "Big_map.add"      -> ok C_MAP_ADD
-    | "Big_map.remove"   -> ok C_MAP_REMOVE
     | "Big_map.literal"  -> ok C_BIG_MAP_LITERAL
     | "Big_map.empty"    -> ok C_BIG_MAP_EMPTY
+    | "Big_map.size"     -> ok C_SIZE
+    | "Big_map.mem"      -> ok C_MAP_MEM
+    | "Big_map.remove"   -> ok C_MAP_REMOVE
+    | "Big_map.add"      -> ok C_MAP_ADD
 
     (* Bitwise module *)
 
@@ -388,7 +389,7 @@ module Simplify = struct
 
     | "String.length" -> ok C_SIZE
     | "String.size"   -> ok C_SIZE
-    | "String.slice"  -> ok C_SLICE
+    | "String.slice"  -> ok C_SLICE  (* Deprecated *)
     | "String.sub"    -> ok C_SLICE
     | "String.concat" -> ok C_CONCAT
 

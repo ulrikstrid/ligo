@@ -20,7 +20,8 @@ Note that this table is not compiled before production and currently needs to be
 |Unit| `unit`|
 |Boolean|<pre><code>const hasDriversLicense: bool = False;<br/>const adult: bool = True;</code></pre> |
 |Boolean Logic|<pre><code>(not True) == False == (False and True) == (False or False)</code></pre>|
-|Mutez (micro tez)| `42mutez`, `7mutez` |
+|Tez | `3tez`, `3_000tez`, `3.5tez`|
+|Mutez (millionth of a tez)| `42000mutez`, `70_000mutez` |
 |Address | `"tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx"`, `"KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD"`|
 |Addition |`3 + 4`, `3n + 4n`|
 |Multiplication & Division| `3 * 4`, `3n * 4n`, `10 / 5`, `10n / 5n`|
@@ -51,10 +52,11 @@ Note that this table is not compiled before production and currently needs to be
 |Characters | `"t"`|
 |Integers | `42`, `7`|
 |Natural numbers | `42n`, `7n`|
-|Unit| `unit`|
+|Unit | `unit`|
 |Boolean|<pre><code>let has_drivers_license: bool = false<br/>let adult: bool = true</code></pre> |
 |Boolean Logic|<pre><code>(not true) = false = (false && true) = (false &#124;&#124; false)</code></pre>|
-|Mutez (micro tez)| `42mutez`, `7mutez` |
+|Tez | `3tez`, `3_000tez`, `3.5tez`|
+|Mutez (millionth of a tez)| `42000mutez`, `70_000mutez` |
 |Address | `("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)`, `("KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD": address)`|
 |Addition |`3 + 4`, `3n + 4n`|
 |Multiplication & Division| `3 * 4`, `3n * 4n`, `10 / 5`, `10n / 5n`|
@@ -86,7 +88,8 @@ Note that this table is not compiled before production and currently needs to be
 |Unit| `unit`|
 |Boolean|<pre><code>let has_drivers_license: bool = false;<br/>let adult: bool = true;</code></pre> |
 |Boolean Logic|<pre><code>(not true) = false = (false && true) = (false &#124;&#124; false)</code></pre>|
-|Mutez (micro tez)| `42mutez`, `7mutez` |
+|Tez | `3tez`, `3_000tez`, `3.5tez`|
+|Mutez (millionth of a tez)| `42000mutez`, `70_000mutez` |
 |Address | `("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)`, `("KT1JepfBfMSqkQyf9B1ndvURghGsSB8YCLMD": address)`|
 |Addition |`3 + 4`, `3n + 4n`|
 |Multiplication & Division| `3 * 4`, `3n * 4n`, `10 / 5`, `10n / 5n`|

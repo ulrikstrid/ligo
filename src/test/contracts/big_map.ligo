@@ -22,8 +22,6 @@ function rm (var m : foo) : foo is block {
   remove 42 from map m
 } with m
 
-function gf (const m : foo) : int is get_force (23, m)
-
 function get (const m : foo) : option (int) is m[42]
 
 const empty_big_map : big_map (int,int) = big_map []
