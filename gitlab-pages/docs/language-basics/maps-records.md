@@ -119,8 +119,9 @@ points on a plane.
 
 <!--PascaLIGO-->
 
-In PascaLIGO, the shape of that expression is `<record variable> with
-<record value>`. The record variable is the record to update and the
+In PascaLIGO, the shape of that expression is 
+`<record variable> with <record value>`. 
+The record variable is the record to update and the
 record value is the update itself.
 
 ```pascaligo group=records2

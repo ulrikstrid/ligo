@@ -1,8 +1,9 @@
-const React = require('react');
+import React from 'react';
+import Highlight, { defaultProps } from "prism-react-renderer";
 
 const pre = '```';
 
-const PASCALIGO_EXAMPLE = `${pre}pascaligo
+const PASCALIGO_EXAMPLE = `
 type storage is int
 
 type parameter is
@@ -27,7 +28,7 @@ function main (const action : parameter; const store : storage) : return is
   | Decrement (n) -> sub (store, n)
   | Reset         -> 0
   end)
-${pre}`;
+`;
 
 const CAMELIGO_EXAMPLE = `${pre}ocaml
 type storage = int
@@ -84,9 +85,7 @@ let main = ((action, store) : (parameter, storage)) : return => {
 ${pre}`;
 
 
-module.exports = props => {
-  const MarkdownBlock = props.MarkdownBlock;
-
+function CodeExamples (props) {
   return (
     <div className="tabs">
       <div className="nav-tabs">
@@ -106,15 +105,53 @@ module.exports = props => {
       </div>
       <div className="tab-content">
         <div id="pascaligo" className="tab-pane active" data-group="examples">
-          <MarkdownBlock>{PASCALIGO_EXAMPLE}</MarkdownBlock>
+          <Highlight {...defaultProps} language="pascaligo" code={PASCALIGO_EXAMPLE}>
+            {({ className, style, tokens, getLineProps, getTokenProps }) => (
+              <pre className={className} style={style}>
+                {tokens.map((line, i) => (
+                  <div {...getLineProps({ line, key: i })}>
+                    {line.map((token, key) => (
+                      <span {...getTokenProps({ token, key })} />
+                    ))}
+                  </div>
+                ))}
+              </pre>
+            )}
+          </Highlight>
         </div>
         <div id="cameligo" className="tab-pane" data-group="examples">
-          <MarkdownBlock>{CAMELIGO_EXAMPLE}</MarkdownBlock>
+          <Highlight {...defaultProps} language="cameligo" code={CAMELIGO_EXAMPLE}>
+            {({ className, style, tokens, getLineProps, getTokenProps }) => (
+              <pre className={className} style={style}>
+                {tokens.map((line, i) => (
+                  <div {...getLineProps({ line, key: i })}>
+                    {line.map((token, key) => (
+                      <span {...getTokenProps({ token, key })} />
+                    ))}
+                  </div>
+                ))}
+              </pre>
+            )}
+          </Highlight>
         </div>
         <div id="reasonligo" className="tab-pane" data-group="examples">
-          <MarkdownBlock>{REASONLIGO_EXAMPLE}</MarkdownBlock>
+        <Highlight {...defaultProps} language="reasonligo" code={REASONLIGO_EXAMPLE}>
+            {({ className, style, tokens, getLineProps, getTokenProps }) => (
+              <pre className={className} style={style}>
+                {tokens.map((line, i) => (
+                  <div {...getLineProps({ line, key: i })}>
+                    {line.map((token, key) => (
+                      <span {...getTokenProps({ token, key })} />
+                    ))}
+                  </div>
+                ))}
+              </pre>
+            )}
+          </Highlight>
         </div>
       </div>
     </div>
   );
 };
+
+export default CodeExamples

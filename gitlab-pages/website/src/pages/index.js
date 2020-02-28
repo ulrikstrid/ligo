@@ -1,7 +1,8 @@
-const React = require('react');
-const MarkdownBlock = require('../../core/CompLibrary').MarkdownBlock;
-const CodeExamples = require(`${process.cwd()}/core/CodeExamples`);
-const docUrl = require(`${process.cwd()}/core/UrlUtils`).docUrl;
+import React from 'react';
+import Layout from '@theme/Layout';
+import useBaseUrl from '@docusaurus/useBaseUrl';
+import CodeExamples from '../../core/CodeExamples';
+import utils from '@docusaurus/utils';
 
 const FEATURES = [
   {
@@ -43,58 +44,72 @@ const PARTNERS = [
   }
 ];
 
-const Feature = (config, props) => (
+const Feature = (props) => (
   <div className="feature" key={props.title}>
-    <img src={`${config.baseUrl}${props.image}`} />
+    <img src={useBaseUrl(props.image)} />
     <h1>{props.title}</h1>
     <p>{props.content}</p>
   </div>
 );
 
-const Partner = (config, props) => (
+const Partner = (props) => (
   <a
     href={props.link}
     title={props.name}
     target="_blank"
     rel="noopener noreferrer"
   >
-    <img src={`${config.baseUrl}${props.image}`} />
+    <img src={useBaseUrl(props.image)} />
   </a>
 );
 
-module.exports = props => {
-  return (
-    <div id="homePage">
-      <div id="intro" className="centered">
+function HomePage() {
+  return <Layout title="Homepage">
+    <div
+      id="homePage"
+      style={{
+        display: 'flex',
+        justifyContent: 'stretch',
+        alignItems: 'stretch',
+        fontSize: '20px',
+        flexDirection: 'column'
+      }}>
+        <div id="intro" className="centered">
         <div id="callToAction">
           <ul>
             <li className="primary">
               <a href="https://ide.ligolang.org">Try Online</a>
             </li>
             <li className="secondary">
-              <a href={docUrl(props.config, 'intro/installation')}>Install</a>
+              <a href={useBaseUrl('/docs/intro/installation')}>Install</a>
             </li>
           </ul>
         </div>
         <div id="preview">
           <h1>A friendly Smart Contract Language for Tezos</h1>
-          <p>Michelson was never so easy</p>
-          <CodeExamples MarkdownBlock={MarkdownBlock}></CodeExamples>
+          <p>Tezos was never so easy</p>
+          <CodeExamples /> 
         </div>
       </div>
       <div id="features" className="centered">
-        {FEATURES.map(entry => Feature(props.config, entry))}
+        {FEATURES.map(entry => 
+          <Feature key={entry.title} title={entry.title} content={entry.content} image={entry.image} /> 
+         )}
       </div>
       <div id="partners">
-        <div className="centered wrapper">
-          <span id="heading">Our Partners</span>
-          <div id="list">
-            {PARTNERS.filter(entry => entry.pinned).map(entry =>
-              Partner(props.config, entry)
-            )}
+          <div className="centered wrapper">
+            <span id="heading">Our Partners</span>
+            <div id="list">
+              {PARTNERS.filter(entry => entry.pinned).map(entry =>
+                <Partner key={entry.name} name={entry.name} image={entry.image} link={entry.link} />
+              )}
+            </div>
           </div>
-        </div>
       </div>
     </div>
-  );
-};
+  </Layout>
+}
+
+export default HomePage;
+
+

@@ -185,8 +185,8 @@ gitlab-pages/docs/language-basics/src/loops/sum.ligo sum 7n
 
 PascaLIGO "for" loops can also iterate through the contents of a
 collection, that is, a list, a set or a map. This is done with a loop
-of the form `for <element var> in <collection type> <collection var>
-<block>`, where `<collection type>` is any of the following keywords:
+of the form `for <element var> in <collection type> <collection var> <block>`, 
+where `<collection type>` is any of the following keywords:
 `list`, `set` or `map`.
 
 Here is an example where the integers in a list are summed up.

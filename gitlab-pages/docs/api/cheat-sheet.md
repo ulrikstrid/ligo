@@ -33,7 +33,7 @@ Note that this table is not compiled before production and currently needs to be
 | If Statement | <pre><code>if age < 16 <br/>then failwith ("Too young to drive."); <br/>else const new_id: int = prev_id + 1;</code></pre>|
 |Options|<pre><code>type middleName is option(string);<br/>const middleName : middleName = Some("Foo");<br/>const middleName : middleName = None;</code></pre>|
 |Assignment| ```const age: int = 5;```|
-|Assignment on an existing variable <br/></br>*⚠️ This feature is not supported at the top-level scope, you can use it e.g. within functions. Works for Records and Maps as well.*| ```age := 18;```, ```p.age := 21``` |
+|Assignment on an existing variable <br/>*⚠️ This feature is not supported at the top-level scope, you can use it e.g. within functions. Works for Records and Maps as well.*| ```age := 18;```, ```p.age := 21``` |
 |Type Annotations| ```("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)```|
 |Variants|<pre><code>type action is<br/>&#124; Increment of int<br/>&#124; Decrement of int</code></pre>|
 |Variant *(pattern)* matching|<pre><code>const a: action = Increment(5);<br/>case a of<br/>&#124; Increment(n) -> n + 1<br/>&#124; Decrement(n) -> n - 1<br/>end</code></pre>|

@@ -1,5 +1,26 @@
 :root {
-  --primary-brand-color: #0e74ff;
+  --ifm-color-primary: #0e74ff;
+  --ifm-color-primary-dark: rgb(33, 175, 144);
+  --ifm-color-primary-darker: rgb(31, 165, 136);
+  --ifm-color-primary-darkest: rgb(26, 136, 112);
+  --ifm-color-primary-light: rgb(70, 203, 174);
+  --ifm-color-primary-lighter: rgb(102, 212, 189);
+  --ifm-color-primary-lightest: rgb(146, 224, 208);
+
+
+  /* header */
+  --ifm-navbar-link-hover-color: #0e74ff;
+
+  /* footer */
+  --ifm-footer-title-color: #fff;
+  --ifm-footer-background-color: #0d0f33;
+  --ifm-footer-link-hover-color: hsla(0,0%,100%,.6);
+  --ifm-footer-color: #fff;
+  
+  
+}
+
+:root {
   --secondary-brand-color: #fc683a;
   --blue: #3aa0ff;
   --lighter-blue: #e1f1ff;
@@ -8,7 +29,7 @@
   --search-background: rgba(73, 114, 158, 0.4);
   --default-max-width: 1100px;
 
-  --color-primary-text: #0d0f33;
+  /* --color-primary-text: #0d0f33; */
   --color-secondary-text: #5a5c74;
   --color-gray: #ebebeb;
   --color-light-blue: #ebf6ff;
@@ -182,7 +203,7 @@ p {
 .navigationSlider .slidingNav ul li.siteNavItemActive > a,
 .navigationSlider .slidingNav ul li.siteNavGroupActive > a {
   background-color: white;
-  color: var(--primary-brand-color) !important;
+  color: var(--ifm-color-primary) !important;
 }
 
 .navSearchWrapper:before {
@@ -262,7 +283,7 @@ blockquote code {
 
 a,
 a:hover {
-  color: var(--primary-brand-color);
+  color: var(--ifm-color-primary);
 }
 
 .docMainWrapper a:hover {
@@ -333,7 +354,7 @@ a:hover {
 }
 
 .navListItemActive a {
-  color: var(--primary-brand-color) !important;
+  color: var(--ifm-color-primary) !important;
 }
 
 .onPageNav > .toc-headings {
@@ -366,7 +387,7 @@ a:hover {
 .button:hover {
   border-radius: 36px;
   padding: 10px 20px;
-  background-color: var(--primary-brand-color);
+  background-color: var(--ifm-color-primary);
   min-width: 130px;
   color: var(--color-white);
 }
@@ -469,7 +490,7 @@ a:hover {
 }
 
 .primary {
-  color: var(--primary-brand-color);
+  color: var(--ifm-color-primary);
 }
 
 .secondary {
@@ -536,8 +557,8 @@ a:hover {
 }
 
 #homePage #intro #callToAction ul li.primary:hover {
-  background-color: var(--primary-brand-color);
-  border-left: 4px solid var(--primary-brand-color);
+  background-color: var(--ifm-color-primary);
+  border-left: 4px solid var(--ifm-color-primary);
 }
 
 #homePage #intro #callToAction ul li.secondary:hover {
@@ -547,6 +568,7 @@ a:hover {
 
 #homePage #intro #callToAction ul li a {
   color: inherit;
+  text-decoration: none;
 }
 
 #homePage #intro #preview .hljs {
@@ -559,13 +581,14 @@ a:hover {
   font-size: 1.5em;
 }
 
-#homePage #features {
+#features {
   margin: 100px auto;
   display: flex;
   justify-content: space-between;
+  flex: 1;
 }
 
-#homePage #features .feature {
+#features .feature {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -573,46 +596,47 @@ a:hover {
   text-align: center;
 }
 
-#homePage #features .feature p {
+#features .feature p {
   text-align: center;
-  font-size: 1.25em;
+  font-size: 1.25rem;
 }
 
-#homePage #partners {
-  background-color: var(--primary-brand-color);
+#partners {  
+  background-color: var(--ifm-color-primary);
   color: white;
-  font-size: 2.8125em;
+  font-size: 2.8rem;
   font-weight: bold;
   padding: 50px 0;
   margin-top: auto;
+  flex: 1;
 }
 
-#homePage #partners .wrapper {
+#partners .wrapper {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
 }
 
-#homePage #partners #heading {
+#partners #heading {
   word-wrap: break-word;
   width: 200px;
   line-height: 1em;
 }
 
-#homePage #partners #list {
+#partners #list {
   display: flex;
 }
 
-#homePage #partners a {
+#partners a {
   line-height: 0;
 }
 
-#homePage #partners a + a {
+#partners a + a {
   margin-left: 50px;
 }
 
-#homePage #partners img {
+#partners img {
   height: 80px;
 }
 
@@ -904,20 +928,20 @@ a:hover {
     margin-top: 0;
   }
 
-  #homePage #partners #heading {
+  #partners #heading {
     text-align: center;
     word-wrap: normal;
     width: auto;
     margin-bottom: 50px;
   }
 
-  #homePage #partners #list {
+  #partners #list {
     display: flex;
     flex-direction: column;
     justify-content: center;
   }
 
-  #homePage #partners a + a {
+  #partners a + a {
     margin: 25px auto;
   }
 }
