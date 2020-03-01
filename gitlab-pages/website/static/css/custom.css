@@ -7,7 +7,8 @@
   --ifm-color-primary-light: rgb(70, 203, 174);
   --ifm-color-primary-lighter: rgb(102, 212, 189);
   --ifm-color-primary-lightest: rgb(146, 224, 208);
-
+  --blockquote-color: #efefef;
+  
 
   /* header */
   --ifm-navbar-link-hover-color: #0e74ff;
@@ -48,6 +49,7 @@
 
 html[data-theme='dark'] {
   --color-primary-text: white;
+  --blockquote-color: var(--ifm-navbar-background-color);
 }
 
 html {
@@ -69,7 +71,6 @@ body {
 code {
   /* font-family: 'Source Code Pro', monospace; */
   font-family: Menlo,Roboto Mono,SFMono-Regular,Segoe UI,Courier,monospace;
-  background: var(--light-blue);
   margin-left: 2px;
   margin-right: 2px;
   border-radius: 2px;
@@ -95,7 +96,6 @@ h1 {
 }
 
 h2 {
-  font-size: 2.25rem;
   margin-bottom: 0.5rem;
   margin-top: 1.5rem;
 }
@@ -278,15 +278,14 @@ p {
 }
 
 blockquote {
-  background-color: #efefef;
+  background-color: var(--blockquote-color);
   border-left: 5px solid var(--color-primary-text);
   color: var(--color-primary-text);
   border-radius: 2px;
 }
 
 blockquote code {
-  opacity: 1;
-  background: var(--light-blue);
+  opacity: 1;  
 }
 
 a,
@@ -881,6 +880,11 @@ a:hover {
 }
 
 @media (min-width: 1024px) {
+  .row .col { 
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+
   .nav-footer .footer-wrapper {
     max-width: 1400px;
   }
@@ -994,3 +998,6 @@ a:hover {
   color: #a31515;
 }
 
+.badge {
+  display: none;
+}

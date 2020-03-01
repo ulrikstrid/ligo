@@ -352,6 +352,7 @@ let rem4 : nat = a mod d;  // 3
 
 </TabItem>
 </Tabs>
+
 ## From `int` to `nat` and back
 
 You can *cast* an `int` to a `nat` and vice versa. Here is how:

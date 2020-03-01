@@ -131,9 +131,9 @@ function Navbar() {
               <NavLink {...linkItem} key={i} />
             ))}
         </div>
-        <div>
-          Add language toggle here please.
-        </div>
+        {/* <div>
+          TOOD: Add language toggle here please.
+        </div> */}
         <div className="navbar__items navbar__items--right">
           {links
             .filter(linkItem => linkItem.position === 'right')
