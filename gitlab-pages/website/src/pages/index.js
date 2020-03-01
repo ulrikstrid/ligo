@@ -2,7 +2,7 @@ import React from 'react';
 import Layout from '@theme/Layout';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import CodeExamples from '../../core/CodeExamples';
-import syntax from '../../core/syntax.js'
+
 
 
 const FEATURES = [

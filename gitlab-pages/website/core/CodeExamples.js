@@ -1,9 +1,9 @@
 import React from 'react';
 import Highlight, { defaultProps } from "prism-react-renderer";
 import github from "prism-react-renderer/themes/github";
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-
-const pre = '```';
 
 const PASCALIGO_EXAMPLE = `
 type storage is int
@@ -89,24 +89,16 @@ let main = ((action, store) : (parameter, storage)) : return => {
 
 function CodeExamples (props) {
   return (
-    <div className="tabs">
-      <div className="nav-tabs">
-        <div
-          className="nav-link active"
-          data-group="examples"
-          data-tab="pascaligo"
-        >
-          PascaLIGO
-        </div>
-        <div className="nav-link" data-group="examples" data-tab="cameligo">
-          CameLIGO
-        </div>
-        <div className="nav-link" data-group="examples" data-tab="reasonligo">
-          ReasonLIGO
-        </div>
-      </div>
-      <div className="tab-content">
-        <div id="pascaligo" className="tab-pane active" data-group="examples">
+   
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+        <TabItem value="pascaligo">
           <Highlight {...defaultProps} language="pascaligo" code={PASCALIGO_EXAMPLE} theme={github}>
             {({ className, style, tokens, getLineProps, getTokenProps }) => (
               <pre className={className} style={style}>
@@ -120,8 +112,9 @@ function CodeExamples (props) {
               </pre>
             )}
           </Highlight>
-        </div>
-        <div id="cameligo" className="tab-pane" data-group="examples">
+        </TabItem>
+        <TabItem value="cameligo">
+
           <Highlight {...defaultProps} language="cameligo" code={CAMELIGO_EXAMPLE} theme={github}>
             {({ className, style, tokens, getLineProps, getTokenProps }) => (
               <pre className={className} style={style}>
@@ -135,8 +128,9 @@ function CodeExamples (props) {
               </pre>
             )}
           </Highlight>
-        </div>
-        <div id="reasonligo" className="tab-pane" data-group="examples">
+        </TabItem>
+        <TabItem value="reasonligo">
+
         <Highlight {...defaultProps} language="reasonligo" code={REASONLIGO_EXAMPLE} theme={github}>
             {({ className, style, tokens, getLineProps, getTokenProps }) => (
               <pre className={className} style={style}>
@@ -150,9 +144,11 @@ function CodeExamples (props) {
               </pre>
             )}
           </Highlight>
-        </div>
-      </div>
-    </div>
+        </TabItem>
+
+
+
+  </Tabs>
   );
 };
 

@@ -158,7 +158,7 @@ const siteConfig = {
           to: 'docs/tutorials/get-started/tezos-taco-shop-smart-contract',
           label: 'Tutorials'
         },
-        { to: 'blog', label: 'Blog' },
+        { href: 'https://forum.tezosagora.org/tag/ligo', label: 'Blog' },
         // TODO: { href: "/odoc", label: "API" },
         // { doc: 'contributors/origin', label: 'Contribute' },
         { to: '/contact', label: 'Ask Questions' }        
