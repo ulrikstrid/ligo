@@ -99,7 +99,7 @@ const siteConfig = {
   },*/
 
   // Add custom scripts here that would be placed in <script> tags.
-  scripts: ['https://buttons.github.io/buttons.js'],
+  scripts: ['https://buttons.github.io/buttons.js', './core/syntax.js'],
 
   // On page navigation for the current documentation page.
   // No .html extensions for paths.
@@ -148,6 +148,7 @@ const siteConfig = {
       logo: {
         alt: 'LIGO Logo',
         src: 'img/logo.svg',
+        srcDark: 'img/logo-night.svg'
       },
       links: [
         { href: 'https://ide.ligolang.org/', label: 'Try Online' },
@@ -215,6 +216,10 @@ const siteConfig = {
     },
     image: 'img/docusaurus.png',
     sidebarCollapsible: true,
+    prism: {
+      theme: require('prism-react-renderer/themes/github'),
+      darkTheme: require('prism-react-renderer/themes/shadesOfPurple')
+    },
   }
 };
 

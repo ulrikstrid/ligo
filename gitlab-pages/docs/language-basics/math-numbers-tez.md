@@ -3,6 +3,9 @@ id: math-numbers-tez
 title: Math, Numbers & Tez
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 LIGO offers three built-in numerical types: `int`, `nat` and
 `tez`. Values of type `int` are integers; values of type `nat` are
 natural numbers (integral numbers greater than or equal to zero);
@@ -38,8 +41,16 @@ remain in comments as they would otherwise not compile, for example,
 adding a value of type `int` to a value of type `tez` is invalid. Note
 that adding an integer to a natural number produces an integer.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=a
 // int + int yields int
 const a : int = 5 + 10
@@ -69,7 +80,9 @@ const g : int = 1_000_000
 > const sum : tez = 100_000mutez
 >```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=a
 // int + int yields int
 let a : int = 5 + 10
@@ -99,7 +112,9 @@ let g : int = 1_000_000
 >let sum : tez = 100_000mutez
 >```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=a
 // int + int yields int
 let a : int = 5 + 10;
@@ -127,7 +142,9 @@ let g : int = 1_000_000;
 >```reasonligo
 >let sum : tex = 100_000mutez;
 >```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 ## Subtraction
 
@@ -135,8 +152,16 @@ Subtraction looks as follows.
 
 > ⚠️ Even when subtracting two `nats`, the result is an `int`
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=b
 const a : int = 5 - 10
 
@@ -149,7 +174,9 @@ const b : int = 5n - 2n
 const d : tez = 5mutez - 1mutez
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=b
 let a : int = 5 - 10
 
@@ -162,7 +189,9 @@ let b : int = 5n - 2n
 let d : tez = 5mutez - 1mutez
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=b
 let a : int = 5 - 10;
 
@@ -175,15 +204,23 @@ let b : int = 5n - 2n;
 let d : tez = 5mutez - 1mutez;
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 
 ## Multiplication
 
 You can multiply values of the same type, such as:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
 
 ```pascaligo group=c
 const a : int = 5 * 5
@@ -193,7 +230,9 @@ const b : nat = 5n * 5n
 const c : tez = 5n * 5mutez
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=c
 let a : int = 5 * 5
 let b : nat = 5n * 5n
@@ -202,7 +241,9 @@ let b : nat = 5n * 5n
 let c : tez = 5n * 5mutez
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=c
 let a : int = 5 * 5;
 let b : nat = 5n * 5n;
@@ -211,7 +252,8 @@ let b : nat = 5n * 5n;
 let c : tez = 5n * 5mutez;
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 ## Euclidean Division
 
@@ -219,35 +261,56 @@ In LIGO you can divide `int`, `nat`, and `tez`. Here is how:
 
 > ⚠️ Division of two `tez` values results into a `nat`
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=d
 const a : int = 10 / 3
 const b : nat = 10n / 3n
 const c : nat = 10mutez / 3mutez
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=d
 let a : int = 10 / 3
 let b : nat = 10n / 3n
 let c : nat = 10mutez / 3mutez
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=d
 let a : int = 10 / 3;
 let b : nat = 10n / 3n;
 let c : nat = 10mutez / 3mutez;
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 LIGO also allows you to compute the remainder of the Euclidean
 division. In LIGO, it is a natural number.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=d
 const a : int = 120
 const b : int = 9
@@ -259,7 +322,9 @@ const rem3 : nat = c mod d  // 3
 const rem4 : nat = a mod d  // 3
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=d
 let a : int = 120
 let b : int = 9
@@ -271,7 +336,9 @@ let rem3 : nat = c mod d  // 3
 let rem4 : nat = a mod d  // 3
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=d
 let a : int = 120;
 let b : int = 9;
@@ -283,29 +350,45 @@ let rem3 : nat = c mod d;  // 3
 let rem4 : nat = a mod d;  // 3
 ```
 
+</TabItem>
+</Tabs>
 ## From `int` to `nat` and back
 
 You can *cast* an `int` to a `nat` and vice versa. Here is how:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=e
 const a : int = int (1n)
 const b : nat = abs (1)
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=e
 let a : int = int (1n)
 let b : nat = abs (1)
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=e
 let a : int = int (1n);
 let b : nat = abs (1);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 ## Checking a `nat`
 
@@ -314,20 +397,33 @@ function which accepts an `int` and returns an optional `nat`: if the
 result is not `None`, then the provided integer was indeed a natural
 number, and not otherwise.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=e
 const is_a_nat : option (nat) = is_nat (1)
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=e
 let is_a_nat : nat option = Michelson.is_nat (1)
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=e
 let is_a_nat : option (nat) = Michelson.is_nat (1);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>

@@ -3,6 +3,9 @@ id: entrypoints-contracts
 title: Main function and Entrypoints
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 ## Access Functions
 
 A LIGO contract is made of a series of constant and function
@@ -22,25 +25,40 @@ type of a main function is as follows, assuming that the type
 `storage` has been defined elsewhere. (Note that you can use any type
 with any name for the storage.)
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo skip
 type storage is ...  // Any name, any type
 type return is list (operation) * storage
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo skip
 type storage = ...  // Any name, any type
 type return = operation list * storage
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo skip
 type storage = ...;  // Any name, any type
 type return = (list (operation), storage);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
+
 
 The contract storage can only be modified by activating a main
 function: given the state of the storage *on-chain*, a main function
@@ -50,9 +68,16 @@ contract's parameter.
 Here is an example where the storage is a single natural number that
 is updated by the parameter.
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--PascaLIGO-->
+<TabItem value="pascaligo">
 
 ```pascaligo group=a
 type parameter is nat
@@ -62,8 +87,9 @@ type return is list (operation) * storage
 function save (const action : parameter; const store : storage) : return is
   ((nil : list (operation)), store)
 ```
+</TabItem>
+<TabItem value="cameligo">
 
-<!--CameLIGO-->
 ```cameligo group=a
 type parameter = nat
 type storage = nat
@@ -73,7 +99,9 @@ let save (action, store: parameter * storage) : return =
   (([] : operation list), store)
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=a
 type parameter = nat;
 type storage = nat;
@@ -82,7 +110,9 @@ type return = (list (operation), storage);
 let main = ((action, store): (parameter, storage)) : return =>
   (([] : list (operation)), store);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 ## Entrypoints
 
@@ -105,9 +135,17 @@ In the following example, the storage contains a counter of type `nat`
 and a name of type `string`. Depending on the parameter of the
 contract, either the counter or the name is updated.
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--PascaLIGO-->
+<TabItem value="pascaligo">
+
 ```pascaligo group=b
 type parameter is
   Action_A of nat
@@ -133,7 +171,9 @@ function main (const action : parameter; const store : storage): return is
   end
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=b
 type parameter =
   Action_A of nat
@@ -158,7 +198,9 @@ let main (action, store: parameter * storage) : return =
   | Action_B s -> entry_B (s, store)
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=b
 type parameter =
 | Action_A (nat)
@@ -183,7 +225,9 @@ let main = ((action, store): (parameter, storage)) : return =>
   | Action_B (s) => entry_B ((s, store))
   };
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 
 ## Tezos-specific Built-ins
@@ -198,8 +242,16 @@ This example shows how `Tezos.amount` and `failwith` can be used to
 decline any transaction that sends more tez than `0tez`, that is, no
 incoming tokens are accepted.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=c
 type parameter is unit
 type storage is unit
@@ -213,7 +265,10 @@ function deny (const action : parameter; const store : storage) : return is
 
 > Note that `amount` is *deprecated*.
 
-<!--CameLIGO-->
+</TabItem>
+
+<TabItem value="cameligo">
+
 ```cameligo group=c
 type parameter = unit
 type storage = unit
@@ -227,7 +282,9 @@ let deny (action, store : parameter * storage) : return =
 
 > Note that `amount` is *deprecated*.
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=c
 type parameter = unit;
 type storage = unit;
@@ -242,15 +299,24 @@ let deny = ((action, store): (parameter, storage)) : return => {
 
 > Note that `amount` is *deprecated*.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 ### Access Control
 
 This example shows how `Tezos.source` can be used to deny access to an
 entrypoint.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=c
 const owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
 
@@ -261,7 +327,9 @@ function main (const action : parameter; const store : storage) : return is
 
 > Note that `source` is *deprecated*.
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=c
 let owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address)
 
@@ -272,7 +340,9 @@ let main (action, store: parameter * storage) : return =
 
 > Note that `source` is *deprecated*.
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=c
 let owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
 
@@ -284,7 +354,8 @@ let main = ((action, store) : (parameter, storage)) : storage => {
 
 > Note that `source` is *deprecated*.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 ### Inter-Contract Invocations
 
@@ -310,9 +381,17 @@ of type `parameter`, and we have a `proxy.ligo` contract that accepts
 the same parameter type, and forwards the call to the deployed counter
 contract.
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--PascaLIGO-->
+<TabItem value="pascaligo">
+
 ```pascaligo skip
 // counter.ligo
 type parameter is
@@ -354,7 +433,9 @@ function proxy (const action : parameter; const store : storage): return is
   } with (ops, store)
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo skip
 // counter.mligo
 
@@ -395,7 +476,8 @@ let proxy (action, store : parameter * storage) : return =
 > Note that `Operation.get_contract` and `Operation.transaction` are
 > *deprecated*.
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
 ```reasonligo skip
 // counter.religo
 
@@ -438,4 +520,5 @@ let proxy = ((action, store): (parameter, storage)) : return => {
 > Note that `Operation.get_contract` and `Operation.transaction` are
 > *deprecated*.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>

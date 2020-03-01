@@ -3,28 +3,47 @@ id: boolean-if-else
 title: Booleans and Conditionals
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 ## Booleans
 
 The type of a boolean value is `bool`. Here is how to define a boolean
 value:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=a
 const a : bool = True   // Also: true
 const b : bool = False  // Also: false
 ```
-<!--CameLIGO-->
+
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=a
 let a : bool = true
 let b : bool = false
 ```
-<!--ReasonLIGO-->
+
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=a
 let a : bool = true;
 let b : bool = false;
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 ## Comparing Values
 
@@ -39,31 +58,55 @@ function.
 
 ### Comparing Strings
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=b
 const a : string = "Alice"
 const b : string = "Alice"
 const c : bool = (a = b) // True
 ```
-<!--CameLIGO-->
+
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=b
 let a : string = "Alice"
 let b : string = "Alice"
 let c : bool = (a = b) // true
 ```
-<!--ReasonLIGO-->
+
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=b
 let a : string = "Alice";
 let b : string = "Alice";
 let c : bool = (a == b); // true
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 ### Comparing numbers
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=c
 const a : int  = 5
 const b : int  = 4
@@ -74,7 +117,10 @@ const f : bool = (a <= b)
 const g : bool = (a >= b)
 const h : bool = (a =/= b)
 ```
-<!--CameLIGO-->
+
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=c
 let a : int  = 5
 let b : int  = 4
@@ -86,7 +132,9 @@ let g : bool = (a >= b)
 let h : bool = (a <> b)
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=c
 let a : int  = 5;
 let b : int  = 4;
@@ -97,33 +145,50 @@ let f : bool = (a <= b);
 let g : bool = (a >= b);
 let h : bool = (a != b);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 ### Comparing tez
 
 > 💡 Comparing `tez` values is especially useful when dealing with an
 > amount sent in a transaction.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=d
 const a : tez  = 5mutez
 const b : tez  = 10mutez
 const c : bool = (a = b) // False
 ```
-<!--CameLIGO-->
+
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=d
 let a : tez  = 5mutez
 let b : tez  = 10mutez
 let c : bool = (a = b) // false
 ```
-<!--ReasonLIGO-->
+
+</TabItem>
+<TabItem value="reasonligo">
 ```reasonligo group=d
 let a : tez  = 5mutez;
 let b : tez  = 10mutez;
 let c : bool = (a == b); // false
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 
 ## Conditionals
@@ -131,8 +196,16 @@ let c : bool = (a == b); // false
 Conditional logic enables forking the control flow depending on the
 state.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=e
 type magnitude is Small | Large // See variant types.
 
@@ -171,7 +244,9 @@ if x < y then {
 else skip;
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=e
 type magnitude = Small | Large // See variant types.
 
@@ -192,8 +267,9 @@ gitlab-pages/docs/language-basics/boolean-if-else/cond.mligo compare 21n'
 > *dangling else* problem is parsed by associating any `else` to the
 > closest previous `then`.
 
+</TabItem>
+<TabItem value="reasonligo">
 
-<!--ReasonLIGO-->
 ```reasonligo group=e
 type magnitude = Small | Large; // See variant types.
 
@@ -208,4 +284,6 @@ ligo run-function
 gitlab-pages/docs/language-basics/boolean-if-else/cond.religo compare 21n'
 # Outputs: Large
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>

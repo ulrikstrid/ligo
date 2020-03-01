@@ -3,11 +3,21 @@ id: loops
 title: Loops
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 ## General Iteration
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--PascaLIGO-->
+<TabItem value="pascaligo">
 
 General iteration in PascaLIGO takes the shape of general loops, which
 should be familiar to programmers of imperative languages as "while
@@ -47,7 +57,8 @@ gitlab-pages/docs/language-basics/src/loops/gcd.ligo gcd '(2n*2n*3n*11n, 2n*2n*2
 # Outputs: +12
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
 
 CameLIGO is a functional language where user-defined values are
 constant, therefore it makes no sense in CameLIGO to feature loops,
@@ -103,7 +114,8 @@ gitlab-pages/docs/language-basics/src/loops/gcd.mligo gcd (2n*2n*3n*11n, 2n*2n*2
 # Outputs: +12
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
 
 ReasonLIGO is a functional language where user-defined values are
 constant, therefore it makes no sense in ReasonLIGO to feature loops,
@@ -153,7 +165,8 @@ let gcd = ((x,y) : (nat, nat)) : nat => {
 > Note that `stop` and `continue` (now `Loop.resume`) are
 > *deprecated*.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 ## Bounded Loops
 

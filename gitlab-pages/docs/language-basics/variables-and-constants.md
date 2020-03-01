@@ -3,6 +3,10 @@ id: constants-and-variables
 title: Constants & Variables
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+
 The next building block after types are *constants* and *variables*.
 
 ## Constants
@@ -12,8 +16,16 @@ reassigned. Put in another way, they can be assigned once, at their
 declaration. When defining a constant you need to provide a `name`,
 `type` and a `value`:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=a
 const age : int = 25
 ```
@@ -24,7 +36,10 @@ command:
 ligo evaluate-value gitlab-pages/docs/language-basics/src/variables-and-constants/const.ligo age
 # Outputs: 25
 ```
-<!--CameLIGO-->
+
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=a
 let age : int = 25
 ```
@@ -36,7 +51,9 @@ ligo evaluate-value gitlab-pages/docs/language-basics/src/variables-and-constant
 # Outputs: 25
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=a
 let age : int = 25;
 ```
@@ -48,12 +65,20 @@ ligo evaluate-value gitlab-pages/docs/language-basics/src/variables-and-constant
 # Outputs: 25
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 ## Variables
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
 
 Variables, unlike constants, are *mutable*. They cannot be declared in
 a *global scope*, but they can be declared and used within functions,
@@ -88,7 +113,8 @@ ligo run-function gitlab-pages/docs/language-basics/src/variables-and-constants/
 # Outputs: 2
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
 
 As expected in the pure subset of a functional language, CameLIGO only
 features *constant values*: once they are declared, the value cannot
@@ -105,7 +131,9 @@ like this:
 ligo run-function gitlab-pages/docs/language-basics/src/variables-and-constants/add.mligo add '(1,1)'
 # Outputs: 2
 ```
-<!--ReasonLIGO-->
+
+</TabItem>
+<TabItem value="reasonligo">
 
 As expected in the pure subset of a functional language, ReasonLIGO
 only features *constant values*: once they are declared, the value
@@ -125,4 +153,5 @@ ligo run-function gitlab-pages/docs/language-basics/src/variables-and-constants/
 # Outputs: 2
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>

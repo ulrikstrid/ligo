@@ -3,6 +3,9 @@ id: types
 title: Types
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 *LIGO is strongly and statically typed.* This means that the compiler
 checks how your contract processes data. If it passes the test, your
 contract will not fail at run-time due to inconsistent assumptions on
@@ -22,36 +25,55 @@ maintainability of your smart contracts. For example we can choose to
 alias a string type as an animal breed - this will allow us to
 comunicate our intent with added clarity.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=a
 type breed is string
 const dog_breed : breed = "Saluki"
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
 
 ```cameligo group=a
 type breed = string
 let dog_breed : breed = "Saluki"
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
 
 ```reasonligo group=a
 type breed = string;
 let dog_breed : breed = "Saluki";
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 > The above type definitions are aliases, which means that `breed` and
 > `string` are interchangable in all contexts.
 
 ## Simple types
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=b
 // The type account_balances denotes maps from addresses to tez
 
@@ -61,7 +83,9 @@ const ledger : account_balances =
   map [("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address) -> 10mutez]
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=b
 // The type account_balances denotes maps from addresses to tez
 
@@ -72,7 +96,9 @@ let ledger : account_balances =
     [(("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address), 10mutez)]
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=b
 // The type account_balances denotes maps from addresses to tez
 
@@ -83,7 +109,8 @@ let ledger: account_balances =
     ([("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address, 10mutez)]);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 ## Structured types
 
@@ -96,8 +123,16 @@ types as *fields* and index them with a *field name*. In the example
 below you can see the definition of data types for a ledger that keeps
 the balance and number of previous transactions for a given account.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=c
 // Type aliasing
 
@@ -124,7 +159,9 @@ const my_ledger : ledger = map [
 ]
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=c
 // Type aliasing
 
@@ -147,7 +184,9 @@ let my_ledger : ledger = Map.literal
     {balance = 10mutez; transactions = 5n})]
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=c
 // Type aliasing
 
@@ -177,7 +216,8 @@ are dual because records are a product of types (types are bundled
 into a record), whereas variant types are a sum of types (they are
 exclusive to each other).
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 ## Annotations
 
@@ -185,9 +225,17 @@ In certain cases, the type of an expression cannot be properly
 inferred by the compiler. In order to help the type checker, you can
 annotate an expression with its desired type. Here is an example:
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--PascaLIGO-->
+<TabItem value="pascaligo">
+
 ```pascaligo group=d
 type parameter is Back | Claim | Withdraw
 
@@ -213,7 +261,9 @@ function back (var action : unit; var store : storage) : return is
   end with ((nil : list (operation)), store) // Annotation
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=d
 type parameter = Back | Claim | Withdraw
 
@@ -239,7 +289,9 @@ let back (param, store : unit * storage) : return =
     | Some (x) -> no_op, store
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=d
 type parameter = | Back | Claim | Withdraw;
 
@@ -269,4 +321,5 @@ let back = ((param, store) : (unit, storage)) : return => {
 };
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>

@@ -3,6 +3,9 @@ id: sets-lists-tuples
 title: Tuples, Lists, Sets
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 Apart from complex data types such as `maps` and `records`, LIGO also
 features `tuples`, `lists` and `sets`.
 
@@ -27,9 +30,16 @@ Unlike [a record](language-basics/maps-records.md), tuple types do not
 have to be defined before they can be used. However below we will give
 them names by *type aliasing*.
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--Pascaligo-->
+<TabItem value="pascaligo">
 
 ```pascaligo group=tuple
 type full_name is string * string  // Alias
@@ -37,7 +47,8 @@ type full_name is string * string  // Alias
 const full_name : full_name = ("Alice", "Johnson")
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
 
 ```cameligo group=tuple
 type full_name = string * string  // Alias
@@ -45,7 +56,8 @@ type full_name = string * string  // Alias
 let full_name : full_name = ("Alice", "Johnson") // Optional parentheses
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
 
 ```reasonligo group=tuple
 type full_name = (string, string);  // Alias
@@ -53,7 +65,8 @@ type full_name = (string, string);  // Alias
 let full_name : full_name = ("Alice", "Johnson");
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 
 ### Accessing Components
@@ -66,27 +79,37 @@ position in their tuple, which cannot be done in OCaml. *Tuple
 components are zero-indexed*, that is, the first component has index
 `0`.
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--PascaLIGO-->
+<TabItem value="pascaligo">
 
 ```pascaligo group=tuple
 const first_name : string = full_name.0
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
 
 ```cameligo group=tuple
 let first_name : string = full_name.0
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
 
 ```reasonligo group=tuple
 let first_name : string = full_name[0];
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 ## Lists
 
@@ -103,26 +126,39 @@ think of a list a *stack*, where the top is written on the left.
 
 ### Defining Lists
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=lists
 const empty_list : list (int) = nil // Or list []
 const my_list : list (int) = list [1; 2; 2] // The head is 1
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=lists
 let empty_list : int list = []
 let my_list : int list = [1; 2; 2] // The head is 1
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=lists
 let empty_list : list (int) = [];
 let my_list : list (int) = [1, 2, 2]; // The head is 1
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 ### Adding to Lists
 
@@ -130,9 +166,16 @@ Lists can be augmented by adding an element before the head (or, in
 terms of stack, by *pushing an element on top*). This operation is
 usually called *consing* in functional languages.
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--PascaLIGO-->
+<TabItem value="pascaligo">
 
 In PascaLIGO, the *cons operator* is infix and noted `#`. It is not
 symmetric: on the left lies the element to cons, and, on the right, a
@@ -143,7 +186,8 @@ you of that.)
 const larger_list : list (int) = 5 # my_list // [5;1;2;2]
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
 
 In CameLIGO, the *cons operator* is infix and noted `::`. It is not
 symmetric: on the left lies the element to cons, and, on the right, a
@@ -153,7 +197,8 @@ list on which to cons.
 let larger_list : int list = 5 :: my_list // [5;1;2;2]
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
 
 In ReasonLIGO, the *cons operator* is infix and noted `, ...`. It is
 not symmetric: on the left lies the element to cons, and, on the
@@ -162,7 +207,9 @@ right, a list on which to cons.
 ```reasonligo group=lists
 let larger_list : list (int) = [5, ...my_list]; // [5,1,2,2]
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 ### Functional Iteration over Lists
 
@@ -189,9 +236,16 @@ called `List.iter`.
 In the following example, a list is iterated to check that all its
 elements (integers) are strictly greater than `3`.
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--PascaLIGO-->
+<TabItem value="pascaligo">
 
 ```pascaligo group=lists
 function iter_op (const l : list (int)) : unit is
@@ -203,7 +257,8 @@ function iter_op (const l : list (int)) : unit is
 
 > Note that `list_iter` is *deprecated*.
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
 
 ```cameligo group=lists
 let iter_op (l : int list) : unit =
@@ -211,7 +266,8 @@ let iter_op (l : int list) : unit =
   in List.iter predicate l
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
 
 ```reasonligo group=lists
 let iter_op = (l : list (int)) : unit => {
@@ -220,7 +276,8 @@ let iter_op = (l : list (int)) : unit => {
 };
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 
 #### Mapped Operation over Lists
@@ -231,9 +288,16 @@ with the map data structure. The predefined functional iterator
 implementing the mapped operation over lists is called `List.map` and
 is used as follows.
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--PascaLIGO-->
+<TabItem value="pascaligo">
 
 ```pascaligo group=lists
 function increment (const i : int): int is i + 1
@@ -244,7 +308,8 @@ const plus_one : list (int) = List.map (increment, larger_list)
 
 > Note that `list_map` is *deprecated*.
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
 
 ```cameligo group=lists
 let increment (i : int) : int = i + 1
@@ -253,7 +318,8 @@ let increment (i : int) : int = i + 1
 let plus_one : int list = List.map increment larger_list
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
 
 ```reasonligo group=lists
 let increment = (i : int) : int => i + 1;
@@ -261,7 +327,9 @@ let increment = (i : int) : int => i + 1;
 // Creates a new list with all elements incremented by 1
 let plus_one : list (int) = List.map (increment, larger_list);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 
 #### Folded Operation over Lists
@@ -274,9 +342,16 @@ traversal of the data structure is over. The predefined functional
 iterator implementing the folded operation over lists is called
 `List.fold` and is used as follows.
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--PascaLIGO-->
+<TabItem value="pascaligo">
 
 ```pascaligo group=lists
 function sum (const acc : int; const i : int): int is acc + i
@@ -285,20 +360,24 @@ const sum_of_elements : int = List.fold (sum, my_list, 0)
 
 > Note that `list_fold` is *deprecated*.
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
 
 ```cameligo group=lists
 let sum (acc, i: int * int) : int = acc + i
 let sum_of_elements : int = List.fold sum my_list 0
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
 
 ```reasonligo group=lists
 let sum = ((result, i): (int, int)): int => result + i;
 let sum_of_elements : int = List.fold (sum, my_list, 0);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 ## Sets
 
@@ -309,9 +388,16 @@ whereas they can be repeated in a *list*.
 
 ### Empty Sets
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--PascaLIGO-->
+<TabItem value="pascaligo">
 
 In PascaLIGO, the notation for sets is similar to that for lists,
 except the keyword `set` is used before:
@@ -319,7 +405,9 @@ except the keyword `set` is used before:
 ```pascaligo group=sets
 const my_set : set (int) = set []
 ```
-<!--CameLIGO-->
+
+</TabItem>
+<TabItem value="cameligo">
 
 In CameLIGO, the empty set is denoted by the predefined value
 `Set.empty`.
@@ -328,7 +416,8 @@ In CameLIGO, the empty set is denoted by the predefined value
 let my_set : int set = Set.empty
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
 
 In ReasonLIGO, the empty set is denoted by the predefined value
 `Set.empty`.
@@ -336,13 +425,22 @@ In ReasonLIGO, the empty set is denoted by the predefined value
 ```reasonligo group=sets
 let my_set : set (int) = Set.empty;
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 ### Non-empty Sets
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--PascaLIGO-->
+<TabItem value="pascaligo">
 
 In PascaLIGO, the notation for sets is similar to that for lists,
 except the keyword `set` is used before:
@@ -359,7 +457,8 @@ gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.ligo my_set
 # Outputs: { 3 ; 2 ; 1 }
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
 
 In CameLIGO, there is no predefined syntactic construct for sets: you
 must build your set by adding to the empty set. (This is the way in
@@ -379,7 +478,8 @@ gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.mligo my_set
 # Outputs: { 3 ; 2 ; 1 }
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
 
 In ReasonLIGO, there is no predefined syntactic construct for sets:
 you must build your set by adding to the empty set. (This is the way
@@ -399,13 +499,22 @@ ligo evaluate-value
 gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.religo my_set
 # Outputs: { 3 ; 2 ; 1 }
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 ### Set Membership
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--PascaLIGO-->
+<TabItem value="pascaligo">
 
 PascaLIGO features a special keyword `contains` that operates like an
 infix operator checking membership in a set.
@@ -414,7 +523,8 @@ infix operator checking membership in a set.
 const contains_3 : bool = my_set contains 3
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
 
 In CameLIGO, the predefined predicate `Set.mem` tests for membership
 in a set as follows:
@@ -423,7 +533,8 @@ in a set as follows:
 let contains_3 : bool = Set.mem 3 my_set
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
 
 In ReasonLIGO, the predefined predicate `Set.mem` tests for membership
 in a set as follows:
@@ -432,7 +543,8 @@ in a set as follows:
 let contains_3 : bool = Set.mem (3, my_set);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 
 ### Cardinal of Sets
@@ -440,9 +552,16 @@ let contains_3 : bool = Set.mem (3, my_set);
 The predefined function `Set.size` returns the number of
 elements in a given set as follows.
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--PascaLIGO-->
+<TabItem value="pascaligo">
 
 ```pascaligo group=sets
 const cardinal : nat = Set.size (my_set)
@@ -450,18 +569,22 @@ const cardinal : nat = Set.size (my_set)
 
 > Note that `size` is *deprecated*.
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
 
 ```cameligo group=sets
 let cardinal : nat = Set.size my_set
 ```
-<!--ReasonLIGO-->
+
+</TabItem>
+<TabItem value="reasonligo">
 
 ```reasonligo group=sets
 let cardinal : nat = Set.size (my_set);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 
 ### Updating Sets
@@ -469,9 +592,16 @@ let cardinal : nat = Set.size (my_set);
 There are two ways to update a set, that is to add or remove from
 it.
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--PascaLIGO-->
+<TabItem value="pascaligo">
 
 In PascaLIGO, either we create a new set from the given one, or we
 modify it in-place. First, let us consider the former way:
@@ -502,7 +632,8 @@ function update (var s : set (int)) : set (int) is block {
 const new_set : set (int) = update (my_set)
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
 
 In CameLIGO, we can use the predefined functions `Set.add` and
 `Set.remove`. We update a given set by creating another one, with or
@@ -513,7 +644,8 @@ let larger_set  : int set = Set.add 4 my_set
 let smaller_set : int set = Set.remove 3 my_set
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
 
 In ReasonLIGO, we can use the predefined functions `Set.add` and
 `Set.remove`. We update a given set by creating another one, with or
@@ -523,7 +655,9 @@ without some elements.
 let larger_set  : set (int) = Set.add (4, my_set);
 let smaller_set : set (int) = Set.remove (3, my_set);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 
 ### Functional Iteration over Sets
@@ -549,9 +683,16 @@ over sets is called `Set.iter`. In the following example, a set is
 iterated to check that all its elements (integers) are greater than
 `3`.
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--PascaLIGO-->
+<TabItem value="pascaligo">
 
 ```pascaligo group=sets
 function iter_op (const s : set (int)) : unit is
@@ -563,7 +704,8 @@ function iter_op (const s : set (int)) : unit is
 
 > Note that `set_iter` is *deprecated*.
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
 
 ```cameligo group=sets
 let iter_op (s : int set) : unit =
@@ -571,7 +713,8 @@ let iter_op (s : int set) : unit =
   in Set.iter predicate s
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
 
 ```reasonligo group=sets
 let iter_op = (s : set (int)) : unit => {
@@ -580,7 +723,8 @@ let iter_op = (s : set (int)) : unit => {
 };
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 
 <!-- #### Mapped Operation (NOT IMPLEMENTED YET) -->
@@ -638,8 +782,16 @@ enables having a partial result that becomes complete when the
 traversal of the data structure is over. The predefined fold over sets
 is called `Set.fold`.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=sets
 function sum (const acc : int; const i : int): int is acc + i
 const sum_of_elements : int = Set.fold (sum, my_set, 0)
@@ -658,15 +810,21 @@ function loop (const s : set (int)) : int is block {
 } with sum
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=sets
 let sum (acc, i : int * int) : int = acc + i
 let sum_of_elements : int = Set.fold sum my_set 0
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=sets
 let sum = ((acc, i) : (int, int)) : int => acc + i;
 let sum_of_elements : int = Set.fold (sum, my_set, 0);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>

@@ -23,8 +23,14 @@ following:
 
 Here is a full example:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', }
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```
 ligo dry-run src/basic.ligo main Unit Unit
 // Outputs:
@@ -32,7 +38,9 @@ ligo dry-run src/basic.ligo main Unit Unit
 //          Unit
 // ]
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 Output of the `dry-run` is the return value of our main function, we
 can see the operations emitted (in our case an empty list, and the new
@@ -45,8 +53,16 @@ will accept an `action` variant in order to re-route our single `main`
 function to two entrypoints for `add` (addition) and `sub`
 (subtraction).
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```
 type parameter is
   Increment of int
@@ -67,7 +83,9 @@ function main (const action : parameter; const store : storage) : return is
    end)
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo
 type parameter =
   Increment of int
@@ -87,7 +105,10 @@ let main (action, store : parameter * storage) : operation list * storage =
     | Decrement n -> sub (n, store)))
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+
+<TabItem value="reasonligo">
+
 ```reasonligo
 type parameter =
   Increment (int)
@@ -109,21 +130,30 @@ let main = ((action, store) : (parameter, storage)) : return =>
     }));
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 To dry-run the counter contract, we will provide the `main` function
 with a variant parameter of value `Increment (5)` and an initial
 storage value of `5`.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```
 ligo dry-run src/counter.ligo main "Increment(5)" 5
 // tuple[   list[]
 //          10
 // ]
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 
 Our contract's storage has been successfuly incremented to `10`.
@@ -134,19 +164,26 @@ In order to deploy the counter contract to a real Tezos network, we'd
 have to compile it first, this can be done with the help of the
 `compile-contract` CLI command:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', }
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```
 ligo compile-contract src/counter.ligo main
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 
 Command above will output the following Michelson code:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
-```
+
+```michelson
 { parameter (or (int %decrement) (int %increment)) ;
   storage int ;
   code { DUP ;
@@ -175,20 +212,27 @@ Command above will output the following Michelson code:
          PAIR ;
          DIP { DROP 2 } } }
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
 
 However in order to originate a Michelson contract on Tezos, we also
 need to provide the initial storage value, we can use
 `compile-storage` to compile the LIGO representation of the storage to
 Michelson.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', }
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```
 ligo compile-storage src/counter.ligo main 5
 // Outputs: 5
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 In our case the LIGO storage value maps 1:1 to its Michelson
 representation, however this will not be the case once the parameter
@@ -200,13 +244,22 @@ Same rules apply for parameters, as apply for translating LIGO storage
 values to Michelson. We will need to use `compile-parameter` to
 compile our `action` variant into Michelson, here's how:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--Pascaligo-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', }
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```
 ligo compile-parameter src/counter.ligo main 'Increment(5)'
 // Outputs: (Right 5)
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
+
 
 Now we can use `(Right 5)` which is a Michelson value, to invoke our
 contract - e.g., via `tezos-client`

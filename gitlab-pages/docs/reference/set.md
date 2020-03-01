@@ -3,6 +3,9 @@ id: set-reference
 title: Sets — Unordered unique collection of a type
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 Sets are unordered collections of values of the same type, like lists
 are ordered collections. Like the mathematical sets and lists, sets
 can be empty and, if not, elements of sets in LIGO are *unique*,
@@ -10,92 +13,157 @@ whereas they can be repeated in a *list*.
 
 # Empty Sets
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=sets
 const my_set : set (int) = set []
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=sets
 let my_set : int set = Set.empty
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=sets
 let my_set : set (int) = Set.empty;
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 # Non-empty Sets
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=sets
 const my_set : set (int) = set [3; 2; 2; 1]
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=sets
 let my_set : int set =
   Set.add 3 (Set.add 2 (Set.add 2 (Set.add 1 (Set.empty : int set))))
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=sets
 let my_set : set (int) =
   Set.add (3, Set.add (2, Set.add (2, Set.add (1, Set.empty : set (int)))));
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 # Set Membership
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=sets
 const contains_3 : bool = my_set contains 3
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=sets
 let contains_3 : bool = Set.mem 3 my_set
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=sets
 let contains_3 : bool = Set.mem (3, my_set);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 # Cardinal of Sets
 
 The predefined function `Set.size` returns the number of
 elements in a given set as follows.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=sets
 const cardinal : nat = Set.size (my_set)
 ```
 
 > Note that `size` is *deprecated*.
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=sets
 let cardinal : nat = Set.size my_set
 ```
-<!--ReasonLIGO-->
+
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=sets
 let cardinal : nat = Set.size (my_set);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 # Updating Sets
 
 There are two ways to update a set, that is to add or remove from it.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 In PascaLIGO, either we create a new set from the given one, or we
 modify it in-place. First, let us consider the former way:
 ```pascaligo group=sets
@@ -118,18 +186,24 @@ function update (var s : set (int)) : set (int) is block {
 const new_set : set (int) = update (my_set)
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=sets
 let larger_set  : int set = Set.add 4 my_set
 let smaller_set : int set = Set.remove 3 my_set
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=sets
 let larger_set  : set (int) = Set.add (4, my_set);
 let smaller_set : set (int) = Set.remove (3, my_set);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 # Functional Iteration over Sets
 
@@ -149,8 +223,16 @@ no return value: its only use is to produce side-effects. This can be
 useful if for example you would like to check that each value inside
 of a map is within a certain range, and fail with an error otherwise.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=sets
 function iter_op (const s : set (int)) : unit is
   block {
@@ -161,21 +243,27 @@ function iter_op (const s : set (int)) : unit is
 
 > Note that `set_iter` is *deprecated*.
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=sets
 let iter_op (s : int set) : unit =
   let predicate = fun (i : int) -> assert (i > 3)
   in Set.iter predicate s
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=sets
 let iter_op = (s : set (int)) : unit => {
   let predicate = (i : int) => assert (i > 3);
   Set.iter (predicate, s);
 };
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 ## Folded Operation
 
@@ -185,9 +273,17 @@ function takes two arguments: an *accumulator* and the structure
 enables having a partial result that becomes complete when the
 traversal of the data structure is over.
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--PascaLIGO-->
+<TabItem value="pascaligo">
+
 ```pascaligo group=sets
 function sum (const acc : int; const i : int): int is acc + i
 const sum_of_elements : int = Set.fold (sum, my_set, 0)
@@ -206,15 +302,21 @@ function loop (const s : set (int)) : int is block {
 } with sum
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=sets
 let sum (acc, i : int * int) : int = acc + i
 let sum_of_elements : int = Set.fold sum my_set 0
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=sets
 let sum = ((acc, i) : (int, int)) : int => acc + i;
 let sum_of_elements : int = Set.fold (sum, my_set, 0);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>

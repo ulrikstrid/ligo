@@ -3,6 +3,9 @@ id: what-and-why
 title: Michelson and LIGO
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 Before we get into what LIGO is and why LIGO needs to exist, let us
 take a look at what options the Tezos blockchain offers us out of the
 box. If you want to implement smart contracts natively on Tezos, you
@@ -161,8 +164,16 @@ Let us decline the same LIGO contract in the three flavours above. Do
 not worry if it is a little confusing at first; we will explain all
 the syntax in the upcoming sections of the documentation.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=a
 type storage is int
 
@@ -182,7 +193,9 @@ function main (const action : parameter; const store : storage) : return is
  end)
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=a
 type storage = int
 
@@ -201,7 +214,9 @@ let main (action, store : parameter * storage) : return =
    | Reset       -> 0)
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=a
 type storage = int;
 
@@ -220,7 +235,9 @@ let main = ((action, store): (parameter, storage)) : return => {
    | Reset         => 0}));
 };
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 
 <!--

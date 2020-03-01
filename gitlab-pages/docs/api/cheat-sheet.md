@@ -2,14 +2,25 @@
 id: cheat-sheet
 title: Cheat Sheet
 ---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 <div class="cheatsheet">
 
 <!--
 Note that this table is not compiled before production and currently needs to be managed manually.
 -->
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
 
 |Primitive   	|Example|
 |---	|---|
@@ -43,7 +54,8 @@ Note that this table is not compiled before production and currently needs to be
 |Transactions|<pre><code>const payment : operation = transaction(unit, amount, receiver);</code></pre>|
 |Exception/Failure|`failwith ("Your descriptive error message for the user goes here.")`|
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
 
 |Primitive   	|Example|
 |---	|---|
@@ -75,7 +87,8 @@ Note that this table is not compiled before production and currently needs to be
 |Transactions|<pre><code>let payment : operation = <br/> Tezos.transaction unit amount receiver</code></pre>|
 |Exception/Failure|`failwith ("Your descriptive error message for the user goes here.")`|
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
 
 |Primitive   	|Example|
 |---	|---|
@@ -107,7 +120,8 @@ Note that this table is not compiled before production and currently needs to be
 |Transactions|<pre><code>let payment : operation = <br/> Tezos.transaction (unit, amount, receiver);</code></pre>|
 |Exception/Failure|`failwith ("Your descriptive error message for the user goes here.");`|
 
+</TabItem>
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Tabs>
 
 </div>

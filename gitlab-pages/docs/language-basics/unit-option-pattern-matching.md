@@ -3,6 +3,10 @@ id: unit-option-pattern-matching
 title: Unit, Option, Pattern matching
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+
 Optionals are a pervasive programing pattern in OCaml. Since Michelson
 and LIGO are both inspired by OCaml, *optional types* are available in
 LIGO as well. Similarly, OCaml features a *unit* type, and LIGO
@@ -16,15 +20,23 @@ The `unit` type in Michelson or LIGO is a predefined type that
 contains only one value that carries no information. It is used when
 no relevant information is required or produced. Here is how it used.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
 
 In PascaLIGO, the unique value of the `unit` type is `Unit`.
 ```pascaligo group=a
 const n : unit = Unit // Note the capital letter
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
 
 In CameLIGO, the unique value of the `unit` type is `()`, following
 the OCaml convention.
@@ -32,7 +44,8 @@ the OCaml convention.
 let n : unit = ()
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
 
 In ReasonLIGO, the unique value of the `unit` type is `()`, following
 the OCaml convention.
@@ -40,7 +53,8 @@ the OCaml convention.
 let n : unit = ();
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 ## Variant types
 
@@ -52,28 +66,42 @@ the enumerated types found in Java, C++, JavaScript etc.
 Here is how we define a coin as being either head or tail (and nothing
 else):
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=b
 type coin is Head | Tail
 const head : coin = Head
 const tail : coin = Tail
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=b
 type coin = Head | Tail
 let head : coin = Head
 let tail : coin = Tail
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=b
 type coin = Head | Tail;
 let head : coin = Head;
 let tail : coin = Tail;
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</TabItem>
+</Tabs>
 
 The names `Head` and `Tail` in the definition of the type `coin` are
 called *data constructors*, or *variants*. In this particular, they
@@ -84,9 +112,17 @@ In general, it is interesting for variants to carry some information,
 and thus go beyond enumerated types. In the following, we show how to
 define different kinds of users of a system.
 
-<!--DOCUSAURUS_CODE_TABS-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
 
-<!--PascaLIGO-->
+<TabItem value="pascaligo">
+
 ```pascaligo group=c
 type id is nat
 
@@ -99,7 +135,9 @@ const u : user = Admin (1000n)
 const g : user = Guest
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=c
 type id = nat
 
@@ -112,7 +150,9 @@ let u : user = Admin 1000n
 let g : user = Guest
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=c
 type id = nat;
 
@@ -125,7 +165,8 @@ let u : user = Admin (1000n);
 let g : user = Guest;
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 In LIGO, a constant constructor is equivalent to the same constructor
 taking an argument of type `unit`, so, for example, `Guest` is the
@@ -141,26 +182,39 @@ type would be `None`, otherwise `Some (v)`, where `v` is some
 meaningful value *of any type*. An example in arithmetic is the
 division operation:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=d
 function div (const a : nat; const b : nat) : option (nat) is
   if b = 0n then (None: option (nat)) else Some (a/b)
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=d
 let div (a, b : nat * nat) : nat option =
   if b = 0n then (None: nat option) else Some (a/b)
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=d
 let div = ((a, b) : (nat, nat)) : option (nat) =>
   if (b == 0n) { (None: option (nat)); } else { Some (a/b); };
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 
 ## Pattern matching
@@ -170,8 +224,16 @@ Javascript, and can be used to route the program's control flow based
 on the value of a variant. Consider for example the definition of a
 function `flip` that flips a coin.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=e
 type coin is Head | Tail
 
@@ -190,7 +252,9 @@ flip "Head"
 # Outputs: Tail(Unit)
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=e
 type coin = Head | Tail
 
@@ -208,7 +272,9 @@ flip Head
 # Outputs: Tail(Unit)
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=e
 type coin = | Head | Tail;
 
@@ -227,4 +293,5 @@ flip Head
 # Outputs: Tail(Unit)
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>

@@ -1,5 +1,7 @@
 import React from 'react';
 import Highlight, { defaultProps } from "prism-react-renderer";
+import github from "prism-react-renderer/themes/github";
+
 
 const pre = '```';
 
@@ -30,7 +32,7 @@ function main (const action : parameter; const store : storage) : return is
   end)
 `;
 
-const CAMELIGO_EXAMPLE = `${pre}ocaml
+const CAMELIGO_EXAMPLE = `
 type storage = int
 
 type parameter =
@@ -54,10 +56,10 @@ let main (action, store : parameter * storage) : return =
    Increment (n) -> add (store, n)
  | Decrement (n) -> sub (store, n)
  | Reset         -> 0)
-${pre}`;
+`;
 
 
-const REASONLIGO_EXAMPLE = `${pre}reasonligo
+const REASONLIGO_EXAMPLE = `
 type storage = int;
 
 type parameter =
@@ -82,7 +84,7 @@ let main = ((action, store) : (parameter, storage)) : return => {
   | Decrement (n) => sub ((store, n))
   | Reset         => 0}))
 };
-${pre}`;
+`;
 
 
 function CodeExamples (props) {
@@ -105,7 +107,7 @@ function CodeExamples (props) {
       </div>
       <div className="tab-content">
         <div id="pascaligo" className="tab-pane active" data-group="examples">
-          <Highlight {...defaultProps} language="pascaligo" code={PASCALIGO_EXAMPLE}>
+          <Highlight {...defaultProps} language="pascaligo" code={PASCALIGO_EXAMPLE} theme={github}>
             {({ className, style, tokens, getLineProps, getTokenProps }) => (
               <pre className={className} style={style}>
                 {tokens.map((line, i) => (
@@ -120,7 +122,7 @@ function CodeExamples (props) {
           </Highlight>
         </div>
         <div id="cameligo" className="tab-pane" data-group="examples">
-          <Highlight {...defaultProps} language="cameligo" code={CAMELIGO_EXAMPLE}>
+          <Highlight {...defaultProps} language="cameligo" code={CAMELIGO_EXAMPLE} theme={github}>
             {({ className, style, tokens, getLineProps, getTokenProps }) => (
               <pre className={className} style={style}>
                 {tokens.map((line, i) => (
@@ -135,7 +137,7 @@ function CodeExamples (props) {
           </Highlight>
         </div>
         <div id="reasonligo" className="tab-pane" data-group="examples">
-        <Highlight {...defaultProps} language="reasonligo" code={REASONLIGO_EXAMPLE}>
+        <Highlight {...defaultProps} language="reasonligo" code={REASONLIGO_EXAMPLE} theme={github}>
             {({ className, style, tokens, getLineProps, getTokenProps }) => (
               <pre className={className} style={style}>
                 {tokens.map((line, i) => (

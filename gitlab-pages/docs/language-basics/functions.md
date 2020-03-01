@@ -3,6 +3,9 @@ id: functions
 title: Functions
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 LIGO functions are the basic building block of contracts. For example,
 entrypoints are functions and each smart contract needs a main
 function that dispatches control to the entrypoints (it is not already
@@ -16,8 +19,15 @@ mutations inside the functions will be.
 
 ## Declaring Functions
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
 
 There are two ways in PascaLIGO to define functions: with or without a
 *block*.
@@ -91,7 +101,8 @@ ligo run-function gitlab-pages/docs/language-basics/src/functions/blockless.ligo
 # Outputs: 3
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
 
 Functions in CameLIGO are defined using the `let` keyword, like other
 values. The difference is that a succession of parameters is provided
@@ -145,7 +156,8 @@ ligo run-function gitlab-pages/docs/language-basics/src/functions/curry.mligo in
 
 The function body is a single expression, whose value is returned.
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
 
 Functions in ReasonLIGO are defined using the `let` keyword, like
 other values. The difference is that a tuple of parameters is provided
@@ -176,7 +188,8 @@ let myFun = ((x, y) : (int, int)) : int => {
 };
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 ## Anonymous functions (a.k.a. lambdas)
 
@@ -186,8 +199,16 @@ a key in a record or a map.
 
 Here is how to define an anonymous function:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=c
 function increment (const b : int) : int is
    (function (const a : int) : int is a + 1) (b)
@@ -201,7 +222,9 @@ ligo evaluate-value gitlab-pages/docs/language-basics/src/functions/anon.ligo a
 # Outputs: 2
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=c
 let increment (b : int) : int = (fun (a : int) -> a + 1) b
 let a : int = increment 1 // a = 2
@@ -214,7 +237,9 @@ ligo evaluate-value gitlab-pages/docs/language-basics/src/functions/anon.mligo a
 # Outputs: 2
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=c
 let increment = (b : int) : int => ((a : int) : int => a + 1) (b);
 let a : int = increment (1); // a == 2
@@ -227,15 +252,24 @@ ligo evaluate-value gitlab-pages/docs/language-basics/src/functions/anon.religo 
 # Outputs: 2
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
 
 If the example above seems contrived, here is a more common design
 pattern for lambdas: to be used as parameters to functions. Consider
 the use case of having a list of integers and mapping the increment
 function to all its elements.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Tabs
+  defaultValue="pascaligo"
+  values={[
+    { label: 'PascaLIGO', value: 'pascaligo', },
+    { label: 'CameLIGO', value: 'cameligo', },
+    { label: 'ReasonLIGO', value: 'reasonligo', },
+  ]
+}>
+<TabItem value="pascaligo">
+
 ```pascaligo group=c
 function incr_map (const l : list (int)) : list (int) is
   List.map (function (const i : int) : int is i + 1, l)
@@ -253,7 +287,9 @@ gitlab-pages/docs/language-basics/src/functions/incr_map.ligo incr_map
 # Outputs: [ 2 ; 3 ; 4 ]
 ```
 
-<!--CameLIGO-->
+</TabItem>
+<TabItem value="cameligo">
+
 ```cameligo group=c
 let incr_map (l : int list) : int list =
   List.map (fun (i : int) -> i + 1) l
@@ -267,7 +303,9 @@ gitlab-pages/docs/language-basics/src/functions/incr_map.mligo incr_map
 # Outputs: [ 2 ; 3 ; 4 ]
 ```
 
-<!--ReasonLIGO-->
+</TabItem>
+<TabItem value="reasonligo">
+
 ```reasonligo group=c
 let incr_map = (l : list (int)) : list (int) =>
   List.map ((i : int) => i + 1, l);
@@ -281,4 +319,5 @@ gitlab-pages/docs/language-basics/src/functions/incr_map.religo incr_map
 # Outputs: [ 2 ; 3 ; 4 ]
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</TabItem>
+</Tabs>
