@@ -3,6 +3,9 @@ id: first-contract
 title: First contract
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 So far so good, we have learned enough of the LIGO language, we are
 confident enough to write out first smart contract.
 

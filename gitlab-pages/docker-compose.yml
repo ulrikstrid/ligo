@@ -16,7 +16,8 @@ services:
       - ./website/versioned_sidebars:/app/website/versioned_sidebars
       - ./website/versioned_docs:/app/website/versioned_docs
       - ./website/sidebars.json:/app/website/sidebars.json
-      - ./website/siteConfig.js:/app/website/siteConfig.js
+      - ./website/docusaurus.config.js:/app/website/docusaurus.config.js
       - ./website/versions.json:/app/website/versions.json
-      - ./website/node_modules/reason-highlightjs:/app/website/node_modules/reason-highlightjs
+      - ./website/core/AlgoliaSearch.js:/app/website/core/AlgoliaSearch.js
+      
     working_dir: /app/website

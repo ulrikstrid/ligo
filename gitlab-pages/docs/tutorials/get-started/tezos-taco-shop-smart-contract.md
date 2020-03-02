@@ -408,7 +408,7 @@ ligo dry-run taco-shop.ligo --syntax pascaligo --amount 1 buy_taco 1n "map [
 **Attempting to Purchase a Taco with 0.7tez**
 <img src="/img/tutorials/get-started/tezos-taco-shop-smart-contract/dry-run-5.png" />
 <div style={{ opacity: 0.7, textAlign: 'center', fontSize: '12px',
-marginTop: '-24px;' }}>Stock does not decrease after a purchase attempt
+marginTop: '-24px' }}>Stock does not decrease after a purchase attempt
 with an insufficient payment.</div>
 
 <br/>

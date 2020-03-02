@@ -6,7 +6,7 @@ title: Cheat Sheet
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-<div class="cheatsheet">
+<div className="cheatsheet">
 
 <!--
 Note that this table is not compiled before production and currently needs to be managed manually.
