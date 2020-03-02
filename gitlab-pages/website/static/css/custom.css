@@ -1,4 +1,4 @@
-@import url('https://rsms.me/inter/inter.css');
+@import url('../fonts/inter.css');
 :root {
   --ifm-color-primary: #0e74ff;
   --ifm-color-primary-dark: rgb(33, 175, 144);
@@ -6,8 +6,9 @@
   --ifm-color-primary-darkest: rgb(26, 136, 112);
   --ifm-color-primary-light: rgb(70, 203, 174);
   --ifm-color-primary-lighter: rgb(102, 212, 189);
-  --ifm-color-primary-lightest: rgb(146, 224, 208);
+  --ifm-color-primary-lightest: #92e0d0;
   --blockquote-color: #efefef;
+  --ifm-code-font-size: .9rem;
   
 
   /* header */
@@ -537,8 +538,11 @@ a:hover {
 #homePage #intro {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   width: 100%;
+}
+
+#callToAction {
+  margin-top: 300px;
 }
 
 #homePage #intro #callToAction ul {
@@ -578,9 +582,10 @@ a:hover {
   text-decoration: none;
 }
 
-#homePage #intro #preview .hljs {
+#homePage #intro #preview  {
   min-width: 700px;
   min-height: 450px;
+  max-width: 400px
 }
 
 #homePage #intro #preview p {

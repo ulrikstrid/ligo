@@ -14,7 +14,7 @@ Prism.languages = {
   pascaligo: {
     'comment': [
       /\(\*[\s\S]+?\*\)/,
-      /\{[\s\S]+?\}/,
+      // /\{[\s\S]+?\}/,
       /\/\/.*/
     ],
     'string': {
@@ -58,8 +58,21 @@ Prism.languages = {
     ],
     'punctuation': /\(\.|\.\)|[()\[\]:;,.]/
   },
-  reasonligo: Prism.languages.reason,
-  cameligo: Prism.languages.ocaml,
+  reasonligo: 
+  {...Prism.languages.reason, 
+    'comment': [
+      /(^|[^\\])\/\*[\s\S]*?\*\//,
+      /\(\*[\s\S]*?\*\)/,   
+      /\/\/.*/   
+    ]
+      
+  },
+  cameligo: {...Prism.languages.ocaml, 
+  'comment': [
+      /(^|[^\\])\/\*[\s\S]*?\*\//,
+      /\(\*[\s\S]*?\*\)/,   
+      /\/\/.*/   
+    ]}
 };
 import defaultTheme from 'prism-react-renderer/themes/palenight';
 import Clipboard from 'clipboard';

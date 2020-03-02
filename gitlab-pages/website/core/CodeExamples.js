@@ -1,9 +1,10 @@
 import React from 'react';
 import Highlight, { defaultProps } from "prism-react-renderer";
-import github from "prism-react-renderer/themes/github";
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-
+import useThemeContext from '@theme/hooks/useThemeContext';
+import defaultTheme from 'prism-react-renderer/themes/palenight';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 
 const PASCALIGO_EXAMPLE = `
 type storage is int
@@ -17,8 +18,11 @@ type return is list (operation) * storage
 
 // Two entrypoints
 
-function add (const store : storage; const delta : int) : storage is store + delta
-function sub (const store : storage; const delta : int) : storage is store - delta
+function add (const store : storage; const delta : int) : storage is 
+  store + delta
+
+function sub (const store : storage; const delta : int) : storage is 
+  store - delta
 
 (* Main access point that dispatches to the entrypoints according to
    the smart contract parameter. *)
@@ -88,6 +92,16 @@ let main = ((action, store) : (parameter, storage)) : return => {
 
 
 function CodeExamples (props) {
+  const {
+    siteConfig: {
+      themeConfig: {prism = {}},
+    },
+  } = useDocusaurusContext();
+  const {isDarkTheme} = useThemeContext();
+  const lightModeTheme = prism.theme || defaultTheme;
+  const darkModeTheme = prism.darkTheme || lightModeTheme;
+  const prismTheme = isDarkTheme ? darkModeTheme : lightModeTheme;
+
   return (
    
 <Tabs
@@ -99,7 +113,7 @@ function CodeExamples (props) {
   ]
 }>
         <TabItem value="pascaligo">
-          <Highlight {...defaultProps} language="pascaligo" code={PASCALIGO_EXAMPLE} theme={github}>
+          <Highlight {...defaultProps} language="pascaligo" code={PASCALIGO_EXAMPLE} theme={prismTheme}>
             {({ className, style, tokens, getLineProps, getTokenProps }) => (
               <pre className={className} style={style}>
                 {tokens.map((line, i) => (
@@ -115,7 +129,7 @@ function CodeExamples (props) {
         </TabItem>
         <TabItem value="cameligo">
 
-          <Highlight {...defaultProps} language="cameligo" code={CAMELIGO_EXAMPLE} theme={github}>
+          <Highlight {...defaultProps} language="cameligo" code={CAMELIGO_EXAMPLE} theme={prismTheme}>
             {({ className, style, tokens, getLineProps, getTokenProps }) => (
               <pre className={className} style={style}>
                 {tokens.map((line, i) => (
@@ -131,7 +145,7 @@ function CodeExamples (props) {
         </TabItem>
         <TabItem value="reasonligo">
 
-        <Highlight {...defaultProps} language="reasonligo" code={REASONLIGO_EXAMPLE} theme={github}>
+        <Highlight {...defaultProps} language="reasonligo" code={REASONLIGO_EXAMPLE} theme={prismTheme}>
             {({ className, style, tokens, getLineProps, getTokenProps }) => (
               <pre className={className} style={style}>
                 {tokens.map((line, i) => (
