@@ -1,4 +1,5 @@
-@import url('../fonts/inter.css');
+@import url('https://rsms.me/inter/inter.css');
+
 :root {
   --ifm-color-primary: #0e74ff;
   --ifm-color-primary-dark: rgb(33, 175, 144);
