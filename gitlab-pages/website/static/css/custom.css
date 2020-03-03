@@ -1,4 +1,4 @@
-@import url('https://rsms.me/inter/inter.css');
+@import url('/fonts/inter.css');
 
 :root {
   --ifm-color-primary: #0e74ff;
@@ -20,8 +20,6 @@
   --ifm-footer-background-color: #0d0f33;
   --ifm-footer-link-hover-color: hsla(0,0%,100%,.6);
   --ifm-footer-color: #fff;
-  
-  
 }
 
 :root {
@@ -60,7 +58,7 @@ html {
 
 body {
   font-family: 'Open Sans', sans-serif;
-  font-family: Inter,SF Pro Text,Roboto,-apple-system,BlinkMacSystemFont,Helvetica Neue,Arial,sans-serif;
+  font-family: 'Inter var',SF Pro Text,Roboto,-apple-system,BlinkMacSystemFont,Helvetica Neue,Arial,sans-serif;
   font-weight: 400;
   font-size: 1rem;
   color: var(--color-primary-text);
