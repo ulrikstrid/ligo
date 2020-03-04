@@ -1,7 +1,7 @@
 (rule
   (target generated_fold.ml)
   (deps generator.raku)
-  (action (with-stdout-to generated_fold.ml (run sh -c "echo AAA >&2; (echo HELLO >&2; perl6 ./generator.raku amodule.ml) 2>~/.opam/log/perllog")))
+  (action (with-stdout-to generated_fold.ml (run perl6 ./generator.raku amodule.ml)))
 ;  (mode (promote (until-clean)))
 )
 ; (library
