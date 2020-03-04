@@ -506,8 +506,8 @@ fun_expr:
           match type_expr with
           | TProd {value; _} ->
             let (hd, rest) = value in
-            let rest = rest @ [(arrow, expr_to_type body)] in
-            curry hd rest
+            let rest = rest @ [(arrow, expr_to_type body)]
+            in curry hd rest
           | e ->
             TFun {
               value = e, arrow, expr_to_type body;
@@ -816,10 +816,13 @@ core_expr:
 | par(expr)           { EPar $1 }
 
 module_field:
-  module_name "." field_name {
-    let region = cover $1.region $3.region
-    and value  = $1.value ^ "." ^ $3.value
-    in {region; value} }
+  module_name "." module_fun {
+    let region = cover $1.region $3.region in
+    {region; value = $1.value ^ "." ^ $3.value} }
+
+module_fun:
+  field_name { $1 }
+| "or"       { {value="or";  region=$1} }
 
 selection:
   "[" "<int>" "]" selection {

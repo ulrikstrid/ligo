@@ -15,8 +15,7 @@ type storage = {
 // I/O types
 
 type message = unit => list (operation);
-type dummy = (key_hash,signature);
-type signatures = list (dummy);
+type signatures = list ((key_hash,signature));
 
 type check_message_pt = {
     counter    : counter,
@@ -39,14 +38,14 @@ let check_message = ((param,s) : (check_message_pt, storage)) : return => {
     let packed_payload : bytes = Bytes.pack ((message, param.counter, s.id, chain_id));
     let valid : nat = 0n;
     let keys : authorized_keys = s.auth;
-    let aux = ((vk,pkh_sig) : ((nat, authorized_keys),(key_hash,signature))):(nat,authorized_keys) => { 
+    let aux = ((vk,pkh_sig) : ((nat, authorized_keys),(key_hash,signature))):(nat,authorized_keys) => {
       let (valid,keys) = vk;
       switch(keys) {
       | [] => (valid,keys);
       | [key, ...tl] => {
           let keys = tl;
           if (pkh_sig[0] == Crypto.hash_key (key)){
-            let valid = 
+            let valid =
             if (Crypto.check (key, pkh_sig[1], packed_payload)){
                valid + 1n ;
              }
@@ -64,7 +63,7 @@ let check_message = ((param,s) : (check_message_pt, storage)) : return => {
     };
     let (valid,keys) = List.fold (aux, param.signatures, (valid,keys));
     if (valid < s.threshold) {
-      let coco = failwith ("Not enough signatures passed the check"); 
+      let coco = failwith ("Not enough signatures passed the check");
       s;
     }
     else {
@@ -75,6 +74,6 @@ let check_message = ((param,s) : (check_message_pt, storage)) : return => {
 };
 
 let main = ((param, s) : (parameter,storage)) : return =>
-  switch(param) { 
+  switch(param) {
    | CheckMessage (p) => check_message ((p,s))
   }
