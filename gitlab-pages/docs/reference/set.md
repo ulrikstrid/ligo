@@ -3,6 +3,8 @@ id: set-reference
 title: Set
 ---
 
+import Syntax from '@theme/Syntax';
+
 *Sets* are unordered collections of values of the same type, like
 lists are ordered collections. Like the mathematical sets and lists,
 sets can be empty and, if not, elements of sets in LIGO are *unique*,
@@ -10,15 +12,16 @@ whereas they can be repeated in a *list*.
 
 ## Declaring a Set
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 In PascaLIGO, the type of a set of values of type `t` is `set (t)`.
 ```pascaligo group=set
 type integers is set (int)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 In CameLIGO, the type of a set of values of type `t` is `t set`.
 
@@ -26,23 +29,25 @@ In CameLIGO, the type of a set of values of type `t` is `t set`.
 type integers = int set
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 In ReasonLIGO, the type of a set of values of type `t` is `set (int)`.
 
 ```reasonligo group=set
 type integers = set (int);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
 
 ## Creating an Empty Set
 
 Empty sets need a type annotation, either as part of a declaration of
 an expression.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 In PascaLIGO, the notation for sets is similar to that for lists,
 except the keyword `set` is used instead of `list`:
@@ -50,7 +55,9 @@ except the keyword `set` is used instead of `list`:
 ```pascaligo group=set
 const my_set : set (int) = set []
 ```
-<!--CameLIGO-->
+
+</Syntax>
+<Syntax syntax="cameligo">
 
 In CameLIGO, the empty set is denoted by the predefined value
 `Set.empty`.
@@ -59,7 +66,8 @@ In CameLIGO, the empty set is denoted by the predefined value
 let my_set : int set = Set.empty
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 In ReasonLIGO, the empty set is denoted by the predefined value
 `Set.empty`.
@@ -67,7 +75,9 @@ In ReasonLIGO, the empty set is denoted by the predefined value
 ```reasonligo group=set
 let my_set : set (int) = Set.empty;
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 ## Creating a Non-Empty Set
 
@@ -75,79 +85,99 @@ A non-empty set can be created by giving all its elements. Remember
 that if an element is repeated, only one copy will be retained in the
 set.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=set
 const my_set : set (int) = set [3; 2; 2; 1]
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=set
 let my_set : int set =
   Set.add 3 (Set.add 2 (Set.add 2 (Set.add 1 (Set.empty : int set))))
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=set
 let my_set : set (int) =
   Set.add (3, Set.add (2, Set.add (2, Set.add (1, Set.empty : set (int)))));
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 ## Set Membership
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=set
 const contains_3 : bool = my_set contains 3
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=set
 let contains_3 : bool = Set.mem 3 my_set
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=set
 let contains_3 : bool = Set.mem (3, my_set);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 ## Cardinal of a Set
 
 The predefined function `Set.cardinal` returns the number of
 elements in a given set as follows.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=set
 const cardinal : nat = Set.cardinal (my_set)
 ```
 
 > Note that `size` is *deprecated*. Use `Set.cardinal`.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=set
 let cardinal : nat = Set.cardinal my_set
 ```
 
 > Note that `Set.size` is *deprecated*. Use `Set.cardinal`.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=set
 let cardinal : nat = Set.cardinal (my_set);
 ```
 
 > Note that `Set.size` is *deprecated*. Use `Set.cardinal`.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
 
 ## Updating a Set
 
 There are two ways to update a set, that is to add or remove from it.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 In PascaLIGO, either we create a new set from the given one, or we
 modify it in-place. First, let us consider the former way:
 
@@ -172,18 +202,24 @@ function update (var s : set (int)) : set (int) is block {
 const new_set : set (int) = update (my_set)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=set
 let larger_set  : int set = Set.add 4 my_set
 let smaller_set : int set = Set.remove 3 my_set
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=set
 let larger_set  : set (int) = Set.add (4, my_set);
 let smaller_set : set (int) = Set.remove (3, my_set);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 ## Functional Iteration over Sets
 
@@ -203,8 +239,9 @@ no return value: its only use is to produce side-effects. This can be
 useful if for example you would like to check that each value inside
 of a map is within a certain range, and fail with an error otherwise.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=set
 function iter_op (const s : set (int)) : unit is
   block {
@@ -215,21 +252,27 @@ function iter_op (const s : set (int)) : unit is
 
 > Note that `set_iter` is *deprecated*. Use `Set.iter`.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=set
 let iter_op (s : int set) : unit =
   let predicate = fun (i : int) -> assert (i > 3)
   in Set.iter predicate s
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=set
 let iter_op = (s : set (int)) : unit => {
   let predicate = (i : int) => assert (i > 3);
   Set.iter (predicate, s);
 };
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 ### Folded Operation
 
@@ -239,9 +282,9 @@ function takes two arguments: an *accumulator* and the structure
 enables having a partial result that becomes complete when the
 traversal of the data structure is over.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=set
 function sum (const acc : int; const i : int): int is acc + i
 const sum_of_elements : int = Set.fold (sum, my_set, 0)
@@ -260,15 +303,21 @@ function loop (const s : set (int)) : int is block {
 } with sum
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=set
 let sum (acc, i : int * int) : int = acc + i
 let sum_of_elements : int = Set.fold sum my_set 0
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=set
 let sum = ((acc, i) : (int, int)) : int => acc + i;
 let sum_of_elements : int = Set.fold (sum, my_set, 0);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+

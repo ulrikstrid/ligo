@@ -3,6 +3,8 @@ id: string-reference
 title: String
 ---
 
+import Syntax from '@theme/Syntax';
+
 ## Length of a String
 
 Get the size of a string as a natural
@@ -10,9 +12,9 @@ number. [Michelson only supports ASCII strings](http://tezos.gitlab.io/whitedoc/
 so for now you can assume that each character takes one byte of
 storage.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=string
 function string_len (const s: string) : nat is String.length (s)
 ```
@@ -20,21 +22,25 @@ function string_len (const s: string) : nat is String.length (s)
 > Note that `size` and `String.size` are *deprecated*. Use
 > `String.length`.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=string
 let string_len (s : string) : nat = String.length s
 ```
 
 > Note that `String.size` is *deprecated*. Use `String.length`.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=string
 let string_len = (s : string) : nat => String.length (s);
 ```
 
 > Note that `String.size` is *deprecated*. Use `String.length`.
-<!--END_DOCUSAURUS_CODE_TABS-->
 
+</Syntax>
 
 ## Extracting a Substring
 
@@ -47,49 +53,59 @@ least one of the two positions is incorrect, then the call to
 For example the string `"tata"` given to the function below returns
 `"at"`.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=string
 function slice (const s : string) : string is String.sub (1n, 2n, s)
 ```
 
 > Note that `string_slice` is *deprecated*. Use `String.sub`.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=string
 let slice (s : string) : string = String.sub 1n 2n s
 ```
 
 > Note that `String.slice` is *deprecated*. Use `String.sub`.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=string
 let slice = (s : string) : string => String.sub (1n, 2n, s);
 ```
 
 > Note that `String.slice` is *deprecated*. Use `String.sub`.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
 
 ## Concatenating two Strings
 
 LIGO offers a predefined operator to concatenate two strings.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=string
 function greet (const name : string) : string is "Hello " ^ name
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=string
 let greet (name : string) = "Hello " ^ name
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=string
 let greet = (name : string) => "Hello " ++ name;
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+

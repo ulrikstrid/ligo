@@ -3,6 +3,8 @@ id: sets-lists-tuples
 title: Tuples, Lists, Sets
 ---
 
+import Syntax from '@theme/Syntax';
+
 Apart from complex data types such as `maps` and `records`, LIGO also
 features `tuples`, `lists` and `sets`.
 
@@ -27,9 +29,9 @@ Unlike [a record](language-basics/maps-records.md), tuple types do not
 have to be defined before they can be used. However below we will give
 them names by *type aliasing*.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--Pascaligo-->
+
+<Syntax syntax="pascaligo">
 
 ```pascaligo group=tuple
 type full_name is string * string  // Alias
@@ -37,7 +39,8 @@ type full_name is string * string  // Alias
 const full_name : full_name = ("Alice", "Johnson")
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 ```cameligo group=tuple
 type full_name = string * string  // Alias
@@ -45,7 +48,8 @@ type full_name = string * string  // Alias
 let full_name : full_name = ("Alice", "Johnson") // Optional parentheses
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 ```reasonligo group=tuple
 type full_name = (string, string);  // Alias
@@ -53,7 +57,8 @@ type full_name = (string, string);  // Alias
 let full_name : full_name = ("Alice", "Johnson");
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 
 ### Accessing Components
@@ -66,27 +71,30 @@ position in their tuple, which cannot be done in OCaml. *Tuple
 components are zero-indexed*, that is, the first component has index
 `0`.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 ```pascaligo group=tuple
 const first_name : string = full_name.0
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 ```cameligo group=tuple
 let first_name : string = full_name.0
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 ```reasonligo group=tuple
 let first_name : string = full_name[0];
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 ## Lists
 
@@ -103,57 +111,67 @@ think of a list a *stack*, where the top is written on the left.
 
 ### Declaring a List
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 In PascaLIGO, the type of a list of values of type `t` is `list (t)`.
 ```pascaligo group=list
 type series is list (int)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 In CameLIGO, the type of a list of values of type `t` is `t list`.
 ```cameligo group=list
 type series = int list
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 In ReasonLIGO, the type of a list of values of type `t` is `list (t)`.
 
 ```reasonligo group=list
 type series = list (int);
 ```
 
+</Syntax>
+
 ## Creating an Empty List
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+<Syntax syntax="pascaligo">
+
 In PascaLIGO, the empty list can be written in many ways: `nil` or
 `list []`.
 ```pascaligo group=list
 const empty_list : list (int) = nil // Or list []
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 In CameLIGO, the only way to denote the empty list is `[]`.
 ```cameligo group=list
 let empty_list : int list = []
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 In ReasonLIGO, the only way to denote the empty list is `[]`.
 ```reasonligo group=list
 let empty_list : list (int) = [];
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
 
 ## Creating a Non-Empty List
 
 A non-empty list can be created by giving all its elements.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 In PascaLIGO, the elements are separated by semicolons inside the
 notation for empty lists.
@@ -161,7 +179,8 @@ notation for empty lists.
 const my_list : list (int) = list [1; 2; 2] // The head is 1
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 In CameLIGO, the elements are separated by semicolons inside the
 notation for empty lists.
@@ -169,7 +188,8 @@ notation for empty lists.
 let my_list : int list = [1; 2; 2] // The head is 1
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 In ReasonLIGO, the elements are separated by commas inside the
 notation for empty lists.
@@ -177,7 +197,8 @@ notation for empty lists.
 let my_list : list (int) = [1, 2, 2]; // The head is 1
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 ### Adding to Lists
 
@@ -186,9 +207,9 @@ becomes the new head (or, in terms of stack, by *pushing an element on
 the top*). This operation is usually called *consing* in functional
 languages.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 In PascaLIGO, the *cons operator* is infix and noted `#`. It is not
 symmetric: on the left lies the element to cons, and, on the right, a
@@ -199,7 +220,8 @@ you of that.)
 const larger_list : list (int) = 5 # my_list // [5;1;2;2]
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 In CameLIGO, the *cons operator* is infix and noted `::`. It is not
 symmetric: on the left lies the element to cons, and, on the right, a
@@ -209,7 +231,8 @@ list on which to cons.
 let larger_list : int list = 5 :: my_list // [5;1;2;2]
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 In ReasonLIGO, the *cons operator* is infix and noted `, ...`. It is
 not symmetric: on the left lies the element to cons, and, on the
@@ -218,36 +241,43 @@ right, a list on which to cons.
 ```reasonligo group=list
 let larger_list : list (int) = [5, ...my_list]; // [5,1,2,2]
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 ## List Length
 
 Get the number of elements in a list.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo
 function size_of (const l : list (int)) : nat is List.length (l)
 ```
 
 > Note that `size` is *deprecated*. Use `List.length`.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo
 let size_of (l : int list) : nat = List.length l
 ```
 
 > Note that `List.size` is *deprecated*. Use `List.length`.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
 let size_of = (l : list (int)) : nat => List.length (l);
 ```
 
 > Note that `List.size` is *deprecated*. Use `List.length`.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
 
 
 ### Functional Iteration over Lists
@@ -275,9 +305,9 @@ called `List.iter`.
 In the following example, a list is iterated to check that all its
 elements (integers) are strictly greater than `3`.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 ```pascaligo group=list
 function iter_op (const l : list (int)) : unit is
@@ -289,7 +319,8 @@ function iter_op (const l : list (int)) : unit is
 
 > Note that `list_iter` is *deprecated*. Use `List.iter`.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 ```cameligo group=list
 let iter_op (l : int list) : unit =
@@ -297,7 +328,8 @@ let iter_op (l : int list) : unit =
   in List.iter predicate l
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 ```reasonligo group=list
 let iter_op = (l : list (int)) : unit => {
@@ -306,7 +338,8 @@ let iter_op = (l : list (int)) : unit => {
 };
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 
 #### Mapped Operation over Lists
@@ -317,9 +350,9 @@ with the map data structure. The predefined functional iterator
 implementing the mapped operation over lists is called `List.map` and
 is used as follows.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 ```pascaligo group=list
 function increment (const i : int): int is i + 1
@@ -330,7 +363,8 @@ const plus_one : list (int) = List.map (increment, larger_list)
 
 > Note that `list_map` is *deprecated*. Use `List.map`.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 ```cameligo group=list
 let increment (i : int) : int = i + 1
@@ -339,7 +373,8 @@ let increment (i : int) : int = i + 1
 let plus_one : int list = List.map increment larger_list
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 ```reasonligo group=list
 let increment = (i : int) : int => i + 1;
@@ -347,7 +382,9 @@ let increment = (i : int) : int => i + 1;
 // Creates a new list with all elements incremented by 1
 let plus_one : list (int) = List.map (increment, larger_list);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 
 #### Folded Operation over Lists
@@ -360,9 +397,9 @@ traversal of the data structure is over. The predefined functional
 iterator implementing the folded operation over lists is called
 `List.fold` and is used as follows.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 ```pascaligo group=list
 function sum (const acc : int; const i : int): int is acc + i
@@ -371,20 +408,24 @@ const sum_of_elements : int = List.fold (sum, my_list, 0)
 
 > Note that `list_fold` is *deprecated*. Use `List.fold`.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 ```cameligo group=list
 let sum (acc, i: int * int) : int = acc + i
 let sum_of_elements : int = List.fold sum my_list 0
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 ```reasonligo group=list
 let sum = ((result, i): (int, int)): int => result + i;
 let sum_of_elements : int = List.fold (sum, my_list, 0);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 
 ## Sets
@@ -396,15 +437,16 @@ whereas they can be repeated in a *list*.
 
 ## Declaring a Set
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 In PascaLIGO, the type of a set of values of type `t` is `set (t)`.
 ```pascaligo group=set
 type integers is set (int)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 In CameLIGO, the type of a set of values of type `t` is `t set`.
 
@@ -412,23 +454,25 @@ In CameLIGO, the type of a set of values of type `t` is `t set`.
 type integers = int set
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 In ReasonLIGO, the type of a set of values of type `t` is `set (int)`.
 
 ```reasonligo group=set
 type integers = set (int);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
 
 ## Creating an Empty Set
 
 Empty sets need a type annotation, either as part of a declaration of
 an expression.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 In PascaLIGO, the notation for sets is similar to that for lists,
 except the keyword `set` is used instead of `list`:
@@ -436,7 +480,9 @@ except the keyword `set` is used instead of `list`:
 ```pascaligo group=set
 const my_set : set (int) = set []
 ```
-<!--CameLIGO-->
+
+</Syntax>
+<Syntax syntax="cameligo">
 
 In CameLIGO, the empty set is denoted by the predefined value
 `Set.empty`.
@@ -445,7 +491,8 @@ In CameLIGO, the empty set is denoted by the predefined value
 let my_set : int set = Set.empty
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 In ReasonLIGO, the empty set is denoted by the predefined value
 `Set.empty`.
@@ -453,7 +500,8 @@ In ReasonLIGO, the empty set is denoted by the predefined value
 ```reasonligo group=set
 let my_set : set (int) = Set.empty;
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
 
 ## Creating a Non-empty Set
 
@@ -461,29 +509,36 @@ A non-empty set can be created by giving all its elements. Remember
 that if an element is repeated, only one copy will be retained in the
 set.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=set
 const my_set : set (int) = set [3; 2; 2; 1]
 ```
 
-<!--CameLIGO-->
+</Syntax>
+
+<Syntax syntax="cameligo">
+
 ```cameligo group=set
 let my_set : int set =
   Set.add 3 (Set.add 2 (Set.add 2 (Set.add 1 (Set.empty : int set))))
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=set
 let my_set : set (int) =
   Set.add (3, Set.add (2, Set.add (2, Set.add (1, Set.empty : set (int)))));
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
 ### Empty Sets
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 In PascaLIGO, the notation for sets is similar to that for lists,
 except the keyword `set` is used instead of `list`:
@@ -491,7 +546,9 @@ except the keyword `set` is used instead of `list`:
 ```pascaligo group=set
 const my_set : set (int) = set []
 ```
-<!--CameLIGO-->
+
+</Syntax>
+<Syntax syntax="cameligo">
 
 In CameLIGO, the empty set is denoted by the predefined value
 `Set.empty`.
@@ -500,7 +557,8 @@ In CameLIGO, the empty set is denoted by the predefined value
 let my_set : int set = Set.empty
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 In ReasonLIGO, the empty set is denoted by the predefined value
 `Set.empty`.
@@ -508,13 +566,15 @@ In ReasonLIGO, the empty set is denoted by the predefined value
 ```reasonligo group=set
 let my_set : set (int) = Set.empty;
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 ### Non-empty Sets
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 In PascaLIGO, the notation for sets is similar to that for lists,
 except the keyword `set` is used before:
@@ -531,7 +591,8 @@ gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.ligo my_set
 # Outputs: { 3 ; 2 ; 1 }
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 In CameLIGO, there is no predefined syntactic construct for sets: you
 must build your set by adding to the empty set. (This is the way in
@@ -551,7 +612,8 @@ gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.mligo my_set
 # Outputs: { 3 ; 2 ; 1 }
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 In ReasonLIGO, there is no predefined syntactic construct for sets:
 you must build your set by adding to the empty set. (This is the way
@@ -571,13 +633,15 @@ ligo evaluate-value
 gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.religo my_set
 # Outputs: { 3 ; 2 ; 1 }
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 ### Set Membership
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 PascaLIGO features a special keyword `contains` that operates like an
 infix operator checking membership in a set.
@@ -586,7 +650,8 @@ infix operator checking membership in a set.
 const contains_3 : bool = my_set contains 3
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 In CameLIGO, the predefined predicate `Set.mem` tests for membership
 in a set as follows:
@@ -595,7 +660,8 @@ in a set as follows:
 let contains_3 : bool = Set.mem 3 my_set
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 In ReasonLIGO, the predefined predicate `Set.mem` tests for membership
 in a set as follows:
@@ -604,7 +670,8 @@ in a set as follows:
 let contains_3 : bool = Set.mem (3, my_set);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 
 ### Cardinal of Sets
@@ -612,9 +679,9 @@ let contains_3 : bool = Set.mem (3, my_set);
 The predefined function `Set.cardinal` returns the number of elements
 in a given set as follows.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 ```pascaligo group=set
 const cardinal : nat = Set.cardinal (my_set)
@@ -622,7 +689,8 @@ const cardinal : nat = Set.cardinal (my_set)
 
 > Note that `size` is *deprecated*. Use `Set.cardinal`.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 ```cameligo group=set
 let cardinal : nat = Set.cardinal my_set
@@ -630,7 +698,8 @@ let cardinal : nat = Set.cardinal my_set
 
 > Note that `Set.size` is *deprecated*. Use `Set.cardinal`.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 ```reasonligo group=set
 let cardinal : nat = Set.cardinal (my_set);
@@ -638,7 +707,7 @@ let cardinal : nat = Set.cardinal (my_set);
 
 > Note that `Set.size` is *deprecated*. Use `Set.cardinal`.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
 
 
 ### Updating Sets
@@ -646,9 +715,9 @@ let cardinal : nat = Set.cardinal (my_set);
 There are two ways to update a set, that is to add or remove from
 it.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 In PascaLIGO, either we create a new set from the given one, or we
 modify it in-place. First, let us consider the former way:
@@ -680,7 +749,8 @@ function update (var s : set (int)) : set (int) is block {
 const new_set : set (int) = update (my_set)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 In CameLIGO, we can use the predefined functions `Set.add` and
 `Set.remove`. We update a given set by creating another one, with or
@@ -691,7 +761,8 @@ let larger_set  : int set = Set.add 4 my_set
 let smaller_set : int set = Set.remove 3 my_set
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 In ReasonLIGO, we can use the predefined functions `Set.add` and
 `Set.remove`. We update a given set by creating another one, with or
@@ -701,7 +772,9 @@ without some elements.
 let larger_set  : set (int) = Set.add (4, my_set);
 let smaller_set : set (int) = Set.remove (3, my_set);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 
 ### Functional Iteration over Sets
@@ -727,9 +800,9 @@ over sets is called `Set.iter`. In the following example, a set is
 iterated to check that all its elements (integers) are greater than
 `3`.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 ```pascaligo group=set
 function iter_op (const s : set (int)) : unit is
@@ -741,7 +814,8 @@ function iter_op (const s : set (int)) : unit is
 
 > Note that `set_iter` is *deprecated*. Use `Set.iter`.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 ```cameligo group=set
 let iter_op (s : int set) : unit =
@@ -749,7 +823,8 @@ let iter_op (s : int set) : unit =
   in Set.iter predicate s
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 ```reasonligo group=set
 let iter_op = (s : set (int)) : unit => {
@@ -758,7 +833,8 @@ let iter_op = (s : set (int)) : unit => {
 };
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 
 <!-- #### Mapped Operation (NOT IMPLEMENTED YET) -->
@@ -816,8 +892,9 @@ enables having a partial result that becomes complete when the
 traversal of the data structure is over. The predefined fold over sets
 is called `Set.fold`.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=set
 function sum (const acc : int; const i : int): int is acc + i
 const sum_of_elements : int = Set.fold (sum, my_set, 0)
@@ -836,15 +913,21 @@ function loop (const s : set (int)) : int is block {
 } with sum
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=set
 let sum (acc, i : int * int) : int = acc + i
 let sum_of_elements : int = Set.fold sum my_set 0
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=set
 let sum = ((acc, i) : (int, int)) : int => acc + i;
 let sum_of_elements : int = Set.fold (sum, my_set, 0);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+

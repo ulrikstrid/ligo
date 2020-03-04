@@ -3,28 +3,40 @@ id: strings
 title: Strings
 ---
 
+import Syntax from '@theme/Syntax';
+
 Strings are defined using the built-in `string` type like this:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```
 const a : string = "Hello Alice"
 ```
-<!--CameLIGO-->
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```
 let a : string = "Hello Alice"
 ```
-<!--ReasonLIGO-->
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo
 let a : string = "Hello Alice";
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 
 ## Concatenating Strings
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 Strings can be concatenated using the `^` operator.
 
 ```pascaligo group=a
@@ -32,7 +44,10 @@ const name : string = "Alice"
 const greeting : string = "Hello"
 const full_greeting : string = greeting ^ " " ^ name
 ```
-<!--CameLIGO-->
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 Strings can be concatenated using the `^` operator.
 
 ```cameligo group=a
@@ -40,7 +55,10 @@ let name : string = "Alice"
 let greeting : string = "Hello"
 let full_greeting : string = greeting ^ " " ^ name
 ```
-<!--ReasonLIGO-->
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
 Strings can be concatenated using the `++` operator.
 
 ```reasonligo group=a
@@ -48,7 +66,9 @@ let name : string = "Alice";
 let greeting : string = "Hello";
 let full_greeting : string = greeting ++ " " ++ name;
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 
 ## Extracting Substrings
@@ -57,8 +77,9 @@ Substrings can be extracted using the predefined function
 `String.sub`. The first character has index 0 and the interval of
 indices for the substring has inclusive bounds.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=b
 const name  : string = "Alice"
 const slice : string = String.sub (0n, 1n, name)
@@ -66,7 +87,9 @@ const slice : string = String.sub (0n, 1n, name)
 
 > Note that `string_slice` is *deprecated*. Use `String.sub`.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=b
 let name  : string = "Alice"
 let slice : string = String.sub 0n 1n name
@@ -74,7 +97,9 @@ let slice : string = String.sub 0n 1n name
 
 > Note that `String.slice` is *deprecated*. Use `String.sub`.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=b
 let name  : string = "Alice";
 let slice : string = String.sub (0n, 1n, name);
@@ -82,7 +107,7 @@ let slice : string = String.sub (0n, 1n, name);
 
 > Note that `String.slice` is *deprecated*. Use `String.sub`.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
 
 > ⚠️ Notice that the offset and length of the slice are natural
 > numbers.
@@ -91,8 +116,9 @@ let slice : string = String.sub (0n, 1n, name);
 
 The length of a string can be found using a built-in function:
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=c
 const name : string = "Alice"
 const length : nat = String.length (name) // length = 5
@@ -100,7 +126,9 @@ const length : nat = String.length (name) // length = 5
 
 > Note that `size` is *deprecated*. Use `String.length`.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=c
 let name : string = "Alice"
 let length : nat = String.length name  // length = 5
@@ -108,7 +136,9 @@ let length : nat = String.length name  // length = 5
 
 > Note that `String.size` is *deprecated*. Use `String.length`.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=c
 let name : string = "Alice";
 let length : nat = String.length (name);  // length == 5
@@ -116,4 +146,4 @@ let length : nat = String.length (name);  // length == 5
 
 > Note that `String.size` is *deprecated*. Use `String.length`.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>

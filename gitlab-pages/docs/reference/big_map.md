@@ -3,6 +3,8 @@ id: big-map-reference
 title: Big_map
 ---
 
+import Syntax from '@theme/Syntax';
+
 ## Big Maps
 
 Ordinary maps are fine for contracts with a finite lifespan or a
@@ -16,8 +18,8 @@ interface for big maps is analogous to the one used for ordinary maps.
 
 ## Declaring a Big Map
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 In PascaLIGO, the type of a big map from values of type `key` to
 values of type `value` is `big_map (key, value)`.
@@ -27,7 +29,8 @@ type move is int * int
 type register is big_map (address, move)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 In CameLIGO, the type of a big map from values of type `key` to values
 of type `value` is `(key, value) big_map`.
@@ -37,7 +40,8 @@ type move = int * int
 type register = (address, move) big_map
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 In ReasonLIGO, the type of a big map from values of type `key` to
 values of type `value` is `big_map (key, value)`.
@@ -46,7 +50,9 @@ values of type `value` is `big_map (key, value)`.
 type move = (int, int);
 type register = big_map (address, move);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 
 ## Creating an Empty Big Map
@@ -54,32 +60,38 @@ type register = big_map (address, move);
 Empty big maps need a type annotation, either as part of a declaration
 or an expression.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=big_map
 const empty : register = big_map []
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=big_map
 let empty : register = Big_map.empty
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=big_map
 let empty : register = Big_map.empty
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 
 ## Creating a Non-empty Big Map
 
 A non-empty big map can be created by giving all its bindings.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=big_map
 const moves : register =
   big_map [
@@ -87,7 +99,9 @@ const moves : register =
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) -> (0,3)]
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=big_map
 let moves : register =
   Big_map.literal [
@@ -95,47 +109,59 @@ let moves : register =
     (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (0,3))]
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=big_map
 let moves : register =
   Big_map.literal ([
     ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address, (1,2)),
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, (0,3))]);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 ## Accessing Values
 
 Given a big map and a key we may retrieve the bound value. Because the
 key may be missing in the big map, the result is an *optional value*.
 
-<!--DOCUSAURUS_CODE_TABS-->
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=big_map
 const my_balance : option (move) =
   moves [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address)]
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=big_map
 let my_balance : move option =
   Big_map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) moves
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=big_map
 let my_balance : option (move) =
   Big_map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, moves);
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
+
 
 Notice how the value we read is an optional value: this is to force
 the reader to account for a missing key in the map. This requires
 *pattern matching*.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=big_map
 function force_access (const key : address; const moves : register) : move is
   case moves[key] of
@@ -144,7 +170,9 @@ function force_access (const key : address; const moves : register) : move is
   end
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=big_map
 let force_access (key, moves : address * register) : move =
   match Big_map.find_opt key moves with
@@ -152,7 +180,9 @@ let force_access (key, moves : address * register) : move =
   | None -> (failwith "No move." : move)
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=big_map
 let force_access = ((key, moves) : (address, register)) : move => {
   switch (Big_map.find_opt (key, moves)) {
@@ -161,16 +191,17 @@ let force_access = ((key, moves) : (address, register)) : move => {
   }
 };
 ```
-<!--END_DOCUSAURUS_CODE_TABS-->
+
+</Syntax>
 
 ## Updating Big Maps
 
 Given a big map and a key, we might want to remove the key (and its
 value) or change its bound value.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 In PascaLIGO, the instruction `m[key] := value` has the effect to add
 the binding from the key `key` to the value `value` in the big map
@@ -202,7 +233,8 @@ function assignments (var m : register) : register is
 > Note the use of the keyword `map` instead of `big_map` (which is not
 > a keyword).
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 In CameLIGO, the call `Big_map.update key (Some value) m` is a big map
 where the key `key` is bound to the value `value`, and all other
@@ -226,7 +258,8 @@ let add (m : register) : register =
     ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address) (4,9) m
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 In ReasonLIGO, the call `Big_map.update (key, Some (value), m)` is a
 big map where the key `key` is bound to the value `value`, and all
@@ -250,13 +283,12 @@ let add = (m : register) : register =>
     (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), (4,9), m);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
 
 ## Removing Bindings
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+<Syntax syntax="pascaligo">
 
 In PascaLIGO, the instruction `remove key from map m` removes the key
 `key` from the big map `m` (note that the keyword is `map`, not
@@ -271,16 +303,21 @@ function rem (var m : register) : register is
 const updated_map : register = rem (moves)
 ```
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=big_map
 let updated_map : register =
   Map.remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=big_map
 let updated_map : register =
   Map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+

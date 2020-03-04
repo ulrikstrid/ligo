@@ -3,15 +3,15 @@ id: bytes-reference
 title: Bytes
 ---
 
+import Syntax from '@theme/Syntax';
+
 ## Concatenating two Bytes
 
 The predefined function `Bytes.concat` concatenates two sequences of
 bytes (that is, two values of type `bytes`), yielding a new sequence
 containing both in the given order.
 
-<!--DOCUSAURUS_CODE_TABS-->
-
-<!--PascaLIGO-->
+<Syntax syntax="pascaligo">
 
 ```pascaligo group=bytes
 function concat (const b : bytes) : bytes is Bytes.concat (b, 0x7070)
@@ -19,19 +19,21 @@ function concat (const b : bytes) : bytes is Bytes.concat (b, 0x7070)
 
 > Note that `bytes_concat` is *deprecated*. Use `Bytes.concat`.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 ```cameligo group=bytes
 let concat (b : bytes) : bytes = Bytes.concat b 0x7070
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 ```reasonligo group=bytes
 let concat = (b : bytes): bytes => Bytes.concat (b, 0x7070);
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
 
 ## Extracting Subsequences of Bytes
 
@@ -43,9 +45,9 @@ position 0 and both positions are inclusive*. So, for example, slicing
 yields the sequence `0x7a7a`. If any of the two positions is invalid,
 the call to `Bytes.sub` fails.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+
+<Syntax syntax="pascaligo">
 
 ```pascaligo group=bytes
 function slice (const b : bytes) : bytes is Bytes.sub (1n, 2n, b)
@@ -53,7 +55,8 @@ function slice (const b : bytes) : bytes is Bytes.sub (1n, 2n, b)
 
 > Note that `bytes_slice` is *deprecated*. Use `Bytes.sub`.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
 
 ```cameligo group=bytes
 let slice (b : bytes) : bytes = Bytes.sub 1n 2n b
@@ -61,7 +64,8 @@ let slice (b : bytes) : bytes = Bytes.sub 1n 2n b
 
 > Note that `Bytes.slice` is *deprecated*. Use `Bytes.sub`.
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
 
 ```reasonligo group=bytes
 let slice = (b : bytes): bytes => Bytes.sub (1n, 2n, b);
@@ -69,7 +73,8 @@ let slice = (b : bytes): bytes => Bytes.sub (1n, 2n, b);
 
 > Note that `Bytes.slice` is *deprecated*. Use `Bytes.sub`.
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
 
 
 ## Pack and Unpack
@@ -86,9 +91,9 @@ return type of `Byte.unpack` is an option that needs to be annotated.
 > untrusted source or casting the result to the wrong type. Do not use
 > the corresponding LIGO functions without doing your homework first.
 
-<!--DOCUSAURUS_CODE_TABS-->
 
-<!--PascaLIGO-->
+<Syntax syntax="pascaligo">
+
 ```pascaligo group=a
 function id_string (const p : string) : option (string) is block {
   const packed : bytes = Bytes.pack (p)
@@ -98,14 +103,18 @@ function id_string (const p : string) : option (string) is block {
 > Note that `bytes_pack` and `bytes_unpack` are *deprecated*. Use
 > `Bytes.pack` and `Bytes.unpack`.
 
-<!--CameLIGO-->
+</Syntax>
+<Syntax syntax="cameligo">
+
 ```cameligo group=a
 let id_string (p : string) : string option =
   let packed: bytes = Bytes.pack p in
   (Bytes.unpack packed : string option)
 ```
 
-<!--ReasonLIGO-->
+</Syntax>
+<Syntax syntax="reasonligo">
+
 ```reasonligo group=a
 let id_string = (p : string) : option (string) => {
   let packed : bytes = Bytes.pack (p);
@@ -113,4 +122,5 @@ let id_string = (p : string) : option (string) => {
 };
 ```
 
-<!--END_DOCUSAURUS_CODE_TABS-->
+</Syntax>
+
