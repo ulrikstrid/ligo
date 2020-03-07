@@ -3,6 +3,26 @@
 This contract implements a collectible virtual sock token (or v-sock for short).
 You can think of it like baseball cards, but for socks. *)
 
+(* Sock Type ID *)
+
+type st_id = int
+
+type sock_type = {
+  name: string;
+  description_hash: string;
+}
+
+type sock_types = (st_id, sock_type) big_map
+
+type sock_id = int
+
+type sock = {
+  sock_type: sock_type;
+  owner: address;
+}
+
+type socks = (sock_id, sock) big_map
+
 (* Drop Table
 
 One of the trickier aspects of smart contract design is figuring out which parts
@@ -63,3 +83,89 @@ tokens is the norm. The authors of current TCG's could tank the value of any giv
 card, or make a card more rare and increase its value arbitrarily.
 
 *)
+
+type storage = {
+  sock_oracle: address;
+  socks: socks;
+  sock_types: sock_types;
+}
+
+type parameter =
+| Add_Sock_Type of st_id, sock_type
+| Update_Sock_Type of st_id, sock_type
+| Add_Sock of sock_id, sock
+| Trade of sock_id, address
+
+let add_sock_type (new_st, storage: parameter * storage) : operation list * storage =
+  (* Sock Oracle check *)
+  if Tezos.sender != storage.sock_oracle
+  then (failwith "You are not the sock oracle.": operation list * storage)
+  else
+  let st_id, sock_type = new_st in
+  (* Make sure we're not overwriting an existing sock type *)
+  match Big_map.find_opt st_id storage.sock_types with
+  | Some st -> (failwith "A sock type with this ID already exists":
+                  operation list * storage)
+  | None ->
+    let updated_sock_types = Big_map.update st_id
+                               (Some sock_type)
+                               storage.sock_types
+    in
+    ([]: list operation), {
+                            sock_oracle = storage.sock_oracle;
+                            socks = storage.socks;
+                            sock_types = updated_sock_types;
+                          }
+
+let update_sock_type (st_update, storage: parameter * storage) : operation list * storage =
+  (* Sock Oracle check *)
+  if Tezos.sender != storage.sock_oracle
+  then (failwith "You are not the sock oracle.": operation list * storage)
+  else
+  let st_id, sock_type = st_update in
+  let updated_sock_types = Big_map.update st_id
+                               (Some sock_type)
+                               storage.sock_types
+  in
+  ([]: list operation), {
+    sock_oracle = storage.sock_oracle;
+    socks = storage.socks;
+    sock_types = updated_sock_types;
+  }
+
+
+let add_sock (new_sock, storage: parameter * storage) : operation list * storage =
+  (* Sock Oracle check *)
+  if Tezos.sender != storage.sock_oracle
+  then (failwith "You are not the sock oracle.": operation list * storage)
+  else
+  let sock_id, sock = new_sock in
+  (* Make sure we're not overwriting an existing sock *)
+  match Big_map.find_opt sock_id storage.socks with
+  | Some s -> (failwith "A sock with this ID already exists.":
+                 operation list * storage)
+  | None ->
+    let updated_socks = Big_map.update sock_id
+                          (Some sock)
+                          storage.socks
+    in
+    ([]: list operation), {
+      sock_oracle = storage.sock_oracle;
+      socks = updated_socks;
+      sock_types = storage.sock_types;
+    }
+
+let trade (trade_info, storage: parameter * storage) : operation list * storage =
+  let sock = Big_map.find_opt sid storage.socks in
+  (* Owner initiating trade check *)
+  if Tezos.sender != sock.owner
+  then (failwith "You don't own this sock.": operation list * storage)
+  else
+  let sid, new_owner = trade_info in
+  let updated_sock = {sock_type = sock.sock_type; owner = new_owner;} in
+  let updated_socks = Big_map.update sid (Some updated_sock) storage.socks in
+  ([]: operation list), {
+    sock_oracle = storage.sock_oracle;
+    socks = updated_socks;
+    sock_types = storage.sock_types;
+  }
