@@ -10,8 +10,10 @@ let error_suggest: string = "\n If you're not sure how to fix this error, you ca
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'\n"
 
-let toplevel ~(display_format : display_format) (x : string result) : unit Term.ret =
-  match x with
+let toplevel : displayable -> unit Term.ret =
+  fun (Displayable { value ; format }) ->
+    | Error _ -> ( match 
+  (* match x with
   | Ok _ -> Format.printf "%a%!" (formatted_string_result_pp display_format) x;
             `Ok ()
   | Error _ ->
@@ -20,4 +22,4 @@ let toplevel ~(display_format : display_format) (x : string result) : unit Term.
     | `Human_readable -> print_string error_suggest ;
     | _ -> () 
     end ;       
-    `Error (false, Format.asprintf "%a%!" (formatted_string_result_pp display_format) x)
+    `Error (false, Format.asprintf "%a%!" (formatted_string_result_pp display_format) x) *)
