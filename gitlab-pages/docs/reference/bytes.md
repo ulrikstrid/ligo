@@ -24,7 +24,7 @@ Concatenate together two `bytes` arguments and return the result.
 
 ```pascaligo
 function concat_op (const s : bytes) : bytes is
-  begin skip end with bytes_concat(s , 0x7070)
+  begin skip end with Bytes.concat(s , 0x7070)
 ```
 
 > Note that `bytes_concat` is *deprecated*. Please use `Bytes.concat`.
@@ -80,7 +80,7 @@ let slice_op (s : bytes) : bytes = Bytes.sub 1n 2n s
 <Syntax syntax="reasonligo">
 
 ```
-let slice_op = (s: bytes): bytes => Bytes.slice(1n, 2n, s);
+let slice_op = (s: bytes): bytes => Bytes.sub(1n, 2n, s);
 ```
 
 > Note that `Bytes.slice` is *deprecated*. Please use `Bytes.sub`.
