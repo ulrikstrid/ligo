@@ -91,14 +91,15 @@ type storage = {
 }
 
 type parameter =
-| Add_Sock_Type of st_id, sock_type
-| Update_Sock_Type of st_id, sock_type
-| Add_Sock of sock_id, sock
-| Trade of sock_id, address
+| Add_Sock_Type of st_id * sock_type
+| Update_Sock_Type of st_id * sock_type
+| Add_Sock of sock_id * sock
+| Trade of sock_id * address
 
-let add_sock_type (new_st, storage: parameter * storage) : operation list * storage =
+let add_sock_type (new_st, storage: (st_id * sock_type)  * storage) :
+  operation list * storage =
   (* Sock Oracle check *)
-  if Tezos.sender != storage.sock_oracle
+  if Tezos.sender <> storage.sock_oracle
   then (failwith "You are not the sock oracle.": operation list * storage)
   else
   let st_id, sock_type = new_st in
@@ -111,15 +112,16 @@ let add_sock_type (new_st, storage: parameter * storage) : operation list * stor
                                (Some sock_type)
                                storage.sock_types
     in
-    ([]: list operation), {
+    ([]: operation list), {
                             sock_oracle = storage.sock_oracle;
                             socks = storage.socks;
                             sock_types = updated_sock_types;
                           }
 
-let update_sock_type (st_update, storage: parameter * storage) : operation list * storage =
+let update_sock_type (st_update, storage: (st_id * sock_type) * storage) :
+  operation list * storage =
   (* Sock Oracle check *)
-  if Tezos.sender != storage.sock_oracle
+  if Tezos.sender <> storage.sock_oracle
   then (failwith "You are not the sock oracle.": operation list * storage)
   else
   let st_id, sock_type = st_update in
@@ -127,16 +129,17 @@ let update_sock_type (st_update, storage: parameter * storage) : operation list 
                                (Some sock_type)
                                storage.sock_types
   in
-  ([]: list operation), {
+  ([]: operation list), {
     sock_oracle = storage.sock_oracle;
     socks = storage.socks;
     sock_types = updated_sock_types;
   }
 
 
-let add_sock (new_sock, storage: parameter * storage) : operation list * storage =
+let add_sock (new_sock, storage: (sock_id * sock) * storage) :
+  operation list * storage =
   (* Sock Oracle check *)
-  if Tezos.sender != storage.sock_oracle
+  if Tezos.sender <> storage.sock_oracle
   then (failwith "You are not the sock oracle.": operation list * storage)
   else
   let sock_id, sock = new_sock in
@@ -149,19 +152,23 @@ let add_sock (new_sock, storage: parameter * storage) : operation list * storage
                           (Some sock)
                           storage.socks
     in
-    ([]: list operation), {
+    ([]: operation list), {
       sock_oracle = storage.sock_oracle;
       socks = updated_socks;
       sock_types = storage.sock_types;
     }
 
-let trade (trade_info, storage: parameter * storage) : operation list * storage =
-  let sock = Big_map.find_opt sid storage.socks in
+let trade (trade_info, storage: (sock_id * address) * storage) : operation list * storage =
+  let sid, new_owner = trade_info in
+  let sock =
+    match Big_map.find_opt sid storage.socks with
+    | Some s -> s
+    | None -> (failwith "There is no sock with that ID.": sock)
+  in
   (* Owner initiating trade check *)
-  if Tezos.sender != sock.owner
+  if Tezos.sender <> sock.owner
   then (failwith "You don't own this sock.": operation list * storage)
   else
-  let sid, new_owner = trade_info in
   let updated_sock = {sock_type = sock.sock_type; owner = new_owner;} in
   let updated_socks = Big_map.update sid (Some updated_sock) storage.socks in
   ([]: operation list), {
@@ -169,3 +176,10 @@ let trade (trade_info, storage: parameter * storage) : operation list * storage 
     socks = updated_socks;
     sock_types = storage.sock_types;
   }
+
+let main (p,s: parameter * storage) : operation list * storage =
+  match p with
+  | Add_Sock_Type ast -> add_sock_type (ast,s)
+  | Update_Sock_Type ust -> update_sock_type (ust,s)
+  | Add_Sock a -> add_sock (a,s)
+  | Trade t -> trade (t,s)
