@@ -105,7 +105,7 @@ let add_sock_type (new_st, storage: (st_id * sock_type)  * storage) :
   let st_id, sock_type = new_st in
   (* Make sure we're not overwriting an existing sock type *)
   match Big_map.find_opt st_id storage.sock_types with
-  | Some st -> (failwith "A sock type with this ID already exists":
+  | Some st -> (failwith "A sock type with this ID already exists.":
                   operation list * storage)
   | None ->
     let updated_sock_types = Big_map.update st_id
