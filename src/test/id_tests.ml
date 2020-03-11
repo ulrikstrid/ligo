@@ -60,8 +60,8 @@ let buy_id () =
                               e_int 2;
                               e_tuple [e_mutez 1000000 ; e_mutez 1000000]]
   in
-  let%bind () = expect_eq ~options program "buy" 
-      (e_pair param storage) 
+  let%bind () = expect_eq ~options program "buy"
+      (e_pair param storage)
       (e_pair (e_list []) new_storage)
   in ok ()
 

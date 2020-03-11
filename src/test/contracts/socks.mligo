@@ -88,13 +88,14 @@ type storage = {
   sock_oracle: address;
   socks: socks;
   sock_types: sock_types;
+  stock_price: tez;
 }
 
 type parameter =
 | Add_Sock_Type of st_id * sock_type
 | Update_Sock_Type of st_id * sock_type
 | Add_Sock of sock_id * sock
-| Trade of sock_id * address
+| Send of sock_id * address
 
 let add_sock_type (new_st, storage: (st_id * sock_type)  * storage) :
   operation list * storage =
@@ -116,6 +117,7 @@ let add_sock_type (new_st, storage: (st_id * sock_type)  * storage) :
                             sock_oracle = storage.sock_oracle;
                             socks = storage.socks;
                             sock_types = updated_sock_types;
+                            stock_price = storage.stock_price;
                           }
 
 let update_sock_type (st_update, storage: (st_id * sock_type) * storage) :
@@ -133,6 +135,7 @@ let update_sock_type (st_update, storage: (st_id * sock_type) * storage) :
     sock_oracle = storage.sock_oracle;
     socks = storage.socks;
     sock_types = updated_sock_types;
+    stock_price = storage.stock_price;
   }
 
 
@@ -143,22 +146,51 @@ let add_sock (new_sock, storage: (sock_id * sock) * storage) :
   then (failwith "You are not the sock oracle.": operation list * storage)
   else
   let sock_id, sock = new_sock in
+  if sock.owner <> storage.sock_oracle
+  then (failwith "You're not adding this sock to the oracle's stock.":
+          operation list * storage)
+  else
   (* Make sure we're not overwriting an existing sock *)
   match Big_map.find_opt sock_id storage.socks with
   | Some s -> (failwith "A sock with this ID already exists.":
                  operation list * storage)
   | None ->
-    let updated_socks = Big_map.update sock_id
+    let updated_stock = Big_map.update sock_id
                           (Some sock)
                           storage.socks
     in
     ([]: operation list), {
       sock_oracle = storage.sock_oracle;
-      socks = updated_socks;
+      socks = updated_stock;
       sock_types = storage.sock_types;
+      stock_price = storage.stock_price;
     }
 
-let trade (trade_info, storage: (sock_id * address) * storage) : operation list * storage =
+
+let buy_stock (sid, storage: sock_id * storage ) :
+  operation list * storage =
+  let sock =
+    match Big_map.find_opt sid storage.socks with
+    | Some sock -> sock
+    | None -> (failwith "There is no sock with that ID.": sock)
+  in
+  (* Sock is stock check *)
+  if storage.sock_oracle <> sock.owner
+  then (failwith "This sock is not in the oracle's stock.": operation list * storage)
+  else
+  if Tezos.amount <> storage.stock_price
+  then (failwith "You paid too much or too little for your sock.": operation list * storage)
+  else
+  let updated_sock = {sock_type = sock.sock_type; owner = Tezos.sender;} in
+  let updated_socks = Big_map.update sid (Some updated_sock) storage.socks in
+  ([]: operation list), {
+    sock_oracle = storage.sock_oracle;
+    socks = updated_socks;
+    sock_types = storage.sock_types;
+    stock_price = storage.stock_price;
+  }
+
+let send (trade_info, storage: (sock_id * address) * storage) : operation list * storage =
   let sid, new_owner = trade_info in
   let sock =
     match Big_map.find_opt sid storage.socks with
@@ -175,6 +207,7 @@ let trade (trade_info, storage: (sock_id * address) * storage) : operation list 
     sock_oracle = storage.sock_oracle;
     socks = updated_socks;
     sock_types = storage.sock_types;
+    stock_price = storage.stock_price;
   }
 
 let main (p,s: parameter * storage) : operation list * storage =
@@ -182,4 +215,4 @@ let main (p,s: parameter * storage) : operation list * storage =
   | Add_Sock_Type ast -> add_sock_type (ast,s)
   | Update_Sock_Type ust -> update_sock_type (ust,s)
   | Add_Sock a -> add_sock (a,s)
-  | Trade t -> trade (t,s)
+  | Send snd -> send (snd,s)
