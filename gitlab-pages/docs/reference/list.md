@@ -113,6 +113,8 @@ with the map data structure.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=lists
+const larger_list: list(int) = list [1; 2; 3]
+
 function increment (const i : int): int is i + 1
 
 // Creates a new list with all elements incremented by 1
@@ -125,6 +127,8 @@ const plus_one : list (int) = List.map (increment, larger_list)
 <Syntax syntax="cameligo">
 
 ```cameligo group=lists
+let larger_list: int list = [1; 2; 3]
+
 let increment (i : int) : int = i + 1
 
 // Creates a new list with all elements incremented by 1
@@ -135,6 +139,8 @@ let plus_one : int list = List.map increment larger_list
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=lists
+let larger_list: list(int) = [1, 2, 3];
+
 let increment = (i : int) : int => i + 1;
 
 // Creates a new list with all elements incremented by 1
@@ -163,7 +169,10 @@ traversal of the data structure is over.
 <Syntax syntax="pascaligo">
 
 ```pascaligo group=lists
+const my_list: list(int) = list [1; 2; 3]
+
 function sum (const acc : int; const i : int): int is acc + i
+
 const sum_of_elements : int = List.fold (sum, my_list, 0)
 ```
 
@@ -173,7 +182,10 @@ const sum_of_elements : int = List.fold (sum, my_list, 0)
 <Syntax syntax="cameligo">
 
 ```cameligo group=lists
-let sum (acc, i: int * int) : int = acc + i
+let my_list : int list = [1; 2; 3]
+
+let sum (acc, i : int * int) : int = acc + i
+
 let sum_of_elements : int = List.fold sum my_list 0
 ```
 
@@ -181,7 +193,10 @@ let sum_of_elements : int = List.fold sum my_list 0
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=lists
+let my_list : list(int) = [1, 2, 3];
+
 let sum = ((result, i): (int, int)): int => result + i;
+
 let sum_of_elements : int = List.fold (sum, my_list, 0);
 ```
 

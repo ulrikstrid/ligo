@@ -104,7 +104,7 @@ Runs the [sha256 hash algorithm](https://en.wikipedia.org/wiki/SHA-2) over the g
 
 ```pascaligo
 function hasherman (const s : bytes) : bytes is
-  begin skip end with Crypto.sha_256(s)
+  begin skip end with Crypto.sha256(s)
 ```
 
 > Note that `sha_256` is *deprecated*.
@@ -144,7 +144,7 @@ Runs the [sha512 hash algorithm](https://en.wikipedia.org/wiki/SHA-2) over the g
 <Syntax syntax="pascaligo">
 
 ```pascaligo
-function hasherman512 (const s: bytes) : bytes is Crypto.sha_512(s)
+function hasherman512 (const s: bytes) : bytes is Crypto.sha512(s)
 ```
 
 > Note that `sha_256` is *deprecated*.
