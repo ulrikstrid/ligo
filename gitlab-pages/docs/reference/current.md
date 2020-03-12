@@ -694,7 +694,8 @@ let get_contract_opt : address => option(contract('parameter))
 
 Get a contract from an address.
 
-If there is no contract found, `None` is returned.
+When no contract is found or the contract doesn't match the type,  
+`None` is returned.
 
 <SyntaxTitle syntax="pascaligo">
 function get_entrypoint_opt : string -> address -> option(contract(parameter))
@@ -706,3 +707,9 @@ function get_entrypoint_opt : string -> address -> 'parameter contract option
 function get_entrypoint_opt: (string, address) => option(contract('parameter))
 </SyntaxTitle>
 
+Get a contract from an address and entrypoint. 
+
+Entrypoints are written in the form of: `%entrypoint`.
+
+When no contract is found or the contract doesn't match the type,  
+`None` is returned.
