@@ -9,13 +9,23 @@ import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
 <SyntaxTitle syntax="pascaligo">
+type bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type bytes
+</SyntaxTitle>
+
+<SyntaxTitle syntax="pascaligo">
 function concat : bytes -> bytes -> bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val concat : bytes -> bytes -> bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let concat : (bytes, bytes) => bytes
+let concat: (bytes, bytes) => bytes
 </SyntaxTitle>
 
 Concatenate together two `bytes` arguments and return the result.
@@ -27,7 +37,7 @@ function concat_op (const s : bytes) : bytes is
   begin skip end with Bytes.concat(s , 0x7070)
 ```
 
-> Note that `bytes_concat` is *deprecated*. Please use `Bytes.concat`.
+> Note that `bytes_concat` is *deprecated*. 
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -65,7 +75,7 @@ inclusive**. For example if you gave the input "ff7a7aff" to the following:
 function slice_op (const s : bytes) : bytes is Bytes.sub(1n , 2n , s)
 ```
 
-> Note that `bytes_slice` is *deprecated*. Please use `Bytes.sub`.
+> Note that `bytes_slice` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -74,7 +84,7 @@ function slice_op (const s : bytes) : bytes is Bytes.sub(1n , 2n , s)
 let slice_op (s : bytes) : bytes = Bytes.sub 1n 2n s
 ```
 
-> Note that `Bytes.slice` is *deprecated*. Please use `Bytes.sub`.
+> Note that `Bytes.slice` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="reasonligo">
@@ -83,7 +93,7 @@ let slice_op (s : bytes) : bytes = Bytes.sub 1n 2n s
 let slice_op = (s: bytes): bytes => Bytes.sub(1n, 2n, s);
 ```
 
-> Note that `Bytes.slice` is *deprecated*. Please use `Bytes.sub`.
+> Note that `Bytes.slice` is *deprecated*.
 
 </Syntax>
 

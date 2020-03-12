@@ -11,6 +11,8 @@ values of the same type. The former are called *key* and the latter
 is that the type of the keys must be *comparable*, in the Michelson
 sense.
 
+
+
 # Declaring a Map
 
 

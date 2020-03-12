@@ -1,11 +1,96 @@
 ---
 id: current-reference
-title: Tezos - Things relating to the current execution context
+title: Tezos
+description: General operations for Tezos
+hide_table_of_contents: true
 ---
 
 import Syntax from '@theme/Syntax';
+import SyntaxTitle from '@theme/SyntaxTitle';
 
-# Tezos.balance
+<SyntaxTitle syntax="pascaligo">
+type timestamp
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type timestamp
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type timestamp
+</SyntaxTitle>
+
+A date in the real world.
+
+<SyntaxTitle syntax="pascaligo">
+type mutez
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type mutez
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type mutez
+</SyntaxTitle>
+
+A specific type for tokens.
+
+<SyntaxTitle syntax="pascaligo">
+type address
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type address
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type address
+</SyntaxTitle>
+
+An untyped address which can refer to a smart contract or account.
+
+<SyntaxTitle syntax="pascaligo">
+type contract(parameter)
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type 'parameter contract
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type contract('parameter)
+</SyntaxTitle>
+
+A typed contract. 
+
+Use `unit` as `parameter` to indicate an implicit account. 
+
+<SyntaxTitle syntax="pascaligo">
+type operation
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type operation
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type operation
+</SyntaxTitle>
+
+An operation emitted by the contract
+
+<SyntaxTitle syntax="pascaligo">
+type chain_id
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type chain_id
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type chain_id
+</SyntaxTitle>
+
+The identifier of a chain, used to indicate test or main chains.
+
+<SyntaxTitle syntax="pascaligo">
+function balance : mutez
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val balance : mutez
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let balance: mutez
+</SyntaxTitle>
 
 Get the balance for the contract.
 
@@ -18,7 +103,7 @@ function main (const p : unit; const s: tez) : list (operation) * tez is
   ((nil : list (operation)), Tezos.balance)
 ```
 
-> Note that `balance` and `Current.balance` are *deprecated*.
+> Note that `balance` and `Current.balance` are *deprecated*. 
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -42,7 +127,15 @@ let main = ((p,s) : (unit, tez)) =>
 </Syntax>
 
 
-## Tezos.now
+<SyntaxTitle syntax="pascaligo">
+function now : timestamp
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val now : timestamp
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let now: timestamp
+</SyntaxTitle>
 
 Returns the current time as a [unix timestamp](https://en.wikipedia.org/wiki/Unix_time).
 
@@ -169,7 +262,15 @@ let not_tomorrow: bool = (Tezos.now == in_24_hrs);
 
 
 
-## Amount
+<SyntaxTitle syntax="pascaligo">
+function amount : mutez
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val amount : mutez
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let amount: mutez
+</SyntaxTitle>
 
 Get the amount of tez provided by the sender to complete this
 transaction.
@@ -207,7 +308,15 @@ let threshold = (p : unit) : int =>
 </Syntax>
 
 
-## Sender
+<SyntaxTitle syntax="pascaligo">
+function sender : address
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val sender : address
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let sender: address
+</SyntaxTitle>
 
 Get the address that initiated the current transaction.
 
@@ -243,7 +352,15 @@ let main = (p : unit) : address => Tezos.sender;
 
 
 
-## Address
+<SyntaxTitle syntax="pascaligo">
+function address : contract 'a -> address
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val address : 'a contract -> address
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let address: contract('a) => address
+</SyntaxTitle>
 
 Get the address associated with a value of type `contract`.
 
@@ -287,7 +404,15 @@ let main = (p : key_hash) : address => {
 </Syntax>
 
 
-## Self Address
+<SyntaxTitle syntax="pascaligo">
+function self_address : address
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val self_address : address
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let self_address: address
+</SyntaxTitle>
 
 Get the address of the currently running contract.
 
@@ -320,8 +445,15 @@ let main = (p : unit) : address => Tezos.self_address;
 > Note that `Current.self_address` is *deprecated*.
 
 </Syntax>
-
-## Self
+<SyntaxTitle syntax="pascaligo">
+function self : string -> contract 'a
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val self : string -> 'a contract
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let self: string => contract('a)
+</SyntaxTitle>
 
 Typecast the currently running contract with an entrypoint annotation.
 If your are using entrypoints: use "%bar" for constructor Bar
@@ -353,7 +485,15 @@ let main = (p: unit) : contract(unit) =>
 
 </Syntax>
 
-## Implicit Account
+<SyntaxTitle syntax="pascaligo">
+function implicit_account : key_hash -> contract 'a
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val implicit_account : key_hash -> 'a contract
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let implicit_account: key_hash => contract('a)
+</SyntaxTitle>
 
 Get the default contract associated with an on-chain key-pair. This
 contract does not execute code, instead it exists to receive tokens on
@@ -392,7 +532,15 @@ let main = (kh : key_hash): contract (unit) =>
 </Syntax>
 
 
-## Source
+<SyntaxTitle syntax="pascaligo">
+function source : address
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val source : address
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let source: address
+</SyntaxTitle>
 
 Get the _originator_ (address) of the current transaction. That is, if
 a chain of transactions led to the current execution get the address
@@ -449,7 +597,15 @@ let main = (p : unit) : address => Tezos.source;
 </Syntax>
 
 
-## Failwith
+<SyntaxTitle syntax="pascaligo">
+function failwith : string -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+function failwith : string -> unit
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+function failwith : string -> unit
+</SyntaxTitle>
 
 Cause the contract to fail with an error message.
 
@@ -484,4 +640,69 @@ let main = ((p,s) : (int, unit)) =>
 ```
 
 </Syntax>
+
+<SyntaxTitle syntax="pascaligo">
+function chain_id : chain_id
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val chain_id : chain_id
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let chain_id: chain_id
+</SyntaxTitle>
+
+Get the identifier of the chain to distinguish between main and test chains.
+
+This is mainly intended to avoid replay attacks between the chains, and can currently
+only be used together with `Bytes.pack` and `Bytes.unpack`.
+
+<SyntaxTitle syntax="pascaligo">
+function transaction : parameter -> mutez -> contract(parameter) -> operation
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val transaction : 'parameter -> mutez -> 'parameter contract -> operation
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let transaction: 'parameter -> mutez -> contract('parameter) -> operation
+</SyntaxTitle>
+
+Create a transaction to a contract or account. 
+
+To indicate an account, use `unit` as `parameter`.
+
+<SyntaxTitle syntax="pascaligo">
+function set_delegate : option(key_hash) -> operation
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val set_delegate : key_hash option -> operation
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let set_delegate: option(key_hash) => operation
+</SyntaxTitle>
+
+Create a delegation.
+
+<SyntaxTitle syntax="pascaligo">
+function get_contract_opt : address -> option(contract(parameter))
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val get_contract_opt : address -> 'parameter contract option
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let get_contract_opt : address => option(contract('parameter))
+</SyntaxTitle>
+
+Get a contract from an address.
+
+If there is no contract found, `None` is returned.
+
+<SyntaxTitle syntax="pascaligo">
+function get_entrypoint_opt : string -> address -> option(contract(parameter))
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+function get_entrypoint_opt : string -> address -> 'parameter contract option
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+function get_entrypoint_opt: (string, address) => option(contract('parameter))
+</SyntaxTitle>
 

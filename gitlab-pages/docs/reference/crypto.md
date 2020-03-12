@@ -9,6 +9,42 @@ import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
 <SyntaxTitle syntax="pascaligo">
+type key
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type key
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type key
+</SyntaxTitle>
+
+A public cryptographic key.
+
+<SyntaxTitle syntax="pascaligo">
+type key_hash
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type key_hash
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type key_hash
+</SyntaxTitle>
+
+The hash of a public cryptographic key.
+
+<SyntaxTitle syntax="pascaligo">
+type signature
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+type signature
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+type signature
+</SyntaxTitle>
+
+A cryptographic signature.
+
+<SyntaxTitle syntax="pascaligo">
 function blake2b : bytes -> bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
@@ -29,7 +65,7 @@ over the given `bytes` data and returns a `bytes` representing the hash.
 function hasherman_blake (const s: bytes) : bytes is Crypto.blake2b(s)
 ```
 
-> Note that `blake2b` is *deprecated*. Use `Crypto.blake2b`.
+> Note that `blake2b` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -71,7 +107,7 @@ function hasherman (const s : bytes) : bytes is
   begin skip end with Crypto.sha_256(s)
 ```
 
-> Note that `sha_256` is *deprecated*. Use `Crypto.sha256`.
+> Note that `sha_256` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -111,7 +147,7 @@ Runs the [sha512 hash algorithm](https://en.wikipedia.org/wiki/SHA-2) over the g
 function hasherman512 (const s: bytes) : bytes is Crypto.sha_512(s)
 ```
 
-> Note that `sha_256` is *deprecated*. Use `Crypto.sha256`.
+> Note that `sha_256` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -153,7 +189,7 @@ function check_hash_key (const kh1 : key_hash; const k2 : key) : bool * key_hash
 } with (ret, kh2)
 ```
 
-> Note that `hash_key` is *deprecated*. Use `Crypto.hash_key`.
+> Note that `hash_key` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
@@ -209,7 +245,7 @@ function check_signature
   is Crypto.check(pk, signed, msg)
 ```
 
-> Note that `crypto_check` is *deprecated*. Use `Crypto.check`.
+> Note that `crypto_check` is *deprecated*.
 
 </Syntax>
 <Syntax syntax="cameligo">
