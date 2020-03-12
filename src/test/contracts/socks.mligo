@@ -178,8 +178,8 @@ let buy_stock (sid, storage: sock_id * storage ) :
   if storage.sock_oracle <> sock.owner
   then (failwith "This sock is not in the oracle's stock.": operation list * storage)
   else
-  if Tezos.amount <> storage.stock_price
-  then (failwith "You paid too much or too little for your sock.": operation list * storage)
+  if Tezos.amount < storage.stock_price
+  then (failwith "You paid too little for your sock.": operation list * storage)
   else
   let updated_sock = {sock_type = sock.sock_type; owner = Tezos.sender;} in
   let updated_socks = Big_map.update sid (Some updated_sock) storage.socks in

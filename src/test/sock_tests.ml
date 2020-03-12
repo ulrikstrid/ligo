@@ -570,7 +570,7 @@ let buy_stock_underpay () =
   let parameter = e_int 0 in
   expect_string_failwith ~options program "buy_stock"
     (e_pair parameter initial_storage)
-    "You paid too much or too little for your sock."
+    "You paid too little for your sock."
 
 let send () =
   let%bind program, _ = get_program () in
