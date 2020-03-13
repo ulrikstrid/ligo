@@ -17,7 +17,7 @@ type sock_types = (st_id, sock_type) big_map
 type sock_id = int
 
 type sock = {
-  sock_type: sock_type;
+  sock_type: st_id;
   owner: address;
 }
 

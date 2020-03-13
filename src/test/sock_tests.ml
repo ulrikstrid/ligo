@@ -56,7 +56,7 @@ let add_sock_type () =
   let sock_type_record_type = t_record_ez [("name", t_string);
                                             ("description_hash", t_string)] in
   let initial_sock_types = e_typed_big_map [] t_int sock_type_record_type in
-  let initial_socks = e_typed_big_map [] t_int (t_record_ez [("sock_type", sock_type_record_type);
+  let initial_socks = e_typed_big_map [] t_int (t_record_ez [("sock_type", t_int);
                                                              ("owner", t_address)])
   in
   let post_sock_types = e_typed_big_map [(e_int 0, new_sock_type)] t_int sock_type_record_type in
@@ -88,7 +88,7 @@ let add_sock_type_unauthorized () =
   let sock_type_record_type = t_record_ez [("name", t_string);
                                             ("description_hash", t_string)] in
   let initial_sock_types = e_typed_big_map [] t_int sock_type_record_type in
-  let initial_socks = e_typed_big_map [] t_int (t_record_ez [("sock_type", sock_type_record_type);
+  let initial_socks = e_typed_big_map [] t_int (t_record_ez [("sock_type", t_int);
                                                              ("owner", t_address)])
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
@@ -113,7 +113,7 @@ let add_sock_type_exists () =
   in
   let sock_type_record_type = t_record_ez [("name", t_string);
                                             ("description_hash", t_string)] in
-  let socks = e_typed_big_map [] t_int (t_record_ez [("sock_type", sock_type_record_type);
+  let socks = e_typed_big_map [] t_int (t_record_ez [("sock_type", t_int);
                                                      ("owner", t_address)])
   in
   let sock_types = e_typed_big_map [(e_int 0, new_sock_type)] t_int sock_type_record_type in
@@ -156,7 +156,7 @@ let update_sock_type () =
       t_int
       sock_type_record_type
   in
-  let initial_socks = e_typed_big_map [] t_int (t_record_ez [("sock_type", sock_type_record_type);
+  let initial_socks = e_typed_big_map [] t_int (t_record_ez [("sock_type", t_int);
                                                              ("owner", t_address)])
   in
 
@@ -199,7 +199,7 @@ let update_sock_type_unauthorized () =
       t_int
       sock_type_record_type
   in
-  let initial_socks = e_typed_big_map [] t_int (t_record_ez [("sock_type", sock_type_record_type);
+  let initial_socks = e_typed_big_map [] t_int (t_record_ez [("sock_type", t_int);
                                                              ("owner", t_address)])
   in
 
@@ -231,11 +231,11 @@ let add_sock () =
       t_int
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", test_sock_type);
+  let test_sock = e_record_ez [("sock_type", e_int 0);
                                ("owner", e_address oracle_addr)]
   in
   let initial_socks = e_typed_big_map []
-      t_int (t_record_ez [("sock_type", sock_type_record_type);
+      t_int (t_record_ez [("sock_type", t_int);
                           ("owner", t_address)])
   in
   let post_socks = e_typed_big_map [(e_int 0, test_sock)]
@@ -275,11 +275,11 @@ let add_sock_unauthorized () =
       t_int
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", test_sock_type);
+  let test_sock = e_record_ez [("sock_type", e_int 0);
                                ("owner", e_address oracle_addr)]
   in
   let initial_socks = e_typed_big_map []
-      t_int (t_record_ez [("sock_type", sock_type_record_type);
+      t_int (t_record_ez [("sock_type", t_int);
                           ("owner", t_address)])
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
@@ -310,11 +310,11 @@ let add_sock_not_stock () =
       t_int
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", test_sock_type);
+  let test_sock = e_record_ez [("sock_type", e_int 0);
                                ("owner", e_address stranger_addr)]
   in
   let initial_socks = e_typed_big_map []
-      t_int (t_record_ez [("sock_type", sock_type_record_type);
+      t_int (t_record_ez [("sock_type", t_int);
                           ("owner", t_address)])
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
@@ -345,11 +345,11 @@ let add_sock_exists () =
       t_int
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", test_sock_type);
+  let test_sock = e_record_ez [("sock_type", e_int 0);
                                ("owner", e_address oracle_addr)]
   in
   let initial_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", sock_type_record_type);
+      t_int (t_record_ez [("sock_type", t_int);
                           ("owner", t_address)])
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
@@ -380,18 +380,18 @@ let buy_stock () =
       t_int
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", test_sock_type);
+  let test_sock = e_record_ez [("sock_type", e_int 0);
                                ("owner", e_address oracle_addr)]
   in
-  let sent_sock = e_record_ez [("sock_type", test_sock_type);
+  let sent_sock = e_record_ez [("sock_type", e_int 0);
                                  ("owner", e_address stranger_addr)]
   in
   let initial_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", sock_type_record_type);
+      t_int (t_record_ez [("sock_type", t_int);
                           ("owner", t_address)])
   in
   let post_socks = e_typed_big_map [(e_int 0, sent_sock)]
-      t_int (t_record_ez [("sock_type", sock_type_record_type);
+      t_int (t_record_ez [("sock_type", t_int);
                           ("owner", t_address)])
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
@@ -429,18 +429,15 @@ let buy_stock_self_buy () =
       t_int
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", test_sock_type);
+  let test_sock = e_record_ez [("sock_type", e_int 0);
                                ("owner", e_address oracle_addr)]
   in
-  let sent_sock = e_record_ez [("sock_type", test_sock_type);
-                                 ("owner", e_address oracle_addr)]
-  in
   let initial_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", sock_type_record_type);
+      t_int (t_record_ez [("sock_type", t_int);
                           ("owner", t_address)])
   in
-  let post_socks = e_typed_big_map [(e_int 0, sent_sock)]
-      t_int (t_record_ez [("sock_type", sock_type_record_type);
+  let post_socks = e_typed_big_map [(e_int 0, test_sock)]
+      t_int (t_record_ez [("sock_type", t_int);
                           ("owner", t_address)])
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
@@ -478,11 +475,11 @@ let buy_stock_nonexistent () =
       t_int
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", test_sock_type);
+  let test_sock = e_record_ez [("sock_type", e_int 0);
                                ("owner", e_address oracle_addr)]
   in
   let initial_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", sock_type_record_type);
+      t_int (t_record_ez [("sock_type", t_int);
                           ("owner", t_address)])
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
@@ -514,11 +511,11 @@ let buy_stock_non_stock () =
       t_int
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", test_sock_type);
+  let test_sock = e_record_ez [("sock_type", e_int 0);
                                ("owner", e_address stranger_addr)]
   in
   let initial_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", sock_type_record_type);
+      t_int (t_record_ez [("sock_type", t_int);
                           ("owner", t_address)])
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
@@ -551,11 +548,11 @@ let buy_stock_underpay () =
       t_int
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", test_sock_type);
+  let test_sock = e_record_ez [("sock_type", e_int 0);
                                ("owner", e_address oracle_addr)]
   in
   let initial_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", sock_type_record_type);
+      t_int (t_record_ez [("sock_type", t_int);
                           ("owner", t_address)])
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
@@ -587,18 +584,18 @@ let send () =
       t_int
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", test_sock_type);
+  let test_sock = e_record_ez [("sock_type", e_int 0);
                                ("owner", e_address oracle_addr)]
   in
-  let sent_sock = e_record_ez [("sock_type", test_sock_type);
+  let sent_sock = e_record_ez [("sock_type", e_int 0);
                                  ("owner", e_address stranger_addr)]
   in
   let initial_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", sock_type_record_type);
+      t_int (t_record_ez [("sock_type", t_int);
                           ("owner", t_address)])
   in
   let post_socks = e_typed_big_map [(e_int 0, sent_sock)]
-      t_int (t_record_ez [("sock_type", sock_type_record_type);
+      t_int (t_record_ez [("sock_type", t_int);
                           ("owner", t_address)])
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
@@ -634,11 +631,11 @@ let send_unauthorized () =
       t_int
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", test_sock_type);
+  let test_sock = e_record_ez [("sock_type", e_int 0);
                                ("owner", e_address oracle_addr)]
   in
   let initial_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", sock_type_record_type);
+      t_int (t_record_ez [("sock_type", t_int);
                           ("owner", t_address)])
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
@@ -669,11 +666,11 @@ let send_nonexistent () =
       t_int
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", test_sock_type);
+  let test_sock = e_record_ez [("sock_type", e_int 0);
                                ("owner", e_address oracle_addr)]
   in
   let initial_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", sock_type_record_type);
+      t_int (t_record_ez [("sock_type", t_int);
                           ("owner", t_address)])
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
