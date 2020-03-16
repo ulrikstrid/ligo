@@ -1,3 +1,5 @@
+open Myerror
+
 type error = [
   | `Bar_error1 of int
   | `Bar_error2 of int
@@ -35,6 +37,6 @@ module Types = struct
 end
 
   let f_err : Foo.Types.expression -> (Types.expression, [> error]) result =
-    fun _e -> Error (`Bar_error1 42)
+    fun _e -> Error (thunk (`Bar_error1 42))
   let f_ok  : Foo.Types.expression -> (Types.expression, [> error]) result =
     fun _e -> Ok (E_toto 42)
