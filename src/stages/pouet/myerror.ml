@@ -1,19 +1,14 @@
 open Pervasives
 open Display
 
-type 'a thunk = unit -> 'a
-
-type nonrec ('value,'error) result = ('value, 'error thunk) result
-
+type nonrec ('value,'error) result = ('value, 'error) result
 
 type error = [ `Simple_error of string ] 
-
-let thunk x () = x
 
 let error_ppformat ~display_format f a =
   match display_format with
   | Human_readable | Dev -> (
-    match a () with 
+    match a with 
     | `Bar_error1 i | `Bar_error2 i ->
       let i' = Format.asprintf " error : %i" i in 
       Format.pp_print_string f i'
@@ -26,7 +21,7 @@ let error_ppformat ~display_format f a =
   )
 
 let error_jsonformat a =
-  match a () with 
+  match a with 
   | `Bar_error1 i | `Bar_error2 i ->
     `Assoc [("bar_error", `Int i)]
   | `Foo_error1 i | `Foo_error2 i ->
@@ -50,9 +45,9 @@ module Let_syntax = struct
   module Open_on_rhs_bind = struct end
 end
 
-let simple_error str () = `Simple_error str
+let simple_error str = `Simple_error str
 
-let bind_format : ('a thunk) Display.format -> 'b Display.format -> ('b,'a) result Display.format =
+let bind_format : 'a Display.format -> 'b Display.format -> ('b,'a) result Display.format =
   fun error_format value_format ->
     let pp ~display_format f a = match a with
       | Error e -> error_format.pp ~display_format f e

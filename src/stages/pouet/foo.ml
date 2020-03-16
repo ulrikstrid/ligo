@@ -37,6 +37,6 @@ module Types = struct
 end
 
 let f_err : unit -> (Types.expression, [> error]) result =
-  fun () -> Error (thunk (`Foo_error1 42))
+  fun () -> Error (`Foo_error1 42)
 let f_ok  : unit -> (Types.expression, [> error]) result =
   fun () -> Ok (E_toto 42)
