@@ -1,3 +1,8 @@
+type error = [
+  | `Bar_error1 of int
+  | `Bar_error2 of int
+]
+
 module Types = struct
   open Display
 
@@ -29,7 +34,7 @@ module Types = struct
   }
 end
 
-  let f_err : unit -> (Types.expression, Myerror.error) result =
-    fun () -> Error (Bar_error1 42)
-  let f_ok  : Foo.Types.expression -> (Types.expression, Myerror.error) result =
+  let f_err : Foo.Types.expression -> (Types.expression, [> error]) result =
+    fun _e -> Error (`Bar_error1 42)
+  let f_ok  : Foo.Types.expression -> (Types.expression, [> error]) result =
     fun _e -> Ok (E_toto 42)

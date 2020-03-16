@@ -1,29 +1,23 @@
 open Pervasives
 open Display
 
-type error =
-  | Foo_error1 of int
-  | Foo_error2 of int
-  | Bar_error1 of int
-  | Bar_error2 of int
-
 let error_ppformat ~display_format f a =
   match display_format with
   | Human_readable | Dev -> (
     match a with 
-    | Bar_error1 i | Bar_error2 i ->
+    | `Bar_error1 i | `Bar_error2 i ->
       let i' = Format.asprintf " error : %i" i in 
       Format.pp_print_string f i'
-    | Foo_error1 i | Foo_error2 i ->
+    | `Foo_error1 i | `Foo_error2 i ->
       let i' = Format.asprintf " error : %i" i in 
       Format.pp_print_string f i'
   )
 
 let error_jsonformat a =
   match a with 
-  | Bar_error1 i | Bar_error2 i ->
+  | `Bar_error1 i | `Bar_error2 i ->
     `Assoc [("bar_error", `Int i)]
-  | Foo_error1 i | Foo_error2 i ->
+  | `Foo_error1 i | `Foo_error2 i ->
     `Assoc [("foo_error", `Int i)]
 
 let error_format : 'a Display.format = {

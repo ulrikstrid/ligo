@@ -4,9 +4,9 @@ module J = Yojson.Basic
 type json = J.t
 
 type 'a display_format =
-| Human_readable : string display_format
-| Dev : string display_format
-| Json : json display_format
+  | Human_readable : string display_format
+  | Dev : string display_format
+  | Json : json display_format
 
 type 'a pp = display_format:(string display_format) -> F.formatter -> 'a -> unit
 type 'a format = {
