@@ -38,5 +38,7 @@ end
 
   let f_err : Foo.Types.expression -> (Types.expression, [> error]) result =
     fun _e -> Error (thunk (`Bar_error1 42))
+  let f_serr : Foo.Types.expression -> (Types.expression, [> error]) result =
+    fun _e -> Error (simple_error "lol")
   let f_ok  : Foo.Types.expression -> (Types.expression, [> error]) result =
     fun _e -> Ok (E_toto 42)

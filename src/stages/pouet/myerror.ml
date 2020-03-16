@@ -6,6 +6,8 @@ type 'a thunk = unit -> 'a
 type nonrec ('value,'error) result = ('value, 'error thunk) result
 
 
+type error = [ `Simple_error of string ] 
+
 let thunk x () = x
 
 let error_ppformat ~display_format f a =
@@ -18,6 +20,9 @@ let error_ppformat ~display_format f a =
     | `Foo_error1 i | `Foo_error2 i ->
       let i' = Format.asprintf " error : %i" i in 
       Format.pp_print_string f i'
+    | `Simple_error s ->
+      let i' = Format.asprintf " simple error : %s" s in 
+      Format.pp_print_string f i'
   )
 
 let error_jsonformat a =
@@ -26,6 +31,8 @@ let error_jsonformat a =
     `Assoc [("bar_error", `Int i)]
   | `Foo_error1 i | `Foo_error2 i ->
     `Assoc [("foo_error", `Int i)]
+  | `Simple_error i ->
+    `Assoc [("simple_error", `String i)]
 
 let error_format : 'a Display.format = {
   pp = error_ppformat;
@@ -42,6 +49,8 @@ module Let_syntax = struct
   let bind = bind_result
   module Open_on_rhs_bind = struct end
 end
+
+let simple_error str () = `Simple_error str
 
 let bind_format : ('a thunk) Display.format -> 'b Display.format -> ('b,'a) result Display.format =
   fun error_format value_format ->
