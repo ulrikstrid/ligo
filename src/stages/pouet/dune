@@ -1,0 +1,27 @@
+; (library
+;   (name pouet)
+;   (public_name ligo.pouet)
+;   (libraries
+;     yojson
+;   )
+;   (preprocess
+;     (pps ppx_let)
+;   )
+  ; (modules
+  ;   myerror foo bar display
+  ; )
+  ; (flags (:standard -open Simple_utils ))
+; )
+
+(executable
+  (name main)
+  (libraries
+    yojson
+  )
+  (modules
+    myerror foo bar display main 
+  )
+  (preprocess
+    (pps ppx_let)
+  )
+)
