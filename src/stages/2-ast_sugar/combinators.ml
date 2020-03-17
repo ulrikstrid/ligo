@@ -5,17 +5,20 @@ module Option = Simple_utils.Option
 module SMap = Map.String
 
 module Errors = struct
-  let bad_kind expected location =
+  let bad_kind _expected _location = simple_error "TODO"
+  let bad_type_operator _type_op = simple_error "TODO"
+  (* let bad_kind expected location =
     let title () = Format.asprintf "a %s was expected" expected in
     let message () = "" in
     let data = [
       ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
     ] in
     error ~data title message
+
   let bad_type_operator type_op =
     let title () = Format.asprintf "bad type operator %a" (PP.type_operator PP.type_expression) type_op in
     let message () = "" in
-    error title message
+    error title message *)
 end
 open Errors
 
@@ -69,7 +72,7 @@ let t_set key               : type_expression = make_t @@ T_operator (TC_set key
 let t_contract contract     : type_expression = make_t @@ T_operator (TC_contract contract)
 
 (* TODO find a better way than using list*)
-let t_operator op lst: type_expression result =
+let t_operator op lst: (type_expression,_) result =
   match op,lst with 
   | TC_set _         , [t] -> ok @@ t_set t
   | TC_list _        , [t] -> ok @@ t_list t
@@ -97,10 +100,10 @@ let e_signature ?loc s : expression = make_expr ?loc @@ E_literal (Literal_signa
 let e_key ?loc s : expression = make_expr ?loc @@ E_literal (Literal_key s)
 let e_key_hash ?loc s : expression = make_expr ?loc @@ E_literal (Literal_key_hash s)
 let e_chain_id ?loc s : expression = make_expr ?loc @@ E_literal (Literal_chain_id s)
-let e'_bytes b : expression_content result =
+let e'_bytes b : (expression_content,_) result =
   let%bind bytes = generic_try (simple_error "bad hex to bytes") (fun () -> Hex.to_bytes (`Hex b)) in
   ok @@ E_literal (Literal_bytes bytes)
-let e_bytes_hex ?loc b : expression result =
+let e_bytes_hex ?loc b : (expression,_) result =
   let%bind e' = e'_bytes b in
   ok @@ make_expr ?loc e'
 let e_bytes_raw ?loc (b: bytes) : expression =
@@ -240,7 +243,7 @@ let get_e_tuple = fun t ->
   | _ -> simple_fail "ast_core: get_e_tuple: not a tuple"
 
 (* Same as get_e_pair *)
-let extract_pair : expression -> (expression * expression) result = fun e ->
+let extract_pair : expression -> (expression * expression , _) result = fun e ->
   match e.expression_content with
   | E_record r -> ( 
   let lst = LMap.to_kv_list r in
@@ -252,17 +255,17 @@ let extract_pair : expression -> (expression * expression) result = fun e ->
     )
   | _ -> fail @@ bad_kind "pair" e.location
 
-let extract_list : expression -> (expression list) result = fun e ->
+let extract_list : expression -> (expression list , _) result = fun e ->
   match e.expression_content with
   | E_list lst -> ok lst
   | _ -> fail @@ bad_kind "list" e.location
 
-let extract_record : expression -> (label * expression) list result = fun e ->
+let extract_record : expression -> ((label * expression) list,_) result = fun e ->
   match e.expression_content with
   | E_record lst -> ok @@ LMap.to_kv_list lst
   | _ -> fail @@ bad_kind "record" e.location
 
-let extract_map : expression -> (expression * expression) list result = fun e ->
+let extract_map : expression -> ((expression * expression) list , _) result = fun e ->
   match e.expression_content with
   | E_map lst -> ok lst
   | _ -> fail @@ bad_kind "map" e.location

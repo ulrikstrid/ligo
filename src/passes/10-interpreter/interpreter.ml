@@ -6,7 +6,7 @@ include Stage_common.Types
 module Env = Ligo_interpreter.Environment
 
 
-let apply_comparison : Ast_typed.constant' -> value list -> value result =
+let apply_comparison : Ast_typed.constant' -> value list -> (value , _) result =
   fun c operands -> match (c,operands) with
     | ( comp , [ V_Ct (C_int a'      ) ; V_Ct (C_int b'      ) ] )
     | ( comp , [ V_Ct (C_nat a'      ) ; V_Ct (C_nat b'      ) ] )
@@ -52,7 +52,7 @@ let apply_comparison : Ast_typed.constant' -> value list -> value result =
       simple_fail "unsupported comparison"
 
 (* applying those operators does not involve extending the environment *)
-let rec apply_operator : Ast_typed.constant' -> value list -> value result =
+let rec apply_operator : Ast_typed.constant' -> value list -> (value,_) result =
   fun c operands ->
   let return_ct v = ok @@ V_Ct v in
   let return_none () = ok @@ v_none () in
@@ -250,7 +250,7 @@ C_STEPS_TO_QUOTA
 *)
 
 (*interpreter*)
-and eval_literal : Ast_typed.literal -> value result = function
+and eval_literal : Ast_typed.literal -> (value , _) result = function
   | Literal_unit        -> ok @@ V_Ct (C_unit)
   | Literal_bool b      -> ok @@ V_Ct (C_bool b)
   | Literal_int i       -> ok @@ V_Ct (C_int i)
@@ -267,7 +267,7 @@ and eval_literal : Ast_typed.literal -> value result = function
   | Literal_operation o -> ok @@ V_Ct (C_operation o)
   | Literal_void -> simple_fail "iguess ?"
 
-and eval : Ast_typed.expression -> env -> value result
+and eval : Ast_typed.expression -> env -> (value , _) result
   = fun term env ->
     match term.expression_content with
     | E_application ({lamb = f; args}) -> (
@@ -382,7 +382,7 @@ and eval : Ast_typed.expression -> env -> value result
       let serr = Format.asprintf "Unsupported construct :\n %a\n" Ast_typed.PP.expression term in
       simple_fail serr
 
-let dummy : Ast_typed.program -> string result =
+let dummy : Ast_typed.program -> (string , _) result =
   fun prg ->
     let%bind (res,_) = bind_fold_list
       (fun (pp,top_env) el ->

@@ -49,10 +49,11 @@ module Errors =
          [("location",
            fun () -> Format.asprintf "%a" Location.pp_lift @@ loc)] *)
 
-    let generic message =
+    let generic _message = Trace.simple_error "TODO"
+    (* let generic message =
       let title () = ""
       and message () = message.Region.value
-      in Trace.error ~data:[] title message
+      in Trace.error ~data:[] title message *)
   end
 
 let parse (module IO : IO) parser =

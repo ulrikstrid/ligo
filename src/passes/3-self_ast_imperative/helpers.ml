@@ -2,8 +2,8 @@ open Ast_imperative
 open Trace
 open Stage_common.Helpers
 
-type 'a folder = 'a -> expression -> 'a result
-let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f init e ->
+type ('a,'err) folder = 'a -> expression -> ('a, 'err) result
+let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a, 'err) result = fun f init e ->
   let self = fold_expression f in 
   let%bind init' = f init e in
   match e.expression_content with
@@ -65,7 +65,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
       ok res
      
 
-and fold_cases : 'a folder -> 'a -> matching_expr -> 'a result = fun f init m ->
+and fold_cases : ('a , 'b) folder -> 'a -> matching_expr -> ('a , 'b) result = fun f init m ->
   match m with
   | Match_bool { match_true ; match_false } -> (
       let%bind res = fold_expression f init match_true in
@@ -94,12 +94,12 @@ and fold_cases : 'a folder -> 'a -> matching_expr -> 'a result = fun f init m ->
       ok res
     )
 
-type exp_mapper = expression -> expression result
-type ty_exp_mapper = type_expression -> type_expression result
-type abs_mapper =
-  | Expression of exp_mapper
-  | Type_expression of ty_exp_mapper 
-let rec map_expression : exp_mapper -> expression -> expression result = fun f e ->
+type 'err exp_mapper = expression -> (expression , 'err) result
+type 'err ty_exp_mapper = type_expression -> (type_expression, 'err) result
+type 'err abs_mapper =
+  | Expression of 'err exp_mapper
+  | Type_expression of 'err ty_exp_mapper 
+let rec map_expression : 'err exp_mapper -> expression -> (expression, 'err) result = fun f e ->
   let self = map_expression f in
   let%bind e' = f e in
   let return expression_content = ok { e' with expression_content } in
@@ -178,7 +178,7 @@ let rec map_expression : exp_mapper -> expression -> expression result = fun f e
     )
   | E_literal _ | E_variable _ | E_skip as e' -> return e'
 
-and map_type_expression : ty_exp_mapper -> type_expression -> type_expression result = fun f te ->
+and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_expression , _) result = fun f te ->
   let self = map_type_expression f in
   let%bind te' = f te in
   let return type_content = ok { te' with type_content } in
@@ -196,7 +196,7 @@ and map_type_expression : ty_exp_mapper -> type_expression -> type_expression re
   | T_operator _
   | T_variable _ | T_constant _ -> ok te'
 
-and map_cases : exp_mapper -> matching_expr -> matching_expr result = fun f m ->
+and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr , _) result = fun f m ->
   match m with
   | Match_bool { match_true ; match_false } -> (
       let%bind match_true = map_expression f match_true in
@@ -226,7 +226,7 @@ and map_cases : exp_mapper -> matching_expr -> matching_expr result = fun f m ->
       ok @@ Match_variant (lst', ())
     )
 
-and map_program : abs_mapper -> program -> program result = fun m p ->
+and map_program : 'err abs_mapper -> program -> (program , _) result = fun m p ->
   let aux = fun (x : declaration) ->
     match x,m with
     | (Declaration_constant (t , o , i, e), Expression m') -> (
@@ -242,8 +242,8 @@ and map_program : abs_mapper -> program -> program result = fun m p ->
   in
   bind_map_list (bind_map_location aux) p
 
-type 'a fold_mapper = 'a -> expression -> (bool * 'a * expression) result
-let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expression) result = fun f a e ->
+type ('a, 'err) fold_mapper = 'a -> expression -> ((bool * 'a * expression), 'err) result
+let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> ('a * expression , 'err) result = fun f a e ->
   let self = fold_map_expression f in
   let%bind (continue, init',e') = f a e in
   if (not continue) then ok(init',e')
@@ -325,7 +325,7 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
     )
   | E_literal _ | E_variable _ | E_skip as e' -> ok (init', return e')
 
-and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> ('a * matching_expr) result = fun f init m ->
+and fold_map_cases : ('a , 'err) fold_mapper -> 'a -> matching_expr -> ('a * matching_expr , 'err) result = fun f init m ->
   match m with
   | Match_bool { match_true ; match_false } -> (
       let%bind (init, match_true) = fold_map_expression f init match_true in

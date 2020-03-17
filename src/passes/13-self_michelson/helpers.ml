@@ -3,8 +3,9 @@ open Tezos_utils
 open Michelson
 open Tezos_micheline.Micheline
 
-type mapper = michelson -> michelson result
-let rec map_expression : mapper -> michelson -> michelson result = fun f e ->
+type 'error mapper = michelson -> (michelson,'error) result
+
+let rec map_expression : 'error mapper -> michelson -> (michelson,_) result = fun f e ->
   let self = map_expression f in
   let%bind e' = f e in
   match e' with
@@ -19,7 +20,7 @@ let rec map_expression : mapper -> michelson -> michelson result = fun f e ->
   | x -> ok x
 
 open Memory_proto_alpha.Protocol.Script_ir_translator
-let fetch_contract_inputs : ex_ty -> (ex_ty * ex_ty) result =
+let fetch_contract_inputs : ex_ty -> (ex_ty * ex_ty, _) result =
   let error ()  = simple_fail "Invalid contract: Failed to fetch parameter and storage" in
   function
   | Ex_ty (Lambda_t (in_ty, _, _)) -> (

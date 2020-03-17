@@ -4,7 +4,7 @@ type form =
   | Contract of string
   | Env
 
-let compile (cform: form) (program : Ast_core.program) : (Ast_typed.program * Typer.Solver.state) result =
+let compile (cform: form) (program : Ast_core.program) : (Ast_typed.program * Typer.Solver.state , [> error]) result =
   let%bind (prog_typed , state) = Typer.type_program program in
   let () = Typer.Solver.discard_state state in
   let%bind applied = Self_ast_typed.all_program prog_typed in
@@ -14,13 +14,13 @@ let compile (cform: form) (program : Ast_core.program) : (Ast_typed.program * Ty
   ok @@ (applied', state)
 
 let compile_expression ?(env = Ast_typed.Environment.full_empty) ~(state : Typer.Solver.state) (e : Ast_core.expression)
-    : (Ast_typed.expression * Typer.Solver.state) result =
+    : (Ast_typed.expression * Typer.Solver.state , [> error]) result =
   let%bind (ae_typed,state) = Typer.type_expression_subst env state e in
   let () = Typer.Solver.discard_state state in
   let%bind ae_typed' = Self_ast_typed.all_expression ae_typed in
   ok @@ (ae_typed',state)
 
-let apply (entry_point : string) (param : Ast_core.expression) : Ast_core.expression result =
+let apply (entry_point : string) (param : Ast_core.expression) : (Ast_core.expression , [> error]) result =
   let name = Var.of_name entry_point in
   let entry_point_var : Ast_core.expression =
     { expression_content = Ast_core.E_variable name ;

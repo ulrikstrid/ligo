@@ -14,10 +14,10 @@ type compiled_expression = {
   expr : michelson ;
 }
 
-val get_operator : constant' -> type_value -> expression list -> predicate result
-val translate_expression : expression -> environment -> michelson result
-val translate_function_body : anon_function -> environment_element list -> type_value -> michelson result
-val translate_value : value -> type_value -> michelson result 
+val get_operator : constant' -> type_value -> expression list -> (predicate , [> error]) result
+val translate_expression : expression -> environment -> (michelson , [> error]) result
+val translate_function_body : anon_function -> environment_element list -> type_value -> (michelson , [> error]) result
+val translate_value : value -> type_value -> (michelson , [> error]) result 
 
 (*
 

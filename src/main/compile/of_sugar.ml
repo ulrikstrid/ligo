@@ -6,10 +6,10 @@ type form =
   | Contract of string
   | Env
 
-let compile (program : program) : Ast_core.program result =
+let compile (program : program) : (Ast_core.program , [> error]) result =
   compile_program program
 
-let compile_expression (e : expression) : Ast_core.expression result =
+let compile_expression (e : expression) : (Ast_core.expression , [> error]) result =
   compile_expression e
 
 let pretty_print formatter (program : program) = 

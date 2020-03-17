@@ -9,7 +9,6 @@ module Option = X_option
 module Int = X_int
 module Tuple = Tuple
 module Map = X_map
-module Dictionary = Dictionary
 module Tree = Tree
 module Region = Region
 module Pos = Pos

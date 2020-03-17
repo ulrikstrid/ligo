@@ -9,7 +9,8 @@ module Wrap = struct
 
   module Errors = struct
 
-    let unknown_type_constructor (ctor : string) (te : T.type_expression) () =
+    let unknown_type_constructor (_ctor : string) (_te : T.type_expression) = simple_error "TODO"
+    (* let unknown_type_constructor (ctor : string) (te : T.type_expression) () =
       let title = (thunk "unknown type constructor") in
       (* TODO: sanitize the "ctor" argument before displaying it. *)
       let message () = ctor in
@@ -18,7 +19,7 @@ module Wrap = struct
         ("expression" , fun () -> Format.asprintf "%a"  T.PP.type_expression te) ;
         (* ("location" , fun () -> Format.asprintf "%a" Location.pp te.location) *) (* TODO *)
       ] in
-      error ~data title message ()
+      error ~data title message () *)
   end
 
 
@@ -1169,7 +1170,7 @@ let discard_state (_ : state) = ()
 (*   in List.map aux state *)
 
 (* This is the solver *)
-let aggregate_constraints : state -> type_constraint list -> state result = fun state newc ->
+let aggregate_constraints : state -> type_constraint list -> (state,_) result = fun state newc ->
   (* TODO: Iterate over constraints *)
   let _todo = ignore (state, newc) in
   let (a, b) = select_and_propagate_all state.already_selected newc state.structured_dbs in

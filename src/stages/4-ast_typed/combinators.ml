@@ -2,7 +2,10 @@ open Trace
 open Types
 
 module Errors = struct
-  let not_a_x_expression expected_expression actual_expression () =
+  let not_a_x_expression _expected_expression _actual_expression = simple_error "TODO"
+  let not_a_x_type _expected_type _actual_type = simple_error "TODO"
+  let declaration_not_found _expected_declaration = simple_error "TODO"
+  (* let not_a_x_expression expected_expression actual_expression () =
     let message () =
       Format.asprintf "Expected a %s expression but got a %a expression"
         expected_expression
@@ -20,7 +23,7 @@ module Errors = struct
     let message () =
       Format.asprintf "Could not find a declaration with the name %s"
         expected_declaration in
-    error (thunk "No declaration with the given name") message
+    error (thunk "No declaration with the given name") message *)
 end
 
 let make_t type_content core = { type_content ; type_meta=core }
@@ -81,68 +84,68 @@ let get_expression (x:expression) = x.expression_content
 
 let get_lambda e : _ result = match e.expression_content with
   | E_lambda l -> ok l
-  | _ -> fail @@ Errors.not_a_x_expression "lambda" e ()
+  | _ -> fail @@ Errors.not_a_x_expression "lambda" e
 
 let get_lambda_with_type e =
   match (e.expression_content , e.type_expression.type_content) with
   | E_lambda l , T_arrow {type1;type2} -> ok (l , (type1,type2))
   | _ -> simple_fail "not a lambda with functional type"
 
-let get_t_bool (t:type_expression) : unit result = match t.type_content with
+let get_t_bool (t:type_expression) : (unit,_) result = match t.type_content with
   | T_constant (TC_bool) -> ok ()
-  | _ -> fail @@ Errors.not_a_x_type "bool" t ()
+  | _ -> fail @@ Errors.not_a_x_type "bool" t
 
-let get_t_int (t:type_expression) : unit result = match t.type_content with
+let get_t_int (t:type_expression) : (unit,_) result = match t.type_content with
   | T_constant (TC_int) -> ok ()
-  | _ -> fail @@ Errors.not_a_x_type "int" t ()
+  | _ -> fail @@ Errors.not_a_x_type "int" t
 
-let get_t_nat (t:type_expression) : unit result = match t.type_content with
+let get_t_nat (t:type_expression) : (unit,_) result = match t.type_content with
   | T_constant (TC_nat) -> ok ()
-  | _ -> fail @@ Errors.not_a_x_type "nat" t ()
+  | _ -> fail @@ Errors.not_a_x_type "nat" t
 
-let get_t_unit (t:type_expression) : unit result = match t.type_content with
+let get_t_unit (t:type_expression) : (unit,_) result = match t.type_content with
   | T_constant (TC_unit) -> ok ()
-  | _ -> fail @@ Errors.not_a_x_type "unit" t ()
+  | _ -> fail @@ Errors.not_a_x_type "unit" t
 
-let get_t_mutez (t:type_expression) : unit result = match t.type_content with
+let get_t_mutez (t:type_expression) : (unit,_) result = match t.type_content with
   | T_constant (TC_mutez) -> ok ()
-  | _ -> fail @@ Errors.not_a_x_type "tez" t ()
+  | _ -> fail @@ Errors.not_a_x_type "tez" t
 
-let get_t_bytes (t:type_expression) : unit result = match t.type_content with
+let get_t_bytes (t:type_expression) : (unit,_) result = match t.type_content with
   | T_constant (TC_bytes) -> ok ()
-  | _ -> fail @@ Errors.not_a_x_type "bytes" t ()
+  | _ -> fail @@ Errors.not_a_x_type "bytes" t
 
-let get_t_string (t:type_expression) : unit result = match t.type_content with
+let get_t_string (t:type_expression) : (unit,_) result = match t.type_content with
   | T_constant (TC_string) -> ok ()
-  | _ -> fail @@ Errors.not_a_x_type "string" t ()
+  | _ -> fail @@ Errors.not_a_x_type "string" t
 
-let get_t_contract (t:type_expression) : type_expression result = match t.type_content with
+let get_t_contract (t:type_expression) : (type_expression,_) result = match t.type_content with
   | T_operator (TC_contract x) -> ok x
-  | _ -> fail @@ Errors.not_a_x_type "contract" t ()
+  | _ -> fail @@ Errors.not_a_x_type "contract" t
 
-let get_t_option (t:type_expression) : type_expression result = match t.type_content with
+let get_t_option (t:type_expression) : (type_expression,_) result = match t.type_content with
   | T_operator (TC_option o) -> ok o
-  | _ -> fail @@ Errors.not_a_x_type "option" t ()
+  | _ -> fail @@ Errors.not_a_x_type "option" t
 
-let get_t_list (t:type_expression) : type_expression result = match t.type_content with
+let get_t_list (t:type_expression) : (type_expression,_) result = match t.type_content with
   | T_operator (TC_list l) -> ok l
-  | _ -> fail @@ Errors.not_a_x_type "list" t ()
+  | _ -> fail @@ Errors.not_a_x_type "list" t
 
-let get_t_set (t:type_expression) : type_expression result = match t.type_content with
+let get_t_set (t:type_expression) : (type_expression,_) result = match t.type_content with
   | T_operator (TC_set s) -> ok s
-  | _ -> fail @@ Errors.not_a_x_type "set" t ()
+  | _ -> fail @@ Errors.not_a_x_type "set" t
 
-let get_t_key (t:type_expression) : unit result = match t.type_content with
+let get_t_key (t:type_expression) : (unit,_) result = match t.type_content with
   | T_constant (TC_key) -> ok ()
-  | _ -> fail @@ Errors.not_a_x_type "key" t ()
+  | _ -> fail @@ Errors.not_a_x_type "key" t
 
-let get_t_signature (t:type_expression) : unit result = match t.type_content with
+let get_t_signature (t:type_expression) : (unit,_) result = match t.type_content with
   | T_constant (TC_signature) -> ok ()
-  | _ -> fail @@ Errors.not_a_x_type "signature" t ()
+  | _ -> fail @@ Errors.not_a_x_type "signature" t
 
-let get_t_key_hash (t:type_expression) : unit result = match t.type_content with
+let get_t_key_hash (t:type_expression) : (unit,_) result = match t.type_content with
   | T_constant (TC_key_hash) -> ok ()
-  | _ -> fail @@ Errors.not_a_x_type "key_hash" t ()
+  | _ -> fail @@ Errors.not_a_x_type "key_hash" t
 
 let tuple_of_record (m: _ LMap.t) =
   let aux i = 
@@ -151,24 +154,24 @@ let tuple_of_record (m: _ LMap.t) =
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
 
-let get_t_tuple (t:type_expression) : type_expression list result = match t.type_content with
+let get_t_tuple (t:type_expression) : (type_expression list,_) result = match t.type_content with
   | T_record lst -> ok @@ tuple_of_record lst
-  | _ -> fail @@ Errors.not_a_x_type "tuple" t ()
+  | _ -> fail @@ Errors.not_a_x_type "tuple" t
 
-let get_t_pair (t:type_expression) : (type_expression * type_expression) result = match t.type_content with
+let get_t_pair (t:type_expression) : (type_expression * type_expression,_) result = match t.type_content with
   | T_record m ->
       let lst = tuple_of_record m in
       let%bind () =
-        trace_strong (Errors.not_a_x_type "pair (tuple with two elements)" t ()) @@
+        trace_strong (Errors.not_a_x_type "pair (tuple with two elements)" t) @@
         Assert.assert_list_size lst 2 in
       ok List.(nth lst 0 , nth lst 1)
-  | _ -> fail @@ Errors.not_a_x_type "pair (tuple with two elements)" t ()
+  | _ -> fail @@ Errors.not_a_x_type "pair (tuple with two elements)" t
 
-let get_t_function (t:type_expression) : (type_expression * type_expression) result = match t.type_content with
+let get_t_function (t:type_expression) : (type_expression * type_expression,_) result = match t.type_content with
   | T_arrow {type1;type2} -> ok (type1,type2)
   | _ -> simple_fail "not a function"
 
-let get_t_function_full (t:type_expression) : (type_expression * type_expression) result =
+let get_t_function_full (t:type_expression) : (type_expression * type_expression,_) result =
   let%bind _ = get_t_function t in
   let rec aux n t = match t.type_content with 
     | T_arrow {type1;type2} -> 
@@ -179,37 +182,37 @@ let get_t_function_full (t:type_expression) : (type_expression * type_expression
   let (input,output) = aux 0 t in
   ok @@ (t_record (LMap.of_list input) (),output) 
 
-let get_t_sum (t:type_expression) : type_expression constructor_map result = match t.type_content with
+let get_t_sum (t:type_expression) : (type_expression constructor_map,_) result = match t.type_content with
   | T_sum m -> ok m
-  | _ -> fail @@ Errors.not_a_x_type "sum" t ()
+  | _ -> fail @@ Errors.not_a_x_type "sum" t
 
-let get_t_record (t:type_expression) : type_expression label_map result = match t.type_content with
+let get_t_record (t:type_expression) : (type_expression label_map,_) result = match t.type_content with
   | T_record m -> ok m
-  | _ -> fail @@ Errors.not_a_x_type "record" t ()
+  | _ -> fail @@ Errors.not_a_x_type "record" t
 
-let get_t_map (t:type_expression) : (type_expression * type_expression) result =
+let get_t_map (t:type_expression) : (type_expression * type_expression,_) result =
   match t.type_content with
   | T_operator (TC_map (k,v)) -> ok (k, v)
-  | _ -> fail @@ Errors.not_a_x_type "map" t ()
+  | _ -> fail @@ Errors.not_a_x_type "map" t
 
-let get_t_big_map (t:type_expression) : (type_expression * type_expression) result =
+let get_t_big_map (t:type_expression) : (type_expression * type_expression,_) result =
   match t.type_content with
   | T_operator (TC_big_map (k,v)) -> ok (k, v)
-  | _ -> fail @@ Errors.not_a_x_type "big_map" t ()
+  | _ -> fail @@ Errors.not_a_x_type "big_map" t
 
-let get_t_map_key : type_expression -> type_expression result = fun t ->
+let get_t_map_key : type_expression -> (type_expression,_) result = fun t ->
   let%bind (key , _) = get_t_map t in
   ok key
 
-let get_t_map_value : type_expression -> type_expression result = fun t ->
+let get_t_map_value : type_expression -> (type_expression,_) result = fun t ->
   let%bind (_ , value) = get_t_map t in
   ok value
 
-let get_t_big_map_key : type_expression -> type_expression result = fun t ->
+let get_t_big_map_key : type_expression -> (type_expression,_) result = fun t ->
   let%bind (key , _) = get_t_big_map t in
   ok key
 
-let get_t_big_map_value : type_expression -> type_expression result = fun t ->
+let get_t_big_map_value : type_expression -> (type_expression,_) result = fun t ->
   let%bind (_ , value) = get_t_big_map t in
   ok value
 
@@ -220,12 +223,12 @@ let assert_t_map = fun t ->
 let is_t_map = Function.compose to_bool get_t_map
 let is_t_big_map = Function.compose to_bool get_t_big_map
 
-let assert_t_mutez : type_expression -> unit result = get_t_mutez
+let assert_t_mutez : type_expression -> (unit,_) result = get_t_mutez
 let assert_t_key = get_t_key
 let assert_t_signature = get_t_signature
 let assert_t_key_hash = get_t_key_hash
 
-let assert_t_contract (t:type_expression) : unit result = match t.type_content with
+let assert_t_contract (t:type_expression) : (unit,_) result = match t.type_content with
   | T_operator (TC_contract _) -> ok ()
   | _ -> simple_fail "not a contract"
 
@@ -248,25 +251,25 @@ let assert_t_string = fun t ->
   let%bind _ = get_t_string t in
   ok ()
 
-let assert_t_operation (t:type_expression) : unit result =
+let assert_t_operation (t:type_expression) : (unit,_) result =
   match t.type_content with
   | T_constant (TC_operation) -> ok ()
   | _ -> simple_fail "assert: not an operation"
 
-let assert_t_list_operation (t : type_expression) : unit result =
+let assert_t_list_operation (t : type_expression) : (unit,_) result =
   let%bind t' = get_t_list t in
   assert_t_operation t'
 
-let assert_t_int : type_expression -> unit result = fun t -> match t.type_content with
+let assert_t_int : type_expression -> (unit,_) result = fun t -> match t.type_content with
   | T_constant (TC_int) -> ok ()
   | _ -> simple_fail "not an int"
 
-let assert_t_nat : type_expression -> unit result = fun t -> match t.type_content with
+let assert_t_nat : type_expression -> (unit,_) result = fun t -> match t.type_content with
   | T_constant (TC_nat) -> ok ()
   | _ -> simple_fail "not an nat"
 
-let assert_t_bool : type_expression -> unit result = fun v -> get_t_bool v
-let assert_t_unit : type_expression -> unit result = fun v -> get_t_unit v
+let assert_t_bool : type_expression -> (unit,_) result = fun v -> get_t_bool v
+let assert_t_unit : type_expression -> (unit,_) result = fun v -> get_t_unit v
 
 let e_record map : expression_content = E_record map
 let ez_e_record (lst : (label * expression) list) : expression_content =
@@ -340,10 +343,10 @@ let get_a_record_accessor = fun t ->
   | E_record_accessor {expr ; label} -> ok (expr , label)
   | _ -> simple_fail "not an accessor"
 
-let get_declaration_by_name : program -> string -> declaration result = fun p name ->
+let get_declaration_by_name : program -> string -> (declaration,_) result = fun p name ->
   let aux : declaration -> bool = fun declaration ->
     match declaration with
     | Declaration_constant (d, _, _, _) -> d = Var.of_name name
   in
-  trace_option (Errors.declaration_not_found name ()) @@
+  trace_option (Errors.declaration_not_found name) @@
   List.find_opt aux @@ List.map Location.unwrap p

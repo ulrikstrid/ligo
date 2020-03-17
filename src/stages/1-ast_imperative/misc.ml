@@ -3,7 +3,14 @@ open Types
 
 open Stage_common.Helpers
 module Errors = struct
-  let different_literals_because_different_types name a b () =
+  type 'a assert_eq_tracer = { a:expression ; b:expression ; error : 'a }
+  
+  let not_equal_tracer a b error   = `Imperative_Not_equal { a ; b ; error }
+
+  let different_literals_because_different_types _name _a _b= simple_error "TODO"
+  let different_literals _name _a _b = simple_error "TODO"
+  let error_uncomparable_literals _name _a _b = simple_error "TODO"
+  (* let different_literals_because_different_types name a b () =
     let title () = "literals have different types: " ^ name in
     let message () = "" in
     let data = [
@@ -28,11 +35,11 @@ module Errors = struct
       ("a" , fun () -> Format.asprintf "%a" PP.literal a) ;
       ("b" , fun () -> Format.asprintf "%a" PP.literal b )
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 end
 open Errors
 
-let assert_literal_eq (a, b : literal * literal) : unit result =
+let assert_literal_eq (a, b : literal * literal) : (unit,_) result =
   match (a, b) with
   | Literal_bool a, Literal_bool b when a = b -> ok ()
   | Literal_bool _, Literal_bool _ -> fail @@ different_literals "different bools" a b
@@ -77,12 +84,12 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_chain_id _, Literal_chain_id _ -> fail @@ different_literals "different chain_id" a b
   | Literal_chain_id _, _ -> fail @@ different_literals_because_different_types "chain_id vs non-chain_id" a b
 
-let rec assert_value_eq (a, b: (expression * expression )) : unit result =
-  Format.printf "in assert_value_eq %a %a\n%!" PP.expression a PP.expression b;
+let rec assert_value_eq (a, b: (expression * expression )) : (unit,_) result =
+  (* Format.printf "in assert_value_eq %a %a\n%!" PP.expression a PP.expression b;
   let error_content () =
     Format.asprintf "\n@[<v>- %a@;- %a]" PP.expression a PP.expression b
-  in
-  trace (fun () -> error (thunk "not equal") error_content ()) @@
+  in *)
+  trace (not_equal_tracer a b) @@
   match (a.expression_content , b.expression_content) with
   | E_literal a , E_literal b ->
       assert_literal_eq (a, b)
@@ -98,12 +105,12 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit result =
   | E_constant _ , E_constant _ ->
       simple_fail "different constants"
   | E_constant _ , _ ->
-      let error_content () =
+      (* let error_content () =
         Format.asprintf "%a vs %a"
           PP.expression a
           PP.expression b
-      in
-      fail @@ (fun () -> error (thunk "comparing constant with other expression") error_content ())
+      in *)
+      fail @@ simple_error "comparing constant with other expression"
 
   | E_constructor (ca), E_constructor (cb) when ca.constructor = cb.constructor -> (
       let%bind _eq = assert_value_eq (ca.element, cb.element) in

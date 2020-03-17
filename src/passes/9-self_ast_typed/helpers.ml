@@ -2,8 +2,8 @@ open Ast_typed
 open Trace
 open Stage_common.Helpers
 
-type 'a folder = 'a -> expression -> 'a result
-let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f init e ->
+type ('a ,'err) folder = 'a -> expression -> ('a , 'err) result
+let rec fold_expression : ('a , [> error]) folder -> 'a -> expression -> ('a , [> error]) result = fun f init e ->
   let self = fold_expression f in 
   let%bind init' = f init e in
   match e.expression_content with
@@ -58,7 +58,7 @@ let rec fold_expression : 'a folder -> 'a -> expression -> 'a result = fun f ini
       ok res
     )
 
-and fold_cases : 'a folder -> 'a -> matching_expr -> 'a result = fun f init m ->
+and fold_cases : ('a , 'err) folder -> 'a -> matching_expr -> ('a , 'err) result = fun f init m ->
   match m with
   | Match_bool { match_true ; match_false } -> (
       let%bind res = fold_expression f init match_true in
@@ -87,8 +87,8 @@ and fold_cases : 'a folder -> 'a -> matching_expr -> 'a result = fun f init m ->
       ok res
     )
 
-type mapper = expression -> expression result
-let rec map_expression : mapper -> expression -> expression result = fun f e ->
+type 'err mapper = expression -> (expression , 'err) result
+let rec map_expression : [> error] mapper -> expression -> (expression , [> error]) result = fun f e ->
   let self = map_expression f in
   let%bind e' = f e in
   let return expression_content = ok { e' with expression_content } in
@@ -160,7 +160,7 @@ let rec map_expression : mapper -> expression -> expression result = fun f e ->
   | E_literal _ | E_variable _ as e' -> return e'
 
 
-and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
+and map_cases : [> error] mapper -> matching_expr -> (matching_expr , [> error]) result = fun f m ->
   match m with
   | Match_bool { match_true ; match_false } -> (
       let%bind match_true = map_expression f match_true in
@@ -190,7 +190,7 @@ and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
       ok @@ Match_variant (lst', te)
     )
 
-and map_program : mapper -> program -> program result = fun m p ->
+and map_program : [> error] mapper -> program -> (program, [> error]) result = fun m p ->
   let aux = fun (x : declaration) ->
     match x with
     | Declaration_constant (n , e , i, env) -> (
@@ -200,8 +200,8 @@ and map_program : mapper -> program -> program result = fun m p ->
   in
   bind_map_list (bind_map_location aux) p
 
-type 'a fold_mapper = 'a -> expression -> (bool * 'a * expression) result
-let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expression) result = fun f a e ->
+type ('a , 'err) fold_mapper = 'a -> expression -> (bool * 'a * expression , 'err) result
+let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a * expression , 'err) result = fun f a e ->
   let self = fold_map_expression f in
   let%bind (continue, init',e') = f a e in
   if (not continue) then ok(init',e')
@@ -275,7 +275,7 @@ let rec fold_map_expression : 'a fold_mapper -> 'a -> expression -> ('a * expres
     )
   | E_literal _ | E_variable _ as e' -> ok (init', return e')
 
-and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> ('a * matching_expr) result = fun f init m ->
+and fold_map_cases : ('a , [> error]) fold_mapper -> 'a -> matching_expr -> ('a * matching_expr , [> error]) result = fun f init m ->
   match m with
   | Match_bool { match_true ; match_false } -> (
       let%bind (init, match_true) = fold_map_expression f init match_true in
@@ -305,7 +305,7 @@ and fold_map_cases : 'a fold_mapper -> 'a -> matching_expr -> ('a * matching_exp
       ok @@ (init, Match_variant (lst', te))
     )  
 
-and fold_map_program : 'a fold_mapper -> 'a -> program -> ('a * program) result = fun m init p ->
+and fold_map_program : ('a, [> error]) fold_mapper -> 'a -> program -> ('a * program , [> error]) result = fun m init p ->
   let aux = fun (acc,acc_prg) (x : declaration Location.wrap) ->
     match Location.unwrap x with
     | Declaration_constant (v , e , i, env) -> (
@@ -317,7 +317,8 @@ and fold_map_program : 'a fold_mapper -> 'a -> program -> ('a * program) result 
   bind_fold_list aux (init,[]) p
 
 module Errors = struct
-  let bad_contract_io entrypoint e () =
+  let bad_contract_io _entrypoint _e = simple_error "TODO"
+  (* let bad_contract_io entrypoint e () =
     let title = thunk "badly typed contract" in
     let message () = Format.asprintf "unexpected entrypoint type" in
     let data = [
@@ -325,9 +326,10 @@ module Errors = struct
       ("entrypoint" , fun () -> entrypoint);
       ("entrypoint_type" , fun () -> Format.asprintf "%a" Ast_typed.PP.type_expression e.type_expression)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let expected_list_operation entrypoint got e () =
+  let expected_list_operation _entrypoint _got _e = simple_error "TODO"
+  (* let expected_list_operation entrypoint got e () =
     let title = thunk "bad return type" in
     let message () = Format.asprintf "expected %a, got %a"
       Ast_typed.PP.type_expression {got with type_content= T_operator (TC_list {got with type_content=T_constant TC_operation})}
@@ -337,9 +339,10 @@ module Errors = struct
       ("location" , fun () -> Format.asprintf "%a" Location.pp e.location);
       ("entrypoint" , fun () -> entrypoint)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let expected_same entrypoint t1 t2 e () =
+  let expected_same _entrypoint _t1 _t2 _e = simple_error "TODO"
+  (* let expected_same entrypoint t1 t2 e () =
     let title = thunk "badly typed contract" in
     let message () = Format.asprintf "expected {%a} and {%a} to be the same in the entrypoint type"
       Ast_typed.PP.type_expression t1
@@ -350,7 +353,7 @@ module Errors = struct
       ("entrypoint" , fun () -> entrypoint);
       ("entrypoint_type" , fun () -> Format.asprintf "%a" Ast_typed.PP.type_expression e.type_expression)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
   
 end
 
@@ -359,7 +362,7 @@ type contract_type = {
   storage : Ast_typed.type_expression ;
 }
 
-let fetch_contract_type : string -> program -> contract_type result = fun main_fname program ->
+let fetch_contract_type : string -> program -> (contract_type , [> error]) result = fun main_fname program ->
   let main_decl = List.rev @@ List.filter
     (fun declt ->
       let (Declaration_constant (v , _ , _ , _)) = Location.unwrap declt in

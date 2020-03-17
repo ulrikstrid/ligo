@@ -11,7 +11,8 @@ module Solver = Solver
 type environment = Environment.t
 
 module Errors = struct
-  let unbound_type_variable (e:environment) (tv:I.type_variable) () =
+  let unbound_type_variable (_e:environment) (_tv:I.type_variable) = simple_error "TODO"
+  (* let unbound_type_variable (e:environment) (tv:I.type_variable) () =
     let title = (thunk "unbound type variable") in
     let message () = "" in
     let data = [
@@ -20,9 +21,10 @@ module Errors = struct
       (* ("location" , fun () -> Format.asprintf "%a" Location.pp (n.location)) ; *)
       ("in" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let unbound_variable (e:environment) (n:I.expression_variable) (loc:Location.t) () =
+  let unbound_variable (_e:environment) (_n:I.expression_variable) (_loc:Location.t) = simple_error "TODO"
+  (* let unbound_variable (e:environment) (n:I.expression_variable) (loc:Location.t) () =
     let name () = Format.asprintf "%a" I.PP.expression_variable n in
     let title = (thunk ("unbound variable "^(name ()))) in
     let message () = "" in
@@ -31,9 +33,10 @@ module Errors = struct
       ("environment" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let match_empty_variant : I.matching_expr -> Location.t -> unit -> _ =
+  let match_empty_variant : I.matching_expr -> Location.t ->  _ = fun _matching _loc -> simple_error "TODO"
+  (* let match_empty_variant : I.matching_expr -> Location.t -> unit -> _ =
     fun matching loc () ->
       let title = (thunk "match with no cases") in
       let message () = "" in
@@ -41,9 +44,11 @@ module Errors = struct
         ("variant" , fun () -> Format.asprintf "%a" I.PP.matching_type matching) ;
         ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
       ] in
-      error ~data title message ()
+      error ~data title message () *)
 
-  let match_missing_case : I.matching_expr -> Location.t -> unit -> _ =
+  let match_missing_case : I.matching_expr -> Location.t -> _ =
+    fun _matching _loc -> simple_error "TODO"
+  (* let match_missing_case : I.matching_expr -> Location.t -> unit -> _ =
     fun matching loc () ->
       let title = (thunk "missing case in match") in
       let message () = "" in
@@ -51,9 +56,11 @@ module Errors = struct
         ("variant" , fun () -> Format.asprintf "%a" I.PP.matching_type matching) ;
         ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
       ] in
-      error ~data title message ()
+      error ~data title message () *)
 
-  let match_redundant_case : I.matching_expr -> Location.t -> unit -> _ =
+  let match_redundant_case : I.matching_expr -> Location.t -> _ =
+    fun _matching _loc -> simple_error "TODO"
+  (* let match_redundant_case : I.matching_expr -> Location.t -> unit -> _ =
     fun matching loc () ->
       let title = (thunk "redundant case in match") in
       let message () = "" in
@@ -61,9 +68,10 @@ module Errors = struct
         ("variant" , fun () -> Format.asprintf "%a" I.PP.matching_type matching) ;
         ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
       ] in
-      error ~data title message ()
+      error ~data title message () *)
 
-  let unbound_constructor (e:environment) (c:I.constructor') (loc:Location.t) () =
+  let unbound_constructor (_e:environment) (_c:I.constructor') (_loc:Location.t) = simple_error "TODO"
+  (* let unbound_constructor (e:environment) (c:I.constructor') (loc:Location.t) () =
     let title = (thunk "unbound constructor") in
     let message () = "" in
     let data = [
@@ -71,9 +79,10 @@ module Errors = struct
       ("environment" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let wrong_arity (n:string) (expected:int) (actual:int) (loc : Location.t) () =
+  let wrong_arity (_n:string) (_expected:int) (_actual:int) (_loc : Location.t) = simple_error "TODO"
+  (* let wrong_arity (n:string) (expected:int) (actual:int) (loc : Location.t) () =
     let title () = "wrong arity" in
     let message () = "" in
     let data = [
@@ -82,9 +91,10 @@ module Errors = struct
       ("actual" , fun () -> Format.asprintf "%d" actual) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let match_tuple_wrong_arity (expected:'a list) (actual:'b list) (loc:Location.t) () =
+  let match_tuple_wrong_arity (_expected:'a list) (_actual:'b list) (_loc:Location.t) = simple_error "TODO"
+  (* let match_tuple_wrong_arity (expected:'a list) (actual:'b list) (loc:Location.t) () =
     let title () = "matching tuple of different size" in
     let message () = "" in
     let data = [
@@ -92,18 +102,20 @@ module Errors = struct
       ("actual" , fun () -> Format.asprintf "%d" (List.length actual)) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
   (* TODO: this should be a trace_info? *)
-  let program_error (p:I.program) () =
+  let program_error (_p:I.program) = simple_error "TODO"
+  (* let program_error (p:I.program) () =
     let message () = "" in
     let title = (thunk "typing program") in
     let data = [
       ("program" , fun () -> Format.asprintf "%a" I.PP.program p)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let constant_declaration_error (name: I.expression_variable) (ae:I.expr) (expected: O.type_expression option) () =
+  let constant_declaration_error_tracer (_name: I.expression_variable) (_ae:I.expr) (_expected: O.type_expression option) _err = simple_error "TODO"
+  (* let constant_declaration_error (name: I.expression_variable) (ae:I.expr) (expected: O.type_expression option) () =
     let title = (thunk "typing constant declaration") in
     let message () = "" in
     let data = [
@@ -115,9 +127,13 @@ module Errors = struct
           | Some expected -> Format.asprintf "%a" O.PP.type_expression expected) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp ae.location)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let match_error : ?msg:string -> expected: I.matching_expr -> actual: O.type_expression -> Location.t -> unit -> _ =
+  let match_error : ?_msg:string -> _expected: I.matching_expr -> _actual: O.type_expression -> Location.t -> _ =
+    fun ?(_msg = "") ~_expected ~_actual _loc -> simple_error "TODO"
+  let match_error_tracer : ?_msg:string -> _expected: I.matching_expr -> _actual: O.type_expression -> Location.t -> [> error] -> _ =
+    fun ?(_msg = "") ~_expected ~_actual _loc _err -> simple_error "TODO"
+  (* let match_error : ?msg:string -> expected: I.matching_expr -> actual: O.type_expression -> Location.t -> unit -> _ =
     fun ?(msg = "") ~expected ~actual loc () ->
       let title = (thunk "typing match") in
       let message () = msg in
@@ -126,7 +142,7 @@ module Errors = struct
         ("actual" , fun () -> Format.asprintf "%a" O.PP.type_expression actual) ;
         ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
       ] in
-      error ~data title message ()
+      error ~data title message () *)
 
   (* let needs_annotation (e : I.expression) (case : string) () =
    *   let title = (thunk "this expression must be annotated with its type") in
@@ -148,7 +164,8 @@ module Errors = struct
    *   ] in
    *   error ~data title message () *)
 
-  let type_error ?(msg="") ~(expected: O.type_expression) ~(actual: O.type_expression) ~(expression : I.expression) (loc:Location.t) () =
+  let type_error_tracer ?(msg="") ~(expected: O.type_expression) ~(actual: O.type_expression) ~(expression : I.expression) (loc:Location.t) (_err) = `Fake (msg,expected,actual,expression,loc)
+  (* let type_error ?(msg="") ~(expected: O.type_expression) ~(actual: O.type_expression) ~(expression : I.expression) (loc:Location.t) () =
     let title = (thunk "type error") in
     let message () = msg in
     let data = [
@@ -157,7 +174,9 @@ module Errors = struct
       ("expression" , fun () -> Format.asprintf "%a" I.PP.expression expression) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
+
+  let in_match_variant_tracer _err = simple_error "TODO"
 
 end
 
@@ -183,7 +202,7 @@ let rec type_program (p:I.program) : O.program result =
 (*
   Extract pairs of (name,type) in the declaration and add it to the environment
 *)
-let rec type_declaration env state : I.declaration -> (environment * Solver.state * O.declaration option) result = function
+let rec type_declaration env state : I.declaration -> (environment * Solver.state * O.declaration option, [>error]) result = function
   | Declaration_type (type_name , type_expression) ->
     let%bind tv = evaluate_type env type_expression in
     let env' = Environment.add_type (type_name) tv env in
@@ -194,24 +213,24 @@ let rec type_declaration env state : I.declaration -> (environment * Solver.stat
     *)
       let%bind tv'_opt = bind_map_option (evaluate_type env) tv_opt in
       let%bind (ae' , state') =
-        trace (constant_declaration_error name expression tv'_opt) @@
+        trace (constant_declaration_error_tracer name expression tv'_opt) @@
         type_expression env state expression in
       let env' = Environment.add_ez_ae name ae' env in
       ok (env', state' , Some (O.Declaration_constant (name, ae', inline, env') ))
     )
 
-and type_match : environment -> Solver.state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O.matching_expr * Solver.state) result =
+and type_match : environment -> Solver.state -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O.matching_expr * Solver.state, [> error]) result =
   fun e state t i ae loc -> match i with
     | Match_bool {match_true ; match_false} ->
       let%bind _ =
-        trace_strong (match_error ~expected:i ~actual:t loc)
+        trace_strong (match_error ~_expected:i ~_actual:t loc)
         @@ get_t_bool t in
       let%bind (match_true , state') = type_expression e state match_true in
       let%bind (match_false , state'') = type_expression e state' match_false in
       ok (O.Match_bool {match_true ; match_false} , state'')
     | Match_option {match_none ; match_some} ->
       let%bind t_opt =
-        trace_strong (match_error ~expected:i ~actual:t loc)
+        trace_strong (match_error ~_expected:i ~_actual:t loc)
         @@ get_t_option t in
       let%bind (match_none , state') = type_expression e state match_none in
       let (n, b, _) = match_some in
@@ -220,7 +239,7 @@ and type_match : environment -> Solver.state -> O.type_expression -> I.matching_
       ok (O.Match_option {match_none ; match_some = (n, b', t_opt)} , state'')
     | Match_list {match_nil ; match_cons} ->
       let%bind t_elt =
-        trace_strong (match_error ~expected:i ~actual:t loc)
+        trace_strong (match_error ~_expected:i ~_actual:t loc)
         @@ get_t_list t in
       let%bind (match_nil , state') = type_expression e state match_nil in
       let (hd, tl, b, _) = match_cons in
@@ -230,7 +249,7 @@ and type_match : environment -> Solver.state -> O.type_expression -> I.matching_
       ok (O.Match_list {match_nil ; match_cons = (hd, tl, b',t)} , state'')
     | Match_tuple ((lst, b),_) ->
       let%bind t_tuple =
-        trace_strong (match_error ~expected:i ~actual:t loc)
+        trace_strong (match_error ~_expected:i ~_actual:t loc)
         @@ get_t_tuple t in
       let%bind lst' =
         generic_try (match_tuple_wrong_arity t_tuple lst loc)
@@ -248,7 +267,7 @@ and type_match : environment -> Solver.state -> O.type_expression -> I.matching_
           let%bind acc = match acc with
             | None -> ok (Some variant)
             | Some variant' -> (
-                trace (type_error
+                trace (type_error_tracer
                          ~msg:"in match variant"
                          ~expected:variant
                          ~actual:variant'
@@ -259,14 +278,14 @@ and type_match : environment -> Solver.state -> O.type_expression -> I.matching_
                 ok (Some variant)
               ) in
           ok acc in
-        trace (simple_info "in match variant") @@
+        trace in_match_variant_tracer @@
         bind_fold_list aux None lst in
       let%bind variant =
         trace_option (match_empty_variant i loc) @@
         variant_opt in
       let%bind () =
         let%bind variant_cases' =
-          trace (match_error ~expected:i ~actual:t loc)
+          trace (match_error_tracer ~_expected:i ~_actual:t loc)
           @@ Ast_typed.Combinators.get_t_sum variant in
         let variant_cases = List.map fst @@ I.CMap.to_kv_list variant_cases' in
         let match_cases = List.map (Function.compose fst fst) lst in
@@ -297,7 +316,7 @@ and type_match : environment -> Solver.state -> O.type_expression -> I.matching_
   Recursively search the type_expression and return a result containing the
   type_value at the leaves
 *)
-and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression result =
+and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, [> error]) result =
   let return tv' = ok (make_t tv' (Some t)) in
   match t.type_content with
   | T_arrow {type1;type2} ->
@@ -356,7 +375,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
         in
       return (T_operator (opt))
 
-and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * Solver.state) result = fun e state ?tv_opt ae ->
+and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * Solver.state, [> error]) result = fun e state ?tv_opt ae ->
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
   let open Solver in
   let module L = Logger.Stateful() in
@@ -367,7 +386,7 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
     let expr' = make_a_e ~location expr tv e in
     ok @@ (expr' , new_state) in
   let return_wrapped expr state (constraints , expr_type) = return expr state constraints expr_type in
-  let main_error =
+  (* let main_error =
     let title () = "typing expression" in
     let content () = "" in
     let data = [
@@ -375,8 +394,9 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
       ("location" , fun () -> Format.asprintf "%a" Location.pp @@ ae.location) ;
       ("misc" , fun () -> L.get ()) ;
     ] in
-    error ~data title content in
-  trace main_error @@
+    error ~data title content in *)
+    let main_error_tracer _err = simple_error "TODO" in
+  trace main_error_tracer @@
   match ae.expression_content with
 
   (* TODO: this file should take care only of the order in which program fragments
@@ -461,14 +481,15 @@ and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -
   (* Sum *)
   | E_constructor {constructor;element} ->
     let%bind (c_tv, sum_tv) =
-      let error =
+      (* let error =
         let title () = "no such constructor" in
         let content () =
           Format.asprintf "%a in:\n%a\n"
             Stage_common.PP.constructor constructor
             O.Environment.PP.full_environment e
         in
-        error title content in
+        error title content in *)
+        let error = simple_error "TODO" in
       trace_option error @@
       Environment.get_constructor constructor e in
     let%bind (expr' , state') = type_expression e state element in
@@ -842,12 +863,12 @@ and type_lambda e state {
       ok (({binder;result}:O.lambda),state',wrapped)
 (* Advanced *)
 
-and type_constant (name:I.constant') (lst:O.type_expression list) (tv_opt:O.type_expression option) : (O.constant' * O.type_expression) result =
+and type_constant (name:I.constant') (lst:O.type_expression list) (tv_opt:O.type_expression option) : (O.constant' * O.type_expression, [> error]) result =
   let%bind typer = Operators.Typer.constant_typers name in
   let%bind tv = typer lst tv_opt in
   ok(name, tv)
 
-let untype_type_value (t:O.type_expression) : (I.type_expression) result =
+let untype_type_value (t:O.type_expression) : (I.type_expression , [> error]) result =
   match t.type_meta with
   | Some s -> ok s
   | _ -> fail @@ internal_assertion_failure "trying to untype generated type"
@@ -870,7 +891,7 @@ let untype_type_value (t:O.type_expression) : (I.type_expression) result =
 (*
 Apply type_declaration on all the node of the AST_core from the root p
 *)
-let type_program_returns_state ((env, state, p) : environment * Solver.state * I.program) : (environment * Solver.state * O.program) result =
+let type_program_returns_state ((env, state, p) : environment * Solver.state * I.program) : (environment * Solver.state * O.program , [> error]) result =
   let aux ((e : environment), (s : Solver.state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let%bind (e' , s' , d'_opt) = type_declaration e s (Location.unwrap d) in
     let ds' = match d'_opt with
@@ -880,12 +901,14 @@ let type_program_returns_state ((env, state, p) : environment * Solver.state * I
     ok (e' , s' , ds')
   in
   let%bind (env' , state' , declarations) =
-    trace (fun () -> program_error p ()) @@
+    trace (fun _err -> program_error p) @@
     bind_fold_list aux (env , state , []) p in
   let () = ignore (env' , state') in
   ok (env', state', declarations)
 
-let type_and_subst_xyz (env_state_node : environment * Solver.state * 'a) (apply_substs : 'b Typesystem.Misc.Substitution.Pattern.w) (type_xyz_returns_state : (environment * Solver.state * 'a) -> (environment * Solver.state * 'b) Trace.result) : ('b * Solver.state) result =
+let type_and_subst_xyz
+    (env_state_node : environment * Solver.state * 'a) (apply_substs : ('b, [> error]) Typesystem.Misc.Substitution.Pattern.w)
+    (type_xyz_returns_state : (environment * Solver.state * 'a) -> (environment * Solver.state * 'b, [> error]) Trace.result) : ('b * Solver.state , [> error]) result =
   let%bind (env, state, program) = type_xyz_returns_state env_state_node in
   let subst_all =
     let aliases = state.structured_dbs.aliases in
@@ -910,24 +933,24 @@ let type_and_subst_xyz (env_state_node : environment * Solver.state * 'a) (apply
   let () = ignore env in        (* TODO: shouldn't we use the `env` somewhere? *)
   ok (program, state)
 
-let type_program (p : I.program) : (O.program * Solver.state) result =
+let type_program (p : I.program) : (O.program * Solver.state, [> error]) result =
   let empty_env = Ast_typed.Environment.full_empty in
   let empty_state = Solver.initial_state in
   type_and_subst_xyz (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_state
 
-let type_expression_returns_state : (environment * Solver.state * I.expression) -> (environment * Solver.state * O.expression) Trace.result =
+let type_expression_returns_state : (environment * Solver.state * I.expression) -> (environment * Solver.state * O.expression, [> error]) result =
   fun (env, state, e) ->
   let%bind (e , state) = type_expression env state e in
   ok (env, state, e)
 
-let type_expression_subst (env : environment) (state : Solver.state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * Solver.state) result =
+let type_expression_subst (env : environment) (state : Solver.state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * Solver.state , [> error]) result =
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
   type_and_subst_xyz (env , state , e) Typesystem.Misc.Substitution.Pattern.s_expression type_expression_returns_state
 
  (*
 TODO: Similar to type_program but use a fold_map_list and List.fold_left and add element to the left or the list which gives a better complexity
  *)
-let type_program' : I.program -> O.program result = fun p ->
+let type_program' : I.program -> (O.program , [> error]) result = fun p ->
   let initial_state = Solver.initial_state in
   let initial_env = Environment.full_empty in
   let aux (env, state) (statement : I.declaration Location.wrap) =
@@ -948,7 +971,7 @@ let type_program' : I.program -> O.program result = fun p ->
 (*
   Tranform a Ast_typed type_expression into an ast_core type_expression
 *)
-let rec untype_type_expression (t:O.type_expression) : (I.type_expression) result =
+let rec untype_type_expression (t:O.type_expression) : (I.type_expression , [> error]) result =
   (* TODO: or should we use t.core if present? *)
   let%bind t = match t.type_content with
   | O.T_sum x ->
@@ -1003,7 +1026,7 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression) resul
 (*
   Tranform a Ast_typed literal into an ast_core literal
 *)
-let untype_literal (l:O.literal) : I.literal result =
+let untype_literal (l:O.literal) : (I.literal, [> error]) result =
   let open I in
   match l with
   | Literal_unit -> ok Literal_unit
@@ -1025,7 +1048,7 @@ let untype_literal (l:O.literal) : I.literal result =
 (*
   Tranform a Ast_typed expression into an ast_core matching
 *)
-let rec untype_expression (e:O.expression) : (I.expression) result =
+let rec untype_expression (e:O.expression) : (I.expression , [> error]) result =
   let open I in
   let return e = ok e in
   match e.expression_content with
@@ -1096,7 +1119,7 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
       let%bind fun_type = untype_type_expression fun_type in
       return @@ e_recursive fun_name fun_type lambda
 
-and untype_lambda ty {binder; result} : I.lambda result =
+and untype_lambda ty {binder; result} : (I.lambda , [> error]) result =
       let%bind io = get_t_function ty in
       let%bind (input_type , output_type) = bind_map_pair untype_type_value io in
       let%bind result = untype_expression result in
@@ -1105,7 +1128,7 @@ and untype_lambda ty {binder; result} : I.lambda result =
 (*
   Tranform a Ast_typed matching into an ast_core matching
 *)
-and untype_matching : (O.expression -> I.expression result) -> O.matching_expr -> I.matching_expr result = fun f m ->
+and untype_matching : (O.expression -> (I.expression, [> error]) result) -> O.matching_expr -> (I.matching_expr , [> error]) result = fun f m ->
   let open I in
   match m with
   | Match_bool {match_true ; match_false} ->

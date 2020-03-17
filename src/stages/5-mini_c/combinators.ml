@@ -134,10 +134,11 @@ let get_or (v:value) = match v with
   | D_right b -> ok (true, b)
   | _ -> simple_fail "not a left/right"
 
-let wrong_type name t =
+let wrong_type _name _t = simple_error "TODO"
+(* let wrong_type name t =
   let title () = "not a " ^ name in
   let content () = Format.asprintf "%a" PP.type_variable t in
-  error title content
+  error title content *)
 
 let get_t_left t = match t with
   | T_or ((_, a) , _) -> ok a

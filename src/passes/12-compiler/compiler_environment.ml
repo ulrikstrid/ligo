@@ -5,14 +5,15 @@ open Michelson
 
 let empty : environment = []
 
-let get : environment -> expression_variable -> michelson result = fun e s ->
+let get : environment -> expression_variable -> (michelson, [> error]) result = fun e s ->
   let%bind (_ , position) =
-    let error =
+    (* let error =
       let title () = "Environment.get" in
       let content () = Format.asprintf "%a in %a"
           Var.pp s 
           PP.environment e in
-      error title content in
+      error title content in *)
+    let error = simple_error "TODO" in
     generic_try error @@
     (fun () -> Environment.get_i s e) in
   let rec aux_bubble = fun n ->
@@ -35,7 +36,7 @@ let get : environment -> expression_variable -> michelson result = fun e s ->
 
   ok code
 
-let pack_closure : environment -> selector -> michelson result = fun e lst ->
+let pack_closure : environment -> selector -> (michelson, [> error]) result = fun e lst ->
   let%bind () = Assert.assert_true (e <> []) in
 
   (* Tag environment with selected elements. Only the first occurence
@@ -65,7 +66,7 @@ let pack_closure : environment -> selector -> michelson result = fun e lst ->
 
   ok code
 
-let unpack_closure : environment -> michelson result = fun e ->
+let unpack_closure : environment -> (michelson , [> error]) result = fun e ->
   match e with
   | [] -> ok @@ seq []
   | _ :: tl -> (

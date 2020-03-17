@@ -2,7 +2,7 @@ open Mini_c
 open Proto_alpha_utils
 open Trace
 
-let compile_contract : expression -> Compiler.compiled_expression result = fun e ->
+let compile_contract : expression -> (Compiler.compiled_expression , [> error]) result = fun e ->
   let%bind e = Self_mini_c.contract_check e in
   let%bind (input_ty , _) = get_t_function e.type_value in
   let%bind body = get_function e in
@@ -11,7 +11,7 @@ let compile_contract : expression -> Compiler.compiled_expression result = fun e
   let%bind expr_ty = Compiler.Type.Ty.type_ e.type_value in
   ok ({ expr_ty ; expr } : Compiler.Program.compiled_expression)
 
-let compile_expression : expression -> Compiler.compiled_expression result = fun e ->
+let compile_expression : expression -> (Compiler.compiled_expression, [> error]) result = fun e ->
   let%bind expr = Compiler.Program.translate_expression e Compiler.Environment.empty in
   let expr = Self_michelson.optimize expr in
   let%bind expr_ty = Compiler.Type.Ty.type_ e.type_value in

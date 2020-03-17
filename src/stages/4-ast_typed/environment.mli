@@ -4,7 +4,7 @@ open Trace
 type t = full_environment
 type element = environment_element
 
-val get_trace : expression_variable -> t -> element result
+val get_trace : expression_variable -> t -> (element, [> error]) result
 val empty : environment
 val full_empty : t
 val add : expression_variable -> element -> t -> t

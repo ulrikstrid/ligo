@@ -19,7 +19,8 @@ let pseq_to_list = function
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
 module Errors = struct
-  let wrong_pattern expected_name actual =
+  let wrong_pattern _expected_name _actual = simple_error "TODO"
+  (* let wrong_pattern expected_name actual =
     let title () = "wrong pattern" in
     let message () =
       match actual with
@@ -35,9 +36,10 @@ module Errors = struct
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@
                 Raw.pattern_to_region actual)]
-    in error ~data title message
+    in error ~data title message *)
 
-  let unsupported_let_in_function (patterns : Raw.pattern list) =
+  let unsupported_let_in_function (_patterns : Raw.pattern list) = simple_error "TODO"
+  (* let unsupported_let_in_function (patterns : Raw.pattern list) =
     let title () = "" in
     let message () = "\nDefining functions with \"let ... in\" \
                       is not supported yet.\n" in
@@ -47,9 +49,11 @@ module Errors = struct
     let data = [
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ patterns_loc)]
-    in error ~data title message
+    in error ~data title message *)
 
-  let unknown_predefined_type name =
+  (* let unknown_predefined_type _name = simple_error "TODO" *)
+  let unknown_predefined_type_tracer _name _err = simple_error "TODO"
+  (* let unknown_predefined_type name =
     let title () = "Type constants" in
     let message () =
       Format.asprintf "Unknown predefined type \"%s\".\n"
@@ -57,9 +61,10 @@ module Errors = struct
     let data = [
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ name.Region.region)]
-    in error ~data title message
+    in error ~data title message *)
 
-  let untyped_fun_param var =
+  let untyped_fun_param _var = simple_error "TODO"
+  (* let untyped_fun_param var =
     let title () = "" in
     let message () =
       Format.asprintf "\nUntyped function parameters \
@@ -68,9 +73,10 @@ module Errors = struct
     let data = [
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ param_loc)]
-    in error ~data title message
+    in error ~data title message *)
 
-  let untyped_recursive_function var =
+  let untyped_recursive_function _var = simple_error "TODO"
+  (* let untyped_recursive_function var =
     let title () = "" in
     let message () =
       Format.asprintf "\nUntyped recursive functions \
@@ -79,9 +85,10 @@ module Errors = struct
     let data = [
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ param_loc)]
-    in error ~data title message
+    in error ~data title message *)
 
-  let unsupported_tuple_pattern p =
+  let unsupported_tuple_pattern _p = simple_error "TODO"
+  (* let unsupported_tuple_pattern p =
     let title () = "" in
     let message () =
       Format.asprintf "\nTuple patterns are not supported yet.\n" in
@@ -90,9 +97,10 @@ module Errors = struct
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
-    error ~data title message
+    error ~data title message *)
 
-  let unsupported_cst_constr p =
+  let unsupported_cst_constr _p = simple_error "TODO"
+  (* let unsupported_cst_constr p =
     let title () = "" in
     let message () =
       Format.asprintf "\nConstant constructors are not supported yet.\n" in
@@ -100,9 +108,10 @@ module Errors = struct
     let data = [
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)]
-    in error ~data title message
+    in error ~data title message *)
 
-  let unsupported_non_var_pattern p =
+  let unsupported_non_var_pattern _p = simple_error "TODO"
+  (* let unsupported_non_var_pattern p =
     let title () = "" in
     let message () =
       Format.asprintf "\nNon-variable patterns in constructors \
@@ -112,9 +121,11 @@ module Errors = struct
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
-    error ~data title message
+    error ~data title message *)
 
-  let abstracting_expr t =
+  let abstracting_expr _t = simple_error "TODO"
+  let abstracting_expr_err _t _err = simple_error "TODO"
+  (* let abstracting_expr t =
     let title () = "abstracting expression" in
     let message () = "" in
     let data = [
@@ -122,9 +133,10 @@ module Errors = struct
          (** TODO: The labelled arguments should be flowing from the CLI. *)
        thunk @@ Parser.Cameligo.ParserLog.expr_to_string
                  ~offsets:true ~mode:`Point t)]
-    in error ~data title message
+    in error ~data title message *)
 
-  let only_constructors p =
+  let only_constructors _p = simple_error "TODO"
+  (* let only_constructors p =
     let title () = "" in
     let message () =
       Format.asprintf "\nCurrently, only constructors are \
@@ -134,9 +146,10 @@ module Errors = struct
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
-    error ~data title message
+    error ~data title message *)
 
-  let unsupported_sugared_lists region =
+  let unsupported_sugared_lists _region = simple_error "TODO"
+  (* let unsupported_sugared_lists region =
     let title () = "" in
     let message () =
       Format.asprintf "\nCurrently, only empty lists and \
@@ -145,12 +158,13 @@ module Errors = struct
     let data = [
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ region)]
-    in error ~data title message
+    in error ~data title message *)
 
-  let corner_case description =
+  let corner_case _description = simple_error "TODO"
+  (* let corner_case description =
     let title () = "Corner case" in
     let message () = description in
-    error title message
+    error title message *)
 
 end
 
@@ -213,8 +227,10 @@ and unpar_pattern : Raw.pattern -> Raw.pattern = function
   | PPar p -> unpar_pattern p.value.inside
   | _ as p -> p
 
-and compile_type_expression : Raw.type_expr -> type_expression result = fun te ->
-  trace (simple_info "abstracting this type expression...") @@
+and compile_type_expression : Raw.type_expr -> (type_expression, [> error]) result = fun te ->
+  let err_trace = fun _err -> simple_error "TODO" in
+  (* trace (simple_info "abstracting this type expression...") @@ *)
+  trace err_trace @@
   match te with
     TPar x -> compile_type_expression x.value.inside
   | TVar v -> (
@@ -236,7 +252,7 @@ and compile_type_expression : Raw.type_expr -> type_expression result = fun te -
       let lst = npseq_to_list tuple.value.inside in
       let%bind lst' = bind_map_list compile_type_expression lst in
       let%bind cst =
-        trace (unknown_predefined_type name) @@
+        trace (unknown_predefined_type_tracer name) @@
         type_operators name.value in
       t_operator cst lst'
     )
@@ -270,7 +286,7 @@ and compile_type_expression : Raw.type_expr -> type_expression result = fun te -
       let m = List.fold_left (fun m (x, y) -> CMap.add (Constructor x) y m) CMap.empty lst in
       ok @@ make_t @@ T_sum m
 
-and compile_list_type_expression (lst:Raw.type_expr list) : type_expression result =
+and compile_list_type_expression (lst:Raw.type_expr list) : (type_expression , [> error]) result =
   match lst with
   | [] -> ok @@ t_unit
   | [hd] -> compile_type_expression hd
@@ -279,7 +295,7 @@ and compile_list_type_expression (lst:Raw.type_expr list) : type_expression resu
       ok @@ t_tuple lst
 
 let rec compile_expression :
-  Raw.expr -> expr result = fun t ->
+  Raw.expr -> (expr , [> error]) result = fun t ->
   let return x = ok x in
   let compile_projection = fun (p:Raw.projection Region.reg) ->
     let (p , loc) = r_split p in
@@ -342,7 +358,7 @@ let rec compile_expression :
     bind_fold_list aux record updates'
   in
 
-  trace (abstracting_expr t) @@
+  trace (abstracting_expr_err t) @@
   match t with
     Raw.ELetIn e ->
       let Raw.{kwd_rec; binding; body; attributes; _} = e.value in
@@ -589,7 +605,7 @@ let rec compile_expression :
          [] -> return @@ e_skip ~loc ()
        | expr::more ->
           let expr' = compile_expression expr in
-          let apply (e1: Raw.expr) (e2: expression Trace.result) =
+          let apply (e1: Raw.expr) (e2: (expression, [> error]) Trace.result) =
             let%bind a = compile_expression e1 in
             let%bind e2' = e2 in
             return @@ e_sequence a e2'
@@ -603,7 +619,7 @@ let rec compile_expression :
       return @@ e_matching ~loc expr (Match_bool {match_true; match_false})
     )
 
-and compile_fun lamb' : expr result =
+and compile_fun lamb' : (expr , [> error]) result =
   let return x = ok x in
   let (lamb , loc) = r_split lamb' in
   let%bind params' =
@@ -714,7 +730,7 @@ and compile_fun lamb' : expr result =
   return @@ ret_lamb
 
 
-and compile_logic_expression ?te_annot (t:Raw.logic_expr) : expr result =
+and compile_logic_expression ?te_annot (t:Raw.logic_expr) : (expr , [> error]) result =
   let return x = ok @@ make_option_typed x te_annot in
   match t with
   | BoolExpr (False reg) -> (
@@ -744,7 +760,7 @@ and compile_logic_expression ?te_annot (t:Raw.logic_expr) : expr result =
   | CompExpr (Neq c) ->
       compile_binop "NEQ" c
 
-and compile_list_expression (t:Raw.list_expr) : expression result =
+and compile_list_expression (t:Raw.list_expr) : (expression , [> error]) result =
   let return x = ok @@ x in
   match t with
     ECons c -> compile_binop "CONS" c
@@ -756,7 +772,7 @@ and compile_list_expression (t:Raw.list_expr) : expression result =
       return @@ e_list ~loc lst'
     )
 
-and compile_binop (name:string) (t:_ Raw.bin_op Region.reg) : expression result =
+and compile_binop (name:string) (t:_ Raw.bin_op Region.reg) : (expression , [> error]) result =
   let return x = ok @@ x in
   let (args , loc) = r_split t in
   let%bind a = compile_expression args.arg1 in
@@ -764,14 +780,14 @@ and compile_binop (name:string) (t:_ Raw.bin_op Region.reg) : expression result 
   let%bind name = constants name in
   return @@ e_constant ~loc name [ a ; b ]
 
-and compile_unop (name:string) (t:_ Raw.un_op Region.reg) : expression result =
+and compile_unop (name:string) (t:_ Raw.un_op Region.reg) : (expression , [> error]) result =
   let return x = ok @@ x in
   let (t , loc) = r_split t in
   let%bind a = compile_expression t.arg in
   let%bind name = constants name in
   return @@ e_constant ~loc name [ a ]
 
-and compile_tuple_expression ?loc (lst:Raw.expr list) : expression result =
+and compile_tuple_expression ?loc (lst:Raw.expr list) : (expression , [> error]) result =
   let return x = ok @@ x in
   match lst with
   | [] -> return @@ e_literal ?loc Literal_unit
@@ -780,7 +796,7 @@ and compile_tuple_expression ?loc (lst:Raw.expr list) : expression result =
       let%bind lst = bind_list @@ List.map compile_expression lst in
       return @@ e_tuple ?loc lst
 
-and compile_declaration : Raw.declaration -> declaration Location.wrap list result =
+and compile_declaration : Raw.declaration -> (declaration Location.wrap list , [> error]) result =
   fun t ->
   let open! Raw in
   let loc : 'a . 'a Raw.reg -> _ -> _ =
@@ -906,7 +922,7 @@ and compile_declaration : Raw.declaration -> declaration Location.wrap list resu
       ok @@ [loc x @@ (Declaration_constant (Var.of_name var.value , lhs_type , inline, rhs'))]
     )
 
-and compile_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_content result =
+and compile_cases : type a . (Raw.pattern * a) list -> ((a, unit) matching_content, [> error]) result =
   fun t ->
   let open Raw in
   let rec get_var (t:Raw.pattern) =
@@ -992,7 +1008,7 @@ and compile_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_conten
         ok (a, b) in
       ok @@ Match_list {match_cons=(Var.of_name a, Var.of_name b, cons, ()); match_nil=nil}
   | lst ->
-      let error x =
+      (* let error x =
         let title () = "Pattern" in
          (** TODO: The labelled arguments should be flowing from the CLI. *)
         let content () =
@@ -1000,19 +1016,22 @@ and compile_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_conten
                          (Parser.Cameligo.ParserLog.pattern_to_string
                             ~offsets:true ~mode:`Point x) in
         error title content
-      in
+      in *)
+      let err_tracer _x = fun _err -> simple_error "TODO" in
       let as_variant () =
-        trace (simple_info "currently, only booleans, lists, options, and constructors \
-                            are supported in patterns") @@
+        let err_supp _err = simple_error "TODO" in
+        (* trace (simple_info "currently, only booleans, lists, options, and constructors \
+                            are supported in patterns") @@ *)
+        trace err_supp @@
         let%bind constrs =
           let aux (x, y) =
-            let%bind x' = trace (error x) @@ get_constr x
+            let%bind x' = trace (err_tracer x) @@ get_constr x
             in ok (x', y)
           in bind_map_list aux lst
         in ok @@ ez_match_variant constrs in
       let as_option () =
         let aux (x, y) =
-          let%bind x' = trace (error x) @@ get_constr_opt x
+          let%bind x' = trace (err_tracer x) @@ get_constr_opt x
           in ok (x', y) in
         let%bind constrs = bind_map_list aux lst in
         match constrs with
@@ -1026,6 +1045,6 @@ and compile_cases : type a . (Raw.pattern * a) list -> (a, unit) matching_conten
         | _ -> simple_fail "bad option pattern"
       in bind_or (as_option () , as_variant ())
 
-let compile_program : Raw.ast -> program result = fun t ->
+let compile_program : Raw.ast -> (program , [> error]) result = fun t ->
   let%bind decls = bind_map_list compile_declaration @@ nseq_to_list t.decl in
   ok @@ List.concat @@ decls

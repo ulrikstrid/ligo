@@ -16,7 +16,8 @@ let temp_unwrap_loc = Location.unwrap
 let temp_unwrap_loc_list = List.map Location.unwrap
 
 module Errors = struct
-  let corner_case ~loc message =
+  let corner_case ~loc:_ _message = simple_error "TODO"
+  (* let corner_case ~loc message =
     let title () = "corner case" in
     let content () = "we don't have a good error message for this case. we are
 striving find ways to better report them and find the use-cases that generate
@@ -25,96 +26,105 @@ them. please report this to the developers." in
       ("location" , fun () -> loc) ;
       ("message" , fun () -> message) ;
     ] in
-    error ~data title content
+    error ~data title content *)
 
-  let no_type_variable name =
+  let no_type_variable _name = simple_error "TODO"
+  (* let no_type_variable name =
     let title () = "type variables can't be transpiled" in
     let content () = Format.asprintf "%a" Var.pp name in
-    error title content
+    error title content *)
 
-  let row_loc l = ("location" , fun () -> Format.asprintf "%a" Location.pp l)
+  (* let row_loc l = ("location" , fun () -> Format.asprintf "%a" Location.pp l) *)
 
-  let unsupported_pattern_matching kind location =
+  let unsupported_pattern_matching _kind _location = simple_error "TODO"
+  (* let unsupported_pattern_matching kind location =
     let title () = "unsupported pattern-matching" in
     let content () = Format.asprintf "%s patterns aren't supported yet" kind in
     let data = [
         row_loc location ;
       ] in
-    error ~data title content
+    error ~data title content *)
 
-  let unsupported_iterator location =
+  let unsupported_iterator _location = simple_error "TODO"
+  (* let unsupported_iterator location =
     let title () = "unsupported iterator" in
     let content () = "only lambda are supported as iterators" in
     let data = [
         row_loc location ;
       ] in
-    error ~data title content
+    error ~data title content *)
 
-  let not_functional_main location =
+  let not_functional_main _location = simple_error "TODO"
+  (* let not_functional_main location =
     let title () = "not functional main" in
     let content () = "main should be a function" in
     let data = [
       ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
     ] in
-    error ~data title content
+    error ~data title content *)
 
-  let bad_big_map location =
+  let bad_big_map _location = simple_error "TODO"
+  (* let bad_big_map location =
     let title () = "bad arguments for main" in
     let content () = "only one big_map per program which must appear
       on the left hand side of a pair in the contract's storage" in
     let data = [
       ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
     ] in
-    error ~data title content
+    error ~data title content *)
 
-  let missing_entry_point name =
+  let missing_entry_point _name = simple_error "TODO"
+  (* let missing_entry_point name =
     let title () = "missing entry point" in
     let content () = "no entry point with the given name" in
     let data = [
       ("name" , fun () -> name) ;
     ] in
-    error ~data title content
+    error ~data title content *)
 
-  let wrong_mini_c_value expected_type actual =
+  let wrong_mini_c_value _expected_type _actual = simple_error "TODO"
+  (* let wrong_mini_c_value expected_type actual =
     let title () = "illed typed intermediary value" in
     let content () = "type of intermediary value doesn't match what was expected" in
     let data = [
       ("expected_type" , fun () -> expected_type) ;
       ("actual" , fun () -> Format.asprintf "%a" Mini_c.PP.value actual ) ;
     ] in
-    error ~data title content
+    error ~data title content *)
 
-  let bad_untranspile bad_type value =
+  let bad_untranspile _bad_type _value = simple_error "TODO"
+  (* let bad_untranspile bad_type value =
     let title () = "untranspiling bad value" in
     let content () = Format.asprintf "can not untranspile %s" bad_type in
     let data = [
       ("bad_type" , fun () -> bad_type) ;
       ("value" , fun () -> Format.asprintf "%a" Mini_c.PP.value value) ;
     ] in
-    error ~data title content
+    error ~data title content *)
 
-  let unknown_untranspile unknown_type value =
+  let unknown_untranspile _unknown_type _value = simple_error "TODO"
+  (* let unknown_untranspile unknown_type value =
     let title () = "untranspiling unknown value" in
     let content () = Format.asprintf "can not untranspile %s" unknown_type in
     let data = [
       ("unknown_type" , fun () -> unknown_type) ;
       ("value" , fun () -> Format.asprintf "%a" Mini_c.PP.value value) ;
     ] in
-    error ~data title content
+    error ~data title content *)
   
-  let unsupported_recursive_function expression_variable =
+  let unsupported_recursive_function _expression_variable = simple_error "TODO"
+  (* let unsupported_recursive_function expression_variable =
     let title () = "unsupported recursive function yet" in
     let content () = "only fuction with one variable are supported" in
     let data = [
       ("value" , fun () -> Format.asprintf "%a" AST.PP.expression_variable expression_variable) ;
     ] in
-    error ~data title content
-
+    error ~data title content *)
 
 end
 open Errors
 
-let rec transpile_type (t:AST.type_expression) : type_value result =
+let rec transpile_type (t:AST.type_expression) : (type_value , [> error]) result =
   match t.type_content with
   | T_variable (name) -> fail @@ no_type_variable @@ name
   | T_constant (TC_bool) -> ok (T_base TC_bool)
@@ -158,7 +168,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
   (* TODO hmm *)
   | T_sum m ->
       let node = Append_tree.of_list @@ kv_list_of_cmap m in
-      let aux a b : type_value annotated result =
+      let aux a b : (type_value annotated , [> error]) result =
         let%bind a = a in
         let%bind b = b in
         ok (None, T_or (a, b))
@@ -171,7 +181,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
       ok @@ snd m'
   | T_record m ->
       let node = Append_tree.of_list @@ kv_list_of_lmap m in
-      let aux a b : type_value annotated result =
+      let aux a b : (type_value annotated , [> error]) result =
         let%bind a = a in
         let%bind b = b in
         ok (None, T_pair (a, b))
@@ -188,7 +198,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
       ok (T_function (param',result'))
     )
 
-let record_access_to_lr : type_value -> type_value AST.label_map -> AST.label -> (type_value * [`Left | `Right]) list result = fun ty tym ind ->
+let record_access_to_lr : type_value -> type_value AST.label_map -> AST.label -> ((type_value * [`Left | `Right]) list , [> error]) result = fun ty tym ind ->
   let tys = kv_list_of_lmap tym in
   let node_tv = Append_tree.of_list tys in
   let%bind path =
@@ -224,22 +234,23 @@ let rec transpile_literal : AST.literal -> value = fun l -> match l with
   | Literal_unit -> D_unit
   | Literal_void -> D_none
 
-and transpile_environment_element_type : AST.environment_element -> type_value result = fun ele ->
+and transpile_environment_element_type : AST.environment_element -> (type_value , [> error]) result = fun ele ->
   transpile_type ele.type_value
 
-and tree_of_sum : AST.type_expression -> (AST.constructor' * AST.type_expression) Append_tree.t result = fun t ->
+and tree_of_sum : AST.type_expression -> ((AST.constructor' * AST.type_expression) Append_tree.t , [> error]) result = fun t ->
   let%bind map_tv = get_t_sum t in
   ok @@ Append_tree.of_list @@ kv_list_of_cmap map_tv
 
-and transpile_annotated_expression (ae:AST.expression) : expression result =
+and transpile_annotated_expression (ae:AST.expression) : (expression , [> error]) result =
   let%bind tv = transpile_type ae.type_expression in
   let return ?(tv = tv) expr = ok @@ Combinators.Expression.make_tpl (expr, tv) in
   let f = transpile_annotated_expression in
-  let info =
+  (* let info =
     let title () = "translating expression" in
     let content () = Format.asprintf "%a" Location.pp ae.location in
     info title content in
-  trace info @@
+  trace info @@ *)
+  trace (fun _err -> simple_error "TODO") @@
   match ae.expression_content with
   | E_let_in {let_binder; rhs; let_result; inline} ->
     let%bind rhs' = transpile_annotated_expression rhs in
@@ -263,7 +274,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let%bind node_tv =
         trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@
         tree_of_sum ae.type_expression in
-      let leaf (k, tv) : (expression' option * type_value) result =
+      let leaf (k, tv) : (expression' option * type_value , [> error]) result =
         if k = constructor then (
           let%bind _ =
             trace_strong (corner_case ~loc:__LOC__ "wrong type for constructor parameter")
@@ -273,7 +284,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
           let%bind tv = transpile_type tv in
           ok (None, tv)
         ) in
-      let node a b : (expression' option * type_value) result =
+      let node a b : (expression' option * type_value , [> error]) result =
         let%bind a = a in
         let%bind b = b in
         match (a, b) with
@@ -290,7 +301,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
     )
   | E_record m -> (
       let node = Append_tree.of_list @@ list_of_lmap m in
-      let aux a b : expression result =
+      let aux a b : (expression , [> error]) result =
         let%bind a = a in
         let%bind b = b in
         let a_ty = Combinators.Expression.get_type a in
@@ -395,7 +406,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
         trace_strong (corner_case ~loc:__LOC__ "not a list") @@
         get_t_list tv in
       let%bind lst' = bind_map_list (transpile_annotated_expression) lst in
-      let aux : expression -> expression -> expression result = fun prev cur ->
+      let aux : expression -> expression -> (expression , [> error]) result = fun prev cur ->
         return @@ E_constant {cons_name=C_CONS;arguments=[cur ; prev]} in
       let%bind (init : expression) = return @@ E_make_empty_list t in
       bind_fold_right_list aux init lst'
@@ -405,7 +416,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
         trace_strong (corner_case ~loc:__LOC__ "not a set") @@
         get_t_set tv in
       let%bind lst' = bind_map_list (transpile_annotated_expression) lst in
-      let aux : expression -> expression -> expression result = fun prev cur ->
+      let aux : expression -> expression -> (expression , [> error]) result = fun prev cur ->
         return @@ E_constant {cons_name=C_SET_ADD;arguments=[cur ; prev]} in
       let%bind (init : expression) = return @@ E_make_empty_set t in
       bind_fold_list aux init lst'
@@ -414,7 +425,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let%bind (src, dst) =
         trace_strong (corner_case ~loc:__LOC__ "not a map") @@
         Mini_c.Combinators.get_t_map tv in
-      let aux : expression result -> (AST.expression * AST.expression) -> expression result = fun prev (k, v) ->
+      let aux : (expression , [> error]) result -> (AST.expression * AST.expression) -> (expression , [> error]) result = fun prev (k, v) ->
         let%bind prev' = prev in
         let%bind (k', v') =
           let v' = e_a_some v ae.environment in
@@ -428,7 +439,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let%bind (src, dst) =
         trace_strong (corner_case ~loc:__LOC__ "not a map") @@
         Mini_c.Combinators.get_t_big_map tv in
-      let aux : expression result -> (AST.expression * AST.expression) -> expression result = fun prev (k, v) ->
+      let aux : (expression , [> error]) result -> (AST.expression * AST.expression) -> (expression , [> error]) result = fun prev (k, v) ->
         let%bind prev' = prev in
         let%bind (k', v') =
           let v' = e_a_some v ae.environment in
@@ -530,7 +541,7 @@ and transpile_lambda l (input_type , output_type) =
   ok @@ Combinators.Expression.make_tpl (closure , tv)
 
 and transpile_recursive {fun_name; fun_type; lambda} =
-  let rec map_lambda : AST.expression_variable -> type_value -> AST.expression -> (expression * expression_variable list) result = fun fun_name loop_type e ->
+  let rec map_lambda : AST.expression_variable -> type_value -> AST.expression -> (expression * expression_variable list , [> error]) result = fun fun_name loop_type e ->
     match e.expression_content with 
       E_lambda {binder;result} -> 
         let%bind (body,l) = map_lambda fun_name loop_type result in
@@ -539,7 +550,7 @@ and transpile_recursive {fun_name; fun_type; lambda} =
         let%bind res = replace_callback fun_name loop_type false e in
         ok @@ (res, [])
 
-  and replace_callback : AST.expression_variable -> type_value -> bool -> AST.expression -> expression result = fun fun_name loop_type shadowed e ->
+  and replace_callback : AST.expression_variable -> type_value -> bool -> AST.expression -> (expression , [> error]) result = fun fun_name loop_type shadowed e ->
     match e.expression_content with
       E_let_in li -> 
         let shadowed = shadowed || Var.equal li.let_binder fun_name in 
@@ -562,7 +573,8 @@ and transpile_recursive {fun_name; fun_type; lambda} =
       _ -> 
         let%bind expr = transpile_annotated_expression e in
         ok @@ Expression.make (E_constant {cons_name=C_LOOP_STOP;arguments=[expr]}) loop_type
-  and matching : AST.expression_variable -> type_value -> bool -> AST.matching -> type_value -> expression result = fun fun_name loop_type shadowed m ty ->
+
+  and matching : AST.expression_variable -> type_value -> bool -> AST.matching -> type_value -> (expression , [> error]) result = fun fun_name loop_type shadowed m ty ->
     let return ret = ok @@ Expression.make ret @@ ty in
     let%bind expr = transpile_annotated_expression m.matchee in
     match m.cases with
@@ -648,7 +660,7 @@ and transpile_recursive {fun_name; fun_type; lambda} =
   let body = Expression.make (E_iterator (C_LOOP_LEFT, ((lambda.binder, loop_type),body), expr)) output_type in
   ok @@ Expression.make (E_closure {binder;body}) fun_type
 
-let transpile_declaration env (d:AST.declaration) : toplevel_statement result =
+let transpile_declaration env (d:AST.declaration) : (toplevel_statement , [> error]) result =
   match d with
   | Declaration_constant (name,expression, inline, _) ->
       let name = name in
@@ -657,8 +669,8 @@ let transpile_declaration env (d:AST.declaration) : toplevel_statement result =
       let env' = Environment.add (name, tv) env in
       ok @@ ((name, inline, expression), environment_wrap env env')
 
-let transpile_program (lst : AST.program) : program result =
-  let aux (prev:(toplevel_statement list * Environment.t) result) cur =
+let transpile_program (lst : AST.program) : (program , [> error]) result =
+  let aux (prev:(toplevel_statement list * Environment.t , [> error]) result) cur =
     let%bind (hds, env) = prev in
     let%bind ((_, env') as cur') = transpile_declaration env cur in
     ok (hds @ [ cur' ], env'.post_environment)
@@ -668,7 +680,7 @@ let transpile_program (lst : AST.program) : program result =
 
 (* check whether the storage contains a big_map, if yes, check that
   it appears on the left hand side of a pair *)
-let check_storage f ty loc : (anon_function * _) result =
+let check_storage f ty loc : (anon_function * _ , [> error]) result =
   let rec aux (t:type_value) on_big_map =
     match t with
       | T_big_map _ -> on_big_map
@@ -687,9 +699,9 @@ let check_storage f ty loc : (anon_function * _) result =
       if aux (snd storage) false then ok (f, ty) else fail @@ bad_big_map loc
     | _ -> ok (f, ty)
 
-let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value * AST.type_expression) result =
+let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value * AST.type_expression , [> error]) result =
   let open Append_tree in
-  let rec aux tv : (string * value * AST.type_expression) result=
+  let rec aux tv : (string * value * AST.type_expression , [> error]) result=
     match tv with
     | Leaf (k, t), v -> ok (k, v, t)
     | Node {a}, D_left v -> aux (a, v)
@@ -699,9 +711,9 @@ let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value 
   let%bind (s, v, t) = aux (tree, v) in
   ok (s, v, t)
 
-let extract_tuple (v : value) (tree : AST.type_expression Append_tree.t') : ((value * AST.type_expression) list) result =
+let extract_tuple (v : value) (tree : AST.type_expression Append_tree.t') : ((value * AST.type_expression) list , [> error]) result =
   let open Append_tree in
-  let rec aux tv : ((value * AST.type_expression) list) result =
+  let rec aux tv : ((value * AST.type_expression) list , [> error]) result =
     match tv with
     | Leaf t, v -> ok @@ [v, t]
     | Node {a;b}, D_pair (va, vb) ->
@@ -712,9 +724,9 @@ let extract_tuple (v : value) (tree : AST.type_expression Append_tree.t') : ((va
   in
   aux (tree, v)
 
-let extract_record (v : value) (tree : _ Append_tree.t') : (_ list) result =
+let extract_record (v : value) (tree : _ Append_tree.t') : (_ list , [> error]) result =
   let open Append_tree in
-  let rec aux tv : ((string * (value * AST.type_expression)) list) result =
+  let rec aux tv : ((string * (value * AST.type_expression)) list , [> error]) result =
     match tv with
     | Leaf (s, t), v -> ok @@ [s, (v, t)]
     | Node {a;b}, D_pair (va, vb) ->

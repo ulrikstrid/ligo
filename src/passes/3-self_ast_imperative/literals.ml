@@ -4,7 +4,13 @@ open Proto_alpha_utils
 
 module Errors = struct
 
-  let bad_format e () =
+  let bad_format _e _tz_errors = simple_error "TODO"
+  let bad_empty_arity _cst _loc = simple_error "TODO"
+  let bad_single_arity _cst _loc = simple_error "TODO"
+  let bad_map_param_type _cst _loc = simple_error "TODO"
+  let bad_set_param_type _cst _loc = simple_error "TODO"
+
+  (* let bad_format e () =
     let title = (thunk ("Badly formatted literal")) in
     let message () = Format.asprintf "%a" PP.expression e in
     let data = [
@@ -46,12 +52,12 @@ module Errors = struct
     let data = [
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc) ;
     ] in
-    error ~data title message ()
+    error ~data title message () *)
   
 end
 open Errors
 
-let peephole_expression : expression -> expression result = fun e ->
+let peephole_expression : expression -> (expression , _) result = fun e ->
   let return expression_content = ok { e with expression_content } in
   match e.expression_content with
   | E_literal (Literal_key_hash s) as l -> (

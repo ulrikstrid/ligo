@@ -5,7 +5,8 @@ open Memory_proto_alpha.Protocol.Script_ir_translator
 open Operators.Compiler
 
 module Errors = struct
-  let corner_case ~loc message =
+  let corner_case ~loc:_ _message = simple_error "TODO"
+  (* let corner_case ~loc message =
     let title () = "corner case" in
     let content () = "we don't have a good error message for this case. we are
 striving find ways to better report them and find the use-cases that generate
@@ -14,20 +15,21 @@ them. please report this to the developers." in
       ("location" , fun () -> loc) ;
       ("message" , fun () -> message) ;
     ] in
-    error ~data title content
+    error ~data title content *)
 
-  let contract_entrypoint_must_be_literal ~loc =
+  let contract_entrypoint_must_be_literal ~loc:_ = simple_error "TODO"
+  (* let contract_entrypoint_must_be_literal ~loc =
     let title () = "contract entrypoint must be literal" in
     let content () = "For get_entrypoint, entrypoint must be given as a literal string" in
     let data =
       [ ("location", fun () -> loc) ;
       ] in
-    error ~data title content
+    error ~data title content *)
 end
 open Errors
 
 (* This does not makes sense to me *)
-let rec get_operator : constant' -> type_value -> expression list -> predicate result = fun s ty lst ->
+let rec get_operator : constant' -> type_value -> expression list -> (predicate , [> error]) result = fun s ty lst ->
   match Operators.Compiler.get_operators s with
   | Ok (x,_) -> ok x
   | Error _ -> (
@@ -153,7 +155,7 @@ let rec get_operator : constant' -> type_value -> expression list -> predicate r
       | x -> simple_fail (Format.asprintf "predicate \"%a\" doesn't exist" PP.constant x)
     )
 
-and translate_value (v:value) ty : michelson result = match v with
+and translate_value (v:value) ty : (michelson , [> error]) result = match v with
   | D_bool b -> ok @@ prim (if b then D_True else D_False)
   | D_int n -> ok @@ int (Z.of_int n)
   | D_nat n -> ok @@ int (Z.of_int n)
@@ -214,14 +216,15 @@ and translate_value (v:value) ty : michelson result = match v with
   | D_operation _ ->
       simple_fail "can't compile an operation"
 
-and translate_expression (expr:expression) (env:environment) : michelson result =
+and translate_expression (expr:expression) (env:environment) : (michelson , [> error]) result =
   let (expr' , ty) = Combinators.Expression.(get_content expr , get_type expr) in
-  let error_message () =
+  (* let error_message () =
     Format.asprintf  "\n- expr: %a\n- type: %a\n" PP.expression expr PP.type_variable ty
-  in
+  in *)
   let return code = ok code in
 
-  trace (error (thunk "compiling expression") error_message) @@
+  (* trace (error (thunk "compiling expression") error_message) @@ *)
+  trace (fun _err -> simple_error "TODO") @@ 
   match expr' with
   | E_skip -> return @@ i_push_unit
   | E_literal v ->
@@ -235,7 +238,8 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       | _ -> simple_fail "expected function type"
     )
   | E_application (f , arg) -> (
-      trace (simple_error "Compiling quote application") @@
+      (* trace (simple_error "Compiling quote application") @@ *)
+      trace (fun _err -> simple_error "TODO") @@
       let%bind f = translate_expression f env in
       let%bind arg = translate_expression arg env in
       return @@ seq [
@@ -291,11 +295,12 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
           ]
         | _ -> simple_fail (Format.asprintf "bad arity for %a" PP.constant str)
       in
-      let error =
+      (* let error =
         let title () = "error compiling constant" in
         let content () = L.get () in
         error title content in
-      trace error @@
+      trace error @@ *)
+      trace (fun _err -> simple_error "TODO") @@
       return code
   | E_make_empty_map sd ->
       let%bind (src, dst) = bind_map_pair Compiler_type.type_ sd in
@@ -416,9 +421,10 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
             ]) in
           return code
         )
-      | s -> (
-          let iter = Format.asprintf "iter %a" PP.constant s in
-          let error = error (thunk "bad iterator") (thunk iter) in
+      | _s -> (
+          (* let iter = Format.asprintf "iter %a" PP.constant s in
+          let error = error (thunk "bad iterator") (thunk iter) in *)
+          let error = simple_error "TODO" in
           fail error
         )
     )
@@ -474,7 +480,7 @@ and translate_expression (expr:expression) (env:environment) : michelson result 
       ]
     )
 
-and translate_function_body ({body ; binder} : anon_function) lst input : michelson result =
+and translate_function_body ({body ; binder} : anon_function) lst input : (michelson , [> error]) result =
   let pre_env = Environment.of_list lst in
   let env = Environment.(add (binder , input) pre_env) in
   let%bind expr_code = translate_expression body env in
@@ -491,7 +497,7 @@ and translate_function_body ({body ; binder} : anon_function) lst input : michel
 
   ok code
 
-and translate_function anon env input_ty output_ty : michelson result =
+and translate_function anon env input_ty output_ty : (michelson , [> error]) result =
   let fvs = Mini_c.Free_variables.lambda [] anon in
   let small_env = Mini_c.Environment.select fvs env in
   let%bind lambda_ty = Compiler_type.lambda_closure (small_env , input_ty , output_ty) in

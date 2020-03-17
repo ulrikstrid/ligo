@@ -370,25 +370,30 @@ end
 
 module Typer = struct
   module Operator_errors = struct
-    let type_error msg expected_type actual_type () =
+    let bad_list_fold_tracer _error = simple_error "TODO"
+    let bad_set_fold_tracer _error = simple_error "TODO"
+    let bad_map_fold_tracer _error = simple_error "TODO"
+    let type_error _msg _expected_type _actual_type = simple_error "TODO"
+    let typeclass_error _msg _f _expected_types _actual_types = simple_error "TODO"
+    (* let type_error msg expected_type actual_type () =
       let message () =
         Format.asprintf "Expected an expression of type %a but got an expression of type %a"
           Ast_typed.PP.type_expression expected_type
           Ast_typed.PP.type_expression actual_type in
-      error (thunk msg) message
+      error (thunk msg) message *)
 
-    open PP_helpers
+    (* open PP_helpers *)
 
-    let print_f_args f printer ppf args =
-      Format.fprintf ppf "%s(%a)" f (list_sep printer (const " , ")) args
+    (* let print_f_args f printer ppf args =
+      Format.fprintf ppf "%s(%a)" f (list_sep printer (const " , ")) args *)
 
     (* These are handled by typeclasses in the new typer *)
-    let typeclass_error msg f expected_types actual_types () =
+    (* let typeclass_error msg f expected_types actual_types () =
       let message () =
         Format.asprintf "Expected arguments with one of the following combinations of types: %a but got this combination instead: %a"
           (list_sep (print_f_args f Ast_typed.PP.type_expression) (const " or ")) expected_types
           (print_f_args f Ast_typed.PP.type_expression) actual_types in
-      error (thunk msg) message
+      error (thunk msg) message *)
   end
   (*
     Each constant has its own type.
@@ -504,7 +509,7 @@ module Typer = struct
     let t_implicit_account = forall_tc "a" @@ fun a -> [tc_storable a] => tuple1 key_hash --> contract a
     let t_set_delegate = tuple1 (option key_hash) --> operation
 
-    let constant_type : constant' -> Typesystem.Core.type_value result = function
+    let constant_type : constant' -> (Typesystem.Core.type_value,_) result = function
       | C_INT                 -> ok @@ t_int ;
       | C_UNIT                -> ok @@ t_unit ;
       | C_NOW                 -> ok @@ t_now ;
@@ -616,49 +621,49 @@ module Typer = struct
 
   let some = typer_1 "SOME" @@ fun a -> ok @@ t_option a ()
 
-  let map_remove : typer = typer_2 "MAP_REMOVE" @@ fun k m ->
+  let map_remove : [> error] typer = typer_2 "MAP_REMOVE" @@ fun k m ->
     let%bind (src , _) = bind_map_or (get_t_map , get_t_big_map) m in
     let%bind () = assert_type_expression_eq (src , k) in
     ok m
 
-  let map_add : typer = typer_3 "MAP_ADD" @@ fun k v m ->
+  let map_add : [> error] typer = typer_3 "MAP_ADD" @@ fun k v m ->
     let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
     let%bind () = assert_type_expression_eq (src, k) in
     let%bind () = assert_type_expression_eq (dst, v) in
     ok m
 
-  let map_update : typer = typer_3 "MAP_UPDATE" @@ fun k v m ->
+  let map_update : [> error] typer = typer_3 "MAP_UPDATE" @@ fun k v m ->
     let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
     let%bind () = assert_type_expression_eq (src, k) in
     let%bind v' = get_t_option v in
     let%bind () = assert_type_expression_eq (dst, v') in
     ok m
 
-  let map_mem : typer = typer_2 "MAP_MEM" @@ fun k m ->
+  let map_mem : [> error] typer = typer_2 "MAP_MEM" @@ fun k m ->
     let%bind (src, _dst) = bind_map_or (get_t_map , get_t_big_map) m in
     let%bind () = assert_type_expression_eq (src, k) in
     ok @@ t_bool ()
 
-  let map_find : typer = typer_2 "MAP_FIND" @@ fun k m ->
+  let map_find : [> error] typer = typer_2 "MAP_FIND" @@ fun k m ->
     let%bind (src, dst) =
       trace_strong (simple_error "MAP_FIND: not map or bigmap") @@
       bind_map_or (get_t_map , get_t_big_map) m in
     let%bind () = assert_type_expression_eq (src, k) in
     ok @@ dst
 
-  let map_find_opt : typer = typer_2 "MAP_FIND_OPT" @@ fun k m ->
+  let map_find_opt : [> error] typer = typer_2 "MAP_FIND_OPT" @@ fun k m ->
     let%bind (src, dst) = bind_map_or (get_t_map , get_t_big_map) m in
     let%bind () = assert_type_expression_eq (src, k) in
     ok @@ t_option dst ()
 
-  let map_iter : typer = typer_2 "MAP_ITER" @@ fun f m ->
+  let map_iter : [> error] typer = typer_2 "MAP_ITER" @@ fun f m ->
     let%bind (k, v) = get_t_map m in
     let%bind (arg , res) = get_t_function f in
     let%bind () = assert_eq_1 arg (t_pair k v ()) in
     let%bind () = assert_eq_1 res (t_unit ()) in
     ok @@ t_unit ()
 
-  let map_map : typer = typer_2 "MAP_MAP" @@ fun f m ->
+  let map_map : [> error] typer = typer_2 "MAP_MAP" @@ fun f m ->
     let%bind (k, v) = get_t_map m in
     let%bind (arg , res) = get_t_function f in
     let%bind () = assert_eq_1 arg (t_pair k v ()) in
@@ -682,7 +687,7 @@ module Typer = struct
                      [t_nat();t_nat();t_string()] ;
                      [t_nat();t_nat();t_bytes()] ;
                    ]
-                   [i ; j ; s] ()
+                   [i ; j ; s]
 
   let failwith_ = typer_1_opt "FAILWITH" @@ fun t opt ->
     let%bind () =
@@ -691,11 +696,11 @@ module Typer = struct
     let default = t_unit () in
     ok @@ Simple_utils.Option.unopt ~default opt
 
-  let int : typer = typer_1 "INT" @@ fun t ->
+  let int : [> error] typer = typer_1 "INT" @@ fun t ->
     let%bind () = assert_t_nat t in
     ok @@ t_int ()
 
-  let bytes_pack : typer = typer_1 "PACK" @@ fun _t ->
+  let bytes_pack : [> error] typer = typer_1 "PACK" @@ fun _t ->
     ok @@ t_bytes ()
 
   let bytes_unpack = typer_1_opt "UNPACK" @@ fun input output_opt ->
@@ -849,7 +854,7 @@ module Typer = struct
   let assertion = typer_1 "ASSERT" @@ fun a ->
     if eq_1 a (t_bool ())
     then ok @@ t_unit ()
-    else fail @@ Operator_errors.type_error "Asserting a non-bool" a (t_bool ()) ()
+    else fail @@ Operator_errors.type_error "Asserting a non-bool" a (t_bool ())
 
   let times = typer_2 "TIMES" @@ fun a b ->
     if eq_2 (a , b) (t_nat ())
@@ -865,7 +870,7 @@ module Typer = struct
                   [t_nat();t_mutez()] ;
                   [t_mutez();t_nat()] ;
                 ]
-                [a; b] ()
+                [a; b]
 
   let div = typer_2 "DIV" @@ fun a b ->
     if eq_2 (a , b) (t_nat ())
@@ -883,7 +888,7 @@ module Typer = struct
                   [t_mutez();t_nat()] ;
                   [t_mutez();t_mutez()] ;
                 ]
-                [a; b] ()
+                [a; b]
 
   let mod_ = typer_2 "MOD" @@ fun a b ->
     if (eq_1 a (t_nat ()) || eq_1 a (t_int ())) && (eq_1 b (t_nat ()) || eq_1 b (t_int ()))
@@ -898,7 +903,7 @@ module Typer = struct
                   [t_int();t_int()] ;
                   [t_mutez();t_mutez()] ;
                 ]
-                [a; b] ()
+                [a; b]
 
   let add = typer_2 "ADD" @@ fun a b ->
     if eq_2 (a , b) (t_nat ())
@@ -921,25 +926,25 @@ module Typer = struct
                   [t_timestamp();t_int()] ;
                   [t_int();t_timestamp()] ;
                 ]
-                [a; b] ()
+                [a; b]
 
   let set_mem = typer_2 "SET_MEM" @@ fun elt set ->
     let%bind key = get_t_set set in
     if eq_1 elt key
     then ok @@ t_bool ()
-    else fail @@ Operator_errors.type_error "Set.mem: elt and set don't match" elt key ()
+    else fail @@ Operator_errors.type_error "Set.mem: elt and set don't match" elt key
 
   let set_add = typer_2 "SET_ADD" @@ fun elt set ->
     let%bind key = get_t_set set in
     if eq_1 elt key
     then ok set
-    else fail @@ Operator_errors.type_error "Set.add: elt and set don't match" elt key ()
+    else fail @@ Operator_errors.type_error "Set.add: elt and set don't match" elt key
 
   let set_remove = typer_2 "SET_REMOVE" @@ fun elt set ->
     let%bind key = get_t_set set in
     if eq_1 elt key
     then ok set
-    else fail @@ Operator_errors.type_error "Set.remove: elt and set don't match" key elt ()
+    else fail @@ Operator_errors.type_error "Set.remove: elt and set don't match" key elt
 
   let set_iter = typer_2 "SET_ITER" @@ fun body set ->
     let%bind (arg , res) = get_t_function body in
@@ -947,7 +952,7 @@ module Typer = struct
     let%bind key = get_t_set set in
     if eq_1 key arg
     then ok (t_unit ())
-    else fail @@ Operator_errors.type_error "bad set iter" key arg ()
+    else fail @@ Operator_errors.type_error "bad set iter" key arg
 
   let list_iter = typer_2 "LIST_ITER" @@ fun body lst ->
     let%bind (arg , res) = get_t_function body in
@@ -955,24 +960,25 @@ module Typer = struct
     let%bind key = get_t_list lst in
     if eq_1 key arg
     then ok (t_unit ())
-    else fail @@ Operator_errors.type_error "bad list iter" key arg ()
+    else fail @@ Operator_errors.type_error "bad list iter" key arg
 
   let list_map = typer_2 "LIST_MAP" @@ fun body lst ->
     let%bind (arg , res) = get_t_function body in
     let%bind key = get_t_list lst in
     if eq_1 key arg
     then ok (t_list res ())
-    else fail @@ Operator_errors.type_error "bad list map" key arg ()
+    else fail @@ Operator_errors.type_error "bad list map" key arg
 
   let list_fold = typer_3 "LIST_FOLD" @@ fun body lst init ->
     let%bind (arg , res) = get_t_function body in
     let%bind (prec , cur) = get_t_pair arg in
     let%bind key = get_t_list lst in
-    let msg = Format.asprintf "%a vs %a"
+    (* let msg = Format.asprintf "%a vs %a"
         PP.type_expression key
         PP.type_expression arg
-    in
-    trace (simple_error ("bad list fold:" ^ msg)) @@
+    in *)
+    (* trace (simple_error ("bad list fold:" ^ msg)) @@ *)
+    trace Operator_errors.bad_list_fold_tracer @@
     let%bind () = assert_eq_1 ~msg:"key cur" key cur in
     let%bind () = assert_eq_1 ~msg:"prec res" prec res in
     let%bind () = assert_eq_1 ~msg:"res init" res init in
@@ -982,11 +988,12 @@ module Typer = struct
     let%bind (arg , res) = get_t_function body in
     let%bind (prec , cur) = get_t_pair arg in
     let%bind key = get_t_set lst in
-    let msg = Format.asprintf "%a vs %a"
+    (* let msg = Format.asprintf "%a vs %a"
         PP.type_expression key
         PP.type_expression arg
     in
-    trace (simple_error ("bad set fold:" ^ msg)) @@
+    trace (simple_error ("bad set fold:" ^ msg)) @@ *)
+    trace Operator_errors.bad_set_fold_tracer @@
     let%bind () = assert_eq_1 ~msg:"key cur" key cur in
     let%bind () = assert_eq_1 ~msg:"prec res" prec res in
     let%bind () = assert_eq_1 ~msg:"res init" res init in
@@ -996,11 +1003,12 @@ module Typer = struct
     let%bind (arg , res) = get_t_function body in
     let%bind (prec , cur) = get_t_pair arg in
     let%bind (key , value) = get_t_map map in
-    let msg = Format.asprintf "%a vs %a"
+    (* let msg = Format.asprintf "%a vs %a"
         PP.type_expression key
         PP.type_expression arg
     in
-    trace (simple_error ("bad map fold:" ^ msg)) @@
+    trace (simple_error ("bad map fold:" ^ msg)) @@ *)
+    trace Operator_errors.bad_map_fold_tracer @@
     let%bind () = assert_eq_1 ~msg:"key cur" (t_pair key value ()) cur in
     let%bind () = assert_eq_1 ~msg:"prec res" prec res in
     let%bind () = assert_eq_1 ~msg:"res init" res init in
@@ -1030,7 +1038,7 @@ module Typer = struct
     then ok @@ t_bool ()
     else if eq_1 elt (t_nat ()) || eq_1 elt (t_int ())
     then ok @@ t_int ()
-    else fail @@ Operator_errors.type_error "bad parameter to not" elt (t_bool ()) ()
+    else fail @@ Operator_errors.type_error "bad parameter to not" elt (t_bool ())
 
   let or_ = typer_2 "OR" @@ fun a b ->
     if eq_2 (a , b) (t_bool ())
@@ -1042,7 +1050,7 @@ module Typer = struct
                      [t_bool();t_bool()] ;
                      [t_nat();t_nat()] ;
                    ]
-                   [a; b] ()
+                   [a; b]
 
   let xor = typer_2 "XOR" @@ fun a b ->
     if eq_2 (a , b) (t_bool ())
@@ -1054,7 +1062,7 @@ module Typer = struct
                      [t_bool();t_bool()] ;
                      [t_nat();t_nat()] ;
                    ]
-                   [a; b] ()
+                   [a; b]
 
   let and_ = typer_2 "AND" @@ fun a b ->
     if eq_2 (a , b) (t_bool ())
@@ -1067,7 +1075,7 @@ module Typer = struct
                      [t_nat();t_nat()] ;
                      [t_int();t_nat()] ;
                    ]
-                   [a; b] ()
+                   [a; b]
 
   let lsl_ = typer_2 "LSL" @@ fun a b ->
     if eq_2 (a , b) (t_nat ())
@@ -1076,7 +1084,7 @@ module Typer = struct
                    [
                      [t_nat();t_nat()] ;
                    ]
-                   [a; b] ()
+                   [a; b]
 
   let lsr_ = typer_2 "LSR" @@ fun a b ->
     if eq_2 (a , b) (t_nat ())
@@ -1085,7 +1093,7 @@ module Typer = struct
                    [
                      [t_nat();t_nat()] ;
                    ]
-                   [a; b] ()
+                   [a; b]
 
   let concat = typer_2 "CONCAT" @@ fun a b ->
     if eq_2 (a , b) (t_string ())
@@ -1097,14 +1105,14 @@ module Typer = struct
                      [t_string();t_string()] ;
                      [t_bytes();t_bytes()] ;
                    ]
-                   [a; b] ()
+                   [a; b]
 
   let cons = typer_2 "CONS" @@ fun hd tl ->
     let%bind elt = get_t_list tl in
     let%bind () = assert_eq_1 hd elt in
     ok tl
 
-  let constant_typers c : typer result = match c with
+  let constant_typers c : ([> error] typer , _) result = match c with
     | C_INT                 -> ok @@ int ;
     | C_UNIT                -> ok @@ unit ;
     | C_NOW                 -> ok @@ now ;
@@ -1217,7 +1225,7 @@ module Compiler = struct
   open Tezos_utils.Michelson
   open Mini_c
 
-  let get_operators c : predicate result =
+  let get_operators c : (predicate,_) result =
   match c with
     | C_ADD             -> ok @@ simple_binary @@ prim I_ADD
     | C_SUB             -> ok @@ simple_binary @@ prim I_SUB

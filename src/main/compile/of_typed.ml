@@ -1,15 +1,18 @@
 open Trace
 open Ast_typed
 
-let compile : Ast_typed.program -> Mini_c.program result = fun p ->
+let compile : Ast_typed.program -> (Mini_c.program, [> error]) result = fun p ->
   Transpiler.transpile_program p
 
-let compile_expression : expression -> Mini_c.expression result = fun e ->
+let compile_expression : expression -> (Mini_c.expression, [> error]) result = fun e ->
   Transpiler.transpile_annotated_expression e
 
 type check_type = Check_parameter | Check_storage
-let assert_equal_contract_type : check_type -> string -> Ast_typed.program -> Ast_typed.expression -> unit result =
-    fun c entry contract param -> Trace.trace (simple_info "Check argument type against contract type") (
+let assert_equal_contract_type : check_type -> string -> Ast_typed.program -> Ast_typed.expression -> (unit, [> error]) result =
+    (* fun c entry contract param -> Trace.trace (simple_info "Check argument type against contract type") ( *)
+    fun c entry contract param ->
+    let err_trace _err = simple_error "TODO" in
+    Trace.trace err_trace (
   let%bind entry_point = Ast_typed.get_entry contract entry in
   match entry_point.type_expression.type_content with
   | T_arrow {type1=args} -> (

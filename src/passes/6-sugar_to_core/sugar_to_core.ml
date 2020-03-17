@@ -2,7 +2,7 @@ module I = Ast_sugar
 module O = Ast_core
 open Trace
 
-let rec idle_type_expression : I.type_expression -> O.type_expression result =
+let rec idle_type_expression : I.type_expression -> (O.type_expression , [> error]) result =
   fun te ->
   let return te = ok @@ O.make_t te in
   match te.type_content with
@@ -34,7 +34,7 @@ let rec idle_type_expression : I.type_expression -> O.type_expression result =
       let%bind type_operator = idle_type_operator type_operator in
       return @@ T_operator type_operator
 
-and idle_type_operator : I.type_operator -> O.type_operator result =
+and idle_type_operator : I.type_operator -> (O.type_operator , [> error]) result =
   fun t_o ->
   match t_o with
     | TC_contract c -> 
@@ -59,7 +59,7 @@ and idle_type_operator : I.type_operator -> O.type_operator result =
       let%bind (i,o) = bind_map_pair idle_type_expression (i,o) in
       ok @@ O.TC_arrow (i,o)
 
-let rec compile_expression : I.expression -> O.expression result =
+let rec compile_expression : I.expression -> (O.expression , [> error]) result =
   fun e ->
   let return expr = ok @@ O.make_expr ~loc:e.location expr in
   match e.expression_content with
@@ -139,13 +139,13 @@ let rec compile_expression : I.expression -> O.expression result =
       return @@ O.E_let_in {let_binder=(Var.of_name "_", Some O.t_unit); rhs=expr1;let_result=expr2; inline=false}
     | I.E_skip -> ok @@ O.e_unit ~loc:e.location ()
 
-and compile_lambda : I.lambda -> O.lambda result =
+and compile_lambda : I.lambda -> (O.lambda , [> error]) result =
   fun {binder;input_type;output_type;result}->
     let%bind input_type = bind_map_option idle_type_expression input_type in
     let%bind output_type = bind_map_option idle_type_expression output_type in
     let%bind result = compile_expression result in
     ok @@ O.{binder;input_type;output_type;result}
-and compile_matching : I.matching_expr -> O.matching_expr result =
+and compile_matching : I.matching_expr -> (O.matching_expr , [> error]) result =
   fun m -> 
   match m with 
     | I.Match_bool {match_true;match_false} ->
@@ -186,12 +186,12 @@ let compile_declaration : I.declaration Location.wrap -> _ =
     let%bind te = idle_type_expression te in
     return @@ O.Declaration_type (n,te)
 
-let compile_program : I.program -> O.program result =
+let compile_program : I.program -> (O.program , [> error]) result =
   fun p ->
   bind_map_list compile_declaration p
 
 (* uncompiling *)
-let rec uncompile_type_expression : O.type_expression -> I.type_expression result =
+let rec uncompile_type_expression : O.type_expression -> (I.type_expression , [> error]) result =
   fun te ->
   let return te = ok @@ I.make_t te in
   match te.type_content with
@@ -223,7 +223,7 @@ let rec uncompile_type_expression : O.type_expression -> I.type_expression resul
       let%bind type_operator = uncompile_type_operator type_operator in
       return @@ T_operator type_operator
 
-and uncompile_type_operator : O.type_operator -> I.type_operator result =
+and uncompile_type_operator : O.type_operator -> (I.type_operator , [> error]) result =
   fun t_o ->
   match t_o with
     | TC_contract c -> 
@@ -248,7 +248,7 @@ and uncompile_type_operator : O.type_operator -> I.type_operator result =
       let%bind (i,o) = bind_map_pair uncompile_type_expression (i,o) in
       ok @@ I.TC_arrow (i,o)
 
-let rec uncompile_expression : O.expression -> I.expression result =
+let rec uncompile_expression : O.expression -> (I.expression , [> error]) result =
   fun e ->
   let return expr = ok @@ I.make_expr ~loc:e.location expr in
   match e.expression_content with 
@@ -327,13 +327,13 @@ let rec uncompile_expression : O.expression -> I.expression result =
     let%bind type_annotation = uncompile_type_expression type_annotation in
     return @@ I.E_ascription {anno_expr; type_annotation}
 
-and uncompile_lambda : O.lambda -> I.lambda result =
+and uncompile_lambda : O.lambda -> (I.lambda , [> error]) result =
   fun {binder;input_type;output_type;result}->
     let%bind input_type = bind_map_option uncompile_type_expression input_type in
     let%bind output_type = bind_map_option uncompile_type_expression output_type in
     let%bind result = uncompile_expression result in
     ok @@ I.{binder;input_type;output_type;result}
-and uncompile_matching : O.matching_expr -> I.matching_expr result =
+and uncompile_matching : O.matching_expr -> (I.matching_expr , [> error]) result =
   fun m -> 
   match m with 
     | O.Match_bool {match_true;match_false} ->

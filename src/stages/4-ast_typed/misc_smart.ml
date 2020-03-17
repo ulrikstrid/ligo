@@ -4,7 +4,7 @@ open Combinators
 open Misc
 open Stage_common.Types
 
-let program_to_main : program -> string -> lambda result = fun p s ->
+let program_to_main : program -> string -> (lambda, _) result = fun p s ->
   let%bind (main , input_type , _) =
     let pred = fun d ->
       match d with
@@ -45,9 +45,9 @@ module Captured_variables = struct
   let empty : bindings = []
   let of_list : expression_variable list -> bindings = fun x -> x
 
-  let rec expression : bindings -> expression -> bindings result = fun b e ->
+  let rec expression : bindings -> expression -> (bindings,_) result = fun b e ->
     expression_content b e.environment e.expression_content
-  and expression_content : bindings -> full_environment -> expression_content -> bindings result = fun b env ec ->
+  and expression_content : bindings -> full_environment -> expression_content -> (bindings,_) result = fun b env ec ->
     let self = expression b in
     match ec with
     | E_lambda l -> ok @@ Free_variables.lambda empty l
@@ -98,10 +98,10 @@ module Captured_variables = struct
       let b' = union (singleton r.fun_name) b in
       expression_content b' env @@ E_lambda r.lambda
 
-  and matching_variant_case : type a . (bindings -> a -> bindings result) -> bindings -> ((constructor' * expression_variable) * a) -> bindings result  = fun f b ((_,n),c) ->
+  and matching_variant_case : type a . (bindings -> a -> (bindings,_) result) -> bindings -> ((constructor' * expression_variable) * a) -> (bindings,_) result  = fun f b ((_,n),c) ->
     f (union (singleton n) b) c
 
-  and matching : type a . (bindings -> a -> bindings result) -> bindings -> (a, 'tv) matching_content -> bindings result = fun f b m ->
+  and matching : type a . (bindings -> a -> (bindings,_) result) -> bindings -> (a, 'tv) matching_content -> (bindings,_) result = fun f b m ->
     match m with
     | Match_bool { match_true = t ; match_false = fa } ->
       let%bind t' = f b t in

@@ -1,14 +1,14 @@
 open Trace
 open Types
 
-val program_to_main : program -> string -> lambda result
+val program_to_main : program -> string -> (lambda , [> error]) result
 
 module Captured_variables : sig
 
   type bindings = expression_variable list
-  val matching : (bindings -> 'a -> bindings result) -> bindings -> ('a, type_expression) matching_content -> bindings result
+  val matching : (bindings -> 'a -> (bindings , [> error] as 'b) result) -> bindings -> ('a, type_expression) matching_content -> (bindings , 'b) result
 
-  val matching_expression : bindings -> matching_expr -> bindings result
+  val matching_expression : bindings -> matching_expr -> (bindings , [> error]) result
 
   val mem : expression_variable -> bindings -> bool
 (*

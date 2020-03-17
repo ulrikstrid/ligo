@@ -56,10 +56,12 @@ module Ty = struct
   let pair_ann (anna, a) (annb, b) =
     Pair_t ((a, field_annot anna, None), (b, field_annot annb, None), None , has_big_map a || has_big_map b)
 
-  let not_comparable name () = error (thunk "not a comparable type") (fun () -> name) ()
-  let not_compilable_type name () = error (thunk "not a compilable type") (fun () -> name) ()
+  (* let not_comparable name () = error (thunk "not a comparable type") (fun () -> name) ()
+  let not_compilable_type name () = error (thunk "not a compilable type") (fun () -> name) () *)
+  let not_comparable _name = simple_error "TODO"
+  let not_compilable_type _name = simple_error "TODO"
 
-  let comparable_type_base : type_constant -> ex_comparable_ty result = fun tb ->
+  let comparable_type_base : type_constant -> (ex_comparable_ty , [> error]) result = fun tb ->
     let return x = ok @@ Ex_comparable_ty x in
     match tb with
     | TC_unit -> fail (not_comparable "unit")
@@ -78,7 +80,7 @@ module Ty = struct
     | TC_key_hash -> return key_hash_k
     | TC_chain_id -> fail (not_comparable "chain_id")
 
-  let comparable_leaf : type a. (a, _) comparable_struct -> (a , leaf) comparable_struct result =
+  let comparable_leaf : type a. (a, _) comparable_struct -> ((a , leaf) comparable_struct , [> error]) result =
       fun a ->
     match a with
     | Pair_key _ -> fail (not_comparable "pair (use (a,(b,c)) instead of (a,b,c))")
@@ -92,7 +94,7 @@ module Ty = struct
     | Timestamp_key annot -> ok (Timestamp_key annot)
     | Address_key annot -> ok (Address_key annot)
 
-  let rec comparable_type : type_value -> ex_comparable_ty result = fun tv ->
+  let rec comparable_type : type_value -> (ex_comparable_ty , [> error]) result = fun tv ->
     match tv with
     | T_base b -> comparable_type_base b
     | T_function _ -> fail (not_comparable "function")
@@ -109,7 +111,7 @@ module Ty = struct
     | T_option _ -> fail (not_comparable "option")
     | T_contract _ -> fail (not_comparable "contract")
 
-  let base_type : type_constant -> ex_ty result = fun b ->
+  let base_type : type_constant -> (ex_ty , [> error]) result = fun b ->
     let return x = ok @@ Ex_ty x in
    match b with
     | TC_unit -> return unit
@@ -128,7 +130,7 @@ module Ty = struct
     | TC_key_hash -> return key_hash
     | TC_chain_id -> return chain_id
 
-  let rec type_ : type_value -> ex_ty result =
+  let rec type_ : type_value -> (ex_ty , [> error]) result =
     function
     | T_base b -> base_type b
     | T_pair (t, t') -> (
@@ -167,7 +169,7 @@ module Ty = struct
         let%bind (Ex_ty t') = type_ t in
         ok @@ Ex_ty (contract t')
 
-  and annotated : type_value annotated -> ex_ty annotated result =
+  and annotated : type_value annotated -> (ex_ty annotated , [> error]) result =
     fun (ann, a) -> let%bind a = type_ a in
                     ok @@ (ann, a)
 
@@ -183,7 +185,7 @@ module Ty = struct
         bind_fold_right_list aux tl_ty hds
       )
 
-  and environment : environment -> ex_stack_ty result = fun env ->
+  and environment : environment -> (ex_stack_ty , [> error]) result = fun env ->
     let%bind lst =
       bind_map_list type_
       @@ List.map snd env in
@@ -195,7 +197,7 @@ module Ty = struct
 end
 
 
-let base_type : type_constant -> O.michelson result =
+let base_type : type_constant -> (O.michelson , [> error]) result =
   function
   | TC_unit -> ok @@ O.prim T_unit
   | TC_void -> fail (Ty.not_compilable_type "void")
@@ -213,7 +215,7 @@ let base_type : type_constant -> O.michelson result =
   | TC_key_hash -> ok @@ O.prim T_key_hash
   | TC_chain_id -> ok @@ O.prim T_chain_id
 
-let rec type_ : type_value -> O.michelson result =
+let rec type_ : type_value -> (O.michelson , [> error]) result =
   function
   | T_base b -> base_type b
   | T_pair (t, t') -> (
@@ -249,7 +251,7 @@ let rec type_ : type_value -> O.michelson result =
       let%bind ret = type_ ret in
       ok @@ O.prim ~children:[arg;ret] T_lambda
 
-and annotated : type_value annotated -> O.michelson result =
+and annotated : type_value annotated -> (O.michelson , [> error]) result =
   function
   | (Some ann, o) ->
      let%bind o' = type_ o in

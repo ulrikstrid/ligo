@@ -16,7 +16,7 @@ let v_some : value -> value =
 let v_none : unit -> value =
   fun () -> V_Construct ("None", v_unit ())
 
-let extract_pair : value -> (value * value) result =
+let extract_pair : value -> (value * value , _) result =
   fun p ->
     let err = simple_error "value is not a pair" in
     ( match p with
@@ -28,7 +28,7 @@ let extract_pair : value -> (value * value) result =
         ok (fst,snd)
       | _ -> fail err )
 
-let is_true : value -> bool result =
+let is_true : value -> (bool , _) result =
   fun b -> match b with
     | V_Ct (C_bool b) -> ok b
     | _ -> simple_fail "value is not a bool"

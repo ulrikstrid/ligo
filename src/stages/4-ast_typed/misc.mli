@@ -1,11 +1,11 @@
 open Trace
 open Types
 
-val assert_value_eq : ( expression * expression ) -> unit result
+val assert_value_eq : ( expression * expression ) -> (unit , [> error]) result
 
-val assert_type_expression_eq : ( type_expression * type_expression ) -> unit result
+val assert_type_expression_eq : ( type_expression * type_expression ) -> (unit , [> error]) result
 
-val merge_annotation : type_expression option -> type_expression option -> error_thunk -> type_expression result
+val merge_annotation : type_expression option -> type_expression option -> ([> `Simple_error of string ] as 'a) -> (type_expression, 'a) result
 
 (* No information about what made it fail *)
 val type_expression_eq : ( type_expression * type_expression ) -> bool
@@ -57,7 +57,7 @@ module Errors : sig
   val different_size_values : name -> value -> value -> unit -> error
   val missing_key_in_record_value : string -> unit -> error
   *)
-  val not_functional_main : Location.t -> unit -> error
+  val not_functional_main : Location.t -> [> error]
 end
 
 
@@ -67,5 +67,5 @@ end
 val assert_literal_eq : ( literal * literal ) -> unit result
 *)
 
-val get_entry : program -> string -> expression result
+val get_entry : program -> string -> (expression , [> error ]) result
 val program_environment : program -> full_environment

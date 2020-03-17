@@ -2,17 +2,18 @@ open Ast_imperative
 open Trace
 
 module Errors = struct
-  let bad_string_timestamp ts loc () =
+  let bad_string_timestamp _ts _loc = simple_error "TODO"
+  (* let bad_string_timestamp ts loc () =
     let title = (thunk ("Badly formatted timestamp \""^ts^"\"")) in
     let message () = "" in
     let data = [
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 end
 open Errors
 
-let peephole_expression : expression -> expression result = fun e ->
+let peephole_expression : expression -> (expression , _) result = fun e ->
   let return expression_content = ok { e with expression_content } in
   match e.expression_content with
   | E_ascription {anno_expr=e'; type_annotation=t} as e -> (

@@ -2,33 +2,39 @@ open Trace
 open Types
 
 module Errors = struct
-  let different_kinds a b () =
+  let different_kinds _a _b = simple_error "TODO"
+  let different_constants _a _b = simple_error "TODO"
+  let different_operators _a _b = simple_error "TODO"
+  let different_operator_number_of_arguments _opa _opb _lena _lenb = simple_error "TODO"
+
+  (* let different_kinds a b () =
     let title = (thunk "different kinds") in
     let message () = "" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a" PP.type_expression a) ;
       ("b" , fun () -> Format.asprintf "%a" PP.type_expression b )
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let different_constants a b () =
+  (* let different_constants a b () =
     let title = (thunk "different type constructors") in
     let message () = "Expected these two constant type constructors to be the same, but they're different" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a" PP.type_constant a) ;
       ("b" , fun () -> Format.asprintf "%a" PP.type_constant b )
     ] in
-    error ~data title message ()
-  let different_operators a b () =
+    error ~data title message () *)
+
+  (* let different_operators a b () =
     let title = (thunk "different type constructors") in
     let message () = "Expected these two n-ary type constructors to be the same, but they're different" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a" (PP.type_operator PP.type_expression) a) ;
       ("b" , fun () -> Format.asprintf "%a" (PP.type_operator PP.type_expression) b)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let different_operator_number_of_arguments opa opb lena lenb () =
+  (* let different_operator_number_of_arguments opa opb lena lenb () =
     let title = (thunk "different number of arguments to type constructors") in
     assert (String.equal (type_operator_name opa) (type_operator_name opb));
     let message () = Format.asprintf
@@ -41,18 +47,20 @@ module Errors = struct
       ("len_a" , fun () -> Format.asprintf "%d" lena) ;
       ("len_b" , fun () -> Format.asprintf "%d" lenb) ;
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let different_size_type names a b () =
+  let different_size_type _names _a _b = simple_error "TODO"
+  (* let different_size_type names a b () =
     let title () = names ^ " have different sizes" in
     let message () = "Expected these two types to be the same, but they're different (both are " ^ names ^ ", but with a different number of arguments)" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a" PP.type_expression a) ;
       ("b" , fun () -> Format.asprintf "%a" PP.type_expression b)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let different_props_in_record a b ra rb ka kb () =
+  let different_props_in_record _a _b _ra _rb _ka _kb = simple_error "TODO"
+  (* let different_props_in_record a b ra rb ka kb () =
     let names () = if Stage_common.Helpers.is_tuple_lmap ra && Stage_common.Helpers.is_tuple_lmap rb then "tuples" else "records" in
     let title () = "different keys in " ^ (names ()) in
     let message () = "" in
@@ -62,9 +70,10 @@ module Errors = struct
       ("a" , fun () -> Format.asprintf "%a" PP.type_expression a) ;
       ("b" , fun () -> Format.asprintf "%a" PP.type_expression b ) ;
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let different_kind_record_tuple a b ra rb () =
+  let different_kind_record_tuple _a _b _ra _rb = simple_error "TODO"
+  (* let different_kind_record_tuple a b ra rb () =
     let name_a () = if Stage_common.Helpers.is_tuple_lmap ra then "tuple" else "record" in
     let name_b () = if Stage_common.Helpers.is_tuple_lmap rb then "tuple" else "record" in
     let title () = "different keys in " ^ (name_a ()) ^ " and " ^ (name_b ()) in
@@ -73,115 +82,125 @@ module Errors = struct
       ("a" , fun () -> Format.asprintf "%a" PP.type_expression a) ;
       ("b" , fun () -> Format.asprintf "%a" PP.type_expression b ) ;
     ] in
-    error ~data title message ()
-
-
-  let _different_size_constants = different_size_type "type constructors"
+    error ~data title message () *)
 
   let different_size_sums = different_size_type "sums"
+  (* let different_size_sums = different_size_type "sums" *)
 
-  let different_size_records_tuples a b ra rb =
+  let different_size_records_tuples _a _b _ra _rb = simple_error "TODO"
+  (* let different_size_records_tuples a b ra rb =
     different_size_type
       (if Stage_common.Helpers.is_tuple_lmap ra && Stage_common.Helpers.is_tuple_lmap rb
        then "tuples"
        else "records")
-      a b
+      a b *)
 
-  let different_types name a b () =
+  let different_types _name _a _b _err = simple_error "TODO"
+  (* let different_types name a b () =
     let title () = name ^ " are different" in
     let message () = "Expected these two types to be the same, but they're different" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a" PP.type_expression a) ;
       ("b" , fun () -> Format.asprintf "%a" PP.type_expression b )
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let different_literals name a b () =
+  let different_literals _name _a _b = simple_error "TODO"
+  (* let different_literals name a b () =
     let title () = name ^ " are different" in
     let message () = "" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a" PP.literal a) ;
       ("b" , fun () -> Format.asprintf "%a" PP.literal b )
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let different_values name a b () =
+  let different_values _name _a _b = simple_error "TODO"
+  (* let different_values name a b () =
     let title () = name ^ " are different" in
     let message () = "" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a"  PP.expression a) ;
       ("b" , fun () -> Format.asprintf "%a"  PP.expression b )
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let different_literals_because_different_types name a b () =
+  let different_literals_because_different_types _name _a _b = simple_error "TODO"
+  (* let different_literals_because_different_types name a b () =
     let title () = "literals have different types: " ^ name in
     let message () = "" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a" PP.literal a) ;
       ("b" , fun () -> Format.asprintf "%a" PP.literal b )
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let different_values_because_different_types name a b () =
+  let different_values_because_different_types _name _a _b = simple_error "TODO"
+  (* let different_values_because_different_types name a b () =
     let title () = "values have different types: " ^ name in
     let message () = "" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a" PP.expression a) ;
       ("b" , fun () -> Format.asprintf "%a" PP.expression b)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let error_uncomparable_literals name a b () =
+  let error_uncomparable_literals _name _a _b = simple_error "TODO"
+  (* let error_uncomparable_literals name a b () =
     let title () = name ^ " are not comparable" in
     let message () = "" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a" PP.literal a) ;
       ("b" , fun () -> Format.asprintf "%a" PP.literal b )
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let error_uncomparable_values name a b () =
+  let error_uncomparable_values _name _a _b = simple_error "TODO"
+  (* let error_uncomparable_values name a b () =
     let title () = name ^ " are not comparable" in
     let message () = "" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a" PP.expression a) ;
       ("b" , fun () -> Format.asprintf "%a" PP.expression b )
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let different_size_values name a b () =
+  let different_size_values _name _a _b = simple_error "TODO"
+  (* let different_size_values name a b () =
     let title () = name in
     let message () = "" in
     let data = [
       ("a" , fun () -> Format.asprintf "%a"  PP.expression a) ;
       ("b" , fun () -> Format.asprintf "%a"  PP.expression b )
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let missing_key_in_record_value k () =
+  let missing_key_in_record_value _k = simple_error "TODO"
+  (* let missing_key_in_record_value k () =
     let title () = "missing keys in one of the records" in
     let message () = "" in
     let data = [
       ("missing_key" , fun () -> Format.asprintf "%s" k)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let missing_entry_point name =
+  let missing_entry_point _name = simple_error "TODO"
+  (* let missing_entry_point name =
     let title () = "missing entry point" in
     let content () = "no entry point with the given name" in
     let data = [
       ("name" , fun () -> name) ;
     ] in
-    error ~data title content
+    error ~data title content *)
 
-  let not_functional_main location =
+  let not_functional_main _location = simple_error "TODO"
+  (* let not_functional_main location =
     let title () = "not functional main" in
     let content () = "main should be a function" in
     let data = [
       ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
     ] in
-    error ~data title content
+    error ~data title content *)
 
 end
 
@@ -330,7 +349,7 @@ end
 open Errors
 
        
-let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : unit result = match (a.type_content, b.type_content) with
+let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : (unit,_) result = match (a.type_content, b.type_content) with
   | T_constant ca, T_constant cb -> (
       trace_strong (different_constants ca cb)
       @@ Assert.assert_true (ca = cb)
@@ -406,7 +425,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
 (* No information about what made it fail *)
 let type_expression_eq ab = Trace.to_bool @@ assert_type_expression_eq ab
 
-let assert_literal_eq (a, b : literal * literal) : unit result =
+let assert_literal_eq (a, b : literal * literal) : (unit,_) result =
   match (a, b) with
   | Literal_bool a, Literal_bool b when a = b -> ok ()
   | Literal_bool _, Literal_bool _ -> fail @@ different_literals "booleans" a b
@@ -452,11 +471,12 @@ let assert_literal_eq (a, b : literal * literal) : unit result =
   | Literal_operation _, _ -> fail @@ different_literals_because_different_types "operation vs non-operation" a b
 
 
-let rec assert_value_eq (a, b: (expression*expression)) : unit result =
-  let error_content () =
+let rec assert_value_eq (a, b: (expression*expression)) : (unit , _) result =
+  (* let error_content () =
     Format.asprintf "\n%a vs %a" PP.expression a PP.expression b
-  in
-  trace (fun () -> error (thunk "not equal") error_content ()) @@
+  in *)
+  (* trace (fun () -> error (thunk "not equal") error_content ()) @@ *)
+  trace (fun _err -> simple_error "TODO") @@
   match (a.expression_content, b.expression_content) with
   | E_literal a, E_literal b ->
       assert_literal_eq (a, b)
@@ -470,12 +490,13 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit result =
   | E_constant _, E_constant _ ->
       fail @@ different_values "constants" a b
   | E_constant _, _ ->
-      let error_content () =
+      (* let error_content () =
         Format.asprintf "%a vs %a"
           PP.expression a
           PP.expression b
       in
-      fail @@ (fun () -> error (thunk "comparing constant with other stuff") error_content ())
+      fail @@ (fun () -> error (thunk "comparing constant with other stuff") error_content ()) *)
+      simple_fail "TODO"
 
   | E_constructor {constructor=ca;element=a}, E_constructor {constructor=cb;element=b} when ca = cb -> (
       let%bind _eq = assert_value_eq (a, b) in
@@ -537,7 +558,7 @@ let rec assert_value_eq (a, b: (expression*expression)) : unit result =
   | (E_look_up _, _) | (E_matching _, _)
   -> fail @@ error_uncomparable_values "can't compare sequences nor loops" a b
 
-let merge_annotation (a:type_expression option) (b:type_expression option) err : type_expression result =
+let merge_annotation (a:type_expression option) (b:type_expression option) err : (type_expression , _) result =
   match a, b with
   | None, None -> fail @@ err
   | Some a, None -> ok a
@@ -548,7 +569,7 @@ let merge_annotation (a:type_expression option) (b:type_expression option) err :
       | _, None -> ok a
       | _, Some _ -> ok b
 
-let get_entry (lst : program) (name : string) : expression result =
+let get_entry (lst : program) (name : string) : (expression , _) result =
   trace_option (Errors.missing_entry_point name) @@
   let aux x =
     let (Declaration_constant (an , expr, _, _)) = Location.unwrap x in

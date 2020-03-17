@@ -7,7 +7,8 @@ open Trace
 
 module Errors = struct
 
-  let corner_case ~loc message =
+  let corner_case ~loc:_ _message = simple_error "TODO"
+  (* let corner_case ~loc message =
     let title () = "corner case" in
     let content () = "we don't have a good error message for this case. we are
 striving find ways to better report them and find the use-cases that generate
@@ -16,31 +17,33 @@ them. please report this to the developers." in
       ("location" , fun () -> loc) ;
       ("message" , fun () -> message) ;
     ] in
-    error ~data title content
+    error ~data title content *)
 
-  let wrong_mini_c_value expected_type actual =
+  let wrong_mini_c_value _expected_type _actual = simple_error "TODO"
+  (* let wrong_mini_c_value expected_type actual =
     let title () = "illed typed intermediary value" in
     let content () = "type of intermediary value doesn't match what was expected" in
     let data = [
       ("expected_type" , fun () -> expected_type) ;
       ("actual" , fun () -> Format.asprintf "%a" Mini_c.PP.value actual ) ;
     ] in
-    error ~data title content
+    error ~data title content *)
 
-  let bad_untranspile bad_type value =
+  let bad_untranspile _bad_type _value = simple_error "TODO"
+  (* let bad_untranspile bad_type value =
     let title () = "untranspiling bad value" in
     let content () = Format.asprintf "can not untranspile %s" bad_type in
     let data = [
       ("bad_type" , fun () -> bad_type) ;
       ("value" , fun () -> Format.asprintf "%a" Mini_c.PP.value value) ;
     ] in
-    error ~data title content
+    error ~data title content *)
 
 end
 
 open Errors
 
-let rec untranspile (v : value) (t : AST.type_expression) : AST.expression result =
+let rec untranspile (v : value) (t : AST.type_expression) : (AST.expression , [> error]) result =
   let open! AST in
   let return e = ok (make_a_e_empty e t) in
   match t.type_content with

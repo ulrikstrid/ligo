@@ -4,15 +4,15 @@ module Concrete_to_imperative : sig
  open Trace
 
   module Pascaligo : sig
-    val constants  : string -> constant' result
-    val type_constants : string -> type_constant result
-    val type_operators : string -> type_operator result
+    val constants  : string -> (constant',[> error]) result
+    val type_constants : string -> (type_constant,[> error]) result
+    val type_operators : string -> (type_operator,[> error]) result
   end
 
   module Cameligo : sig
-    val constants  : string -> constant' result
-    val type_constants : string -> type_constant result
-    val type_operators : string -> type_operator result
+    val constants  : string -> (constant',[> error]) result
+    val type_constants : string -> (type_constant,[> error]) result
+    val type_operators : string -> (type_operator,[> error]) result
   end
 
 end
@@ -93,7 +93,7 @@ module Typer : sig
       val t_set_add : Typesystem.Core.type_value
       val t_set_remove : Typesystem.Core.type_value
       val t_not : Typesystem.Core.type_value
-      val constant_type : constant' -> Typesystem.Core.type_value Trace.result
+      val constant_type : constant' -> (Typesystem.Core.type_value, [> error]) Trace.result
     end
 
   (*
@@ -107,7 +107,7 @@ module Typer : sig
   val map_mem : typer 
   val map_find : typer 
   *)
-  val map_find_opt : typer 
+  val map_find_opt : [> error] typer 
   (*
   val map_iter : typer 
   val map_map : typer 
@@ -134,17 +134,17 @@ module Typer : sig
   val unit : typer
   val amount : typer
   *)
-  val balance : typer
+  val balance : [> error] typer
   (*
   val address : typer
   val now : typer
   val transaction : typer
   *)
-  val create_contract : typer
+  val create_contract : [> error] typer
   (*
   val get_contract : typer
   *)
-  val set_delegate : typer
+  val set_delegate : [> error] typer
   (*
   val abs : typer
   val neg : typer
@@ -164,13 +164,13 @@ module Typer : sig
   val xor : typer
   val and_ : typer
   *)
-  val lsl_ : typer
-  val lsr_ : typer
+  val lsl_ : [> error] typer
+  val lsr_ : [> error] typer
   (*
   val concat : typer
   *)
-  val cons : typer
-  val constant_typers : constant' -> typer result
+  val cons : [> error] typer
+  val constant_typers : constant' -> ([>error] typer,[>error]) result
 
 end
 
@@ -190,7 +190,7 @@ module Compiler : sig
     | Tetrary of michelson
     | Pentary of michelson
     | Hexary of michelson
-  val get_operators : constant' -> predicate result
+  val get_operators : constant' -> (predicate,[> error]) result
   val simple_constant : t -> predicate
   val simple_unary : t -> predicate
   val simple_binary : t -> predicate

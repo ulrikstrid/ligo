@@ -16,41 +16,41 @@ module Expression : sig
   val pair : t -> t -> t'
 end
 
-val get_bool : value ->bool result
-val get_int : value -> int result
-val get_nat : value -> int result
-val get_mutez : value -> int result
-val get_timestamp : value -> int result
-val get_string : value -> string result
-val get_bytes : value -> bytes result
-val get_unit : value -> unit result
-val get_option : value -> value option result
-val get_map : value -> ( value * value ) list result
-val get_big_map : value -> ( value * value ) list result
-val get_list : value -> value list result
-val get_set : value -> value list result
-val get_function_with_ty : expression -> ( anon_function * ( type_value * type_value) ) result
-val get_function : expression -> anon_function result
-val get_t_function : type_value -> ( type_value * type_value ) result
-val get_t_option : type_value -> type_value result
-val get_pair : value -> ( value * value ) result
-val get_t_pair : type_value -> ( type_value * type_value ) result
-val get_t_or : type_value -> ( type_value * type_value ) result
-val get_t_map : type_value -> ( type_value * type_value ) result
-val get_t_big_map : type_value -> ( type_value * type_value ) result
-val get_t_list : type_value -> type_value result
-val get_t_set : type_value -> type_value result
-val get_left : value -> value result
-val get_right : value -> value result
-val get_or : value -> ( bool * value ) result
+val get_bool : value -> (bool,[> error ]) result
+val get_int : value -> (int, [> `Simple_error of string ] ) result
+val get_nat : value -> (int, [> `Simple_error of string ] ) result
+val get_mutez : value -> (int, [> `Simple_error of string ] ) result
+val get_timestamp : value -> (int, [> `Simple_error of string ] ) result
+val get_string : value -> (string, [> `Simple_error of string ] ) result
+val get_bytes : value -> (bytes, [> `Simple_error of string ] ) result
+val get_unit : value -> (unit, [> `Simple_error of string ] ) result
+val get_option : value -> (value option, [> `Simple_error of string ] ) result
+val get_map : value -> ((value * value) list, [> `Simple_error of string ] ) result
+val get_big_map : value -> (( value * value ) list, [> `Simple_error of string ] ) result
+val get_list : value -> (value list, [> `Simple_error of string ] ) result
+val get_set : value -> (value list, [> `Simple_error of string ] ) result
+val get_function_with_ty : expression -> (( anon_function * ( type_value * type_value) ), [> `Simple_error of string ] ) result
+val get_function : expression -> (anon_function, [> `Simple_error of string ] ) result
+val get_t_function : type_value -> (( type_value * type_value ), [> `Simple_error of string ] ) result
+val get_t_option : type_value -> (type_value, [> `Simple_error of string ] ) result
+val get_pair : value -> (( value * value ), [> `Simple_error of string ] ) result
+val get_t_pair : type_value -> (( type_value * type_value ), [> `Simple_error of string ] ) result
+val get_t_or : type_value -> (( type_value * type_value ), [> `Simple_error of string ] ) result
+val get_t_map : type_value -> (( type_value * type_value ), [> `Simple_error of string ] ) result
+val get_t_big_map : type_value -> (( type_value * type_value ), [> `Simple_error of string ] ) result
+val get_t_list : type_value -> (type_value, [> `Simple_error of string ] ) result
+val get_t_set : type_value -> (type_value, [> `Simple_error of string ] ) result
+val get_left : value -> (value, [> `Simple_error of string ] ) result
+val get_right : value -> (value, [> `Simple_error of string ] ) result
+val get_or : value -> (( bool * value ), [> `Simple_error of string ] ) result
 (*
 val wrong_type : string -> type_value -> unit -> error
 *)
-val get_t_left : type_value -> type_value result
-val get_t_right : type_value -> type_value result
-val get_t_contract : type_value -> type_value result
-val get_t_operation : type_value -> type_value result
-val get_operation : value -> Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation result
+val get_t_left : type_value -> (type_value, [> `Simple_error of string ] ) result
+val get_t_right : type_value -> (type_value, [> `Simple_error of string ] ) result
+val get_t_contract : type_value -> (type_value, [> `Simple_error of string ] ) result
+val get_t_operation : type_value -> (type_value, [> `Simple_error of string ] ) result
+val get_operation : value -> (Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation, [> `Simple_error of string ] ) result
 
 val t_int : type_value 
 val t_unit : type_value 

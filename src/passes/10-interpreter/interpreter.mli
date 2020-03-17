@@ -1,3 +1,3 @@
 open Trace
 
-val dummy : Ast_typed.program -> string result
+val dummy : Ast_typed.program -> (string, [> error]) result

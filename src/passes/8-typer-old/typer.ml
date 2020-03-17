@@ -11,7 +11,12 @@ module Solver = Typer_new.Solver
 type environment = Environment.t
 
 module Errors = struct
-  let unbound_type_variable (e:environment) (tv:I.type_variable) () =
+  (*added during error refactoring*)
+  let match_variant_tracer _msg _err = simple_error "TODO"
+  (**)
+
+  let unbound_type_variable (_e:environment) (_tv:I.type_variable) = simple_error "TODO"
+  (* let unbound_type_variable (e:environment) (tv:I.type_variable) () =
     let name = Var.to_name tv in
     let suggestion = match name with
         | "integer" -> "int"
@@ -27,9 +32,10 @@ module Errors = struct
       ("in" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
       ("did_you_mean" , fun () -> suggestion)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let unbound_variable (e:environment) (n:I.expression_variable) (loc:Location.t) () =
+  let unbound_variable (_e:environment) (_n:I.expression_variable) (_loc:Location.t) = simple_error "TODO"
+  (* let unbound_variable (e:environment) (n:I.expression_variable) (loc:Location.t) () =
     let name () = Format.asprintf "%a" I.PP.expression_variable n in
     let title = (thunk ("unbound variable "^(name ()))) in
     let message () = "" in
@@ -38,9 +44,11 @@ module Errors = struct
       ("environment" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let match_empty_variant : I.matching_expr -> Location.t -> unit -> _ =
+  let match_empty_variant : I.matching_expr -> Location.t -> _ =
+    fun _matching _loc -> simple_error "TODO"
+  (* let match_empty_variant : I.matching_expr -> Location.t -> unit -> _ =
     fun matching loc () ->
       let title = (thunk "match with no cases") in
       let message () = "" in
@@ -48,9 +56,11 @@ module Errors = struct
         ("variant" , fun () -> Format.asprintf "%a" I.PP.matching_type matching) ;
         ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
       ] in
-      error ~data title message ()
+      error ~data title message () *)
 
-  let match_missing_case : I.matching_expr -> Location.t -> unit -> _ =
+  let match_missing_case : I.matching_expr -> Location.t -> _ =
+    fun _matching _loc -> simple_error "TODO"
+  (* let match_missing_case : I.matching_expr -> Location.t -> unit -> _ =
     fun matching loc () ->
     let title = (thunk "missing case in match") in
     let message () = "" in
@@ -58,9 +68,11 @@ module Errors = struct
       ("variant" , fun () -> Format.asprintf "%a" I.PP.matching_type matching) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let match_redundant_case : I.matching_expr -> Location.t -> unit -> _ =
+  let match_redundant_case : I.matching_expr -> Location.t -> _ =
+    fun _matching _loc -> simple_error "TODO"
+  (* let match_redundant_case : I.matching_expr -> Location.t -> unit -> _ =
     fun matching loc () ->
     let title = (thunk "redundant case in match") in
     let message () = "" in
@@ -68,9 +80,10 @@ module Errors = struct
       ("variant" , fun () -> Format.asprintf "%a" I.PP.matching_type matching) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let unbound_constructor (e:environment) (c:I.constructor') (loc:Location.t) () =
+  let unbound_constructor (_e:environment) (_c:I.constructor') (_loc:Location.t) = simple_error "TODO"
+  (* let unbound_constructor (e:environment) (c:I.constructor') (loc:Location.t) () =
     let title = (thunk "unbound constructor") in
     let message () = "" in
     let data = [
@@ -78,18 +91,20 @@ module Errors = struct
       ("environment" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let redundant_constructor (e:environment) (c:I.constructor') () =
+  let redundant_constructor (_e:environment) (_c:I.constructor') = simple_error "TODO"
+  (* let redundant_constructor (e:environment) (c:I.constructor') () =
     let title = (thunk "redundant constructor") in
     let message () = "" in
     let data = [
       ("constructor" , fun () -> Format.asprintf "%a" I.PP.constructor c);
       ("environment" , fun () -> Format.asprintf "%a" Environment.PP.full_environment e) ;
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let wrong_arity (n:string) (expected:int) (actual:int) (loc : Location.t) () =
+  let wrong_arity (_n:string) (_expected:int) (_actual:int) (_loc : Location.t) = simple_error "TODO"
+  (* let wrong_arity (n:string) (expected:int) (actual:int) (loc : Location.t) () =
     let title () = "wrong arity" in
     let message () = "" in
     let data = [
@@ -98,10 +113,10 @@ module Errors = struct
       ("actual" , fun () -> Format.asprintf "%d" actual) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-
-  let match_tuple_wrong_arity (expected:'a list) (actual:'b list) (loc:Location.t) () =
+  let match_tuple_wrong_arity (_expected:'a list) (_actual:'b list) (_loc:Location.t) = simple_error "TODO"
+  (* let match_tuple_wrong_arity (expected:'a list) (actual:'b list) (loc:Location.t) () =
     let title () = "matching tuple of different size" in
     let message () = "" in
     let data = [
@@ -109,18 +124,20 @@ module Errors = struct
       ("actual" , fun () -> Format.asprintf "%d" (List.length actual)) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
   (* TODO: this should be a trace_info? *)
-  let program_error (p:I.program) () =
+  let program_error_tracer (_p:I.program) _err = simple_error "TODO"
+  (* let program_error (p:I.program) () =
     let message () = "" in
     let title = (thunk "typing program") in
     let data = [
       ("program" , fun () -> Format.asprintf "%a" I.PP.program p)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let constant_declaration_error (name:I.expression_variable) (ae:I.expr) (expected: O.type_expression option) () =
+  let constant_declaration_error_tracer (_name:I.expression_variable) (_ae:I.expr) (_expected: O.type_expression option) _err = simple_error "TODO"
+  (* let constant_declaration_error (name:I.expression_variable) (ae:I.expr) (expected: O.type_expression option) () =
     let title = (thunk "typing constant declaration") in
     let message () = "" in
     let data = [
@@ -132,9 +149,13 @@ module Errors = struct
           | Some expected -> Format.asprintf "%a" O.PP.type_expression expected) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp ae.location)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let match_error : ?msg:string -> expected: I.matching_expr -> actual: O.type_expression -> Location.t -> unit -> _ =
+  let match_error_tracer : ?_msg:string -> _expected: I.matching_expr -> _actual: O.type_expression -> Location.t -> _ =
+    fun ?(_msg = "") ~_expected ~_actual _loc _err -> simple_error "TODO"
+  let match_error: ?_msg:string -> _expected: I.matching_expr -> _actual: O.type_expression -> Location.t -> _ =
+    fun ?(_msg = "") ~_expected ~_actual _loc -> simple_error "TODO"
+  (* let match_error : ?msg:string -> expected: I.matching_expr -> actual: O.type_expression -> Location.t -> unit -> _ =
     fun ?(msg = "") ~expected ~actual loc () ->
     let title = (thunk "typing match") in
     let message () = msg in
@@ -143,36 +164,40 @@ module Errors = struct
       ("actual" , fun () -> Format.asprintf "%a" O.PP.type_expression actual) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let needs_annotation (e : I.expression) (case : string) () =
+  let needs_annotation (_e : I.expression) (_case : string) = simple_error "TODO"
+  (* let needs_annotation (e : I.expression) (case : string) () =
     let title = (thunk "this expression must be annotated with its type") in
     let message () = Format.asprintf "%s needs an annotation" case in
     let data = [
       ("expression" , fun () -> Format.asprintf "%a" I.PP.expression e) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp e.location)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let fvs_in_create_contract_lambda (e : I.expression) (fvar : Ast_typed.expression_variable) () =
+  let fvs_in_create_contract_lambda (_e : I.expression) (_fvar : Ast_typed.expression_variable) = simple_error "TODO"
+  (* let fvs_in_create_contract_lambda (e : I.expression) (fvar : Ast_typed.expression_variable) () =
     let title = (thunk "No free variable allowed in this lambda") in
     let message () = Format.asprintf "variable '%a'" Var.pp fvar in
     let data = [
       ("expression" , fun () -> Format.asprintf "%a" I.PP.expression e) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp e.location)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let create_contract_lambda (cst : I.constant') (e : I.expression) () =
+  let create_contract_lambda (_cst : I.constant') (_e : I.expression) = simple_error "TODO"
+  (* let create_contract_lambda (cst : I.constant') (e : I.expression) () =
     let title () = Format.asprintf "%a first argument must be inlined" I.PP.constant cst in
     let message () = Format.asprintf "contract code can be inlined using a lambda" in
     let data = [
       ("expression" , fun () -> Format.asprintf "%a" I.PP.expression e) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp e.location)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let type_error_approximate ?(msg="") ~(expected: string) ~(actual: O.type_expression) ~(expression : I.expression) (loc:Location.t) () =
+  let type_error_approximate ?(_msg="") ~(_expected: string) ~(_actual: O.type_expression) ~(_expression : I.expression) (_loc:Location.t) = simple_error "TODO"
+  (* let type_error_approximate ?(msg="") ~(expected: string) ~(actual: O.type_expression) ~(expression : I.expression) (loc:Location.t) () =
     let title = (thunk "type error") in
     let message () = msg in
     let data = [
@@ -181,9 +206,10 @@ module Errors = struct
       ("expression" , fun () -> Format.asprintf "%a" I.PP.expression expression) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let type_error ?(msg="") ~(expected: O.type_expression) ~(actual: O.type_expression) ~(expression : I.expression) (loc:Location.t) () =
+  let type_error_tracer ?(msg="") ~(expected: O.type_expression) ~(actual: O.type_expression) ~(expression : I.expression) (loc:Location.t) _err = `Fake3 (msg,expected,actual,expression,loc)
+  (* let type_error ?(msg="") ~(expected: O.type_expression) ~(actual: O.type_expression) ~(expression : I.expression) (loc:Location.t) () =
     let title = (thunk "type error") in
     let message () = msg in
     let data = [
@@ -192,9 +218,10 @@ module Errors = struct
       ("expression" , fun () -> Format.asprintf "%a" I.PP.expression expression) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
-  let bad_record_access (field : I.label) (ae : I.expression) (t : O.type_expression) (loc:Location.t) () =
+  let bad_record_access (field : I.label) (ae : I.expression) (t : O.type_expression) (loc:Location.t) = `Fake (field,ae,t,loc)
+  (* let bad_record_access (field : I.label) (ae : I.expression) (t : O.type_expression) (loc:Location.t) () =
     let title = (thunk "invalid record field") in
     let message () = "" in
     let data = [
@@ -203,12 +230,12 @@ module Errors = struct
       ("tuple_type" , fun () -> Format.asprintf "%a" O.PP.type_expression t) ;
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 
 end
 open Errors
 
-let rec type_program (p:I.program) : (O.program * Solver.state) result =
+let rec type_program (p:I.program) : (O.program * Solver.state , [> error]) result =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let%bind ed' = (bind_map_location (type_declaration e (Solver.placeholder_for_state_of_new_typer ()))) d in
     let loc : 'a . 'a Location.wrap -> _ -> _ = fun x v -> Location.wrap ~loc:x.location v in
@@ -218,11 +245,12 @@ let rec type_program (p:I.program) : (O.program * Solver.state) result =
     | Some d' -> ok (e', loc ed' d' :: acc)
   in
   let%bind (_, lst) =
-    trace (fun () -> program_error p ()) @@
+    trace (program_error_tracer p) @@
     bind_fold_list aux (Environment.full_empty, []) p in
   ok @@ (List.rev lst , (Solver.placeholder_for_state_of_new_typer ()))
 
-and type_declaration env (_placeholder_for_state_of_new_typer : Solver.state) : I.declaration -> (environment * Solver.state * O.declaration option) result = function
+
+and type_declaration env (_placeholder_for_state_of_new_typer : Solver.state) : I.declaration -> (environment * Solver.state * O.declaration option, error) Trace.result = function
   | Declaration_type (type_name , type_expression) ->
       let%bind tv = evaluate_type env type_expression in
       let env' = Environment.add_type (type_name) tv env in
@@ -230,24 +258,24 @@ and type_declaration env (_placeholder_for_state_of_new_typer : Solver.state) : 
   | Declaration_constant (name , tv_opt , inline, expression) -> (
       let%bind tv'_opt = bind_map_option (evaluate_type env) tv_opt in
       let%bind ae' =
-        trace (constant_declaration_error name expression tv'_opt) @@
+        trace (constant_declaration_error_tracer name expression tv'_opt) @@
         type_expression' ?tv_opt:tv'_opt env expression in
       let env' = Environment.add_ez_ae name ae' env in
       ok (env', (Solver.placeholder_for_state_of_new_typer ()) , Some (O.Declaration_constant (name,ae', inline, env')))
     )
 
-and type_match : (environment -> I.expression -> O.expression result) -> environment -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> O.matching_expr result =
+and type_match : (environment -> I.expression -> (O.expression , [>error]) result) -> environment -> O.type_expression -> I.matching_expr -> I.expression -> Location.t -> (O.matching_expr, [> error]) result =
   fun f e t i ae loc -> match i with
     | Match_bool {match_true ; match_false} ->
       let%bind _ =
-        trace_strong (match_error ~expected:i ~actual:t loc)
+        trace_strong (match_error ~_expected:i ~_actual:t loc)
         @@ get_t_bool t in
       let%bind match_true = f e match_true in
       let%bind match_false = f e match_false in
       ok (O.Match_bool {match_true ; match_false})
   | Match_option {match_none ; match_some} ->
       let%bind t_opt =
-        trace_strong (match_error ~expected:i ~actual:t loc)
+        trace_strong (match_error ~_expected:i ~_actual:t loc)
         @@ get_t_option t in
       let%bind match_none = f e match_none in
       let (n, b,_) = match_some in
@@ -256,7 +284,7 @@ and type_match : (environment -> I.expression -> O.expression result) -> environ
       ok (O.Match_option {match_none ; match_some = (n, b', t_opt)})
   | Match_list {match_nil ; match_cons} ->
       let%bind t_elt =
-        trace_strong (match_error ~expected:i ~actual:t loc)
+        trace_strong (match_error ~_expected:i ~_actual:t loc)
         @@ get_t_list t in
       let%bind match_nil = f e match_nil in
       let (hd, tl, b,_) = match_cons in
@@ -266,7 +294,7 @@ and type_match : (environment -> I.expression -> O.expression result) -> environ
       ok (O.Match_list {match_nil ; match_cons = (hd, tl, b', t_elt)})
   | Match_tuple ((lst, b),_) ->
       let%bind t_tuple =
-        trace_strong (match_error ~expected:i ~actual:t loc)
+        trace_strong (match_error ~_expected:i ~_actual:t loc)
         @@ get_t_tuple t in
       let%bind lst' =
         generic_try (match_tuple_wrong_arity t_tuple lst loc)
@@ -284,7 +312,7 @@ and type_match : (environment -> I.expression -> O.expression result) -> environ
           let%bind acc = match acc with
             | None -> ok (Some variant)
             | Some variant' -> (
-                trace (type_error
+                trace (type_error_tracer
                          ~msg:"in match variant"
                          ~expected:variant
                          ~actual:variant'
@@ -295,14 +323,15 @@ and type_match : (environment -> I.expression -> O.expression result) -> environ
                 ok (Some variant)
               ) in
           ok acc in
-        trace (simple_info "in match variant") @@
+        (* trace (simple_info "in match variant") @@ *)
+        trace (match_variant_tracer "in match variant") @@
         bind_fold_list aux None lst in
       let%bind variant =
         trace_option (match_empty_variant i loc) @@
         variant_opt in
       let%bind () =
         let%bind variant_cases' =
-          trace (match_error ~expected:i ~actual:t loc)
+          trace (match_error_tracer ~_expected:i ~_actual:t loc)
           @@ Ast_typed.Combinators.get_t_sum variant in
         let variant_cases = List.map fst @@ I.CMap.to_kv_list variant_cases' in
         let match_cases = List.map (Function.compose fst fst) lst in
@@ -329,7 +358,7 @@ and type_match : (environment -> I.expression -> O.expression result) -> environ
         bind_map_list aux lst in
       ok (O.Match_variant (lst' , variant))
 
-and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression result =
+and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, error) result =
   let return tv' = ok (make_t tv' (Some t)) in
   match t.type_content with
   | T_arrow {type1;type2} ->
@@ -389,13 +418,13 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
             let%bind c = evaluate_type e c in
             ok @@ O.TC_contract c
         in
-      return (T_operator (opt))
+      return (T_operator (opt)) 
 
-and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * Solver.state) result
+and type_expression : environment -> Solver.state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * Solver.state , [> error]) result
   = fun e _placeholder_for_state_of_new_typer ?tv_opt ae ->
     let%bind res = type_expression' e ?tv_opt ae in
     ok (res, (Solver.placeholder_for_state_of_new_typer ()))
-and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression -> O.expression result = fun e ?tv_opt ae ->
+and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression -> (O.expression , [> error]) result = fun e ?tv_opt ae ->
   let module L = Logger.Stateful() in
   let return expr tv =
     let%bind () =
@@ -404,7 +433,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       | Some tv' -> O.assert_type_expression_eq (tv' , tv) in
     let location = ae.location in
     ok @@ make_a_e ~location expr tv e in
-  let main_error =
+  (* let main_error =
     let title () = "typing expression" in
     let content () = "" in
     let data = [
@@ -412,7 +441,8 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       ("location" , fun () -> Format.asprintf "%a" Location.pp ae.location) ;
       ("misc" , fun () -> L.get ()) ;
     ] in
-    error ~data title content in
+    error ~data title content in *)
+    let main_error _err = simple_error "TODO" in
   trace main_error @@
   match ae.expression_content with
   (* Basic *)
@@ -452,7 +482,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       return (e_operation op) (t_operation ())
   | E_record_accessor {expr;label} ->
       let%bind e' = type_expression' e expr in
-      let aux (prev:O.expression) (a:I.label) : O.expression result =
+      let aux (prev:O.expression) (a:I.label) : (O.expression, [> error]) result =
             let property = a in
             let%bind r_tv = get_t_record prev.type_expression in
             let%bind tv =
@@ -462,7 +492,8 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
             ok @@ make_a_e ~location (E_record_accessor {expr=prev; label=property}) tv e
       in
       let%bind ae =
-      trace (simple_info "accessing") @@ aux e' label in
+      (* trace (simple_info "accessing") @@ aux e' label in *)
+      trace (fun _err -> simple_info "accessing") @@ aux e' label in
       (* check type annotation of the final accessed element *)
       let%bind () =
         match tv_opt with
@@ -472,14 +503,15 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
   (* Sum *)
   | E_constructor {constructor; element} ->
       let%bind (c_tv, sum_tv) =
-        let error =
+        (* let error =
           let title () = "no such constructor" in
           let content () =
             Format.asprintf "%a in:\n%a\n"
               Stage_common.PP.constructor constructor 
               O.Environment.PP.full_environment e
           in
-          error title content in
+          error title content in *)
+          let error = simple_error "TODO" in
         trace_option error @@
         Environment.get_constructor constructor e in
       let%bind expr' = type_expression' e element in
@@ -568,7 +600,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
             @@ List.map get_type_expression
             @@ List.map fst lst' in
           let%bind annot = bind_map_option get_t_map_key tv_opt in
-          trace (simple_info "empty map expression without a type annotation") @@
+          trace (fun _err -> simple_info "empty map expression without a type annotation") @@
           O.merge_annotation annot sub (needs_annotation ae "this map literal")
         in
         let%bind value_type =
@@ -577,7 +609,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
             @@ List.map get_type_expression
             @@ List.map snd lst' in
           let%bind annot = bind_map_option get_t_map_value tv_opt in
-          trace (simple_info "empty map expression without a type annotation") @@
+          trace (fun _err -> simple_info "empty map expression without a type annotation") @@
           O.merge_annotation annot sub (needs_annotation ae "this map literal")
         in
         ok (t_map key_type value_type ())
@@ -598,7 +630,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
             @@ List.map get_type_expression
             @@ List.map fst lst' in
           let%bind annot = bind_map_option get_t_big_map_key tv_opt in
-          trace (simple_info "empty map expression without a type annotation") @@
+          trace (fun _err -> simple_info "empty map expression without a type annotation") @@
           O.merge_annotation annot sub (needs_annotation ae "this map literal")
         in
         let%bind value_type =
@@ -607,7 +639,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
             @@ List.map get_type_expression
             @@ List.map snd lst' in
           let%bind annot = bind_map_option get_t_big_map_value tv_opt in
-          trace (simple_info "empty map expression without a type annotation") @@
+          trace (fun _err -> simple_info "empty map expression without a type annotation") @@
           O.merge_annotation annot sub (needs_annotation ae "this map literal")
         in
         ok (t_big_map key_type value_type ())
@@ -697,9 +729,9 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
             ok type2
         | _ ->
           fail @@ type_error_approximate
-            ~expected:"should be a function type"
-            ~expression:lamb
-            ~actual:lamb'.type_expression
+            ~_expected:"should be a function type"
+            ~_expression:lamb
+            ~_actual:lamb'.type_expression
             lamb'.location
       in
       return (E_application {lamb=lamb'; args=args'}) tv
@@ -797,17 +829,17 @@ and type_lambda e {
 
 
 
-and type_constant (name:I.constant') (lst:O.type_expression list) (tv_opt:O.type_expression option) : (O.constant' * O.type_expression) result =
+and type_constant (name:I.constant') (lst:O.type_expression list) (tv_opt:O.type_expression option) : (O.constant' * O.type_expression , [> error]) result =
   let%bind typer = Operators.Typer.constant_typers name in
   let%bind tv = typer lst tv_opt in
   ok(name, tv)
 
-let untype_type_expression (t:O.type_expression) : (I.type_expression) result =
+let untype_type_expression (t:O.type_expression) : (I.type_expression , [> error]) result =
   match t.type_meta with
   | Some s -> ok s
   | _ -> fail @@ internal_assertion_failure "trying to untype generated type"
 
-let untype_literal (l:O.literal) : I.literal result =
+let untype_literal (l:O.literal) : (I.literal , [> error]) result =
   let open I in
   match l with
   | Literal_unit -> ok Literal_unit
@@ -827,9 +859,9 @@ let untype_literal (l:O.literal) : I.literal result =
   | Literal_address s -> ok (Literal_address s)
   | Literal_operation s -> ok (Literal_operation s)
 
-let rec untype_expression (e:O.expression) : (I.expression) result =
+let rec untype_expression (e:O.expression) : (I.expression , [> error]) result =
   untype_expression_content e.type_expression e.expression_content
-  and untype_expression_content ty (ec:O.expression_content) : (I.expression) result =
+  and untype_expression_content ty (ec:O.expression_content) : (I.expression , [> error]) result =
   let open I in
   let return e = ok e in
   match ec with
@@ -900,7 +932,7 @@ let rec untype_expression (e:O.expression) : (I.expression) result =
       let lambda = match unty_expr.expression_content with I.E_lambda l -> l | _ -> failwith "impossible case" in
       return @@ e_recursive fun_name fun_type lambda
 
-and untype_matching : (O.expression -> I.expression result) -> O.matching_expr -> I.matching_expr result = fun f m ->
+and untype_matching : (O.expression -> (I.expression , [> error]) result) -> O.matching_expr -> (I.matching_expr , [> error]) result = fun f m ->
   let open I in
   match m with
   | Match_bool {match_true ; match_false} ->

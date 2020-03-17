@@ -48,7 +48,7 @@ val patterns_to_var : Raw.pattern list -> Raw.variable result
 val compile_type_expression : Raw.type_expr -> type_expression result
 val compile_list_type_expression : Raw.type_expr list -> type_expression result
 *)
-val compile_expression : Raw.expr -> expr result
+val compile_expression : Raw.expr -> (expr, [> error]) result
 (*
 val compile_fun : Raw.fun_expr Raw.reg -> expr result 
 val compile_logic_expression : ?te_annot:type_expression -> Raw.logic_expr -> expr result
@@ -59,4 +59,4 @@ val compile_tuple_expression : ?loc:Location.t -> Raw.expr list -> expression re
 val compile_declaration : Raw.declaration -> declaration Location.wrap result
 val compile_cases : (Raw.pattern * 'a) list -> 'a matching result
 *)
-val compile_program : Raw.ast -> program result
+val compile_program : Raw.ast -> (program , [> error]) result

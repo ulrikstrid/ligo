@@ -39,9 +39,9 @@ val get_type_expression : expression -> type_expression
 val get_type' : type_expression -> type_content
 val get_environment : expression -> full_environment
 val get_expression : expression -> expression_content
-val get_lambda : expression -> lambda result
-val get_lambda_with_type : expression -> (lambda * ( type_expression * type_expression) ) result
-val get_t_bool : type_expression -> unit result
+val get_lambda : expression -> (lambda, [> error]) result
+val get_lambda_with_type : expression -> (lambda * ( type_expression * type_expression) , [> error]) result
+val get_t_bool : type_expression -> (unit, [> error]) result
 (*
 val get_t_int : type_expression -> unit result
 val get_t_nat : type_expression -> unit result
@@ -50,39 +50,39 @@ val get_t_mutez : type_expression -> unit result
 val get_t_bytes : type_expression -> unit result 
 val get_t_string : type_expression -> unit result
 *)
-val get_t_contract : type_expression -> type_expression result
-val get_t_option : type_expression -> type_expression result
-val get_t_list : type_expression -> type_expression result 
-val get_t_set : type_expression -> type_expression result
+val get_t_contract : type_expression -> (type_expression , [> error]) result
+val get_t_option : type_expression -> (type_expression , [> error]) result
+val get_t_list : type_expression -> (type_expression , [> error]) result 
+val get_t_set : type_expression -> (type_expression , [> error]) result
 (*
 val get_t_key : type_expression -> unit result
 val get_t_signature : type_expression -> unit result
 val get_t_key_hash : type_expression -> unit result
 *)
-val get_t_tuple : type_expression -> type_expression list result
-val get_t_pair : type_expression -> ( type_expression * type_expression ) result
-val get_t_function : type_expression -> ( type_expression * type_expression ) result
-val get_t_function_full : type_expression -> ( type_expression * type_expression ) result
-val get_t_sum : type_expression -> type_expression constructor_map result
-val get_t_record : type_expression -> type_expression label_map result
-val get_t_map : type_expression -> ( type_expression * type_expression ) result
-val get_t_big_map : type_expression -> ( type_expression * type_expression ) result
-val get_t_map_key : type_expression -> type_expression result
-val get_t_map_value : type_expression -> type_expression result
-val get_t_big_map_key : type_expression -> type_expression result
-val get_t_big_map_value : type_expression -> type_expression result
+val get_t_tuple : type_expression -> (type_expression list , [> error]) result
+val get_t_pair : type_expression -> (( type_expression * type_expression ) , [> error]) result
+val get_t_function : type_expression -> (( type_expression * type_expression ) , [> error]) result
+val get_t_function_full : type_expression -> (( type_expression * type_expression ) , [> error]) result
+val get_t_sum : type_expression -> (type_expression constructor_map , [> error]) result
+val get_t_record : type_expression -> (type_expression label_map , [> error]) result
+val get_t_map : type_expression -> (( type_expression * type_expression ) , [> error]) result
+val get_t_big_map : type_expression -> (( type_expression * type_expression ) , [> error]) result
+val get_t_map_key : type_expression -> (type_expression , [> error]) result
+val get_t_map_value : type_expression -> (type_expression , [> error]) result
+val get_t_big_map_key : type_expression -> (type_expression , [> error]) result
+val get_t_big_map_value : type_expression -> (type_expression , [> error]) result
 
-val assert_t_map : type_expression -> unit result
+val assert_t_map : type_expression -> (unit , [> error]) result
 
 val is_t_map : type_expression -> bool
 val is_t_big_map : type_expression -> bool 
 
-val assert_t_mutez : type_expression -> unit result
-val assert_t_key : type_expression -> unit result
-val assert_t_signature : type_expression -> unit result
-val assert_t_key_hash : type_expression -> unit result
+val assert_t_mutez : type_expression -> (unit , [> error]) result
+val assert_t_key : type_expression -> (unit , [> error]) result
+val assert_t_signature : type_expression -> (unit , [> error]) result
+val assert_t_key_hash : type_expression -> (unit , [> error]) result
 
-val assert_t_list : type_expression -> unit result
+val assert_t_list : type_expression -> (unit , [> error]) result
 
 val is_t_list   : type_expression -> bool
 val is_t_set    : type_expression -> bool
@@ -91,17 +91,17 @@ val is_t_string : type_expression -> bool
 val is_t_bytes  : type_expression -> bool
 val is_t_int    : type_expression -> bool
 
-val assert_t_bytes : type_expression -> unit result
-val assert_t_string : type_expression -> unit result
+val assert_t_bytes : type_expression -> (unit , [> error]) result
+val assert_t_string : type_expression -> (unit , [> error]) result
 (*
 val assert_t_operation : type_expression -> unit result
 *)
-val assert_t_list_operation : type_expression -> unit result
-val assert_t_int : type_expression -> unit result
-val assert_t_nat : type_expression -> unit result
-val assert_t_bool : type_expression -> unit result
-val assert_t_unit : type_expression -> unit result
-val assert_t_contract : type_expression -> unit result
+val assert_t_list_operation : type_expression -> (unit , [> error]) result
+val assert_t_int : type_expression -> (unit , [> error]) result
+val assert_t_nat : type_expression -> (unit , [> error]) result
+val assert_t_bool : type_expression -> (unit , [> error]) result
+val assert_t_unit : type_expression -> (unit , [> error]) result
+val assert_t_contract : type_expression -> (unit , [> error]) result
 (*
 val e_record : ae_map -> expression
 val ez_e_record : ( string * expression ) list -> expression
@@ -150,8 +150,8 @@ val e_a_map : ( expression * expression ) list -> type_expression -> type_expres
 val e_a_list : expression list -> type_expression -> full_environment -> expression
 val e_a_let_in : expression_variable -> bool -> expression -> expression -> full_environment -> expression
 
-val get_a_int : expression -> int result
-val get_a_unit : expression -> unit result
-val get_a_bool : expression -> bool result
-val get_a_record_accessor : expression -> (expression * label) result
-val get_declaration_by_name : program -> string -> declaration result
+val get_a_int : expression -> (int , [> error]) result
+val get_a_unit : expression -> (unit , [> error]) result
+val get_a_bool : expression -> (bool , [> error]) result
+val get_a_record_accessor : expression -> (expression * label , [> error]) result
+val get_declaration_by_name : program -> string -> (declaration , [> error]) result

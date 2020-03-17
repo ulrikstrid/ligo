@@ -2,18 +2,19 @@ open Ast_typed
 open Trace
 
 module Errors = struct
-  let recursive_call_is_only_allowed_as_the_last_operation name loc () =
+  let recursive_call_is_only_allowed_as_the_last_operation _name _loc = simple_error "TODO"
+  (* let recursive_call_is_only_allowed_as_the_last_operation name loc () =
     let title = (thunk ("Recursion must be achieved through tail-calls only")) in
     let message () = "" in
     let data = [
       ("function" , fun () -> Format.asprintf "%a" PP.expression_variable name);
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
-    error ~data title message ()
+    error ~data title message () *)
 end
 open Errors
 
-let rec check_recursive_call : expression_variable -> bool -> expression -> unit result = fun n final_path e ->
+let rec check_recursive_call : expression_variable -> bool -> expression -> (unit, [> error]) result = fun n final_path e ->
   match e.expression_content with
   | E_literal _   -> ok ()
   | E_constant c  ->
@@ -98,7 +99,7 @@ and check_recursive_call_in_matching = fun n final_path c ->
     ok ()
     
 
-let peephole_expression : expression -> expression result = fun e ->
+let peephole_expression : expression -> (expression, [> error]) result = fun e ->
   let return expression_content = ok { e with expression_content } in
   match e.expression_content with
   | E_recursive {fun_name; lambda} as e-> (

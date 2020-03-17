@@ -3,14 +3,16 @@ open Trace
 open Stage_common.Helpers
 
 module Errors = struct
-  let bad_string_timestamp name () =
+  let bad_string_timestamp _name = simple_error "TODO"
+
+  (* let bad_string_timestamp name () =
     let title = thunk @@ Format.asprintf ("Too long constructor '%s'") name in
     let message () = "names length is limited to 32 (tezos limitation)" in
-    error title message ()
+    error title message () *)
 end
 open Errors
 
-let peephole_type_expression : type_expression -> type_expression result = fun e ->
+let peephole_type_expression : type_expression -> (type_expression , _) result = fun e ->
   let return type_content = ok { e with type_content } in
   match e.type_content with
   | T_sum cmap ->

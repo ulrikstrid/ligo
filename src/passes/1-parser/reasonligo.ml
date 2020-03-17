@@ -48,12 +48,14 @@ module PreUnit =
 
 module Errors =
   struct
-    let generic message =
+    let generic _message = simple_error "TODO"
+    (* let generic message =
       let title () = ""
       and message () = message.Region.value
-      in Trace.error ~data:[] title message
+      in Trace.error ~data:[] title message *)
 
-    let wrong_function_arguments (expr: AST.expr) =
+    let wrong_function_arguments (_expr: AST.expr) = simple_error "TODO"
+    (* let wrong_function_arguments (expr: AST.expr) =
       let title () = "" in
       let message () = "It looks like you are defining a function, \
                however we do not\n\
@@ -67,7 +69,7 @@ module Errors =
       let data = [
         ("location",
          fun () -> Format.asprintf "%a" Location.pp_lift @@ expression_loc)]
-      in error ~data title message
+      in error ~data title message *)
   end
 
 let parse (module IO : IO) parser =

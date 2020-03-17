@@ -43,17 +43,17 @@ module ParserLog =
 module PreUnit =
   ParserUnit.Make (Lexer)(AST)(Parser)(ParErr)(ParserLog)
 
-module Errors =
-  struct
+module Errors = struct
     (* let data =
          [("location",
            fun () -> Format.asprintf "%a" Location.pp_lift @@ loc)] *)
 
-    let generic message =
+    (* let generic message =
       let title () = ""
       and message () = message.Region.value
-      in Trace.error ~data:[] title message
-  end
+      in Trace.error ~data:[] title message *)
+  let generic _message = Trace.simple_error "TODO"
+end
 
 let parse (module IO : IO) parser =
   let module Unit = PreUnit (IO) in

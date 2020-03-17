@@ -6,7 +6,7 @@ open Protocol
 open Script_typed_ir
 open Script_ir_translator
 
-let rec translate_value (Ex_typed_value (ty, value)) : value result =
+let rec translate_value (Ex_typed_value (ty, value)) : (value , [> error]) result =
   match (ty, value) with
   | Pair_t ((a_ty, _, _), (b_ty, _, _), _ , _), (a, b) -> (
       let%bind a = translate_value @@ Ex_typed_value(a_ty, a) in
@@ -122,23 +122,30 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
       ok @@ D_operation op
   | (Lambda_t _ as ty) , _ ->
       let%bind m_ty =
-        trace_tzresult_lwt (simple_error "unparsing unrecognized data") @@
+        let err_tracer _errs = simple_error "TODO" in
+        (* trace_tzresult_lwt (simple_error "unparsing unrecognized data") @@ *)
+        trace_tzresult_lwt err_tracer @@
         Proto_alpha_utils.Memory_proto_alpha.unparse_michelson_ty ty in
       let pp_lambda =
         Format.asprintf "[lambda of type: %a ]" Michelson.pp m_ty in
         ok @@ D_string pp_lambda
   | ty, v ->
+      let err_tracer _errs = simple_error "TODO" in
       let%bind error =
-        let%bind m_data =
-          trace_tzresult_lwt (simple_error "unparsing unrecognized data") @@
+        let%bind _m_data =
+          (* trace_tzresult_lwt (simple_error "unparsing unrecognized data") @@ *)
+          trace_tzresult_lwt err_tracer @@
           Proto_alpha_utils.Memory_proto_alpha.unparse_michelson_data ty v in
-        let%bind m_ty =
-          trace_tzresult_lwt (simple_error "unparsing unrecognized data") @@
+        let%bind _m_ty =
+          let err_tracer _errs = simple_error "TODO" in
+          (* trace_tzresult_lwt (simple_error "unparsing unrecognized data") @@ *)
+          trace_tzresult_lwt err_tracer @@
           Proto_alpha_utils.Memory_proto_alpha.unparse_michelson_ty ty in
-        let error_content () =
+        (* let error_content () =
           Format.asprintf "%a : %a"
             Michelson.pp m_data
-            Michelson.pp m_ty in
-        ok @@ (fun () -> error (thunk "this value can't be transpiled back yet") error_content ())
+            Michelson.pp m_ty in *)
+        (* ok @@ (fun () -> error (thunk "this value can't be transpiled back yet") error_content ()) *)
+        ok @@ simple_error "TODO" (* must take m_data m_ty*)
       in
       fail error

@@ -2,7 +2,7 @@ module I = Ast_imperative
 module O = Ast_sugar
 open Trace
 
-let rec compile_type_expression : I.type_expression -> O.type_expression result =
+let rec compile_type_expression : I.type_expression -> (O.type_expression,_) result =
   fun te ->
   let return te = ok @@ O.make_t te in
   match te.type_content with
@@ -34,7 +34,7 @@ let rec compile_type_expression : I.type_expression -> O.type_expression result 
       let%bind type_operator = compile_type_operator type_operator in
       return @@ T_operator type_operator
 
-and compile_type_operator : I.type_operator -> O.type_operator result =
+and compile_type_operator : I.type_operator -> (O.type_operator,_) result =
   fun t_o ->
   match t_o with
     | TC_contract c -> 
@@ -59,7 +59,7 @@ and compile_type_operator : I.type_operator -> O.type_operator result =
       let%bind (i,o) = bind_map_pair compile_type_expression (i,o) in
       ok @@ O.TC_arrow (i,o)
 
-let rec compile_expression : I.expression -> O.expression result =
+let rec compile_expression : I.expression -> (O.expression , _) result =
   fun e ->
   let return expr = ok @@ O.make_expr ~loc:e.location expr in
   match e.expression_content with
@@ -138,13 +138,13 @@ let rec compile_expression : I.expression -> O.expression result =
       let%bind expr2 = compile_expression expr2 in
       return @@ O.E_sequence {expr1; expr2}
     | I.E_skip -> return @@ O.E_skip
-and compile_lambda : I.lambda -> O.lambda result =
+and compile_lambda : I.lambda -> (O.lambda , _) result =
   fun {binder;input_type;output_type;result}->
     let%bind input_type = bind_map_option compile_type_expression input_type in
     let%bind output_type = bind_map_option compile_type_expression output_type in
     let%bind result = compile_expression result in
     ok @@ O.{binder;input_type;output_type;result}
-and compile_matching : I.matching_expr -> O.matching_expr result =
+and compile_matching : I.matching_expr -> (O.matching_expr , _) result =
   fun m -> 
   match m with 
     | I.Match_bool {match_true;match_false} ->
@@ -185,12 +185,12 @@ let compile_declaration : I.declaration Location.wrap -> _ =
     let%bind te = compile_type_expression te in
     return @@ O.Declaration_type (n,te)
 
-let compile_program : I.program -> O.program result =
+let compile_program : I.program -> (O.program , _) result =
   fun p ->
   bind_map_list compile_declaration p
 
 (* uncompiling *)
-let rec uncompile_type_expression : O.type_expression -> I.type_expression result =
+let rec uncompile_type_expression : O.type_expression -> (I.type_expression , _) result =
   fun te ->
   let return te = ok @@ I.make_t te in
   match te.type_content with
@@ -222,7 +222,7 @@ let rec uncompile_type_expression : O.type_expression -> I.type_expression resul
       let%bind type_operator = uncompile_type_operator type_operator in
       return @@ T_operator type_operator
 
-and uncompile_type_operator : O.type_operator -> I.type_operator result =
+and uncompile_type_operator : O.type_operator -> (I.type_operator , _) result =
   fun t_o ->
   match t_o with
     | TC_contract c -> 
@@ -247,7 +247,7 @@ and uncompile_type_operator : O.type_operator -> I.type_operator result =
       let%bind (i,o) = bind_map_pair uncompile_type_expression (i,o) in
       ok @@ I.TC_arrow (i,o)
 
-let rec uncompile_expression : O.expression -> I.expression result =
+let rec uncompile_expression : O.expression -> (I.expression , _) result =
   fun e ->
   let return expr = ok @@ I.make_expr ~loc:e.location expr in
   match e.expression_content with 
@@ -327,13 +327,13 @@ let rec uncompile_expression : O.expression -> I.expression result =
     return @@ I.E_sequence {expr1; expr2}
   | O.E_skip -> return @@ I.E_skip
 
-and uncompile_lambda : O.lambda -> I.lambda result =
+and uncompile_lambda : O.lambda -> (I.lambda , _) result =
   fun {binder;input_type;output_type;result}->
     let%bind input_type = bind_map_option uncompile_type_expression input_type in
     let%bind output_type = bind_map_option uncompile_type_expression output_type in
     let%bind result = uncompile_expression result in
     ok @@ I.{binder;input_type;output_type;result}
-and uncompile_matching : O.matching_expr -> I.matching_expr result =
+and uncompile_matching : O.matching_expr -> (I.matching_expr , _) result =
   fun m -> 
   match m with 
     | O.Match_bool {match_true;match_false} ->

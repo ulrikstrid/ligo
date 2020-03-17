@@ -63,11 +63,11 @@ module Ty : sig
   val comparable_type : type_value -> ex_comparable_ty result
   val base_type : type_base -> ex_ty result
  *)
-  val type_ : type_value -> ex_ty result
+  val type_ : type_value -> (ex_ty , [> error]) result
 
-  val environment_representation : environment -> ex_ty result
+  val environment_representation : environment -> (ex_ty , [> error]) result
 
-  val environment : environment -> ex_stack_ty result
+  val environment : environment -> (ex_stack_ty , [> error]) result
   (*
   val not_comparable : string -> unit -> error
   val not_compilable_type : string -> unit -> error
@@ -81,14 +81,14 @@ module Ty : sig
   *)
 end
 
-val type_ : type_value -> O.t result
+val type_ : type_value -> (O.t , [> error]) result
 
-val environment_element : string * type_value -> (int, O.prim) Tezos_micheline.Micheline.node result
+val environment_element : string * type_value -> ((int, O.prim) Tezos_micheline.Micheline.node , [> error]) result
 
-val environment : ( 'a * type_value ) list -> O.t list result
-val lambda_closure : environment * type_value  * type_value -> (int, O.prim) Tezos_micheline.Micheline.node result
+val environment : ( 'a * type_value ) list -> (O.t list , [> error]) result
+val lambda_closure : environment * type_value  * type_value -> ((int, O.prim) Tezos_micheline.Micheline.node , [> error]) result
 
-val environment_closure : environment -> (int , O.prim ) Tezos_micheline.Micheline.node result
+val environment_closure : environment -> ((int , O.prim ) Tezos_micheline.Micheline.node , [> error]) result
 (*
 val base_type : type_base -> O.michelson result
 

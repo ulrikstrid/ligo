@@ -43,7 +43,7 @@ val ez_t_sum : ( string * type_expression ) list -> type_expression
 val t_function : type_expression -> type_expression -> type_expression
 val t_map : type_expression -> type_expression -> type_expression
 
-val t_operator : type_operator -> type_expression list -> type_expression result
+val t_operator : type_operator -> type_expression list -> (type_expression, [> `Simple_error of string ]) result
 val t_set : type_expression -> type_expression
 
 val make_expr : ?loc:Location.t -> expression_content -> expression
@@ -61,8 +61,8 @@ val e_key : ?loc:Location.t -> string -> expression
 val e_key_hash : ?loc:Location.t -> string -> expression 
 val e_chain_id : ?loc:Location.t -> string -> expression 
 val e_mutez : ?loc:Location.t -> int -> expression
-val e'_bytes : string -> expression_content result
-val e_bytes_hex : ?loc:Location.t -> string -> expression result
+val e'_bytes : string -> (expression_content , [> `Simple_error of string ] ) result
+val e_bytes_hex : ?loc:Location.t -> string -> (expression, [> `Simple_error of string ]) result
 val e_bytes_raw : ?loc:Location.t -> bytes -> expression
 val e_bytes_string : ?loc:Location.t -> string -> expression
 val e_big_map : ?loc:Location.t -> ( expr * expr ) list -> expression
@@ -116,20 +116,20 @@ val e_assign_with_let : ?loc:Location.t -> string -> string list -> expression -
 val get_e_accessor : expression' -> ( expression * access_path ) result
 *)
 
-val assert_e_accessor : expression_content -> unit result
+val assert_e_accessor : expression_content -> (unit, [> `Simple_error of string ]) result
 
-val get_e_pair : expression_content -> ( expression * expression ) result
+val get_e_pair : expression_content -> (expression * expression , [> `Simple_error of string ]) result
 
-val get_e_list : expression_content -> ( expression list ) result
-val get_e_tuple : expression_content -> ( expression list ) result
+val get_e_list : expression_content -> (expression list , [> `Simple_error of string ]) result
+val get_e_tuple : expression_content -> (expression list , [> `Simple_error of string ]) result
 (*
 val get_e_failwith : expression -> expression result 
 val is_e_failwith : expression -> bool
 *)
-val extract_pair : expression -> ( expression * expression ) result 
+val extract_pair : expression -> (expression * expression , [> `Simple_error of string ] ) result 
 
-val extract_list : expression -> (expression list) result
+val extract_list : expression -> (expression list , [> `Simple_error of string ]) result
 
-val extract_record : expression -> (label * expression) list result
+val extract_record : expression -> ((label * expression) list , [> `Simple_error of string ]) result
 
-val extract_map : expression -> (expression * expression) list result
+val extract_map : expression -> ((expression * expression) list , [> `Simple_error of string ]) result

@@ -1,6 +1,7 @@
 open Cmdliner
 open Trace
 open Main.Display
+open Main.Errors_format
 
 let error_suggest: string = "\n If you're not sure how to fix this error, you can
  do one of the following:

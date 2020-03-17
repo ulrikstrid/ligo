@@ -88,9 +88,10 @@ end
 
 open Trace
 
-let get_trace : expression_variable -> t -> element result = fun s env ->
-  let error =
+let get_trace : expression_variable -> t -> (element,_) result = fun s env ->
+  (* let error =
     let title () = "missing var not in env" in
     let content () = Format.asprintf "\nvar: %a\nenv: %a\n" PP. expression_variable s PP.full_environment env in
-    error title content in
+    error title content in *)
+  let error = simple_error "TODO" in
   trace_option error @@ get_opt s env

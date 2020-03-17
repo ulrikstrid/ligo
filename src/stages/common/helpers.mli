@@ -18,7 +18,7 @@ val bind_map_cmap :
 val is_tuple_lmap : 'a Types.label_map -> bool
 val get_pair :
            'a Types.label_map ->
-           (('a * 'a) * 'b list, unit -> Trace.error) result
+           (('a * 'a) * 'b list, [> `Simple_error of string ]) result
 
 
 

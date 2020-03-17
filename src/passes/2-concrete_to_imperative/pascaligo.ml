@@ -3,7 +3,7 @@ open Ast_imperative
 
 module Raw = Parser.Pascaligo.AST
 module SMap = Map.String
-module ParserLog = Parser_pascaligo.ParserLog
+(* module ParserLog = Parser_pascaligo.ParserLog *)
 
 open Combinators
 
@@ -101,7 +101,8 @@ and restore_mutable_variable (expr : expression->expression) (free_vars : expres
 
 
 module Errors = struct
-  let unsupported_cst_constr p =
+  let unsupported_cst_constr _p = simple_error "TODO"
+  (* let unsupported_cst_constr p =
     let title () = "" in
     let message () =
       Format.asprintf "\nConstant constructors are not supported yet.\n" in
@@ -110,9 +111,11 @@ module Errors = struct
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
-    error ~data title message
+    error ~data title message *)
 
-  let unknown_predefined_type name =
+  let unknown_predefined_type_tracer _name _err = simple_error "TODO"
+  (* let unknown_predefined_type _name = simple_error "TODO" *)
+  (* let unknown_predefined_type name =
     let title () = "\nType constants" in
     let message () =
       Format.asprintf "Unknown predefined type \"%s\".\n" name.Region.value in
@@ -120,9 +123,10 @@ module Errors = struct
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ name.Region.region)
     ] in
-    error ~data title message
+    error ~data title message *)
 
-  let unsupported_non_var_pattern p =
+  let unsupported_non_var_pattern _p = simple_error "TODO"
+  (* let unsupported_non_var_pattern p =
     let title () = "" in
     let message () =
       Format.asprintf "\nNon-variable patterns in constructors \
@@ -132,9 +136,10 @@ module Errors = struct
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
-    error ~data title message
+    error ~data title message *)
 
-  let only_constructors p =
+  let only_constructors _p = simple_error "TODO"
+  (* let only_constructors p =
     let title () = "" in
     let message () =
       Format.asprintf "\nCurrently, only constructors \
@@ -144,9 +149,10 @@ module Errors = struct
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
-    error ~data title message
+    error ~data title message *)
 
-  let unsupported_tuple_pattern p =
+  let unsupported_tuple_pattern _p = simple_error "TODO"
+  (* let unsupported_tuple_pattern p =
     let title () = "" in
     let message () =
       Format.asprintf "\nTuple patterns are not supported yet.\n" in
@@ -159,9 +165,10 @@ module Errors = struct
        fun () -> ParserLog.pattern_to_string
                 ~offsets:true ~mode:`Point p)
     ] in
-    error ~data title message
+    error ~data title message *)
 
-  let unsupported_deep_Some_patterns pattern =
+  let unsupported_deep_Some_patterns _pattern = simple_error "TODO"
+  (* let unsupported_deep_Some_patterns pattern =
     let title () = "" in
     let message () =
       Format.asprintf "\nCurrently, only variables in constructors \
@@ -171,9 +178,10 @@ module Errors = struct
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ pattern_loc)
     ] in
-    error ~data title message
+    error ~data title message *)
 
-  let unsupported_deep_list_patterns cons =
+  let unsupported_deep_list_patterns _cons = simple_error "TODO"
+  (* let unsupported_deep_list_patterns cons =
     let title () = "" in
     let message () =
       Format.asprintf "\nCurrently, only empty lists and x::y \
@@ -182,11 +190,13 @@ module Errors = struct
       ("location",
        fun () -> Format.asprintf "%a" Location.pp_lift @@ cons.Region.region)
     ] in
-    error ~data title message
+    error ~data title message *)
 
   (* Logging *)
 
-  let abstracting_instruction t =
+  let abstracting_instruction_tracer _t _err = simple_error "TODO"
+  (* let abstracting_instruction _t = simple_error "TODO" *)
+  (* let abstracting_instruction t =
     let title () = "\nSimplifiying instruction" in
     let message () = "" in
     (** TODO: The labelled arguments should be flowing from the CLI. *)
@@ -195,7 +205,7 @@ module Errors = struct
        fun () -> ParserLog.instruction_to_string
                 ~offsets:true ~mode:`Point t)
     ] in
-    error ~data title message
+    error ~data title message *)
 end
 
 open Errors
@@ -229,7 +239,7 @@ let return_statement expr = ok @@ fun expr'_opt ->
   | Some expr' -> ok @@ e_sequence expr expr'
 
 
-let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
+let rec compile_type_expression (t:Raw.type_expr) : (type_expression , [> error]) result =
   match t with
     TPar x -> compile_type_expression x.value.inside
   | TVar v -> (
@@ -249,7 +259,7 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
       let%bind lst =
         bind_list @@ List.map compile_type_expression lst in (** TODO: fix constant and operator*)
       let%bind cst =
-        trace (unknown_predefined_type name) @@
+        trace (unknown_predefined_type_tracer name) @@
         type_operators name.value in
       t_operator cst lst
   | TProd p ->
@@ -285,7 +295,7 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
       let m = List.fold_left (fun m (x, y) -> CMap.add (Constructor x) y m) CMap.empty lst in
       ok @@ make_t @@ T_sum m
 
-and compile_list_type_expression (lst:Raw.type_expr list) : type_expression result =
+and compile_list_type_expression (lst:Raw.type_expr list) : (type_expression , [> error]) result =
   match lst with
   | [] -> ok @@ t_unit
   | [hd] -> compile_type_expression hd
@@ -309,7 +319,7 @@ let compile_projection : Raw.projection Region.reg -> _ = fun p ->
   ok @@ List.fold_left (e_accessor ~loc) var path'
 
 
-let rec compile_expression (t:Raw.expr) : expr result =
+let rec compile_expression (t:Raw.expr) : (expr , [> error]) result =
   let return x = ok x in
   match t with
   | EAnnot a -> (
@@ -459,7 +469,7 @@ let rec compile_expression (t:Raw.expr) : expr result =
       let (mi , loc) = r_split mi in
       let%bind lst =
         let lst = List.map get_value @@ pseq_to_list mi.elements in
-        let aux : Raw.binding -> (expression * expression) result =
+        let aux : Raw.binding -> (expression * expression, [> error]) result =
           fun b ->
             let%bind src = compile_expression b.source in
             let%bind dst = compile_expression b.image in
@@ -471,7 +481,7 @@ let rec compile_expression (t:Raw.expr) : expr result =
       let (mi , loc) = r_split mi in
       let%bind lst =
         let lst = List.map get_value @@ pseq_to_list mi.elements in
-        let aux : Raw.binding -> (expression * expression) result =
+        let aux : Raw.binding -> (expression * expression, [> error]) result =
           fun b ->
             let%bind src = compile_expression b.source in
             let%bind dst = compile_expression b.image in
@@ -523,7 +533,7 @@ and compile_update = fun (u:Raw.update Region.reg) ->
     aux ur path in
   bind_fold_list aux record updates'
 
-and compile_logic_expression (t:Raw.logic_expr) : expression result =
+and compile_logic_expression (t:Raw.logic_expr) : (expression , [>error]) result =
   let return x = ok x in
   match t with
   | BoolExpr (False reg) -> (
@@ -553,7 +563,7 @@ and compile_logic_expression (t:Raw.logic_expr) : expression result =
   | CompExpr (Neq c) ->
       compile_binop "NEQ" c
 
-and compile_list_expression (t:Raw.list_expr) : expression result =
+and compile_list_expression (t:Raw.list_expr) : (expression , [> error]) result =
   let return x = ok x in
   match t with
     ECons c ->
@@ -568,7 +578,7 @@ and compile_list_expression (t:Raw.list_expr) : expression result =
       let loc = Location.lift reg in
       return @@ e_list ~loc []
 
-and compile_set_expression (t:Raw.set_expr) : expression result =
+and compile_set_expression (t:Raw.set_expr) : (expression , [> error]) result =
   match t with
   | SetMem x -> (
     let (x' , loc) = r_split x in
@@ -583,7 +593,7 @@ and compile_set_expression (t:Raw.set_expr) : expression result =
     ok @@ e_set ~loc elements'
   )
 
-and compile_binop (name:string) (t:_ Raw.bin_op Region.reg) : expression result =
+and compile_binop (name:string) (t:_ Raw.bin_op Region.reg) : (expression , [> error]) result =
   let return x = ok x in
   let (t , loc) = r_split t in
   let%bind a = compile_expression t.arg1 in
@@ -591,14 +601,14 @@ and compile_binop (name:string) (t:_ Raw.bin_op Region.reg) : expression result 
   let%bind name = constants name in
   return @@ e_constant ~loc name [ a ; b ]
 
-and compile_unop (name:string) (t:_ Raw.un_op Region.reg) : expression result =
+and compile_unop (name:string) (t:_ Raw.un_op Region.reg) : (expression , [> error]) result =
   let return x = ok x in
   let (t , loc) = r_split t in
   let%bind a = compile_expression t.arg in
   let%bind name = constants name in
   return @@ e_constant ~loc name [ a ]
 
-and compile_tuple_expression ?loc (lst:Raw.expr list) : expression result =
+and compile_tuple_expression ?loc (lst:Raw.expr list) : (expression , [> error]) result =
   let return x = ok x in
   match lst with
   | [] -> return @@ e_literal Literal_unit
@@ -640,7 +650,7 @@ and compile_data_declaration : Raw.data_decl -> _ result =
       in return_let_in ~loc binder false inline expr
 
 and compile_param :
-      Raw.param_decl -> (string * type_expression) result =
+      Raw.param_decl -> (string * type_expression, [> error]) result =
   fun t ->
   match t with
   | ParamConst c ->
@@ -656,7 +666,7 @@ and compile_param :
 
 and compile_fun_decl :
       loc:_ -> Raw.fun_decl ->
-      ((expression_variable * type_expression option) * expression) result =
+      ((expression_variable * type_expression option) * expression , [> error]) result =
   fun ~loc x ->
   let open! Raw in
   let {kwd_recursive;fun_name; param; ret_type; block_with;
@@ -733,7 +743,7 @@ and compile_fun_decl :
   )
 
 and compile_fun_expression :
-  loc:_ -> Raw.fun_expr -> (type_expression option * expression) result =
+  loc:_ -> Raw.fun_expr -> (type_expression option * expression , [> error]) result =
   fun ~loc x ->
   let open! Raw in
   let {kwd_recursive;param;ret_type;return} : fun_expr = x in
@@ -819,7 +829,7 @@ and compile_statement_list statements =
       hook (compile_data_declaration d :: acc) statements
   in bind_list @@ hook [] (List.rev statements)
 
-and get_case_variables (t:Raw.pattern) : expression_variable list result = 
+and get_case_variables (t:Raw.pattern) : (expression_variable list, [> error]) result = 
   match t with 
     | PConstr PFalse _ 
     | PConstr PTrue _ 
@@ -848,7 +858,7 @@ and get_case_variables (t:Raw.pattern) : expression_variable list result =
     | PVar  v -> ok @@ [Var.of_name v.value] 
     | p -> fail @@ unsupported_cst_constr p
 
-and compile_single_instruction : Raw.instruction -> (_ -> expression result) result =
+and compile_single_instruction : Raw.instruction -> ((_ -> (expression, [> error]) result), [> error]) result =
   fun t ->
   match t with
   | ProcCall x -> (
@@ -1095,7 +1105,7 @@ and compile_path : Raw.path -> string * string list = fun p ->
       (var , path')
     )
 
-and compile_cases : (Raw.pattern * expression) list -> matching_expr result = fun t ->
+and compile_cases : (Raw.pattern * expression) list -> (matching_expr , [> error]) result = fun t ->
   let open Raw in
   let get_var (t:Raw.pattern) =
     match t with
@@ -1167,18 +1177,19 @@ and compile_cases : (Raw.pattern * expression) list -> matching_expr result = fu
       in
       ok @@ Match_list {match_cons = (Var.of_name a, Var.of_name b, cons,()) ; match_nil = nil}
   | lst ->
-      trace (simple_info "currently, only booleans, options, lists and \
+      trace (fun _err -> simple_info "currently, only booleans, options, lists and \
                          user-defined constructors are supported in patterns") @@
       let%bind constrs =
         let aux (x , y) =
-          let error =
+          (* let error =
             let title () = "Pattern" in
             (* TODO: The labelled arguments should be flowing from the CLI. *)
             let content () =
               Printf.sprintf "Pattern : %s"
                 (ParserLog.pattern_to_string
                    ~offsets:true ~mode:`Point x) in
-            error title content in
+            error title content in *)
+            let error = fun _err -> simple_error "TODO" in
           let%bind x' =
             trace error @@
             get_constr x in
@@ -1186,14 +1197,14 @@ and compile_cases : (Raw.pattern * expression) list -> matching_expr result = fu
         bind_map_list aux lst in
       ok @@ ez_match_variant constrs
 
-and compile_instruction : Raw.instruction -> (_ -> expression result) result =
-  fun t -> trace (abstracting_instruction t) @@ compile_single_instruction t
+and compile_instruction : Raw.instruction -> ((_ -> (expression, [> error]) result) , [> error]) result =
+  fun t -> trace (abstracting_instruction_tracer t) @@ compile_single_instruction t
 
-and compile_statements : Raw.statements -> (_ -> expression result) result =
+and compile_statements : Raw.statements -> ((_ -> (expression,[> error]) result) , [> error]) result =
   fun statements ->
     let lst = npseq_to_list statements in
     let%bind fs = compile_statement_list lst in
-    let aux : _ -> (expression option -> expression result) -> _ =
+    let aux : _ -> (expression option -> (expression, [> error]) result) -> _ =
       fun prec cur ->
         let%bind res = cur prec
         in ok @@ Some res in
@@ -1201,10 +1212,10 @@ and compile_statements : Raw.statements -> (_ -> expression result) result =
            let%bind ret = bind_fold_right_list aux expr' fs in
            ok @@ Option.unopt_exn ret
 
-and compile_block : Raw.block -> (_ -> expression result) result =
+and compile_block : Raw.block -> ((_ -> (expression , [> error]) result) , [> error]) result =
   fun t -> compile_statements t.statements
 
-and compile_while_loop : Raw.while_loop -> (_ -> expression result) result = fun wl ->
+and compile_while_loop : Raw.while_loop -> (_ -> (expression , [> error]) result , [> error] ) result = fun wl ->
   let env_rec = Var.fresh () in
   let binder  = Var.fresh () in
 
@@ -1238,7 +1249,7 @@ and compile_while_loop : Raw.while_loop -> (_ -> expression result) result = fun
   restore_mutable_variable return_expr captured_name_list env_rec 
 
 
-and compile_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
+and compile_for_int : Raw.for_int -> ((_ -> (expression, [> error]) result) , [> error]) result = fun fi ->
   let env_rec = Var.fresh () in
   let binder  = Var.fresh () in
   let name = fi.assign.value.name.value in
@@ -1286,7 +1297,7 @@ and compile_for_int : Raw.for_int -> (_ -> expression result) result = fun fi ->
   in
   restore_mutable_variable return_expr captured_name_list env_rec 
 
-and compile_for_collect : Raw.for_collect -> (_ -> expression result) result = fun fc ->
+and compile_for_collect : Raw.for_collect -> ((_ -> (expression , [> error]) result) , [> error] ) result = fun fc ->
   let binder = Var.of_name "arguments" in
   let%bind element_names = ok @@ match fc.bind_to with
     | Some v -> [Var.of_name fc.var.value;Var.of_name (snd v).value]
@@ -1320,7 +1331,7 @@ and compile_for_collect : Raw.for_collect -> (_ -> expression result) result = f
   in
   restore_mutable_variable fold free_vars env
 
-and compile_declaration_list declarations : declaration Location.wrap list result =
+and compile_declaration_list declarations : (declaration Location.wrap list, [> error]) result =
   let open Raw in
   let rec hook acc = function
     [] -> acc
@@ -1383,5 +1394,5 @@ and compile_declaration_list declarations : declaration Location.wrap list resul
       hook (bind_list_cons res acc) declarations
   in hook (ok @@ []) (List.rev declarations)
 
-let compile_program : Raw.ast -> program result =
+let compile_program : Raw.ast -> (program , [> error]) result =
   fun t -> compile_declaration_list @@ nseq_to_list t.decl
