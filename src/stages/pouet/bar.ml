@@ -42,3 +42,5 @@ end
     fun _e -> Error (simple_error "lol")
   let f_ok  : Foo.Types.expression -> (Types.expression, [> error]) result =
     fun _e -> Ok (E_toto 42)
+  let f_tr : Foo.Types.expression -> (Types.expression,_) result =
+    fun fv -> trace (`Bar_error2 30) @@ f_err fv

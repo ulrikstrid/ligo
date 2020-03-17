@@ -3,7 +3,7 @@ open Myerror
 let _ =
   let computations : (Bar.Types.expression, _) result =
     let%bind x = Foo.f_ok () in
-    Bar.f_serr x in
+    Bar.f_tr x in
 
   let toto =
       Yojson.Basic.to_string @@ Display.convert ~display_format:(Display.Json) (Display.Displayable {
