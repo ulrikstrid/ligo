@@ -55,25 +55,23 @@ let add_sock_type () =
   in
   let sock_type_record_type = t_record_ez [("name", t_string);
                                             ("description_hash", t_string)] in
-  let initial_sock_types = e_typed_big_map [] t_int sock_type_record_type in
-  let initial_socks = e_typed_big_map [] t_int (t_record_ez [("sock_type", t_int);
-                                                             ("owner", t_address)])
-  in
-  let post_sock_types = e_typed_big_map [(e_int 0, new_sock_type)] t_int sock_type_record_type in
+  let initial_sock_types = e_typed_big_map [] t_nat sock_type_record_type in
+  let socks = e_typed_big_map [] (t_tuple [t_address; t_nat]) t_nat in
+  let post_sock_types = e_typed_big_map [(e_nat 0, new_sock_type)] t_nat sock_type_record_type in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
-                                     ("socks", initial_socks );
+                                     ("socks", socks );
                                      ("sock_types", initial_sock_types);
                                      ("stock_price", e_mutez 1000000)]
   in
   let post_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
-                                  ("socks", initial_socks);
+                                  ("socks", socks);
                                   ("sock_types", post_sock_types);
                                   ("stock_price", e_mutez 1000000)]
   in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
       ~sender:oracle_contract ()
   in
-  let parameter = e_tuple [e_int 0; new_sock_type] in
+  let parameter = e_tuple [e_nat 0; new_sock_type] in
   expect_eq ~options program "add_sock_type"
     (e_pair parameter initial_storage)
     (e_pair (e_list []) post_storage)
@@ -87,19 +85,17 @@ let add_sock_type_unauthorized () =
   in
   let sock_type_record_type = t_record_ez [("name", t_string);
                                             ("description_hash", t_string)] in
-  let initial_sock_types = e_typed_big_map [] t_int sock_type_record_type in
-  let initial_socks = e_typed_big_map [] t_int (t_record_ez [("sock_type", t_int);
-                                                             ("owner", t_address)])
-  in
+  let initial_sock_types = e_typed_big_map [] t_nat sock_type_record_type in
+  let socks = e_typed_big_map [] (t_tuple [t_address; t_nat]) t_nat in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
-                                     ("socks", initial_socks );
+                                     ("socks", socks );
                                      ("sock_types", initial_sock_types);
                                      ("stock_price", e_mutez 1000000)]
   in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
       ~sender:stranger_contract ()
   in
-  let parameter = e_tuple [e_int 0; new_sock_type] in
+  let parameter = e_tuple [e_nat 0; new_sock_type] in
   expect_string_failwith ~options program "add_sock_type"
     (e_pair parameter initial_storage)
     "You are not the sock oracle."
@@ -113,10 +109,8 @@ let add_sock_type_exists () =
   in
   let sock_type_record_type = t_record_ez [("name", t_string);
                                             ("description_hash", t_string)] in
-  let socks = e_typed_big_map [] t_int (t_record_ez [("sock_type", t_int);
-                                                     ("owner", t_address)])
-  in
-  let sock_types = e_typed_big_map [(e_int 0, new_sock_type)] t_int sock_type_record_type in
+  let socks = e_typed_big_map [] (t_tuple [t_address; t_nat]) t_nat in
+  let sock_types = e_typed_big_map [(e_nat 0, new_sock_type)] t_nat sock_type_record_type in
   let storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                              ("socks", socks);
                              ("sock_types", sock_types);
@@ -125,7 +119,7 @@ let add_sock_type_exists () =
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
       ~sender:oracle_contract ()
   in
-  let parameter = e_tuple [e_int 0; new_sock_type] in
+  let parameter = e_tuple [e_nat 0; new_sock_type] in
   expect_string_failwith ~options program "add_sock_type"
     (e_pair parameter storage)
     "A sock type with this ID already exists."
@@ -147,33 +141,30 @@ let update_sock_type () =
   let sock_type_record_type = t_record_ez [("name", t_string);
                                             ("description_hash", t_string)] in
   let initial_sock_types = e_typed_big_map
-      [(e_int 0, current_sock_type)]
-      t_int
+      [(e_nat 0, current_sock_type)]
+      t_nat
       sock_type_record_type
   in
   let post_sock_types = e_typed_big_map
-      [(e_int 0, sock_type_update)]
-      t_int
+      [(e_nat 0, sock_type_update)]
+      t_nat
       sock_type_record_type
   in
-  let initial_socks = e_typed_big_map [] t_int (t_record_ez [("sock_type", t_int);
-                                                             ("owner", t_address)])
-  in
-
+  let socks = e_typed_big_map [] (t_tuple [t_address; t_nat]) t_nat in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
-                                     ("socks", initial_socks );
+                                     ("socks", socks );
                                      ("sock_types", initial_sock_types);
                                      ("stock_price", e_mutez 1000000)]
   in
   let post_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
-                                  ("socks", initial_socks);
+                                  ("socks", socks);
                                   ("sock_types", post_sock_types);
                                   ("stock_price", e_mutez 1000000)]
   in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
       ~sender:oracle_contract ()
   in
-  let parameter = e_tuple [e_int 0; sock_type_update] in
+  let parameter = e_tuple [e_nat 0; sock_type_update] in
   expect_eq ~options program "update_sock_type"
     (e_pair parameter initial_storage)
     (e_pair (e_list []) post_storage)
@@ -195,23 +186,20 @@ let update_sock_type_unauthorized () =
   let sock_type_record_type = t_record_ez [("name", t_string);
                                             ("description_hash", t_string)] in
   let initial_sock_types = e_typed_big_map
-      [(e_int 0, current_sock_type)]
-      t_int
+      [(e_nat 0, current_sock_type)]
+      t_nat
       sock_type_record_type
   in
-  let initial_socks = e_typed_big_map [] t_int (t_record_ez [("sock_type", t_int);
-                                                             ("owner", t_address)])
-  in
-
+  let socks = e_typed_big_map [] (t_tuple [t_address; t_nat]) t_nat in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
-                                     ("socks", initial_socks );
+                                     ("socks", socks );
                                      ("sock_types", initial_sock_types);
                                      ("stock_price", e_mutez 1000000)]
   in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
       ~sender:stranger_contract ()
   in
-  let parameter = e_tuple [e_int 0; sock_type_update] in
+  let parameter = e_tuple [e_nat 0; sock_type_update] in
   expect_string_failwith ~options program "update_sock_type"
     (e_pair parameter initial_storage)
     "You are not the sock oracle."
@@ -227,20 +215,15 @@ let add_sock () =
   let sock_type_record_type = t_record_ez [("name", t_string);
                                             ("description_hash", t_string)] in
   let initial_sock_types = e_typed_big_map
-      [(e_int 0, test_sock_type)]
-      t_int
+      [(e_nat 0, test_sock_type)]
+      t_nat
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", e_int 0);
-                               ("owner", e_address oracle_addr)]
-  in
   let initial_socks = e_typed_big_map []
-      t_int (t_record_ez [("sock_type", t_int);
-                          ("owner", t_address)])
+      (t_tuple [t_address; t_nat]) t_nat
   in
-  let post_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", sock_type_record_type);
-                          ("owner", t_address)])
+  let post_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
+      (t_tuple [t_address; t_nat]) t_nat
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
@@ -255,7 +238,7 @@ let add_sock () =
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
       ~sender:oracle_contract ()
   in
-  let parameter = e_tuple [e_int 0; test_sock] in
+  let parameter = e_nat 0 in
   expect_eq ~options program "add_sock"
     (e_pair parameter initial_storage)
     (e_pair (e_list []) post_storage)
@@ -271,17 +254,11 @@ let add_sock_unauthorized () =
   let sock_type_record_type = t_record_ez [("name", t_string);
                                             ("description_hash", t_string)] in
   let initial_sock_types = e_typed_big_map
-      [(e_int 0, test_sock_type)]
-      t_int
+      [(e_nat 0, test_sock_type)]
+      t_nat
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", e_int 0);
-                               ("owner", e_address oracle_addr)]
-  in
-  let initial_socks = e_typed_big_map []
-      t_int (t_record_ez [("sock_type", t_int);
-                          ("owner", t_address)])
-  in
+  let initial_socks = e_typed_big_map [] (t_tuple [t_address; t_nat]) t_nat in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
                                      ("sock_types", initial_sock_types);
@@ -290,80 +267,10 @@ let add_sock_unauthorized () =
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
       ~sender:stranger_contract ()
   in
-  let parameter = e_tuple [e_int 0; test_sock] in
+  let parameter = e_nat 0 in
   expect_string_failwith ~options program "add_sock"
     (e_pair parameter initial_storage)
     "You are not the sock oracle."
-
-let add_sock_not_stock () =
-  let%bind program, _ = get_program () in
-  (* Hash says "A plain sock." *)
-  let test_sock_type = e_record_ez [
-      ("name", e_string "Cotton Sock");
-      ("description_hash",
-       e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
-  in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
-  let initial_sock_types = e_typed_big_map
-      [(e_int 0, test_sock_type)]
-      t_int
-      sock_type_record_type
-  in
-  let test_sock = e_record_ez [("sock_type", e_int 0);
-                               ("owner", e_address stranger_addr)]
-  in
-  let initial_socks = e_typed_big_map []
-      t_int (t_record_ez [("sock_type", t_int);
-                          ("owner", t_address)])
-  in
-  let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
-                                     ("socks", initial_socks );
-                                     ("sock_types", initial_sock_types);
-                                     ("stock_price", e_mutez 1000000)]
-  in
-  let options = Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~sender:oracle_contract ()
-  in
-  let parameter = e_tuple [e_int 0; test_sock] in
-  expect_string_failwith ~options program "add_sock"
-    (e_pair parameter initial_storage)
-    "You're not adding this sock to the oracle's stock."
-
-let add_sock_exists () =
-  let%bind program, _ = get_program () in
-  (* Hash says "A plain sock." *)
-  let test_sock_type = e_record_ez [
-      ("name", e_string "Cotton Sock");
-      ("description_hash",
-       e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
-  in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
-  let initial_sock_types = e_typed_big_map
-      [(e_int 0, test_sock_type)]
-      t_int
-      sock_type_record_type
-  in
-  let test_sock = e_record_ez [("sock_type", e_int 0);
-                               ("owner", e_address oracle_addr)]
-  in
-  let initial_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", t_int);
-                          ("owner", t_address)])
-  in
-  let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
-                                     ("socks", initial_socks );
-                                     ("sock_types", initial_sock_types);
-                                     ("stock_price", e_mutez 1000000)]
-  in
-  let options = Proto_alpha_utils.Memory_proto_alpha.make_options
-      ~sender:oracle_contract ()
-  in
-  let parameter = e_tuple [e_int 0; test_sock] in
-  expect_string_failwith ~options program "add_sock"
-    (e_pair parameter initial_storage)
-    "A sock with this ID already exists."
 
 let buy_stock () =
   let%bind program, _ = get_program () in
@@ -376,23 +283,16 @@ let buy_stock () =
   let sock_type_record_type = t_record_ez [("name", t_string);
                                             ("description_hash", t_string)] in
   let initial_sock_types = e_typed_big_map
-      [(e_int 0, test_sock_type)]
-      t_int
+      [(e_nat 0, test_sock_type)]
+      t_nat
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", e_int 0);
-                               ("owner", e_address oracle_addr)]
+  let initial_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
+      (t_tuple [t_address; t_nat]) t_nat
   in
-  let sent_sock = e_record_ez [("sock_type", e_int 0);
-                                 ("owner", e_address stranger_addr)]
-  in
-  let initial_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", t_int);
-                          ("owner", t_address)])
-  in
-  let post_socks = e_typed_big_map [(e_int 0, sent_sock)]
-      t_int (t_record_ez [("sock_type", t_int);
-                          ("owner", t_address)])
+  let post_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 0);
+                                    (e_tuple [e_address stranger_addr; e_nat 0], e_nat 1)]
+      (t_tuple [t_address; t_nat]) t_nat
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
@@ -408,7 +308,7 @@ let buy_stock () =
       ~sender:stranger_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.one) ()
   in
-  let parameter = e_int 0 in
+  let parameter = e_nat 0 in
   expect_eq ~options program "buy_stock"
     (e_pair parameter initial_storage)
     (e_pair (e_list []) post_storage)
@@ -425,28 +325,20 @@ let buy_stock_self_buy () =
   let sock_type_record_type = t_record_ez [("name", t_string);
                                             ("description_hash", t_string)] in
   let initial_sock_types = e_typed_big_map
-      [(e_int 0, test_sock_type)]
-      t_int
+      [(e_nat 0, test_sock_type)]
+      t_nat
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", e_int 0);
-                               ("owner", e_address oracle_addr)]
-  in
-  let initial_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", t_int);
-                          ("owner", t_address)])
-  in
-  let post_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", t_int);
-                          ("owner", t_address)])
+  let socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
+      (t_tuple [t_address; t_nat]) t_nat
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
-                                     ("socks", initial_socks );
+                                     ("socks", socks );
                                      ("sock_types", initial_sock_types);
                                      ("stock_price", e_mutez 1000000)]
   in
   let post_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
-                                  ("socks", post_socks);
+                                  ("socks", socks);
                                   ("sock_types", initial_sock_types);
                                   ("stock_price", e_mutez 1000000)]
   in
@@ -454,7 +346,7 @@ let buy_stock_self_buy () =
       ~sender:oracle_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.one) ()
   in
-  let parameter = e_int 0 in
+  let parameter = e_nat 0 in
   expect_eq ~options program "buy_stock"
     (e_pair parameter initial_storage)
     (e_pair (e_list []) post_storage)
@@ -471,16 +363,12 @@ let buy_stock_nonexistent () =
   let sock_type_record_type = t_record_ez [("name", t_string);
                                             ("description_hash", t_string)] in
   let initial_sock_types = e_typed_big_map
-      [(e_int 0, test_sock_type)]
-      t_int
+      [(e_nat 0, test_sock_type)]
+      t_nat
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", e_int 0);
-                               ("owner", e_address oracle_addr)]
-  in
-  let initial_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", t_int);
-                          ("owner", t_address)])
+  let initial_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
+      (t_tuple [t_address; t_nat]) t_nat
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
@@ -491,12 +379,13 @@ let buy_stock_nonexistent () =
       ~sender:stranger_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.one) ()
   in
-  let parameter = e_int 10 in
+  let parameter = e_nat 10 in
   expect_string_failwith ~options program "buy_stock"
     (e_pair parameter initial_storage)
-    "There is no sock with that ID."
+    "This sock is not in the oracle's stock (Tip: Wrong ID?)."
 
-let buy_stock_non_stock () =
+(* Make sure we fail when a sock type is out of stock *)
+let buy_stock_oos () =
   let%bind program, _ = get_program () in
   (* Hash says "A plain sock." *)
   let test_sock_type = e_record_ez [
@@ -507,16 +396,12 @@ let buy_stock_non_stock () =
   let sock_type_record_type = t_record_ez [("name", t_string);
                                             ("description_hash", t_string)] in
   let initial_sock_types = e_typed_big_map
-      [(e_int 0, test_sock_type)]
-      t_int
+      [(e_nat 0, test_sock_type)]
+      t_nat
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", e_int 0);
-                               ("owner", e_address stranger_addr)]
-  in
-  let initial_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", t_int);
-                          ("owner", t_address)])
+  let initial_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 0)]
+      (t_tuple [t_address ; t_nat]) t_nat
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
@@ -527,10 +412,10 @@ let buy_stock_non_stock () =
       ~sender:oracle_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.one) ()
   in
-  let parameter = e_int 0 in
+  let parameter = e_nat 0 in
   expect_string_failwith ~options program "buy_stock"
     (e_pair parameter initial_storage)
-    "This sock is not in the oracle's stock."
+    "This sock is not in the oracle's stock (Tip: Out Of Stock)."
 
 (* Pay too little for a sock *)
 let buy_stock_underpay () =
@@ -544,16 +429,12 @@ let buy_stock_underpay () =
   let sock_type_record_type = t_record_ez [("name", t_string);
                                             ("description_hash", t_string)] in
   let initial_sock_types = e_typed_big_map
-      [(e_int 0, test_sock_type)]
-      t_int
+      [(e_nat 0, test_sock_type)]
+      t_nat
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", e_int 0);
-                               ("owner", e_address oracle_addr)]
-  in
-  let initial_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", t_int);
-                          ("owner", t_address)])
+  let initial_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
+      (t_tuple [t_address ; t_nat]) t_nat
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
@@ -564,12 +445,12 @@ let buy_stock_underpay () =
       ~sender:stranger_contract
       ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.zero) ()
   in
-  let parameter = e_int 0 in
+  let parameter = e_nat 0 in
   expect_string_failwith ~options program "buy_stock"
     (e_pair parameter initial_storage)
     "You paid too little for your sock."
 
-let send () =
+let transfer () =
   let%bind program, _ = get_program () in
   (* Hash says "A plain sock." *)
   let test_sock_type = e_record_ez [
@@ -580,23 +461,16 @@ let send () =
   let sock_type_record_type = t_record_ez [("name", t_string);
                                             ("description_hash", t_string)] in
   let initial_sock_types = e_typed_big_map
-      [(e_int 0, test_sock_type)]
-      t_int
+      [(e_nat 0, test_sock_type)]
+      t_nat
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", e_int 0);
-                               ("owner", e_address oracle_addr)]
+  let initial_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
+      (t_tuple [t_address; t_nat]) t_nat
   in
-  let sent_sock = e_record_ez [("sock_type", e_int 0);
-                                 ("owner", e_address stranger_addr)]
-  in
-  let initial_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", t_int);
-                          ("owner", t_address)])
-  in
-  let post_socks = e_typed_big_map [(e_int 0, sent_sock)]
-      t_int (t_record_ez [("sock_type", t_int);
-                          ("owner", t_address)])
+  let post_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 0);
+                                    (e_tuple [e_address stranger_addr; e_nat 0], e_nat 1)]
+      (t_tuple [t_address; t_nat]) t_nat
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
@@ -611,12 +485,15 @@ let send () =
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
       ~sender:oracle_contract ()
   in
-  let parameter = e_tuple [e_int 0; e_address stranger_addr] in
-  expect_eq ~options program "send"
+  let parameter = e_list [e_record_ez [("from_", e_address oracle_addr);
+                                       ("to_", e_address stranger_addr);
+                                       ("token_id", e_nat 0);
+                                       ("amount", e_nat 1);]] in
+  expect_eq ~options program "transfer"
     (e_pair parameter initial_storage)
     (e_pair (e_list []) post_storage)
 
-let send_unauthorized () =
+let transfer_unauthorized () =
   let%bind program, _ = get_program () in
   (* Hash says "A plain sock." *)
   let test_sock_type = e_record_ez [
@@ -627,16 +504,12 @@ let send_unauthorized () =
   let sock_type_record_type = t_record_ez [("name", t_string);
                                             ("description_hash", t_string)] in
   let initial_sock_types = e_typed_big_map
-      [(e_int 0, test_sock_type)]
-      t_int
+      [(e_nat 0, test_sock_type)]
+      t_nat
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", e_int 0);
-                               ("owner", e_address oracle_addr)]
-  in
-  let initial_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", t_int);
-                          ("owner", t_address)])
+  let initial_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
+      (t_tuple [t_address; t_nat]) t_nat
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
@@ -646,12 +519,15 @@ let send_unauthorized () =
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
       ~sender:stranger_contract ()
   in
-  let parameter = e_tuple [e_int 0; e_address stranger_addr] in
-  expect_string_failwith ~options program "send"
+  let parameter =  e_list [e_record_ez [("from_", e_address oracle_addr);
+                                       ("to_", e_address stranger_addr);
+                                       ("token_id", e_nat 0);
+                                       ("amount", e_nat 1);]] in
+  expect_string_failwith ~options program "transfer"
     (e_pair parameter initial_storage)
-    "You don't own this sock."
+    "You don't own a sock of that type."
 
-let send_nonexistent () =
+let transfer_nonexistent () =
   let%bind program, _ = get_program () in
   (* Hash says "A plain sock." *)
   let test_sock_type = e_record_ez [
@@ -662,16 +538,12 @@ let send_nonexistent () =
   let sock_type_record_type = t_record_ez [("name", t_string);
                                             ("description_hash", t_string)] in
   let initial_sock_types = e_typed_big_map
-      [(e_int 0, test_sock_type)]
-      t_int
+      [(e_nat 0, test_sock_type)]
+      t_nat
       sock_type_record_type
   in
-  let test_sock = e_record_ez [("sock_type", e_int 0);
-                               ("owner", e_address oracle_addr)]
-  in
-  let initial_socks = e_typed_big_map [(e_int 0, test_sock)]
-      t_int (t_record_ez [("sock_type", t_int);
-                          ("owner", t_address)])
+  let initial_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
+      (t_tuple [t_address; t_nat]) t_nat
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
@@ -681,10 +553,13 @@ let send_nonexistent () =
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
       ~sender:oracle_contract ()
   in
-  let parameter = e_tuple [e_int 10; e_address stranger_addr] in
-  expect_string_failwith ~options program "send"
+  let parameter = e_list [e_record_ez [("from_", e_address oracle_addr);
+                                       ("to_", e_address stranger_addr);
+                                       ("token_id", e_nat 10);
+                                       ("amount", e_nat 1);]] in
+  expect_string_failwith ~options program "transfer"
     (e_pair parameter initial_storage)
-    "There is no sock with that ID."
+    "You don't own a sock of that type."
 
 let main = test_suite "Socks" [
     test "add sock type" add_sock_type ;
@@ -694,14 +569,12 @@ let main = test_suite "Socks" [
     test "update sock type (unauthorized)" update_sock_type_unauthorized ;
     test "add sock" add_sock ;
     test "add sock (unauthorized)" add_sock_unauthorized ;
-    test "add sock (fail if non-stock)" add_sock_not_stock ;
-    test "add sock (fail if sock ID exists)" add_sock_exists ;
     test "buy stock" buy_stock ;
     test "buy stock (oracle buys from self)" buy_stock_self_buy ;
     test "buy stock (fail if sock ID nonexistent)" buy_stock_nonexistent ;
-    test "buy stock (fail if sock not in stock)" buy_stock_non_stock ;
+    test "buy stock (fail if sock not in stock)" buy_stock_oos ;
     test "buy stock (underpayment)" buy_stock_underpay ;
-    test "send" send ;
-    test "send (unauthorized)" send_unauthorized ;
-    test "send (nonexistent sock ID)" send_nonexistent ;
+    test "transfer" transfer ;
+    test "transfer (unauthorized)" transfer_unauthorized ;
+    test "transfer (nonexistent sock ID)" transfer_nonexistent ;
 ]

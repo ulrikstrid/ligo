@@ -5,7 +5,7 @@ You can think of it like baseball cards, but for socks. *)
 
 (* Sock Type ID *)
 
-type st_id = int
+type st_id = nat
 
 type sock_type = {
   name: string;
@@ -14,14 +14,7 @@ type sock_type = {
 
 type sock_types = (st_id, sock_type) big_map
 
-type sock_id = int
-
-type sock = {
-  sock_type: st_id;
-  owner: address;
-}
-
-type socks = (sock_id, sock) big_map
+type socks = (address * st_id, nat) big_map
 
 (* Drop Table
 
@@ -91,11 +84,23 @@ type storage = {
   stock_price: tez;
 }
 
+(* This contract implements FA2, see:
+   https://gitlab.com/tzip/tzip/-/blob/master/proposals/tzip-12/tzip-12.md
+*)
+
+type transfer = {
+  from_ : address;
+  to_ : address;
+  token_id : st_id;
+  amount : nat;
+}
+
+
 type parameter =
 | Add_Sock_Type of st_id * sock_type
 | Update_Sock_Type of st_id * sock_type
-| Add_Sock of sock_id * sock
-| Send of sock_id * address
+| Add_Sock of st_id
+| Transfer of transfer list
 
 let add_sock_type (new_st, storage: (st_id * sock_type)  * storage) :
   operation list * storage =
@@ -113,12 +118,7 @@ let add_sock_type (new_st, storage: (st_id * sock_type)  * storage) :
                                (Some sock_type)
                                storage.sock_types
     in
-    ([]: operation list), {
-                            sock_oracle = storage.sock_oracle;
-                            socks = storage.socks;
-                            sock_types = updated_sock_types;
-                            stock_price = storage.stock_price;
-                          }
+    ([]: operation list), {storage with sock_types = updated_sock_types;}
 
 let update_sock_type (st_update, storage: (st_id * sock_type) * storage) :
   operation list * storage =
@@ -131,88 +131,93 @@ let update_sock_type (st_update, storage: (st_id * sock_type) * storage) :
                                (Some sock_type)
                                storage.sock_types
   in
-  ([]: operation list), {
-    sock_oracle = storage.sock_oracle;
-    socks = storage.socks;
-    sock_types = updated_sock_types;
-    stock_price = storage.stock_price;
-  }
+  ([]: operation list), {storage with sock_types = updated_sock_types;}
 
 
-let add_sock (new_sock, storage: (sock_id * sock) * storage) :
+let add_sock (st_id, storage: st_id * storage) :
   operation list * storage =
   (* Sock Oracle check *)
   if Tezos.sender <> storage.sock_oracle
   then (failwith "You are not the sock oracle.": operation list * storage)
   else
-  let sock_id, sock = new_sock in
-  if sock.owner <> storage.sock_oracle
-  then (failwith "You're not adding this sock to the oracle's stock.":
-          operation list * storage)
-  else
-  (* Make sure we're not overwriting an existing sock *)
-  match Big_map.find_opt sock_id storage.socks with
-  | Some s -> (failwith "A sock with this ID already exists.":
-                 operation list * storage)
-  | None ->
-    let updated_stock = Big_map.update sock_id
-                          (Some sock)
-                          storage.socks
-    in
-    ([]: operation list), {
-      sock_oracle = storage.sock_oracle;
-      socks = updated_stock;
-      sock_types = storage.sock_types;
-      stock_price = storage.stock_price;
-    }
-
-
-let buy_stock (sid, storage: sock_id * storage ) :
-  operation list * storage =
-  let sock =
+  let sid = (storage.sock_oracle, st_id) in
+  let current_stock =
     match Big_map.find_opt sid storage.socks with
-    | Some sock -> sock
-    | None -> (failwith "There is no sock with that ID.": sock)
+    | Some sc -> sc
+    | None -> 0n
+  in
+  let updated_stock = Big_map.update sid
+                      (Some (current_stock + 1n))
+                      storage.socks
+  in ([]: operation list), {storage with socks = updated_stock;}
+
+
+let buy_stock (st_id, storage: st_id * storage ) :
+  operation list * storage =
+  let sid = (storage.sock_oracle, st_id) in
+  let stock_count : nat =
+    match Big_map.find_opt sid storage.socks with
+    | Some sock_c -> sock_c
+    | None -> (failwith "This sock is not in the oracle's stock (Tip: Wrong ID?).": nat)
   in
   (* Sock is stock check *)
-  if storage.sock_oracle <> sock.owner
-  then (failwith "This sock is not in the oracle's stock.": operation list * storage)
+  if stock_count < 1n
+  then (failwith "This sock is not in the oracle's stock (Tip: Out Of Stock).":
+         operation list * storage)
   else
   if Tezos.amount < storage.stock_price
   then (failwith "You paid too little for your sock.": operation list * storage)
   else
-  let updated_sock = {sock_type = sock.sock_type; owner = Tezos.sender;} in
-  let updated_socks = Big_map.update sid (Some updated_sock) storage.socks in
-  ([]: operation list), {
-    sock_oracle = storage.sock_oracle;
-    socks = updated_socks;
-    sock_types = storage.sock_types;
-    stock_price = storage.stock_price;
-  }
-
-let send (trade_info, storage: (sock_id * address) * storage) : operation list * storage =
-  let sid, new_owner = trade_info in
-  let sock =
-    match Big_map.find_opt sid storage.socks with
-    | Some s -> s
-    | None -> (failwith "There is no sock with that ID.": sock)
+  let updated_socks = Big_map.update sid (Some (abs (stock_count - 1n))) storage.socks in
+  (* We use the updated socks because the oracle might buy from itself *)
+  let buyer_sock_count : nat =
+    match Big_map.find_opt (Tezos.sender, st_id) updated_socks with
+    | Some sc -> sc
+    | None -> 0n
   in
-  (* Owner initiating trade check *)
-  if Tezos.sender <> sock.owner
-  then (failwith "You don't own this sock.": operation list * storage)
+  let updated_socks = Big_map.update
+      (Tezos.sender, st_id)
+      (Some (buyer_sock_count + 1n))
+      updated_socks in
+  ([]: operation list), {storage with socks = updated_socks;}
+
+(* Helper function for the transfer operation *)
+let t_process_one (storage, transfer_info: storage * transfer) : storage =
+  let from_sid = (Tezos.sender, transfer_info.token_id) in
+  let to_sid = (transfer_info.to_, transfer_info.token_id) in
+  let from_sock_count =
+    match Big_map.find_opt from_sid storage.socks with
+    | Some sc -> sc
+    | None -> (failwith "You don't own a sock of that type.": nat)
+  in
+  if (from_sock_count - (transfer_info.amount)) < 0
+  then (failwith "Attempted to transfer more socks of that type than you have.":
+          storage)
   else
-  let updated_sock = {sock_type = sock.sock_type; owner = new_owner;} in
-  let updated_socks = Big_map.update sid (Some updated_sock) storage.socks in
-  ([]: operation list), {
-    sock_oracle = storage.sock_oracle;
-    socks = updated_socks;
-    sock_types = storage.sock_types;
-    stock_price = storage.stock_price;
-  }
+  let to_sock_count =
+    match Big_map.find_opt to_sid storage.socks with
+    | Some sc -> sc
+    | None -> 0n
+  in
+  let updated_socks =
+    Big_map.update
+      from_sid
+      (Some (abs (from_sock_count - transfer_info.amount)))
+      storage.socks
+  in
+  let updated_socks =
+    Big_map.update
+      to_sid
+      (Some (to_sock_count + transfer_info.amount))
+      updated_socks
+  in {storage with socks = updated_socks;}
+
+let transfer (transfers, s: transfer list * storage) : operation list * storage =
+  ([]: operation list), List.fold t_process_one transfers s
 
 let main (p,s: parameter * storage) : operation list * storage =
   match p with
   | Add_Sock_Type ast -> add_sock_type (ast,s)
   | Update_Sock_Type ust -> update_sock_type (ust,s)
   | Add_Sock a -> add_sock (a,s)
-  | Send snd -> send (snd,s)
+  | Transfer t -> transfer (t,s)
