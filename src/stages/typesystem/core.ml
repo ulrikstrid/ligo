@@ -21,7 +21,7 @@ type constant_tag =
   | C_bool      (* * *)
   | C_string    (* * *)
   | C_nat       (* * *)
-  | C_mutez       (* * *)
+  | C_mutez     (* * *)
   | C_timestamp (* * *)
   | C_int       (* * *)
   | C_address   (* * *)
