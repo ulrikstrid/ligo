@@ -194,16 +194,18 @@ let t_process_one (storage, transfer_info: storage * transfer) : storage =
   then (failwith "Attempted to transfer more socks of that type than you have.":
           storage)
   else
-  let to_sock_count =
-    match Big_map.find_opt to_sid storage.socks with
-    | Some sc -> sc
-    | None -> 0n
-  in
   let updated_socks =
     Big_map.update
       from_sid
       (Some (abs (from_sock_count - transfer_info.amount)))
       storage.socks
+  in
+  (* We use the updated socks because otherwise you would be able to duplicate socks
+     by transferring to yourself *)
+  let to_sock_count =
+    match Big_map.find_opt to_sid updated_socks with
+    | Some sc -> sc
+    | None -> 0n
   in
   let updated_socks =
     Big_map.update

@@ -493,6 +493,45 @@ let transfer () =
     (e_pair parameter initial_storage)
     (e_pair (e_list []) post_storage)
 
+let transfer_self () =
+  let%bind program, _ = get_program () in
+  (* Hash says "A plain sock." *)
+  let test_sock_type = e_record_ez [
+      ("name", e_string "Cotton Sock");
+      ("description_hash",
+       e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
+  in
+  let sock_type_record_type = t_record_ez [("name", t_string);
+                                            ("description_hash", t_string)] in
+  let initial_sock_types = e_typed_big_map
+      [(e_nat 0, test_sock_type)]
+      t_nat
+      sock_type_record_type
+  in
+  let socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
+      (t_tuple [t_address; t_nat]) t_nat
+  in
+  let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
+                                     ("socks", socks );
+                                     ("sock_types", initial_sock_types);
+                                     ("stock_price", e_mutez 1000000)]
+  in
+  let post_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
+                                  ("socks", socks);
+                                  ("sock_types", initial_sock_types);
+                                  ("stock_price", e_mutez 1000000)]
+  in
+  let options = Proto_alpha_utils.Memory_proto_alpha.make_options
+      ~sender:oracle_contract ()
+  in
+  let parameter = e_list [e_record_ez [("from_", e_address oracle_addr);
+                                       ("to_", e_address oracle_addr);
+                                       ("token_id", e_nat 0);
+                                       ("amount", e_nat 1);]] in
+  expect_eq ~options program "transfer"
+    (e_pair parameter initial_storage)
+    (e_pair (e_list []) post_storage)
+
 let transfer_unauthorized () =
   let%bind program, _ = get_program () in
   (* Hash says "A plain sock." *)
@@ -561,6 +600,40 @@ let transfer_nonexistent () =
     (e_pair parameter initial_storage)
     "You don't own a sock of that type."
 
+let transfer_overdraw () =
+  let%bind program, _ = get_program () in
+  (* Hash says "A plain sock." *)
+  let test_sock_type = e_record_ez [
+      ("name", e_string "Cotton Sock");
+      ("description_hash",
+       e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
+  in
+  let sock_type_record_type = t_record_ez [("name", t_string);
+                                            ("description_hash", t_string)] in
+  let initial_sock_types = e_typed_big_map
+      [(e_nat 0, test_sock_type)]
+      t_nat
+      sock_type_record_type
+  in
+  let initial_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
+      (t_tuple [t_address; t_nat]) t_nat
+  in
+  let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
+                                     ("socks", initial_socks );
+                                     ("sock_types", initial_sock_types);
+                                     ("stock_price", e_mutez 1000000)]
+  in
+  let options = Proto_alpha_utils.Memory_proto_alpha.make_options
+      ~sender:oracle_contract ()
+  in
+  let parameter = e_list [e_record_ez [("from_", e_address oracle_addr);
+                                       ("to_", e_address stranger_addr);
+                                       ("token_id", e_nat 0);
+                                       ("amount", e_nat 10);]] in
+  expect_string_failwith ~options program "transfer"
+    (e_pair parameter initial_storage)
+    "Attempted to transfer more socks of that type than you have."
+
 let main = test_suite "Socks" [
     test "add sock type" add_sock_type ;
     test "add sock type (unauthorized)" add_sock_type_unauthorized ;
@@ -575,6 +648,8 @@ let main = test_suite "Socks" [
     test "buy stock (fail if sock not in stock)" buy_stock_oos ;
     test "buy stock (underpayment)" buy_stock_underpay ;
     test "transfer" transfer ;
+    test "transfer (to self)" transfer_self ;
     test "transfer (unauthorized)" transfer_unauthorized ;
     test "transfer (nonexistent sock ID)" transfer_nonexistent ;
+    test "transfer (overdraw)" transfer_overdraw ;
 ]
