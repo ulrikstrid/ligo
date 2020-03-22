@@ -606,22 +606,22 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
         | TC_map (k,v) ->
             let%bind k = evaluate_type e k in 
             let%bind v = evaluate_type e v in 
-            ok @@ O.TC_map (k,v) 
+            ok @@ O.TC_map {k;v}
         | TC_big_map (k,v) ->
             let%bind k = evaluate_type e k in 
             let%bind v = evaluate_type e v in 
-            ok @@ O.TC_big_map (k,v) 
+            ok @@ O.TC_big_map {k;v}
         | TC_map_or_big_map (k,v) ->
             let%bind k = evaluate_type e k in 
             let%bind v = evaluate_type e v in 
-            ok @@ O.TC_map_or_big_map (k,v) 
+            ok @@ O.TC_map_or_big_map {k;v}
         | TC_contract c ->
             let%bind c = evaluate_type e c in
             ok @@ O.TC_contract c
         | TC_arrow ( arg , ret ) ->
            let%bind arg' = evaluate_type e arg in
            let%bind ret' = evaluate_type e ret in
-           ok @@ O.TC_arrow ( arg' , ret' )
+           ok @@ O.TC_arrow { type1=arg' ; type2=ret' }
         in
       return (T_operator (opt))
 
@@ -1111,19 +1111,19 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression) resul
       | O.TC_set    t ->     
          let%bind t' = untype_type_expression t in
          ok @@ I.TC_set t'
-      | O.TC_map   (k,v) ->     
+      | O.TC_map   {k;v} ->     
          let%bind k = untype_type_expression k in
          let%bind v = untype_type_expression v in
          ok @@ I.TC_map (k,v)
-      | O.TC_big_map (k,v) ->     
+      | O.TC_big_map {k;v} ->
          let%bind k = untype_type_expression k in
          let%bind v = untype_type_expression v in
          ok @@ I.TC_big_map (k,v)
-      | O.TC_map_or_big_map (k,v) ->     
+      | O.TC_map_or_big_map {k;v} ->     
          let%bind k = untype_type_expression k in
          let%bind v = untype_type_expression v in
          ok @@ I.TC_map_or_big_map (k,v)
-      | O.TC_arrow ( arg , ret ) ->
+      | O.TC_arrow { type1=arg ; type2=ret } ->
          let%bind arg' = untype_type_expression arg in
          let%bind ret' = untype_type_expression ret in
          ok @@ I.TC_arrow ( arg' , ret' )
