@@ -1021,19 +1021,16 @@ let type_and_subst_xyz (env_state_node : environment * Solver.state * 'a) (apply
     let assignments = state.structured_dbs.assignments in
     let substs : variable: I.type_variable -> _ = fun ~variable ->
       to_option @@
-      let () = Printf.printf "%s" @@ Format.asprintf "TRY   %a\n" Var.pp variable in
       let%bind root =
         trace_option (simple_error (Format.asprintf "can't find alias root of variable %a" Var.pp variable)) @@
           (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
           try Some (Solver.UF.repr variable aliases) with Not_found -> None in
-      let () = Printf.printf "%s" @@ Format.asprintf "TRYR  %a (%a)\n" Var.pp variable Var.pp root in
       let%bind assignment =
         trace_option (simple_error (Format.asprintf "can't find assignment for root %a" Var.pp root)) @@
           (Solver.TypeVariableMap.find_opt root assignments) in
       let Solver.{ tv ; c_tag ; tv_list } = assignment in
       let () = ignore tv (* I think there is an issue where the tv is stored twice (as a key and in the element itself) *) in
       let%bind (expr : O.type_content) = Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map (fun s -> O.{ type_content = T_variable s ; type_meta = None }) tv_list)) in
-      let () = Printf.printf "%s" @@ Format.asprintf "SUBST %a (%a)\n" Var.pp variable Var.pp root in
       ok @@ expr
     in
     let p = apply_substs ~substs program in
