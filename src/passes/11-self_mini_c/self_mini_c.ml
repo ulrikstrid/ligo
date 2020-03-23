@@ -163,6 +163,64 @@ let betas : bool ref -> expression -> expression =
   fun changed ->
   map_expression (beta changed)
 
+
+(* Reduce obviously useless record updates. We will flatten
+
+     { { r with p1 = x } with p1 = y }
+
+   to:
+
+     { r with p1 = y }
+
+   (etc)
+
+   Note that this is only sound when x is pure.
+ *)
+
+let flatten_nested_update : bool ref -> expression -> expression =
+  fun changed e ->
+  (* 'reflect' nested record update expressions, pulling out the leaf
+     record expression and a list of updates (in reverse order; first
+     update in list is last to take effect) *)
+  let rec reflect_updates e =
+    match e.content with
+    | E_record_update (r , path , expr) ->
+      begin
+        match reflect_updates r with
+        | None -> Some (r, [])
+        | Some (r, updates) -> Some (r, (path, expr, e.type_value) :: updates)
+      end
+    | _ -> None in
+  (* remove updates to the same path, keeping only the last one *)
+  let rec collapse_updates updates =
+    match updates with
+    | [] -> []
+    | (path, _, _) as update :: updates ->
+      let updates = collapse_updates updates in
+      let redundant (path', expr, _) = path = path' && is_pure expr in
+      let updates = List.filter (fun update -> not (redundant update)) updates in
+      update :: updates in
+  (* 'reify' a record expression and list of updates back into nested
+     record update expressions *)
+  let reify_updates (r, updates) =
+    List.fold_right
+      (fun (path, expr, ty) r ->
+         { content = E_record_update (r, path, expr) ;
+           type_value = ty })
+      updates r in
+  match reflect_updates e with
+  | None -> e
+  | Some (r, updates) ->
+    let updates' = collapse_updates updates in
+    if List.length updates' < List.length updates
+    then (changed := true ;
+          reify_updates (r, updates'))
+    else e
+
+let flatten_nested_updates : bool ref -> expression -> expression =
+  fun changed ->
+  map_expression (flatten_nested_update changed)
+
 let contract_check =
   let all = [Michelson_restrictions.self_in_lambdas] in
   let all_e = List.map Helpers.map_sub_level_expression all in
@@ -173,6 +231,7 @@ let rec all_expression : expression -> expression =
   let changed = ref false in
   let e = inline_lets changed e in
   let e = betas changed e in
+  let e = flatten_nested_updates changed e in
   if !changed
   then all_expression e
   else e

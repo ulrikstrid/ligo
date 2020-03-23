@@ -13,7 +13,7 @@ let%expect_test _ =
   [%expect {| 1324 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
-  [%expect {| 3231 bytes |}] ;
+  [%expect {| 3126 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
   [%expect {| 589 bytes |}] ;
@@ -742,11 +742,6 @@ let%expect_test _ =
                                  DIP { DROP 6 } } ;
                           DIP 4 { DUP } ;
                           DIG 4 ;
-                          DIP 4 { DUP } ;
-                          DIG 4 ;
-                          SWAP ;
-                          CAR ;
-                          PAIR ;
                           DIP 3 { DUP } ;
                           DIG 3 ;
                           DIP { DUP ; CDR ; SWAP ; CAR ; DUP ; CAR ; SWAP ; CDR ; CAR } ;
@@ -754,11 +749,6 @@ let%expect_test _ =
                           PAIR ;
                           SWAP ;
                           PAIR ;
-                          PAIR ;
-                          DIP 2 { DUP } ;
-                          DIG 2 ;
-                          SWAP ;
-                          CAR ;
                           PAIR ;
                           CAR ;
                           DIP { DUP } ;
@@ -903,25 +893,6 @@ let%expect_test _ =
                           PAIR } ;
                      DIP 7 { DUP } ;
                      DIG 7 ;
-                     DIP 3 { DUP } ;
-                     DIG 3 ;
-                     SWAP ;
-                     CAR ;
-                     PAIR ;
-                     DIP { DUP } ;
-                     SWAP ;
-                     CAR ;
-                     CDR ;
-                     SWAP ;
-                     CDR ;
-                     SWAP ;
-                     PAIR ;
-                     DIP { DUP } ;
-                     SWAP ;
-                     CDR ;
-                     SWAP ;
-                     CAR ;
-                     PAIR ;
                      DIP { DUP } ;
                      SWAP ;
                      CAR ;
@@ -1174,7 +1145,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_toplevel.mligo" ; "main" ] ;
   [%expect {|
-ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8. No free variable allowed in this lambda: variable 'store' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * string ))) : None return let rhs#654 = #P in let p = rhs#654.0 in let s = rhs#654.1 in ( list[] : (TO_list(operation)) , store ) , NONE() : (TO_option(key_hash)) , 300000000mutez , \"un\")","location":"in file \"create_contract_toplevel.mligo\", line 4, character 35 to line 8, character 8"}
+ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8. No free variable allowed in this lambda: variable 'store' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * string ))) : None return let rhs#644 = #P in let p = rhs#644.0 in let s = rhs#644.1 in ( list[] : (TO_list(operation)) , store ) , NONE() : (TO_option(key_hash)) , 300000000mutez , \"un\")","location":"in file \"create_contract_toplevel.mligo\", line 4, character 35 to line 8, character 8"}
 
 
  If you're not sure how to fix this error, you can
@@ -1187,7 +1158,7 @@ ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, 
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_var.mligo" ; "main" ] ;
   [%expect {|
-ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5. No free variable allowed in this lambda: variable 'a' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * int ))) : None return let rhs#657 = #P in let p = rhs#657.0 in let s = rhs#657.1 in ( list[] : (TO_list(operation)) , a ) , NONE() : (TO_option(key_hash)) , 300000000mutez , 1)","location":"in file \"create_contract_var.mligo\", line 6, character 35 to line 10, character 5"}
+ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5. No free variable allowed in this lambda: variable 'a' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * int ))) : None return let rhs#647 = #P in let p = rhs#647.0 in let s = rhs#647.1 in ( list[] : (TO_list(operation)) , a ) , NONE() : (TO_option(key_hash)) , 300000000mutez , 1)","location":"in file \"create_contract_var.mligo\", line 6, character 35 to line 10, character 5"}
 
 
  If you're not sure how to fix this error, you can
