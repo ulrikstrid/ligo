@@ -24,10 +24,10 @@ let to_mini_c f stx env =
   let%bind mini_c     = Of_typed.compile typed in
   ok @@ mini_c
 
-let compile_file f stx ep =
+let compile_file ~aggressive_inlining f stx ep =
   let%bind typed, _ = type_file f stx @@ Contract ep in
   let%bind mini_c     = Of_typed.compile typed in
-  let%bind michelson  = Of_mini_c.aggregate_and_compile_contract mini_c ep in
+  let%bind michelson  = Of_mini_c.aggregate_and_compile_contract ~aggressive_inlining mini_c ep in
   let%bind contract   = Of_michelson.build_contract michelson in
   ok @@ contract
 
@@ -49,17 +49,17 @@ let compile_expression source_file syntax expression env state =
     let%bind compiled   = Of_mini_c.compile_expression mini_c_exp in
     ok @@ compiled
 
-let compile_and_aggregate_expression source_file syntax expression env state mini_c_prg =
+let compile_and_aggregate_expression ~aggressive_inlining source_file syntax expression env state mini_c_prg =
     let%bind mini_c_exp = expression_to_mini_c source_file syntax expression env state in
-    let%bind compiled   = Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c_exp in
+    let%bind compiled   = Of_mini_c.aggregate_and_compile_expression ~aggressive_inlining mini_c_prg mini_c_exp in
     ok @@ compiled
 
-let compile_storage storage input source_file syntax env state mini_c_prg =
+let compile_storage ~aggressive_inlining storage input source_file syntax env state mini_c_prg =
     let%bind v_syntax   = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
     let%bind imperative = Of_source.compile_contract_input storage input v_syntax in
     let%bind sugar      = Of_imperative.compile_expression imperative in
     let%bind core       = Of_sugar.compile_expression sugar in
     let%bind typed,_    = Of_core.compile_expression ~env ~state core in
     let%bind mini_c     = Of_typed.compile_expression typed in
-    let%bind compiled   = Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c in
+    let%bind compiled   = Of_mini_c.aggregate_and_compile_expression ~aggressive_inlining mini_c_prg mini_c in
     ok @@ compiled

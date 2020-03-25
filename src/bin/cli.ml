@@ -132,22 +132,35 @@ let michelson_code_format =
     (enum [("text", `Text); ("json", `Json); ("hex", `Hex)])
     `Text info
 
+let aggressive_inlining =
+  let open Arg in
+  let info =
+    let doc = "Perform inlining optimizations aggressively. \
+               Might significantly decrease or increase code size, depending on the code. \
+               Use the `measure-contract` command to measure. \
+               Use with caution; inlining can affect typability of the output \
+               Michelson. You should not _rely_ on this option to make compilation \
+               succeed. This option might be removed someday." in
+    info ~doc ["aggressive-inlining"] in
+  value @@ flag info
+
+
 module Helpers = Ligo.Compile.Helpers
 module Compile = Ligo.Compile
 module Uncompile = Ligo.Uncompile
 module Run = Ligo.Run.Of_michelson
 
 let compile_file =
-  let f source_file entry_point syntax display_format disable_typecheck michelson_format =
+  let f source_file entry_point syntax display_format disable_typecheck michelson_format aggressive_inlining =
     toplevel ~display_format @@
     let%bind typed,_    = Compile.Utils.type_file source_file syntax (Contract entry_point) in
     let%bind mini_c     = Compile.Of_typed.compile typed in
-    let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
+    let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract ~aggressive_inlining mini_c entry_point in
     let%bind contract   = Compile.Of_michelson.build_contract ~disable_typecheck michelson in
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) contract
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format $ disable_michelson_typechecking $ michelson_code_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format $ disable_michelson_typechecking $ michelson_code_format $ aggressive_inlining) in
   let cmdname = "compile-contract" in
   let doc = "Subcommand: Compile a contract." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -226,24 +239,25 @@ let print_mini_c =
   (Term.ret term, Term.info ~doc cmdname)
 
 let measure_contract =
-  let f source_file entry_point syntax display_format  =
+  let f source_file entry_point syntax display_format aggressive_inlining =
     toplevel ~display_format @@
-    let%bind contract   = Compile.Utils.compile_file source_file syntax entry_point in
+    let%bind contract   = Compile.Utils.compile_file ~aggressive_inlining source_file syntax entry_point in
     let open Tezos_utils in
     ok @@ Format.asprintf "%d bytes\n" (Michelson.measure contract)
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format $ aggressive_inlining) in
   let cmdname = "measure-contract" in
   let doc = "Subcommand: Measure a contract's compiled size in bytes." in
   (Term.ret term , Term.info ~doc cmdname)
 
 let compile_parameter =
-  let f source_file entry_point expression syntax amount balance sender source predecessor_timestamp display_format michelson_format =
+  let f source_file entry_point expression syntax amount balance sender source
+      predecessor_timestamp display_format michelson_format aggressive_inlining =
     toplevel ~display_format @@
     let%bind typed_prg,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
-    let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
+    let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract ~aggressive_inlining mini_c_prg entry_point in
     let      env             = Ast_typed.program_environment typed_prg in
     let%bind (_contract: Tezos_utils.Michelson.michelson) =
       (* fails if the given entry point is not a valid contract *)
@@ -251,7 +265,7 @@ let compile_parameter =
 
     let%bind (typed_param,_)  = Compile.Utils.type_expression (Some source_file) syntax expression env state in
     let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
-    let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c_param in
+    let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression ~aggressive_inlining mini_c_prg mini_c_param in
     let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_parameter entry_point typed_prg typed_param in
     let%bind ()               = Compile.Of_michelson.assert_equal_contract_type Check_parameter michelson_prg compiled_param in
     let%bind options          = Run.make_dry_run_options {predecessor_timestamp ; amount ; balance ; sender ; source } in
@@ -259,13 +273,14 @@ let compile_parameter =
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ syntax $ amount $ balance $ sender $ source $ predecessor_timestamp $ display_format $ michelson_code_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ syntax $ amount $ balance $ sender $ source $ predecessor_timestamp $ display_format $ michelson_code_format $ aggressive_inlining) in
   let cmdname = "compile-parameter" in
   let doc = "Subcommand: Compile parameters to a Michelson expression. The resulting Michelson expression can be passed as an argument in a transaction which calls a contract." in
   (Term.ret term , Term.info ~doc cmdname)
 
 let interpret =
-  let f expression init_file syntax amount balance sender source predecessor_timestamp display_format =
+  let f expression init_file syntax amount balance sender source
+      predecessor_timestamp display_format aggressive_inlining =
     toplevel ~display_format @@
     let%bind (decl_list,state,env) = match init_file with
       | Some init_file ->
@@ -277,7 +292,7 @@ let interpret =
 
     let%bind (typed_exp,_)  = Compile.Utils.type_expression init_file syntax expression env state in
     let%bind mini_c_exp     = Compile.Of_typed.compile_expression typed_exp in
-    let%bind compiled_exp   = Compile.Of_mini_c.aggregate_and_compile_expression decl_list mini_c_exp in
+    let%bind compiled_exp   = Compile.Of_mini_c.aggregate_and_compile_expression ~aggressive_inlining decl_list mini_c_exp in
     let%bind options        = Run.make_dry_run_options {predecessor_timestamp ; amount ; balance ; sender ; source } in
     let%bind runres         = Run.run_expression ~options compiled_exp.expr compiled_exp.expr_ty in
     match runres with
@@ -289,7 +304,8 @@ let interpret =
         ok @@ Format.asprintf "%a\n" Ast_core.PP.expression core_output
   in
   let term =
-    Term.(const f $ expression "EXPRESSION" 0 $ init_file $ syntax $ amount $ balance $ sender $ source $ predecessor_timestamp $ display_format ) in
+    Term.(const f $ expression "EXPRESSION" 0 $ init_file $ syntax $ amount $ balance $ sender $ source
+          $ predecessor_timestamp $ display_format $ aggressive_inlining) in
   let cmdname = "interpret" in
   let doc = "Subcommand: Interpret the expression in the context initialized by the provided source file." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -308,11 +324,12 @@ let temp_ligo_interpreter =
   (Term.ret term , Term.info ~doc cmdname)
 
 let compile_storage =
-  let f source_file entry_point expression syntax amount balance sender source predecessor_timestamp display_format michelson_format =
+  let f source_file entry_point expression syntax amount balance sender source
+      predecessor_timestamp display_format michelson_format aggressive_inlining =
     toplevel ~display_format @@
     let%bind typed_prg,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
-    let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
+    let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract ~aggressive_inlining mini_c_prg entry_point in
     let      env             = Ast_typed.program_environment typed_prg in
     let%bind (_contract: Tezos_utils.Michelson.michelson) =
       (* fails if the given entry point is not a valid contract *)
@@ -320,7 +337,7 @@ let compile_storage =
 
     let%bind (typed_param,_)  = Compile.Utils.type_expression (Some source_file) syntax expression env state in
     let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
-    let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c_param in
+    let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression ~aggressive_inlining mini_c_prg mini_c_param in
     let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_storage entry_point typed_prg typed_param in
     let%bind ()               = Compile.Of_michelson.assert_equal_contract_type Check_storage michelson_prg compiled_param in
     let%bind options          = Run.make_dry_run_options {predecessor_timestamp ; amount ; balance ; sender ; source } in
@@ -328,23 +345,25 @@ let compile_storage =
     ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) value
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2 $ syntax $ amount $ balance $ sender $ source $ predecessor_timestamp $ display_format $ michelson_code_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "STORAGE" 2 $ syntax $ amount $ balance $ sender $ source
+          $ predecessor_timestamp $ display_format $ michelson_code_format $ aggressive_inlining) in
   let cmdname = "compile-storage" in
   let doc = "Subcommand: Compile an initial storage in ligo syntax to a Michelson expression. The resulting Michelson expression can be passed as an argument in a transaction which originates a contract." in
   (Term.ret term , Term.info ~doc cmdname)
 
 let dry_run =
-  let f source_file entry_point storage input amount balance sender source predecessor_timestamp syntax display_format =
+  let f source_file entry_point storage input amount balance sender source
+      predecessor_timestamp syntax display_format aggressive_inlining =
     toplevel ~display_format @@
     let%bind typed_prg,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
     let      env             = Ast_typed.program_environment typed_prg in
     let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
-    let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
+    let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract ~aggressive_inlining mini_c_prg entry_point in
     let%bind (_contract: Tezos_utils.Michelson.michelson) =
       (* fails if the given entry point is not a valid contract *)
       Compile.Of_michelson.build_contract michelson_prg in
 
-    let%bind compiled_params   = Compile.Utils.compile_storage storage input source_file syntax env state mini_c_prg in
+    let%bind compiled_params   = Compile.Utils.compile_storage ~aggressive_inlining storage input source_file syntax env state mini_c_prg in
     let%bind args_michelson    = Run.evaluate_expression compiled_params.expr compiled_params.expr_ty in
 
     let%bind options           = Run.make_dry_run_options {predecessor_timestamp ; amount ; balance ; sender ; source } in
@@ -358,13 +377,16 @@ let dry_run =
         ok @@ Format.asprintf "%a\n" Ast_core.PP.expression core_output
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ amount $ balance $ sender $ source $ predecessor_timestamp $ syntax $ display_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3
+          $ amount $ balance $ sender $ source
+          $ predecessor_timestamp $ syntax $ display_format $ aggressive_inlining) in
   let cmdname = "dry-run" in
   let doc = "Subcommand: Run a smart-contract with the given storage and input." in
   (Term.ret term , Term.info ~doc cmdname)
 
 let run_function =
-  let f source_file entry_point parameter amount balance sender source predecessor_timestamp syntax display_format =
+  let f source_file entry_point parameter amount balance sender source
+      predecessor_timestamp syntax display_format aggressive_inlining =
     toplevel ~display_format @@
     let%bind typed_prg,state = Compile.Utils.type_file source_file syntax Env in
     let      env             = Ast_typed.program_environment typed_prg in
@@ -379,7 +401,7 @@ let run_function =
     let%bind (typed_app,_)    = Compile.Of_core.compile_expression ~env ~state app in
     let%bind compiled_applied = Compile.Of_typed.compile_expression typed_app in
 
-    let%bind michelson        = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg compiled_applied in
+    let%bind michelson        = Compile.Of_mini_c.aggregate_and_compile_expression ~aggressive_inlining mini_c_prg compiled_applied in
     let%bind options          = Run.make_dry_run_options {predecessor_timestamp ; amount ; balance ; sender ; source } in
     let%bind runres           = Run.run_expression ~options michelson.expr michelson.expr_ty in
     match runres with
@@ -391,25 +413,29 @@ let run_function =
         ok @@ Format.asprintf "%a\n" Ast_core.PP.expression core_output
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ amount $ balance $ sender $ source $ predecessor_timestamp $ syntax $ display_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2
+          $ amount $ balance $ sender $ source
+          $ predecessor_timestamp $ syntax $ display_format $ aggressive_inlining) in
   let cmdname = "run-function" in
   let doc = "Subcommand: Run a function with the given parameter." in
   (Term.ret term , Term.info ~doc cmdname)
 
 let evaluate_value =
-  let f source_file entry_point amount balance sender source predecessor_timestamp syntax display_format =
+  let f source_file entry_point amount balance sender source
+      predecessor_timestamp syntax display_format aggressive_inlining =
     toplevel ~display_format @@
     let%bind typed_prg,_       = Compile.Utils.type_file source_file syntax Env in
     let%bind mini_c            = Compile.Of_typed.compile typed_prg in
     let%bind (exp,_)           = Mini_c.get_entry mini_c entry_point in
-    let%bind compiled          = Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp in
+    let%bind compiled          = Compile.Of_mini_c.aggregate_and_compile_expression ~aggressive_inlining mini_c exp in
     let%bind options           = Run.make_dry_run_options {predecessor_timestamp ; amount ; balance ; sender ; source } in
     let%bind michelson_output  = Run.run_no_failwith ~options compiled.expr compiled.expr_ty in
     let%bind core_output       = Uncompile.uncompile_typed_program_entry_expression_result typed_prg entry_point michelson_output in
     ok @@ Format.asprintf "%a\n" Ast_core.PP.expression core_output
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ amount $ balance $ sender $ source $ predecessor_timestamp $ syntax $ display_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ amount $ balance $ sender $ source
+          $ predecessor_timestamp $ syntax $ display_format $ aggressive_inlining) in
   let cmdname = "evaluate-value" in
   let doc = "Subcommand: Evaluate a given definition." in
   (Term.ret term , Term.info ~doc cmdname)

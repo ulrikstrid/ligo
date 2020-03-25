@@ -111,11 +111,11 @@ let should_inline : expression_variable -> expression -> bool =
   fun x e ->
   occurs_count x e <= 1
 
-let inline_let : bool ref -> expression -> expression =
-  fun changed e ->
+let inline_let ~(aggressive_inlining : bool) (changed : bool ref) (e : expression) : expression =
   match e.content with
   | E_let_in ((x, _a), should_inline_here, e1, e2) ->
-    if is_pure e1 && (should_inline_here || should_inline x e2)
+    if is_pure e1 && (aggressive_inlining
+                      || should_inline_here || should_inline x e2)
     then
       let e2' = Subst.subst_expression ~body:e2 ~x:x ~expr:e1 in
       (changed := true ; e2')
@@ -123,9 +123,8 @@ let inline_let : bool ref -> expression -> expression =
       e
   | _ -> e
 
-let inline_lets : bool ref -> expression -> expression =
-  fun changed ->
-  map_expression (inline_let changed)
+let inline_lets ~(aggressive_inlining : bool) (changed : bool ref) : expression -> expression =
+  map_expression (inline_let ~aggressive_inlining changed)
 
 
 (* Let "beta" mean transforming the code:
@@ -168,11 +167,11 @@ let contract_check =
   let all_e = List.map Helpers.map_sub_level_expression all in
   bind_chain all_e
 
-let rec all_expression : expression -> expression =
+let rec all_expression ~(aggressive_inlining : bool) : expression -> expression =
   fun e ->
   let changed = ref false in
-  let e = inline_lets changed e in
+  let e = inline_lets ~aggressive_inlining changed e in
   let e = betas changed e in
   if !changed
-  then all_expression e
+  then all_expression ~aggressive_inlining e
   else e

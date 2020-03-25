@@ -192,6 +192,14 @@ let%expect_test _ =
                SOURCE_FILE is the path to the smart contract file.
 
     OPTIONS
+           --aggressive-inlining
+               Perform inlining optimizations aggressively. Might significantly
+               decrease or increase code size, depending on the code. Use the
+               `measure-contract` command to measure. Use with caution; inlining
+               can affect typability of the output Michelson. You should not
+               _rely_ on this option to make compilation succeed. This option
+               might be removed someday.
+
            --disable-michelson-typechecking
                disable Michelson typecking, this might produce ill-typed
                Michelson code.
@@ -245,6 +253,14 @@ let%expect_test _ =
                SOURCE_FILE is the path to the smart contract file.
 
     OPTIONS
+           --aggressive-inlining
+               Perform inlining optimizations aggressively. Might significantly
+               decrease or increase code size, depending on the code. Use the
+               `measure-contract` command to measure. Use with caution; inlining
+               can affect typability of the output Michelson. You should not
+               _rely_ on this option to make compilation succeed. This option
+               might be removed someday.
+
            --amount=AMOUNT (absent=0)
                AMOUNT is the amount the Michelson interpreter will use for the
                transaction.
@@ -316,6 +332,14 @@ let%expect_test _ =
                STORAGE_EXPRESSION is the expression that will be compiled.
 
     OPTIONS
+           --aggressive-inlining
+               Perform inlining optimizations aggressively. Might significantly
+               decrease or increase code size, depending on the code. Use the
+               `measure-contract` command to measure. Use with caution; inlining
+               can affect typability of the output Michelson. You should not
+               _rely_ on this option to make compilation succeed. This option
+               might be removed someday.
+
            --amount=AMOUNT (absent=0)
                AMOUNT is the amount the Michelson interpreter will use for the
                transaction.
@@ -388,6 +412,14 @@ let%expect_test _ =
                STORAGE_EXPRESSION is the expression that will be compiled.
 
     OPTIONS
+           --aggressive-inlining
+               Perform inlining optimizations aggressively. Might significantly
+               decrease or increase code size, depending on the code. Use the
+               `measure-contract` command to measure. Use with caution; inlining
+               can affect typability of the output Michelson. You should not
+               _rely_ on this option to make compilation succeed. This option
+               might be removed someday.
+
            --amount=AMOUNT (absent=0)
                AMOUNT is the amount the Michelson interpreter will use for the
                transaction.
@@ -452,6 +484,14 @@ let%expect_test _ =
                SOURCE_FILE is the path to the smart contract file.
 
     OPTIONS
+           --aggressive-inlining
+               Perform inlining optimizations aggressively. Might significantly
+               decrease or increase code size, depending on the code. Use the
+               `measure-contract` command to measure. Use with caution; inlining
+               can affect typability of the output Michelson. You should not
+               _rely_ on this option to make compilation succeed. This option
+               might be removed someday.
+
            --amount=AMOUNT (absent=0)
                AMOUNT is the amount the Michelson interpreter will use for the
                transaction.
@@ -511,6 +551,14 @@ let%expect_test _ =
                SOURCE_FILE is the path to the smart contract file.
 
     OPTIONS
+           --aggressive-inlining
+               Perform inlining optimizations aggressively. Might significantly
+               decrease or increase code size, depending on the code. Use the
+               `measure-contract` command to measure. Use with caution; inlining
+               can affect typability of the output Michelson. You should not
+               _rely_ on this option to make compilation succeed. This option
+               might be removed someday.
+
            --amount=AMOUNT (absent=0)
                AMOUNT is the amount the Michelson interpreter will use for the
                transaction.
