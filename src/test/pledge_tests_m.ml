@@ -3,7 +3,7 @@ open Test_helpers
 open Ast_imperative
 
 let retype_file f =
-  let%bind typed,state = Ligo.Compile.Utils.type_file f "reasonligo" Env in
+  let%bind typed,state = Ligo.Compile.Utils.type_file f "cameligo" Env in
   ok (typed,state)
 
 let get_program =
@@ -11,7 +11,7 @@ let get_program =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program = retype_file "./contracts/pledge.religo" in
+        let%bind program = retype_file "./contracts/pledge.mligo" in
         s := Some program ;
         ok program
       )
@@ -78,7 +78,7 @@ let distribute_unauthorized () =
     (e_pair parameter storage)
     "You're not the oracle for this distribution."
 
-let main = test_suite "Pledge & Distribute (ReasonLIGO)" [
+let main = test_suite "Pledge & Distribute (CameLIGO)" [
     test "donate" pledge ;
     test "distribute" distribute ;
     test "distribute (unauthorized)" distribute_unauthorized ;

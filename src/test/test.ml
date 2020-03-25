@@ -17,6 +17,8 @@ let () =
     Time_lock_tests.main ;
     Hash_lock_tests.main ;
     Time_lock_repeat_tests.main ;
+    Pledge_tests_m.main ;
+    Pledge_tests_p.main ;
     Pledge_tests.main ;
   ] ;
   ()
