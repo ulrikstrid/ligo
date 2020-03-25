@@ -3,7 +3,7 @@
 open Trace
 open Ast_imperative
 
-module Raw = Parser.Pascaligo.AST
+module Raw = Parser.Pascaligo.CST
 module SMap = Map.String
 
 (** Convert a concrete PascaLIGO expression AST to the imperative

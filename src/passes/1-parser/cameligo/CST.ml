@@ -1,4 +1,4 @@
-(* Abstract Syntax Tree (AST) for CameLIGO *)
+(* Concrete Syntax Tree (CST) for CameLIGO *)
 
 (* To disable warning about multiply-defined record labels. *)
 
@@ -10,7 +10,7 @@ open Utils
 
 (* Regions
 
-   The AST carries all the regions where tokens have been found by the
+   The CST carries all the regions where tokens have been found by the
    lexer, plus additional regions corresponding to whole subtrees
    (like entire expressions, patterns etc.). These regions are needed
    for error reporting and source-to-source transformations. To make
@@ -387,7 +387,7 @@ and cond_expr = {
   ifnot    : expr
 }
 
-(* Projecting regions from some nodes of the AST *)
+(* Projecting regions from some nodes of the CST *)
 
 let rec last to_region = function
     [] -> Region.ghost

@@ -24,14 +24,14 @@ module type Pretty =
   end
 
 module Make (Lexer: Lexer.S)
-            (AST: sig type t type expr end)
+            (CST: sig type t type expr end)
             (Parser: ParserAPI.PARSER
-                     with type ast   = AST.t
-                      and type expr  = AST.expr
+                     with type ast   = CST.t
+                      and type expr  = CST.expr
                       and type token = Lexer.token)
             (ParErr: sig val message : int -> string end)
-            (ParserLog: Pretty with type ast  = AST.t
-                                and type expr = AST.expr)
+            (ParserLog: Pretty with type ast  = CST.t
+                                and type expr = CST.expr)
             (IO: IO) =
   struct
     open Printf
@@ -64,7 +64,7 @@ module Make (Lexer: Lexer.S)
     (* Parsing an expression *)
 
     let parse_expr lexer_inst :
-      (AST.expr, message Region.reg) Stdlib.result =
+      (CST.expr, message Region.reg) Stdlib.result =
       let output = Buffer.create 131 in
       let state  =
         ParserLog.mk_state ~offsets:IO.options#offsets
@@ -99,7 +99,7 @@ module Make (Lexer: Lexer.S)
     (* Parsing a contract *)
 
     let parse_contract lexer_inst :
-      (AST.t, message Region.reg) Stdlib.result =
+      (CST.t, message Region.reg) Stdlib.result =
       let output = Buffer.create 131 in
       let state  =
         ParserLog.mk_state ~offsets:IO.options#offsets

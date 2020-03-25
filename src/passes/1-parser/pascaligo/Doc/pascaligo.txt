@@ -44,16 +44,16 @@ The directory contains the following:
 
   ParserLog.mli
   ParserLog.ml
-    Source for printing the AST. Used by ParserMain.ml, pascaligo.ml
-    and the translator from this AST to the one needed by the
+    Source for printing the CST. Used by ParserMain.ml, pascaligo.ml
+    and the translator from this CST to the one needed by the
     type-checker (see directory ligo/src/simplify).
 
   Utils.mli
   Utils.ml
     Some utility types and functions.
 
-  AST.mli
-  AST.ml
+  CST.mli
+  CST.ml
     The abstract syntax tree of Pascaligo.
 
   LexToken.mli
@@ -68,7 +68,7 @@ The directory contains the following:
 
   Parser.mly
     The Menhir specification of the grammar of Pascaligo and the
-    semantic actions building the AST. The syntax is actually a mix of
+    semantic actions building the CST. The syntax is actually a mix of
     two sub-flavours: one in which compound structures, like blocks,
     records, lists etc., are opened by a keyword denoting the kind of
     structure, like "block", "record", "list" etc., and are closed by

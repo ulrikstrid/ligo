@@ -1,7 +1,7 @@
 [@@@warning "-42"]
 [@@@coverage exclude_file]
 
-open AST
+open CST
 open! Region
 
 let sprintf = Printf.sprintf
@@ -594,7 +594,7 @@ let pattern_to_string ~offsets ~mode =
 let expr_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_expr
 
-(** {1 Pretty-printing the AST} *)
+(** {1 Pretty-printing the CST} *)
 
 let pp_ident state {value=name; region} =
   let reg  = compact state region in

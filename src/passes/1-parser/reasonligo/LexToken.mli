@@ -1,7 +1,7 @@
 (* This signature defines the lexical tokens for LIGO
 
    _Tokens_ are the abstract units which are used by the parser to
-   build the abstract syntax tree (AST), in other words, the stream of
+   build the abstract syntax tree (CST), in other words, the stream of
    tokens is the minimal model of the input program, carrying
    implicitly all its structure in a linear encoding, and nothing
    else, in particular, comments and whitespace are absent.

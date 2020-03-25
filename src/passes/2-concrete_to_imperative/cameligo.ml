@@ -3,7 +3,7 @@
 open Trace
 open Ast_imperative
 
-module Raw = Parser.Cameligo.AST
+module Raw = Parser.Cameligo.CST
 module SMap = Map.String
 module Option = Simple_utils.Option
 (* TODO: move 1-parser/shared/Utils.ml{i} to Simple_utils/ *)

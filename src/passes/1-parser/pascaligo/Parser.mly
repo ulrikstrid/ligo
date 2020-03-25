@@ -4,7 +4,7 @@
 [@@@warning "-42"]
 
 open Region
-open AST
+open CST
 
 (* END HEADER *)
 %}
@@ -14,8 +14,8 @@ open AST
 (* Entry points *)
 
 %start contract interactive_expr
-%type <AST.t> contract
-%type <AST.expr> interactive_expr
+%type <CST.t> contract
+%type <CST.expr> interactive_expr
 
 %%
 
@@ -529,7 +529,7 @@ proc_call:
 conditional:
   "if" expr "then" if_clause ";"? "else" if_clause {
     let region = cover $1 (if_clause_to_region $7) in
-    let value : AST.conditional = {
+    let value : CST.conditional = {
       kwd_if     = $1;
       test       = $2;
       kwd_then   = $3;
@@ -671,7 +671,7 @@ expr:
 cond_expr:
   "if" expr "then" expr ";"? "else" expr {
     let region = cover $1 (expr_to_region $7) in
-    let value : AST.cond_expr = {
+    let value : CST.cond_expr = {
       kwd_if     = $1;
       test       = $2;
       kwd_then   = $3;
@@ -942,7 +942,7 @@ record_expr:
   "record" sep_or_term_list(field_assignment,";") "end" {
     let ne_elements, terminator = $2 in
     let region = cover $1 $3
-    and value : field_assign AST.reg ne_injection = {
+    and value : field_assign CST.reg ne_injection = {
       opening = Kwd $1;
       ne_elements;
       terminator;
@@ -952,7 +952,7 @@ record_expr:
 | "record" "[" sep_or_term_list(field_assignment,";") "]" {
    let ne_elements, terminator = $3 in
    let region = cover $1 $4
-   and value : field_assign AST.reg ne_injection = {
+   and value : field_assign CST.reg ne_injection = {
      opening = KwdBracket ($1,$2);
      ne_elements;
      terminator;

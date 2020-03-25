@@ -1,7 +1,7 @@
 open Trace
 open Ast_imperative
 
-module Raw = Parser.Pascaligo.AST
+module Raw = Parser.Pascaligo.CST
 module SMap = Map.String
 module ParserLog = Parser_pascaligo.ParserLog
 

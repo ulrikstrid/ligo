@@ -1,4 +1,4 @@
-module AST      = Parser_cameligo.AST
+module CST      = Parser_cameligo.CST
 module LexToken = Parser_cameligo.LexToken
 module Lexer    = Lexer.Make(LexToken)
 module Scoping  = Parser_cameligo.Scoping
@@ -28,20 +28,20 @@ module PreIO =
 
 module Parser =
   struct
-    type ast  = AST.t
-    type expr = AST.expr
+    type ast  = CST.t
+    type expr = CST.expr
     include Parser_cameligo.Parser
   end
 
 module ParserLog =
   struct
-    type ast  = AST.t
-    type expr = AST.expr
+    type ast  = CST.t
+    type expr = CST.expr
     include Parser_cameligo.ParserLog
   end
 
 module PreUnit =
-  ParserUnit.Make (Lexer)(AST)(Parser)(ParErr)(ParserLog)
+  ParserUnit.Make (Lexer)(CST)(Parser)(ParErr)(ParserLog)
 
 module Errors =
   struct

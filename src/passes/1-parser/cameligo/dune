@@ -15,7 +15,7 @@
   (name parser_cameligo)
   (public_name ligo.parser.cameligo)
   (modules
-     Scoping AST cameligo Parser ParserLog LexToken ParErr)
+     Scoping CST cameligo Parser ParserLog LexToken ParErr)
   (libraries
      menhirLib
      parser_shared

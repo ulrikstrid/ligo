@@ -4,8 +4,8 @@
 [@@@warning "-42"]
 
 open Region
-module AST = Parser_cameligo.AST
-open! AST
+module CST = Parser_cameligo.CST
+open! CST
 
 type 'a sequence_elements = {
   s_elts       : ('a, semi) Utils.nsepseq;
@@ -48,8 +48,8 @@ let rec curry hd = function
 (* Entry points *)
 
 %start contract interactive_expr
-%type <AST.t> contract
-%type <AST.expr> interactive_expr
+%type <CST.t> contract
+%type <CST.expr> interactive_expr
 
 (* Solves a shift/reduce problem that happens with record and
    sequences. To elaborate: [sequence_or_record_in]
@@ -154,7 +154,7 @@ contract:
   declarations EOF { {decl=$1; eof=$2} }
 
 declarations:
-  declaration              { $1,[] : AST.declaration Utils.nseq }
+  declaration              { $1,[] : CST.declaration Utils.nseq }
 | declaration declarations { Utils.nseq_cons $1 $2              }
 
 declaration:

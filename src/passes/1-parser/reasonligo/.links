@@ -21,7 +21,7 @@ $HOME/git/ligo/vendors/ligo-utils/simple-utils/region.ml
 ../shared/ParserUnit.ml
 Stubs/Simple_utils.ml
 Stubs/Parser_cameligo.ml
-../cameligo/AST.ml
+../cameligo/CST.ml
 ../cameligo/ParserLog.mli
 ../cameligo/ParserLog.ml
 ../cameligo/Scoping.mli

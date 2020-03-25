@@ -1,4 +1,4 @@
-module AST      = Parser_pascaligo.AST
+module CST      = Parser_pascaligo.CST
 module LexToken = Parser_pascaligo.LexToken
 module Lexer    = Lexer.Make(LexToken)
 module Scoping  = Parser_pascaligo.Scoping
@@ -28,20 +28,20 @@ module PreIO =
 
 module Parser =
   struct
-    type ast  = AST.t
-    type expr = AST.expr
+    type ast  = CST.t
+    type expr = CST.expr
     include Parser_pascaligo.Parser
   end
 
 module ParserLog =
   struct
-    type ast  = AST.t
-    type expr = AST.expr
+    type ast  = CST.t
+    type expr = CST.expr
     include Parser_pascaligo.ParserLog
   end
 
 module PreUnit =
-  ParserUnit.Make (Lexer)(AST)(Parser)(ParErr)(ParserLog)
+  ParserUnit.Make (Lexer)(CST)(Parser)(ParErr)(ParserLog)
 
 module Errors =
   struct

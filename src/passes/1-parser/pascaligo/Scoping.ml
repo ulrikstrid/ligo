@@ -2,11 +2,11 @@
 
 
 type t =
-  Reserved_name       of AST.variable
-| Duplicate_parameter of AST.variable
-| Duplicate_variant   of AST.variable
-| Non_linear_pattern  of AST.variable
-| Duplicate_field     of AST.variable
+  Reserved_name       of CST.variable
+| Duplicate_parameter of CST.variable
+| Duplicate_variant   of CST.variable
+| Non_linear_pattern  of CST.variable
+| Duplicate_field     of CST.variable
 
 type error = t
 
@@ -20,7 +20,7 @@ module SSet = Utils.String.Set
 
 module Ord =
   struct
-    type t = AST.variable
+    type t = CST.variable
     let compare v1 v2 =
       compare v1.value v2.value
   end
@@ -98,7 +98,7 @@ let check_reserved_name var =
 
 (* Checking the linearity of patterns *)
 
-open! AST
+open! CST
 
 let rec vars_of_pattern env = function
   PConstr p -> vars_of_pconstr env p

@@ -8,22 +8,22 @@ module IO =
 
 module Parser =
   struct
-    type ast  = AST.t
-    type expr = AST.expr
+    type ast  = CST.t
+    type expr = CST.expr
     include Parser
   end
 
 module ParserLog =
   struct
-    type ast  = AST.t
-    type expr = AST.expr
+    type ast  = CST.t
+    type expr = CST.expr
     include ParserLog
   end
 
 module Lexer = Lexer.Make (LexToken)
 
 module Unit =
-  ParserUnit.Make (Lexer)(AST)(Parser)(ParErr)(ParserLog)(IO)
+  ParserUnit.Make (Lexer)(CST)(Parser)(ParErr)(ParserLog)(IO)
 
 (* Main *)
 

@@ -1,6 +1,6 @@
 open Trace
 
-module AST         = Parser_cameligo.AST
+module CST         = Parser_cameligo.CST
 module LexToken    = Parser_reasonligo.LexToken
 module Lexer       = Lexer.Make(LexToken)
 module Scoping     = Parser_cameligo.Scoping
@@ -31,20 +31,20 @@ module PreIO =
 
 module Parser =
   struct
-    type ast  = AST.t
-    type expr = AST.expr
+    type ast  = CST.t
+    type expr = CST.expr
     include Parser_reasonligo.Parser
   end
 
 module ParserLog =
   struct
-    type ast  = AST.t
-    type expr = AST.expr
+    type ast  = CST.t
+    type expr = CST.expr
     include Parser_cameligo.ParserLog
   end
 
 module PreUnit =
-  ParserUnit.Make (Lexer)(AST)(Parser)(ParErr)(ParserLog)
+  ParserUnit.Make (Lexer)(CST)(Parser)(ParErr)(ParserLog)
 
 module Errors =
   struct
@@ -53,7 +53,7 @@ module Errors =
       and message () = message.Region.value
       in Trace.error ~data:[] title message
 
-    let wrong_function_arguments (expr: AST.expr) =
+    let wrong_function_arguments (expr: CST.expr) =
       let title () = "" in
       let message () = "It looks like you are defining a function, \
                however we do not\n\
@@ -63,7 +63,7 @@ module Errors =
                let tuple = ((a, b): (int, int)) => a + b; \n\
                let x = (a: string) : string => \"Hello, \" ++ a;\n" 
       in
-      let expression_loc = AST.expr_to_region expr in
+      let expression_loc = CST.expr_to_region expr in
       let data = [
         ("location",
          fun () -> Format.asprintf "%a" Location.pp_lift @@ expression_loc)]

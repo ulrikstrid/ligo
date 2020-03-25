@@ -1,4 +1,4 @@
 type error = 
-  | WrongFunctionArguments of AST.expr
+  | WrongFunctionArguments of CST.expr
 
 exception Error of error

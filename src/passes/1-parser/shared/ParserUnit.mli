@@ -24,14 +24,14 @@ module type Pretty =
   end
 
 module Make (Lexer : Lexer.S)
-            (AST : sig type t type expr end)
+            (CST : sig type t type expr end)
             (Parser : ParserAPI.PARSER
-                      with type ast   = AST.t
-                       and type expr  = AST.expr
+                      with type ast   = CST.t
+                       and type expr  = CST.expr
                        and type token = Lexer.token)
             (ParErr : sig val message : int -> string end)
-            (ParserLog : Pretty with type ast  = AST.t
-                                 and type expr = AST.expr)
+            (ParserLog : Pretty with type ast  = CST.t
+                                 and type expr = CST.expr)
             (IO: IO) :
   sig
     (* Error handling reexported from [ParserAPI] without the
@@ -54,6 +54,6 @@ module Make (Lexer : Lexer.S)
 
     val apply : Lexer.instance -> 'a parser -> ('a, message Region.reg) result
 
-    val parse_contract : AST.t parser
-    val parse_expr     : AST.expr parser
+    val parse_contract : CST.t parser
+    val parse_expr     : CST.expr parser
   end

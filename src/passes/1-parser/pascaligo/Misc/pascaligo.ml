@@ -18,19 +18,19 @@ let pre_options =
 
 module Parser =
   struct
-    type ast  = AST.t
-    type expr = AST.expr
+    type ast  = CST.t
+    type expr = CST.expr
     include Parser_pascaligo.Parser
   end
 
 module ParserLog =
   struct
-    type ast  = AST.t
-    type expr = AST.expr
+    type ast  = CST.t
+    type expr = CST.expr
     include Parser_pascaligo.ParserLog
   end
 
-module PreUnit = ParserUnit.Make (Lexer)(AST)(Parser)(ParErr)(ParserLog)
+module PreUnit = ParserUnit.Make (Lexer)(CST)(Parser)(ParErr)(ParserLog)
 module Front   = ParserAPI.Make (Lexer)(Parser)(ParErr)
 
 let issue_error point =

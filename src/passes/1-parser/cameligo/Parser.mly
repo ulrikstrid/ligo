@@ -4,7 +4,7 @@
 [@@@warning "-42"]
 
 open Region
-open AST
+open CST
 
 (* END HEADER *)
 %}
@@ -14,8 +14,8 @@ open AST
 (* Entry points *)
 
 %start contract interactive_expr
-%type <AST.t> contract
-%type <AST.expr> interactive_expr
+%type <CST.t> contract
+%type <CST.expr> interactive_expr
 
 %%
 
@@ -108,7 +108,7 @@ contract:
   declarations EOF { {decl=$1; eof=$2} }
 
 declarations:
-  declaration              { $1,[] : AST.declaration Utils.nseq }
+  declaration              { $1,[] : CST.declaration Utils.nseq }
 | declaration declarations { Utils.nseq_cons $1 $2              }
 
 declaration:
