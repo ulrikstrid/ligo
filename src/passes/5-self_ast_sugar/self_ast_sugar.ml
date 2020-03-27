@@ -1,6 +1,7 @@
 open Trace
 
 let all_expression_mapper = [
+  Sequence_with_skip.peephole_expression
 ]
 
 let all_type_expression_mapper = [
