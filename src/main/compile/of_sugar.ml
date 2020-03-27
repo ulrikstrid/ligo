@@ -7,10 +7,12 @@ type form =
   | Env
 
 let compile (program : program) : Ast_core.program result =
-  compile_program program
+  let%bind program = compile_program program in
+  Self_ast_core.all_program program
 
 let compile_expression (e : expression) : Ast_core.expression result =
-  compile_expression e
+  let%bind e = compile_expression e in
+  Self_ast_core.all_expression e
 
 let pretty_print formatter (program : program) = 
   PP.program formatter program
