@@ -5,6 +5,13 @@ type 'a display_format =
   | Dev : string display_format
   | Json : json display_format
 
+type 'b consommateur = { run : 'a . 'a display_format -> 'b }
+type planque = { tt : 'b . 'b consommateur -> 'b }
+
+let human_readable = { tt = fun f -> (f.run Human_readable) }
+let dev = { tt = fun f -> (f.run Dev) }
+let json = { tt = fun f -> (f.run Json) }
+
 type 'a pp = display_format:(string display_format) -> Format.formatter -> 'a -> unit
 type 'a format = {
     pp : 'a pp ;
@@ -26,6 +33,17 @@ let convert : type output . display_format:(output display_format) -> displayabl
   | Human_readable -> Format.asprintf "%a" (format.pp ~display_format) value
 
 let to_json : displayable -> json = convert ~display_format:Json
+
+let bind_format :
+  'a format -> 'b format -> ('b,'a) result format =
+  fun error_format value_format ->
+    let pp ~display_format f a = match a with
+      | Error e -> error_format.pp ~display_format f e
+      | Ok v -> value_format.pp ~display_format f v in
+    let to_json a = match a with
+      | Error e -> error_format.to_json e
+      | Ok v -> value_format.to_json v in
+    { pp ; to_json }
 
 (* let rec error_pp ?(dev = false) out (e : error) =
   let open JSON_string_utils in

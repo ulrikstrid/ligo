@@ -111,14 +111,15 @@ let predecessor_timestamp =
 
 let display_format =
   let open Arg in
+  let open Main.Display in
   let info  =
     let docv = "DISPLAY_FORMAT" in
     let doc = "$(docv) is the format that will be used by the CLI. Available formats are 'dev', 'json', and 'human-readable' (default). When human-readable lacks details (we are still tweaking it), please contact us and use another format in the meanwhile." in
     info ~docv ~doc ["format" ; "display-format"] in
   value @@
   opt
-    (enum [("human-readable", `Human_readable); ("dev", `Dev); ("json", `Json)])
-    `Human_readable
+    (enum [("human-readable", human_readable); ("dev", dev); ("json", json)])
+    human_readable
     info
 
 let michelson_code_format =
@@ -137,14 +138,32 @@ module Compile = Ligo.Compile
 module Uncompile = Ligo.Uncompile
 module Run = Ligo.Run.Of_michelson
 
+let mich_ppformat ~display_format f _a =
+  match display_format with
+  | Main.Display.Human_readable | Dev -> (
+     (* Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) a *)
+     Format.pp_print_string f "todo"
+  )
+let mich_jsonformat _a =
+  `Assoc [("toto expression", `Int 21)]
+
+let foo_expression : 'a Main.Display.format = {
+  pp = mich_ppformat;
+  to_json = mich_jsonformat;
+}
+
 let compile_file =
-  let f source_file entry_point syntax display_format disable_typecheck michelson_format =
-    toplevel ~display_format @@
-    let%bind typed,_    = Compile.Utils.type_file source_file syntax (Contract entry_point) in
-    let%bind mini_c     = Compile.Of_typed.compile typed in
-    let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
-    let%bind contract   = Compile.Of_michelson.build_contract ~disable_typecheck michelson in
-    ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) contract
+  let f source_file entry_point syntax display_format disable_typecheck _michelson_format =
+    toplevel display_format (Main.Display.Displayable {
+      value = (
+        let%bind typed,_    = Compile.Utils.type_file source_file syntax (Contract entry_point) in
+        let%bind mini_c     = Compile.Of_typed.compile typed in
+        let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
+        Compile.Of_michelson.build_contract ~disable_typecheck michelson
+      ) ;
+      format = Main.Display.bind_format Main.Errors_format.error_format foo_expression
+    })
+      (* ok @@ Format.asprintf "%a\n" (Main.Display.michelson_pp michelson_format) contract *)
   in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format $ disable_michelson_typechecking $ michelson_code_format) in
@@ -152,7 +171,7 @@ let compile_file =
   let doc = "Subcommand: Compile a contract." in
   (Term.ret term , Term.info ~doc cmdname)
 
-let print_cst =
+(* let print_cst =
   let f source_file syntax display_format = (
     toplevel ~display_format @@
     let%bind pp = Compile.Of_source.pretty_print source_file (Syntax_name syntax) in
@@ -424,13 +443,13 @@ let list_declarations =
     Term.(const f $ source_file 0 $ syntax ) in
   let cmdname = "list-declarations" in
   let doc = "Subcommand: List all the top-level declarations." in
-  (Term.ret term , Term.info ~doc cmdname)
+  (Term.ret term , Term.info ~doc cmdname) *)
 
 let run ?argv () =
   Term.eval_choice ?argv main [
-    temp_ligo_interpreter ;
+    (* temp_ligo_interpreter ; *)
     compile_file ;
-    measure_contract ;
+    (* measure_contract ;
     compile_parameter ;
     compile_storage ;
     compile_expression ;
@@ -443,5 +462,5 @@ let run ?argv () =
     print_ast ;
     print_typed_ast ;
     print_mini_c ;
-    list_declarations ;
+    list_declarations ; *)
   ]

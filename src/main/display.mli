@@ -5,6 +5,13 @@ type 'a display_format =
   | Dev : string display_format
   | Json : json display_format
 
+type 'b consommateur = { run : 'a . 'a display_format -> 'b }
+type planque = { tt : 'b . 'b consommateur -> 'b }
+
+val human_readable : planque
+val dev : planque
+val json : planque
+
 type 'a pp = display_format:(string display_format) -> Format.formatter -> 'a -> unit
 type 'a format = {
     pp : 'a pp ;
@@ -21,3 +28,5 @@ type displayable = Displayable : 'a with_format -> displayable
 val convert : display_format:'output display_format -> displayable -> 'output
 
 val to_json : displayable -> json
+
+val bind_format : 'a format -> 'b format -> ('b,'a) result format
