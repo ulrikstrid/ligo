@@ -1,48 +1,46 @@
 (ocamllex md)
 
 (executables
-  (names test doc_test parser_negative_tests)
-  (libraries
-    simple-utils
-    ligo
-    alcotest
-    tezos-crypto
-  )
-  (preprocess
-    (pps ppx_let)
-  )
-  (flags (:standard -w +1..62-4-9-44-40-42-48@39@33 -open Simple_utils ))
-)
+ (names test doc_test parser_negative_tests)
+ (libraries simple-utils ligo alcotest tezos-crypto)
+ (preprocess
+  (pps ppx_let))
+ (flags
+  (:standard -w +1..62-4-9-44-40-42-48@39@33 -open Simple_utils)))
 
 (alias
-  (name doc-test)
-  (action (run ./doc_test.exe))
-  (deps (source_tree ../../gitlab-pages/docs))
-)
+ (name doc-test)
+ (action
+  (run ./doc_test.exe))
+ (deps
+  (source_tree ../../gitlab-pages/docs)))
 
 (alias
-  (name parser-negative-tests)
-  (action (run ./parser_negative_tests.exe))
-  (deps
-    ../passes/1-parser/pascaligo/all.ligo
-    ../passes/1-parser/cameligo/all.mligo
-    ../passes/1-parser/reasonligo/all.religo
-  ))
+ (name parser-negative-tests)
+ (action
+  (run ./parser_negative_tests.exe))
+ (deps ../passes/1-parser/pascaligo/all.ligo
+   ../passes/1-parser/cameligo/all.mligo
+   ../passes/1-parser/reasonligo/all.religo))
 
 (alias
-  (name ligo-test)
-  (action (run ./test.exe))
-  (deps (glob_files contracts/*)
-        (glob_files contracts/negative/*))
-)
+ (name ligo-test)
+ (action
+  (run ./test.exe))
+ (deps
+  (glob_files contracts/*)
+  (glob_files contracts/negative/*)))
 
 (alias
-  (name runtest)
-  (deps (alias ligo-test) (alias doc-test) (alias parser-negative-tests))
-)
+ (name runtest)
+ (deps
+  (alias ligo-test)
+  (alias doc-test)
+  (alias parser-negative-tests)))
 
 (alias
-  (name manual-test)
-  (action (run ./manual_test.exe))
-  (deps (glob_files contracts/*))
-)
+ (name manual-test)
+ (action
+  (run ./manual_test.exe))
+ (deps
+  (glob_files contracts/*)))

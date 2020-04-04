@@ -1,27 +1,34 @@
 open Trace
 open Types
 
-val assert_value_eq : ( expression * expression ) -> unit result
+val assert_value_eq : expression * expression -> unit result
 
-val assert_type_expression_eq : ( type_expression * type_expression ) -> unit result
+val assert_type_expression_eq :
+  type_expression * type_expression -> unit result
 
-val merge_annotation : type_expression option -> type_expression option -> error_thunk -> type_expression result
+val merge_annotation :
+  type_expression option ->
+  type_expression option ->
+  error_thunk ->
+  type_expression result
 
 (* No information about what made it fail *)
-val type_expression_eq : ( type_expression * type_expression ) -> bool
+val type_expression_eq : type_expression * type_expression -> bool
 
 module Free_variables : sig
   type bindings = expression_variable list
 
   val matching_expression : bindings -> matching_expr -> bindings
+
   val lambda : bindings -> lambda -> bindings
 
-  val expression : bindings -> expression -> bindings 
+  val expression : bindings -> expression -> bindings
 
-  val empty : bindings 
-  val singleton : expression_variable -> bindings 
+  val empty : bindings
 
-(*
+  val singleton : expression_variable -> bindings
+
+  (*
   val mem : string -> bindings -> bool
   val union : bindings -> bindings -> bindings
   val unions : bindings list -> bindings
@@ -60,12 +67,10 @@ module Errors : sig
   val not_functional_main : Location.t -> unit -> error
 end
 
-
-
-
 (*
 val assert_literal_eq : ( literal * literal ) -> unit result
 *)
 
 val get_entry : program -> string -> expression result
+
 val program_environment : program -> full_environment

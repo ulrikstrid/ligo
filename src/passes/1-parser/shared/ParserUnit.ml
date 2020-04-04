@@ -2,183 +2,183 @@
 
 module Region = Simple_utils.Region
 
-module type IO =
-  sig
-    val ext : string              (* LIGO file extension *)
-    val options : EvalOpt.options (* CLI options *)
-  end
+module type IO = sig
+  val ext : string (* LIGO file extension *)
 
-module type Pretty =
-  sig
-    type state
-    type ast
-    type expr
+  val options : EvalOpt.options (* CLI options *)
+end
 
-    val mk_state :
-      offsets:bool -> mode:[`Point|`Byte] -> buffer:Buffer.t -> state
+module type Pretty = sig
+  type state
 
-    val pp_ast       : state -> ast -> unit
-    val pp_expr      : state -> expr -> unit
-    val print_tokens : state -> ast -> unit
-    val print_expr   : state -> expr -> unit
-  end
+  type ast
 
-module Make (Lexer: Lexer.S)
-            (AST: sig type t type expr end)
-            (Parser: ParserAPI.PARSER
-                     with type ast   = AST.t
-                      and type expr  = AST.expr
-                      and type token = Lexer.token)
-            (ParErr: sig val message : int -> string end)
-            (ParserLog: Pretty with type ast  = AST.t
-                                and type expr = AST.expr)
-            (IO: IO) =
-  struct
-    open Printf
-    module SSet = Utils.String.Set
+  type expr
 
-    (* Log of the lexer *)
+  val mk_state :
+    offsets:bool -> mode:[`Point | `Byte] -> buffer:Buffer.t -> state
 
-    module Log = LexerLog.Make (Lexer)
+  val pp_ast : state -> ast -> unit
 
-    let log =
-      Log.output_token ~offsets:IO.options#offsets
-                       IO.options#mode IO.options#cmd stdout
+  val pp_expr : state -> expr -> unit
 
-    (* Error handling (reexported from [ParserAPI]) *)
+  val print_tokens : state -> ast -> unit
 
-    type message = string
-    type valid   = Parser.token
-    type invalid = Parser.token
-    type error   = message * valid option * invalid
+  val print_expr : state -> expr -> unit
+end
 
-    (* Instantiating the parser *)
+module Make
+    (Lexer : Lexer.S) (AST : sig
+      type t
 
-    module Front = ParserAPI.Make (IO)(Lexer)(Parser)(ParErr)
+      type expr
+    end)
+    (Parser : ParserAPI.PARSER
+                with type ast = AST.t
+                 and type expr = AST.expr
+                 and type token = Lexer.token)
+    (ParErr : sig
+      val message : int -> string
+    end)
+    (ParserLog : Pretty with type ast = AST.t and type expr = AST.expr)
+    (IO : IO) =
+struct
+  open Printf
+  module SSet = Utils.String.Set
 
-    let format_error = Front.format_error
+  (* Log of the lexer *)
 
-    let short_error ?(offsets=true) mode msg (reg: Region.t) =
-      sprintf "Parse error %s:\n%s" (reg#to_string ~offsets mode) msg
+  module Log = LexerLog.Make (Lexer)
 
-    (* Parsing an expression *)
+  let log =
+    Log.output_token ~offsets:IO.options#offsets IO.options#mode IO.options#cmd
+      stdout
 
-    let parse_expr lexer_inst :
-      (AST.expr, message Region.reg) Stdlib.result =
-      let output = Buffer.create 131 in
-      let state  =
-        ParserLog.mk_state ~offsets:IO.options#offsets
-                           ~mode:IO.options#mode
-                           ~buffer:output in
-      let close () = lexer_inst.Lexer.close () in
-      let expr =
-        try
-          if IO.options#mono then
-            let tokeniser = lexer_inst.Lexer.read ~log
-            and lexbuf = lexer_inst.Lexer.buffer
-            in Front.mono_expr tokeniser lexbuf
-          else
-            Front.incr_expr lexer_inst
-        with exn -> close (); raise exn in
-      let () =
-        if SSet.mem "ast-tokens" IO.options#verbose then
-          begin
-            Buffer.clear output;
-            ParserLog.print_expr state expr;
-            Buffer.output_buffer stdout output
-          end in
-      let () =
-        if SSet.mem "ast" IO.options#verbose then
-          begin
-            Buffer.clear output;
-            ParserLog.pp_expr state expr;
-            Buffer.output_buffer stdout output
-          end
-      in close (); Ok expr
+  (* Error handling (reexported from [ParserAPI]) *)
 
-    (* Parsing a contract *)
+  type message = string
 
-    let parse_contract lexer_inst :
-      (AST.t, message Region.reg) Stdlib.result =
-      let output = Buffer.create 131 in
-      let state  =
-        ParserLog.mk_state ~offsets:IO.options#offsets
-                           ~mode:IO.options#mode
-                           ~buffer:output in
-      let close () = lexer_inst.Lexer.close () in
-      let ast =
-        try
-          if IO.options#mono then
-            let tokeniser = lexer_inst.Lexer.read ~log
-            and lexbuf = lexer_inst.Lexer.buffer
-            in Front.mono_contract tokeniser lexbuf
-          else
-            Front.incr_contract lexer_inst
-        with exn -> close (); raise exn in
-      let () =
-        if SSet.mem "ast-tokens" IO.options#verbose then
-          begin
-            Buffer.clear output;
-            ParserLog.print_tokens state ast;
-            Buffer.output_buffer stdout output
-          end in
-      let () =
-        if SSet.mem "ast" IO.options#verbose then
-          begin
-            Buffer.clear output;
-            ParserLog.pp_ast state ast;
-            Buffer.output_buffer stdout output
-          end
-      in close (); Ok ast
+  type valid = Parser.token
 
-    (* Wrapper for the parsers above *)
+  type invalid = Parser.token
 
-    type 'a parser = Lexer.instance -> ('a, message Region.reg) result
+  type error = message * valid option * invalid
 
-    let apply lexer_inst parser =
-      (* Calling the parser and filtering errors *)
+  (* Instantiating the parser *)
 
-      match parser lexer_inst with
-        Stdlib.Error _ as error -> error
-      | Stdlib.Ok _ as node -> node
+  module Front = ParserAPI.Make (IO) (Lexer) (Parser) (ParErr)
 
-      (* Lexing errors *)
+  let format_error = Front.format_error
 
-      | exception Lexer.Error err ->
-          let file =
-            match IO.options#input with
-              None | Some "-" -> false
-            |          Some _ -> true in
-          let error =
-            Lexer.format_error ~offsets:IO.options#offsets
-                               IO.options#mode err ~file
-          in Stdlib.Error error
+  let short_error ?(offsets = true) mode msg (reg : Region.t) =
+    sprintf "Parse error %s:\n%s" (reg#to_string ~offsets mode) msg
 
-      (* Incremental API of Menhir *)
+  (* Parsing an expression *)
 
-      | exception Front.Point point ->
-          let error =
-            Front.format_error ~offsets:IO.options#offsets
-                               IO.options#mode point
-          in Stdlib.Error error
+  let parse_expr lexer_inst : (AST.expr, message Region.reg) Stdlib.result =
+    let output = Buffer.create 131 in
+    let state =
+      ParserLog.mk_state ~offsets:IO.options#offsets ~mode:IO.options#mode
+        ~buffer:output
+    in
+    let close () = lexer_inst.Lexer.close () in
+    let expr =
+      try
+        if IO.options#mono then (
+          let tokeniser = lexer_inst.Lexer.read ~log
+          and lexbuf = lexer_inst.Lexer.buffer in
+          Front.mono_expr tokeniser lexbuf )
+        else
+          Front.incr_expr lexer_inst
+      with exn -> close () ; raise exn
+    in
+    let () =
+      if SSet.mem "ast-tokens" IO.options#verbose then (
+        Buffer.clear output ;
+        ParserLog.print_expr state expr ;
+        Buffer.output_buffer stdout output )
+    in
+    let () =
+      if SSet.mem "ast" IO.options#verbose then (
+        Buffer.clear output ;
+        ParserLog.pp_expr state expr ;
+        Buffer.output_buffer stdout output )
+    in
+    close () ; Ok expr
 
-      (* Monolithic API of Menhir *)
+  (* Parsing a contract *)
 
-      | exception Parser.Error ->
-          let invalid, valid_opt =
-            match lexer_inst.Lexer.get_win () with
-              Lexer.Nil ->
-                  assert false (* Safe: There is always at least EOF. *)
-              | Lexer.One invalid -> invalid, None
-              | Lexer.Two (invalid, valid) -> invalid, Some valid in
-            let point = "", valid_opt, invalid in
-            let error =
-              Front.format_error ~offsets:IO.options#offsets
-                                 IO.options#mode point
-            in Stdlib.Error error
+  let parse_contract lexer_inst : (AST.t, message Region.reg) Stdlib.result =
+    let output = Buffer.create 131 in
+    let state =
+      ParserLog.mk_state ~offsets:IO.options#offsets ~mode:IO.options#mode
+        ~buffer:output
+    in
+    let close () = lexer_inst.Lexer.close () in
+    let ast =
+      try
+        if IO.options#mono then (
+          let tokeniser = lexer_inst.Lexer.read ~log
+          and lexbuf = lexer_inst.Lexer.buffer in
+          Front.mono_contract tokeniser lexbuf )
+        else
+          Front.incr_contract lexer_inst
+      with exn -> close () ; raise exn
+    in
+    let () =
+      if SSet.mem "ast-tokens" IO.options#verbose then (
+        Buffer.clear output ;
+        ParserLog.print_tokens state ast ;
+        Buffer.output_buffer stdout output )
+    in
+    let () =
+      if SSet.mem "ast" IO.options#verbose then (
+        Buffer.clear output ;
+        ParserLog.pp_ast state ast ;
+        Buffer.output_buffer stdout output )
+    in
+    close () ; Ok ast
 
-       (* I/O errors *)
+  (* Wrapper for the parsers above *)
 
-       | exception Sys_error error ->
-           Stdlib.Error (Region.wrap_ghost error)
-  end
+  type 'a parser = Lexer.instance -> ('a, message Region.reg) result
+
+  let apply lexer_inst parser =
+    (* Calling the parser and filtering errors *)
+    match parser lexer_inst with
+    | Stdlib.Error _ as error -> error
+    | Stdlib.Ok _ as node -> node
+    (* Lexing errors *)
+    | exception Lexer.Error err ->
+        let file =
+          match IO.options#input with
+          | None | Some "-" -> false
+          | Some _ -> true
+        in
+        let error =
+          Lexer.format_error ~offsets:IO.options#offsets IO.options#mode err
+            ~file
+        in
+        Stdlib.Error error
+    (* Incremental API of Menhir *)
+    | exception Front.Point point ->
+        let error =
+          Front.format_error ~offsets:IO.options#offsets IO.options#mode point
+        in
+        Stdlib.Error error
+    (* Monolithic API of Menhir *)
+    | exception Parser.Error ->
+        let invalid, valid_opt =
+          match lexer_inst.Lexer.get_win () with
+          | Lexer.Nil -> assert false (* Safe: There is always at least EOF. *)
+          | Lexer.One invalid -> (invalid, None)
+          | Lexer.Two (invalid, valid) -> (invalid, Some valid)
+        in
+        let point = ("", valid_opt, invalid) in
+        let error =
+          Front.format_error ~offsets:IO.options#offsets IO.options#mode point
+        in
+        Stdlib.Error error
+    (* I/O errors *)
+    | exception Sys_error error -> Stdlib.Error (Region.wrap_ghost error)
+end

@@ -1,12 +1,11 @@
 include Stage_common.Types
 
 (*types*)
-module Env = Map.Make(
-  struct
-    type t = expression_variable
-    let compare a b = Var.compare a b
-  end
-)
+module Env = Map.Make (struct
+  type t = expression_variable
+
+  let compare a b = Var.compare a b
+end)
 
 (*TODO temporary hack to handle failwiths *)
 exception Temporary_hack of string
@@ -27,15 +26,19 @@ and constant_val =
   | C_key of string
   | C_key_hash of string
   | C_chain_id of string
-  | C_operation of Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
+  | C_operation of
+      Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
 
 and value =
   | V_Func_val of (expression_variable * Ast_typed.expression * env)
-  | V_Func_rec of (expression_variable * expression_variable * Ast_typed.expression * env)
+  | V_Func_rec of
+      (expression_variable * expression_variable * Ast_typed.expression * env)
   | V_Ct of constant_val
   | V_List of value list
   | V_Record of value label_map
   | V_Map of (value * value) list
   | V_Set of value list
   | V_Construct of (string * value)
-  | V_Failure of string (*temporary*)
+  | V_Failure of string
+
+(*temporary*)

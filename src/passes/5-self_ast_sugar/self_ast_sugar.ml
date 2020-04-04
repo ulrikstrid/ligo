@@ -1,13 +1,13 @@
 open Trace
 
-let all_expression_mapper = [
-]
+let all_expression_mapper = []
 
-let all_type_expression_mapper = [
-]
+let all_type_expression_mapper = []
 
 let all_exp = List.map (fun el -> Helpers.Expression el) all_expression_mapper
-let all_ty = List.map (fun el -> Helpers.Type_expression el) all_type_expression_mapper
+
+let all_ty =
+  List.map (fun el -> Helpers.Type_expression el) all_type_expression_mapper
 
 let all_program =
   let all_p = List.map Helpers.map_program all_exp in

@@ -1,16 +1,17 @@
 open Trace
 
-let all_expression_mapper = [
-  Tezos_type_annotation.peephole_expression ;
-  None_variant.peephole_expression ;
-  Literals.peephole_expression ;
-]
-let all_type_expression_mapper = [
-  Entrypoints_length_limit.peephole_type_expression ;
-]
+let all_expression_mapper =
+  [ Tezos_type_annotation.peephole_expression;
+    None_variant.peephole_expression;
+    Literals.peephole_expression ]
+
+let all_type_expression_mapper =
+  [Entrypoints_length_limit.peephole_type_expression]
 
 let all_exp = List.map (fun el -> Helpers.Expression el) all_expression_mapper
-let all_ty = List.map (fun el -> Helpers.Type_expression el) all_type_expression_mapper
+
+let all_ty =
+  List.map (fun el -> Helpers.Type_expression el) all_type_expression_mapper
 
 let all_program =
   let all_p = List.map Helpers.map_program all_exp in

@@ -1,8 +1,12 @@
 open Cli_expect
 
 let%expect_test _ =
-  run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/gitlab_111.religo" ; "main" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile-contract";
+      "../../test/contracts/negative/gitlab_111.religo";
+      "main" ] ;
+  [%expect
+    {|
     ligo: : Parse error in file "gitlab_111.religo", line 2, characters 0-3, after "=" and before "let":
           This is an incorrect let binding. 
           -
@@ -19,10 +23,13 @@ let%expect_test _ =
     * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |} ] ;
-
-  run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/missing_rpar.religo" ; "main" ] ;
-  [%expect {|
+    * Check the changelog by running 'ligo changelog' |}] ;
+  run_ligo_bad
+    [ "compile-contract";
+      "../../test/contracts/negative/missing_rpar.religo";
+      "main" ] ;
+  [%expect
+    {|
     ligo: : Parse error in file "missing_rpar.religo", line 5, characters 0-3, after "m" and before "let":
           Missing `)`.
            {}
@@ -34,5 +41,4 @@ let%expect_test _ =
     * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |} ] ;
-
+    * Check the changelog by running 'ligo changelog' |}]

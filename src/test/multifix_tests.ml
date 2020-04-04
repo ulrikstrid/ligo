@@ -11,7 +11,4 @@ let simplify () : unit result =
   let%bind _simpl = Simplify.Cameligo.main raw in
   ok ()
 
-let main = "Multifix", [
-    test "basic" basic ;
-    test "simplify" simplify ;
-]
+let main = ("Multifix", [test "basic" basic; test "simplify" simplify])

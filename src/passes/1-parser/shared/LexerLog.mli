@@ -1,20 +1,25 @@
 module Region = Simple_utils.Region
 
-module type S =
-  sig
-    module Lexer : Lexer.S
+module type S = sig
+  module Lexer : Lexer.S
 
-    val output_token :
-      ?offsets:bool -> [`Byte | `Point] ->
-      EvalOpt.command -> out_channel ->
-      Markup.t list -> Lexer.token -> unit
+  val output_token :
+    ?offsets:bool ->
+    [`Byte | `Point] ->
+    EvalOpt.command ->
+    out_channel ->
+    Markup.t list ->
+    Lexer.token ->
+    unit
 
-    type file_path = string
+  type file_path = string
 
-    val trace :
-      ?offsets:bool -> [`Byte | `Point] ->
-      file_path option -> EvalOpt.command ->
-      (unit, string Region.reg) Stdlib.result
-  end
+  val trace :
+    ?offsets:bool ->
+    [`Byte | `Point] ->
+    file_path option ->
+    EvalOpt.command ->
+    (unit, string Region.reg) Stdlib.result
+end
 
-module Make (Lexer: Lexer.S) : S with module Lexer = Lexer
+module Make (Lexer : Lexer.S) : S with module Lexer = Lexer

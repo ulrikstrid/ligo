@@ -1,13 +1,9 @@
 open Trace
 
-let all_passes = [
-  Tail_recursion.peephole_expression
-]
+let all_passes = [Tail_recursion.peephole_expression]
 
-let contract_passes = [
-  Contract_passes.self_typing ;
-  No_nested_big_map.self_typing ;
-]
+let contract_passes =
+  [Contract_passes.self_typing; No_nested_big_map.self_typing]
 
 let all_program =
   let all_p = List.map Helpers.map_program all_passes in
@@ -19,15 +15,13 @@ let all_expression =
 
 let all_contract main_name prg =
   let%bind contract_type = Helpers.fetch_contract_type main_name prg in
-  let data : Contract_passes.contract_pass_data = {
-    contract_type = contract_type ;
-    main_name = main_name ;
-    } in
-  let all_p = List.map (fun pass -> Helpers.fold_map_program pass data) contract_passes in
+  let data : Contract_passes.contract_pass_data = {contract_type; main_name} in
+  let all_p =
+    List.map (fun pass -> Helpers.fold_map_program pass data) contract_passes
+  in
   bind_chain_ignore_acc all_p prg
-let all = [
-  Tail_recursion.peephole_expression
-]
+
+let all = [Tail_recursion.peephole_expression]
 
 let map_expression = Helpers.map_expression
 

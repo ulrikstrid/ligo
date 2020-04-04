@@ -3,5 +3,4 @@
  * open Combinators *)
 open Test_helpers
 
-let main = test_suite "Transpiler (from Ast_typed)" [
-  ]
+let main = test_suite "Transpiler (from Ast_typed)" []

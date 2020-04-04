@@ -4,14 +4,19 @@ open Types
 val program_to_main : program -> string -> lambda result
 
 module Captured_variables : sig
-
   type bindings = expression_variable list
-  val matching : (bindings -> 'a -> bindings result) -> bindings -> ('a, type_expression) matching_content -> bindings result
+
+  val matching :
+    (bindings -> 'a -> bindings result) ->
+    bindings ->
+    ('a, type_expression) matching_content ->
+    bindings result
 
   val matching_expression : bindings -> matching_expr -> bindings result
 
   val mem : expression_variable -> bindings -> bool
-(*
+
+  (*
   val singleton : name -> bindings
   val union : bindings -> bindings -> bindings
   val unions : bindings list -> bindings

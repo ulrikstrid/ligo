@@ -54,49 +54,69 @@ type lexeme = string
    reading the ocamllex specification for the lexer ([Lexer.mll]).
 *)
 
-module type TOKEN =
-  sig
-    type token
+module type TOKEN = sig
+  type token
 
-    (* Errors *)
+  (* Errors *)
 
-    type   int_err = Non_canonical_zero
-    type ident_err = Reserved_name
-    type   nat_err = Invalid_natural
-                   | Non_canonical_zero_nat
-    type   sym_err = Invalid_symbol
-    type  attr_err = Invalid_attribute
+  type int_err = Non_canonical_zero
 
-    (* Injections *)
+  type ident_err = Reserved_name
 
-    val mk_int    : lexeme -> Region.t -> (token,   int_err) result
-    val mk_nat    : lexeme -> Region.t -> (token,   nat_err) result
-    val mk_mutez  : lexeme -> Region.t -> (token,   int_err) result
-    val mk_ident  : lexeme -> Region.t -> (token, ident_err) result
-    val mk_sym    : lexeme -> Region.t -> (token,   sym_err) result
-    val mk_string : lexeme -> Region.t -> token
-    val mk_bytes  : lexeme -> Region.t -> token
-    val mk_constr : lexeme -> Region.t -> token
-    val mk_attr   : string -> lexeme -> Region.t -> (token, attr_err) result
-    val eof       : Region.t -> token
+  type nat_err = Invalid_natural | Non_canonical_zero_nat
 
-    (* Predicates *)
+  type sym_err = Invalid_symbol
 
-    val is_string : token -> bool
-    val is_bytes  : token -> bool
-    val is_int    : token -> bool
-    val is_ident  : token -> bool
-    val is_kwd    : token -> bool
-    val is_constr : token -> bool
-    val is_sym    : token -> bool
-    val is_eof    : token -> bool
+  type attr_err = Invalid_attribute
 
-    (* Projections *)
+  (* Injections *)
 
-    val to_lexeme : token -> lexeme
-    val to_string : token -> ?offsets:bool -> [`Byte | `Point] -> string
-    val to_region : token -> Region.t
-  end
+  val mk_int : lexeme -> Region.t -> (token, int_err) result
+
+  val mk_nat : lexeme -> Region.t -> (token, nat_err) result
+
+  val mk_mutez : lexeme -> Region.t -> (token, int_err) result
+
+  val mk_ident : lexeme -> Region.t -> (token, ident_err) result
+
+  val mk_sym : lexeme -> Region.t -> (token, sym_err) result
+
+  val mk_string : lexeme -> Region.t -> token
+
+  val mk_bytes : lexeme -> Region.t -> token
+
+  val mk_constr : lexeme -> Region.t -> token
+
+  val mk_attr : string -> lexeme -> Region.t -> (token, attr_err) result
+
+  val eof : Region.t -> token
+
+  (* Predicates *)
+
+  val is_string : token -> bool
+
+  val is_bytes : token -> bool
+
+  val is_int : token -> bool
+
+  val is_ident : token -> bool
+
+  val is_kwd : token -> bool
+
+  val is_constr : token -> bool
+
+  val is_sym : token -> bool
+
+  val is_eof : token -> bool
+
+  (* Projections *)
+
+  val to_lexeme : token -> lexeme
+
+  val to_string : token -> ?offsets:bool -> [`Byte | `Point] -> string
+
+  val to_region : token -> Region.t
+end
 
 (* The module type for lexers is [S]. It mainly exports the function
    [open_token_stream], which returns
@@ -120,55 +140,54 @@ module type TOKEN =
    markup to a given channel, at the caller's discretion.
 *)
 
-module type S =
-  sig
-    module Token : TOKEN
-    type token = Token.token
+module type S = sig
+  module Token : TOKEN
 
-    type file_path = string
-    type logger = Markup.t list -> token -> unit
+  type token = Token.token
 
-    type window =
-      Nil
-    | One of token
-    | Two of token * token
+  type file_path = string
 
-    val slide : token -> window -> window
+  type logger = Markup.t list -> token -> unit
 
-    type instance = {
-      read     : log:logger -> Lexing.lexbuf -> token;
-      buffer   : Lexing.lexbuf;
-      get_win  : unit -> window;
-      get_pos  : unit -> Pos.t;
-      get_last : unit -> Region.t;
-      get_file : unit -> file_path;
-      close    : unit -> unit
-    }
+  type window = Nil | One of token | Two of token * token
 
-    type input =
-      File    of file_path (* "-" means stdin *)
+  val slide : token -> window -> window
+
+  type instance =
+    { read: log:logger -> Lexing.lexbuf -> token;
+      buffer: Lexing.lexbuf;
+      get_win: unit -> window;
+      get_pos: unit -> Pos.t;
+      get_last: unit -> Region.t;
+      get_file: unit -> file_path;
+      close: unit -> unit }
+
+  type input =
+    | File of file_path (* "-" means stdin *)
     | Stdin
-    | String  of string
+    | String of string
     | Channel of in_channel
-    | Buffer  of Lexing.lexbuf
+    | Buffer of Lexing.lexbuf
 
-    type open_err = File_opening of string
+  type open_err = File_opening of string
 
-    val open_token_stream : input -> (instance, open_err) Stdlib.result
+  val open_token_stream : input -> (instance, open_err) Stdlib.result
 
-    (* Error reporting *)
+  (* Error reporting *)
 
-    type error
+  type error
 
-    val error_to_string : error -> string
+  val error_to_string : error -> string
 
-    exception Error of error Region.reg
+  exception Error of error Region.reg
 
-    val format_error :
-      ?offsets:bool -> [`Byte | `Point] ->
-      error Region.reg -> file:bool -> string Region.reg
-
-  end
+  val format_error :
+    ?offsets:bool ->
+    [`Byte | `Point] ->
+    error Region.reg ->
+    file:bool ->
+    string Region.reg
+end
 
 (* The functorised interface
 
@@ -176,4 +195,4 @@ module type S =
    submodule in [S].
 *)
 
-module Make (Token: TOKEN) : S with module Token = Token
+module Make (Token : TOKEN) : S with module Token = Token

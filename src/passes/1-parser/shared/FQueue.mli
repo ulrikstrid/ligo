@@ -2,9 +2,11 @@
 
 type 'a t
 
-val empty    : 'a t
-val enq      : 'a -> 'a t -> 'a t
-val deq      : 'a t -> ('a t * 'a) option
+val empty : 'a t
+
+val enq : 'a -> 'a t -> 'a t
+
+val deq : 'a t -> ('a t * 'a) option
 
 val is_empty : 'a t -> bool
 
@@ -14,4 +16,4 @@ val is_empty : 'a t -> bool
    same order, but more efficient, in general, to use in further
    calls. *)
 
-val peek     : 'a t -> ('a t * 'a) option
+val peek : 'a t -> ('a t * 'a) option

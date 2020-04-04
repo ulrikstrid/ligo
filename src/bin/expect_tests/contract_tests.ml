@@ -1,31 +1,38 @@
 open Cli_expect
 
-let contract basename =
-  "../../test/contracts/" ^ basename
-let bad_contract basename =
-  "../../test/contracts/negative/" ^ basename
+let contract basename = "../../test/contracts/" ^ basename
+
+let bad_contract basename = "../../test/contracts/negative/" ^ basename
 
 let%expect_test _ =
-  run_ligo_good [ "measure-contract" ; contract "coase.ligo" ; "main" ] ;
+  run_ligo_good ["measure-contract"; contract "coase.ligo"; "main"] ;
   [%expect {| 1872 bytes |}] ;
-
-  run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
+  run_ligo_good ["measure-contract"; contract "multisig.ligo"; "main"] ;
   [%expect {| 1294 bytes |}] ;
-
-  run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
+  run_ligo_good ["measure-contract"; contract "multisig-v2.ligo"; "main"] ;
   [%expect {| 2974 bytes |}] ;
-
-  run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
+  run_ligo_good ["measure-contract"; contract "vote.mligo"; "main"] ;
   [%expect {| 589 bytes |}] ;
-
-  run_ligo_good [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
+  run_ligo_good
+    [ "compile-parameter";
+      contract "coase.ligo";
+      "main";
+      "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {| (Left (Left 1)) |}] ;
-
-  run_ligo_good [ "compile-storage" ; contract "coase.ligo" ; "main" ; "record cards = (map end : cards) ; card_patterns = (map end : card_patterns) ; next_id = 3n ; end" ] ;
+  run_ligo_good
+    [ "compile-storage";
+      contract "coase.ligo";
+      "main";
+      "record cards = (map end : cards) ; card_patterns = (map end : \
+       card_patterns) ; next_id = 3n ; end" ] ;
   [%expect {| (Pair (Pair {} {}) 3) |}] ;
-
-  run_ligo_bad [ "compile-storage" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile-storage";
+      contract "coase.ligo";
+      "main";
+      "Buy_single (record card_to_buy = 1n end)" ] ;
+  [%expect
+    {|
     ligo: different kinds:  {"a":"record[card_patterns -> (TO_Map (nat,record[coefficient -> mutez , quantity -> nat])) ,\n       cards -> (TO_Map (nat,record[card_owner -> address , card_pattern -> nat])) ,\n       next_id -> nat]","b":"sum[Buy_single -> record[card_to_buy -> nat] ,\n    Sell_single -> record[card_to_sell -> nat] ,\n    Transfer_single -> record[card_to_transfer -> nat ,\n                              destination -> address]]"}
 
 
@@ -36,9 +43,14 @@ let%expect_test _ =
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}] ;
-
-  run_ligo_bad [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "record cards = (map end : cards) ; card_patterns = (map end : card_patterns) ; next_id = 3n ; end" ] ;
-  [%expect {|
+  run_ligo_bad
+    [ "compile-parameter";
+      contract "coase.ligo";
+      "main";
+      "record cards = (map end : cards) ; card_patterns = (map end : \
+       card_patterns) ; next_id = 3n ; end" ] ;
+  [%expect
+    {|
     ligo: different kinds:  {"a":"sum[Buy_single -> record[card_to_buy -> nat] ,\n    Sell_single -> record[card_to_sell -> nat] ,\n    Transfer_single -> record[card_to_transfer -> nat ,\n                              destination -> address]]","b":"record[card_patterns -> (TO_Map (nat,record[coefficient -> mutez , quantity -> nat])) ,\n       cards -> (TO_Map (nat,record[card_owner -> address , card_pattern -> nat])) ,\n       next_id -> nat]"}
 
 
@@ -49,16 +61,22 @@ let%expect_test _ =
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}] ;
-
   ()
 
-let%expect_test _  =
-  run_ligo_good [ "compile-storage" ; contract "timestamp.ligo" ; "main" ; "now" ; "--predecessor-timestamp" ; "2042-01-01T00:00:00Z" ] ;
+let%expect_test _ =
+  run_ligo_good
+    [ "compile-storage";
+      contract "timestamp.ligo";
+      "main";
+      "now";
+      "--predecessor-timestamp";
+      "2042-01-01T00:00:00Z" ] ;
   [%expect {| "2042-01-01T00:00:01Z" |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "coase.ligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_good ["compile-contract"; contract "coase.ligo"; "main"] ;
+  [%expect
+    {|
     { parameter
         (or (or (nat %buy_single) (nat %sell_single))
             (pair %transfer_single (nat %card_to_transfer) (address %destination))) ;
@@ -290,11 +308,12 @@ let%expect_test _ =
                  NIL operation ;
                  PAIR ;
                  DIP { DROP 7 } } ;
-             DIP { DROP 2 } } } |} ]
+             DIP { DROP 2 } } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "multisig.ligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_good ["compile-contract"; contract "multisig.ligo"; "main"] ;
+  [%expect
+    {|
     { parameter
         (pair (pair (nat %counter) (lambda %message unit (list operation)))
               (list %signatures (pair (key_hash %0) (signature %1)))) ;
@@ -467,11 +486,12 @@ let%expect_test _ =
              EXEC ;
              DIP { DUP } ;
              PAIR ;
-             DIP { DROP 7 } } } |} ]
+             DIP { DROP 7 } } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_good ["compile-contract"; contract "multisig-v2.ligo"; "main"] ;
+  [%expect
+    {|
     { parameter
         (or (or (unit %default) (lambda %send bytes (list operation)))
             (lambda %withdraw bytes (list operation))) ;
@@ -885,11 +905,12 @@ let%expect_test _ =
                  NIL operation ;
                  PAIR ;
                  DIP { DROP 6 } } ;
-             DIP { DROP 2 } } } |} ]
+             DIP { DROP 2 } } } |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "vote.mligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_good ["compile-contract"; contract "vote.mligo"; "main"] ;
+  [%expect
+    {|
     { parameter
         (or (pair %reset (pair (timestamp %finish_time) (timestamp %start_time)) (string %title))
             (or %vote (unit %nay) (unit %yea))) ;
@@ -971,8 +992,9 @@ let%expect_test _ =
              DIP { DROP 2 } } } |}]
 
 let%expect_test _ =
-    run_ligo_good [ "compile-contract" ; contract "implicit.mligo" ; "main" ] ;
-    [%expect {|
+  run_ligo_good ["compile-contract"; contract "implicit.mligo"; "main"] ;
+  [%expect
+    {|
       { parameter key_hash ;
         storage unit ;
         code { DUP ;
@@ -984,8 +1006,9 @@ let%expect_test _ =
                DIP { DROP 2 } } } |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile-contract" ; contract "bad_type_operator.ligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_bad ["compile-contract"; contract "bad_type_operator.ligo"; "main"] ;
+  [%expect
+    {|
     ligo: bad type operator (TO_Map (unit,unit)):
 
      If you're not sure how to fix this error, you can
@@ -997,18 +1020,21 @@ let%expect_test _ =
     * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run-function" ; contract "failwith.ligo" ; "failer" ; "1" ] ;
+  run_ligo_good ["run-function"; contract "failwith.ligo"; "failer"; "1"] ;
   [%expect {|
     failwith("some_string") |}]
 
 let%expect_test _ =
-  run_ligo_good [ "run-function" ; contract "failwith.ligo" ; "failer" ; "1" ; "--format=json" ] ;
+  run_ligo_good
+    ["run-function"; contract "failwith.ligo"; "failer"; "1"; "--format=json"] ;
   [%expect {|
     {"status":"ok","content":"failwith(\"some_string\")"} |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile-contract" ; contract "bad_address_format.religo" ; "main" ] ;
-  [%expect {|
+  run_ligo_bad
+    ["compile-contract"; contract "bad_address_format.religo"; "main"] ;
+  [%expect
+    {|
     ligo: in file "bad_address_format.religo", line 2, characters 26-48. Badly formatted literal: @"KT1badaddr" {"location":"in file \"bad_address_format.religo\", line 2, characters 26-48"}
 
 
@@ -1021,8 +1047,9 @@ let%expect_test _ =
     * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile-contract" ; contract "bad_timestamp.ligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_bad ["compile-contract"; contract "bad_timestamp.ligo"; "main"] ;
+  [%expect
+    {|
     ligo: in file "bad_timestamp.ligo", line 7, characters 30-44. Badly formatted timestamp "badtimestamp":  {"location":"in file \"bad_timestamp.ligo\", line 7, characters 30-44"}
 
 
@@ -1035,16 +1062,18 @@ let%expect_test _ =
     * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
-    run_ligo_good [ "dry-run" ; contract "redeclaration.ligo" ; "main" ; "unit" ; "0" ] ;
-    [%expect {|( LIST_EMPTY() , 0 ) |}]
+  run_ligo_good ["dry-run"; contract "redeclaration.ligo"; "main"; "unit"; "0"] ;
+  [%expect {|( LIST_EMPTY() , 0 ) |}]
 
 let%expect_test _ =
-    run_ligo_good [ "dry-run" ; contract "double_main.ligo" ; "main" ; "unit" ; "0" ] ;
-    [%expect {|( LIST_EMPTY() , 2 ) |}]
+  run_ligo_good ["dry-run"; contract "double_main.ligo"; "main"; "unit"; "0"] ;
+  [%expect {|( LIST_EMPTY() , 2 ) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "subtle_nontail_fail.mligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_good
+    ["compile-contract"; contract "subtle_nontail_fail.mligo"; "main"] ;
+  [%expect
+    {|
     { parameter unit ;
       storage unit ;
       code { PUSH bool True ;
@@ -1053,13 +1082,15 @@ let%expect_test _ =
 
 let%expect_test _ =
   (* TODO should not be bad? *)
-  run_ligo_good [ "dry-run" ; contract "subtle_nontail_fail.mligo" ; "main" ; "()" ; "()" ] ;
+  run_ligo_good
+    ["dry-run"; contract "subtle_nontail_fail.mligo"; "main"; "()"; "()"] ;
   [%expect {|
     failwith("This contract always fails") |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile-contract" ; bad_contract "self_in_lambda.mligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_bad ["compile-contract"; bad_contract "self_in_lambda.mligo"; "main"] ;
+  [%expect
+    {|
     ligo: Wrong SELF_ADDRESS location: SELF_ADDRESS is only allowed at top-level
 
      If you're not sure how to fix this error, you can
@@ -1071,20 +1102,25 @@ let%expect_test _ =
     * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile-storage" ; contract "big_map.ligo" ; "main" ; "(big_map1,unit)" ] ;
+  run_ligo_good
+    ["compile-storage"; contract "big_map.ligo"; "main"; "(big_map1,unit)"] ;
   [%expect {|
     (Pair { Elt 23 0 ; Elt 42 0 } Unit) |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "key_hash_comparable.ligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_good
+    ["compile-contract"; contract "key_hash_comparable.ligo"; "main"] ;
+  [%expect
+    {|
     { parameter int ;
       storage (pair (map %one key_hash nat) (big_map %two key_hash bool)) ;
       code { DUP ; CDR ; NIL operation ; PAIR ; DIP { DROP } } } |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile-contract" ; bad_contract "long_sum_type_names.ligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_bad
+    ["compile-contract"; bad_contract "long_sum_type_names.ligo"; "main"] ;
+  [%expect
+    {|
     ligo: Too long constructor 'Incrementttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt': names length is limited to 32 (tezos limitation)
 
      If you're not sure how to fix this error, you can
@@ -1096,13 +1132,20 @@ let%expect_test _ =
     * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
-  run_ligo_good [ "dry-run" ; contract "super-counter.mligo" ; "main" ; "test_param" ; "test_storage" ] ;
+  run_ligo_good
+    [ "dry-run";
+      contract "super-counter.mligo";
+      "main";
+      "test_param";
+      "test_storage" ] ;
   [%expect {|
     ( LIST_EMPTY() , 3 ) |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile-contract" ; bad_contract "redundant_constructors.mligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_bad
+    ["compile-contract"; bad_contract "redundant_constructors.mligo"; "main"] ;
+  [%expect
+    {|
     ligo: redundant constructor:  {"constructor":"Add","environment":"- E[]\tT[union_a -> sum[Add -> int , Remove -> int]] ]"}
 
 
@@ -1115,8 +1158,10 @@ let%expect_test _ =
     * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_toplevel.mligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_bad
+    ["compile-contract"; bad_contract "create_contract_toplevel.mligo"; "main"] ;
+  [%expect
+    {|
 ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8. No free variable allowed in this lambda: variable 'store' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * string ))) : None return\n                let rhs#702 = #P in\n                let p = rhs#702.0 in\n                let s = rhs#702.1 in\n                ( LIST_EMPTY() : (TO_list(operation)) , store ) ,\n                NONE() : (TO_option(key_hash)) ,\n                300000000mutez ,\n                \"un\")","location":"in file \"create_contract_toplevel.mligo\", line 4, character 35 to line 8, character 8"}
 
 
@@ -1127,9 +1172,10 @@ ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, 
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog' |}] ;
-
-  run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_var.mligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_bad
+    ["compile-contract"; bad_contract "create_contract_var.mligo"; "main"] ;
+  [%expect
+    {|
 ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5. No free variable allowed in this lambda: variable 'a' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * int ))) : None return\n                let rhs#705 = #P in\n                let p = rhs#705.0 in\n                let s = rhs#705.1 in\n                ( LIST_EMPTY() : (TO_list(operation)) , a ) ,\n                NONE() : (TO_option(key_hash)) ,\n                300000000mutez ,\n                1)","location":"in file \"create_contract_var.mligo\", line 6, character 35 to line 10, character 5"}
 
 
@@ -1140,9 +1186,10 @@ ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, char
 * Ask a question on our Discord: https://discord.gg/9rhYaEt
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog' |}] ;
-
-  run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_no_inline.mligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_bad
+    ["compile-contract"; bad_contract "create_contract_no_inline.mligo"; "main"] ;
+  [%expect
+    {|
     ligo: unbound type variable:  {"variable":"return","in":"- E[foo -> int]\tT[] ]","did_you_mean":"no suggestion"}
 
 
@@ -1153,9 +1200,9 @@ ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, char
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}] ;
-
-  run_ligo_good [ "compile-contract" ; contract "create_contract.mligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_good ["compile-contract"; contract "create_contract.mligo"; "main"] ;
+  [%expect
+    {|
     { parameter string ;
       storage string ;
       code { PUSH string "un" ;
@@ -1176,8 +1223,10 @@ ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, char
              DIP { DROP 2 } } } |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile-contract" ; bad_contract "self_type_annotation.ligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_bad
+    ["compile-contract"; bad_contract "self_type_annotation.ligo"; "main"] ;
+  [%expect
+    {|
     ligo: in file "self_type_annotation.ligo", line 8, characters 41-64. bad self type: expected (TO_Contract (int)) but got (TO_Contract (nat)) {"location":"in file \"self_type_annotation.ligo\", line 8, characters 41-64"}
 
 
@@ -1188,9 +1237,10 @@ let%expect_test _ =
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}] ;
-
-  run_ligo_good [ "compile-contract" ; contract "self_type_annotation.ligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_good
+    ["compile-contract"; contract "self_type_annotation.ligo"; "main"] ;
+  [%expect
+    {|
     { parameter nat ;
       storage int ;
       code { DUP ;
@@ -1202,8 +1252,9 @@ let%expect_test _ =
              DIP { DROP 2 } } } |}]
 
 let%expect_test _ =
-  run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract.mligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_bad ["compile-contract"; bad_contract "bad_contract.mligo"; "main"] ;
+  [%expect
+    {|
     ligo: in file "", line 0, characters 0-0. badly typed contract: unexpected entrypoint type {"location":"in file \"\", line 0, characters 0-0","entrypoint":"main","entrypoint_type":"( nat * int ) -> int"}
 
 
@@ -1214,9 +1265,9 @@ let%expect_test _ =
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}] ;
-
-  run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract2.mligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_bad ["compile-contract"; bad_contract "bad_contract2.mligo"; "main"] ;
+  [%expect
+    {|
     ligo: in file "", line 0, characters 0-0. bad return type: expected (TO_list(operation)), got string {"location":"in file \"\", line 0, characters 0-0","entrypoint":"main"}
 
 
@@ -1227,9 +1278,9 @@ let%expect_test _ =
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}] ;
-
-  run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract3.mligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_bad ["compile-contract"; bad_contract "bad_contract3.mligo"; "main"] ;
+  [%expect
+    {|
     ligo: in file "", line 0, characters 0-0. badly typed contract: expected {int} and {string} to be the same in the entrypoint type {"location":"in file \"\", line 0, characters 0-0","entrypoint":"main","entrypoint_type":"( nat * int ) -> ( (TO_list(operation)) * string )"}
 
 
@@ -1242,8 +1293,10 @@ let%expect_test _ =
     * Check the changelog by running 'ligo changelog' |}]
 
 let%expect_test _ =
-  run_ligo_good [ "compile-contract" ; contract "self_with_entrypoint.ligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_good
+    ["compile-contract"; contract "self_with_entrypoint.ligo"; "main"] ;
+  [%expect
+    {|
     { parameter (or (unit %default) (int %toto)) ;
       storage nat ;
       code { SELF %toto ;
@@ -1258,9 +1311,10 @@ let%expect_test _ =
              DIP { DIP 2 { DUP } ; DIG 2 ; CDR } ;
              PAIR ;
              DIP { DROP 3 } } } |}] ;
-
-  run_ligo_good [ "compile-contract" ; contract "self_without_entrypoint.ligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_good
+    ["compile-contract"; contract "self_without_entrypoint.ligo"; "main"] ;
+  [%expect
+    {|
     { parameter int ;
       storage nat ;
       code { SELF %default ;
@@ -1275,9 +1329,10 @@ let%expect_test _ =
              DIP { DIP 2 { DUP } ; DIG 2 ; CDR } ;
              PAIR ;
              DIP { DROP 3 } } } |}] ;
-
-  run_ligo_bad [ "compile-contract" ; bad_contract "self_bad_entrypoint_format.ligo" ; "main" ] ;
-  [%expect {|
+  run_ligo_bad
+    ["compile-contract"; bad_contract "self_bad_entrypoint_format.ligo"; "main"] ;
+  [%expect
+    {|
     ligo: in file "self_bad_entrypoint_format.ligo", line 8, characters 52-58. bad entrypoint format: entrypoint "Toto" is badly formatted. We expect "%bar" for entrypoint Bar and "%default" when no entrypoint used {"location":"in file \"self_bad_entrypoint_format.ligo\", line 8, characters 52-58"}
 
 
@@ -1287,10 +1342,11 @@ let%expect_test _ =
     * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}];
-
-  run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_1.religo"; "main"];
-  [%expect {|
+    * Check the changelog by running 'ligo changelog' |}] ;
+  run_ligo_bad
+    ["compile-contract"; bad_contract "nested_bigmap_1.religo"; "main"] ;
+  [%expect
+    {|
     ligo: It looks like you have nested a big map inside another big map. This is not supported. :  {}
 
 
@@ -1300,10 +1356,11 @@ let%expect_test _ =
     * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}];
-
-  run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_2.religo"; "main"];
-  [%expect {|
+    * Check the changelog by running 'ligo changelog' |}] ;
+  run_ligo_bad
+    ["compile-contract"; bad_contract "nested_bigmap_2.religo"; "main"] ;
+  [%expect
+    {|
     ligo: It looks like you have nested a big map inside another big map. This is not supported. :  {}
 
 
@@ -1313,10 +1370,11 @@ let%expect_test _ =
     * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}];
-  
-  run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_3.religo"; "main"];
-  [%expect {|
+    * Check the changelog by running 'ligo changelog' |}] ;
+  run_ligo_bad
+    ["compile-contract"; bad_contract "nested_bigmap_3.religo"; "main"] ;
+  [%expect
+    {|
     ligo: It looks like you have nested a big map inside another big map. This is not supported. :  {}
 
 
@@ -1326,10 +1384,11 @@ let%expect_test _ =
     * Visit our documentation: https://ligolang.org/docs/intro/what-and-why/
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-    * Check the changelog by running 'ligo changelog' |}];
-
-  run_ligo_bad ["compile-contract"; bad_contract "nested_bigmap_4.religo"; "main"];
-  [%expect {|
+    * Check the changelog by running 'ligo changelog' |}] ;
+  run_ligo_bad
+    ["compile-contract"; bad_contract "nested_bigmap_4.religo"; "main"] ;
+  [%expect
+    {|
     ligo: It looks like you have nested a big map inside another big map. This is not supported. :  {}
 
 

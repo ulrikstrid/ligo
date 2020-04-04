@@ -3,7 +3,8 @@ open Cli_expect
 let%expect_test _ =
   (* TODO good? *)
   run_ligo_good [] ;
-  [%expect {|
+  [%expect
+    {|
     NAME
            ligo
 
@@ -87,10 +88,10 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --version
-               Show version information. |} ] ;
-
-  run_ligo_good [ "--help" ] ;
-  [%expect {|
+               Show version information. |}] ;
+  run_ligo_good ["--help"] ;
+  [%expect
+    {|
     NAME
            ligo
 
@@ -174,10 +175,10 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --version
-               Show version information. |} ] ;
-
-  run_ligo_good [ "compile-contract" ; "--help" ] ;
-  [%expect {|
+               Show version information. |}] ;
+  run_ligo_good ["compile-contract"; "--help"] ;
+  [%expect
+    {|
     NAME
            ligo-compile-contract - Subcommand: Compile a contract.
 
@@ -221,10 +222,10 @@ let%expect_test _ =
                respectively).
 
            --version
-               Show version information. |} ] ;
-
-  run_ligo_good [ "compile-parameter" ; "--help" ] ;
-  [%expect {|
+               Show version information. |}] ;
+  run_ligo_good ["compile-parameter"; "--help"] ;
+  [%expect
+    {|
     NAME
            ligo-compile-parameter - Subcommand: Compile parameters to a Michelson
            expression. The resulting Michelson expression can be passed as an
@@ -291,10 +292,10 @@ let%expect_test _ =
                use.
 
            --version
-               Show version information. |} ] ;
-
-  run_ligo_good [ "compile-storage" ; "--help" ] ;
-  [%expect {|
+               Show version information. |}] ;
+  run_ligo_good ["compile-storage"; "--help"] ;
+  [%expect
+    {|
     NAME
            ligo-compile-storage - Subcommand: Compile an initial storage in ligo
            syntax to a Michelson expression. The resulting Michelson expression
@@ -362,10 +363,10 @@ let%expect_test _ =
                use.
 
            --version
-               Show version information. |} ] ;
-
-  run_ligo_good [ "dry-run" ; "--help" ] ;
-  [%expect {|
+               Show version information. |}] ;
+  run_ligo_good ["dry-run"; "--help"] ;
+  [%expect
+    {|
     NAME
            ligo-dry-run - Subcommand: Run a smart-contract with the given storage
            and input.
@@ -429,10 +430,10 @@ let%expect_test _ =
                use.
 
            --version
-               Show version information. |} ] ;
-
-  run_ligo_good [ "run-function" ; "--help" ] ;
-  [%expect {|
+               Show version information. |}] ;
+  run_ligo_good ["run-function"; "--help"] ;
+  [%expect
+    {|
     NAME
            ligo-run-function - Subcommand: Run a function with the given
            parameter.
@@ -493,10 +494,10 @@ let%expect_test _ =
                use.
 
            --version
-               Show version information. |} ] ;
-
-  run_ligo_good [ "evaluate-value" ; "--help" ] ;
-  [%expect {|
+               Show version information. |}] ;
+  run_ligo_good ["evaluate-value"; "--help"] ;
+  [%expect
+    {|
     NAME
            ligo-evaluate-value - Subcommand: Evaluate a given definition.
 
@@ -552,10 +553,10 @@ let%expect_test _ =
                use.
 
            --version
-               Show version information. |} ] ;
-
-  run_ligo_good [ "compile-expression" ; "--help" ] ;
-  [%expect {|
+               Show version information. |}] ;
+  run_ligo_good ["compile-expression"; "--help"] ;
+  [%expect
+    {|
     NAME
            ligo-compile-expression - Subcommand: Compile to a michelson value.
 
@@ -592,4 +593,4 @@ let%expect_test _ =
                are 'text' (default), 'json' and 'hex'.
 
            --version
-               Show version information. |} ] ;
+               Show version information. |}]

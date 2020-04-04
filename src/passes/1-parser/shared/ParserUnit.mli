@@ -2,58 +2,70 @@
 
 module Region = Simple_utils.Region
 
-module type IO =
-  sig
-    val ext : string              (* LIGO file extension *)
-    val options : EvalOpt.options (* CLI options *)
-  end
+module type IO = sig
+  val ext : string (* LIGO file extension *)
 
-module type Pretty =
-  sig
-    type state
-    type ast
-    type expr
+  val options : EvalOpt.options (* CLI options *)
+end
 
-    val mk_state :
-      offsets:bool -> mode:[`Point|`Byte] -> buffer:Buffer.t -> state
+module type Pretty = sig
+  type state
 
-    val pp_ast       : state -> ast -> unit
-    val pp_expr      : state -> expr -> unit
-    val print_tokens : state -> ast -> unit
-    val print_expr   : state -> expr -> unit
-  end
+  type ast
 
-module Make (Lexer : Lexer.S)
-            (AST : sig type t type expr end)
-            (Parser : ParserAPI.PARSER
-                      with type ast   = AST.t
-                       and type expr  = AST.expr
-                       and type token = Lexer.token)
-            (ParErr : sig val message : int -> string end)
-            (ParserLog : Pretty with type ast  = AST.t
-                                 and type expr = AST.expr)
-            (IO: IO) :
-  sig
-    (* Error handling reexported from [ParserAPI] without the
+  type expr
+
+  val mk_state :
+    offsets:bool -> mode:[`Point | `Byte] -> buffer:Buffer.t -> state
+
+  val pp_ast : state -> ast -> unit
+
+  val pp_expr : state -> expr -> unit
+
+  val print_tokens : state -> ast -> unit
+
+  val print_expr : state -> expr -> unit
+end
+
+module Make
+    (Lexer : Lexer.S) (AST : sig
+      type t
+
+      type expr
+    end)
+    (Parser : ParserAPI.PARSER
+                with type ast = AST.t
+                 and type expr = AST.expr
+                 and type token = Lexer.token)
+    (ParErr : sig
+      val message : int -> string
+    end)
+    (ParserLog : Pretty with type ast = AST.t and type expr = AST.expr)
+    (IO : IO) : sig
+  (* Error handling reexported from [ParserAPI] without the
        exception [Point] *)
 
-    type message = string
-    type valid   = Parser.token
-    type invalid = Parser.token
-    type error   = message * valid option * invalid
+  type message = string
 
-    val format_error :
-      ?offsets:bool -> [`Byte | `Point] -> error -> string Region.reg
+  type valid = Parser.token
 
-    val short_error :
-      ?offsets:bool -> [`Point | `Byte] -> message -> Region.t -> string
+  type invalid = Parser.token
 
-    (* Parsers *)
+  type error = message * valid option * invalid
 
-    type 'a parser = Lexer.instance -> ('a, message Region.reg) result
+  val format_error :
+    ?offsets:bool -> [`Byte | `Point] -> error -> string Region.reg
 
-    val apply : Lexer.instance -> 'a parser -> ('a, message Region.reg) result
+  val short_error :
+    ?offsets:bool -> [`Point | `Byte] -> message -> Region.t -> string
 
-    val parse_contract : AST.t parser
-    val parse_expr     : AST.expr parser
-  end
+  (* Parsers *)
+
+  type 'a parser = Lexer.instance -> ('a, message Region.reg) result
+
+  val apply : Lexer.instance -> 'a parser -> ('a, message Region.reg) result
+
+  val parse_contract : AST.t parser
+
+  val parse_expr : AST.expr parser
+end

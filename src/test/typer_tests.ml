@@ -1,7 +1,6 @@
 open Trace
 open Ast_core
 open Test_helpers
-
 module Typed = Ast_typed
 module Typer = Typer
 module Simplified = Ast_core
@@ -12,7 +11,7 @@ let int () : unit result =
   let open Typer in
   let e = Environment.full_empty in
   let state = Typer.Solver.initial_state in
-  let%bind (post , new_state) = type_expression_subst e state pre in
+  let%bind post, new_state = type_expression_subst e state pre in
   let () = Typer.Solver.discard_state new_state in
   let open! Typed in
   let open Combinators in
@@ -20,29 +19,37 @@ let int () : unit result =
   ok ()
 
 module TestExpressions = struct
-  let test_expression ?(env = Typer.Environment.full_empty)
-                      ?(state = Typer.Solver.initial_state)
-                      (expr : expression)
-                      (test_expected_ty : Typed.type_expression) =
+  let test_expression
+      ?(env = Typer.Environment.full_empty)
+      ?(state = Typer.Solver.initial_state)
+      (expr : expression)
+      (test_expected_ty : Typed.type_expression) =
     let pre = expr in
     let open Typer in
     let open! Typed in
-    let%bind (post , new_state) = type_expression_subst env state pre in
+    let%bind post, new_state = type_expression_subst env state pre in
     let () = Typer.Solver.discard_state new_state in
-    let%bind () = assert_type_expression_eq (post.type_expression, test_expected_ty) in
+    let%bind () =
+      assert_type_expression_eq (post.type_expression, test_expected_ty)
+    in
     ok ()
 
   module I = Simplified.Combinators
   module O = Typed.Combinators
   module E = O
 
-  let unit   () : unit result = test_expression I.(e_unit ())    O.(t_unit ())
-  let int    () : unit result = test_expression I.(e_int 32)     O.(t_int ())
-  let bool   () : unit result = test_expression I.(e_bool true)  O.(t_bool ())
-  let string () : unit result = test_expression I.(e_string "s") O.(t_string ())
-  let bytes  () : unit result =
+  let unit () : unit result = test_expression I.(e_unit ()) O.(t_unit ())
+
+  let int () : unit result = test_expression I.(e_int 32) O.(t_int ())
+
+  let bool () : unit result = test_expression I.(e_bool true) O.(t_bool ())
+
+  let string () : unit result =
+    test_expression I.(e_string "s") O.(t_string ())
+
+  let bytes () : unit result =
     let%bind b = I.e_bytes_hex "0b" in
-    test_expression b  O.(t_bytes ())
+    test_expression b O.(t_bytes ())
 
   let lambda () : unit result =
     test_expression
@@ -52,35 +59,35 @@ module TestExpressions = struct
   let tuple () : unit result =
     test_expression
       I.(e_tuple [e_int 32; e_string "foo"])
-      O.(make_t_ez_record [("0",t_int ()); ("1",t_string ())])
+      O.(make_t_ez_record [("0", t_int ()); ("1", t_string ())])
 
   let constructor () : unit result =
     let variant_foo_bar =
       O.[(Constructor "foo", t_int ()); (Constructor "bar", t_string ())]
-    in test_expression
+    in
+    test_expression
       ~env:(E.env_sum_type variant_foo_bar)
       I.(e_constructor "foo" (e_int 32))
       O.(make_t_ez_sum variant_foo_bar)
 
   let record () : unit result =
     test_expression
-      I.(e_record_ez        [("foo", e_int 32);  ("bar", e_string "foo")])
+      I.(e_record_ez [("foo", e_int 32); ("bar", e_string "foo")])
       O.(make_t_ez_record [("foo", t_int ()); ("bar", t_string ())])
-
-
 end
+
 (* TODO: deep types (e.g. record of record)
    TODO: negative tests (expected type error) *)
 
-let main = test_suite "Typer (from core AST)" [
-    test "int" int ;
-    test "unit"        TestExpressions.unit ;
-    test "int2"        TestExpressions.int ;
-    test "bool"        TestExpressions.bool ;
-    test "string"      TestExpressions.string ;
-    test "bytes"       TestExpressions.bytes ;
-    test "tuple"       TestExpressions.tuple ;
-    test "constructor" TestExpressions.constructor ;
-    test "record"      TestExpressions.record ;
-    test "lambda"      TestExpressions.lambda ;
-  ]
+let main =
+  test_suite "Typer (from core AST)"
+    [ test "int" int;
+      test "unit" TestExpressions.unit;
+      test "int2" TestExpressions.int;
+      test "bool" TestExpressions.bool;
+      test "string" TestExpressions.string;
+      test "bytes" TestExpressions.bytes;
+      test "tuple" TestExpressions.tuple;
+      test "constructor" TestExpressions.constructor;
+      test "record" TestExpressions.record;
+      test "lambda" TestExpressions.lambda ]

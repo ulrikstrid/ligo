@@ -2,7 +2,6 @@
 
 open Trace
 open Ast_imperative
-
 module Raw = Parser.Cameligo.AST
 module SMap = Map.String
 module Option = Simple_utils.Option
@@ -11,13 +10,14 @@ module Option = Simple_utils.Option
 val nseq_to_list : 'a * 'a list -> 'a list 
 val npseq_to_list : 'a * ( 'b * 'a ) list -> 'a list 
 *)
-val npseq_to_nelist : 'a * ( 'b * 'c ) list -> 'a * 'c list 
+val npseq_to_nelist : 'a * ('b * 'c) list -> 'a * 'c list
+
 (*
 val pseq_to_list : ('a * ('b * 'a) list) option -> 'a list
 val get_value : 'a Raw.reg -> 'a
 *)
 
-module Errors : sig 
+module Errors : sig
   (*
   val wrong_pattern : string -> Raw.pattern -> unit -> error
   val multiple_patterns : string -> Raw.pattern list -> unit -> error
@@ -36,8 +36,8 @@ module Errors : sig
   val bad_map_definition : unit -> error
   val corner_case : loc:string -> string -> unit -> error
   *)
-end
 
+end
 
 (*
 val r_split : 'a Raw.reg -> 'a * Location.t
@@ -49,6 +49,7 @@ val compile_type_expression : Raw.type_expr -> type_expression result
 val compile_list_type_expression : Raw.type_expr list -> type_expression result
 *)
 val compile_expression : Raw.expr -> expr result
+
 (*
 val compile_fun : Raw.fun_expr Raw.reg -> expr result 
 val compile_logic_expression : ?te_annot:type_expression -> Raw.logic_expr -> expr result

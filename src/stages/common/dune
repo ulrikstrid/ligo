@@ -1,13 +1,9 @@
 (library
-  (name stage_common)
-  (public_name ligo.stage_common)
-  (libraries
-    simple-utils
-    tezos-utils
-  )
-  (inline_tests)
-  (preprocess
-    (pps ppx_let ppx_expect bisect_ppx --conditional)
-  )
-  (flags (:standard -open Simple_utils))
-)
+ (name stage_common)
+ (public_name ligo.stage_common)
+ (libraries simple-utils tezos-utils)
+ (inline_tests)
+ (preprocess
+  (pps ppx_let ppx_expect bisect_ppx --conditional))
+ (flags
+  (:standard -open Simple_utils)))

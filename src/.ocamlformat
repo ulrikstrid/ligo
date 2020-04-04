@@ -1,0 +1,12 @@
+profile = ocamlformat
+break-separators = after
+if-then-else = fit-or-vertical
+break-cases = fit
+align-cases = true
+break-infix = fit-or-vertical
+exp-grouping = preserve
+align-variants-decl = true
+function-indent-nested = always
+parens-ite = true
+break-infix-before-func = true
+break-fun-decl = fit-or-vertical

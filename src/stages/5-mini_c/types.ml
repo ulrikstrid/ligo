@@ -1,4 +1,3 @@
-
 include Stage_common.Types
 
 type 'a annotated = string option * 'a
@@ -19,12 +18,11 @@ and environment_element = expression_variable * type_value
 
 and environment = environment_element list
 
-and environment_wrap = {
-  pre_environment : environment ;
-  post_environment : environment ;
-}
+and environment_wrap =
+  {pre_environment: environment; post_environment: environment}
 
 and var_name = expression_variable
+
 and fun_name = expression_variable
 
 type inline = bool
@@ -48,7 +46,8 @@ type value =
   | D_list of value list
   | D_set of value list
   (* | `Macro of anon_macro ... The future. *)
-  | D_operation of Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
+  | D_operation of
+      Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
 
 and selector = var_name list
 
@@ -60,34 +59,35 @@ and expression' =
   | E_application of (expression * expression)
   | E_variable of var_name
   | E_make_none of type_value
-  | E_iterator of constant' * ((var_name * type_value) * expression) * expression
+  | E_iterator of
+      constant' * ((var_name * type_value) * expression) * expression
   | E_fold of (((var_name * type_value) * expression) * expression * expression)
   | E_if_bool of (expression * expression * expression)
-  | E_if_none of expression * expression * ((var_name * type_value) * expression)
-  | E_if_cons of (expression * expression * (((var_name * type_value) * (var_name * type_value)) * expression))
-  | E_if_left of expression * ((var_name * type_value) * expression) * ((var_name * type_value) * expression)
+  | E_if_none of
+      expression * expression * ((var_name * type_value) * expression)
+  | E_if_cons of
+      ( expression
+      * expression
+      * (((var_name * type_value) * (var_name * type_value)) * expression) )
+  | E_if_left of
+      expression
+      * ((var_name * type_value) * expression)
+      * ((var_name * type_value) * expression)
   | E_let_in of ((var_name * type_value) * inline * expression * expression)
   | E_sequence of (expression * expression)
   | E_record_update of (expression * [`Left | `Right] list * expression)
   | E_while of (expression * expression)
 
-and expression = {
-  content : expression' ;
-  type_value : type_value ;
-}
+and expression = {content: expression'; type_value: type_value}
 
-and constant = {
-  cons_name : constant'; (* this is at the end because it is huge *)
-  arguments : expression list;
-}
+and constant =
+  { cons_name: constant'; (* this is at the end because it is huge *)
+    arguments: expression list }
 
 and assignment = var_name * inline * expression
 
 and toplevel_statement = assignment * environment_wrap
 
-and anon_function = {
-  binder : expression_variable ;
-  body : expression ;
-}
+and anon_function = {binder: expression_variable; body: expression}
 
 and program = toplevel_statement list
