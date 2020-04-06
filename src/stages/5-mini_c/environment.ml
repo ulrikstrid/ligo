@@ -45,23 +45,23 @@ module Environment (* : ENVIRONMENT *) = struct
   let select ?(rev = false) ?(keep = true) : expression_variable list -> t -> t
       =
    fun lst env ->
-     let e_lst =
-       let e_lst = to_list env in
-       let aux selector (s, _) =
-         match List.mem ~compare:Var.compare s selector with
-         | true  -> (List.remove_element ~compare:Var.compare s selector, keep)
-         | false -> (selector, not keep)
-       in
-       let e_lst' =
-         if rev = keep then
-           List.fold_map aux lst e_lst
-         else
-           List.fold_map_right aux lst e_lst
-       in
-       let e_lst'' = List.combine e_lst e_lst' in
-       e_lst''
-     in
-     of_list @@ List.map fst @@ List.filter snd @@ e_lst
+    let e_lst =
+      let e_lst = to_list env in
+      let aux selector (s, _) =
+        match List.mem ~compare:Var.compare s selector with
+        | true ->
+            (List.remove_element ~compare:Var.compare s selector, keep)
+        | false ->
+            (selector, not keep)
+      in
+      let e_lst' =
+        if rev = keep then List.fold_map aux lst e_lst
+        else List.fold_map_right aux lst e_lst
+      in
+      let e_lst'' = List.combine e_lst e_lst' in
+      e_lst''
+    in
+    of_list @@ List.map fst @@ List.filter snd @@ e_lst
 
   let fold : _ -> 'a -> t -> 'a = List.fold_left
 

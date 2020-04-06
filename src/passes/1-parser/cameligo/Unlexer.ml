@@ -15,66 +15,121 @@ and ctor_sym = gen_sym "C"
 
 let concrete = function
   (* Keywords *)
-  | "Begin" -> "begin"
-  | "Else" -> "else"
-  | "End" -> "end"
-  | "False" -> "false"
-  | "Fun" -> "fun"
-  | "If" -> "if"
-  | "In" -> "in"
-  | "Let" -> "let"
-  | "Match" -> "match"
-  | "Mod" -> "mod"
-  | "Not" -> "not"
-  | "Of" -> "of"
-  | "Or" -> "or"
-  | "Then" -> "then"
-  | "True" -> "true"
-  | "Type" -> "type"
-  | "With" -> "with"
+  | "Begin" ->
+      "begin"
+  | "Else" ->
+      "else"
+  | "End" ->
+      "end"
+  | "False" ->
+      "false"
+  | "Fun" ->
+      "fun"
+  | "If" ->
+      "if"
+  | "In" ->
+      "in"
+  | "Let" ->
+      "let"
+  | "Match" ->
+      "match"
+  | "Mod" ->
+      "mod"
+  | "Not" ->
+      "not"
+  | "Of" ->
+      "of"
+  | "Or" ->
+      "or"
+  | "Then" ->
+      "then"
+  | "True" ->
+      "true"
+  | "Type" ->
+      "type"
+  | "With" ->
+      "with"
   (* Data constructors *)
-  | "C_None" -> "None"
-  | "C_Some" -> "Some"
+  | "C_None" ->
+      "None"
+  | "C_Some" ->
+      "Some"
   (* Symbols *)
-  | "MINUS" -> "-"
-  | "PLUS" -> "+"
-  | "SLASH" -> "/"
-  | "TIMES" -> "*"
-  | "LPAR" -> "("
-  | "RPAR" -> ")"
-  | "LBRACKET" -> "["
-  | "RBRACKET" -> "]"
-  | "LBRACE" -> "{"
-  | "RBRACE" -> "}"
-  | "ARROW" -> "->"
-  | "CONS" -> "::"
-  | "CAT" -> "^"
-  | "DOT" -> "."
-  | "COMMA" -> ","
-  | "SEMI" -> ";"
-  | "COLON" -> ":"
-  | "VBAR" -> "|"
-  | "WILD" -> "_"
-  | "EQ" -> "="
-  | "NE" -> "<>"
-  | "LT" -> "<"
-  | "GT" -> ">"
-  | "LE" -> "<="
-  | "GE" -> ">="
-  | "BOOL_OR" -> "||"
-  | "BOOL_AND" -> "&&"
+  | "MINUS" ->
+      "-"
+  | "PLUS" ->
+      "+"
+  | "SLASH" ->
+      "/"
+  | "TIMES" ->
+      "*"
+  | "LPAR" ->
+      "("
+  | "RPAR" ->
+      ")"
+  | "LBRACKET" ->
+      "["
+  | "RBRACKET" ->
+      "]"
+  | "LBRACE" ->
+      "{"
+  | "RBRACE" ->
+      "}"
+  | "ARROW" ->
+      "->"
+  | "CONS" ->
+      "::"
+  | "CAT" ->
+      "^"
+  | "DOT" ->
+      "."
+  | "COMMA" ->
+      ","
+  | "SEMI" ->
+      ";"
+  | "COLON" ->
+      ":"
+  | "VBAR" ->
+      "|"
+  | "WILD" ->
+      "_"
+  | "EQ" ->
+      "="
+  | "NE" ->
+      "<>"
+  | "LT" ->
+      "<"
+  | "GT" ->
+      ">"
+  | "LE" ->
+      "<="
+  | "GE" ->
+      ">="
+  | "BOOL_OR" ->
+      "||"
+  | "BOOL_AND" ->
+      "&&"
   (* Literals *)
-  | "String" -> "\"a string\""
-  | "Bytes" -> "0xAA"
-  | "Int" -> "1"
-  | "Nat" -> "1n"
-  | "Mutez" -> "1mutez"
-  | "Ident" -> id_sym ()
-  | "Constr" -> ctor_sym ()
+  | "String" ->
+      "\"a string\""
+  | "Bytes" ->
+      "0xAA"
+  | "Int" ->
+      "1"
+  | "Nat" ->
+      "1n"
+  | "Mutez" ->
+      "1mutez"
+  | "Ident" ->
+      id_sym ()
+  | "Constr" ->
+      ctor_sym ()
   (* Virtual tokens *)
-  | "EOF" -> ""
+  | "EOF" ->
+      ""
   (* For completeness of open sum types *)
-  | _ -> "<Unknown>"
+  | _ ->
+      "<Unknown>"
 
 (* Unlexing a sentence *)
 
@@ -83,9 +138,11 @@ let unlex (sentence : string) : Buffer.t =
   let lexemes = List.map concrete tokens in
   let buffer = Buffer.create 31 in
   let rec trans = function
-    | []         -> ()
-    | [s] -> Buffer.add_string buffer s
-    | s :: l  ->
+    | [] ->
+        ()
+    | [s] ->
+        Buffer.add_string buffer s
+    | s :: l ->
         Buffer.add_string buffer (s ^ " ") ;
         trans l
   in

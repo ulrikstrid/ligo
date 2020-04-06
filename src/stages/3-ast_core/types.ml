@@ -27,7 +27,10 @@ and declaration =
       (expression_variable * type_expression option * inline * expression)
 
 (* | Macro_declaration of macro_declaration *)
-and expression = {expression_content: expression_content; location: Location.t}
+and expression = {
+  expression_content : expression_content;
+  location : Location.t;
+}
 
 and expression_content =
   (* Base *)
@@ -48,38 +51,44 @@ and expression_content =
   (* Advanced *)
   | E_ascription of ascription
 
-and constant =
-  { cons_name: constant'; (* this is at the end because it is huge *)
-    arguments: expression list }
+and constant = {
+  cons_name : constant'; (* this is at the end because it is huge *)
+  arguments : expression list;
+}
 
-and application = {lamb: expression; args: expression}
+and application = {lamb : expression; args : expression}
 
-and lambda =
-  { binder: expression_variable;
-    input_type: type_expression option;
-    output_type: type_expression option;
-    result: expression }
+and lambda = {
+  binder : expression_variable;
+  input_type : type_expression option;
+  output_type : type_expression option;
+  result : expression;
+}
 
-and recursive =
-  {fun_name: expression_variable; fun_type: type_expression; lambda: lambda}
+and recursive = {
+  fun_name : expression_variable;
+  fun_type : type_expression;
+  lambda : lambda;
+}
 
-and let_in =
-  { let_binder: expression_variable * type_expression option;
-    rhs: expression;
-    let_result: expression;
-    inline: bool }
+and let_in = {
+  let_binder : expression_variable * type_expression option;
+  rhs : expression;
+  let_result : expression;
+  inline : bool;
+}
 
-and constructor = {constructor: constructor'; element: expression}
+and constructor = {constructor : constructor'; element : expression}
 
-and record_accessor = {record: expression; path: label}
+and record_accessor = {record : expression; path : label}
 
-and record_update = {record: expression; path: label; update: expression}
+and record_update = {record : expression; path : label; update : expression}
 
 and matching_expr = (expr, unit) matching_content
 
-and matching = {matchee: expression; cases: matching_expr}
+and matching = {matchee : expression; cases : matching_expr}
 
-and ascription = {anno_expr: expression; type_annotation: type_expression}
+and ascription = {anno_expr : expression; type_annotation : type_expression}
 
 and environment_element_definition =
   | ED_binder
@@ -87,10 +96,11 @@ and environment_element_definition =
 
 and free_variables = expression_variable list
 
-and environment_element =
-  { type_value: type_expression;
-    source_environment: full_environment;
-    definition: environment_element_definition }
+and environment_element = {
+  type_value : type_expression;
+  source_environment : full_environment;
+  definition : environment_element_definition;
+}
 
 and environment = (expression_variable * environment_element) list
 

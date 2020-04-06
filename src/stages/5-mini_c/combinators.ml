@@ -10,12 +10,12 @@ module Expression = struct
 
   let get_type : t -> type_value = fun e -> e.type_value
 
-  let make e' t = {content= e'; type_value= t}
+  let make e' t = {content = e'; type_value = t}
 
-  let make_tpl (e', t) = {content= e'; type_value= t}
+  let make_tpl (e', t) = {content = e'; type_value = t}
 
   let pair : t -> t -> t' =
-   fun a b -> E_constant {cons_name= C_PAIR; arguments= [a; b]}
+   fun a b -> E_constant {cons_name = C_PAIR; arguments = [a; b]}
 end
 
 let get_bool (v : value) =
@@ -44,9 +44,12 @@ let get_unit (v : value) =
 
 let get_option (v : value) =
   match v with
-  | D_none   -> ok None
-  | D_some s -> ok (Some s)
-  | _        -> simple_fail "not an option"
+  | D_none ->
+      ok None
+  | D_some s ->
+      ok (Some s)
+  | _ ->
+      simple_fail "not an option"
 
 let get_map (v : value) =
   match v with D_map lst -> ok lst | _ -> simple_fail "not a map"
@@ -62,14 +65,17 @@ let get_set (v : value) =
 
 let get_function_with_ty (e : expression) =
   match (e.content, e.type_value) with
-  | E_closure f, T_function ty -> ok (f, ty)
-  | _                              -> simple_fail
-                                        "not a function with functional type"
+  | (E_closure f, T_function ty) ->
+      ok (f, ty)
+  | _ ->
+      simple_fail "not a function with functional type"
 
 let get_function (e : expression) =
   match e.content with
-  | E_closure f -> ok f
-  | _           -> simple_fail "not a function"
+  | E_closure f ->
+      ok f
+  | _ ->
+      simple_fail "not a function"
 
 let get_t_function tv =
   match tv with T_function ty -> ok ty | _ -> simple_fail "not a function"
@@ -82,13 +88,17 @@ let get_pair (v : value) =
 
 let get_t_pair (t : type_value) =
   match t with
-  | T_pair ((_, a), (_, b)) -> ok (a, b)
-  | _                       -> simple_fail "not a type pair"
+  | T_pair ((_, a), (_, b)) ->
+      ok (a, b)
+  | _ ->
+      simple_fail "not a type pair"
 
 let get_t_or (t : type_value) =
   match t with
-  | T_or ((_, a), (_, b)) -> ok (a, b)
-  | _                     -> simple_fail "not a type or"
+  | T_or ((_, a), (_, b)) ->
+      ok (a, b)
+  | _ ->
+      simple_fail "not a type or"
 
 let get_t_map (t : type_value) =
   match t with T_map kv -> ok kv | _ -> simple_fail "not a type map"
@@ -110,9 +120,12 @@ let get_right (v : value) =
 
 let get_or (v : value) =
   match v with
-  | D_left b  -> ok (false, b)
-  | D_right b -> ok (true, b)
-  | _         -> simple_fail "not a left/right"
+  | D_left b ->
+      ok (false, b)
+  | D_right b ->
+      ok (true, b)
+  | _ ->
+      simple_fail "not a left/right"
 
 let wrong_type name t =
   let title () = "not a " ^ name in
@@ -130,8 +143,10 @@ let get_t_contract t =
 
 let get_t_operation t =
   match t with
-  | T_base TC_operation -> ok t
-  | _                   -> fail @@ wrong_type "operation" t
+  | T_base TC_operation ->
+      ok t
+  | _ ->
+      fail @@ wrong_type "operation" t
 
 let get_operation (v : value) =
   match v with D_operation x -> ok x | _ -> simple_fail "not an operation"

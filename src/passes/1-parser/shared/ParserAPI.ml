@@ -65,8 +65,10 @@ struct
 
   let state checkpoint : int =
     match Lazy.force (stack checkpoint) with
-    | S.Nil -> 0 (* WARNING: Hack. The first state should be 0. *)
-    | S.Cons (I.Element (s, _, _, _), _) -> I.number s
+    | S.Nil ->
+        0 (* WARNING: Hack. The first state should be 0. *)
+    | S.Cons (I.Element (s, _, _, _), _) ->
+        I.number s
 
   (* The parser has successfully produced a semantic value. *)
 
@@ -89,36 +91,35 @@ struct
     let header = "Parse error " ^ invalid_region#to_string ~offsets mode in
     let trailer =
       match valid_opt with
-      | None       ->
-          if Lexer.Token.is_eof invalid then
-            ""
-          else (
+      | None ->
+          if Lexer.Token.is_eof invalid then ""
+          else
             let invalid_lexeme = Lexer.Token.to_lexeme invalid in
-            Printf.sprintf ", before \"%s\"" invalid_lexeme )
+            Printf.sprintf ", before \"%s\"" invalid_lexeme
       | Some valid ->
           let valid_lexeme = Lexer.Token.to_lexeme valid in
           let s = Printf.sprintf ", after \"%s\"" valid_lexeme in
-          if Lexer.Token.is_eof invalid then
-            s
-          else (
+          if Lexer.Token.is_eof invalid then s
+          else
             let invalid_lexeme = Lexer.Token.to_lexeme invalid in
-            Printf.sprintf "%s and before \"%s\"" s invalid_lexeme )
+            Printf.sprintf "%s and before \"%s\"" s invalid_lexeme
     in
     let header = header ^ trailer in
     let msg = header ^ if msg = "" then ".\n" else ":\n" ^ msg in
-    Region.{value= msg; region= invalid_region}
+    Region.{value = msg; region = invalid_region}
 
   let failure get_win checkpoint =
     let message = ParErr.message (state checkpoint) in
     let message =
       if message = "<YOUR SYNTAX ERROR MESSAGE HERE>\n" then
         string_of_int (state checkpoint) ^ ": <syntax error>"
-      else
-        message
+      else message
     in
     match get_win () with
-    | Lexer.Nil -> assert false
-    | Lexer.One invalid -> raise (Point (message, None, invalid))
+    | Lexer.Nil ->
+        assert false
+    | Lexer.One invalid ->
+        raise (Point (message, None, invalid))
     | Lexer.Two (invalid, valid) ->
         raise (Point (message, Some valid, invalid))
 
@@ -134,7 +135,10 @@ struct
   module Log = LexerLog.Make (Lexer)
 
   let log =
-    Log.output_token ~offsets:IO.options#offsets IO.options#mode IO.options#cmd
+    Log.output_token
+      ~offsets:IO.options#offsets
+      IO.options#mode
+      IO.options#cmd
       stdout
 
   let incr_contract Lexer.{read; buffer; get_win; close; _} =

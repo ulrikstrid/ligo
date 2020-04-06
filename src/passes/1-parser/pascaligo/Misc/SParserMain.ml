@@ -31,8 +31,10 @@ let external_ text =
 type Error.t += ParseError
 
 let error_to_string = function
-  | ParseError -> "Syntax error.\n"
-  | _          -> assert false
+  | ParseError ->
+      "Syntax error.\n"
+  | _ ->
+      assert false
 
 let print_error ?(offsets = true) mode Region.{region; value} ~file =
   let msg = error_to_string value in
@@ -43,7 +45,8 @@ let print_error ?(offsets = true) mode Region.{region; value} ~file =
 
 let lib_path =
   match options.libs with
-  | []   -> ""
+  | [] ->
+      ""
   | libs ->
       let mk_I dir path = Printf.sprintf " -I %s%s" dir path in
       List.fold_right mk_I libs ""
@@ -52,17 +55,18 @@ let lib_path =
 
 let prefix =
   match options.input with
-  | None | Some "-" -> "temp"
-  | Some file -> Filename.(file |> basename |> remove_extension)
+  | None | Some "-" ->
+      "temp"
+  | Some file ->
+      Filename.(file |> basename |> remove_extension)
 
 let suffix = ".pp.ligo"
 
 let pp_input =
-  if Utils.String.Set.mem "cpp" options.verbose then
-    prefix ^ suffix
-  else (
-    let pp_input, pp_out = Filename.open_temp_file prefix suffix in
-    close_out pp_out ; pp_input )
+  if Utils.String.Set.mem "cpp" options.verbose then prefix ^ suffix
+  else
+    let (pp_input, pp_out) = Filename.open_temp_file prefix suffix in
+    close_out pp_out ; pp_input
 
 let cpp_cmd =
   match options.input with
@@ -113,7 +117,8 @@ let () =
       Lexer.print_error ~offsets:options.offsets options.mode err ~file
   | Parser.Error ->
       let region = get_last () in
-      let error = Region.{region; value= ParseError} in
+      let error = Region.{region; value = ParseError} in
       let () = close_all () in
       print_error ~offsets:options.offsets options.mode error ~file
-  | Sys_error msg -> Utils.highlight msg
+  | Sys_error msg ->
+      Utils.highlight msg

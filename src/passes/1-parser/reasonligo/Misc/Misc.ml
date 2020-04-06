@@ -8,29 +8,42 @@ type error =
 let rec first_of_expr = function
   | ECase {value; _} -> (
     match LexToken.mk_kwd "switch" value.kwd_match with
-    | Error e  -> Error (KwdErr e)
-    | Ok token -> Ok token )
+    | Error e ->
+        Error (KwdErr e)
+    | Ok token ->
+        Ok token )
   | ECond {value; _} -> (
     match LexToken.mk_kwd "if" value.kwd_if with
-    | Error e  -> Error (KwdErr e)
-    | Ok token -> Ok token )
+    | Error e ->
+        Error (KwdErr e)
+    | Ok token ->
+        Ok token )
   | EPar {value; _} -> (
     match LexToken.mk_sym "(" value.lpar with
-    | Error e  -> Error (SymErr e)
-    | Ok token -> Ok token )
+    | Error e ->
+        Error (SymErr e)
+    | Ok token ->
+        Ok token )
   | EAnnot {value; _} -> (
     match LexToken.mk_sym "(" value.lpar with
-    | Error e  -> Error (SymErr e)
-    | Ok token -> Ok token )
-  | EUnit {value= opening, _; _} -> (
+    | Error e ->
+        Error (SymErr e)
+    | Ok token ->
+        Ok token )
+  | EUnit {value = (opening, _); _} -> (
     match LexToken.mk_sym "(" opening with
-    | Error e  -> Error (SymErr e)
-    | Ok token -> Ok token )
-  | EBytes b -> Ok (LexToken.mk_bytes (fst b.value) b.region)
+    | Error e ->
+        Error (SymErr e)
+    | Ok token ->
+        Ok token )
+  | EBytes b ->
+      Ok (LexToken.mk_bytes (fst b.value) b.region)
   | EVar v -> (
     match LexToken.mk_ident v.value v.region with
-    | Error e  -> Error (IdentErr e)
-    | Ok token -> Ok token )
+    | Error e ->
+        Error (IdentErr e)
+    | Ok token ->
+        Ok token )
   | ESeq {value; _} -> (
       let opening =
         match value.compound with
@@ -39,18 +52,25 @@ let rec first_of_expr = function
             opening
       in
       match LexToken.mk_sym "{" opening with
-      | Error e  -> Error (SymErr e)
-      | Ok token -> Ok token )
+      | Error e ->
+          Error (SymErr e)
+      | Ok token ->
+          Ok token )
   | EProj {value; _} -> (
       let structure = value.struct_name in
       match LexToken.mk_ident structure.value structure.region with
-      | Error e  -> Error (IdentErr e)
-      | Ok token -> Ok token )
+      | Error e ->
+          Error (IdentErr e)
+      | Ok token ->
+          Ok token )
   | EFun {value; _} -> (
     match LexToken.mk_kwd "fun" value.kwd_fun with
-    | Error e  -> Error (KwdErr e)
-    | Ok token -> Ok token )
-  | _ -> failwith "TODO"
+    | Error e ->
+        Error (KwdErr e)
+    | Ok token ->
+        Ok token )
+  | _ ->
+      failwith "TODO"
 
 (*
 

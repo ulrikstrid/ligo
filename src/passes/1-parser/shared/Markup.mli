@@ -3,10 +3,10 @@
 
 module Region = Simple_utils.Region
 
-type lexeme = string
 (** A lexeme is piece of concrete syntax belonging to a token. In
    algebraic terms, a token is also a piece of abstract lexical
    syntax. Lexical units emcompass both markup and lexemes. *)
+type lexeme = string
 
 type t =
   | Tabs of int Region.reg (* Tabulations *)

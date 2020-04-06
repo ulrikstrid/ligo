@@ -11,7 +11,7 @@ let int () : unit result =
   let open Typer in
   let e = Environment.full_empty in
   let state = Typer.Solver.initial_state in
-  let%bind post, new_state = type_expression_subst e state pre in
+  let%bind (post, new_state) = type_expression_subst e state pre in
   let () = Typer.Solver.discard_state new_state in
   let open! Typed in
   let open Combinators in
@@ -19,15 +19,13 @@ let int () : unit result =
   ok ()
 
 module TestExpressions = struct
-  let test_expression
-      ?(env = Typer.Environment.full_empty)
-      ?(state = Typer.Solver.initial_state)
-      (expr : expression)
+  let test_expression ?(env = Typer.Environment.full_empty)
+      ?(state = Typer.Solver.initial_state) (expr : expression)
       (test_expected_ty : Typed.type_expression) =
     let pre = expr in
     let open Typer in
     let open! Typed in
-    let%bind post, new_state = type_expression_subst env state pre in
+    let%bind (post, new_state) = type_expression_subst env state pre in
     let () = Typer.Solver.discard_state new_state in
     let%bind () =
       assert_type_expression_eq (post.type_expression, test_expected_ty)
@@ -80,7 +78,8 @@ end
    TODO: negative tests (expected type error) *)
 
 let main =
-  test_suite "Typer (from core AST)"
+  test_suite
+    "Typer (from core AST)"
     [ test "int" int;
       test "unit" TestExpressions.unit;
       test "int2" TestExpressions.int;

@@ -14,7 +14,8 @@ module Errors = struct
 
   let bad_type_operator type_op =
     let title () =
-      Format.asprintf "bad type operator %a"
+      Format.asprintf
+        "bad type operator %a"
         (PP.type_operator PP.type_expression)
         type_op
     in
@@ -96,14 +97,20 @@ let t_contract contract : type_expression =
 (* TODO find a better way than using list*)
 let t_operator op lst : type_expression result =
   match (op, lst) with
-  | TC_set _, [t]                      -> ok @@ t_set t
-  | TC_list _, [t]                     -> ok @@ t_list t
-  | TC_option _, [t]                   -> ok @@ t_option t
-  | TC_map (_, _), [kt; vt]     -> ok @@ t_map kt vt
-  | TC_big_map (_, _), [kt; vt] -> ok @@ t_big_map kt vt
-  | TC_contract _, [t]                 -> ok @@ t_contract t
-  | _, _                                          -> fail
-                                                     @@ bad_type_operator op
+  | (TC_set _, [t]) ->
+      ok @@ t_set t
+  | (TC_list _, [t]) ->
+      ok @@ t_list t
+  | (TC_option _, [t]) ->
+      ok @@ t_option t
+  | (TC_map (_, _), [kt; vt]) ->
+      ok @@ t_map kt vt
+  | (TC_big_map (_, _), [kt; vt]) ->
+      ok @@ t_big_map kt vt
+  | (TC_contract _, [t]) ->
+      ok @@ t_contract t
+  | (_, _) ->
+      fail @@ bad_type_operator op
 
 let make_expr ?(loc = Location.generated) expression_content =
   let location = loc in
@@ -164,16 +171,16 @@ let e_bytes_string ?loc (s : string) : expression =
 let e_big_map ?loc lst : expression = make_expr ?loc @@ E_big_map lst
 
 let e_some ?loc s : expression =
-  make_expr ?loc @@ E_constant {cons_name= C_SOME; arguments= [s]}
+  make_expr ?loc @@ E_constant {cons_name = C_SOME; arguments = [s]}
 
 let e_none ?loc () : expression =
-  make_expr ?loc @@ E_constant {cons_name= C_NONE; arguments= []}
+  make_expr ?loc @@ E_constant {cons_name = C_NONE; arguments = []}
 
 let e_string_cat ?loc sl sr : expression =
-  make_expr ?loc @@ E_constant {cons_name= C_CONCAT; arguments= [sl; sr]}
+  make_expr ?loc @@ E_constant {cons_name = C_CONCAT; arguments = [sl; sr]}
 
 let e_map_add ?loc k v old : expression =
-  make_expr ?loc @@ E_constant {cons_name= C_MAP_ADD; arguments= [k; v; old]}
+  make_expr ?loc @@ E_constant {cons_name = C_MAP_ADD; arguments = [k; v; old]}
 
 let e_map ?loc lst : expression = make_expr ?loc @@ E_map lst
 
@@ -182,16 +189,16 @@ let e_set ?loc lst : expression = make_expr ?loc @@ E_set lst
 let e_list ?loc lst : expression = make_expr ?loc @@ E_list lst
 
 let e_constructor ?loc s a : expression =
-  make_expr ?loc @@ E_constructor {constructor= Constructor s; element= a}
+  make_expr ?loc @@ E_constructor {constructor = Constructor s; element = a}
 
 let e_matching ?loc a b : expression =
-  make_expr ?loc @@ E_matching {matchee= a; cases= b}
+  make_expr ?loc @@ E_matching {matchee = a; cases = b}
 
 let e_matching_bool ?loc a b c : expression =
-  e_matching ?loc a (Match_bool {match_true= b; match_false= c})
+  e_matching ?loc a (Match_bool {match_true = b; match_false = c})
 
 let e_record_accessor ?loc a b =
-  make_expr ?loc @@ E_record_accessor {record= a; path= Label b}
+  make_expr ?loc @@ E_record_accessor {record = a; path = Label b}
 
 let e_accessor ?loc a b = e_record_accessor ?loc a b
 
@@ -204,18 +211,19 @@ let e_skip ?loc () = make_expr ?loc @@ E_skip
 
 let e_let_in ?loc (binder, ascr) inline rhs let_result =
   make_expr ?loc
-  @@ E_let_in {let_binder= (binder, ascr); rhs; let_result; inline}
+  @@ E_let_in {let_binder = (binder, ascr); rhs; let_result; inline}
 
 let e_annotation ?loc anno_expr ty =
-  make_expr ?loc @@ E_ascription {anno_expr; type_annotation= ty}
+  make_expr ?loc @@ E_ascription {anno_expr; type_annotation = ty}
 
-let e_application ?loc a b = make_expr ?loc @@ E_application {lamb= a; args= b}
+let e_application ?loc a b =
+  make_expr ?loc @@ E_application {lamb = a; args = b}
 
 let e_binop ?loc name a b =
-  make_expr ?loc @@ E_constant {cons_name= name; arguments= [a; b]}
+  make_expr ?loc @@ E_constant {cons_name = name; arguments = [a; b]}
 
 let e_constant ?loc name lst =
-  make_expr ?loc @@ E_constant {cons_name= name; arguments= lst}
+  make_expr ?loc @@ E_constant {cons_name = name; arguments = lst}
 
 let e_look_up ?loc x y = make_expr ?loc @@ E_look_up (x, y)
 
@@ -283,12 +291,9 @@ let e_typed_big_map ?loc lst k v =
 
 let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 
-let e_lambda
-    ?loc
-    (binder : expression_variable)
+let e_lambda ?loc (binder : expression_variable)
     (input_type : type_expression option)
-    (output_type : type_expression option)
-    (result : expression) : expression =
+    (output_type : type_expression option) (result : expression) : expression =
   make_expr ?loc @@ E_lambda {binder; input_type; output_type; result}
 
 let e_recursive ?loc fun_name fun_type lambda =
@@ -304,8 +309,10 @@ let e_ez_assign ?loc variable access_path expression =
 
 let get_e_accessor t =
   match t with
-  | E_record_accessor {record; path} -> ok (record, path)
-  | _ -> simple_fail "not an accessor"
+  | E_record_accessor {record; path} ->
+      ok (record, path)
+  | _ ->
+      simple_fail "not an accessor"
 
 let assert_e_accessor t =
   let%bind _ = get_e_accessor t in
@@ -319,30 +326,40 @@ let get_e_list t =
 
 let get_e_tuple t =
   match t with
-  | E_tuple t -> ok @@ t
-  | _         -> simple_fail "ast_core: get_e_tuple: not a tuple"
+  | E_tuple t ->
+      ok @@ t
+  | _ ->
+      simple_fail "ast_core: get_e_tuple: not a tuple"
 
 (* Same as get_e_pair *)
 let extract_pair : expression -> (expression * expression) result =
  fun e ->
-   match e.expression_content with
-   | E_tuple [a; b] -> ok @@ (a, b)
-   | _                              -> fail @@ bad_kind "pair" e.location
+  match e.expression_content with
+  | E_tuple [a; b] ->
+      ok @@ (a, b)
+  | _ ->
+      fail @@ bad_kind "pair" e.location
 
 let extract_list : expression -> expression list result =
  fun e ->
-   match e.expression_content with
-   | E_list lst -> ok lst
-   | _          -> fail @@ bad_kind "list" e.location
+  match e.expression_content with
+  | E_list lst ->
+      ok lst
+  | _ ->
+      fail @@ bad_kind "list" e.location
 
 let extract_record : expression -> (label * expression) list result =
  fun e ->
-   match e.expression_content with
-   | E_record lst -> ok @@ LMap.to_kv_list lst
-   | _            -> fail @@ bad_kind "record" e.location
+  match e.expression_content with
+  | E_record lst ->
+      ok @@ LMap.to_kv_list lst
+  | _ ->
+      fail @@ bad_kind "record" e.location
 
 let extract_map : expression -> (expression * expression) list result =
  fun e ->
-   match e.expression_content with
-   | E_map lst -> ok lst
-   | _         -> fail @@ bad_kind "map" e.location
+  match e.expression_content with
+  | E_map lst ->
+      ok lst
+  | _ ->
+      fail @@ bad_kind "map" e.location

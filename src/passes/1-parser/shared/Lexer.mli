@@ -153,14 +153,15 @@ module type S = sig
 
   val slide : token -> window -> window
 
-  type instance =
-    { read: log:logger -> Lexing.lexbuf -> token;
-      buffer: Lexing.lexbuf;
-      get_win: unit -> window;
-      get_pos: unit -> Pos.t;
-      get_last: unit -> Region.t;
-      get_file: unit -> file_path;
-      close: unit -> unit }
+  type instance = {
+    read : log:logger -> Lexing.lexbuf -> token;
+    buffer : Lexing.lexbuf;
+    get_win : unit -> window;
+    get_pos : unit -> Pos.t;
+    get_last : unit -> Region.t;
+    get_file : unit -> file_path;
+    close : unit -> unit;
+  }
 
   type input =
     | File of file_path (* "-" means stdin *)

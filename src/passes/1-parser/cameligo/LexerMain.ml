@@ -12,5 +12,7 @@ module M = LexerUnit.Make (IO) (Lexer.Make (LexToken))
 
 let () =
   match M.trace () with
-  | Stdlib.Ok () -> ()
-  | Error Region.{value; _} -> Utils.highlight value
+  | Stdlib.Ok () ->
+      ()
+  | Error Region.{value; _} ->
+      Utils.highlight value

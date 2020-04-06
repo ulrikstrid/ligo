@@ -17,10 +17,10 @@ let compile_expression : v_syntax -> string -> Ast_imperative.expression result
 let compile_contract_input :
     string -> string -> v_syntax -> Ast_imperative.expression result =
  fun storage parameter syntax ->
-   let%bind storage, parameter =
-     bind_map_pair (compile_expression syntax) (storage, parameter)
-   in
-   ok @@ Ast_imperative.e_pair storage parameter
+  let%bind (storage, parameter) =
+    bind_map_pair (compile_expression syntax) (storage, parameter)
+  in
+  ok @@ Ast_imperative.e_pair storage parameter
 
 let pretty_print source_filename syntax =
   Helpers.pretty_print syntax source_filename

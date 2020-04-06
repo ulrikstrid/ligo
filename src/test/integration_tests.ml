@@ -3,17 +3,17 @@ open Test_helpers
 open Ast_imperative.Combinators
 
 let retype_file f =
-  let%bind typed, state = Ligo.Compile.Utils.type_file f "reasonligo" Env in
+  let%bind (typed, state) = Ligo.Compile.Utils.type_file f "reasonligo" Env in
   let () = Typer.Solver.discard_state state in
   ok typed
 
 let mtype_file f =
-  let%bind typed, state = Ligo.Compile.Utils.type_file f "cameligo" Env in
+  let%bind (typed, state) = Ligo.Compile.Utils.type_file f "cameligo" Env in
   let () = Typer.Solver.discard_state state in
   ok typed
 
 let type_file f =
-  let%bind typed, state = Ligo.Compile.Utils.type_file f "pascaligo" Env in
+  let%bind (typed, state) = Ligo.Compile.Utils.type_file f "pascaligo" Env in
   let () = Typer.Solver.discard_state state in
   ok typed
 
@@ -46,7 +46,9 @@ let annotation () : unit result =
   let%bind program = type_file "./contracts/annotation.ligo" in
   let%bind () = expect_eq_evaluate program "lst" (e_list []) in
   let%bind () =
-    expect_eq_evaluate program "my_address"
+    expect_eq_evaluate
+      program
+      "my_address"
       (e_address "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx")
   in
   ok ()
@@ -259,7 +261,8 @@ let bool_expression () : unit result =
   let%bind program = type_file "./contracts/boolean_operators.ligo" in
   let%bind _ =
     let aux (name, f) = expect_eq_b_bool program name f in
-    bind_map_list aux
+    bind_map_list
+      aux
       [ ("or_true", fun b -> b || true);
         ("or_false", fun b -> b || false);
         ("and_true", fun b -> b && true);
@@ -272,7 +275,8 @@ let bool_expression_mligo () : unit result =
   let%bind program = mtype_file "./contracts/boolean_operators.mligo" in
   let%bind _ =
     let aux (name, f) = expect_eq_b_bool program name f in
-    bind_map_list aux
+    bind_map_list
+      aux
       [ ("or_true", fun b -> b || true);
         ("or_false", fun b -> b || false);
         ("and_true", fun b -> b && true);
@@ -285,7 +289,8 @@ let bool_expression_religo () : unit result =
   let%bind program = retype_file "./contracts/boolean_operators.religo" in
   let%bind _ =
     let aux (name, f) = expect_eq_b_bool program name f in
-    bind_map_list aux
+    bind_map_list
+      aux
       [ ("or_true", fun b -> b || true);
         ("or_false", fun b -> b || false);
         ("and_true", fun b -> b && true);
@@ -298,7 +303,8 @@ let arithmetic () : unit result =
   let%bind program = type_file "./contracts/arithmetic.ligo" in
   let%bind _ =
     let aux (name, f) = expect_eq_n_int program name f in
-    bind_map_list aux
+    bind_map_list
+      aux
       [ ("plus_op", fun n -> n + 42);
         ("minus_op", fun n -> n - 42);
         ("times_op", fun n -> n * 42);
@@ -317,7 +323,8 @@ let arithmetic_mligo () : unit result =
   let%bind program = mtype_file "./contracts/arithmetic.mligo" in
   let%bind _ =
     let aux (name, f) = expect_eq_n_int program name f in
-    bind_map_list aux
+    bind_map_list
+      aux
       [ ("plus_op", fun n -> n + 42);
         ("minus_op", fun n -> n - 42);
         ("times_op", fun n -> n * 42);
@@ -336,7 +343,8 @@ let arithmetic_religo () : unit result =
   let%bind program = retype_file "./contracts/arithmetic.religo" in
   let%bind _ =
     let aux (name, f) = expect_eq_n_int program name f in
-    bind_map_list aux
+    bind_map_list
+      aux
       [ ("plus_op", fun n -> n + 42);
         ("minus_op", fun n -> n - 42);
         ("times_op", fun n -> n * 42);
@@ -432,7 +440,10 @@ let string_arithmetic_mligo () : unit result =
     expect_eq program "slice_op" (e_string "foo") (e_string "oo")
   in
   let%bind () =
-    expect_eq program "concat_syntax" (e_string "string_")
+    expect_eq
+      program
+      "concat_syntax"
+      (e_string "string_")
       (e_string "string_test_literal")
   in
   ok ()
@@ -447,7 +458,10 @@ let string_arithmetic_religo () : unit result =
     expect_eq program "slice_op" (e_string "foo") (e_string "oo")
   in
   let%bind () =
-    expect_eq program "concat_syntax" (e_string "string_")
+    expect_eq
+      program
+      "concat_syntax"
+      (e_string "string_")
       (e_string "string_test_literal")
   in
   ok ()
@@ -467,12 +481,16 @@ let bytes_arithmetic () : unit result =
   let%bind () = expect_fail program "slice_op" foo in
   let%bind () = expect_fail program "slice_op" ba in
   let%bind b1 =
-    Test_helpers.run_typed_program_with_imperative_input program "hasherman"
+    Test_helpers.run_typed_program_with_imperative_input
+      program
+      "hasherman"
       foo
   in
   let%bind () = expect_eq_core program "hasherman" foo b1 in
   let%bind b3 =
-    Test_helpers.run_typed_program_with_imperative_input program "hasherman"
+    Test_helpers.run_typed_program_with_imperative_input
+      program
+      "hasherman"
       foototo
   in
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b3, b1) in
@@ -483,23 +501,31 @@ let crypto () : unit result =
   let%bind foo = e_bytes_hex "0f00" in
   let%bind foototo = e_bytes_hex "0f007070" in
   let%bind b1 =
-    Test_helpers.run_typed_program_with_imperative_input program "hasherman512"
+    Test_helpers.run_typed_program_with_imperative_input
+      program
+      "hasherman512"
       foo
   in
   let%bind () = expect_eq_core program "hasherman512" foo b1 in
   let%bind b2 =
-    Test_helpers.run_typed_program_with_imperative_input program "hasherman512"
+    Test_helpers.run_typed_program_with_imperative_input
+      program
+      "hasherman512"
       foototo
   in
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b2, b1) in
   let%bind b4 =
-    Test_helpers.run_typed_program_with_imperative_input program
-      "hasherman_blake" foo
+    Test_helpers.run_typed_program_with_imperative_input
+      program
+      "hasherman_blake"
+      foo
   in
   let%bind () = expect_eq_core program "hasherman_blake" foo b4 in
   let%bind b5 =
-    Test_helpers.run_typed_program_with_imperative_input program
-      "hasherman_blake" foototo
+    Test_helpers.run_typed_program_with_imperative_input
+      program
+      "hasherman_blake"
+      foototo
   in
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b5, b4) in
   ok ()
@@ -509,23 +535,31 @@ let crypto_mligo () : unit result =
   let%bind foo = e_bytes_hex "0f00" in
   let%bind foototo = e_bytes_hex "0f007070" in
   let%bind b1 =
-    Test_helpers.run_typed_program_with_imperative_input program "hasherman512"
+    Test_helpers.run_typed_program_with_imperative_input
+      program
+      "hasherman512"
       foo
   in
   let%bind () = expect_eq_core program "hasherman512" foo b1 in
   let%bind b2 =
-    Test_helpers.run_typed_program_with_imperative_input program "hasherman512"
+    Test_helpers.run_typed_program_with_imperative_input
+      program
+      "hasherman512"
       foototo
   in
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b2, b1) in
   let%bind b4 =
-    Test_helpers.run_typed_program_with_imperative_input program
-      "hasherman_blake" foo
+    Test_helpers.run_typed_program_with_imperative_input
+      program
+      "hasherman_blake"
+      foo
   in
   let%bind () = expect_eq_core program "hasherman_blake" foo b4 in
   let%bind b5 =
-    Test_helpers.run_typed_program_with_imperative_input program
-      "hasherman_blake" foototo
+    Test_helpers.run_typed_program_with_imperative_input
+      program
+      "hasherman_blake"
+      foototo
   in
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b5, b4) in
   ok ()
@@ -535,23 +569,31 @@ let crypto_religo () : unit result =
   let%bind foo = e_bytes_hex "0f00" in
   let%bind foototo = e_bytes_hex "0f007070" in
   let%bind b1 =
-    Test_helpers.run_typed_program_with_imperative_input program "hasherman512"
+    Test_helpers.run_typed_program_with_imperative_input
+      program
+      "hasherman512"
       foo
   in
   let%bind () = expect_eq_core program "hasherman512" foo b1 in
   let%bind b2 =
-    Test_helpers.run_typed_program_with_imperative_input program "hasherman512"
+    Test_helpers.run_typed_program_with_imperative_input
+      program
+      "hasherman512"
       foototo
   in
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b2, b1) in
   let%bind b4 =
-    Test_helpers.run_typed_program_with_imperative_input program
-      "hasherman_blake" foo
+    Test_helpers.run_typed_program_with_imperative_input
+      program
+      "hasherman_blake"
+      foo
   in
   let%bind () = expect_eq_core program "hasherman_blake" foo b4 in
   let%bind b5 =
-    Test_helpers.run_typed_program_with_imperative_input program
-      "hasherman_blake" foototo
+    Test_helpers.run_typed_program_with_imperative_input
+      program
+      "hasherman_blake"
+      foototo
   in
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b5, b4) in
   ok ()
@@ -571,12 +613,16 @@ let bytes_arithmetic_mligo () : unit result =
   let%bind () = expect_fail program "slice_op" foo in
   let%bind () = expect_fail program "slice_op" ba in
   let%bind b1 =
-    Test_helpers.run_typed_program_with_imperative_input program "hasherman"
+    Test_helpers.run_typed_program_with_imperative_input
+      program
+      "hasherman"
       foo
   in
   let%bind () = expect_eq_core program "hasherman" foo b1 in
   let%bind b3 =
-    Test_helpers.run_typed_program_with_imperative_input program "hasherman"
+    Test_helpers.run_typed_program_with_imperative_input
+      program
+      "hasherman"
       foototo
   in
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b3, b1) in
@@ -597,12 +643,16 @@ let bytes_arithmetic_religo () : unit result =
   let%bind () = expect_fail program "slice_op" foo in
   let%bind () = expect_fail program "slice_op" ba in
   let%bind b1 =
-    Test_helpers.run_typed_program_with_imperative_input program "hasherman"
+    Test_helpers.run_typed_program_with_imperative_input
+      program
+      "hasherman"
       foo
   in
   let%bind () = expect_eq_core program "hasherman" foo b1 in
   let%bind b3 =
-    Test_helpers.run_typed_program_with_imperative_input program "hasherman"
+    Test_helpers.run_typed_program_with_imperative_input
+      program
+      "hasherman"
       foototo
   in
   let%bind () = Assert.assert_fail @@ Ast_core.Misc.assert_value_eq (b3, b1) in
@@ -612,61 +662,83 @@ let set_arithmetic () : unit result =
   let%bind program = type_file "./contracts/set_arithmetic.ligo" in
   let%bind program_1 = type_file "./contracts/set_arithmetic-1.ligo" in
   let%bind () =
-    expect_eq program_1 "iter_op"
+    expect_eq
+      program_1
+      "iter_op"
       (e_set [e_int 2; e_int 4; e_int 7])
       (e_int 13)
   in
   let%bind () =
-    expect_eq program "add_op"
+    expect_eq
+      program
+      "add_op"
       (e_set [e_string "foo"; e_string "bar"])
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
   in
   let%bind () =
-    expect_eq program "add_op"
+    expect_eq
+      program
+      "add_op"
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
   in
   let%bind () =
-    expect_eq program "remove_op"
+    expect_eq
+      program
+      "remove_op"
       (e_set [e_string "foo"; e_string "bar"])
       (e_set [e_string "foo"; e_string "bar"])
   in
   let%bind () =
-    expect_eq program "remove_op"
+    expect_eq
+      program
+      "remove_op"
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
       (e_set [e_string "foo"; e_string "bar"])
   in
   let%bind () =
-    expect_eq program "remove_syntax"
+    expect_eq
+      program
+      "remove_syntax"
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
       (e_set [e_string "foo"; e_string "bar"])
   in
   let%bind () =
-    expect_eq program "remove_deep"
+    expect_eq
+      program
+      "remove_deep"
       (e_pair
          (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
          (e_nat 42))
       (e_pair (e_set [e_string "foo"; e_string "bar"]) (e_nat 42))
   in
   let%bind () =
-    expect_eq program "patch_op"
+    expect_eq
+      program
+      "patch_op"
       (e_set [e_string "foo"; e_string "bar"])
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
   in
   let%bind () =
-    expect_eq program "patch_op_deep"
+    expect_eq
+      program
+      "patch_op_deep"
       (e_pair (e_set [e_string "foo"; e_string "bar"]) (e_nat 42))
       (e_pair
          (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
          (e_nat 42))
   in
   let%bind () =
-    expect_eq program "mem_op"
+    expect_eq
+      program
+      "mem_op"
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
       (e_bool true)
   in
   let%bind () =
-    expect_eq program "mem_op"
+    expect_eq
+      program
+      "mem_op"
       (e_set [e_string "foo"; e_string "bar"])
       (e_bool false)
   in
@@ -679,31 +751,44 @@ let set_arithmetic_mligo () : unit result =
   let%bind program = mtype_file "./contracts/set_arithmetic.mligo" in
   let%bind program_1 = type_file "./contracts/set_arithmetic-1.ligo" in
   let%bind () =
-    expect_eq program "literal_op" (e_unit ())
+    expect_eq
+      program
+      "literal_op"
+      (e_unit ())
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
   in
   let%bind () =
-    expect_eq program "size_op"
+    expect_eq
+      program
+      "size_op"
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
       (e_nat 3)
   in
   let%bind () =
-    expect_eq program "add_op"
+    expect_eq
+      program
+      "add_op"
       (e_set [e_string "foo"; e_string "bar"])
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
   in
   let%bind () =
-    expect_eq program "add_op"
+    expect_eq
+      program
+      "add_op"
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
   in
   let%bind () =
-    expect_eq program "remove_op"
+    expect_eq
+      program
+      "remove_op"
       (e_set [e_string "foo"; e_string "bar"])
       (e_set [e_string "foo"; e_string "bar"])
   in
   let%bind () =
-    expect_eq program "remove_op"
+    expect_eq
+      program
+      "remove_op"
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
       (e_set [e_string "foo"; e_string "bar"])
   in
@@ -716,31 +801,44 @@ let set_arithmetic_religo () : unit result =
   let%bind program = retype_file "./contracts/set_arithmetic.religo" in
   let%bind program_1 = type_file "./contracts/set_arithmetic-1.ligo" in
   let%bind () =
-    expect_eq program "literal_op" (e_unit ())
+    expect_eq
+      program
+      "literal_op"
+      (e_unit ())
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
   in
   let%bind () =
-    expect_eq program "size_op"
+    expect_eq
+      program
+      "size_op"
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
       (e_nat 3)
   in
   let%bind () =
-    expect_eq program "add_op"
+    expect_eq
+      program
+      "add_op"
       (e_set [e_string "foo"; e_string "bar"])
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
   in
   let%bind () =
-    expect_eq program "add_op"
+    expect_eq
+      program
+      "add_op"
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
   in
   let%bind () =
-    expect_eq program "remove_op"
+    expect_eq
+      program
+      "remove_op"
       (e_set [e_string "foo"; e_string "bar"])
       (e_set [e_string "foo"; e_string "bar"])
   in
   let%bind () =
-    expect_eq program "remove_op"
+    expect_eq
+      program
+      "remove_op"
       (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
       (e_set [e_string "foo"; e_string "bar"])
   in
@@ -783,7 +881,8 @@ let multiple_parameters () : unit result =
   in
   let%bind _ =
     bind_list
-    @@ List.map aux
+    @@ List.map
+         aux
          [ ("ab", tuple_ez_int ["a"; "b"], fun n -> 2 * n);
            ("abcd", tuple_ez_int ["a"; "b"; "c"; "d"], fun n -> (4 * n) + 2);
            ( "abcde",
@@ -800,7 +899,8 @@ let multiple_parameters_mligo () : unit result =
   in
   let%bind _ =
     bind_list
-    @@ List.map aux
+    @@ List.map
+         aux
          [ (* Didn't include the other tests because they're probably not necessary *)
            ( "abcde",
              tuple_ez_int ["a"; "b"; "c"; "d"; "e"],
@@ -816,7 +916,8 @@ let multiple_parameters_religo () : unit result =
   in
   let%bind _ =
     bind_list
-    @@ List.map aux
+    @@ List.map
+         aux
          [ (* Didn't include the other tests because they're probably not necessary *)
            ( "abcde",
              tuple_ez_int ["a"; "b"; "c"; "d"; "e"],
@@ -1142,7 +1243,9 @@ let map_ type_f path : unit result =
     expect_eq program "mem" (e_tuple [e_int 1000; input_map]) (e_bool false)
   in
   let%bind () =
-    expect_eq_evaluate program "empty_map"
+    expect_eq_evaluate
+      program
+      "empty_map"
       (e_annotation (e_map []) (t_map t_int t_int))
   in
   let%bind () =
@@ -1253,7 +1356,9 @@ let list () : unit result =
     expect_eq program "iter_op" (e_list [e_int 2; e_int 4; e_int 7]) (e_int 13)
   in
   let%bind () =
-    expect_eq program "map_op"
+    expect_eq
+      program
+      "map_op"
       (e_list [e_int 2; e_int 4; e_int 7])
       (e_list [e_int 3; e_int 5; e_int 8])
   in
@@ -1280,7 +1385,8 @@ let condition_mligo () : unit result =
       let make_expected n = e_int (if n = 2 then 42 else 0) in
       expect_eq_n program "main" make_input make_expected
     in
-    bind_map_list aux
+    bind_map_list
+      aux
       [ "./contracts/condition.mligo";
         "./contracts/condition-shadowing.mligo";
         "./contracts/condition-annot.mligo" ]
@@ -1295,7 +1401,8 @@ let condition_religo () : unit result =
       let make_expected n = e_int (if n = 2 then 42 else 0) in
       expect_eq_n program "main" make_input make_expected
     in
-    bind_map_list aux
+    bind_map_list
+      aux
       [ "./contracts/condition.religo";
         "./contracts/condition-shadowing.religo";
         "./contracts/condition-annot.religo" ]
@@ -1306,7 +1413,9 @@ let eq_bool_common program =
   let%bind _ =
     bind_map_list
       (fun (a, b, expected) ->
-        expect_eq program "main"
+        expect_eq
+          program
+          "main"
           (e_pair (e_bool a) (e_bool b))
           (e_int expected))
       [ (false, false, 999);
@@ -1395,7 +1504,8 @@ let loop () : unit result =
   in
   let%bind () =
     let expected =
-      e_pair (e_int 24)
+      e_pair
+        (e_int 24)
         (e_string
            "1 one,two 2 one,two 3 one,two 1 one,two 2 one,two 3 one,two 1 \
             one,two 2 one,two 3 one,two ")
@@ -1598,7 +1708,10 @@ let failwith_ligo () : unit result =
   let%bind program = type_file "./contracts/failwith.ligo" in
   let should_fail = expect_fail program "main" in
   let should_work input =
-    expect_eq program "main" input
+    expect_eq
+      program
+      "main"
+      input
       (e_pair (e_typed_list [] t_operation) (e_unit ()))
   in
   let%bind _ =
@@ -2058,8 +2171,10 @@ let amount () : unit result =
   let expected = e_int 42 in
   let amount =
     match Memory_proto_alpha.Protocol.Alpha_context.Tez.of_string "100" with
-    | Some t -> t
-    | None   -> Memory_proto_alpha.Protocol.Alpha_context.Tez.one
+    | Some t ->
+        t
+    | None ->
+        Memory_proto_alpha.Protocol.Alpha_context.Tez.one
   in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
   expect_eq ~options program "check" input expected
@@ -2070,8 +2185,10 @@ let amount_mligo () : unit result =
   let expected = e_int 42 in
   let amount =
     match Memory_proto_alpha.Protocol.Alpha_context.Tez.of_string "100" with
-    | Some t -> t
-    | None   -> Memory_proto_alpha.Protocol.Alpha_context.Tez.one
+    | Some t ->
+        t
+    | None ->
+        Memory_proto_alpha.Protocol.Alpha_context.Tez.one
   in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
   expect_eq ~options program "check_" input expected
@@ -2082,8 +2199,10 @@ let amount_religo () : unit result =
   let expected = e_int 42 in
   let amount =
     match Memory_proto_alpha.Protocol.Alpha_context.Tez.of_string "100" with
-    | Some t -> t
-    | None   -> Memory_proto_alpha.Protocol.Alpha_context.Tez.one
+    | Some t ->
+        t
+    | None ->
+        Memory_proto_alpha.Protocol.Alpha_context.Tez.one
   in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
   expect_eq ~options program "check_" input expected
@@ -2244,13 +2363,15 @@ let get_contract_ligo () : unit result =
     let make_input _n = e_unit () in
     let make_expected : int -> Ast_core.expression -> unit result =
      fun _n result ->
-       let%bind ops, storage = Ast_core.get_e_pair result.expression_content in
-       let%bind () =
-         let%bind lst = Ast_core.get_e_list ops.expression_content in
-         Assert.assert_list_size lst 1
-       in
-       let expected_storage = Ast_core.e_unit () in
-       Ast_core.Misc.assert_value_eq (expected_storage, storage)
+      let%bind (ops, storage) =
+        Ast_core.get_e_pair result.expression_content
+      in
+      let%bind () =
+        let%bind lst = Ast_core.get_e_list ops.expression_content in
+        Assert.assert_list_size lst 1
+      in
+      let expected_storage = Ast_core.e_unit () in
+      Ast_core.Misc.assert_value_eq (expected_storage, storage)
     in
     let%bind () =
       let amount = Memory_proto_alpha.Protocol.Alpha_context.Tez.zero in
@@ -2258,7 +2379,11 @@ let get_contract_ligo () : unit result =
         Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ()
       in
       let%bind () =
-        expect_n_strict_pos_small ~options program "cb" make_input
+        expect_n_strict_pos_small
+          ~options
+          program
+          "cb"
+          make_input
           make_expected
       in
       expect_n_strict_pos_small ~options program "cbo" make_input make_expected
@@ -2286,7 +2411,7 @@ let chain_id () : unit result =
 
 let key_hash () : unit result =
   let open Tezos_crypto in
-  let raw_pkh, raw_pk, _ = Signature.generate_key () in
+  let (raw_pkh, raw_pk, _) = Signature.generate_key () in
   let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
   let pk_str = Signature.Public_key.to_b58check raw_pk in
   let%bind program = type_file "./contracts/key_hash.ligo" in
@@ -2297,7 +2422,7 @@ let key_hash () : unit result =
 
 let key_hash_mligo () : unit result =
   let open Tezos_crypto in
-  let raw_pkh, raw_pk, _ = Signature.generate_key () in
+  let (raw_pkh, raw_pk, _) = Signature.generate_key () in
   let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
   let pk_str = Signature.Public_key.to_b58check raw_pk in
   let%bind program = mtype_file "./contracts/key_hash.mligo" in
@@ -2308,7 +2433,7 @@ let key_hash_mligo () : unit result =
 
 let key_hash_religo () : unit result =
   let open Tezos_crypto in
-  let raw_pkh, raw_pk, _ = Signature.generate_key () in
+  let (raw_pkh, raw_pk, _) = Signature.generate_key () in
   let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
   let pk_str = Signature.Public_key.to_b58check raw_pk in
   let%bind program = retype_file "./contracts/key_hash.religo" in
@@ -2319,7 +2444,7 @@ let key_hash_religo () : unit result =
 
 let check_signature () : unit result =
   let open Tezos_crypto in
-  let _, raw_pk, sk = Signature.generate_key () in
+  let (_, raw_pk, sk) = Signature.generate_key () in
   let pk_str = Signature.Public_key.to_b58check raw_pk in
   let signed = Signature.sign sk (Bytes.of_string "hello world") in
   let%bind program = type_file "./contracts/check_signature.ligo" in
@@ -2335,7 +2460,7 @@ let check_signature () : unit result =
 
 let check_signature_mligo () : unit result =
   let open Tezos_crypto in
-  let _, raw_pk, sk = Signature.generate_key () in
+  let (_, raw_pk, sk) = Signature.generate_key () in
   let pk_str = Signature.Public_key.to_b58check raw_pk in
   let signed = Signature.sign sk (Bytes.of_string "hello world") in
   let%bind program = mtype_file "./contracts/check_signature.mligo" in
@@ -2352,7 +2477,7 @@ let check_signature_mligo () : unit result =
 
 let check_signature_religo () : unit result =
   let open Tezos_crypto in
-  let _, raw_pk, sk = Signature.generate_key () in
+  let (_, raw_pk, sk) = Signature.generate_key () in
   let pk_str = Signature.Public_key.to_b58check raw_pk in
   let signed = Signature.sign sk (Bytes.of_string "hello world") in
   let%bind program = retype_file "./contracts/check_signature.religo" in
@@ -2374,7 +2499,7 @@ let curry () : unit result =
 
 let set_delegate () : unit result =
   let open Tezos_crypto in
-  let raw_pkh, _, _ = Signature.generate_key () in
+  let (raw_pkh, _, _) = Signature.generate_key () in
   let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
   let%bind program = type_file "./contracts/set_delegate.ligo" in
   let%bind () =
@@ -2384,7 +2509,7 @@ let set_delegate () : unit result =
 
 let set_delegate_mligo () : unit result =
   let open Tezos_crypto in
-  let raw_pkh, _, _ = Signature.generate_key () in
+  let (raw_pkh, _, _) = Signature.generate_key () in
   let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
   let%bind program = mtype_file "./contracts/set_delegate.mligo" in
   let%bind () =
@@ -2394,7 +2519,7 @@ let set_delegate_mligo () : unit result =
 
 let set_delegate_religo () : unit result =
   let open Tezos_crypto in
-  let raw_pkh, _, _ = Signature.generate_key () in
+  let (raw_pkh, _, _) = Signature.generate_key () in
   let pkh_str = Signature.Public_key_hash.to_b58check raw_pkh in
   let%bind program = retype_file "./contracts/set_delegate.religo" in
   let%bind () =
@@ -2436,7 +2561,9 @@ let let_in_multi_bind () : unit result =
     expect_eq program "sum" (e_tuple [e_int 10; e_int 10]) (e_int 20)
   in
   let%bind () =
-    expect_eq program "sum2"
+    expect_eq
+      program
+      "sum2"
       (e_tuple [e_string "my"; e_string "name"; e_string "is"; e_string "bob"])
       (e_string "mynameisbob")
   in
@@ -2445,7 +2572,10 @@ let let_in_multi_bind () : unit result =
 let bytes_unpack () : unit result =
   let%bind program = type_file "./contracts/bytes_unpack.ligo" in
   let%bind () =
-    expect_eq program "id_string" (e_string "teststring")
+    expect_eq
+      program
+      "id_string"
+      (e_string "teststring")
       (e_some (e_string "teststring"))
   in
   let%bind () = expect_eq program "id_int" (e_int 42) (e_some (e_int 42)) in
@@ -2462,7 +2592,10 @@ let bytes_unpack () : unit result =
 let bytes_unpack_mligo () : unit result =
   let%bind program = mtype_file "./contracts/bytes_unpack.mligo" in
   let%bind () =
-    expect_eq program "id_string" (e_string "teststring")
+    expect_eq
+      program
+      "id_string"
+      (e_string "teststring")
       (e_some (e_string "teststring"))
   in
   let%bind () = expect_eq program "id_int" (e_int 42) (e_some (e_int 42)) in
@@ -2479,7 +2612,10 @@ let bytes_unpack_mligo () : unit result =
 let bytes_unpack_religo () : unit result =
   let%bind program = retype_file "./contracts/bytes_unpack.religo" in
   let%bind () =
-    expect_eq program "id_string" (e_string "teststring")
+    expect_eq
+      program
+      "id_string"
+      (e_string "teststring")
       (e_some (e_string "teststring"))
   in
   let%bind () = expect_eq program "id_int" (e_int 42) (e_some (e_int 42)) in
@@ -2600,7 +2736,8 @@ let loop_bugs_ligo () : unit result =
   ok ()
 
 let main =
-  test_suite "Integration (End to End)"
+  test_suite
+    "Integration (End to End)"
     [ test "bytes unpack" bytes_unpack;
       test "bytes unpack (mligo)" bytes_unpack_mligo;
       test "bytes unpack (religo)" bytes_unpack_religo;
@@ -2756,7 +2893,8 @@ let main =
       test "is_nat" is_nat;
       test "is_nat (mligo)" is_nat_mligo;
       test "is_nat (religo)" is_nat_religo;
-      test "tuples_sequences_functions (religo)"
+      test
+        "tuples_sequences_functions (religo)"
         tuples_sequences_functions_religo;
       test "simple_access (ligo)" simple_access_ligo;
       test "deep_access (ligo)" deep_access_ligo;

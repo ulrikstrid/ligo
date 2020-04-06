@@ -5,7 +5,8 @@ open Test_helpers
 let () =
   Printexc.record_backtrace true ;
   run_test
-  @@ test_suite "LIGO"
+  @@ test_suite
+       "LIGO"
        [ Integration_tests.main;
          Transpiler_tests.main;
          Typer_tests.main;

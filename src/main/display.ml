@@ -9,8 +9,10 @@ let rec error_pp ?(dev = false) out (e : error) =
   let error_code =
     let error_code = e |> member "error_code" in
     match error_code with
-    | `Null -> ""
-    | _     -> " (" ^ J.to_string error_code ^ ")"
+    | `Null ->
+        ""
+    | _ ->
+        " (" ^ J.to_string error_code ^ ")"
   in
   let title =
     let opt = e |> member "title" |> string in
@@ -32,16 +34,23 @@ let rec error_pp ?(dev = false) out (e : error) =
     let opt = e |> member "data" |> member "location" |> string in
     let aux cur prec =
       match prec with
-      | None   -> cur |> member "data" |> member "location" |> string
-      | Some s -> Some s
+      | None ->
+          cur |> member "data" |> member "location" |> string
+      | Some s ->
+          Some s
     in
     match List.fold_right aux infos opt with None -> "" | Some s -> s ^ ". "
   in
   let print x = Format.fprintf out x in
-  if not dev then
-    print "%s%s%s%s%s" location title error_code message data
+  if not dev then print "%s%s%s%s%s" location title error_code message data
   else
-    print "%s%s%s.\n%s%s\n%a\n%a\n" title error_code message data location
+    print
+      "%s%s%s.\n%s%s\n%a\n%a\n"
+      title
+      error_code
+      message
+      data
+      location
       (Format.pp_print_list (error_pp ~dev))
       infos
       (Format.pp_print_list (error_pp ~dev))
@@ -49,16 +58,20 @@ let rec error_pp ?(dev = false) out (e : error) =
 
 let result_pp_hr f out (r : _ result) =
   match r with
-  | Ok (s, _) -> Format.fprintf out "%a" f s
-  | Error e   -> Format.fprintf out "%a" (error_pp ~dev:false) (e ())
+  | Ok (s, _) ->
+      Format.fprintf out "%a" f s
+  | Error e ->
+      Format.fprintf out "%a" (error_pp ~dev:false) (e ())
 
 let string_result_pp_hr =
   result_pp_hr (fun out s -> Format.fprintf out "%s\n" s)
 
 let result_pp_dev f out (r : _ result) =
   match r with
-  | Ok (s, _) -> Format.fprintf out "%a" f s
-  | Error e   -> Format.fprintf out "%a" (error_pp ~dev:true) (e ())
+  | Ok (s, _) ->
+      Format.fprintf out "%a" f s
+  | Error e ->
+      Format.fprintf out "%a" (error_pp ~dev:true) (e ())
 
 let string_result_pp_dev =
   result_pp_hr (fun out s -> Format.fprintf out "%s\n" s)
@@ -72,20 +85,27 @@ let string_result_pp_json out (r : string result) =
   match r with
   | Ok (x, _) ->
       Format.fprintf out "%a\n" json_pp (status_json "ok" (`String x))
-  | Error e   -> Format.fprintf out "%a\n" json_pp (status_json "error" (e ()))
+  | Error e ->
+      Format.fprintf out "%a\n" json_pp (status_json "error" (e ()))
 
 type display_format = [`Human_readable | `Json | `Dev]
 
 let formatted_string_result_pp (display_format : display_format) =
   match display_format with
-  | `Human_readable -> string_result_pp_hr
-  | `Dev            -> string_result_pp_dev
-  | `Json           -> string_result_pp_json
+  | `Human_readable ->
+      string_result_pp_hr
+  | `Dev ->
+      string_result_pp_dev
+  | `Json ->
+      string_result_pp_json
 
 type michelson_format = [`Text | `Json | `Hex]
 
 let michelson_pp (mf : michelson_format) =
   match mf with
-  | `Text -> Michelson.pp
-  | `Json -> Michelson.pp_json
-  | `Hex  -> Michelson.pp_hex
+  | `Text ->
+      Michelson.pp
+  | `Json ->
+      Michelson.pp_json
+  | `Hex ->
+      Michelson.pp_hex

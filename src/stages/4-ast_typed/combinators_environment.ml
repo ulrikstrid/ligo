@@ -32,8 +32,6 @@ let e_a_empty_lambda l i o = e_a_lambda l i o Environment.full_empty
 
 open Environment
 
-let env_sum_type
-    ?(env = full_empty)
-    ?(type_name = Var.of_name "a_sum_type")
+let env_sum_type ?(env = full_empty) ?(type_name = Var.of_name "a_sum_type")
     (lst : (constructor' * type_expression) list) =
   add_type type_name (make_t_ez_sum lst) env

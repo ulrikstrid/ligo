@@ -17,16 +17,18 @@ type markup = t
 let sprintf = Printf.sprintf
 
 let to_lexeme = function
-  | Tabs Region.{value; _} -> String.make value '\t'
-  | Space Region.{value; _} -> String.make value ' '
+  | Tabs Region.{value; _} ->
+      String.make value '\t'
+  | Space Region.{value; _} ->
+      String.make value ' '
   | Newline Region.{value; _}
-   |LineCom Region.{value; _}
-   |BlockCom Region.{value; _}
-   |BOM Region.{value; _} ->
+  | LineCom Region.{value; _}
+  | BlockCom Region.{value; _}
+  | BOM Region.{value; _} ->
       value
 
 let to_string markup ?(offsets = true) mode =
-  let region, val_str =
+  let (region, val_str) =
     match markup with
     | Tabs Region.{value; region} ->
         let lex = String.make value '\t' |> String.escaped in

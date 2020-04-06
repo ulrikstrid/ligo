@@ -36,8 +36,10 @@ module Make (Lexer : Lexer.S) : S with module Lexer = Lexer = struct
     let output str = Printf.fprintf channel "%s%!" str in
     let output_nl str = output (str ^ "\n") in
     match command with
-    | EvalOpt.Quiet -> ()
-    | EvalOpt.Tokens -> Token.to_string token ~offsets mode |> output_nl
+    | EvalOpt.Quiet ->
+        ()
+    | EvalOpt.Tokens ->
+        Token.to_string token ~offsets mode |> output_nl
     | EvalOpt.Copy ->
         let lexeme = Token.to_lexeme token
         and apply acc markup = Markup.to_lexeme markup :: acc in
@@ -46,8 +48,7 @@ module Make (Lexer : Lexer.S) : S with module Lexer = Lexer = struct
         let abs_token = Token.to_string token ~offsets mode
         and apply acc markup = Markup.to_string markup ~offsets mode :: acc in
         List.fold_left apply [abs_token] left_mark
-        |> String.concat "\n"
-        |> output_nl
+        |> String.concat "\n" |> output_nl
 
   type file_path = string
 
@@ -55,8 +56,10 @@ module Make (Lexer : Lexer.S) : S with module Lexer = Lexer = struct
       (unit, string Region.reg) Stdlib.result =
     let input =
       match file_path_opt with
-      | Some file_path -> Lexer.File file_path
-      | None           -> Lexer.Stdin
+      | Some file_path ->
+          Lexer.File file_path
+      | None ->
+          Lexer.Stdin
     in
     match Lexer.open_token_stream input with
     | Ok Lexer.{read; buffer; close; _} ->
@@ -65,15 +68,14 @@ module Make (Lexer : Lexer.S) : S with module Lexer = Lexer = struct
         let rec iter () =
           match read ~log buffer with
           | token ->
-              if Token.is_eof token then
-                Stdlib.Ok ()
-              else
-                iter ()
+              if Token.is_eof token then Stdlib.Ok () else iter ()
           | exception Lexer.Error error ->
               let file =
                 match file_path_opt with
-                | None | Some "-" -> false
-                | Some _ -> true
+                | None | Some "-" ->
+                    false
+                | Some _ ->
+                    true
               in
               let msg = Lexer.format_error ~offsets mode ~file error in
               Stdlib.Error msg

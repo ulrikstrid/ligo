@@ -5,17 +5,17 @@
 *)
 type command = Quiet | Copy | Units | Tokens
 
-type options =
-  < input: string option
-  ; libs: string list
-  ; verbose: Utils.String.Set.t
-  ; offsets: bool
-  ; mode: [`Byte | `Point]
-  ; cmd: command
-  ; mono: bool
-  ; expr: bool >
 (** The type [options] gathers the command-line options.
 *)
+type options =
+  < input : string option
+  ; libs : string list
+  ; verbose : Utils.String.Set.t
+  ; offsets : bool
+  ; mode : [`Byte | `Point]
+  ; cmd : command
+  ; mono : bool
+  ; expr : bool >
 
 let make ~input ~libs ~verbose ~offsets ~mode ~cmd ~mono ~expr =
   object
@@ -53,7 +53,9 @@ let abort msg =
 let help language extension () =
   let file = Filename.basename Sys.argv.(0) in
   printf "Usage: %s [<option> ...] [<input>%s | \"-\"]\n" file extension ;
-  printf "where <input>%s is the %s source file (default: stdin),\n" extension
+  printf
+    "where <input>%s is the %s source file (default: stdin),\n"
+    extension
     language ;
   print "and each <option> (if any) is one of the following:" ;
   print "  -I <paths>             Library paths (colon-separated)" ;
@@ -110,7 +112,8 @@ let add_verbose d =
   verbose :=
     List.fold_left
       (Utils.swap Utils.String.Set.add)
-      !verbose (split_at_colon d)
+      !verbose
+      (split_at_colon d)
 
 let specs language extension =
   let open! Getopt in
@@ -131,7 +134,8 @@ let specs language extension =
 *)
 let anonymous arg =
   match !input with
-  | None   -> input := Some arg
+  | None ->
+      input := Some arg
   | Some s ->
       Printf.printf "s=%s\n" s ;
       abort (sprintf "Multiple inputs")
@@ -139,8 +143,10 @@ let anonymous arg =
 (** Checking options and exporting them as non-mutable values
 *)
 let string_of convert = function
-  | None   -> "None"
-  | Some s -> sprintf "Some %s" (convert s)
+  | None ->
+      "None"
+  | Some s ->
+      sprintf "Some %s" (convert s)
 
 let string_of_path p =
   let apply s a = if a = "" then s else s ^ ":" ^ a in
@@ -166,15 +172,13 @@ let check extension =
   let () = if Utils.String.Set.mem "cli" !verbose then print_opt () in
   let input =
     match !input with
-    | None | Some "-" -> !input
+    | None | Some "-" ->
+        !input
     | Some file_path ->
         if Filename.check_suffix file_path extension then
-          if Sys.file_exists file_path then
-            Some file_path
-          else
-            abort "Source file not found."
-        else
-          abort ("Source file lacks the extension " ^ extension ^ ".")
+          if Sys.file_exists file_path then Some file_path
+          else abort "Source file not found."
+        else abort ("Source file lacks the extension " ^ extension ^ ".")
   in
   (* Exporting remaining options as non-mutable values *)
   let copy = !copy
@@ -204,11 +208,16 @@ let check extension =
   in
   let cmd =
     match (quiet, copy, units, tokens) with
-    | false, false, false, false | true, false, false, false -> Quiet
-    | false, true, false, false -> Copy
-    | false, false, true, false -> Units
-    | false, false, false, true -> Tokens
-    | _ -> abort "Choose one of -q, -c, -u, -t."
+    | (false, false, false, false) | (true, false, false, false) ->
+        Quiet
+    | (false, true, false, false) ->
+        Copy
+    | (false, false, true, false) ->
+        Units
+    | (false, false, false, true) ->
+        Tokens
+    | _ ->
+        abort "Choose one of -q, -c, -u, -t."
   in
   make ~input ~libs ~verbose ~offsets ~mode ~cmd ~mono ~expr
 

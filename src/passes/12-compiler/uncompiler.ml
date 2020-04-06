@@ -8,57 +8,66 @@ open Script_ir_translator
 
 let rec translate_value (Ex_typed_value (ty, value)) : value result =
   match (ty, value) with
-  | Pair_t ((a_ty, _, _), (b_ty, _, _), _, _), (a, b) ->
+  | (Pair_t ((a_ty, _, _), (b_ty, _, _), _, _), (a, b)) ->
       let%bind a = translate_value @@ Ex_typed_value (a_ty, a) in
       let%bind b = translate_value @@ Ex_typed_value (b_ty, b) in
       ok @@ D_pair (a, b)
-  | Union_t ((a_ty, _), _, _, _), L a ->
+  | (Union_t ((a_ty, _), _, _, _), L a) ->
       let%bind a = translate_value @@ Ex_typed_value (a_ty, a) in
       ok @@ D_left a
-  | Union_t (_, (b_ty, _), _, _), R b ->
+  | (Union_t (_, (b_ty, _), _, _), R b) ->
       let%bind b = translate_value @@ Ex_typed_value (b_ty, b) in
       ok @@ D_right b
-  | Int_t _, n ->
+  | (Int_t _, n) ->
       let%bind n =
         trace_option (simple_error "too big to fit an int")
         @@ Alpha_context.Script_int.to_int n
       in
       ok @@ D_int n
-  | Nat_t _, n ->
+  | (Nat_t _, n) ->
       let%bind n =
         trace_option (simple_error "too big to fit an int")
         @@ Alpha_context.Script_int.to_int n
       in
       ok @@ D_nat n
-  | Chain_id_t _, id ->
+  | (Chain_id_t _, id) ->
       let str =
         Tezos_crypto.Base58.simple_encode
-          Tezos_base__TzPervasives.Chain_id.b58check_encoding id
+          Tezos_base__TzPervasives.Chain_id.b58check_encoding
+          id
       in
       ok @@ D_string str
-  | Key_hash_t _, n -> ok @@ D_string (Signature.Public_key_hash.to_b58check n)
-  | Key_t _, n -> ok @@ D_string (Signature.Public_key.to_b58check n)
-  | Signature_t _, n -> ok @@ D_string (Signature.to_b58check n)
-  | Timestamp_t _, n ->
+  | (Key_hash_t _, n) ->
+      ok @@ D_string (Signature.Public_key_hash.to_b58check n)
+  | (Key_t _, n) ->
+      ok @@ D_string (Signature.Public_key.to_b58check n)
+  | (Signature_t _, n) ->
+      ok @@ D_string (Signature.to_b58check n)
+  | (Timestamp_t _, n) ->
       let n = Z.to_int @@ Alpha_context.Script_timestamp.to_zint n in
       ok @@ D_timestamp n
-  | Mutez_t _, n ->
+  | (Mutez_t _, n) ->
       let%bind n =
         generic_try (simple_error "too big to fit an int")
         @@ fun () -> Int64.to_int @@ Alpha_context.Tez.to_mutez n
       in
       ok @@ D_mutez n
-  | Bool_t _, b -> ok @@ D_bool b
-  | String_t _, s -> ok @@ D_string s
-  | Bytes_t _, b -> ok @@ D_bytes b
-  | Address_t _, (s, _) ->
+  | (Bool_t _, b) ->
+      ok @@ D_bool b
+  | (String_t _, s) ->
+      ok @@ D_string s
+  | (Bytes_t _, b) ->
+      ok @@ D_bytes b
+  | (Address_t _, (s, _)) ->
       ok @@ D_string (Alpha_context.Contract.to_b58check s)
-  | Unit_t _, () -> ok @@ D_unit
-  | Option_t _, None -> ok @@ D_none
-  | Option_t (o_ty, _, _), Some s ->
+  | (Unit_t _, ()) ->
+      ok @@ D_unit
+  | (Option_t _, None) ->
+      ok @@ D_none
+  | (Option_t (o_ty, _, _), Some s) ->
       let%bind s' = translate_value @@ Ex_typed_value (o_ty, s) in
       ok @@ D_some s'
-  | Map_t (k_cty, v_ty, _, _), m ->
+  | (Map_t (k_cty, v_ty, _, _), m) ->
       let k_ty = Script_ir_translator.ty_of_comparable_ty k_cty in
       let lst =
         let aux k v acc = (k, v) :: acc in
@@ -74,7 +83,7 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
         bind_map_list aux lst
       in
       ok @@ D_map lst'
-  | Big_map_t (k_cty, v_ty, _), m ->
+  | (Big_map_t (k_cty, v_ty, _), m) ->
       let k_ty = Script_ir_translator.ty_of_comparable_ty k_cty in
       let lst =
         let aux k v acc = (k, v) :: acc in
@@ -88,22 +97,21 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
           match v with
           | Some vadd ->
               let%bind v' = translate_value (Ex_typed_value (v_ty, vadd)) in
-              if List.mem_assoc k' orig then
-                ok @@ ((k', v') :: orig_rem)
-              else
-                ok @@ ((k', v') :: orig)
-          | None      -> ok orig_rem
+              if List.mem_assoc k' orig then ok @@ ((k', v') :: orig_rem)
+              else ok @@ ((k', v') :: orig)
+          | None ->
+              ok orig_rem
         in
         bind_fold_list aux [] lst
       in
       ok @@ D_big_map lst'
-  | List_t (ty, _, _), lst ->
+  | (List_t (ty, _, _), lst) ->
       let%bind lst' =
         let aux t = translate_value (Ex_typed_value (ty, t)) in
         bind_map_list aux lst
       in
       ok @@ D_list lst'
-  | Set_t (ty, _), (module S) ->
+  | (Set_t (ty, _), (module S)) ->
       let lst = S.OPS.elements S.boxed in
       let lst' =
         let aux acc cur = cur :: acc in
@@ -117,8 +125,9 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
         bind_map_list aux lst'
       in
       ok @@ D_set lst''
-  | Operation_t _, (op, _) -> ok @@ D_operation op
-  | (Lambda_t _ as ty), _ ->
+  | (Operation_t _, (op, _)) ->
+      ok @@ D_operation op
+  | ((Lambda_t _ as ty), _) ->
       let%bind m_ty =
         trace_tzresult_lwt (simple_error "unparsing unrecognized data")
         @@ Proto_alpha_utils.Memory_proto_alpha.unparse_michelson_ty ty
@@ -127,7 +136,7 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
         Format.asprintf "[lambda of type: %a ]" Michelson.pp m_ty
       in
       ok @@ D_string pp_lambda
-  | ty, v ->
+  | (ty, v) ->
       let%bind error =
         let%bind m_data =
           trace_tzresult_lwt (simple_error "unparsing unrecognized data")
@@ -144,6 +153,7 @@ let rec translate_value (Ex_typed_value (ty, value)) : value result =
         @@ fun () ->
         error
           (thunk "this value can't be transpiled back yet")
-          error_content ()
+          error_content
+          ()
       in
       fail error

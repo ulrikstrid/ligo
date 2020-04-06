@@ -5,13 +5,14 @@ let tc type_vars allowed_list = Core.C_typeclass (type_vars, allowed_list)
 let forall binder f =
   let () = ignore binder in
   let freshvar = fresh_type_variable () in
-  P_forall {binder= freshvar; constraints= []; body= f (P_variable freshvar)}
+  P_forall
+    {binder = freshvar; constraints = []; body = f (P_variable freshvar)}
 
 let forall_tc binder f =
   let () = ignore binder in
   let freshvar = fresh_type_variable () in
-  let tc, ty = f (P_variable freshvar) in
-  P_forall {binder= freshvar; constraints= tc; body= ty}
+  let (tc, ty) = f (P_variable freshvar) in
+  P_forall {binder = freshvar; constraints = tc; body = ty}
 
 (* chained forall *)
 let forall2 a b f = forall a @@ fun a' -> forall b @@ fun b' -> f a' b'

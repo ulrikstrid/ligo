@@ -1,9 +1,9 @@
 (** Printing the AST *)
 
-type state
 (** The type [state] captures the state that is threaded in the
     printing iterators in this module.
 *)
+type state
 
 val mk_state :
   offsets:bool -> mode:[`Point | `Byte] -> buffer:Buffer.t -> state

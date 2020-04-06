@@ -187,19 +187,19 @@ type attribute = string reg
 
 (* Parentheses *)
 
-type 'a par = {lpar: lpar; inside: 'a; rpar: rpar}
+type 'a par = {lpar : lpar; inside : 'a; rpar : rpar}
 
 (* Brackets compounds *)
 
-type 'a brackets = {lbracket: lbracket; inside: 'a; rbracket: rbracket}
+type 'a brackets = {lbracket : lbracket; inside : 'a; rbracket : rbracket}
 
 (* Braced compounds *)
 
-type 'a braces = {lbrace: lbrace; inside: 'a; rbrace: rbrace}
+type 'a braces = {lbrace : lbrace; inside : 'a; rbrace : rbrace}
 
 (* The Abstract Syntax Tree *)
 
-type t = {decl: declaration nseq; eof: eof}
+type t = {decl : declaration nseq; eof : eof}
 
 and ast = t
 
@@ -211,23 +211,25 @@ and declaration =
 
 and attr_decl = string reg ne_injection reg
 
-and const_decl =
-  { kwd_const: kwd_const;
-    name: variable;
-    colon: colon;
-    const_type: type_expr;
-    equal: equal;
-    init: expr;
-    terminator: semi option;
-    attributes: attr_decl option }
+and const_decl = {
+  kwd_const : kwd_const;
+  name : variable;
+  colon : colon;
+  const_type : type_expr;
+  equal : equal;
+  init : expr;
+  terminator : semi option;
+  attributes : attr_decl option;
+}
 
 (* Type declarations *)
-and type_decl =
-  { kwd_type: kwd_type;
-    name: type_name;
-    kwd_is: kwd_is;
-    type_expr: type_expr;
-    terminator: semi option }
+and type_decl = {
+  kwd_type : kwd_type;
+  name : type_name;
+  kwd_is : kwd_is;
+  type_expr : type_expr;
+  terminator : semi option;
+}
 
 and type_expr =
   | TProd of cartesian
@@ -240,50 +242,65 @@ and type_expr =
 
 and cartesian = (type_expr, times) nsepseq reg
 
-and variant = {constr: constr; arg: (kwd_of * type_expr) option}
+and variant = {constr : constr; arg : (kwd_of * type_expr) option}
 
-and field_decl = {field_name: field_name; colon: colon; field_type: type_expr}
+and field_decl = {
+  field_name : field_name;
+  colon : colon;
+  field_type : type_expr;
+}
 
 and type_tuple = (type_expr, comma) nsepseq par reg
 
 (* Function and procedure declarations *)
-and fun_expr =
-  { kwd_recursive: kwd_recursive option;
-    kwd_function: kwd_function;
-    param: parameters;
-    colon: colon;
-    ret_type: type_expr;
-    kwd_is: kwd_is;
-    return: expr }
+and fun_expr = {
+  kwd_recursive : kwd_recursive option;
+  kwd_function : kwd_function;
+  param : parameters;
+  colon : colon;
+  ret_type : type_expr;
+  kwd_is : kwd_is;
+  return : expr;
+}
 
-and fun_decl =
-  { kwd_recursive: kwd_recursive option;
-    kwd_function: kwd_function;
-    fun_name: variable;
-    param: parameters;
-    colon: colon;
-    ret_type: type_expr;
-    kwd_is: kwd_is;
-    block_with: (block reg * kwd_with) option;
-    return: expr;
-    terminator: semi option;
-    attributes: attr_decl option }
+and fun_decl = {
+  kwd_recursive : kwd_recursive option;
+  kwd_function : kwd_function;
+  fun_name : variable;
+  param : parameters;
+  colon : colon;
+  ret_type : type_expr;
+  kwd_is : kwd_is;
+  block_with : (block reg * kwd_with) option;
+  return : expr;
+  terminator : semi option;
+  attributes : attr_decl option;
+}
 
 and parameters = (param_decl, semi) nsepseq par reg
 
 and param_decl = ParamConst of param_const reg | ParamVar of param_var reg
 
-and param_const =
-  {kwd_const: kwd_const; var: variable; colon: colon; param_type: type_expr}
+and param_const = {
+  kwd_const : kwd_const;
+  var : variable;
+  colon : colon;
+  param_type : type_expr;
+}
 
-and param_var =
-  {kwd_var: kwd_var; var: variable; colon: colon; param_type: type_expr}
+and param_var = {
+  kwd_var : kwd_var;
+  var : variable;
+  colon : colon;
+  param_type : type_expr;
+}
 
-and block =
-  { opening: block_opening;
-    statements: statements;
-    terminator: semi option;
-    closing: block_closing }
+and block = {
+  opening : block_opening;
+  statements : statements;
+  terminator : semi option;
+  closing : block_closing;
+}
 
 and block_opening = Block of kwd_block * lbrace | Begin of kwd_begin
 
@@ -298,14 +315,15 @@ and data_decl =
   | LocalVar of var_decl reg
   | LocalFun of fun_decl reg
 
-and var_decl =
-  { kwd_var: kwd_var;
-    name: variable;
-    colon: colon;
-    var_type: type_expr;
-    assign: assign;
-    init: expr;
-    terminator: semi option }
+and var_decl = {
+  kwd_var : kwd_var;
+  name : variable;
+  colon : colon;
+  var_type : type_expr;
+  assign : assign;
+  init : expr;
+  terminator : semi option;
+}
 
 and instruction =
   | Cond of conditional reg
@@ -320,54 +338,64 @@ and instruction =
   | MapRemove of map_remove reg
   | SetRemove of set_remove reg
 
-and set_remove =
-  { kwd_remove: kwd_remove;
-    element: expr;
-    kwd_from: kwd_from;
-    kwd_set: kwd_set;
-    set: path }
+and set_remove = {
+  kwd_remove : kwd_remove;
+  element : expr;
+  kwd_from : kwd_from;
+  kwd_set : kwd_set;
+  set : path;
+}
 
-and map_remove =
-  { kwd_remove: kwd_remove;
-    key: expr;
-    kwd_from: kwd_from;
-    kwd_map: kwd_map;
-    map: path }
+and map_remove = {
+  kwd_remove : kwd_remove;
+  key : expr;
+  kwd_from : kwd_from;
+  kwd_map : kwd_map;
+  map : path;
+}
 
-and set_patch =
-  { kwd_patch: kwd_patch;
-    path: path;
-    kwd_with: kwd_with;
-    set_inj: expr ne_injection reg }
+and set_patch = {
+  kwd_patch : kwd_patch;
+  path : path;
+  kwd_with : kwd_with;
+  set_inj : expr ne_injection reg;
+}
 
-and map_patch =
-  { kwd_patch: kwd_patch;
-    path: path;
-    kwd_with: kwd_with;
-    map_inj: binding reg ne_injection reg }
+and map_patch = {
+  kwd_patch : kwd_patch;
+  path : path;
+  kwd_with : kwd_with;
+  map_inj : binding reg ne_injection reg;
+}
 
-and binding = {source: expr; arrow: arrow; image: expr}
+and binding = {source : expr; arrow : arrow; image : expr}
 
-and record_patch =
-  {kwd_patch: kwd_patch; path: path; kwd_with: kwd_with; record_inj: record reg}
+and record_patch = {
+  kwd_patch : kwd_patch;
+  path : path;
+  kwd_with : kwd_with;
+  record_inj : record reg;
+}
 
-and cond_expr =
-  { kwd_if: kwd_if;
-    test: expr;
-    kwd_then: kwd_then;
-    ifso: expr;
-    terminator: semi option;
-    kwd_else: kwd_else;
-    ifnot: expr }
+and cond_expr = {
+  kwd_if : kwd_if;
+  test : expr;
+  kwd_then : kwd_then;
+  ifso : expr;
+  terminator : semi option;
+  kwd_else : kwd_else;
+  ifnot : expr;
+}
 
-and conditional =
-  { kwd_if: kwd_if;
-    test: expr;
-    kwd_then: kwd_then;
-    ifso: if_clause;
-    terminator: semi option;
-    kwd_else: kwd_else;
-    ifnot: if_clause }
+and conditional = {
+  kwd_if : kwd_if;
+  test : expr;
+  kwd_then : kwd_then;
+  ifso : if_clause;
+  terminator : semi option;
+  kwd_else : kwd_else;
+  ifnot : if_clause;
+}
 
 and if_clause = ClauseInstr of instruction | ClauseBlock of clause_block
 
@@ -375,19 +403,20 @@ and clause_block =
   | LongBlock of block reg
   | ShortBlock of (statements * semi option) braces reg
 
-and set_membership = {set: expr; kwd_contains: kwd_contains; element: expr}
+and set_membership = {set : expr; kwd_contains : kwd_contains; element : expr}
 
-and 'a case =
-  { kwd_case: kwd_case;
-    expr: expr;
-    opening: opening;
-    lead_vbar: vbar option;
-    cases: ('a case_clause reg, vbar) nsepseq reg;
-    closing: closing }
+and 'a case = {
+  kwd_case : kwd_case;
+  expr : expr;
+  opening : opening;
+  lead_vbar : vbar option;
+  cases : ('a case_clause reg, vbar) nsepseq reg;
+  closing : closing;
+}
 
-and 'a case_clause = {pattern: pattern; arrow: arrow; rhs: 'a}
+and 'a case_clause = {pattern : pattern; arrow : arrow; rhs : 'a}
 
-and assignment = {lhs: lhs; assign: assign; rhs: rhs}
+and assignment = {lhs : lhs; assign : assign; rhs : rhs}
 
 and lhs = Path of path | MapPath of map_lookup reg
 
@@ -395,27 +424,29 @@ and rhs = expr
 
 and loop = While of while_loop reg | For of for_loop
 
-and while_loop = {kwd_while: kwd_while; cond: expr; block: block reg}
+and while_loop = {kwd_while : kwd_while; cond : expr; block : block reg}
 
 and for_loop = ForInt of for_int reg | ForCollect of for_collect reg
 
-and for_int =
-  { kwd_for: kwd_for;
-    assign: var_assign reg;
-    kwd_to: kwd_to;
-    bound: expr;
-    block: block reg }
+and for_int = {
+  kwd_for : kwd_for;
+  assign : var_assign reg;
+  kwd_to : kwd_to;
+  bound : expr;
+  block : block reg;
+}
 
-and var_assign = {name: variable; assign: assign; expr: expr}
+and var_assign = {name : variable; assign : assign; expr : expr}
 
-and for_collect =
-  { kwd_for: kwd_for;
-    var: variable;
-    bind_to: (arrow * variable) option;
-    kwd_in: kwd_in;
-    collection: collection;
-    expr: expr;
-    block: block reg }
+and for_collect = {
+  kwd_for : kwd_for;
+  var : variable;
+  bind_to : (arrow * variable) option;
+  kwd_in : kwd_in;
+  collection : collection;
+  expr : expr;
+  block : block reg;
+}
 
 and collection = Map of kwd_map | Set of kwd_set | List of kwd_list
 
@@ -446,17 +477,19 @@ and annot_expr = expr * type_expr
 
 and set_expr = SetInj of expr injection reg | SetMem of set_membership reg
 
-and 'a injection =
-  { opening: opening;
-    elements: ('a, semi) sepseq;
-    terminator: semi option;
-    closing: closing }
+and 'a injection = {
+  opening : opening;
+  elements : ('a, semi) sepseq;
+  terminator : semi option;
+  closing : closing;
+}
 
-and 'a ne_injection =
-  { opening: opening;
-    ne_elements: ('a, semi) nsepseq;
-    terminator: semi option;
-    closing: closing }
+and 'a ne_injection = {
+  opening : opening;
+  ne_elements : ('a, semi) nsepseq;
+  terminator : semi option;
+  closing : closing;
+}
 
 and opening = Kwd of keyword | KwdBracket of keyword * lbracket
 
@@ -467,7 +500,7 @@ and map_expr =
   | MapInj of binding reg injection reg
   | BigMapInj of binding reg injection reg
 
-and map_lookup = {path: path; index: expr brackets reg}
+and map_lookup = {path : path; index : expr brackets reg}
 
 and path = Name of variable | Path of projection reg
 
@@ -480,9 +513,9 @@ and bool_expr =
   | False of c_False
   | True of c_True
 
-and 'a bin_op = {op: 'a; arg1: expr; arg2: expr}
+and 'a bin_op = {op : 'a; arg1 : expr; arg2 : expr}
 
-and 'a un_op = {op: 'a; arg: expr}
+and 'a un_op = {op : 'a; arg : expr}
 
 and comp_expr =
   | Lt of lt bin_op reg
@@ -515,20 +548,27 @@ and constr_expr =
   | NoneExpr of c_None
   | ConstrApp of (constr * arguments option) reg
 
-and field_assign = {field_name: field_name; equal: equal; field_expr: expr}
+and field_assign = {field_name : field_name; equal : equal; field_expr : expr}
 
 and record = field_assign reg ne_injection
 
-and projection =
-  {struct_name: variable; selector: dot; field_path: (selection, dot) nsepseq}
+and projection = {
+  struct_name : variable;
+  selector : dot;
+  field_path : (selection, dot) nsepseq;
+}
 
-and update =
-  { record: path;
-    kwd_with: kwd_with;
-    updates: field_path_assign reg ne_injection reg }
+and update = {
+  record : path;
+  kwd_with : kwd_with;
+  updates : field_path_assign reg ne_injection reg;
+}
 
-and field_path_assign =
-  {field_path: (field_name, dot) nsepseq; equal: equal; field_expr: expr}
+and field_path_assign = {
+  field_path : (field_name, dot) nsepseq;
+  equal : equal;
+  field_expr : expr;
+}
 
 and selection =
   | FieldName of field_name
@@ -571,9 +611,12 @@ and list_pattern =
 (* Projecting regions *)
 
 let rec last to_region = function
-  | []         -> Region.ghost
-  | [x] -> to_region x
-  | _ :: t  -> last to_region t
+  | [] ->
+      Region.ghost
+  | [x] ->
+      to_region x
+  | _ :: t ->
+      last to_region t
 
 let nseq_to_region to_region (hd, tl) =
   Region.cover (to_region hd) (last to_region tl)
@@ -583,152 +626,180 @@ let nsepseq_to_region to_region (hd, tl) =
   Region.cover (to_region hd) (last reg tl)
 
 let sepseq_to_region to_region = function
-  | None     -> Region.ghost
-  | Some seq -> nsepseq_to_region to_region seq
+  | None ->
+      Region.ghost
+  | Some seq ->
+      nsepseq_to_region to_region seq
 
 let type_expr_to_region = function
   | TProd {region; _}
-   |TSum {region; _}
-   |TRecord {region; _}
-   |TApp {region; _}
-   |TFun {region; _}
-   |TPar {region; _}
-   |TVar {region; _} ->
+  | TSum {region; _}
+  | TRecord {region; _}
+  | TApp {region; _}
+  | TFun {region; _}
+  | TPar {region; _}
+  | TVar {region; _} ->
       region
 
 let rec expr_to_region = function
-  | ELogic e -> logic_expr_to_region e
-  | EArith e -> arith_expr_to_region e
-  | EString e -> string_expr_to_region e
-  | EAnnot e -> annot_expr_to_region e
-  | EList e -> list_expr_to_region e
-  | ESet e -> set_expr_to_region e
-  | EConstr e -> constr_expr_to_region e
-  | ERecord e -> record_expr_to_region e
-  | EMap e -> map_expr_to_region e
-  | ETuple e -> tuple_expr_to_region e
+  | ELogic e ->
+      logic_expr_to_region e
+  | EArith e ->
+      arith_expr_to_region e
+  | EString e ->
+      string_expr_to_region e
+  | EAnnot e ->
+      annot_expr_to_region e
+  | EList e ->
+      list_expr_to_region e
+  | ESet e ->
+      set_expr_to_region e
+  | EConstr e ->
+      constr_expr_to_region e
+  | ERecord e ->
+      record_expr_to_region e
+  | EMap e ->
+      map_expr_to_region e
+  | ETuple e ->
+      tuple_expr_to_region e
   | EUpdate {region; _}
-   |EProj {region; _}
-   |EVar {region; _}
-   |ECall {region; _}
-   |EBytes {region; _}
-   |EUnit region
-   |ECase {region; _}
-   |ECond {region; _}
-   |EPar {region; _}
-   |EFun {region; _} ->
+  | EProj {region; _}
+  | EVar {region; _}
+  | ECall {region; _}
+  | EBytes {region; _}
+  | EUnit region
+  | ECase {region; _}
+  | ECond {region; _}
+  | EPar {region; _}
+  | EFun {region; _} ->
       region
 
 and tuple_expr_to_region {region; _} = region
 
 and map_expr_to_region = function
-  | MapLookUp {region; _} | MapInj {region; _} -> region
-  | BigMapInj {region; _} -> region
+  | MapLookUp {region; _} | MapInj {region; _} ->
+      region
+  | BigMapInj {region; _} ->
+      region
 
 and set_expr_to_region = function
-  | SetInj {region; _} | SetMem {region; _} -> region
+  | SetInj {region; _} | SetMem {region; _} ->
+      region
 
 and logic_expr_to_region = function
-  | BoolExpr e -> bool_expr_to_region e
-  | CompExpr e -> comp_expr_to_region e
+  | BoolExpr e ->
+      bool_expr_to_region e
+  | CompExpr e ->
+      comp_expr_to_region e
 
 and bool_expr_to_region = function
   | Or {region; _}
-   |And {region; _}
-   |Not {region; _}
-   |False region
-   |True region ->
+  | And {region; _}
+  | Not {region; _}
+  | False region
+  | True region ->
       region
 
 and comp_expr_to_region = function
   | Lt {region; _}
-   |Leq {region; _}
-   |Gt {region; _}
-   |Geq {region; _}
-   |Equal {region; _}
-   |Neq {region; _} ->
+  | Leq {region; _}
+  | Gt {region; _}
+  | Geq {region; _}
+  | Equal {region; _}
+  | Neq {region; _} ->
       region
 
 and arith_expr_to_region = function
   | Add {region; _}
-   |Sub {region; _}
-   |Mult {region; _}
-   |Div {region; _}
-   |Mod {region; _}
-   |Neg {region; _}
-   |Int {region; _}
-   |Nat {region; _}
-   |Mutez {region; _} ->
+  | Sub {region; _}
+  | Mult {region; _}
+  | Div {region; _}
+  | Mod {region; _}
+  | Neg {region; _}
+  | Int {region; _}
+  | Nat {region; _}
+  | Mutez {region; _} ->
       region
 
 and string_expr_to_region = function
-  | Cat {region; _} | String {region; _} -> region
+  | Cat {region; _} | String {region; _} ->
+      region
 
 and annot_expr_to_region {region; _} = region
 
 and list_expr_to_region = function
-  | ECons {region; _} | EListComp {region; _} | ENil region -> region
+  | ECons {region; _} | EListComp {region; _} | ENil region ->
+      region
 
 and constr_expr_to_region = function
-  | NoneExpr region | ConstrApp {region; _} | SomeApp {region; _} -> region
+  | NoneExpr region | ConstrApp {region; _} | SomeApp {region; _} ->
+      region
 
 and record_expr_to_region {region; _} = region
 
 let path_to_region = function
-  | Name var -> var.region
-  | Path {region; _} -> region
+  | Name var ->
+      var.region
+  | Path {region; _} ->
+      region
 
 let instr_to_region = function
   | Cond {region; _}
-   |CaseInstr {region; _}
-   |Assign {region; _}
-   |Loop (While {region; _})
-   |Loop (For (ForInt {region; _}))
-   |Loop (For (ForCollect {region; _}))
-   |ProcCall {region; _}
-   |Skip region
-   |RecordPatch {region; _}
-   |MapPatch {region; _}
-   |SetPatch {region; _}
-   |MapRemove {region; _}
-   |SetRemove {region; _} ->
+  | CaseInstr {region; _}
+  | Assign {region; _}
+  | Loop (While {region; _})
+  | Loop (For (ForInt {region; _}))
+  | Loop (For (ForCollect {region; _}))
+  | ProcCall {region; _}
+  | Skip region
+  | RecordPatch {region; _}
+  | MapPatch {region; _}
+  | SetPatch {region; _}
+  | MapRemove {region; _}
+  | SetRemove {region; _} ->
       region
 
 let clause_block_to_region = function
-  | LongBlock {region; _} | ShortBlock {region; _} -> region
+  | LongBlock {region; _} | ShortBlock {region; _} ->
+      region
 
 let if_clause_to_region = function
-  | ClauseInstr instr        -> instr_to_region instr
-  | ClauseBlock clause_block -> clause_block_to_region clause_block
+  | ClauseInstr instr ->
+      instr_to_region instr
+  | ClauseBlock clause_block ->
+      clause_block_to_region clause_block
 
 let pattern_to_region = function
   | PVar {region; _}
-   |PWild region
-   |PInt {region; _}
-   |PNat {region; _}
-   |PBytes {region; _}
-   |PString {region; _}
-   |PConstr (PUnit region)
-   |PConstr (PFalse region)
-   |PConstr (PTrue region)
-   |PConstr (PNone region)
-   |PConstr (PSomeApp {region; _})
-   |PConstr (PConstrApp {region; _})
-   |PList (PListComp {region; _})
-   |PList (PNil region)
-   |PList (PParCons {region; _})
-   |PList (PCons {region; _})
-   |PTuple {region; _} ->
+  | PWild region
+  | PInt {region; _}
+  | PNat {region; _}
+  | PBytes {region; _}
+  | PString {region; _}
+  | PConstr (PUnit region)
+  | PConstr (PFalse region)
+  | PConstr (PTrue region)
+  | PConstr (PNone region)
+  | PConstr (PSomeApp {region; _})
+  | PConstr (PConstrApp {region; _})
+  | PList (PListComp {region; _})
+  | PList (PNil region)
+  | PList (PParCons {region; _})
+  | PList (PCons {region; _})
+  | PTuple {region; _} ->
       region
 
 let lhs_to_region : lhs -> Region.t = function
-  | Path path -> path_to_region path
-  | MapPath {region; _} -> region
+  | Path path ->
+      path_to_region path
+  | MapPath {region; _} ->
+      region
 
 let rhs_to_region = expr_to_region
 
 let selection_to_region = function
-  | FieldName {region; _} | Component {region; _} -> region
+  | FieldName {region; _} | Component {region; _} ->
+      region
 
 let map_ne_injection f ne_injection =
-  {ne_injection with ne_elements= nsepseq_map f ne_injection.ne_elements}
+  {ne_injection with ne_elements = nsepseq_map f ne_injection.ne_elements}

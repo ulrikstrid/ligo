@@ -20,8 +20,13 @@ module PreIO = struct
   let ext = ".ligo"
 
   let pre_options =
-    EvalOpt.make ~libs:[] ~verbose:SSet.empty ~offsets:true ~mode:`Point
-      ~cmd:EvalOpt.Quiet ~mono:false
+    EvalOpt.make
+      ~libs:[]
+      ~verbose:SSet.empty
+      ~offsets:true
+      ~mode:`Point
+      ~cmd:EvalOpt.Quiet
+      ~mono:false
 end
 
 module Parser = struct
@@ -82,14 +87,15 @@ end
 let parse (module IO : IO) parser =
   let module Unit = PreUnit (IO) in
   let local_fail error =
-    Trace.fail
-    @@ Errors.generic
+    Trace.fail @@ Errors.generic
     @@ Unit.format_error ~offsets:IO.options#offsets IO.options#mode error
   in
   match parser () with
-  | Stdlib.Ok semantic_value -> Trace.ok semantic_value
+  | Stdlib.Ok semantic_value ->
+      Trace.ok semantic_value
   (* Lexing and parsing errors *)
-  | Stdlib.Error error -> Trace.fail @@ Errors.generic error
+  | Stdlib.Error error ->
+      Trace.fail @@ Errors.generic error
   (* Scoping errors *)
   | exception Scoping.Error (Scoping.Reserved_name name) -> (
       let token = Lexer.Token.mk_ident name.Region.value name.Region.region in
@@ -140,23 +146,25 @@ let parse_file (source : string) =
   end in
   let lib_path =
     match IO.options#libs with
-    | []   -> ""
+    | [] ->
+        ""
     | libs ->
         let mk_I dir path = Printf.sprintf " -I %s%s" dir path in
         List.fold_right mk_I libs ""
   in
   let prefix =
     match IO.options#input with
-    | None | Some "-" -> "temp"
-    | Some file -> Filename.(remove_extension @@ basename file)
+    | None | Some "-" ->
+        "temp"
+    | Some file ->
+        Filename.(remove_extension @@ basename file)
   in
   let suffix = ".pp" ^ IO.ext in
   let pp_input =
-    if SSet.mem "cpp" IO.options#verbose then
-      prefix ^ suffix
-    else (
-      let pp_input, pp_out = Filename.open_temp_file prefix suffix in
-      close_out pp_out ; pp_input )
+    if SSet.mem "cpp" IO.options#verbose then prefix ^ suffix
+    else
+      let (pp_input, pp_out) = Filename.open_temp_file prefix suffix in
+      close_out pp_out ; pp_input
   in
   let cpp_cmd =
     match IO.options#input with

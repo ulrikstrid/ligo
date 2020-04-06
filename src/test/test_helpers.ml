@@ -7,15 +7,17 @@ type test = Test_suite of (string * test list) | Test of test_case
 let wrap_test name f =
   let result = trace (error (thunk "running test") (thunk name)) @@ f () in
   match result with
-  | Ok ((), annotations) -> ignore annotations ; ()
-  | Error err            ->
+  | Ok ((), annotations) ->
+      ignore annotations ; ()
+  | Error err ->
       Format.printf "%a\n%!" (Ligo.Display.error_pp ~dev:true) (err ()) ;
       raise Alcotest.Test_error
 
 let wrap_test_raw f =
   match f () with
-  | Ok ((), annotations) -> ignore annotations ; ()
-  | Error err            ->
+  | Ok ((), annotations) ->
+      ignore annotations ; ()
+  | Error err ->
       Format.printf "%a\n%!" (Ligo.Display.error_pp ~dev:true) (err ())
 
 let test name f =
@@ -36,8 +38,10 @@ let pack_payload (program : Ast_typed.program) (payload : expression) :
     let env = Ast_typed.program_environment program in
     let%bind sugar = Compile.Of_imperative.compile_expression payload in
     let%bind core = Compile.Of_sugar.compile_expression sugar in
-    let%bind typed, _ =
-      Compile.Of_core.compile_expression ~env ~state:Typer.Solver.initial_state
+    let%bind (typed, _) =
+      Compile.Of_core.compile_expression
+        ~env
+        ~state:Typer.Solver.initial_state
         core
     in
     let%bind mini_c = Compile.Of_typed.compile_expression typed in
@@ -68,7 +72,7 @@ let addr id =
 
 let gen_keys () =
   let open Tezos_crypto in
-  let raw_pkh, raw_pk, raw_sk = Signature.generate_key () in
+  let (raw_pkh, raw_pk, raw_sk) = Signature.generate_key () in
   (raw_pkh, raw_pk, raw_sk)
 
 let str_keys (raw_pkh, raw_pk, raw_sk) =
@@ -85,8 +89,7 @@ let sha_256_hash pl =
 open Ast_imperative.Combinators
 
 let typed_program_with_imperative_input_to_michelson
-    (program : Ast_typed.program)
-    (entry_point : string)
+    (program : Ast_typed.program) (entry_point : string)
     (input : Ast_imperative.expression) : Compiler.compiled_expression result =
   Printexc.record_backtrace true ;
   let env = Ast_typed.program_environment program in
@@ -94,25 +97,30 @@ let typed_program_with_imperative_input_to_michelson
   let%bind sugar = Compile.Of_imperative.compile_expression input in
   let%bind core = Compile.Of_sugar.compile_expression sugar in
   let%bind app = Compile.Of_core.apply entry_point core in
-  let%bind typed_app, _ = Compile.Of_core.compile_expression ~env ~state app in
+  let%bind (typed_app, _) =
+    Compile.Of_core.compile_expression ~env ~state app
+  in
   let%bind compiled_applied = Compile.Of_typed.compile_expression typed_app in
   let%bind mini_c_prg = Compile.Of_typed.compile program in
-  Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg
+  Compile.Of_mini_c.aggregate_and_compile_expression
+    mini_c_prg
     compiled_applied
 
-let run_typed_program_with_imperative_input
-    ?options
-    (program : Ast_typed.program)
-    (entry_point : string)
+let run_typed_program_with_imperative_input ?options
+    (program : Ast_typed.program) (entry_point : string)
     (input : Ast_imperative.expression) : Ast_core.expression result =
   let%bind michelson_program =
     typed_program_with_imperative_input_to_michelson program entry_point input
   in
   let%bind michelson_output =
-    Ligo.Run.Of_michelson.run_no_failwith ?options michelson_program.expr
+    Ligo.Run.Of_michelson.run_no_failwith
+      ?options
+      michelson_program.expr
       michelson_program.expr_ty
   in
-  Uncompile.uncompile_typed_program_entry_function_result program entry_point
+  Uncompile.uncompile_typed_program_entry_function_result
+    program
+    entry_point
     michelson_output
 
 let expect ?options program entry_point input expecter =
@@ -123,7 +131,10 @@ let expect ?options program entry_point input expecter =
       error title content
     in
     trace run_error
-    @@ run_typed_program_with_imperative_input ?options program entry_point
+    @@ run_typed_program_with_imperative_input
+         ?options
+         program
+         entry_point
          input
   in
   expecter result
@@ -134,8 +145,7 @@ let expect_fail ?options program entry_point input =
     let content () = Format.asprintf "Entry_point: %s" entry_point in
     error title content
   in
-  trace run_error
-  @@ Assert.assert_fail
+  trace run_error @@ Assert.assert_fail
   @@ run_typed_program_with_imperative_input ?options program entry_point input
 
 let expect_string_failwith ?options program entry_point input expected_failwith
@@ -144,13 +154,16 @@ let expect_string_failwith ?options program entry_point input expected_failwith
     typed_program_with_imperative_input_to_michelson program entry_point input
   in
   let%bind err =
-    Ligo.Run.Of_michelson.run_failwith ?options michelson_program.expr
+    Ligo.Run.Of_michelson.run_failwith
+      ?options
+      michelson_program.expr
       michelson_program.expr_ty
   in
   match err with
   | Ligo.Run.Of_michelson.Failwith_string s ->
       Assert.assert_equal_string expected_failwith s
-  | _ -> simple_fail "Expected to fail with a string"
+  | _ ->
+      simple_fail "Expected to fail with a string"
 
 let expect_eq ?options program entry_point input expected =
   let%bind expected = expression_to_core expected in
@@ -158,8 +171,12 @@ let expect_eq ?options program entry_point input expected =
     let expect_error =
       let title () = "expect result" in
       let content () =
-        Format.asprintf "Expected %a, got %a" Ast_core.PP.expression expected
-          Ast_core.PP.expression result
+        Format.asprintf
+          "Expected %a, got %a"
+          Ast_core.PP.expression
+          expected
+          Ast_core.PP.expression
+          result
       in
       error title content
     in
@@ -172,8 +189,12 @@ let expect_eq_core ?options program entry_point input expected =
     let expect_error =
       let title () = "expect result" in
       let content () =
-        Format.asprintf "Expected %a, got %a" Ast_core.PP.expression expected
-          Ast_core.PP.expression result
+        Format.asprintf
+          "Expected %a, got %a"
+          Ast_core.PP.expression
+          expected
+          Ast_core.PP.expression
+          result
       in
       error title content
     in
@@ -189,17 +210,20 @@ let expect_evaluate program entry_point expecter =
   in
   trace error
   @@ let%bind mini_c = Ligo.Compile.Of_typed.compile program in
-     let%bind exp, _ = Mini_c.get_entry mini_c entry_point in
+     let%bind (exp, _) = Mini_c.get_entry mini_c entry_point in
      let%bind michelson_value =
        Ligo.Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp
      in
      let%bind res_michelson =
-       Ligo.Run.Of_michelson.run_no_failwith michelson_value.expr
+       Ligo.Run.Of_michelson.run_no_failwith
+         michelson_value.expr
          michelson_value.expr_ty
      in
      let%bind res_simpl =
-       Uncompile.uncompile_typed_program_entry_expression_result program
-         entry_point res_michelson
+       Uncompile.uncompile_typed_program_entry_expression_result
+         program
+         entry_point
+         res_michelson
      in
      expecter res_simpl
 
@@ -220,12 +244,7 @@ let expect_n_aux ?options lst program entry_point make_input make_expecter =
   let%bind _ = bind_map_list aux lst in
   ok ()
 
-let expect_eq_n_trace_aux
-    ?options
-    lst
-    program
-    entry_point
-    make_input
+let expect_eq_n_trace_aux ?options lst program entry_point make_input
     make_expected =
   let aux n =
     let%bind input = make_input n in
@@ -238,12 +257,7 @@ let expect_eq_n_trace_aux
   let%bind _ = bind_map_list_seq aux lst in
   ok ()
 
-let expect_eq_exp_trace_aux
-    ?options
-    explst
-    program
-    entry_point
-    make_input
+let expect_eq_exp_trace_aux ?options explst program entry_point make_input
     make_expected =
   let aux exp =
     let%bind input = make_input exp in
@@ -257,13 +271,8 @@ let expect_eq_exp_trace_aux
   let%bind _ = bind_map_list_seq aux explst in
   ok ()
 
-let expect_failwith_exp_trace_aux
-    ?options
-    explst
-    program
-    entry_point
-    make_input
-    make_expected_failwith =
+let expect_failwith_exp_trace_aux ?options explst program entry_point
+    make_input make_expected_failwith =
   let aux exp =
     let%bind input = make_input exp in
     let%bind expected = make_expected_failwith exp in
@@ -321,10 +330,11 @@ let expect_eq_b_bool a b c = expect_eq_b a b (fun bool -> e_bool (c bool))
 
 let rec test_height : test -> int =
  fun t ->
-   match t with
-   | Test _              -> 1
-   | Test_suite (_, lst) ->
-       (List.fold_left max 1 @@ List.map test_height lst) + 1
+  match t with
+  | Test _ ->
+      1
+  | Test_suite (_, lst) ->
+      (List.fold_left max 1 @@ List.map test_height lst) + 1
 
 let extract_test : test -> test_case =
  fun t -> match t with Test tc -> tc | _ -> assert false
@@ -333,14 +343,18 @@ let extract_param : test -> string * (string * test_case list) list =
   let extract_element = extract_test in
   let extract_group : test -> string * test_case list =
    fun t ->
-     match t with
-     | Test tc                -> ("isolated", [tc])
-     | Test_suite (name, lst) -> (name, List.map extract_element lst)
+    match t with
+    | Test tc ->
+        ("isolated", [tc])
+    | Test_suite (name, lst) ->
+        (name, List.map extract_element lst)
   in
   fun t ->
     match t with
-    | Test tc                -> ("", [("isolated", [tc])])
-    | Test_suite (name, lst) -> (name, List.map extract_group lst)
+    | Test tc ->
+        ("", [("isolated", [tc])])
+    | Test_suite (name, lst) ->
+        (name, List.map extract_group lst)
 
 let x : _ -> unit Alcotest.test = fun x -> x
 
@@ -351,11 +365,11 @@ let x : _ -> unit Alcotest.test = fun x -> x
 
 let rec run_test ?(prefix = "") : test -> unit =
  fun t ->
-   match t with
-   | Test case              -> Alcotest.run "isolated test" [("", [case])]
-   | Test_suite (name, lst) ->
-       if test_height t <= 3 then (
-         let name, tests = extract_param t in
-         Alcotest.run (prefix ^ name) tests )
-       else
-         List.iter (run_test ~prefix:(prefix ^ name ^ "_")) lst
+  match t with
+  | Test case ->
+      Alcotest.run "isolated test" [("", [case])]
+  | Test_suite (name, lst) ->
+      if test_height t <= 3 then
+        let (name, tests) = extract_param t in
+        Alcotest.run (prefix ^ name) tests
+      else List.iter (run_test ~prefix:(prefix ^ name ^ "_")) lst

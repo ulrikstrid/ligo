@@ -28,7 +28,7 @@ type lexeme = string
 
 (* TOKENS *)
 
-type attribute = {header: string; string: lexeme Region.reg}
+type attribute = {header : string; string : lexeme Region.reg}
 
 type t =
   (* Literals *)

@@ -6,17 +6,23 @@ type v_syntax = PascaLIGO | CameLIGO | ReasonLIGO
 
 let syntax_to_variant (Syntax_name syntax) source =
   match (syntax, source) with
-  | "auto", Some sf -> (
+  | ("auto", Some sf) -> (
     match Filename.extension sf with
-    | ".ligo" | ".pligo" -> ok PascaLIGO
-    | ".mligo" -> ok CameLIGO
-    | ".religo" -> ok ReasonLIGO
+    | ".ligo" | ".pligo" ->
+        ok PascaLIGO
+    | ".mligo" ->
+        ok CameLIGO
+    | ".religo" ->
+        ok ReasonLIGO
     | _ ->
         simple_fail
           "Cannot auto-detect the syntax.\nHint: Use -s <name of syntax>\n" )
-  | ("pascaligo" | "PascaLIGO"), _ -> ok PascaLIGO
-  | ("cameligo" | "CameLIGO"), _ -> ok CameLIGO
-  | ("reasonligo" | "ReasonLIGO"), _ -> ok ReasonLIGO
+  | (("pascaligo" | "PascaLIGO"), _) ->
+      ok PascaLIGO
+  | (("cameligo" | "CameLIGO"), _) ->
+      ok CameLIGO
+  | (("reasonligo" | "ReasonLIGO"), _) ->
+      ok ReasonLIGO
   | _ ->
       simple_fail
         "Invalid syntax name.\n\
@@ -88,9 +94,12 @@ let parsify_expression_reasonligo source =
 let parsify syntax source =
   let%bind parsify =
     match syntax with
-    | PascaLIGO  -> ok parsify_pascaligo
-    | CameLIGO   -> ok parsify_cameligo
-    | ReasonLIGO -> ok parsify_reasonligo
+    | PascaLIGO ->
+        ok parsify_pascaligo
+    | CameLIGO ->
+        ok parsify_cameligo
+    | ReasonLIGO ->
+        ok parsify_reasonligo
   in
   let%bind parsified = parsify source in
   let%bind applied = Self_ast_imperative.all_program parsified in
@@ -99,9 +108,12 @@ let parsify syntax source =
 let parsify_expression syntax source =
   let%bind parsify =
     match syntax with
-    | PascaLIGO  -> ok parsify_expression_pascaligo
-    | CameLIGO   -> ok parsify_expression_cameligo
-    | ReasonLIGO -> ok parsify_expression_reasonligo
+    | PascaLIGO ->
+        ok parsify_expression_pascaligo
+    | CameLIGO ->
+        ok parsify_expression_cameligo
+    | ReasonLIGO ->
+        ok parsify_expression_reasonligo
   in
   let%bind parsified = parsify source in
   let%bind applied = Self_ast_imperative.all_expression parsified in
@@ -140,9 +152,12 @@ let parsify_string_cameligo source =
 let parsify_string syntax source =
   let%bind parsify =
     match syntax with
-    | PascaLIGO  -> ok parsify_string_pascaligo
-    | CameLIGO   -> ok parsify_string_cameligo
-    | ReasonLIGO -> ok parsify_string_reasonligo
+    | PascaLIGO ->
+        ok parsify_string_pascaligo
+    | CameLIGO ->
+        ok parsify_string_cameligo
+    | ReasonLIGO ->
+        ok parsify_string_reasonligo
   in
   let%bind parsified = parsify source in
   let%bind applied = Self_ast_imperative.all_program parsified in
@@ -180,6 +195,9 @@ let pretty_print_reasonligo source =
 let pretty_print syntax source =
   let%bind v_syntax = syntax_to_variant syntax (Some source) in
   match v_syntax with
-  | PascaLIGO  -> pretty_print_pascaligo source
-  | CameLIGO   -> pretty_print_cameligo source
-  | ReasonLIGO -> pretty_print_reasonligo source
+  | PascaLIGO ->
+      pretty_print_pascaligo source
+  | CameLIGO ->
+      pretty_print_cameligo source
+  | ReasonLIGO ->
+      pretty_print_reasonligo source

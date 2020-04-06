@@ -51,7 +51,10 @@ struct
   module Log = LexerLog.Make (Lexer)
 
   let log =
-    Log.output_token ~offsets:IO.options#offsets IO.options#mode IO.options#cmd
+    Log.output_token
+      ~offsets:IO.options#offsets
+      IO.options#mode
+      IO.options#cmd
       stdout
 
   (* Error handling (reexported from [ParserAPI]) *)
@@ -78,18 +81,19 @@ struct
   let parse_expr lexer_inst : (AST.expr, message Region.reg) Stdlib.result =
     let output = Buffer.create 131 in
     let state =
-      ParserLog.mk_state ~offsets:IO.options#offsets ~mode:IO.options#mode
+      ParserLog.mk_state
+        ~offsets:IO.options#offsets
+        ~mode:IO.options#mode
         ~buffer:output
     in
     let close () = lexer_inst.Lexer.close () in
     let expr =
       try
-        if IO.options#mono then (
+        if IO.options#mono then
           let tokeniser = lexer_inst.Lexer.read ~log
           and lexbuf = lexer_inst.Lexer.buffer in
-          Front.mono_expr tokeniser lexbuf )
-        else
-          Front.incr_expr lexer_inst
+          Front.mono_expr tokeniser lexbuf
+        else Front.incr_expr lexer_inst
       with exn -> close () ; raise exn
     in
     let () =
@@ -111,18 +115,19 @@ struct
   let parse_contract lexer_inst : (AST.t, message Region.reg) Stdlib.result =
     let output = Buffer.create 131 in
     let state =
-      ParserLog.mk_state ~offsets:IO.options#offsets ~mode:IO.options#mode
+      ParserLog.mk_state
+        ~offsets:IO.options#offsets
+        ~mode:IO.options#mode
         ~buffer:output
     in
     let close () = lexer_inst.Lexer.close () in
     let ast =
       try
-        if IO.options#mono then (
+        if IO.options#mono then
           let tokeniser = lexer_inst.Lexer.read ~log
           and lexbuf = lexer_inst.Lexer.buffer in
-          Front.mono_contract tokeniser lexbuf )
-        else
-          Front.incr_contract lexer_inst
+          Front.mono_contract tokeniser lexbuf
+        else Front.incr_contract lexer_inst
       with exn -> close () ; raise exn
     in
     let () =
@@ -146,17 +151,24 @@ struct
   let apply lexer_inst parser =
     (* Calling the parser and filtering errors *)
     match parser lexer_inst with
-    | Stdlib.Error _ as error -> error
-    | Stdlib.Ok _ as node -> node
+    | Stdlib.Error _ as error ->
+        error
+    | Stdlib.Ok _ as node ->
+        node
     (* Lexing errors *)
     | exception Lexer.Error err ->
         let file =
           match IO.options#input with
-          | None | Some "-" -> false
-          | Some _ -> true
+          | None | Some "-" ->
+              false
+          | Some _ ->
+              true
         in
         let error =
-          Lexer.format_error ~offsets:IO.options#offsets IO.options#mode err
+          Lexer.format_error
+            ~offsets:IO.options#offsets
+            IO.options#mode
+            err
             ~file
         in
         Stdlib.Error error
@@ -168,11 +180,14 @@ struct
         Stdlib.Error error
     (* Monolithic API of Menhir *)
     | exception Parser.Error ->
-        let invalid, valid_opt =
+        let (invalid, valid_opt) =
           match lexer_inst.Lexer.get_win () with
-          | Lexer.Nil -> assert false (* Safe: There is always at least EOF. *)
-          | Lexer.One invalid -> (invalid, None)
-          | Lexer.Two (invalid, valid) -> (invalid, Some valid)
+          | Lexer.Nil ->
+              assert false (* Safe: There is always at least EOF. *)
+          | Lexer.One invalid ->
+              (invalid, None)
+          | Lexer.Two (invalid, valid) ->
+              (invalid, Some valid)
         in
         let point = ("", valid_opt, invalid) in
         let error =
@@ -180,5 +195,6 @@ struct
         in
         Stdlib.Error error
     (* I/O errors *)
-    | exception Sys_error error -> Stdlib.Error (Region.wrap_ghost error)
+    | exception Sys_error error ->
+        Stdlib.Error (Region.wrap_ghost error)
 end

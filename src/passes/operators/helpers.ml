@@ -6,8 +6,11 @@ module Typer = struct
     let wrong_param_number name expected got =
       let title () = "wrong number of params" in
       let full () =
-        Format.asprintf "constant name: %s\nexpected: %d\ngot: %d\n" name
-          expected (List.length got)
+        Format.asprintf
+          "constant name: %s\nexpected: %d\ngot: %d\n"
+          name
+          expected
+          (List.length got)
       in
       error title full
 
@@ -31,42 +34,46 @@ module Typer = struct
   let typer_0 :
       string -> (type_expression option -> type_expression result) -> typer =
    fun s f lst tv_opt ->
-     match lst with
-     | [] ->
-         let%bind tv' = f tv_opt in
-         ok tv'
-     | _  -> fail @@ wrong_param_number s 0 lst
+    match lst with
+    | [] ->
+        let%bind tv' = f tv_opt in
+        ok tv'
+    | _ ->
+        fail @@ wrong_param_number s 0 lst
 
   let typer_1 : string -> (type_expression -> type_expression result) -> typer
       =
    fun s f lst _ ->
-     match lst with
-     | [a] ->
-         let%bind tv' = f a in
-         ok tv'
-     | _          -> fail @@ wrong_param_number s 1 lst
+    match lst with
+    | [a] ->
+        let%bind tv' = f a in
+        ok tv'
+    | _ ->
+        fail @@ wrong_param_number s 1 lst
 
   let typer_1_opt :
       string ->
       (type_expression -> type_expression option -> type_expression result) ->
       typer =
    fun s f lst tv_opt ->
-     match lst with
-     | [a] ->
-         let%bind tv' = f a tv_opt in
-         ok tv'
-     | _          -> fail @@ wrong_param_number s 1 lst
+    match lst with
+    | [a] ->
+        let%bind tv' = f a tv_opt in
+        ok tv'
+    | _ ->
+        fail @@ wrong_param_number s 1 lst
 
   let typer_2 :
       string ->
       (type_expression -> type_expression -> type_expression result) ->
       typer =
    fun s f lst _ ->
-     match lst with
-     | [a; b] ->
-         let%bind tv' = f a b in
-         ok tv'
-     | _                    -> fail @@ wrong_param_number s 2 lst
+    match lst with
+    | [a; b] ->
+        let%bind tv' = f a b in
+        ok tv'
+    | _ ->
+        fail @@ wrong_param_number s 2 lst
 
   let typer_2_opt :
       string ->
@@ -76,11 +83,12 @@ module Typer = struct
       type_expression result) ->
       typer =
    fun s f lst tv_opt ->
-     match lst with
-     | [a; b] ->
-         let%bind tv' = f a b tv_opt in
-         ok tv'
-     | _                    -> fail @@ wrong_param_number s 2 lst
+    match lst with
+    | [a; b] ->
+        let%bind tv' = f a b tv_opt in
+        ok tv'
+    | _ ->
+        fail @@ wrong_param_number s 2 lst
 
   let typer_3 :
       string ->
@@ -90,11 +98,12 @@ module Typer = struct
       type_expression result) ->
       typer =
    fun s f lst _ ->
-     match lst with
-     | [a; b; c] ->
-         let%bind tv' = f a b c in
-         ok tv'
-     | _                              -> fail @@ wrong_param_number s 3 lst
+    match lst with
+    | [a; b; c] ->
+        let%bind tv' = f a b c in
+        ok tv'
+    | _ ->
+        fail @@ wrong_param_number s 3 lst
 
   let typer_4 :
       string ->
@@ -105,12 +114,12 @@ module Typer = struct
       type_expression result) ->
       typer =
    fun s f lst _ ->
-     match lst with
-     | [a; b; c; d] ->
-         let%bind tv' = f a b c d in
-         ok tv'
-     | _                                        -> fail
-                                                   @@ wrong_param_number s 4 lst
+    match lst with
+    | [a; b; c; d] ->
+        let%bind tv' = f a b c d in
+        ok tv'
+    | _ ->
+        fail @@ wrong_param_number s 4 lst
 
   let typer_5 :
       string ->
@@ -122,13 +131,12 @@ module Typer = struct
       type_expression result) ->
       typer =
    fun s f lst _ ->
-     match lst with
-     | [a; b; c; d; e] ->
-         let%bind tv' = f a b c d e in
-         ok tv'
-     | _                                                  -> fail
-                                                             @@ wrong_param_number
-                                                                  s 5 lst
+    match lst with
+    | [a; b; c; d; e] ->
+        let%bind tv' = f a b c d e in
+        ok tv'
+    | _ ->
+        fail @@ wrong_param_number s 5 lst
 
   let typer_6 :
       string ->
@@ -141,15 +149,12 @@ module Typer = struct
       type_expression result) ->
       typer =
    fun s f lst _ ->
-     match lst with
-     | [a; b; c; d; e; f_] ->
-         let%bind tv' = f a b c d e f_ in
-         ok tv'
-     | _                                                             -> fail
-                                                                        @@ wrong_param_number
-                                                                             s
-                                                                             6
-                                                                             lst
+    match lst with
+    | [a; b; c; d; e; f_] ->
+        let%bind tv' = f a b c d e f_ in
+        ok tv'
+    | _ ->
+        fail @@ wrong_param_number s 6 lst
 
   let constant' name cst = typer_0 name (fun _ -> ok cst)
 
@@ -164,40 +169,40 @@ module Typer = struct
 
   let comparator : string -> typer =
    fun s ->
-     typer_2 s
-     @@ fun a b ->
-     let%bind () =
-       trace_strong (error_uncomparable_types a b)
-       @@ Assert.assert_true
-       @@ List.exists
-            (eq_2 (a, b))
-            [ t_int ();
-              t_nat ();
-              t_bool ();
-              t_mutez ();
-              t_string ();
-              t_bytes ();
-              t_address ();
-              t_timestamp ();
-              t_key_hash () ]
-     in
-     ok @@ t_bool ()
+    typer_2 s
+    @@ fun a b ->
+    let%bind () =
+      trace_strong (error_uncomparable_types a b)
+      @@ Assert.assert_true
+      @@ List.exists
+           (eq_2 (a, b))
+           [ t_int ();
+             t_nat ();
+             t_bool ();
+             t_mutez ();
+             t_string ();
+             t_bytes ();
+             t_address ();
+             t_timestamp ();
+             t_key_hash () ]
+    in
+    ok @@ t_bool ()
 
   let boolean_operator_2 : string -> typer =
    fun s ->
-     typer_2 s
-     @@ fun a b ->
-     let%bind () =
-       trace_strong (simple_error "A isn't of type bool")
-       @@ Assert.assert_true
-       @@ type_expression_eq (t_bool (), a)
-     in
-     let%bind () =
-       trace_strong (simple_error "B isn't of type bool")
-       @@ Assert.assert_true
-       @@ type_expression_eq (t_bool (), b)
-     in
-     ok @@ t_bool ()
+    typer_2 s
+    @@ fun a b ->
+    let%bind () =
+      trace_strong (simple_error "A isn't of type bool")
+      @@ Assert.assert_true
+      @@ type_expression_eq (t_bool (), a)
+    in
+    let%bind () =
+      trace_strong (simple_error "B isn't of type bool")
+      @@ Assert.assert_true
+      @@ type_expression_eq (t_bool (), b)
+    in
+    ok @@ t_bool ()
 end
 
 module Compiler = struct

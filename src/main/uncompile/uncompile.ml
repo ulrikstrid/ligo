@@ -6,9 +6,10 @@ let uncompile_value func_or_expr program entry ex_ty_value =
   let%bind entry_expression = Ast_typed.get_entry program entry in
   let%bind output_type =
     match func_or_expr with
-    | Expression -> ok entry_expression.type_expression
-    | Function   ->
-        let%bind _, output_type =
+    | Expression ->
+        ok entry_expression.type_expression
+    | Function ->
+        let%bind (_, output_type) =
           Ast_typed.get_t_function entry_expression.type_expression
         in
         ok output_type

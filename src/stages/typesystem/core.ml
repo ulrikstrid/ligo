@@ -43,8 +43,11 @@ type type_value =
   | P_constant of (constant_tag * type_value list)
   | P_apply of (type_value * type_value)
 
-and p_forall =
-  {binder: type_variable; constraints: type_constraint list; body: type_value}
+and p_forall = {
+  binder : type_variable;
+  constraints : type_constraint list;
+  body : type_value;
+}
 
 (* Different type of constraint *)
 (* why isn't this a variant ? *)
@@ -79,35 +82,68 @@ and typeclass = type_value list list
 open Trace
 
 let type_expression'_of_simple_c_constant = function
-  | C_contract, [x] -> ok @@ Ast_typed.T_operator (TC_contract x)
-  | C_option, [x] -> ok @@ Ast_typed.T_operator (TC_option x)
-  | C_list, [x] -> ok @@ Ast_typed.T_operator (TC_list x)
-  | C_set, [x] -> ok @@ Ast_typed.T_operator (TC_set x)
-  | C_map, [x; y] -> ok @@ Ast_typed.T_operator (TC_map (x, y))
-  | C_big_map, [x; y] -> ok @@ Ast_typed.T_operator (TC_big_map (x, y))
-  | C_arrow, [x; y] -> ok @@ Ast_typed.T_operator (TC_arrow (x, y))
-  | C_record, _lst ->
+  | (C_contract, [x]) ->
+      ok @@ Ast_typed.T_operator (TC_contract x)
+  | (C_option, [x]) ->
+      ok @@ Ast_typed.T_operator (TC_option x)
+  | (C_list, [x]) ->
+      ok @@ Ast_typed.T_operator (TC_list x)
+  | (C_set, [x]) ->
+      ok @@ Ast_typed.T_operator (TC_set x)
+  | (C_map, [x; y]) ->
+      ok @@ Ast_typed.T_operator (TC_map (x, y))
+  | (C_big_map, [x; y]) ->
+      ok @@ Ast_typed.T_operator (TC_big_map (x, y))
+  | (C_arrow, [x; y]) ->
+      ok @@ Ast_typed.T_operator (TC_arrow (x, y))
+  | (C_record, _lst) ->
       ok @@ failwith "records are not supported yet: T_record lst"
-  | C_variant, _lst -> ok @@ failwith "sums are not supported yet: T_sum lst"
-  | (C_contract | C_option | C_list | C_set | C_map | C_big_map | C_arrow), _
+  | (C_variant, _lst) ->
+      ok @@ failwith "sums are not supported yet: T_sum lst"
+  | ((C_contract | C_option | C_list | C_set | C_map | C_big_map | C_arrow), _)
     ->
       failwith "internal error: wrong number of arguments for type operator"
-  | C_unit, [] -> ok @@ Ast_typed.T_constant TC_unit
-  | C_string, [] -> ok @@ Ast_typed.T_constant TC_string
-  | C_bytes, [] -> ok @@ Ast_typed.T_constant TC_bytes
-  | C_nat, [] -> ok @@ Ast_typed.T_constant TC_nat
-  | C_int, [] -> ok @@ Ast_typed.T_constant TC_int
-  | C_mutez, [] -> ok @@ Ast_typed.T_constant TC_mutez
-  | C_bool, [] -> ok @@ Ast_typed.T_constant TC_bool
-  | C_operation, [] -> ok @@ Ast_typed.T_constant TC_operation
-  | C_address, [] -> ok @@ Ast_typed.T_constant TC_address
-  | C_key, [] -> ok @@ Ast_typed.T_constant TC_key
-  | C_key_hash, [] -> ok @@ Ast_typed.T_constant TC_key_hash
-  | C_chain_id, [] -> ok @@ Ast_typed.T_constant TC_chain_id
-  | C_signature, [] -> ok @@ Ast_typed.T_constant TC_signature
-  | C_timestamp, [] -> ok @@ Ast_typed.T_constant TC_timestamp
-  | ( ( C_unit | C_string | C_bytes | C_nat | C_int | C_mutez | C_bool
-      | C_operation | C_address | C_key | C_key_hash | C_chain_id | C_signature
+  | (C_unit, []) ->
+      ok @@ Ast_typed.T_constant TC_unit
+  | (C_string, []) ->
+      ok @@ Ast_typed.T_constant TC_string
+  | (C_bytes, []) ->
+      ok @@ Ast_typed.T_constant TC_bytes
+  | (C_nat, []) ->
+      ok @@ Ast_typed.T_constant TC_nat
+  | (C_int, []) ->
+      ok @@ Ast_typed.T_constant TC_int
+  | (C_mutez, []) ->
+      ok @@ Ast_typed.T_constant TC_mutez
+  | (C_bool, []) ->
+      ok @@ Ast_typed.T_constant TC_bool
+  | (C_operation, []) ->
+      ok @@ Ast_typed.T_constant TC_operation
+  | (C_address, []) ->
+      ok @@ Ast_typed.T_constant TC_address
+  | (C_key, []) ->
+      ok @@ Ast_typed.T_constant TC_key
+  | (C_key_hash, []) ->
+      ok @@ Ast_typed.T_constant TC_key_hash
+  | (C_chain_id, []) ->
+      ok @@ Ast_typed.T_constant TC_chain_id
+  | (C_signature, []) ->
+      ok @@ Ast_typed.T_constant TC_signature
+  | (C_timestamp, []) ->
+      ok @@ Ast_typed.T_constant TC_timestamp
+  | ( ( C_unit
+      | C_string
+      | C_bytes
+      | C_nat
+      | C_int
+      | C_mutez
+      | C_bool
+      | C_operation
+      | C_address
+      | C_key
+      | C_key_hash
+      | C_chain_id
+      | C_signature
       | C_timestamp ),
       _ :: _ ) ->
       failwith "internal error: wrong number of arguments for type constant"

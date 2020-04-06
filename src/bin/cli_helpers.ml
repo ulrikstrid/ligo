@@ -14,14 +14,15 @@ let error_suggest : string =
 let toplevel ~(display_format : display_format) (x : string result) :
     unit Term.ret =
   match x with
-  | Ok _    ->
+  | Ok _ ->
       Format.printf "%a%!" (formatted_string_result_pp display_format) x ;
       `Ok ()
   | Error _ ->
-      begin
-        match display_format with
-        | `Human_readable -> print_string error_suggest | _               -> ()
-      end ;
+      ( match display_format with
+      | `Human_readable ->
+          print_string error_suggest
+      | _ ->
+          () ) ;
       `Error
         ( false,
           Format.asprintf "%a%!" (formatted_string_result_pp display_format) x

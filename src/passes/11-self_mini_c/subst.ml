@@ -17,84 +17,82 @@ open Mini_c
 *)
 let rec replace : expression -> var_name -> var_name -> expression =
  fun e x y ->
-   let replace e = replace e x y in
-   let return content = {e with content} in
-   let replace_var v =
-     if Var.equal v x then
-       y
-     else
-       v
-   in
-   match e.content with
-   | E_literal _ -> e
-   | E_closure {binder; body} ->
-       let body = replace body in
-       let binder = replace_var binder in
-       return @@ E_closure {binder; body}
-   | E_skip -> e
-   | E_constant c ->
-       let args = List.map replace c.arguments in
-       return @@ E_constant {cons_name= c.cons_name; arguments= args}
-   | E_application (f, x) ->
-       let f, x = Tuple.map2 replace (f, x) in
-       return @@ E_application (f, x)
-   | E_variable z ->
-       let z = replace_var z in
-       return @@ E_variable z
-   | E_make_none _ -> e
-   | E_iterator (name, ((v, tv), body), expr) ->
-       let body = replace body in
-       let expr = replace expr in
-       let v = replace_var v in
-       return @@ E_iterator (name, ((v, tv), body), expr)
-   | E_fold (((v, tv), body), collection, initial) ->
-       let body = replace body in
-       let collection = replace collection in
-       let initial = replace initial in
-       let v = replace_var v in
-       return @@ E_fold (((v, tv), body), collection, initial)
-   | E_if_bool (c, bt, bf) ->
-       let c = replace c in
-       let bt = replace bt in
-       let bf = replace bf in
-       return @@ E_if_bool (c, bt, bf)
-   | E_if_none (c, bt, ((v, tv), bf)) ->
-       let c = replace c in
-       let bt = replace bt in
-       let bf = replace bf in
-       let v = replace_var v in
-       return @@ E_if_none (c, bt, ((v, tv), bf))
-   | E_if_cons (c, bf, (((v1, tv1), (v2, tv2)), bt)) ->
-       let c = replace c in
-       let bf = replace bf in
-       let v1 = replace_var v1 in
-       let v2 = replace_var v2 in
-       let bt = replace bt in
-       return @@ E_if_cons (c, bf, (((v1, tv1), (v2, tv2)), bt))
-   | E_if_left (c, ((v1, tv1), bt), ((v2, tv2), bf)) ->
-       let c = replace c in
-       let bf = replace bf in
-       let v1 = replace_var v1 in
-       let v2 = replace_var v2 in
-       let bt = replace bt in
-       return @@ E_if_left (c, ((v1, tv1), bt), ((v2, tv2), bf))
-   | E_let_in ((v, tv), inline, e1, e2) ->
-       let v = replace_var v in
-       let e1 = replace e1 in
-       let e2 = replace e2 in
-       return @@ E_let_in ((v, tv), inline, e1, e2)
-   | E_sequence (e1, e2) ->
-       let e1 = replace e1 in
-       let e2 = replace e2 in
-       return @@ E_sequence (e1, e2)
-   | E_record_update (r, p, e) ->
-       let r = replace r in
-       let e = replace e in
-       return @@ E_record_update (r, p, e)
-   | E_while (cond, body) ->
-       let cond = replace cond in
-       let body = replace body in
-       return @@ E_while (cond, body)
+  let replace e = replace e x y in
+  let return content = {e with content} in
+  let replace_var v = if Var.equal v x then y else v in
+  match e.content with
+  | E_literal _ ->
+      e
+  | E_closure {binder; body} ->
+      let body = replace body in
+      let binder = replace_var binder in
+      return @@ E_closure {binder; body}
+  | E_skip ->
+      e
+  | E_constant c ->
+      let args = List.map replace c.arguments in
+      return @@ E_constant {cons_name = c.cons_name; arguments = args}
+  | E_application (f, x) ->
+      let (f, x) = Tuple.map2 replace (f, x) in
+      return @@ E_application (f, x)
+  | E_variable z ->
+      let z = replace_var z in
+      return @@ E_variable z
+  | E_make_none _ ->
+      e
+  | E_iterator (name, ((v, tv), body), expr) ->
+      let body = replace body in
+      let expr = replace expr in
+      let v = replace_var v in
+      return @@ E_iterator (name, ((v, tv), body), expr)
+  | E_fold (((v, tv), body), collection, initial) ->
+      let body = replace body in
+      let collection = replace collection in
+      let initial = replace initial in
+      let v = replace_var v in
+      return @@ E_fold (((v, tv), body), collection, initial)
+  | E_if_bool (c, bt, bf) ->
+      let c = replace c in
+      let bt = replace bt in
+      let bf = replace bf in
+      return @@ E_if_bool (c, bt, bf)
+  | E_if_none (c, bt, ((v, tv), bf)) ->
+      let c = replace c in
+      let bt = replace bt in
+      let bf = replace bf in
+      let v = replace_var v in
+      return @@ E_if_none (c, bt, ((v, tv), bf))
+  | E_if_cons (c, bf, (((v1, tv1), (v2, tv2)), bt)) ->
+      let c = replace c in
+      let bf = replace bf in
+      let v1 = replace_var v1 in
+      let v2 = replace_var v2 in
+      let bt = replace bt in
+      return @@ E_if_cons (c, bf, (((v1, tv1), (v2, tv2)), bt))
+  | E_if_left (c, ((v1, tv1), bt), ((v2, tv2), bf)) ->
+      let c = replace c in
+      let bf = replace bf in
+      let v1 = replace_var v1 in
+      let v2 = replace_var v2 in
+      let bt = replace bt in
+      return @@ E_if_left (c, ((v1, tv1), bt), ((v2, tv2), bf))
+  | E_let_in ((v, tv), inline, e1, e2) ->
+      let v = replace_var v in
+      let e1 = replace e1 in
+      let e2 = replace e2 in
+      return @@ E_let_in ((v, tv), inline, e1, e2)
+  | E_sequence (e1, e2) ->
+      let e1 = replace e1 in
+      let e2 = replace e2 in
+      return @@ E_sequence (e1, e2)
+  | E_record_update (r, p, e) ->
+      let r = replace r in
+      let e = replace e in
+      return @@ E_record_update (r, p, e)
+  | E_while (cond, body) ->
+      let cond = replace cond in
+      let body = replace body in
+      return @@ E_while (cond, body)
 
 (**
    Computes `body[x := expr]`.
@@ -103,98 +101,102 @@ let rec replace : expression -> var_name -> var_name -> expression =
 let rec subst_expression :
     body:expression -> x:var_name -> expr:expression -> expression =
  fun ~body ~x ~expr ->
-   let self body = subst_expression ~body ~x ~expr in
-   let subst_binder y expr' =
-     (* if x is shadowed, binder doesn't change *)
-     if Var.equal x y then
-       (y, expr') (* else, if no capture, subst in binder *)
-     else if not (Free_variables.mem y (Free_variables.expression [] expr))
-     then
-       (y, self expr') (* else, avoid capture and subst in binder *)
-     else (
-       let fresh = Var.fresh_like y in
-       let new_body = replace expr' y fresh in
-       (fresh, self new_body) )
-   in
-   (* hack to avoid reimplementing subst_binder for 2-ary binder in E_if_cons:
+  let self body = subst_expression ~body ~x ~expr in
+  let subst_binder y expr' =
+    (* if x is shadowed, binder doesn't change *)
+    if Var.equal x y then (y, expr') (* else, if no capture, subst in binder *)
+    else if not (Free_variables.mem y (Free_variables.expression [] expr)) then
+      (y, self expr') (* else, avoid capture and subst in binder *)
+    else
+      let fresh = Var.fresh_like y in
+      let new_body = replace expr' y fresh in
+      (fresh, self new_body)
+  in
+  (* hack to avoid reimplementing subst_binder for 2-ary binder in E_if_cons:
      intuitively, we substitute in \hd tl. expr' as if it were \hd. \tl. expr *)
-   let subst_binder2 y z expr' =
-     let dummy = T_base TC_unit in
-     let hack =
-       {content= E_closure {binder= z; body= expr'}; type_value= dummy}
-     in
-     match subst_binder y hack with
-     | y', {content= E_closure {binder= z'; body}; type_value= _dummy} ->
-         (y', z', {body with type_value= expr'.type_value})
-     | _ -> assert false
-   in
-   let return content = {body with content} in
-   let return_id = body in
-   match body.content with
-   | E_variable x' ->
-       if x' = x then
-         expr
-       else
-         return_id
-   | E_closure {binder; body} ->
-       let binder, body = subst_binder binder body in
-       return @@ E_closure {binder; body}
-   | E_let_in ((v, tv), inline, expr, body) ->
-       let expr = self expr in
-       let v, body = subst_binder v body in
-       return @@ E_let_in ((v, tv), inline, expr, body)
-   | E_iterator (s, ((name, tv), body), collection) ->
-       let name, body = subst_binder name body in
-       let collection = self collection in
-       return @@ E_iterator (s, ((name, tv), body), collection)
-   | E_fold (((name, tv), body), collection, init) ->
-       let name, body = subst_binder name body in
-       let collection = self collection in
-       let init = self init in
-       return @@ E_fold (((name, tv), body), collection, init)
-   | E_if_none (c, n, ((name, tv), s)) ->
-       let c = self c in
-       let n = self n in
-       let name, s = subst_binder name s in
-       return @@ E_if_none (c, n, ((name, tv), s))
-   | E_if_cons (c, n, (((hd, hdtv), (tl, tltv)), cons)) ->
-       let c = self c in
-       let n = self n in
-       let hd, tl, cons = subst_binder2 hd tl cons in
-       return @@ E_if_cons (c, n, (((hd, hdtv), (tl, tltv)), cons))
-   | E_if_left (c, ((name_l, tvl), l), ((name_r, tvr), r)) ->
-       let c = self c in
-       let name_l, l = subst_binder name_l l in
-       let name_r, r = subst_binder name_r r in
-       return @@ E_if_left (c, ((name_l, tvl), l), ((name_r, tvr), r))
-   (* All that follows is boilerplate *)
-   | (E_literal _ | E_skip | E_make_none _) as em -> return em
-   | E_constant c ->
-       let lst = List.map self c.arguments in
-       return @@ E_constant {cons_name= c.cons_name; arguments= lst}
-   | E_application farg ->
-       let farg' = Tuple.map2 self farg in
-       return @@ E_application farg'
-   | E_while eb ->
-       let eb' = Tuple.map2 self eb in
-       return @@ E_while eb'
-   | E_if_bool cab ->
-       let cab' = Tuple.map3 self cab in
-       return @@ E_if_bool cab'
-   | E_sequence ab ->
-       let ab' = Tuple.map2 self ab in
-       return @@ E_sequence ab'
-   | E_record_update (r, p, e) ->
-       let r' = self r in
-       let e' = self e in
-       return @@ E_record_update (r', p, e')
+  let subst_binder2 y z expr' =
+    let dummy = T_base TC_unit in
+    let hack =
+      {content = E_closure {binder = z; body = expr'}; type_value = dummy}
+    in
+    match subst_binder y hack with
+    | (y', {content = E_closure {binder = z'; body}; type_value = _dummy}) ->
+        (y', z', {body with type_value = expr'.type_value})
+    | _ ->
+        assert false
+  in
+  let return content = {body with content} in
+  let return_id = body in
+  match body.content with
+  | E_variable x' ->
+      if x' = x then expr else return_id
+  | E_closure {binder; body} ->
+      let (binder, body) = subst_binder binder body in
+      return @@ E_closure {binder; body}
+  | E_let_in ((v, tv), inline, expr, body) ->
+      let expr = self expr in
+      let (v, body) = subst_binder v body in
+      return @@ E_let_in ((v, tv), inline, expr, body)
+  | E_iterator (s, ((name, tv), body), collection) ->
+      let (name, body) = subst_binder name body in
+      let collection = self collection in
+      return @@ E_iterator (s, ((name, tv), body), collection)
+  | E_fold (((name, tv), body), collection, init) ->
+      let (name, body) = subst_binder name body in
+      let collection = self collection in
+      let init = self init in
+      return @@ E_fold (((name, tv), body), collection, init)
+  | E_if_none (c, n, ((name, tv), s)) ->
+      let c = self c in
+      let n = self n in
+      let (name, s) = subst_binder name s in
+      return @@ E_if_none (c, n, ((name, tv), s))
+  | E_if_cons (c, n, (((hd, hdtv), (tl, tltv)), cons)) ->
+      let c = self c in
+      let n = self n in
+      let (hd, tl, cons) = subst_binder2 hd tl cons in
+      return @@ E_if_cons (c, n, (((hd, hdtv), (tl, tltv)), cons))
+  | E_if_left (c, ((name_l, tvl), l), ((name_r, tvr), r)) ->
+      let c = self c in
+      let (name_l, l) = subst_binder name_l l in
+      let (name_r, r) = subst_binder name_r r in
+      return @@ E_if_left (c, ((name_l, tvl), l), ((name_r, tvr), r))
+  (* All that follows is boilerplate *)
+  | (E_literal _ | E_skip | E_make_none _) as em ->
+      return em
+  | E_constant c ->
+      let lst = List.map self c.arguments in
+      return @@ E_constant {cons_name = c.cons_name; arguments = lst}
+  | E_application farg ->
+      let farg' = Tuple.map2 self farg in
+      return @@ E_application farg'
+  | E_while eb ->
+      let eb' = Tuple.map2 self eb in
+      return @@ E_while eb'
+  | E_if_bool cab ->
+      let cab' = Tuple.map3 self cab in
+      return @@ E_if_bool cab'
+  | E_sequence ab ->
+      let ab' = Tuple.map2 self ab in
+      return @@ E_sequence ab'
+  | E_record_update (r, p, e) ->
+      let r' = self r in
+      let e' = self e in
+      return @@ E_record_update (r', p, e')
 
 let%expect_test _ =
   let dummy_type = T_base TC_unit in
-  let wrap e = {content= e; type_value= dummy_type} in
+  let wrap e = {content = e; type_value = dummy_type} in
   let show_subst ~body ~x ~expr =
-    Format.printf "(%a)[%a := %a] =@ %a" PP.expression body Var.pp x
-      PP.expression expr PP.expression
+    Format.printf
+      "(%a)[%a := %a] =@ %a"
+      PP.expression
+      body
+      Var.pp
+      x
+      PP.expression
+      expr
+      PP.expression
       (subst_expression ~body ~x ~expr)
   in
   let x = Var.of_name "x" in
@@ -202,7 +204,7 @@ let%expect_test _ =
   let z = Var.of_name "z" in
   let var x = wrap (E_variable x) in
   let app f x = wrap (E_application (f, x)) in
-  let lam x u = wrap (E_closure {binder= x; body= u}) in
+  let lam x u = wrap (E_closure {binder = x; body = u}) in
   let unit = wrap (E_literal D_unit) in
   (* substituted var *)
   Var.reset_counter () ;
@@ -243,7 +245,8 @@ let%expect_test _ =
   Var.reset_counter () ;
   show_subst
     ~body:(wrap (E_let_in ((x, dummy_type), false, var x, var x)))
-    ~x ~expr:unit ;
+    ~x
+    ~expr:unit ;
   [%expect
     {|
     (let x = x in x)[x := L(unit)] =
@@ -253,7 +256,8 @@ let%expect_test _ =
   Var.reset_counter () ;
   show_subst
     ~body:(wrap (E_let_in ((y, dummy_type), false, var x, var x)))
-    ~x ~expr:unit ;
+    ~x
+    ~expr:unit ;
   [%expect
     {|
     (let y = x in x)[x := L(unit)] =
@@ -264,7 +268,8 @@ let%expect_test _ =
   show_subst
     ~body:
       (wrap (E_let_in ((y, dummy_type), false, var x, app (var x) (var y))))
-    ~x ~expr:(var y) ;
+    ~x
+    ~expr:(var y) ;
   [%expect
     {|
     (let y = x in (x)@(y))[x := y] =
@@ -274,7 +279,8 @@ let%expect_test _ =
   Var.reset_counter () ;
   show_subst
     ~body:(wrap (E_iterator (C_ITER, ((x, dummy_type), var x), var x)))
-    ~x ~expr:unit ;
+    ~x
+    ~expr:unit ;
   [%expect
     {|
     (for_ITER x of x do ( x ))[x := L(unit)] =
@@ -284,7 +290,8 @@ let%expect_test _ =
   Var.reset_counter () ;
   show_subst
     ~body:(wrap (E_iterator (C_ITER, ((y, dummy_type), var x), var x)))
-    ~x ~expr:unit ;
+    ~x
+    ~expr:unit ;
   [%expect
     {|
     (for_ITER y of x do ( x ))[x := L(unit)] =
@@ -299,7 +306,8 @@ let%expect_test _ =
             ( C_ITER,
               ((y, dummy_type), app (var x) (var y)),
               app (var x) (var y) )))
-    ~x ~expr:(var y) ;
+    ~x
+    ~expr:(var y) ;
   [%expect
     {|
     (for_ITER y of (x)@(y) do ( (x)@(y) ))[x := y] =
@@ -311,7 +319,8 @@ let%expect_test _ =
     ~body:
       (wrap
          (E_if_cons (var x, var x, (((x, dummy_type), (y, dummy_type)), var x))))
-    ~x ~expr:unit ;
+    ~x
+    ~expr:unit ;
   [%expect
     {|
     (x ?? x : (x :: y) -> x)[x := L(unit)] =
@@ -323,7 +332,8 @@ let%expect_test _ =
     ~body:
       (wrap
          (E_if_cons (var x, var x, (((y, dummy_type), (x, dummy_type)), var x))))
-    ~x ~expr:unit ;
+    ~x
+    ~expr:unit ;
   [%expect
     {|
     (x ?? x : (y :: x) -> x)[x := L(unit)] =
@@ -335,7 +345,8 @@ let%expect_test _ =
     ~body:
       (wrap
          (E_if_cons (var x, var x, (((y, dummy_type), (z, dummy_type)), var x))))
-    ~x ~expr:unit ;
+    ~x
+    ~expr:unit ;
   [%expect
     {|
     (x ?? x : (y :: z) -> x)[x := L(unit)] =
@@ -351,7 +362,8 @@ let%expect_test _ =
               var x,
               ( ((y, dummy_type), (z, dummy_type)),
                 app (var x) (app (var y) (var z)) ) )))
-    ~x ~expr:(var y) ;
+    ~x
+    ~expr:(var y) ;
   [%expect
     {|
     (x ?? x : (y :: z) -> (x)@((y)@(z)))[x := y] =
@@ -367,7 +379,8 @@ let%expect_test _ =
               var x,
               ( ((y, dummy_type), (z, dummy_type)),
                 app (var x) (app (var y) (var z)) ) )))
-    ~x ~expr:(var z) ;
+    ~x
+    ~expr:(var z) ;
   [%expect
     {|
     (x ?? x : (y :: z) -> (x)@((y)@(z)))[x := z] =
@@ -378,7 +391,8 @@ let%expect_test _ =
   let y0 = Var.fresh ~name:"y" () in
   show_subst
     ~body:(lam y (lam y0 (app (var x) (app (var y) (var y0)))))
-    ~x ~expr:(var y) ;
+    ~x
+    ~expr:(var y) ;
   [%expect
     {|
     (fun y -> (fun y#1 -> ((x)@((y)@(y#1)))))[x := y] =

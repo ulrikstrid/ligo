@@ -8,7 +8,7 @@ open Operators.Compiler
 module Contract_types = Meta_michelson.Types
 module Stack = Meta_michelson.Stack
 *)
-type compiled_expression = {expr_ty: ex_ty; expr: michelson}
+type compiled_expression = {expr_ty : ex_ty; expr : michelson}
 
 val get_operator :
   constant' -> type_value -> expression list -> predicate result

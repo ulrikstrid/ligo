@@ -20,15 +20,6 @@
  *)
 type command = Quiet | Copy | Units | Tokens
 
-type options =
-  < input: string option
-  ; libs: string list
-  ; verbose: Utils.String.Set.t
-  ; offsets: bool
-  ; mode: [`Byte | `Point]
-  ; cmd: command
-  ; mono: bool
-  ; expr: bool >
 (** The type [options] gathers the command-line options.
     {ul
 
@@ -57,6 +48,15 @@ type options =
           expressions is used, otherwise a full-fledged contract is
           expected.}
 } *)
+type options =
+  < input : string option
+  ; libs : string list
+  ; verbose : Utils.String.Set.t
+  ; offsets : bool
+  ; mode : [`Byte | `Point]
+  ; cmd : command
+  ; mono : bool
+  ; expr : bool >
 
 val make :
   input:string option ->
@@ -69,8 +69,8 @@ val make :
   expr:bool ->
   options
 
-val read : string -> string -> options
 (** Parsing the command-line options on stdin.  The first parameter is
    the name of the concrete syntax, e.g., "pascaligo", and the second
    is the file extension, e.g., ".ligo".
  *)
+val read : string -> string -> options

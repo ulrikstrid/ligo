@@ -30,9 +30,9 @@ let rec check_no_nested_bigmap is_in_bigmap e =
       let%bind _ = check_no_nested_bigmap true value in
       ok ()
   | T_operator (TC_contract t)
-   |T_operator (TC_option t)
-   |T_operator (TC_list t)
-   |T_operator (TC_set t) ->
+  | T_operator (TC_option t)
+  | T_operator (TC_list t)
+  | T_operator (TC_set t) ->
       let%bind _ = check_no_nested_bigmap is_in_bigmap t in
       ok ()
   | T_operator (TC_map (a, b)) ->
@@ -59,12 +59,13 @@ let rec check_no_nested_bigmap is_in_bigmap e =
       let%bind _ = check_no_nested_bigmap false type1 in
       let%bind _ = check_no_nested_bigmap false type2 in
       ok ()
-  | T_variable _ | T_constant _ -> ok ()
+  | T_variable _ | T_constant _ ->
+      ok ()
 
 let self_typing :
     contract_pass_data ->
     expression ->
     (bool * contract_pass_data * expression) result =
  fun dat el ->
-   let%bind _ = check_no_nested_bigmap false el.type_expression in
-   ok (true, dat, el)
+  let%bind _ = check_no_nested_bigmap false el.type_expression in
+  ok (true, dat, el)

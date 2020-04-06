@@ -37,12 +37,16 @@ let extract_constructor (v : value) (tree : _ Append_tree.t') :
   let open Append_tree in
   let rec aux tv : (string * value * AST.type_expression) result =
     match tv with
-    | Leaf (Constructor k, t), v -> ok (k, v, t)
-    | Node {a}, D_left v -> aux (a, v)
-    | Node {b}, D_right v -> aux (b, v)
-    | _ -> fail @@ internal_assertion_failure "bad constructor path"
+    | (Leaf (Constructor k, t), v) ->
+        ok (k, v, t)
+    | (Node {a}, D_left v) ->
+        aux (a, v)
+    | (Node {b}, D_right v) ->
+        aux (b, v)
+    | _ ->
+        fail @@ internal_assertion_failure "bad constructor path"
   in
-  let%bind s, v, t = aux (tree, v) in
+  let%bind (s, v, t) = aux (tree, v) in
   ok (s, v, t)
 
 let extract_tuple (v : value) (tree : AST.type_expression Append_tree.t') :
@@ -50,12 +54,14 @@ let extract_tuple (v : value) (tree : AST.type_expression Append_tree.t') :
   let open Append_tree in
   let rec aux tv : (value * AST.type_expression) list result =
     match tv with
-    | Leaf t, v -> ok @@ [(v, t)]
-    | Node {a; b}, D_pair (va, vb) ->
+    | (Leaf t, v) ->
+        ok @@ [(v, t)]
+    | (Node {a; b}, D_pair (va, vb)) ->
         let%bind a' = aux (a, va) in
         let%bind b' = aux (b, vb) in
         ok (a' @ b')
-    | _ -> fail @@ internal_assertion_failure "bad tuple path"
+    | _ ->
+        fail @@ internal_assertion_failure "bad tuple path"
   in
   aux (tree, v)
 
@@ -63,11 +69,13 @@ let extract_record (v : value) (tree : _ Append_tree.t') : _ list result =
   let open Append_tree in
   let rec aux tv : (AST.label * (value * AST.type_expression)) list result =
     match tv with
-    | Leaf (s, t), v -> ok @@ [(s, (v, t))]
-    | Node {a; b}, D_pair (va, vb) ->
+    | (Leaf (s, t), v) ->
+        ok @@ [(s, (v, t))]
+    | (Node {a; b}, D_pair (va, vb)) ->
         let%bind a' = aux (a, va) in
         let%bind b' = aux (b, vb) in
         ok (a' @ b')
-    | _ -> fail @@ internal_assertion_failure "bad record path"
+    | _ ->
+        fail @@ internal_assertion_failure "bad record path"
   in
   aux (tree, v)

@@ -45,7 +45,7 @@ let parse parser : ('a, string Region.reg) Stdlib.result =
       let error =
         Unit.short_error ~offsets:IO.options#offsets IO.options#mode msg region
       in
-      Stdlib.Error Region.{value= error; region}
+      Stdlib.Error Region.{value = error; region}
   (* Scoping errors *)
   | SyntaxError.Error (SyntaxError.InvalidWild expr) ->
       let msg =
@@ -54,13 +54,14 @@ let parse parser : ('a, string Region.reg) Stdlib.result =
       let error =
         Unit.short_error ~offsets:IO.options#offsets IO.options#mode msg region
       in
-      Stdlib.Error Region.{value= error; region}
+      Stdlib.Error Region.{value = error; region}
   | Scoping.Error (Scoping.Reserved_name name) -> (
       let token = Lexer.Token.mk_ident name.Region.value name.Region.region in
       match token with
       (* Cannot fail because [name] is a not a
             reserved name for the lexer. *)
-      | Stdlib.Error _ -> assert false
+      | Stdlib.Error _ ->
+          assert false
       | Ok invalid ->
           issue_error
             ("Reserved name.\nHint: Change the name.\n", None, invalid) )
@@ -78,7 +79,8 @@ let parse parser : ('a, string Region.reg) Stdlib.result =
       match token with
       (* Cannot fail because [var] is a not a
             reserved name for the lexer. *)
-      | Stdlib.Error _ -> assert false
+      | Stdlib.Error _ ->
+          assert false
       | Ok invalid ->
           let point =
             ( "Repeated variable in this pattern.\nHint: Change the name.\n",
@@ -91,7 +93,8 @@ let parse parser : ('a, string Region.reg) Stdlib.result =
       match token with
       (* Cannot fail because [name] is a not a
             reserved name for the lexer. *)
-      | Stdlib.Error _ -> assert false
+      | Stdlib.Error _ ->
+          assert false
       | Ok invalid ->
           let point =
             ( "Duplicate field name in this record declaration.\n\
@@ -111,24 +114,26 @@ let sprintf = Printf.sprintf
 
 let lib_path =
   match IO.options#libs with
-  | []   -> ""
+  | [] ->
+      ""
   | libs ->
       let mk_I dir path = sprintf " -I %s%s" dir path in
       List.fold_right mk_I libs ""
 
 let prefix =
   match IO.options#input with
-  | None | Some "-" -> "temp"
-  | Some file -> Filename.(file |> basename |> remove_extension)
+  | None | Some "-" ->
+      "temp"
+  | Some file ->
+      Filename.(file |> basename |> remove_extension)
 
 let suffix = ".pp" ^ IO.ext
 
 let pp_input =
-  if SSet.mem "cpp" IO.options#verbose then
-    prefix ^ suffix
-  else (
-    let pp_input, pp_out = Filename.open_temp_file prefix suffix in
-    close_out pp_out ; pp_input )
+  if SSet.mem "cpp" IO.options#verbose then prefix ^ suffix
+  else
+    let (pp_input, pp_out) = Filename.open_temp_file prefix suffix in
+    close_out pp_out ; pp_input
 
 let cpp_cmd =
   match IO.options#input with
@@ -145,16 +150,18 @@ let () =
 
 let lexer_inst =
   match Lexer.open_token_stream (Lexer.File pp_input) with
-  | Ok instance ->
-      if IO.options#expr then (
+  | Ok instance -> (
+      if IO.options#expr then
         match parse (fun () -> Unit.apply instance Unit.parse_expr) with
-        | Stdlib.Ok _ -> ()
-        | Error Region.{value; _} -> Printf.eprintf "\027[31m%s\027[0m%!" value
-      )
-      else (
+        | Stdlib.Ok _ ->
+            ()
+        | Error Region.{value; _} ->
+            Printf.eprintf "\027[31m%s\027[0m%!" value
+      else
         match parse (fun () -> Unit.apply instance Unit.parse_contract) with
-        | Stdlib.Ok _ -> ()
-        | Error Region.{value; _} -> Printf.eprintf "\027[31m%s\027[0m%!" value
-      )
+        | Stdlib.Ok _ ->
+            ()
+        | Error Region.{value; _} ->
+            Printf.eprintf "\027[31m%s\027[0m%!" value )
   | Stdlib.Error (Lexer.File_opening msg) ->
       Printf.eprintf "\027[31m%s\027[0m%!" msg

@@ -16,14 +16,8 @@ let run_ligo args =
 
 let run_ligo_good args =
   let exit_code = run_ligo args in
-  if exit_code <> 0 then
-    raise Should_exit_good
-  else
-    ()
+  if exit_code <> 0 then raise Should_exit_good else ()
 
 let run_ligo_bad args =
   let exit_code = run_ligo args in
-  if exit_code = 0 then
-    raise Should_exit_bad
-  else
-    ()
+  if exit_code = 0 then raise Should_exit_bad else ()

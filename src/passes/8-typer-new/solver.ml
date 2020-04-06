@@ -33,143 +33,177 @@ module Wrap = struct
 
   let rec type_expression_to_type_value : T.type_expression -> O.type_value =
    fun te ->
-     match te.type_content with
-     | T_sum kvmap ->
-         let () =
-           failwith
-             "fixme: don't use to_list, it drops the variant keys, rows have \
-              a differnt kind than argument lists for now!"
-         in
-         P_constant
-           ( C_variant,
-             T.CMap.to_list @@ T.CMap.map type_expression_to_type_value kvmap
-           )
-     | T_record kvmap ->
-         let () =
-           failwith
-             "fixme: don't use to_list, it drops the record keys, rows have a \
-              differnt kind than argument lists for now!"
-         in
-         P_constant
-           ( C_record,
-             T.LMap.to_list @@ T.LMap.map type_expression_to_type_value kvmap
-           )
-     | T_arrow {type1; type2} ->
-         P_constant
-           (C_arrow, List.map type_expression_to_type_value [type1; type2])
-     | T_variable type_name -> P_variable type_name
-     | T_constant type_name ->
-         let csttag =
-           Core.(
-             match type_name with
-             | TC_unit      -> C_unit
-             | TC_bool      -> C_bool
-             | TC_string    -> C_string
-             | TC_nat       -> C_nat
-             | TC_mutez     -> C_mutez
-             | TC_timestamp -> C_timestamp
-             | TC_int       -> C_int
-             | TC_address   -> C_address
-             | TC_bytes     -> C_bytes
-             | TC_key_hash  -> C_key_hash
-             | TC_key       -> C_key
-             | TC_signature -> C_signature
-             | TC_operation -> C_operation
-             | TC_chain_id  -> C_unit (* TODO : replace  with chain_id *)
-             | TC_void      -> C_unit
-             (* TODO : replace with void *))
-         in
-         P_constant (csttag, [])
-     | T_operator type_operator ->
-         let csttag, args =
-           Core.(
-             match type_operator with
-             | TC_option o              -> (C_option, [o])
-             | TC_set s                 -> (C_set, [s])
-             | TC_map (k, v)            -> (C_map, [k; v])
-             | TC_big_map (k, v)        -> (C_big_map, [k; v])
-             | TC_map_or_big_map (k, v) -> (C_map, [k; v])
-             | TC_arrow (arg, ret)      -> (C_arrow, [arg; ret])
-             | TC_list l                -> (C_list, [l])
-             | TC_contract c            -> (C_contract, [c]))
-         in
-         P_constant (csttag, List.map type_expression_to_type_value args)
+    match te.type_content with
+    | T_sum kvmap ->
+        let () =
+          failwith
+            "fixme: don't use to_list, it drops the variant keys, rows have a \
+             differnt kind than argument lists for now!"
+        in
+        P_constant
+          ( C_variant,
+            T.CMap.to_list @@ T.CMap.map type_expression_to_type_value kvmap )
+    | T_record kvmap ->
+        let () =
+          failwith
+            "fixme: don't use to_list, it drops the record keys, rows have a \
+             differnt kind than argument lists for now!"
+        in
+        P_constant
+          ( C_record,
+            T.LMap.to_list @@ T.LMap.map type_expression_to_type_value kvmap )
+    | T_arrow {type1; type2} ->
+        P_constant
+          (C_arrow, List.map type_expression_to_type_value [type1; type2])
+    | T_variable type_name ->
+        P_variable type_name
+    | T_constant type_name ->
+        let csttag =
+          Core.(
+            match type_name with
+            | TC_unit ->
+                C_unit
+            | TC_bool ->
+                C_bool
+            | TC_string ->
+                C_string
+            | TC_nat ->
+                C_nat
+            | TC_mutez ->
+                C_mutez
+            | TC_timestamp ->
+                C_timestamp
+            | TC_int ->
+                C_int
+            | TC_address ->
+                C_address
+            | TC_bytes ->
+                C_bytes
+            | TC_key_hash ->
+                C_key_hash
+            | TC_key ->
+                C_key
+            | TC_signature ->
+                C_signature
+            | TC_operation ->
+                C_operation
+            | TC_chain_id ->
+                C_unit (* TODO : replace  with chain_id *)
+            | TC_void ->
+                C_unit
+            (* TODO : replace with void *))
+        in
+        P_constant (csttag, [])
+    | T_operator type_operator ->
+        let (csttag, args) =
+          Core.(
+            match type_operator with
+            | TC_option o ->
+                (C_option, [o])
+            | TC_set s ->
+                (C_set, [s])
+            | TC_map (k, v) ->
+                (C_map, [k; v])
+            | TC_big_map (k, v) ->
+                (C_big_map, [k; v])
+            | TC_map_or_big_map (k, v) ->
+                (C_map, [k; v])
+            | TC_arrow (arg, ret) ->
+                (C_arrow, [arg; ret])
+            | TC_list l ->
+                (C_list, [l])
+            | TC_contract c ->
+                (C_contract, [c]))
+        in
+        P_constant (csttag, List.map type_expression_to_type_value args)
 
   let rec type_expression_to_type_value_copypasted :
       I.type_expression -> O.type_value =
    fun te ->
-     match te.type_content with
-     | T_sum kvmap ->
-         let () =
-           failwith
-             "fixme: don't use to_list, it drops the variant keys, rows have \
-              a differnt kind than argument lists for now!"
-         in
-         P_constant
-           ( C_variant,
-             I.CMap.to_list
-             @@ I.CMap.map type_expression_to_type_value_copypasted kvmap )
-     | T_record kvmap ->
-         let () =
-           failwith
-             "fixme: don't use to_list, it drops the record keys, rows have a \
-              differnt kind than argument lists for now!"
-         in
-         P_constant
-           ( C_record,
-             I.LMap.to_list
-             @@ I.LMap.map type_expression_to_type_value_copypasted kvmap )
-     | T_arrow {type1; type2} ->
-         P_constant
-           ( C_arrow,
-             List.map type_expression_to_type_value_copypasted [type1; type2]
-           )
-     | T_variable type_name -> P_variable type_name (* eird stuff*)
-     | T_constant type_name ->
-         let csttag =
-           Core.(
-             match type_name with
-             | TC_unit   -> C_unit
-             | TC_bool   -> C_bool
-             | TC_string -> C_string
-             | _         -> failwith "unknown type constructor")
-         in
-         P_constant (csttag, [])
-     | T_operator type_name ->
-         let csttag, args =
-           Core.(
-             match type_name with
-             | TC_option o              -> (C_option, [o])
-             | TC_list l                -> (C_list, [l])
-             | TC_set s                 -> (C_set, [s])
-             | TC_map (k, v)            -> (C_map, [k; v])
-             | TC_big_map (k, v)        -> (C_big_map, [k; v])
-             | TC_map_or_big_map (k, v) -> (C_map, [k; v])
-             | TC_contract c            -> (C_contract, [c])
-             | TC_arrow (arg, ret)      -> (C_arrow, [arg; ret]))
-         in
-         P_constant
-           (csttag, List.map type_expression_to_type_value_copypasted args)
+    match te.type_content with
+    | T_sum kvmap ->
+        let () =
+          failwith
+            "fixme: don't use to_list, it drops the variant keys, rows have a \
+             differnt kind than argument lists for now!"
+        in
+        P_constant
+          ( C_variant,
+            I.CMap.to_list
+            @@ I.CMap.map type_expression_to_type_value_copypasted kvmap )
+    | T_record kvmap ->
+        let () =
+          failwith
+            "fixme: don't use to_list, it drops the record keys, rows have a \
+             differnt kind than argument lists for now!"
+        in
+        P_constant
+          ( C_record,
+            I.LMap.to_list
+            @@ I.LMap.map type_expression_to_type_value_copypasted kvmap )
+    | T_arrow {type1; type2} ->
+        P_constant
+          ( C_arrow,
+            List.map type_expression_to_type_value_copypasted [type1; type2] )
+    | T_variable type_name ->
+        P_variable type_name (* eird stuff*)
+    | T_constant type_name ->
+        let csttag =
+          Core.(
+            match type_name with
+            | TC_unit ->
+                C_unit
+            | TC_bool ->
+                C_bool
+            | TC_string ->
+                C_string
+            | _ ->
+                failwith "unknown type constructor")
+        in
+        P_constant (csttag, [])
+    | T_operator type_name ->
+        let (csttag, args) =
+          Core.(
+            match type_name with
+            | TC_option o ->
+                (C_option, [o])
+            | TC_list l ->
+                (C_list, [l])
+            | TC_set s ->
+                (C_set, [s])
+            | TC_map (k, v) ->
+                (C_map, [k; v])
+            | TC_big_map (k, v) ->
+                (C_big_map, [k; v])
+            | TC_map_or_big_map (k, v) ->
+                (C_map, [k; v])
+            | TC_contract c ->
+                (C_contract, [c])
+            | TC_arrow (arg, ret) ->
+                (C_arrow, [arg; ret]))
+        in
+        P_constant
+          (csttag, List.map type_expression_to_type_value_copypasted args)
 
   let failwith_ : unit -> constraints * O.type_variable =
    fun () ->
-     let type_name = Core.fresh_type_variable () in
-     ([], type_name)
+    let type_name = Core.fresh_type_variable () in
+    ([], type_name)
 
   let variable :
       I.expression_variable ->
       T.type_expression ->
       constraints * T.type_variable =
    fun _name expr ->
-     let pattern = type_expression_to_type_value expr in
-     let type_name = Core.fresh_type_variable () in
-     ([C_equation (P_variable type_name, pattern)], type_name)
+    let pattern = type_expression_to_type_value expr in
+    let type_name = Core.fresh_type_variable () in
+    ([C_equation (P_variable type_name, pattern)], type_name)
 
   let literal : T.type_expression -> constraints * T.type_variable =
    fun t ->
-     let pattern = type_expression_to_type_value t in
-     let type_name = Core.fresh_type_variable () in
-     ([C_equation (P_variable type_name, pattern)], type_name)
+    let pattern = type_expression_to_type_value t in
+    let type_name = Core.fresh_type_variable () in
+    ([C_equation (P_variable type_name, pattern)], type_name)
 
   (*
   let literal_bool : unit -> (constraints * O.type_variable) = fun () ->
@@ -185,10 +219,10 @@ module Wrap = struct
 
   let tuple : T.type_expression list -> constraints * T.type_variable =
    fun tys ->
-     let patterns = List.map type_expression_to_type_value tys in
-     let pattern = O.(P_constant (C_record, patterns)) in
-     let type_name = Core.fresh_type_variable () in
-     ([C_equation (P_variable type_name, pattern)], type_name)
+    let patterns = List.map type_expression_to_type_value tys in
+    let pattern = O.(P_constant (C_record, patterns)) in
+    let type_name = Core.fresh_type_variable () in
+    ([C_equation (P_variable type_name, pattern)], type_name)
 
   (* let t_tuple         = ('label:int, 'v) … -> record ('label : 'v) … *)
   (* let t_constructor   = ('label:string, 'v) -> variant ('label : 'v) *)
@@ -241,33 +275,33 @@ module Wrap = struct
       T.type_expression ->
       constraints * T.type_variable =
    fun t_arg c_arg sum ->
-     let t_arg = type_expression_to_type_value t_arg in
-     let c_arg = type_expression_to_type_value c_arg in
-     let sum = type_expression_to_type_value sum in
-     let whole_expr = Core.fresh_type_variable () in
-     ( [C_equation (P_variable whole_expr, sum); C_equation (t_arg, c_arg)],
-       whole_expr )
+    let t_arg = type_expression_to_type_value t_arg in
+    let c_arg = type_expression_to_type_value c_arg in
+    let sum = type_expression_to_type_value sum in
+    let whole_expr = Core.fresh_type_variable () in
+    ( [C_equation (P_variable whole_expr, sum); C_equation (t_arg, c_arg)],
+      whole_expr )
 
   let record : T.type_expression T.label_map -> constraints * T.type_variable =
    fun fields ->
-     let record_type = type_expression_to_type_value (T.t_record fields ()) in
-     let whole_expr = Core.fresh_type_variable () in
-     ([C_equation (P_variable whole_expr, record_type)], whole_expr)
+    let record_type = type_expression_to_type_value (T.t_record fields ()) in
+    let whole_expr = Core.fresh_type_variable () in
+    ([C_equation (P_variable whole_expr, record_type)], whole_expr)
 
   let collection :
       O.constant_tag -> T.type_expression list -> constraints * T.type_variable
       =
    fun ctor element_tys ->
-     let elttype = O.P_variable (Core.fresh_type_variable ()) in
-     let aux elt =
-       let elt' = type_expression_to_type_value elt in
-       O.C_equation (elttype, elt')
-     in
-     let equations = List.map aux element_tys in
-     let whole_expr = Core.fresh_type_variable () in
-     ( O.[C_equation (P_variable whole_expr, O.P_constant (ctor, [elttype]))]
-       @ equations,
-       whole_expr )
+    let elttype = O.P_variable (Core.fresh_type_variable ()) in
+    let aux elt =
+      let elt' = type_expression_to_type_value elt in
+      O.C_equation (elttype, elt')
+    in
+    let equations = List.map aux element_tys in
+    let whole_expr = Core.fresh_type_variable () in
+    ( O.[C_equation (P_variable whole_expr, O.P_constant (ctor, [elttype]))]
+      @ equations,
+      whole_expr )
 
   let list = collection O.C_list
 
@@ -277,97 +311,95 @@ module Wrap = struct
       (T.type_expression * T.type_expression) list ->
       constraints * T.type_variable =
    fun kv_tys ->
-     let k_type = O.P_variable (Core.fresh_type_variable ()) in
-     let v_type = O.P_variable (Core.fresh_type_variable ()) in
-     let aux_k (k, _v) =
-       let k' = type_expression_to_type_value k in
-       O.C_equation (k_type, k')
-     in
-     let aux_v (_k, v) =
-       let v' = type_expression_to_type_value v in
-       O.C_equation (v_type, v')
-     in
-     let equations_k = List.map aux_k kv_tys in
-     let equations_v = List.map aux_v kv_tys in
-     let whole_expr = Core.fresh_type_variable () in
-     ( O.
-         [ C_equation
-             (P_variable whole_expr, O.P_constant (C_map, [k_type; v_type])) ]
-       @ equations_k
-       @ equations_v,
-       whole_expr )
+    let k_type = O.P_variable (Core.fresh_type_variable ()) in
+    let v_type = O.P_variable (Core.fresh_type_variable ()) in
+    let aux_k (k, _v) =
+      let k' = type_expression_to_type_value k in
+      O.C_equation (k_type, k')
+    in
+    let aux_v (_k, v) =
+      let v' = type_expression_to_type_value v in
+      O.C_equation (v_type, v')
+    in
+    let equations_k = List.map aux_k kv_tys in
+    let equations_v = List.map aux_v kv_tys in
+    let whole_expr = Core.fresh_type_variable () in
+    ( O.
+        [ C_equation
+            (P_variable whole_expr, O.P_constant (C_map, [k_type; v_type])) ]
+      @ equations_k @ equations_v,
+      whole_expr )
 
   let big_map :
       (T.type_expression * T.type_expression) list ->
       constraints * T.type_variable =
    fun kv_tys ->
-     let k_type = O.P_variable (Core.fresh_type_variable ()) in
-     let v_type = O.P_variable (Core.fresh_type_variable ()) in
-     let aux_k (k, _v) =
-       let k' = type_expression_to_type_value k in
-       O.C_equation (k_type, k')
-     in
-     let aux_v (_k, v) =
-       let v' = type_expression_to_type_value v in
-       O.C_equation (v_type, v')
-     in
-     let equations_k = List.map aux_k kv_tys in
-     let equations_v = List.map aux_v kv_tys in
-     let whole_expr = Core.fresh_type_variable () in
-     ( O.
-         [ (* TODO: this doesn't tag big_maps uniquely (i.e. if two
+    let k_type = O.P_variable (Core.fresh_type_variable ()) in
+    let v_type = O.P_variable (Core.fresh_type_variable ()) in
+    let aux_k (k, _v) =
+      let k' = type_expression_to_type_value k in
+      O.C_equation (k_type, k')
+    in
+    let aux_v (_k, v) =
+      let v' = type_expression_to_type_value v in
+      O.C_equation (v_type, v')
+    in
+    let equations_k = List.map aux_k kv_tys in
+    let equations_v = List.map aux_v kv_tys in
+    let whole_expr = Core.fresh_type_variable () in
+    ( O.
+        [ (* TODO: this doesn't tag big_maps uniquely (i.e. if two
            big_map have the same type, they can be swapped. *)
-           C_equation
-             (P_variable whole_expr, O.P_constant (C_big_map, [k_type; v_type]))
-         ]
-       @ equations_k
-       @ equations_v,
-       whole_expr )
+          C_equation
+            (P_variable whole_expr, O.P_constant (C_big_map, [k_type; v_type]))
+        ]
+      @ equations_k @ equations_v,
+      whole_expr )
 
   let application :
       T.type_expression -> T.type_expression -> constraints * T.type_variable =
    fun f arg ->
-     let whole_expr = Core.fresh_type_variable () in
-     let f' = type_expression_to_type_value f in
-     let arg' = type_expression_to_type_value arg in
-     ( O.[C_equation (f', P_constant (C_arrow, [arg'; P_variable whole_expr]))],
-       whole_expr )
+    let whole_expr = Core.fresh_type_variable () in
+    let f' = type_expression_to_type_value f in
+    let arg' = type_expression_to_type_value arg in
+    ( O.[C_equation (f', P_constant (C_arrow, [arg'; P_variable whole_expr]))],
+      whole_expr )
 
   let look_up :
       T.type_expression -> T.type_expression -> constraints * T.type_variable =
    fun ds ind ->
-     let ds' = type_expression_to_type_value ds in
-     let ind' = type_expression_to_type_value ind in
-     let whole_expr = Core.fresh_type_variable () in
-     let v = Core.fresh_type_variable () in
-     ( O.
-         [ C_equation (ds', P_constant (C_map, [ind'; P_variable v]));
-           C_equation
-             (P_variable whole_expr, P_constant (C_option, [P_variable v])) ],
-       whole_expr )
+    let ds' = type_expression_to_type_value ds in
+    let ind' = type_expression_to_type_value ind in
+    let whole_expr = Core.fresh_type_variable () in
+    let v = Core.fresh_type_variable () in
+    ( O.
+        [ C_equation (ds', P_constant (C_map, [ind'; P_variable v]));
+          C_equation
+            (P_variable whole_expr, P_constant (C_option, [P_variable v])) ],
+      whole_expr )
 
   let sequence :
       T.type_expression -> T.type_expression -> constraints * T.type_variable =
    fun a b ->
-     let a' = type_expression_to_type_value a in
-     let b' = type_expression_to_type_value b in
-     let whole_expr = Core.fresh_type_variable () in
-     ( O.
-         [ C_equation (a', P_constant (C_unit, []));
-           C_equation (b', P_variable whole_expr) ],
-       whole_expr )
+    let a' = type_expression_to_type_value a in
+    let b' = type_expression_to_type_value b in
+    let whole_expr = Core.fresh_type_variable () in
+    ( O.
+        [ C_equation (a', P_constant (C_unit, []));
+          C_equation (b', P_variable whole_expr) ],
+      whole_expr )
 
   let loop :
       T.type_expression -> T.type_expression -> constraints * T.type_variable =
    fun expr body ->
-     let expr' = type_expression_to_type_value expr in
-     let body' = type_expression_to_type_value body in
-     let whole_expr = Core.fresh_type_variable () in
-     ( O.
-         [ C_equation (expr', P_constant (C_bool, []));
-           C_equation (body', P_constant (C_unit, []));
-           C_equation (P_variable whole_expr, P_constant (C_unit, [])) ],
-       whole_expr )
+    let expr' = type_expression_to_type_value expr in
+    let body' = type_expression_to_type_value body in
+    let whole_expr = Core.fresh_type_variable () in
+    ( O.
+        [ C_equation (expr', P_constant (C_bool, []));
+          C_equation (body', P_constant (C_unit, []));
+          C_equation (P_variable whole_expr, P_constant (C_unit, [])) ],
+      whole_expr )
 
   let let_in :
       T.type_expression ->
@@ -375,53 +407,54 @@ module Wrap = struct
       T.type_expression ->
       constraints * T.type_variable =
    fun rhs rhs_tv_opt result ->
-     let rhs' = type_expression_to_type_value rhs in
-     let result' = type_expression_to_type_value result in
-     let rhs_tv_opt' =
-       match rhs_tv_opt with
-       | None       -> []
-       | Some annot ->
-           O.[C_equation (rhs', type_expression_to_type_value annot)]
-     in
-     let whole_expr = Core.fresh_type_variable () in
-     (O.[C_equation (result', P_variable whole_expr)] @ rhs_tv_opt', whole_expr)
+    let rhs' = type_expression_to_type_value rhs in
+    let result' = type_expression_to_type_value result in
+    let rhs_tv_opt' =
+      match rhs_tv_opt with
+      | None ->
+          []
+      | Some annot ->
+          O.[C_equation (rhs', type_expression_to_type_value annot)]
+    in
+    let whole_expr = Core.fresh_type_variable () in
+    (O.[C_equation (result', P_variable whole_expr)] @ rhs_tv_opt', whole_expr)
 
   let recursive : T.type_expression -> constraints * T.type_variable =
    fun fun_type ->
-     let fun_type = type_expression_to_type_value fun_type in
-     let whole_expr = Core.fresh_type_variable () in
-     (O.[C_equation (fun_type, P_variable whole_expr)], whole_expr)
+    let fun_type = type_expression_to_type_value fun_type in
+    let whole_expr = Core.fresh_type_variable () in
+    (O.[C_equation (fun_type, P_variable whole_expr)], whole_expr)
 
   let assign :
       T.type_expression -> T.type_expression -> constraints * T.type_variable =
    fun v e ->
-     let v' = type_expression_to_type_value v in
-     let e' = type_expression_to_type_value e in
-     let whole_expr = Core.fresh_type_variable () in
-     ( O.
-         [ C_equation (v', e');
-           C_equation (P_variable whole_expr, P_constant (C_unit, [])) ],
-       whole_expr )
+    let v' = type_expression_to_type_value v in
+    let e' = type_expression_to_type_value e in
+    let whole_expr = Core.fresh_type_variable () in
+    ( O.
+        [ C_equation (v', e');
+          C_equation (P_variable whole_expr, P_constant (C_unit, [])) ],
+      whole_expr )
 
   let annotation :
       T.type_expression -> T.type_expression -> constraints * T.type_variable =
    fun e annot ->
-     let e' = type_expression_to_type_value e in
-     let annot' = type_expression_to_type_value annot in
-     let whole_expr = Core.fresh_type_variable () in
-     ( O.[C_equation (e', annot'); C_equation (e', P_variable whole_expr)],
-       whole_expr )
+    let e' = type_expression_to_type_value e in
+    let annot' = type_expression_to_type_value annot in
+    let whole_expr = Core.fresh_type_variable () in
+    ( O.[C_equation (e', annot'); C_equation (e', P_variable whole_expr)],
+      whole_expr )
 
   let matching : T.type_expression list -> constraints * T.type_variable =
    fun es ->
-     let whole_expr = Core.fresh_type_variable () in
-     let type_expressions = List.map type_expression_to_type_value es in
-     let cs =
-       List.map
-         (fun e -> O.C_equation (P_variable whole_expr, e))
-         type_expressions
-     in
-     (cs, whole_expr)
+    let whole_expr = Core.fresh_type_variable () in
+    let type_expressions = List.map type_expression_to_type_value es in
+    let cs =
+      List.map
+        (fun e -> O.C_equation (P_variable whole_expr, e))
+        type_expressions
+    in
+    (cs, whole_expr)
 
   let fresh_binder () = Core.fresh_type_variable ()
 
@@ -431,51 +464,52 @@ module Wrap = struct
       T.type_expression option ->
       constraints * T.type_variable =
    fun fresh arg body ->
-     let whole_expr = Core.fresh_type_variable () in
-     let unification_arg = Core.fresh_type_variable () in
-     let unification_body = Core.fresh_type_variable () in
-     let arg' =
-       match arg with
-       | None     -> []
-       | Some arg ->
-           O.
-             [ C_equation
-                 (P_variable unification_arg, type_expression_to_type_value arg)
-             ]
-     in
-     let body' =
-       match body with
-       | None      -> []
-       | Some body ->
-           O.
-             [ C_equation
-                 ( P_variable unification_body,
-                   type_expression_to_type_value body ) ]
-     in
-     ( O.
-         [ C_equation
-             (type_expression_to_type_value fresh, P_variable unification_arg);
-           C_equation
-             ( P_variable whole_expr,
-               P_constant
-                 ( C_arrow,
-                   [P_variable unification_arg; P_variable unification_body] )
-             ) ]
-       @ arg'
-       @ body',
-       whole_expr )
+    let whole_expr = Core.fresh_type_variable () in
+    let unification_arg = Core.fresh_type_variable () in
+    let unification_body = Core.fresh_type_variable () in
+    let arg' =
+      match arg with
+      | None ->
+          []
+      | Some arg ->
+          O.
+            [ C_equation
+                (P_variable unification_arg, type_expression_to_type_value arg)
+            ]
+    in
+    let body' =
+      match body with
+      | None ->
+          []
+      | Some body ->
+          O.
+            [ C_equation
+                ( P_variable unification_body,
+                  type_expression_to_type_value body ) ]
+    in
+    ( O.
+        [ C_equation
+            (type_expression_to_type_value fresh, P_variable unification_arg);
+          C_equation
+            ( P_variable whole_expr,
+              P_constant
+                ( C_arrow,
+                  [P_variable unification_arg; P_variable unification_body] )
+            ) ]
+      @ arg' @ body',
+      whole_expr )
 
   (* This is pretty much a wrapper for an n-ary function. *)
   let constant :
       O.type_value -> T.type_expression list -> constraints * T.type_variable =
    fun f args ->
-     let whole_expr = Core.fresh_type_variable () in
-     let args' = List.map type_expression_to_type_value args in
-     let args_tuple = O.P_constant (C_record, args') in
-     ( O.
-         [ C_equation
-             (f, P_constant (C_arrow, [args_tuple; P_variable whole_expr])) ],
-       whole_expr )
+    let whole_expr = Core.fresh_type_variable () in
+    let args' = List.map type_expression_to_type_value args in
+    let args_tuple = O.P_constant (C_record, args') in
+    ( O.
+        [ C_equation
+            (f, P_constant (C_arrow, [args_tuple; P_variable whole_expr])) ],
+      whole_expr )
 end
 
 (* begin unionfind *)
@@ -535,39 +569,43 @@ Workflow:
 
 open Core
 
-type structured_dbs =
-  { all_constraints: type_constraint_simpl list;
-    aliases: unionfind;
-    (* assignments (passive data structure).
+type structured_dbs = {
+  all_constraints : type_constraint_simpl list;
+  aliases : unionfind;
+  (* assignments (passive data structure).
      Now: just a map from unification vars to types (pb: what about partial types?)
      maybe just local assignments (allow only vars as children of pair(α,β)) *)
-    (* TODO: the rhs of the map should not repeat the variable name. *)
-    assignments: c_constructor_simpl TypeVariableMap.t;
-    grouped_by_variable: constraints TypeVariableMap.t;
-    (* map from (unionfind) variables to constraints containing them *)
-    cycle_detection_toposort: unit
-        (* example of structured db that we'll add later *) }
+  (* TODO: the rhs of the map should not repeat the variable name. *)
+  assignments : c_constructor_simpl TypeVariableMap.t;
+  grouped_by_variable : constraints TypeVariableMap.t;
+  (* map from (unionfind) variables to constraints containing them *)
+  cycle_detection_toposort : unit;
+      (* example of structured db that we'll add later *)
+}
 
-and constraints =
-  { (* If implemented in a language with decent sets, these should be sets not lists. *)
-    constructor: c_constructor_simpl list;
-    (* List of ('a = constructor(args…)) constraints *)
-    poly: c_poly_simpl list;
-    (* List of ('a = forall 'b, some_type) constraints *)
-    tc: c_typeclass_simpl list (* List of (typeclass(args…)) constraints *)
-  }
+and constraints = {
+  (* If implemented in a language with decent sets, these should be sets not lists. *)
+  constructor : c_constructor_simpl list;
+  (* List of ('a = constructor(args…)) constraints *)
+  poly : c_poly_simpl list;
+  (* List of ('a = forall 'b, some_type) constraints *)
+  tc : c_typeclass_simpl list; (* List of (typeclass(args…)) constraints *)
+}
 
-and c_constructor_simpl =
-  {tv: type_variable; c_tag: constant_tag; tv_list: type_variable list}
+and c_constructor_simpl = {
+  tv : type_variable;
+  c_tag : constant_tag;
+  tv_list : type_variable list;
+}
 
 (* copy-pasted from core.ml *)
 and c_const = type_variable * type_expression
 
 and c_equation = type_expression * type_expression
 
-and c_typeclass_simpl = {tc: typeclass; args: type_variable list}
+and c_typeclass_simpl = {tc : typeclass; args : type_variable list}
 
-and c_poly_simpl = {tv: type_variable; forall: p_forall}
+and c_poly_simpl = {tv : type_variable; forall : p_forall}
 
 and type_constraint_simpl =
   | SC_Constructor of c_constructor_simpl (* α = ctor(β, …) *)
@@ -583,68 +621,80 @@ module UnionFindWrapper = struct
   let get_constraints_related_to :
       type_variable -> structured_dbs -> constraints =
    fun variable dbs ->
-     let variable, aliases = UF.get_or_set variable dbs.aliases in
-     let dbs = {dbs with aliases} in
-     match TypeVariableMap.find_opt variable dbs.grouped_by_variable with
-     | Some l -> l
-     | None   -> {constructor= []; poly= []; tc= []}
+    let (variable, aliases) = UF.get_or_set variable dbs.aliases in
+    let dbs = {dbs with aliases} in
+    match TypeVariableMap.find_opt variable dbs.grouped_by_variable with
+    | Some l ->
+        l
+    | None ->
+        {constructor = []; poly = []; tc = []}
 
   let add_constraints_related_to :
       type_variable -> constraints -> structured_dbs -> structured_dbs =
    fun variable c dbs ->
-     (* let (variable_repr , _height) , aliases = UF.get_or_set variable dbs.aliases in
+    (* let (variable_repr , _height) , aliases = UF.get_or_set variable dbs.aliases in
          let dbs = { dbs with aliases } in *)
-     let variable_repr, aliases = UF.get_or_set variable dbs.aliases in
-     let dbs = {dbs with aliases} in
-     let grouped_by_variable =
-       TypeVariableMap.update variable_repr
-         (function
-             | None   -> Some c
-             | Some x ->
-                 Some
-                   { constructor= c.constructor @ x.constructor;
-                     poly= c.poly @ x.poly;
-                     tc= c.tc @ x.tc })
-         dbs.grouped_by_variable
-     in
-     let dbs = {dbs with grouped_by_variable} in
-     dbs
+    let (variable_repr, aliases) = UF.get_or_set variable dbs.aliases in
+    let dbs = {dbs with aliases} in
+    let grouped_by_variable =
+      TypeVariableMap.update
+        variable_repr
+        (function
+          | None ->
+              Some c
+          | Some x ->
+              Some
+                {
+                  constructor = c.constructor @ x.constructor;
+                  poly = c.poly @ x.poly;
+                  tc = c.tc @ x.tc;
+                })
+        dbs.grouped_by_variable
+    in
+    let dbs = {dbs with grouped_by_variable} in
+    dbs
 
   let merge_constraints :
       type_variable -> type_variable -> structured_dbs -> structured_dbs =
    fun variable_a variable_b dbs ->
-     (* get old representant for variable_a *)
-     let variable_repr_a, aliases = UF.get_or_set variable_a dbs.aliases in
-     let dbs = {dbs with aliases} in
-     (* get old representant for variable_b *)
-     let variable_repr_b, aliases = UF.get_or_set variable_b dbs.aliases in
-     let dbs = {dbs with aliases} in
-     (* alias variable_a and variable_b together *)
-     let aliases = UF.alias variable_a variable_b dbs.aliases in
-     let dbs = {dbs with aliases} in
-     (* Replace the two entries in grouped_by_variable by a single one *)
-     let get_constraints ab =
-       match TypeVariableMap.find_opt ab dbs.grouped_by_variable with
-       | Some x -> x
-       | None   -> {constructor= []; poly= []; tc= []}
-     in
-     let constraints_a = get_constraints variable_repr_a in
-     let constraints_b = get_constraints variable_repr_b in
-     let all_constraints =
-       { constructor= constraints_a.constructor @ constraints_b.constructor;
-         poly= constraints_a.poly @ constraints_b.poly;
-         tc= constraints_a.tc @ constraints_b.tc }
-     in
-     let grouped_by_variable =
-       TypeVariableMap.add variable_repr_a all_constraints
-         dbs.grouped_by_variable
-     in
-     let dbs = {dbs with grouped_by_variable} in
-     let grouped_by_variable =
-       TypeVariableMap.remove variable_repr_b dbs.grouped_by_variable
-     in
-     let dbs = {dbs with grouped_by_variable} in
-     dbs
+    (* get old representant for variable_a *)
+    let (variable_repr_a, aliases) = UF.get_or_set variable_a dbs.aliases in
+    let dbs = {dbs with aliases} in
+    (* get old representant for variable_b *)
+    let (variable_repr_b, aliases) = UF.get_or_set variable_b dbs.aliases in
+    let dbs = {dbs with aliases} in
+    (* alias variable_a and variable_b together *)
+    let aliases = UF.alias variable_a variable_b dbs.aliases in
+    let dbs = {dbs with aliases} in
+    (* Replace the two entries in grouped_by_variable by a single one *)
+    let get_constraints ab =
+      match TypeVariableMap.find_opt ab dbs.grouped_by_variable with
+      | Some x ->
+          x
+      | None ->
+          {constructor = []; poly = []; tc = []}
+    in
+    let constraints_a = get_constraints variable_repr_a in
+    let constraints_b = get_constraints variable_repr_b in
+    let all_constraints =
+      {
+        constructor = constraints_a.constructor @ constraints_b.constructor;
+        poly = constraints_a.poly @ constraints_b.poly;
+        tc = constraints_a.tc @ constraints_b.tc;
+      }
+    in
+    let grouped_by_variable =
+      TypeVariableMap.add
+        variable_repr_a
+        all_constraints
+        dbs.grouped_by_variable
+    in
+    let dbs = {dbs with grouped_by_variable} in
+    let grouped_by_variable =
+      TypeVariableMap.remove variable_repr_b dbs.grouped_by_variable
+    in
+    let dbs = {dbs with grouped_by_variable} in
+    dbs
 end
 
 (* sub-sub component: constraint normalizer: remove dupes and give structure
@@ -665,8 +715,8 @@ type ('a, 'b) normalizer = structured_dbs -> 'a -> structured_dbs * 'b list
 let normalizer_all_constraints :
     (type_constraint_simpl, type_constraint_simpl) normalizer =
  fun dbs new_constraint ->
-   ( {dbs with all_constraints= new_constraint :: dbs.all_constraints},
-     [new_constraint] )
+  ( {dbs with all_constraints = new_constraint :: dbs.all_constraints},
+    [new_constraint] )
 
 (** Updates the dbs.grouped_by_variable field when new constraints are
    discovered.
@@ -678,23 +728,26 @@ let normalizer_all_constraints :
 let normalizer_grouped_by_variable :
     (type_constraint_simpl, type_constraint_simpl) normalizer =
  fun dbs new_constraint ->
-   let store_constraint tvars constraints =
-     let aux dbs (tvar : type_variable) =
-       UnionFindWrapper.add_constraints_related_to tvar constraints dbs
-     in
-     List.fold_left aux dbs tvars
-   in
-   let dbs =
-     match new_constraint with
-     | SC_Constructor ({tv; c_tag= _; tv_list} as c) ->
-         store_constraint (tv :: tv_list) {constructor= [c]; poly= []; tc= []}
-     | SC_Typeclass ({tc= _; args} as c) ->
-         store_constraint args {constructor= []; poly= []; tc= [c]}
-     | SC_Poly ({tv; forall= _} as c) ->
-         store_constraint [tv] {constructor= []; poly= [c]; tc= []}
-     | SC_Alias (a, b) -> UnionFindWrapper.merge_constraints a b dbs
-   in
-   (dbs, [new_constraint])
+  let store_constraint tvars constraints =
+    let aux dbs (tvar : type_variable) =
+      UnionFindWrapper.add_constraints_related_to tvar constraints dbs
+    in
+    List.fold_left aux dbs tvars
+  in
+  let dbs =
+    match new_constraint with
+    | SC_Constructor ({tv; c_tag = _; tv_list} as c) ->
+        store_constraint
+          (tv :: tv_list)
+          {constructor = [c]; poly = []; tc = []}
+    | SC_Typeclass ({tc = _; args} as c) ->
+        store_constraint args {constructor = []; poly = []; tc = [c]}
+    | SC_Poly ({tv; forall = _} as c) ->
+        store_constraint [tv] {constructor = []; poly = [c]; tc = []}
+    | SC_Alias (a, b) ->
+        UnionFindWrapper.merge_constraints a b dbs
+  in
+  (dbs, [new_constraint])
 
 (** Stores the first assinment ('a = ctor('b, …)) that is encountered.
 
@@ -704,16 +757,18 @@ let normalizer_grouped_by_variable :
 let normalizer_assignments :
     (type_constraint_simpl, type_constraint_simpl) normalizer =
  fun dbs new_constraint ->
-   match new_constraint with
-   | SC_Constructor ({tv; c_tag= _; tv_list= _} as c) ->
-       let assignments =
-         TypeVariableMap.update tv
-           (function None -> Some c | e -> e)
-           dbs.assignments
-       in
-       let dbs = {dbs with assignments} in
-       (dbs, [new_constraint])
-   | _ -> (dbs, [new_constraint])
+  match new_constraint with
+  | SC_Constructor ({tv; c_tag = _; tv_list = _} as c) ->
+      let assignments =
+        TypeVariableMap.update
+          tv
+          (function None -> Some c | e -> e)
+          dbs.assignments
+      in
+      let dbs = {dbs with assignments} in
+      (dbs, [new_constraint])
+  | _ ->
+      (dbs, [new_constraint])
 
 (** Evaluates a type-leval application. For now, only supports
     immediate beta-reduction at the root of the type. *)
@@ -729,7 +784,8 @@ let check_applied ((reduced, _new_constraints) as x) =
     | P_apply _ ->
         failwith "internal error: shouldn't happen"
         (* failwith "could not reduce type-level application. Arbitrary type-level applications are not supported for now." *)
-    | _         -> ()
+    | _ ->
+        ()
   in
   x
 
@@ -747,67 +803,79 @@ let check_applied ((reduced, _new_constraints) as x) =
 let rec normalizer_simpl : (type_constraint, type_constraint_simpl) normalizer
     =
  fun dbs new_constraint ->
-   let insert_fresh a b =
-     let fresh = Core.fresh_type_variable () in
-     let dbs, cs1 = normalizer_simpl dbs (C_equation (P_variable fresh, a)) in
-     let dbs, cs2 = normalizer_simpl dbs (C_equation (P_variable fresh, b)) in
-     (dbs, cs1 @ cs2)
-   in
-   let split_constant a c_tag args =
-     let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
-     let fresh_eqns =
-       List.map
-         (fun (v, t) -> C_equation (P_variable v, t))
-         (List.combine fresh_vars args)
-     in
-     let dbs, recur = List.fold_map_acc normalizer_simpl dbs fresh_eqns in
-     ( dbs,
-       [SC_Constructor {tv= a; c_tag; tv_list= fresh_vars}]
-       @ List.flatten recur )
-   in
-   let gather_forall a forall = (dbs, [SC_Poly {tv= a; forall}]) in
-   let gather_alias a b = (dbs, [SC_Alias (a, b)]) in
-   let reduce_type_app a b =
-     let reduced, new_constraints = check_applied @@ type_level_eval b in
-     let dbs, recur = List.fold_map_acc normalizer_simpl dbs new_constraints in
-     let dbs, resimpl = normalizer_simpl dbs (C_equation (a, reduced)) in
-     (* Note: this calls recursively but cant't fall in the same case. *)
-     (dbs, resimpl @ List.flatten recur)
-   in
-   let split_typeclass args tc =
-     let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
-     let fresh_eqns =
-       List.map
-         (fun (v, t) -> C_equation (P_variable v, t))
-         (List.combine fresh_vars args)
-     in
-     let dbs, recur = List.fold_map_acc normalizer_simpl dbs fresh_eqns in
-     (dbs, [SC_Typeclass {tc; args= fresh_vars}] @ List.flatten recur)
-   in
-   match new_constraint with
-   (* break down (forall 'b, body = forall 'c, body') into ('a = forall 'b, body and 'a = forall 'c, body')) *)
-   | C_equation ((P_forall _ as a), (P_forall _ as b)) -> insert_fresh a b
-   (* break down (forall 'b, body = c(args)) into ('a = forall 'b, body and 'a = c(args)) *)
-   | C_equation ((P_forall _ as a), (P_constant _ as b)) -> insert_fresh a b
-   (* break down (c(args) = c'(args')) into ('a = c(args) and 'a = c'(args')) *)
-   | C_equation ((P_constant _ as a), (P_constant _ as b)) -> insert_fresh a b
-   (* break down (c(args) = forall 'b, body) into ('a = c(args) and 'a = forall 'b, body) *)
-   | C_equation ((P_constant _ as a), (P_forall _ as b)) -> insert_fresh a b
-   | C_equation (P_forall forall, P_variable b) -> gather_forall b forall
-   | C_equation (P_variable a, P_forall forall) -> gather_forall a forall
-   | C_equation (P_variable a, P_variable b) -> gather_alias a b
-   | C_equation (P_variable a, P_constant (c_tag, args)) ->
-       split_constant a c_tag args
-   | C_equation (P_constant (c_tag, args), P_variable b) ->
-       split_constant b c_tag args
-   (*  Reduce the type-level application, and simplify the resulting constraint + the extra constraints (typeclasses) that appeared at the forall binding site *)
-   | C_equation ((_ as a), (P_apply _ as b)) -> reduce_type_app a b
-   | C_equation ((P_apply _ as a), (_ as b)) -> reduce_type_app b a
-   (* break down (TC(args)) into (TC('a, …) and ('a = arg) …) *)
-   | C_typeclass (args, tc) -> split_typeclass args tc
-   | C_access_label (tv, label, result) ->
-       let _todo = ignore (tv, label, result) in
-       failwith "TODO"
+  let insert_fresh a b =
+    let fresh = Core.fresh_type_variable () in
+    let (dbs, cs1) = normalizer_simpl dbs (C_equation (P_variable fresh, a)) in
+    let (dbs, cs2) = normalizer_simpl dbs (C_equation (P_variable fresh, b)) in
+    (dbs, cs1 @ cs2)
+  in
+  let split_constant a c_tag args =
+    let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
+    let fresh_eqns =
+      List.map
+        (fun (v, t) -> C_equation (P_variable v, t))
+        (List.combine fresh_vars args)
+    in
+    let (dbs, recur) = List.fold_map_acc normalizer_simpl dbs fresh_eqns in
+    ( dbs,
+      [SC_Constructor {tv = a; c_tag; tv_list = fresh_vars}]
+      @ List.flatten recur )
+  in
+  let gather_forall a forall = (dbs, [SC_Poly {tv = a; forall}]) in
+  let gather_alias a b = (dbs, [SC_Alias (a, b)]) in
+  let reduce_type_app a b =
+    let (reduced, new_constraints) = check_applied @@ type_level_eval b in
+    let (dbs, recur) =
+      List.fold_map_acc normalizer_simpl dbs new_constraints
+    in
+    let (dbs, resimpl) = normalizer_simpl dbs (C_equation (a, reduced)) in
+    (* Note: this calls recursively but cant't fall in the same case. *)
+    (dbs, resimpl @ List.flatten recur)
+  in
+  let split_typeclass args tc =
+    let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
+    let fresh_eqns =
+      List.map
+        (fun (v, t) -> C_equation (P_variable v, t))
+        (List.combine fresh_vars args)
+    in
+    let (dbs, recur) = List.fold_map_acc normalizer_simpl dbs fresh_eqns in
+    (dbs, [SC_Typeclass {tc; args = fresh_vars}] @ List.flatten recur)
+  in
+  match new_constraint with
+  (* break down (forall 'b, body = forall 'c, body') into ('a = forall 'b, body and 'a = forall 'c, body')) *)
+  | C_equation ((P_forall _ as a), (P_forall _ as b)) ->
+      insert_fresh a b
+  (* break down (forall 'b, body = c(args)) into ('a = forall 'b, body and 'a = c(args)) *)
+  | C_equation ((P_forall _ as a), (P_constant _ as b)) ->
+      insert_fresh a b
+  (* break down (c(args) = c'(args')) into ('a = c(args) and 'a = c'(args')) *)
+  | C_equation ((P_constant _ as a), (P_constant _ as b)) ->
+      insert_fresh a b
+  (* break down (c(args) = forall 'b, body) into ('a = c(args) and 'a = forall 'b, body) *)
+  | C_equation ((P_constant _ as a), (P_forall _ as b)) ->
+      insert_fresh a b
+  | C_equation (P_forall forall, P_variable b) ->
+      gather_forall b forall
+  | C_equation (P_variable a, P_forall forall) ->
+      gather_forall a forall
+  | C_equation (P_variable a, P_variable b) ->
+      gather_alias a b
+  | C_equation (P_variable a, P_constant (c_tag, args)) ->
+      split_constant a c_tag args
+  | C_equation (P_constant (c_tag, args), P_variable b) ->
+      split_constant b c_tag args
+  (*  Reduce the type-level application, and simplify the resulting constraint + the extra constraints (typeclasses) that appeared at the forall binding site *)
+  | C_equation ((_ as a), (P_apply _ as b)) ->
+      reduce_type_app a b
+  | C_equation ((P_apply _ as a), (_ as b)) ->
+      reduce_type_app b a
+  (* break down (TC(args)) into (TC('a, …) and ('a = arg) …) *)
+  | C_typeclass (args, tc) ->
+      split_typeclass args tc
+  | C_access_label (tv, label, result) ->
+      let _todo = ignore (tv, label, result) in
+      failwith "TODO"
 
 (* Random notes from live discussion. Kept here to include bits as a rationale later on / remind me of the discussion in the short term.
  * Feel free to erase if it rots here for too long.
@@ -842,13 +910,13 @@ let rec normalizer_simpl : (type_constraint, type_constraint_simpl) normalizer
  *   (fun x  y -> if random then x else y) id                       ii as toto
  *   id "foo" *)
 
-type ('state, 'elt) state_list_monad = {state: 'state; list: 'elt list}
+type ('state, 'elt) state_list_monad = {state : 'state; list : 'elt list}
 
 let lift_state_list_monad ~state ~list = {state; list}
 
 let lift f {state; list} =
-  let new_state, new_lists = List.fold_map_acc f state list in
-  {state= new_state; list= List.flatten new_lists}
+  let (new_state, new_lists) = List.fold_map_acc f state list in
+  {state = new_state; list = List.flatten new_lists}
 
 (* TODO: move this to the List module *)
 let named_fold_left f ~acc ~lst =
@@ -865,12 +933,12 @@ let normalizers :
     structured_dbs ->
     (structured_dbs, 'modified_constraint) state_list_monad =
  fun new_constraint dbs ->
-   Fun.id
-   @@ lift normalizer_grouped_by_variable
-   @@ lift normalizer_assignments
-   @@ lift normalizer_all_constraints
-   @@ lift normalizer_simpl
-   @@ lift_state_list_monad ~state:dbs ~list:[new_constraint]
+  Fun.id
+  @@ lift normalizer_grouped_by_variable
+  @@ lift normalizer_assignments
+  @@ lift normalizer_all_constraints
+  @@ lift normalizer_simpl
+  @@ lift_state_list_monad ~state:dbs ~list:[new_constraint]
 
 (* sub-sub component: lazy selector (don't re-try all selectors every time)
  * For now: just re-try everytime *)
@@ -898,323 +966,766 @@ type 'selector_output propagator =
 (* selector / propagation rule for breaking down composite types
  * For now: break pair(a, b) = pair(c, d) into a = c, b = d *)
 
-type output_break_ctor =
-  {a_k_var: c_constructor_simpl; a_k'_var': c_constructor_simpl}
+type output_break_ctor = {
+  a_k_var : c_constructor_simpl;
+  a_k'_var' : c_constructor_simpl;
+}
 
 let selector_break_ctor : (type_constraint_simpl, output_break_ctor) selector =
  (* find two rules with the shape a = k(var …) and a = k'(var' …) *)
  fun type_constraint_simpl dbs ->
-   match type_constraint_simpl with
-   | SC_Constructor c ->
-       (* finding other constraints related to the same type variable and
+  match type_constraint_simpl with
+  | SC_Constructor c ->
+      (* finding other constraints related to the same type variable and
        with the same sort of constraint (constructor vs. constructor)
        is symmetric *)
-       let other_cs =
-         (UnionFindWrapper.get_constraints_related_to c.tv dbs).constructor
-       in
-       let cs_pairs =
-         List.map (fun x -> {a_k_var= c; a_k'_var'= x}) other_cs
-       in
-       WasSelected cs_pairs
-   | SC_Alias _       -> WasNotSelected (* TODO: ??? (beware: symmetry) *)
-   | SC_Poly _        -> WasNotSelected (* TODO: ??? (beware: symmetry) *)
-   | SC_Typeclass _   -> WasNotSelected
+      let other_cs =
+        (UnionFindWrapper.get_constraints_related_to c.tv dbs).constructor
+      in
+      let cs_pairs =
+        List.map (fun x -> {a_k_var = c; a_k'_var' = x}) other_cs
+      in
+      WasSelected cs_pairs
+  | SC_Alias _ ->
+      WasNotSelected (* TODO: ??? (beware: symmetry) *)
+  | SC_Poly _ ->
+      WasNotSelected (* TODO: ??? (beware: symmetry) *)
+  | SC_Typeclass _ ->
+      WasNotSelected
 
 (* TODO: move this to a more appropriate place and/or auto-generate it. *)
 let compare_simple_c_constant = function
-  | C_arrow     -> (
+  | C_arrow -> (
       function
-        (* N/A -> 1 *)
-        | C_arrow -> 0
-        | C_option | C_record | C_variant | C_map | C_big_map | C_list
-         |C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp
-         |C_int | C_address | C_bytes | C_key_hash | C_key | C_signature
-         |C_operation | C_contract | C_chain_id ->
-            -1 )
-  | C_option    -> (
+      (* N/A -> 1 *)
+      | C_arrow ->
+          0
+      | C_option
+      | C_record
+      | C_variant
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation
+      | C_contract
+      | C_chain_id ->
+          -1 )
+  | C_option -> (
       function
-        | C_arrow -> 1
-        | C_option -> 0
-        | C_record | C_variant | C_map | C_big_map | C_list | C_set | C_unit
-         |C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int
-         |C_address | C_bytes | C_key_hash | C_key | C_signature
-         |C_operation | C_contract | C_chain_id ->
-            -1 )
-  | C_record    -> (
+      | C_arrow ->
+          1
+      | C_option ->
+          0
+      | C_record
+      | C_variant
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation
+      | C_contract
+      | C_chain_id ->
+          -1 )
+  | C_record -> (
       function
-        | C_arrow | C_option -> 1
-        | C_record -> 0
-        | C_variant | C_map | C_big_map | C_list | C_set | C_unit | C_bool
-         |C_string | C_nat | C_mutez | C_timestamp | C_int | C_address
-         |C_bytes | C_key_hash | C_key | C_signature | C_operation
-         |C_contract | C_chain_id ->
-            -1 )
-  | C_variant   -> (
+      | C_arrow | C_option ->
+          1
+      | C_record ->
+          0
+      | C_variant
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation
+      | C_contract
+      | C_chain_id ->
+          -1 )
+  | C_variant -> (
       function
-        | C_arrow | C_option | C_record -> 1
-        | C_variant -> 0
-        | C_map | C_big_map | C_list | C_set | C_unit | C_bool | C_string
-         |C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes
-         |C_key_hash | C_key | C_signature | C_operation | C_contract
-         |C_chain_id ->
-            -1 )
-  | C_map       -> (
+      | C_arrow | C_option | C_record ->
+          1
+      | C_variant ->
+          0
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation
+      | C_contract
+      | C_chain_id ->
+          -1 )
+  | C_map -> (
       function
-        | C_arrow | C_option | C_record | C_variant -> 1
-        | C_map -> 0
-        | C_big_map | C_list | C_set | C_unit | C_bool | C_string | C_nat
-         |C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash
-         |C_key | C_signature | C_operation | C_contract | C_chain_id ->
-            -1 )
-  | C_big_map   -> (
+      | C_arrow | C_option | C_record | C_variant ->
+          1
+      | C_map ->
+          0
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation
+      | C_contract
+      | C_chain_id ->
+          -1 )
+  | C_big_map -> (
       function
-        | C_arrow | C_option | C_record | C_variant | C_map -> 1
-        | C_big_map -> 0
-        | C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez
-         |C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key
-         |C_signature | C_operation | C_contract | C_chain_id ->
-            -1 )
-  | C_list      -> (
+      | C_arrow | C_option | C_record | C_variant | C_map ->
+          1
+      | C_big_map ->
+          0
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation
+      | C_contract
+      | C_chain_id ->
+          -1 )
+  | C_list -> (
       function
-        | C_arrow | C_option | C_record | C_variant | C_map | C_big_map -> 1
-        | C_list -> 0
-        | C_set | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp
-         |C_int | C_address | C_bytes | C_key_hash | C_key | C_signature
-         |C_operation | C_contract | C_chain_id ->
-            -1 )
-  | C_set       -> (
+      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map ->
+          1
+      | C_list ->
+          0
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation
+      | C_contract
+      | C_chain_id ->
+          -1 )
+  | C_set -> (
       function
-        | C_arrow | C_option | C_record | C_variant | C_map | C_big_map
-         |C_list ->
-            1
-        | C_set -> 0
-        | C_unit | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int
-         |C_address | C_bytes | C_key_hash | C_key | C_signature
-         |C_operation | C_contract | C_chain_id ->
-            -1 )
-  | C_unit      -> (
+      | C_arrow | C_option | C_record | C_variant | C_map | C_big_map | C_list
+        ->
+          1
+      | C_set ->
+          0
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation
+      | C_contract
+      | C_chain_id ->
+          -1 )
+  | C_unit -> (
       function
-        | C_arrow | C_option | C_record | C_variant | C_map | C_big_map
-         |C_list | C_set ->
-            1
-        | C_unit -> 0
-        | C_bool | C_string | C_nat | C_mutez | C_timestamp | C_int
-         |C_address | C_bytes | C_key_hash | C_key | C_signature
-         |C_operation | C_contract | C_chain_id ->
-            -1 )
-  | C_bool      -> (
+      | C_arrow
+      | C_option
+      | C_record
+      | C_variant
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set ->
+          1
+      | C_unit ->
+          0
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation
+      | C_contract
+      | C_chain_id ->
+          -1 )
+  | C_bool -> (
       function
-        | C_arrow | C_option | C_record | C_variant | C_map | C_big_map
-         |C_list | C_set | C_unit ->
-            1
-        | C_bool -> 0
-        | C_string | C_nat | C_mutez | C_timestamp | C_int | C_address
-         |C_bytes | C_key_hash | C_key | C_signature | C_operation
-         |C_contract | C_chain_id ->
-            -1 )
-  | C_string    -> (
+      | C_arrow
+      | C_option
+      | C_record
+      | C_variant
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit ->
+          1
+      | C_bool ->
+          0
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation
+      | C_contract
+      | C_chain_id ->
+          -1 )
+  | C_string -> (
       function
-        | C_arrow | C_option | C_record | C_variant | C_map | C_big_map
-         |C_list | C_set | C_unit | C_bool ->
-            1
-        | C_string -> 0
-        | C_nat | C_mutez | C_timestamp | C_int | C_address | C_bytes
-         |C_key_hash | C_key | C_signature | C_operation | C_contract
-         |C_chain_id ->
-            -1 )
-  | C_nat       -> (
+      | C_arrow
+      | C_option
+      | C_record
+      | C_variant
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool ->
+          1
+      | C_string ->
+          0
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation
+      | C_contract
+      | C_chain_id ->
+          -1 )
+  | C_nat -> (
       function
-        | C_arrow | C_option | C_record | C_variant | C_map | C_big_map
-         |C_list | C_set | C_unit | C_bool | C_string ->
-            1
-        | C_nat -> 0
-        | C_mutez | C_timestamp | C_int | C_address | C_bytes | C_key_hash
-         |C_key | C_signature | C_operation | C_contract | C_chain_id ->
-            -1 )
-  | C_mutez     -> (
+      | C_arrow
+      | C_option
+      | C_record
+      | C_variant
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string ->
+          1
+      | C_nat ->
+          0
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation
+      | C_contract
+      | C_chain_id ->
+          -1 )
+  | C_mutez -> (
       function
-        | C_arrow | C_option | C_record | C_variant | C_map | C_big_map
-         |C_list | C_set | C_unit | C_bool | C_string | C_nat ->
-            1
-        | C_mutez -> 0
-        | C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key
-         |C_signature | C_operation | C_contract | C_chain_id ->
-            -1 )
+      | C_arrow
+      | C_option
+      | C_record
+      | C_variant
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat ->
+          1
+      | C_mutez ->
+          0
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation
+      | C_contract
+      | C_chain_id ->
+          -1 )
   | C_timestamp -> (
       function
-        | C_arrow | C_option | C_record | C_variant | C_map | C_big_map
-         |C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez ->
-            1
-        | C_timestamp -> 0
-        | C_int | C_address | C_bytes | C_key_hash | C_key | C_signature
-         |C_operation | C_contract | C_chain_id ->
-            -1 )
-  | C_int       -> (
+      | C_arrow
+      | C_option
+      | C_record
+      | C_variant
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez ->
+          1
+      | C_timestamp ->
+          0
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation
+      | C_contract
+      | C_chain_id ->
+          -1 )
+  | C_int -> (
       function
-        | C_arrow | C_option | C_record | C_variant | C_map | C_big_map
-         |C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez
-         |C_timestamp ->
-            1
-        | C_int -> 0
-        | C_address | C_bytes | C_key_hash | C_key | C_signature
-         |C_operation | C_contract | C_chain_id ->
-            -1 )
-  | C_address   -> (
+      | C_arrow
+      | C_option
+      | C_record
+      | C_variant
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp ->
+          1
+      | C_int ->
+          0
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation
+      | C_contract
+      | C_chain_id ->
+          -1 )
+  | C_address -> (
       function
-        | C_arrow | C_option | C_record | C_variant | C_map | C_big_map
-         |C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez
-         |C_timestamp | C_int ->
-            1
-        | C_address -> 0
-        | C_bytes | C_key_hash | C_key | C_signature | C_operation
-         |C_contract | C_chain_id ->
-            -1 )
-  | C_bytes     -> (
+      | C_arrow
+      | C_option
+      | C_record
+      | C_variant
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int ->
+          1
+      | C_address ->
+          0
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation
+      | C_contract
+      | C_chain_id ->
+          -1 )
+  | C_bytes -> (
       function
-        | C_arrow | C_option | C_record | C_variant | C_map | C_big_map
-         |C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez
-         |C_timestamp | C_int | C_address ->
-            1
-        | C_bytes -> 0
-        | C_key_hash | C_key | C_signature | C_operation | C_contract
-         |C_chain_id ->
-            -1 )
-  | C_key_hash  -> (
+      | C_arrow
+      | C_option
+      | C_record
+      | C_variant
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address ->
+          1
+      | C_bytes ->
+          0
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation
+      | C_contract
+      | C_chain_id ->
+          -1 )
+  | C_key_hash -> (
       function
-        | C_arrow | C_option | C_record | C_variant | C_map | C_big_map
-         |C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez
-         |C_timestamp | C_int | C_address | C_bytes ->
-            1
-        | C_key_hash -> 0
-        | C_key | C_signature | C_operation | C_contract | C_chain_id -> -1 )
-  | C_key       -> (
+      | C_arrow
+      | C_option
+      | C_record
+      | C_variant
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes ->
+          1
+      | C_key_hash ->
+          0
+      | C_key | C_signature | C_operation | C_contract | C_chain_id ->
+          -1 )
+  | C_key -> (
       function
-        | C_arrow | C_option | C_record | C_variant | C_map | C_big_map
-         |C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez
-         |C_timestamp | C_int | C_address | C_bytes | C_key_hash ->
-            1
-        | C_key -> 0
-        | C_signature | C_operation | C_contract | C_chain_id -> -1 )
+      | C_arrow
+      | C_option
+      | C_record
+      | C_variant
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash ->
+          1
+      | C_key ->
+          0
+      | C_signature | C_operation | C_contract | C_chain_id ->
+          -1 )
   | C_signature -> (
       function
-        | C_arrow | C_option | C_record | C_variant | C_map | C_big_map
-         |C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez
-         |C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key ->
-            1
-        | C_signature -> 0
-        | C_operation | C_contract | C_chain_id -> -1 )
+      | C_arrow
+      | C_option
+      | C_record
+      | C_variant
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key ->
+          1
+      | C_signature ->
+          0
+      | C_operation | C_contract | C_chain_id ->
+          -1 )
   | C_operation -> (
       function
-        | C_arrow | C_option | C_record | C_variant | C_map | C_big_map
-         |C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez
-         |C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key
-         |C_signature ->
-            1
-        | C_operation -> 0
-        | C_contract | C_chain_id -> -1 )
-  | C_contract  -> (
+      | C_arrow
+      | C_option
+      | C_record
+      | C_variant
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature ->
+          1
+      | C_operation ->
+          0
+      | C_contract | C_chain_id ->
+          -1 )
+  | C_contract -> (
       function
-        | C_arrow | C_option | C_record | C_variant | C_map | C_big_map
-         |C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez
-         |C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key
-         |C_signature | C_operation ->
-            1
-        | C_contract -> 0
-        | C_chain_id -> -1 )
-  | C_chain_id  -> (
+      | C_arrow
+      | C_option
+      | C_record
+      | C_variant
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation ->
+          1
+      | C_contract ->
+          0
+      | C_chain_id ->
+          -1 )
+  | C_chain_id -> (
       function
-        | C_arrow | C_option | C_record | C_variant | C_map | C_big_map
-         |C_list | C_set | C_unit | C_bool | C_string | C_nat | C_mutez
-         |C_timestamp | C_int | C_address | C_bytes | C_key_hash | C_key
-         |C_signature | C_operation | C_contract ->
-            1
-        | C_chain_id -> 0 (* N/A -> -1 *) )
+      | C_arrow
+      | C_option
+      | C_record
+      | C_variant
+      | C_map
+      | C_big_map
+      | C_list
+      | C_set
+      | C_unit
+      | C_bool
+      | C_string
+      | C_nat
+      | C_mutez
+      | C_timestamp
+      | C_int
+      | C_address
+      | C_bytes
+      | C_key_hash
+      | C_key
+      | C_signature
+      | C_operation
+      | C_contract ->
+          1
+      | C_chain_id ->
+          0 (* N/A -> -1 *) )
 
 (* Using a pretty-printer from the PP.ml module creates a dependency
    loop, so the one that we need temporarily for debugging purposes
    has been copied here. *)
 let debug_pp_constant : _ -> constant_tag -> unit =
  fun ppf c_tag ->
-   let ct =
-     match c_tag with
-     | Core.C_arrow -> "arrow"
-     | Core.C_option -> "option"
-     | Core.C_record -> failwith "record"
-     | Core.C_variant -> failwith "variant"
-     | Core.C_map -> "map"
-     | Core.C_big_map -> "big_map"
-     | Core.C_list -> "list"
-     | Core.C_set -> "set"
-     | Core.C_unit -> "unit"
-     | Core.C_bool -> "bool"
-     | Core.C_string -> "string"
-     | Core.C_nat -> "nat"
-     | Core.C_mutez -> "mutez"
-     | Core.C_timestamp -> "timestamp"
-     | Core.C_int -> "int"
-     | Core.C_address -> "address"
-     | Core.C_bytes -> "bytes"
-     | Core.C_key_hash -> "key_hash"
-     | Core.C_key -> "key"
-     | Core.C_signature -> "signature"
-     | Core.C_operation -> "operation"
-     | Core.C_contract -> "contract"
-     | Core.C_chain_id -> "chain_id"
-   in
-   Format.fprintf ppf "%s" ct
+  let ct =
+    match c_tag with
+    | Core.C_arrow ->
+        "arrow"
+    | Core.C_option ->
+        "option"
+    | Core.C_record ->
+        failwith "record"
+    | Core.C_variant ->
+        failwith "variant"
+    | Core.C_map ->
+        "map"
+    | Core.C_big_map ->
+        "big_map"
+    | Core.C_list ->
+        "list"
+    | Core.C_set ->
+        "set"
+    | Core.C_unit ->
+        "unit"
+    | Core.C_bool ->
+        "bool"
+    | Core.C_string ->
+        "string"
+    | Core.C_nat ->
+        "nat"
+    | Core.C_mutez ->
+        "mutez"
+    | Core.C_timestamp ->
+        "timestamp"
+    | Core.C_int ->
+        "int"
+    | Core.C_address ->
+        "address"
+    | Core.C_bytes ->
+        "bytes"
+    | Core.C_key_hash ->
+        "key_hash"
+    | Core.C_key ->
+        "key"
+    | Core.C_signature ->
+        "signature"
+    | Core.C_operation ->
+        "operation"
+    | Core.C_contract ->
+        "contract"
+    | Core.C_chain_id ->
+        "chain_id"
+  in
+  Format.fprintf ppf "%s" ct
 
 let debug_pp_c_constructor_simpl ppf {tv; c_tag; tv_list} =
-  Format.fprintf ppf "CTOR %a %a(%a)" Var.pp tv debug_pp_constant c_tag
+  Format.fprintf
+    ppf
+    "CTOR %a %a(%a)"
+    Var.pp
+    tv
+    debug_pp_constant
+    c_tag
     PP_helpers.(list_sep Var.pp (const " , "))
     tv_list
 
 let propagator_break_ctor : output_break_ctor propagator =
  fun selected dbs ->
-   let () = ignore dbs in
-   (* this propagator doesn't need to use the dbs *)
-   let a = selected.a_k_var in
-   let b = selected.a_k'_var' in
-   (* produce constraints: *)
+  let () = ignore dbs in
+  (* this propagator doesn't need to use the dbs *)
+  let a = selected.a_k_var in
+  let b = selected.a_k'_var' in
+  (* produce constraints: *)
 
-   (* a.tv = b.tv *)
-   let eq1 = C_equation (P_variable a.tv, P_variable b.tv) in
-   (* a.c_tag = b.c_tag *)
-   if compare_simple_c_constant a.c_tag b.c_tag <> 0 then
-     failwith
-       (Format.asprintf
-          "type error: incompatible types, not same ctor %a vs. %a (compare \
-           returns %d)"
-          debug_pp_c_constructor_simpl a debug_pp_c_constructor_simpl b
-          (compare_simple_c_constant a.c_tag b.c_tag))
-   else if
-     (* a.tv_list = b.tv_list *)
-     List.length a.tv_list <> List.length b.tv_list
-   then
-     failwith "type error: incompatible types, not same length"
-   else (
-     let eqs3 =
-       List.map2
-         (fun aa bb -> C_equation (P_variable aa, P_variable bb))
-         a.tv_list b.tv_list
-     in
-     let eqs = eq1 :: eqs3 in
-     (eqs, []) )
+  (* a.tv = b.tv *)
+  let eq1 = C_equation (P_variable a.tv, P_variable b.tv) in
+  (* a.c_tag = b.c_tag *)
+  if compare_simple_c_constant a.c_tag b.c_tag <> 0 then
+    failwith
+      (Format.asprintf
+         "type error: incompatible types, not same ctor %a vs. %a (compare \
+          returns %d)"
+         debug_pp_c_constructor_simpl
+         a
+         debug_pp_c_constructor_simpl
+         b
+         (compare_simple_c_constant a.c_tag b.c_tag))
+  else if
+    (* a.tv_list = b.tv_list *)
+    List.length a.tv_list <> List.length b.tv_list
+  then failwith "type error: incompatible types, not same length"
+  else
+    let eqs3 =
+      List.map2
+        (fun aa bb -> C_equation (P_variable aa, P_variable bb))
+        a.tv_list
+        b.tv_list
+    in
+    let eqs = eq1 :: eqs3 in
+    (eqs, [])
 
 (* no new assignments *)
 
 (* TODO : with our selectors, the selection depends on the order in which the constraints are added :-( :-( :-( :-(
    We need to return a lazy stream of constraints. *)
 
-type output_specialize1 = {poly: c_poly_simpl; a_k_var: c_constructor_simpl}
+type output_specialize1 = {poly : c_poly_simpl; a_k_var : c_constructor_simpl}
 
 let ( <? ) ca cb = if ca = 0 then cb () else ca
 
 let rec compare_list f = function
   | hd1 :: tl1 -> (
       function
-        | [] -> 1 | hd2 :: tl2 -> f hd1 hd2 <? fun () -> compare_list f tl1 tl2
-      )
-  | []            -> ( function [] -> 0 | _ :: _ -> -1 )
+      | [] -> 1 | hd2 :: tl2 -> f hd1 hd2 <? fun () -> compare_list f tl1 tl2 )
+  | [] -> (
+      function [] -> 0 | _ :: _ -> -1 )
 
 (* This follows the behaviour of Pervasives.compare for lists of different length *)
 
@@ -1229,90 +1740,106 @@ let rec compare_typeclass a b =
   compare_list (compare_list compare_type_expression) a b
 
 and compare_type_expression = function
-  | P_forall {binder= a1; constraints= a2; body= a3} -> (
+  | P_forall {binder = a1; constraints = a2; body = a3} -> (
       function
-        | P_forall {binder= b1; constraints= b2; body= b3} ->
-            compare_type_variable a1 b1
-            <? fun () ->
-            compare_list compare_type_constraint a2 b2
-            <? fun () -> compare_type_expression a3 b3
-        | P_variable _ -> -1
-        | P_constant _ -> -1
-        | P_apply _ -> -1 )
+      | P_forall {binder = b1; constraints = b2; body = b3} ->
+          compare_type_variable a1 b1
+          <? fun () ->
+          compare_list compare_type_constraint a2 b2
+          <? fun () -> compare_type_expression a3 b3
+      | P_variable _ ->
+          -1
+      | P_constant _ ->
+          -1
+      | P_apply _ ->
+          -1 )
   | P_variable a -> (
       function
-        | P_forall _   -> 1
-        | P_variable b -> compare_type_variable a b
-        | P_constant _ -> -1
-        | P_apply _    -> -1 )
+      | P_forall _ ->
+          1
+      | P_variable b ->
+          compare_type_variable a b
+      | P_constant _ ->
+          -1
+      | P_apply _ ->
+          -1 )
   | P_constant (a1, a2) -> (
       function
-        | P_forall _          -> 1
-        | P_variable _        -> 1
-        | P_constant (b1, b2) ->
-            compare_simple_c_constant a1 b1
-            <? fun () -> compare_list compare_type_expression a2 b2
-        | P_apply _           -> -1 )
+      | P_forall _ ->
+          1
+      | P_variable _ ->
+          1
+      | P_constant (b1, b2) ->
+          compare_simple_c_constant a1 b1
+          <? fun () -> compare_list compare_type_expression a2 b2
+      | P_apply _ ->
+          -1 )
   | P_apply (a1, a2) -> (
       function
-        | P_forall _       -> 1
-        | P_variable _     -> 1
-        | P_constant _     -> 1
-        | P_apply (b1, b2) ->
-            compare_type_expression a1 b1
-            <? fun () -> compare_type_expression a2 b2 )
+      | P_forall _ ->
+          1
+      | P_variable _ ->
+          1
+      | P_constant _ ->
+          1
+      | P_apply (b1, b2) ->
+          compare_type_expression a1 b1
+          <? fun () -> compare_type_expression a2 b2 )
 
 and compare_type_constraint = function
-  | C_equation (a1, a2)         -> (
+  | C_equation (a1, a2) -> (
       function
-        | C_equation (b1, b2) ->
-            compare_type_expression a1 b1
-            <? fun () -> compare_type_expression a2 b2
-        | C_typeclass _       -> -1
-        | C_access_label _    -> -1 )
-  | C_typeclass (a1, a2)        -> (
+      | C_equation (b1, b2) ->
+          compare_type_expression a1 b1
+          <? fun () -> compare_type_expression a2 b2
+      | C_typeclass _ ->
+          -1
+      | C_access_label _ ->
+          -1 )
+  | C_typeclass (a1, a2) -> (
       function
-        | C_equation _         -> 1
-        | C_typeclass (b1, b2) ->
-            compare_list compare_type_expression a1 b1
-            <? fun () -> compare_typeclass a2 b2
-        | C_access_label _     -> -1 )
+      | C_equation _ ->
+          1
+      | C_typeclass (b1, b2) ->
+          compare_list compare_type_expression a1 b1
+          <? fun () -> compare_typeclass a2 b2
+      | C_access_label _ ->
+          -1 )
   | C_access_label (a1, a2, a3) -> (
       function
-        | C_equation _                -> 1
-        | C_typeclass _               -> 1
-        | C_access_label (b1, b2, b3) ->
-            compare_type_expression a1 b1
-            <? fun () ->
-            compare_label a2 b2 <? fun () -> compare_type_variable a3 b3 )
+      | C_equation _ ->
+          1
+      | C_typeclass _ ->
+          1
+      | C_access_label (b1, b2, b3) ->
+          compare_type_expression a1 b1
+          <? fun () ->
+          compare_label a2 b2 <? fun () -> compare_type_variable a3 b3 )
 
 let compare_type_constraint_list = compare_list compare_type_constraint
 
-let compare_p_forall
-    {binder= a1; constraints= a2; body= a3}
-    {binder= b1; constraints= b2; body= b3} =
+let compare_p_forall {binder = a1; constraints = a2; body = a3}
+    {binder = b1; constraints = b2; body = b3} =
   compare_type_variable a1 b1
   <? fun () ->
   compare_type_constraint_list a2 b2 <? fun () -> compare_type_expression a3 b3
 
-let compare_c_poly_simpl {tv= a1; forall= a2} {tv= b1; forall= b2} =
+let compare_c_poly_simpl {tv = a1; forall = a2} {tv = b1; forall = b2} =
   compare_type_variable a1 b1 <? fun () -> compare_p_forall a2 b2
 
-let compare_c_constructor_simpl
-    {tv= a1; c_tag= a2; tv_list= a3}
-    {tv= b1; c_tag= b2; tv_list= b3} =
+let compare_c_constructor_simpl {tv = a1; c_tag = a2; tv_list = a3}
+    {tv = b1; c_tag = b2; tv_list = b3} =
   compare_type_variable a1 b1
   <? fun () ->
   compare_simple_c_constant a2 b2
   <? fun () -> compare_list compare_type_variable a3 b3
 
-let compare_output_specialize1 {poly= a1; a_k_var= a2} {poly= b1; a_k_var= b2}
-    =
+let compare_output_specialize1 {poly = a1; a_k_var = a2}
+    {poly = b1; a_k_var = b2} =
   compare_c_poly_simpl a1 b1 <? fun () -> compare_c_constructor_simpl a2 b2
 
-let compare_output_break_ctor
-    {a_k_var= a1; a_k'_var'= a2}
-    {a_k_var= b1; a_k'_var'= b2} =
+let compare_output_break_ctor {a_k_var = a1; a_k'_var' = a2}
+    {a_k_var = b1; a_k'_var' = b2} =
   compare_c_constructor_simpl a1 b1
   <? fun () -> compare_c_constructor_simpl a2 b2
 
@@ -1335,49 +1862,51 @@ let selector_specialize1 : (type_constraint_simpl, output_specialize1) selector
  (* TODO: do the same for two rules with the shape (a = forall b, d) and tc(a…) *)
  (* TODO: do the appropriate thing for two rules with the shape (a = forall b, d) and (a = forall b', d') *)
  fun type_constraint_simpl dbs ->
-   match type_constraint_simpl with
-   | SC_Constructor c ->
-       (* vice versa *)
-       let other_cs =
-         (UnionFindWrapper.get_constraints_related_to c.tv dbs).poly
-       in
-       let other_cs =
-         List.filter (fun (x : c_poly_simpl) -> c.tv = x.tv) other_cs
-       in
-       (* TODO: does equality work in OCaml? *)
-       let cs_pairs = List.map (fun x -> {poly= x; a_k_var= c}) other_cs in
-       WasSelected cs_pairs
-   | SC_Alias _       -> WasNotSelected (* TODO: ??? *)
-   | SC_Poly p        ->
-       let other_cs =
-         (UnionFindWrapper.get_constraints_related_to p.tv dbs).constructor
-       in
-       let other_cs =
-         List.filter (fun (x : c_constructor_simpl) -> x.tv = p.tv) other_cs
-       in
-       (* TODO: does equality work in OCaml? *)
-       let cs_pairs = List.map (fun x -> {poly= p; a_k_var= x}) other_cs in
-       WasSelected cs_pairs
-   | SC_Typeclass _   -> WasNotSelected
+  match type_constraint_simpl with
+  | SC_Constructor c ->
+      (* vice versa *)
+      let other_cs =
+        (UnionFindWrapper.get_constraints_related_to c.tv dbs).poly
+      in
+      let other_cs =
+        List.filter (fun (x : c_poly_simpl) -> c.tv = x.tv) other_cs
+      in
+      (* TODO: does equality work in OCaml? *)
+      let cs_pairs = List.map (fun x -> {poly = x; a_k_var = c}) other_cs in
+      WasSelected cs_pairs
+  | SC_Alias _ ->
+      WasNotSelected (* TODO: ??? *)
+  | SC_Poly p ->
+      let other_cs =
+        (UnionFindWrapper.get_constraints_related_to p.tv dbs).constructor
+      in
+      let other_cs =
+        List.filter (fun (x : c_constructor_simpl) -> x.tv = p.tv) other_cs
+      in
+      (* TODO: does equality work in OCaml? *)
+      let cs_pairs = List.map (fun x -> {poly = p; a_k_var = x}) other_cs in
+      WasSelected cs_pairs
+  | SC_Typeclass _ ->
+      WasNotSelected
 
 let propagator_specialize1 : output_specialize1 propagator =
  fun selected dbs ->
-   let () = ignore dbs in
-   (* this propagator doesn't need to use the dbs *)
-   let a = selected.poly in
-   let b = selected.a_k_var in
-   let () = if a.tv <> b.tv then failwith "internal error" else () in
-   (* produce constraints: *)
+  let () = ignore dbs in
+  (* this propagator doesn't need to use the dbs *)
+  let a = selected.poly in
+  let b = selected.a_k_var in
+  let () = if a.tv <> b.tv then failwith "internal error" else () in
+  (* produce constraints: *)
 
-   (* create a fresh existential variable to instantiate the polymorphic type b *)
-   let fresh_existential = Core.fresh_type_variable () in
-   (* Produce the constraint (b.tv = a.body[a.binder |-> fresh_existential])
+  (* create a fresh existential variable to instantiate the polymorphic type b *)
+  let fresh_existential = Core.fresh_type_variable () in
+  (* Produce the constraint (b.tv = a.body[a.binder |-> fresh_existential])
      The substitution is obtained by immediately applying the forall. *)
-   let apply = P_apply (P_forall a.forall, P_variable fresh_existential) in
-   let reduced, new_constraints = check_applied @@ type_level_eval apply in
-   let eq1 = C_equation (P_variable b.tv, reduced) in
-   let eqs = eq1 :: new_constraints in
-   (eqs, [])
+  let apply = P_apply (P_forall a.forall, P_variable fresh_existential) in
+  let (reduced, new_constraints) = check_applied @@ type_level_eval apply in
+  let eq1 = C_equation (P_variable b.tv, reduced) in
+  let eqs = eq1 :: new_constraints in
+  (eqs, [])
 
 (* no new assignments *)
 
@@ -1392,33 +1921,33 @@ module M (BlaBla : Set.OrderedType) = struct
       structured_dbs ->
       _ * new_constraints * new_assignments =
    fun selector propagator already_selected old_type_constraint dbs ->
-     (* TODO: thread some state to know which selector outputs were already seen *)
-     match selector old_type_constraint dbs with
-     | WasSelected selected_outputs ->
-         (* TODO: fold instead. *)
-         let already_selected, selected_outputs =
-           List.fold_left
-             (fun (already_selected, selected_outputs) elt ->
-               if AlreadySelected.mem elt already_selected then
-                 ( AlreadySelected.add elt already_selected,
-                   elt :: selected_outputs )
-               else
-                 (already_selected, selected_outputs))
-             (already_selected, selected_outputs)
-             selected_outputs
-         in
-         (* Call the propagation rule *)
-         let new_contraints_and_assignments =
-           List.map (fun s -> propagator s dbs) selected_outputs
-         in
-         let new_constraints, new_assignments =
-           List.split new_contraints_and_assignments
-         in
-         (* return so that the new constraints are pushed to some kind of work queue and the new assignments stored *)
-         ( already_selected,
-           List.flatten new_constraints,
-           List.flatten new_assignments )
-     | WasNotSelected               -> (already_selected, [], [])
+    (* TODO: thread some state to know which selector outputs were already seen *)
+    match selector old_type_constraint dbs with
+    | WasSelected selected_outputs ->
+        (* TODO: fold instead. *)
+        let (already_selected, selected_outputs) =
+          List.fold_left
+            (fun (already_selected, selected_outputs) elt ->
+              if AlreadySelected.mem elt already_selected then
+                ( AlreadySelected.add elt already_selected,
+                  elt :: selected_outputs )
+              else (already_selected, selected_outputs))
+            (already_selected, selected_outputs)
+            selected_outputs
+        in
+        (* Call the propagation rule *)
+        let new_contraints_and_assignments =
+          List.map (fun s -> propagator s dbs) selected_outputs
+        in
+        let (new_constraints, new_assignments) =
+          List.split new_contraints_and_assignments
+        in
+        (* return so that the new constraints are pushed to some kind of work queue and the new assignments stored *)
+        ( already_selected,
+          List.flatten new_constraints,
+          List.flatten new_assignments )
+    | WasNotSelected ->
+        (already_selected, [], [])
 end
 
 module M_break_ctor = M (BreakCtor)
@@ -1428,12 +1957,14 @@ let select_and_propagate_break_ctor =
   M_break_ctor.select_and_propagate selector_break_ctor propagator_break_ctor
 
 let select_and_propagate_specialize1 =
-  M_specialize1.select_and_propagate selector_specialize1
+  M_specialize1.select_and_propagate
+    selector_specialize1
     propagator_specialize1
 
-type already_selected =
-  { break_ctor: M_break_ctor.AlreadySelected.t;
-    specialize1: M_specialize1.AlreadySelected.t }
+type already_selected = {
+  break_ctor : M_break_ctor.AlreadySelected.t;
+  specialize1 : M_specialize1.AlreadySelected.t;
+}
 
 (* Takes a constraint, applies all selector+propagator pairs to it.
    Keeps track of which constraints have already been selected. *)
@@ -1443,14 +1974,15 @@ let select_and_propagate_all' :
     structured_dbs ->
     _ * new_constraints * structured_dbs =
   let aux sel_propag new_constraint (already_selected, new_constraints, dbs) =
-    let already_selected, new_constraints', new_assignments =
+    let (already_selected, new_constraints', new_assignments) =
       sel_propag already_selected new_constraint dbs
     in
     let assignments =
       List.fold_left
-        (fun acc ({tv; c_tag= _; tv_list= _} as ele) ->
+        (fun acc ({tv; c_tag = _; tv_list = _} as ele) ->
           TypeVariableMap.update tv (function None -> Some ele | x -> x) acc)
-        dbs.assignments new_assignments
+        dbs.assignments
+        new_assignments
     in
     let dbs = {dbs with assignments} in
     (already_selected, new_constraints' @ new_constraints, dbs)
@@ -1458,24 +1990,30 @@ let select_and_propagate_all' :
   fun already_selected new_constraint dbs ->
     (* The order in which the propagators are applied to constraints
        is entirely accidental (dfs/bfs/something in-between). *)
-    let already_selected, new_constraints, dbs = (already_selected, [], dbs) in
+    let (already_selected, new_constraints, dbs) =
+      (already_selected, [], dbs)
+    in
     (* We must have a different already_selected for each selector,
        so this is more verbose than a few uses of `aux'. *)
-    let already_selected', new_constraints, dbs =
-      aux select_and_propagate_break_ctor new_constraint
+    let (already_selected', new_constraints, dbs) =
+      aux
+        select_and_propagate_break_ctor
+        new_constraint
         (already_selected.break_ctor, new_constraints, dbs)
     in
-    let already_selected, new_constraints, dbs =
-      ( {already_selected with break_ctor= already_selected'},
+    let (already_selected, new_constraints, dbs) =
+      ( {already_selected with break_ctor = already_selected'},
         new_constraints,
         dbs )
     in
-    let already_selected', new_constraints, dbs =
-      aux select_and_propagate_specialize1 new_constraint
+    let (already_selected', new_constraints, dbs) =
+      aux
+        select_and_propagate_specialize1
+        new_constraint
         (already_selected.specialize1, new_constraints, dbs)
     in
-    let already_selected, new_constraints, dbs =
-      ( {already_selected with specialize1= already_selected'},
+    let (already_selected, new_constraints, dbs) =
+      ( {already_selected with specialize1 = already_selected'},
         new_constraints,
         dbs )
     in
@@ -1489,24 +2027,25 @@ let rec select_and_propagate_all :
     structured_dbs ->
     _ * structured_dbs =
  fun already_selected new_constraints dbs ->
-   match new_constraints with
-   | []                      -> (already_selected, dbs)
-   | new_constraint :: tl ->
-       let {state= dbs; list= modified_constraints} =
-         normalizers new_constraint dbs
-       in
-       let already_selected, new_constraints', dbs =
-         List.fold_left
-           (fun (already_selected, nc, dbs) c ->
-             let already_selected, new_constraints', dbs =
-               select_and_propagate_all' already_selected c dbs
-             in
-             (already_selected, new_constraints' @ nc, dbs))
-           (already_selected, [], dbs)
-           modified_constraints
-       in
-       let new_constraints = new_constraints' @ tl in
-       select_and_propagate_all already_selected new_constraints dbs
+  match new_constraints with
+  | [] ->
+      (already_selected, dbs)
+  | new_constraint :: tl ->
+      let {state = dbs; list = modified_constraints} =
+        normalizers new_constraint dbs
+      in
+      let (already_selected, new_constraints', dbs) =
+        List.fold_left
+          (fun (already_selected, nc, dbs) c ->
+            let (already_selected, new_constraints', dbs) =
+              select_and_propagate_all' already_selected c dbs
+            in
+            (already_selected, new_constraints' @ nc, dbs))
+          (already_selected, [], dbs)
+          modified_constraints
+      in
+      let new_constraints = new_constraints' @ tl in
+      select_and_propagate_all already_selected new_constraints dbs
 
 (* sub-component: constraint selector (worklist / dynamic queries) *)
 
@@ -1525,8 +2064,10 @@ let rec select_and_propagate_all :
  *   constraints : constraints TypeVariableMap.t ;
  * } *)
 
-type state =
-  {structured_dbs: structured_dbs; already_selected: already_selected}
+type state = {
+  structured_dbs : structured_dbs;
+  already_selected : already_selected;
+}
 
 let initial_state : state =
   (* {
@@ -1534,19 +2075,25 @@ let initial_state : state =
  *   constraints = TypeVariableMap.empty ;
  *   assignments = TypeVariableMap.empty ;
  * } *)
-  { structured_dbs=
-      { all_constraints= [];
+  {
+    structured_dbs =
+      {
+        all_constraints = [];
         (* type_constraint_simpl list *)
-        aliases= UF.empty;
+        aliases = UF.empty;
         (* unionfind *)
-        assignments= TypeVariableMap.empty;
+        assignments = TypeVariableMap.empty;
         (* c_constructor_simpl TypeVariableMap.t *)
-        grouped_by_variable= TypeVariableMap.empty;
+        grouped_by_variable = TypeVariableMap.empty;
         (* constraints TypeVariableMap.t *)
-        cycle_detection_toposort= () (* unit *) };
-    already_selected=
-      { break_ctor= M_break_ctor.AlreadySelected.empty;
-        specialize1= M_specialize1.AlreadySelected.empty } }
+        cycle_detection_toposort = () (* unit *);
+      };
+    already_selected =
+      {
+        break_ctor = M_break_ctor.AlreadySelected.empty;
+        specialize1 = M_specialize1.AlreadySelected.empty;
+      };
+  }
 
 (* This function is called when a program is fully compiled, and the
    typechecker's state is discarded. TODO: either get rid of the state
@@ -1577,12 +2124,12 @@ let discard_state (_ : state) = ()
 (* This is the solver *)
 let aggregate_constraints : state -> type_constraint list -> state result =
  fun state newc ->
-   (* TODO: Iterate over constraints *)
-   let _todo = ignore (state, newc) in
-   let a, b =
-     select_and_propagate_all state.already_selected newc state.structured_dbs
-   in
-   ok {already_selected= a; structured_dbs= b}
+  (* TODO: Iterate over constraints *)
+  let _todo = ignore (state, newc) in
+  let (a, b) =
+    select_and_propagate_all state.already_selected newc state.structured_dbs
+  in
+  ok {already_selected = a; structured_dbs = b}
 
 (*let { constraints ; eqv } = state in
   ok { constraints = constraints @ newc ; eqv }*)

@@ -12,7 +12,7 @@ type type_content =
   | T_constant of type_constant
   | T_operator of type_operator
 
-and arrow = {type1: type_expression; type2: type_expression}
+and arrow = {type1 : type_expression; type2 : type_expression}
 
 and type_operator =
   | TC_contract of type_expression
@@ -23,7 +23,7 @@ and type_operator =
   | TC_big_map of type_expression * type_expression
   | TC_arrow of type_expression * type_expression
 
-and type_expression = {type_content: type_content}
+and type_expression = {type_content : type_content}
 
 type program = declaration Location.wrap list
 
@@ -38,7 +38,10 @@ and declaration =
       (expression_variable * type_expression option * bool * expression)
 
 (* | Macro_declaration of macro_declaration *)
-and expression = {expression_content: expression_content; location: Location.t}
+and expression = {
+  expression_content : expression_content;
+  location : Location.t;
+}
 
 and expression_content =
   (* Base *)
@@ -72,48 +75,57 @@ and expression_content =
   | E_set of expression list
   | E_look_up of (expression * expression)
 
-and constant =
-  { cons_name: constant'; (* this is at the end because it is huge *)
-    arguments: expression list }
+and constant = {
+  cons_name : constant'; (* this is at the end because it is huge *)
+  arguments : expression list;
+}
 
-and application = {lamb: expression; args: expression}
+and application = {lamb : expression; args : expression}
 
-and lambda =
-  { binder: expression_variable;
-    input_type: type_expression option;
-    output_type: type_expression option;
-    result: expression }
+and lambda = {
+  binder : expression_variable;
+  input_type : type_expression option;
+  output_type : type_expression option;
+  result : expression;
+}
 
-and recursive =
-  {fun_name: expression_variable; fun_type: type_expression; lambda: lambda}
+and recursive = {
+  fun_name : expression_variable;
+  fun_type : type_expression;
+  lambda : lambda;
+}
 
-and let_in =
-  { let_binder: expression_variable * type_expression option;
-    rhs: expression;
-    let_result: expression;
-    inline: bool;
-    mut: bool }
+and let_in = {
+  let_binder : expression_variable * type_expression option;
+  rhs : expression;
+  let_result : expression;
+  inline : bool;
+  mut : bool;
+}
 
-and constructor = {constructor: constructor'; element: expression}
+and constructor = {constructor : constructor'; element : expression}
 
-and record_accessor = {record: expression; path: label}
+and record_accessor = {record : expression; path : label}
 
-and record_update = {record: expression; path: label; update: expression}
+and record_update = {record : expression; path : label; update : expression}
 
 and matching_expr = (expr, unit) matching_content
 
-and matching = {matchee: expression; cases: matching_expr}
+and matching = {matchee : expression; cases : matching_expr}
 
-and ascription = {anno_expr: expression; type_annotation: type_expression}
+and ascription = {anno_expr : expression; type_annotation : type_expression}
 
-and conditional =
-  {condition: expression; then_clause: expression; else_clause: expression}
+and conditional = {
+  condition : expression;
+  then_clause : expression;
+  else_clause : expression;
+}
 
-and sequence = {expr1: expression; expr2: expression}
+and sequence = {expr1 : expression; expr2 : expression}
 
-and tuple_accessor = {tuple: expression; path: int}
+and tuple_accessor = {tuple : expression; path : int}
 
-and tuple_update = {tuple: expression; path: int; update: expression}
+and tuple_update = {tuple : expression; path : int; update : expression}
 
 and environment_element_definition =
   | ED_binder
@@ -121,10 +133,11 @@ and environment_element_definition =
 
 and free_variables = expression_variable list
 
-and environment_element =
-  { type_value: type_expression;
-    source_environment: full_environment;
-    definition: environment_element_definition }
+and environment_element = {
+  type_value : type_expression;
+  source_environment : full_environment;
+  definition : environment_element_definition;
+}
 
 and environment = (expression_variable * environment_element) list
 

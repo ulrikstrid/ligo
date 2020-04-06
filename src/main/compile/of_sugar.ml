@@ -17,6 +17,9 @@ let list_declarations (program : program) : string list =
     (fun prev el ->
       let open Location in
       match el.wrap_content with
-      | Declaration_constant (var, _, _, _) -> Var.to_name var :: prev
-      | _                                   -> prev)
-    [] program
+      | Declaration_constant (var, _, _, _) ->
+          Var.to_name var :: prev
+      | _ ->
+          prev)
+    []
+    program

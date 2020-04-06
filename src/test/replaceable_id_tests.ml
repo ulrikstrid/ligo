@@ -2,7 +2,7 @@ open Trace
 open Test_helpers
 
 let type_file f =
-  let%bind typed, state =
+  let%bind (typed, state) =
     Ligo.Compile.Utils.type_file f "pascaligo" (Contract "main")
   in
   ok @@ (typed, state)
@@ -11,14 +11,15 @@ let get_program =
   let s = ref None in
   fun () ->
     match !s with
-    | Some s -> ok s
-    | None   ->
+    | Some s ->
+        ok s
+    | None ->
         let%bind program = type_file "./contracts/replaceable_id.ligo" in
         s := Some program ;
         ok program
 
 let compile_main () =
-  let%bind typed_prg, _ = get_program () in
+  let%bind (typed_prg, _) = get_program () in
   let%bind mini_c_prg = Ligo.Compile.Of_typed.compile typed_prg in
   let%bind michelson_prg =
     Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main"
@@ -34,7 +35,9 @@ open Ast_imperative
 let empty_op_list = e_typed_list [] t_operation
 
 let empty_message =
-  e_lambda (Var.of_name "arguments") (Some t_unit)
+  e_lambda
+    (Var.of_name "arguments")
+    (Some t_unit)
     (Some (t_list t_operation))
     empty_op_list
 
@@ -46,19 +49,22 @@ let entry_change_addr id =
 let entry_pass_message = e_constructor "Pass_message" @@ empty_message
 
 let change_addr_success () =
-  let%bind program, _ = get_program () in
+  let%bind (program, _) = get_program () in
   let init_storage = storage 1 in
   let param = entry_change_addr 2 in
   let options =
     let sender = contract 1 in
     Proto_alpha_utils.Memory_proto_alpha.make_options ~sender ()
   in
-  expect_eq ~options program "main"
+  expect_eq
+    ~options
+    program
+    "main"
     (e_pair param init_storage)
     (e_pair empty_op_list (storage 2))
 
 let change_addr_fail () =
-  let%bind program, _ = get_program () in
+  let%bind (program, _) = get_program () in
   let init_storage = storage 1 in
   let param = entry_change_addr 2 in
   let options =
@@ -66,24 +72,30 @@ let change_addr_fail () =
     Proto_alpha_utils.Memory_proto_alpha.make_options ~sender ()
   in
   let exp_failwith = "Unauthorized sender" in
-  expect_string_failwith ~options program "main"
+  expect_string_failwith
+    ~options
+    program
+    "main"
     (e_pair param init_storage)
     exp_failwith
 
 let pass_message_success () =
-  let%bind program, _ = get_program () in
+  let%bind (program, _) = get_program () in
   let init_storage = storage 1 in
   let param = entry_pass_message in
   let options =
     let sender = contract 1 in
     Proto_alpha_utils.Memory_proto_alpha.make_options ~sender ()
   in
-  expect_eq ~options program "main"
+  expect_eq
+    ~options
+    program
+    "main"
     (e_pair param init_storage)
     (e_pair empty_op_list init_storage)
 
 let pass_message_fail () =
-  let%bind program, _ = get_program () in
+  let%bind (program, _) = get_program () in
   let init_storage = storage 1 in
   let param = entry_pass_message in
   let options =
@@ -91,12 +103,16 @@ let pass_message_fail () =
     Proto_alpha_utils.Memory_proto_alpha.make_options ~sender ()
   in
   let exp_failwith = "Unauthorized sender" in
-  expect_string_failwith ~options program "main"
+  expect_string_failwith
+    ~options
+    program
+    "main"
     (e_pair param init_storage)
     exp_failwith
 
 let main =
-  test_suite "Replaceable ID"
+  test_suite
+    "Replaceable ID"
     [ test "compile" compile_main;
       test "change_addr_success" change_addr_success;
       test "change_addr_fail" change_addr_fail;

@@ -43,8 +43,10 @@ let is_tuple_lmap m =
 let get_pair m =
   let open Trace in
   match (LMap.find_opt (Label "0") m, LMap.find_opt (Label "1") m) with
-  | Some e1, Some e2 -> ok (e1, e2)
-  | _                    -> simple_fail "not a pair"
+  | (Some e1, Some e2) ->
+      ok (e1, e2)
+  | _ ->
+      simple_fail "not a pair"
 
 let tuple_of_record (m : _ LMap.t) =
   let aux i =
@@ -55,13 +57,8 @@ let tuple_of_record (m : _ LMap.t) =
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
 
 let list_of_record_or_tuple (m : _ LMap.t) =
-  if is_tuple_lmap m then
-    List.map snd @@ tuple_of_record m
-  else
-    List.rev @@ LMap.to_list m
+  if is_tuple_lmap m then List.map snd @@ tuple_of_record m
+  else List.rev @@ LMap.to_list m
 
 let kv_list_of_record_or_tuple (m : _ LMap.t) =
-  if is_tuple_lmap m then
-    tuple_of_record m
-  else
-    List.rev @@ LMap.to_kv_list m
+  if is_tuple_lmap m then tuple_of_record m else List.rev @@ LMap.to_kv_list m

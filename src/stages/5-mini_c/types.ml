@@ -18,8 +18,10 @@ and environment_element = expression_variable * type_value
 
 and environment = environment_element list
 
-and environment_wrap =
-  {pre_environment: environment; post_environment: environment}
+and environment_wrap = {
+  pre_environment : environment;
+  post_environment : environment;
+}
 
 and var_name = expression_variable
 
@@ -78,16 +80,17 @@ and expression' =
   | E_record_update of (expression * [`Left | `Right] list * expression)
   | E_while of (expression * expression)
 
-and expression = {content: expression'; type_value: type_value}
+and expression = {content : expression'; type_value : type_value}
 
-and constant =
-  { cons_name: constant'; (* this is at the end because it is huge *)
-    arguments: expression list }
+and constant = {
+  cons_name : constant'; (* this is at the end because it is huge *)
+  arguments : expression list;
+}
 
 and assignment = var_name * inline * expression
 
 and toplevel_statement = assignment * environment_wrap
 
-and anon_function = {binder: expression_variable; body: expression}
+and anon_function = {binder : expression_variable; body : expression}
 
 and program = toplevel_statement list

@@ -9,13 +9,8 @@ end)
 
 let failed_to_compile_md_file md_file (s, group, prg) =
   let title () =
-    "Failed to compile ```"
-    ^ s
-    ^ " block (group '"
-    ^ group
-    ^ "') in file '"
-    ^ md_file
-    ^ "'"
+    "Failed to compile ```" ^ s ^ " block (group '" ^ group ^ "') in file '"
+    ^ md_file ^ "'"
   in
   let content () = "\n" ^ prg in
   error title content
@@ -40,8 +35,8 @@ let get_groups md_file =
     (fun (grp_map : _ SnippetsGroup.t) (el : Md.block) ->
       match el.header with
       | Some ("pascaligo" as s)
-       |Some ("cameligo" as s)
-       |Some ("reasonligo" as s) -> (
+      | Some ("cameligo" as s)
+      | Some ("reasonligo" as s) -> (
           let%bind () =
             bind_iter_list
               (fun arg ->
@@ -55,30 +50,40 @@ let get_groups md_file =
           match el.arguments with
           | [Md.Field ""] ->
               ok
-              @@ SnippetsGroup.update (s, "ungrouped")
+              @@ SnippetsGroup.update
+                   (s, "ungrouped")
                    (fun arg_content ->
                      match arg_content with
-                     | Some ct -> Some (String.concat "\n" (ct :: el.contents))
-                     | None    -> Some (String.concat "\n" el.contents))
+                     | Some ct ->
+                         Some (String.concat "\n" (ct :: el.contents))
+                     | None ->
+                         Some (String.concat "\n" el.contents))
                    grp_map
-          | [Md.Field "skip"] -> ok grp_map
+          | [Md.Field "skip"] ->
+              ok grp_map
           | _ ->
               bind_fold_list
                 (fun grp_map arg ->
                   match arg with
                   | Md.NameValue ("group", name) ->
                       ok
-                      @@ SnippetsGroup.update (s, name)
+                      @@ SnippetsGroup.update
+                           (s, name)
                            (fun arg_content ->
                              match arg_content with
                              | Some ct ->
                                  Some (String.concat "\n" (ct :: el.contents))
-                             | None    -> Some (String.concat "\n" el.contents))
+                             | None ->
+                                 Some (String.concat "\n" el.contents))
                            grp_map
-                  | _ -> ok grp_map)
-                grp_map el.arguments )
-      | None | Some _ -> ok grp_map)
-    SnippetsGroup.empty code_blocks
+                  | _ ->
+                      ok grp_map)
+                grp_map
+                el.arguments )
+      | None | Some _ ->
+          ok grp_map)
+    SnippetsGroup.empty
+    code_blocks
 
 (**
   evaluate each expression in each programs from the snippets group map
@@ -96,7 +101,7 @@ let compile_groups _filename grp_list =
            in
            let%bind sugar = Ligo.Compile.Of_imperative.compile imperative in
            let%bind core = Ligo.Compile.Of_sugar.compile sugar in
-           let%bind typed, _ = Compile.Of_core.compile Env core in
+           let%bind (typed, _) = Compile.Of_core.compile Env core in
            let%bind mini_c = Compile.Of_typed.compile typed in
            bind_map_list
              (fun ((_, _, exp), _) ->
@@ -165,7 +170,8 @@ let md_files =
 let md_root = "../../gitlab-pages/docs/language-basics/"
 
 let main =
-  test_suite "Markdown files"
+  test_suite
+    "Markdown files"
     (List.map
        (fun md_file ->
          let test_name = "File : \"." ^ md_file ^ "\"" in

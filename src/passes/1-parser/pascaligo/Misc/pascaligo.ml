@@ -5,8 +5,13 @@ module SSet = Utils.String.Set
 (* Mock options. TODO: Plug in cmdliner. *)
 
 let pre_options =
-  EvalOpt.make ~libs:[] ~verbose:SSet.empty ~offsets:true ~mode:`Point
-    ~cmd:EvalOpt.Quiet ~mono:true
+  EvalOpt.make
+    ~libs:[]
+    ~verbose:SSet.empty
+    ~offsets:true
+    ~mode:`Point
+    ~cmd:EvalOpt.Quiet
+    ~mono:true
 
 (* Monolithic API of Menhir for now *)
 
@@ -34,7 +39,9 @@ module Front = ParserAPI.Make (Lexer) (Parser) (ParErr)
 
 let issue_error point =
   let error =
-    Front.format_error ~offsets:true (* TODO: CLI *) `Point
+    Front.format_error
+      ~offsets:true
+      (* TODO: CLI *) `Point
       (* TODO: CLI *) point
   in
   Stdlib.Error error
