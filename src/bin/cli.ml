@@ -118,8 +118,8 @@ let display_format =
     info ~docv ~doc ["format" ; "display-format"] in
   value @@
   opt
-    (enum [("human-readable", human_readable); ("dev", dev); ("json", json)])
-    human_readable
+    (enum [("human-readable", Human_readable); ("dev", Dev); ("json", Json)])
+    Human_readable
     info
 
 let michelson_code_format =
