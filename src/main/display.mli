@@ -29,4 +29,12 @@ val convert : display_format:'output display_format -> displayable -> 'output
 
 val to_json : displayable -> json
 
-val bind_format : 'a format -> 'b format -> ('b,'a) result format
+val bind_format : 'value format -> 'error format -> ('value,'error) result format
+
+type michelson_format = [
+  | `Text
+  | `Json
+  | `Hex
+]
+
+val michelson : michelson_format -> (Michelson.michelson * 'a) format

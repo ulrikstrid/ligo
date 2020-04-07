@@ -24,9 +24,9 @@ open Main.Display
   | Ok _ -> `Ok ()
   | Error _ -> `Error (false, "error") *)
 
-let toplevel : planque -> displayable -> unit Term.ret =
-  fun wrapper disp ->
-  let str = wrapper.tt { run =
+let toplevel : display_format:planque -> displayable -> unit Term.ret =
+  fun ~display_format disp ->
+  let str = display_format.tt { run =
     fun (type a) (cons : a display_format) ->
         match cons with
         | Human_readable -> convert ~display_format:(Human_readable) disp

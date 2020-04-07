@@ -35,8 +35,8 @@ let convert : type output . display_format:(output display_format) -> displayabl
 let to_json : displayable -> json = convert ~display_format:Json
 
 let bind_format :
-  'a format -> 'b format -> ('b,'a) result format =
-  fun error_format value_format ->
+  'value format -> 'error format -> ('value,'error) result format =
+  fun value_format error_format ->
     let pp ~display_format f a = match a with
       | Error e -> error_format.pp ~display_format f e
       | Ok v -> value_format.pp ~display_format f v in
@@ -45,57 +45,39 @@ let bind_format :
       | Ok v -> value_format.to_json v in
     { pp ; to_json }
 
-(* let rec error_pp ?(dev = false) out (e : error) =
-  let open JSON_string_utils in
-  let message =
-    let opt = e |> member "message" |> string in
-    match opt with
-    | Some msg -> ": " ^ msg
-    | None -> "" in
-  let error_code =
-    let error_code = e |> member "error_code" in
-    match error_code with
-    | `Null -> ""
-    | _ -> " (" ^ (J.to_string error_code) ^ ")" in
-  let title =
-    let opt = e |> member "title" |> string in
-    Option.unopt ~default:"" opt in
-  let data =
-    let data = e |> member "data" in
-    match data with
-    | `Null -> ""
-    | _ -> " " ^ (J.to_string data) ^ "\n" in
-  let infos =
-    let infos = e |> member "infos" in
-    match infos with
-    | `List lst -> lst
-    | `Null -> []
-    | x -> [ x ] in
-  let children =
-    let infos = e |> member "children" in
-    match infos with
-    | `List lst -> lst
-    | `Null -> []
-    | x -> [ x ] in
-  let location =
-    let opt = e |> member "data" |> member "location" |> string in
-    let aux cur prec =
-      match prec with
-      | None -> cur |> member "data" |> member "location" |> string
-      | Some s -> Some s
-    in
-    match List.fold_right aux infos opt with
-    | None -> ""
-    | Some s -> s ^ ". "
-  in
-  let print x = Format.fprintf out x in
-  if not dev then (
-    print "%s%s%s%s%s" location title error_code message data
-  ) else (
-    print "%s%s%s.\n%s%s\n%a\n%a\n" title error_code message data location
-      (Format.pp_print_list (error_pp ~dev)) infos
-      (Format.pp_print_list (error_pp ~dev)) children
-  ) *)
+(* TODO : move michelson format things out of here *)
+type michelson_format = [
+  | `Text
+  | `Json
+  | `Hex
+]
+
+let michelson_ppformat michelson_format ~display_format f (a,_) =
+  let mich_pp = fun michelson_format ->  match michelson_format with
+    | `Text -> Michelson.pp
+    | `Json -> Michelson.pp_json
+    | `Hex -> Michelson.pp_hex in
+  match display_format with
+  | Human_readable | Dev -> (
+     let m = Format.asprintf "%a\n" (mich_pp michelson_format) a in
+     Format.pp_print_string f m
+  )
+
+let michelson_jsonformat michelson_format (a,_) : json = match michelson_format with
+  | `Text ->
+    let code_as_str = Format.asprintf "%a" Michelson.pp a in
+    `Assoc [("text_code" , `String code_as_str)]
+  | `Hex -> 
+    let code_as_hex = Format.asprintf "%a" Michelson.pp_hex a in
+    `Assoc [("hex_code" , `String code_as_hex)]
+  | `Json ->
+    (* Ideally , would like to do that :
+    Michelson.get_json a *)
+    let code_as_str = Format.asprintf "%a" Michelson.pp_json a in
+    `Assoc [("json_code" , `String code_as_str)]
 
 
-
+let michelson : michelson_format -> 'a format = fun mf -> {
+  pp = michelson_ppformat mf;
+  to_json = michelson_jsonformat mf;
+}
