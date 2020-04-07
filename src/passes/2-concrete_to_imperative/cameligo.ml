@@ -584,15 +584,13 @@ let rec compile_expression :
   | ESeq s -> (
       let (s , loc) = r_split s in
       let items : Raw.expr list = pseq_to_list s.elements in
-      (match items with
-         [] -> return @@ e_skip ~loc ()
-       | expr::more ->
-          let expr' = compile_expression expr in
-          let apply (e1: Raw.expr) (e2: expression Trace.result) =
-            let%bind a = compile_expression e1 in
-            let%bind e2' = e2 in
-            return @@ e_sequence a e2'
-          in List.fold_right apply more expr')
+      let apply (e1: Raw.expr) (e2: expression Trace.result) =
+        let%bind a = compile_expression e1 in
+        let%bind e2 = e2 in
+        match e2.expression_content with
+        | E_skip -> ok a
+        | _ -> ok @@ e_sequence a e2
+      in List.fold_right apply items (ok (e_skip ~loc ()))
     )
   | ECond c -> (
       let (c , loc) = r_split c in
