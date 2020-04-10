@@ -8,6 +8,7 @@ let () =
     Integration_tests.main ;
     Transpiler_tests.main ;
     Typer_tests.main ;
+    (*
     Coase_tests.main ;
     Vote_tests.main ;
     Id_tests.main ;
@@ -18,5 +19,6 @@ let () =
     Hash_lock_tests.main ;
     Time_lock_repeat_tests.main ;
     Pledge_tests.main ;
+    *)
   ] ;
   ()
