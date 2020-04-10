@@ -7,8 +7,8 @@ module Errors = struct
     let title = (thunk "different kinds") in
     let message () = "" in
     let data = [
-      ("a" , fun () -> Format.asprintf "%a" PP.type_expression a) ;
-      ("b" , fun () -> Format.asprintf "%a" PP.type_expression b )
+      ("a" , fun () -> Format.asprintf "%a" PP_generic.type_expression a) ;
+      ("b" , fun () -> Format.asprintf "%a" PP_generic.type_expression b )
     ] in
     error ~data title message ()
 
