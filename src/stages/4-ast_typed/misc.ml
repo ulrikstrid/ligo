@@ -527,3 +527,11 @@ let program_environment (program : program) : full_environment =
   let last_declaration = Location.unwrap List.(hd @@ rev program) in
   match last_declaration with
   | Declaration_constant { binder=_ ; expr=_ ; inline=_ ; post_env } -> post_env
+
+let p_constant (p_ctor_tag : constant_tag) (p_ctor_args : p_ctor_args) =
+  P_constant {
+      p_ctor_tag : constant_tag ;
+      p_ctor_args : p_ctor_args ;
+    }
+
+let c_equation aval bval = C_equation { aval ; bval }
