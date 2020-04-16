@@ -44,7 +44,7 @@ Based on a fork of the GitHub Terms of Service, with thanks.
 6. The “Website” refers to LIGO’s website located at [ligolang.org](https://ligolang.org/), and all content, services, and products provided by LIGO at or through the Website. It also refers to LIGO-owned subdomains of ligolang.org, such as [ide.ligolang.org](https://ide.ligolang.org/). Occasionally, websites owned or operated by LIGO may provide different or additional terms of service. If those additional terms conflict with this Agreement, the more specific terms apply to the relevant page or service.
 
 ### B. Acceptable Use
-**Short version:** *LIGO is collaborative project with users and contributors from all over the world, and that collaboration only works when our users are able to work together in good faith. While using the service, You must follow the terms of this section, which include some restrictions on content You can post or input and other limitations. In short, be excellent to each other.*
+**Short version:** *LIGO is a collaborative project with users and contributors from all over the world, and that collaboration only works when our users are able to work together in good faith. While using the service, You must follow the terms of this section, which include some restrictions on content You can post or input and other limitations. In short, be excellent to each other.*
 
 Your use of the Website and Service must not violate any applicable laws, including copyright or trademark laws, export control or sanctions laws applicable to LIGO's operations, or other laws in Your jurisdiction. You are responsible for making sure that Your use of the Service is in compliance with laws and any applicable regulations.
 
