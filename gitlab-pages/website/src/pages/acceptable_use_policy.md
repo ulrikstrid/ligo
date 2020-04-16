@@ -6,7 +6,7 @@ redirect_from:
   - /articles/github-acceptable-use-policies
 ---
 
-**Short version:** _LIGO is collaborative project with users and contributors from all over the world, and that collaboration only works when our users are able to work together in good faith. While using the service, you must follow the terms of this section, which include some restrictions on content you can post, conduct on the service, and other limitations. In short, be excellent to each other._
+**Short version:** _LIGO is a collaborative project with users and contributors from all over the world, and that collaboration only works when our users are able to work together in good faith. While using the service, you must follow the terms of this section, which include some restrictions on content you can post, conduct on the service, and other limitations. In short, be excellent to each other._
 
 Capitalized terms used but not defined in these Acceptable Use Policies have the meanings assigned to them in our [Terms of Service](https://ADDURL) and [Privacy Policy](https://ADDURL). "You" and "Your" or "User" refer to the individual person, company, or organization that has visited or is using the Website or Services, and "We", "Us", "Our" or "LIGO" refers to Ligo LANG SASU (128 rue de la Boetie, 75008, Paris, France).
 
