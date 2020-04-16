@@ -948,7 +948,7 @@ interactive_expr: LBRACE ELLIPSIS Constr WILD
 ## Constr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a `.` as part of the module path.
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes VBAR
 ##
@@ -1904,7 +1904,7 @@ interactive_expr: Switch Constr WILD
 ## Constr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a `.` as part of the module path.
 
 interactive_expr: Switch LBRACE WILD
 ##
@@ -3572,7 +3572,7 @@ contract: Type Ident EQ Constr DOT WILD
 ## Constr DOT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an identifier.
 
 contract: Type Ident EQ Constr LPAR Ident RPAR WILD
 ##
@@ -3585,7 +3585,7 @@ contract: Type Ident EQ Constr LPAR Ident RPAR WILD
 ## variant
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
 contract: Type Ident EQ Constr LPAR Ident Type
 ##
@@ -3616,7 +3616,10 @@ contract: Type Ident EQ Constr LPAR WILD
 ## Constr LPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Not a valid constructor argument.
+- 
+Expected something like:
+type direction = Left(int)
 
 contract: Type Ident EQ Constr RPAR
 ##
@@ -3638,7 +3641,7 @@ contract: Type Ident EQ Constr RPAR
 ## In state 65, spurious reduction of production type_decl -> Type Ident EQ type_expr 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
 contract: Type Ident EQ Constr SEMI WILD
 ##
@@ -3651,7 +3654,7 @@ contract: Type Ident EQ Constr SEMI WILD
 ## declaration
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
 contract: Type Ident EQ Constr VBAR WILD
 ##
@@ -3663,7 +3666,7 @@ contract: Type Ident EQ Constr VBAR WILD
 ## variant VBAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a constructor here. Did you perhaps forget to capitalize it?
 
 contract: Type Ident EQ Constr WILD
 ##
@@ -3677,7 +3680,7 @@ contract: Type Ident EQ Constr WILD
 ## Constr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a `.` as part of the module path.
 
 contract: Type Ident EQ Ident ARROW WILD
 ##
@@ -3689,7 +3692,7 @@ contract: Type Ident EQ Ident ARROW WILD
 ## Ident ARROW
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Not a valid type.
 
 contract: Type Ident EQ Ident LPAR Ident Type
 ##
@@ -3709,7 +3712,7 @@ contract: Type Ident EQ Ident LPAR Ident Type
 ## In state 23, spurious reduction of production fun_type -> core_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
 contract: Type Ident EQ Ident LPAR WILD
 ##
@@ -3721,7 +3724,7 @@ contract: Type Ident EQ Ident LPAR WILD
 ## LPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Not a valid type argument.
 
 contract: Type Ident EQ Ident WILD
 ##
@@ -3735,7 +3738,7 @@ contract: Type Ident EQ Ident WILD
 ## Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
 contract: Type Ident EQ LBRACE Ident COLON Constr Type
 ##
@@ -3759,7 +3762,7 @@ contract: Type Ident EQ LBRACE Ident COLON Constr Type
 ## In state 49, spurious reduction of production field_decl -> Ident COLON type_expr_field 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
 contract: Type Ident EQ LBRACE Ident COLON Ident WILD
 ##
@@ -3772,7 +3775,7 @@ contract: Type Ident EQ LBRACE Ident COLON Ident WILD
 ## Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
 contract: Type Ident EQ LBRACE Ident COLON LPAR Ident Type
 ##
@@ -3791,7 +3794,7 @@ contract: Type Ident EQ LBRACE Ident COLON LPAR Ident Type
 ## In state 23, spurious reduction of production fun_type -> core_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
 contract: Type Ident EQ LBRACE Ident COLON LPAR WILD
 ##
@@ -3803,7 +3806,7 @@ contract: Type Ident EQ LBRACE Ident COLON LPAR WILD
 ## LPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a `}` or `,`.
 
 contract: Type Ident EQ LBRACE Ident COLON WILD
 ##
@@ -3815,7 +3818,7 @@ contract: Type Ident EQ LBRACE Ident COLON WILD
 ## Ident COLON
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+This is not a valid type.
 
 contract: Type Ident EQ LBRACE Ident COMMA Ident COLON Constr Type
 ##
@@ -3839,7 +3842,7 @@ contract: Type Ident EQ LBRACE Ident COMMA Ident COLON Constr Type
 ## In state 49, spurious reduction of production field_decl -> Ident COLON type_expr_field 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
 contract: Type Ident EQ LBRACE Ident COMMA Ident COMMA WILD
 ##
@@ -3852,7 +3855,7 @@ contract: Type Ident EQ LBRACE Ident COMMA Ident COMMA WILD
 ## field_decl COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Not a valid field declaration.
 
 contract: Type Ident EQ LBRACE Ident COMMA WILD
 ##
@@ -3865,7 +3868,7 @@ contract: Type Ident EQ LBRACE Ident COMMA WILD
 ## field_decl COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Not a valid field declaration.
 
 contract: Type Ident EQ LBRACE Ident WILD
 ##
@@ -3878,7 +3881,7 @@ contract: Type Ident EQ LBRACE Ident WILD
 ## Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a `:`, `}` or `,`.
 
 contract: Type Ident EQ LBRACE WILD
 ##
@@ -3890,7 +3893,7 @@ contract: Type Ident EQ LBRACE WILD
 ## LBRACE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a field declaration. Note that a field name has to start with a lowercase character.
 
 contract: Type Ident EQ LPAR Constr WILD
 ##
@@ -3902,7 +3905,7 @@ contract: Type Ident EQ LPAR Constr WILD
 ## Constr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a `.` as part of the module path.
 
 contract: Type Ident EQ LPAR Ident COMMA Ident COMMA WILD
 ##
@@ -3914,7 +3917,7 @@ contract: Type Ident EQ LPAR Ident COMMA Ident COMMA WILD
 ## fun_type COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Not a valid type.
 
 contract: Type Ident EQ LPAR Ident COMMA Ident RPAR ARROW WILD
 ##
@@ -3926,7 +3929,7 @@ contract: Type Ident EQ LPAR Ident COMMA Ident RPAR ARROW WILD
 ## LPAR tuple(fun_type) RPAR ARROW
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Not a valid type.
 
 contract: Type Ident EQ LPAR Ident COMMA Ident RPAR WILD
 ##
@@ -3939,7 +3942,7 @@ contract: Type Ident EQ LPAR Ident COMMA Ident RPAR WILD
 ## LPAR tuple(fun_type) RPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
 contract: Type Ident EQ LPAR Ident COMMA Ident Type
 ##
@@ -3959,7 +3962,7 @@ contract: Type Ident EQ LPAR Ident COMMA Ident Type
 ## In state 23, spurious reduction of production fun_type -> core_type 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
 contract: Type Ident EQ LPAR Ident COMMA WILD
 ##
@@ -3971,7 +3974,7 @@ contract: Type Ident EQ LPAR Ident COMMA WILD
 ## fun_type COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Not a valid type.
 
 contract: Type Ident EQ LPAR Ident RPAR ARROW WILD
 ##
@@ -3983,7 +3986,7 @@ contract: Type Ident EQ LPAR Ident RPAR ARROW WILD
 ## LPAR fun_type RPAR ARROW
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Not a valid type.
 
 contract: Type Ident EQ LPAR Ident RPAR WILD
 ##
@@ -3996,7 +3999,7 @@ contract: Type Ident EQ LPAR Ident RPAR WILD
 ## LPAR fun_type RPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
 contract: Type Ident EQ LPAR Ident Type
 ##
@@ -4032,7 +4035,7 @@ contract: Type Ident EQ LPAR WILD
 ## LPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Not a valid type.
 
 contract: Type Ident EQ VBAR Constr WILD
 ##
@@ -4045,7 +4048,7 @@ contract: Type Ident EQ VBAR Constr WILD
 ## Constr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
 contract: Type Ident EQ VBAR WILD
 ##
@@ -4057,7 +4060,7 @@ contract: Type Ident EQ VBAR WILD
 ## VBAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a constructor here. Did you perhaps forget to capitalize it?
 
 contract: Type Ident EQ WILD
 ##
@@ -4069,7 +4072,7 @@ contract: Type Ident EQ WILD
 ## Type Ident EQ
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+This is not a valid type expression.
 
 contract: Type Ident WILD
 ##
@@ -4081,7 +4084,7 @@ contract: Type Ident WILD
 ## Type Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an `=` as part of the type declaration.
 
 contract: Type WILD
 ##
@@ -4093,7 +4096,7 @@ contract: Type WILD
 ## Type
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an identifier as part of the type declaration.
 
 contract: WILD
 ##
@@ -4105,5 +4108,5 @@ contract: WILD
 ##
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
