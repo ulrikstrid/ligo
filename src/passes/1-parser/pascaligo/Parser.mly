@@ -141,8 +141,14 @@ type_decl:
                   terminator = $5}
     in {region; value} }
 
+pair(X,Y): "(" X "," Y ")" { ... : ('a,'b) AST.pair }
+
 type_expr:
-  fun_type | sum_type | record_type { $1 }
+  fun_type | sum_type | record_type | michelson_type { $1 }
+
+michelson_type:
+  "<michelson_or>" pair(pair(core_type, "<string>"),
+                        pair(core_type, "<string>")) { ... }
 
 fun_type:
   cartesian { $1 }
