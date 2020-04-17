@@ -115,6 +115,18 @@ type set_name   = string reg
 type constr     = string reg
 type attribute  = string reg
 
+(* For Michelson type expressions *)
+
+type kwd_michelson_or = Region.t
+
+type ('a,'b) pair = {
+  lpar      : lpar;
+  fst_comp  : 'a;
+  comma     : comma;
+  snd_comp  : 'b;
+  rpar      : rpar
+}
+
 (* Parentheses *)
 
 type 'a par = {
@@ -185,6 +197,18 @@ and type_expr =
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
+| TMichelson of michelson_type_expr reg
+
+and michelson_type_expr =
+  MichelsonOf of michelson_or
+(* | MichelsonPair of michelson_pair *)
+
+and michelson_or = {
+  kwd_michelson_or : kwd_michelson_or;
+  contents         : (michelson_annot, michelson_annot) pair
+}
+
+and michelson_annot = (type_expr, string) pair
 
 and cartesian = (type_expr, times) nsepseq reg
 
