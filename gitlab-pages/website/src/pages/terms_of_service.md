@@ -25,11 +25,11 @@ Thank you for using LIGO, a smart contract language for Tezos. Please read this 
 | [G. Disclaimer of Warranties](#g-disclaimer-of-warranties) | We provide our Services as is, and We make no promises or guarantees about our Services. **Please read this section carefully; You should understand what to expect.** |
 | [H. Limitation of Liability](#h-limitation-of-liability) | We will not be liable for damages or losses arising from Your use or inability to use the Services or otherwise arising under this agreement. **Please read this section carefully; it limits our obligations to You.** |
 | [I. Release and Indemnification](#i-release-and-indemnification) | You are fully responsible for Your use of the Services. |
-| [J. Changes to these Terms of Service](#j-changes-to-these-terms) | We may modify this agreement, but We will give You notice of any material changes that affect Your rights. |
+| [J. Changes to these Terms of Service](#j-changes-to-these-terms) | We may modify this agreement, but will give You notice of any material changes that affect Your rights. |
 | [K. Miscellaneous](#k-miscellaneous) | This section includes a few common 'boiler plate' clauses. |
 
 ### The LIGO Terms of Service
-Updated: March 17, 2020.
+Updated: April 17, 2020.
 Based on a fork of the GitHub Terms of Service, with thanks.
 
 
@@ -39,7 +39,7 @@ Based on a fork of the GitHub Terms of Service, with thanks.
 1. The “Agreement” refers, collectively, to all the terms, conditions, notices contained or referenced in this document (the “Terms of Service” or the "Terms") and all other operating rules, policies (including the LIGO Privacy Statement, available at [ligolang.org/ADDURL](https://ligolang.org/ADDURL)) and procedures that We may publish from time to time on the Website.
 2. “Content” refers to content featured or displayed through the Website, including without limitation code, text, data, articles, images, photographs, graphics, software, applications, packages, designs, features, and other materials that are available on the Website or otherwise available through the Service. "Content" also includes Services. “User-Generated Content” is Content, written or otherwise, created or uploaded by our Users. "Your Content" is Content that You create or own.
 3. “LIGO,” “We,” and “Us” refer to Ligo LANG SASU (128 rue de la Boetie, 75008, Paris), as well as our affiliates, directors, subsidiaries, contractors, licensors, officers, agents, employees and authorized contributors.
-4. The “Service” refers to the applications, software, products, and services provided by LIGO.
+4. The “Service” refers to the applications, software, products, and services provided by LIGO through the Website.
 5. “The User,” “You,” and “Your” refer to the individual person, company, or organization that has visited or is using the Website or Service. A User must be at least 18 years of age or the age of majority in the jurisdiction that they reside or access the Website or Services.
 6. The “Website” refers to LIGO’s website located at [ligolang.org](https://ligolang.org/), and all content, services, and products provided by LIGO at or through the Website. It also refers to LIGO-owned subdomains of ligolang.org, such as [ide.ligolang.org](https://ide.ligolang.org/). Occasionally, websites owned or operated by LIGO may provide different or additional terms of service. If those additional terms conflict with this Agreement, the more specific terms apply to the relevant page or service.
 
@@ -51,7 +51,7 @@ Your use of the Website and Service must not violate any applicable laws, includ
 You agree that You will not under any circumstances violate our [Acceptable Use Policies](https://ADDURL).
 
 ### C. User-Generated Content
-**Short version:** *You own content You create, but You allow Us certain rights to it, so that We can display and share the content You post. You still have control over Your content, and responsibility for it, and the rights You grant Us are limited to those We need to provide the service. We have the right to remove content if We need to.*
+**Short version:** *You own content You create, but You grant Us certain rights to it so that We can display and share the content You post. You still have control over Your content, and responsibility for it, and the rights You grant Us are limited to those We need to provide the service. We have the right to remove content if We need to.*
 
 #### 1. Responsibility for User-Generated Content
 You may create or upload User-Generated Content while using the Service. You are solely responsible for the content of, and for any harm resulting from, any User-Generated Content that You input, post, upload, link to or otherwise make available via the Service, regardless of the form of that Content. We are not responsible for any public display or misuse of Your User-Generated Content.
