@@ -14,7 +14,7 @@ Capitalized terms used but not defined in these Acceptable Use Policies have the
 You are responsible for using the Service in compliance with all applicable laws, regulations, and all of Our Acceptable Use Policies. These policies may be updated from time to time and are provided below, as well as in Our [Terms of Service](https://ADDURL).
 
 ### 2. Content Restrictions
-Under no circumstances will Users upload, post, host, execute, or transmit any Content to any repositories that:
+Under no circumstances will Users upload, post, host, execute, or transmit any Content to any Services that:
 
 - is unlawful or promotes unlawful activities;
 
@@ -62,7 +62,7 @@ Misuse of User Personal Information is prohibited.
 Any person, entity, or service collecting data from the Service must comply with the [LIGO Privacy Policy](https://ADDURL), particularly in regards to the collection of User Personal Information. If You collect any User Personal Information from the Service, You agree that You will only use that User Personal Information for the purpose for which that User has authorized it. You agree that You will reasonably secure any User Personal Information You have gathered from the Service, and You will respond promptly to complaints, removal requests, and "do not contact" requests from Us or other users.
 
 ### 7. Excessive Bandwidth Use
-The Service's bandwidth limitations vary based on the features You use. If We determine Your bandwidth usage to be significantly excessive in relation to other users of similar features, We reserve the right to suspend Your access, throttle Your file hosting, or otherwise limit Your activity until You can reduce Your bandwidth consumption.
+The Service's bandwidth limitations vary based on the features You use. If We determine Your bandwidth usage to be significantly excessive in relation to other users of similar features, We reserve the right to suspend, throttle or otherwise limit Your activity and access to the Services.
 
 ### 8. Marketing
 **Short version:** *We do not generally prohibit the indirect use of LIGO for marketing purposes. However, We expect Our users to follow certain limitations.*
@@ -77,7 +77,7 @@ Automated excessive bulk activity and coordinated inauthentic activity, such as 
 * using LIGO as a platform for propagating abuse on other platforms
 * phishing or attempted phishing
 
-LIGO reserves the right to remove any Content in violation of this policy.
+LIGO reserves the right to remove any Content and block activity that may be in violation of this policy.
 
 ### 10. User Protection
-You must not engage in activity that significantly harms other users. We will resolve disputes in favor of protecting users as a whole.
+You must not engage in activity that may significantly harm other users. We will resolve disputes in favor of protecting users and the LIGO community as a whole.
