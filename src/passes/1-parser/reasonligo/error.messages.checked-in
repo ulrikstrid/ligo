@@ -948,7 +948,7 @@ interactive_expr: LBRACE ELLIPSIS Constr WILD
 ## Constr
 ##
 
-Expected a `.` as part of the module path.
+Expected `$1.`, but got: `$1$0`.
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes VBAR
 ##
@@ -3616,10 +3616,7 @@ contract: Type Ident EQ Constr LPAR WILD
 ## Constr LPAR
 ##
 
-Not a valid constructor argument.
-- 
-Expected something like:
-type direction = Left(int)
+`$0` is not a valid type.
 
 contract: Type Ident EQ Constr RPAR
 ##
@@ -3641,7 +3638,10 @@ contract: Type Ident EQ Constr RPAR
 ## In state 65, spurious reduction of production type_decl -> Type Ident EQ type_expr 
 ##
 
-Unexpected token.
+Unexpected token `$0`. Expected either:
+- type arguments like: `(string, int)`
+- another variant case like: `| Foo(int)`
+- a declaration like: `type foo = Bar;` or `let foo = 1;`
 
 contract: Type Ident EQ Constr SEMI WILD
 ##
@@ -4035,7 +4035,9 @@ contract: Type Ident EQ LPAR WILD
 ## LPAR
 ##
 
-Not a valid type.
+Not a valid type. Either: 
+- a tuple like: `type $3 = (string, int)`
+- a function type like `type $3 = (int) => int`
 
 contract: Type Ident EQ VBAR Constr WILD
 ##
@@ -4048,7 +4050,10 @@ contract: Type Ident EQ VBAR Constr WILD
 ## Constr
 ##
 
-Unexpected token.
+Unexpected token `$0`. Expected either:
+- type arguments like: `(string, int)`
+- another variant case like: `| Foo(int)`
+- a declaration like: `type foo = Bar;` or `let foo = 1;`
 
 contract: Type Ident EQ VBAR WILD
 ##
@@ -4072,7 +4077,14 @@ contract: Type Ident EQ WILD
 ## Type Ident EQ
 ##
 
-This is not a valid type expression.
+`$0` is not a valid type expression. 
+A valid type expression can either be:
+- a type alias like: `type $2 = string;`
+- a type with arguments: `type $2 = big_map (string, int);`
+- a union type like: `type $2 = | Foo | Bar (int);`
+- a tuple type like: `type $2 = (string, int, bool);`
+- a record type like: `type $2 = { foo: int, bar: string, etc: bool };`
+- a function type like: `type $2 = (int) => int;`
 
 contract: Type Ident WILD
 ##
@@ -4084,7 +4096,7 @@ contract: Type Ident WILD
 ## Type Ident
 ##
 
-Expected an `=` as part of the type declaration.
+Expected an `=` as part of the type declaration, but got `$0`.
 
 contract: Type WILD
 ##
@@ -4096,7 +4108,7 @@ contract: Type WILD
 ## Type
 ##
 
-Expected an identifier as part of the type declaration.
+Expected an identifier as part of the type declaration. A correct identifier matches `[a-z][a-zA-Z0-9_]*`.
 
 contract: WILD
 ##
@@ -4108,5 +4120,5 @@ contract: WILD
 ##
 ##
 
-Unexpected token.
+Unexpected token: $0.
 
