@@ -114,8 +114,53 @@ module Make (IO: IO)
         header ^ (if msg = "" then ".\n" else ":\n" ^ msg)
       in Region.{value=msg; region=invalid_region}
 
-    let failure get_win checkpoint =
-      let message = ParErr.message (state checkpoint) in
+    let extract text (pos1, pos2) : string =
+      let ofs1 = pos1.Lexing.pos_cnum + 1
+      and ofs2 = pos2.Lexing.pos_cnum + 1 in
+      let len = ofs2 - ofs1 in
+      try
+        String.sub text ofs1 len
+      with Invalid_argument _ ->        
+        "??"
+
+    let fragment text get_win checkpoint msg = 
+      let i = int_of_string (Str.matched_group 1 msg) in
+      if i = 0 then (
+        let invalid = match get_win () with
+          Lexer.Nil -> assert false
+        | Lexer.One invalid ->
+          invalid
+        | Lexer.Two (invalid, _) ->
+          invalid
+        in 
+        let invalid_region = Lexer.Token.to_region invalid in
+        extract text (invalid_region#start#byte, invalid_region#stop#byte)
+      )
+      else (
+        match checkpoint with 
+        | I.HandlingError env -> ( 
+          let e = I.get (i - 1) env in
+          match e with 
+          | Some (I.Element (_,_, pos1, pos2)) ->
+            extract text (pos1, pos2)
+          | _ -> msg
+        )
+        | _ -> msg
+      )
+      
+
+    let augment text get_win checkpoint msg = 
+      Str.global_substitute
+        (Str.regexp "\\$\\([0-9]+\\)")
+        (fragment text get_win checkpoint)
+        msg
+
+    let failure lexbuf get_win checkpoint =
+      let text = Bytes.to_string lexbuf in
+      let message = 
+        ParErr.message (state checkpoint) 
+        |> augment text get_win checkpoint
+      in
       let message = if message = "<YOUR SYNTAX ERROR MESSAGE HERE>\n" then
         (string_of_int (state checkpoint)) ^ ": <syntax error>"
       else
@@ -145,14 +190,14 @@ module Make (IO: IO)
 
     let incr_contract Lexer.{read; buffer; get_win; close; _} =
       let supplier  = I.lexer_lexbuf_to_supplier (read ~log) buffer
-      and failure   = failure get_win in
+      and failure   = failure buffer.Lexing.lex_buffer get_win in
       let parser    = Incr.contract buffer.Lexing.lex_curr_p in
       let ast       = I.loop_handle success failure supplier parser
       in flush_all (); close (); ast
 
     let incr_expr Lexer.{read; buffer; get_win; close; _} =
       let supplier   = I.lexer_lexbuf_to_supplier (read ~log) buffer
-      and failure    = failure get_win in
+      and failure    = failure buffer.Lexing.lex_buffer get_win in
       let parser     = Incr.interactive_expr buffer.Lexing.lex_curr_p in
       let expr       = I.loop_handle success failure supplier parser
       in flush_all (); close (); expr
