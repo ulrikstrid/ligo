@@ -3572,7 +3572,7 @@ contract: Type Ident EQ Constr DOT WILD
 ## Constr DOT
 ##
 
-Expected an identifier.
+Expected an identifier as part of the module path. A correct identifier matches `[a-z][a-zA-Z0-9_]*`.
 
 contract: Type Ident EQ Constr LPAR Ident RPAR WILD
 ##
@@ -3668,7 +3668,7 @@ contract: Type Ident EQ Constr VBAR WILD
 ## variant VBAR
 ##
 
-Expected a constructor here. Did you perhaps forget to capitalize it?
+Expected a constructor here. A correct constructor name matches `[A-Z][a-zA-Z0-9_]*`.
 
 contract: Type Ident EQ Constr WILD
 ##
@@ -3715,9 +3715,9 @@ contract: Type Ident EQ Ident LPAR Ident Type
 ##
 
 Expected either:
-- another argument, like `$6 $5 $4 $3 $2 $1, foo)`
-- closing parentheses, like `$6 $5 $4 $3 $2 $1)`
-- or type argument(s), like `$6 $5 $4 $3 $2 (string, int))`
+- closing parentheses, like `)`
+- another argument, like `, foo)`
+- or type argument(s), like `(string, int))`
 
 contract: Type Ident EQ Ident LPAR WILD
 ##
@@ -3744,10 +3744,9 @@ contract: Type Ident EQ Ident WILD
 ##
 
 Expected either:
-- another argument, like `$6 $5 $4 $3 $2 $1, foo)`
-- a closing parentheses, like `$6 $5 $4 $3 $2 $1)`
-- or type argument(s), like `$6 $5 $4 $3 $2 (string, int))`
-was expected.
+- another argument, like `, foo)`
+- a closing parentheses, like `)`
+- type argument(s), like `(string, int))`
 
 contract: Type Ident EQ LBRACE Ident COLON Constr Type
 ##
@@ -3775,7 +3774,7 @@ Expected either:
 - type arguments, like: `(string, int)`
 - a comma and another record field declaration, like: `, foo: int`
 - a `}` to close the record
-- or a `.` as part of the module path, like `$1.some_identifier`
+- a `.` as part of the module path, like `$1.some_identifier`
 
 contract: Type Ident EQ LBRACE Ident COLON Ident WILD
 ##
@@ -3791,7 +3790,7 @@ contract: Type Ident EQ LBRACE Ident COLON Ident WILD
 Expected either: 
 - type arguments, like: `(string, int)`
 - a comma and another record field declaration, like: `, foo: int` or `, bar` 
-- or a `}` to close the record
+- a `}` to close the record
 
 contract: Type Ident EQ LBRACE Ident COLON LPAR Ident Type
 ##
@@ -3812,7 +3811,7 @@ contract: Type Ident EQ LBRACE Ident COLON LPAR Ident Type
 
 Expected either:
 - more function type arguments
-- or a `)` to close the function type arguments
+- a `)` to close the function type arguments
 
 contract: Type Ident EQ LBRACE Ident COLON LPAR WILD
 ##
