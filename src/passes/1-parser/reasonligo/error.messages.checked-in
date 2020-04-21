@@ -948,7 +948,7 @@ interactive_expr: LBRACE ELLIPSIS Constr WILD
 ## Constr
 ##
 
-Expected `$1.`, but got: `$1$0`.
+Expected a `.` as part of the module path.
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes VBAR
 ##
@@ -3585,7 +3585,9 @@ contract: Type Ident EQ Constr LPAR Ident RPAR WILD
 ## variant
 ##
 
-Unexpected token.
+Expected either:
+- another variant case, like: `| Foo`
+- another declaration
 
 contract: Type Ident EQ Constr LPAR Ident Type
 ##
@@ -3616,7 +3618,7 @@ contract: Type Ident EQ Constr LPAR WILD
 ## Constr LPAR
 ##
 
-`$0` is not a valid type.
+Not a valid type.
 
 contract: Type Ident EQ Constr RPAR
 ##
@@ -3638,7 +3640,7 @@ contract: Type Ident EQ Constr RPAR
 ## In state 65, spurious reduction of production type_decl -> Type Ident EQ type_expr 
 ##
 
-Unexpected token `$0`. Expected either:
+Unexpected token. Expected either:
 - type arguments like: `(string, int)`
 - another variant case like: `| Foo(int)`
 - a declaration like: `type foo = Bar;` or `let foo = 1;`
@@ -3654,7 +3656,7 @@ contract: Type Ident EQ Constr SEMI WILD
 ## declaration
 ##
 
-Unexpected token.
+Expected a declaration.
 
 contract: Type Ident EQ Constr VBAR WILD
 ##
@@ -3712,7 +3714,10 @@ contract: Type Ident EQ Ident LPAR Ident Type
 ## In state 23, spurious reduction of production fun_type -> core_type 
 ##
 
-Unexpected token.
+Expected either:
+- another argument, like `$6 $5 $4 $3 $2 $1, foo)`
+- closing parentheses, like `$6 $5 $4 $3 $2 $1)`
+- or type argument(s), like `$6 $5 $4 $3 $2 (string, int))`
 
 contract: Type Ident EQ Ident LPAR WILD
 ##
@@ -3738,7 +3743,11 @@ contract: Type Ident EQ Ident WILD
 ## Ident
 ##
 
-Unexpected token.
+Expected either:
+- another argument, like `$6 $5 $4 $3 $2 $1, foo)`
+- a closing parentheses, like `$6 $5 $4 $3 $2 $1)`
+- or type argument(s), like `$6 $5 $4 $3 $2 (string, int))`
+was expected.
 
 contract: Type Ident EQ LBRACE Ident COLON Constr Type
 ##
@@ -3762,7 +3771,11 @@ contract: Type Ident EQ LBRACE Ident COLON Constr Type
 ## In state 49, spurious reduction of production field_decl -> Ident COLON type_expr_field 
 ##
 
-Unexpected token.
+Expected either:
+- type arguments, like: `(string, int)`
+- a comma and another record field declaration, like: `, foo: int`
+- a `}` to close the record
+- or a `.` as part of the module path, like `$1.some_identifier`
 
 contract: Type Ident EQ LBRACE Ident COLON Ident WILD
 ##
@@ -3775,7 +3788,10 @@ contract: Type Ident EQ LBRACE Ident COLON Ident WILD
 ## Ident
 ##
 
-Unexpected token.
+Expected either: 
+- type arguments, like: `(string, int)`
+- a comma and another record field declaration, like: `, foo: int` or `, bar` 
+- or a `}` to close the record
 
 contract: Type Ident EQ LBRACE Ident COLON LPAR Ident Type
 ##
@@ -3794,7 +3810,9 @@ contract: Type Ident EQ LBRACE Ident COLON LPAR Ident Type
 ## In state 23, spurious reduction of production fun_type -> core_type 
 ##
 
-Unexpected token.
+Expected either:
+- more function type arguments
+- or a `)` to close the function type arguments
 
 contract: Type Ident EQ LBRACE Ident COLON LPAR WILD
 ##
@@ -3806,7 +3824,7 @@ contract: Type Ident EQ LBRACE Ident COLON LPAR WILD
 ## LPAR
 ##
 
-Expected a `}` or `,`.
+Not a valid type.
 
 contract: Type Ident EQ LBRACE Ident COLON WILD
 ##
@@ -3818,7 +3836,7 @@ contract: Type Ident EQ LBRACE Ident COLON WILD
 ## Ident COLON
 ##
 
-This is not a valid type.
+Not a valid type.
 
 contract: Type Ident EQ LBRACE Ident COMMA Ident COLON Constr Type
 ##
@@ -3893,7 +3911,7 @@ contract: Type Ident EQ LBRACE WILD
 ## LBRACE
 ##
 
-Expected a field declaration. Note that a field name has to start with a lowercase character.
+Expected a record field declaration. Note that a field name has to start with a lowercase character.
 
 contract: Type Ident EQ LPAR Constr WILD
 ##
@@ -3942,7 +3960,9 @@ contract: Type Ident EQ LPAR Ident COMMA Ident RPAR WILD
 ## LPAR tuple(fun_type) RPAR
 ##
 
-Unexpected token.
+Expected either:
+- another declaration
+- or a `=>` as part of the function type
 
 contract: Type Ident EQ LPAR Ident COMMA Ident Type
 ##
@@ -4050,10 +4070,10 @@ contract: Type Ident EQ VBAR Constr WILD
 ## Constr
 ##
 
-Unexpected token `$0`. Expected either:
+Expected either:
 - type arguments like: `(string, int)`
 - another variant case like: `| Foo(int)`
-- a declaration like: `type foo = Bar;` or `let foo = 1;`
+- or a declaration like: `type foo = Bar;` or `let foo = 1;`
 
 contract: Type Ident EQ VBAR WILD
 ##
@@ -4077,8 +4097,7 @@ contract: Type Ident EQ WILD
 ## Type Ident EQ
 ##
 
-`$0` is not a valid type expression. 
-A valid type expression can either be:
+Not a valid type expression. A valid type expression can either be:
 - a type alias like: `type $2 = string;`
 - a type with arguments: `type $2 = big_map (string, int);`
 - a union type like: `type $2 = | Foo | Bar (int);`
@@ -4096,7 +4115,7 @@ contract: Type Ident WILD
 ## Type Ident
 ##
 
-Expected an `=` as part of the type declaration, but got `$0`.
+Expected an `=` as part of the type declaration.
 
 contract: Type WILD
 ##
@@ -4120,5 +4139,5 @@ contract: WILD
 ##
 ##
 
-Unexpected token: $0.
+Unexpected token.
 
