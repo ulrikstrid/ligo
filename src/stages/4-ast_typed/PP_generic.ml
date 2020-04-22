@@ -104,3 +104,4 @@ let print : (unit fold_config -> unit -> 'a -> unit) -> formatter -> 'a -> unit 
 let program = print fold__program
 let type_expression = print fold__type_expression
 let full_environment = print fold__full_environment
+let typer_state = print fold__typer_state

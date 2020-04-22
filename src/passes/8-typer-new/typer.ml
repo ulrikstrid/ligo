@@ -456,10 +456,19 @@ let type_program_returns_state ((env, state, p) : environment * O.typer_state * 
   let declarations = List.rev declarations in (* Common hack to have O(1) append: prepend and then reverse *)
   ok (env', state', declarations)
 
+let print_env_state_node ((env,state,node) : environment * O.typer_state * 'a) =
+  ignore node; (* TODO *)
+  Printf.printf "%s" @@
+    Format.asprintf "ENV = %a\nSTATE = %a\nNODE = ?\n\n"
+      Ast_typed.PP_generic.full_environment env
+      Ast_typed.PP_generic.typer_state state
+
 let type_and_subst_xyz (env_state_node : environment * O.typer_state * 'a) (apply_substs : 'b Typesystem.Misc.Substitution.Pattern.w) (type_xyz_returns_state : (environment * O.typer_state * 'a) -> (environment * O.typer_state * 'b) Trace.result) : ('b * O.typer_state) result =
-  Printf.printf "Print env_state_node here.";
+  Printf.printf "\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env_state_node here.\n\n";
+  let () = print_env_state_node env_state_node in
   let%bind (env, state, node) = type_xyz_returns_state env_state_node in
-  Printf.printf "Print env,state,node here again.";
+  Printf.printf "\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env,state,node here again.\n\n";
+  let () = print_env_state_node (env, state, node) in
   let subst_all =
     let aliases = state.structured_dbs.aliases in
     let assignments = state.structured_dbs.assignments in
