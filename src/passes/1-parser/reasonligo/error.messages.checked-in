@@ -139,7 +139,9 @@ interactive_expr: Ident WILD
 ## Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+This is not a correct expression.
+If you were trying to call a function, you need to change this code to use parentheses like this: 
+  `$1($0)`. 
 
 interactive_expr: If LBRACE VBAR
 ##
@@ -1824,7 +1826,12 @@ interactive_expr: Let VBAR
 ## seq(Attr) Let
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+This is an incorrect let binding. 
+-
+Examples of correct let bindings: 
+let a: int = 4;
+let (a: int, b: int) = (1, 2);
+let func = (a: int, b: int) => a + b;
 
 interactive_expr: Let WILD EQ Bytes SEMI VBAR
 ##
@@ -3717,7 +3724,7 @@ contract: Type Ident EQ Ident LPAR Ident Type
 Expected either:
 - closing parentheses, like `)`
 - another argument, like `, foo)`
-- or type argument(s), like `(string, int))`
+- type argument(s), like `(string, int))`
 
 contract: Type Ident EQ Ident LPAR WILD
 ##
@@ -3859,7 +3866,7 @@ contract: Type Ident EQ LBRACE Ident COMMA Ident COLON Constr Type
 ## In state 49, spurious reduction of production field_decl -> Ident COLON type_expr_field 
 ##
 
-Unexpected token.
+Expected a `.` as part of the module path.
 
 contract: Type Ident EQ LBRACE Ident COMMA Ident COMMA WILD
 ##
@@ -3872,7 +3879,7 @@ contract: Type Ident EQ LBRACE Ident COMMA Ident COMMA WILD
 ## field_decl COMMA
 ##
 
-Not a valid field declaration.
+Not a valid type.
 
 contract: Type Ident EQ LBRACE Ident COMMA WILD
 ##
@@ -3885,7 +3892,7 @@ contract: Type Ident EQ LBRACE Ident COMMA WILD
 ## field_decl COMMA
 ##
 
-Not a valid field declaration.
+Not a valid type.
 
 contract: Type Ident EQ LBRACE Ident WILD
 ##
@@ -3910,7 +3917,7 @@ contract: Type Ident EQ LBRACE WILD
 ## LBRACE
 ##
 
-Expected a record field declaration. Note that a field name has to start with a lowercase character.
+A record field name has to start with a lowercase character.
 
 contract: Type Ident EQ LPAR Constr WILD
 ##
@@ -3961,7 +3968,7 @@ contract: Type Ident EQ LPAR Ident COMMA Ident RPAR WILD
 
 Expected either:
 - another declaration
-- or a `=>` as part of the function type
+- a `=>` as part of the function type
 
 contract: Type Ident EQ LPAR Ident COMMA Ident Type
 ##
@@ -4099,7 +4106,7 @@ contract: Type Ident EQ WILD
 Not a valid type expression. A valid type expression can either be:
 - a type alias like: `type $2 = string;`
 - a type with arguments: `type $2 = big_map (string, int);`
-- a union type like: `type $2 = | Foo | Bar (int);`
+- a variant type like: `type $2 = | Foo | Bar (int);`
 - a tuple type like: `type $2 = (string, int, bool);`
 - a record type like: `type $2 = { foo: int, bar: string, etc: bool };`
 - a function type like: `type $2 = (int) => int;`

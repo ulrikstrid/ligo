@@ -1,0 +1,1 @@
+let z = {...Foo, bar};

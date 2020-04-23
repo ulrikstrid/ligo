@@ -7,16 +7,16 @@ let bad_contract basename =
 
 let%expect_test _ =
   run_ligo_good [ "measure-contract" ; contract "coase.ligo" ; "main" ] ;
-  [%expect {| 1872 bytes |}] ;
+  [%expect {| 1874 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
-  [%expect {| 1282 bytes |}] ;
+  [%expect {| 1163 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
-  [%expect {| 2974 bytes |}] ;
+  [%expect {| 2867 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
-  [%expect {| 589 bytes |}] ;
+  [%expect {| 617 bytes |}] ;
 
   run_ligo_good [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {| (Left (Left 1)) |}] ;
@@ -122,16 +122,18 @@ let%expect_test _ =
                      PAIR ;
                      PAIR ;
                      DUP ;
-                     DIP { DUP } ;
-                     SWAP ;
                      CDR ;
-                     DIP { DIP 7 { DUP } ;
-                           DIG 7 ;
+                     DIP { DIP 6 { DUP } ;
+                           DIG 6 ;
                            SENDER ;
                            PAIR ;
                            SOME ;
-                           DIP { DIP { DUP } ; SWAP ; CAR ; CDR } } ;
+                           DIP { DUP ; CAR ; CDR } } ;
                      UPDATE ;
+                     DIP { DUP } ;
+                     SWAP ;
+                     DIP { DUP } ;
+                     SWAP ;
                      DIP { DUP ; CDR ; SWAP ; CAR ; CAR } ;
                      SWAP ;
                      PAIR ;
@@ -148,7 +150,7 @@ let%expect_test _ =
                      DUP ;
                      NIL operation ;
                      PAIR ;
-                     DIP { DROP 11 } }
+                     DIP { DROP 12 } }
                    { DUP ;
                      DIP { DIP 2 { DUP } ; DIG 2 } ;
                      PAIR ;
@@ -302,10 +304,6 @@ let%expect_test _ =
         (pair (pair (list %auth key) (nat %counter)) (pair (string %id) (nat %threshold))) ;
       code { DUP ;
              CAR ;
-             DIP { DUP ; CDR } ;
-             PAIR ;
-             DUP ;
-             CAR ;
              DIP { DUP } ;
              SWAP ;
              CDR ;
@@ -313,17 +311,21 @@ let%expect_test _ =
              SWAP ;
              CAR ;
              CDR ;
-             DIP { DUP } ;
-             SWAP ;
-             DIP 3 { DUP } ;
-             DIG 3 ;
+             DIP 2 { DUP } ;
+             DIG 2 ;
              CAR ;
              CAR ;
-             DIP { DIP 2 { DUP } ; DIG 2 ; CAR ; CDR } ;
+             DIP { DIP { DUP } ; SWAP ; CAR ; CDR } ;
              COMPARE ;
              NEQ ;
              IF { PUSH string "Counters does not match" ; FAILWITH }
-                { DIP 3 { DUP } ;
+                { DUP ;
+                  DIP { DIP 2 { DUP } ; DIG 2 ; CAR ; CAR } ;
+                  PAIR ;
+                  DIP { DIP { DUP } ; SWAP ; CDR ; CAR ; CHAIN_ID ; SWAP ; PAIR } ;
+                  PAIR ;
+                  PACK ;
+                  DIP 3 { DUP } ;
                   DIG 3 ;
                   CDR ;
                   DIP { DIP 2 { DUP } ; DIG 2 ; CAR ; CAR ; PUSH nat 0 ; SWAP ; PAIR } ;
@@ -346,49 +348,35 @@ let%expect_test _ =
                          DIP 2 { DUP } ;
                          DIG 2 ;
                          IF_CONS
-                           { DIP 5 { DUP } ;
-                             DIG 5 ;
-                             DIP 4 { DUP } ;
-                             DIG 4 ;
+                           { DIP 3 { DUP } ;
+                             DIG 3 ;
                              CAR ;
-                             DIP { DIP { DUP } ; SWAP ; HASH_KEY } ;
+                             DIP { DUP ; HASH_KEY } ;
                              COMPARE ;
                              EQ ;
-                             IF { DIP 6 { DUP } ;
-                                  DIG 6 ;
-                                  DIP 2 { DUP } ;
-                                  DIG 2 ;
-                                  DIP { DIP 5 { DUP } ;
-                                        DIG 5 ;
-                                        CDR ;
-                                        DIP { DIP 10 { DUP } ;
-                                              DIG 10 ;
-                                              DIP { DIP 12 { DUP } ; DIG 12 ; CAR ; CAR } ;
-                                              PAIR ;
-                                              DIP { DIP 11 { DUP } ; DIG 11 ; CDR ; CAR ; CHAIN_ID ; SWAP ; PAIR } ;
-                                              PAIR ;
-                                              PACK } } ;
+                             IF { DUP ;
+                                  DIP { DIP 3 { DUP } ; DIG 3 ; CDR ; DIP { DIP 7 { DUP } ; DIG 7 } } ;
                                   CHECK_SIGNATURE ;
-                                  IF { DIP 7 { DUP } ;
-                                       DIG 7 ;
+                                  IF { DIP 5 { DUP } ;
+                                       DIG 5 ;
                                        PUSH nat 1 ;
                                        ADD ;
-                                       DIP { DUP } ;
-                                       SWAP ;
+                                       DIP 6 { DUP } ;
+                                       DIG 6 ;
                                        DIP { DUP } ;
                                        SWAP ;
                                        DIP { DROP 2 } }
                                      { PUSH string "Invalid signature" ; FAILWITH } ;
-                                  DIP 2 { DUP } ;
-                                  DIG 2 ;
+                                  DIP 6 { DUP } ;
+                                  DIG 6 ;
                                   DIP { DUP } ;
                                   SWAP ;
-                                  DIP { DROP 3 } }
-                                { DUP } ;
-                             DIP 4 { DUP } ;
-                             DIG 4 ;
-                             DIP 4 { DUP } ;
-                             DIG 4 ;
+                                  DIP { DROP 2 } }
+                                { DIP 5 { DUP } ; DIG 5 } ;
+                             DIP 3 { DUP } ;
+                             DIG 3 ;
+                             DIP 3 { DUP } ;
+                             DIG 3 ;
                              SWAP ;
                              CDR ;
                              SWAP ;
@@ -396,53 +384,35 @@ let%expect_test _ =
                              CAR ;
                              DIP { DUP } ;
                              PAIR ;
-                             DIP { DROP 4 } }
+                             DIP { DROP 3 } }
                            { DUP } ;
                          DIP 5 { DUP } ;
                          DIG 5 ;
-                         DIP 6 { DUP } ;
-                         DIG 6 ;
-                         CAR ;
-                         DIP 2 { DUP } ;
-                         DIG 2 ;
-                         CAR ;
-                         SWAP ;
-                         CDR ;
-                         SWAP ;
-                         PAIR ;
-                         SWAP ;
-                         CDR ;
-                         SWAP ;
-                         PAIR ;
-                         DUP ;
                          DIP { DUP } ;
                          SWAP ;
                          CAR ;
-                         DIP 3 { DUP } ;
-                         DIG 3 ;
-                         CDR ;
-                         SWAP ;
-                         CAR ;
+                         DIP { DUP ; CDR ; SWAP ; CAR ; CDR } ;
                          PAIR ;
+                         PAIR ;
+                         DIP { DUP } ;
                          SWAP ;
                          CDR ;
+                         DIP { DUP ; CDR ; SWAP ; CAR ; CAR } ;
                          SWAP ;
                          PAIR ;
+                         PAIR ;
                          CAR ;
-                         DIP { DROP 7 } } ;
-                  DIP 3 { DUP } ;
-                  DIG 3 ;
-                  DIP { DUP } ;
-                  SWAP ;
+                         DIP { DROP 6 } } ;
+                  DUP ;
                   CDR ;
-                  DIP { DIP 4 { DUP } ; DIG 4 ; CDR ; CDR } ;
+                  DIP { DIP 3 { DUP } ; DIG 3 ; CDR ; CDR } ;
                   COMPARE ;
                   LT ;
                   IF { PUSH string "Not enough signatures passed the check" ; FAILWITH }
-                     { DIP 4 { DUP } ;
+                     { DIP 3 { DUP } ;
+                       DIG 3 ;
+                       DIP 4 { DUP } ;
                        DIG 4 ;
-                       DIP 5 { DUP } ;
-                       DIG 5 ;
                        CAR ;
                        CDR ;
                        PUSH nat 1 ;
@@ -451,23 +421,23 @@ let%expect_test _ =
                        SWAP ;
                        PAIR ;
                        PAIR ;
-                       DIP { DUP } ;
-                       SWAP ;
+                       DIP 4 { DUP } ;
+                       DIG 4 ;
                        DIP { DUP } ;
                        SWAP ;
                        DIP { DROP 2 } } ;
-                  DIP 3 { DUP } ;
-                  DIG 3 ;
+                  DIP 4 { DUP } ;
+                  DIG 4 ;
                   DIP { DUP } ;
                   SWAP ;
                   DIP { DROP 4 } } ;
-             DIP 2 { DUP } ;
-             DIG 2 ;
+             DIP { DUP } ;
+             SWAP ;
              UNIT ;
              EXEC ;
              DIP { DUP } ;
              PAIR ;
-             DIP { DROP 7 } } } |} ]
+             DIP { DROP 5 } } } |} ]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
@@ -560,17 +530,14 @@ let%expect_test _ =
                          SWAP ;
                          PAIR ;
                          DIP { DROP 2 } }
-                       { DIP 7 { DUP } ;
-                         DIG 7 ;
-                         DIP { DUP } ;
-                         SWAP ;
+                       { DUP ;
                          SENDER ;
                          MEM ;
-                         IF { DUP }
-                            { DIP 8 { DUP } ;
+                         IF { DIP 7 { DUP } ; DIG 7 }
+                            { DIP 7 { DUP } ;
+                              DIG 7 ;
+                              DIP 8 { DUP } ;
                               DIG 8 ;
-                              DIP 9 { DUP } ;
-                              DIG 9 ;
                               CDR ;
                               CAR ;
                               CAR ;
@@ -580,7 +547,7 @@ let%expect_test _ =
                               PUSH nat 1 ;
                               ADD ;
                               SOME ;
-                              DIP { DIP 9 { DUP } ; DIG 9 ; CDR ; CAR ; CAR } ;
+                              DIP { DIP 8 { DUP } ; DIG 8 ; CDR ; CAR ; CAR } ;
                               SENDER ;
                               UPDATE ;
                               DIP { DUP ; CAR ; SWAP ; CDR ; DUP ; CDR ; SWAP ; CAR ; CDR } ;
@@ -588,23 +555,25 @@ let%expect_test _ =
                               PAIR ;
                               SWAP ;
                               PAIR ;
-                              DIP { DUP } ;
-                              SWAP ;
+                              DIP 8 { DUP } ;
+                              DIG 8 ;
                               DIP { DUP } ;
                               SWAP ;
                               DIP { DROP 2 } } ;
-                         DIP 3 { DUP } ;
-                         DIG 3 ;
-                         CAR ;
                          DIP { DUP } ;
-                         PAIR ;
-                         DIP 3 { DUP } ;
-                         DIG 3 ;
+                         SWAP ;
                          PUSH bool True ;
                          SENDER ;
                          UPDATE ;
+                         DIP 3 { DUP } ;
+                         DIG 3 ;
+                         DIP 2 { DUP } ;
+                         DIG 2 ;
                          SWAP ;
+                         CAR ;
+                         PAIR ;
                          CDR ;
+                         DIP { DUP } ;
                          SWAP ;
                          PAIR ;
                          DIP { DROP 3 } } ;
@@ -683,18 +652,15 @@ let%expect_test _ =
                                  SWAP ;
                                  CDR ;
                                  CAR ;
-                                 DIP { DUP } ;
-                                 SWAP ;
-                                 DIP { DUP } ;
-                                 SWAP ;
-                                 DIP { DIP 12 { DUP } ; DIG 12 } ;
+                                 DUP ;
+                                 DIP { DIP 11 { DUP } ; DIG 11 } ;
                                  MEM ;
-                                 IF { DIP 2 { DUP } ;
-                                      DIG 2 ;
-                                      DIP 2 { DUP } ;
-                                      DIG 2 ;
-                                      DIP { DIP 4 { DUP } ;
-                                            DIG 4 ;
+                                 IF { DIP { DUP } ;
+                                      SWAP ;
+                                      DIP { DUP } ;
+                                      SWAP ;
+                                      DIP { DIP 3 { DUP } ;
+                                            DIG 3 ;
                                             CDR ;
                                             CDR ;
                                             PUSH nat 1 ;
@@ -702,30 +668,27 @@ let%expect_test _ =
                                             SUB ;
                                             ABS ;
                                             SOME ;
-                                            DIP { DIP 3 { DUP } ; DIG 3 ; CDR ; CAR ; CAR } } ;
+                                            DIP { DIP 2 { DUP } ; DIG 2 ; CDR ; CAR ; CAR } } ;
                                       UPDATE ;
                                       DIP { DUP ; CAR ; SWAP ; CDR ; DUP ; CDR ; SWAP ; CAR ; CDR } ;
                                       PAIR ;
                                       PAIR ;
                                       SWAP ;
                                       PAIR ;
-                                      DIP { DUP } ;
-                                      SWAP ;
+                                      DIP 2 { DUP } ;
+                                      DIG 2 ;
                                       DIP { DUP } ;
                                       SWAP ;
                                       DIP { DROP 2 } }
-                                    { DUP } ;
-                                 DIP 4 { DUP } ;
-                                 DIG 4 ;
-                                 DIP 5 { DUP } ;
-                                 DIG 5 ;
-                                 CAR ;
-                                 DIP 2 { DUP } ;
-                                 DIG 2 ;
-                                 DIP { DROP ; CDR } ;
+                                    { DIP { DUP } ; SWAP } ;
+                                 DIP 3 { DUP } ;
+                                 DIG 3 ;
+                                 CDR ;
+                                 DIP { DUP } ;
+                                 SWAP ;
                                  PAIR ;
                                  CAR ;
-                                 DIP { DROP 5 } } ;
+                                 DIP { DROP 4 } } ;
                           DIP 4 { DUP } ;
                           DIG 4 ;
                           DIP 4 { DUP } ;
@@ -768,9 +731,6 @@ let%expect_test _ =
                           CAR ;
                           PAIR } ;
                      DUP ;
-                     CAR ;
-                     DIP { DUP ; CDR } ;
-                     PAIR ;
                      DIP { DROP 17 } } ;
                  DIP { DROP } }
                { DUP ;
@@ -782,30 +742,25 @@ let%expect_test _ =
                  SWAP ;
                  CAR ;
                  PACK ;
-                 DIP { DUP } ;
-                 SWAP ;
-                 DIP { DUP } ;
-                 SWAP ;
-                 DIP { DIP 2 { DUP } ; DIG 2 ; CAR ; CDR ; CDR } ;
+                 DUP ;
+                 DIP { DIP { DUP } ; SWAP ; CAR ; CDR ; CDR } ;
                  GET ;
                  IF_NONE
-                   { DUP }
+                   { DIP { DUP } ; SWAP }
                    { DUP ;
                      PUSH bool False ;
                      SENDER ;
                      UPDATE ;
-                     DIP 4 { DUP } ;
-                     DIG 4 ;
-                     DIP 2 { DUP } ;
-                     DIG 2 ;
+                     DIP { DUP } ;
+                     SWAP ;
                      SIZE ;
-                     DIP { DIP { DUP } ; SWAP ; SIZE } ;
+                     DIP { DUP ; SIZE } ;
                      COMPARE ;
                      NEQ ;
-                     IF { DIP 5 { DUP } ;
-                          DIG 5 ;
-                          DIP 6 { DUP } ;
-                          DIG 6 ;
+                     IF { DIP 3 { DUP } ;
+                          DIG 3 ;
+                          DIP 4 { DUP } ;
+                          DIG 4 ;
                           CDR ;
                           CAR ;
                           CAR ;
@@ -817,7 +772,7 @@ let%expect_test _ =
                           SUB ;
                           ABS ;
                           SOME ;
-                          DIP { DIP 6 { DUP } ; DIG 6 ; CDR ; CAR ; CAR } ;
+                          DIP { DIP 4 { DUP } ; DIG 4 ; CDR ; CAR ; CAR } ;
                           SENDER ;
                           UPDATE ;
                           DIP { DUP ; CAR ; SWAP ; CDR ; DUP ; CDR ; SWAP ; CAR ; CDR } ;
@@ -825,26 +780,23 @@ let%expect_test _ =
                           PAIR ;
                           SWAP ;
                           PAIR ;
-                          DIP { DUP } ;
-                          SWAP ;
+                          DIP 4 { DUP } ;
+                          DIG 4 ;
                           DIP { DUP } ;
                           SWAP ;
                           DIP { DROP 2 } }
-                        { DUP } ;
-                     DUP ;
-                     DUP ;
-                     DIP 4 { DUP } ;
-                     DIG 4 ;
+                        { DIP 3 { DUP } ; DIG 3 } ;
+                     DIP { DUP } ;
+                     SWAP ;
                      SIZE ;
                      PUSH nat 0 ;
                      SWAP ;
                      COMPARE ;
                      EQ ;
-                     IF { DIP { DUP } ;
-                          SWAP ;
-                          DIP 8 { DUP } ;
-                          DIG 8 ;
-                          DIP { DIP 2 { DUP } ; DIG 2 ; CAR ; CDR ; CDR ; NONE (set address) } ;
+                     IF { DUP ;
+                          DIP 4 { DUP } ;
+                          DIG 4 ;
+                          DIP { DIP { DUP } ; SWAP ; CAR ; CDR ; CDR ; NONE (set address) } ;
                           UPDATE ;
                           DIP { DUP ; CDR ; SWAP ; CAR ; DUP ; CAR ; SWAP ; CDR ; CAR } ;
                           SWAP ;
@@ -858,14 +810,14 @@ let%expect_test _ =
                           SWAP ;
                           DIP { DROP 2 } }
                         { DUP ;
-                          DIP 2 { DUP } ;
-                          DIG 2 ;
-                          DIP 9 { DUP } ;
-                          DIG 9 ;
-                          DIP { DIP 6 { DUP } ;
-                                DIG 6 ;
+                          DIP { DUP } ;
+                          SWAP ;
+                          DIP 5 { DUP } ;
+                          DIG 5 ;
+                          DIP { DIP 3 { DUP } ;
+                                DIG 3 ;
                                 SOME ;
-                                DIP { DIP 3 { DUP } ; DIG 3 ; CAR ; CDR ; CDR } } ;
+                                DIP { DIP 2 { DUP } ; DIG 2 ; CAR ; CDR ; CDR } } ;
                           UPDATE ;
                           DIP { DUP ; CDR ; SWAP ; CAR ; DUP ; CAR ; SWAP ; CDR ; CAR } ;
                           SWAP ;
@@ -874,17 +826,17 @@ let%expect_test _ =
                           PAIR ;
                           PAIR ;
                           DIP { DROP } } ;
-                     DIP 7 { DUP } ;
-                     DIG 7 ;
-                     DIP 3 { DUP } ;
-                     DIG 3 ;
+                     DIP 5 { DUP } ;
+                     DIG 5 ;
+                     DIP 2 { DUP } ;
+                     DIG 2 ;
                      DIP { DROP ; DUP } ;
                      SWAP ;
-                     DIP { DROP 8 } } ;
+                     DIP { DROP 5 } } ;
                  DUP ;
                  NIL operation ;
                  PAIR ;
-                 DIP { DROP 6 } } ;
+                 DIP { DROP 5 } } ;
              DIP { DROP 2 } } } |} ]
 
 let%expect_test _ =
@@ -898,11 +850,9 @@ let%expect_test _ =
                     (pair (timestamp %start_time) (string %title)))
               (pair (set %voters address) (nat %yea))) ;
       code { DUP ;
-             DUP ;
              CAR ;
              IF_LEFT
                { DUP ;
-                 DUP ;
                  CAR ;
                  CAR ;
                  PUSH nat 0 ;
@@ -914,20 +864,22 @@ let%expect_test _ =
                  PAIR ;
                  NIL operation ;
                  PAIR ;
-                 DIP { DROP 2 } }
+                 DIP { DROP } }
                { DUP ;
                  DIP { DIP { DUP } ; SWAP ; CDR } ;
                  PAIR ;
                  DUP ;
                  CDR ;
-                 DIP { DUP } ;
-                 SWAP ;
+                 NOW ;
+                 SENDER ;
+                 DIP 3 { DUP } ;
+                 DIG 3 ;
                  CAR ;
                  IF_LEFT
-                   { DIP { DUP } ;
-                     SWAP ;
-                     DIP 2 { DUP } ;
-                     DIG 2 ;
+                   { DIP 3 { DUP } ;
+                     DIG 3 ;
+                     DIP 4 { DUP } ;
+                     DIG 4 ;
                      CAR ;
                      CAR ;
                      CDR ;
@@ -939,10 +891,10 @@ let%expect_test _ =
                      PAIR ;
                      PAIR ;
                      DIP { DROP } }
-                   { DIP { DUP } ;
-                     SWAP ;
-                     DIP 2 { DUP } ;
-                     DIG 2 ;
+                   { DIP 3 { DUP } ;
+                     DIG 3 ;
+                     DIP 4 { DUP } ;
+                     DIG 4 ;
                      CDR ;
                      CDR ;
                      PUSH nat 1 ;
@@ -954,12 +906,9 @@ let%expect_test _ =
                      PAIR ;
                      DIP { DROP } } ;
                  DUP ;
-                 DIP { DUP } ;
-                 SWAP ;
-                 CDR ;
-                 CAR ;
-                 PUSH bool True ;
-                 SENDER ;
+                 DIP 2 { DUP } ;
+                 DIG 2 ;
+                 DIP { DIP { DUP } ; SWAP ; CDR ; CAR ; PUSH bool True } ;
                  UPDATE ;
                  DIP { DUP ; CAR ; SWAP ; CDR ; CDR } ;
                  PAIR ;
@@ -967,8 +916,8 @@ let%expect_test _ =
                  PAIR ;
                  NIL operation ;
                  PAIR ;
-                 DIP { DROP 4 } } ;
-             DIP { DROP 2 } } } |}]
+                 DIP { DROP 6 } } ;
+             DIP { DROP } } } |}]
 
 let%expect_test _ =
     run_ligo_good [ "compile-contract" ; contract "implicit.mligo" ; "main" ] ;
@@ -984,6 +933,32 @@ let%expect_test _ =
                DIP { DROP 2 } } } |}]
 
 let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "amount_lambda.mligo" ; "main" ] ;
+  (* AMOUNT should occur inside the second lambda, but not the first lambda *)
+  [%expect {|
+    { parameter bool ;
+      storage (lambda unit mutez) ;
+      code { DUP ;
+             CAR ;
+             IF { AMOUNT ;
+                  DUP ;
+                  LAMBDA
+                    (pair mutez unit)
+                    mutez
+                    { DUP ; CAR ; SWAP ; CDR ; DIP { DUP } ; SWAP ; DIP { DROP 2 } } ;
+                  SWAP ;
+                  APPLY ;
+                  DIP { DROP } }
+                { LAMBDA unit mutez { DROP ; AMOUNT } } ;
+             NIL operation ;
+             PAIR ;
+             DIP { DROP } } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "print-ast-typed" ; contract "sequence.mligo" ; ];
+  [%expect {| const y = lambda (_) return let x = +1 in let _ = let x = +2 in UNIT() in let _ = let x = +23 in UNIT() in let _ = let x = +42 in UNIT() in x |}]
+
+let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_type_operator.ligo" ; "main" ] ;
   [%expect {|
     ligo: bad type operator (TO_Map (unit,unit)):
@@ -995,16 +970,6 @@ let%expect_test _ =
     * Ask a question on our Discord: https://discord.gg/9rhYaEt
     * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
     * Check the changelog by running 'ligo changelog' |}]
-
-let%expect_test _ =
-  run_ligo_good [ "run-function" ; contract "failwith.ligo" ; "failer" ; "1" ] ;
-  [%expect {|
-    failwith("some_string") |}]
-
-let%expect_test _ =
-  run_ligo_good [ "run-function" ; contract "failwith.ligo" ; "failer" ; "1" ; "--format=json" ] ;
-  [%expect {|
-    {"status":"ok","content":"failwith(\"some_string\")"} |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_address_format.religo" ; "main" ] ;
@@ -1117,7 +1082,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_toplevel.mligo" ; "main" ] ;
   [%expect {|
-ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8. No free variable allowed in this lambda: variable 'store' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * string ))) : None return\n                let rhs#713 = #P in\n                let p = rhs#713.0 in\n                let s = rhs#713.1 in\n                ( LIST_EMPTY() : (type_operator: list(operation)) , store ) ,\n                NONE() : (type_operator: option(key_hash)) ,\n                300000000mutez ,\n                \"un\")","location":"in file \"create_contract_toplevel.mligo\", line 4, character 35 to line 8, character 8"}
+ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, character 8. No free variable allowed in this lambda: variable 'store' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * string ))) : None return\n                let rhs#2 = #P in\n                let p = rhs#2.0 in\n                let s = rhs#2.1 in\n                ( LIST_EMPTY() : (type_operator: list(operation)) , store ) ,\n                NONE() : (type_operator: option(key_hash)) ,\n                300000000mutez ,\n                \"un\")","location":"in file \"create_contract_toplevel.mligo\", line 4, character 35 to line 8, character 8"}
 
 
  If you're not sure how to fix this error, you can
@@ -1130,7 +1095,7 @@ ligo: in file "create_contract_toplevel.mligo", line 4, character 35 to line 8, 
 
   run_ligo_bad [ "compile-contract" ; bad_contract "create_contract_var.mligo" ; "main" ] ;
   [%expect {|
-ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5. No free variable allowed in this lambda: variable 'a' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * int ))) : None return\n                let rhs#716 = #P in\n                let p = rhs#716.0 in\n                let s = rhs#716.1 in\n                ( LIST_EMPTY() : (type_operator: list(operation)) , a ) ,\n                NONE() : (type_operator: option(key_hash)) ,\n                300000000mutez ,\n                1)","location":"in file \"create_contract_var.mligo\", line 6, character 35 to line 10, character 5"}
+ligo: in file "create_contract_var.mligo", line 6, character 35 to line 10, character 5. No free variable allowed in this lambda: variable 'a' {"expression":"CREATE_CONTRACT(lambda (#P:Some(( nat * int ))) : None return\n                let rhs#2 = #P in\n                let p = rhs#2.0 in\n                let s = rhs#2.1 in\n                ( LIST_EMPTY() : (type_operator: list(operation)) , a ) ,\n                NONE() : (type_operator: option(key_hash)) ,\n                300000000mutez ,\n                1)","location":"in file \"create_contract_var.mligo\", line 6, character 35 to line 10, character 5"}
 
 
  If you're not sure how to fix this error, you can

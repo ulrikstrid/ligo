@@ -25,12 +25,13 @@ let is_pure_constant : constant' -> bool =
   | C_SOME
   | C_UPDATE | C_MAP_FIND_OPT | C_MAP_ADD | C_MAP_UPDATE
   | C_INT | C_ABS | C_IS_NAT
-  | C_BALANCE | C_AMOUNT | C_ADDRESS | C_NOW | C_SOURCE | C_SENDER | C_CHAIN_ID
+  | C_ADDRESS
   | C_SET_MEM | C_SET_ADD | C_SET_REMOVE | C_SLICE
   | C_SHA256 | C_SHA512 | C_BLAKE2b | C_CHECK_SIGNATURE
   | C_HASH_KEY | C_BYTES_PACK | C_CONCAT
     -> true
   (* unfortunately impure: *)
+  | C_BALANCE | C_AMOUNT | C_NOW | C_SOURCE | C_SENDER | C_CHAIN_ID
   | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR 
   (* impure: *)
   | C_ASSERTION | C_ASSERT_INFERRED
@@ -103,15 +104,21 @@ let occurs_count : expression_variable -> expression -> int =
    - ?
 *)
 
-let should_inline : expression_variable -> expression -> bool =
-  fun x e ->
-  occurs_count x e <= 1
+let is_variable : expression -> bool =
+  fun e ->
+  match e.content with
+  | E_variable _ -> true
+  | _ -> false
+
+let should_inline : expression_variable -> expression -> expression -> bool =
+  fun x e1 e2 ->
+  occurs_count x e2 <= 1 || is_variable e1
 
 let inline_let : bool ref -> expression -> expression =
   fun changed e ->
   match e.content with
   | E_let_in ((x, _a), should_inline_here, e1, e2) ->
-    if is_pure e1 && (should_inline_here || should_inline x e2)
+    if is_pure e1 && (should_inline_here || should_inline x e1 e2)
     then
       let e2' = Subst.subst_expression ~body:e2 ~x:x ~expr:e1 in
       (changed := true ; e2')
@@ -159,6 +166,25 @@ let betas : bool ref -> expression -> expression =
   fun changed ->
   map_expression (beta changed)
 
+let eta : bool ref -> expression -> expression =
+  fun changed e ->
+  match e.content with
+  | E_constant {cons_name = C_PAIR; arguments = [ { content = E_constant {cons_name = C_CAR; arguments = [ e1 ]} ; type_value = _ } ;
+                                                  { content = E_constant {cons_name = C_CDR; arguments = [ e2 ]} ; type_value = _ }]} ->
+    (match (e1.content, e2.content) with
+     | E_variable x1, E_variable x2 ->
+       if Var.equal x1 x2
+       then
+         (changed := true;
+          { e with content = e1.content })
+       else e
+     | _ -> e)
+  | _ -> e
+
+let etas : bool ref -> expression -> expression =
+  fun changed ->
+  map_expression (eta changed)
+
 let contract_check =
   let all = [Michelson_restrictions.self_in_lambdas] in
   let all_e = List.map Helpers.map_sub_level_expression all in
@@ -169,6 +195,7 @@ let rec all_expression : expression -> expression =
   let changed = ref false in
   let e = inline_lets changed e in
   let e = betas changed e in
+  let e = etas changed e in
   if !changed
   then all_expression e
   else e

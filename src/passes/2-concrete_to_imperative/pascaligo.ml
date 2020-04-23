@@ -110,6 +110,15 @@ module Errors = struct
                 ~offsets:true ~mode:`Point t)
     ] in
     error ~data title message
+
+  let unknown_built_in name =
+    let title () = "\n Unknown built-in function" in
+    let message () = "" in
+    let data = [
+      ("built-in", fun  () -> name);
+    ] in
+    error ~data title message
+
 end
 
 open Errors
@@ -142,6 +151,10 @@ let return_statement expr = ok @@ fun expr'_opt ->
   | None -> ok @@ expr
   | Some expr' -> ok @@ e_sequence expr expr'
 
+let get_t_string_singleton_opt = function
+  | Raw.TStringLiteral s -> Some (String.(sub s.value 1 ((length s.value)-2)))
+  | _ -> None
+
 
 let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
   match t with
@@ -149,8 +162,8 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
   | TVar v -> (
       let (v,loc) = r_split v in
       match type_constants v with
-      | Ok (s,_) -> ok @@ make_t ~loc @@ T_constant s
-      | Error _ -> ok @@ make_t ~loc @@ T_variable (Var.of_name v)
+      | Some s -> ok @@ make_t ~loc @@ T_constant s
+      | None -> ok @@ make_t ~loc @@ T_variable (Var.of_name v)
     )
   | TFun x -> (
       let (x,loc) = r_split x in
@@ -162,13 +175,45 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
   | TApp x ->
       let (x, loc) = r_split x in
       let (name, tuple) = x in
-      let lst = npseq_to_list tuple.value.inside in
-      let%bind lst =
-        bind_list @@ List.map compile_type_expression lst in (** TODO: fix constant and operator*)
-      let%bind cst =
-        trace (unknown_predefined_type name) @@
-        type_operators name.value in
-      t_operator ~loc cst lst
+      (match name.value with
+        | "michelson_or" -> 
+          let lst = npseq_to_list tuple.value.inside in
+          (match lst with
+          | [a ; b ; c ; d ] -> (
+            let%bind b' =
+              trace_option (simple_error "second argument of michelson_or must be a string singleton") @@
+                get_t_string_singleton_opt b in
+            let%bind d' =
+              trace_option (simple_error "fourth argument of michelson_or must be a string singleton") @@
+                get_t_string_singleton_opt d in
+            let%bind a' = compile_type_expression a in
+            let%bind c' = compile_type_expression c in
+            ok @@ t_michelson_or ~loc a' b' c' d'
+            )
+          | _ -> simple_fail "michelson_or does not have the right number of argument")
+        | "michelson_pair" ->
+          let lst = npseq_to_list tuple.value.inside in
+          (match lst with
+          | [a ; b ; c ; d ] -> (
+            let%bind b' =
+              trace_option (simple_error "second argument of michelson_pair must be a string singleton") @@
+                get_t_string_singleton_opt b in
+            let%bind d' =
+              trace_option (simple_error "fourth argument of michelson_pair must be a string singleton") @@
+                get_t_string_singleton_opt d in
+            let%bind a' = compile_type_expression a in
+            let%bind c' = compile_type_expression c in
+            ok @@ t_michelson_pair ~loc a' b' c' d'
+            )
+          | _ -> simple_fail "michelson_pair does not have the right number of argument")
+        | _ ->
+          let lst = npseq_to_list tuple.value.inside in
+          let%bind lst =
+            bind_list @@ List.map compile_type_expression lst in (** TODO: fix constant and operator*)
+          let%bind cst =
+            trace_option (unknown_predefined_type name) @@
+            type_operators name.value in
+          t_operator ~loc cst lst)
   | TProd p ->
       let%bind tpl = compile_list_type_expression
     @@ npseq_to_list p.value in
@@ -203,6 +248,7 @@ let rec compile_type_expression (t:Raw.type_expr) : type_expression result =
         @@ npseq_to_list s in
       let m = List.fold_left (fun m (x, y) -> CMap.add (Constructor x) y m) CMap.empty lst in
       ok @@ make_t ~loc @@ T_sum m
+  | TStringLiteral _s -> simple_fail "we don't support singleton string type"
 
 and compile_list_type_expression (lst:Raw.type_expr list) : type_expression result =
   match lst with
@@ -240,8 +286,8 @@ let rec compile_expression (t:Raw.expr) : expr result =
   | EVar c -> (
       let (c' , loc) = r_split c in
       match constants c' with
-      | Error _   -> return @@ e_variable ~loc (Var.of_name c.value)
-      | Ok (s,_)  -> return @@ e_constant ~loc s []
+      | None   -> return @@ e_variable ~loc (Var.of_name c.value)
+      | Some s -> return @@ e_constant ~loc s []
     )
   | ECall x -> (
       let ((f, args) , loc) = r_split x in
@@ -251,10 +297,10 @@ let rec compile_expression (t:Raw.expr) : expr result =
       | EVar name -> (
         let (f_name , f_loc) = r_split name in
         match constants f_name with
-        | Error _ ->
+        | None ->
            let%bind arg = compile_tuple_expression ~loc:args_loc args' in
            return @@ e_application ~loc (e_variable ~loc:f_loc (Var.of_name f_name)) arg
-        | Ok (s,_) ->
+        | Some s ->
            let%bind lst = bind_map_list compile_expression args' in
            return @@ e_constant ~loc s lst
       )
@@ -501,14 +547,14 @@ and compile_binop (name:string) (t:_ Raw.bin_op Region.reg) : expression result 
   let (t , loc) = r_split t in
   let%bind a = compile_expression t.arg1 in
   let%bind b = compile_expression t.arg2 in
-  let%bind name = constants name in
+  let%bind name = trace_option (unknown_built_in name) @@ constants name in
   return @@ e_constant ~loc name [ a ; b ]
 
 and compile_unop (name:string) (t:_ Raw.un_op Region.reg) : expression result =
   let return x = ok x in
   let (t , loc) = r_split t in
   let%bind a = compile_expression t.arg in
-  let%bind name = constants name in
+  let%bind name = trace_option (unknown_built_in name) @@ constants name in
   return @@ e_constant ~loc name [ a ]
 
 and compile_tuple_expression ?loc (lst:Raw.expr list) : expression result =
@@ -743,10 +789,10 @@ and compile_single_instruction : Raw.instruction -> (_ -> expression result) res
     | EVar name -> (
       let (f_name , f_loc) = r_split name in
       match constants f_name with
-      | Error _  ->
+      | None  ->
          let%bind arg = compile_tuple_expression ~loc:args_loc args' in
          return_statement @@ e_application ~loc (e_variable ~loc:f_loc (Var.of_name f_name)) arg
-      | Ok (s,_) ->
+      | Some s ->
          let%bind lst = bind_map_list compile_expression args' in
          return_statement @@ e_constant ~loc s lst
     )

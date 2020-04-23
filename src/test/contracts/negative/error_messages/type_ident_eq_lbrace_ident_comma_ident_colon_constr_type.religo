@@ -1,0 +1,1 @@
+type z = { foo, bar: Cat dog

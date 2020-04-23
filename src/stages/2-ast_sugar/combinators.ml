@@ -51,10 +51,12 @@ let t_record ?loc m  : type_expression =
   let lst = Map.String.to_kv_list m in
   t_record_ez ?loc lst
 
-let t_pair ?loc (a , b) : type_expression = t_record_ez ?loc [("0",a) ; ("1",b)]
+let t_pair ?loc (a , b) : type_expression = t_record_ez ?loc [
+  ("0",{field_type=a;michelson_annotation=None}) ;
+  ("1",{field_type=b;michelson_annotation=None})]
 let t_tuple ?loc lst    : type_expression = t_record_ez ?loc (tuple_to_record lst)
 
-let ez_t_sum ?loc (lst:(string * type_expression) list) : type_expression =
+let ez_t_sum ?loc (lst:((string * ctor_content) list)) : type_expression =
   let aux prev (k, v) = CMap.add (Constructor k) v prev in
   let map = List.fold_left aux CMap.empty lst in
   make_t ?loc @@ T_sum map
@@ -116,7 +118,7 @@ let e_lambda ?loc binder input_type output_type result : expression = make_e ?lo
 let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_name; fun_type; lambda}
 let e_let_in ?loc (binder, ascr) mut inline rhs let_result = make_e ?loc @@ E_let_in { let_binder = (binder, ascr) ; rhs ; let_result; inline; mut }
 
-let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constructor = Constructor s; element = a}
+let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constructor = s; element = a}
 let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;cases=b}
 
 let e_record ?loc map : expression = make_e ?loc @@ E_record map

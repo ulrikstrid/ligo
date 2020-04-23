@@ -258,10 +258,6 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
       ok (T_big_map kv')
   | T_operator (TC_map_or_big_map _) ->
       fail @@ corner_case ~loc:"transpiler" "TC_map_or_big_map should have been resolved before transpilation"
-  | T_operator (TC_michelson_or {l;r}) ->
-      let%bind l' = transpile_type l in
-      let%bind r' = transpile_type r in
-      ok (T_or ((None,l'),(None,r')))
   | T_operator (TC_list t) ->
       let%bind t' = transpile_type t in
       ok (T_list t')
@@ -276,9 +272,7 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
       let%bind result' = transpile_type result in
       ok (T_function (param', result'))
     )
-  (* TODO hmm *)
-  | T_sum m ->
-      let is_michelson_or = Ast_typed.Helpers.is_michelson_or m in
+  | T_sum m when Ast_typed.Helpers.is_michelson_or m ->
       let node = Append_tree.of_list @@ kv_list_of_cmap m in
       let aux a b : type_value annotated result =
         let%bind a = a in
@@ -286,14 +280,35 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
         ok (None, T_or (a, b))
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (Ast_typed.Types.Constructor ann, a) ->
-                        let%bind a = transpile_type a in
-                        ok ((
-                          if is_michelson_or then 
-                            None 
-                          else 
-                            Some (String.uncapitalize_ascii ann)), 
-                          a))
+                      (fun (_, ({ctor_type ; michelson_annotation}: AST.ctor_content)) ->
+                        let%bind a = transpile_type ctor_type in
+                        ok (Ast_typed.Helpers.remove_empty_annotation michelson_annotation, a) )
+                      aux node in
+      ok @@ snd m'
+  | T_sum m ->
+      let node = Append_tree.of_list @@ kv_list_of_cmap m in
+      let aux a b : type_value annotated result =
+        let%bind a = a in
+        let%bind b = b in
+        ok (None, T_or (a, b))
+      in
+      let%bind m' = Append_tree.fold_ne
+                      (fun (Ast_typed.Types.Constructor ann, ({ctor_type ; _}: AST.ctor_content)) ->
+                        let%bind a = transpile_type ctor_type in
+                        ok (Some (String.uncapitalize_ascii ann), a))
+                      aux node in
+      ok @@ snd m'
+  | T_record m when Ast_typed.Helpers.is_michelson_pair m ->
+      let node = Append_tree.of_list @@ Ast_typed.Helpers.tuple_of_record m in
+      let aux a b : type_value annotated result =
+        let%bind a = a in
+        let%bind b = b in
+        ok (None, T_pair (a, b))
+      in
+      let%bind m' = Append_tree.fold_ne
+                      (fun (_, ({field_type ; michelson_annotation} : AST.field_content)) ->
+                        let%bind a = transpile_type field_type in
+                        ok (Ast_typed.Helpers.remove_empty_annotation michelson_annotation, a) )
                       aux node in
       ok @@ snd m'
   | T_record m ->
@@ -311,8 +326,8 @@ let rec transpile_type (t:AST.type_expression) : type_value result =
         ok (None, T_pair (a, b))
       in
       let%bind m' = Append_tree.fold_ne
-                      (fun (Ast_typed.Types.Label ann, a) ->
-                        let%bind a = transpile_type a in                        
+                      (fun (Ast_typed.Types.Label ann, ({field_type;_}: AST.field_content)) ->
+                        let%bind a = transpile_type field_type in
                         ok ((if is_tuple_lmap then 
                               None 
                             else 
@@ -368,7 +383,8 @@ and transpile_environment_element_type : AST.environment_element -> type_value r
 
 and tree_of_sum : AST.type_expression -> (AST.constructor' * AST.type_expression) Append_tree.t result = fun t ->
   let%bind map_tv = get_t_sum t in
-  ok @@ Append_tree.of_list @@ kv_list_of_cmap map_tv
+  let kt_list = List.map (fun (k,({ctor_type;_}:AST.ctor_content)) -> (k,ctor_type)) (kv_list_of_cmap map_tv) in
+  ok @@ Append_tree.of_list kt_list
 
 and transpile_annotated_expression (ae:AST.expression) : expression result =
   let%bind tv = transpile_type ae.type_expression in
@@ -445,7 +461,7 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let%bind ty_lmap =
         trace_strong (corner_case ~loc:__LOC__ "not a record") @@
         get_t_record (get_type_expression record) in
-      let%bind ty'_lmap = Ast_typed.Helpers.bind_map_lmap transpile_type ty_lmap in
+      let%bind ty'_lmap = Ast_typed.Helpers.bind_map_lmap_t transpile_type ty_lmap in
       let%bind path =
         trace_strong (corner_case ~loc:__LOC__ "record access") @@
         record_access_to_lr ty' ty'_lmap path in
@@ -458,14 +474,29 @@ and transpile_annotated_expression (ae:AST.expression) : expression result =
       let expr = List.fold_left aux record' path in
       ok expr
   | E_record_update {record; path; update} -> 
-      let%bind ty' = transpile_type (get_type_expression record) in 
-      let%bind ty_lmap =
-        trace_strong (corner_case ~loc:__LOC__ "not a record") @@
-        get_t_record (get_type_expression record) in
-      let%bind ty'_lmap = Ast_typed.Helpers.bind_map_lmap transpile_type ty_lmap in
-      let%bind path = 
-        trace_strong (corner_case ~loc:__LOC__ "record access") @@
-        record_access_to_lr ty' ty'_lmap path in
+      let rec aux res (r,p,up) =
+        let ty = get_type_expression r in
+        let%bind ty_lmap =
+          trace_strong (corner_case ~loc:__LOC__ "not a record") @@
+          get_t_record (ty) in
+        let%bind ty' = transpile_type (ty) in 
+        let%bind ty'_lmap = Ast_typed.Helpers.bind_map_lmap_t transpile_type ty_lmap in
+        let%bind p' = 
+          trace_strong (corner_case ~loc:__LOC__ "record access") @@
+          record_access_to_lr ty' ty'_lmap p in
+        let res' = res @ p' in
+        match (up:AST.expression).expression_content with
+        | AST.E_record_update {record=record'; path=path'; update=update'} -> (
+          match record'.expression_content with 
+            | AST.E_record_accessor {record;path} ->
+              if (AST.Misc.equal_variables record r && path = p) then
+                aux res' (record',path',update')
+              else ok @@ (up,res')
+            | _ -> ok @@ (up,res')
+        )
+        | _ -> ok @@ (up,res')
+      in
+      let%bind (update, path) = aux [] (record, path, update) in
       let path = List.map snd path in
       let%bind update = transpile_annotated_expression update in
       let%bind record = transpile_annotated_expression record in
