@@ -1,11 +1,10 @@
 open Trace
 open Test_helpers
-open Ast_simplified
+open Ast_imperative
 
 
-let retype_file f =
-  let%bind simplified  = Ligo.Compile.Of_source.compile f (Syntax_name "cameligo") in
-  let%bind typed,state = Ligo.Compile.Of_simplified.compile simplified in
+let mtype_file f =
+  let%bind typed,state = Ligo.Compile.Utils.type_file f "cameligo" Env in
   ok (typed,state)
 
 let get_program =
@@ -13,14 +12,13 @@ let get_program =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program = retype_file "./contracts/socks.mligo" in
+        let%bind program = mtype_file "./contracts/socks.mligo" in
         s := Some program ;
         ok program
       )
 
 let compile_main () =
-  let%bind simplified      = Ligo.Compile.Of_source.compile "./contracts/socks.mligo" (Syntax_name "cameligo") in
-  let%bind typed_prg,_ = Ligo.Compile.Of_simplified.compile simplified in
+  let%bind typed_prg,_     = mtype_file "./contracts/socks.ligo" in
   let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in
   let%bind michelson_prg   = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg "main" in
   let%bind (_contract: Tezos_utils.Michelson.michelson) =
@@ -40,10 +38,9 @@ let (stranger_addr , stranger_contract) =
   let kt = id.implicit_contract in
   Protocol.Alpha_context.Contract.to_b58check kt , kt
 
-let empty_op_list =
-  (e_typed_list [] t_operation)
+let empty_op_list = e_typed_list [] (t_operation ())
 let empty_message = e_lambda (Var.of_name "arguments")
-  (Some t_unit) (Some (t_list t_operation))
+  (Some (t_unit ())) (Some (t_list (t_operation ())))
   empty_op_list
 
 let add_sock_type () =
@@ -53,11 +50,11 @@ let add_sock_type () =
       ("description_hash",
        e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
   in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
-  let initial_sock_types = e_typed_big_map [] t_nat sock_type_record_type in
-  let socks = e_typed_big_map [] (t_tuple [t_address; t_nat]) t_nat in
-  let post_sock_types = e_typed_big_map [(e_nat 0, new_sock_type)] t_nat sock_type_record_type in
+  let sock_type_record_type = t_record_ez [("name", t_string ());
+                                            ("description_hash", t_string ())] in
+  let initial_sock_types = e_typed_big_map [] (t_nat ()) sock_type_record_type in
+  let socks = e_typed_big_map [] (t_tuple [t_address (); t_nat ()]) (t_nat ()) in
+  let post_sock_types = e_typed_big_map [(e_nat 0, new_sock_type)] (t_nat ()) sock_type_record_type in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", socks );
                                      ("sock_types", initial_sock_types);
@@ -83,10 +80,10 @@ let add_sock_type_unauthorized () =
       ("description_hash",
        e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
   in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
-  let initial_sock_types = e_typed_big_map [] t_nat sock_type_record_type in
-  let socks = e_typed_big_map [] (t_tuple [t_address; t_nat]) t_nat in
+  let sock_type_record_type = t_record_ez [("name", t_string ());
+                                            ("description_hash", t_string ())] in
+  let initial_sock_types = e_typed_big_map [] (t_nat ()) sock_type_record_type in
+  let socks = e_typed_big_map [] (t_tuple [t_address (); t_nat ()]) (t_nat ()) in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", socks );
                                      ("sock_types", initial_sock_types);
@@ -107,10 +104,10 @@ let add_sock_type_exists () =
       ("description_hash",
        e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
   in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
-  let socks = e_typed_big_map [] (t_tuple [t_address; t_nat]) t_nat in
-  let sock_types = e_typed_big_map [(e_nat 0, new_sock_type)] t_nat sock_type_record_type in
+  let sock_type_record_type = t_record_ez [("name", t_string ());
+                                            ("description_hash", t_string ())] in
+  let socks = e_typed_big_map [] (t_tuple [t_address (); t_nat ()]) (t_nat ()) in
+  let sock_types = e_typed_big_map [(e_nat 0, new_sock_type)] (t_nat ()) sock_type_record_type in
   let storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                              ("socks", socks);
                              ("sock_types", sock_types);
@@ -138,19 +135,19 @@ let update_sock_type () =
       ("description_hash",
        e_string "a0f72c4cb3d015c2790bfe79e60a15b289042e56235e65ac3cd07817478cb5aa")]
   in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
+  let sock_type_record_type = t_record_ez [("name", t_string ());
+                                            ("description_hash", t_string ())] in
   let initial_sock_types = e_typed_big_map
       [(e_nat 0, current_sock_type)]
-      t_nat
+      (t_nat ())
       sock_type_record_type
   in
   let post_sock_types = e_typed_big_map
       [(e_nat 0, sock_type_update)]
-      t_nat
+      (t_nat ())
       sock_type_record_type
   in
-  let socks = e_typed_big_map [] (t_tuple [t_address; t_nat]) t_nat in
+  let socks = e_typed_big_map [] (t_tuple [t_address (); t_nat ()]) (t_nat ()) in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", socks );
                                      ("sock_types", initial_sock_types);
@@ -183,14 +180,14 @@ let update_sock_type_unauthorized () =
       ("description_hash",
        e_string "a0f72c4cb3d015c2790bfe79e60a15b289042e56235e65ac3cd07817478cb5aa")]
   in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
+  let sock_type_record_type = t_record_ez [("name", t_string ());
+                                            ("description_hash", t_string ())] in
   let initial_sock_types = e_typed_big_map
       [(e_nat 0, current_sock_type)]
-      t_nat
+      (t_nat ())
       sock_type_record_type
   in
-  let socks = e_typed_big_map [] (t_tuple [t_address; t_nat]) t_nat in
+  let socks = e_typed_big_map [] (t_tuple [t_address (); t_nat ()]) (t_nat ()) in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", socks );
                                      ("sock_types", initial_sock_types);
@@ -212,18 +209,18 @@ let add_sock () =
       ("description_hash",
        e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
   in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
+  let sock_type_record_type = t_record_ez [("name", t_string ());
+                                            ("description_hash", t_string ())] in
   let initial_sock_types = e_typed_big_map
       [(e_nat 0, test_sock_type)]
-      t_nat
+      (t_nat ())
       sock_type_record_type
   in
   let initial_socks = e_typed_big_map []
-      (t_tuple [t_address; t_nat]) t_nat
+      (t_tuple [t_address (); t_nat ()]) (t_nat ())
   in
   let post_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
-      (t_tuple [t_address; t_nat]) t_nat
+      (t_tuple [t_address (); t_nat ()]) (t_nat ())
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
@@ -251,14 +248,14 @@ let add_sock_unauthorized () =
       ("description_hash",
        e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
   in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
+  let sock_type_record_type = t_record_ez [("name", t_string ());
+                                            ("description_hash", t_string ())] in
   let initial_sock_types = e_typed_big_map
       [(e_nat 0, test_sock_type)]
-      t_nat
+      (t_nat ())
       sock_type_record_type
   in
-  let initial_socks = e_typed_big_map [] (t_tuple [t_address; t_nat]) t_nat in
+  let initial_socks = e_typed_big_map [] (t_tuple [t_address (); t_nat ()]) (t_nat ()) in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
                                      ("sock_types", initial_sock_types);
@@ -280,19 +277,19 @@ let buy_stock () =
       ("description_hash",
        e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
   in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
+  let sock_type_record_type = t_record_ez [("name", t_string ());
+                                            ("description_hash", t_string ())] in
   let initial_sock_types = e_typed_big_map
       [(e_nat 0, test_sock_type)]
-      t_nat
+      (t_nat ())
       sock_type_record_type
   in
   let initial_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
-      (t_tuple [t_address; t_nat]) t_nat
+      (t_tuple [t_address (); t_nat ()]) (t_nat ())
   in
   let post_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 0);
                                     (e_tuple [e_address stranger_addr; e_nat 0], e_nat 1)]
-      (t_tuple [t_address; t_nat]) t_nat
+      (t_tuple [t_address (); t_nat ()]) (t_nat ())
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
@@ -322,15 +319,15 @@ let buy_stock_self_buy () =
       ("description_hash",
        e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
   in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
+  let sock_type_record_type = t_record_ez [("name", t_string ());
+                                            ("description_hash", t_string ())] in
   let initial_sock_types = e_typed_big_map
       [(e_nat 0, test_sock_type)]
-      t_nat
+      (t_nat ())
       sock_type_record_type
   in
   let socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
-      (t_tuple [t_address; t_nat]) t_nat
+      (t_tuple [t_address (); t_nat ()]) (t_nat ())
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", socks );
@@ -360,15 +357,15 @@ let buy_stock_nonexistent () =
       ("description_hash",
        e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
   in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
+  let sock_type_record_type = t_record_ez [("name", t_string ());
+                                            ("description_hash", t_string ())] in
   let initial_sock_types = e_typed_big_map
       [(e_nat 0, test_sock_type)]
-      t_nat
+      (t_nat ())
       sock_type_record_type
   in
   let initial_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
-      (t_tuple [t_address; t_nat]) t_nat
+      (t_tuple [t_address (); t_nat ()]) (t_nat ())
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
@@ -393,15 +390,15 @@ let buy_stock_oos () =
       ("description_hash",
        e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
   in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
+  let sock_type_record_type = t_record_ez [("name", t_string ());
+                                            ("description_hash", t_string ())] in
   let initial_sock_types = e_typed_big_map
       [(e_nat 0, test_sock_type)]
-      t_nat
+      (t_nat ())
       sock_type_record_type
   in
   let initial_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 0)]
-      (t_tuple [t_address ; t_nat]) t_nat
+      (t_tuple [t_address (); t_nat ()]) (t_nat ())
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
@@ -426,15 +423,15 @@ let buy_stock_underpay () =
       ("description_hash",
        e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
   in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
+  let sock_type_record_type = t_record_ez [("name", t_string ());
+                                            ("description_hash", t_string ())] in
   let initial_sock_types = e_typed_big_map
       [(e_nat 0, test_sock_type)]
-      t_nat
+      (t_nat ())
       sock_type_record_type
   in
   let initial_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
-      (t_tuple [t_address ; t_nat]) t_nat
+      (t_tuple [t_address (); t_nat ()]) (t_nat ())
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
@@ -458,19 +455,19 @@ let transfer () =
       ("description_hash",
        e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
   in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
+  let sock_type_record_type = t_record_ez [("name", t_string ());
+                                            ("description_hash", t_string ())] in
   let initial_sock_types = e_typed_big_map
       [(e_nat 0, test_sock_type)]
-      t_nat
+      (t_nat ())
       sock_type_record_type
   in
   let initial_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
-      (t_tuple [t_address; t_nat]) t_nat
+      (t_tuple [t_address (); t_nat ()]) (t_nat ())
   in
   let post_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 0);
                                     (e_tuple [e_address stranger_addr; e_nat 0], e_nat 1)]
-      (t_tuple [t_address; t_nat]) t_nat
+      (t_tuple [t_address (); t_nat ()]) (t_nat ())
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
@@ -501,15 +498,15 @@ let transfer_self () =
       ("description_hash",
        e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
   in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
+  let sock_type_record_type = t_record_ez [("name", t_string ());
+                                            ("description_hash", t_string ())] in
   let initial_sock_types = e_typed_big_map
       [(e_nat 0, test_sock_type)]
-      t_nat
+      (t_nat ())
       sock_type_record_type
   in
   let socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
-      (t_tuple [t_address; t_nat]) t_nat
+      (t_tuple [t_address (); t_nat ()]) (t_nat ())
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", socks );
@@ -540,15 +537,15 @@ let transfer_unauthorized () =
       ("description_hash",
        e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
   in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
+  let sock_type_record_type = t_record_ez [("name", t_string ());
+                                            ("description_hash", t_string ())] in
   let initial_sock_types = e_typed_big_map
       [(e_nat 0, test_sock_type)]
-      t_nat
+      (t_nat ())
       sock_type_record_type
   in
   let initial_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
-      (t_tuple [t_address; t_nat]) t_nat
+      (t_tuple [t_address (); t_nat ()]) (t_nat ())
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
@@ -574,15 +571,15 @@ let transfer_nonexistent () =
       ("description_hash",
        e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
   in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
+  let sock_type_record_type = t_record_ez [("name", t_string ());
+                                            ("description_hash", t_string ())] in
   let initial_sock_types = e_typed_big_map
       [(e_nat 0, test_sock_type)]
-      t_nat
+      (t_nat ())
       sock_type_record_type
   in
   let initial_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
-      (t_tuple [t_address; t_nat]) t_nat
+      (t_tuple [t_address (); t_nat ()]) (t_nat ())
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
@@ -608,15 +605,15 @@ let transfer_overdraw () =
       ("description_hash",
        e_string "b890266c2ad86f7c12660e1b3700da5a70ad6ea3aa243c4cf501bdda4497424c")]
   in
-  let sock_type_record_type = t_record_ez [("name", t_string);
-                                            ("description_hash", t_string)] in
+  let sock_type_record_type = t_record_ez [("name", t_string ());
+                                            ("description_hash", t_string ())] in
   let initial_sock_types = e_typed_big_map
       [(e_nat 0, test_sock_type)]
-      t_nat
+      (t_nat ())
       sock_type_record_type
   in
   let initial_socks = e_typed_big_map [(e_tuple [e_address oracle_addr; e_nat 0], e_nat 1)]
-      (t_tuple [t_address; t_nat]) t_nat
+      (t_tuple [t_address (); t_nat ()]) (t_nat ())
   in
   let initial_storage = e_record_ez [("sock_oracle", e_address oracle_addr);
                                      ("socks", initial_socks );
