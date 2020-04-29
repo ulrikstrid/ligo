@@ -21,12 +21,12 @@ type storage = {
   reveals: reveals;
   end_phase_one: timestamp;
   end_phase_two: timestamp;
-  min_players: int;
+  min_players: nat;
 }
 
 (* We use a 2 ** 256 nat for the random data space because it's not possible to
    XOR bytes in Michelson yet :( *)
-let random_space : nat = 115792089237316195423570985008687907853269984665640564039457584007913129639936
+let random_space : nat = 115792089237316195423570985008687907853269984665640564039457584007913129639936n
 
 
 (* Phase 1 *)
@@ -34,12 +34,7 @@ let random_space : nat = 1157920892373161954235709850086879078532699846656405640
 let commit (p,s: bytes * storage) =
   let s =
     if s.end_phase_one > Current.time
-    then {commits = Map.update Current.sender p s.commits;
-          reveals = reveals;
-          end_phase_one = s.end_phase_one;
-          end_phase_two = s.end_phase_two;
-          min_players = s.min_players;
-         }
+    then {s with commits = Map.update Current.sender (Some p) s.commits }
     else (failwith "This game has passed the commit stage.": storage)
   in ([]: operation list), s
 
@@ -57,19 +52,14 @@ let reveal (p,s: nat * storage) =
       | Some hashed -> hashed
       | None -> (failwith "You didn't commit a hash in the 1st round.": bytes)
     in
-    let updated_reveals : (address, bytes) map =
+    let updated_reveals : (address, nat) map =
       if (Crypto.sha256 (Bytes.pack p)) = hashed
-      then Map.update Current.sender p s.reveals
+      then Map.update Current.sender (Some p) s.reveals
       else (failwith "The submitted bytes don't match your commitment.":
-              (address, bytes) map)
+              (address, nat) map)
     in
     let updated_storage : storage =
-      {commits = s.commits;
-       reveals = updated_reveals;
-       end_phase_one = s.end_phase_one;
-       end_phase_two = s.end_phase_two;
-       min_players = s.min_players;
-      }
+      {s with reveals = updated_reveals }
     in ([]: operation list), updated_storage
   else (failwith "This game is not in the reveal stage.": operation list * storage)
 
@@ -78,21 +68,21 @@ let reveal (p,s: nat * storage) =
 XOR together the revealed bytes to create a final 'random' value that can be consumed.
 
 *)
+let folding_xor (accumulator, kv: nat * (address * nat)) : nat =
+  Bitwise.lxor accumulator kv.1
+
 let result (p,s: unit * storage) =
   if Current.time > s.end_phase_two
   then
     if Map.size s.reveals >= s.min_players
     then
-      let folding_xor (accumulator, kv: nat * (address * nat)) : nat =
-        Bitwise.lxor accumulator kv.1
-      in 
-      let xor_entries = Map.fold folding_xor s.reveals 0 in
+      let xor_entries = Map.fold folding_xor s.reveals 0n in
       let result = Crypto.sha256 (Bytes.pack xor_entries) in
       let caller : bytes contract = Operation.get_contract Current.sender in
       let return_ops : operation = Operation.transaction result 0mutez caller in
       [return_ops], s
-    else (failwith "Minimum player threshold not met for this game.")
-  else (failwith "The reveal stage has not finished yet.")
+    else ((failwith "Minimum player threshold not met for this game."): operation list * storage)
+  else ((failwith "The reveal stage has not finished yet."): (operation list * storage))
 
 let main (p,s: parameter * storage) =
   match p with
