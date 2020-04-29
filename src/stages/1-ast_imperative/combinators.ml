@@ -114,6 +114,8 @@ let e_bytes_raw ?loc (b: bytes) : expression =
   make_e ?loc @@ E_literal (Literal_bytes b)
 let e_bytes_string ?loc (s: string) : expression =
   make_e ?loc @@ E_literal (Literal_bytes (Hex.to_bytes (Hex.of_string s)))
+let e_bytes_int ?loc (i: int) : expression =
+  make_e ?loc @@ E_literal (Literal_bytes (Hex.to_bytes (Hex.of_string (Format.sprintf "%x" i))))
 let e_some ?loc s  : expression = make_e ?loc @@ E_constant {cons_name = C_SOME; arguments = [s]}
 let e_none ?loc () : expression = make_e ?loc @@ E_constant {cons_name = C_NONE; arguments = []}
 let e_string_cat ?loc sl sr : expression = make_e ?loc @@ E_constant {cons_name = C_CONCAT; arguments = [sl ; sr ]}

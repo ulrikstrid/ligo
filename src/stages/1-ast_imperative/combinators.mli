@@ -72,6 +72,7 @@ val e_mutez : ?loc:Location.t -> int -> expression
 val e'_bytes : string -> expression_content result
 val e_bytes_hex : ?loc:Location.t -> string -> expression result
 val e_bytes_raw : ?loc:Location.t -> bytes -> expression
+val e_bytes_int : ?loc:Location.t -> int -> expression
 val e_bytes_string : ?loc:Location.t -> string -> expression
 
 val e_binop    : ?loc:Location.t -> constant' -> expression -> expression -> expression

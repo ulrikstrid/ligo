@@ -164,7 +164,10 @@ let run_no_failwith ?options (exp:Michelson.t) (exp_type:ex_ty) : ex_typed_value
   let%bind expr = run_expression ?options exp exp_type in
   match expr with
   | Success tval  -> ok tval
-  | Fail _ -> simple_fail "Unexpected error of execution"
+  | Fail f -> 
+    let%bind s = failwith_to_string f in
+    Format.printf "%s%!" s;
+    simple_fail "Unexpected error of execution"
 
 let evaluate_expression ?options exp exp_type =
   let%bind etv = run_expression ?options exp exp_type in

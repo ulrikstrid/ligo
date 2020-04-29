@@ -39,7 +39,6 @@ open Ast_imperative
 let pack_payload (program:Ast_typed.program) (payload:expression) : bytes result =
   let%bind code =
     let env = Ast_typed.program_environment program in
-
     let%bind sugar     = Compile.Of_imperative.compile_expression payload in
     let%bind core      = Compile.Of_sugar.compile_expression sugar in
     let%bind (typed,_) = Compile.Of_core.compile_expression

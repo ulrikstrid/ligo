@@ -78,8 +78,11 @@ let result (p,s: unit * storage) =
     then
       let xor_entries = Map.fold folding_xor s.reveals 0n in
       let result = Crypto.sha256 (Bytes.pack xor_entries) in
-      let caller : bytes contract = Operation.get_contract Current.sender in
-      let return_ops : operation = Operation.transaction result 0mutez caller in
+      let caller = match (Tezos.get_contract_opt Tezos.sender : (bytes contract) option) with 
+        Some c -> c
+      | None ->(failwith "Sender is not a valid contract address": bytes contract)
+      in
+      let return_ops : operation = Tezos.transaction result 0mutez caller in
       [return_ops], s
     else ((failwith "Minimum player threshold not met for this game."): operation list * storage)
   else ((failwith "The reveal stage has not finished yet."): (operation list * storage))
