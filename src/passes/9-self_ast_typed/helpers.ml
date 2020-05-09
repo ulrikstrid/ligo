@@ -153,11 +153,41 @@ and map_cases : mapper -> matching_expr -> matching_expr result = fun f m ->
       ok @@ Match_variant {cases ; tv}
     )
 
+and map_environment_element_definition_declaration : mapper -> environment_element_definition_declaration -> environment_element_definition_declaration result =
+  fun m { expr; free_variables } ->
+  let%bind expr = map_expression m expr in
+  let () = ignore free_variables in
+  let free_variables = Misc.Free_variables.(expression empty expr) in
+  ok @@ { expr; free_variables }
+
+and map_environment_element_definition : mapper -> environment_element_definition -> environment_element_definition result = fun m ->
+  function
+  | ED_binder -> ok @@ ED_binder
+  | ED_declaration x ->
+     let%bind x = map_environment_element_definition_declaration m x in
+     ok @@ ED_declaration x
+
+and map_environment_element : mapper -> environment_element -> environment_element result =
+  fun m { type_value; source_environment; definition } ->
+  let%bind definition = map_environment_element_definition m definition in
+  ok @@ { type_value; source_environment; definition }
+
+and map_environment_binding : mapper -> environment_binding -> environment_binding result =
+  fun m { expr_var; env_elt } ->
+  let%bind env_elt = map_environment_element m env_elt in
+  ok @@ { expr_var; env_elt }
+
+and map_post_env : mapper -> environment -> environment result =
+  fun m { expression_environment; type_environment } ->
+  let%bind expression_environment = bind_map_list (map_environment_binding m) expression_environment in
+  ok @@ { expression_environment; type_environment }
+
 and map_program : mapper -> program -> program result = fun m p ->
   let aux = fun (x : declaration) ->
     match x with
     | Declaration_constant {binder; expr ; inline ; post_env} -> (
         let%bind expr = map_expression m expr in
+        let%bind post_env = map_post_env m post_env in
         ok (Declaration_constant {binder; expr ; inline ; post_env})
       )
   in
