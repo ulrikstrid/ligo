@@ -79,7 +79,9 @@ type mapper = expression -> expression result
 let rec map_expression : mapper -> expression -> expression result = fun f e ->
   let self = map_expression f in
   let%bind e' = f e in
-  let return expression_content = ok { e' with expression_content } in
+  let%bind environment = map_environment f e'.environment in
+  let return expression_content =
+    ok { e' with expression_content ; environment } in
   match e'.expression_content with
   | E_matching {matchee=e;cases} -> (
       let%bind e' = self e in
@@ -177,7 +179,7 @@ and map_environment_binding : mapper -> environment_binding -> environment_bindi
   let%bind env_elt = map_environment_element m env_elt in
   ok @@ { expr_var; env_elt }
 
-and map_post_env : mapper -> environment -> environment result =
+and map_environment : mapper -> environment -> environment result =
   fun m { expression_environment; type_environment } ->
   let%bind expression_environment = bind_map_list (map_environment_binding m) expression_environment in
   ok @@ { expression_environment; type_environment }
@@ -187,7 +189,7 @@ and map_program : mapper -> program -> program result = fun m p ->
     match x with
     | Declaration_constant {binder; expr ; inline ; post_env} -> (
         let%bind expr = map_expression m expr in
-        let%bind post_env = map_post_env m post_env in
+        let%bind post_env = map_environment m post_env in
         ok (Declaration_constant {binder; expr ; inline ; post_env})
       )
   in
@@ -197,6 +199,8 @@ type 'a fold_mapper = 'a -> expression -> (bool * 'a * expression) result
 let rec fold_map_expression : 'a . 'a fold_mapper -> 'a -> expression -> ('a * expression) result = fun f a e ->
   let self = fold_map_expression f in
   let%bind (continue, init',e') = f a e in
+  let%bind (init', environment) = fold_map_environment f init' e'.environment in
+  let e' = { e' with environment } in
   if (not continue) then ok(init',e')
   else
   let return expression_content = { e' with expression_content } in
@@ -273,13 +277,43 @@ and fold_map_cases : 'a . 'a fold_mapper -> 'a -> matching_expr -> ('a * matchin
       ok @@ (init, Match_variant {cases ; tv})
     )
 
+and fold_map_environment_element_definition_declaration : 'a . 'a fold_mapper -> 'a -> environment_element_definition_declaration -> ('a * environment_element_definition_declaration) result =
+  fun m init { expr; free_variables } ->
+  let%bind (acc, expr) = fold_map_expression m init expr in
+  let () = ignore free_variables in
+  let free_variables = Misc.Free_variables.(expression empty expr) in
+  ok @@ (acc, { expr; free_variables })
+
+and fold_map_environment_element_definition : 'a . 'a fold_mapper -> 'a -> environment_element_definition -> ('a * environment_element_definition) result = fun m init ->
+  function
+  | ED_binder -> ok @@ (init, ED_binder)
+  | ED_declaration x ->
+     let%bind (acc, x) = fold_map_environment_element_definition_declaration m init x in
+     ok @@ (acc, ED_declaration x)
+
+and fold_map_environment_element : 'a . 'a fold_mapper -> 'a -> environment_element -> ('a * environment_element) result =
+  fun m init { type_value; source_environment; definition } ->
+  let%bind (acc, definition) = fold_map_environment_element_definition m init definition in
+  ok @@ (acc, { type_value; source_environment; definition })
+
+and fold_map_environment_binding : 'a . 'a fold_mapper -> 'a -> environment_binding -> ('a * environment_binding) result =
+  fun m init { expr_var; env_elt } ->
+  let%bind (acc, env_elt) = fold_map_environment_element m init env_elt in
+  ok @@ (acc, { expr_var; env_elt })
+
+and fold_map_environment : 'a . 'a fold_mapper -> 'a -> environment -> ('a * environment) result =
+  fun m init { expression_environment; type_environment } ->
+  let%bind (acc, expression_environment) = bind_fold_map_list (fold_map_environment_binding m) init expression_environment in
+  ok @@ (acc, { expression_environment; type_environment })
+
 and fold_map_program : 'a . 'a fold_mapper -> 'a -> program -> ('a * program) result = fun m init p ->
   let aux = fun (acc,acc_prg) (x : declaration Location.wrap) ->
     match Location.unwrap x with
     | Declaration_constant {binder ; expr ; inline ; post_env} -> (
         let%bind (acc', expr) = fold_map_expression m acc expr in
+        let%bind (acc'', post_env) = fold_map_environment m acc' post_env in
         let wrap_content = Declaration_constant {binder ; expr ; inline ; post_env} in
-        ok (acc', List.append acc_prg [{x with wrap_content}])
+        ok (acc'', List.append acc_prg [{x with wrap_content}])
       )
   in
   bind_fold_list aux (init,[]) p
