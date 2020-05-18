@@ -266,7 +266,6 @@ build-publish-ide-image:
   stage: build_and_deploy
   <<: *docker
   script:
-    - echo $CI_PIPELINE_SOURCE
     - ls -F
     - find dist/
     - find dist/package/ -name '*ligo_*deb'
@@ -283,7 +282,7 @@ build-publish-ide-image:
       .
     - docker push "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
   rules:
-    - if: '$CI_PIPELINE_SOURCE != schedule'
+    - if: $CI_PIPELINE_SOURCE != "schedule"
       changes:
         - tools/webide/**
       when: always
