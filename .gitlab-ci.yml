@@ -118,11 +118,13 @@ local-dune-job:
   artifacts:
     paths:
       - _coverage_all
+  except:
+    - variables:
+      - $TAG_JOB != "true"
   only:
     - merge_requests
     - dev
     - tags
-    - triggers
     - /^.*-run-dev$/
 
 # Run a docker build without publishing to the registry
@@ -152,7 +154,8 @@ build-and-publish-latest-docker-image:
     - docker push ${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}:$(if test "$CI_COMMIT_REF_NAME" = "dev"; then echo next; else echo next-attempt; fi)
   rules:
     # Only deploy docker when from the dev branch AND on the canonical ligolang/ligo repository
-    - if: '$CI_COMMIT_REF_NAME =~ /^(dev|.*-run-dev)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$TAG_JOB != "true"'
+      if: '$CI_COMMIT_REF_NAME =~ /^(dev|.*-run-dev)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
 
 # It'd be a good idea to generate those jobs dynamically,
@@ -166,6 +169,9 @@ build-and-package-debian-9:
     target_os: "debian"
     target_os_version: "9"
   <<: *build_binary
+  except:
+    - variables:
+      - $TAG_JOB == "true"
   only:
     - dev
     - tags
@@ -183,6 +189,9 @@ build-and-package-debian-10:
   # this one is merge_requests and dev, because the debian 10 binary
   # is used for build-current-docker-image and for
   # build-and-publish-latest-docker-image
+  except:
+    - variables:
+      - $TAG_JOB == "true"
   only:
     - merge_requests
     - dev
@@ -198,6 +207,9 @@ build-and-package-ubuntu-18-04:
     target_os: "ubuntu"
     target_os_version: "18.04"
   <<: *build_binary
+  except:
+    - variables:
+      - $TAG_JOB == "true"
   only:
     - dev
     - tags
@@ -212,6 +224,9 @@ build-and-package-ubuntu-19-10:
     target_os: "ubuntu"
     target_os_version: "19.10"
   <<: *build_binary
+  except:
+    - variables:
+      - $TAG_JOB == "true"
   only:
     - dev
     - tags
