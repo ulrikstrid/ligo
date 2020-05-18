@@ -283,7 +283,7 @@ build-publish-ide-image:
       .
     - docker push "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
   rules:
-    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE != schedule'
       changes:
         - tools/webide/**
       when: always
