@@ -285,9 +285,7 @@ build-publish-ide-image:
     - if: '$CI_PIPELINE_SOURCE == "ssschedule"'
       changes:
         - tools/webide/**
-      when: always
       if: '$CI_COMMIT_REF_NAME == "dev-test"'
-      when: always
 
 run-webide-e2e-tests:
   stage: ide-e2e-test
