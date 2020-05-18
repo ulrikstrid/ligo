@@ -266,6 +266,7 @@ build-publish-ide-image:
   stage: build_and_deploy
   <<: *docker
   script:
+    - echo $CI_PIPELINE_SOURCE
     - ls -F
     - find dist/
     - find dist/package/ -name '*ligo_*deb'
