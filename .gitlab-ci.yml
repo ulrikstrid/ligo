@@ -147,13 +147,12 @@ build-and-publish-latest-docker-image:
   <<: *docker
   dependencies:
     - build-and-package-debian-10
-    script:
-    - echo "ALMALALALZALZLAZLA"
+  script:
+    - echo "lll"
     - echo $TAG_JOB
     - echo $TAG_JOB
     - echo $TAG_JOB
-    - echo $TAG_JOB
-    - echo "ALMALALALZALZLAZLA"
+    - echo "lll"
     - sh scripts/build_docker_image.sh $(if test "$CI_COMMIT_REF_NAME" = "dev-test"; then echo next; else echo next-attempt; fi)
     - sh scripts/test_cli.sh
     - echo ${LIGO_REGISTRY_PASSWORD} | docker login -u ${LIGO_REGISTRY_USER} --password-stdin
