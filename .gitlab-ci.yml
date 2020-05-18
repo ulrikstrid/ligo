@@ -120,10 +120,10 @@ local-dune-job:
       - _coverage_all
   only:
     - merge_requests
-    - dev
+    - dev-test
     - tags
     - triggers
-    - /^.*-run-dev$/
+    - /^.*-run-dev-test$/
 
 # Run a docker build without publishing to the registry
 build-current-docker-image:
@@ -138,7 +138,7 @@ build-current-docker-image:
   only:
     - merge_requests
 
-# When a MR/PR is merged to dev
+# When a MR/PR is merged to dev-test
 # take the previous build and publish it to Docker Hub
 build-and-publish-latest-docker-image:
   stage: build_and_deploy
@@ -146,13 +146,13 @@ build-and-publish-latest-docker-image:
   dependencies:
     - build-and-package-debian-10
   script:
-    - sh scripts/build_docker_image.sh $(if test "$CI_COMMIT_REF_NAME" = "dev"; then echo next; else echo next-attempt; fi)
+    - sh scripts/build_docker_image.sh $(if test "$CI_COMMIT_REF_NAME" = "dev-test"; then echo next; else echo next-attempt; fi)
     - sh scripts/test_cli.sh
     - echo ${LIGO_REGISTRY_PASSWORD} | docker login -u ${LIGO_REGISTRY_USER} --password-stdin
-    - docker push ${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}:$(if test "$CI_COMMIT_REF_NAME" = "dev"; then echo next; else echo next-attempt; fi)
+    - docker push ${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}:$(if test "$CI_COMMIT_REF_NAME" = "dev-test"; then echo next; else echo next-attempt; fi)
   rules:
-    # Only deploy docker when from the dev branch AND on the canonical ligolang/ligo repository
-    - if: '$CI_COMMIT_REF_NAME =~ /^(dev|.*-run-dev)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+    # Only deploy docker when from the dev-test branch AND on the canonical ligolang/ligo repository
+    - if: '$CI_COMMIT_REF_NAME =~ /^(dev-test|.*-run-dev-test)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
 
 # It'd be a good idea to generate those jobs dynamically,
@@ -167,9 +167,9 @@ build-and-package-debian-9:
     target_os_version: "9"
   <<: *build_binary
   only:
-    - dev
+    - dev-test
     - tags
-    - /^.*-run-dev$/
+    - /^.*-run-dev-test$/
 
 build-and-package-debian-10:
   <<: *docker
@@ -180,14 +180,14 @@ build-and-package-debian-10:
     target_os: "debian"
     target_os_version: "10"
   <<: *build_binary
-  # this one is merge_requests and dev, because the debian 10 binary
+  # this one is merge_requests and dev-test, because the debian 10 binary
   # is used for build-current-docker-image and for
   # build-and-publish-latest-docker-image
   only:
     - merge_requests
-    - dev
+    - dev-test
     - tags
-    - /^.*-run-dev$/
+    - /^.*-run-dev-test$/
 
 build-and-package-ubuntu-18-04:
   <<: *docker
@@ -199,9 +199,9 @@ build-and-package-ubuntu-18-04:
     target_os_version: "18.04"
   <<: *build_binary
   only:
-    - dev
+    - dev-test
     - tags
-    - /^.*-run-dev$/
+    - /^.*-run-dev-test$/
 
 build-and-package-ubuntu-19-10:
   <<: *docker
@@ -213,22 +213,22 @@ build-and-package-ubuntu-19-10:
     target_os_version: "19.10"
   <<: *build_binary
   only:
-    - dev
+    - dev-test
     - tags
-    - /^.*-run-dev$/
+    - /^.*-run-dev-test$/
 
-# Pages are deployed from dev, be careful not to override 'next'
-# in case something gets merged into 'dev' while releasing.
+# Pages are deployed from dev-test, be careful not to override 'next'
+# in case something gets merged into 'dev-test' while releasing.
 pages:
   <<: *website_build
   rules:
-    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_COMMIT_REF_NAME == "dev-test" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
 
 pages-attempt:
   <<: *website_build
   rules:
-    - if: '$CI_COMMIT_REF_NAME =~ /^.*-run-dev$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_COMMIT_REF_NAME =~ /^.*-run-dev-test$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
 
 # WEBIDE jobs
@@ -275,7 +275,7 @@ build-publish-ide-image:
       changes:
         - tools/webide/**
       when: always
-      if: '$CI_COMMIT_REF_NAME == "dev"'
+      if: '$CI_COMMIT_REF_NAME == "dev-test"'
       when: always
 
 run-webide-e2e-tests:
@@ -291,7 +291,7 @@ run-webide-e2e-tests:
       changes:
         - tools/webide/**
       when: always
-      if: '$CI_COMMIT_REF_NAME == "dev"'
+      if: '$CI_COMMIT_REF_NAME == "dev-test"'
       when: always
 
 deploy-handoff:
@@ -302,7 +302,7 @@ deploy-handoff:
     LIGO_COMMIT_REF_NAME: "${CI_COMMIT_SHORT_SHA}"
   trigger: ligolang/ligo-webide-deploy
   rules:
-    - if: '$CI_COMMIT_REF_NAME == "dev"'
+    - if: '$CI_COMMIT_REF_NAME == "dev-test"'
       when: always
 
 
@@ -326,8 +326,8 @@ binary-nix:
   <<: *prepare_nix
   only:
     - merge_requests
-    - dev
-    - /^.*-run-dev$/
+    - dev-test
+    - /^.*-run-dev-test$/
   script:
     - nix-build nix -A ligo-bin
 
@@ -336,8 +336,8 @@ doc-nix:
   <<: *prepare_nix
   only:
     - merge_requests
-    - dev
-    - /^.*-run-dev$/
+    - dev-test
+    - /^.*-run-dev-test$/
   script:
     - nix-build nix -A ligo-doc
     - cp -Lr result/share/doc result-doc
@@ -350,8 +350,8 @@ test-nix:
   <<: *prepare_nix
   only:
     - merge_requests
-    - dev
-    - /^.*-run-dev$/
+    - dev-test
+    - /^.*-run-dev-test$/
   script:
     - nix-build nix -A ligo-coverage
     - cp -Lr result/share/coverage result-coverage
@@ -367,7 +367,7 @@ test-nix:
     - changes:
         - tools/webide/**
       when: always
-    - if: '$CI_COMMIT_REF_NAME =~ /^(dev|.*-run-dev)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_COMMIT_REF_NAME =~ /^(dev-test|.*-run-dev-test)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
   script:
     - nix-build nix -A ligo-editor.e2e
@@ -376,8 +376,8 @@ docker-nix:
   stage: nix
   only:
     - merge_requests
-    - dev
-    - /^.*-run-dev$/
+    - dev-test
+    - /^.*-run-dev-test$/
   <<: *prepare_nix
   script:
     - nix-build nix -A ligo-docker
@@ -394,13 +394,13 @@ docker-push-nix:
   needs:
     - docker-nix
   rules:
-    # Only deploy docker when from the dev branch AND on the canonical ligolang/ligo repository
-    - if: '$CI_COMMIT_REF_NAME =~ /^(dev|.*-run-dev)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+    # Only deploy docker when from the dev-test branch AND on the canonical ligolang/ligo repository
+    - if: '$CI_COMMIT_REF_NAME =~ /^(dev-test|.*-run-dev-test)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
   script:
     - echo ${LIGO_REGISTRY_PASSWORD} | docker login -u ${LIGO_REGISTRY_USER} --password-stdin
     - docker load -i=./ligo.tar.gz
-    - export LIGO_REGISTRY_FULL_NAME=${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}:$(if test "$CI_COMMIT_REF_NAME" = "dev"; then echo next-nix; else echo next-attempt-nix; fi)
+    - export LIGO_REGISTRY_FULL_NAME=${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}:$(if test "$CI_COMMIT_REF_NAME" = "dev-test"; then echo next-nix; else echo next-attempt-nix; fi)
     - docker tag ligo "${LIGO_REGISTRY_FULL_NAME}"
     - docker push "${LIGO_REGISTRY_FULL_NAME}"
 
@@ -408,8 +408,8 @@ webide-docker-nix:
   stage: nix
   only:
     - merge_requests
-    - dev
-    - /^.*-run-dev$/
+    - dev-test
+    - /^.*-run-dev-test$/
   <<: *prepare_nix
   script:
     - nix-build nix -A ligo-editor-docker
@@ -427,8 +427,8 @@ webide-push-nix:
   needs:
     - webide-docker-nix
   rules:
-    # Only deploy docker when from the dev branch AND on the canonical ligolang/ligo repository
-    - if: '$CI_COMMIT_REF_NAME =~ /^(dev|.*-run-dev)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+    # Only deploy docker when from the dev-test branch AND on the canonical ligolang/ligo repository
+    - if: '$CI_COMMIT_REF_NAME =~ /^(dev-test|.*-run-dev-test)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
   script:
     - echo "${CI_BUILD_TOKEN}" | docker login -u gitlab-ci-token --password-stdin registry.gitlab.com
@@ -440,8 +440,8 @@ static-binary-nix:
   stage: nix
   <<: *prepare_nix
   only:
-    - dev
-    - /^.*-run-dev$/
+    - dev-test
+    - /^.*-run-dev-test$/
   script:
     - nix-build nix -A ligo-static
     # Check that the binary is truly static and has 0 dependencies
@@ -455,8 +455,8 @@ website-nix:
   stage: nix
   <<: *prepare_nix
   only:
-    - dev
-    - /^.*-run-dev$/
+    - dev-test
+    - /^.*-run-dev-test$/
   script:
     - nix-build nix -A ligo-website
     - cp -Lr result/ result-website
