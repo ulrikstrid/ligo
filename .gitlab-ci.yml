@@ -155,9 +155,8 @@ build-and-publish-latest-docker-image:
   rules:
     # Only deploy docker when from the dev-test branch AND on the canonical ligolang/ligo repository
     - if: '$TAG_JOB != "true"'
-      if:
-        - '$CI_COMMIT_REF_NAME =~ /^(dev-test|.*-run-dev-test)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
-      when: always
+      if: '$CI_COMMIT_REF_NAME =~ /^(dev-test|.*-run-dev-test)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
+      when : always
 
 # It'd be a good idea to generate those jobs dynamically,
 # based on desired targets
