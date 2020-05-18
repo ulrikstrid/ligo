@@ -1,7 +1,9 @@
 #!/bin/sh
 
-apt-get update -qq
-apt-get -y -qq install jq
+INCR_TYPE=$1
+
+# apt-get update -qq
+# apt-get -y -qq install jq
 
 fetch_version () {
   local LAST_VERSION=`curl --silent "https://gitlab.com/api/v4/projects/12294987/repository/tags?search=^V&order_by=name" | jq "map(.name)[0]"`
@@ -29,16 +31,24 @@ tag_dev () {
   curl --request POST --header "PRIVATE-TOKEN: ${AUTH}" https://gitlab.com/api/v4/projects/12294987/repository/tags -d "tag_name=V.${1}&ref=dev"
 }
 
+case $INCR_TYPE in
+  major)
+    increment_major
+    ;;
+  minor)
+    increment_minor
+    ;;
+  patch)
+    increment_patch
+    ;;
+  *)
+    echo "unrecognized script parameter"
+    exit 1
+    ;;
+esac
 
-increment_minor
-echo $NEW_VERSION
-# increment_major
-# echo $NEW_VERSION
-# increment_patch
-# echo $NEW_VERSION
 
 tag_dev $NEW_VERSION
-
 
 # curl --header "PRIVATE-TOKEN: W-7UVDzeofRmejE17_Gn" https://gitlab.com/api/v4/version
 # curl --request POST --header "PRIVATE-TOKEN: <your_access_token>" https://gitlab.example.com/api/v4/projects/5/repository/branches?branch=newbranch&ref=master
