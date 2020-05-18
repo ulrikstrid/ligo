@@ -118,6 +118,8 @@ local-dune-job:
   artifacts:
     paths:
       - _coverage_all
+  except:
+    - schedules
   only:
     - merge_requests
     - dev-test
