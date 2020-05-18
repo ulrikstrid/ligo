@@ -154,7 +154,7 @@ build-and-publish-latest-docker-image:
     - docker push ${LIGO_REGISTRY_IMAGE_BUILD:-ligolang/ligo}:$(if test "$CI_COMMIT_REF_NAME" = "dev-test"; then echo next; else echo next-attempt; fi)
   rules:
     # Only deploy docker when from the dev-test branch AND on the canonical ligolang/ligo repository
-    - if: '$CI_PIPELINE_SOUCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
       if: '$CI_COMMIT_REF_NAME =~ /^(dev-test|.*-run-dev-test)$/ && $CI_PROJECT_PATH == "ligolang/ligo"'
       when : always
 
@@ -257,7 +257,7 @@ run-webide-unit-tests:
     - npm ci
     - export LIGO_CMD=/bin/ligo && npm run test
   rules:
-    - if: '$CI_PIPELINE_SOUCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
       changes:
         - tools/webide/**
       when: always
@@ -282,7 +282,7 @@ build-publish-ide-image:
       .
     - docker push "${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
   rules:
-    - if: '$CI_PIPELINE_SOUCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
       changes:
         - tools/webide/**
       when: always
@@ -298,7 +298,7 @@ run-webide-e2e-tests:
     - export WEBIDE_IMAGE="${WEBIDE_IMAGE_NAME}:${CI_COMMIT_SHORT_SHA}"
     - docker-compose run e2e
   rules:
-    - if: '$CI_PIPELINE_SOUCE != "schedule"'
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
       changes:
         - tools/webide/**
       when: always
