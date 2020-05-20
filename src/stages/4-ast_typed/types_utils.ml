@@ -14,9 +14,9 @@ type z = Z.t
 type ligo_string = Stage_common.Types.ligo_string
 
 type constructor' =
-| Constructor of string
+| Constructor of string [@@deriving yojson]
 type label =
-| Label of string
+| Label of string [@@deriving yojson]
 
 module CMap = Map.Make( struct type t = constructor' let compare (Constructor a) (Constructor b) = compare a b end)
 module LMap = Map.Make( struct type t = label let compare (Label a) (Label b) = String.compare a b end)

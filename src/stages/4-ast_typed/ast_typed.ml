@@ -2,6 +2,7 @@ module Types = Types
 module Environment = Environment
 module PP = PP
 module PP_generic = PP_generic
+module JSON = JSON
 module Combinators = struct
   include Combinators
   include Combinators_environment

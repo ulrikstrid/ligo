@@ -17,8 +17,13 @@ type type_constant =
     | TC_signature
     | TC_timestamp
     | TC_void
+    (* [@@deriving yojson] *)
 
+(* 
 type te_cmap = ctor_content constructor_map
+*)
+type te_cmap = ctor_content constructor_map
+(* [@to_yojson (fun m -> CMap.bindings m |> [%to_yojson: (constructor' * ctor_content) list])] *)
 and te_lmap = field_content label_map
 and type_meta = ast_core_type_expression option
 
@@ -29,6 +34,7 @@ and type_content =
   | T_variable of type_variable
   | T_constant of type_constant
   | T_operator of type_operator
+(* [@@deriving yojson] *)
 
 and arrow = {
     type1: type_expression;

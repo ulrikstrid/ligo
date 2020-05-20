@@ -15,6 +15,7 @@ depends: [
   "ppx_let"
   "ppx_deriving"
   "ppx_expect"
+  "ppx_deriving_yojson"
   "ppx_blob"
   "tezos-utils"
   "proto-alpha-utils"
