@@ -14,9 +14,9 @@ stages:
   - ide-unit-test
   - ide-build
   - ide-e2e-test
-  - ide-deploy
   - nix
   - nix-push
+  - ide-deploy
   - versioning
 
 # TODO provide sensible CI for master
@@ -299,7 +299,7 @@ deploy-handoff:
   stage: ide-deploy
   variables:
     IDE_DOCKER_IMAGE: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
-    LIGO_COMMIT_REF_NAME: "${CI_COMMIT_SHORT_SHA}"
+    LIGO_COMMIT_REF_NAME: "nix${CI_COMMIT_SHORT_SHA}"
   trigger: ligolang/ligo-webide-deploy
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev"'
