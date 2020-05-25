@@ -40,27 +40,81 @@ let pack_closure : environment -> selector -> (michelson, stacking_error) result
     e_lst''
   in
 
-  let (_ , code) =
-    let aux = fun (first , code) (_ , b) ->
+  let%bind (_ , code) =
+    let dummy = { type_content = T_base TB_unit ; location = Location.generated } in
+    (* extend environment with dummy var for pair accumulator *)
+    let e' = (Environment.add (Var.fresh (), dummy) e) in
+    let aux = fun (first , code) ((x, _) , b) ->
       match b with
-      | false -> (first , seq [dip code ; i_swap])
-      | true -> (false ,
-                 match first with
-                 | true -> i_dup
-                 | false -> seq [dip code ; i_dup ; dip i_pair ; i_swap]
-                )
+      (* not in selector, ignore *)
+      | false -> ok (first , code)
+      (* in selector *)
+      | true ->
+        (* `get` the used variable (accounting for pair accumulator on
+           top, after the first variable) *)
+        let%bind get_code =
+          get (if first then e else e') x in
+        ok (false,
+            let code = seq [code; get_code] in
+            if first
+            then code
+            else seq [code; i_pair])
     in
-    List.fold_right' aux (true , seq []) e_lst in
+    bind_fold_right_list aux (true , seq []) e_lst in
 
   ok code
+
+let%expect_test _ =
+  begin
+    let bool = {type_content = T_base TB_bool; location = Location.generated} in
+    match pack_closure
+            [(Var.of_name "x", bool);
+             (Var.of_name "y", bool);
+             (Var.of_name "z", bool);
+             (Var.of_name "w", bool)]
+            [Var.of_name "x"; Var.of_name "z"; Var.of_name "w"] with
+    | Ok (mich, _) -> Michelson.pp Format.std_formatter mich
+    | _ -> Format.printf "ERROR"
+  end;
+  [%expect {|
+    { { { { { {} ; { DIG 3 ; DUP ; DUG 4 } } ; { DIG 3 ; DUP ; DUG 4 } } ;
+          PAIR } ;
+        { DIG 1 ; DUP ; DUG 2 } } ;
+      PAIR } |}]
+
+let rec uncomb (env : 'a list) : michelson =
+  match env with
+  | [] -> seq []
+  | [_] -> seq []
+  | _ :: env ->
+    seq [i_dup; i_cdr; uncomb env;
+         i_dig (List.length env); i_car]
 
 let unpack_closure : environment -> (michelson , stacking_error) result = fun e ->
   match e with
   | [] -> ok @@ seq []
-  | _ :: tl -> (
-      let aux = fun code _ -> seq [ i_unpair ; dip code ] in
-      let unpairs = (List.fold_right' aux (seq []) tl) in
-      ok @@ seq [ i_unpiar ; dip unpairs ]
-    )
-  (* let aux = fun code _ -> seq [ i_unpair ; dip code ] in
-   * ok (List.fold_right' aux (seq []) e) *)
+  | env ->
+    ok @@ seq [i_dup; i_car; uncomb env;
+               i_dig (List.length env); i_cdr]
+
+let%expect_test _ =
+  begin
+    let bool = {type_content = T_base TB_bool; location = Location.generated} in
+    match unpack_closure
+            [(Var.of_name "x", bool);
+             (Var.of_name "y", bool);
+             (Var.of_name "z", bool);
+             (Var.of_name "w", bool)] with
+    | Ok (mich, _) -> Michelson.pp Format.std_formatter mich
+    | _ -> Format.printf "ERROR"
+  end;
+  [%expect {|
+    { DUP ;
+      CAR ;
+      { DUP ;
+        CDR ;
+        { DUP ; CDR ; { DUP ; CDR ; {} ; DIG 1 ; CAR } ; DIG 2 ; CAR } ;
+        DIG 3 ;
+        CAR } ;
+      DIG 4 ;
+      CDR } |}]

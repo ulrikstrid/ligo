@@ -77,7 +77,7 @@ let%expect_test _ =
              CDR ;
              CDR ;
              CAR ;
-             DIG 1 ;
+             SWAP ;
              DUP ;
              DUG 2 ;
              CDR ;
@@ -99,7 +99,7 @@ let%expect_test _ =
              DUP ;
              CAR ;
              CDR ;
-             DIG 1 ;
+             SWAP ;
              DUP ;
              DUG 2 ;
              CAR ;
@@ -220,7 +220,7 @@ let%expect_test _ =
       storage (big_map nat address) ;
       code { DUP ;
              CDR ;
-             DIG 1 ;
+             SWAP ;
              DUP ;
              DUG 2 ;
              CAR ;
@@ -231,13 +231,13 @@ let%expect_test _ =
                     DUP ;
                     CAR ;
                     SENDER ;
-                    DIG 1 ;
+                    SWAP ;
                     DUP ;
                     DUG 2 ;
                     COMPARE ;
                     NEQ ;
                     IF { PUSH string "NOT_OWNER" ; FAILWITH } { PUSH unit Unit } ;
-                    DIG 1 ;
+                    SWAP ;
                     DUP ;
                     DUG 2 ;
                     DIG 4 ;
@@ -253,11 +253,11 @@ let%expect_test _ =
                            PAIR ;
                            DUP ;
                            CAR ;
-                           DIG 1 ;
+                           SWAP ;
                            DUP ;
                            DUG 2 ;
                            CDR ;
-                           DIG 1 ;
+                           SWAP ;
                            DUP ;
                            DUG 2 ;
                            CAR ;
@@ -284,7 +284,7 @@ let%expect_test _ =
                            DIG 2 ;
                            DUP ;
                            DUG 3 ;
-                           DIG 1 ;
+                           SWAP ;
                            DUP ;
                            DUG 2 ;
                            CDR ;
@@ -294,7 +294,7 @@ let%expect_test _ =
                              { DIG 2 ;
                                DUP ;
                                DUG 3 ;
-                               DIG 1 ;
+                               SWAP ;
                                DUP ;
                                DUG 2 ;
                                COMPARE ;

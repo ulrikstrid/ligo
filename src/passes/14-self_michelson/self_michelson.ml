@@ -354,6 +354,12 @@ let opt_swap2 : peep2 = function
      Some [comm_op]
   | _ -> None
 
+let opt_digdug1 : peep1 = function
+  (* DUG/DIG 1  ↦  SWAP *)
+  | Prim (_, (I_DIG|I_DUG), [Int (_, n)], _) when Z.equal n Z.one ->
+     Some [i_swap]
+  | _ -> None
+
 (* This "optimization" deletes dead code produced by the compiler
    after a FAILWITH, which is illegal in Michelson. This means we are
    thwarting the intent of the Michelson tail fail restriction -- the
@@ -482,6 +488,7 @@ let optimize : michelson -> michelson =
                      peephole @@ peep2 opt_dip2 ;
                      peephole @@ peep1 opt_dip1 ;
                      peephole @@ peep2 opt_swap2 ;
+                     peephole @@ peep1 opt_digdug1 ;
                    ] in
   let x = iterate_optimizer (sequence_optimizers optimizers) x in
   let x = opt_combine_drops x in
