@@ -35,7 +35,9 @@ if (process.env.NODE_ENV === 'development') {
   DEFAULT_STATE.list = [
     { id: 'MzkMQ1oiVHJqbcfUuVFKTw', name: 'CameLIGO Contract' },
     { id: 'FEb62HL7onjg1424eUsGSg', name: 'PascaLIGO Contract' },
-    { id: 'JPhSOehj_2MFwRIlml0ymQ', name: 'ReasonLIGO Contract' }
+    { id: 'JPhSOehj_2MFwRIlml0ymQ', name: 'ReasonLIGO Contract' },
+    { id: '4rF3bmExqHsrPV-2cOle4A', name: 'CameLIGO Hashlock Contract'},
+    { id: 'NCo8yadjxAZbW5QlojmA0w', name: 'PascaLIGO Hashlock Contract' }
   ];
 }
 

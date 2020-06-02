@@ -7,7 +7,9 @@ const YAML = require('yamljs');
 const CURATED_EXAMPLES = [
   'cameligo/arithmetic-contract.ligo',
   'pascaligo/arithmetic-contract.ligo',
-  'reasonligo/arithmetic-contract.ligo'
+  'reasonligo/arithmetic-contract.ligo',
+  'cameligo/hashlock.ligo',
+  'pascaligo/hashlock.ligo'
 ];
 
 function urlFriendlyHash(content) {
