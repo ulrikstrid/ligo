@@ -36,8 +36,9 @@ if (process.env.NODE_ENV === 'development') {
     { id: 'MzkMQ1oiVHJqbcfUuVFKTw', name: 'CameLIGO Contract' },
     { id: 'FEb62HL7onjg1424eUsGSg', name: 'PascaLIGO Contract' },
     { id: 'JPhSOehj_2MFwRIlml0ymQ', name: 'ReasonLIGO Contract' },
-    { id: '4rF3bmExqHsrPV-2cOle4A', name: 'CameLIGO Hashlock Contract'},
-    { id: 'NCo8yadjxAZbW5QlojmA0w', name: 'PascaLIGO Hashlock Contract' }
+    { id: 'v1A26q31HZj0RADecjNg3A', name: 'Hashlock Contract (CameLIGO)'},
+    { id: 'NCo8yadjxAZbW5QlojmA0w', name: 'Hashlock Contract (PascaLIGO)'},
+    { id: 'D0EjGZZWuK2ILzPqtUDrQg', name: 'Hashlock Contract (ReasonLIGO)'}
   ];
 }
 
