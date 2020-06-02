@@ -43,7 +43,7 @@ if (process.env.NODE_ENV === 'development') {
     { id: 'yP-THvmURsaqHxpwCravWg', name: 'ID Example PascaLIGO' },
     { id: 'CpnK7TFuUjJiQTT8KiiGyQ', name: 'ID Example ReasonLIGO' },
     { id: 'v1A26q31HZj0RADecjNg3A', name: 'Hashlock Example CameLIGO' },
-    { id: 'NCo8yadjxAZbW5QlojmA0w', name: 'Hashlock Example PascaLIGO)' },
+    { id: 'NCo8yadjxAZbW5QlojmA0w', name: 'Hashlock Example PascaLIGO' },
     { id: 'D0EjGZZWuK2ILzPqtUDrQg', name: 'Hashlock Example ReasonLIGO' }
   ];
 }
