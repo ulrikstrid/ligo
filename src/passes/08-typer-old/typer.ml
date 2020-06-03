@@ -2,6 +2,7 @@ open Trace
 
 module I = Ast_core
 module O = Ast_typed
+module O' = Typesystem.Solver_types
 open O.Combinators
 
 module DEnv = Environment
@@ -228,6 +229,11 @@ module Errors = struct
       ("location" , fun () -> Format.asprintf "%a" Location.pp loc)
     ] in
     error ~data title message ()
+
+  let bad_type_operator type_op =
+    let title () = Format.asprintf "bad type operator %a" I.PP.type_expression type_op in
+    let message () = "" in
+    error title message
 
 end
 open Errors
@@ -489,7 +495,7 @@ let unconvert_constant' : O.constant' -> I.constant' = function
   | C_CONVERT_FROM_LEFT_COMB -> C_CONVERT_FROM_LEFT_COMB
   | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
 
-let rec type_program (p:I.program) : (O.program * O.typer_state) result =
+let rec type_program (p:I.program) : (O.program * O'.typer_state) result =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let%bind ed' = (bind_map_location (type_declaration e (Solver.placeholder_for_state_of_new_typer ()))) d in
     let loc : 'a . 'a Location.wrap -> _ -> _ = fun x v -> Location.wrap ~loc:x.location v in
@@ -501,7 +507,7 @@ let rec type_program (p:I.program) : (O.program * O.typer_state) result =
     bind_fold_list aux (DEnv.default, []) p in
   ok @@ (List.rev lst , (Solver.placeholder_for_state_of_new_typer ()))
 
-and type_declaration env (_placeholder_for_state_of_new_typer : O.typer_state) : I.declaration -> (environment * O.typer_state * O.declaration) result = function
+and type_declaration env (_placeholder_for_state_of_new_typer : O'.typer_state) : I.declaration -> (environment * O'.typer_state * O.declaration) result = function
   | Declaration_type (type_binder , type_expr) ->
       let%bind tv = evaluate_type env type_expr in
       let env' = Environment.add_type (type_binder) tv env in
@@ -613,62 +619,63 @@ and evaluate_type (e:environment) (t:I.type_expression) : O.type_expression resu
       ok tv
   | T_constant cst ->
       return (T_constant (convert_type_constant cst))
-  | T_operator opt -> ( match opt with
-    | TC_set s -> 
+  | T_operator (op, lst) -> ( match op,lst with
+    | TC_set, [s] -> 
         let%bind s = evaluate_type e s in 
         return @@ T_operator (O.TC_set (s))
-    | TC_option o -> 
+    | TC_option, [o] -> 
         let%bind o = evaluate_type e o in 
         return @@ T_operator (O.TC_option (o))
-    | TC_list l -> 
+    | TC_list, [l] -> 
         let%bind l = evaluate_type e l in 
         return @@ T_operator (O.TC_list (l))
-    | TC_map (k,v) ->
+    | TC_map, [k;v] ->
         let%bind k = evaluate_type e k in 
         let%bind v = evaluate_type e v in 
         return @@ T_operator (O.TC_map {k;v})
-    | TC_big_map (k,v) ->
+    | TC_big_map, [k;v] ->
         let%bind k = evaluate_type e k in 
         let%bind v = evaluate_type e v in 
         return @@ T_operator (O.TC_big_map {k;v})
-    | TC_map_or_big_map (k,v) ->
+    | TC_map_or_big_map, [k;v] ->
         let%bind k = evaluate_type e k in 
         let%bind v = evaluate_type e v in 
         return @@ T_operator (O.TC_map_or_big_map {k;v})
-    | TC_contract c ->
+    | TC_contract, [c] ->
         let%bind c = evaluate_type e c in
         return @@ T_operator (O.TC_contract c)
-    | TC_michelson_pair_right_comb c ->
+    | TC_michelson_pair_right_comb, [c] ->
         let%bind c' = evaluate_type e c in
         let%bind lmap = match c'.type_content with
           | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap)) -> ok lmap
           | _ -> fail (michelson_comb_no_record t.location) in
         let record = Operators.Typer.Converter.convert_pair_to_right_comb (Ast_typed.LMap.to_kv_list lmap) in
         return @@ record
-    | TC_michelson_pair_left_comb c ->
+    | TC_michelson_pair_left_comb, [c] ->
         let%bind c' = evaluate_type e c in
         let%bind lmap = match c'.type_content with
           | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap)) -> ok lmap
           | _ -> fail (michelson_comb_no_record t.location) in
         let record = Operators.Typer.Converter.convert_pair_to_left_comb (Ast_typed.LMap.to_kv_list lmap) in
         return @@ record
-    | TC_michelson_or_right_comb c ->
+    | TC_michelson_or_right_comb, [c] ->
         let%bind c' = evaluate_type e c in
         let%bind cmap = match c'.type_content with
           | T_sum cmap -> ok cmap
           | _ -> fail (michelson_comb_no_variant t.location) in
         let pair = Operators.Typer.Converter.convert_variant_to_right_comb (Ast_typed.CMap.to_kv_list cmap) in
         return @@ pair
-    | TC_michelson_or_left_comb c ->
+    | TC_michelson_or_left_comb, [c] ->
         let%bind c' = evaluate_type e c in
         let%bind cmap = match c'.type_content with
           | T_sum cmap -> ok cmap
           | _ -> fail (michelson_comb_no_variant t.location) in
         let pair = Operators.Typer.Converter.convert_variant_to_left_comb (Ast_typed.CMap.to_kv_list cmap) in
         return @@ pair
+    | _ -> fail @@ bad_type_operator t
   )
 
-and type_expression : environment -> O.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * O.typer_state) result
+and type_expression : environment -> O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * O'.typer_state) result
   = fun e _placeholder_for_state_of_new_typer ?tv_opt ae ->
     let%bind res = type_expression' e ?tv_opt ae in
     ok (res, (Solver.placeholder_for_state_of_new_typer ()))

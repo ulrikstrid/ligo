@@ -31,20 +31,21 @@ export const DEFAULT_STATE: ExamplesState = {
   list: []
 };
 
+
 if (process.env.NODE_ENV === 'development') {
+
+  // The name value configured in this list will only be for the development environment.
+  // For other environments, the name value will be taken directly from your contract's yaml configuration.
   DEFAULT_STATE.list = [
-    { id: 'MzkMQ1oiVHJqbcfUuVFKTw', name: 'CameLIGO Contract' },
-    { id: 'FEb62HL7onjg1424eUsGSg', name: 'PascaLIGO Contract' },
-    { id: 'JPhSOehj_2MFwRIlml0ymQ', name: 'ReasonLIGO Contract' },
-    { id: 'MzkMQ1oiVHJqbcfUuVFKTw', name: 'Increment Example CameLIGO ' },
-    { id: 'FEb62HL7onjg1424eUsGSg', name: 'Increment Example PascaLIGO' },
-    { id: 'JPhSOehj_2MFwRIlml0ymQ', name: 'Increment Example ReasonLIGO' },
-    { id: 'ehDv-Xaf70mQoiPhQDTAUQ', name: 'ID Example CameLIGO' },
-    { id: 'yP-THvmURsaqHxpwCravWg', name: 'ID Example PascaLIGO' },
-    { id: 'CpnK7TFuUjJiQTT8KiiGyQ', name: 'ID Example ReasonLIGO' },
-    { id: 'v1A26q31HZj0RADecjNg3A', name: 'Hashlock Example CameLIGO' },
-    { id: 'NCo8yadjxAZbW5QlojmA0w', name: 'Hashlock Example PascaLIGO' },
-    { id: 'D0EjGZZWuK2ILzPqtUDrQg', name: 'Hashlock Example ReasonLIGO' }
+    { id: 'FEb62HL7onjg1424eUsGSg', name: 'Increment (PascaLIGO)' },
+    { id: 'MzkMQ1oiVHJqbcfUuVFKTw', name: 'Increment (CameLIGO)' },
+    { id: 'JPhSOehj_2MFwRIlml0ymQ', name: 'Increment (ReasonLIGO)' },
+    { id: 'yP-THvmURsaqHxpwCravWg', name: 'ID (PascaLIGO)' },
+    { id: 'ehDv-Xaf70mQoiPhQDTAUQ', name: 'ID (CameLIGO)' },
+    { id: 'CpnK7TFuUjJiQTT8KiiGyQ', name: 'ID (ReasonLIGO)' },
+    { id: 'NCo8yadjxAZbW5QlojmA0w', name: 'Hashlock PascaLIGO' },
+    { id: 'v1A26q31HZj0RADecjNg3A', name: 'Hashlock CameLIGO' },
+    { id: 'D0EjGZZWuK2ILzPqtUDrQg', name: 'Hashlock ReasonLIGO' }
   ];
 }
 
