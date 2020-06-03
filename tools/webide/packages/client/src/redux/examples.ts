@@ -43,9 +43,9 @@ if (process.env.NODE_ENV === 'development') {
     { id: 'yP-THvmURsaqHxpwCravWg', name: 'ID (PascaLIGO)' },
     { id: 'ehDv-Xaf70mQoiPhQDTAUQ', name: 'ID (CameLIGO)' },
     { id: 'CpnK7TFuUjJiQTT8KiiGyQ', name: 'ID (ReasonLIGO)' },
-    { id: 'NCo8yadjxAZbW5QlojmA0w', name: 'Hashlock PascaLIGO' },
-    { id: 'v1A26q31HZj0RADecjNg3A', name: 'Hashlock CameLIGO' },
-    { id: 'D0EjGZZWuK2ILzPqtUDrQg', name: 'Hashlock ReasonLIGO' }
+    { id: 'NCo8yadjxAZbW5QlojmA0w', name: 'Hashlock (PascaLIGO)' },
+    { id: 'v1A26q31HZj0RADecjNg3A', name: 'Hashlock (CameLIGO)' },
+    { id: 'D0EjGZZWuK2ILzPqtUDrQg', name: 'Hashlock (ReasonLIGO)' }
   ];
 }
 
