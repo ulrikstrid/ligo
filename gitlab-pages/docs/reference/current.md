@@ -709,7 +709,7 @@ let main = ((ignore, storage): (unit, storage)) => {
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function transaction : 'parameter -> mutez -> contract('parameter) -> operation
+function transaction : parameter -> mutez -> contract(parameter) -> operation
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val transaction : 'parameter -> mutez -> 'parameter contract -> operation
