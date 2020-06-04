@@ -113,7 +113,10 @@ async function main() {
     'cameligo/hashlock.mligo',
     'pascaligo/hashlock.ligo',
     'reasonligo/hashlock.religo',
-    'pascaligo/fa-1.2.ligo'
+    'cameligo/FA1.2.mligo',
+    'pascaligo/FA1.2.ligo',
+    'pascaligo/fa-1.2.ligo',
+    'reasonligo/FA1.2.religo'
   ];
 
   const EXAMPLES_DEST_DIR = join(process.cwd(), 'build', 'static', 'examples');

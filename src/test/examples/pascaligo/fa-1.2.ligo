@@ -1,5 +1,5 @@
 (*_*
-  name: FA1.2 (PascaLIGO)
+  name: FA1.2 - revised (PascaLIGO)
   language: pascaligo
   compile:
     entrypoint: main
@@ -14,7 +14,7 @@
     storage: |
       ( record [
           totalSupply=100n;
-          ledger=big_map[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->record[balance=100n;allowances=map[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->50n]]]
+          ledger=big_map[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->record[balance=100n;allowances=map[("tz1SVwdLNf3ANMQE1AXrxS1pBG8tcn2joVZg" : address)->50n]]]
         ]
       )
   deploy:
@@ -22,7 +22,7 @@
     storage: |
       ( record [
           totalSupply=100n;
-          ledger=big_map[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->record[balance=100n;allowances=map[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->50n]]]
+          ledger=big_map[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->record[balance=100n;allowances=map[("tz1SVwdLNf3ANMQE1AXrxS1pBG8tcn2joVZg" : address)->50n]]]
         ]
       )
   evaluateValue:
@@ -34,8 +34,16 @@
         ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address),
         ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address),
         10n, 
-        record [totalSupply=100n; ledger=big_map[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->record[balance=100n; allowances=map[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->50n]]]]
+        record [totalSupply=100n; ledger=big_map[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->record[balance=100n; allowances=map[("tz1SVwdLNf3ANMQE1AXrxS1pBG8tcn2joVZg" : address)->50n]]]]
       )
+  generateDeployScript:
+    tool: tezos-client
+    entrypoint: main
+    storage: |
+      record [
+          totalSupply=100n;
+          ledger=big_map[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->record[balance=100n;allowances=map[("tz1SVwdLNf3ANMQE1AXrxS1pBG8tcn2joVZg" : address)->50n]]]
+        ]    
 *_*)
 // This is an implimentation of the FA1.2 specification in PascaLIGO
 
