@@ -1,20 +1,40 @@
 (*_*
-  name: FA1.2 PascaLIGO implementation
+  name: FA1.2 (PascaLIGO)
   language: pascaligo
   compile:
     entrypoint: main
   dryRun:
     entrypoint: main
-    parameters: ""
-    storage: ""
+    parameters: |
+      Transfer (
+        ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address),
+        ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address),
+        10n)
+      )
+    storage: |
+      ( record [
+          totalSupply=100n;
+          ledger=big_map[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->record[balance=100n;allowances=map[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->50n]]]
+        ]
+      )
   deploy:
     entrypoint: main
-    storage: ""
+    storage: |
+      (
+        totalySupply=10n,
+        ledger=big_map[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->100n]
+      )
   evaluateValue:
     entrypoint: ""
   evaluateFunction:
-    entrypoint: ""
-    parameters: ""
+    entrypoint: transfer
+    parameters: |
+      (
+        ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address),
+        ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address),
+        10n, 
+        record [totalSupply=100n; ledger=big_map[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->record[balance=100n; allowances=map[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->50n]]]]
+      )
 *_*)
 // This is an implimentation of the FA1.2 specification in PascaLIGO
 
@@ -42,7 +62,8 @@ function isAllowed ( const src : address ; const value : amt ; var s : contract_
     var allowed: bool := False;
     if sender =/= source then block {
       const src: account = get_force(src, s.ledger);
-      const allowanceAmount: amt = get_force(sender, src.allowances);
+      // const allowanceAmount: amt = get_force(sender, src.allowances);
+      const allowanceAmount : amt = senderAmount;  // just for demonstration.
       allowed := allowanceAmount >= value;
     };
     else allowed := True;
@@ -95,7 +116,8 @@ function transfer (const accountFrom : address ; const destination : address ; c
 
     // Decrease the allowance amount if necessary
     if accountFrom =/= sender then block {
-        const allowanceAmount: amt = get_force(sender, src.allowances);
+        // const allowanceAmount: amt = get_force(sender, src.allowances);
+        const allowanceAmount : amt = senderAmount;  // just for demonstration.
         if allowanceAmount - value < 0 then failwith ("Allowance amount cannot be negative");
         else src.allowances[sender] := abs(allowanceAmount - value);
     } else skip;

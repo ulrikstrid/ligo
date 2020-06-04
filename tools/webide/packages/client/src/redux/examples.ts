@@ -45,7 +45,8 @@ if (process.env.NODE_ENV === 'development') {
     { id: 'CpnK7TFuUjJiQTT8KiiGyQ', name: 'ID (ReasonLIGO)' },
     { id: 'NCo8yadjxAZbW5QlojmA0w', name: 'Hashlock (PascaLIGO)' },
     { id: 'v1A26q31HZj0RADecjNg3A', name: 'Hashlock (CameLIGO)' },
-    { id: 'D0EjGZZWuK2ILzPqtUDrQg', name: 'Hashlock (ReasonLIGO)' }
+    { id: 'D0EjGZZWuK2ILzPqtUDrQg', name: 'Hashlock (ReasonLIGO)' },
+    { id: 'ZKLbvE7Xp8Rta-fPrTFJww', name: 'FA1.2 (PascaLIGO)' }
   ];
 }
 
