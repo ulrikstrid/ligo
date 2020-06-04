@@ -9,7 +9,7 @@
       Transfer (
         ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address),
         ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address),
-        10n)
+        10n
       )
     storage: |
       ( record [
@@ -20,9 +20,10 @@
   deploy:
     entrypoint: main
     storage: |
-      (
-        totalySupply=10n,
-        ledger=big_map[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->100n]
+      ( record [
+          totalSupply=100n;
+          ledger=big_map[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->record[balance=100n;allowances=map[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" : address)->50n]]]
+        ]
       )
   evaluateValue:
     entrypoint: ""
@@ -45,6 +46,8 @@ type account is record
     allowances: map(address, amt);
 end
 
+const senderAmount : amt = 100n  // just for web ide demonstration
+
 type action is
 | Transfer of (address * address * amt)
 | Approve of (address * amt)
@@ -63,7 +66,7 @@ function isAllowed ( const src : address ; const value : amt ; var s : contract_
     if sender =/= source then block {
       const src: account = get_force(src, s.ledger);
       // const allowanceAmount: amt = get_force(sender, src.allowances);
-      const allowanceAmount : amt = senderAmount;  // just for demonstration.
+      const allowanceAmount : amt = senderAmount;  // just for web ide demonstration.
       allowed := allowanceAmount >= value;
     };
     else allowed := True;
@@ -117,7 +120,7 @@ function transfer (const accountFrom : address ; const destination : address ; c
     // Decrease the allowance amount if necessary
     if accountFrom =/= sender then block {
         // const allowanceAmount: amt = get_force(sender, src.allowances);
-        const allowanceAmount : amt = senderAmount;  // just for demonstration.
+        const allowanceAmount : amt = senderAmount;  // just for web ide demonstration.
         if allowanceAmount - value < 0 then failwith ("Allowance amount cannot be negative");
         else src.allowances[sender] := abs(allowanceAmount - value);
     } else skip;
