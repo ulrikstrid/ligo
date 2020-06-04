@@ -64,5 +64,12 @@
       "tutorials/get-started/tezos-taco-shop-smart-contract",
       "tutorials/get-started/tezos-taco-shop-payout"
     ]
+  },
+  "policies": {
+    "Policies": [
+      "policies/acceptable-use-policy",
+      "policies/privacy-policy",
+      "policies/terms-of-service"
+    ]
   }
 }

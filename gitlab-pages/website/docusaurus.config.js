@@ -203,6 +203,23 @@ const siteConfig = {
           ]
         },
         {
+          title: 'Policies',
+          items: [
+            {
+              label: 'Acceptable Use Policy',
+              to: 'docs/policies/acceptable-use-policy'
+            },
+            {
+              label: 'Privacy Policy',
+              to: 'docs/policies/privacy-policy'
+            },
+            {
+              label: 'Terms of Service', 
+              to: 'docs/policies/terms-of-service'
+            }
+          ]
+        },
+        {
           title: 'More',
           items: [
             {
