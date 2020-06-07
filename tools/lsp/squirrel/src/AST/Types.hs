@@ -171,7 +171,7 @@ data Path it
   deriving stock (Functor, Foldable, Traversable)
 
 data Name it = Name
-  { _raw     :: Text
+  { _raw :: Text
   }
   deriving (Show) via PP (Name it)
   deriving stock (Functor, Foldable, Traversable)
@@ -300,10 +300,9 @@ instance Pretty1 Pattern where
     IsList       l         -> list l
     IsTuple      t         -> tuple t
 
-
 instance Pretty1 Name where
   pp1 = \case
-    Name      raw -> pp raw
+    Name raw -> pp raw
 
 instance Pretty1 Path where
   pp1 = \case
