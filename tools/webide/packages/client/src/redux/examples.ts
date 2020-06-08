@@ -17,7 +17,7 @@ export interface ExamplesState {
 
 export class ChangeSelectedAction {
   public readonly type = ActionType.ChangeSelected;
-  constructor(public payload: ExamplesState['selected']) {}
+  constructor(public payload: ExamplesState['selected']) { }
 }
 
 export class ClearSelectedAction {
@@ -31,11 +31,18 @@ export const DEFAULT_STATE: ExamplesState = {
   list: []
 };
 
+
 if (process.env.NODE_ENV === 'development') {
+
+  // The name value configured in this list will only be for the development environment.
+  // For other environments, the name value will be taken directly from your contract's yaml configuration.
   DEFAULT_STATE.list = [
-    { id: 'MzkMQ1oiVHJqbcfUuVFKTw', name: 'CameLIGO Contract' },
-    { id: 'FEb62HL7onjg1424eUsGSg', name: 'PascaLIGO Contract' },
-    { id: 'JPhSOehj_2MFwRIlml0ymQ', name: 'ReasonLIGO Contract' }
+    { id: 'FEb62HL7onjg1424eUsGSg', name: 'Increment (PascaLIGO)' },
+    { id: 'MzkMQ1oiVHJqbcfUuVFKTw', name: 'Increment (CameLIGO)' },
+    { id: 'JPhSOehj_2MFwRIlml0ymQ', name: 'Increment (ReasonLIGO)' },
+    { id: 'yP-THvmURsaqHxpwCravWg', name: 'ID (PascaLIGO)' },
+    { id: 'ehDv-Xaf70mQoiPhQDTAUQ', name: 'ID (CameLIGO)' },
+    { id: 'CpnK7TFuUjJiQTT8KiiGyQ', name: 'ID (ReasonLIGO)' }
   ];
 }
 

@@ -41,9 +41,11 @@ val t_sum    : ?loc:Location.t -> Types.ctor_content Map.String.t -> type_expres
 val ez_t_sum : ?loc:Location.t -> ( string * Types.ctor_content ) list -> type_expression
 
 val t_function : ?loc:Location.t -> type_expression -> type_expression -> type_expression
-val t_map      : ?loc:Location.t -> type_expression -> type_expression -> type_expression
 
-val t_operator : ?loc:Location.t -> type_operator -> type_expression list -> type_expression result
+val t_operator : ?loc:Location.t -> type_operator -> type_expression list -> type_expression
+val t_map : ?loc:Location.t -> type_expression -> type_expression -> type_expression
+val t_big_map : ?loc:Location.t -> type_expression -> type_expression -> type_expression
+val t_contract : ?loc:Location.t -> type_expression -> type_expression
 val t_set      : ?loc:Location.t -> type_expression -> type_expression
 
 val make_e : ?loc:Location.t -> expression_content -> expression
@@ -72,7 +74,7 @@ val e_string_cat : ?loc:Location.t -> expression -> expression -> expression
 val e_map_add : ?loc:Location.t -> expression -> expression ->  expression -> expression
 val e_constructor : ?loc:Location.t -> string -> expression -> expression
 val e_matching : ?loc:Location.t -> expression -> matching_expr -> expression
-val e_record_accessor : ?loc:Location.t -> expression -> string -> expression
+val e_record_accessor : ?loc:Location.t -> expression -> label -> expression
 val e_variable : ?loc:Location.t -> expression_variable -> expression
 val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option ) -> bool -> expression -> expression -> expression
 val e_annotation : ?loc:Location.t -> expression -> type_expression -> expression

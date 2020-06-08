@@ -42,20 +42,22 @@ let rec type_expression' :
 and type_expression ppf (te : type_expression) : unit =
   type_expression' type_expression ppf te
 
-and type_operator : (formatter -> type_expression -> unit) -> formatter -> type_operator -> unit =
+and type_operator : (formatter -> type_expression -> unit) -> formatter -> type_operator * type_expression list -> unit =
   fun f ppf to_ ->
-  let s =
-    match to_ with
-    | TC_option te -> Format.asprintf "option(%a)" f te
-    | TC_list te -> Format.asprintf "list(%a)" f te
-    | TC_set te -> Format.asprintf "set(%a)" f te
-    | TC_map (k, v) -> Format.asprintf "Map (%a,%a)" f k f v
-    | TC_big_map (k, v) -> Format.asprintf "Big Map (%a,%a)" f k f v
-    | TC_contract te  -> Format.asprintf "Contract (%a)" f te
-    | TC_michelson_pair_right_comb c -> Format.asprintf "michelson_pair_right_comb (%a)" f c
-    | TC_michelson_pair_left_comb c -> Format.asprintf "michelson_pair_left_comb (%a)" f c
-    | TC_michelson_or_right_comb c -> Format.asprintf "michelson_or_right_comb (%a)" f c
-    | TC_michelson_or_left_comb c -> Format.asprintf "michelson_or_left_comb (%a)" f c
+  let s = match to_ with
+    TC_option                    , lst -> Format.asprintf "option(%a)"                     (list_sep_d f) lst
+  | TC_list                      , lst -> Format.asprintf "list(%a)"                       (list_sep_d f) lst
+  | TC_set                       , lst -> Format.asprintf "set(%a)"                        (list_sep_d f) lst
+  | TC_map                       , lst -> Format.asprintf "Map (%a)"                       (list_sep_d f) lst
+  | TC_big_map                   , lst -> Format.asprintf "Big Map (%a)"                   (list_sep_d f) lst
+  | TC_map_or_big_map            , lst -> Format.asprintf "Map Or Big Map (%a)"            (list_sep_d f) lst
+  | TC_contract                  , lst -> Format.asprintf "Contract (%a)"                  (list_sep_d f) lst
+  | TC_michelson_pair            , lst -> Format.asprintf "michelson_pair (%a)"            (list_sep_d f) lst                            
+  | TC_michelson_or              , lst -> Format.asprintf "michelson_or (%a)"              (list_sep_d f) lst
+  | TC_michelson_pair_right_comb , lst -> Format.asprintf "michelson_pair_right_comb (%a)" (list_sep_d f) lst
+  | TC_michelson_pair_left_comb  , lst -> Format.asprintf "michelson_pair_left_comb (%a)"  (list_sep_d f) lst
+  | TC_michelson_or_right_comb   , lst -> Format.asprintf "michelson_or_right_comb (%a)"   (list_sep_d f) lst
+  | TC_michelson_or_left_comb    , lst -> Format.asprintf "michelson_or_left_comb (%a)"    (list_sep_d f) lst
   in
   fprintf ppf "(TO_%s)" s
 
@@ -76,10 +78,10 @@ and expression_content ppf (ec : expression_content) =
         c.arguments
   | E_record m ->
       fprintf ppf "{%a}" (record_sep_expr expression (const ";")) m
-  | E_record_accessor ra ->
-      fprintf ppf "%a.%a" expression ra.record label ra.path
-  | E_record_update {record; path; update} ->
-      fprintf ppf "{ %a with %a = %a }" expression record label path expression update
+  | E_accessor {record;path} ->
+      fprintf ppf "%a.%a" expression record (list_sep accessor (const ".")) path
+  | E_update {record; path; update} ->
+      fprintf ppf "{ %a with %a = %a }" expression record (list_sep accessor (const ".")) path expression update
   | E_map m ->
       fprintf ppf "map[%a]" (list_sep_d assoc_expression) m
   | E_big_map m ->
@@ -88,8 +90,6 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "list[%a]" (list_sep_d expression) lst
   | E_set lst ->
       fprintf ppf "set[%a]" (list_sep_d expression) lst
-  | E_look_up (ds, ind) ->
-      fprintf ppf "(%a)[%a]" expression ds expression ind
   | E_lambda {binder; input_type; output_type; result} ->
       fprintf ppf "lambda (%a:%a) : %a return %a" 
         expression_variable binder
@@ -125,10 +125,12 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "skip"
   | E_tuple t ->
       fprintf ppf "(%a)" (list_sep_d expression) t
-  | E_tuple_accessor ta ->
-      fprintf ppf "%a.%d" expression ta.tuple ta.path
-  | E_tuple_update {tuple; path; update} ->
-      fprintf ppf "{ %a with %d = %a }" expression tuple path expression update
+
+and accessor ppf a =
+  match a with
+    | Access_tuple i  -> fprintf ppf "%a" Z.pp_print i
+    | Access_record s -> fprintf ppf "%s" s
+    | Access_map e    -> fprintf ppf "%a" expression e
 
 and option_type_name ppf
     ((n, ty_opt) : expression_variable * type_expression option) =
@@ -148,27 +150,35 @@ and matching_variant_case : type a . (_ -> a -> unit) -> _ -> (constructor' * ex
   fun f ppf ((c,n),a) ->
   fprintf ppf "| %a %a -> %a" constructor c expression_variable n f a
 
-and matching : type a . (formatter -> a -> unit) -> formatter -> (a,unit) matching_content -> unit =
+and matching : (formatter -> expression -> unit) -> formatter -> matching_expr -> unit =
   fun f ppf m -> match m with
-    | Match_tuple ((lst, b), _) ->
-        fprintf ppf "let (%a) = %a" (list_sep_d expression_variable) lst f b
-    | Match_variant (lst, _) ->
+    | Match_variant lst ->
         fprintf ppf "%a" (list_sep (matching_variant_case f) (tag "@.")) lst
-    | Match_list {match_nil ; match_cons = (hd, tl, match_cons, _)} ->
+    | Match_list {match_nil ; match_cons = (hd, tl, match_cons)} ->
         fprintf ppf "| Nil -> %a @.| %a :: %a -> %a" f match_nil expression_variable hd expression_variable tl f match_cons
-    | Match_option {match_none ; match_some = (some, match_some, _)} ->
+    | Match_option {match_none ; match_some = (some, match_some)} ->
         fprintf ppf "| None -> %a @.| Some %a -> %a" f match_none expression_variable some f match_some
+    | Match_tuple (lst, _,b) ->
+        fprintf ppf "(%a) -> %a" (list_sep_d expression_variable) lst f b
+    | Match_record (lst, _,b) ->
+        fprintf ppf "{%a} -> %a" (list_sep_d (fun ppf (a,b) -> fprintf ppf "%a = %a" label a expression_variable b)) lst f b
+    | Match_variable (a, _,b) ->
+        fprintf ppf "%a -> %a" expression_variable a f b
 
 (* Shows the type expected for the matched value *)
 and matching_type ppf m = match m with
-  | Match_tuple _ ->
-      fprintf ppf "tuple"
-  | Match_variant (lst, _) ->
+  | Match_variant lst ->
       fprintf ppf "variant %a" (list_sep matching_variant_case_type (tag "@.")) lst
   | Match_list _ ->
       fprintf ppf "list"
   | Match_option _ ->
       fprintf ppf "option"
+  | Match_tuple _ ->
+      fprintf ppf "tuple"
+  | Match_record _ ->
+      fprintf ppf "record"
+  | Match_variable _ ->
+      fprintf ppf "variable"
 
 and matching_variant_case_type ppf ((c,n),_a) =
   fprintf ppf "| %a %a" constructor c expression_variable n

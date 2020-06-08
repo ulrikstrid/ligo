@@ -7,7 +7,7 @@ let bad_contract basename =
 
 let%expect_test _ =
   run_ligo_good [ "measure-contract" ; contract "coase.ligo" ; "main" ] ;
-  [%expect {| 1700 bytes |}] ;
+  [%expect {| 1668 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
   [%expect {| 995 bytes |}] ;
@@ -276,7 +276,7 @@ let%expect_test _ =
                  DIG 7 ;
                  DUP ;
                  DUG 8 ;
-                 NONE (pair (address %card_owner) (nat %card_pattern)) ;
+                 NONE (pair address nat) ;
                  SWAP ;
                  UPDATE ;
                  DIG 2 ;
@@ -1321,7 +1321,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "bad_type_operator.ligo" ; "main" ] ;
   [%expect {|
-    ligo: bad type operator (TO_Map (unit,unit)):
+    ligo: bad type operator (type_operator: Map (binding)):
 
      If you're not sure how to fix this error, you can
      do one of the following:

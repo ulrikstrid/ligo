@@ -1,5 +1,5 @@
 (*_*
-  name: PascaLIGO Contract
+  name: Increment (PascaLIGO)
   language: pascaligo
   compile:
     entrypoint: main
@@ -15,6 +15,10 @@
   evaluateFunction:
     entrypoint: add
     parameters: (5, 6)
+  generateDeployScript:
+    tool: tezos-client
+    entrypoint: main
+    storage: 0
 *_*)
 // variant defining pseudo multi-entrypoint actions
 type action is

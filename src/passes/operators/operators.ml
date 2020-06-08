@@ -32,8 +32,6 @@ module Concrete_to_imperative = struct
     - The left-hand-side is the reserved name in the given front-end.
     - The right-hand-side is the name that will be used in the AST.
   *)
-  let unit_expr = make_t @@ T_constant TC_unit
-
   let type_constants s =
     match s with
       "chain_id"  -> Some TC_chain_id
@@ -53,17 +51,17 @@ module Concrete_to_imperative = struct
 
   let type_operators s =
     match s with
-      "list"         -> Some (TC_list unit_expr)
-    | "option"       -> Some (TC_option unit_expr)
-    | "set"          -> Some (TC_set unit_expr)
-    | "map"          -> Some (TC_map (unit_expr,unit_expr))
-    | "big_map"      -> Some (TC_big_map (unit_expr,unit_expr))
-    | "contract"     -> Some (TC_contract unit_expr)
-    | "michelson_pair_right_comb" -> Some (TC_michelson_pair_right_comb unit_expr)
-    | "michelson_pair_left_comb" -> Some (TC_michelson_pair_left_comb unit_expr)
-    | "michelson_or_right_comb" -> Some (TC_michelson_or_right_comb unit_expr)
-    | "michelson_or_left_comb" -> Some (TC_michelson_or_left_comb unit_expr)
-    | _              -> None
+      "list"                      -> Some (TC_list)
+    | "option"                    -> Some (TC_option)
+    | "set"                       -> Some (TC_set)
+    | "map"                       -> Some (TC_map)
+    | "big_map"                   -> Some (TC_big_map)
+    | "contract"                  -> Some (TC_contract)
+    | "michelson_pair_right_comb" -> Some (TC_michelson_pair_right_comb)
+    | "michelson_pair_left_comb"  -> Some (TC_michelson_pair_left_comb)
+    | "michelson_or_right_comb"   -> Some (TC_michelson_or_right_comb)
+    | "michelson_or_left_comb"    -> Some (TC_michelson_or_left_comb)
+    | _                           -> None
 
   let pseudo_modules = function
     | "Tezos.chain_id"           -> Some C_CHAIN_ID
@@ -434,17 +432,17 @@ module Typer = struct
   module Operators_types = struct
     open Typesystem.Shorthands
 
-    let tc_subarg   a b c = tc [a;b;c] [ (*TODO…*) ]
-    let tc_sizearg  a     = tc [a]     [ [int] ]
-    let tc_packable a     = tc [a]     [ [int] ; [string] ; [bool] (*TODO…*) ]
-    let tc_timargs  a b c = tc [a;b;c] [ [nat;nat;nat] ; [int;int;int] (*TODO…*) ]
-    let tc_edivargs a b c = tc [a;b;c] [ (*TODO…*) ]
-    let tc_divargs  a b c = tc [a;b;c] [ (*TODO…*) ]
-    let tc_modargs  a b c = tc [a;b;c] [ (*TODO…*) ]
-    let tc_addargs  a b c = tc [a;b;c] [ (*TODO…*) ]
-    let tc_comparable a   = tc [a]     [ [nat] ; [int] ; [mutez] ; [timestamp] ]
-    let tc_concatable a   = tc [a]     [ [string] ; [bytes] ]
-    let tc_storable a     = tc [a]     [ [string] ; [bytes] ; (*Humm .. TODO ?*) ]
+    let tc_subarg   a b c = tc "arguments for (-)"        [a;b;c] [ (*TODO…*) ]
+    let tc_sizearg  a     = tc "arguments for size"       [a]     [ [int] ]
+    let tc_packable a     = tc "packable"                 [a]     [ [int] ; [string] ; [bool] (*TODO…*) ]
+    let tc_timargs  a b c = tc "arguments for ( * )"      [a;b;c] [ [nat;nat;nat] ; [int;int;int] (*TODO…*) ]
+    let tc_edivargs a b c = tc "arguments for ediv"       [a;b;c] [ (*TODO…*) ]
+    let tc_divargs  a b c = tc "arguments for div"        [a;b;c] [ (*TODO…*) ]
+    let tc_modargs  a b c = tc "arguments for mod"        [a;b;c] [ (*TODO…*) ]
+    let tc_addargs  a b c = tc "arguments for (+)"        [a;b;c] [ [nat;nat;nat] ; [int;int;int] (*TODO…*) ]
+    let tc_comparable a   = tc "comparable"               [a]     [ [nat] ; [int] ; [mutez] ; [timestamp] ]
+    let tc_concatable a   = tc "concatenable"             [a]     [ [string] ; [bytes] ]
+    let tc_storable a     = tc "storable"                 [a]     [ [string] ; [bytes] ; (*Humm .. TODO ?*) ]
 
     let t_none         = forall "a" @@ fun a -> option a
 

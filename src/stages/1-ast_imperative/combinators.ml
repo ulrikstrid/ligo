@@ -12,10 +12,6 @@ module Errors = struct
       ("location" , fun () -> Format.asprintf "%a" Location.pp location) ;
     ] in
     error ~data title message
-  let bad_type_operator type_op =
-    let title () = Format.asprintf "bad type operator %a" (PP.type_operator PP.type_expression) type_op in
-    let message () = "" in
-    error title message
 end
 open Errors
 
@@ -34,8 +30,8 @@ let t_signature ?loc ()   : type_expression = make_t ?loc @@ T_constant (TC_sign
 let t_key ?loc ()         : type_expression = make_t ?loc @@ T_constant (TC_key)
 let t_key_hash ?loc ()    : type_expression = make_t ?loc @@ T_constant (TC_key_hash)
 let t_timestamp ?loc ()   : type_expression = make_t ?loc @@ T_constant (TC_timestamp)
-let t_option ?loc o       : type_expression = make_t ?loc @@ T_operator (TC_option o)
-let t_list ?loc t         : type_expression = make_t ?loc @@ T_operator (TC_list t)
+let t_option ?loc o       : type_expression = make_t ?loc @@ T_operator (TC_option, [o])
+let t_list ?loc t         : type_expression = make_t ?loc @@ T_operator (TC_list, [t])
 let t_variable ?loc n     : type_expression = make_t ?loc @@ T_variable (Var.of_name n)
 let t_record_ez ?loc lst =
   let lst = List.mapi (fun i (k, v) -> (Label k, {field_type=v;field_decl_pos=i})) lst in
@@ -56,33 +52,25 @@ let t_sum ?loc m : type_expression =
   let lst = Map.String.to_kv_list m in
   ez_t_sum ?loc lst
 
-let t_function ?loc type1 type2  : type_expression = make_t ?loc @@ T_arrow {type1; type2}
-let t_map ?loc key value         : type_expression = make_t ?loc @@ T_operator (TC_map (key, value))
-let t_big_map ?loc key value     : type_expression = make_t ?loc @@ T_operator (TC_big_map (key , value))
-let t_set ?loc key               : type_expression = make_t ?loc @@ T_operator (TC_set key)
-let t_contract ?loc contract     : type_expression = make_t ?loc @@ T_operator (TC_contract contract)
-let t_michelson_or ?loc l l_ann r r_ann : type_expression = make_t ?loc @@ T_operator (TC_michelson_or (l, l_ann, r, r_ann))
-let t_michelson_pair ?loc l l_ann r r_ann : type_expression = make_t ?loc @@ T_operator (TC_michelson_pair (l, l_ann, r, r_ann))
-let t_michelson_pair_right_comb ?loc c : type_expression = make_t ?loc @@ T_operator (TC_michelson_pair_right_comb c) 
-let t_michelson_pair_left_comb ?loc c : type_expression = make_t ?loc @@ T_operator (TC_michelson_pair_left_comb c) 
-let t_michelson_or_right_comb ?loc c : type_expression = make_t ?loc @@ T_operator (TC_michelson_or_right_comb c) 
-let t_michelson_or_left_comb ?loc c : type_expression = make_t ?loc @@ T_operator (TC_michelson_or_left_comb c) 
+let t_operator ?loc op lst: type_expression = make_t ?loc @@ T_operator (op, lst)
+let t_annoted ?loc ty str : type_expression = make_t ?loc @@ T_annoted (ty, str)
 
-(* TODO find a better way than using list*)
-let t_operator ?loc op lst: type_expression result =
-  match op,lst with 
-  | TC_set _         , [t] -> ok @@ t_set ?loc t
-  | TC_list _        , [t] -> ok @@ t_list ?loc t
-  | TC_option _      , [t] -> ok @@ t_option ?loc t
-  | TC_map (_,_)     , [kt;vt] -> ok @@ t_map ?loc kt vt
-  | TC_big_map (_,_) , [kt;vt] -> ok @@ t_big_map ?loc kt vt
-  | TC_michelson_or (_,l_ann,_,r_ann) , [l;r] -> ok @@ t_michelson_or ?loc l l_ann r r_ann
-  | TC_contract _    , [t] -> ok @@ t_contract t
-  | TC_michelson_pair_right_comb _ , [c] -> ok @@ t_michelson_pair_right_comb c
-  | TC_michelson_pair_left_comb _ , [c] -> ok @@ t_michelson_pair_left_comb c
-  | TC_michelson_or_right_comb _ , [c] -> ok @@ t_michelson_or_right_comb c
-  | TC_michelson_or_left_comb _ , [c] -> ok @@ t_michelson_or_left_comb c
-  | _ , _ -> fail @@ bad_type_operator op
+let t_function ?loc type1 type2           : type_expression = make_t ?loc @@ T_arrow {type1; type2}
+let t_map ?loc key value                  : type_expression = make_t ?loc @@ T_operator (TC_map ,[key; value])
+let t_big_map ?loc key value              : type_expression = make_t ?loc @@ T_operator (TC_big_map, [key; value])
+let t_set ?loc key                        : type_expression = make_t ?loc @@ T_operator (TC_set, [key])
+let t_contract ?loc contract              : type_expression = make_t ?loc @@ T_operator (TC_contract, [contract])
+let t_michelson_or ?loc l l_ann r r_ann   : type_expression = make_t ?loc @@ T_operator (TC_michelson_or, [t_annoted l l_ann; t_annoted r r_ann])
+let t_michelson_pair ?loc l l_ann r r_ann : type_expression = make_t ?loc @@ T_operator (TC_michelson_pair, [t_annoted l l_ann; t_annoted r r_ann])
+let t_michelson_pair_right_comb ?loc c    : type_expression = make_t ?loc @@ T_operator (TC_michelson_pair_right_comb, [c]) 
+let t_michelson_pair_left_comb ?loc c     : type_expression = make_t ?loc @@ T_operator (TC_michelson_pair_left_comb, [c]) 
+let t_michelson_or_right_comb ?loc c      : type_expression = make_t ?loc @@ T_operator (TC_michelson_or_right_comb, [c]) 
+let t_michelson_or_left_comb ?loc c       : type_expression = make_t ?loc @@ T_operator (TC_michelson_or_left_comb, [c]) 
+
+let get_t_annoted = fun te ->
+  match te.type_content with
+    T_annoted (te, lst) -> ok (te,lst)
+  | _ -> simple_fail "not a T_annoted"
 
 let make_e ?(loc = Location.generated) expression_content =
   let location = loc in
@@ -131,15 +119,12 @@ let e_let_in ?loc (binder, ascr) inline rhs let_result = make_e ?loc @@ E_let_in
 let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constructor = Constructor s; element = a}
 let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;cases=b}
 
-let e_record_accessor ?loc a b = make_e ?loc @@ E_record_accessor {record = a; path = Label b}
-let e_accessor_list ?loc a b  = List.fold_left (fun a b -> e_record_accessor ?loc a b) a b
-let e_record_update ?loc record path update = make_e ?loc @@ E_record_update {record; path=Label path; update}
+let e_accessor ?loc record path      = make_e ?loc @@ E_accessor {record; path}
+let e_update ?loc record path update = make_e ?loc @@ E_update {record; path; update}
 
 let e_annotation ?loc anno_expr ty = make_e ?loc @@ E_ascription {anno_expr; type_annotation = ty}
 
 let e_tuple ?loc lst : expression = make_e ?loc @@ E_tuple lst
-let e_tuple_accessor ?loc tuple path : expression = make_e ?loc @@ E_tuple_accessor {tuple; path}
-let e_tuple_update ?loc tuple path update : expression = make_e ?loc @@ E_tuple_update {tuple; path; update}
 
 let e_pair ?loc a b  : expression = e_tuple ?loc [a;b]
 let e_cond ?loc condition then_clause else_clause = make_e ?loc @@ E_cond {condition;then_clause;else_clause}
@@ -150,7 +135,6 @@ let e_list ?loc lst : expression = make_e ?loc @@ E_list lst
 let e_set ?loc lst : expression = make_e ?loc @@ E_set lst
 let e_map ?loc lst : expression = make_e ?loc @@ E_map lst
 let e_big_map ?loc lst : expression = make_e ?loc @@ E_big_map lst
-let e_look_up ?loc x y = make_e ?loc @@ E_look_up (x , y)
 
 let e_while ?loc condition body = make_e ?loc @@ E_while {condition; body}
 let e_for ?loc binder start final increment body = make_e ?loc @@ E_for {binder;start;final;increment;body}
@@ -160,9 +144,14 @@ let e_bool ?loc   b : expression = e_constructor ?loc (string_of_bool b) (e_unit
 
 let ez_match_variant (lst : ((string * string) * 'a) list) =
   let lst = List.map (fun ((c,n),a) -> ((Constructor c, Var.of_name n), a) ) lst in
-  Match_variant (lst,())
+  Match_variant lst
 let e_matching_variant ?loc a (lst : ((string * string)* 'a) list) =
   e_matching ?loc a (ez_match_variant lst)
+
+let e_matching_record   ?loc m lst ty_opt expr = e_matching ?loc m @@ Match_record   (lst,ty_opt, expr)
+let e_matching_tuple    ?loc m lst ty_opt expr = e_matching ?loc m @@ Match_tuple    (lst,ty_opt, expr)
+let e_matching_variable ?loc m var ty_opt expr = e_matching ?loc m @@ Match_variable (var,ty_opt, expr)
+
 let e_record_ez ?loc (lst : (string * expr) list) : expression =
   let map = List.fold_left (fun m (x, y) -> LMap.add (Label x) y m) LMap.empty lst in
   make_e ?loc @@ E_record map
@@ -196,14 +185,10 @@ let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 
 let e_assign ?loc variable access_path expression =
   make_e ?loc @@ E_assign {variable;access_path;expression} 
-let e_ez_assign ?loc variable access_path expression = 
-  let variable = Var.of_name variable in
-  let access_path = List.map (fun s -> Access_record s) access_path in
-  e_assign ?loc variable access_path expression 
 
 let get_e_accessor = fun t ->
   match t with
-  | E_record_accessor {record; path} -> ok (record , path)
+  | E_accessor {record; path} -> ok (record , path)
   | _ -> simple_fail "not an accessor"
 
 let assert_e_accessor = fun t ->
