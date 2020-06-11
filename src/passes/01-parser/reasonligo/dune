@@ -65,13 +65,6 @@
   (deps (:script_messages ../../../../vendors/ligo-utils/simple-utils/messages.sh) Parser.mly LexToken.mli ParToken.mly)
   (action (run %{script_messages} --lex-tokens=LexToken.mli --par-tokens=ParToken.mly Parser.mly )))
 
-;; Build of all the LIGO source file that cover all error states
-
-(rule
-  (targets all.religo)
-  (deps (:script_cover ../../../../vendors/ligo-utils/simple-utils/cover.sh) Parser.mly LexToken.mli ParToken.mly Parser.msg Unlexer.exe)
-  (action (run %{script_cover} --lex-tokens=LexToken.mli --par-tokens=ParToken.mly --ext=religo --unlexer=./Unlexer.exe --messages=Parser.msg --dir=. --concatenate Parser.mly )))
-
 ;; Error messages
 ;; Generate error messages from scratch
 ; (rule
@@ -133,27 +126,6 @@
     )
   )
 )
-
-(alias
-  (name runtest)
-  (deps error.messages error.messages.new)
-  (action
-    (run
-      menhir
-        --unused-tokens
-        --table
-        --strict
-        --external-tokens LexToken.mli
-        --base Parser.mly
-        ParToken.mly
-        Parser.mly
-        --compare-errors error.messages.new
-        --compare-errors error.messages
-      )
-    )
-  )
-
-
 
 (rule
  (targets ParErr.ml)

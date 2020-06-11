@@ -135,27 +135,6 @@
   )
 )
 
-(alias
-  (name runtest)
-  (deps error.messages error.messages.new)
-  (action
-    (run
-      menhir
-        --unused-tokens
-        --table
-        --strict
-        --external-tokens LexToken.mli
-        --base Parser.mly
-        ParToken.mly
-        Parser.mly
-        --compare-errors error.messages.new
-        --compare-errors error.messages
-      )
-    )
-  )
-
-
-
 (rule
  (targets ParErr.ml)
  (mode (promote (until-clean) (only *)))

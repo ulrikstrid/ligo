@@ -115,11 +115,15 @@ module Make (IO: IO)
       in Region.{value=msg; region=invalid_region}
 
     let failure get_win checkpoint =
-      let message = ParErr.message (state checkpoint) in
-      let message = if message = "<YOUR SYNTAX ERROR MESSAGE HERE>\n" then
-        (string_of_int (state checkpoint)) ^ ": <syntax error>"
-      else
-        message
+      let message = try 
+        (ParErr.message (state checkpoint)) 
+      with _ -> "<YOUR SYNTAX ERROR MESSAGE HERE>\n"
+      in
+      let message = 
+        if message = "<YOUR SYNTAX ERROR MESSAGE HERE>\n" then
+          (string_of_int (state checkpoint)) ^ ": <syntax error>"
+        else
+          message
       in
       match get_win () with
         LexerLib.Nil -> assert false

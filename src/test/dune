@@ -1,7 +1,7 @@
 (ocamllex md)
 
 (executables
-  (names test doc_test parser_negative_tests)
+  (names test doc_test)
   (libraries
     simple-utils
     ligo
@@ -21,15 +21,6 @@
 )
 
 (alias
-  (name parser-negative-tests)
-  (action (run ./parser_negative_tests.exe))
-  (deps
-    ../passes/01-parser/pascaligo/all.ligo
-    ../passes/01-parser/cameligo/all.mligo
-    ../passes/01-parser/reasonligo/all.religo
-  ))
-
-(alias
   (name ligo-test)
   (action (run ./test.exe))
   (deps (glob_files contracts/*)
@@ -38,7 +29,7 @@
 
 (alias
   (name runtest)
-  (deps (alias ligo-test) (alias doc-test) (alias parser-negative-tests))
+  (deps (alias ligo-test) (alias doc-test))
 )
 
 (alias
