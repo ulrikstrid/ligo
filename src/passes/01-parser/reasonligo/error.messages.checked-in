@@ -1960,6 +1960,7 @@ interactive_expr: Switch WILD LBRACE VBAR LBRACKET WILD WILD
 
 Expected either:
 - a closing `]`
+- a `,` and another pattern
 
 interactive_expr: Switch WILD LBRACE VBAR LPAR Bytes RPAR WILD
 ##
@@ -1971,7 +1972,7 @@ interactive_expr: Switch WILD LBRACE VBAR LPAR Bytes RPAR WILD
 ## sub_pattern
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected `,` and another pattern, or `=>`.
 
 interactive_expr: Switch WILD LBRACE VBAR VBAR
 ##
@@ -1983,7 +1984,7 @@ interactive_expr: Switch WILD LBRACE VBAR VBAR
 ## VBAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a pattern.
 
 interactive_expr: Switch WILD LBRACE VBAR WILD ARROW Bytes SEMI WILD
 ##
@@ -1995,7 +1996,7 @@ interactive_expr: Switch WILD LBRACE VBAR WILD ARROW Bytes SEMI WILD
 ## case_clause(base_cond)
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected another switch case or a closing `}`.
 
 interactive_expr: Switch WILD LBRACE VBAR WILD ARROW Bytes VBAR Bytes ARROW Bytes SEMI WILD
 ##
@@ -2007,7 +2008,7 @@ interactive_expr: Switch WILD LBRACE VBAR WILD ARROW Bytes VBAR Bytes ARROW Byte
 ## case_clause(base_cond)
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected another switch case or a closing `}`.
 
 interactive_expr: Switch WILD LBRACE VBAR WILD ARROW VBAR
 ##
@@ -2019,7 +2020,7 @@ interactive_expr: Switch WILD LBRACE VBAR WILD ARROW VBAR
 ## VBAR pattern ARROW
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: Switch WILD LBRACE VBAR WILD ARROW WILD Type
 ##
@@ -2048,7 +2049,7 @@ interactive_expr: Switch WILD LBRACE VBAR WILD ARROW WILD Type
 ## In state 228, spurious reduction of production base_cond -> base_expr 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected another switch case or a closing `}`.
 
 interactive_expr: Switch WILD LBRACE VBAR WILD COMMA Bytes RPAR
 ##
@@ -2068,7 +2069,7 @@ interactive_expr: Switch WILD LBRACE VBAR WILD COMMA Bytes RPAR
 ## In state 342, spurious reduction of production pattern -> tuple(sub_pattern) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected `=>`.
 
 interactive_expr: Switch WILD LBRACE VBAR WILD COMMA VBAR
 ##
@@ -2080,7 +2081,7 @@ interactive_expr: Switch WILD LBRACE VBAR WILD COMMA VBAR
 ## sub_pattern COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a pattern.
 
 interactive_expr: Switch WILD LBRACE VBAR WILD COMMA WILD COMMA VBAR
 ##
@@ -2092,7 +2093,7 @@ interactive_expr: Switch WILD LBRACE VBAR WILD COMMA WILD COMMA VBAR
 ## sub_pattern COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a pattern.
 
 interactive_expr: Switch WILD LBRACE VBAR WILD COMMA WILD WILD
 ##
@@ -2105,7 +2106,7 @@ interactive_expr: Switch WILD LBRACE VBAR WILD COMMA WILD WILD
 ## sub_pattern
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected `,` and another pattern, or `=>`.
 
 interactive_expr: Switch WILD LBRACE VBAR WILD WILD
 ##
@@ -2118,7 +2119,7 @@ interactive_expr: Switch WILD LBRACE VBAR WILD WILD
 ## core_pattern
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected `,` and another pattern, or `=>`.
 
 interactive_expr: Switch WILD LBRACE WILD
 ##
@@ -2130,7 +2131,7 @@ interactive_expr: Switch WILD LBRACE WILD
 ## Switch switch_expr_ LBRACE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a switch case.
 
 interactive_expr: Switch WILD WILD
 ##
@@ -2142,7 +2143,7 @@ interactive_expr: Switch WILD WILD
 ## Switch switch_expr_
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an opening `{`.
 
 interactive_expr: VBAR
 ##
@@ -2154,7 +2155,7 @@ interactive_expr: VBAR
 ##
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: WILD ARROW VBAR
 ##
@@ -2166,7 +2167,7 @@ interactive_expr: WILD ARROW VBAR
 ## disj_expr_level ARROW
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: WILD BOOL_AND VBAR
 ##
@@ -2178,7 +2179,7 @@ interactive_expr: WILD BOOL_AND VBAR
 ## conj_expr_level BOOL_AND
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: WILD BOOL_OR VBAR
 ##
@@ -2190,7 +2191,7 @@ interactive_expr: WILD BOOL_OR VBAR
 ## disj_expr_level BOOL_OR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: WILD CAT VBAR
 ##
@@ -2202,7 +2203,7 @@ interactive_expr: WILD CAT VBAR
 ## add_expr_level CAT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: WILD COLON Ident LPAR Ident VBAR
 ##
@@ -2222,7 +2223,9 @@ interactive_expr: WILD COLON Ident LPAR Ident VBAR
 ## In state 148, spurious reduction of production type_expr_simple -> Ident option(type_expr_simple_args) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected either:
+- `,` and another type expression
+- a closing `)`.
 
 interactive_expr: WILD COLON Ident LPAR WILD
 ##
@@ -2234,7 +2237,7 @@ interactive_expr: WILD COLON Ident LPAR WILD
 ## LPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a type expression.
 
 interactive_expr: WILD COLON Ident WILD
 ##
@@ -2246,7 +2249,7 @@ interactive_expr: WILD COLON Ident WILD
 ## Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
 interactive_expr: WILD COLON LPAR Ident ARROW Ident VBAR
 ##
@@ -2265,7 +2268,7 @@ interactive_expr: WILD COLON LPAR Ident ARROW Ident VBAR
 ## In state 148, spurious reduction of production type_expr_simple -> Ident option(type_expr_simple_args) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a closing `)`.
 
 interactive_expr: WILD COLON LPAR Ident ARROW WILD
 ##
@@ -2277,7 +2280,7 @@ interactive_expr: WILD COLON LPAR Ident ARROW WILD
 ## LPAR type_expr_simple ARROW
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a type expression.
 
 interactive_expr: WILD COLON LPAR Ident COMMA WILD
 ##
@@ -2289,7 +2292,7 @@ interactive_expr: WILD COLON LPAR Ident COMMA WILD
 ## type_expr_simple COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a type expression.
 
 interactive_expr: WILD COLON LPAR Ident RPAR WILD
 ##
@@ -2304,7 +2307,7 @@ interactive_expr: WILD COLON LPAR Ident RPAR WILD
 ## mult_expr_level
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
 interactive_expr: WILD COLON LPAR Ident VBAR
 ##
@@ -2325,7 +2328,10 @@ interactive_expr: WILD COLON LPAR Ident VBAR
 ## In state 148, spurious reduction of production type_expr_simple -> Ident option(type_expr_simple_args) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected either:
+- a closing `)`
+- `,` and a type expression
+- `=>` and the remainder of the function type expression
 
 interactive_expr: WILD COLON LPAR WILD
 ##
@@ -2338,7 +2344,7 @@ interactive_expr: WILD COLON LPAR WILD
 ## LPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a type expression.
 
 interactive_expr: WILD COLON WILD
 ##
@@ -2350,7 +2356,7 @@ interactive_expr: WILD COLON WILD
 ## COLON
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a type expression.
 
 interactive_expr: WILD EQEQ VBAR
 ##
@@ -2362,7 +2368,7 @@ interactive_expr: WILD EQEQ VBAR
 ## comp_expr_level EQEQ
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: WILD GE VBAR
 ##
@@ -2374,7 +2380,7 @@ interactive_expr: WILD GE VBAR
 ## comp_expr_level GE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: WILD GT VBAR
 ##
@@ -2386,7 +2392,7 @@ interactive_expr: WILD GT VBAR
 ## comp_expr_level GT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: WILD LE VBAR
 ##
@@ -2398,7 +2404,7 @@ interactive_expr: WILD LE VBAR
 ## comp_expr_level LE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: WILD LPAR VBAR
 ##
@@ -2411,7 +2417,7 @@ interactive_expr: WILD LPAR VBAR
 ## core_expr LPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression or closing `)`.
 
 interactive_expr: WILD LPAR WILD COMMA VBAR
 ##
@@ -2423,7 +2429,7 @@ interactive_expr: WILD LPAR WILD COMMA VBAR
 ## expr COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: WILD LPAR WILD VBAR
 ##
@@ -2454,7 +2460,7 @@ interactive_expr: WILD LPAR WILD VBAR
 ## In state 229, spurious reduction of production expr -> base_cond 
 ##
 
-Missing `)`.
+Expected a `,` and another expression, or a closing  `)`.
 
 interactive_expr: WILD LT VBAR
 ##
@@ -2466,7 +2472,7 @@ interactive_expr: WILD LT VBAR
 ## comp_expr_level LT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: WILD MINUS VBAR
 ##
@@ -2478,7 +2484,7 @@ interactive_expr: WILD MINUS VBAR
 ## add_expr_level MINUS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: WILD MINUS WILD COLON LPAR Ident RPAR WILD
 ##
@@ -2493,7 +2499,7 @@ interactive_expr: WILD MINUS WILD COLON LPAR Ident RPAR WILD
 ## add_expr_level MINUS mult_expr_level
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator, like `-`, `+`, `*`, or `/`.
 
 interactive_expr: WILD Mod VBAR
 ##
@@ -2505,7 +2511,7 @@ interactive_expr: WILD Mod VBAR
 ## mult_expr_level Mod
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: WILD NE VBAR
 ##
@@ -2517,7 +2523,7 @@ interactive_expr: WILD NE VBAR
 ## comp_expr_level NE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: WILD Or VBAR
 ##
@@ -2529,7 +2535,7 @@ interactive_expr: WILD Or VBAR
 ## disj_expr_level Or
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: WILD PLUS VBAR
 ##
@@ -2541,7 +2547,7 @@ interactive_expr: WILD PLUS VBAR
 ## add_expr_level PLUS
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: WILD PLUS WILD COLON LPAR Ident RPAR WILD
 ##
@@ -2556,7 +2562,7 @@ interactive_expr: WILD PLUS WILD COLON LPAR Ident RPAR WILD
 ## add_expr_level PLUS mult_expr_level
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an operator, like `-`, `+`, `*`, or `/`.
 
 interactive_expr: WILD SLASH VBAR
 ##
@@ -2568,7 +2574,7 @@ interactive_expr: WILD SLASH VBAR
 ## mult_expr_level SLASH
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: WILD TIMES VBAR
 ##
@@ -2580,7 +2586,7 @@ interactive_expr: WILD TIMES VBAR
 ## mult_expr_level TIMES
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 interactive_expr: WILD VBAR
 ##
@@ -2611,7 +2617,7 @@ interactive_expr: WILD VBAR
 ## In state 401, spurious reduction of production expr_with_let_expr -> expr 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
 interactive_expr: WILD WILD
 ##
@@ -2625,7 +2631,7 @@ interactive_expr: WILD WILD
 ## core_expr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
 contract: Attr WILD
 ##
@@ -2637,7 +2643,7 @@ contract: Attr WILD
 ## Attr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected another attribute or a let instruction.
 
 contract: Let Ident COLON String WILD
 ##
@@ -2649,7 +2655,7 @@ contract: Let Ident COLON String WILD
 ## Ident option(type_annotation)
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a `=` as part of the let binding.
 
 contract: Let Ident EQ VBAR
 ##
@@ -2661,7 +2667,7 @@ contract: Let Ident EQ VBAR
 ## Ident option(type_annotation) EQ
 ##
 
-This is an incorrect let binding.
+Expected an expression as part of the let binding.
 -
 Examples of correct let bindings:
 let a: int = 4;
@@ -2679,7 +2685,10 @@ contract: Let Ident WILD
 ## Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected either:
+- a type annotation
+- `=` and an expression
+- a `,` and a pattern
 
 contract: Let LBRACE Ident EQ Bytes COMMA Ident EQ Bytes COMMA WILD
 ##
@@ -2692,7 +2701,7 @@ contract: Let LBRACE Ident EQ Bytes COMMA Ident EQ Bytes COMMA WILD
 ## field_pattern COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a update_record field pattern.
 
 contract: Let LBRACE Ident EQ Bytes COMMA Ident EQ Bytes WILD
 ##
@@ -2706,7 +2715,7 @@ contract: Let LBRACE Ident EQ Bytes COMMA Ident EQ Bytes WILD
 ## field_pattern
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected either a `,` and record field pattern, or a closing `}`.
 
 contract: Let LBRACE Ident EQ Bytes COMMA WILD
 ##
@@ -2719,7 +2728,7 @@ contract: Let LBRACE Ident EQ Bytes COMMA WILD
 ## field_pattern COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a record field pattern.
 
 contract: Let LBRACE Ident EQ Bytes RBRACE COLON String WILD
 ##
@@ -2731,7 +2740,7 @@ contract: Let LBRACE Ident EQ Bytes RBRACE COLON String WILD
 ## record_pattern option(type_annotation)
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an `=` as part of the let binding.
 
 contract: Let LBRACE Ident EQ Bytes RBRACE EQ VBAR
 ##
@@ -2743,7 +2752,7 @@ contract: Let LBRACE Ident EQ Bytes RBRACE EQ VBAR
 ## record_pattern option(type_annotation) EQ
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 contract: Let LBRACE Ident EQ Bytes RBRACE WILD
 ##
@@ -2756,7 +2765,10 @@ contract: Let LBRACE Ident EQ Bytes RBRACE WILD
 ## record_pattern
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected either:
+- a type annotation
+- `=` and an expression
+- a `,` and a pattern
 
 contract: Let LBRACE Ident EQ Bytes WILD
 ##
@@ -2770,7 +2782,9 @@ contract: Let LBRACE Ident EQ Bytes WILD
 ## field_pattern
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected either:
+- a closing `}`
+- a `,` and another field pattern
 
 contract: Let LBRACE Ident EQ VBAR
 ##
@@ -2782,7 +2796,7 @@ contract: Let LBRACE Ident EQ VBAR
 ## Ident EQ
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a pattern.
 
 contract: Let LBRACE Ident WILD
 ##
@@ -2794,7 +2808,7 @@ contract: Let LBRACE Ident WILD
 ## Ident
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a `=` as part of the record field pattern.
 
 contract: Let LBRACE WILD
 ##
@@ -2806,7 +2820,7 @@ contract: Let LBRACE WILD
 ## LBRACE
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a record field pattern.
 
 contract: Let LPAR C_Some VBAR
 ##
@@ -2818,7 +2832,7 @@ contract: Let LPAR C_Some VBAR
 ## C_Some
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a pattern.
 
 contract: Let LPAR Constr LBRACKET VBAR
 ##
@@ -2830,7 +2844,7 @@ contract: Let LPAR Constr LBRACKET VBAR
 ## LBRACKET
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a pattern.
 
 contract: Let LPAR Constr LBRACKET WILD COMMA VBAR
 ##
@@ -2843,7 +2857,7 @@ contract: Let LPAR Constr LBRACKET WILD COMMA VBAR
 ## sub_pattern COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a pattern.
 
 contract: Let LPAR Constr LBRACKET WILD COMMA WILD COMMA VBAR
 ##
@@ -2856,7 +2870,7 @@ contract: Let LPAR Constr LBRACKET WILD COMMA WILD COMMA VBAR
 ## sub_pattern COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a pattern.
 
 contract: Let LPAR Constr LBRACKET WILD COMMA WILD WILD
 ##
@@ -2870,7 +2884,7 @@ contract: Let LPAR Constr LBRACKET WILD COMMA WILD WILD
 ## sub_pattern
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a `,` and another pattern, or a closing `]`.
 
 contract: Let LPAR Constr LBRACKET WILD WILD
 ##
@@ -2884,7 +2898,7 @@ contract: Let LPAR Constr LBRACKET WILD WILD
 ## sub_pattern
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a `,` and another pattern, or a closing `]`.
 
 contract: Let LPAR Constr LPAR VBAR
 ##
@@ -2898,7 +2912,7 @@ contract: Let LPAR Constr LPAR VBAR
 ## LPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected either a pattern or closing `)`.
 
 contract: Let LPAR Constr LPAR WILD COMMA Bytes ARROW
 ##
@@ -2918,7 +2932,7 @@ contract: Let LPAR Constr LPAR WILD COMMA Bytes ARROW
 ## In state 327, spurious reduction of production ptuple -> tuple(sub_pattern) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a closing `)`.
 
 contract: Let LPAR Constr LPAR WILD WILD
 ##
@@ -2931,7 +2945,7 @@ contract: Let LPAR Constr LPAR WILD WILD
 ## LPAR sub_pattern
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a `,` and another pattern, or a closing `)`.
 
 contract: Let LPAR Constr RBRACKET
 ##
@@ -2950,7 +2964,7 @@ contract: Let LPAR Constr RBRACKET
 ## In state 373, spurious reduction of production closed_irrefutable -> constr_pattern 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a closing `)`.
 
 contract: Let LPAR Constr VBAR
 ##
@@ -2963,7 +2977,7 @@ contract: Let LPAR Constr VBAR
 ## Constr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Uexpected token.
 
 contract: Let LPAR RPAR COLON String WILD
 ##
@@ -2975,7 +2989,7 @@ contract: Let LPAR RPAR COLON String WILD
 ## unit option(type_annotation)
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected `=`.
 
 contract: Let LPAR RPAR EQ VBAR
 ##
@@ -2987,7 +3001,7 @@ contract: Let LPAR RPAR EQ VBAR
 ## unit option(type_annotation) EQ
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 contract: Let LPAR RPAR WILD
 ##
@@ -3000,7 +3014,10 @@ contract: Let LPAR RPAR WILD
 ## unit
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected either:
+- a type annotation 
+- a `=` and an expression
+- a `,` and another pattern.
 
 contract: Let LPAR Verbatim
 ##
@@ -3013,7 +3030,7 @@ contract: Let LPAR Verbatim
 ## LPAR
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a pattern or closing `)`.
 
 contract: Let LPAR WILD COLON WILD
 ##
@@ -3025,7 +3042,7 @@ contract: Let LPAR WILD COLON WILD
 ## irrefutable COLON
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a type expression.
 
 contract: Let LPAR WILD COMMA Ident EQ
 ##
@@ -3046,7 +3063,7 @@ contract: Let LPAR WILD COMMA Ident EQ
 ## In state 361, spurious reduction of production irrefutable -> tuple(sub_irrefutable) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a type annotation or a closing `)`.
 
 contract: Let LPAR WILD RPAR COLON String WILD
 ##
@@ -3058,7 +3075,7 @@ contract: Let LPAR WILD RPAR COLON String WILD
 ## par(closed_irrefutable) option(type_annotation)
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a `=` as part of the let binding.
 
 contract: Let LPAR WILD RPAR EQ VBAR
 ##
@@ -3070,7 +3087,7 @@ contract: Let LPAR WILD RPAR EQ VBAR
 ## par(closed_irrefutable) option(type_annotation) EQ
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 contract: Let LPAR WILD RPAR WILD
 ##
@@ -3083,7 +3100,7 @@ contract: Let LPAR WILD RPAR WILD
 ## par(closed_irrefutable)
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a `,` and another expression, or a type annotation.
 
 contract: Let LPAR WILD WILD
 ##
@@ -3096,7 +3113,7 @@ contract: Let LPAR WILD WILD
 ## sub_irrefutable
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Unexpected token.
 
 contract: Let Rec Verbatim
 ##
@@ -3108,7 +3125,7 @@ contract: Let Rec Verbatim
 ## seq(Attr) Let Rec
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a let binding.
 
 contract: Let Verbatim
 ##
@@ -3121,7 +3138,7 @@ contract: Let Verbatim
 ## seq(Attr) Let
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a let binding.
 
 contract: Let WILD COLON String WILD
 ##
@@ -3133,7 +3150,7 @@ contract: Let WILD COLON String WILD
 ## WILD option(type_annotation)
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected `=` as part of the let binding.
 
 contract: Let WILD COLON WILD
 ##
@@ -3145,7 +3162,7 @@ contract: Let WILD COLON WILD
 ## COLON
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a type expression.
 
 contract: Let WILD COMMA Ident COLON String WILD
 ##
@@ -3157,7 +3174,7 @@ contract: Let WILD COMMA Ident COLON String WILD
 ## tuple(sub_irrefutable) option(type_annotation)
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected `=` as part of the let binding.
 
 contract: Let WILD COMMA Ident EQ VBAR
 ##
@@ -3169,7 +3186,7 @@ contract: Let WILD COMMA Ident EQ VBAR
 ## tuple(sub_irrefutable) option(type_annotation) EQ
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected an expression.
 
 contract: Let WILD COMMA Ident RPAR
 ##
@@ -3188,7 +3205,7 @@ contract: Let WILD COMMA Ident RPAR
 ## In state 369, spurious reduction of production tuple(sub_irrefutable) -> sub_irrefutable COMMA nsepseq(sub_irrefutable,COMMA) 
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected either a type annotation or `=` followed by an expression.
 
 contract: Let WILD COMMA Verbatim
 ##
@@ -3200,7 +3217,7 @@ contract: Let WILD COMMA Verbatim
 ## sub_irrefutable COMMA
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Expected a pattern.
 
 contract: Let WILD COMMA WILD COMMA Verbatim
 ##
