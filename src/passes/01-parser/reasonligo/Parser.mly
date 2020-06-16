@@ -130,7 +130,7 @@ tuple(item):
 (* Possibly empty semicolon-separated values between brackets *)
 
 list__(item):
-  "[" sep_or_term_list(item,";")? "]" {
+  "[" sep_or_term_list(item,",")? "]" {
     let compound = Brackets ($1,$3)
     and region = cover $1 $3 in
     let elements, terminator =
