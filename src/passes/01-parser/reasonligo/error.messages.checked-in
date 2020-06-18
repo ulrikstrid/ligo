@@ -72,7 +72,8 @@ interactive_expr: Constr Switch
 Ill-formed expression.
 At this point one of the following is expected:
   an expression; or 
-  a '.' followed by identifier; or 
+  a dot '.',
+    followed by identifier; or 
   a semicolon ';'.
 
 interactive_expr: Ident DOT Ident WILD
@@ -896,7 +897,8 @@ interactive_expr: LBRACE ELLIPSIS Constr DOT Ident WILD
 ##
 
 Ill-formed functional record update.
-At this point a selection '[<int>]' is optional, followed by a comma ','.
+At this point a selection '[<int>]' is optional, 
+  followed by a required comma ','.
 
 interactive_expr: LBRACE ELLIPSIS Constr DOT WILD
 ##
@@ -922,7 +924,8 @@ interactive_expr: LBRACE ELLIPSIS Constr WILD
 ##
 
 Ill-formed module path.
-At this point a dot '.' is expected, followed by an identifier.
+At this point a dot '.' is expected, 
+  followed by an identifier.
 
 interactive_expr: LBRACE ELLIPSIS Ident COLON
 ##
@@ -941,7 +944,8 @@ interactive_expr: LBRACE ELLIPSIS Ident COLON
 ##
 
 Ill-formed functional record update.
-At this point a comma ',' is expected, followed by record field assignment(s).
+At this point a comma ',' is expected, 
+  followed by record field assignment(s).
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes COMMA Ident COLON Bytes COMMA WILD
 ##
@@ -990,7 +994,8 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes COMMA Ident COLO
 
 Ill-formed functional record update.
 At this point one of the following is expected:
-  a ',' followed by a record field assignment; or 
+  a comma ',', 
+    followed by a record field assignment; or 
   a closing brace '}'.
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes COMMA WILD
@@ -1040,7 +1045,8 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes VBAR
 
 Ill-formed functional record update.
 At this point one of the following is expected:
-  a ',' followed by a record field assignment; or 
+  a comma ',', 
+    followed by a record field assignment; or 
   a closing brace '}'.
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON VBAR
@@ -1073,7 +1079,8 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COMMA
 ##
 
 Ill-formed record field assignment.
-At this point a colon ':' is expected, followed by an expression.
+At this point a colon ':' is expected, 
+  followed by an expression.
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA WILD
 ##
@@ -1102,7 +1109,8 @@ interactive_expr: LBRACE ELLIPSIS Ident WILD
 Ill-formed functional record update.
 At this point one of the following is expected:
   a selection '[<int>]'; or
-  a comma, followed by record field assignment(s).
+  a comma ',', 
+    followed by record field assignment(s).
 
 interactive_expr: LBRACE ELLIPSIS WILD
 ##
@@ -1148,7 +1156,8 @@ interactive_expr: LBRACE Ident COLON Bytes VBAR
 
 Ill-formed record expression.
 At this point one of the following is expected:
-  a comma ',' followed by a record field assignment; or
+  a comma ',', 
+    followed by a record field assignment; or
   a closing brace '}'.
 
 interactive_expr: LBRACE Ident COLON VBAR
@@ -1198,7 +1207,8 @@ interactive_expr: LBRACE Ident COMMA Ident COLON Bytes VBAR
 
 Ill-formed record expression.
 At this point one of the following is expected:
-  a comma ',', followed by a record field assignment; or
+  a comma ',', 
+    followed by a record field assignment; or
   a closing brace '}'.
 
 interactive_expr: LBRACE Ident COMMA Ident COMMA Ident COLON Bytes VBAR
@@ -1235,7 +1245,8 @@ interactive_expr: LBRACE Ident COMMA Ident COMMA Ident COLON Bytes VBAR
 
 Ill-formed record expression.
 At this point one of the following is expected:
-  a comma ',', followed by a record field assignment; or
+  a comma ',', 
+    followed by a record field assignment; or
   a closing brace '}'.
 
 interactive_expr: LBRACE Ident COMMA Ident COMMA Ident COMMA WILD
@@ -1279,8 +1290,10 @@ interactive_expr: LBRACE Ident COMMA Ident WILD
 
 Ill-formed record expression.
 At this point one of the following is expected:
-  a colon ':' followed by an expression; or
-  a comma ',', followed by a record field assignment; or
+  a colon ':', 
+    followed by an expression; or
+  a comma ',', 
+    followed by a record field assignment; or
   a closing brace '}'.
 
 interactive_expr: LBRACE Ident COMMA WILD
@@ -1316,8 +1329,10 @@ If this is a sequence,
     a semicolon ';' and an expression.
 If this is a record expression, 
   then at this point one of the following is expected:
-    a colon ':' followed by an expresion; or 
-    a comma ',' followed by a field assignment.
+    a colon ':', 
+      followed by an expresion; or 
+    a comma ',', 
+      followed by a record field assignment.
 
 interactive_expr: LBRACE VBAR
 ##
@@ -1386,7 +1401,8 @@ interactive_expr: LBRACE WILD VBAR
 
 Ill-formed sequence of expressions. 
 At this point one of the following is expected:
-  a semicolon ';' followed by an expression; or
+  a semicolon ';', 
+    followed by an expression; or
   a closing brace '}'.
 
 interactive_expr: LBRACKET PERCENT Constr VBAR
@@ -1524,7 +1540,7 @@ interactive_expr: LBRACKET WILD COMMA VBAR
 ##
 
 Ill-formed expression.
-If this is a list, 
+If this is a list expression, 
   then at this point an expression is expected.
 If this is spread syntax,
   then at this point an ellipsis '...' is expected.
@@ -1559,7 +1575,11 @@ interactive_expr: LBRACKET WILD COMMA WILD COMMA WILD VBAR
 ## In state 229, spurious reduction of production expr -> base_cond 
 ##
 
-Expected a `,` and another expression, or a closing `]`.
+Ill-formed list expression.
+At this point one of the following is expected:
+  a comma ',', 
+    followed by an expression; or
+  a closing bracket ']'.
 
 interactive_expr: LBRACKET WILD COMMA WILD VBAR
 ##
@@ -1591,7 +1611,11 @@ interactive_expr: LBRACKET WILD COMMA WILD VBAR
 ## In state 229, spurious reduction of production expr -> base_cond 
 ##
 
-Expected a `,` and another expression, or a closing `]`.
+Ill-formed list expression.
+At this point one of the following is expected:
+  a comma ',', 
+    followed by an expression; or
+  a closing bracket ']'.
 
 interactive_expr: LBRACKET WILD VBAR
 ##
@@ -1623,8 +1647,16 @@ interactive_expr: LBRACKET WILD VBAR
 ## In state 229, spurious reduction of production expr -> base_cond 
 ##
 
-Expected a `,` or a closing `]`.
-
+Ill-formed expression.
+If this is a list expression, 
+  then at this point one of the following is expected:
+    a comma ',', 
+      followed by an expression; or
+    a closing bracket ']'.
+If this is spread syntax, 
+  then at this point an ellipsis is expected,
+    followed by an expression.
+  
 interactive_expr: LPAR VBAR
 ##
 ## Ends in an error in state: 98.
@@ -1637,7 +1669,13 @@ interactive_expr: LPAR VBAR
 ## LPAR
 ##
 
-Unexpected token.
+Ill-formed expression.
+If this is a tuple or an expression wrapped by parentheses, 
+  then at this point an expression is expected.
+If this is a unit,
+  then at this point a closing parenthesis ')' is expected.
+If this is a function expression,
+  then at this point an identifier is expected.
 
 interactive_expr: LPAR WILD COMMA Bytes RPAR COLON Ident TIMES
 ##
@@ -1662,7 +1700,11 @@ interactive_expr: LPAR WILD COMMA Bytes RPAR COLON Ident TIMES
 ## In state 157, spurious reduction of production disj_expr_level -> par(tuple(disj_expr_level)) option(type_annotation_simple) 
 ##
 
-Unexpected token.
+Ill-formed expression.
+If this is a function expression,
+  then at this point an arrow '=>' is expected.
+If this is a tuple,
+  then at this point a semicolon ';' is expected.
 
 interactive_expr: LPAR WILD COMMA Bytes RPAR WILD
 ##
@@ -1674,7 +1716,11 @@ interactive_expr: LPAR WILD COMMA Bytes RPAR WILD
 ## par(tuple(disj_expr_level))
 ##
 
-Unexpected token.
+Ill-formed expression.
+If this is a function expression,
+  then at this point an arrow '=>' is expected.
+If this is a tuple, 
+  then at this point a semicolon ';' is expected.
 
 interactive_expr: LPAR WILD COMMA VBAR
 ##
@@ -1686,7 +1732,11 @@ interactive_expr: LPAR WILD COMMA VBAR
 ## disj_expr_level COMMA
 ##
 
-Expected an expression.
+Ill-formed expression.
+If this is a tuple, 
+  then at this point an expression is expected.
+If this is a function expression,
+  then at this point an identifier is expected.
 
 interactive_expr: LPAR WILD COMMA WILD COMMA VBAR
 ##
@@ -1698,7 +1748,11 @@ interactive_expr: LPAR WILD COMMA WILD COMMA VBAR
 ## disj_expr_level COMMA
 ##
 
-Expected an expression.
+Ill-formed expression.
+If this is a tuple, 
+  then at this point an expression is expected.
+If this is a function expression,
+  then at this point an identifier is expected.
 
 interactive_expr: LPAR WILD COMMA WILD VBAR
 ##
@@ -1728,7 +1782,13 @@ interactive_expr: LPAR WILD COMMA WILD VBAR
 ## In state 224, spurious reduction of production disj_expr_level -> conj_expr_level 
 ##
 
-Expected a `,` or closing `)`.
+Ill-formed expression.
+If this is a boolean comparison, 
+  then at this point a boolean operator is expected.
+If this is an expression wrapped between parentheses,
+  then at this point a closing parenthesis ')' is expected.
+If this is a tuple or function expression,
+  then at this point a comma ',' is expected.
 
 interactive_expr: LPAR WILD VBAR
 ##
@@ -1759,7 +1819,13 @@ interactive_expr: LPAR WILD VBAR
 ## In state 224, spurious reduction of production disj_expr_level -> conj_expr_level 
 ##
 
-Unexpected token.
+Ill-formed expression.
+If this is a boolean comparison, 
+  then at this point a boolean operator is expected.
+If this is an expression wrapped between parentheses,
+  then at this point a closing parenthesis ')' is expected.
+If this is a tuple or function expression,
+  then at this point a comma ',' is expected.
 
 interactive_expr: Let Rec Verbatim
 ##
@@ -1771,7 +1837,8 @@ interactive_expr: Let Rec Verbatim
 ## seq(Attr) Let Rec
 ##
 
-Expected a let binding.
+Ill-formed 'let' expression.
+At this point expected a let binding.
 
 interactive_expr: Let Rec WILD EQ Bytes SEMI VBAR
 ##
@@ -1783,7 +1850,8 @@ interactive_expr: Let Rec WILD EQ Bytes SEMI VBAR
 ## seq(Attr) Let Rec let_binding SEMI
 ##
 
-Expected another expression.
+Ill-formed 'let' expression.
+At this point expected an expression.
 
 interactive_expr: Let Rec WILD EQ Bytes VBAR
 ##
@@ -1814,7 +1882,9 @@ interactive_expr: Let Rec WILD EQ Bytes VBAR
 ## In state 515, spurious reduction of production let_binding -> WILD option(type_annotation) EQ expr 
 ##
 
-Expected a `;`.
+Ill-formed 'let' expression.
+At this point a semicolon ';' is expected, 
+  followed by an expression.
 
 interactive_expr: Let Verbatim
 ##
@@ -1827,7 +1897,11 @@ interactive_expr: Let Verbatim
 ## seq(Attr) Let
 ##
 
-Expected a let binding.
+Ill-formed 'let' expression.
+At this point one of the following is expected:
+  a let binding; or 
+  a 'rec' keyword, 
+    followed by a let binding.
 
 interactive_expr: Let WILD EQ Bytes SEMI VBAR
 ##
@@ -1839,7 +1913,8 @@ interactive_expr: Let WILD EQ Bytes SEMI VBAR
 ## seq(Attr) Let let_binding SEMI
 ##
 
-Expected an expression.
+Ill-formed 'let' expression.
+At this point an expression is expected.
 
 interactive_expr: Let WILD EQ Bytes VBAR
 ##
@@ -1870,7 +1945,9 @@ interactive_expr: Let WILD EQ Bytes VBAR
 ## In state 515, spurious reduction of production let_binding -> WILD option(type_annotation) EQ expr 
 ##
 
-Expected `;`.
+Ill-formed 'let' expression.
+At this point a semicolon ';' is expected,
+  followed by an expression.
 
 interactive_expr: MINUS VBAR
 ##
@@ -1882,7 +1959,8 @@ interactive_expr: MINUS VBAR
 ## MINUS
 ##
 
-Expected an expression.
+Ill-formed unary operation. 
+At this point an expression is expected.
 
 interactive_expr: NOT VBAR
 ##
@@ -1894,7 +1972,8 @@ interactive_expr: NOT VBAR
 ## NOT
 ##
 
-Expected an expression.
+Ill-formed unary operation.
+At this point an expression is expected.
 
 interactive_expr: Switch Constr WILD
 ##
@@ -1907,7 +1986,9 @@ interactive_expr: Switch Constr WILD
 ## Constr
 ##
 
-Expected a `.`.
+Ill-formed module path.
+At this point a dot '.' is expected,
+  followed by an identifier.
 
 interactive_expr: Switch LBRACE WILD
 ##
@@ -1919,7 +2000,8 @@ interactive_expr: Switch LBRACE WILD
 ## LBRACE
 ##
 
-Unexpected token.
+Ill-formed functional record update.
+At this point an ellipsis '...' is expected.
 
 interactive_expr: Switch LBRACKET VBAR
 ##
@@ -1932,7 +2014,11 @@ interactive_expr: Switch LBRACKET VBAR
 ## LBRACKET
 ##
 
-Unexpected token.
+Ill-formed expression.
+If this is a code insert, 
+  then at this point a percentage '%' is expected.
+If this is a list expression,
+  then at this point an expression is expected.
 
 interactive_expr: Switch LBRACKET WILD COMMA VBAR
 ##
