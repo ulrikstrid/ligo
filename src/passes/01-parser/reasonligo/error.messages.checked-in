@@ -2031,7 +2031,8 @@ interactive_expr: Switch LBRACKET WILD COMMA VBAR
 ## expr COMMA
 ##
 
-Expected an expression.
+Ill-formed 'list' expression.
+At this point an expression is expected.
 
 interactive_expr: Switch LBRACKET WILD COMMA WILD COMMA VBAR
 ##
@@ -2044,7 +2045,8 @@ interactive_expr: Switch LBRACKET WILD COMMA WILD COMMA VBAR
 ## expr COMMA
 ##
 
-Expected an expression.
+Ill-formed 'list' expression.
+At this point an expression is expected.
 
 interactive_expr: Switch LPAR VBAR
 ##
@@ -2057,7 +2059,11 @@ interactive_expr: Switch LPAR VBAR
 ## LPAR
 ##
 
-Expected an expression or a closing `]`.
+Ill-formed expression.
+If this is parenthesized expression, 
+  then at this point an expression is expected.
+If this is a unit, 
+  then at this point a closing parenthesis ')' is expected.
 
 interactive_expr: Switch LPAR WILD VBAR
 ##
@@ -2087,7 +2093,8 @@ interactive_expr: Switch LPAR WILD VBAR
 ## In state 229, spurious reduction of production expr -> base_cond 
 ##
 
-Expected a closing `)`.
+Ill-formed parenthesized expression.
+At this point a closing parenthesis ')' is expected.
 
 interactive_expr: Switch VBAR
 ##
@@ -2099,7 +2106,8 @@ interactive_expr: Switch VBAR
 ## Switch
 ##
 
-Expected an expression.
+Ill-formed 'switch' expression.
+At this point an expression is expected.
 
 interactive_expr: Switch WILD LBRACE VBAR LBRACKET VBAR
 ##
@@ -2112,7 +2120,8 @@ interactive_expr: Switch WILD LBRACE VBAR LBRACKET VBAR
 ## LBRACKET
 ##
 
-Expected a pattern.
+Ill-formed 'switch' case.
+At this point a pattern is expected.
 
 interactive_expr: Switch WILD LBRACE VBAR LBRACKET WILD COMMA ELLIPSIS VBAR
 ##
@@ -2124,7 +2133,8 @@ interactive_expr: Switch WILD LBRACE VBAR LBRACKET WILD COMMA ELLIPSIS VBAR
 ## LBRACKET sub_pattern COMMA ELLIPSIS
 ##
 
-Expected a pattern.
+Ill-formed list pattern.
+At this point a pattern is expected.
 
 interactive_expr: Switch WILD LBRACE VBAR LBRACKET WILD COMMA ELLIPSIS WILD WILD
 ##
@@ -2136,7 +2146,8 @@ interactive_expr: Switch WILD LBRACE VBAR LBRACKET WILD COMMA ELLIPSIS WILD WILD
 ## LBRACKET sub_pattern COMMA ELLIPSIS sub_pattern
 ##
 
-Expected a closing `]`.
+Ill-formed list pattern.
+At this point a closing bracket ']' is expected. 
 
 interactive_expr: Switch WILD LBRACE VBAR LBRACKET WILD COMMA VBAR
 ##
@@ -2150,7 +2161,11 @@ interactive_expr: Switch WILD LBRACE VBAR LBRACKET WILD COMMA VBAR
 ## LBRACKET sub_pattern COMMA
 ##
 
-Expected `...` as part of the list spread syntax.
+Ill-formed list pattern.
+At this point expected one of the following:
+  a pattern; or
+  an ellipsis,
+    followed by a pattern.
 
 interactive_expr: Switch WILD LBRACE VBAR LBRACKET WILD WILD
 ##
@@ -2165,9 +2180,10 @@ interactive_expr: Switch WILD LBRACE VBAR LBRACKET WILD WILD
 ## LBRACKET sub_pattern
 ##
 
-Expected either:
-- a closing `]`
-- a `,` and another pattern
+Ill-formed list pattern.
+At this point one of the following is expected: 
+  a comma ','; or
+  a closing bracket ']'.
 
 interactive_expr: Switch WILD LBRACE VBAR LPAR Bytes RPAR WILD
 ##
@@ -2179,7 +2195,11 @@ interactive_expr: Switch WILD LBRACE VBAR LPAR Bytes RPAR WILD
 ## sub_pattern
 ##
 
-Expected `,` and another pattern, or `=>`.
+Ill-formed tuple pattern.
+At this point one of the following is expected:
+  a comma ',',
+    followed by a pattern; or
+  an arrow '=>'.
 
 interactive_expr: Switch WILD LBRACE VBAR VBAR
 ##
@@ -2191,7 +2211,8 @@ interactive_expr: Switch WILD LBRACE VBAR VBAR
 ## VBAR
 ##
 
-Expected a pattern.
+Ill-formed 'switch' case.
+At this point a pattern is expected.
 
 interactive_expr: Switch WILD LBRACE VBAR WILD ARROW Bytes SEMI WILD
 ##
@@ -2203,7 +2224,10 @@ interactive_expr: Switch WILD LBRACE VBAR WILD ARROW Bytes SEMI WILD
 ## case_clause(base_cond)
 ##
 
-Expected another switch case or a closing `}`.
+Ill-formed 'switch' expression.
+At this point one of the following is expected:
+  a switch case; or
+  a closing brace '}'.
 
 interactive_expr: Switch WILD LBRACE VBAR WILD ARROW Bytes VBAR Bytes ARROW Bytes SEMI WILD
 ##
@@ -2215,7 +2239,10 @@ interactive_expr: Switch WILD LBRACE VBAR WILD ARROW Bytes VBAR Bytes ARROW Byte
 ## case_clause(base_cond)
 ##
 
-Expected another switch case or a closing `}`.
+Ill-formed 'switch' expression.
+At this point one of the following is expected:
+  a switch case; or
+  a closing brace '}'.
 
 interactive_expr: Switch WILD LBRACE VBAR WILD ARROW VBAR
 ##
@@ -2227,7 +2254,8 @@ interactive_expr: Switch WILD LBRACE VBAR WILD ARROW VBAR
 ## VBAR pattern ARROW
 ##
 
-Expected an expression.
+Ill-formed 'switch' case.
+At this point an expression is expected.
 
 interactive_expr: Switch WILD LBRACE VBAR WILD ARROW WILD Type
 ##
@@ -2256,7 +2284,10 @@ interactive_expr: Switch WILD LBRACE VBAR WILD ARROW WILD Type
 ## In state 228, spurious reduction of production base_cond -> base_expr 
 ##
 
-Expected another switch case or a closing `}`.
+Ill-formed 'switch' expression.
+At this point one of the following is expected:
+  a switch case; or
+  a closing brace '}'.
 
 interactive_expr: Switch WILD LBRACE VBAR WILD COMMA Bytes RPAR
 ##
@@ -2276,7 +2307,8 @@ interactive_expr: Switch WILD LBRACE VBAR WILD COMMA Bytes RPAR
 ## In state 342, spurious reduction of production pattern -> tuple(sub_pattern) 
 ##
 
-Expected `=>`.
+Ill-formed 'switch' case.
+At this point an arrow '=>' is expected.
 
 interactive_expr: Switch WILD LBRACE VBAR WILD COMMA VBAR
 ##
@@ -2288,7 +2320,8 @@ interactive_expr: Switch WILD LBRACE VBAR WILD COMMA VBAR
 ## sub_pattern COMMA
 ##
 
-Expected a pattern.
+Ill-formed 'switch' case.
+At this point a pattern is expected.
 
 interactive_expr: Switch WILD LBRACE VBAR WILD COMMA WILD COMMA VBAR
 ##
@@ -2300,7 +2333,8 @@ interactive_expr: Switch WILD LBRACE VBAR WILD COMMA WILD COMMA VBAR
 ## sub_pattern COMMA
 ##
 
-Expected a pattern.
+Ill-formed 'switch' case.
+At this point a pattern is expected.
 
 interactive_expr: Switch WILD LBRACE VBAR WILD COMMA WILD WILD
 ##
@@ -2313,7 +2347,11 @@ interactive_expr: Switch WILD LBRACE VBAR WILD COMMA WILD WILD
 ## sub_pattern
 ##
 
-Expected `,` and another pattern, or `=>`.
+Ill-formed 'switch' case.
+At this point one of the following is expected:
+  a comma ',',
+    followed by a pattern; or
+  an arrow '=>'.
 
 interactive_expr: Switch WILD LBRACE VBAR WILD WILD
 ##
@@ -2326,8 +2364,12 @@ interactive_expr: Switch WILD LBRACE VBAR WILD WILD
 ## core_pattern
 ##
 
-Expected `,` and another pattern, or `=>`.
-
+Ill-formed 'switch' case.
+At this point one of the following is expected:
+  a comma ',',
+    followed by a pattern; or
+  an arrow '=>'.
+  
 interactive_expr: Switch WILD LBRACE WILD
 ##
 ## Ends in an error in state: 502.
@@ -2338,7 +2380,8 @@ interactive_expr: Switch WILD LBRACE WILD
 ## Switch switch_expr_ LBRACE
 ##
 
-Expected a switch case.
+Ill-formed 'switch' expression.
+At this point a switch case is expected.
 
 interactive_expr: Switch WILD WILD
 ##
