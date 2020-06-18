@@ -8,7 +8,7 @@ interactive_expr: C_None WILD
 ## call_expr_level_in
 ##
 
-Ill-formed `None` constructor. 
+Ill-formed 'None' constructor. 
 At this point one of the following is expected:
   a type annotation; or
   a semicolon ';'.
@@ -23,7 +23,7 @@ interactive_expr: C_Some VBAR
 ## C_Some
 ##
 
-Ill-formed `Some` constructor.
+Ill-formed 'Some' constructor.
 At this point an expression is expected.
 
 interactive_expr: Constr DOT Ident WILD
@@ -382,7 +382,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch VBAR
 ## Switch
 ##
 
-Ill-formed switch expression.
+Ill-formed 'switch' expression.
 At this point an expression is expected.
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR VBAR
@@ -395,7 +395,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR VBAR
 ## VBAR
 ##
 
-Ill-formed switch case.
+Ill-formed 'switch' case.
 At this point a pattern is expected.
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW Bytes SEMI WILD
@@ -407,9 +407,6 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW By
 ## The known suffix of the stack is as follows:
 ## case_clause(base_if_then_else)
 ##
-
-Expected another case or closing of the switch with `}`.
-
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW Bytes VBAR Bytes ARROW Bytes SEMI WILD
 ##
 ## Ends in an error in state: 436.
@@ -420,7 +417,10 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW By
 ## case_clause(base_if_then_else)
 ##
 
-Expected another case or closing of the switch with `}`.
+Ill-formed 'switch' expression.
+At this point one of the following is expected:
+  a switch case; or
+  a closing brace '}'.
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE VBAR
 ##
@@ -431,9 +431,6 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 ## The known suffix of the stack is as follows:
 ## If parenthesized_expr LBRACE
 ##
-
-Expected an expression.
-
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE WILD RBRACE Else LBRACE VBAR
 ##
 ## Ends in an error in state: 421.
@@ -444,7 +441,8 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 ## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE
 ##
 
-Expected an expression.
+Ill-formed 'if' expression.
+At this point an expression is expected.
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE WILD RBRACE Else LBRACE WILD SEMI PLUS
 ##
@@ -456,7 +454,8 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 ## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE base_if_then_else option(SEMI)
 ##
 
-Expected `}` or another expression.
+Ill-formed 'if' expression.
+At this point a closing brace '}' is expected.
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE WILD RBRACE Else LBRACE WILD VBAR
 ##
@@ -486,7 +485,8 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 ## In state 423, spurious reduction of production base_if_then_else -> base_if_then_else__open(base_if_then_else) 
 ##
 
-Expected `}`.
+Ill-formed 'if' expression.
+At this point a closing brace '}' is expected.
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE WILD RBRACE Else WILD
 ##
@@ -498,7 +498,8 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 ## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else
 ##
 
-Expected `{`.
+Ill-formed 'if' expression.
+At this point an opening '{' is expected.
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE WILD RBRACE WILD
 ##
@@ -510,7 +511,8 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 ## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE
 ##
 
-Expected `else`.
+Ill-formed 'if' expression.
+At this point 'else' is expected.
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE WILD SEMI PLUS
 ##
@@ -522,7 +524,8 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 ## If parenthesized_expr LBRACE closed_if option(SEMI)
 ##
 
-Expected `}` or another expression.
+Ill-formed 'if' expression.
+At this point a closing brace '}' is expected.
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE WILD VBAR
 ##
@@ -552,7 +555,8 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 ## In state 415, spurious reduction of production closed_if -> base_if_then_else__open(closed_if) 
 ##
 
-Expected `}` or another expression.
+Ill-formed 'if' expression.
+At this point a closing brace '}' is expected.
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If LPAR Bytes RPAR WILD
 ##
@@ -564,7 +568,8 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 ## If parenthesized_expr
 ##
 
-Expected `{`.
+Ill-formed 'if' expression.
+At this point an opening brace '{' is expected.
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If WILD
 ##
@@ -576,6 +581,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 ## If
 ##
 
+Ill-formed 'if' expression.
 Expected a parenthesized test as part of the if expression.
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW VBAR
@@ -588,7 +594,8 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW VB
 ## VBAR pattern ARROW
 ##
 
-Expected an expression.
+Ill-formed switch case.
+At this point an expression is expected.
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW WILD Type
 ##
@@ -618,8 +625,11 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW WI
 ## In state 423, spurious reduction of production base_if_then_else -> base_if_then_else__open(base_if_then_else) 
 ##
 
-Expected another switch case or the end of the switch expression with a closing `}`.
-
+Ill-formed 'switch' expression.
+At this point one of the following is expected:
+  a switch case; or 
+  a closing brace '}'.
+  
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD COMMA Bytes RPAR
 ##
 ## Ends in an error in state: 344.
@@ -638,7 +648,8 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD COMMA By
 ## In state 342, spurious reduction of production pattern -> tuple(sub_pattern) 
 ##
 
-Expected `=>` as part of the switch case.
+Ill-formed 'switch' case.
+At this point an arrow '=>' is expected.
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE WILD
 ##
@@ -650,7 +661,8 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE WILD
 ## Switch switch_expr_ LBRACE
 ##
 
-Expected a switch case.
+Ill-formed 'switch' expression.
+At this point a switch case is expected. 
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD WILD
 ##
@@ -662,7 +674,8 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD WILD
 ## Switch switch_expr_
 ##
 
-Expected `{`.
+Ill-formed 'switch' expression.
+At this point an opening brace '{' is expected.
 
 interactive_expr: If LPAR WILD RPAR LBRACE VBAR
 ##
@@ -675,7 +688,8 @@ interactive_expr: If LPAR WILD RPAR LBRACE VBAR
 ## If parenthesized_expr LBRACE
 ##
 
-Expected an expression.
+Ill-formed 'if' expression.
+At this point an opening brace '{' is expected.
 
 interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE Else LBRACE VBAR
 ##
@@ -687,7 +701,8 @@ interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE Else LBRACE VBAR
 ## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE
 ##
 
-Expected an expression.
+Ill-formed 'if' expression.
+At this point an opening brace '{' is expected.
 
 interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE Else LBRACE WILD SEMI PLUS
 ##
@@ -699,7 +714,8 @@ interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE Else LBRACE WILD SEMI PLU
 ## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE expr_with_let_expr option(SEMI)
 ##
 
-Expected `}` or another expression.
+Ill-formed 'if' expression.
+At this point a closing brace '}' is expected.
 
 interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE Else LBRACE WILD VBAR
 ##
@@ -730,7 +746,8 @@ interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE Else LBRACE WILD VBAR
 ## In state 401, spurious reduction of production expr_with_let_expr -> expr 
 ##
 
-Expected `}` or another expression.
+Ill-formed 'if' expression.
+At this point a closing brace '}' is expected.
 
 interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE Else WILD
 ##
@@ -742,7 +759,8 @@ interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE Else WILD
 ## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else
 ##
 
-Expected `{`.
+Ill-formed 'if' expression.
+At this point an opening brace '{' is expected.
 
 interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE WILD
 ##
@@ -755,7 +773,10 @@ interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE WILD
 ## If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE
 ##
 
-Unexpected token.
+Ill-formed 'if' expression.
+At this point one of the following is expected:
+  an 'else' block; or
+  a closing brace '}'.
 
 interactive_expr: If LPAR WILD RPAR LBRACE WILD SEMI PLUS
 ##
@@ -768,7 +789,9 @@ interactive_expr: If LPAR WILD RPAR LBRACE WILD SEMI PLUS
 ## If parenthesized_expr LBRACE closed_if option(SEMI)
 ##
 
-Expected `}` or another expression.
+Ill-formed 'if' expression.
+At this point a closing brace '}' is expected, 
+followed with an optional 'else' block.
 
 interactive_expr: If LPAR WILD RPAR LBRACE WILD VBAR
 ##
@@ -799,7 +822,9 @@ interactive_expr: If LPAR WILD RPAR LBRACE WILD VBAR
 ## In state 415, spurious reduction of production closed_if -> base_if_then_else__open(closed_if) 
 ##
 
-Unexpected token.
+Ill-formed 'if' expression.
+At this point a closing brace '}' is expected, 
+followed with an optional 'else' block.
 
 interactive_expr: If LPAR WILD RPAR WILD
 ##
@@ -812,7 +837,8 @@ interactive_expr: If LPAR WILD RPAR WILD
 ## If parenthesized_expr
 ##
 
-Expected `{`.
+Ill-formed 'if' expression.
+At this point an opening brace '{' is expected.
 
 interactive_expr: If LPAR WILD VBAR
 ##
@@ -842,7 +868,8 @@ interactive_expr: If LPAR WILD VBAR
 ## In state 229, spurious reduction of production expr -> base_cond 
 ##
 
-Expected `)`.
+Ill-formed 'if' expression.
+At this point a closing parenthesis ')' is expected.
 
 interactive_expr: If WILD
 ##
@@ -855,7 +882,8 @@ interactive_expr: If WILD
 ## If
 ##
 
-Expected `(`.
+Ill-formed 'if' expression.
+At this an opening parenthesis '(' is expected.
 
 interactive_expr: LBRACE ELLIPSIS Constr DOT Ident WILD
 ##
@@ -867,7 +895,8 @@ interactive_expr: LBRACE ELLIPSIS Constr DOT Ident WILD
 ## Constr DOT Ident
 ##
 
-Expected a record field assignment.
+Ill-formed record expression.
+At this point a selection '[<int>]' is optional, followed by a comma ','.
 
 interactive_expr: LBRACE ELLIPSIS Constr DOT WILD
 ##
@@ -879,7 +908,8 @@ interactive_expr: LBRACE ELLIPSIS Constr DOT WILD
 ## Constr DOT
 ##
 
-Expected an identifier.
+Ill-formed module path.
+At this point an identifier is expected.
 
 interactive_expr: LBRACE ELLIPSIS Constr WILD
 ##
@@ -891,7 +921,8 @@ interactive_expr: LBRACE ELLIPSIS Constr WILD
 ## Constr
 ##
 
-Expected a `.` and an identifier as part of the record path.
+Ill-formed module path.
+At this point a dot '.' is expected, followed by an identifier.
 
 interactive_expr: LBRACE ELLIPSIS Ident COLON
 ##
@@ -909,7 +940,8 @@ interactive_expr: LBRACE ELLIPSIS Ident COLON
 ## In state 253, spurious reduction of production path -> Ident 
 ##
 
-Expected a `,`.
+Ill-formed record expression.
+At this point a comma ',' is expected, followed by record field assignment(s).
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes COMMA Ident COLON Bytes COMMA WILD
 ##
@@ -922,7 +954,8 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes COMMA Ident COLO
 ## field_path_assignment COMMA
 ##
 
-Expected either another record field assignment or a closing `}`.
+Ill-formed record expression.
+At this point a record field assignment is expected.
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes COMMA Ident COLON Bytes VBAR
 ##
@@ -955,7 +988,10 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes COMMA Ident COLO
 ## In state 264, spurious reduction of production field_path_assignment -> path COLON expr 
 ##
 
-Expected either another record field assignment or a closing `}`.
+Ill-formed record expression.
+At this point one of the following is expected:
+  a ',' followed by a record field assignment; or 
+  a closing brace '}'.
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes COMMA WILD
 ##
@@ -968,7 +1004,8 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes COMMA WILD
 ## field_path_assignment COMMA
 ##
 
-Expected either another record field assignment or a closing `}`.
+Ill-formed record expression.
+At this point a record field assignment is expected.
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes VBAR
 ##
@@ -1001,7 +1038,10 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes VBAR
 ## In state 264, spurious reduction of production field_path_assignment -> path COLON expr 
 ##
 
-Expected either another record field assignment or a closing `}`.
+Ill-formed record expression.
+At this point one of the following is expected:
+  a ',' followed by a record field assignment; or 
+  a closing brace '}'.
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON VBAR
 ##
@@ -1013,7 +1053,8 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON VBAR
 ## path COLON
 ##
 
-Expected an expression.
+Ill-formed record expression.
+At this point an expression is expected.
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COMMA
 ##
@@ -1031,7 +1072,8 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COMMA
 ## In state 253, spurious reduction of production path -> Ident 
 ##
 
-Expected an record field assignment or a closing `}`.
+Ill-formed record expression.
+At this point a record field assignment is expected.
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA WILD
 ##
