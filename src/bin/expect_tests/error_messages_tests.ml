@@ -25,7 +25,11 @@ let%expect_test _ =
   [%expect {|
     ligo: error
     Parse error in file "missing_rpar.religo", line 5, characters 0-3 at "let", after "m":
-    Expected a `,` and another expression, or a closing  `)`.
+    Up to this point a function call has been recognized.
+    At this point one of the following is expected:
+      a comma ',',
+        followed by an expression; or
+      a closing parenthesis ')'.
 
 
 

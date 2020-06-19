@@ -2393,7 +2393,8 @@ interactive_expr: Switch WILD WILD
 ## Switch switch_expr_
 ##
 
-Expected an opening `{`.
+Ill-formed 'switch' expression.
+At this point an opening brace '{' is expected.
 
 interactive_expr: VBAR
 ##
@@ -2405,7 +2406,7 @@ interactive_expr: VBAR
 ##
 ##
 
-Expected an expression.
+Ill-formed expression.
 
 interactive_expr: WILD ARROW VBAR
 ##
@@ -2417,7 +2418,8 @@ interactive_expr: WILD ARROW VBAR
 ## disj_expr_level ARROW
 ##
 
-Expected an expression.
+Ill-formed function expression.
+At this point an expression is expected.
 
 interactive_expr: WILD BOOL_AND VBAR
 ##
@@ -2429,7 +2431,8 @@ interactive_expr: WILD BOOL_AND VBAR
 ## conj_expr_level BOOL_AND
 ##
 
-Expected an expression.
+Ill-formed binary '&&' operation.
+At this point an expression is expected.
 
 interactive_expr: WILD BOOL_OR VBAR
 ##
@@ -2441,7 +2444,8 @@ interactive_expr: WILD BOOL_OR VBAR
 ## disj_expr_level BOOL_OR
 ##
 
-Expected an expression.
+Ill-formed binary '||' operation.
+At this point an expression is expected.
 
 interactive_expr: WILD CAT VBAR
 ##
@@ -2453,7 +2457,9 @@ interactive_expr: WILD CAT VBAR
 ## add_expr_level CAT
 ##
 
-Expected an expression.
+
+Ill-formed string concatenation '++'.
+At this point an expression is expected. 
 
 interactive_expr: WILD COLON Ident LPAR Ident VBAR
 ##
@@ -2473,9 +2479,11 @@ interactive_expr: WILD COLON Ident LPAR Ident VBAR
 ## In state 148, spurious reduction of production type_expr_simple -> Ident option(type_expr_simple_args) 
 ##
 
-Expected either:
-- `,` and another type expression
-- a closing `)`.
+Ill-formed type expression.
+At this point one of the following is expected:
+  a comma ',',
+    followed by a type expression; or
+  a closing parenthesis ')'.
 
 interactive_expr: WILD COLON Ident LPAR WILD
 ##
@@ -2487,7 +2495,8 @@ interactive_expr: WILD COLON Ident LPAR WILD
 ## LPAR
 ##
 
-Expected a type expression.
+Ill-formed type expression.
+At this point a type expression is expected.
 
 interactive_expr: WILD COLON Ident WILD
 ##
@@ -2499,7 +2508,10 @@ interactive_expr: WILD COLON Ident WILD
 ## Ident
 ##
 
-Unexpected token.
+Ill-formed type expression.
+At this point one of the following is expected:
+  type arguments; or
+  a semicolon ';'.
 
 interactive_expr: WILD COLON LPAR Ident ARROW Ident VBAR
 ##
@@ -2518,7 +2530,8 @@ interactive_expr: WILD COLON LPAR Ident ARROW Ident VBAR
 ## In state 148, spurious reduction of production type_expr_simple -> Ident option(type_expr_simple_args) 
 ##
 
-Expected a closing `)`.
+Ill-formed function type expression.
+At this point a closing parenthesis ')' is expected.
 
 interactive_expr: WILD COLON LPAR Ident ARROW WILD
 ##
@@ -2530,7 +2543,9 @@ interactive_expr: WILD COLON LPAR Ident ARROW WILD
 ## LPAR type_expr_simple ARROW
 ##
 
-Expected a type expression.
+Ill-formed function type expression.
+At this point a type expression is expected,
+  followed by a closing parenthesis ')'.
 
 interactive_expr: WILD COLON LPAR Ident COMMA WILD
 ##
@@ -2542,7 +2557,7 @@ interactive_expr: WILD COLON LPAR Ident COMMA WILD
 ## type_expr_simple COMMA
 ##
 
-Expected a type expression.
+Ill-formed type expression.
 
 interactive_expr: WILD COLON LPAR Ident RPAR WILD
 ##
@@ -2557,7 +2572,10 @@ interactive_expr: WILD COLON LPAR Ident RPAR WILD
 ## mult_expr_level
 ##
 
-Unexpected token.
+Ill-formed expression.
+At this point one of the following is expected:
+  an operator; or
+  a semicolon ';'.
 
 interactive_expr: WILD COLON LPAR Ident VBAR
 ##
@@ -2578,10 +2596,13 @@ interactive_expr: WILD COLON LPAR Ident VBAR
 ## In state 148, spurious reduction of production type_expr_simple -> Ident option(type_expr_simple_args) 
 ##
 
-Expected either:
-- a closing `)`
-- `,` and a type expression
-- `=>` and the remainder of the function type expression
+Ill-formed type expression.
+At this point one of the following is expected:
+  an arrow '=>',
+    followed by a type expression; or
+  a comma ',',
+    followed by a type expression; or
+  a closing parenthesis ')'.
 
 interactive_expr: WILD COLON LPAR WILD
 ##
@@ -2594,7 +2615,7 @@ interactive_expr: WILD COLON LPAR WILD
 ## LPAR
 ##
 
-Expected a type expression.
+Ill-formed type expression.
 
 interactive_expr: WILD COLON WILD
 ##
@@ -2606,7 +2627,7 @@ interactive_expr: WILD COLON WILD
 ## COLON
 ##
 
-Expected a type expression.
+Ill-formed type expression.
 
 interactive_expr: WILD EQEQ VBAR
 ##
@@ -2618,7 +2639,8 @@ interactive_expr: WILD EQEQ VBAR
 ## comp_expr_level EQEQ
 ##
 
-Expected an expression.
+Ill-formed binary '==' operation.
+At this point an expression is expected.
 
 interactive_expr: WILD GE VBAR
 ##
@@ -2630,7 +2652,8 @@ interactive_expr: WILD GE VBAR
 ## comp_expr_level GE
 ##
 
-Expected an expression.
+Ill-formed binary '>=' operation.
+At this point an expression is expected.
 
 interactive_expr: WILD GT VBAR
 ##
@@ -2642,7 +2665,8 @@ interactive_expr: WILD GT VBAR
 ## comp_expr_level GT
 ##
 
-Expected an expression.
+Ill-formed binary '>' operation.
+At this point an expression is expected.
 
 interactive_expr: WILD LE VBAR
 ##
@@ -2654,7 +2678,8 @@ interactive_expr: WILD LE VBAR
 ## comp_expr_level LE
 ##
 
-Expected an expression.
+Ill-formed binary '<=' operation.
+At this point an expression is expected.
 
 interactive_expr: WILD LPAR VBAR
 ##
@@ -2667,7 +2692,10 @@ interactive_expr: WILD LPAR VBAR
 ## core_expr LPAR
 ##
 
-Expected an expression or closing `)`.
+Up to this point a function call has been recognized.
+At this point one of the following is expected:
+  an expression; or
+  a closing parenthesis ')'.
 
 interactive_expr: WILD LPAR WILD COMMA VBAR
 ##
@@ -2679,7 +2707,8 @@ interactive_expr: WILD LPAR WILD COMMA VBAR
 ## expr COMMA
 ##
 
-Expected an expression.
+Up to this point a function call has been recognized.
+At this point an expression is expected.
 
 interactive_expr: WILD LPAR WILD VBAR
 ##
@@ -2710,7 +2739,11 @@ interactive_expr: WILD LPAR WILD VBAR
 ## In state 229, spurious reduction of production expr -> base_cond 
 ##
 
-Expected a `,` and another expression, or a closing  `)`.
+Up to this point a function call has been recognized.
+At this point one of the following is expected:
+  a comma ',',
+    followed by an expression; or
+  a closing parenthesis ')'.
 
 interactive_expr: WILD LT VBAR
 ##
@@ -2722,7 +2755,8 @@ interactive_expr: WILD LT VBAR
 ## comp_expr_level LT
 ##
 
-Expected an expression.
+Ill-formed binary '<' operation.
+At this point an expression is expected.
 
 interactive_expr: WILD MINUS VBAR
 ##
@@ -2734,7 +2768,8 @@ interactive_expr: WILD MINUS VBAR
 ## add_expr_level MINUS
 ##
 
-Expected an expression.
+Ill-formed binary '-' operation.
+At this point an expression is expected.
 
 interactive_expr: WILD MINUS WILD COLON LPAR Ident RPAR WILD
 ##
@@ -2749,7 +2784,7 @@ interactive_expr: WILD MINUS WILD COLON LPAR Ident RPAR WILD
 ## add_expr_level MINUS mult_expr_level
 ##
 
-Expected an operator, like `-`, `+`, `*`, or `/`.
+At this point an operator, like '-', 'mod', '/', or '*', is expected.
 
 interactive_expr: WILD Mod VBAR
 ##
@@ -2761,7 +2796,8 @@ interactive_expr: WILD Mod VBAR
 ## mult_expr_level Mod
 ##
 
-Expected an expression.
+Ill-formed binary 'mod' operation.
+At this point an expression is expected.
 
 interactive_expr: WILD NE VBAR
 ##
@@ -2773,7 +2809,8 @@ interactive_expr: WILD NE VBAR
 ## comp_expr_level NE
 ##
 
-Expected an expression.
+Ill-formed binary '!=' operation.
+At this point an expression is expected.
 
 interactive_expr: WILD Or VBAR
 ##
@@ -2785,7 +2822,8 @@ interactive_expr: WILD Or VBAR
 ## disj_expr_level Or
 ##
 
-Expected an expression.
+Ill-formed binary '||' operation.
+At this point an expression is expected.
 
 interactive_expr: WILD PLUS VBAR
 ##
@@ -2797,7 +2835,8 @@ interactive_expr: WILD PLUS VBAR
 ## add_expr_level PLUS
 ##
 
-Expected an expression.
+Ill-formed binary '+' operation.
+At this point an expression is expected.
 
 interactive_expr: WILD PLUS WILD COLON LPAR Ident RPAR WILD
 ##
@@ -2812,7 +2851,7 @@ interactive_expr: WILD PLUS WILD COLON LPAR Ident RPAR WILD
 ## add_expr_level PLUS mult_expr_level
 ##
 
-Expected an operator, like `-`, `+`, `*`, or `/`.
+At this point an operator, like '-', 'mod', '/', or '*', is expected.
 
 interactive_expr: WILD SLASH VBAR
 ##
@@ -2824,7 +2863,8 @@ interactive_expr: WILD SLASH VBAR
 ## mult_expr_level SLASH
 ##
 
-Expected an expression.
+Ill-formed binary '/' operation.
+At this point an expression is expected.
 
 interactive_expr: WILD TIMES VBAR
 ##
@@ -2836,7 +2876,8 @@ interactive_expr: WILD TIMES VBAR
 ## mult_expr_level TIMES
 ##
 
-Expected an expression.
+Ill-formed binary '*' operation.
+At this point an expression is expected.
 
 interactive_expr: WILD VBAR
 ##
@@ -2867,9 +2908,11 @@ interactive_expr: WILD VBAR
 ## In state 401, spurious reduction of production expr_with_let_expr -> expr 
 ##
 
-Unexpected token.
+At this point end of the file is expected.
 
 interactive_expr: WILD WILD
+##
+## This should never happen.
 ##
 ## Ends in an error in state: 161.
 ##
@@ -2881,7 +2924,7 @@ interactive_expr: WILD WILD
 ## core_expr
 ##
 
-Unexpected token.
+This error should not occur! If it does, the wild pattern check is broken.
 
 contract: Attr WILD
 ##
@@ -2893,7 +2936,9 @@ contract: Attr WILD
 ## Attr
 ##
 
-Expected another attribute or a let instruction.
+At this point one of the following is expected:
+  another attribute; or
+  a let declaration.
 
 contract: Let Ident COLON String WILD
 ##
@@ -2905,7 +2950,8 @@ contract: Let Ident COLON String WILD
 ## Ident option(type_annotation)
 ##
 
-Expected a `=` as part of the let binding.
+Ill-formed let declaration.
+At this point an equals '=' symbol is expected.
 
 contract: Let Ident EQ VBAR
 ##
