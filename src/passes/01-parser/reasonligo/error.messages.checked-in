@@ -2938,7 +2938,7 @@ contract: Attr WILD
 
 At this point one of the following is expected:
   another attribute; or
-  a let declaration.
+  a 'let' declaration.
 
 contract: Let Ident COLON String WILD
 ##
@@ -2950,7 +2950,7 @@ contract: Let Ident COLON String WILD
 ## Ident option(type_annotation)
 ##
 
-Ill-formed let declaration.
+Ill-formed 'let' declaration.
 At this point an equals '=' symbol is expected.
 
 contract: Let Ident EQ VBAR
@@ -2963,12 +2963,8 @@ contract: Let Ident EQ VBAR
 ## Ident option(type_annotation) EQ
 ##
 
-Expected an expression as part of the let binding.
--
-Examples of correct let bindings:
-let a: int = 4;
-let (a: int, b: int) = (1, 2);
-let func = (a: int, b: int) => a + b;
+Ill-formed 'let' declaration.
+At this point an expression is expected.
 
 contract: Let Ident WILD
 ##
@@ -2981,10 +2977,13 @@ contract: Let Ident WILD
 ## Ident
 ##
 
-Expected either:
-- a type annotation
-- `=` and an expression
-- a `,` and a pattern
+Ill-formed 'let' declaration.
+At this point one of the following is expected:
+  a type annotation; or
+  an equals '=' symbol,
+    followed by an expression; or
+  a comma ',',
+    followed by a pattern.
 
 contract: Let LBRACE Ident EQ Bytes COMMA Ident EQ Bytes COMMA WILD
 ##
@@ -2997,7 +2996,8 @@ contract: Let LBRACE Ident EQ Bytes COMMA Ident EQ Bytes COMMA WILD
 ## field_pattern COMMA
 ##
 
-Expected a update_record field pattern.
+Ill-formed record pattern.
+At this point a record field pattern is expected.
 
 contract: Let LBRACE Ident EQ Bytes COMMA Ident EQ Bytes WILD
 ##
@@ -3011,6 +3011,7 @@ contract: Let LBRACE Ident EQ Bytes COMMA Ident EQ Bytes WILD
 ## field_pattern
 ##
 
+Ill-formed record pattern.
 Expected either a `,` and record field pattern, or a closing `}`.
 
 contract: Let LBRACE Ident EQ Bytes COMMA WILD
@@ -3024,7 +3025,8 @@ contract: Let LBRACE Ident EQ Bytes COMMA WILD
 ## field_pattern COMMA
 ##
 
-Expected a record field pattern.
+Ill-formed record pattern.
+At this point a record field pattern is expected.
 
 contract: Let LBRACE Ident EQ Bytes RBRACE COLON String WILD
 ##
@@ -3036,7 +3038,8 @@ contract: Let LBRACE Ident EQ Bytes RBRACE COLON String WILD
 ## record_pattern option(type_annotation)
 ##
 
-Expected an `=` as part of the let binding.
+Ill-formed 'let' binding.
+At this point an equals '=' symbol is expected.
 
 contract: Let LBRACE Ident EQ Bytes RBRACE EQ VBAR
 ##
@@ -3048,7 +3051,8 @@ contract: Let LBRACE Ident EQ Bytes RBRACE EQ VBAR
 ## record_pattern option(type_annotation) EQ
 ##
 
-Expected an expression.
+Ill-formed 'let' binding.
+At this point an expression is expected.
 
 contract: Let LBRACE Ident EQ Bytes RBRACE WILD
 ##
@@ -3061,10 +3065,13 @@ contract: Let LBRACE Ident EQ Bytes RBRACE WILD
 ## record_pattern
 ##
 
-Expected either:
-- a type annotation
-- `=` and an expression
-- a `,` and a pattern
+Ill-formed 'let' binding.
+At this point one of the following is expected:
+  a type annotation; or
+  an equals '=' symbol,
+    followed by an expression; or
+  a comma ',',
+    followed by a pattern.
 
 contract: Let LBRACE Ident EQ Bytes WILD
 ##
@@ -3078,9 +3085,11 @@ contract: Let LBRACE Ident EQ Bytes WILD
 ## field_pattern
 ##
 
-Expected either:
-- a closing `}`
-- a `,` and another field pattern
+Ill-formed record pattern.
+At this point one of the following is expected:
+  a comma ',',
+    followed by a field pattern; or
+  a closing brace '}'.
 
 contract: Let LBRACE Ident EQ VBAR
 ##
@@ -3092,7 +3101,8 @@ contract: Let LBRACE Ident EQ VBAR
 ## Ident EQ
 ##
 
-Expected a pattern.
+Ill-formed record pattern.
+At this point a pattern is expected.
 
 contract: Let LBRACE Ident WILD
 ##
@@ -3104,7 +3114,8 @@ contract: Let LBRACE Ident WILD
 ## Ident
 ##
 
-Expected a `=` as part of the record field pattern.
+Ill-formed record pattern.
+At this point an equals '=' symbol is expected.
 
 contract: Let LBRACE WILD
 ##
@@ -3116,7 +3127,8 @@ contract: Let LBRACE WILD
 ## LBRACE
 ##
 
-Expected a record field pattern.
+Ill-formed record pattern.
+At this point a field pattern is expected.
 
 contract: Let LPAR C_Some VBAR
 ##
@@ -3128,7 +3140,7 @@ contract: Let LPAR C_Some VBAR
 ## C_Some
 ##
 
-Expected a pattern.
+Ill-formed pattern.
 
 contract: Let LPAR Constr LBRACKET VBAR
 ##
@@ -3140,7 +3152,7 @@ contract: Let LPAR Constr LBRACKET VBAR
 ## LBRACKET
 ##
 
-Expected a pattern.
+Ill-formed pattern.
 
 contract: Let LPAR Constr LBRACKET WILD COMMA VBAR
 ##
@@ -3153,7 +3165,7 @@ contract: Let LPAR Constr LBRACKET WILD COMMA VBAR
 ## sub_pattern COMMA
 ##
 
-Expected a pattern.
+Ill-formed pattern.
 
 contract: Let LPAR Constr LBRACKET WILD COMMA WILD COMMA VBAR
 ##
@@ -3166,7 +3178,7 @@ contract: Let LPAR Constr LBRACKET WILD COMMA WILD COMMA VBAR
 ## sub_pattern COMMA
 ##
 
-Expected a pattern.
+Ill-formed pattern.
 
 contract: Let LPAR Constr LBRACKET WILD COMMA WILD WILD
 ##
@@ -3180,7 +3192,11 @@ contract: Let LPAR Constr LBRACKET WILD COMMA WILD WILD
 ## sub_pattern
 ##
 
-Expected a `,` and another pattern, or a closing `]`.
+Ill-formed pattern.
+At this point one of the following is expected:
+  a comma ',',
+    followed by a pattern; or
+  a closing bracket ']'.
 
 contract: Let LPAR Constr LBRACKET WILD WILD
 ##
@@ -3194,7 +3210,11 @@ contract: Let LPAR Constr LBRACKET WILD WILD
 ## sub_pattern
 ##
 
-Expected a `,` and another pattern, or a closing `]`.
+Ill-formed pattern.
+At this point one of the following is expected:
+  a comma ',',
+    followed by a pattern; or
+  a closing bracket ']'.
 
 contract: Let LPAR Constr LPAR VBAR
 ##
@@ -3208,7 +3228,10 @@ contract: Let LPAR Constr LPAR VBAR
 ## LPAR
 ##
 
-Expected either a pattern or closing `)`.
+Ill-formed pattern.
+At this point one of the following is expected:
+  a pattern; or
+  a closing parenthesis ')'.
 
 contract: Let LPAR Constr LPAR WILD COMMA Bytes ARROW
 ##
@@ -3228,7 +3251,8 @@ contract: Let LPAR Constr LPAR WILD COMMA Bytes ARROW
 ## In state 327, spurious reduction of production ptuple -> tuple(sub_pattern) 
 ##
 
-Expected a closing `)`.
+Ill-formed pattern.
+At this point a closing parenthesis ')' is expected.
 
 contract: Let LPAR Constr LPAR WILD WILD
 ##
@@ -3241,7 +3265,11 @@ contract: Let LPAR Constr LPAR WILD WILD
 ## LPAR sub_pattern
 ##
 
-Expected a `,` and another pattern, or a closing `)`.
+Ill-formed pattern.
+At this point one of the following is expected:
+  a comma ',',
+    followed by a pattern; or 
+  a closing parenthesis ')'.
 
 contract: Let LPAR Constr RBRACKET
 ##
@@ -3260,7 +3288,8 @@ contract: Let LPAR Constr RBRACKET
 ## In state 373, spurious reduction of production closed_irrefutable -> constr_pattern 
 ##
 
-Expected a closing `)`.
+Ill-formed pattern.
+At this point a closing parenthesis ')' is expected.
 
 contract: Let LPAR Constr VBAR
 ##
@@ -3273,7 +3302,7 @@ contract: Let LPAR Constr VBAR
 ## Constr
 ##
 
-Uexpected token.
+Ill-formed pattern.
 
 contract: Let LPAR RPAR COLON String WILD
 ##
@@ -3285,7 +3314,8 @@ contract: Let LPAR RPAR COLON String WILD
 ## unit option(type_annotation)
 ##
 
-Expected `=`.
+Ill-formed 'let' declaration.
+At this point an equals '=' symbol is expected.
 
 contract: Let LPAR RPAR EQ VBAR
 ##
@@ -3297,7 +3327,8 @@ contract: Let LPAR RPAR EQ VBAR
 ## unit option(type_annotation) EQ
 ##
 
-Expected an expression.
+Ill-formed 'let' declaration.
+At this point an expression is expected.
 
 contract: Let LPAR RPAR WILD
 ##
@@ -3310,11 +3341,14 @@ contract: Let LPAR RPAR WILD
 ## unit
 ##
 
-Expected either:
-- a type annotation 
-- a `=` and an expression
-- a `,` and another pattern.
-
+Ill-formed 'let' declaration.
+At this point one of the following is expected:
+  an equals '=' symbol,
+    followed by an expression; or
+  a type annotation; or
+  a comma ',',
+    followed by a pattern.
+  
 contract: Let LPAR Verbatim
 ##
 ## Ends in an error in state: 356.
@@ -3326,7 +3360,10 @@ contract: Let LPAR Verbatim
 ## LPAR
 ##
 
-Expected a pattern or closing `)`.
+Ill-formed 'let' declaration.
+At this point one of the following is expected:
+  a pattern; or 
+  a closing parenthesis ')'.
 
 contract: Let LPAR WILD COLON WILD
 ##
@@ -3338,7 +3375,8 @@ contract: Let LPAR WILD COLON WILD
 ## irrefutable COLON
 ##
 
-Expected a type expression.
+Ill-formed type annotations.
+At this point a type expression is expected.
 
 contract: Let LPAR WILD COMMA Ident EQ
 ##
@@ -3359,7 +3397,12 @@ contract: Let LPAR WILD COMMA Ident EQ
 ## In state 361, spurious reduction of production irrefutable -> tuple(sub_irrefutable) 
 ##
 
-Expected a type annotation or a closing `)`.
+Ill-formed pattern.
+At this point one of the following is expected:
+  a comma ',',
+    followed by a pattern; or
+  a type annotation; or
+  a closing parenthesis ')'.
 
 contract: Let LPAR WILD RPAR COLON String WILD
 ##
@@ -3371,7 +3414,8 @@ contract: Let LPAR WILD RPAR COLON String WILD
 ## par(closed_irrefutable) option(type_annotation)
 ##
 
-Expected a `=` as part of the let binding.
+Ill-formed 'let' declaration.
+At this point an equals '=' symbol is expected.
 
 contract: Let LPAR WILD RPAR EQ VBAR
 ##
@@ -3383,7 +3427,8 @@ contract: Let LPAR WILD RPAR EQ VBAR
 ## par(closed_irrefutable) option(type_annotation) EQ
 ##
 
-Expected an expression.
+Ill-formed 'let' declaration.
+At this point an expression is expected.
 
 contract: Let LPAR WILD RPAR WILD
 ##
@@ -3396,7 +3441,13 @@ contract: Let LPAR WILD RPAR WILD
 ## par(closed_irrefutable)
 ##
 
-Expected a `,` and another expression, or a type annotation.
+Ill-formed pattern.
+At this point one of the following is expected:
+  an equals '=' symbol,
+    followed by an expression; or
+  a type annotation; or
+  a comma ',', 
+    followed by a pattern.
 
 contract: Let LPAR WILD WILD
 ##
@@ -3409,7 +3460,11 @@ contract: Let LPAR WILD WILD
 ## sub_irrefutable
 ##
 
-Unexpected token.
+Ill-formed pattern.
+At this point one of the following is expected:
+  a comma ',',
+    followed by a pattern; or
+  a closing parenthesis ')'.
 
 contract: Let Rec Verbatim
 ##
@@ -3421,7 +3476,8 @@ contract: Let Rec Verbatim
 ## seq(Attr) Let Rec
 ##
 
-Expected a let binding.
+Ill-formed 'let' declaration.
+At this point a let binding is expected.
 
 contract: Let Verbatim
 ##
@@ -3434,7 +3490,11 @@ contract: Let Verbatim
 ## seq(Attr) Let
 ##
 
-Expected a let binding.
+Ill-formed 'let' declaration.
+At this point one of the following is expected:
+  a let binding; or 
+  a 'rec' keyword, 
+    followed by a let binding.
 
 contract: Let WILD COLON String WILD
 ##
@@ -3446,7 +3506,8 @@ contract: Let WILD COLON String WILD
 ## WILD option(type_annotation)
 ##
 
-Expected `=` as part of the let binding.
+Ill-formed 'let' declaration.
+At this point an equals '=' symbol is expected.
 
 contract: Let WILD COLON WILD
 ##
@@ -3458,7 +3519,8 @@ contract: Let WILD COLON WILD
 ## COLON
 ##
 
-Expected a type expression.
+Ill-formed type annotation.
+At this point a type expression is expected.
 
 contract: Let WILD COMMA Ident COLON String WILD
 ##
@@ -3470,7 +3532,8 @@ contract: Let WILD COMMA Ident COLON String WILD
 ## tuple(sub_irrefutable) option(type_annotation)
 ##
 
-Expected `=` as part of the let binding.
+Ill-formed 'let' declaration.
+At this point an equals '=' symbol is expected.
 
 contract: Let WILD COMMA Ident EQ VBAR
 ##
@@ -3482,7 +3545,8 @@ contract: Let WILD COMMA Ident EQ VBAR
 ## tuple(sub_irrefutable) option(type_annotation) EQ
 ##
 
-Expected an expression.
+Ill-formed 'let' declaration.
+At this point an expression is expected.
 
 contract: Let WILD COMMA Ident RPAR
 ##
@@ -3501,7 +3565,13 @@ contract: Let WILD COMMA Ident RPAR
 ## In state 369, spurious reduction of production tuple(sub_irrefutable) -> sub_irrefutable COMMA nsepseq(sub_irrefutable,COMMA) 
 ##
 
-Expected either a type annotation or `=` followed by an expression.
+Ill-formed pattern.
+At this point one of the following is expected:
+  a comma ',', 
+    followed by a pattern; or
+  a type annotation; or
+  an equals '=' symbol,
+    followed by an expression.
 
 contract: Let WILD COMMA Verbatim
 ##
@@ -3513,7 +3583,7 @@ contract: Let WILD COMMA Verbatim
 ## sub_irrefutable COMMA
 ##
 
-Expected a pattern.
+Ill-formed pattern.
 
 contract: Let WILD COMMA WILD COMMA Verbatim
 ##
@@ -3525,7 +3595,7 @@ contract: Let WILD COMMA WILD COMMA Verbatim
 ## sub_irrefutable COMMA
 ##
 
-Unexpected token.
+Ill-formed pattern.
 
 contract: Let WILD COMMA WILD WILD
 ##
@@ -3538,7 +3608,13 @@ contract: Let WILD COMMA WILD WILD
 ## sub_irrefutable
 ##
 
-Unexpected token.
+Ill-formed pattern.
+At this point one of the following is expected:
+  a comma ',',
+    followed by a pattern; or
+  an equals '=' symbol,
+    followed by an expression; or
+  a type annotation.
 
 contract: Let WILD EQ Bytes VBAR
 ##
@@ -3570,7 +3646,7 @@ contract: Let WILD EQ Bytes VBAR
 ## In state 518, spurious reduction of production let_declaration -> seq(Attr) Let let_binding 
 ##
 
-Unexpected token.
+At this point another declaration is expected.
 
 contract: Let WILD EQ VBAR
 ##
@@ -3582,7 +3658,8 @@ contract: Let WILD EQ VBAR
 ## WILD option(type_annotation) EQ
 ##
 
-Unexpected token.
+Ill-formed 'let' declaration.
+At this point an expression is expected.
 
 contract: Let WILD WILD
 ##
@@ -3595,7 +3672,13 @@ contract: Let WILD WILD
 ## WILD
 ##
 
-Unexpected token.
+Ill-formed 'let' declaration.
+At this point one of the following is expected:
+  a comma ',',
+    followed by a pattern; or
+  a type annotation; or
+  an equals '=' symbol,
+    followed by an expression.
 
 contract: Type Ident EQ Constr DOT WILD
 ##
@@ -3607,7 +3690,8 @@ contract: Type Ident EQ Constr DOT WILD
 ## Constr DOT
 ##
 
-Expected an indentifier.
+Ill-formed type declaration.
+At this point an identifier is expected.
 
 contract: Type Ident EQ Constr LPAR Ident RPAR WILD
 ##
@@ -3620,8 +3704,12 @@ contract: Type Ident EQ Constr LPAR Ident RPAR WILD
 ## variant
 ##
 
-Expected another variant or another declaration.
-
+Ill-formed type declaration.
+At this point one of the following is expected:
+  a vertical bar '|',
+    followed by a constructor; or
+  another declaration.
+  
 contract: Type Ident EQ Constr LPAR String WILD
 ##
 ## Ends in an error in state: 36.
@@ -3632,7 +3720,8 @@ contract: Type Ident EQ Constr LPAR String WILD
 ## Constr LPAR fun_type
 ##
 
-Expected token.
+Ill-formed type declaration.
+At this point a closing parenthesis ')' is expected.
 
 contract: Type Ident EQ Constr LPAR WILD
 ##
@@ -3644,7 +3733,8 @@ contract: Type Ident EQ Constr LPAR WILD
 ## Constr LPAR
 ##
 
-Not a valid argument.
+Ill-formed type declaration.
+At this point a type expression is expected.
 
 contract: Type Ident EQ Constr SEMI WILD
 ##
@@ -3657,7 +3747,7 @@ contract: Type Ident EQ Constr SEMI WILD
 ## declaration
 ##
 
-Unexpected token. Expected a declaration.
+Ill-formed declaration.
 
 contract: Type Ident EQ Constr VBAR WILD
 ##
@@ -3669,7 +3759,8 @@ contract: Type Ident EQ Constr VBAR WILD
 ## variant VBAR
 ##
 
-Not a valid constructor.
+Ill-formed variant.
+At this point a constructor is expected.
 
 contract: Type Ident EQ Constr WILD
 ##
@@ -3683,7 +3774,13 @@ contract: Type Ident EQ Constr WILD
 ## Constr
 ##
 
-Unexpected token.
+Ill-formed type declaration.
+At this point one of the following is expected:
+  a dot '.',
+    followed by an identifier; or
+  a opening parenthesis '(',
+    followed by a type expression; or
+  a semicolon ';'.
 
 contract: Type Ident EQ Ident ARROW WILD
 ##
@@ -3695,7 +3792,8 @@ contract: Type Ident EQ Ident ARROW WILD
 ## Ident ARROW
 ##
 
-Not a valid type.
+Ill-formed function type declaration.
+At this point a type expression is expected.
 
 contract: Type Ident EQ Ident LPAR String WILD
 ##
@@ -3708,7 +3806,11 @@ contract: Type Ident EQ Ident LPAR String WILD
 ## fun_type
 ##
 
-Unexpected token. Expected either `,` or `)`.
+Ill-formed type declaration.
+At this point one of the following is expected:
+  a comma ',',
+    followed by a type expression; or
+  a closing parenthesis ')'.
 
 contract: Type Ident EQ Ident LPAR WILD
 ##
@@ -3720,7 +3822,8 @@ contract: Type Ident EQ Ident LPAR WILD
 ## LPAR
 ##
 
-Expected an argument. 
+Ill-formed type declaration.
+At this point a type expression is expected.
 
 contract: Type Ident EQ Ident WILD
 ##
@@ -3734,8 +3837,12 @@ contract: Type Ident EQ Ident WILD
 ## Ident
 ##
 
-Not a valid type declaration. Expected either type arguments, `=>`, or another 
-declaration.
+Ill-formed type declaration.
+At this point one of the following is expected:
+  arguments; or
+  another declaration; or
+  an arrow '=>',
+    followed by a type expression.
 
 contract: Type Ident EQ LBRACE Ident COLON Ident WILD
 ##
@@ -3748,7 +3855,12 @@ contract: Type Ident EQ LBRACE Ident COLON Ident WILD
 ## Ident
 ##
 
-Unexpected token.
+Ill-formed record type declaration.
+At this point one of the following is expected:
+  a ',',
+    followed by a type expression; or
+  a closing brace '}'; or
+  arguments.
 
 contract: Type Ident EQ LBRACE Ident COLON LPAR String WILD
 ##
@@ -3760,7 +3872,8 @@ contract: Type Ident EQ LBRACE Ident COLON LPAR String WILD
 ## LPAR fun_type
 ##
 
-Unexpected token. Expected either `,` or `}`.
+Ill-formed record type declaration.
+At this point a closing parenthesis ')' is expected.
 
 contract: Type Ident EQ LBRACE Ident COLON LPAR WILD
 ##
@@ -3772,7 +3885,8 @@ contract: Type Ident EQ LBRACE Ident COLON LPAR WILD
 ## LPAR
 ##
 
-Expected an argument.
+Ill-formed record type declaration.
+At this point a type expression is expected.
 
 contract: Type Ident EQ LBRACE Ident COLON String WILD
 ##
@@ -3786,7 +3900,11 @@ contract: Type Ident EQ LBRACE Ident COLON String WILD
 ## field_decl
 ##
 
-Unexpected token.
+Ill-formed record type declaration.
+At this point one of the following is expected:
+  a closing brace '}'; or
+  a comma ',',
+    followed by a record type field.
 
 contract: Type Ident EQ LBRACE Ident COLON WILD
 ##
@@ -3798,7 +3916,8 @@ contract: Type Ident EQ LBRACE Ident COLON WILD
 ## Ident COLON
 ##
 
-Not a valid expression
+Ill-formed record type field.
+At this point a type expression is expected.
 
 contract: Type Ident EQ LBRACE Ident COMMA Ident COLON String WILD
 ##
@@ -3812,7 +3931,11 @@ contract: Type Ident EQ LBRACE Ident COMMA Ident COLON String WILD
 ## field_decl
 ##
 
-Not a valid record type field declaration.
+Ill-formed record type declaration.
+At this point one of the following is expected:
+  a closing brace '}'; or
+  a comma ',',
+    followed by a record type field.  
 
 contract: Type Ident EQ LBRACE Ident COMMA Ident COMMA WILD
 ##
@@ -3825,7 +3948,8 @@ contract: Type Ident EQ LBRACE Ident COMMA Ident COMMA WILD
 ## field_decl COMMA
 ##
 
-Not a valid record type field declaration.
+Ill-formed record type declaration.
+At this point a record type field is expected.
 
 contract: Type Ident EQ LBRACE Ident COMMA WILD
 ##
@@ -3838,7 +3962,8 @@ contract: Type Ident EQ LBRACE Ident COMMA WILD
 ## field_decl COMMA
 ##
 
-Incomplete record type field declaration.
+Ill-formed record type declaration.
+At this point a record type field is expected.
 
 contract: Type Ident EQ LBRACE Ident WILD
 ##
@@ -3851,7 +3976,13 @@ contract: Type Ident EQ LBRACE Ident WILD
 ## Ident
 ##
 
-Incomplete record type field declaration.
+Ill-formed record type declaration.
+At this point one of the following is expected:
+  a comma ',',
+    followed by another record type field; or
+  a colon ':',
+    followed by a type expression; or
+  a closing brace '}'.
 
 contract: Type Ident EQ LBRACE WILD
 ##
@@ -3863,7 +3994,8 @@ contract: Type Ident EQ LBRACE WILD
 ## LBRACE
 ##
 
-Expected a record type field declaration.
+Ill-formed record declaration.
+At this point a record type field is expected.
 
 contract: Type Ident EQ LPAR Constr WILD
 ##
@@ -3875,7 +4007,9 @@ contract: Type Ident EQ LPAR Constr WILD
 ## Constr
 ##
 
-Incomplete path.
+Ill-formed module path.
+At this point a `.` is expected,
+  followed by an identifier.
 
 contract: Type Ident EQ LPAR String COMMA Ident RPAR ARROW WILD
 ##
@@ -3887,7 +4021,8 @@ contract: Type Ident EQ LPAR String COMMA Ident RPAR ARROW WILD
 ## LPAR tuple(fun_type) RPAR ARROW
 ##
 
-Unexpected token.
+Ill-formed function type declaration.
+At this point a type expression is expected.
 
 contract: Type Ident EQ LPAR String COMMA Ident RPAR WILD
 ##
@@ -3900,7 +4035,11 @@ contract: Type Ident EQ LPAR String COMMA Ident RPAR WILD
 ## LPAR tuple(fun_type) RPAR
 ##
 
-Expected either `=>` or another declaration.
+Ill-formed type declaration.
+At this point one of the following is expected:
+  an arrow '=>', 
+    followed by a type expression; or
+  another declaration.
 
 contract: Type Ident EQ LPAR String COMMA String COMMA WILD
 ##
@@ -3912,7 +4051,8 @@ contract: Type Ident EQ LPAR String COMMA String COMMA WILD
 ## fun_type COMMA
 ##
 
-Unexpected token.
+Ill-formed type declaration.
+At this point a type expression is expected.
 
 contract: Type Ident EQ LPAR String COMMA String WILD
 ##
@@ -3925,7 +4065,11 @@ contract: Type Ident EQ LPAR String COMMA String WILD
 ## fun_type
 ##
 
-Unexpected token.
+Ill-formed type declaration.
+At this point one of the following is expected:
+  a comma ',',
+    followed by a type expression; or
+  a closing parenthesis ')'.
 
 contract: Type Ident EQ LPAR String COMMA WILD
 ##
@@ -3937,7 +4081,8 @@ contract: Type Ident EQ LPAR String COMMA WILD
 ## fun_type COMMA
 ##
 
-Unexpected token.
+Ill-formed type declaration.
+At this point a type expression is expected.
 
 contract: Type Ident EQ LPAR String RPAR ARROW WILD
 ##
@@ -3949,7 +4094,8 @@ contract: Type Ident EQ LPAR String RPAR ARROW WILD
 ## LPAR fun_type RPAR ARROW
 ##
 
-Not a valid function type.
+Ill-formed function type declaration.
+At this point a type expression is expected.
 
 contract: Type Ident EQ LPAR String RPAR WILD
 ##
@@ -3962,7 +4108,11 @@ contract: Type Ident EQ LPAR String RPAR WILD
 ## LPAR fun_type RPAR
 ##
 
-Unexpected token.
+Ill-formed type declaration.
+At this point one of the following is expected:
+  an arrow '=>',
+    followed by a type expression; or
+  another declaration.
 
 contract: Type Ident EQ LPAR String WILD
 ##
@@ -3976,7 +4126,11 @@ contract: Type Ident EQ LPAR String WILD
 ## LPAR fun_type
 ##
 
-Unexpected token.
+Ill-formed type declaration.
+At this point one of the following is expected:
+  a comma ',',
+    followed by a type expression; or
+  a closing parenthesis ')'.
 
 contract: Type Ident EQ LPAR WILD
 ##
@@ -3991,7 +4145,8 @@ contract: Type Ident EQ LPAR WILD
 ## LPAR
 ##
 
-Unexpected token.
+Ill-formed type declaration.
+At this point a type expression is expected.
 
 contract: Type Ident EQ String WILD
 ##
@@ -4003,7 +4158,7 @@ contract: Type Ident EQ String WILD
 ## type_decl
 ##
 
-Expected another declaration.
+At this point another declaration is expected.
 
 contract: Type Ident EQ VBAR Constr WILD
 ##
@@ -4016,7 +4171,12 @@ contract: Type Ident EQ VBAR Constr WILD
 ## Constr
 ##
 
-Unexpected token.
+Ill-formed type declaration. 
+At this point one of the following is expected:
+  a vertical bar '|',
+    followed by another constructor; or
+  arguments; or
+  another declaration.
 
 contract: Type Ident EQ VBAR WILD
 ##
@@ -4028,7 +4188,8 @@ contract: Type Ident EQ VBAR WILD
 ## VBAR
 ##
 
-Invalid variant constructor.
+Ill-formed variant type declaration.
+At this point a constructor is expected.
 
 contract: Type Ident EQ WILD
 ##
@@ -4040,7 +4201,8 @@ contract: Type Ident EQ WILD
 ## Type Ident EQ
 ##
 
-Invalid type expression. 
+Ill-formed type declaration.
+At this point a type expression is expected.
 
 contract: Type Ident WILD
 ##
@@ -4052,7 +4214,8 @@ contract: Type Ident WILD
 ## Type Ident
 ##
 
-Expected `=`.
+Ill-formed type declaration.
+At this point an equals '=' symbol is expected.
 
 contract: Type WILD
 ##
@@ -4064,7 +4227,8 @@ contract: Type WILD
 ## Type
 ##
 
-Not a valid type identifier.
+Ill-formed type declaration.
+At this point an identifier is expected.
 
 contract: WILD
 ##
@@ -4078,7 +4242,7 @@ contract: WILD
 
 At this point one of the following is expected:
   a type declaration; or
-  a let declaration; or
+  a 'let' declaration; or
   an attribute; or
   the end of the file.
 
