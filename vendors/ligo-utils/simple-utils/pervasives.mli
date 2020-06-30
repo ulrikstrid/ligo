@@ -3,22 +3,22 @@ external raise_notrace : exn -> 'a = "%raise_notrace"
 val invalid_arg : string -> 'a
 val failwith : string -> 'a
 exception Exit
-external ( = ) : 'a -> 'a -> bool = "%equal"
-external ( <> ) : 'a -> 'a -> bool = "%notequal"
-external ( < ) : 'a -> 'a -> bool = "%lessthan"
-external ( > ) : 'a -> 'a -> bool = "%greaterthan"
-external ( <= ) : 'a -> 'a -> bool = "%lessequal"
-external ( >= ) : 'a -> 'a -> bool = "%greaterequal"
-external compare : 'a -> 'a -> int = "%compare"
-val min : 'a -> 'a -> 'a
-val max : 'a -> 'a -> 'a
-external ( == ) : 'a -> 'a -> bool = "%eq"
-external ( != ) : 'a -> 'a -> bool = "%noteq"
+external ( = ) : int -> int -> bool = "%equal"
+external ( <> ) : int -> int -> bool = "%notequal"
+external ( < ) : int -> int -> bool = "%lessthan"
+external ( > ) : int -> int -> bool = "%greaterthan"
+external ( <= ) : int -> int -> bool = "%lessequal"
+external ( >= ) : int -> int -> bool = "%greaterequal"
+external compare : int -> int -> int = "%compare"
+val min : int -> int -> int
+val max : int -> int -> int
+external ( == ) : int -> int -> bool = "%eq"
+external ( != ) : int -> int -> bool = "%noteq"
 external not : bool -> bool = "%boolnot"
 external ( && ) : bool -> bool -> bool = "%sequand"
-external ( & ) : bool -> bool -> bool = "%sequand"
+(* external ( & ) : bool -> bool -> bool = "%sequand" *)
 external ( || ) : bool -> bool -> bool = "%sequor"
-external ( or ) : bool -> bool -> bool = "%sequor"
+(* external ( or ) : bool -> bool -> bool = "%sequor" *)
 external __LOC__ : string = "%loc_LOC"
 external __FILE__ : string = "%loc_FILE"
 external __LINE__ : int = "%loc_LINE"
