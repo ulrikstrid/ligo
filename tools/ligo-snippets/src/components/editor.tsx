@@ -6,7 +6,7 @@ import YAML from 'yaml';
 import './ligo-prism.css';
 import { PushSpinner } from 'react-spinners-kit';
 
-const { Prism } = require("prism-react-renderer");
+const { Prism } = require("prism-react-renderer"); 
 
 Prism.languages = {
     ...Prism.languages,
