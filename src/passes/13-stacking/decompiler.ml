@@ -86,11 +86,11 @@ let rec decompile_value (Ex_typed_value (ty, value)) : (value , stacking_error) 
       let%bind lst' =
         let aux orig (k, v) =
           let%bind k' = decompile_value (Ex_typed_value (k_ty, k)) in
-          let orig_rem = List.remove_assoc k' orig in
+          let orig_rem = List.remove_assoc ~compare k' orig in
           match v with
           | Some vadd ->
             let%bind v' = decompile_value (Ex_typed_value (v_ty, vadd)) in
-            if (List.mem_assoc k' orig) then ok @@ (k', v')::orig_rem
+            if (List.mem_assoc ~compare k' orig) then ok @@ (k', v')::orig_rem
             else ok @@ (k', v')::orig
           | None -> ok orig_rem in
         bind_fold_list aux [] lst in

@@ -18,8 +18,13 @@ type constructor' =
 type label =
 | Label of string
 
-module CMap = Map.Make( struct type t = constructor' let compare (Constructor a) (Constructor b) = compare a b end)
-module LMap = Map.Make( struct type t = label let compare (Label a) (Label b) = String.compare a b end)
+let constructor_compare (Constructor a) (Constructor b) =
+  String.compare a b
+let label_compare (Label a) (Label b) =
+  String.compare a b
+
+module CMap = Map.Make( struct type t = constructor' let compare = constructor_compare end)
+module LMap = Map.Make( struct type t = label let compare = label_compare end)
 
 type 'a label_map = 'a LMap.t
 type 'a constructor_map = 'a CMap.t

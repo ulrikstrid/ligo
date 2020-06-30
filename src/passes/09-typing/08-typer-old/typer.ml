@@ -327,7 +327,7 @@ and type_match : (environment -> I.expression -> (O.expression , typer_error) re
       let variant_cases = List.map fst @@ O.CMap.to_kv_list variant_cases' in
       let match_cases = List.map (fun x -> convert_constructor' @@ fst @@ fst x) lst in
       let test_case = fun c ->
-        Assert.assert_true (corner_case "match case") (List.mem c match_cases)
+        Assert.assert_true (corner_case "match case") (List.mem ~compare:Ast_typed.constructor_compare c match_cases)
       in
       let%bind () =
         trace_strong (match_missing_case i loc) @@

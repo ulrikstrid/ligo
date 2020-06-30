@@ -89,11 +89,11 @@ let rec apply_operator : Ast_typed.constant' -> value list -> (value, interprete
       let%bind pass = is_true v in
       if pass then return_ct @@ C_unit
       else raise (Temporary_hack "failed assertion")
-    | C_MAP_FIND_OPT , [ k ; V_Map l ] -> ( match List.assoc_opt k l with
+    | C_MAP_FIND_OPT , [ k ; V_Map l ] -> ( match List.assoc_opt ~compare:Stdlib.Pervasives.compare k l with
       | Some v -> ok @@ v_some v
       | None -> ok @@ v_none ()
     )
-    | C_MAP_FIND , [ k ; V_Map l ] -> ( match List.assoc_opt k l with
+    | C_MAP_FIND , [ k ; V_Map l ] -> ( match List.assoc_opt ~compare:Stdlib.Pervasives.compare k l with
       | Some v -> ok @@ v
       | None -> raise (Temporary_hack "failed map find")
     )
@@ -181,14 +181,14 @@ let rec apply_operator : Ast_typed.constant' -> value list -> (value, interprete
           eval body env'
         )
         init kvs
-    | ( C_MAP_MEM , [ k ; V_Map kvs ] ) -> ok @@ v_bool (List.mem_assoc k kvs)
+    | ( C_MAP_MEM , [ k ; V_Map kvs ] ) -> ok @@ v_bool (List.mem_assoc ~compare:compare k kvs)
     | ( C_MAP_ADD , [ k ; v ; V_Map kvs as vmap] ) ->
-      if (List.mem_assoc k kvs) then ok vmap
+      if (List.mem_assoc ~compare k kvs) then ok vmap
       else ok (V_Map ((k,v)::kvs)) 
-    | ( C_MAP_REMOVE , [ k ; V_Map kvs] ) -> ok @@ V_Map (List.remove_assoc k kvs)
+    | ( C_MAP_REMOVE , [ k ; V_Map kvs] ) -> ok @@ V_Map (List.remove_assoc ~compare k kvs)
     | ( C_MAP_UPDATE , [ k ; V_Construct (option,v) ; V_Map kvs] ) -> (match option with
-      | "Some" -> ok @@ V_Map ((k,v)::(List.remove_assoc k kvs))
-      | "None" -> ok @@ V_Map (List.remove_assoc k kvs)
+      | "Some" -> ok @@ V_Map ((k,v)::(List.remove_assoc ~compare k kvs))
+      | "None" -> ok @@ V_Map (List.remove_assoc ~compare k kvs)
       | _ -> failwith "update without an option"
     )
     | ( C_SET_EMPTY, []) -> ok @@ V_Set ([])
@@ -208,8 +208,8 @@ let rec apply_operator : Ast_typed.constant' -> value list -> (value, interprete
           eval body env'
         )
         (V_Ct C_unit) elts
-    | ( C_SET_MEM    , [ v ; V_Set (elts) ] ) -> ok @@ v_bool (List.mem v elts)
-    | ( C_SET_REMOVE , [ v ; V_Set (elts) ] ) -> ok @@ V_Set (List.filter (fun el -> not (el = v)) elts)
+    | ( C_SET_MEM    , [ v ; V_Set (elts) ] ) -> ok @@ v_bool (List.mem ~compare:Stdlib.Pervasives.compare  v elts)
+    | ( C_SET_REMOVE , [ v ; V_Set (elts) ] ) -> ok @@ V_Set (List.filter (fun el -> not (Stdlib.Pervasives.(=) el v)) elts)
     | _ ->
       let () = Format.printf "%a\n" Ast_typed.PP.constant c in
       let () = List.iter ( fun e -> Format.printf "%s\n" (Ligo_interpreter.PP.pp_value e)) operands in

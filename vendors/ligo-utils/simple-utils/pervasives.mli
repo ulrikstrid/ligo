@@ -218,7 +218,7 @@ external ( ! ) : 'a ref -> 'a = "%field0"
 external ( := ) : 'a ref -> 'a -> unit = "%setfield0"
 external incr : int ref -> unit = "%incr"
 external decr : int ref -> unit = "%decr"
-type ('a, 'b) result = Ok of 'a | Error of 'b
+type ('a, 'b) result = ('a, 'b) Stdlib.Pervasives.result = Ok of 'a | Error of 'b
 type ('a, 'b, 'c, 'd, 'e, 'f) format6 =
     ('a, 'b, 'c, 'd, 'e, 'f) CamlinternalFormatBasics.format6
 type ('a, 'b, 'c, 'd) format4 = ('a, 'b, 'c, 'c, 'c, 'd) format6

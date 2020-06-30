@@ -44,7 +44,7 @@ let init_vote () =
   let%bind storage' = trace_option (test_internal __LOC__) @@ Ast_core.extract_record storage in
 (*  let votes = List.assoc (Label "voters") storage' in
   let%bind votes' = extract_map votes in *)
-  let yea = List.assoc (Label "yea") storage' in
+  let yea = List.assoc ~compare:Pervasives.compare (Label "yea") storage' in
   let%bind () = trace_option (test_internal __LOC__) @@ Ast_core.Misc.assert_value_eq (yea, Ast_core.e_nat Z.one) in
   ok ()
 

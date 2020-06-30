@@ -1,0 +1,9 @@
+let (=) : int32 -> int32 -> bool = Stdlib.Pervasives.(=)
+let (<>) : int32 -> int32 -> bool = Stdlib.Pervasives.(<>)
+let (<) : int32 -> int32 -> bool = Stdlib.Pervasives.(<)
+let (>) : int32 -> int32 -> bool = Stdlib.Pervasives.(>)
+let (<=) : int32 -> int32 -> bool = Stdlib.Pervasives.(<=)
+let (>=) : int32 -> int32 -> bool = Stdlib.Pervasives.(>=)
+let compare : int32 -> int32 -> int = Stdlib.Pervasives.compare
+let min : int32 -> int32 -> int32 = Stdlib.Pervasives.min
+let max : int32 -> int32 -> int32 = Stdlib.Pervasives.max

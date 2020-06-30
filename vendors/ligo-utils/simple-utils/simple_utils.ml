@@ -7,6 +7,7 @@ module Location = Location
 module List = X_list
 module Option = X_option
 module Int = X_int
+module Int32 = X_int32
 module Tuple = Tuple
 module Map = X_map
 module Tree = Tree
@@ -16,4 +17,7 @@ module Var = Var
 module Ligo_string = X_string
 module Display = Display
 module Runned_result = Runned_result
+module Compare = Compare
 
+module Pervasives = Pervasives
+include Pervasives

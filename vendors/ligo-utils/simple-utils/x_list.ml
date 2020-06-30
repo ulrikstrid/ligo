@@ -10,13 +10,6 @@ let rec take n = function
   | _ when n = 0 -> []
   | hd :: tl -> hd :: take (n - 1) tl
 
-let map ?(acc = []) f lst =
-  let rec aux acc f = function
-    | [] -> acc
-    | hd :: tl -> aux (f hd :: acc) f tl
-  in
-  aux acc f (List.rev lst)
-
 let fold_map_right : type acc ele ret . (acc -> ele -> (acc * ret)) -> acc -> ele list -> ret list =
   fun f acc lst ->
   let rec aux (acc , prev) f = function
@@ -49,8 +42,7 @@ let unopt ~default x = match x with
   | None -> default
   | Some x -> x
 
-let rec remove_element ?compare:cmp x lst =
-  let compare = unopt ~default:compare cmp in
+let rec remove_element ~compare x lst =
   match lst with
   | [] -> raise (Failure "X_list.remove_element")
   | hd :: tl when compare x hd = 0 -> tl
@@ -151,42 +143,40 @@ let to_singleton = function
   | _ -> None
 
 
-(** overriding stdlib List functions with optional compare/eq
-   arguments *)
+(** overriding stdlib List functions with compare/eq arguments *)
 
-let rec mem ?compare:cmp x =
-  let compare = unopt ~default:compare cmp in
+let rec mem ~compare x =
   function
   | [] -> false
   | a::l -> compare a x = 0 || mem ~compare x l
 
-let rec memq ?eq:eq x =
-  let eq = unopt ~default:(=) eq in
-  function
-  | [] -> false
-  | a::l -> eq a x || memq ~eq x l
-
-let rec assoc ?compare:cmp x =
-  let compare = unopt ~default:compare cmp in
+let rec assoc ~(compare : 'a -> 'a -> int) x =
   function
     [] -> raise Not_found
   | (a,b)::l -> if compare a x = 0 then b else assoc ~compare x l
 
-let rec assoc_opt ?compare:cmp x =
-  let compare = unopt ~default:compare cmp in
+let rec assoc_opt ~compare x =
   function
     [] -> None
   | (a,b)::l -> if compare a x = 0 then Some b else assoc_opt ~compare x l
 
-let rec compare ?compare:cmp a b =
-  let cmp = unopt ~default:Pervasives.compare cmp in
+let rec mem_assoc ~compare x = function
+  | [] -> false
+  | (a, _) :: l -> compare a x = 0 || mem_assoc ~compare x l
+
+let rec remove_assoc ~compare x = function
+  | [] -> []
+  | (a, _ as pair) :: l ->
+      if compare a x = 0 then l else pair :: remove_assoc ~compare x l
+
+let rec compare ~compare:cmp a b =
   match a,b with
     [], [] -> 0
   | [], _::_ -> -1
   | _::_, [] -> 1
   | ha::ta, hb::tb ->
      (match cmp ha hb with
-        0 -> compare ta tb
+        0 -> compare ~compare:cmp ta tb
       | c -> c)
 
 

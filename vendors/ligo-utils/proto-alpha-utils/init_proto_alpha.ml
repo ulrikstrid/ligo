@@ -47,10 +47,10 @@ module Context_init = struct
     let open Error_monad in
     let { blocks_per_cycle ; blocks_per_commitment ;
           blocks_per_roll_snapshot ; _ } = constants in
-    Error_monad.unless (blocks_per_commitment <= blocks_per_cycle)
+    Error_monad.unless Int32.(blocks_per_commitment <= blocks_per_cycle)
       (fun () -> failwith "Inconsistent constants : blocks per commitment must be \
                            less than blocks per cycle") >>=? fun () ->
-    Error_monad.unless (blocks_per_cycle >= blocks_per_roll_snapshot)
+    Error_monad.unless Int32.(blocks_per_cycle >= blocks_per_roll_snapshot)
       (fun () -> failwith "Inconsistent constants : blocks per cycle \
                            must be superior than blocks per roll snapshot") >>=?
       return
@@ -101,9 +101,9 @@ module Context_init = struct
         ?(no_reward_cycles = None)
         (initial_accounts : (account * Tez_repr.t) list)
     =
-    if initial_accounts = [] then
-      Pervasives.failwith "Must have one account with a roll to bake";
-
+    match initial_accounts with
+    | [] -> Pervasives.failwith "Must have one account with a roll to bake";
+    | _ ->
     (* Check there is at least one roll *)
     let constants : Constants_repr.parametric = Tezos_protocol_006_PsCARTHA_parameters.Default_parameters.constants_test in
     check_constants_consistency constants >>=? fun () ->
