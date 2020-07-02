@@ -208,7 +208,7 @@ lambda_expr = do
       pure Lambda
         <*> inside "parameters:parameters" do
               many do inside "parameter" paramDecl
-        <*> inside "type" newtype_
+        <*> (Just <$> inside "type" newtype_)
         <*> inside "body" expr
 
 seq_expr :: Parser (Pascal ASTInfo)

@@ -23,6 +23,8 @@ type Pascal = Tree
   , Declaration, Contract
   ]
 
+type Caml = Pascal
+
 data Contract it
   = Contract      [it] -- ^ Declaration
   deriving (Show) via PP (Contract it)
@@ -102,11 +104,13 @@ data Expr it
   | ForLoop   it it it it              -- (Name) (Expr) (Expr) (Expr)
   | WhileLoop it it                    -- (Expr) (Expr)
   | Seq       [it]                     -- [Declaration]
-  | Lambda    [it] it it               -- [VarDecl] (Type) (Expr)
+  | Lambda    [it] (Maybe it) it               -- [VarDecl] (Type) (Expr)
   | ForBox    it (Maybe it) Text it it -- (Name) (Maybe (Name)) Text (Expr) (Expr)
   | MapPatch  it [it] -- (QualifiedName) [MapBinding]
   | SetPatch  it [it] -- (QualifiedName) [Expr]
   | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
+  | RecAccessor it it -- (Expr) (Name)
+  | Unit
   deriving (Show) via PP (Expr it)
   deriving stock (Functor, Foldable, Traversable)
 
@@ -256,7 +260,7 @@ instance Pretty1 Expr where
     ForBox    k mv t z b -> "for" <+> k <+> mb ("->" <+>) mv <+> "in" <+> pp t <+> z `indent` b
     WhileLoop f b        -> "while" <+> f `indent` b
     Seq       es         -> "block {" `indent` sparseBlock es `above` "}"
-    Lambda    ps ty b    -> (("function" `indent` tuple ps) `indent` (":" <+> ty)) `indent` b
+    Lambda    ps ty b    -> (("function" `indent` tuple ps) `indent` maybe empty (":" <+>) ty) `indent` b
     MapPatch  z bs       -> "patch" `indent` z `above` "with" <+> "map" `indent` list bs
     SetPatch  z bs       -> "patch" `indent` z `above` "with" <+> "set" `indent` list bs
     RecordUpd r up       -> r `indent` "with" <+> "record" `indent` list up
