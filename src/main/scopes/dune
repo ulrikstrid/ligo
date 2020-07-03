@@ -1,17 +1,13 @@
 (library
-  (name uncompile)
-  (public_name ligo.uncompile)
+  (name scopes)
+  (public_name ligo.scopes)
   (libraries
+    main_errors
+    compile
     simple-utils
-    purification
-    desugaring
-    typer_new
+    self_ast_core
     typer
     ast_typed
-    spilling
-    mini_c
-    stacking
-    main_errors
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

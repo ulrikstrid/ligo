@@ -1,5 +1,5 @@
 type expression_
-and expression_variable = expression_ Var.t
+and expression_variable = expression_ Var.t Location.wrap
 type type_
 and type_variable = type_ Var.t
 
@@ -52,7 +52,6 @@ end
 module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
   open PARAMETER
 
-  type michelson_annotation = string
 
   type type_content =
     | T_sum of ctor_content constructor_map

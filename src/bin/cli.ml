@@ -96,6 +96,13 @@ let disable_michelson_typechecking =
     info ~doc ["disable-michelson-typechecking"] in
   value @@ flag info
 
+let with_types =
+  let open Arg in
+  let info =
+    let doc = "tries to infer types for all named expressions" in
+    info ~doc ["with-types"] in
+  value @@ flag info
+
 let predecessor_timestamp =
   let open Arg in
   let info =
@@ -117,6 +124,14 @@ let display_format =
     human_readable
     info
 
+let output_file =
+  let open Arg in
+  let info  =
+    let docv = "OUTPUT_FILE" in
+    let doc = "$(docv) if used, prints the output into the specified file instead of stdout" in
+    info ~docv ~doc ["output" ; "output-file"] in
+  value @@ opt (some string) None info
+
 let michelson_code_format =
   let open Arg in
   let info  =
@@ -137,21 +152,21 @@ let optimize =
   value @@ opt (some string) None info
 
 
-module Helpers = Ligo.Compile.Helpers
-module Compile = Ligo.Compile
-module Uncompile = Ligo.Uncompile
+module Helpers   = Ligo.Compile.Helpers
+module Compile   = Ligo.Compile
+module Decompile = Ligo.Decompile
 module Run = Ligo.Run.Of_michelson
 
 let compile_file =
-  let f source_file entry_point syntax display_format disable_typecheck michelson_format =
-    return_result ~display_format (Tezos_utils.Michelson.michelson_format michelson_format) @@
+  let f source_file entry_point syntax display_format disable_typecheck michelson_format output_file =
+    return_result ~output_file ~display_format (Tezos_utils.Michelson.michelson_format michelson_format) @@
       let%bind typed,_    = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let%bind mini_c     = Compile.Of_typed.compile typed in
       let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
       Compile.Of_michelson.build_contract ~disable_typecheck michelson
   in
   let term =
-    Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format $ disable_michelson_typechecking $ michelson_code_format) in
+    Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format $ disable_michelson_typechecking $ michelson_code_format $ output_file) in
   let cmdname = "compile-contract" in
   let doc = "Subcommand: Compile a contract." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -250,7 +265,7 @@ let measure_contract =
       let%bind contract   = Compile.Utils.compile_file source_file syntax entry_point in
       ok @@ Tezos_utils.Michelson.measure contract in
     let format = Display.bind_format Formatter.contract_size_format Main.Formatter.error_format in
-    toplevel ~display_format (Display.Displayable { value ; format }) (returned_value value)
+    toplevel ~display_format (Display.Displayable { value ; format }) value
   in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format) in
@@ -285,7 +300,7 @@ let compile_parameter =
 
 let interpret =
   let f expression init_file syntax amount balance sender source predecessor_timestamp display_format =
-    return_result ~display_format (Uncompile.Formatter.expression_format) @@
+    return_result ~display_format (Decompile.Formatter.expression_format) @@
       let%bind (decl_list,state,env) = match init_file with
         | Some init_file ->
           let%bind typed_prg,state = Compile.Utils.type_file init_file syntax Env in
@@ -299,7 +314,7 @@ let interpret =
       let%bind compiled_exp   = Compile.Of_mini_c.aggregate_and_compile_expression decl_list mini_c_exp in
       let%bind options        = Run.make_dry_run_options {predecessor_timestamp ; amount ; balance ; sender ; source } in
       let%bind runres         = Run.run_expression ~options compiled_exp.expr compiled_exp.expr_ty in
-      Uncompile.uncompile_expression typed_exp.type_expression runres
+      Decompile.Of_michelson.decompile_expression typed_exp.type_expression runres
   in
   let term =
     Term.(const f $ expression "EXPRESSION" 0 $ init_file $ syntax $ amount $ balance $ sender $ source $ predecessor_timestamp $ display_format ) in
@@ -345,7 +360,7 @@ let compile_storage =
 
 let dry_run =
   let f source_file entry_point storage input amount balance sender source predecessor_timestamp syntax display_format =
-    return_result ~display_format (Uncompile.Formatter.expression_format) @@
+    return_result ~display_format (Decompile.Formatter.expression_format) @@
       let%bind typed_prg,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let      env             = Ast_typed.program_environment Environment.default typed_prg in
       let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
@@ -359,7 +374,7 @@ let dry_run =
 
       let%bind options           = Run.make_dry_run_options {predecessor_timestamp ; amount ; balance ; sender ; source } in
       let%bind runres  = Run.run_contract ~options michelson_prg.expr michelson_prg.expr_ty args_michelson in
-      Uncompile.uncompile_typed_program_entry_function_result typed_prg entry_point runres
+      Decompile.Of_michelson.decompile_typed_program_entry_function_result typed_prg entry_point runres
     in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ expression "STORAGE" 3 $ amount $ balance $ sender $ source $ predecessor_timestamp $ syntax $ display_format) in
@@ -369,7 +384,7 @@ let dry_run =
 
 let run_function =
   let f source_file entry_point parameter amount balance sender source predecessor_timestamp syntax display_format =
-    return_result ~display_format (Uncompile.Formatter.expression_format) @@
+    return_result ~display_format (Decompile.Formatter.expression_format) @@
       let%bind typed_prg,state = Compile.Utils.type_file source_file syntax Env in
       let      env             = Ast_typed.program_environment Environment.default typed_prg in
       let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
@@ -386,7 +401,7 @@ let run_function =
       let%bind michelson        = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg compiled_applied in
       let%bind options          = Run.make_dry_run_options {predecessor_timestamp ; amount ; balance ; sender ; source } in
       let%bind runres           = Run.run_expression ~options michelson.expr michelson.expr_ty in
-      Uncompile.uncompile_typed_program_entry_function_result typed_prg entry_point runres
+      Decompile.Of_michelson.decompile_typed_program_entry_function_result typed_prg entry_point runres
     in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ amount $ balance $ sender $ source $ predecessor_timestamp $ syntax $ display_format) in
@@ -396,14 +411,14 @@ let run_function =
 
 let evaluate_value =
   let f source_file entry_point amount balance sender source predecessor_timestamp syntax display_format =
-    return_result ~display_format Uncompile.Formatter.expression_format @@
+    return_result ~display_format Decompile.Formatter.expression_format @@
       let%bind typed_prg,_ = Compile.Utils.type_file source_file syntax Env in
       let%bind mini_c      = Compile.Of_typed.compile typed_prg in
       let%bind (exp,_)     = trace_option Main_errors.entrypoint_not_found @@ Mini_c.get_entry mini_c entry_point in
       let%bind compiled    = Compile.Of_mini_c.aggregate_and_compile_expression mini_c exp in
       let%bind options     = Run.make_dry_run_options {predecessor_timestamp ; amount ; balance ; sender ; source } in
       let%bind runres      = Run.run_expression ~options compiled.expr compiled.expr_ty in
-      Uncompile.uncompile_typed_program_entry_expression_result typed_prg entry_point runres
+      Decompile.Of_michelson.decompile_typed_program_entry_expression_result typed_prg entry_point runres
     in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ amount $ balance $ sender $ source $ predecessor_timestamp $ syntax $ display_format) in
@@ -429,7 +444,7 @@ let dump_changelog =
   let f display_format =
     let value = [%blob "../../CHANGELOG.md"] in
     let format = Formatter.changelog_format in
-    toplevel ~display_format (Display.Displayable {value ; format}) (returned_value (ok ())) in
+    toplevel ~display_format (Display.Displayable {value ; format}) (ok value) in
   let term =
     Term.(const f $ display_format) in
   let cmdname = "changelog" in
@@ -449,6 +464,52 @@ let list_declarations =
   let doc = "Subcommand: List all the top-level declarations." in
   (Term.ret term , Term.info ~doc cmdname)
 
+let transpile_contract =
+  let f source_file new_syntax syntax display_format =
+    return_result ~display_format (Parser.Formatter.ppx_format) @@
+      let%bind core       = Compile.Utils.to_core source_file syntax in
+      let%bind sugar      = Decompile.Of_core.decompile core in
+      let%bind imperative = Decompile.Of_sugar.decompile sugar in
+      let%bind buffer     = Decompile.Of_imperative.decompile imperative (Syntax_name new_syntax) in
+      ok @@ buffer
+  in
+  let term =
+    Term.(const f $ source_file 0 $ req_syntax 1 $ syntax $ display_format) in
+  let cmdname = "transpile-contract" in
+  let doc = "Subcommand: Transpile a contract to another syntax." in
+  (Term.ret term , Term.info ~doc cmdname)
+
+let transpile_expression =
+  let f expression new_syntax syntax display_format =
+    return_result ~display_format (Parser.Formatter.ppx_format) @@
+      let%bind v_syntax   = Helpers.syntax_to_variant (Syntax_name syntax) None in
+      let%bind n_syntax   = Decompile.Helpers.syntax_to_variant (Syntax_name new_syntax) None in
+      let%bind imperative = Compile.Of_source.compile_expression v_syntax expression in
+      let%bind sugar      = Compile.Of_imperative.compile_expression imperative in
+      let%bind core       = Compile.Of_sugar.compile_expression sugar in
+      let%bind sugar      = Decompile.Of_core.decompile_expression core in
+      let%bind imperative = Decompile.Of_sugar.decompile_expression sugar in
+      let%bind buffer     = Decompile.Of_imperative.decompile_expression imperative n_syntax in
+      ok @@ buffer
+  in
+  let term =
+    Term.(const f $ expression "" 1  $ req_syntax 2 $ req_syntax 0 $ display_format) in
+  let cmdname = "transpile-expression" in
+  let doc = "Subcommand: Transpile an expression to another syntax." in
+  (Term.ret term , Term.info ~doc cmdname)
+
+
+let get_scope =
+  let f source_file syntax display_format with_types =
+    return_result ~display_format Ligo.Scopes.Formatter.scope_format @@
+    Ligo.Scopes.scopes ~with_types source_file syntax
+  in
+  let term =
+    Term.(const f $ source_file 0 $ syntax $ display_format $ with_types) in
+  let cmdname = "get-scope" in
+  let doc = "Subcommand: Return the JSON encoded environment for a given file." in
+  (Term.ret term , Term.info ~doc cmdname)
+
 let run ?argv () =
   Term.eval_choice ?argv main [
     temp_ligo_interpreter ;
@@ -457,6 +518,8 @@ let run ?argv () =
     compile_parameter ;
     compile_storage ;
     compile_expression ;
+    transpile_contract ;
+    transpile_expression ;
     interpret ;
     dry_run ;
     run_function ;
@@ -470,5 +533,6 @@ let run ?argv () =
     print_mini_c ;
     list_declarations ;
     preprocess;
-    pretty_print
+    pretty_print;
+    get_scope;
   ]

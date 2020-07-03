@@ -6,6 +6,7 @@
 
 (* Utilities *)
 
+module Utils = Simple_utils.Utils
 open Utils
 
 (* Regions
@@ -22,6 +23,10 @@ open Utils
 module Region = Simple_utils.Region
 
 type 'a reg = 'a Region.reg
+
+(* Lexemes *)
+
+type lexeme = string
 
 (* Keywords of OCaml *)
 
@@ -169,7 +174,7 @@ and type_expr =
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
-| TString of Lexer.lexeme reg
+| TString of lexeme reg
 
 and cartesian = (type_expr, times) nsepseq reg
 
@@ -192,9 +197,9 @@ and pattern =
 | PFalse    of kwd_false
 | PTrue     of kwd_true
 | PVar      of variable
-| PInt      of (Lexer.lexeme * Z.t) reg
-| PNat      of (Lexer.lexeme * Z.t) reg
-| PBytes    of (Lexer.lexeme * Hex.t) reg
+| PInt      of (lexeme * Z.t) reg
+| PNat      of (lexeme * Z.t) reg
+| PBytes    of (lexeme * Hex.t) reg
 | PString   of string reg
 | PVerbatim of string reg
 | PWild     of wild
@@ -251,13 +256,13 @@ and expr =
 and annot_expr = expr * colon * type_expr
 
 and 'a injection = {
-  compound   : compound;
+  compound   : compound option;
   elements   : ('a, semi) sepseq;
   terminator : semi option
 }
 
 and 'a ne_injection = {
-  compound    : compound;
+  compound    : compound option;
   ne_elements : ('a, semi) nsepseq;
   terminator  : semi option
 }
@@ -395,8 +400,7 @@ and cond_expr = {
   test     : expr;
   kwd_then : kwd_then;
   ifso     : expr;
-  kwd_else : kwd_else;
-  ifnot    : expr
+  ifnot    : (kwd_else * expr) option;
 }
 
 (* Code injection.  Note how the field [language] wraps a region in
