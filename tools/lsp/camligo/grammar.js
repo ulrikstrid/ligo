@@ -1,3 +1,5 @@
+let sepBy1 = (sep, p) => seq(p, repeat(seq(sep, p)))
+
 module.exports = grammar({
   name: 'CameLigo',
   extras: $ => [$.comment, $.ocaml_comment, /\s/],
@@ -5,7 +7,7 @@ module.exports = grammar({
   rules: {
 
 
-    contract: $ => repeat($.declaration),
+    contract: $ => repeat($.let_decl),
 
     declaration: $ => choice(
       $.let_decl,
@@ -21,14 +23,25 @@ module.exports = grammar({
       repeat(field("bindArgument", $.argument)),
       optional(field("bindAnnot", $.type_annot)),
       "=",
-      field("letExpr",$.expr)),
+      field("letExpr",$.let_expr)),
 
     //========== EXPR ============
 
-    let_expr: $ => seq(
-      $.let_decl,
-      "in",
+    let_expr: $ => choice(
+      $.let_expr1,
       $.expr
+    ),
+
+    let_expr1: $ => seq(
+      "let",
+      optional(field("recursive", "rec")),
+      field("bindName", $.Name),
+      repeat(field("bindArgument", $.argument)),
+      optional(field("bindAnnot", $.type_annot)),
+      "=",
+      field("letExpr",$.expr),
+      "in",
+      $.let_expr
     ),
 
     // [1;2]
@@ -79,12 +92,29 @@ module.exports = grammar({
       repeat(seq("|", field("matching", $.matching)))
     )),
 
+    call: $ => choice(
+      $.fun_app,
+      // $.unary_op_app,
+      $.add_op_app
+    ),
+
+    add_op_app: $ => prec.left(14, seq(
+      field("arg1", $.expr),
+      field("op", choice("-", "+")),
+      field("arg2", $.expr),
+    )),
+
+    // // ! a
+    // unary_op_app: $ => prec.right(19, choice(
+    //   seq(field("unaryOp", "-"), field("arg", $.expr))),
+    // ),
+
     // f a
     fun_app: $ => prec.left(20, seq(field("appF", $.expr), field("appArg",$.expr))),
     // Cat a
-    con_app: $ => prec(19, seq($.data_con, $.expr)),
+    // con_app: $ => prec(19, seq($.data_con, $.expr)),
     // a + b
-    op_app: $ => choice(
+    op_app: $ => prec(19, choice(
       prec.left(16, seq(field("arg1", $.expr), field("op", "mod"), field("arg2", $.expr))),
       prec.left(15, seq(field("arg1", $.expr), field("op", "*"), field("arg2", $.expr))),
       prec.left(15, seq(field("arg1", $.expr), field("op", "/"), field("arg2", $.expr))),
@@ -106,11 +136,7 @@ module.exports = grammar({
       prec.left(10, seq(field("arg1", $.expr), field("op", "<="), field("arg2", $.expr))),
       prec.left(10, seq(field("arg1", $.expr), field("op", ">"), field("arg2", $.expr))),
       prec.left(10, seq(field("arg1", $.expr), field("op", ">="), field("arg2", $.expr)))
-    ),
-    // ! a
-    unary_op_app: $ => choice(
-      prec(18, seq(field("unaryOp", "-"), field("arg", $.expr))),
-    ),
+    )),
     // a.field
     rec_accessor: $ => prec(21, seq(field("rec", $.expr), ".", field("label", $.label))),
 
@@ -178,10 +204,10 @@ module.exports = grammar({
       $.Name_Capital,
       $.literal,
       $.paren_expr,
-      $.let_expr,
-      $.fun_app,
-      $.op_app,
-      //$.unary_op_app,
+      // $.let_expr,
+      $.call,
+      // $.op_app,
+      // $.unary_op_app,
       $.rec_accessor,
       $.rec_expr,
       $.if_expr,
@@ -217,7 +243,7 @@ module.exports = grammar({
 
     // int -> string
     type_fun: $ => prec.right(8,seq(field("domain", $.type_expr), "->", field("codomain", $.type_expr))),
-    
+
     type_expr: $ => choice(
       $.type_fun,
       $.type_product,
