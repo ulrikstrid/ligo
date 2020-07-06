@@ -250,7 +250,7 @@ export const LigoSnippet = (props) => {
                 entrypoint  
             });
         } else {
-            response = await axios.post('https://cors-anywhere.herokuapp.com/https://ide.ligolang.org/api/compile-contract', {
+            response = await axios.post('https://ide.ligolang.org/api/compile-contract', {
                 syntax,
                 code,
                 entrypoint  
