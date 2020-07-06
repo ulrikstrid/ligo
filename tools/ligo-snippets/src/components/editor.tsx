@@ -6,7 +6,7 @@ import YAML from 'yaml';
 import './ligo-prism.css';
 import { PushSpinner } from 'react-spinners-kit';
 
-const { Prism } = require("prism-react-renderer"); 
+const { Prism } = require("prism-react-renderer");
 
 Prism.languages = {
     ...Prism.languages,
@@ -238,10 +238,10 @@ export const LigoSnippet = (props) => {
     const [theme, setTheme] = useState(getTheme(data, false));
     const [loading, setLoading] = useState(false);
 
-    async function compileCode(snippetCode) {
+    async function compileCode(editorParams, snippetCode) {
         setOutput(""); setLoading(true);
         setTheme(getTheme(data, true));
-        const entrypoint = "main", syntax = snippetCode.editor.language, code = snippetCode.editor.code;
+        const entrypoint = "main", syntax = editorParams.editor.language, code = snippetCode;
         let response;
         if(data.api && data.api != "") {
             response = await axios.post(data.api, {
@@ -277,7 +277,7 @@ export const LigoSnippet = (props) => {
             <ReactCodeJar style={theme.editorStyle} code={snippetCode} onUpdate={onUpdate} highlight={highlight} />
             <div style={theme.buttonContainer}>
                 <button style={theme.buttonStyle} className={ data.compile ? '' : 'hidden' } onClick={() => compileCode(editorParams, snippetCode)} title="Compile">Compile</button>
-                <button style={theme.buttonStyle} onClick={() => openInIde(snippetCode)} title="Open in Ligo Web IDE">I D E ↵ </button>
+                <button style={theme.buttonStyle} onClick={() => openInIde(editorParams, snippetCode)} title="Open in Ligo Web IDE">I D E ↵ </button>
                 <div style={theme.outputContainer}>
                     <div style={theme.loadingTab}><PushSpinner size={50} loading={loading} color="#fedace" /></div>
                     <div style={theme.outputTab}>
