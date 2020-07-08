@@ -274,19 +274,19 @@ instance HasRange a => UpdateOver CollectM Binding (Pascal a) where
   before r = \case
     Function recur name _args ty body -> do
       when recur do
-        def name (Just ty) (Just body)
+        def name ty (Just body)
       enter r
 
     _ -> enter r
 
   after _ = \case
-    Irrefutable name    body -> do leave; def name  Nothing  (Just body)
+    Irrefutable name ty body -> do leave; def name ty        (Just body)
     Var         name ty body -> do leave; def name (Just ty) (Just body)
     Const       name ty body -> do leave; def name (Just ty) (Just body)
     Function recur name _args ty body -> do
       leave
       unless recur do
-        def name (Just ty) (Just body)
+        def name ty (Just body)
 
 instance HasRange a => UpdateOver CollectM VarDecl (Pascal a) where
   after _ (Decl _ name ty) = def name (Just ty) Nothing

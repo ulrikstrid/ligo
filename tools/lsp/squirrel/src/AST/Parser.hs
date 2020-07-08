@@ -123,7 +123,7 @@ binding = do
         <*> inside "parameters:parameters" do
               many do
                 inside "parameter" paramDecl
-        <*> inside "type:" type_
+        <*> fmap Just (inside "type:" type_)
         <*> inside "body:" letExpr
 
 recursive :: Parser Bool

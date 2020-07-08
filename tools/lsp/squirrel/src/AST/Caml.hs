@@ -1,7 +1,7 @@
 module AST.Caml where
 
-import Data.Text (Text)
 import Data.Sum
+import Data.Foldable
 
 import AST.Types
 
@@ -23,31 +23,37 @@ ranged p = do
 name :: Parser (Caml ASTInfo)
 name = ranged do pure Name <*> token "Name"
 
+typeName :: Parser (Caml ASTInfo)
+typeName = ranged do pure Name <*> token "TypeName"
+
+fieldName :: Parser (Caml ASTInfo)
+fieldName = ranged do pure Name <*> token "FieldName"
+
 capitalName :: Parser (Caml ASTInfo)
 capitalName = ranged do pure Name <*> token "Name_Capital"
 
 literal :: Parser (Caml ASTInfo)
-literal = subtree "literal" . ranged $ select
-  [ String <$> token "String"
-  , Int <$> token "Int"
-  , Nat <$> token "Nat"
-  , Tez <$> token "Tez"
-  , Bytes <$> token "Bytes"
-  , Unit <$ token "Unit"
-  , Name <$> token "False"
-  , Name <$> token "True"
+literal = subtree "literal" . select $
+  [ ranged $ String <$> token "String"
+  , ranged $ Int <$> token "Int"
+  , ranged $ Nat <$> token "Nat"
+  , ranged $ Tez <$> token "Tez"
+  , ranged $ Bytes <$> token "Bytes"
+  , ranged $ Unit <$ token "Unit"
+  , ranged $ Name <$> token "False"
+  , ranged $ Name <$> token "True"
   ]
 
 contract :: Parser (Caml ASTInfo)
-contract = ranged $
-  Contract
-  <$> subtree "contract" do
-        many do
-          declaration
+contract = do
+  decls <- subtree "contract" (many declaration)
+  -- Weird that I have to do this
+  c <- ranged $ pure ContractEnd
+  foldrM (\a b -> ranged . pure $ ContractCons a b) c $ decls
 
 declaration :: Parser (Caml ASTInfo)
 declaration = subtree "declaration" $
-      (ranged $ ValueDecl <$> letDecl)
+      letDecl
   <|> typeDecl
   -- <|> include
 
@@ -88,11 +94,11 @@ dataCon = do
 
 typeCon :: Parser (Caml ASTInfo)
 typeCon = do
-  subtree "type_con" name
+  subtree "type_con" typeName
 
 label :: Parser (Caml ASTInfo)
 label = do
-  subtree "label" name
+  subtree "label" fieldName
 
 typeExpr :: Parser (Caml ASTInfo)
 typeExpr = do
@@ -134,18 +140,40 @@ typeAnnotation :: Parser (Caml ASTInfo)
 typeAnnotation = do
   subtree "type_annot" . inside "annotExpr" $ typeExpr
 
+letStruct :: Bool -> Parser (Caml ASTInfo)
+letStruct topLevel = ranged $ do
+  token "let"
+  e <- bindOrPat
+  let body = if topLevel then letExpr else expr
+  binding <- case e of
+    Left (rec, n, arg) -> ranged $
+      Function rec n arg
+      <$> optional (inside "bindAnnot" typeAnnotation)
+      <*> inside "letExpr" body
+    Right pat -> ranged $
+      Irrefutable pat
+      <$> optional (inside "bindAnnot" typeAnnotation)
+      <*> inside "letExpr" body
+  pure $ ValueDecl binding
+
 letDecl :: Parser (Caml ASTInfo)
-letDecl =
-  subtree "let_decl" . ranged $ do
-    Function
-    <$> recursive
-    <*> inside "bindName" name
-    <*> many (inside "bindArgument" argument)
-    <*> inside "bindAnnot" typeAnnotation
-    <*> inside "letExpr" expr
+letDecl = subtree "let_decl" $ letStruct True
+
+bindOrPat :: Parser (Either (Bool, Caml ASTInfo, [Caml ASTInfo]) (Caml ASTInfo))
+bindOrPat =
+  fmap Left letBinds <|> fmap Right letPat
+
+letBinds :: Parser (Bool, Caml ASTInfo, [Caml ASTInfo])
+letBinds = subtree "let_binds" $ (,,)
+  <$> recursive
+  <*> inside "bindName" name
+  <*> many (inside "bindArgument" argument)
   where
     recursive =
       maybe False (const True) <$> optional (inside "recursive" (token "rec"))
+
+letPat :: Parser (Caml ASTInfo)
+letPat = subtree "let_pat" pattern
 
 argument :: Parser (Caml ASTInfo)
 argument =
@@ -154,6 +182,15 @@ argument =
     <$> ranged (pure Immutable)
     <*> inside "argPattern" pattern
     <*> inside "argAnnot" typeAnnotation
+
+letExpr :: Parser (Caml ASTInfo)
+letExpr = subtree "let_expr" $
+  expr <|> letExpr1
+
+letExpr1 :: Parser (Caml ASTInfo)
+letExpr1 = subtree "let_expr1" . ranged $ Let
+  <$> letStruct False
+  <*> inside "innerExpr" letExpr
 
 pattern :: Parser (Caml ASTInfo)
 pattern = do
@@ -190,19 +227,26 @@ tuplePattern =
 expr :: Parser (Caml ASTInfo)
 expr =
   subtree "expr" $ select
+    [ subExpr
+    , tupExpr
+    , call
+    ]
+
+subExpr :: Parser (Caml ASTInfo)
+subExpr =
+  subtree "sub_expr" $ select
     [ ranged $ Ident <$> name 
     , ranged $ Constant <$> literal
+    , ranged $ Ident <$> capitalName
     , parenExpr
-    , funApp
-    , opApp
     , prefixOpApp
-    , recAccessor
     , ifExpr
     , lambdaExpr
     , matchExpr
-    , tupExpr
     , listExpr
     , recExpr
+    , ixAccessor
+    , funApp
     ]
   where
     parenExpr = subtree "paren_expr" $ do
@@ -212,14 +256,17 @@ expr =
         Nothing -> pure e
         Just annot -> ranged . pure $ Annot e annot
 
+call :: Parser (Caml ASTInfo)
+call = subtree "call" $ prefixOpApp <|> opApp
+
 funApp :: Parser (Caml ASTInfo)
 funApp =
   subtree "fun_app" . ranged $
-    Apply <$> inside "appF" expr <*> ((:[]) <$> inside "appArg" expr)
+    Apply <$> inside "appF" subExpr <*> ((:[]) <$> inside "appArg" subExpr)
 
 opApp :: Parser (Caml ASTInfo)
 opApp =
-  subtree "op_app" . ranged $ do
+  ranged $ do
     l <- inside "arg1" expr
     op <- inside "op" anything
     r <- inside "arg2" expr
@@ -230,10 +277,10 @@ prefixOpApp =
   subtree "unary_op_app" . ranged $
     UnOp <$> inside "unaryOp" anything <*> inside "arg" expr
 
-recAccessor :: Parser (Caml ASTInfo)
-recAccessor =
-  subtree "rec_accessor" . ranged $
-    RecAccessor <$> inside "rec" expr <*> inside "label" label
+ixAccessor :: Parser (Caml ASTInfo)
+ixAccessor =
+  subtree "index_accessor" . ranged $
+    Indexing <$> inside "exp" subExpr <*> inside "ix" subExpr
 
 ifExpr :: Parser (Caml ASTInfo)
 ifExpr =
@@ -284,4 +331,4 @@ recExpr = subtree "rec_expr" . ranged $ do
     Just u -> pure $ RecordUpd u assignments
   where
     assignment = subtree "rec_assignment" . ranged $
-      Assignment <$> inside "assignmentLabel" label <*> inside "assignmentExpr" expr
+      Assignment <$> inside "assignmentLabel" expr <*> inside "assignmentExpr" expr

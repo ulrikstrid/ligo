@@ -1,13 +1,20 @@
 let sepBy1 = (sep, p) => seq(p, repeat(seq(sep, p)))
 
+function mkOp($, opExpr) {
+  return seq(
+    field("arg1", $.expr),
+    field("op", opExpr),
+    field("arg2", $.expr)
+  );
+}
+
 module.exports = grammar({
   name: 'CameLigo',
   extras: $ => [$.comment, $.ocaml_comment, /\s/],
 
   rules: {
 
-
-    contract: $ => repeat($.let_decl),
+    contract: $ => repeat($.declaration),
 
     declaration: $ => choice(
       $.let_decl,
@@ -18,9 +25,7 @@ module.exports = grammar({
     argument: $ => seq("(", field("argPattern", $.pattern), field("argAnnot", $.type_annot), ")"),
     let_decl: $ => seq(
       "let",
-      optional(field("recursive", "rec")),
-      field("bindName", $.Name),
-      repeat(field("bindArgument", $.argument)),
+      choice(field("letBinds", $.let_binds), field("letPat", $.let_pat)),
       optional(field("bindAnnot", $.type_annot)),
       "=",
       field("letExpr",$.let_expr)),
@@ -32,16 +37,22 @@ module.exports = grammar({
       $.expr
     ),
 
-    let_expr1: $ => seq(
-      "let",
+    let_binds: $ => prec(1, seq(
       optional(field("recursive", "rec")),
       field("bindName", $.Name),
-      repeat(field("bindArgument", $.argument)),
+      repeat(field("bindArgument", $.argument))
+    )),
+
+    let_pat: $ => $.pattern,
+
+    let_expr1: $ => seq(
+      "let",
+      choice(field("letBinds", $.let_binds), field("letPat", $.let_pat)),
       optional(field("bindAnnot", $.type_annot)),
       "=",
       field("letExpr",$.expr),
       "in",
-      $.let_expr
+      field("innerExpr", $.let_expr)
     ),
 
     // [1;2]
@@ -93,66 +104,49 @@ module.exports = grammar({
     )),
 
     call: $ => choice(
-      $.fun_app,
-      // $.unary_op_app,
-      $.add_op_app
+      $.unary_op_app,
+      $._mod_op_app,
+      $._mul_op_app,
+      $._add_op_app,
+      $._list_con_op_app,
+      $._string_cat_op_app,
+      $._bool_op_app,
+      $._comp_op_app
     ),
 
-    add_op_app: $ => prec.left(14, seq(
-      field("arg1", $.expr),
-      field("op", choice("-", "+")),
-      field("arg2", $.expr),
-    )),
+    _mod_op_app: $ => prec.left(16, mkOp($, "mod")),
+    _mul_op_app: $ => prec.left(15, mkOp($, choice("/", "*"))),
+    _add_op_app: $ => prec.left(14, mkOp($, choice("-", "+"))),
+    _list_con_op_app: $ => prec.right(13, mkOp($, "::")),
+    _string_cat_op_app: $ => prec.right(12, mkOp($, "^")),
+    _bool_op_app: $ => prec.left(11, mkOp($, choice("&&", "||"))),
+    _comp_op_app: $ => prec.left(10, mkOp($, choice("=", "<>", "==", "<", "<=", ">", ">="))),
 
-    // // ! a
-    // unary_op_app: $ => prec.right(19, choice(
-    //   seq(field("unaryOp", "-"), field("arg", $.expr))),
-    // ),
+    // - a
+    unary_op_app: $ => prec(19, choice(
+       seq(field("unaryOp", "-"), field("arg", $.expr))),
+    ),
 
     // f a
-    fun_app: $ => prec.left(20, seq(field("appF", $.expr), field("appArg",$.expr))),
-    // Cat a
-    // con_app: $ => prec(19, seq($.data_con, $.expr)),
-    // a + b
-    op_app: $ => prec(19, choice(
-      prec.left(16, seq(field("arg1", $.expr), field("op", "mod"), field("arg2", $.expr))),
-      prec.left(15, seq(field("arg1", $.expr), field("op", "*"), field("arg2", $.expr))),
-      prec.left(15, seq(field("arg1", $.expr), field("op", "/"), field("arg2", $.expr))),
-      prec.left(14, seq(field("arg1", $.expr), field("op", "+"), field("arg2", $.expr))),
-      prec.left(14, seq(field("arg1", $.expr), field("op", "-"), field("arg2", $.expr))),
+    fun_app: $ => prec.left(20, seq(field("appF", $.sub_expr), field("appArg",$.sub_expr))),
 
-      prec.left(13, seq(field("arg1", $.expr), field("op", "::"), field("arg2", $.expr))),
-
-      prec.left(12, seq(field("arg1", $.expr), field("op", "@"), field("arg2", $.expr))),
-      prec.left(12, seq(field("arg1", $.expr), field("op", "^"), field("arg2", $.expr))),
-
-      prec.left(11, seq(field("arg1", $.expr), field("op", "&&"), field("arg2", $.expr))),
-      prec.left(11, seq(field("arg1", $.expr), field("op", "||"), field("arg2", $.expr))),
-      prec.left(10, seq(field("arg1", $.expr), field("op", "="), field("arg2", $.expr))),
-      prec.left(10, seq(field("arg1", $.expr), field("op", "<>"), field("arg2", $.expr))),
-      prec.left(10, seq(field("arg1", $.expr), field("op", "=="), field("arg2", $.expr))),
-      prec.left(10, seq(field("arg1", $.expr), field("op", "!="), field("arg2", $.expr))),
-      prec.left(10, seq(field("arg1", $.expr), field("op", "<"), field("arg2", $.expr))),
-      prec.left(10, seq(field("arg1", $.expr), field("op", "<="), field("arg2", $.expr))),
-      prec.left(10, seq(field("arg1", $.expr), field("op", ">"), field("arg2", $.expr))),
-      prec.left(10, seq(field("arg1", $.expr), field("op", ">="), field("arg2", $.expr)))
-    )),
-    // a.field
-    rec_accessor: $ => prec(21, seq(field("rec", $.expr), ".", field("label", $.label))),
+    // a.0
+    index_accessor: $ => prec.right(21, seq(field("exp", $.sub_expr), ".", field("ix", $.sub_expr))),
 
     // { p with a = b; c = d }
     rec_expr: $ => seq(
       "{",
       optional(seq(field("updateTarget", $.Name), "with")),
-      repeat1(field("assignment", $.rec_assignment)),
+      field("assignment", $.rec_assignment),
+      repeat(seq(";", field("assignment", $.rec_assignment))),
+      optional(";"),
       "}"
     ),
     // a = b;
     rec_assignment: $ => seq(
-      field("assignmentLabel", $.label),
+      field("assignmentLabel", $.expr),
       "=",
       field("assignmentExpr", $.expr),
-      ";"
     ),
 
     // if a then b else c
@@ -200,21 +194,23 @@ module.exports = grammar({
     )),
 
     expr: $ => choice(
+      $.call,
+      $.sub_expr,
+      $.tup_expr
+    ),
+
+    sub_expr: $ => choice(
+      $.fun_app,
+      $.paren_expr,
       $.Name,
       $.Name_Capital,
       $.literal,
-      $.paren_expr,
-      // $.let_expr,
-      $.call,
-      // $.op_app,
-      // $.unary_op_app,
-      $.rec_accessor,
       $.rec_expr,
       $.if_expr,
       $.lambda_expr,
       $.match_expr,
       $.list_expr,
-      $.tup_expr
+      $.index_accessor
     ),
 
     paren_expr: $ => seq(
@@ -227,7 +223,7 @@ module.exports = grammar({
 
     //========== TYPE_EXPR ============
     // t, test, string, integer
-    type_con: $ => $.Name,
+    type_con: $ => $.TypeName,
     // Red, Green, Blue, Cat
     data_con: $ => $.Name_Capital,
     // a t, (a, b) t
@@ -248,7 +244,8 @@ module.exports = grammar({
       $.type_fun,
       $.type_product,
       $.type_app,
-      $.type_con
+      $.type_con,
+      $.paren_type_expr,
     ),
 
     paren_type_expr: $ => seq(
@@ -263,12 +260,14 @@ module.exports = grammar({
     type_sum: $ => seq(field("variant", $.variant), optional(repeat(seq("|", field("variant", $.variant))))),
 
     // field : string * int
-    label: $ => $.Name,
+    label: $ => $.FieldName,
     type_rec_field: $ => seq(field("recLabel", $.label), ":", field("labelType", $.type_expr)),
     // { field1 : a; field2 : b }
     type_rec: $ => seq(
       "{",
-      repeat1(seq(field("recField", $.type_rec_field), ";")),
+      field("recField", $.type_rec_field),
+      repeat(seq(";", field("recField", $.type_rec_field))),
+      optional(";"),
       "}"
     ),
 
@@ -296,6 +295,8 @@ module.exports = grammar({
     Tez:          $ => /([1-9][0-9_]*|0)(\.[0-9_]+)?(tz|tez|mutez)/,
     Bytes:        $ => /0x[0-9a-fA-F]+/,
     Name:         $ => /[a-z][a-zA-Z0-9_]*/,
+    TypeName:     $ => /[a-z][a-zA-Z0-9_]*/,
+    FieldName:    $ => /[a-z][a-zA-Z0-9_]*/,
     Name_Capital: $ => /[A-Z][a-zA-Z0-9_]*/,
     Keyword:      $ => /[A-Za-z][a-z]*/,
 

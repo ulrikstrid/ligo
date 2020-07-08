@@ -40,10 +40,10 @@ data Declaration it
   deriving stock (Functor, Foldable, Traversable)
 
 data Binding it
-  = Irrefutable  it it               -- ^ (Pattern) (Expr)
-  | Function     Bool it [it] it it  -- ^ (Name) [VarDecl] (Type) (Expr)
-  | Var          it it it            -- ^ (Name) (Type) (Expr)
-  | Const        it it it            -- ^ (Name) (Type) (Expr)
+  = Irrefutable  it (Maybe it) it            -- ^ (Pattern) (Maybe Type) (Expr)
+  | Function     Bool it [it] (Maybe it) it  -- ^ (Name) [VarDecl] (Maybe Type) (Expr)
+  | Var          it it it                    -- ^ (Name) (Type) (Expr)
+  | Const        it it it                    -- ^ (Name) (Type) (Expr)
   deriving (Show) via PP (Binding it)
   deriving stock (Functor, Foldable, Traversable)
 
@@ -110,7 +110,6 @@ data Expr it
   | MapPatch  it [it] -- (QualifiedName) [MapBinding]
   | SetPatch  it [it] -- (QualifiedName) [Expr]
   | RecordUpd it [it] -- (QualifiedName) [FieldAssignment]
-  | RecAccessor it it -- (Expr) (Name)
   | Unit
   deriving (Show) via PP (Expr it)
   deriving stock (Functor, Foldable, Traversable)
@@ -207,7 +206,7 @@ instance Pretty1 Declaration where
 
 instance Pretty1 Binding where
   pp1 = \case
-    Irrefutable  pat expr -> "irref" <+> pat <+> "=" `indent` expr
+    Irrefutable  pat ty expr -> "irref" <+> pat <+> maybe empty (":" <+>) ty <+> "=" `indent` expr
     Function     isRec name params ty body ->
       (
         (
@@ -217,7 +216,7 @@ instance Pretty1 Binding where
           )
           `indent` tuple params
         )
-        `indent` (":" <+> ty <+> "is")
+        `indent` (maybe empty (":" <+>) ty <+> "is")
       )
       `indent` body
     Var   name ty value -> "var"   <+> name <+> ":" <+> ty <+> ":=" `indent` value
@@ -277,6 +276,7 @@ instance Pretty1 Expr where
     MapPatch  z bs       -> "patch" `indent` z `above` "with" <+> "map" `indent` list bs
     SetPatch  z bs       -> "patch" `indent` z `above` "with" <+> "set" `indent` list bs
     RecordUpd r up       -> r `indent` "with" <+> "record" `indent` list up
+    Unit                 -> "()"
 
 instance Pretty1 Alt where
   pp1 = \case

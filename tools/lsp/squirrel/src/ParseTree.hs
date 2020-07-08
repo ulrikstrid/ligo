@@ -49,7 +49,7 @@ import Text.PrettyPrint hiding ((<>))
 import Range
 import Pretty
 
-foreign import ccall unsafe tree_sitter_PascaLigo :: Ptr Language
+foreign import ccall unsafe tree_sitter_CameLigo :: Ptr Language
 
 data Source
   = Path       { srcPath :: FilePath }
@@ -101,7 +101,7 @@ instance Pretty ParseForest where
 toParseTree :: Source -> IO ParseForest
 toParseTree fin = do
   parser <- ts_parser_new
-  True   <- ts_parser_set_language parser tree_sitter_PascaLigo
+  True   <- ts_parser_set_language parser tree_sitter_CameLigo
 
   src <- srcToBytestring fin
 

@@ -1,1 +1,1 @@
-../../pascaligo/src/parser.c
+../../camligo/src/parser.c
