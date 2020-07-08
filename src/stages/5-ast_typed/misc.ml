@@ -3,7 +3,8 @@ open Types
 module Free_variables = struct
 
   type bindings = expression_variable list
-  let mem : expression_variable -> bindings -> bool = List.mem
+  let var_compare = Location.compare_content ~compare:Var.compare
+  let mem : expression_variable -> bindings -> bool = List.mem ~compare:var_compare
   let singleton : expression_variable -> bindings = fun s -> [ s ]
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat
@@ -145,8 +146,6 @@ let assert_literal_eq (a, b : literal * literal) : unit option =
   | Literal_bytes a, Literal_bytes b when a = b -> Some ()
   | Literal_bytes _, Literal_bytes _ -> None
   | Literal_bytes _, _ -> None
-  | Literal_void, Literal_void -> Some ()
-  | Literal_void, _ -> None
   | Literal_unit, Literal_unit -> Some ()
   | Literal_unit, _ -> None
   | Literal_address a, Literal_address b when a = b -> Some ()
@@ -219,7 +218,7 @@ let get_entry (lst : program) (name : string) : expression option =
   let aux x =
     match Location.unwrap x with
     | Declaration_constant { binder ; expr ; inline=_ } -> (
-      if Var.equal binder (Var.of_name name)
+      if Var.equal binder.wrap_content (Var.of_name name)
       then Some expr
       else None
     )
@@ -229,7 +228,7 @@ let get_entry (lst : program) (name : string) : expression option =
 
 let equal_variables a b : bool =
   match a.expression_content, b.expression_content with
-  | E_variable a, E_variable b -> Var.equal a b
+  | E_variable a, E_variable b -> Var.equal a.wrap_content b.wrap_content
   |  _, _ -> false
 
 let p_constant (p_ctor_tag : constant_tag) (p_ctor_args : p_ctor_args) = {

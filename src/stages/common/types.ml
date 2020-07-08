@@ -1,5 +1,5 @@
 type expression_
-and expression_variable = expression_ Var.t
+and expression_variable = expression_ Var.t Location.wrap
 type type_
 and type_variable = type_ Var.t
 
@@ -29,7 +29,7 @@ type 'a constructor_map = 'a CMap.t
     | TC_chain_id
     | TC_signature
     | TC_timestamp
-    | TC_void
+
   and type_operator =
     | TC_contract
     | TC_option
@@ -143,7 +143,6 @@ module Ast_generic_type (PARAMETER : AST_PARAMETER_TYPE) = struct
     | TC_chain_id  -> "TC_chain_id", []
     | TC_signature -> "TC_signature", []
     | TC_timestamp -> "TC_timestamp", []
-    | TC_void      -> "TC_void", []
 
   let string_of_type_expression' = function
     | T_operator o -> string_of_type_operator o
@@ -166,7 +165,6 @@ type literal =
   | Literal_key of string
   | Literal_key_hash of string
   | Literal_chain_id of string
-  | Literal_void
   | Literal_operation of
       Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation
 and constant' =
