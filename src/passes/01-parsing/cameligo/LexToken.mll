@@ -85,6 +85,7 @@ type t =
 | Fun       of Region.t
 | Rec       of Region.t
 | If        of Region.t
+| Import    of Region.t
 | In        of Region.t
 | Let       of Region.t
 | Match     of Region.t
@@ -170,24 +171,25 @@ let proj_token = function
 
   (* Keywords *)
 
-| Begin region -> region, "Begin"
-| Else  region -> region, "Else"
-| End   region -> region, "End"
-| False region -> region, "False"
-| Fun   region -> region, "Fun"
-| Rec   region -> region, "Rec"
-| If    region -> region, "If"
-| In    region -> region, "In"
-| Let   region -> region, "Let"
-| Match region -> region, "Match"
-| Mod   region -> region, "Mod"
-| Not   region -> region, "Not"
-| Of    region -> region, "Of"
-| Or    region -> region, "Or"
-| Then  region -> region, "Then"
-| True  region -> region, "True"
-| Type  region -> region, "Type"
-| With  region -> region, "With"
+| Begin  region -> region, "Begin"
+| Else   region -> region, "Else"
+| End    region -> region, "End"
+| False  region -> region, "False"
+| Fun    region -> region, "Fun"
+| Rec    region -> region, "Rec"
+| If     region -> region, "If"
+| Import region -> region, "Import"
+| In     region -> region, "In"
+| Let    region -> region, "Let"
+| Match  region -> region, "Match"
+| Mod    region -> region, "Mod"
+| Not    region -> region, "Not"
+| Of     region -> region, "Of"
+| Or     region -> region, "Or"
+| Then   region -> region, "Then"
+| True   region -> region, "True"
+| Type   region -> region, "Type"
+| With   region -> region, "With"
 
   (* Data *)
 
@@ -245,24 +247,25 @@ let to_lexeme = function
 
   (* Keywords *)
 
-| Begin _ -> "begin"
-| Else  _ -> "else"
-| End   _ -> "end"
-| False _ -> "false"
-| Fun   _ -> "fun"
-| Rec   _ -> "rec"
-| If    _ -> "if"
-| In    _ -> "in"
-| Let   _ -> "let"
-| Match _ -> "match"
-| Mod   _ -> "mod"
-| Not   _ -> "not"
-| Of    _ -> "of"
-| Or    _ -> "or"
-| True  _ -> "true"
-| Type  _ -> "type"
-| Then  _ -> "then"
-| With  _ -> "with"
+| Begin  _ -> "begin"
+| Else   _ -> "else"
+| End    _ -> "end"
+| False  _ -> "false"
+| Fun    _ -> "fun"
+| Rec    _ -> "rec"
+| If     _ -> "if"
+| Import _ -> "import"
+| In     _ -> "in"
+| Let    _ -> "let"
+| Match  _ -> "match"
+| Mod    _ -> "mod"
+| Not    _ -> "not"
+| Of     _ -> "of"
+| Or     _ -> "or"
+| True   _ -> "true"
+| Type   _ -> "type"
+| Then   _ -> "then"
+| With   _ -> "with"
 
 (* Data constructors *)
 
@@ -292,6 +295,7 @@ let keywords = [
   (fun reg -> Fun       reg);
   (fun reg -> Rec       reg);
   (fun reg -> If        reg);
+  (fun reg -> Import    reg);
   (fun reg -> In        reg);
   (fun reg -> Let       reg);
   (fun reg -> Match     reg);
