@@ -582,6 +582,7 @@ core_expr:
 | code_inj                            {                   ECodeInj $1 }
 | par(expr)                           {                       EPar $1 }
 | par(annot_expr)                     {                     EAnnot $1 }
+| module_import                       {                    EImport $1 }
 
 code_inj:
   "<lang>" expr "]" {
@@ -600,6 +601,13 @@ module_field:
 module_fun:
   field_name { $1 }
 | "or"       { {value="or"; region=$1} }
+
+module_import:
+  "import" module_name {
+    let region = cover $1.region $2.region in
+    let value = Name $2 in
+    {region; value}
+}
 
 projection:
   struct_name "." nsepseq(selection,".") {

@@ -25,26 +25,27 @@ type 'a reg = 'a Region.reg
 
 (* Keywords of OCaml *)
 
-type keyword   = Region.t
-type kwd_and   = Region.t
-type kwd_begin = Region.t
-type kwd_else  = Region.t
-type kwd_end   = Region.t
-type kwd_false = Region.t
-type kwd_fun   = Region.t
-type kwd_rec   = Region.t
-type kwd_if    = Region.t
-type kwd_in    = Region.t
-type kwd_let   = Region.t
-type kwd_match = Region.t
-type kwd_mod   = Region.t
-type kwd_not   = Region.t
-type kwd_of    = Region.t
-type kwd_or    = Region.t
-type kwd_then  = Region.t
-type kwd_true  = Region.t
-type kwd_type  = Region.t
-type kwd_with  = Region.t
+type keyword    = Region.t
+type kwd_and    = Region.t
+type kwd_begin  = Region.t
+type kwd_else   = Region.t
+type kwd_end    = Region.t
+type kwd_false  = Region.t
+type kwd_fun    = Region.t
+type kwd_rec    = Region.t
+type kwd_if     = Region.t
+type kwd_import = Region.t
+type kwd_in     = Region.t
+type kwd_let    = Region.t
+type kwd_match  = Region.t
+type kwd_mod    = Region.t
+type kwd_not    = Region.t
+type kwd_of     = Region.t
+type kwd_or     = Region.t
+type kwd_then   = Region.t
+type kwd_true   = Region.t
+type kwd_type   = Region.t
+type kwd_with   = Region.t
 type kwd_let_entry = Region.t
 
 (* Data constructors *)
@@ -247,6 +248,7 @@ and expr =
 | EFun     of fun_expr reg
 | ESeq     of expr injection reg
 | ECodeInj of code_inj reg
+| EImport  of path reg
 
 and annot_expr = expr * colon * type_expr
 
