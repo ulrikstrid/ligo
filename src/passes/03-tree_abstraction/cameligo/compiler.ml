@@ -713,7 +713,10 @@ and compile_declaration : Raw.declaration -> (declaration Location.wrap list , a
           in let%bind variables = ok @@ npseq_to_list pt.value
           in let%bind expr_bind_lst =
                match let_rhs with
-               | ETuple et -> ok @@ npseq_to_list et.value
+               | ETuple et -> 
+                 ok @@ List.rev (npseq_to_list et.value)
+               | EPar {value = {inside = ETuple et; _}; _} -> 
+                 ok @@ List.rev (npseq_to_list et.value)
                | EVar v -> (* Handle variable bound to tuple *)
                  let name = v.value in
                  let rec gen_access_tuple ?(i: int = 0)
@@ -742,10 +745,40 @@ and compile_declaration : Raw.declaration -> (declaration Location.wrap list , a
                  in ok (gen_access_tuple name)
                (* TODO: Improve this error message *)
                | other -> fail @@ bad_deconstruction other
-          in let%bind decls =
-               (* TODO: Rewrite the gen_access_tuple so there's no List.rev *)
-               bind_map_list process_variable (List.combine variables (List.rev expr_bind_lst))
-          in ok @@ decls
+          in 
+          let rec unepar = function
+          | Raw.EPar { value = { inside ; _} ; _} -> 
+            unepar inside
+          | e -> e
+          in
+          let rec unppar = function
+          | Raw.PPar { value = { inside ; _} ; _} -> unppar inside
+          | e -> e
+          in
+          let rec resolve a =
+            match a with
+                    [] -> ok []                          
+            | hd :: tl -> (
+              let a = unppar (fst hd) in 
+              let b = unepar (snd hd) in
+              match a, b with 
+              | Raw.PTuple p, Raw.ETuple e -> (
+                let hd = List.map unppar (Utils.nsepseq_to_list p.value) in
+                let e = List.map unepar (Utils.nsepseq_to_list e.value) in
+                let%bind hd = resolve (List.combine hd e) in
+                let%bind tl = resolve tl in
+                ok (hd @ tl)
+              )
+              | _ -> (
+                let%bind hd = process_variable hd in 
+                let%bind tl = resolve tl in
+                ok (hd :: tl)
+              )
+            )
+          in
+          let combined = List.combine variables (List.rev expr_bind_lst) in
+          resolve combined
+        
         | PPar {region = _ ; value = { lpar = _ ; inside = pt; rpar = _; } } ->
           (* Extract parenthetical multi-bind *)
           let (wild, recursive, _, attributes) = fst @@ r_split x in
