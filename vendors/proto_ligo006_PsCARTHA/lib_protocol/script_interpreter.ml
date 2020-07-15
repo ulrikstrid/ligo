@@ -361,6 +361,8 @@ type step_constants =
     payer : Contract.t ;
     self : Contract.t ;
     amount : Tez.t ;
+    balance : Tez.t;
+    now : Script_timestamp.t;
     chain_id : Chain_id.t }
 
 let rec step_star
@@ -1052,12 +1054,10 @@ let rec step_star
         logged_return (Item ((Internal_operation { source = step_constants.self ; operation ; nonce }, None), rest))
     | Balance, rest ->
         call (Gas_consume Interp_costs.balance) >>=* fun () ->
-        call (Get_balance step_constants.self) >>=* fun balance ->
-        logged_return (Item (balance, rest))
+        logged_return (Item (step_constants.balance, rest))
     | Now, rest ->
         call (Gas_consume Interp_costs.now) >>=* fun () ->
-        call Now >>=* fun now ->
-        logged_return (Item (now, rest))
+        logged_return (Item (step_constants.now, rest))
     | Check_signature, Item (key, Item (signature, Item (message, rest))) ->
         call (Gas_consume (Interp_costs.check_signature key message)) >>=* fun () ->
         let res = Signature.check key signature message in

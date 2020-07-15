@@ -52,6 +52,8 @@ type step_constants =
     payer : Contract.t ;
     self : Contract.t ;
     amount : Tez.t ;
+    balance : Tez.t;
+    now : Script_timestamp.t;
     chain_id : Chain_id.t }
 
 type 'tys stack =
