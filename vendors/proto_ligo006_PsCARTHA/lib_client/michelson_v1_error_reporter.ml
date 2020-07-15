@@ -88,7 +88,8 @@ let collect_error_locations errs =
         | No_such_entrypoint _
         | Duplicate_entrypoint _
         | Unreachable_entrypoint _
-        | Runtime_contract_error (_, _)
+        | Script_interpreter_error
+            (Script_interpreter.Error.Runtime_contract_error (_, _))
         | Michelson_v1_primitives.Invalid_primitive_name (_, _)
         | Ill_typed_data (_, _, _)
         | Ill_typed_contract (_, _) )
@@ -118,8 +119,9 @@ let collect_error_locations errs =
         | Invalid_syntactic_constant (loc, _, _)
         | Invalid_contract (loc, _)
         | Comparable_type_expected (loc, _)
-        | Overflow (loc, _)
-        | Reject (loc, _, _) )
+        | Script_interpreter_error (Script_interpreter.Error.Overflow (loc, _))
+        | Script_interpreter_error
+            (Script_interpreter.Error.Reject (loc, _, _)) )
       :: rest ->
         collect (loc :: acc) rest
     | _ :: rest ->
@@ -149,7 +151,7 @@ let report_errors ~details ~show_source ?parsed ppf errs =
         Some ploc
       with Not_found -> None
     in
-    let print_source ppf (parsed, _hilights) (* TODO *) =
+    let print_source ppf (parsed, _hilights (* TODO *)) =
       let lines =
         String.split_on_char '\n' parsed.Michelson_v1_parser.source
       in
@@ -289,7 +291,10 @@ let report_errors ~details ~show_source ?parsed ppf errs =
           (Michelson_v1_primitives.string_of_prim prim) ;
         if rest <> [] then Format.fprintf ppf "@," ;
         print_trace locations rest
-    | Environment.Ecoproto_error Cannot_serialize_storage :: rest ->
+    | Environment.Ecoproto_error
+        (Script_interpreter_error
+          Script_interpreter.Error.Cannot_serialize_storage)
+      :: rest ->
         Format.fprintf
           ppf
           "Cannot serialize the resulting storage value within the provided \
@@ -313,7 +318,11 @@ let report_errors ~details ~show_source ?parsed ppf errs =
         if rest <> [] then Format.fprintf ppf "@," ;
         print_trace locations rest
     | Environment.Ecoproto_error (Unexpected_big_map loc) :: rest ->
-        Format.fprintf ppf "%abig_map type not expected here" print_loc loc ;
+        Format.fprintf
+          ppf
+          "%abig_map type not allowed inside another big_map"
+          print_loc
+          loc ;
         if rest <> [] then Format.fprintf ppf "@," ;
         print_trace locations rest
     | Environment.Ecoproto_error (Unexpected_operation loc) :: rest ->
@@ -332,7 +341,9 @@ let report_errors ~details ~show_source ?parsed ppf errs =
           loc ;
         if rest <> [] then Format.fprintf ppf "@," ;
         print_trace locations rest
-    | Environment.Ecoproto_error (Runtime_contract_error (contract, expr))
+    | Environment.Ecoproto_error
+        (Script_interpreter_error
+          (Script_interpreter.Error.Runtime_contract_error (contract, expr)))
       :: rest ->
         let parsed =
           match parsed with
@@ -386,8 +397,9 @@ let report_errors ~details ~show_source ?parsed ppf errs =
            Try again with a higher storage limit.@]" ;
         if rest <> [] then Format.fprintf ppf "@," ;
         print_trace locations rest
-    | [Environment.Ecoproto_error (Script_interpreter.Bad_contract_parameter c)]
-      ->
+    | [ Environment.Ecoproto_error
+          (Script_interpreter_error
+            (Script_interpreter.Error.Bad_contract_parameter c)) ] ->
         Format.fprintf
           ppf
           "@[<v 0>Account %a is not a smart contract, it does not take \
@@ -398,7 +410,8 @@ let report_errors ~details ~show_source ?parsed ppf errs =
           c
     | Environment.Ecoproto_error err :: rest ->
         ( match err with
-        | Script_interpreter.Bad_contract_parameter c ->
+        | Script_interpreter_error
+            (Script_interpreter.Error.Bad_contract_parameter c) ->
             Format.fprintf
               ppf
               "Invalid argument passed to contract %a."
@@ -654,7 +667,8 @@ let report_errors ~details ~show_source ?parsed ppf errs =
               tya
               print_ty
               tyb
-        | Reject (loc, v, trace) ->
+        | Script_interpreter_error
+            (Script_interpreter.Error.Reject (loc, v, trace)) ->
             Format.fprintf
               ppf
               "%ascript reached FAILWITH instruction@ @[<hov 2>with@ %a@]%a"
@@ -669,7 +683,8 @@ let report_errors ~details ~show_source ?parsed ppf errs =
                       print_execution_trace
                       trace)
               trace
-        | Overflow (loc, trace) ->
+        | Script_interpreter_error
+            (Script_interpreter.Error.Overflow (loc, trace)) ->
             Format.fprintf
               ppf
               "%aunexpected arithmetic overflow%a"
