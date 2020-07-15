@@ -316,7 +316,7 @@ let failure_interpret
   Script_interpreter.step tezos_context step_constants instr bef >>= fun x ->
   match x with
   | Ok (s , _ctxt) -> return @@ Succeed s
-  | Error ((Reject (_, expr, _))::_t) -> return @@ Fail expr (* This catches failwith errors *)
+  | Error ((Script_interpreter_error (Reject (_, expr, _)))::_t) -> return @@ Fail expr (* This catches failwith errors *)
   | Error errs -> Lwt.return @@ Error (List.map (alpha_error_wrap) errs)
 
 let pack (data_ty: 'a ty) (data: 'a) : bytes tzresult Lwt.t =
