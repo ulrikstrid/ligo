@@ -122,8 +122,8 @@ and pp_ptuple {value; _} =
   | p::items ->
       group (break 1 ^^ pp_pattern p ^^ string ",") ^^ app items
   in if tail = []
-     then string "(" ^^ nest 1 (pp_pattern head) ^^ string ")"
-     else string "(" ^^ nest 1 (pp_pattern head ^^ string "," ^^ app (List.map snd tail)) ^^ string ")"
+     then (pp_pattern head)
+     else (pp_pattern head ^^ string "," ^^ app (List.map snd tail))
 
 and pp_precord fields = pp_ne_injection pp_field_pattern fields
 
@@ -348,8 +348,8 @@ and pp_tuple_expr {value; _} =
   | e::items ->
       group (break 1 ^^ pp_expr e ^^ string ",") ^^ app items
   in if tail = []
-     then string "(" ^^ nest 1 (pp_expr head) ^^ string ")"
-     else string "(" ^^ nest 1 (pp_expr head ^^ string "," ^^ app (List.map snd tail)) ^^ string ")"
+     then (pp_expr head)
+     else (pp_expr head ^^ string "," ^^ app (List.map snd tail))
 
 and pp_par_expr {value; _} =
   string "(" ^^ nest 1 (pp_expr value.inside ^^ string ")")

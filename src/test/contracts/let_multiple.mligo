@@ -34,3 +34,11 @@ let (greet_num : int), (greeting : string) = different_types
 
 let correct_values_different_types (p : unit) : int * string =
   greet_num, greeting
+
+
+let ((y2: int), (z2: int)) = (2, 3)
+
+let o = 1
+let o2 = 2
+let o3 = 3
+let ((x: int), ((y: int), (z: int))) = (o2, (o, o3))

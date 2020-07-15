@@ -279,7 +279,7 @@ let_binding:
 | par(closed_irrefutable) type_annotation? "=" expr {
     wild_error $4;
     Scoping.check_pattern $1.value.inside;
-    {binders = $1.value.inside, []; lhs_type=$2; eq=$3; let_rhs=$4}
+    {binders = PPar $1, []; lhs_type=$2; eq=$3; let_rhs=$4}
   }
 | tuple(sub_irrefutable) type_annotation? "=" expr {
     wild_error $4;
@@ -476,20 +476,15 @@ fun_expr(right_expr):
     | EPar p ->
         let value =
           {p.value with inside = arg_to_pattern p.value.inside}
-        in PPar {p with value}
+        in
+        PPar {p with value}
     | EUnit u -> PUnit u
     | ETuple { value; region } ->
         PTuple { value = Utils.nsepseq_map arg_to_pattern value; region}
     | EAnnot {region; value = {inside = t, colon, typ; _}} ->
-        let value = { pattern = arg_to_pattern t; colon; type_expr = typ} in
-        PPar {
-          value = {
-            lpar = Region.ghost;
-            rpar = Region.ghost;
-            inside = PTyped {region; value}
-          };
-          region
-        }
+        let pattern = arg_to_pattern t in
+        let value = { pattern; colon; type_expr = typ} in
+        PTyped {region; value}
     | e ->
         let open! SyntaxError in
         raise (Error (WrongFunctionArguments e)) in
@@ -675,15 +670,16 @@ disj_expr_level:
 | par(tuple(disj_expr_level)) type_annotation_simple? {
     let region = nsepseq_to_region expr_to_region $1.value.inside in
     let tuple  = ETuple {value=$1.value.inside; region} in
+    let par = EPar { value = {lpar = $1.value.lpar; inside = tuple; rpar = $1.value.rpar}; region = $1.region } in
     let region =
       match $2 with
         Some (_,s) -> cover $1.region (type_expr_to_region s)
       |       None -> region in
     match $2 with
       Some (colon, typ) ->
-        let value = {$1.value with inside = tuple,colon,typ}
+        let value = {$1.value with inside = par,colon,typ}
         in EAnnot {region; value}
-    | None -> tuple }
+    | None -> par }
 
 bin_op(arg1,op,arg2):
   arg1 op arg2 {

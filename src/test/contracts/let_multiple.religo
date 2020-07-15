@@ -13,3 +13,9 @@ let foobar : (int, int) = (23, 42);
 let ((foo : int), (bar : int)) = foobar;
 
 let non_tuple_rhs = (p : unit) : int => foo + bar;
+
+
+let o = 1
+let o2 = 2
+let o3 = 3
+let ((x: int), ((y: int), (z: int))) = (o2, (o, o3));

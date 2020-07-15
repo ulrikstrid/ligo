@@ -751,19 +751,15 @@ and compile_declaration : Raw.declaration -> (declaration Location.wrap list , a
             unepar inside
           | e -> e
           in
-          let rec unppar = function
-          | Raw.PPar { value = { inside ; _} ; _} -> unppar inside
-          | e -> e
-          in
           let rec resolve a =
             match a with
                     [] -> ok []                          
             | hd :: tl -> (
-              let a = unppar (fst hd) in 
+              let a = unpar_pattern (fst hd) in 
               let b = unepar (snd hd) in
               match a, b with 
               | Raw.PTuple p, Raw.ETuple e -> (
-                let hd = List.map unppar (Utils.nsepseq_to_list p.value) in
+                let hd = List.map unpar_pattern (Utils.nsepseq_to_list p.value) in
                 let e = List.map unepar (Utils.nsepseq_to_list e.value) in
                 let%bind hd = resolve (List.combine hd e) in
                 let%bind tl = resolve tl in
