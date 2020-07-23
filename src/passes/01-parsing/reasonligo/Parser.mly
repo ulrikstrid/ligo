@@ -456,9 +456,20 @@ const_decl :
 type_annotation_simple:
   ":" type_expr_simple { $1,$2 }
 
+fun_args :
+  disj_expr_level { $1 }
+| par(tuple(fun_args)) type_annotation_simple? {
+    let region = nsepseq_to_region expr_to_region $1.value.inside in
+    let tuple  = ETuple {value=$1.value.inside; region} in
+    match $2 with
+      Some (colon, typ) ->
+        let region = cover $1.region (type_expr_to_region typ)
+        and value = {$1.value with inside = tuple,colon,typ}
+        in EAnnot {region; value}
+    | None -> tuple }
 
 fun_expr(right_expr):
-  disj_expr_level "=>" right_expr {
+  fun_args "=>" right_expr {
     let arrow, body = $2, $3 in
     let start       = expr_to_region $1
     and stop        = expr_to_region body in
@@ -659,15 +670,6 @@ let_expr(right_expr):
 disj_expr_level:
   disj_expr
 | conj_expr_level { $1 }
-| par(tuple(disj_expr_level)) type_annotation_simple? {
-    let region = nsepseq_to_region expr_to_region $1.value.inside in
-    let tuple  = ETuple {value=$1.value.inside; region} in
-    match $2 with
-      Some (colon, typ) ->
-        let region = cover $1.region (type_expr_to_region typ)
-        and value = {$1.value with inside = tuple,colon,typ}
-        in EAnnot {region; value}
-    | None -> tuple }
 
 bin_op(arg1,op,arg2):
   arg1 op arg2 {
