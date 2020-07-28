@@ -37,6 +37,7 @@ module type TOKEN =
     val mk_nat      : lexeme -> Region.t -> (token,   nat_err) result
     val mk_mutez    : lexeme -> Region.t -> (token,   int_err) result
     val mk_ident    : lexeme -> Region.t -> (token, ident_err) result
+    val mk_exist    : lexeme -> Region.t -> token
     val mk_sym      : lexeme -> Region.t -> (token,   sym_err) result
     val mk_string   : lexeme -> Region.t -> token
     val mk_verbatim : lexeme -> Region.t -> token
@@ -269,6 +270,11 @@ module Make (Token : TOKEN) : (S with module Token = Token) =
       | Error Token.Invalid_attribute ->
           fail region Invalid_attribute
 
+    let mk_exist state buffer =
+      let region, lexeme, state = state#sync buffer in
+      let token = Token.mk_exist lexeme region
+      in state#enqueue token
+
     let mk_constr state buffer =
       let region, lexeme, state = state#sync buffer in
       let token = Token.mk_constr lexeme region
@@ -312,6 +318,7 @@ let capital    = ['A'-'Z']
 let letter     = small | capital
 let ident      = small (letter | '_' | digit)*
 let constr     = capital (letter | '_' | digit)*
+let exist      = '\'' (ident)
 let attr       = ident | constr
 let hexa_digit = digit | ['A'-'F' 'a'-'f']
 let byte       = hexa_digit hexa_digit
@@ -386,6 +393,7 @@ and scan state = parse
 
 | ident                  { mk_ident        state lexbuf }
 | constr                 { mk_constr       state lexbuf }
+| exist                  { mk_exist        state lexbuf }
 | bytes                  { mk_bytes seq    state lexbuf }
 | natural 'n'            { mk_nat          state lexbuf }
 | natural "mutez"        { mk_mutez        state lexbuf }

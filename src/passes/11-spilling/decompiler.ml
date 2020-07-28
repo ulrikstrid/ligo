@@ -11,7 +11,7 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
   let open! AST in
   let return e = ok (make_e e t) in
   match t.type_content with
-  | T_variable (name) when Var.equal name Ast_typed.Constant.t_bool -> (
+  | T_existential (name) when Var.equal name Ast_typed.Constant.t_bool -> (
         let%bind b =
           trace_option (wrong_mini_c_value t v) @@
           get_bool v in
@@ -216,3 +216,5 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
       return (E_literal (Literal_string n))
   | T_variable _ ->
     fail @@ corner_case ~loc:__LOC__ "trying to decompile at variable type"
+  | T_existential _ ->
+    fail @@ corner_case ~loc:__LOC__ "trying to decompile at existential type"

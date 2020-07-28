@@ -107,6 +107,14 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
       Some const -> return @@ t_constant ~loc const
     | None -> return @@ t_variable_ez ~loc name
     )
+  | TExist var ->
+    let (var,loc) = r_split var in
+    let var = Var.of_name var in
+    return @@ make_t ~loc @@ T_existential var
+  | TWild reg ->
+    let loc = Location.lift reg in
+    let var = Var.fresh () in
+    return @@ make_t ~loc @@ T_existential var
   | TString _s -> fail @@ unsupported_string_singleton te
 
 let compile_selection (selection : CST.selection) =

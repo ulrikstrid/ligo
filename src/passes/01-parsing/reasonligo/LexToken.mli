@@ -35,6 +35,7 @@ type t =
   (* Identifiers, labels, numbers and strings *)
 
 | Ident    of string Region.reg
+| Exist    of string Region.reg
 | Constr   of string Region.reg
 | Int      of (string * Z.t) Region.reg
 | Nat      of (string * Z.t) Region.reg
@@ -150,6 +151,7 @@ val mk_int      : lexeme -> Region.t -> (token,   int_err) result
 val mk_nat      : lexeme -> Region.t -> (token,   nat_err) result
 val mk_mutez    : lexeme -> Region.t -> (token,   int_err) result
 val mk_ident    : lexeme -> Region.t -> (token, ident_err) result
+val mk_exist    : lexeme -> Region.t -> token
 val mk_sym      : lexeme -> Region.t -> (token,   sym_err) result
 val mk_kwd      : lexeme -> Region.t -> (token,   kwd_err) result
 val mk_string   : lexeme -> Region.t -> token

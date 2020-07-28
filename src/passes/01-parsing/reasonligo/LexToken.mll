@@ -18,6 +18,7 @@ type t =
   (* Identifiers, labels, numbers and strings *)
 
 | Ident    of string Region.reg
+| Exist    of string Region.reg
 | Constr   of string Region.reg
 | Int      of (string * Z.t) Region.reg
 | Nat      of (string * Z.t) Region.reg
@@ -125,6 +126,8 @@ let proj_token = function
     region, sprintf "Mutez (%S, %s)" s (Z.to_string n)
 | Ident Region.{region; value} ->
     region, sprintf "Ident %S" value
+| Exist Region.{region; value} ->
+    region, sprintf "Exist %S" value
 | Constr Region.{region; value} ->
     region, sprintf "Constr %S" value
 | Attr Region.{region; value} ->
@@ -187,6 +190,7 @@ let to_lexeme = function
 | Nat i
 | Mutez i    -> fst i.Region.value
 | Ident  id  -> id.Region.value
+| Exist id   -> id.Region.value
 | Constr id  -> id.Region.value
 | Attr a     -> a.Region.value
 | Lang lang  -> Region.(lang.value.value)
@@ -364,6 +368,7 @@ let capital = ['A'-'Z']
 let letter  = small | capital
 let digit   = ['0'-'9']
 let ident   = small (letter | '_' | digit)*
+let exist   = '\'' (ident)
 let constr  = capital (letter | '_' | digit)*
 
 (* Rules *)
@@ -375,6 +380,10 @@ rule scan_ident region lexicon = parse
     else Ok (match SMap.find_opt value lexicon.kwd with
                Some mk_kwd -> mk_kwd region
              |        None -> Ident Region.{region; value}) }
+
+and scan_exist region lexicon = parse
+  (exist as value) eof {
+    Exist Region.{region; value} }
 
 and scan_constr region lexicon = parse
   (constr as value) eof {
@@ -476,6 +485,13 @@ let mk_ident' lexeme region lexicon =
   Lexing.from_string lexeme |> scan_ident region lexicon
 
 let mk_ident lexeme region = mk_ident' lexeme region lexicon
+
+(* existentials *)
+
+let mk_exist' lexeme region lexicon =
+  Lexing.from_string lexeme |> scan_exist region lexicon
+
+let mk_exist lexeme region = mk_exist' lexeme region lexicon
 
 (* Constructors *)
 

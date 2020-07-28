@@ -1783,3 +1783,19 @@ let%expect_test _ =
     y) ,
     z)
     |}];
+
+  run_ligo_bad ["print-ast-typed"; contract "existential.mligo"];
+  [%expect {|
+    ligo: error
+          in file "existential.mligo", line 8, characters 1-6
+          Expected arguments with one of the following combinations of type:
+          (nat , nat) or (int , int) or (mutez , mutez) or (nat , int) or (int , nat) or (timestamp , int) or (int , timestamp)
+          but got int , string
+
+
+          If you're not sure how to fix this error, you can do one of the following:
+
+          * Visit our documentation: https://ligolang.org/docs/intro/introduction
+          * Ask a question on our Discord: https://discord.gg/9rhYaEt
+          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
+          * Check the changelog by running 'ligo changelog' |}]

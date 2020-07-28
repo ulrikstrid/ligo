@@ -104,6 +104,7 @@ sepseq(X,Sep):
 
 %inline var         : "<ident>"  { $1 }
 %inline type_name   : "<ident>"  { $1 }
+%inline type_exist  : "<exist>"  { $1 }
 %inline fun_name    : "<ident>"  { $1 }
 %inline field_name  : "<ident>"  { $1 }
 %inline struct_name : "<ident>"  { $1 }
@@ -169,6 +170,8 @@ cartesian:
 
 core_type:
   type_name      { TVar    $1 }
+| type_exist     { TExist  $1 }
+| "_"            { TWild   $1 }
 | "<string>"     { TString $1 }
 | par(type_expr) { TPar    $1 }
 | type_name type_tuple {

@@ -160,6 +160,8 @@ and print_type_expr state = function
 | TPar par        -> print_type_par state par
 | TVar var        -> print_var state var
 | TFun t          -> print_fun_type state t
+| TExist var      -> print_var state var
+| TWild wild      -> print_token state wild " "
 | TString s       -> print_string state s
 
 and print_fun_type state {value; _} =
@@ -1175,6 +1177,12 @@ and pp_type_expr state = function
 | TVar v ->
     pp_node  state "TVar";
     pp_ident (state#pad 1 0) v
+| TExist v ->
+    pp_node  state "TExist";
+    pp_ident (state#pad 1 0) v
+| TWild wild ->
+    pp_node  state "TWild";
+    pp_loc_node state "TWild" wild
 | TString s ->
     pp_node   state "TString";
     pp_string (state#pad 1 0) s

@@ -13,6 +13,7 @@ module LexToken = Lexer_pascaligo.LexToken
 %token    <(LexToken.lexeme * Z.t) Region.reg> Nat      "<nat>"
 %token    <(LexToken.lexeme * Z.t) Region.reg> Mutez    "<mutez>"
 %token            <LexToken.lexeme Region.reg> Ident    "<ident>"
+%token                     <string Region.reg> Exist    "<exist>"
 %token            <LexToken.lexeme Region.reg> Constr   "<constr>"
 %token <LexToken.lexeme Region.reg Region.reg> Lang     "<lang>"
 

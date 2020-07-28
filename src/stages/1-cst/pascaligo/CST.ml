@@ -190,6 +190,8 @@ and type_expr =
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
+| TExist  of variable
+| TWild   of wild
 | TString of lexeme reg
 
 and cartesian = (type_expr, times) nsepseq reg
@@ -675,7 +677,10 @@ let type_expr_to_region = function
 | TFun    {region; _}
 | TPar    {region; _}
 | TString {region; _}
-| TVar    {region; _} -> region
+| TVar    {region; _}
+| TExist  {region; _}
+| TWild    region
+ -> region
 
 let rec expr_to_region = function
 | ELogic  e -> logic_expr_to_region e

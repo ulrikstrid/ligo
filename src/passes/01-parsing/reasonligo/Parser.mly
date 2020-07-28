@@ -107,6 +107,7 @@ nsepseq(item,sep):
 (* Helpers *)
 
 %inline type_name   : "<ident>"  { $1 }
+%inline type_exist  : "<exist>"  { $1 }
 %inline field_name  : "<ident>"  { $1 }
 %inline struct_name : "<ident>"  { $1 }
 %inline module_name : "<constr>" { $1 }
@@ -178,7 +179,9 @@ type_args:
 
 core_type:
   type_name      {    TVar $1 }
-| par(type_expr)  {    TPar $1 }
+| type_exist     {  TExist $1 }
+| "_"            {   TWild $1 }
+| par(type_expr) {    TPar $1 }
 | "<string>"     { TString $1 }
 | module_name "." type_name {
     let module_name = $1.value in
