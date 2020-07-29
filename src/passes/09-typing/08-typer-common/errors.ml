@@ -1,6 +1,5 @@
 open Simple_utils.Display
 
-
 let stage = "typer"
 
 type typer_error = [
