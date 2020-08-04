@@ -15,7 +15,6 @@ my $folder_filename      = @*ARGS[3];
 my $mapper_filename      = @*ARGS[4];
 
 my $moduleName = $inputADTfile.subst(/\.ml$/, '').samecase("A_");
-say "\$moduleName is $moduleName";
 my $variant = "_ _variant";
 my $record = "_ _ record";
 sub poly { $^type_name }
