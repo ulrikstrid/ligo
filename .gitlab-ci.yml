@@ -29,11 +29,11 @@ version_scheduled_job:
     - nix
   before_script:
     - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
-    - nix-env -f channel:nixos-unstable -iA gnutar gitMinimal
+    - nix-env -f channel:nixos-unstable -iA gnutar gitMinimal moreutils
     - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
 
 # The binary produced is useless by itself
-binary:
+.binary:
   extends: .nix
   only:
     - merge_requests
@@ -50,7 +50,7 @@ deb:
     - /^.*-run-dev$/
     - /[0-9]+\.[0-9]+\.[0-9]+/
   script:
-    - nix-build nix -A ligo-deb
+    - nix-build nix -A ligo-deb 2>&1 | ts "[%H:%M:%.S]"
     - cp -L result/ligo.deb .
   artifacts:
     paths:
@@ -63,7 +63,7 @@ doc:
     - dev
     - /^.*-run-dev$/
   script:
-    - nix-build nix -A ligo-doc
+    - nix-build nix -A ligo-doc 2>&1 | ts "[%H:%M:%.S]"
     - cp -Lr --no-preserve=mode,ownership,timestamps result/share/doc .
   artifacts:
     paths:
@@ -76,7 +76,7 @@ test:
     - dev
     - /^.*-run-dev$/
   script:
-    - nix-build nix -A ligo-coverage
+    - nix-build nix -A ligo-coverage 2>&1 | ts "[%H:%M:%.S]"
     - cat result/share/coverage-all
     - cp -Lr --no-preserve=mode,ownership,timestamps result/share/coverage .
   artifacts:
@@ -115,7 +115,7 @@ docker:
     - /^.*-run-dev$/
     - /[0-9]+\.[0-9]+\.[0-9]+/
   script:
-    - nix-build nix -A ligo-docker
+    - nix-build nix -A ligo-docker 2>&1 | ts "[%H:%M:%.S]"
     - cp -L result ligo.tar.gz
   artifacts:
     paths:
@@ -124,7 +124,7 @@ docker:
 docker-large:
   extends: docker
   script:
-    - nix-build nix -A ligo-docker-large
+    - nix-build nix -A ligo-docker-large 2>&1 | ts "[%H:%M:%.S]"
     - cp -L result ligo.tar.gz
 
 docker-push:
@@ -166,7 +166,7 @@ webide-docker:
     - dev
     - /^.*-run-dev$/
   script:
-    - nix-build nix -A ligo-editor-docker
+    - nix-build nix -A ligo-editor-docker 2>&1 | ts "[%H:%M:%.S]"
     - cp -L result webide.tar.gz
   artifacts:
     paths:
@@ -208,7 +208,7 @@ static-binary:
     - /^.*-run-dev$/
     - /[0-9]+\.[0-9]+\.[0-9]+/
   script:
-    - nix-build nix -A ligo-static
+    - nix-build nix -A ligo-static 2>&1 | ts "[%H:%M:%.S]"
     # Check that the binary is truly static and has 0 dependencies
     - test $(nix-store -q --references ./result | wc -l) -eq 0
     - cp -L result/bin/ligo ligo
@@ -257,7 +257,7 @@ release:
 .website:
   extends: .nix
   script:
-    - nix-build nix -A ligo-website
+    - nix-build nix -A ligo-website 2>&1 | ts "[%H:%M:%.S]"
     - cp -Lr --no-preserve=mode,ownership,timestamps result/ public
   artifacts:
     paths:
