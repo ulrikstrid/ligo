@@ -1,4 +1,3 @@
-open Trace
 open Simple_utils.Display
 open Stage_common.Types
 
@@ -46,7 +45,7 @@ let rec error_ppformat : display_format:string display_format ->
     match a with
     | `Stacking_get_environment (var,env) ->
       let s = Format.asprintf "failed to get var %a in environment %a"
-        Var.pp var
+        Var.pp var.wrap_content
         Mini_c.PP.environment env in
       Format.pp_print_string f s ;
     | `Stacking_corner_case (loc,msg) ->
@@ -59,7 +58,7 @@ let rec error_ppformat : display_format:string display_format ->
       Format.pp_print_string f s ;
     | `Stacking_expression_tracer (e,ty,err) ->
       Format.fprintf f
-        "@[<hv>compiling expression@%a of type %a@%a]"
+        "@[<hv>compiling expression %a@ of type %a@ %a]"
         Mini_c.PP.expression e 
         Mini_c.PP.type_variable ty
         (error_ppformat ~display_format) err
@@ -92,7 +91,7 @@ let rec error_ppformat : display_format:string display_format ->
         Mini_c.PP.constant c
   )
 
-let rec error_jsonformat : stacking_error -> J.t = fun a ->
+let rec error_jsonformat : stacking_error -> Yojson.t = fun a ->
   let json_error ~stage ~content =
     `Assoc [
       ("status", `String "error") ;
@@ -101,7 +100,7 @@ let rec error_jsonformat : stacking_error -> J.t = fun a ->
   in
   match a with
   | `Stacking_get_environment (var,env) ->
-    let var' = Format.asprintf "%a" Var.pp var in
+    let var' = Format.asprintf "%a" Var.pp var.wrap_content in
     let env' = Format.asprintf "%a" Mini_c.PP.environment env in
     let content = `Assoc [
       ("message", `String "failed to get var from environment");
