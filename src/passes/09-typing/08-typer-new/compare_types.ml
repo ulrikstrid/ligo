@@ -21,7 +21,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
         Assert.assert_true (different_constants ca cb) (ca = cb)
     in
     if List.length lsta <> List.length lstb then
-      fail @@ different_type_constant_number_of_arguments ca cb (List.length lsta) (List.length lstb)
+      fail @@ different_type_constant_number_of_arguments __LOC__ ca cb (List.length lsta) (List.length lstb)
     else
       trace (different_types "arguments to type type_constants" a b)
       @@ bind_list_iter (fun (a,b) -> assert_type_expression_eq (a,b) )(List.combine lsta lstb)

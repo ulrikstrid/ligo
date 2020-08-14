@@ -48,12 +48,9 @@ let propagator : (output_break_ctor , unit , typer_error) propagator =
                 Solver_should_be_generated.debug_pp_c_constructor_simpl b
                 (Solver_should_be_generated.compare_simple_c_constant a.c_tag b.c_tag))
   else
-    (* a.tv_list = b.tv_list *)
-  if List.length a.tv_list <> List.length b.tv_list then
-    (* TODO : use error monad *)
-    failwith "type error: incompatible types, not same length"
-  else
-    let eqs3 = List.map2 (fun aa bb -> c_equation { tsrc = "solver: propagator: break_ctor aa" ; t = P_variable aa} { tsrc = "solver: propagator: break_ctor bb" ; t = P_variable bb} "propagator: break_ctor") a.tv_list b.tv_list in
+    (* Produce constraint a.tv_list = b.tv_list *)
+    let%bind eqs3 = List.map2 (fun aa bb -> c_equation { tsrc = "solver: propagator: break_ctor aa" ; t = P_variable aa} { tsrc = "solver: propagator: break_ctor bb" ; t = P_variable bb} "propagator: break_ctor") a.tv_list b.tv_list
+        ~ok ~fail:(fun _ _ -> fail @@ different_constant_tag_number_of_arguments __LOC__ a.c_tag b.c_tag (List.length a.tv_list) (List.length b.tv_list)) in
     let eqs = eq1 :: eqs3 in
     ok (() , eqs)
 

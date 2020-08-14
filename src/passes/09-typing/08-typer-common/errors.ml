@@ -72,7 +72,8 @@ type typer_error = [
   | `Typer_expected_ascription of Ast_core.expression
   | `Typer_different_kinds of Ast_typed.type_expression * Ast_typed.type_expression
   | `Typer_different_constants of Ast_typed.type_constant * Ast_typed.type_constant
-  | `Typer_type_constant_number_of_arguments of Ast_typed.type_constant * Ast_typed.type_constant * int * int
+  | `Typer_type_constant_number_of_arguments of string * Ast_typed.type_constant * Ast_typed.type_constant * int * int
+  | `Typer_constant_tag_number_of_arguments of string * Ast_typed.constant_tag * Ast_typed.constant_tag * int * int
   | `Typer_different_record_props of
     Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.te_lmap * Ast_typed.te_lmap * string * string
   | `Typer_different_kind_record_tuple of
@@ -172,7 +173,8 @@ let in_match_variant_tracer (ae:Ast_core.matching_expr) (err:typer_error) =
   `Typer_match_variant_tracer (ae,err)
 let different_kinds a b = `Typer_different_kinds (a,b)
 let different_constants a b = `Typer_different_constants (a,b)
-let different_type_constant_number_of_arguments opa opb lena lenb = `Typer_type_constant_number_of_arguments (opa, opb, lena, lenb)
+let different_type_constant_number_of_arguments loc opa opb lena lenb : typer_error = `Typer_type_constant_number_of_arguments (loc, opa, opb, lena, lenb)
+let different_constant_tag_number_of_arguments loc opa opb lena lenb : typer_error = `Typer_constant_tag_number_of_arguments (loc, opa, opb, lena, lenb)
 let different_props_in_record a b ra rb ka kb = `Typer_different_record_props (a,b,ra,rb,ka,kb)
 let different_kind_record_tuple a b ra rb = `Typer_different_kind_record_tuple (a,b,ra,rb)
 let different_size_records_tuples a b ra rb = `Typer_different_size_records_tuples (a,b,ra,rb)
@@ -390,12 +392,20 @@ let rec error_ppformat : display_format:string display_format ->
         Expected these two constant type constructors to be the same, but they're different@ %a@ %a@]"
         Ast_typed.PP.type_constant a
         Ast_typed.PP.type_constant b
-    | `Typer_type_constant_number_of_arguments (opa, _opb, lena, lenb) ->
+    | `Typer_type_constant_number_of_arguments (loc, opa, _opb, lena, lenb) ->
       Format.fprintf f
         "@[<hv> different number of arguments to type constructors.@ \
         Expected these two n-ary type constructors to be the same, but they have different number\
-        of arguments (both use the %s type constructor, but they have %d and %d arguments, respectively)@]"
-        (Ast_typed.Helpers.string_of_type_constant opa) lena lenb
+        of arguments (both use the %s type constructor, but they have %d and %d arguments, respectively)@ \
+        Thrown by compiler at %s@]"
+        (Ast_typed.Helpers.string_of_type_constant opa) lena lenb loc
+    | `Typer_constant_tag_number_of_arguments (loc, opa, _opb, lena, lenb) ->
+      Format.fprintf f
+        "@[<hv> different number of arguments to type constructors.@ \
+        Expected these two n-ary type constructors to be the same, but they have different number\
+        of arguments (both use the %s type constructor, but they have %d and %d arguments, respectively)@ \
+        Thrown by compiler at %s@]"
+        (Format.asprintf "%a" Ast_typed.PP_generic.constant_tag opa) lena lenb loc
     | `Typer_different_record_props (_a,_b,ra,rb,_ka,_kb) ->
       let names = if Ast_typed.Helpers.is_tuple_lmap ra &&Ast_typed.Helpers.is_tuple_lmap rb
         then "tuples" else "records" in
@@ -1306,7 +1316,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
       ("b", b) ;
     ] in
     json_error ~stage ~content
-  | `Typer_type_constant_number_of_arguments (opa, opb, lena, lenb) ->
+  | `Typer_type_constant_number_of_arguments (loc, opa, opb, lena, lenb) ->
     let message = `String "different number of arguments to type constructors.\ 
       Expected these two n-ary type constructors to be the same, but they have different number\ 
       of arguments" in
@@ -1315,6 +1325,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     let op = `String (Ast_typed.Helpers.string_of_type_constant opa) in
     let len_a = `Int lena in
     let len_b = `Int lenb in
+    let loc = `String loc in
     let content = `Assoc [
       ("message", message) ;
       ("a", a) ;
@@ -1322,6 +1333,27 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
       ("op", op) ;
       ("len_a", len_a) ;
       ("len_b", len_b) ;
+      ("thrown by compiler at", loc) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_constant_tag_number_of_arguments (loc, opa, opb, lena, lenb) ->
+    let message = `String "different number of arguments to type constructors.\ 
+      Expected these two n-ary type constructors to be the same, but they have different number\ 
+      of arguments" in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP_generic.constant_tag opa) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP_generic.constant_tag opb) in
+    let op = `String (Format.asprintf "%a" Ast_typed.PP_generic.constant_tag opa) in
+    let len_a = `Int lena in
+    let len_b = `Int lenb in
+    let loc = `String loc in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+      ("op", op) ;
+      ("len_a", len_a) ;
+      ("len_b", len_b) ;
+      ("thrown by compiler at", loc) ;
     ] in
     json_error ~stage ~content
   | `Typer_different_record_props (a,b,ra,rb,ka,kb) ->
