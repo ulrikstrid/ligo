@@ -18,6 +18,15 @@ let map f lst =
   in
   List.rev (aux [] f lst)
 
+let map2 f lst_a lst_b ~ok ~fail =
+  let rec aux acc f lst_a lst_b =
+    match lst_a, lst_b with
+    | ([] , []) -> ok @@ List.rev @@ acc
+    | (hd_a :: tl_a , hd_b :: tl_b) -> aux (f hd_a hd_b :: acc) f tl_a tl_b
+    | (la , lb) -> fail la lb
+  in
+  aux [] f lst_a lst_b
+
 let fold_map_right : type acc ele ret . (acc -> ele -> (acc * ret)) -> acc -> ele list -> ret list =
   fun f acc lst ->
   let rec aux (acc , prev) f = function
