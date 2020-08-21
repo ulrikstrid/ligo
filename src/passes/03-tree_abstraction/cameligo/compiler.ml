@@ -60,43 +60,43 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
     (* this is a bad design, michelson_or and pair should be an operator
        see AnnotType *)
     (match operator.value with
-      | "michelson_or" ->
-        let lst = npseq_to_list args.value.inside in
-        (match lst with
+     | "michelson_or" ->
+       let lst = npseq_to_list args.value.inside in
+       (match lst with
         | [a ; b ; c ; d ] -> (
-          let%bind b' =
-            trace_option (michelson_type_wrong te operator.value) @@
+            let%bind b' =
+              trace_option (michelson_type_wrong te operator.value) @@
               get_t_string_singleton_opt b in
-          let%bind d' =
-            trace_option (michelson_type_wrong te operator.value) @@
+            let%bind d' =
+              trace_option (michelson_type_wrong te operator.value) @@
               get_t_string_singleton_opt d in
-          let%bind a' = compile_type_expression a in
-          let%bind c' = compile_type_expression c in
-          return @@ t_michelson_or ~loc a' b' c' d'
+            let%bind a' = compile_type_expression a in
+            let%bind c' = compile_type_expression c in
+            return @@ t_michelson_or ~loc a' b' c' d'
           )
         | _ -> fail @@ michelson_type_wrong_arity loc operator.value)
-      | "michelson_pair" ->
-        let lst = npseq_to_list args.value.inside in
-        (match lst with
+     | "michelson_pair" ->
+       let lst = npseq_to_list args.value.inside in
+       (match lst with
         | [a ; b ; c ; d ] -> (
-          let%bind b' =
-            trace_option (michelson_type_wrong te operator.value) @@
+            let%bind b' =
+              trace_option (michelson_type_wrong te operator.value) @@
               get_t_string_singleton_opt b in
-          let%bind d' =
-            trace_option (michelson_type_wrong te operator.value) @@
+            let%bind d' =
+              trace_option (michelson_type_wrong te operator.value) @@
               get_t_string_singleton_opt d in
-          let%bind a' = compile_type_expression a in
-          let%bind c' = compile_type_expression c in
-          return @@ t_michelson_pair ~loc a' b' c' d'
+            let%bind a' = compile_type_expression a in
+            let%bind c' = compile_type_expression c in
+            return @@ t_michelson_pair ~loc a' b' c' d'
           )
         | _ -> fail @@ michelson_type_wrong_arity loc operator.value)
-    | _ ->
-      let%bind operators =
-        trace_option (unknown_predefined_type operator) @@
-        type_operators operator.value in
-      let lst = npseq_to_list args.value.inside in
-      let%bind lst = bind_map_list compile_type_expression lst in
-      return @@ t_operator ~loc operators lst
+     | _ ->
+       let%bind operators =
+         trace_option (unknown_predefined_type operator) @@
+         type_operators operator.value in
+       let lst = npseq_to_list args.value.inside in
+       let%bind lst = bind_map_list compile_type_expression lst in
+       return @@ t_operator ~loc operators lst
     )
   | TFun func ->
     let ((input_type,_,output_type), loc) = r_split func in
@@ -110,8 +110,8 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
   | TVar var ->
     let (name,loc) = r_split var in
     (match type_constants name with
-      Some const -> return @@ t_constant ~loc const
-    | None -> return @@ t_variable_ez ~loc name
+       Some const -> return @@ t_constant ~loc const
+     | None -> return @@ t_variable_ez ~loc name
     )
   | TWild reg ->
     let loc = Location.lift reg in
@@ -138,14 +138,14 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
   let compile_path (path : CST.path) =
     match path with
       Name var ->
-        let (var, loc) = r_split var in
-        return @@ e_variable_ez ~loc var
+      let (var, loc) = r_split var in
+      return @@ e_variable_ez ~loc var
     | Path proj ->
-        let (proj, loc) = r_split proj in
-        let (var, _loc_var) = r_split proj.struct_name in
-        let var  = e_variable_ez ~loc var in
-        let (sels, _) = List.split @@ List.map compile_selection @@ npseq_to_list proj.field_path in
-        return @@ e_accessor var sels
+      let (proj, loc) = r_split proj in
+      let (var, _loc_var) = r_split proj.struct_name in
+      let var  = e_variable_ez ~loc var in
+      let (sels, _) = List.split @@ List.map compile_selection @@ npseq_to_list proj.field_path in
+      return @@ e_accessor var sels
   in
   let compile_bin_op (op_type : AST.constant') (op : _ CST.bin_op CST.reg) =
     let (op, loc) = r_split op in
@@ -162,8 +162,8 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     EVar var ->
     let (var, loc) = r_split var in
     (match constants var with
-      Some const -> return @@ e_constant ~loc const []
-    | None -> return @@ e_variable_ez ~loc var
+       Some const -> return @@ e_constant ~loc const []
+     | None -> return @@ e_variable_ez ~loc var
     )
   | EPar par -> compile_expression par.value.inside
   | EUnit the_unit ->
@@ -174,70 +174,70 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let (_s,b) = bytes in
     return @@ e_bytes_hex ~loc b
   | EString str ->(
-    match str with
-      Cat c ->
-      let (op,loc) = r_split c in
-      let%bind a = compile_expression op.arg1 in
-      let%bind b = compile_expression op.arg2 in
-      return @@ e_constant ~loc C_CONCAT [a;b]
-    | String str ->
-      let (str, loc) = r_split str in
-      return @@ e_string ~loc str
-    | Verbatim str ->
-      let (str, loc) = r_split str in
-      return @@ e_verbatim ~loc str
-  )
+      match str with
+        Cat c ->
+        let (op,loc) = r_split c in
+        let%bind a = compile_expression op.arg1 in
+        let%bind b = compile_expression op.arg2 in
+        return @@ e_constant ~loc C_CONCAT [a;b]
+      | String str ->
+        let (str, loc) = r_split str in
+        return @@ e_string ~loc str
+      | Verbatim str ->
+        let (str, loc) = r_split str in
+        return @@ e_verbatim ~loc str
+    )
   | EArith arth ->
     ( match arth with
-      Add plus   -> compile_bin_op C_ADD plus
-    | Sub minus  -> compile_bin_op C_SUB minus
-    | Mult times -> compile_bin_op C_MUL times
-    | Div slash  -> compile_bin_op C_DIV slash
-    | Mod mod_   -> compile_bin_op C_MOD mod_
-    | Neg minus  -> compile_un_op C_NEG minus
-    | Int i ->
-      let ((_,i), loc) = r_split i in
-      return @@ e_int_z ~loc i
-    | Nat n ->
-      let ((_,n), loc) = r_split n in
-      return @@ e_nat_z ~loc n
-    | Mutez mtez ->
-      let ((_,mtez), loc) = r_split mtez in
-      return @@ e_mutez_z ~loc mtez
+        Add plus   -> compile_bin_op C_ADD plus
+      | Sub minus  -> compile_bin_op C_SUB minus
+      | Mult times -> compile_bin_op C_MUL times
+      | Div slash  -> compile_bin_op C_DIV slash
+      | Mod mod_   -> compile_bin_op C_MOD mod_
+      | Neg minus  -> compile_un_op C_NEG minus
+      | Int i ->
+        let ((_,i), loc) = r_split i in
+        return @@ e_int_z ~loc i
+      | Nat n ->
+        let ((_,n), loc) = r_split n in
+        return @@ e_nat_z ~loc n
+      | Mutez mtez ->
+        let ((_,mtez), loc) = r_split mtez in
+        return @@ e_mutez_z ~loc mtez
     )
   | ELogic logic -> (
-    match logic with
-      BoolExpr be -> (
-      match be with
-        Or or_   -> compile_bin_op C_OR  or_
-      | And and_ -> compile_bin_op C_AND and_
-      | Not not_ -> compile_un_op  C_NOT not_
-      | True  reg -> let loc = Location.lift reg in return @@ e_true  ~loc ()
-      | False reg -> let loc = Location.lift reg in return @@ e_false ~loc ()
+      match logic with
+        BoolExpr be -> (
+          match be with
+            Or or_   -> compile_bin_op C_OR  or_
+          | And and_ -> compile_bin_op C_AND and_
+          | Not not_ -> compile_un_op  C_NOT not_
+          | True  reg -> let loc = Location.lift reg in return @@ e_true  ~loc ()
+          | False reg -> let loc = Location.lift reg in return @@ e_false ~loc ()
+        )
+      | CompExpr ce -> (
+          match ce with
+            Lt lt    -> compile_bin_op C_LT  lt
+          | Leq le   -> compile_bin_op C_LE  le
+          | Gt gt    -> compile_bin_op C_GT  gt
+          | Geq ge   -> compile_bin_op C_GE  ge
+          | Equal eq -> compile_bin_op C_EQ  eq
+          | Neq ne   -> compile_bin_op C_NEQ ne
+        )
     )
-    | CompExpr ce -> (
-      match ce with
-        Lt lt    -> compile_bin_op C_LT  lt
-      | Leq le   -> compile_bin_op C_LE  le
-      | Gt gt    -> compile_bin_op C_GT  gt
-      | Geq ge   -> compile_bin_op C_GE  ge
-      | Equal eq -> compile_bin_op C_EQ  eq
-      | Neq ne   -> compile_bin_op C_NEQ ne
-    )
-  )
   (* This case is due to a bad besign of our constant it as to change
-    with the new typer so LIGO-684 on Jira *)
+     with the new typer so LIGO-684 on Jira *)
   | ECall {value=(EVar var,args);region} ->
     let loc = Location.lift region in
     let (var, loc_var) = r_split var in
     (match constants var with
-      Some const ->
-      let%bind args = bind_map_list compile_expression @@ nseq_to_list args in
-      return @@ e_constant ~loc const args
-    | None ->
-      let func = e_variable_ez ~loc:loc_var var in
-      let%bind args = bind_map_list compile_expression @@ nseq_to_list args in
-      return @@ List.fold_left (e_application ~loc) func @@ args
+       Some const ->
+       let%bind args = bind_map_list compile_expression @@ nseq_to_list args in
+       return @@ e_constant ~loc const args
+     | None ->
+       let func = e_variable_ez ~loc:loc_var var in
+       let%bind args = bind_map_list compile_expression @@ nseq_to_list args in
+       return @@ List.fold_left (e_application ~loc) func @@ args
     )
   | ECall call ->
     let ((func, args), loc) = r_split call in
@@ -273,12 +273,12 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
       let path = up.field_path in
       let%bind expr = compile_expression up.field_expr in
       let path = (match path with
-        Name var -> [Access_record var.value]
-      | Path proj ->
-        let (proj, _) = r_split proj in
-        let (path, _) = List.split @@ List.map compile_selection @@ npseq_to_list proj.field_path in
-        (Access_record proj.struct_name.value)::path
-      )
+            Name var -> [Access_record var.value]
+          | Path proj ->
+            let (proj, _) = r_split proj in
+            let (path, _) = List.split @@ List.map compile_selection @@ npseq_to_list proj.field_path in
+            (Access_record proj.struct_name.value)::path
+        )
       in
       return (path, expr, loc)
     in
@@ -335,21 +335,21 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let%bind else_clause = bind_map_option (compile_expression <@ snd) cond.ifnot in
     return @@ e_cond ~loc test then_clause @@ Option.unopt ~default:(e_unit ~loc ()) else_clause
   | EList lst -> (
-    match lst with
-      ECons cons ->
-      let (cons, loc) = r_split cons in
-      let%bind a  = compile_expression cons.arg1 in
-      let%bind b  = compile_expression cons.arg2 in
-      return @@ e_constant ~loc C_CONS [a; b]
-    | EListComp lc ->
-      let (lc,loc) = r_split lc in
-      let lst =
-        Option.unopt ~default:[] @@
-        Option.map npseq_to_list lc.elements
-      in
-      let%bind lst = bind_map_list compile_expression lst in
-      return @@ e_list ~loc lst
-  )
+      match lst with
+        ECons cons ->
+        let (cons, loc) = r_split cons in
+        let%bind a  = compile_expression cons.arg1 in
+        let%bind b  = compile_expression cons.arg2 in
+        return @@ e_constant ~loc C_CONS [a; b]
+      | EListComp lc ->
+        let (lc,loc) = r_split lc in
+        let lst =
+          Option.unopt ~default:[] @@
+          Option.map npseq_to_list lc.elements
+        in
+        let%bind lst = bind_map_list compile_expression lst in
+        return @@ e_list ~loc lst
+    )
   | ELetIn li ->
     let (li, loc) = r_split li in
     let ({kwd_rec;binding;body;attributes;_} : CST.let_in) = li in
@@ -363,29 +363,37 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let (language, _) = r_split language in
     let%bind code = compile_expression ci.code in
     return @@ e_raw_code ~loc language code
-  | ESeq seq ->
-    let (seq, loc) = r_split seq in
-    let%bind seq = bind_map_list compile_expression @@ pseq_to_list seq.elements in
-    match seq with 
-      [] -> return @@ e_unit ~loc ()
-    | hd :: tl ->
-      let rec aux prev = function
-       [] ->  return @@ prev
-      | hd :: tl -> bind (return <@ e_sequence ~loc prev) @@ aux hd tl 
-      in
-      aux hd @@ tl 
+  | ESeq seq -> (
+      let (seq, loc) = r_split seq in
+      let%bind seq = bind_map_list compile_expression @@ pseq_to_list seq.elements in
+      match seq with
+        [] -> return @@ e_unit ~loc ()
+      | hd :: tl ->
+        let rec aux prev = function
+            [] ->  return @@ prev
+          | hd :: tl -> bind (return <@ e_sequence ~loc prev) @@ aux hd tl
+        in
+        aux hd @@ tl
+    )
+  | EImport import ->
+    let (import, loc) = r_split import in
+    let (x, xs : string CST.reg * string CST.reg list) = npseq_to_ne_list import in
+    let path = x.value, List.map (fun x -> let seg, _ = r_split x in seg) xs in (* is there an easier way to do this that doesn't mysteriously break? *)
+    (* let path = x.value, List.map (fun x -> x.value) xs in (\*has an error for some reason*\) *)
+    return @@ e_import ~loc path
+(* fail @@ import_not_found import.value *)
 
 and compile_matching_expr :  'a CST.case_clause CST.reg List.Ne.t -> _ =
-fun cases ->
+  fun cases ->
   let return = ok in
   let compile_pattern pattern = return pattern in
   let compile_simple_pattern (pattern : CST.pattern) =
     let rec aux = function
-      CST.PVar var ->
+        CST.PVar var ->
         return @@ Var.of_name var.value
-    | PPar par ->
-        aux par.value.inside 
-    | _ -> fail @@ unsupported_non_var_pattern pattern
+      | PPar par ->
+        aux par.value.inside
+      | _ -> fail @@ unsupported_non_var_pattern pattern
     in aux pattern
   in
   let compile_list_pattern (cases : (CST.pattern * _) list) =
@@ -400,29 +408,29 @@ fun cases ->
       let hd = Location.wrap ?loc:(Some hd_loc) hd in
       let tl = Location.wrap ?loc:(Some tl_loc) tl in
       let match_cons = (hd,tl,econs) in
-        return (match_nil,match_cons)
+      return (match_nil,match_cons)
     | _ -> fail @@ unsupported_deep_list_patterns @@ fst @@ List.hd cases
   in
   let compile_constr_pattern (constr : CST.pattern) =
     match constr with
       PConstr c ->
       ( match c with
-      | PNone  _ -> return (Label "None", Location.wrap @@ Var.of_name "_")
-      | PSomeApp some ->
-        let (some,loc) = r_split some in
-        let (_, pattern) = some in
-        let%bind pattern = compile_simple_pattern pattern in
-        return (Label "Some", Location.wrap ~loc pattern)
-      | PConstrApp constr ->
-        let (constr, pattern_loc) = r_split constr in
-        let (constr, patterns) = constr in
-        let (constr, _) = r_split constr in
-        let%bind pattern = bind_map_option compile_simple_pattern patterns in
-        let pattern = Location.wrap ?loc:(Some pattern_loc) @@ Option.unopt ~default:(Var.of_name "_") pattern in
-        return (Label constr, pattern)
-      | PFalse _ -> return (Label "false", Location.wrap @@ Var.of_name "_")
-      | PTrue  _ -> return (Label "true", Location.wrap @@ Var.of_name "_")
-    )
+        | PNone  _ -> return (Label "None", Location.wrap @@ Var.of_name "_")
+        | PSomeApp some ->
+          let (some,loc) = r_split some in
+          let (_, pattern) = some in
+          let%bind pattern = compile_simple_pattern pattern in
+          return (Label "Some", Location.wrap ~loc pattern)
+        | PConstrApp constr ->
+          let (constr, pattern_loc) = r_split constr in
+          let (constr, patterns) = constr in
+          let (constr, _) = r_split constr in
+          let%bind pattern = bind_map_option compile_simple_pattern patterns in
+          let pattern = Location.wrap ?loc:(Some pattern_loc) @@ Option.unopt ~default:(Var.of_name "_") pattern in
+          return (Label constr, pattern)
+        | PFalse _ -> return (Label "false", Location.wrap @@ Var.of_name "_")
+        | PTrue  _ -> return (Label "true", Location.wrap @@ Var.of_name "_")
+      )
     | _ -> fail @@ unsupported_pattern_type [constr]
   in
   let aux (case : 'a CST.case_clause CST.reg) =
@@ -456,46 +464,46 @@ and compile_let_binding ?kwd_rec attributes binding =
   let%bind lhs_type = bind_map_option (compile_type_expression <@ snd) lhs_type in
   let%bind expr = compile_expression let_rhs in
   let rec aux = function
-  | CST.PPar par, [] ->
-    let par, _ = r_split par in
-    aux (par.inside, [])
-  | PVar name, args -> (*function *)
-    let%bind args = bind_map_list compile_parameter args in
-    let fun_binder = compile_variable name in
-    let rec aux lst =
-      match lst with
-        [] -> expr,lhs_type
-      | ((args,ty_opt),exprs):: lst ->
-        let loc = Location.get_location args in
-        let expr,lhs_type = aux lst in
-        let expr = List.fold_left (|>) expr exprs in
-        e_lambda ~loc args ty_opt lhs_type expr,
-        Option.map (Utils.uncurry @@ t_function ~loc) @@ Option.bind_pair (ty_opt,lhs_type)
-    in
-    let expr,lhs_type = aux args in
-    (* This handle the recursion *)
-    let%bind expr = match kwd_rec with
-      Some reg ->
-        let%bind fun_type = trace_option (untyped_recursive_fun reg) @@ lhs_type in
-        let%bind lambda = trace_option (corner_case "recursion on non function") @@ get_e_lambda expr.expression_content in
-        ok @@ e_recursive ~loc:(Location.lift reg) fun_binder fun_type lambda
-    | None   ->
-        ok @@ expr
-    in 
-    return_1 @@ (fun_binder,lhs_type, attr, expr)
-  | PTuple tuple, [] -> (* Tuple destructuring *)
-    let (tuple, loc) = r_split tuple in
-    let%bind lst = bind_map_ne_list compile_parameter @@ npseq_to_ne_list tuple in
-    let (lst, _) = List.Ne.split lst in
-    let var = Location.wrap ~loc @@ Var.fresh () in
-    let body = e_variable var in
-    let aux i (var, ty_opt) = Z.add i Z.one, (var,ty_opt, attr, e_accessor body @@ [Access_tuple i]) in
-    return @@ (var,None, false, expr) :: (List.fold_map aux Z.zero @@ List.Ne.to_list lst)
-  | _ -> fail @@ unsupported_pattern_type @@ nseq_to_list binders
+    | CST.PPar par, [] ->
+      let par, _ = r_split par in
+      aux (par.inside, [])
+    | PVar name, args -> (*function *)
+      let%bind args = bind_map_list compile_parameter args in
+      let fun_binder = compile_variable name in
+      let rec aux lst =
+        match lst with
+          [] -> expr,lhs_type
+        | ((args,ty_opt),exprs):: lst ->
+          let loc = Location.get_location args in
+          let expr,lhs_type = aux lst in
+          let expr = List.fold_left (|>) expr exprs in
+          e_lambda ~loc args ty_opt lhs_type expr,
+          Option.map (Utils.uncurry @@ t_function ~loc) @@ Option.bind_pair (ty_opt,lhs_type)
+      in
+      let expr,lhs_type = aux args in
+      (* This handle the recursion *)
+      let%bind expr = match kwd_rec with
+          Some reg ->
+          let%bind fun_type = trace_option (untyped_recursive_fun reg) @@ lhs_type in
+          let%bind lambda = trace_option (corner_case "recursion on non function") @@ get_e_lambda expr.expression_content in
+          ok @@ e_recursive ~loc:(Location.lift reg) fun_binder fun_type lambda
+        | None   ->
+          ok @@ expr
+      in
+      return_1 @@ (fun_binder,lhs_type, attr, expr)
+    | PTuple tuple, [] -> (* Tuple destructuring *)
+      let (tuple, loc) = r_split tuple in
+      let%bind lst = bind_map_ne_list compile_parameter @@ npseq_to_ne_list tuple in
+      let (lst, _) = List.Ne.split lst in
+      let var = Location.wrap ~loc @@ Var.fresh () in
+      let body = e_variable var in
+      let aux i (var, ty_opt) = Z.add i Z.one, (var,ty_opt, attr, e_accessor body @@ [Access_tuple i]) in
+      return @@ (var,None, false, expr) :: (List.fold_map aux Z.zero @@ List.Ne.to_list lst)
+    | _ -> fail @@ unsupported_pattern_type @@ nseq_to_list binders
   in aux binders
 
 and compile_parameter : CST.pattern -> _ result = fun pattern ->
-  let return ?ty loc exprs var = 
+  let return ?ty loc exprs var =
     ok ((Location.wrap ~loc var, ty), exprs) in
   match pattern with
     PConstr _ -> fail @@ unsupported_pattern_type [pattern]
@@ -513,20 +521,20 @@ and compile_parameter : CST.pattern -> _ result = fun pattern ->
     let%bind lst = bind_map_ne_list compile_parameter @@ npseq_to_ne_list tuple in
     let (lst,exprs) = List.Ne.split lst in
     let (vars,ty_opt) = List.Ne.split lst in
-    let ty = match ty_opt with 
+    let ty = match ty_opt with
       | ty, [] -> ty
       | ty, lst ->
         Option.map (t_tuple ~loc) @@ Option.bind_list @@ ty::lst
     in
     let var, expr = match vars with
-      var, [] -> 
-      Location.unwrap var, []
-    | var, lst ->
-      let binder = Var.fresh () in
-      binder, [e_matching_tuple ~loc (e_variable @@ Location.wrap ~loc binder) (var::lst) None ]
+        var, [] ->
+        Location.unwrap var, []
+      | var, lst ->
+        let binder = Var.fresh () in
+        binder, [e_matching_tuple ~loc (e_variable @@ Location.wrap ~loc binder) (var::lst) None ]
     in
     let exprs = List.flatten @@ expr :: List.Ne.to_list exprs in
-    return ?ty loc exprs @@ var 
+    return ?ty loc exprs @@ var
   | PPar par ->
     let (par,loc) = r_split par in
     let%bind ((var,ty), expr) = compile_parameter par.inside in
@@ -544,7 +552,7 @@ and compile_parameter : CST.pattern -> _ result = fun pattern ->
 and compile_attribute_declaration = fun lst ->
   let lst = List.map (fst <@ r_split) lst in
   let inline = List.filter (String.equal "inline") lst in
-  match inline with 
+  match inline with
     [] -> false
   | _  -> true
 
@@ -563,5 +571,5 @@ let compile_declaration : CST.declaration -> _ = fun decl ->
     return region @@ List.map aux lst
 
 let compile_program : CST.ast -> _ result = fun t ->
-    let%bind lst = bind_map_list compile_declaration @@ nseq_to_list t.decl in
-    ok @@ List.flatten lst
+  let%bind lst = bind_map_list compile_declaration @@ nseq_to_list t.decl in
+  ok @@ List.flatten lst

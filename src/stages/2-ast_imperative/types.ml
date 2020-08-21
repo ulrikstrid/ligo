@@ -72,6 +72,8 @@ and expression_content =
   | E_for of for_
   | E_for_each of for_each
   | E_while of while_loop
+  (* Modules *)
+  | E_import of import
 
 and constant =
   { cons_name: constant' (* this is at the end because it is huge *)
@@ -80,7 +82,7 @@ and constant =
 and application = {
   lamb: expression ; 
   args: expression ;
-  }
+}
 
 and lambda =
   { binder: expression_variable
@@ -103,7 +105,7 @@ and let_in =
 and raw_code = { 
   language : string ;
   code : expression ;
-  }
+}
 
 and constructor = {constructor: label; element: expression}
 
@@ -142,7 +144,7 @@ and conditional = {
 and sequence = {
   expr1: expression ;
   expr2: expression ;
-  }
+}
 
 and assign = {
   variable : expression_variable;
@@ -171,14 +173,16 @@ and for_each = {
 }
 
 and collect_type = 
- | Map
- | Set
- | List
+  | Map
+  | Set
+  | List
 
 and while_loop = {
   condition : expression;
   body : expression;
 }
+
+and import = { path : string * string list }
 
 and environment_element_definition =
   | ED_binder

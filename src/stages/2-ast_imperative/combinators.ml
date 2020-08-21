@@ -146,12 +146,12 @@ let e_matching_tuple    ?loc m lst ty_opt expr = e_matching ?loc m @@ Match_tupl
 let e_matching_variable ?loc m var ty_opt expr = e_matching ?loc m @@ Match_variable (var,ty_opt, expr)
 
 (* let e_matching_tuple_ez ?loc m lst ty_opt expr =
-  let lst = List.map Var.of_name lst in
-  e_matching_tuple ?loc m lst ty_opt expr *)
+   let lst = List.map Var.of_name lst in
+   e_matching_tuple ?loc m lst ty_opt expr *)
 
 (* let ez_match_variant (lst : ((string * string) * 'a) list) =
-  let lst = List.map (fun ((c,n),a) -> ((Constructor c, Var.of_name n), a) ) lst in
-  Match_variant lst *)
+   let lst = List.map (fun ((c,n),a) -> ((Constructor c, Var.of_name n), a) ) lst in
+   Match_variant lst *)
 
 let e_record ?loc map = make_e ?loc @@ E_record map
 let e_record_ez ?loc (lst : (string * expr) list) : expression =
@@ -182,6 +182,9 @@ let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 
 let e_assign ?loc variable access_path expression = make_e ?loc @@ E_assign {variable;access_path;expression} 
 let e_assign_ez ?loc variable access_path expression = e_assign ?loc (Location.wrap ?loc @@ Var.of_name variable) access_path expression
+
+
+let e_import ?loc path = make_e ?loc @@ E_import {path}
 
 
 let get_e_accessor = fun t ->

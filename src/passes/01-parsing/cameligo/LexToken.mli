@@ -102,6 +102,7 @@ type t =
 | Fun       of Region.t
 | Rec       of Region.t
 | If        of Region.t
+| Import    of Region.t
 | In        of Region.t
 | Let       of Region.t
 | Match     of Region.t

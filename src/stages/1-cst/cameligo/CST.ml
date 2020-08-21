@@ -121,6 +121,8 @@ type type_constr = string reg
 type constr      = string reg
 type attribute   = string reg
 
+type import_path = string reg * (dot * string reg) list
+
 (* Parentheses *)
 
 type 'a par = {
@@ -143,8 +145,8 @@ and ast = t
 and attributes = attribute list
 
 and declaration =
-  Let      of let_decl
-| TypeDecl of type_decl reg
+    Let      of let_decl
+  | TypeDecl of type_decl reg
 
 (* Non-recursive values *)
 
@@ -168,15 +170,15 @@ and type_decl = {
 }
 
 and type_expr =
-  TProd   of cartesian
-| TSum    of (variant reg, vbar) nsepseq reg
-| TRecord of field_decl reg ne_injection reg
-| TApp    of (type_constr * type_tuple) reg
-| TFun    of (type_expr * arrow * type_expr) reg
-| TPar    of type_expr par reg
-| TVar    of variable
-| TWild   of wild
-| TString of lexeme reg
+    TProd   of cartesian
+  | TSum    of (variant reg, vbar) nsepseq reg
+  | TRecord of field_decl reg ne_injection reg
+  | TApp    of (type_constr * type_tuple) reg
+  | TFun    of (type_expr * arrow * type_expr) reg
+  | TPar    of type_expr par reg
+  | TVar    of variable
+  | TWild   of wild
+  | TString of lexeme reg
 
 and cartesian = (type_expr, times) nsepseq reg
 
@@ -194,31 +196,31 @@ and field_decl = {
 and type_tuple = (type_expr, comma) nsepseq par reg
 
 and pattern =
-  PConstr   of constr_pattern
-| PUnit     of the_unit reg
-| PVar      of variable
-| PInt      of (lexeme * Z.t) reg
-| PNat      of (lexeme * Z.t) reg
-| PBytes    of (lexeme * Hex.t) reg
-| PString   of string reg
-| PVerbatim of string reg
-| PWild     of wild
-| PList     of list_pattern
-| PTuple    of (pattern, comma) nsepseq reg
-| PPar      of pattern par reg
-| PRecord   of field_pattern reg ne_injection reg
-| PTyped    of typed_pattern reg
+    PConstr   of constr_pattern
+  | PUnit     of the_unit reg
+  | PVar      of variable
+  | PInt      of (lexeme * Z.t) reg
+  | PNat      of (lexeme * Z.t) reg
+  | PBytes    of (lexeme * Hex.t) reg
+  | PString   of string reg
+  | PVerbatim of string reg
+  | PWild     of wild
+  | PList     of list_pattern
+  | PTuple    of (pattern, comma) nsepseq reg
+  | PPar      of pattern par reg
+  | PRecord   of field_pattern reg ne_injection reg
+  | PTyped    of typed_pattern reg
 
 and constr_pattern =
-  PNone      of c_None
-| PSomeApp   of (c_Some * pattern) reg
-| PFalse    of kwd_false
-| PTrue     of kwd_true
-| PConstrApp of (constr * pattern option) reg
+    PNone      of c_None
+  | PSomeApp   of (c_Some * pattern) reg
+  | PFalse    of kwd_false
+  | PTrue     of kwd_true
+  | PConstrApp of (constr * pattern option) reg
 
 and list_pattern =
-  PListComp of pattern injection reg
-| PCons     of (pattern * cons * pattern) reg
+    PListComp of pattern injection reg
+  | PCons     of (pattern * cons * pattern) reg
 
 and typed_pattern = {
   pattern   : pattern;
@@ -233,28 +235,28 @@ and field_pattern = {
 }
 
 and expr =
-  ECase    of expr case reg
-| ECond    of cond_expr reg
-| EAnnot   of annot_expr par reg
-| ELogic   of logic_expr
-| EArith   of arith_expr
-| EString  of string_expr
-| EList    of list_expr
-| EConstr  of constr_expr
-| ERecord  of record reg
-| EProj    of projection reg
-| EUpdate  of update reg
-| EVar     of variable
-| ECall    of (expr * expr nseq) reg
-| EBytes   of (string * Hex.t) reg
-| EUnit    of the_unit reg
-| ETuple   of (expr, comma) nsepseq reg
-| EPar     of expr par reg
-| ELetIn   of let_in reg
-| EFun     of fun_expr reg
-| ESeq     of expr injection reg
-| ECodeInj of code_inj reg
-| EImport  of path reg
+    ECase    of expr case reg
+  | ECond    of cond_expr reg
+  | EAnnot   of annot_expr par reg
+  | ELogic   of logic_expr
+  | EArith   of arith_expr
+  | EString  of string_expr
+  | EList    of list_expr
+  | EConstr  of constr_expr
+  | ERecord  of record reg
+  | EProj    of projection reg
+  | EUpdate  of update reg
+  | EVar     of variable
+  | ECall    of (expr * expr nseq) reg
+  | EBytes   of (string * Hex.t) reg
+  | EUnit    of the_unit reg
+  | ETuple   of (expr, comma) nsepseq reg
+  | EPar     of expr par reg
+  | ELetIn   of let_in reg
+  | EFun     of fun_expr reg
+  | ESeq     of expr injection reg
+  | ECodeInj of code_inj reg
+  | EImport  of import_path reg
 
 and annot_expr = expr * colon * type_expr
 
@@ -271,46 +273,46 @@ and 'a ne_injection = {
 }
 
 and compound =
-  BeginEnd of kwd_begin * kwd_end
-| Braces   of lbrace * rbrace
-| Brackets of lbracket * rbracket
+    BeginEnd of kwd_begin * kwd_end
+  | Braces   of lbrace * rbrace
+  | Brackets of lbracket * rbracket
 
 and list_expr =
-  ECons     of cons bin_op reg
-| EListComp of expr injection reg
+    ECons     of cons bin_op reg
+  | EListComp of expr injection reg
   (*| Append of (expr * append * expr) reg*)
 
 and string_expr =
-  Cat      of cat bin_op reg
-| String   of string reg
-| Verbatim of string reg
+    Cat      of cat bin_op reg
+  | String   of string reg
+  | Verbatim of string reg
 
 and constr_expr =
-  ENone      of c_None
-| ESomeApp   of (c_Some * expr) reg
-| EConstrApp of (constr * expr option) reg
+    ENone      of c_None
+  | ESomeApp   of (c_Some * expr) reg
+  | EConstrApp of (constr * expr option) reg
 
 and arith_expr =
-  Add   of plus bin_op reg
-| Sub   of minus bin_op reg
-| Mult  of times bin_op reg
-| Div   of slash bin_op reg
-| Mod   of kwd_mod bin_op reg
-| Neg   of minus un_op reg
-| Int   of (string * Z.t) reg
-| Nat   of (string * Z.t) reg
-| Mutez of (string * Z.t) reg
+    Add   of plus bin_op reg
+  | Sub   of minus bin_op reg
+  | Mult  of times bin_op reg
+  | Div   of slash bin_op reg
+  | Mod   of kwd_mod bin_op reg
+  | Neg   of minus un_op reg
+  | Int   of (string * Z.t) reg
+  | Nat   of (string * Z.t) reg
+  | Mutez of (string * Z.t) reg
 
 and logic_expr =
-  BoolExpr of bool_expr
-| CompExpr of comp_expr
+    BoolExpr of bool_expr
+  | CompExpr of comp_expr
 
 and bool_expr =
-  Or    of kwd_or bin_op reg
-| And   of kwd_and bin_op reg
-| Not   of kwd_not un_op reg
-| True  of kwd_true
-| False of kwd_false
+    Or    of kwd_or bin_op reg
+  | And   of kwd_and bin_op reg
+  | Not   of kwd_not un_op reg
+  | True  of kwd_true
+  | False of kwd_false
 
 and 'a bin_op = {
   op   : 'a;
@@ -324,12 +326,12 @@ and 'a un_op = {
 }
 
 and comp_expr =
-  Lt    of lt    bin_op reg
-| Leq   of leq   bin_op reg
-| Gt    of gt    bin_op reg
-| Geq   of geq   bin_op reg
-| Equal of equal bin_op reg
-| Neq   of neq   bin_op reg
+    Lt    of lt    bin_op reg
+  | Leq   of leq   bin_op reg
+  | Gt    of gt    bin_op reg
+  | Geq   of geq   bin_op reg
+  | Equal of equal bin_op reg
+  | Neq   of neq   bin_op reg
 
 and record = field_assign reg ne_injection
 
@@ -340,8 +342,8 @@ and projection = {
 }
 
 and selection =
-  FieldName of variable
-| Component of (string * Z.t) reg
+    FieldName of variable
+  | Component of (string * Z.t) reg
 
 and field_assign = {
   field_name : field_name;
@@ -364,8 +366,8 @@ and field_path_assignment = {
 }
 
 and path =
-  Name of variable
-| Path of projection reg
+    Name of variable
+  | Path of projection reg
 
 and 'a case = {
   kwd_match : kwd_match;
@@ -420,98 +422,98 @@ and code_inj = {
 
 let rec last to_region = function
     [] -> Region.ghost
-|  [x] -> to_region x
-| _::t -> last to_region t
+  |  [x] -> to_region x
+  | _::t -> last to_region t
 
 let nsepseq_to_region to_region (hd,tl) =
   let reg (_, item) = to_region item in
   Region.cover (to_region hd) (last reg tl)
 
 let type_expr_to_region = function
-  TProd   {region; _}
-| TSum    {region; _}
-| TRecord {region; _}
-| TApp    {region; _}
-| TFun    {region; _}
-| TPar    {region; _}
-| TString {region; _}
-| TVar    {region; _}
-| TWild    region
- -> region
+    TProd   {region; _}
+  | TSum    {region; _}
+  | TRecord {region; _}
+  | TApp    {region; _}
+  | TFun    {region; _}
+  | TPar    {region; _}
+  | TString {region; _}
+  | TVar    {region; _}
+  | TWild    region
+    -> region
 
 let list_pattern_to_region = function
-  PListComp {region; _} | PCons {region; _} -> region
+    PListComp {region; _} | PCons {region; _} -> region
 
 let constr_pattern_to_region = function
-  PNone region | PSomeApp {region;_}
-| PTrue region | PFalse region
-| PConstrApp {region;_} -> region
+    PNone region | PSomeApp {region;_}
+  | PTrue region | PFalse region
+  | PConstrApp {region;_} -> region
 
 let pattern_to_region = function
-| PList p -> list_pattern_to_region p
-| PConstr c -> constr_pattern_to_region c
-| PUnit {region;_}
-| PTuple {region;_} | PVar {region;_}
-| PInt {region;_}
-| PString {region;_} | PVerbatim {region;_}
-| PWild region | PPar {region;_}
-| PRecord {region; _} | PTyped {region; _}
-| PNat {region; _} | PBytes {region; _}
-  -> region
+  | PList p -> list_pattern_to_region p
+  | PConstr c -> constr_pattern_to_region c
+  | PUnit {region;_}
+  | PTuple {region;_} | PVar {region;_}
+  | PInt {region;_}
+  | PString {region;_} | PVerbatim {region;_}
+  | PWild region | PPar {region;_}
+  | PRecord {region; _} | PTyped {region; _}
+  | PNat {region; _} | PBytes {region; _}
+    -> region
 
 let bool_expr_to_region = function
-  Or {region;_} | And {region;_}
-| True region | False region
-| Not {region;_} -> region
+    Or {region;_} | And {region;_}
+  | True region | False region
+  | Not {region;_} -> region
 
 let comp_expr_to_region = function
-  Lt {region;_} | Leq {region;_}
-| Gt {region;_} | Geq {region;_}
-| Neq {region;_} | Equal {region;_} -> region
+    Lt {region;_} | Leq {region;_}
+  | Gt {region;_} | Geq {region;_}
+  | Neq {region;_} | Equal {region;_} -> region
 
 let logic_expr_to_region = function
-  BoolExpr e -> bool_expr_to_region e
-| CompExpr e -> comp_expr_to_region e
+    BoolExpr e -> bool_expr_to_region e
+  | CompExpr e -> comp_expr_to_region e
 
 let arith_expr_to_region = function
-  Add {region;_} | Sub {region;_} | Mult {region;_}
-| Div {region;_} | Mod {region;_} | Neg {region;_}
-| Int {region;_} | Mutez {region; _}
-| Nat {region; _} -> region
+    Add {region;_} | Sub {region;_} | Mult {region;_}
+  | Div {region;_} | Mod {region;_} | Neg {region;_}
+  | Int {region;_} | Mutez {region; _}
+  | Nat {region; _} -> region
 
 let string_expr_to_region = function
-  Verbatim {region;_} | String {region;_} | Cat {region;_} -> region
+    Verbatim {region;_} | String {region;_} | Cat {region;_} -> region
 
 let list_expr_to_region = function
-  ECons {region; _} | EListComp {region; _}
-(* | Append {region; _}*) -> region
+    ECons {region; _} | EListComp {region; _}
+    (* | Append {region; _}*) -> region
 
 and constr_expr_to_region = function
-  ENone region
-| EConstrApp {region; _}
-| ESomeApp   {region; _} -> region
+    ENone region
+  | EConstrApp {region; _}
+  | ESomeApp   {region; _} -> region
 
 let expr_to_region = function
-  ELogic e -> logic_expr_to_region e
-| EArith e -> arith_expr_to_region e
-| EString e -> string_expr_to_region e
-| EList e -> list_expr_to_region e
-| EConstr e -> constr_expr_to_region e
-| EAnnot {region;_ } | ELetIn {region;_}   | EFun {region;_}
-| ECond {region;_}   | ETuple {region;_}   | ECase {region;_}
-| ECall {region;_}   | EVar {region; _}    | EProj {region; _}
-| EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
-| ESeq {region; _}   | ERecord {region; _} | EUpdate {region; _}
-| ECodeInj {region; _} -> region
+    ELogic e -> logic_expr_to_region e
+  | EArith e -> arith_expr_to_region e
+  | EString e -> string_expr_to_region e
+  | EList e -> list_expr_to_region e
+  | EConstr e -> constr_expr_to_region e
+  | EAnnot {region;_ } | ELetIn {region;_}   | EFun {region;_}
+  | ECond {region;_}   | ETuple {region;_}   | ECase {region;_}
+  | ECall {region;_}   | EVar {region; _}    | EProj {region; _}
+  | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
+  | ESeq {region; _}   | ERecord {region; _} | EUpdate {region; _}
+  | EImport {region; _}| ECodeInj {region; _} -> region
 
 let declaration_to_region = function
-| Let {region;_}
-| TypeDecl {region;_} -> region
+  | Let {region;_}
+  | TypeDecl {region;_} -> region
 
 let selection_to_region = function
-  FieldName f -> f.region
-| Component c -> c.region
+    FieldName f -> f.region
+  | Component c -> c.region
 
 let path_to_region = function
-  Name var -> var.region
-| Path {region; _} -> region
+    Name var -> var.region
+  | Path {region; _} -> region

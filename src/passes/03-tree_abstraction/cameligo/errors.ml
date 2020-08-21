@@ -27,7 +27,8 @@ type abs_error = [
   | `Concrete_cameligo_michelson_type_wrong of Raw.type_expr * string
   | `Concrete_cameligo_michelson_type_wrong_arity of Location.t * string
   | `Concrete_cameligo_program_tracer of Raw.declaration list * abs_error
-  ]
+  | `Concrete_cameligo_import_not_found of Raw.path
+]
 
 let wrong_pattern expected actual = `Concrete_cameligo_wrong_pattern (expected,actual)
 let unsupported_let_in_function patterns = `Concrete_cameligo_unsupported_let_in patterns
@@ -51,12 +52,13 @@ let unknown_built_in name = `Concrete_cameligo_unknown_built_in name
 let michelson_type_wrong texpr name = `Concrete_cameligo_michelson_type_wrong (texpr,name)
 let michelson_type_wrong_arity loc name = `Concrete_cameligo_michelson_type_wrong_arity (loc,name)
 let program_tracer decl err = `Concrete_cameligo_program_tracer (decl,err)
+let import_not_found name = `Concrete_cameligo_import_not_found name
 
 let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> abs_error -> unit =
   fun ~display_format f a ->
   match display_format with
-  | Human_readable | Dev -> (
+  | Human_readable | Dev ->
     match a with
     | `Concrete_cameligo_wrong_pattern (expected_name,actual) ->
       Format.fprintf f
@@ -142,9 +144,9 @@ let rec error_ppformat : display_format:string display_format ->
     | `Concrete_cameligo_michelson_type_wrong (texpr,name) ->
       Format.fprintf f
         "@[<hv>%a@Argument %s of %s must be a string singleton@]"
-          Location.pp_lift (Raw.type_expr_to_region texpr)
-          (Cst_cameligo.ParserLog.type_expr_to_string ~offsets:true ~mode:`Point texpr)
-          name
+        Location.pp_lift (Raw.type_expr_to_region texpr)
+        (Cst_cameligo.ParserLog.type_expr_to_string ~offsets:true ~mode:`Point texpr)
+        name
     | `Concrete_cameligo_michelson_type_wrong_arity (loc,name) ->
       Format.fprintf f
         "@[<hv>%a@%s does not have the right number of argument@]"
@@ -155,7 +157,18 @@ let rec error_ppformat : display_format:string display_format ->
         "@[<hv>%a@Abstracting program@%a@]"
         Location.pp_lift (List.fold_left (fun a d -> Region.cover a (Raw.declaration_to_region d)) Region.ghost decl)
         (error_ppformat ~display_format) err
-  )
+    | `Concrete_cameligo_import_not_found (path) ->
+      let path_ppformat f (path: Raw.path) =
+        match path with
+        | Name s ->
+          Format.fprintf f "%s" s.value
+        | Path p ->
+          Format.fprintf f "%s." p.value.struct_name.value (* TODO: format whole path *)
+      in
+      Format.fprintf f
+        "@[<hv>@Module %a not found@]"
+        path_ppformat path
+
 
 
 let rec error_jsonformat : abs_error -> Yojson.t = fun a ->
@@ -171,79 +184,79 @@ let rec error_jsonformat : abs_error -> Yojson.t = fun a ->
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.pattern_to_region actual) in
     let actual = (Cst_cameligo.ParserLog.pattern_to_string ~offsets:true ~mode:`Point actual) in
     let content = `Assoc [
-      ("message", message);
-      ("location", `String loc);
-      ("expected", `String expected_name);
-      ("actual", `String actual) ] in
+        ("message", message);
+        ("location", `String loc);
+        ("expected", `String expected_name);
+        ("actual", `String actual) ] in
     json_error ~stage ~content
   | `Concrete_cameligo_unsupported_let_in expr ->
     let message = `String "Defining functions with \"let ... in\" is not supported yet" in
     let loc = Format.asprintf "%a"
-      Location.pp_lift (List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost expr) in
+        Location.pp_lift (List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost expr) in
     let content = `Assoc [
-      ("message", message);
-      ("location", `String loc)] in
+        ("message", message);
+        ("location", `String loc)] in
     json_error ~stage ~content
   | `Concrete_cameligo_unknown_predefined_type type_name ->
     let message = `String "Unknown predefined type" in
     let t = `String type_name.Region.value in
     let loc = Format.asprintf "%a" Location.pp_lift type_name.Region.region in
     let content = `Assoc [
-      ("message", message );
-      ("location", `String loc);
-      ("type", t ) ] in
+        ("message", message );
+        ("location", `String loc);
+        ("type", t ) ] in
     json_error ~stage ~content
   | `Concrete_cameligo_untyped_fun_param variable ->
     let message = `String "Untyped function parameters are not supported yet" in
     let loc = Format.asprintf "%a" Location.pp_lift variable.Region.region in
     let content = `Assoc [
-      ("message", message );
-      ("location", `String loc);] in
+        ("message", message );
+        ("location", `String loc);] in
     json_error ~stage ~content
   | `Concrete_cameligo_recursive_fun reg ->
     let message = `String "Untyped recursive functions are not supported yet" in
     let loc = Format.asprintf "%a" Location.pp_lift reg in
     let content = `Assoc [
-      ("message", message );
-      ("location", `String loc);] in
+        ("message", message );
+        ("location", `String loc);] in
     json_error ~stage ~content
   | `Concrete_cameligo_unsupported_tuple_pattern p ->
     let message = `String "The following tuple pattern is not supported yet" in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.pattern_to_region p) in
     let pattern = Cst_cameligo.ParserLog.pattern_to_string ~offsets:true ~mode:`Point p in
     let content = `Assoc [
-      ("message", message );
-      ("location", `String loc);
-      ("pattern", `String pattern); ] in
+        ("message", message );
+        ("location", `String loc);
+        ("pattern", `String pattern); ] in
     json_error ~stage ~content
   | `Concrete_cameligo_unsupported_constant_constr p ->
     let message = `String "Constant constructors are not supported yet" in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.pattern_to_region p) in
     let content = `Assoc [
-      ("message", message );
-      ("location", `String loc);] in
+        ("message", message );
+        ("location", `String loc);] in
     json_error ~stage ~content
   | `Concrete_cameligo_unsupported_non_var_pattern p ->
     let message = `String "Non-variable patterns in constructors are not supported yet" in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.pattern_to_region p) in
     let content = `Assoc [
-      ("message", message );
-      ("location", `String loc);] in
+        ("message", message );
+        ("location", `String loc);] in
     json_error ~stage ~content
   | `Concrete_cameligo_unsupported_pattern_type pl ->
     let loc = Format.asprintf "%a"
-      Location.pp_lift (List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl) in
+        Location.pp_lift (List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl) in
     let message = `String "Currently, only booleans, lists, options, and constructors are supported in patterns" in
     let content = `Assoc [
-      ("message", message );
-      ("location", `String loc);] in
+        ("message", message );
+        ("location", `String loc);] in
     json_error ~stage ~content
   | `Concrete_cameligo_unsupported_string_singleton te ->
     let message = `String "Unsupported singleton string type" in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.type_expr_to_region te) in
     let content = `Assoc [
-      ("message", message );
-      ("location", `String loc);] in
+        ("message", message );
+        ("location", `String loc);] in
     json_error ~stage ~content
   | `Concrete_cameligo_unsupported_deep_list_pattern cons ->
     let message = `String "Currently, only empty lists and x::y are supported in list patterns" in
@@ -265,10 +278,10 @@ let rec error_jsonformat : abs_error -> Yojson.t = fun a ->
     let expr = Cst_cameligo.ParserLog.expr_to_string ~offsets:true ~mode:`Point expr in
     let children = error_jsonformat err in
     let content = `Assoc [
-      ("message", message );
-      ("location", `String loc);
-      ("expression", `String expr);
-      ("children", children) ] in
+        ("message", message );
+        ("location", `String loc);
+        ("expression", `String expr);
+        ("children", children) ] in
     json_error ~stage ~content
   | `Concrete_cameligo_abstraction_type_tracer (te,err) ->
     let message = `String "Abstracting type expression" in
@@ -276,66 +289,70 @@ let rec error_jsonformat : abs_error -> Yojson.t = fun a ->
     let expr = Cst_cameligo.ParserLog.type_expr_to_string ~offsets:true ~mode:`Point te in
     let children = error_jsonformat err in
     let content = `Assoc [
-      ("message", message );
-      ("location", `String loc);
-      ("type expression", `String expr);
-      ("children", children) ] in
+        ("message", message );
+        ("location", `String loc);
+        ("type expression", `String expr);
+        ("children", children) ] in
     json_error ~stage ~content
   | `Concrete_cameligo_bad_deconstruction expr ->
     let message = `String "Bad tuple deconstruction" in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.expr_to_region expr) in
     let expr = Cst_cameligo.ParserLog.expr_to_string ~offsets:true ~mode:`Point expr in
     let content = `Assoc [
-      ("message", message );
-      ("location", `String loc);
-      ("expression", `String expr) ] in
+        ("message", message );
+        ("location", `String loc);
+        ("expression", `String expr) ] in
     json_error ~stage ~content
   | `Concrete_cameligo_only_constructors p ->
     let message = `String "Currently, only constructors are supported in patterns" in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.pattern_to_region p) in
     let content = `Assoc [
-      ("message", message );
-      ("location", `String loc);] in
+        ("message", message );
+        ("location", `String loc);] in
     json_error ~stage ~content
   | `Concrete_cameligo_unsupported_sugared_lists wild ->
     let message = `String "Currently, only empty lists and constructors (::) are supported in patterns" in
     let loc = Format.asprintf "%a" Location.pp_lift wild in
     let content = `Assoc [
-      ("message", message );
-      ("location", `String loc); ] in
+        ("message", message );
+        ("location", `String loc); ] in
     json_error ~stage ~content
   | `Concrete_cameligo_corner_case desc ->
     let message = Format.asprintf "Corner case: %s" desc in
     let content = `Assoc [
-      ("message", `String message ); ] in
+        ("message", `String message ); ] in
     json_error ~stage ~content
   | `Concrete_cameligo_unknown_built_in bi ->
     let message = Format.asprintf "Unknown built-in function %s" bi in
     let content = `Assoc [
-      ("message", `String message ); ] in
+        ("message", `String message ); ] in
     json_error ~stage ~content
   | `Concrete_cameligo_michelson_type_wrong (texpr,name) ->
     let message = Format.asprintf "Argument %s of %s must be a string singleton"
         (Cst_cameligo.ParserLog.type_expr_to_string ~offsets:true ~mode:`Point texpr) name in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.type_expr_to_region texpr) in
     let content = `Assoc [
-      ("message", `String message );
-      ("location", `String loc); ] in
+        ("message", `String message );
+        ("location", `String loc); ] in
     json_error ~stage ~content
   | `Concrete_cameligo_michelson_type_wrong_arity (loc,name) ->
     let message = Format.asprintf "%s does not have the right number of argument" name in
     let loc = Format.asprintf "%a" Location.pp loc in
     let content = `Assoc [
-      ("message", `String message );
-      ("location", `String loc); ] in
+        ("message", `String message );
+        ("location", `String loc); ] in
     json_error ~stage ~content
   | `Concrete_cameligo_program_tracer (decl,err) ->
     let message = `String "Abstracting program" in
     let loc = Format.asprintf "%a"
-      Location.pp_lift (List.fold_left (fun a d -> Region.cover a (Raw.declaration_to_region d)) Region.ghost decl) in
+        Location.pp_lift (List.fold_left (fun a d -> Region.cover a (Raw.declaration_to_region d)) Region.ghost decl) in
     let children = error_jsonformat err in
     let content = `Assoc [
-      ("message", message );
-      ("location", `String loc);
-      ("children", children) ] in
+        ("message", message );
+        ("location", `String loc);
+        ("children", children) ] in
+    json_error ~stage ~content
+  | `Concrete_cameligo_import_not_found (_) ->
+    (* TODO: render import path properly *)
+    let content = `Assoc [ ("message", `String "Import path not found: (import resolution NYI)") ] in
     json_error ~stage ~content

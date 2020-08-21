@@ -125,12 +125,14 @@ val e_big_map : ?loc:Location.t -> ( expr * expr ) list -> expression
 val e_assign : ?loc:Location.t -> expression_variable -> access list -> expression -> expression
 val e_assign_ez : ?loc:Location.t -> string -> access list -> expression -> expression
 
+val e_import : ?loc:Location.t -> string * string list -> expression
+
 val e_while  : ?loc:Location.t -> expression -> expression -> expression
 val e_for     : ?loc:Location.t -> expression_variable -> expression -> expression -> expression -> expression -> expression
 val e_for_each : ?loc:Location.t -> expression_variable * expression_variable option -> expression -> collect_type -> expression -> expression
 
 (* val e_for_ez  : ?loc:Location.t -> string -> expression -> expression -> expression -> expression -> expression
-val e_for_each_ez : ?loc:Location.t -> string * string option -> expression -> collect_type -> expression -> expression *)
+   val e_for_each_ez : ?loc:Location.t -> string * string option -> expression -> collect_type -> expression -> expression *)
 
 val make_option_typed : ?loc:Location.t -> expression -> type_expression option -> expression
 

@@ -64,6 +64,7 @@ module LexToken = Lexer_cameligo.LexToken
 %token <Region.t> Fun   "fun"
 %token <Region.t> Rec   "rec"
 %token <Region.t> If    "if"
+%token <Region.t> Import "import"
 %token <Region.t> In    "in"
 %token <Region.t> Let   "let"
 %token <Region.t> Match "match"

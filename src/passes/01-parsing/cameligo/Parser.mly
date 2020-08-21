@@ -604,9 +604,9 @@ module_fun:
 | "or"       { {value="or"; region=$1} }
 
 module_import:
-  "import" module_name {
-    let region = cover $1.region $2.region in
-    let value = Name $2 in
+  "import" nsepseq(module_name, ".") {
+    let region = cover $1 (nsepseq_to_region (fun x -> x.region) $2) in
+    let value = $2 in
     {region; value}
 }
 
