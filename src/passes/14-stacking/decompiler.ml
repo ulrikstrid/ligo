@@ -113,6 +113,10 @@ let rec decompile_value (Ex_typed_value (ty, value)) : (value , stacking_error) 
       ok @@ D_set lst''
     )
   | (Operation_t _) , (op , _) ->
+      let op =
+        Data_encoding.Binary.to_bytes_exn
+          Alpha_context.Operation.internal_operation_encoding
+          op in
       ok @@ D_operation op
   | (Lambda_t _ as ty) , _ ->
       let%bind m_ty = trace_strong (corner_case ~loc:"TODO" "TODO") @@
