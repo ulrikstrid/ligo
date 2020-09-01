@@ -1,0 +1,6 @@
+author: Tom Jack
+merge_request: '781'
+title: Remove decompilation to operation literals (one step towards being less couples
+  to tezos protocol in the core compiler). Operations will now be printed as hex bytes
+  again when using dry-run
+type: changed
