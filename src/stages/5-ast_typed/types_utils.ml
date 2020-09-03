@@ -12,6 +12,9 @@ and type_variable = type_ Var.t
 type z = Z.t
 type ast_core_type_expression = S.type_expression
 
+type constraint_identifier =
+| ConstraintIdentifier of int64
+type 'v constraint_identifierMap = (constraint_identifier, 'v) RedBlackTrees.PolyMap.t
 
 type 'a list_ne = 'a List.Ne.t
 type location = Location.t
@@ -60,6 +63,9 @@ let fold_map__PolyMap : type k v state new_v err . (state -> v -> (state * new_v
 let fold_map__typeVariableMap : type a state new_a err . (state -> a -> (state * new_a , err) result) -> state -> a typeVariableMap -> (state * new_a typeVariableMap , err) result =
   fold_map__PolyMap
 
+let fold_map__constraint_identifierMap : type a state new_a err . (state -> a -> (state * new_a , err) result) -> state -> a constraint_identifierMap -> (state * new_a constraint_identifierMap , err) result =
+  fold_map__PolyMap
+
 let fold_map__poly_set : type a state new_a err . new_a extra_info__comparable -> (state -> a -> (state * new_a, err) result) -> state -> a poly_set -> (state * new_a poly_set, err) result =
   fun extra_info f state s ->
   let new_compare : (new_a -> new_a -> int) = extra_info.compare in
@@ -89,3 +95,14 @@ let fold_map_to_make fold_map = fun f v ->
    Instead of writing the following functions, we could just write the
    get_typeclass_compare functions for poly_unionfind and poly_set,
    but the resulting code wouldn't be much clearer. *)
+
+let make__label_map f v = fold_map_to_make fold_map__label_map f v
+let make__list f v = fold_map_to_make fold_map__list f v
+let make__location_wrap f v = fold_map_to_make fold_map__location_wrap f v
+let make__list_ne f v = fold_map_to_make fold_map__list_ne f v
+let make__option f v = fold_map_to_make fold_map__option f v
+let make__poly_unionfind f v = fold_map_to_make (fold_map__poly_unionfind { compare = failwith "TODO" (*UnionFind.Poly2.get_compare v*) }) f v
+let make__PolyMap f v = fold_map_to_make fold_map__PolyMap f v
+let make__typeVariableMap f v = fold_map_to_make fold_map__typeVariableMap f v
+let make__constraint_identifierMap f v = fold_map_to_make fold_map__constraint_identifierMap f v
+let make__poly_set f v = fold_map_to_make (fold_map__poly_set { compare = failwith "TODO" (*PolySet.get_compare v*) }) f v

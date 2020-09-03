@@ -28,6 +28,7 @@ let initial_state : _ typer_state = {
         assignments              = (Map.create ~cmp:Var.compare : (type_variable, c_constructor_simpl) Map.t);
         grouped_by_variable      = (Map.create ~cmp:Var.compare : (type_variable,         constraints) Map.t);
         cycle_detection_toposort = ();
+        by_constraint_identifier = (Map.create ~cmp:Ast_typed.Compare_generic.constraint_identifier : (constraint_identifier, c_typeclass_simpl) Map.t);
       } ;
     already_selected_and_propagators = List.map init_propagator_heuristic propagator_heuristics
   }

@@ -386,6 +386,7 @@ and typeclass = tc_allowed list
 
 type c_constructor_simpl_typeVariableMap = c_constructor_simpl typeVariableMap
 and constraints_typeVariableMap = constraints typeVariableMap
+and c_typeclass_simpl_constraint_identifierMap = c_typeclass_simpl constraint_identifierMap
 and type_constraint_simpl_list = type_constraint_simpl list
 and structured_dbs = {
   all_constraints          : type_constraint_simpl_list ;
@@ -397,6 +398,8 @@ and structured_dbs = {
   assignments              : c_constructor_simpl_typeVariableMap ;
   grouped_by_variable      : constraints_typeVariableMap ; (* map from (unionfind) variables to constraints containing them *)
   cycle_detection_toposort : unit ;                        (* example of structured db that we'll add later *)
+  (* TODO: later have all constraints get an identtifier, not just typeclass constraints. *)
+  by_constraint_identifier : c_typeclass_simpl_constraint_identifierMap ;
 }
 
 and c_constructor_simpl_list = c_constructor_simpl list
@@ -435,7 +438,7 @@ and c_equation_e = {
   }
 and c_typeclass_simpl = {
   reason_typeclass_simpl : string ;
-  id_typeclass_simpl     : int    ;
+  id_typeclass_simpl     : constraint_identifier ;
   tc   : typeclass          ;
   args : type_variable_list ;
 }
