@@ -45,6 +45,13 @@ let normalizer_grouped_by_variable : (type_constraint_simpl , type_constraint_si
     | SC_Alias { a; b } -> Constraint_databases.merge_constraints a b dbs
   in (dbs , [new_constraint])
 
+let normalizer_by_constraint_identifier : (type_constraint_simpl , type_constraint_simpl) normalizer =
+  fun dbs new_constraint ->
+  let dbs = match new_constraint with
+    | SC_Typeclass c -> Constraint_databases.register_by_constraint_identifier c dbs
+    | _ -> dbs
+  in (dbs , [new_constraint])
+
 (** Stores the first assignment ('a = ctor('b, …)) that is encountered. -> why ?
 
     Subsequent ('a = ctor('b2, …)) with the same 'a are ignored. *)
@@ -64,7 +71,7 @@ let normalizer_assignments : (type_constraint_simpl , type_constraint_simpl) nor
 
 (* TODO: make this be threaded around (not essential, but we tend to
    avoid mutable stuff). *)
-let global_next_constraint_id : int ref = ref 0
+let global_next_constraint_id : int64 ref = ref 0L
 
 (** This function converts constraints from type_constraint to
     type_constraint_simpl. The former has more possible cases, and the
@@ -106,8 +113,8 @@ and type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
     let fresh_eqns = List.map (fun (v,t) -> c_equation { tsrc = "solver: normalizer: split typeclass" ; t = P_variable v} t "normalizer: split_typeclass") (List.combine fresh_vars args) in
     let recur = List.map type_constraint_simpl fresh_eqns in
-    let id_typeclass_simpl = !global_next_constraint_id in
-    global_next_constraint_id := !global_next_constraint_id + 1;
+    let id_typeclass_simpl = ConstraintIdentifier (!global_next_constraint_id) in
+    global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
     [SC_Typeclass { tc ; args = fresh_vars ; id_typeclass_simpl ; reason_typeclass_simpl="normalizer: split_typeclass"}] @ List.flatten recur in
 
   match new_constraint.c with
@@ -145,6 +152,8 @@ and type_constraint_simpl : type_constraint -> type_constraint_simpl list =
 let normalizers : type_constraint -> structured_dbs -> (structured_dbs , 'modified_constraint) state_list_monad =
   fun new_constraint dbs ->
     (fun x -> x)
+    (* TODO: this does no exhaustiveness check to ensure that all parts of the database were updated as needed. *)
+    @@ lift normalizer_by_constraint_identifier
     @@ lift normalizer_grouped_by_variable
     @@ lift normalizer_assignments
     @@ lift normalizer_all_constraints

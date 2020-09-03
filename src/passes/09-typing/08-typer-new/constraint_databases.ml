@@ -36,6 +36,11 @@ let add_constraints_related_to : type_variable -> constraints -> structured_dbs 
     let dbs = { dbs with grouped_by_variable } in
     dbs
 
+let register_by_constraint_identifier : c_typeclass_simpl -> structured_dbs -> structured_dbs =
+  fun c dbs ->
+  { dbs with by_constraint_identifier = Map.add c.id_typeclass_simpl c dbs.by_constraint_identifier }
+
+
 let merge_constraints : type_variable -> type_variable -> structured_dbs -> structured_dbs =
   fun variable_a variable_b dbs ->
   (* get old representant for variable_a *)
