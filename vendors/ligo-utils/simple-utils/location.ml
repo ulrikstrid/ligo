@@ -64,6 +64,9 @@ let compare_content ~compare:compare_content wa wb =
 let equal_content ~equal:equal_content wa wb =
   equal_content wa.wrap_content wb.wrap_content
 
+let pinpoint a b = match a with
+  | File _ -> a
+  | Virtual _ -> b
 let wrap ?(loc = generated) wrap_content = { wrap_content ; location = loc }
 let get_location x = x.location
 let unwrap { wrap_content ; _ } = wrap_content

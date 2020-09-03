@@ -340,6 +340,7 @@ The following forms of subtractions are possible:
           Ast_typed.PP.type_expression b
           Ast_typed.PP.type_expression a      
     | `Typer_assert_equal (loc, expected,actual) ->
+      let loc = Location.pinpoint actual.location loc in
       Format.fprintf f
         "@[<hv>%a@.Invalid type(s).@.Expected: \"%a\", but got: \"%a\". @]"
         Location.pp loc
@@ -737,6 +738,7 @@ let rec error_jsonformat : typer_error -> Yojson.t = fun a ->
     ] in
     json_error ~stage ~content
   | `Typer_assert_equal (loc,expected,actual) ->
+    let loc = Location.pinpoint actual.location loc in
     let message = `String "bad types" in
     let expected = `String (Format.asprintf "%a" Ast_typed.PP.type_expression expected) in
     let actual = `String (Format.asprintf "%a" Ast_typed.PP.type_expression actual) in

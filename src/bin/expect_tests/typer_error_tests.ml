@@ -4,7 +4,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_function_annotation_1.mligo"; "main"];
   [%expect {|
     ligo: error
-          in file "error_function_annotation_1.mligo", line 1, characters 26-27
+          in file "error_function_annotation_1.mligo", line 1, characters 12-15
           Invalid type(s).
           Expected: "unit", but got: "int".
 
@@ -34,7 +34,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_function_annotation_3.mligo"; "f"];
   [%expect {|
     ligo: error
-
+          in file "error_function_annotation_3.mligo", line 2, character 4 to line 3, character 14
           Invalid type(s).
           Expected: "( list (operation) * sum[Add -> int , Sub -> int] )", but got: "
           sum[Add -> int , Sub -> int]".
@@ -110,7 +110,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_3.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-          in file "error_typer_3.mligo", line 3, characters 36-44
+          in file "error_typer_3.mligo", line 1, characters 13-25
           Invalid type(s).
           Expected: "( int * string * sum[false -> unit , true -> unit] )", but got: "
           ( int * string )".
@@ -126,7 +126,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; "../../test/contracts/negative/error_typer_4.mligo" ; "main" ] ;
   [%expect {|
     ligo: error
-          in file "error_typer_4.mligo", line 4, characters 18-48
+          in file "error_typer_4.mligo", line 1, characters 12-47
           Invalid type(s).
           Expected: "record[a -> int , c -> sum[false -> unit , true -> unit] , d -> string]", but got: "
           record[a -> int , b -> string , c -> sum[false -> unit , true -> unit]]".
@@ -158,8 +158,7 @@ let%expect_test _ =
     ligo: error
           in file "error_typer_6.mligo", line 1, characters 31-45
           Invalid type(s).
-          Expected: "Map (int , string)", but got: "Map (int ,
-          sum[false -> unit , true -> unit])".
+          Expected: "string", but got: "sum[false -> unit , true -> unit]".
 
 
           If you're not sure how to fix this error, you can do one of the following:

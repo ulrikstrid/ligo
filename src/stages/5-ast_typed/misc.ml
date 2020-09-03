@@ -261,3 +261,72 @@ let reason_simpl : type_constraint_simpl -> string = function
   | SC_Poly { reason_poly_simpl=reason; _ }
   | SC_Typeclass { reason_typeclass_simpl=reason; _ }
   -> reason
+
+
+(**
+diff (a,b)
+if (a=b) returns None
+otherwise, returns the inner difference between the two types
+*)
+let rec diff : type_expression * type_expression -> (type_expression * type_expression) option = fun (expected, actual) ->
+  let return_equal = None in
+  let return_diff ab = Some ab in
+  match (expected.type_content, actual.type_content) with
+  | T_constant {type_constant=ca;arguments=la}, T_constant {type_constant=cb;arguments=lb} -> (
+    let aux = fun lsta lstb ->
+      if List.length lsta <> List.length lstb then return_diff (expected, actual)
+      else
+        let diffs = List.map diff (List.combine lsta lstb) in
+        let diffs = List.filter (fun d -> Option.is_some d) diffs in
+        if (List.length diffs = 0) then return_equal else List.hd diffs
+    in
+    match (ca, cb) with
+      | TC_option, TC_option
+      | TC_list, TC_list
+      | TC_contract, TC_contract
+      | TC_set, TC_set
+      | (TC_map | TC_map_or_big_map) , (TC_map | TC_map_or_big_map)
+      | (TC_big_map | TC_map_or_big_map ), (TC_big_map | TC_map_or_big_map) ->
+        aux la lb
+      | (TC_option | TC_list | TC_contract | TC_set | TC_map | TC_big_map | TC_map_or_big_map | TC_michelson_pair|TC_michelson_or|TC_michelson_pair_right_comb | TC_michelson_pair_left_comb|TC_michelson_or_right_comb| TC_michelson_or_left_comb ),
+        (TC_option | TC_list | TC_contract | TC_set | TC_map | TC_big_map | TC_map_or_big_map | TC_michelson_pair|TC_michelson_or|TC_michelson_pair_right_comb | TC_michelson_pair_left_comb|TC_michelson_or_right_comb| TC_michelson_or_left_comb )
+        -> return_diff (expected, actual)
+      | _ -> if ca = cb then return_equal else return_diff (expected, actual)
+  )
+  | T_constant _, _ -> return_diff (expected, actual)
+  | T_sum sa, T_sum sb when LMap.cardinal sa <> LMap.cardinal sb -> return_diff (expected, actual)
+  | T_sum sa, T_sum sb -> (
+      let sa' = LMap.to_kv_list sa in
+      let sb' = LMap.to_kv_list sb in
+      let aux : (label * row_element) * (label * row_element) -> (type_expression * type_expression) option =
+        fun ((Label la, {associated_type=va;_}), (Label lb, {associated_type=vb;_})) ->
+          if String.equal la lb then diff (va,vb) else return_diff (expected,actual)
+      in
+      let diffs = List.map aux (List.combine sa' sb') in
+      let diffs = List.filter (fun d -> Option.is_some d) diffs in
+      if (List.length diffs = 0) then return_equal else List.hd diffs
+    )
+  | T_sum _, _ -> return_diff (expected,actual)
+  | T_record ra, T_record rb when LMap.cardinal ra <> LMap.cardinal rb -> return_diff (expected, actual)
+  | T_record ra, T_record rb
+       when Helpers.is_tuple_lmap ra <> Helpers.is_tuple_lmap rb -> return_diff (expected, actual)
+  | T_record ra, T_record rb -> (
+      let ra' = LMap.to_kv_list ra in
+      let rb' = LMap.to_kv_list rb in
+      let aux ((Label la, {associated_type=va;_}), (Label lb, {associated_type=vb;_})) =
+          if String.equal la lb then diff (va,vb) else return_diff (expected,actual)
+      in
+      let diffs = List.map aux (List.combine ra' rb') in
+      let diffs = List.filter (fun d -> Option.is_some d) diffs in
+      if (List.length diffs = 0) then return_equal else List.hd diffs
+    )
+  | T_record _, _ -> return_diff (expected, actual)
+  | T_arrow {type1;type2}, T_arrow {type1=type1';type2=type2'} ->
+    let open Option in
+    diff (type1, type1') >>= fun _ ->
+    diff (type2, type2')
+  | T_arrow _, _ -> return_diff (expected, actual)
+  | T_variable x, T_variable y -> let _ = (x = y) in failwith "TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding"
+  | T_variable _, _ -> return_diff (expected, actual)
+  | _, T_wildcard -> return_equal
+  | T_wildcard, _ -> return_equal

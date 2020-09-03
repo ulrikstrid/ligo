@@ -3,8 +3,9 @@ open Ast_typed
 open Trace
 
 let assert_type_expression_eq (loc:Location.t) ((tv',tv):type_expression * type_expression) : (unit,typer_error) result = 
-  trace_option (assert_equal loc tv' tv) @@
-    assert_type_expression_eq (tv' , tv)
+  match Misc.diff (tv',tv) with
+    | Some (expected,actual) -> fail (assert_equal loc expected actual)
+    | None -> ok ()
 
 type typer = type_expression list -> type_expression -> (type_expression, typer_error) result
 
