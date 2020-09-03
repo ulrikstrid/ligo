@@ -440,6 +440,7 @@ and c_equation_e = {
   }
 and c_typeclass_simpl = {
   reason_typeclass_simpl : string ;
+  id_typeclass_simpl     : int    ;
   tc   : typeclass          ;
   args : type_variable_list ;
 }

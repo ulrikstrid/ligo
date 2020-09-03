@@ -62,10 +62,14 @@ let normalizer_assignments : (type_constraint_simpl , type_constraint_simpl) nor
 (* TODO: at some point there may be uses of named type aliases (type
    foo = int; let x : foo = 42). These should be inlined. *)
 
+(* TODO: make this be threaded around (not essential, but we tend to
+   avoid mutable stuff). *)
+let global_next_constraint_id : int ref = ref 0
+
 (** This function converts constraints from type_constraint to
     type_constraint_simpl. The former has more possible cases, and the
     latter uses a more minimalistic constraint language.
- *)
+*)
 let rec normalizer_simpl : (type_constraint , type_constraint_simpl) normalizer =
   fun dbs new_constraint ->
   (dbs, type_constraint_simpl new_constraint)
@@ -102,7 +106,9 @@ and type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
     let fresh_eqns = List.map (fun (v,t) -> c_equation { tsrc = "solver: normalizer: split typeclass" ; t = P_variable v} t "normalizer: split_typeclass") (List.combine fresh_vars args) in
     let recur = List.map type_constraint_simpl fresh_eqns in
-    [SC_Typeclass { tc ; args = fresh_vars ; reason_typeclass_simpl="normalizer: split_typeclass"}] @ List.flatten recur in
+    let id_typeclass_simpl = !global_next_constraint_id in
+    global_next_constraint_id := !global_next_constraint_id + 1;
+    [SC_Typeclass { tc ; args = fresh_vars ; id_typeclass_simpl ; reason_typeclass_simpl="normalizer: split_typeclass"}] @ List.flatten recur in
 
   match new_constraint.c with
   (* break down (forall 'b, body = forall 'c, body') into ('a = forall 'b, body and 'a = forall 'c, body')) *)
