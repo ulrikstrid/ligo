@@ -22,15 +22,15 @@ let selector : (type_constraint_simpl , output_specialize1 , unit) selector =
     let other_cs = (Constraint_databases.get_constraints_related_to c.tv dbs).poly in
     let other_cs = List.filter (fun (x : c_poly_simpl) -> Var.equal c.tv x.tv) other_cs in
     let cs_pairs = List.map (fun x -> { poly = x ; a_k_var = c }) other_cs in
-    () , WasSelected cs_pairs
-  | SC_Alias       _                -> () , WasNotSelected (* TODO: ??? *)
+    () , cs_pairs
+  | SC_Alias       _                -> () , [] (* TODO: ??? *)
   | SC_Poly        p                ->
     let other_cs = (Constraint_databases.get_constraints_related_to p.tv dbs).constructor in
     let other_cs = List.filter (fun (x : c_constructor_simpl) -> Var.equal x.tv p.tv) other_cs in
     let cs_pairs = List.map (fun x -> { poly = p ; a_k_var = x }) other_cs in
-    () , WasSelected cs_pairs
-  | SC_Typeclass   _                -> () , WasNotSelected
-  | SC_Row _                        -> () , WasNotSelected
+    () , cs_pairs
+  | SC_Typeclass   _                -> () , []
+  | SC_Row _                        -> () , []
 
 let propagator : (output_specialize1 , unit, typer_error) propagator =
   fun () dbs selected ->
