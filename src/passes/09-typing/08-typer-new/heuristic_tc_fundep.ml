@@ -21,51 +21,108 @@ open Trace
 open Typer_common.Errors
 module Map = RedBlackTrees.PolyMap
 module Set = RedBlackTrees.PolySet
+module UF = UnionFind.Poly2
 
-(* This rule maintains in its private storage a representation of
-   the latest version of each typeclass *)
+open Heuristic_tc_fundep_utils
 
-let set_of_vars l = (Set.add_list l (Set.create ~cmp:Var.compare)).set
-let make_refined_typeclass tcs : refined_typeclass = { tcs ; vars = set_of_vars tcs.args }
-(* TODO: concise unique representant for typeclass constraints, for
-   now use the entire typeclass and ignore the "reason" fields in the
-   compare. *)
+(* ***********************************************************************
+ * Selector
+ * *********************************************************************** *)
 
-let constraint_identifier_to_tc (dbs : structured_dbs) (ci : constraint_identifier) =
-  (* TODO: this can fail: catch the exception and throw an error *)
-  RedBlackTrees.PolyMap.find ci dbs.by_constraint_identifier 
-let tc_to_constraint_identifier : c_typeclass_simpl -> constraint_identifier =
-  fun tc -> tc.id_typeclass_simpl
-type 'v constraint_identifierMap = (constraint_identifier, 'v) RedBlackTrees.PolyMap.t
-type refined_typeclass_constraint_identifierMap = refined_typeclass constraint_identifierMap
-type constraint_identifier_set = constraint_identifier Set.t
-type constraint_identifier_set_map = constraint_identifier_set typeVariableMap
-type private_storage = {
-  refined_typeclasses: refined_typeclass_constraint_identifierMap ;
-  typeclasses_constrained_by : constraint_identifier_set_map ;
-  }
+(* gets the refined_typeclass from for tc the private_storage (and
+   stores a copy of the tc if there was no existing refined_typeclass) *)
+let get_or_add_refined_typeclass : structured_dbs ->private_storage -> c_typeclass_simpl -> (private_storage * refined_typeclass) =
+  fun dbs { refined_typeclasses; typeclasses_constrained_by } tcs ->
+  let tc = tc_to_constraint_identifier tcs in
+  match PolyMap.find_opt tc refined_typeclasses with
+    None ->
+    let rtc = make_refined_typeclass @@ constraint_identifier_to_tc dbs tc in
+    let refined_typeclasses = PolyMap.add tc rtc refined_typeclasses in
+    let aux' = function
+        Some set -> Some (Set.add tc set)
+      | None -> Some (Set.add tc (Set.create ~cmp:Ast_typed.Compare_generic.constraint_identifier)) in
+    let aux typeclasses_constrained_by tv =
+      Map.update tv aux' typeclasses_constrained_by in
+    let typeclasses_constrained_by =
+      List.fold_left
+        aux
+        typeclasses_constrained_by
+        (List.rev (constraint_identifier_to_tc dbs tc).args) in
+    { refined_typeclasses; typeclasses_constrained_by }, rtc
+  | Some rtc ->
+    { refined_typeclasses; typeclasses_constrained_by }, rtc
 
-let splice f idx l =
-  let rec splice acc f idx l =
-    match l with
-      [] -> failwith "invalid index into list"
-    | hd :: tl ->
-      if idx = 0
-      then (List.append (List.rev acc) @@ List.append (f hd) @@ tl)
-      else (splice (hd :: acc) f (idx - 1) tl)
-  in splice [] f idx l
+let is_variable_constrained_by_typeclass : structured_dbs -> type_variable -> refined_typeclass -> bool =
+  fun dbs var refined_typeclass ->
+  (* This won't work because the Set.mem function doesn't take into account the unification of two variables *)
+  (* Set.mem var refined_typeclass *)
+  List.exists
+    (fun a ->
+       Var.equal
+         (UF.repr a dbs.aliases)
+         (UF.repr var dbs.aliases))
+  @@ Set.elements refined_typeclass.vars
 
-let splice_or_none f idx l =
-  let rec splice_or_none acc f idx l =
-    match l with
-      [] -> failwith "internal error: invalid index into list"
-    | hd :: tl ->
-      if idx = 0
-      then (match f hd with
-          | None -> None
-          | Some new_hds -> Some (List.append (List.rev acc) @@ List.append new_hds @@ tl))
-      else (splice_or_none (hd :: acc) f (idx - 1) tl)
-  in splice_or_none [] f idx l
+(* Find typeclass constraints in the dbs which constrain c.tv
+   This is useful for the typeclass constraints which do not exist yet in the private_storage. *)
+let selector_by_ctor_in_db : private_storage -> structured_dbs -> c_constructor_simpl -> (private_storage * output_tc_fundep selector_outputs) =
+  fun private_storage dbs c ->
+  let typeclasses = (Constraint_databases.get_constraints_related_to c.tv dbs).tc in  
+  let typeclasses = List.fold_map (get_or_add_refined_typeclass dbs) private_storage typeclasses in
+  let typeclasses = List.filter (is_variable_constrained_by_typeclass dbs c.tv) typeclasses in
+  let cs_pairs_db = List.map (fun tc -> { tc ; c }) typeclasses in
+  private_storage, cs_pairs_db
+
+(* Find typeclass constraints in the private_storage which constrain c.tv *)
+let selector_by_ctor_in_private_storage : private_storage -> structured_dbs -> c_constructor_simpl -> (private_storage * output_tc_fundep selector_outputs) =
+  fun private_storage dbs c ->
+  let refined_typeclasses = List.map snd @@ Map.bindings private_storage.refined_typeclasses in
+  let typeclasses =
+    List.filter
+      (is_variable_constrained_by_typeclass dbs c.tv)
+      refined_typeclasses in
+  let cs_pairs_db = List.map (fun tc -> { tc ; c }) typeclasses in
+  (* TODO: remove the WasSelected *)
+  private_storage, cs_pairs_db
+
+let selector_by_ctor : private_storage -> structured_dbs -> c_constructor_simpl -> (private_storage * output_tc_fundep selector_outputs) =
+  fun private_storage dbs c ->
+  let private_storage, cs_pairs_in_db = selector_by_ctor_in_db private_storage dbs c in
+  let private_storage, cs_pairs_in_private_storage = selector_by_ctor_in_private_storage private_storage dbs c in
+  private_storage, cs_pairs_in_db @ cs_pairs_in_private_storage
+
+(* Find constructor constraints α = κ(β …) where α is one of the
+   variables constrained by the (refined version of the) typeclass
+   constraint tcs. *)
+let selector_by_tc : private_storage -> structured_dbs -> c_typeclass_simpl -> (private_storage * output_tc_fundep selector_outputs) =
+  fun private_storage dbs tcs ->
+  let private_storage, tc = get_or_add_refined_typeclass dbs private_storage tcs in
+  (* TODO: this won't detect already-existing constructor
+     constraints that would apply to future versions of the refined
+     typeclass. *)
+  let aux tv =
+    (* Find the constructor constraints which apply to tv. *)
+    (* Since we are only refining the typeclass one type expression
+       node at a time, we only need the top-level assignment for
+       that variable, e.g. α = κ(βᵢ, …). We can therefore look
+       directly in the assignments. *)
+    match PolyMap.find_opt tv dbs.assignments with
+      Some c -> [({ tc ; c } : output_tc_fundep)]
+    | None   -> [] in
+  private_storage, (List.flatten @@ List.map aux tc.tcs.args)
+
+let selector : (type_constraint_simpl , output_tc_fundep , private_storage) selector =
+  fun type_constraint_simpl private_storage dbs ->
+  match type_constraint_simpl with
+    SC_Constructor c  -> selector_by_ctor private_storage dbs c
+  | SC_Row r          -> ignore r; failwith "TODO: call selector_by_ctor private_storage dbs r"
+  | SC_Alias       _  -> private_storage, [] (* TODO: ? *)
+  | SC_Poly        _  -> private_storage, [] (* TODO: ? *)
+  | SC_Typeclass   tc -> selector_by_tc private_storage dbs tc
+
+(* ***********************************************************************
+ * Propagator
+ * *********************************************************************** *)
 
 let restrict_one (c : c_constructor_simpl) (allowed : type_value) =
   match c, allowed.t with
@@ -93,86 +150,6 @@ let restrict (({ reason_constr_simpl = _; tv = _; c_tag = _; tv_list } as c) : c
   let id_typeclass_simpl = tcs.id_typeclass_simpl in
   { reason_typeclass_simpl = tcs.reason_typeclass_simpl; id_typeclass_simpl ; tc ; args }
 
-(* Check that the typeclass is a rectangular matrix, with one column
-   per argument. *)
-let check_typeclass_rectangular ({ reason_typeclass_simpl=_; tc; args } as tcs : c_typeclass_simpl) =
-  let nargs = List.length args in
-  if (List.for_all (fun allowed -> List.length allowed = nargs) tc)
-  then ok tcs
-  else fail typeclass_not_a_rectangular_matrix
-
-(* Check that the transposed typeclass is a rectangular matrix, with
-   one row per argument. *)
-let check_typeclass_transposed_rectangular (tc : (type_variable * type_value list) list) =
-  match tc with
-    [] -> ok tc
-  | (_, hd) :: tl ->
-    let hdlen = List.length hd in
-    if List.for_all (fun (_, l) -> List.length l = hdlen) tl
-    then ok tc
-    else fail typeclass_not_a_rectangular_matrix
-
-(* transpose ([x;z] ∈ [ [map(nat,unit) ; int    ; ] ;
-                        [map(unit,nat) ; string ; ] ;
-                        [map(int,int)  ; unit   ; ] ; ])
-   will return [ x ? [ map(nat,unit) ; map(unit,nat) ; map(int,int) ; ] ;
-                 z ? [ int           ; string        ; unit         ; ] ; ] *)
-let transpose : c_typeclass_simpl -> ((type_variable * type_value list) list, _) result =
-  fun { reason_typeclass_simpl = _; tc; args } ->
-  bind_fold_list
-    (fun accs allowed_tuple ->
-       List.map2 (fun (var, acc) allowed_type -> (var, allowed_type :: acc)) accs allowed_tuple
-         ~ok ~fail:(fun _ _ -> fail @@ internal_error __LOC__ "typeclass is not represented by a rectangular matrix"))
-    (List.map (fun var -> var, []) args)
-    tc
-  >>|? List.map (fun (var, acc) -> (var, List.rev acc))
-  >>? check_typeclass_transposed_rectangular
-
-(* transpose_back [ x ? [ map(nat,unit) ; map(unit,nat) ; map(int,int) ; ] ;
-                    z ? [ int           ; string        ; unit         ; ] ; ]
-   will return ([x;z] ∈ [ [map(nat,unit) ; int    ; ] ;
-                          [map(unit,nat) ; string ; ] ;
-                          [map(int,int)  ; unit   ; ] ; ]) *)
-let transpose_back : _ -> _ -> (type_variable * type_value list) list -> (c_typeclass_simpl, _) result =
-  fun reason_typeclass_simpl id_typeclass_simpl tcs ->
-  let%bind tc =
-    match tcs with
-    | [] -> ok []
-    | (_, hd_allowed_types) :: _ ->
-      bind_fold_list
-        (fun allowed_tuples allowed_types ->
-           List.map2 (fun allowed_tuple allowed_type -> allowed_type :: allowed_tuple) allowed_tuples allowed_types
-             ~ok ~fail:(fun _ _ -> fail @@ internal_error __LOC__ "transposed typeclass is not represented by a rectangular matrix"))
-        (List.map (fun _ -> []) hd_allowed_types)
-        (List.map snd tcs)
-      >>|? List.map (fun allowed_typle -> List.rev allowed_typle)
-  in
-  let args = List.map fst tcs in
-  check_typeclass_rectangular @@
-  { reason_typeclass_simpl; id_typeclass_simpl; tc; args }
-
-type 'a all_equal = Empty | All_equal_to of 'a | Different
-let all_equal cmp = function
-  | [] -> Empty
-  | hd :: tl -> if List.for_all (fun x -> cmp x hd = 0) tl then All_equal_to hd else Different
- 
-let get_tag_and_args (tv : type_value) =
-  match tv.t with
-  | P_constant { p_ctor_tag; p_ctor_args } -> ok (p_ctor_tag, p_ctor_args)
-  | P_row { p_row_tag; p_row_args } -> ignore (p_row_tag, p_row_args); failwith "TODO: return p_row_tag, p_row_args similarly to P_constant"
-  | P_forall _ ->
-    (* In this case we would need to do specialization.
-       For now we just leave as-is and don't deduce anything *)
-    failwith "TODO"
-  | P_variable _ ->
-    (* In this case we  *)
-    failwith "TODO"
-  | P_apply _ ->
-    (* In this case we would need to do β-reduction, if
-       possible, or invoke another heuristic.
-       For now we just leave as-is and don't deduce anything *)
-    failwith "TODO"
-
 (* input:
      x ? [ map3( nat , unit , float ) ; map3( bytes , mutez , float ) ]
    output:
@@ -181,7 +158,7 @@ let get_tag_and_args (tv : type_value) =
      [ m ? [ nat  ; bytes ]
        n ? [ unit ; mutez ] ] *)
 let replace_var_and_possibilities_1 ((x : type_variable) , (possibilities_for_x : type_value list)) =
-  let%bind tags_and_args = bind_map_list get_tag_and_args possibilities_for_x in
+  let%bind tags_and_args = bind_map_list get_tag_and_args_of_constant possibilities_for_x in
   let tags_of_constructors, arguments_of_constructors = List.split @@ tags_and_args in
   match all_equal Ast_typed.Compare_generic.constant_tag tags_of_constructors with
   | Different ->
@@ -263,71 +240,9 @@ let deduce_and_clean : c_typeclass_simpl -> (deduce_and_clean_result, _) result 
              y         ? [ int   ; string ]     ]
          deduced:
          [ x         = map3  ( fresh_x_1 , fresh_x_2 , fresh_x_3 ) ;
-           fresh_x_3 = float (                                   ) ; ]
-  *)
+           fresh_x_3 = float (                                   ) ; ] *)
   let%bind cleaned = transpose_back tcs.reason_typeclass_simpl tcs.id_typeclass_simpl vars_and_possibilities in
   ok { deduced ; cleaned }
-
-let get_or_add_refined_typeclass (dbs : structured_dbs) ({ refined_typeclasses; typeclasses_constrained_by } : private_storage) (tc : constraint_identifier)
-  : (private_storage * refined_typeclass) =
-  match PolyMap.find_opt tc refined_typeclasses with
-    None ->
-    let rtc = make_refined_typeclass @@ constraint_identifier_to_tc dbs tc in
-    let refined_typeclasses = PolyMap.add tc rtc refined_typeclasses in
-    let aux' = function
-        Some set -> Some (Set.add tc set)
-      | None -> Some (Set.add tc (Set.create ~cmp:Ast_typed.Compare_generic.constraint_identifier)) in
-    let aux typeclasses_constrained_by tv =
-           Map.update tv aux' typeclasses_constrained_by in
-    let typeclasses_constrained_by =
-      List.fold_left
-        aux
-        typeclasses_constrained_by
-        (List.rev (constraint_identifier_to_tc dbs tc).args) in
-    { refined_typeclasses; typeclasses_constrained_by }, rtc
-  | Some rtc ->
-    { refined_typeclasses; typeclasses_constrained_by }, rtc
-
-let selector_by_ctor (private_storage : private_storage) (dbs : structured_dbs) (c : c_constructor_simpl) : _ = 
-    (* find a typeclass in db which constrains c.tv *)
-  let typeclasses = (Constraint_databases.get_constraints_related_to c.tv dbs).tc in  
-  let typeclasses = List.map tc_to_constraint_identifier typeclasses in
-  let typeclasses = List.fold_map (get_or_add_refined_typeclass dbs) private_storage typeclasses in
-  let typeclasses = List.filter (fun (x : refined_typeclass) -> Set.mem c.tv x.vars) typeclasses in
-  let cs_pairs_db = List.map (fun tc -> { tc ; c }) typeclasses in
-
-  (* find a typeclass in refined_typeclasses which constrains c.tv *)
-  let other_cs = Map.find c.tv private_storage.typeclasses_constrained_by in
-  let cs_pairs_refined = List.map (fun tc -> { tc = make_refined_typeclass tc ; c }) @@ List.map (constraint_identifier_to_tc dbs) @@ Set.elements other_cs in
-
-  private_storage, WasSelected (cs_pairs_db @ cs_pairs_refined)
-
-let selector_by_tc (private_storage : private_storage) (dbs : structured_dbs) (tcs : c_typeclass_simpl) : private_storage * output_tc_fundep selector_outputs = 
-    (* This case finds the constructor constraints which apply to the variables
-       constrained by the typeclass. *)
-    let private_storage, tc = get_or_add_refined_typeclass dbs private_storage @@ tc_to_constraint_identifier tcs in
-    (* TODO: this won't detect already-existing constructor
-       constraints that would apply to future versions of the refined
-       typeclass. *)
-    let aux tv =
-      (* Find the constructor constraints which apply to tv. *)
-      (* Since we are only refining the typeclass one type expression
-         node at a time, we only need the top-level assignment for
-         that variable, e.g. α = κ(βᵢ, …). We can therefore look
-         directly in the assignments. *)
-      match PolyMap.find_opt tv dbs.assignments with
-        Some c -> [({ tc ; c } : output_tc_fundep)]
-      | None   -> [] in
-    private_storage, WasSelected (List.flatten @@ List.map aux tc.tcs.args)
-
-let selector : (type_constraint_simpl , output_tc_fundep , private_storage) selector =
-  fun type_constraint_simpl private_storage dbs ->
-  match type_constraint_simpl with
-    SC_Constructor c  -> selector_by_ctor private_storage dbs c
-  | SC_Row r          -> ignore r; failwith "TODO: call selector_by_ctor private_storage dbs r"
-  | SC_Alias       _  -> private_storage, WasNotSelected (* TODO: ? *)
-  | SC_Poly        _  -> private_storage, WasNotSelected (* TODO: ? *)
-  | SC_Typeclass   tc -> selector_by_tc private_storage dbs tc
 
 let propagator : (output_tc_fundep, private_storage , typer_error) propagator =
   fun private_storage _dbs selected ->
@@ -355,6 +270,10 @@ let propagator : (output_tc_fundep, private_storage , typer_error) propagator =
                                          x.tv_list ; } } } } in
   let deduced : type_constraint list = List.map aux deduced in
   ok (private_storage, deduced)
+
+(* ***********************************************************************
+ * Heuristic
+ * *********************************************************************** *)
 
 let heuristic =
   Propagator_heuristic
