@@ -9,6 +9,7 @@ in {
   libev = dds super.libev;
   libusb = self.libusb1;
   systemd = self.eudev;
+  curl = super.curl.override { gssSupport = false; };
   libusb1 = dds (super.libusb1.override { enableSystemd = true; });
   gdb = null;
   hidapi = dds (super.hidapi.override { systemd = self.eudev; });

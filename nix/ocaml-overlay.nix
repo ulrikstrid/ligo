@@ -55,7 +55,7 @@ in {
             "https://github.com/aantron/bisect_ppx/archive/02dfb10188033a26d07d23480c2bc44a3a670357.tar.gz";
         });
 
-        proto-alpha-utils = osuper.proto-alpha-utils.overrideAttrs (oa: rec {
+        proto-alpha-utils = (osuper.proto-alpha-utils.override { dune = oself.dune_2; }).overrideAttrs (oa: rec {
           buildInputs = oa.buildInputs
             ++ [ oself.tezos-protocol-006-PsCARTHA-parameters ];
           propagatedBuildInputs = buildInputs;
@@ -65,6 +65,12 @@ in {
             buildInputs = oa.buildInputs ++ [ oself.pprint ];
             propagatedBuildInputs = buildInputs;
           });
+
+        tezos-protocol-ligo006-PsCARTHA = osuper.tezos-protocol-ligo006-PsCARTHA.override { dune = oself.dune_2; };
+        tezos-protocol-ligo006-PsCARTHA-parameters = osuper.tezos-protocol-ligo006-PsCARTHA-parameters.override { dune = oself.dune_2; };
+        tezos-client-ligo006-PsCARTHA = osuper.tezos-client-ligo006-PsCARTHA.override { dune = oself.dune_2; };
+        tezos-memory-proto-alpha = osuper.tezos-memory-proto-alpha.override { dune = oself.dune_2; };
+        tezos-utils = osuper.tezos-utils.override { dune = oself.dune_2; };
 
         # A combination of executables, libraries, documentation and test coverage
         ligo = self.buildEnv {
@@ -78,7 +84,7 @@ in {
         };
 
         # LIGO executable and public libraries
-        ligo-out = osuper.ligo.overrideAttrs (oa: {
+        ligo-out = (osuper.ligo.override { dune = oself.dune_2; }).overrideAttrs (oa: {
           name = "ligo-out";
           LIGO_VERSION = if isNull
           (builtins.match "[0-9]+\\.[0-9]+\\.[0-9]+" CI_COMMIT_TAG) then
@@ -102,7 +108,7 @@ in {
         });
 
         # LIGO test suite; output empty on purpose
-        ligo-tests = osuper.ligo.overrideAttrs (oa: {
+        ligo-tests = (osuper.ligo.override { dune = oself.dune_2; }).overrideAttrs (oa: {
           name = "ligo-tests";
           src = filterOut [
             ".git"
@@ -120,7 +126,7 @@ in {
           buildInputs = oa.buildInputs ++ oa.checkInputs;
         });
         # LIGO odoc documentation
-        ligo-doc = osuper.ligo.overrideAttrs (oa: {
+        ligo-doc = (osuper.ligo.override { dune = oself.dune_2; }).overrideAttrs (oa: {
           name = "ligo-doc";
           buildInputs = oa.buildInputs
             ++ [ oself.odoc oself.tezos-protocol-updater ];
