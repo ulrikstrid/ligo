@@ -21,10 +21,11 @@
 
 (rule
  (targets changelog.ml)
- (deps (env_var CHANGELOG_PATH))
- (action (with-stdout-to
-          changelog.ml
-          (run "sh" "-c" "printf 'let changelog = {changelog|%s|changelog}' \"$(cat ${CHANGELOG_PATH:-../../gitlab-pages/docs/intro/changelog.md})\""))))
+ (deps (file %{workspace_root}/gitlab-pages/docs/intro/changelog.md))
+ (action 
+     (with-stdout-to
+       changelog.ml
+       (run "sh" "-c" "printf 'let changelog = {changelog|%s|changelog}' \"$(cat ../../gitlab-pages/docs/intro/changelog.md)\""))))
 
 (executable
   (name runligo)
