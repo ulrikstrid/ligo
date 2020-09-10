@@ -27,7 +27,11 @@ for VERSION in "${VERSIONS[@]}"; do
     fi
     TEMP="$(jq ".[env.name] = []" <<< "$TEMP")"
     for CHANGE in $CHANGES; do
-        TEMP="$(jq ".[env.name] = .[env.name] + [ $(yaml2json < "$CHANGE") ]" <<< "$TEMP")"
+        CHANGE_JSON="$(yaml2json < "$CHANGE")" 
+        CHECK="$(jq "contains({\"type\":\"internal\"})" <<< "$CHANGE_JSON")"
+        if !($CHECK == "true"); then
+            TEMP="$(jq ".[env.name] = .[env.name] + [ $CHANGE_JSON ]" <<< "$TEMP")"
+        fi
     done
     PREV_VERSION="$VERSION"
 done
