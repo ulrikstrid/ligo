@@ -40,7 +40,7 @@ binary:
     - dev
     - /^.*-run-dev$/
   script:
-    - nix-build nix -A ligo-bin --show-trace
+    - nix-build nix -A ligo-bin
 
 deb:
   extends: .nix
@@ -226,7 +226,7 @@ changelog:
     - /^.*-run-dev$/
     - /[0-9]+\.[0-9]+\.[0-9]+/
   script:
-    - nix-build nix -A ligo-changelog
+    - nix-build nix -A ligo-changelog --show-trace
     - cp -L result/* .
   artifacts:
     paths:
