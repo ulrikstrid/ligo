@@ -40,7 +40,7 @@ binary:
     - dev
     - /^.*-run-dev$/
   script:
-    - nix-build nix -A ligo-bin
+    - nix-build nix -A ligo-bin --show-trace
 
 deb:
   extends: .nix
