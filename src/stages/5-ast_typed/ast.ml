@@ -519,3 +519,12 @@ type already_selected = {
   break_ctor  : m_break_ctor__already_selected  ;
   specialize1 : m_specialize1__already_selected ;
 }
+
+type type_constraint_list = type_constraint list
+type update = {
+  remove_constraints : type_constraint_simpl_list ;
+  add_constraints : type_constraint_list ;
+  justification : string ;
+}
+type updates = update list
+type updates_list = updates list

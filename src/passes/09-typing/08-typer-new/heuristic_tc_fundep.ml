@@ -269,7 +269,13 @@ let propagator : (output_tc_fundep, private_storage , typer_error) propagator =
                                                      t    = P_variable v})
                                          x.tv_list ; } } } } in
   let deduced : type_constraint list = List.map aux deduced in
-  ok (private_storage, deduced)
+  ok (private_storage, [
+      {
+        remove_constraints = [];
+        add_constraints = deduced;
+        justification = "no removal so no justification needed"
+      }
+    ])
 
 (* ***********************************************************************
  * Heuristic

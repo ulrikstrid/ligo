@@ -69,6 +69,7 @@ type typer_error = [
   | `Typer_record_redefined_error of Location.t
   | `Typer_constant_tag_number_of_arguments of string * Ast_typed.constant_tag * Ast_typed.constant_tag * int * int
   | `Typer_typeclass_not_a_rectangular_matrix
+  | `Typer_could_not_remove
   | `Typer_internal_error of string * string
 ]
 
@@ -152,7 +153,7 @@ let in_match_variant_tracer (ae:Ast_core.matching_expr) (err:typer_error) =
 let different_types a b = `Typer_different_types (a,b)
 let different_constant_tag_number_of_arguments loc opa opb lena lenb : typer_error = `Typer_constant_tag_number_of_arguments (loc, opa, opb, lena, lenb)
 let typeclass_not_a_rectangular_matrix = `Typer_typeclass_not_a_rectangular_matrix
-let internal_error loc msg = `Typer_internal_error (loc, msg)
+let internal_error (loc : string) (msg : string) : typer_error = `Typer_internal_error (loc, msg)
 
 let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> typer_error -> unit =
@@ -510,6 +511,7 @@ The following forms of subtractions are possible:
     | `Typer_typeclass_not_a_rectangular_matrix ->
       Format.fprintf f "@[<hv>internal error: typeclass is not represented as a rectangular matrix with one column per argument@]"
     | `Typer_internal_error (loc, msg) -> Format.fprintf f "internal error at %s: %s" loc msg
+    | `Typer_could_not_remove -> Format.fprintf f "Heuristic requested removal of a constraint that cannot be removed"
   )
 
 let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
@@ -1183,6 +1185,12 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Typer_internal_error (loc, msg) ->
     let message = `String (Format.sprintf "internal error at %s: %s" loc msg) in
+    let content = `Assoc [
+      ("message", message);
+    ] in
+    json_error ~stage ~content
+  | `Typer_could_not_remove ->
+    let message = `String (Format.sprintf "Heuristic requested removal of a constraint that cannot be removed" ) in
     let content = `Assoc [
       ("message", message);
     ] in

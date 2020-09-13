@@ -56,7 +56,13 @@ let propagator : (output_specialize1 , unit, typer_error) propagator =
   (if Ast_typed.Debug.debug_new_typer then Format.printf "apply = %a\nb = %a\nreduced = %a\nnew_constraints = [\n%a\n]\n" Ast_typed.PP.type_value apply Ast_typed.PP.c_constructor_simpl b Ast_typed.PP.type_value reduced (PP_helpers.list_sep Ast_typed.PP.type_constraint (fun ppf () -> Format.fprintf ppf " ;\n")) new_constraints);
   let eq1 = c_equation { tsrc = "solver: propagator: specialize1 eq1" ; t = P_variable b.tv } reduced "propagator: specialize1" in
   let eqs = eq1 :: new_constraints in
-  ok ((), eqs)
+    ok (() , [
+        {
+          remove_constraints = [];
+          add_constraints = eqs;
+          justification = "no removal so no justification needed"
+        }
+      ])
 
 let heuristic =
   Propagator_heuristic

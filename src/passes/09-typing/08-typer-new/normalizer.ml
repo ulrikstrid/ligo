@@ -3,6 +3,7 @@ module Map = RedBlackTrees.PolyMap
 open Ast_typed.Misc
 open Ast_typed.Types
 open Typesystem.Solver_types
+open Trace
 
 (* sub-sub component: constraint normalizer: remove dupes and give structure
  * right now: union-find of unification vars
@@ -13,6 +14,11 @@ open Typesystem.Solver_types
    normalizer rewrites the constraints e.g. into simpler ones. *)
 (* TODO: If implemented in a language with decent sets, should be 'b set not 'b list. *)
 type ('a , 'b) normalizer = structured_dbs -> 'a -> (structured_dbs * 'b list)
+type 'a normalizer_rm = structured_dbs -> 'a -> (structured_dbs, Typer_common.Errors.typer_error) result
+(* type ('a , 'b) normalizer = {
+ *   add: ('a, 'b) normalizer_add;
+ *   rm: 'a normalizer_rm;
+ * } *)
 
 (** Updates the dbs.all_constraints field when new constraints are
    discovered.
@@ -44,6 +50,22 @@ let normalizer_grouped_by_variable : (type_constraint_simpl , type_constraint_si
     | SC_Poly        ({tv; forall = _}           as c) -> store_constraint [tv]                        {constructor = []  ; poly = [c] ; tc = [] ; row = []}
     | SC_Alias { a; b } -> Constraint_databases.merge_constraints a b dbs
   in (dbs , [new_constraint])
+
+let normalizer_grouped_by_variable_remove : type_constraint_simpl normalizer_rm =
+  fun dbs constraint_to_rm ->
+  let rm_constraint tvars constraints =
+    let aux dbs (tvar : type_variable) =
+      Constraint_databases.rm_constraints_related_to tvar constraints dbs
+    in bind_fold_list aux dbs tvars
+  in
+  match constraint_to_rm with
+      SC_Constructor ({tv ; c_tag = _ ; tv_list} as c) -> rm_constraint (tv :: tv_list)             {constructor = [c] ; poly = []  ; tc = [] ; row = []}
+    | SC_Row         ({tv ; r_tag = _ ; tv_map } as c) -> rm_constraint (tv :: LMap.to_list tv_map) {constructor = []  ; poly = []  ; tc = [] ; row = [c]}
+    | SC_Typeclass   ({tc = _ ; args}            as c) -> rm_constraint args                        {constructor = []  ; poly = []  ; tc = [c]; row = []}
+    | SC_Poly        ({tv; forall = _}           as c) -> rm_constraint [tv]                        {constructor = []  ; poly = [c] ; tc = [] ; row = []}
+    | SC_Alias { a; b } -> ignore (a,b); fail (Typer_common.Errors.internal_error __LOC__ "can't remove aliasing constraints")
+      (* Constraint_databases.merge_constraints a b dbs *)
+  
 
 let normalizer_by_constraint_identifier : (type_constraint_simpl , type_constraint_simpl) normalizer =
   fun dbs new_constraint ->

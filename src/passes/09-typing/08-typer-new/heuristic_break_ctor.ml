@@ -52,7 +52,13 @@ let propagator : (output_break_ctor , unit , typer_error) propagator =
     let%bind eqs3 = List.map2 (fun aa bb -> c_equation { tsrc = "solver: propagator: break_ctor aa" ; t = P_variable aa} { tsrc = "solver: propagator: break_ctor bb" ; t = P_variable bb} "propagator: break_ctor") a.tv_list b.tv_list
         ~ok ~fail:(fun _ _ -> fail @@ different_constant_tag_number_of_arguments __LOC__ a.c_tag b.c_tag (List.length a.tv_list) (List.length b.tv_list)) in
     let eqs = eq1 :: eqs3 in
-    ok (() , eqs)
+    ok (() , [
+        {
+          remove_constraints = [];
+          add_constraints = eqs;
+          justification = "no removal so no justification needed"
+        }
+      ])
 
 let heuristic =
   Propagator_heuristic
