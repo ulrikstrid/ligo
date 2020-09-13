@@ -40,7 +40,7 @@ let initial_state : _ typer_state = {
    entirely accidental (dfs/bfs/something in-between). *)
 
 (* sub-component: constraint selector (worklist / dynamic queries) *)
-let select_and_propagate : 'old_input 'selector_output 'private_storage . ('old_input, 'selector_output, 'private_storage) selector -> ('selector_output , 'private_storage, typer_error) propagator -> 'selector_output poly_set -> 'private_storage -> 'old_input -> structured_dbs -> ('selector_output poly_set * 'private_storage * new_constraints) result =
+let select_and_propagate : 'old_input 'selector_output 'private_storage . ('old_input, 'selector_output, 'private_storage) selector -> ('selector_output , 'private_storage, typer_error) propagator -> 'selector_output poly_set -> 'private_storage -> 'old_input -> structured_dbs -> ('selector_output poly_set * 'private_storage * updates) result =
   fun selector propagator ->
   fun already_selected private_storage old_type_constraint dbs ->
   (* TODO: thread some state to know which selector outputs were already seen *)
@@ -51,21 +51,80 @@ let select_and_propagate : 'old_input 'selector_output 'private_storage . ('old_
   (* return so that the new constraints are pushed to some kind of work queue *)
   let () =
     if Ast_typed.Debug.debug_new_typer && false then
-      let s str = (fun ppf () -> Format.fprintf ppf str) in
-      Format.printf "propagator produced\nnew_constraints = %a\n"
-        (PP_helpers.list_sep (PP_helpers.list_sep Ast_typed.PP.type_constraint (s "\n")) (s "\n"))
+      Format.printf "propagator produced\nupdates = %a\n"
+        Ast_typed.PP_helpers.updates_list
         new_constraints
   in
   ok (already_selected , private_storage , List.flatten new_constraints)
 
-let select_and_propagate_one new_constraint (new_states , new_constraints , dbs) (Propagator_state { selector; propagator; printer ; already_selected ; private_storage }) =
+let remove_constraint : structured_dbs -> type_constraint_simpl -> structured_dbs result =
+  fun
+    { all_constraints;
+      aliases;
+      assignments;
+      grouped_by_variable;
+      cycle_detection_toposort = ();
+      by_constraint_identifier;
+    }
+    to_remove ->
+    (* TODO: split these into normalizers (the normalizers should have an add & a remove part. *)
+    (* TODO: figure out what parts of the database are initial constraints (goals in Coq), what parts are outputs (assignments to evars in Coq), and what parts are temporary hypotheses. *)
+    (* TODO: compare type constraints by their constrain id instead of by equality. *)
+    (* TODO: use a set, not a list. *)
+    (* TODO: proper failure if the element doesn't exist (don't catch the exception as the comparator may throw a similar exception on its own). *)
+    let%bind all_constraints = ok @@ List.remove_element ~compare:Ast_typed.Compare_generic.type_constraint_simpl to_remove all_constraints in
+    let%bind { grouped_by_variable ; _ } =
+      (* for each type variable affected by the constraint as specified by the normalizers,
+         remove that constraint from the grouped_by_variable *)
+      Normalizer.normalizer_grouped_by_variable_remove { all_constraints; aliases; assignments; grouped_by_variable; cycle_detection_toposort = (); by_constraint_identifier } to_remove in
+    let%bind cycle_detection_toposort = ok () in (* placeholder for a future state *)
+    let%bind by_constraint_identifier = match to_remove with
+      | Ast_typed.Types.SC_Typeclass { id_typeclass_simpl; _ } ->
+        (* TODO: a proper error instead of an exception *)
+        ok @@ Map.remove id_typeclass_simpl by_constraint_identifier
+      | _ -> ok by_constraint_identifier in
+    ok @@
+    { all_constraints;
+      aliases;                  (* This is general bookkeeping, removing an aliasing constraint would require updating too many things. *)
+      assignments;              (* This is an output. An assignment cannot be changed after it was made. We might want to garbage-collect assignments to variables which aren't used anymore, but a heuristic cannot request the deletion of an assignment. *)
+      grouped_by_variable;
+      cycle_detection_toposort;
+      by_constraint_identifier;
+    }
+
+let apply_update : (type_constraint list * structured_dbs) -> update -> (type_constraint list * structured_dbs) result =
+  fun (acc, dbs) update ->
+  let%bind dbs' = bind_fold_list remove_constraint dbs update.remove_constraints in
+  (* TODO: don't append list like this, it's inefficient. *)
+  ok @@ (acc @ update.add_constraints, dbs')
+
+let apply_updates : update list -> structured_dbs -> (type_constraint list * structured_dbs) result =
+  fun updates dbs ->
+  bind_fold_list apply_update ([], dbs) updates
+
+let select_and_propagate_one :
+  type_constraint_simpl selector_input ->
+  typer_error ex_propagator_state list * type_constraint list * structured_dbs ->
+  typer_error ex_propagator_state ->
+  (typer_error ex_propagator_state list * type_constraint list * structured_dbs) result =
+  fun
+    new_constraint
+    (new_states , new_constraints , dbs)
+    (Propagator_state { selector; propagator; printer ; already_selected ; private_storage }) ->
   let sel_propag = (select_and_propagate selector propagator) in
-  let%bind (already_selected , private_storage, new_constraints') = sel_propag already_selected private_storage new_constraint dbs in
-  ok @@ (Propagator_state { selector; propagator; printer ; already_selected ; private_storage } :: new_states, new_constraints' @ new_constraints, dbs)
+  let%bind (already_selected , private_storage, updates) =
+    sel_propag already_selected private_storage new_constraint dbs in
+  let%bind new_constraints'', dbs = apply_updates updates dbs in
+  ok @@ (
+    (Propagator_state { selector; propagator; printer ; already_selected ; private_storage }
+     :: new_states),
+    new_constraints'' @ new_constraints,
+    dbs
+  )
 
 (* Takes a constraint, applies all selector+propagator pairs to it.
    Keeps track of which constraints have already been selected. *)
-let select_and_propagate_all' : typer_error ex_propagator_state list -> type_constraint_simpl selector_input -> structured_dbs -> (typer_error ex_propagator_state list * new_constraints * structured_dbs) result =
+let select_and_propagate_all' : typer_error ex_propagator_state list -> type_constraint_simpl selector_input -> structured_dbs -> (typer_error ex_propagator_state list * type_constraint list * structured_dbs) result =
   fun already_selected_and_propagators new_constraint dbs ->
   bind_fold_list
     (select_and_propagate_one new_constraint)
