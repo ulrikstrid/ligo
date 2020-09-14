@@ -29,6 +29,14 @@ let normalizer_all_constraints : (type_constraint_simpl , type_constraint_simpl)
   fun dbs new_constraint ->
     ({ dbs with all_constraints = new_constraint :: dbs.all_constraints } , [new_constraint])
 
+let normalizer_all_constraints_remove : type_constraint_simpl normalizer_rm =
+  fun dbs constraint_to_rm ->
+  (* TODO: use a set, not a list. *)
+  (* TODO: compare type constraints by their constrain id instead of by equality. *)
+  (* TODO: proper failure if the element doesn't exist (don't catch the exception as the comparator may throw a similar exception on its own). *)
+  let all_constraints = List.remove_element ~compare:Ast_typed.Compare_generic.type_constraint_simpl constraint_to_rm dbs.all_constraints in
+  ok { dbs with all_constraints }
+
 (** Updates the dbs.grouped_by_variable field when new constraints are
    discovered.
 
@@ -52,6 +60,8 @@ let normalizer_grouped_by_variable : (type_constraint_simpl , type_constraint_si
   in (dbs , [new_constraint])
 
 let normalizer_grouped_by_variable_remove : type_constraint_simpl normalizer_rm =
+  (* for each type variable affected by the constraint as specified by the normalizers,
+     remove that constraint from the grouped_by_variable *)
   fun dbs constraint_to_rm ->
   let rm_constraint tvars constraints =
     let aux dbs (tvar : type_variable) =
@@ -73,6 +83,15 @@ let normalizer_by_constraint_identifier : (type_constraint_simpl , type_constrai
     | SC_Typeclass c -> Constraint_databases.register_by_constraint_identifier c dbs
     | _ -> dbs
   in (dbs , [new_constraint])
+
+let normalizer_by_constraint_identifier_remove : type_constraint_simpl normalizer_rm =
+  fun dbs constraint_to_rm ->
+  let%bind by_constraint_identifier = match constraint_to_rm with
+    | Ast_typed.Types.SC_Typeclass { id_typeclass_simpl; _ } ->
+      (* TODO: a proper error instead of an exception *)
+      ok @@ Map.remove id_typeclass_simpl dbs.by_constraint_identifier
+    | _ -> ok dbs.by_constraint_identifier in
+  ok { dbs with by_constraint_identifier }
 
 (** Stores the first assignment ('a = ctor('b, …)) that is encountered. -> why ?
 
@@ -181,3 +200,21 @@ let normalizers : type_constraint -> structured_dbs -> (structured_dbs , 'modifi
     @@ lift normalizer_all_constraints
     @@ lift normalizer_simpl
     @@ lift_state_list_monad ~state:dbs ~list:[new_constraint]
+
+let normalizers_remove : structured_dbs -> type_constraint_simpl -> (structured_dbs, _) result =
+  let _ = bind_map_list in
+  (* TODO: figure out what parts of the database are initial
+     constraints (goals in Coq, can't be removed), what parts are
+     outputs (assignments to evars in Coq, can't be removed), and what
+     parts are temporary hypotheses (safe to remove). *)
+  fun dbs constraint_to_remove ->
+    let (>>?) (dc : (structured_dbs * type_constraint_simpl,  _) result) (f : type_constraint_simpl normalizer_rm) : (structured_dbs * type_constraint_simpl,  _) result = let%bind (d, c) = dc in let%bind d = f d c in ok (d, c) in
+    let%bind (dbs, _) =
+      ok (dbs, constraint_to_remove)
+      (* TODO: this does no exhaustiveness check to ensure that all parts of the database were updated as needed. *)
+      >>? normalizer_by_constraint_identifier_remove
+      >>? normalizer_grouped_by_variable_remove
+      (* >>? lift normalizer_assignments_remove *)
+      >>? normalizer_all_constraints_remove
+      (* >>? lift normalizer_simpl *)
+    in ok dbs

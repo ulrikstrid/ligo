@@ -46,7 +46,7 @@ let rm_constraints_related_to : type_variable -> constraints -> structured_dbs -
        any constraint after this removal. *)
     let rm_typeclass_simpl : c_typeclass_simpl list -> c_typeclass_simpl list -> c_typeclass_simpl list =
       fun x c ->
-        (* TODO: use sets, not lists. *)
+        (* TODO: use a set, not a list. *)
         List.fold_left (fun x' ci ->
             try
               List.remove_element
