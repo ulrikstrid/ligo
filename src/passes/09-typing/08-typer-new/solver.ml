@@ -57,44 +57,9 @@ let select_and_propagate : 'old_input 'selector_output 'private_storage . ('old_
   in
   ok (already_selected , private_storage , List.flatten new_constraints)
 
-let remove_constraint : structured_dbs -> type_constraint_simpl -> structured_dbs result =
-  fun
-    { all_constraints;
-      aliases;
-      assignments;
-      grouped_by_variable;
-      cycle_detection_toposort = ();
-      by_constraint_identifier;
-    }
-    to_remove ->
-    (* TODO: split these into normalizers (the normalizers should have an add & a remove part. *)
-    (* TODO: figure out what parts of the database are initial constraints (goals in Coq), what parts are outputs (assignments to evars in Coq), and what parts are temporary hypotheses. *)
-    (* TODO: compare type constraints by their constrain id instead of by equality. *)
-    (* TODO: use a set, not a list. *)
-    (* TODO: proper failure if the element doesn't exist (don't catch the exception as the comparator may throw a similar exception on its own). *)
-    let%bind all_constraints = ok @@ List.remove_element ~compare:Ast_typed.Compare_generic.type_constraint_simpl to_remove all_constraints in
-    let%bind { grouped_by_variable ; _ } =
-      (* for each type variable affected by the constraint as specified by the normalizers,
-         remove that constraint from the grouped_by_variable *)
-      Normalizer.normalizer_grouped_by_variable_remove { all_constraints; aliases; assignments; grouped_by_variable; cycle_detection_toposort = (); by_constraint_identifier } to_remove in
-    let%bind cycle_detection_toposort = ok () in (* placeholder for a future state *)
-    let%bind by_constraint_identifier = match to_remove with
-      | Ast_typed.Types.SC_Typeclass { id_typeclass_simpl; _ } ->
-        (* TODO: a proper error instead of an exception *)
-        ok @@ Map.remove id_typeclass_simpl by_constraint_identifier
-      | _ -> ok by_constraint_identifier in
-    ok @@
-    { all_constraints;
-      aliases;                  (* This is general bookkeeping, removing an aliasing constraint would require updating too many things. *)
-      assignments;              (* This is an output. An assignment cannot be changed after it was made. We might want to garbage-collect assignments to variables which aren't used anymore, but a heuristic cannot request the deletion of an assignment. *)
-      grouped_by_variable;
-      cycle_detection_toposort;
-      by_constraint_identifier;
-    }
-
 let apply_update : (type_constraint list * structured_dbs) -> update -> (type_constraint list * structured_dbs) result =
   fun (acc, dbs) update ->
-  let%bind dbs' = bind_fold_list remove_constraint dbs update.remove_constraints in
+  let%bind dbs' = bind_fold_list Normalizer.normalizers_remove dbs update.remove_constraints in
   (* TODO: don't append list like this, it's inefficient. *)
   ok @@ (acc @ update.add_constraints, dbs')
 
