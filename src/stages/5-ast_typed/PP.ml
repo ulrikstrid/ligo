@@ -64,11 +64,24 @@ let rec type_content : formatter -> type_content -> unit =
   fun ppf tc ->
   match tc with
   | T_sum m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d type_expression) (LMap.to_kv_list @@ LMap.map (fun {associated_type;_} -> associated_type) m)
-  | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type type_expression) m
+  | T_record m -> fprintf ppf "%a" record m
   | T_arrow a -> fprintf ppf "@[<h>%a ->@ %a@]" type_expression a.type1 type_expression a.type2
   | T_variable tv -> type_variable ppf tv
   | T_wildcard -> fprintf ppf "_"
   | T_constant {type_constant=tc;arguments} -> fprintf ppf "%a%a" type_constant tc (list_sep_d_par type_expression) arguments
+
+and record ppf {content; layout_opt} =
+  fprintf ppf "%a%a" 
+    (tuple_or_record_sep_type type_expression) content
+    option_layout layout_opt
+
+and option_layout ppf l = match l with
+  | Some l -> fprintf ppf "%s" @@ layout_to_string l
+  | None   -> fprintf ppf "" 
+
+and layout_to_string = function
+  | L_comb -> "L_comb"
+  | L_tree -> "L_tree"
 
 and type_expression ppf (te : type_expression) : unit =
   fprintf ppf "%a" type_content te.type_content

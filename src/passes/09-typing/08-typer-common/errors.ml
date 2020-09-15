@@ -65,8 +65,10 @@ type typer_error = [
   | `Typer_unrecognized_type_constant of Ast_core.type_expression
   | `Typer_expected_ascription of Ast_core.expression
   | `Typer_different_types of Ast_typed.type_expression * Ast_typed.type_expression
+  | `Typer_record_redefined_error of Location.t
 ]
 
+let record_redefined_error (loc:Location.t) = `Typer_record_redefined_error loc
 let michelson_comb_no_record (loc:Location.t) = `Typer_michelson_comb_no_record loc
 let michelson_comb_no_variant (loc:Location.t) = `Typer_michelson_comb_no_variant loc
 let unbound_type_variable (e:Ast_typed.Environment.t) (tv:Ast_typed.type_variable) (loc:Location.t) = `Typer_unbound_type_variable (e,tv,loc)
@@ -475,6 +477,10 @@ The following forms of subtractions are possible:
     | `Typer_declaration_order_record loc ->
       Format.fprintf f
         "@[<hv>%a@.Incorrect argument provided to Layout.convert_to_(left|right)_comb.@.The given argument must be annotated with the type of the value. @]"
+        Location.pp loc
+    | `Typer_record_redefined_error loc ->
+      Format.fprintf f
+        "@[<hv>%a@.Redefined record. @]"
         Location.pp loc
   )
 
@@ -1098,5 +1104,12 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("message", message) ;
       ("a", a) ;
       ("b", b) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_record_redefined_error loc ->
+    let message = `String "Redefined record" in
+    let content = `Assoc [
+      ("message", message) ;
+      ("location", Location.to_yojson loc) ;
     ] in
     json_error ~stage ~content

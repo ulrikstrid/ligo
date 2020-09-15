@@ -29,6 +29,8 @@ let type_constant = function
   | TC_michelson_pair_left_comb  -> `List [ `String "TC_michelson_pair_left_comb"; `Null]
   | TC_michelson_or_right_comb   -> `List [ `String "TC_michelson_or_right_comb"; `Null]
   | TC_michelson_or_left_comb    -> `List [ `String "TC_michelson_or_left_comb"; `Null]
+  | TC_michelson_comb            -> `List [ `String "TC_michelson_comb"; `Null ]
+  | TC_michelson_tree            -> `List [ `String "TC_michelson_tree"; `Null ]
 
 let constant' = function
   | C_INT                -> `List [`String "C_INT"; `Null ]
@@ -180,6 +182,10 @@ let label_map f lmap =
   in
   `Assoc lst'
 
+let layout = function
+  | L_comb -> `List [ `String "L_comb"; `Null ]
+  | L_tree -> `List [ `String "L_tree"; `Null ]
+
 
 let rec type_expression {type_content=tc;type_meta;location} =
   `Assoc [
@@ -190,12 +196,17 @@ let rec type_expression {type_content=tc;type_meta;location} =
 
 and type_content = function
   | T_sum      t -> `List [ `String "t_sum"; label_map row_element t]
-  | T_record   t -> `List [ `String "t_record"; label_map row_element t]
+  | T_record   t -> `List [ `String "t_record"; record t]
   | T_arrow    t -> `List [ `String "t_arrow"; arrow t]
   | T_variable t -> `List [ `String "t_variable"; type_variable_to_yojson t]
   | T_constant t -> `List [ `String "t_constant"; type_operator t]
   | T_wildcard   -> `List [ `String "t_wildcard"; `Null]
 
+and record {content; layout_opt} =
+  `Assoc [
+    ("content", label_map row_element content);
+    ("layout_opt", option layout layout_opt);
+  ]
 and row_element {associated_type; michelson_annotation; decl_pos} =
   `Assoc [
     ("associated_type", type_expression associated_type);

@@ -270,9 +270,9 @@ let fetch_contract_type : string -> program -> (contract_type, self_ast_typed_er
   match expr.type_expression.type_content with
   | T_arrow {type1 ; type2} -> (
     match type1.type_content , type2.type_content with
-    | T_record tin , T_record tout when (is_tuple_lmap tin) && (is_tuple_lmap tout) ->
-       let%bind (parameter,storage) = trace_option (expected_pair_in expr.location) @@ Ast_typed.Helpers.get_pair tin in
-       let%bind (listop,storage') = trace_option (expected_pair_out expr.location) @@ Ast_typed.Helpers.get_pair tout in
+    | T_record tin , T_record tout when (is_tuple_lmap tin.content) && (is_tuple_lmap tout.content) ->
+       let%bind (parameter,storage) = trace_option (expected_pair_in expr.location) @@ Ast_typed.Helpers.get_pair tin.content in
+       let%bind (listop,storage') = trace_option (expected_pair_out expr.location) @@ Ast_typed.Helpers.get_pair tout.content in
        let%bind () = trace_option (expected_list_operation main_fname listop expr) @@
                        Ast_typed.assert_t_list_operation listop in
        let%bind () = trace_option (expected_same main_fname storage storage' expr) @@

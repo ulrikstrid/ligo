@@ -61,6 +61,20 @@ end
 
 let assert_eq = fun a b -> if (a = b) then Some () else None
 let assert_same_size = fun a b -> if (List.length a = List.length b) then Some () else None
+let rec assert_list_eq f = fun a b -> match (a,b) with
+  | [], [] -> Some ()
+  | [], _  -> None
+  | _ , [] -> None
+  | hda::tla, hdb::tlb -> Option.(
+    f hda hdb >>= fun () ->
+    assert_list_eq f tla tlb
+  )
+
+let layout_eq a b = match (a,b) with
+  | L_comb, L_comb
+  | L_tree, L_tree -> true
+  | _ -> false
+let assert_layout_opt_eq = fun a b -> if (Option.equal (layout_eq) a b) then Some () else None
 
 let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : unit option =
   let open Option in
@@ -102,17 +116,18 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
     )
   | T_sum _, _ -> None
   | T_record ra, T_record rb
-       when Helpers.is_tuple_lmap ra <> Helpers.is_tuple_lmap rb -> None
+       when Helpers.is_tuple_lmap ra.content <> Helpers.is_tuple_lmap rb.content -> None
   | T_record ra, T_record rb -> (
       let sort_lmap r' = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) r' in
-      let ra' = sort_lmap @@ LMap.to_kv_list ra in
-      let rb' = sort_lmap @@ LMap.to_kv_list rb in
+      let ra' = sort_lmap @@ LMap.to_kv_list ra.content in
+      let rb' = sort_lmap @@ LMap.to_kv_list rb.content in
       let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
         let Label ka = ka in
         let Label kb = kb in
         assert_eq ka kb >>= fun _ ->
         assert_type_expression_eq (va, vb)
       in
+      assert_layout_opt_eq ra.layout_opt rb.layout_opt >>= fun _ ->
       assert_same_size ra' rb' >>= fun _ ->
       List.fold_left (fun acc p -> match acc with | None -> None | Some () -> aux p) (Some ()) (List.combine ra' rb')
 

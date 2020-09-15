@@ -17,13 +17,22 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
        ok @@ v' in
      let%bind x' = Stage_common.Helpers.bind_map_lmap aux x in
      return @@ I.T_sum x'
-  | O.T_record x ->
-     let aux ({associated_type ; michelson_annotation ; decl_pos} : O.row_element) =
-       let%bind associated_type = untype_type_expression associated_type in
-       let v' = ({associated_type ; michelson_annotation ; decl_pos} : I.row_element) in
-       ok @@ v' in
-     let%bind x' = Stage_common.Helpers.bind_map_lmap aux x in
-     return @@ I.T_record x'
+  | O.T_record {content;layout_opt} ->
+    let aux ({associated_type ; michelson_annotation ; decl_pos} : O.row_element) =
+      let%bind associated_type = untype_type_expression associated_type in
+      let v' = ({associated_type ; michelson_annotation ; decl_pos} : I.row_element) in
+      ok @@ v' in
+    let%bind x' = Stage_common.Helpers.bind_map_lmap aux content in
+    let%bind te = return @@ I.T_record x' in
+    (match layout_opt with
+      None -> ok @@ te
+    | Some l ->
+      (match l with 
+        L_comb -> ok @@ I.type_constant TC_michelson_comb [te]
+      | L_tree -> ok @@ I.type_constant TC_michelson_tree [te]
+      )
+    )
+     
   | O.T_variable name -> return @@ I.T_variable (Var.todo_cast name)
   | O.T_wildcard -> return @@ I.T_wildcard
   | O.T_arrow {type1;type2} ->

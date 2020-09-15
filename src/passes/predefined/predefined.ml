@@ -66,6 +66,8 @@ module Tree_abstraction = struct
     | "michelson_pair_left_comb"  -> Some (TC_michelson_pair_left_comb)
     | "michelson_or_right_comb"   -> Some (TC_michelson_or_right_comb)
     | "michelson_or_left_comb"    -> Some (TC_michelson_or_left_comb)
+    | "michelson_comb"            -> Some (TC_michelson_comb)
+    | "michelson_tree"            -> Some (TC_michelson_tree)
     | _                           -> None
 
   let type_constant_to_string tc =
@@ -96,6 +98,8 @@ module Tree_abstraction = struct
     | TC_michelson_or_right_comb -> "michelson_or_right_comb"
     | TC_michelson_or_left_comb -> "michelson_or_left_comb"
     | TC_map_or_big_map -> "map_or_big_map"
+    | TC_michelson_comb -> "michelson_comb"
+    | TC_michelson_tree -> "michelson_tree"
 
   let pseudo_modules x =
     match x with

@@ -208,70 +208,47 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
                         ok (Some (String.uncapitalize_ascii ann), a))
                       aux node in
       ok @@ snd m'
-  | T_record m when Ast_typed.Helpers.is_michelson_pair m ->
-      let node = Append_tree.of_list @@ Ast_typed.Helpers.tuple_of_record m in
-      let aux a b : (type_expression annotated , spilling_error) result =
-        let%bind a = a in
-        let%bind b = b in
-        let%bind t = return @@ T_pair (a, b) in
-        ok (None, t)
-      in
-      let%bind m' = Append_tree.fold_ne
-                      (fun (_, ({associated_type ; michelson_annotation} : AST.row_element)) ->
-                        let%bind a = compile_type associated_type in
-                        ok (Ast_typed.Helpers.remove_empty_annotation michelson_annotation, a) )
-                      aux node in
-      ok @@ snd m'
-  | T_record m ->
-      let is_tuple_lmap = Ast_typed.Helpers.is_tuple_lmap m in
-      let node = Append_tree.of_list @@ (
-        if is_tuple_lmap then
-          Ast_typed.Helpers.tuple_of_record m
-        else 
-          List.rev @@ Ast_typed.Types.LMap.to_kv_list m
+  | T_record { content = m ; layout_opt } -> (
+      let open Ast_typed.Helpers in
+      match is_michelson_pair m with
+      | Some (a , b) -> (
+          let aux (x : AST.row_element) =
+            let%bind t = compile_type x.associated_type in
+            let annot = remove_empty_annotation x.michelson_annotation in
+            ok (annot , t)
+          in
+          let%bind a' = aux a in
+          let%bind b' = aux b in
+          let t = T_pair (a' , b') in
+          return t
         )
-      in
-      let aux a b : (type_expression annotated, spilling_error) result =
-        let%bind a = a in
-        let%bind b = b in
-        let%bind t = return @@ T_pair (a, b) in
-        ok (None, t)
-      in
-      let%bind m' = Append_tree.fold_ne
-                      (fun (Label ann, ({associated_type;_}: AST.row_element)) ->
-                        let%bind a = compile_type associated_type in
-                        ok ((if is_tuple_lmap then 
-                              None 
-                            else 
-                              Some ann), 
-                            a)
-                      )
-                      aux node in
-      ok @@ snd m'
+      | None -> Layout.t_record_to_pairs ?layout:layout_opt return compile_type m
+    )
   | T_arrow {type1;type2} -> (
       let%bind param' = compile_type type1 in
       let%bind result' = compile_type type2 in
       return @@ (T_function (param',result'))
     )
 
-let record_access_to_lr : type_expression -> type_expression AST.label_map -> AST.label -> ((type_expression * [`Left | `Right]) list , spilling_error) result = fun ty tym ind ->
-  let tys = Ast_typed.Helpers.kv_list_of_record_or_tuple tym in
-  let node_tv = Append_tree.of_list tys in
-  let%bind path =
-    let aux (i , _) = i = ind  in
-    trace_option (corner_case ~loc:__LOC__ "record access leaf") @@
-    Append_tree.exists_path aux node_tv in
-  let lr_path = List.map (fun b -> if b then `Right else `Left) path in
-  let%bind (_ , lst) =
-    let aux = fun (ty , acc) cur ->
-      let%bind (a , b) =
-        trace_option (corner_case ~loc:__LOC__ "record access pair") @@
-        Mini_c.get_t_pair ty in
-      match cur with
-      | `Left -> ok (a , acc @ [(a , `Left)])
-      | `Right -> ok (b , acc @ [(b , `Right)] ) in
-    bind_fold_list aux (ty , []) lr_path in
-  ok lst
+(* let record_access_to_lr : type_expression -> type_expression AST.label_map -> AST.label -> ((type_expression * [`Left | `Right]) list , spilling_error) result = fun ty tym ind ->
+ *       (\*TODO *\)
+ *   let tys = Ast_typed.Helpers.kv_list_of_record_or_tuple tym in
+ *   let node_tv = Append_tree.of_list tys in
+ *   let%bind path =
+ *     let aux (i , _) = i = ind  in
+ *     trace_option (corner_case ~loc:__LOC__ "record access leaf") @@
+ *     Append_tree.exists_path aux node_tv in
+ *   let lr_path = List.map (fun b -> if b then `Right else `Left) path in
+ *   let%bind (_ , lst) =
+ *     let aux = fun (ty , acc) cur ->
+ *       let%bind (a , b) =
+ *         trace_option (corner_case ~loc:__LOC__ "record access pair") @@
+ *         Mini_c.get_t_pair ty in
+ *       match cur with
+ *       | `Left -> ok (a , acc @ [(a , `Left)])
+ *       | `Right -> ok (b , acc @ [(b , `Right)] ) in
+ *     bind_fold_list aux (ty , []) lr_path in
+ *   ok lst *)
 
 let rec compile_literal : AST.literal -> value = fun l -> match l with
   | Literal_int n -> D_int n
@@ -346,7 +323,13 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       return ~tv ae
     )
   | E_record m -> (
-      let node = Append_tree.of_list @@ Ast_typed.Helpers.list_of_record_or_tuple m in
+      let%bind record_t = trace_option (`Spilling_corner_case ("aa","TODO")) (AST.get_t_record ae.type_expression) in
+      Layout.record_to_pairs compile_expression return record_t m
+      (* let node = match record_t.layout_opt with
+        | None -> Append_tree.of_list @@ Ast_typed.Helpers.list_of_record_or_tuple m 
+        | Some L_comb -> Layout.comb_of_record record_t m
+        | Some L_tree -> Layout.tree_of_record m
+      in
       let aux a b : (expression , spilling_error) result =
         let%bind a = a in
         let%bind b = b in
@@ -356,15 +339,15 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
         return ~tv @@ E_constant {cons_name=C_PAIR;arguments=[a; b]}
       in
       trace_strong (corner_case ~loc:__LOC__ "record build") @@
-      Append_tree.fold_ne (compile_expression) aux node
+      Append_tree.fold_ne (compile_expression) aux node *)
     )
   | E_record_accessor {record; path} ->
+      (*TODO *)
       let%bind ty' = compile_type (get_type_expression record) in
-      let%bind ty_lmap =
+      let%bind ty_record =
         trace_option (corner_case ~loc:__LOC__ "not a record") @@
         get_t_record (get_type_expression record) in
-      let%bind ty'_lmap = Ast_typed.Helpers.bind_map_lmap_t compile_type ty_lmap in
-      let%bind path = record_access_to_lr ty' ty'_lmap path in
+      let%bind path = Layout.record_access_to_lr ty' ty_record.content path in
       let aux = fun pred (ty, lr) ->
         let c = match lr with
           | `Left  -> C_CAR
@@ -376,16 +359,16 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       let%bind expr = bind_fold_list aux record' path in
       ok expr
   | E_record_update {record; path; update} -> 
+      (*TODO *)
       let rec aux res (r,p,up) =
         let ty = get_type_expression r in
         let%bind ty_lmap =
           trace_option (corner_case ~loc:__LOC__ "not a record") @@
           get_t_record (ty) in
         let%bind ty' = compile_type (ty) in 
-        let%bind ty'_lmap = Ast_typed.Helpers.bind_map_lmap_t compile_type ty_lmap in
         let%bind p' = 
           trace_strong (corner_case ~loc:__LOC__ "record access") @@
-          record_access_to_lr ty' ty'_lmap p in
+          Layout.record_access_to_lr ty' ty_lmap.content p in
         let res' = res @ p' in
         match (up:AST.expression).expression_content with
         | AST.E_record_update {record=record'; path=path'; update=update'} -> (

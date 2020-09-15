@@ -10,6 +10,7 @@ val add_type : type_variable -> type_expression -> t -> t
 val get_opt : expression_variable -> t -> element option
 val get_type_opt : type_variable -> t -> type_expression option
 val get_constructor : label -> t -> (type_expression * type_expression) option
+val get_record : row_element label_map -> t -> record option
 
 val add_ez_sum_type : ?env:environment -> ?type_name:type_variable -> (label * row_element) list ->  environment
 module PP : sig

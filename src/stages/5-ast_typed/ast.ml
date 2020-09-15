@@ -9,18 +9,27 @@ include Stage_common.Enums (*@ follow ../common/enums.ml *)
    provided by the Comparable module *)
 (*@ typeclass poly_unionfind comparable *)
 (*@ typeclass poly_set       comparable *)
+type layout =
+  | L_comb
+  | L_tree
+
 
 type te_lmap = row_element label_map
 and type_meta = ast_core_type_expression option
 
 and type_content =
   | T_sum of te_lmap
-  | T_record of te_lmap
+  | T_record of record
   | T_arrow of arrow
   | T_variable of type_variable
   (* TODO: remove this when we remove the old typer *)
   | T_wildcard
   | T_constant of type_operator
+
+and record = {
+  content : row_element label_map;
+  layout_opt : layout option ;
+}
 
 and arrow = {
     type1: type_expression;

@@ -1,7 +1,8 @@
+module H=Helpers
 open Trace
-open Helpers
 open Errors
 open Ast_typed
+open H
 
 (*
   Each constant has its own type.
@@ -564,7 +565,7 @@ let cons loc = typer_2 loc "CONS" @@ fun loc hd tl ->
 let convert_to_right_comb loc = typer_1 loc "CONVERT_TO_RIGHT_COMB" @@ fun _loc t ->
   match t.type_content with
     | T_record lmap ->
-      let kvl = LMap.to_kv_list lmap in
+      let kvl = LMap.to_kv_list lmap.content in
       let%bind () = Michelson_type_converter.field_checks kvl loc in
       let pair = Michelson_type_converter.convert_pair_to_right_comb kvl in
       ok {t with type_content = pair}
@@ -578,7 +579,7 @@ let convert_to_right_comb loc = typer_1 loc "CONVERT_TO_RIGHT_COMB" @@ fun _loc 
 let convert_to_left_comb loc = typer_1 loc "CONVERT_TO_LEFT_COMB" @@ fun _loc t ->
   match t.type_content with
     | T_record lmap ->
-      let kvl =  LMap.to_kv_list lmap in
+      let kvl =  LMap.to_kv_list lmap.content in
       let%bind () = Michelson_type_converter.field_checks kvl loc in
       let pair = Michelson_type_converter.convert_pair_to_left_comb kvl in
       ok {t with type_content = pair}
@@ -592,9 +593,9 @@ let convert_to_left_comb loc = typer_1 loc "CONVERT_TO_LEFT_COMB" @@ fun _loc t 
 let convert_from_right_comb loc = typer_1_opt loc "CONVERT_FROM_RIGHT_COMB" @@ fun loc t tv ->
   let%bind dst_t = need_real_type tv t.location in
   match t.type_content with
-    | T_record src_lmap ->
+    | T_record {content=src_lmap;_} ->
       let%bind dst_lmap = trace_option (expected_record loc dst_t) @@ get_t_record dst_t in
-      let%bind record = Michelson_type_converter.convert_pair_from_right_comb src_lmap dst_lmap in
+      let%bind record = Michelson_type_converter.convert_pair_from_right_comb src_lmap dst_lmap.content in
       ok {t with type_content = record}
     | T_sum src_cmap ->
       let%bind dst_cmap = trace_option (expected_variant loc dst_t) @@ get_t_sum dst_t in
@@ -605,9 +606,9 @@ let convert_from_right_comb loc = typer_1_opt loc "CONVERT_FROM_RIGHT_COMB" @@ f
 let convert_from_left_comb loc = typer_1_opt loc "CONVERT_FROM_LEFT_COMB" @@ fun loc t tv ->
   let%bind dst_t = need_real_type tv t.location in
   match t.type_content with
-    | T_record src_lmap ->
+    | T_record {content=src_lmap;_} ->
       let%bind dst_lmap = trace_option (expected_record loc dst_t) @@ get_t_record dst_t in
-      let%bind record = Michelson_type_converter.convert_pair_from_left_comb src_lmap dst_lmap in
+      let%bind record = Michelson_type_converter.convert_pair_from_left_comb src_lmap dst_lmap.content in
       ok {t with type_content = record}
     | T_sum src_cmap ->
       let%bind dst_cmap = trace_option (expected_variant loc dst_t) @@ get_t_sum dst_t in

@@ -45,13 +45,13 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
     )
   | T_sum _, _ -> fail @@ different_types a b
   | T_record ra, T_record rb
-       when Helpers.is_tuple_lmap ra <> Helpers.is_tuple_lmap rb -> (
+       when Helpers.is_tuple_lmap ra.content <> Helpers.is_tuple_lmap rb.content -> (
     fail @@ different_types a b
   )
   | T_record ra, T_record rb -> (
       let sort_lmap r' = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) r' in
-      let ra' = sort_lmap @@ LMap.to_kv_list ra in
-      let rb' = sort_lmap @@ LMap.to_kv_list rb in
+      let ra' = sort_lmap @@ LMap.to_kv_list ra.content in
+      let rb' = sort_lmap @@ LMap.to_kv_list rb.content in
       let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
         let%bind _ =
           trace (fun _ -> different_types a b) @@
@@ -60,6 +60,9 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
           Assert.assert_true (different_types a b) (ka = kb) in
         assert_type_expression_eq (va, vb)
       in
+      let%bind _ =
+        Assert.assert_true (different_types a b) @@ 
+          Option.equal (Misc.layout_eq) ra.layout_opt rb.layout_opt in
       let%bind _ =
         Assert.assert_list_same_size (different_types a b) ra' rb' in
       trace (fun _ -> different_types a b)
@@ -77,4 +80,3 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
 
 (* No information about what made it fail *)
 let type_expression_eq ab = Trace.to_bool @@ assert_type_expression_eq ab
-

@@ -59,6 +59,8 @@ let string_of_type_constant = function
   | TC_michelson_pair_left_comb  -> "TC_michelson_pair_left_comb"
   | TC_michelson_or_right_comb   -> "TC_michelson_or_right_comb"
   | TC_michelson_or_left_comb    -> "TC_michelson_or_left_comb"
+  | TC_michelson_comb            -> "TC_michelson_comb"
+  | TC_michelson_tree            -> "TC_michelson_tree"
 
 let bind_lmap (l:_ label_map) =
   let open Trace in
@@ -108,18 +110,35 @@ let tuple_of_record (m: _ LMap.t) =
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
 
-let list_of_record_or_tuple (m: _ LMap.t) =
-  if (is_tuple_lmap m) then
-    List.map snd @@ tuple_of_record m
-  else
-    List.rev @@ LMap.to_list m
+let kv_list_of_t_record_or_tuple ?(layout = L_tree) (m: _ LMap.t) =
+  let lst =
+    if (is_tuple_lmap m)
+    then tuple_of_record m
+    else LMap.to_kv_list m
+  in
+  match layout with
+  | L_tree -> lst
+  | L_comb -> (
+      let aux (_ , { decl_pos = a ; _ }) (_ , { decl_pos = b ; _ }) = Int.compare a b in
+      List.sort aux lst
+    )
 
-let kv_list_of_record_or_tuple (m: _ LMap.t) =
-  if (is_tuple_lmap m) then
-    tuple_of_record m
-  else
-    List.rev @@ LMap.to_kv_list m
-
+let kv_list_of_record_or_tuple ?(layout=L_tree) record_t_content record =
+  let exps =
+    if (is_tuple_lmap record)
+    then tuple_of_record record
+    else LMap.to_kv_list record
+  in
+  match layout with
+  | L_tree -> List.map snd exps
+  | L_comb -> (
+    let types = LMap.to_kv_list record_t_content in
+    let te = List.map (fun ((label_t,t),(label_e,e)) ->
+      assert (label_t = label_e) ; (*TODO TEST*)
+      (t,e)) (List.combine types exps) in
+    let s = List.sort (fun ({ decl_pos = a ; _ },_) ({ decl_pos = b ; _ },_) -> Int.compare a b) te in
+    List.map snd s
+  )
 
 let remove_empty_annotation (ann : string option) : string option =
   match ann with
@@ -128,17 +147,17 @@ let remove_empty_annotation (ann : string option) : string option =
   | None -> None
 
 let is_michelson_or (t: _ label_map) =
-  LMap.cardinal t = 2 && 
+  LMap.cardinal t = 2 &&
   (LMap.mem (Label "M_left") t) &&
   (LMap.mem (Label "M_right") t)
 
-let is_michelson_pair (t: _ label_map) =
-  LMap.cardinal t = 2 && 
-  let l = LMap.to_list t in
-  List.fold_left
-    (fun prev {michelson_annotation;_} -> match michelson_annotation with
-      | Some _ -> true
-      | None -> prev)
-    false 
-    l &&
-  List.for_all (fun i -> LMap.mem i t) @@ (label_range 0 (LMap.cardinal t))
+let is_michelson_pair (t: _ label_map) : (row_element * row_element) option =
+  match LMap.to_list t with
+  | [ a ; b ] -> (
+      if List.for_all (fun i -> LMap.mem i t) @@ (label_range 0 2)
+       && Option.is_some a.michelson_annotation
+       && Option.is_some b.michelson_annotation
+      then Some (a , b)
+      else None
+    )
+  | _ -> None

@@ -115,7 +115,7 @@ let rec from_right_comb_record
   | (label , {associated_type;_}) :: (_::_ as tl) ->
     let intermediary_type = LMap.find (Label "1") src_lmap in
     let src_lmap' = match intermediary_type.associated_type.type_content with
-      | T_record a -> a
+      | T_record a -> a.content
       | _ -> src_lmap in
     let conv_map' = LMap.add label (accessor prev (Label "0") associated_type) conv_map in
     let next = accessor prev (Label "1") intermediary_type.associated_type in
@@ -132,7 +132,7 @@ let rec from_left_comb_record
   | (label , {associated_type;_}) :: (_::_ as tl) ->
     let intermediary_type = LMap.find (Label "0") src_lmap in
     let src_lmap' = match intermediary_type.associated_type.type_content with
-      | T_record a -> a
+      | T_record a -> a.content
       | _ -> src_lmap in
     let conv_map' = LMap.add label (accessor prev (Label "1") associated_type) conv_map in
     let next = accessor prev (Label "0") intermediary_type.associated_type in
@@ -198,7 +198,7 @@ let peephole_expression : expression -> (expression , self_ast_typed_error) resu
   match e.expression_content with
   | E_constant {cons_name= (C_CONVERT_TO_LEFT_COMB);arguments= [ to_convert ] } -> (
     match to_convert.type_expression.type_content with
-      | T_record src_lmap ->
+      | T_record {content=src_lmap;_} ->
         let src_kvl = to_sorted_kv_list_l src_lmap in
         return @@ E_record (to_left_comb_record to_convert src_kvl LMap.empty)
       | T_sum src_cmap ->
@@ -218,7 +218,7 @@ let peephole_expression : expression -> (expression , self_ast_typed_error) resu
   )
   | E_constant {cons_name= (C_CONVERT_TO_RIGHT_COMB);arguments= [ to_convert ] } -> (
     match to_convert.type_expression.type_content with
-      | T_record src_lmap ->
+      | T_record {content=src_lmap;_} ->
         let src_kvl = to_sorted_kv_list_l src_lmap in
         return @@ E_record (to_right_comb_record to_convert src_kvl LMap.empty)
       | T_sum src_cmap ->
@@ -238,9 +238,9 @@ let peephole_expression : expression -> (expression , self_ast_typed_error) resu
   )
   | E_constant {cons_name= (C_CONVERT_FROM_RIGHT_COMB); arguments= [ to_convert ] } -> (
     match to_convert.type_expression.type_content with
-      | T_record src_lmap ->
+      | T_record {content=src_lmap;_} ->
         let%bind dst_lmap = trace_option (corner_case "from_right_comb conversion") @@ get_t_record e.type_expression in
-        let dst_kvl = to_sorted_kv_list_l dst_lmap in
+        let dst_kvl = to_sorted_kv_list_l dst_lmap.content in
         return @@ E_record (from_right_comb_record to_convert src_lmap dst_kvl LMap.empty)
       | T_sum src_lmap ->
         let%bind dst_lmap = trace_option (corner_case "from_right_comb conversion") @@ get_t_sum e.type_expression in
@@ -256,9 +256,9 @@ let peephole_expression : expression -> (expression , self_ast_typed_error) resu
   )
   | E_constant {cons_name= (C_CONVERT_FROM_LEFT_COMB); arguments= [ to_convert ] } -> (
     match to_convert.type_expression.type_content with
-      | T_record src_lmap ->
+      | T_record {content=src_lmap;_} ->
         let%bind dst_lmap = trace_option (corner_case "from_left_comb conversion") @@ get_t_record e.type_expression in
-        let dst_kvl = to_sorted_kv_list_l dst_lmap in
+        let dst_kvl = to_sorted_kv_list_l dst_lmap.content in
         return @@ E_record (from_left_comb to_convert src_lmap dst_kvl LMap.empty)
       | T_sum src_lmap ->
         let%bind dst_lmap = trace_option (corner_case "from_left_comb conversion") @@  get_t_sum e.type_expression in

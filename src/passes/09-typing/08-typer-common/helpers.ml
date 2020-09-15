@@ -1,5 +1,5 @@
-open Errors
 open Ast_typed
+open Errors
 open Trace
 
 let assert_type_expression_eq (loc:Location.t) ((tv',tv):type_expression * type_expression) : (unit,typer_error) result = 

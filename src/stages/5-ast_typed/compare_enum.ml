@@ -27,6 +27,8 @@ let type_constant_tag = function
   | TC_michelson_pair_left_comb  -> 24
   | TC_michelson_or_right_comb   -> 25
   | TC_michelson_or_left_comb    -> 26
+  | TC_michelson_comb            -> 27
+  | TC_michelson_tree            -> 28
 
 let type_constant a b = Int.compare (type_constant_tag a) (type_constant_tag b)
 

@@ -66,8 +66,10 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
       let%bind associated_type = evaluate_type e associated_type in
       ok @@ ({associated_type ; michelson_annotation ; decl_pos}:O.row_element)
     in
-    let%bind m = Stage_common.Helpers.bind_map_lmap aux m in
-    return (T_record m)
+    let%bind lmap = Stage_common.Helpers.bind_map_lmap aux m in
+    let%bind () = trace_assert_fail_option (record_redefined_error t.location) @@
+      Environment.get_record lmap e in
+    return (T_record {content = lmap;layout_opt=None})
   | T_variable name ->
     (* Check that the variable is in the environment *)
     let name : O.type_variable = Var.todo_cast name in
@@ -113,16 +115,16 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
       | TC_michelson_pair_right_comb ->
           let%bind c = bind (evaluate_type e) @@ get_unary arguments in
           let%bind lmap = match c.type_content with
-            | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap)) -> ok lmap
+            | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap.content)) -> ok lmap
             | _ -> fail (michelson_comb_no_record t.location) in
-          let record = Typer_common.Michelson_type_converter.convert_pair_to_right_comb (Ast_typed.LMap.to_kv_list lmap) in
+          let record = Typer_common.Michelson_type_converter.convert_pair_to_right_comb (Ast_typed.LMap.to_kv_list lmap.content) in
           return @@ record
       | TC_michelson_pair_left_comb ->
           let%bind c = bind (evaluate_type e) @@ get_unary arguments in
           let%bind lmap = match c.type_content with
-            | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap)) -> ok lmap
+            | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap.content)) -> ok lmap
             | _ -> fail (michelson_comb_no_record t.location) in
-          let record = Typer_common.Michelson_type_converter.convert_pair_to_left_comb (Ast_typed.LMap.to_kv_list lmap) in
+          let record = Typer_common.Michelson_type_converter.convert_pair_to_left_comb (Ast_typed.LMap.to_kv_list lmap.content) in
           return @@ record
       | TC_michelson_or_right_comb ->
           let%bind c = bind (evaluate_type e) @@ get_unary arguments in
@@ -138,6 +140,34 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
             | _ -> fail (michelson_comb_no_variant t.location) in
           let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list cmap) in
           return @@ pair
+      | TC_michelson_comb ->
+        let%bind c = bind (evaluate_type e) @@ get_unary arguments in
+        let%bind record = match c.type_content with
+          | T_record record -> ok @@ record
+          (* | _ -> fail (michelson_no_record "comb" t.location) *)
+          | _ -> fail (record_redefined_error t.location) (*ERROR TODO*)
+        in
+        let%bind layout = match record.layout_opt with
+          None   -> ok O.L_comb
+        (* | Some _ -> fail (michelson_already_layout "comb" t.location)  *)
+          | _ -> fail (record_redefined_error t.location) (*ERROR TODO*)
+        in
+        let record = {record with layout_opt = Some layout} in
+        return @@ (T_record record)
+      | TC_michelson_tree ->
+        let%bind c = bind (evaluate_type e) @@ get_unary arguments in
+        let%bind record = match c.type_content with
+          | T_record record -> ok @@ record
+          (* | _ -> fail (michelson_no_record "tree" t.location) *)
+          | _ -> fail (record_redefined_error t.location) (*ERROR TODO*)
+        in
+        let%bind layout = match record.layout_opt with
+          None   -> ok O.L_tree
+        (* | Some _ -> fail (michelson_already_layout "tree" t.location)  *)
+        | _ -> fail (record_redefined_error t.location) (*ERROR TODO*)
+        in
+        let record = {record with layout_opt = Some layout} in
+        return @@ T_record record
       | _ -> fail @@ unrecognized_type_constant t
 
 and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (_ O'.typer_state * O.expression, typer_error) result = fun ?tv_opt e state ae ->
@@ -265,7 +295,12 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
     let aux state _ expr = type_expression e state expr in
     let%bind (state', m') = Stage_common.Helpers.bind_fold_map_lmap aux state m in
     (* Do we need row_element for AST_typed ? *)
-    let wrapped = Wrap.record (O.LMap.map (fun e -> ({associated_type = get_type_expression e ; michelson_annotation = None ; decl_pos = 0}: O.row_element)) m') in
+    let lmap = O.LMap.map (fun e -> ({associated_type = get_type_expression e ; michelson_annotation = None ; decl_pos = 0}: O.row_element)) m' in
+    let record_type = match Environment.get_record lmap e with
+      | None -> O.{content=lmap;layout_opt=None}
+      | Some r -> r
+    in
+    let wrapped = Wrap.record record_type in
     return_wrapped (E_record m') state' wrapped
 
   | E_record_accessor {record;path} -> (
@@ -280,9 +315,9 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
     let wrapped = get_type_expression record in
     let%bind (wrapped,tv) = 
       match wrapped.type_content with 
-      | T_record record -> (
+      | T_record ({content;_} as record) -> (
           let%bind {associated_type;_} = trace_option (bad_record_access path ae wrapped update.location) @@
-            O.LMap.find_opt path record in
+            O.LMap.find_opt path content in
           ok (record, associated_type)
       )
       (* TODO: write a real error *)

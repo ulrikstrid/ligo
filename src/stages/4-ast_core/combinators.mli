@@ -1,6 +1,7 @@
 open Types
 
 val make_t      : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> type_content -> type_expression
+val type_constant : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> type_constant -> type_expression list -> type_expression
 val t_bool      : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> unit -> type_expression
 val t_string    : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> unit -> type_expression
 val t_bytes     : ?loc:Location.t -> ?sugar:Ast_sugar.type_expression -> unit -> type_expression
