@@ -169,13 +169,16 @@ and type_decl = {
 and type_expr =
   TProd   of cartesian
 | TSum    of (variant reg, vbar) nsepseq reg
-| TRecord of field_decl reg ne_injection reg
+| TRecord of record_type
 | TApp    of (type_constr * type_tuple) reg
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
+| TAttr   of (type_expr * attribute nseq) par reg
 | TVar    of variable
 | TWild   of wild
 | TString of lexeme reg
+
+and record_type = field_decl reg ne_injection reg
 
 and cartesian = (type_expr, times) nsepseq reg
 
@@ -187,7 +190,8 @@ and variant = {
 and field_decl = {
   field_name : field_name;
   colon      : colon;
-  field_type : type_expr
+  field_type : type_expr;
+  attributes : attributes
 }
 
 and type_tuple = (type_expr, comma) nsepseq par reg
@@ -432,6 +436,7 @@ let type_expr_to_region = function
 | TApp    {region; _}
 | TFun    {region; _}
 | TPar    {region; _}
+| TAttr   {region; _}
 | TString {region; _}
 | TVar    {region; _}
 | TWild    region

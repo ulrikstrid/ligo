@@ -56,23 +56,6 @@ open CST
 
 (* RULES *)
 
-(* The rule [sep_or_term(item,sep)] ("separated or terminated list")
-   parses a non-empty list of items separated by [sep], and optionally
-   terminated by [sep]. *)
-
-sep_or_term_list(item,sep):
-  nsepseq(item,sep) {
-    $1, None
-  }
-| nseq(item sep {$1,$2}) {
-    let (first,sep), tail = $1 in
-    let rec trans (seq, prev_sep as acc) = function
-      [] -> acc
-    | (item,next_sep)::others ->
-        trans ((prev_sep,item)::seq, next_sep) others in
-    let list, term = trans ([],sep) tail
-    in (first, List.rev list), Some term }
-
 (* Compound constructs *)
 
 par(X):
@@ -110,6 +93,23 @@ nseq(item):
 nsepseq(item,sep):
   item                       {                        $1, [] }
 | item sep nsepseq(item,sep) { let h,t = $3 in $1, ($2,h)::t }
+
+(* The rule [sep_or_term(item,sep)] ("separated or terminated list")
+   parses a non-empty list of items separated by [sep], and optionally
+   terminated by [sep]. *)
+
+sep_or_term_list(item,sep):
+  nsepseq(item,sep) {
+    $1, None
+  }
+| nseq(item sep {$1,$2}) {
+    let (first,sep), tail = $1 in
+    let rec trans (seq, prev_sep as acc) = function
+      [] -> acc
+    | (item,next_sep)::others ->
+        trans ((prev_sep,item)::seq, next_sep) others in
+    let list, term = trans ([],sep) tail
+    in (first, List.rev list), Some term }
 
 (* Helpers *)
 
@@ -180,11 +180,15 @@ cartesian:
     let region = nsepseq_to_region type_expr_to_region value
     in TProd {region; value} }
 
+type_expr_attr:
+  type_expr nseq(Attr) {$1,$2}
+
 core_type:
-  type_name      {    TVar $1 }
-| "_"            {  TWild  $1 }
-| par(type_expr) {    TPar $1 }
-| "<string>"     { TString $1 }
+  type_name           {    TVar $1 }
+| "_"                 {  TWild  $1 }
+| par(type_expr)      {    TPar $1 }
+| par(type_expr_attr) {   TAttr $1 }
+| "<string>"          { TString $1 }
 | module_name "." type_name {
     let module_name = $1.value in
     let type_name   = $3.value in
@@ -217,7 +221,9 @@ sum_type:
     in TSum {region; value=$2} }
 
 variant:
-  "<constr>" { {$1 with value={constr=$1; arg=None}} }
+  "<constr>" {
+    {$1 with value={constr=$1; arg=None}}
+  }
 | "<constr>" "of" fun_type {
     let region = cover $1.region (type_expr_to_region $3)
     and value  = {constr=$1; arg = Some ($2,$3)}
@@ -225,18 +231,20 @@ variant:
 
 record_type:
   "{" sep_or_term_list(field_decl,";") "}" {
-    let ne_elements, terminator = $2 in
-    let () = Utils.nsepseq_to_list ne_elements
-             |> Scoping.check_fields in
+    let fields, terminator = $2 in
+    let () = Utils.nsepseq_to_list fields |> Scoping.check_fields in
     let region = cover $1 $3
-    and value  = {compound = Some (Braces ($1,$3)); ne_elements; terminator}
+    and value = {
+      compound = Some (Braces ($1,$3));
+      ne_elements = fields;
+      terminator}
     in TRecord {region; value} }
 
 field_decl:
-  field_name ":" type_expr {
+  field_name ":" type_expr seq(Attr) {
     let stop   = type_expr_to_region $3 in
     let region = cover $1.region stop
-    and value  = {field_name=$1; colon=$2; field_type=$3}
+    and value  = {field_name=$1; colon=$2; field_type=$3; attributes=$4}
     in {region; value} }
 
 (* Top-level definitions *)

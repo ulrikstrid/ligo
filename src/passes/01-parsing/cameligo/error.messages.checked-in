@@ -4061,3 +4061,25 @@ Ill-formed contract.
 At this point, one of the following is expected:
   * a type declaration starting with the keyword 'type';
   * a value declaration starting with the keyword 'let'.
+
+contract: Type Ident EQ LPAR WILD Attr With
+##
+## Ends in an error in state: 55.
+##
+## par(type_expr_attr) -> LPAR type_expr_attr . RPAR [ VBAR Type TIMES SEMI RPAR RBRACE Let Ident EQ EOF COMMA Attr ARROW ]
+##
+## The known suffix of the stack is as follows:
+## LPAR type_expr_attr
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 64, spurious reduction of production seq(Attr) ->
+## In state 65, spurious reduction of production nseq(Attr) -> Attr seq(Attr)
+## In state 66, spurious reduction of production type_expr_attr -> type_expr nseq(Attr)
+##
+
+Ill-formed attributed type expression.
+At this point, if the attribute series is complete, a closing
+parenthesis ')' is expected.

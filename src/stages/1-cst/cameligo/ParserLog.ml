@@ -159,13 +159,22 @@ and print_statement state = function
 and print_type_expr state = function
   TProd prod      -> print_cartesian state prod
 | TSum {value; _} -> print_nsepseq state "|" print_variant value
-| TRecord t       -> print_rec_type_expr state t
+| TRecord t       -> print_record_type state t
 | TApp app        -> print_type_app state app
 | TPar par        -> print_type_par state par
+| TAttr par       -> print_type_attr state par
 | TVar var        -> print_var state var
 | TWild wild      -> print_token state wild " "
 | TFun t          -> print_fun_type state t
 | TString s       -> print_string state s
+
+and print_type_attr state {value; _} =
+  let {lpar; inside; rpar} = value in
+  let type_expr, attributes = inside in
+  print_token      state lpar "(";
+  print_type_expr  state type_expr;
+  print_attributes state (Utils.nseq_to_list attributes);
+  print_token      state rpar ")"
 
 and print_fun_type state {value; _} =
   let domain, arrow, range = value in
@@ -184,7 +193,8 @@ and print_type_tuple state {value; _} =
   print_nsepseq state "," print_type_expr inside;
   print_token   state rpar ")"
 
-and print_type_par state {value={lpar;inside=t;rpar}; _} =
+and print_type_par state {value; _} =
+  let {lpar; inside=t; rpar} = value in
   print_token     state lpar "(";
   print_type_expr state t;
   print_token     state rpar ")"
@@ -222,18 +232,12 @@ and print_variant state {value = {constr; arg}; _} =
       print_token     state kwd_of "of";
       print_type_expr state t_expr
 
-and print_rec_type_expr state {value; _} =
-  let {compound; ne_elements; terminator} = value in
-  print_open_compound  state compound;
-  print_nsepseq        state ";" print_field_decl ne_elements;
-  print_terminator     state terminator;
-  print_close_compound state compound
-
 and print_field_decl state {value; _} =
-  let {field_name; colon; field_type} = value
-  in print_var       state field_name;
-     print_token     state colon ":";
-     print_type_expr state field_type
+  let {field_name; colon; field_type; attributes} = value
+  in print_var        state field_name;
+     print_token      state colon ":";
+     print_type_expr  state field_type;
+     print_attributes state attributes
 
 and print_injection :
   'a.state -> (state -> 'a -> unit) -> 'a injection reg -> unit =
@@ -252,6 +256,9 @@ and print_ne_injection :
     print_nsepseq        state ";" print ne_elements;
     print_terminator     state terminator;
     print_close_compound state compound
+
+and print_record_type state =
+  print_ne_injection state print_field_decl
 
 and print_open_compound state = function
   None -> ()
@@ -670,32 +677,29 @@ and pp_declaration state = function
 
 and pp_let_binding state node attr =
   let {binders; lhs_type; let_rhs; _} = node in
-  let fields = if lhs_type = None then 2 else 3 in
-  let fields = if attr = [] then fields else fields+1 in
-  let arity =
-    let state = state#pad fields 0 in
+  let arity = if lhs_type = None then 2 else 3 in
+  let arity = if attr = [] then arity else arity+1 in
+  let rank =
+    let state = state#pad arity 0 in
     pp_node    state "<binders>";
     pp_binders state binders; 0 in
-  let arity =
+  let rank =
     match lhs_type with
-      None -> arity
+      None -> rank
     | Some (_, type_expr) ->
-       let state = state#pad fields (arity+1) in
+       let state = state#pad arity (rank+1) in
        pp_node state "<lhs type>";
        pp_type_expr (state#pad 1 0) type_expr;
-       arity+1 in
-  let arity =
-    let state = state#pad fields (arity+1) in
+       rank+1 in
+  let rank =
+    let state = state#pad arity (rank+1) in
     pp_node state "<rhs>";
     pp_expr (state#pad 1 0) let_rhs;
-    arity+1 in
+    rank+1 in
   let () =
     if attr <> [] then
-      let state = state#pad fields (arity+1) in
-      pp_node state "<attributes>";
-      let length         = List.length attr in
-      let apply len rank = pp_ident (state#pad len rank)
-      in List.iteri (apply length) attr
+      let state = state#pad arity (rank+1)
+      in pp_attributes state attr
   in ()
 
 and pp_type_decl state decl =
@@ -779,18 +783,20 @@ and pp_list_pattern state = function
 and pp_injection :
   'a.(state -> 'a -> unit) -> state -> 'a injection -> unit =
   fun printer state inj ->
-  let elements       = Utils.sepseq_to_list inj.elements in
-  let length         = List.length elements in
-  let apply len rank = printer (state#pad len rank)
-  in List.iteri (apply length) elements
+    let elements       = Utils.sepseq_to_list inj.elements in
+    let length         = List.length elements in
+    let apply len rank = printer (state#pad len rank)
+    in List.iteri (apply length) elements
 
 and pp_ne_injection :
   'a.(state -> 'a -> unit) -> state -> 'a ne_injection -> unit =
   fun printer state inj ->
-  let ne_elements    = Utils.nsepseq_to_list inj.ne_elements in
-  let length         = List.length ne_elements in
-  let apply len rank = printer (state#pad len rank)
-  in List.iteri (apply length) ne_elements
+    let ne_elements    = Utils.nsepseq_to_list inj.ne_elements in
+    let length         = List.length ne_elements
+    and apply len rank = printer (state#pad len rank)
+    in List.iteri (apply length) ne_elements
+
+and pp_record_type state = pp_ne_injection pp_field_decl state
 
 and pp_bytes state {value=lexeme,hex; region} =
   pp_loc_node (state#pad 2 0) lexeme region;
@@ -918,45 +924,48 @@ and pp_code_inj state rc =
 and pp_let_in state node =
   let {binding; body; attributes; kwd_rec; _} = node in
   let {binders; lhs_type; let_rhs; _} = binding in
-  let fields = if lhs_type = None then 3 else 4 in
-  let fields = if kwd_rec = None then fields else fields+1 in
-  let fields = if attributes = [] then fields else fields+1 in
-  let arity =
+  let arity = if lhs_type = None then 3 else 4 in
+  let arity = if kwd_rec = None then arity else arity+1 in
+  let arity = if attributes = [] then arity else arity+1 in
+  let rank =
     match kwd_rec with
       None -> 0
     | Some (_) ->
-      let state = state#pad fields 0 in
+      let state = state#pad arity 0 in
       pp_node state "rec"; 0 in
-  let arity =
-    let state = state#pad fields 0 in
+  let rank =
+    let state = state#pad arity 0 in
     pp_node state "<binders>";
-    pp_binders state binders; arity in
-  let arity =
+    pp_binders state binders; rank in
+  let rank =
     match lhs_type with
-      None -> arity
+      None -> rank
     | Some (_, type_expr) ->
-       let state = state#pad fields (arity+1) in
+       let state = state#pad arity (rank+1) in
        pp_node state "<lhs type>";
        pp_type_expr (state#pad 1 0) type_expr;
-       arity+1 in
-  let arity =
-    let state = state#pad fields (arity+1) in
+       rank+1 in
+  let rank =
+    let state = state#pad arity (rank+1) in
     pp_node state "<rhs>";
     pp_expr (state#pad 1 0) let_rhs;
-    arity+1 in
-  let arity =
-    let state = state#pad fields (arity+1) in
+    rank+1 in
+  let rank =
+    let state = state#pad arity (rank+1) in
     pp_node state "<body>";
     pp_expr (state#pad 1 0) body;
-    arity+1 in
+    rank+1 in
   let () =
     if attributes <> [] then
-      let state = state#pad fields (arity+1) in
-      pp_node state "<attributes>";
-      let length         = List.length attributes in
-      let apply len rank = pp_ident (state#pad len rank)
-      in List.iteri (apply length) attributes
+      let state = state#pad arity (rank+1) in
+      pp_attributes state attributes
   in ()
+
+and pp_attributes state attributes =
+  pp_node state "<attributes>";
+  let length         = List.length attributes in
+  let apply len rank = pp_ident (state#pad len rank)
+  in List.iteri (apply length) attributes
 
 and pp_tuple_expr state {value; _} =
   let exprs          = Utils.nsepseq_to_list value in
@@ -1167,11 +1176,16 @@ and pp_type_expr state = function
     List.iteri (List.length variants |> apply) variants
 | TRecord {value; region} ->
     pp_loc_node state "TRecord" region;
-    pp_ne_injection pp_field_decl state value
+    pp_record_type state value
 | TApp {value=name,tuple; region} ->
     pp_loc_node   state "TApp" region;
-    pp_ident      (state#pad 1 0) name;
+    pp_ident      (state#pad 2 0) name;
     pp_type_tuple (state#pad 2 1) tuple
+| TAttr {value={inside; _}; region} ->
+    let type_expr, attributes = inside in
+    pp_loc_node   state "TAttr" region;
+    pp_type_expr  (state#pad 2 0) type_expr;
+    pp_attributes (state#pad 2 1) (Utils.nseq_to_list attributes)
 | TFun {value; region} ->
     pp_loc_node state "TFun" region;
     let apply len rank =
@@ -1197,8 +1211,11 @@ and pp_type_tuple state {value; _} =
   in List.iteri (List.length components |> apply) components
 
 and pp_field_decl state {value; _} =
-  pp_ident     state value.field_name;
-  pp_type_expr (state#pad 1 0) value.field_type
+  let arity = if value.attributes = [] then 1 else 2 in
+  pp_ident      state value.field_name;
+  pp_type_expr  (state#pad arity 0) value.field_type;
+  if value.attributes <> [] then
+    pp_attributes (state#pad arity 1) value.attributes
 
 and pp_cartesian state t_exprs =
   let t_exprs        = Utils.nsepseq_to_list t_exprs in
