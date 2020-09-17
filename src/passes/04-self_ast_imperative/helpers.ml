@@ -3,15 +3,15 @@ open Trace
 open Stage_common.Helpers
 
 let bind_map_lmap_t f map = bind_lmap (
-  LMap.map 
-    (fun ({associated_type;_} as field) -> 
+  LMap.map
+    (fun ({associated_type;_} as field) ->
       let%bind associated_type = f associated_type in
-      ok {field with associated_type }) 
+      ok {field with associated_type })
     map)
 
 type ('a,'err) folder = 'a -> expression -> ('a, 'err) result
 let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a, 'err) result = fun f init e ->
-  let self = fold_expression f in 
+  let self = fold_expression f in
   let%bind init' = f init e in
   match e.expression_content with
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip -> ok init'
@@ -49,17 +49,17 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a, 'err) re
   | E_update {record;path;update} -> (
     let%bind res = self init' record in
     let aux res a = match a with
-    | Access_map e -> self res e 
+    | Access_map e -> self res e
     | _ -> ok res
     in
     let%bind res = bind_fold_list aux res path in
     let%bind res = fold_expression self res update in
-    ok res 
+    ok res
   )
   | E_accessor {record;path} -> (
     let%bind res = self init' record in
     let aux res a = match a with
-    | Access_map e -> self res e 
+    | Access_map e -> self res e
     | _ -> ok res
     in
     let%bind res = bind_fold_list aux res path in
@@ -92,7 +92,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a, 'err) re
       ok res
   | E_assign {variable=_;access_path;expression} ->
       let aux res a = match a with
-      | Access_map e -> self res e 
+      | Access_map e -> self res e
       | _ -> ok res
       in
       let%bind res = bind_fold_list aux init' access_path in
@@ -108,7 +108,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a, 'err) re
   | E_while {condition; body} ->
       let%bind res = self init' condition in
       let%bind res = self res body in
-      ok res  
+      ok res
 
 and fold_cases : ('a , 'b) folder -> 'a -> matching_expr -> ('a , 'b) result = fun f init m ->
   match m with
@@ -146,7 +146,7 @@ type 'err exp_mapper = expression -> (expression , 'err) result
 type 'err ty_exp_mapper = type_expression -> (type_expression, 'err) result
 type 'err abs_mapper =
   | Expression of 'err exp_mapper
-  | Type_expression of 'err ty_exp_mapper 
+  | Type_expression of 'err ty_exp_mapper
 let rec map_expression : 'err exp_mapper -> expression -> (expression, 'err) result = fun f e ->
   let self = map_expression f in
   let%bind e' = f e in
@@ -184,7 +184,7 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression, 'err) res
   | E_accessor {record; path} -> (
     let%bind record = self record in
     let aux a = match a with
-    | Access_map e -> 
+    | Access_map e ->
       let%bind e = self e in
       ok @@ Access_map e
     | e -> ok @@ e
@@ -195,7 +195,7 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression, 'err) res
   | E_update {record; path; update} -> (
     let%bind record = self record in
     let aux a = match a with
-    | Access_map e -> 
+    | Access_map e ->
       let%bind e = self e in
       ok @@ Access_map e
     | e -> ok @@ e
@@ -245,7 +245,7 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression, 'err) res
     )
   | E_assign {variable;access_path;expression} -> (
       let aux a = match a with
-      | Access_map e -> 
+      | Access_map e ->
         let%bind e = self e in
         ok @@ Access_map e
       | e -> ok @@ e
@@ -276,9 +276,9 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
   | T_sum temap ->
     let%bind temap' = bind_map_lmap_t self temap in
     return @@ (T_sum temap')
-  | T_record temap ->
-    let%bind temap' = bind_map_lmap_t self temap in
-    return @@ (T_record temap')
+  | T_record {fields; attributes} ->
+    let%bind fields = bind_map_lmap_t self fields in
+    return @@ (T_record {fields; attributes})
   | T_tuple telst ->
     let%bind telst' = bind_map_list self telst in
     return @@ (T_tuple telst')
@@ -286,7 +286,7 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
     let%bind type1' = self type1 in
     let%bind type2' = self type2 in
     return @@ (T_arrow {type1=type1' ; type2=type2'})
-  | T_annoted (ty, str) -> 
+  | T_annoted (ty, str) ->
     let%bind ty = self ty in
     return @@ T_annoted (ty, str)
   | T_variable _ | T_constant _ -> ok te'
@@ -381,7 +381,7 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> ('a 
   | E_accessor {record;path} -> (
     let%bind (res, record) = self init' record in
     let aux res a = match a with
-    | Access_map e -> 
+    | Access_map e ->
       let%bind (res,e) = self res e in
       ok @@ (res,Access_map e)
     | e -> ok @@ (res,e)
@@ -392,7 +392,7 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> ('a 
   | E_update {record; path; update} -> (
     let%bind (res, record) = self init' record in
     let aux res a = match a with
-    | Access_map e -> 
+    | Access_map e ->
       let%bind (res,e) = self res e in
       ok @@ (res,Access_map e)
     | e -> ok @@ (res,e)
@@ -442,7 +442,7 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> ('a 
     )
   | E_assign {variable;access_path;expression} ->
       let aux res a = match a with
-      | Access_map e -> 
+      | Access_map e ->
         let%bind (res,e) = self res e in
         ok @@ (res,Access_map e)
       | e -> ok @@ (res,e)

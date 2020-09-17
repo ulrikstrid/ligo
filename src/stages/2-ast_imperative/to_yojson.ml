@@ -169,12 +169,14 @@ let literal = function
   | Literal_operation l -> `List [`String "Literal_unit"; bytes_to_yojson l ]
 
 let label = label_to_yojson
+
 let option f o =
     match o with
     | None   -> `List [ `String "None" ; `Null ]
     | Some v -> `List [ `String "Some" ; f v ]
 
 let list f lst = `List (List.map f lst)
+
 let label_map f lmap =
   let lst = List.sort (fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
   let lst' = List.fold_left
@@ -183,7 +185,7 @@ let label_map f lmap =
   in
   `Assoc lst'
 
-let deprecated {name;const} = 
+let deprecated {name;const} =
   `Assoc [
     ("name", `String name);
     ("const", constant' const);
@@ -200,20 +202,27 @@ let rec type_expression {type_content=tc;location} =
     ("location", Location.to_yojson location);
   ]
 
+and attributes attr =
+  let list = List.map (fun string -> `String string) attr
+  in `Assoc [("attributes", `List list)]
+
 and type_content = function
-  | T_sum      t -> `List [ `String "t_sum"; label_map row_element t]
-  | T_record   t -> `List [ `String "t_record"; label_map row_element t]
+  | T_sum      t -> `List [ `String "t_sum"; label_map row_element t ]
+  | T_record   t -> `List [ `String "t_record";
+                            label_map row_element t.fields;
+                            attributes t.attributes]
   | T_tuple    t -> `List [ `String "t_tuple";  list type_expression t]
   | T_arrow    t -> `List [ `String "t_arrow"; arrow t]
   | T_variable t -> `List [ `String "t_variable"; type_variable_to_yojson t]
   | T_constant t -> `List [ `String "t_constant"; type_operator t]
   | T_annoted  t -> `List [ `String "t_annoted"; `List [type_expression @@ fst t;`String (snd t)]]
 
-and row_element {associated_type; decl_pos} =
+and row_element {associated_type; attributes=attr; decl_pos} =
   `Assoc [
-    ("associated_type", type_expression associated_type);
-    ("decl_pos", `Int decl_pos);
-  ]
+     ("associated_type", type_expression associated_type);
+     ("attributes", attributes attr);
+     ("decl_pos", `Int decl_pos);
+   ]
 
 and arrow {type1;type2} =
   `Assoc [
@@ -233,7 +242,7 @@ let rec expression {expression_content=ec;location} =
     ("location", Location.to_yojson location);
   ]
 
-and expression_content = function 
+and expression_content = function
   (* Base *)
   | E_literal     e -> `List [ `String "E_literal"; literal e ]
   | E_constant    e -> `List [ `String "E_constant"; constant e ]
@@ -256,7 +265,7 @@ and expression_content = function
   | E_skip          -> `List [ `String "E_skip"; `Null ]
   | E_tuple       e -> `List [ `String "E_tuple"; list expression e ]
   (* Data Structures *)
-  | E_map         e -> `List [ `String "E_map"; list (fun (k,v) -> `List [ expression k; expression v]) e ] 
+  | E_map         e -> `List [ `String "E_map"; list (fun (k,v) -> `List [ expression k; expression v]) e ]
   | E_big_map     e -> `List [ `String "E_big_map"; list (fun (k,v) -> `List [ expression k; expression v]) e ]
   | E_list        e -> `List [ `String "E_list"; list expression e]
   | E_set         e -> `List [ `String "E_set"; list expression e]
@@ -291,7 +300,7 @@ and recursive {fun_name;fun_type;lambda=l} =
     ("lambda", lambda l)
   ]
 
-and let_in {let_binder;rhs;let_result;inline} =
+and let_in {let_binder;rhs;let_result;inline } =
   `Assoc [
     ("let_binder", expression_variable_to_yojson @@ fst let_binder);
     ("rhs", expression rhs);
@@ -378,9 +387,9 @@ and for_each {binder;collection;collection_type;body} =
   ]
 
 and collect_type = function
-  | Map  -> `List [ `String "Map"; `Null] 
-  | Set  -> `List [ `String "Set"; `Null] 
-  | List -> `List [ `String "List"; `Null]  
+  | Map  -> `List [ `String "Map"; `Null]
+  | Set  -> `List [ `String "Set"; `Null]
+  | List -> `List [ `String "List"; `Null]
 
 and while_loop {condition;body} =
   `Assoc [
@@ -388,7 +397,7 @@ and while_loop {condition;body} =
     ("body", expression body);
   ]
 and matching_expr = function
-  | Match_list    {match_nil;match_cons} -> `List [ `String "Match_list";    
+  | Match_list    {match_nil;match_cons} -> `List [ `String "Match_list";
     `Assoc [
       ("match_nil", expression match_nil);
       ("match_cons", matching_content_cons match_cons);
@@ -447,9 +456,9 @@ let declaration_constant (binder,ty_opt,inline,expr) =
     ("binder",expression_variable_to_yojson binder);
     ("type_expression", yojson_opt type_expression ty_opt);
     ("expr", expression expr);
-    ("attribute", `Bool inline);
+    ("inline", `Bool inline);
   ]
-let declaration = function 
+let declaration = function
   | Declaration_type     dt -> `List [ `String "Declaration_type"; declaration_type dt]
   | Declaration_constant dc -> `List [ `String "Declaration_constant"; declaration_constant dc]
 

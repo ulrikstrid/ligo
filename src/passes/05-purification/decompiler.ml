@@ -12,21 +12,21 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, Err
       (* This type sum could be a michelson_or as well, we could use is_michelson_or *)
       let%bind sum =
         Stage_common.Helpers.bind_map_lmap (fun v ->
-          let {associated_type;decl_pos} : O.row_element = v in
+          let {associated_type;attributes;decl_pos} : O.row_element = v in
           let%bind v = decompile_type_expression associated_type in
-          ok @@ ({associated_type=v;decl_pos}:I.row_element)
+          ok @@ ({associated_type=v;attributes;decl_pos}:I.row_element)
         ) sum
       in
       return @@ I.T_sum sum
-    | O.T_record record ->
-      let%bind record =
+    | O.T_record {fields ; attributes} ->
+      let%bind fields =
         Stage_common.Helpers.bind_map_lmap (fun v ->
-          let {associated_type;decl_pos} : O.row_element = v in
+          let {associated_type;attributes;decl_pos} : O.row_element = v in
           let%bind v = decompile_type_expression associated_type in
-          ok @@ ({associated_type=v;decl_pos}:I.row_element)
-        ) record
+          ok @@ ({associated_type=v;attributes;decl_pos}:I.row_element)
+        ) fields
       in
-      return @@ I.T_record record
+      return @@ I.T_record {fields ; attributes}
     | O.T_tuple tuple ->
       let%bind tuple = bind_map_list decompile_type_expression tuple in
       return @@ I.T_tuple tuple

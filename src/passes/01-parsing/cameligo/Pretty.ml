@@ -385,7 +385,7 @@ and pp_seq {value; _} =
 and pp_type_expr = function
   TProd t   -> pp_cartesian t
 | TSum t    -> pp_variants t
-| TRecord t -> pp_fields t
+| TRecord t -> pp_record_type t
 | TApp t    -> pp_type_app t
 | TFun t    -> pp_fun_type t
 | TPar t    -> pp_type_par t
@@ -417,13 +417,14 @@ and pp_variant {value; _} =
   | Some (_, e) ->
       prefix 4 1 (pp_ident constr ^^ string " of") (pp_type_expr e)
 
-and pp_fields fields = group (pp_ne_injection pp_field_decl fields)
+and pp_record_type fields = group (pp_ne_injection pp_field_decl fields)
 
 and pp_field_decl {value; _} =
-  let {field_name; field_type; _} = value in
+  let {field_name; field_type; attributes; _} = value in
   let name = pp_ident field_name in
   let t_expr = pp_type_expr field_type
   in prefix 2 1 (name ^^ string " :") t_expr
+     ^^ pp_attributes attributes
 
 and pp_type_app {value = ctor, tuple; _} =
   pp_type_tuple tuple ^^ group (nest 2 (break 1 ^^ pp_type_constr ctor))

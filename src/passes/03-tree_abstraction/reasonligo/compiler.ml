@@ -37,15 +37,14 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
     let%bind sum = bind_map_list aux lst in
     return @@ t_sum_ez ~loc sum
   | TRecord record ->
-    let (nsepseq, loc) = r_split record in
-    let lst = npseq_to_list nsepseq.ne_elements in
+    let injection, loc = r_split record in
+    let lst = npseq_to_list injection.ne_elements in
     let aux (field : CST.field_decl CST.reg) =
       let (f, _) = r_split field in
       let%bind type_expr = compile_type_expression f.field_type in
-      return @@ (f.field_name.value,type_expr)
-    in
+      return @@ (f.field_name.value, type_expr, [] (* TODO *)) in
     let%bind record = bind_map_list aux lst in
-    return @@ t_record_ez ~loc record
+    return @@ t_record_ez ~loc record ~attr:[] (* TODO *)
   | TProd prod ->
     let (nsepseq, loc) = r_split prod in
     let lst = npseq_to_list nsepseq.inside in

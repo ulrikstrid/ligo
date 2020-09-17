@@ -6,6 +6,21 @@ open Errors
 
 let cast_var = Location.map Var.todo_cast
 
+let is_michelson_annotation attr =
+  if String.length attr > 6 && String.sub attr 0 6 = "annot:" then
+    Some (String.sub attr 6 ((String.length attr)-6))
+  else None
+
+let get_michelson_annotation : (string list) -> string option = fun attributes ->
+  let rec aux lst = match lst with
+    | hd::tl -> ( match is_michelson_annotation hd with
+      | Some ann -> Some ann
+      | None -> aux tl
+    )
+    | [] -> None
+  in
+  aux attributes
+
 let rec compile_type_expression : I.type_expression -> (O.type_expression , desugaring_error) result =
   fun te ->
   let return tc = ok @@ O.make_t ~loc:te.location ~sugar:te tc in
@@ -13,23 +28,26 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression , desu
     | I.T_sum sum -> 
       let%bind sum = 
         Stage_common.Helpers.bind_map_lmap (fun v ->
-          let {associated_type ; michelson_annotation ; decl_pos} : I.row_element = v in
+          let {associated_type ; attributes ; decl_pos} : I.row_element = v in
+          let michelson_annotation = get_michelson_annotation attributes in
           let%bind associated_type = compile_type_expression associated_type in
           let v' : O.row_element = {associated_type ; michelson_annotation ; decl_pos} in
           ok @@ v'
         ) sum
       in
       return @@ O.T_sum sum
-    | I.T_record record -> 
-      let%bind record = 
+    | I.T_record {fields ; attributes=_TODO} -> 
+    (* GA TODO*)
+      let%bind fields = 
         Stage_common.Helpers.bind_map_lmap (fun v ->
-          let {associated_type ; michelson_annotation ; decl_pos} : I.row_element = v in
+          let {associated_type ; attributes ; decl_pos} : I.row_element = v in
           let%bind associated_type = compile_type_expression associated_type in
+          let michelson_annotation = get_michelson_annotation attributes in
           let v' : O.row_element = {associated_type ; michelson_annotation ; decl_pos} in
           ok @@ v'
-        ) record
+        ) fields
       in
-      return @@ O.T_record record
+      return @@ O.T_record fields
     | I.T_tuple tuple ->
       let aux (i,acc) el = 
         let%bind el = compile_type_expression el in

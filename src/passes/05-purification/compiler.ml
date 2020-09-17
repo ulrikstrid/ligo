@@ -119,22 +119,22 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors
   match te.type_content with
     | I.T_sum sum ->
       let%bind sum =
-        Stage_common.Helpers.bind_map_lmap (fun (({associated_type = v; decl_pos ; _}:I.row_element)) ->
+        Stage_common.Helpers.bind_map_lmap (fun (({associated_type = v; decl_pos ; attributes}:I.row_element)) ->
           let%bind v = compile_type_expression v in
-          let content : O.row_element = {associated_type = v ; michelson_annotation = None ; decl_pos } in
+          let content : O.row_element = {associated_type = v ; attributes ; decl_pos } in
           ok @@ content
         ) sum
       in
       return @@ O.T_sum sum
-    | I.T_record record ->
-      let%bind record =
-        Stage_common.Helpers.bind_map_lmap (fun (({associated_type = v; decl_pos ; _}:I.row_element)) ->
+    | I.T_record {fields ; attributes} ->
+      let%bind fields =
+        Stage_common.Helpers.bind_map_lmap (fun (({associated_type = v; decl_pos ; attributes}:I.row_element)) ->
           let%bind v = compile_type_expression v in
-          let content : O.row_element = {associated_type = v; michelson_annotation = None ; decl_pos} in
+          let content : O.row_element = {associated_type = v; attributes ; decl_pos} in
           ok @@ content
-        ) record
+        ) fields
       in
-      return @@ O.T_record record
+      return @@ O.T_record {fields ; attributes}
     | I.T_tuple tuple ->
       let%bind tuple = bind_map_list compile_type_expression tuple in
       return @@ O.T_tuple tuple
@@ -148,8 +148,8 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors
       let%bind (r, r_ann) = trace_option (Errors.corner_case "not an annotated type") @@ I.get_t_annoted r in
       let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
       let sum : (O.label * O.row_element) list = [
-        (O.Label "M_left" , {associated_type = l ; michelson_annotation = Some l_ann ; decl_pos = 0});
-        (O.Label "M_right", {associated_type = r ; michelson_annotation = Some r_ann ; decl_pos = 1}); ]
+        (O.Label "M_left" , {associated_type = l ; attributes = [ "annot:"^l_ann ] ; decl_pos = 0});
+        (O.Label "M_right", {associated_type = r ; attributes = [ "annot:"^r_ann ] ; decl_pos = 1}); ]
       in
       return @@ O.T_sum (O.LMap.of_list sum)
     | I.T_constant (TC_michelson_pair, [l;r]) ->
@@ -157,10 +157,10 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors
       let%bind (r, r_ann) = trace_option (Errors.corner_case "not an annotated type") @@ I.get_t_annoted r in
       let%bind (l,r) = bind_map_pair compile_type_expression (l,r) in
       let sum : (O.label * O.row_element) list = [
-        (O.Label "0" , {associated_type = l ; michelson_annotation = Some l_ann ; decl_pos = 0});
-        (O.Label "1", {associated_type = r ; michelson_annotation = Some r_ann ; decl_pos = 0}); ]
+        (O.Label "0" , {associated_type = l ; attributes = [ "annot:"^l_ann ] ; decl_pos = 0});
+        (O.Label "1", {associated_type = r ; attributes = [ "annot:"^r_ann ] ; decl_pos = 0}); ]
       in
-      return @@ O.T_record (O.LMap.of_list sum)
+      return @@ O.T_record { fields = (O.LMap.of_list sum) ; attributes = [] }
     | I.T_constant (type_constant, lst) ->
       let%bind lst = bind_map_list compile_type_expression lst in
       return @@ T_constant (type_constant, lst)

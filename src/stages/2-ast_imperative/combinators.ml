@@ -26,17 +26,21 @@ let t_variable ?loc n     : type_expression = make_t ?loc @@ T_variable n
 let t_variable_ez ?loc n  : type_expression = t_variable ?loc @@ Var.of_name n
 
 let t_record ?loc record  : type_expression = make_t ?loc @@ T_record record
-let t_record_ez ?loc lst =
-  let lst = List.mapi (fun i (k, v) -> (Label k, {associated_type=v;decl_pos=i})) lst in
-  let record = LMap.of_list lst in
-  t_record ?loc (record:row_element label_map)
+let t_record_ez ?loc lst ~attr =
+  let aux i (k, v, attr) =
+    (Label k, {associated_type=v; decl_pos=i; attributes=attr}) in
+  let lst = List.mapi aux lst in
+  let fields : row_element label_map = LMap.of_list lst
+  in t_record ?loc {fields; attributes=attr}
 
 let t_tuple ?loc lst    : type_expression = make_t ?loc @@ T_tuple lst
 let t_pair ?loc (a , b) : type_expression = t_tuple ?loc [a; b]
 
 let t_sum ?loc sum : type_expression = make_t ?loc @@ T_sum sum
 let t_sum_ez ?loc (lst:(string * type_expression) list) : type_expression =
-  let aux (prev,i) (k, v) = (LMap.add (Label k) {associated_type=v;decl_pos=i} prev, i+1) in
+  let aux (prev,i) (k, v) =
+    LMap.add (Label k) {associated_type=v;decl_pos=i;attributes=[]} prev,
+    i+1 in
   let (map,_) = List.fold_left aux (LMap.empty,0) lst in
   t_sum ?loc (map: row_element label_map)
 

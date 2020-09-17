@@ -25,7 +25,7 @@ let expression_variable ppf (ev : expression_variable) : unit =
   fprintf ppf "%a" Var.pp ev.wrap_content
 
 let list_sep_d_par f ppf lst =
-  match lst with 
+  match lst with
   | [] -> ()
   | _ -> fprintf ppf " (%a)" (list_sep_d f) lst
 
@@ -33,7 +33,7 @@ let rec type_content : formatter -> type_expression -> unit =
   fun ppf te ->
   match te.type_content with
   | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (lmap_sep_d type_expression) m
-  | T_record m -> fprintf ppf "{%a}" (record_sep_t type_expression (const ";")) m
+  | T_record m -> fprintf ppf "{%a}" (record_sep_t type_expression (const ";")) m.fields
   | T_tuple  t -> fprintf ppf "(%a)" (list_sep_d type_expression) t
   | T_arrow  a -> fprintf ppf "%a -> %a" type_expression a.type1 type_expression a.type2
   | T_variable tv -> type_variable ppf tv
@@ -79,8 +79,8 @@ and expression_content ppf (ec : expression_content) =
         (PP_helpers.option type_expression)
         output_type expression result
   | E_recursive { fun_name; fun_type; lambda} ->
-      fprintf ppf "rec (%a:%a => %a )" 
-        expression_variable fun_name 
+      fprintf ppf "rec (%a:%a => %a )"
+        expression_variable fun_name
         type_expression fun_type
         expression_content (E_lambda lambda)
   | E_matching {matchee; cases; _} ->
@@ -90,8 +90,8 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "let %a%a = %a%a in %a" 
         option_type_name let_binder 
         option_mut mut
-        expression rhs 
-        option_inline inline 
+        expression rhs
+        option_inline inline
         expression let_result
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
@@ -166,14 +166,14 @@ and matching_type ppf m = match m with
 and matching_variant_case_type ppf ((c,n),_a) =
   fprintf ppf "| %a %a" label c expression_variable n
 
-and option_mut ppf mut = 
-  if mut then 
+and option_mut ppf mut =
+  if mut then
     fprintf ppf "[@mut]"
   else
     fprintf ppf ""
 
-and option_inline ppf inline = 
-  if inline then 
+and option_inline ppf inline =
+  if inline then
     fprintf ppf "[@inline]"
   else
     fprintf ppf ""

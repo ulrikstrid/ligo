@@ -190,18 +190,22 @@ let rec type_expression {type_content=tc;location} =
     ("location", Location.to_yojson location);
   ]
 
+and attributes attr =
+  let list = List.map (fun string -> `String string) attr
+  in `Assoc [("attributes", `List list)]
+
 and type_content = function
   | T_sum      t -> `List [ `String "t_sum"; label_map row_element t]
-  | T_record   t -> `List [ `String "t_record"; label_map row_element t]
+  | T_record   t -> `List [ `String "t_record"; label_map row_element t.fields]
   | T_tuple    t -> `List [ `String "t_tuple";  list type_expression t]
   | T_arrow    t -> `List [ `String "t_arrow"; arrow t]
   | T_variable t -> `List [ `String "t_variable"; type_variable_to_yojson t]
   | T_constant t -> `List [ `String "t_constant"; type_operator t]
 
-and row_element {associated_type; michelson_annotation; decl_pos} =
+and row_element {associated_type; attributes=attr; decl_pos} =
   `Assoc [
     ("associated_type", type_expression associated_type);
-    ("michelson_annotation", option (fun s -> `String s) michelson_annotation);
+    ("attributes", attributes attr);
     ("decl_pos", `Int decl_pos);
   ]
 
@@ -223,7 +227,7 @@ let rec expression {expression_content=ec;location} =
     ("location", Location.to_yojson location);
   ]
 
-and expression_content = function 
+and expression_content = function
   (* Base *)
   | E_literal     e -> `List [ `String "E_literal"; literal e ]
   | E_constant    e -> `List [ `String "E_constant"; constant e ]
@@ -246,7 +250,7 @@ and expression_content = function
   | E_skip          -> `List [ `String "E_skip"; `Null ]
   | E_tuple       e -> `List [ `String "E_tuple"; list expression e ]
   (* Data Structures *)
-  | E_map         e -> `List [ `String "E_map"; list (fun (k,v) -> `List [ expression k; expression v]) e ] 
+  | E_map         e -> `List [ `String "E_map"; list (fun (k,v) -> `List [ expression k; expression v]) e ]
   | E_big_map     e -> `List [ `String "E_big_map"; list (fun (k,v) -> `List [ expression k; expression v]) e ]
   | E_list        e -> `List [ `String "E_list"; list expression e]
   | E_set         e -> `List [ `String "E_set"; list expression e]
@@ -340,8 +344,7 @@ and sequence {expr1;expr2} =
     ("expr2", expression expr2);
   ]
 and matching_expr = function
-  (*TODO*)
-  | Match_list    {match_nil;match_cons} -> `List [ `String "Match_list";    
+  | Match_list    {match_nil;match_cons} -> `List [ `String "Match_list";
     `Assoc [
       ("match_nil", expression match_nil);
       ("match_cons", matching_content_cons match_cons);
@@ -400,9 +403,9 @@ let declaration_constant (binder,ty,inline,expr) =
     ("binder",expression_variable_to_yojson binder);
     ("type_expression", yojson_opt type_expression ty);
     ("expr", expression expr);
-    ("attribute", `Bool inline);
+    ("inline", `Bool inline);
   ]
-let declaration = function 
+let declaration = function
   | Declaration_type     dt -> `List [ `String "Declaration_type"; declaration_type dt]
   | Declaration_constant dc -> `List [ `String "Declaration_constant"; declaration_constant dc]
 
