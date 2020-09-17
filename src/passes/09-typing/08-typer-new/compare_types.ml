@@ -3,8 +3,8 @@ open Trace
 open Typer_common.Errors
 
 let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : (unit, typer_error) result = match (a.type_content, b.type_content) with
-  | T_wildcard , _ -> ok ()
-  | _ , T_wildcard -> ok ()
+  | T_wildcard , _ -> fail @@ different_types a b
+  | _ , T_wildcard -> fail @@ different_types a b
   | T_constant {type_constant=ca;arguments=lsta}, T_constant {type_constant=cb;arguments=lstb} -> (
     let%bind _ = match (ca, cb) with
       | TC_option, TC_option

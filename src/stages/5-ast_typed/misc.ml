@@ -79,8 +79,8 @@ let assert_layout_opt_eq = fun a b -> if (Option.equal (layout_eq) a b) then Som
 let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : unit option =
   let open Option in
   match (a.type_content, b.type_content) with
-  | T_wildcard, _ -> Some ()
-  | _, T_wildcard -> Some ()
+  | T_wildcard, _ -> None
+  | _, T_wildcard -> None
   | T_constant {type_constant=ca;arguments=la}, T_constant {type_constant=cb;arguments=lb} -> (
     let aux = fun lsta lstb ->
       if List.length lsta <> List.length lstb then None

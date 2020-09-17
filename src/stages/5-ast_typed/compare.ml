@@ -45,10 +45,8 @@ let rec type_expression a b =
   | T_sum      a, T_sum      b -> label_map ~compare:row a b
   | T_record   a, T_record   b -> record a b
   | T_arrow    a, T_arrow    b -> arrow a b
-  | T_wildcard, _ -> 0
-  | _, T_wildcard -> 0
-  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _),
-    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _) ->
+  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_wildcard ),
+    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_wildcard ) ->
     Int.compare (type_expression_tag a) (type_expression_tag b)
 
 
