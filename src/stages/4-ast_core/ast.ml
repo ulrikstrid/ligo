@@ -14,19 +14,14 @@ let location_to_yojson loc = Location.to_yojson loc
 
 type program_loc = declaration location_wrap
 and program = program_loc list
-
-and binder = { 
-  var : expression_variable ;
-  ty : type_expression ;
-  }
-
 and declaration_type = {
     type_binder : type_variable ;
     type_expr : type_expression ;
   }
 
 and declaration_constant = {
-    binder : binder;
+    binder : expression_variable ;
+    type_opt : type_expression_option ;
     attr : attribute ;
     expr : expression ;
   }
@@ -108,9 +103,12 @@ and application = {
     args: expression ;
   }
 
+and type_expression_option = type_expression option
 
 and lambda = {
-    binder: binder ;
+    binder: expression_variable ;
+    input_type: type_expression_option ;
+    output_type: type_expression_option ;
     result: expression ;
   }
 
@@ -120,8 +118,12 @@ and recursive = {
     lambda : lambda ;
   }
  
+and let_binder = {
+    binder : expression_variable ;
+    ascr : type_expression_option ;
+  }
 and let_in = {
-    let_binder: binder ;
+    let_binder: let_binder ;
     rhs: expression ;
     let_result: expression ;
     inline: bool ;

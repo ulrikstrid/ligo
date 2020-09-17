@@ -23,11 +23,10 @@ val t_unit      : ?loc:Location.t -> ?core:S.type_expression -> unit -> type_exp
 val t_option    : ?loc:Location.t -> ?core:S.type_expression -> type_expression -> type_expression
 val t_pair      : ?loc:Location.t -> ?core:S.type_expression -> type_expression -> type_expression -> type_expression
 val t_list      : ?loc:Location.t -> ?core:S.type_expression -> type_expression -> type_expression
-val t_variable  : ?loc:Location.t -> ?core:S.type_expression -> type_variable   -> type_expression
-val t_wildcard  : ?loc:Location.t -> ?core:S.type_expression -> unit -> type_expression
-val t_record    : ?loc:Location.t -> ?core:S.type_expression -> layout_opt:layout option -> row_element label_map -> type_expression
+val t_variable  : type_variable -> ?loc:Location.t -> ?core:S.type_expression -> unit -> type_expression
+val t_record    : ?loc:Location.t -> ?core:S.type_expression -> layout_opt:layout option -> te_lmap -> type_expression
 val make_t_ez_record : ?loc:Location.t -> ?core:S.type_expression -> ?layout_opt:layout -> (string* type_expression) list -> type_expression 
-val ez_t_record : ?loc:Location.t -> ?core:S.type_expression -> ?layout_opt:layout -> ( label * row_element ) list ->  type_expression 
+val ez_t_record : ?loc:Location.t -> ?core:S.type_expression -> ?layout_opt:layout -> ( label * row_element ) list -> type_expression 
 
 val t_map            : ?loc:Location.t -> ?core:S.type_expression -> type_expression -> type_expression -> type_expression
 val t_big_map        : ?loc:Location.t -> ?core:S.type_expression -> type_expression -> type_expression -> type_expression

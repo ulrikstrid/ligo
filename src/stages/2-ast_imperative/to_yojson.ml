@@ -1,4 +1,5 @@
 open Types
+open Yojson_helpers
 
 type json = Yojson.Safe.t
 
@@ -278,9 +279,9 @@ and application {lamb;args} =
     ("args", expression args);
   ]
 
-and lambda {binder;result} =
+and lambda {binder;input_type=_;output_type=_;result} =
   `Assoc [
-    ("binder", expression_variable_to_yojson @@ fst binder);
+    ("binder", expression_variable_to_yojson binder);
     ("result", expression result);
   ]
 
@@ -399,18 +400,21 @@ and matching_expr = function
       ("match_some", matching_content_some match_some);
     ]]
   | Match_variant m -> `List [ `String "Match_variant"; list matching_content_case m ]
-  | Match_tuple   (lst,e) -> `List [ `String "Match_tuple";
+  | Match_tuple   (lst,_,e) -> `List [ `String "Match_tuple";
+  (*TODO*)
     `List [
-      list (fun (e,t) -> `List [expression_variable_to_yojson e; type_expression t]) lst;
+      list (fun (e) -> `List [expression_variable_to_yojson e]) lst;
       expression e;
     ]]
-  | Match_record (lst, e) -> `List [`String "Match_record";
+  | Match_record (lst,_, e) -> `List [`String "Match_record";
+  (*TODO*)
     `List [
-      list (fun (l,e,t) -> `List [label l; expression_variable_to_yojson e; type_expression t]) lst;
+      list (fun (l,e) -> `List [label l; expression_variable_to_yojson e]) lst;
       expression e;
     ]]
-  | Match_variable ((ev,t),e) -> `List [`String "Match_varible";
-    `List [expression_variable_to_yojson ev; type_expression t; expression e];
+  | Match_variable (ev,_,e) -> `List [`String "Match_varible";
+  (*TODO*)
+    `List [expression_variable_to_yojson ev ; expression e];
     ]
 
 and matching_content_cons (hd, tl, body) =
@@ -439,10 +443,10 @@ let declaration_type (type_binder, type_expr) =
     ("type_expr", type_expression type_expr);
   ]
 
-let declaration_constant (binder,ty,inline,expr) =
+let declaration_constant (binder,ty_opt,inline,expr) =
   `Assoc [
     ("binder",expression_variable_to_yojson binder);
-    ("type_expression", type_expression ty);
+    ("type_expression", yojson_opt type_expression ty_opt);
     ("expr", expression expr);
     ("attribute", `Bool inline);
   ]

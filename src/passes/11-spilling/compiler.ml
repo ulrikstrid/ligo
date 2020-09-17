@@ -230,26 +230,6 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
       return @@ (T_function (param',result'))
     )
 
-(* let record_access_to_lr : type_expression -> type_expression AST.label_map -> AST.label -> ((type_expression * [`Left | `Right]) list , spilling_error) result = fun ty tym ind ->
- *       (\*TODO *\)
- *   let tys = Ast_typed.Helpers.kv_list_of_record_or_tuple tym in
- *   let node_tv = Append_tree.of_list tys in
- *   let%bind path =
- *     let aux (i , _) = i = ind  in
- *     trace_option (corner_case ~loc:__LOC__ "record access leaf") @@
- *     Append_tree.exists_path aux node_tv in
- *   let lr_path = List.map (fun b -> if b then `Right else `Left) path in
- *   let%bind (_ , lst) =
- *     let aux = fun (ty , acc) cur ->
- *       let%bind (a , b) =
- *         trace_option (corner_case ~loc:__LOC__ "record access pair") @@
- *         Mini_c.get_t_pair ty in
- *       match cur with
- *       | `Left -> ok (a , acc @ [(a , `Left)])
- *       | `Right -> ok (b , acc @ [(b , `Right)] ) in
- *     bind_fold_list aux (ty , []) lr_path in
- *   ok lst *)
-
 let rec compile_literal : AST.literal -> value = fun l -> match l with
   | Literal_int n -> D_int n
   | Literal_nat n -> D_nat n
@@ -325,21 +305,6 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
   | E_record m -> (
       let%bind record_t = trace_option (`Spilling_corner_case ("aa","TODO")) (AST.get_t_record ae.type_expression) in
       Layout.record_to_pairs compile_expression return record_t m
-      (* let node = match record_t.layout_opt with
-        | None -> Append_tree.of_list @@ Ast_typed.Helpers.list_of_record_or_tuple m 
-        | Some L_comb -> Layout.comb_of_record record_t m
-        | Some L_tree -> Layout.tree_of_record m
-      in
-      let aux a b : (expression , spilling_error) result =
-        let%bind a = a in
-        let%bind b = b in
-        let a_ty = Combinators.Expression.get_type a in
-        let b_ty = Combinators.Expression.get_type b in
-        let tv   = Combinators.Expression.make_t @@ T_pair ((None, a_ty) , (None, b_ty)) in
-        return ~tv @@ E_constant {cons_name=C_PAIR;arguments=[a; b]}
-      in
-      trace_strong (corner_case ~loc:__LOC__ "record build") @@
-      Append_tree.fold_ne (compile_expression) aux node *)
     )
   | E_record_accessor {record; path} ->
       (*TODO *)

@@ -17,9 +17,6 @@ let label_of_yojson = function
 module LMap = Map.Make( struct type t = label let compare (Label a) (Label b) = String.compare a b end)
 type 'a label_map = 'a LMap.t
 
-and ('a,'b) binder = ('a * 'b)
-
-
 include Enums
 include Enums_utils
 

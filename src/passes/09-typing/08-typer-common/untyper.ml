@@ -47,10 +47,10 @@ let untype_declaration_constant untype_expression O.{binder;expr;inline} =
   let attr = I.{inline} in
   let%bind ty = untype_type_expression expr.type_expression in
   let var = Location.map Var.todo_cast binder in
-  let binder = I.{var; ty} in
+  let binder = var in
   let%bind expr = untype_expression expr in
   let expr = I.e_annotation expr ty in
-  ok @@ I.{binder;attr;expr}
+  ok @@ I.{binder;attr;expr;type_opt=Some(ty)}
 
 let untype_declaration_type O.{type_binder; type_expr} =
   let%bind type_expr = untype_type_expression type_expr in
