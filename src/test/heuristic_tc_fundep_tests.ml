@@ -93,7 +93,7 @@ let test'
         (fun (tv , c_tag , tv_list) -> {reason_constr_simpl = "unit test" ; tv ; c_tag ; tv_list})
         expected_inferred in
     let%bind actual = deduce_and_clean input_tc in
-    (match Heuristic_tc_fundep_tests_compare_cleaned.compare_and_check_vars_deduce_and_clean_result { deduced = expected_inferred ; cleaned = expected_tc } actual with
+    (match to_stdlib_result @@ Heuristic_tc_fundep_tests_compare_cleaned.compare_and_check_vars_deduce_and_clean_result { deduced = expected_inferred ; cleaned = expected_tc } actual with
      | Ok _ -> ok @@ None
      | Error e -> ok @@ Some e)
   in

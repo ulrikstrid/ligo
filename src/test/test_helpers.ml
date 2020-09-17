@@ -20,7 +20,7 @@ let wrap_test name f =
   let format = Display.bind_format test_format Main.Formatter.error_format in
   let disp = Simple_utils.Display.Displayable {value=result ; format} in
   let s = Simple_utils.Display.convert ~display_format:(Human_readable) disp in
-  match result with
+  match to_stdlib_result result with
   | Ok ((), annotations) -> ignore annotations; ()
   | Error _ ->
     Format.printf "%s\n%!" s ;

@@ -1,10 +1,10 @@
 open Display
 
-let program_ppformat ~display_format f (typed,_) =
+let program_ppformat ~display_format f typed =
   match display_format with
   | Human_readable | Dev -> PP.program f typed
 
-let program_jsonformat (p,_) : json =
+let program_jsonformat p : json =
   let s = Format.asprintf "%a" PP.program p in
   `Assoc [("Typed(temp)" , `String s)]
 
