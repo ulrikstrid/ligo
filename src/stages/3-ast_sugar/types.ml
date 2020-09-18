@@ -6,12 +6,17 @@ include Stage_common.Types
 
 type type_content =
   | T_sum of row_element label_map
-  | T_record of row_element label_map
+  | T_record of record_type
   | T_tuple  of type_expression list
   | T_arrow of arrow
   | T_variable of type_variable
   | T_wildcard
   | T_constant of (type_constant * type_expression list)
+
+and record_type = {
+  fields : row_element label_map;
+  layout : bool (* Attribute *)
+  }
 
 and arrow = {type1: type_expression; type2: type_expression}
 
@@ -59,7 +64,7 @@ and expression_content =
   | E_skip
   | E_tuple of expression list
   (* Data Structures *)
-  | E_map of (expression * expression) list 
+  | E_map of (expression * expression) list
   | E_big_map of (expression * expression) list
   | E_list of expression list
   | E_set of expression list
@@ -69,13 +74,13 @@ and constant =
   ; arguments: expression list }
 
 and application = {
-  lamb: expression ; 
+  lamb: expression ;
   args: expression ;
   }
 
 and lambda = {
-  binder: (expression_variable, type_expression) binder; 
-  result: expression 
+  binder: (expression_variable, type_expression) binder;
+  result: expression
   }
 
 and recursive = {
@@ -84,7 +89,7 @@ and recursive = {
   lambda : lambda;
 }
 
-and let_in = { 
+and let_in = {
   let_binder: (expression_variable, type_expression) binder ;
   rhs: expression ;
   let_result: expression ;
@@ -92,7 +97,7 @@ and let_in = {
   mut: bool;
   }
 
-and raw_code = { 
+and raw_code = {
   language : string ;
   code : expression ;
   }

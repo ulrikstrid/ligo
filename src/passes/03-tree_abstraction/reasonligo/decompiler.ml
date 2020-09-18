@@ -7,7 +7,17 @@ open Function
 
 (* Utils *)
 let rg = Region.ghost
-let wrap : type a. a -> a CST.reg = fun value -> {value;region=rg}
+
+let wrap = Region.wrap_ghost
+
+let decompile_attribute_inline = function
+    true -> [wrap "inline"]
+  | false -> []
+
+let decompile_attribute_layout = function
+    true -> [wrap "layout"]
+  | false -> []
+
 let list_to_sepseq lst =
   match lst with
     [] -> None
@@ -57,18 +67,19 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
     let%bind sum = bind_map_list aux sum in
     let%bind sum = list_to_nsepseq sum in
     return @@ CST.TSum (wrap sum)
-  | T_record record ->
-    let record = AST.LMap.to_kv_list record in
-    let aux (AST.Label c, AST.{associated_type;_}) =
-      let field_name = wrap c in
-      let colon = rg in
-      let%bind field_type = decompile_type_expr associated_type in
-      let variant : CST.field_decl = {field_name;colon;field_type} in
-      ok @@ wrap variant
-    in
-    let%bind record = bind_map_list aux record in
-    let%bind record = list_to_nsepseq record in
-    return @@ CST.TRecord (wrap @@ ne_inject (braces) record)
+  | T_record {fields; layout} ->
+     let () = ignore layout in (* TODO *)
+     let record = AST.LMap.to_kv_list fields in
+     let aux (AST.Label c, AST.{associated_type;_}) =
+       let field_name = wrap c in
+       let colon = rg in
+       let%bind field_type = decompile_type_expr associated_type in
+       let variant : CST.field_decl = {field_name;colon;field_type} in
+       ok @@ wrap variant
+     in
+     let%bind record = bind_map_list aux record in
+     let%bind record = list_to_nsepseq record in
+     return @@ CST.TRecord (wrap @@ ne_inject braces record)
   | T_tuple tuple ->
     let%bind tuple = bind_map_list decompile_type_expr tuple in
     let%bind tuple = list_to_nsepseq tuple in
@@ -202,7 +213,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     let%bind let_rhs = decompile_expression rhs in
     let binding : CST.let_binding = {binders;lhs_type=Some lhs_type;eq=rg;let_rhs} in
     let%bind body = decompile_expression let_result in
-    let attributes = decompile_attributes inline in
+    let attributes = decompile_attribute_inline inline in
     let lin : CST.let_in = {kwd_let=rg;kwd_rec=None;binding;semi=rg;body;attributes} in
     return_expr @@ CST.ELetIn (wrap lin)
   | E_raw_code {language; code} ->
@@ -416,10 +427,6 @@ and decompile_lambda : AST.lambda -> _ = fun {binder;result} ->
     let%bind result = decompile_expression result in
     ok @@ (param,ret_type,result)
 
-and decompile_attributes = function
-    true -> [wrap "inline"]
-  | false -> []
-
 and decompile_matching_cases : AST.matching_expr -> ((CST.expr CST.case_clause Region.reg, Region.t) Simple_utils.Utils.nsepseq Region.reg,_) result =
 fun m ->
   let%bind cases = match m with
@@ -478,7 +485,7 @@ let decompile_declaration : AST.declaration Location.wrap -> (CST.declaration, _
     let%bind type_expr = decompile_type_expr te in
     ok @@ CST.TypeDecl (wrap (CST.{kwd_type=rg; name; eq=rg; type_expr}))
   | Declaration_constant (var, ty, inline, expr) ->
-    let attributes : CST.attributes = decompile_attributes inline in
+    let attributes : CST.attributes = decompile_attribute_inline inline in
     let var = CST.PVar (decompile_variable var.wrap_content) in
     let binders = var in
     match expr.expression_content with

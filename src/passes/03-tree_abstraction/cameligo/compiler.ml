@@ -4,13 +4,15 @@ open Function
 
 module CST = Cst.Cameligo
 module AST = Ast_imperative
-(* TODO: move 1-parser/shared/Utils.ml{i} to Simple_utils/ *)
 
 open AST
 
 let nseq_to_list (hd, tl) = hd :: tl
+
 let npseq_to_list (hd, tl) = hd :: (List.map snd tl)
+
 let npseq_to_ne_list (hd, tl) = hd, (List.map snd tl)
+
 let pseq_to_list = function
   | None -> []
   | Some lst -> npseq_to_list lst
@@ -21,6 +23,8 @@ open Predefined.Tree_abstraction.Cameligo
 let r_split = Location.r_split
 
 let compile_variable var = Location.map Var.of_name @@ Location.lift_region var
+let compile_attribute expected attributes =
+  List.map (fst <@ r_split) attributes |> List.mem expected
 
 let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
   let return te = ok @@ te in
@@ -37,15 +41,15 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
     let%bind sum = bind_map_list aux lst in
     return @@ t_sum_ez ~loc sum
   | TRecord record ->
-    let (nsepseq, loc) = r_split record in
-    let lst = npseq_to_list nsepseq.ne_elements in
+     let injection, loc = r_split record in
+     let layout = compile_attribute "layout" injection.attributes in
+     let lst = npseq_to_list injection.ne_elements in
     let aux (field : CST.field_decl CST.reg) =
       let (f, _) = r_split field in
       let%bind type_expr = compile_type_expression f.field_type in
-      return @@ (f.field_name.value,type_expr)
-    in
+      return @@ (f.field_name.value,type_expr,f.michelson_annotation) in
     let%bind record = bind_map_list aux lst in
-    return @@ t_record_ez ~loc record
+    return @@ t_record_ez ~loc record ~layout
   | TProd prod ->
     let (nsepseq, loc) = r_split prod in
     let lst = npseq_to_list nsepseq in
@@ -107,6 +111,7 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
     let (par, _) = r_split par in
     let type_expr = par.inside in
     compile_type_expression type_expr
+
   | TVar var ->
     let (name,loc) = r_split var in
     (match type_constants name with
@@ -494,7 +499,7 @@ and compile_let_binding ?kwd_rec attributes binding =
   let return lst = ok lst in
   let return_1 a = return [a] in
   let ({binders; lhs_type; let_rhs; _} : CST.let_binding) = binding in
-  let attr = compile_attribute_declaration attributes in
+  let inline = compile_attribute "inline" attributes in
   let%bind lhs_type = bind_map_option (compile_type_expression <@ snd) lhs_type in
   let%bind expr = compile_expression let_rhs in
   let rec aux = function
@@ -530,7 +535,7 @@ and compile_let_binding ?kwd_rec attributes binding =
         ok @@ expr
     in
     let lhs_type = Option.unopt ~default:(t_wildcard ()) lhs_type in
-    return_1 @@ (fun_binder,lhs_type, attr, expr)
+    return_1 @@ (fun_binder,lhs_type, inline, expr)
   | PTuple tuple, [] -> (* Tuple destructuring *)
     let (tuple, loc) = r_split tuple in
     let%bind lst = bind_map_ne_list compile_parameter @@ npseq_to_ne_list tuple in
@@ -538,7 +543,7 @@ and compile_let_binding ?kwd_rec attributes binding =
     let exprs = List.flatten @@ List.Ne.to_list exprs in
     let var = Location.wrap ~loc @@ Var.fresh () in
     let body = e_variable var in
-    let aux i (var, ty_opt) = Z.add i Z.one, (var,ty_opt, attr, e_accessor body @@ [Access_tuple i]) in
+    let aux i (var, ty_opt) = Z.add i Z.one, (var,ty_opt, inline, e_accessor body @@ [Access_tuple i]) in
     return @@ (var,t_wildcard (), false, expr) :: (List.fold_map aux Z.zero @@ List.Ne.to_list lst) @ exprs
   | _ -> fail @@ unsupported_pattern_type @@ nseq_to_list binders
   in aux binders
@@ -586,14 +591,6 @@ and compile_parameter : CST.pattern -> _ result = fun pattern ->
     let%bind ((var, _), exprs) = compile_parameter pattern in
     return ~ty loc exprs @@ Location.unwrap var
   | _ -> fail @@ unsupported_pattern_type [pattern]
-
-
-and compile_attribute_declaration = fun lst ->
-  let lst = List.map (fst <@ r_split) lst in
-  let inline = List.filter (String.equal "inline") lst in
-  match inline with
-    [] -> false
-  | _  -> true
 
 let compile_declaration : CST.declaration -> _ = fun decl ->
   let return reg decl =

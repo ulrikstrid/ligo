@@ -32,7 +32,8 @@ open CST
 %on_error_reduce seq(core_expr)
 %on_error_reduce bin_op(add_expr_level,MINUS,mult_expr_level)
 %on_error_reduce bin_op(add_expr_level,PLUS,mult_expr_level)
-%on_error_reduce seq(Attr)
+%on_error_reduce seq(Attr1)
+%on_error_reduce seq(Attr2)
 %on_error_reduce constr_pattern
 %on_error_reduce tail
 %on_error_reduce nsepseq(sub_irrefutable,COMMA)
@@ -180,14 +181,10 @@ cartesian:
     let region = nsepseq_to_region type_expr_to_region value
     in TProd {region; value} }
 
-type_expr_attr:
-  type_expr nseq(Attr) {$1,$2}
-
 core_type:
   type_name           {    TVar $1 }
 | "_"                 {   TWild $1 }
 | par(type_expr)      {    TPar $1 }
-| par(type_expr_attr) {   TAttr $1 }
 | "<string>"          { TString $1 }
 | module_name "." type_name {
     let module_name = $1.value in
@@ -230,18 +227,19 @@ variant:
     in {region; value} }
 
 record_type:
-  "{" sep_or_term_list(field_decl,";") "}" {
+  "{" sep_or_term_list(field_decl,";") "}" seq("[@attr]") {
     let fields, terminator = $2 in
     let () = Utils.nsepseq_to_list fields |> Scoping.check_fields in
     let region = cover $1 $3
     and value = {
       compound = Some (Braces ($1,$3));
       ne_elements = fields;
-      terminator}
+      terminator;
+      attributes=$4}
     in TRecord {region; value} }
 
 field_decl:
-  field_name ":" type_expr seq(Attr) {
+  field_name ":" type_expr seq("[@@attr]") {
     let stop   = type_expr_to_region $3 in
     let region = cover $1.region stop
     and value  = {field_name=$1; colon=$2; field_type=$3; attributes=$4}
@@ -250,7 +248,7 @@ field_decl:
 (* Top-level definitions *)
 
 let_declaration:
-  "let" ioption("rec") let_binding seq(Attr) {
+  "let" ioption("rec") let_binding seq("[@@attr]") {
     let kwd_let    = $1 in
     let kwd_rec    = $2 in
     let attributes = $4 in
@@ -341,7 +339,11 @@ record_pattern:
   "{" sep_or_term_list(field_pattern,";") "}" {
     let ne_elements, terminator = $2 in
     let region = cover $1 $3 in
-    let value  = {compound = Some (Braces ($1,$3)); ne_elements; terminator}
+    let value  = {
+      compound = Some (Braces ($1,$3));
+      ne_elements;
+      terminator;
+      attributes=[]}
     in {region; value} }
 
 field_pattern:
@@ -485,7 +487,7 @@ case_clause(right_expr):
     {pattern=$1; arrow=$2; rhs=$3} }
 
 let_expr(right_expr):
-  "let" ioption("rec") let_binding seq(Attr) "in" right_expr  {
+  "let" ioption("rec") let_binding seq("[@@attr]") "in" right_expr  {
     let stop   = expr_to_region $6 in
     let region = cover $1 stop
     and value  = {kwd_let    = $1;
@@ -671,7 +673,8 @@ record_expr:
     let region = cover $1 $3 in
     let value  = {compound = Some (Braces ($1,$3));
                   ne_elements;
-                  terminator}
+                  terminator;
+                  attributes=[]}
     in {region; value} }
 
 update_record:
@@ -684,7 +687,8 @@ update_record:
       kwd_with = $3;
       updates  = {value = {compound = None;
                            ne_elements;
-                           terminator};
+                           terminator;
+                           attributes=[]};
                   region = cover $3 $5};
       rbrace   = $5}
     in {region; value} }
@@ -726,7 +730,7 @@ last_expr:
 | let_in_sequence       { $1 }
 
 let_in_sequence:
-  "let" ioption("rec") let_binding seq(Attr) "in" series  {
+  "let" ioption("rec") let_binding seq("[@@attr]") "in" series  {
     let seq      = $6 in
     let stop     = nsepseq_to_region expr_to_region seq in
     let region   = cover $1 stop in

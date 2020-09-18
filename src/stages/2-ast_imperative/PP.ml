@@ -32,7 +32,14 @@ let rec type_content : formatter -> type_expression -> unit =
   fun ppf te ->
   match te.type_content with
   | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (lmap_sep_d type_expression) m
-  | T_record m -> fprintf ppf "{%a}" (record_sep_t type_expression (const ";")) m
+
+  | T_record m ->
+     let r = record_sep_t type_expression (const ";") in
+     if m.layout then
+       fprintf ppf "({%a} [@@layout])" r m.fields
+     else
+       fprintf ppf "{%a}" r m.fields
+
   | T_tuple  t -> fprintf ppf "(%a)" (list_sep_d type_expression) t
   | T_arrow  a -> fprintf ppf "%a -> %a" type_expression a.type1 type_expression a.type2
   | T_variable tv -> type_variable ppf tv
@@ -87,7 +94,7 @@ and expression_content ppf (ec : expression_content) =
         type_expression fun_type
         expression_content (E_lambda lambda)
   | E_let_in { let_binder ; rhs ; let_result; inline } ->
-      fprintf ppf "let %a = %a%a in %a" binder let_binder expression rhs option_inline inline expression let_result
+      fprintf ppf "let %a = %a%a in %a" binder let_binder expression rhs inline_attribute inline expression let_result
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
   | E_ascription {anno_expr; type_annotation} ->
@@ -182,17 +189,11 @@ and matching_type ppf m = match m with
 and matching_variant_case_type ppf ((c,n),_a) =
   fprintf ppf "| %a %a" label c expression_variable n
 
-and option_mut ppf mut =
-  if mut then
-    fprintf ppf "[@mut]"
-  else
-    fprintf ppf ""
+and layout_attribute ppf layout =
+  if layout then fprintf ppf "[@layout]" else fprintf ppf ""
 
-and option_inline ppf inline =
-  if inline then
-    fprintf ppf "[@inline]"
-  else
-    fprintf ppf ""
+and inline_attribute ppf inline =
+  if inline then fprintf ppf "[@@inline]" else fprintf ppf ""
 
 let declaration ppf (d : declaration) =
   match d with
@@ -202,7 +203,7 @@ let declaration ppf (d : declaration) =
       fprintf ppf "const %a = %a%a"
         binder (name, ty_opt)
         expression expr
-        option_inline i
+        inline_attribute i
 
 let program ppf (p : program) =
   fprintf ppf "@[<v>%a@]"

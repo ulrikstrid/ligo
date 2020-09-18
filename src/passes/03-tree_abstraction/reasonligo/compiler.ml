@@ -45,7 +45,7 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
       return @@ (f.field_name.value,type_expr)
     in
     let%bind record = bind_map_list aux lst in
-    return @@ t_record_ez ~loc record
+    return @@ t_record_ez ~loc record ~layout:false (* TODO *)
   | TProd prod ->
     let (nsepseq, loc) = r_split prod in
     let lst = npseq_to_list nsepseq.inside in

@@ -81,14 +81,15 @@ let rec decompile_type_expr : dialect -> AST.type_expression -> _ result = fun d
     let%bind sum = bind_map_list aux sum in
     let%bind sum = list_to_nsepseq sum in
     return @@ CST.TSum (wrap sum)
-  | T_record record ->
-    let record = AST.LMap.to_kv_list record in
-    let aux (AST.Label c, AST.{associated_type;_}) =
-      let field_name = wrap c in
-      let colon = rg in
-      let%bind field_type = decompile_type_expr dialect associated_type in
-      let variant : CST.field_decl = {field_name;colon;field_type} in
-      ok @@ wrap variant
+  | T_record {fields; layout} ->
+     let () = ignore layout in (* TODO *)
+     let record = AST.LMap.to_kv_list fields in
+     let aux (AST.Label c, AST.{associated_type;_}) =
+       let field_name = wrap c in
+       let colon = rg in
+       let%bind field_type = decompile_type_expr dialect associated_type in
+       let variant : CST.field_decl = {field_name;colon;field_type} in
+       ok @@ wrap variant
     in
     let%bind record = bind_map_list aux record in
     let%bind record = list_to_nsepseq record in

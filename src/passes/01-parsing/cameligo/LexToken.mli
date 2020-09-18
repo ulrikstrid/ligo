@@ -42,7 +42,8 @@ type t =
 | String   of string Region.reg
 | Verbatim of string Region.reg
 | Bytes    of (string * Hex.t) Region.reg
-| Attr     of string Region.reg
+| Attr1    of string Region.reg
+| Attr2    of string Region.reg
 | Lang     of lexeme Region.reg Region.reg
 
 (* Symbols *)

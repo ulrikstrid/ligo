@@ -27,10 +27,12 @@ let t_variable_ez ?loc n  : type_expression = t_variable ?loc @@ Var.of_name n
 let t_wildcard ?loc ()    : type_expression = make_t ?loc @@ T_wildcard
 
 let t_record ?loc record  : type_expression = make_t ?loc @@ T_record record
-let t_record_ez ?loc lst =
-  let lst = List.mapi (fun i (k, v) -> (Label k, {associated_type=v;decl_pos=i})) lst in
-  let record = LMap.of_list lst in
-  t_record ?loc (record:row_element label_map)
+let t_record_ez ?loc lst ~layout =
+  let aux i (k, v, attr) =
+    (Label k, {associated_type=v; decl_pos=i; michelson_annotation=attr}) in
+  let lst = List.mapi aux lst in
+  let fields : row_element label_map = LMap.of_list lst
+  in t_record ?loc {fields; layout}
 
 let t_tuple ?loc lst    : type_expression = make_t ?loc @@ T_tuple lst
 let t_pair ?loc (a , b) : type_expression = t_tuple ?loc [a; b]
