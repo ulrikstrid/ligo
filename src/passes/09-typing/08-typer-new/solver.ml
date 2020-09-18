@@ -79,7 +79,7 @@ let select_and_propagate_one :
   let sel_propag = (select_and_propagate selector propagator) in
   let%bind (already_selected , private_storage, updates) =
     sel_propag already_selected private_storage new_constraint dbs in
-  let%bind new_constraints'', dbs = apply_updates updates dbs in
+  let%bind new_constraints'', dbs = apply_multiple_removals updates dbs in
   ok @@ (
     (Propagator_state { selector; propagator; printer ; already_selected ; private_storage }
      :: new_states),

@@ -113,7 +113,7 @@ let selector_by_tc : private_storage -> structured_dbs -> c_typeclass_simpl -> (
 
 let selector : (type_constraint_simpl , output_tc_fundep , private_storage) selector =
   fun type_constraint_simpl private_storage dbs ->
-  match type_constraint_simpl with
+  match type_constraint_simpl.sc with
     SC_Constructor c  -> selector_by_ctor private_storage dbs c
   | SC_Row r          -> ignore r; failwith "TODO: call selector_by_ctor private_storage dbs r"
   | SC_Alias       _  -> private_storage, [] (* TODO: ? *)

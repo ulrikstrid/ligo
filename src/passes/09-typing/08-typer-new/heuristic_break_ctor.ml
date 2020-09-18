@@ -10,7 +10,7 @@ open Typer_common.Errors
 let selector :  (type_constraint_simpl, output_break_ctor, unit) selector =
   (* find two rules with the shape x = k(var …) and x = k'(var' …) *)
   fun type_constraint_simpl () dbs ->
-  match type_constraint_simpl with
+  match type_constraint_simpl.sc with
     SC_Constructor c ->
     (* finding other constraints related to the same type variable and
        with the same sort of constraint (constructor vs. constructor)

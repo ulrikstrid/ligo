@@ -334,7 +334,7 @@ let c_row_simpl ppf ({reason_row_simpl; tv; r_tag; tv_map}) =
     row_tag r_tag
     (lmap_sep_d type_variable) @@ LMap.to_kv_list tv_map
 
-let type_constraint_simpl ppf (tc: type_constraint_simpl) = match tc with
+let type_constraint_simpl ppf (tc: type_constraint_simpl) = match tc.sc with
   | SC_Constructor c -> fprintf ppf "SC_Constructor (%a)" c_constructor_simpl c
   | SC_Alias       a -> fprintf ppf "SC_Alias (%a)" c_alias a
   | SC_Poly        p -> fprintf ppf "SC_Poly (%a)" c_poly_simpl p

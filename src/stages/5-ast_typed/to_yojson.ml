@@ -554,13 +554,17 @@ let c_row_simpl {reason_row_simpl; tv;r_tag;tv_map} =
     ("r_tag", row_tag r_tag);
     ("tv_map", label_map type_variable_to_yojson tv_map)
   ]
-let type_constraint_simpl = function
+let type_constraint_simpl_ = function
   | SC_Constructor c -> `List [`String "SC_constructor"; c_constructor_simpl c]
   | SC_Alias       c -> `List [`String "SC_alias"; c_alias c]
   | SC_Poly        c -> `List [`String "SC_Poly"; c_poly_simpl c]
   | SC_Typeclass   c -> `List [`String "SC_Typclass"; c_typeclass_simpl c]
   | SC_Row         c -> `List [`String "SC_Row"; c_row_simpl c]
 
+let type_constraint_simpl { sc } =
+  `Assoc [
+    ("sc", type_constraint_simpl_ sc)
+  ]
 
 let poly_unionfind f p =
   let lst = (UnionFind.Poly2.partitions p) in

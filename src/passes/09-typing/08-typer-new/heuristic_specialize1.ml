@@ -16,7 +16,7 @@ let selector : (type_constraint_simpl , output_specialize1 , unit) selector =
   (* TODO: do the same for two rules with the shape (a = forall b, d) and tc(a…) *)
   (* TODO: do the appropriate thing for two rules with the shape (a = forall b, d) and (a = forall b', d') *)
   fun type_constraint_simpl () dbs ->
-  match type_constraint_simpl with
+  match type_constraint_simpl.sc with
     SC_Constructor c                ->
     (* vice versa *)
     let other_cs = (Constraint_databases.get_constraints_related_to c.tv dbs).poly in

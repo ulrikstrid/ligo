@@ -468,7 +468,10 @@ and c_poly_simpl = {
   tv     : type_variable ;
   forall : p_forall      ;
 }
-and type_constraint_simpl =
+and type_constraint_simpl = {
+  sc: type_constraint_simpl_;
+}
+and type_constraint_simpl_ =
   | SC_Constructor of c_constructor_simpl             (* α = ctor(β, …) *)
   | SC_Alias       of c_alias                         (* α = β *)
   | SC_Poly        of c_poly_simpl                    (* α = forall β, δ where δ can be a more complex type *)

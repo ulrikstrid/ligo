@@ -266,10 +266,12 @@ let p_row_ez (p_row_tag : row_tag) (p_row_args : (string * type_value) list ) =
 
 let c_equation aval bval reason = { c = C_equation { aval ; bval }; reason }
 
-let reason_simpl : type_constraint_simpl -> string = function
+let reason_simpl_ : type_constraint_simpl_ -> string = function
   | SC_Constructor { reason_constr_simpl=reason; _ }
   | SC_Row { reason_row_simpl=reason; _ }
   | SC_Alias { reason_alias_simpl=reason; _ }
   | SC_Poly { reason_poly_simpl=reason; _ }
   | SC_Typeclass { reason_typeclass_simpl=reason; _ }
   -> reason
+
+let reason_simpl : type_constraint_simpl -> string = fun c -> reason_simpl_ c.sc
