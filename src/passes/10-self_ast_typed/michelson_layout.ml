@@ -4,7 +4,7 @@ open Trace
 
 let to_sorted_kv_list_l lmap =
   List.sort (fun (_,{decl_pos=a;_}) (_,{decl_pos=b;}) -> Int.compare a b) @@
-  LMap.to_kv_list lmap
+  LMap.to_kv_list_rev lmap
 
 let accessor (record:expression) (path:label) (t:type_expression) =
   { expression_content = E_record_accessor {record; path} ;

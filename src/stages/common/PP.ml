@@ -8,7 +8,7 @@ let label ppf (l:label) : unit =
 let list_sep_d x = list_sep x (tag " ,@ ")
 
 let record_sep_expr value sep ppf (m : 'a label_map) =
-  let lst = LMap.to_kv_list m in
+  let lst = LMap.to_kv_list_rev m in
   let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
   let new_pp ppf (k, v) = fprintf ppf "@[<h>%a = %a@]" label k value v in
   fprintf ppf "%a" (list_sep new_pp sep) lst

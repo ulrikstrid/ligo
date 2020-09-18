@@ -212,7 +212,7 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression, 
       let%bind m = compile_matching m loc in
       ok @@ m
     | I.E_record record ->
-      let record = I.LMap.to_kv_list record in
+      let record = I.LMap.to_kv_list_rev record in
       let%bind record =
         bind_map_list (fun (k,v) ->
           let%bind v = compile_expression v in

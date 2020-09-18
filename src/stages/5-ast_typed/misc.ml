@@ -24,7 +24,7 @@ module Free_variables = struct
       )
     | E_application {lamb;args} -> unions @@ List.map self [ lamb ; args ]
     | E_constructor {element;_} -> self element
-    | E_record m -> unions @@ List.map self @@ LMap.to_list m
+    | E_record m -> unions @@ List.map self @@ LMap.to_list_rev m
     | E_record_accessor {record;_} -> self record
     | E_record_update {record; update;_} -> union (self record) @@ self update
     | E_matching {matchee; cases;_} -> union (self matchee) (matching_expression b cases)
@@ -105,8 +105,8 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   )
   | T_constant _, _ -> None
   | T_sum sa, T_sum sb -> (
-      let sa' = LMap.to_kv_list sa in
-      let sb' = LMap.to_kv_list sb in
+      let sa' = LMap.to_kv_list_rev sa in
+      let sb' = LMap.to_kv_list_rev sb in
       let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
         assert_eq ka kb >>= fun _ ->
           assert_type_expression_eq (va, vb)
@@ -119,8 +119,8 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
        when Helpers.is_tuple_lmap ra.content <> Helpers.is_tuple_lmap rb.content -> None
   | T_record ra, T_record rb -> (
       let sort_lmap r' = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) r' in
-      let ra' = sort_lmap @@ LMap.to_kv_list ra.content in
-      let rb' = sort_lmap @@ LMap.to_kv_list rb.content in
+      let ra' = sort_lmap @@ LMap.to_kv_list_rev ra.content in
+      let rb' = sort_lmap @@ LMap.to_kv_list_rev rb.content in
       let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
         let Label ka = ka in
         let Label kb = kb in

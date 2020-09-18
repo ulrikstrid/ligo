@@ -16,11 +16,11 @@ let rec check_no_nested_bigmap is_in_bigmap e =
     let%bind _ = bind_map_list (check_no_nested_bigmap is_in_bigmap) arguments in
     ok ()
   | T_sum s -> 
-    let es = List.map (fun {associated_type;_} -> associated_type) (LMap.to_list s) in
+    let es = List.map (fun {associated_type;_} -> associated_type) (LMap.to_list_rev s) in
     let%bind _ = bind_map_list (fun l -> check_no_nested_bigmap is_in_bigmap l) es in
     ok ()
   | T_record {content=elm;_} -> 
-    let es = LMap.to_list elm in
+    let es = LMap.to_list_rev elm in
     let%bind _ = bind_map_list (fun {associated_type;_} -> check_no_nested_bigmap is_in_bigmap associated_type) es in
     ok ()
   | T_arrow { type1; type2 } -> 

@@ -329,7 +329,7 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> ('a 
       ok (res, return @@ E_matching {matchee=e';cases=cases'})
     )
   | E_record m -> (
-    let%bind (res, lst') = bind_fold_map_list (fun res (k,e) -> let%bind (res,e) = self res e in ok (res,(k,e))) init' (LMap.to_kv_list m) in
+    let%bind (res, lst') = bind_fold_map_list (fun res (k,e) -> let%bind (res,e) = self res e in ok (res,(k,e))) init' (LMap.to_kv_list_rev m) in
     let m' = LMap.of_list lst' in
     ok (res, return @@ E_record m')
   )

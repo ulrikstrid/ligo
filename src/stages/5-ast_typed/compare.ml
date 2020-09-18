@@ -11,8 +11,8 @@ let compare_tvmap_entry compare (tva, va) (tvb, vb) = cmp2 Var.compare tva tvb c
 let bool a b = (Stdlib.compare : bool -> bool -> int) a b
 let label (Label a) (Label b) = String.compare a b
 let label_map ~compare lma lmb =
-  let ra = LMap.to_kv_list lma in
-  let rb = LMap.to_kv_list lmb in
+  let ra = LMap.to_kv_list_rev lma in
+  let rb = LMap.to_kv_list_rev lmb in
   let aux (la,a) (lb,b) =
     cmp2 label la lb compare a b in
   List.compare ~compare:aux ra rb

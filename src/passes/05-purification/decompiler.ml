@@ -78,7 +78,7 @@ let rec decompile_expression : O.expression -> (I.expression, Errors.purificatio
     let%bind cases   = decompile_matching cases in
     return @@ I.E_matching {matchee;cases}
   | O.E_record record ->
-    let record = I.LMap.to_kv_list record in
+    let record = I.LMap.to_kv_list_rev record in
     let%bind record =
       bind_map_list (fun (k,v) ->
         let%bind v = decompile_expression v in

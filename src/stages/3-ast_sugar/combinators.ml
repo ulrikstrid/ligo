@@ -34,7 +34,7 @@ let t_record_ez ?loc lst =
   let m = LMap.of_list lst in
   make_t ?loc @@ T_record m
 let t_record ?loc m  : type_expression =
-  let lst = Map.String.to_kv_list m in
+  let lst = SMap.to_kv_list_rev m in
   t_record_ez ?loc lst
 
 let t_pair ?loc (a , b) : type_expression = t_record_ez ?loc [
@@ -47,7 +47,7 @@ let ez_t_sum ?loc (lst:((string * row_element) list)) : type_expression =
   let map = List.fold_left aux LMap.empty lst in
   make_t ?loc @@ T_sum map
 let t_sum ?loc m : type_expression =
-  let lst = Map.String.to_kv_list m in
+  let lst = SMap.to_kv_list_rev m in
   ez_t_sum ?loc lst
 
 let t_function ?loc type1 type2  : type_expression = make_t ?loc @@ T_arrow {type1; type2}
@@ -175,7 +175,7 @@ let extract_list : expression -> (expression list) option = fun e ->
 
 let extract_record : expression -> ((label * expression) list) option = fun e ->
   match e.expression_content with
-  | E_record lst -> Some (LMap.to_kv_list lst)
+  | E_record lst -> Some (LMap.to_kv_list_rev lst)
   | _ -> None
 
 let extract_map : expression -> ((expression * expression) list) option = fun e ->

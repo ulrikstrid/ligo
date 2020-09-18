@@ -28,8 +28,8 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   )
   | T_constant _, _ -> fail @@ different_types a b
   | T_sum sa, T_sum sb -> (
-      let sa' = LMap.to_kv_list sa in
-      let sb' = LMap.to_kv_list sb in
+      let sa' = LMap.to_kv_list_rev sa in
+      let sb' = LMap.to_kv_list_rev sb in
       let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
         let%bind _ =
           Assert.assert_true (corner_case "different keys in sum types")
@@ -50,8 +50,8 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   )
   | T_record ra, T_record rb -> (
       let sort_lmap r' = List.sort (fun (Label a,_) (Label b,_) -> String.compare a b) r' in
-      let ra' = sort_lmap @@ LMap.to_kv_list ra.content in
-      let rb' = sort_lmap @@ LMap.to_kv_list rb.content in
+      let ra' = sort_lmap @@ LMap.to_kv_list_rev ra.content in
+      let rb' = sort_lmap @@ LMap.to_kv_list_rev rb.content in
       let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
         let%bind _ =
           trace (fun _ -> different_types a b) @@

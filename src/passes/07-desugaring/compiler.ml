@@ -88,7 +88,7 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       let%bind matchee = compile_expression matchee in
       compile_matching sugar matchee cases
     | I.E_record record ->
-      let record = I.LMap.to_kv_list record in
+      let record = I.LMap.to_kv_list_rev record in
       let%bind record = 
         bind_map_list (fun (I.Label k,v) ->
           let%bind v =compile_expression v in

@@ -8,7 +8,7 @@ include Stage_common.PP
 let type_variable ppf (t : type_variable) : unit = fprintf ppf "%a" Var.pp t
 
   let record_sep value sep ppf (m : 'a label_map) =
-    let lst = LMap.to_kv_list m in
+    let lst = LMap.to_kv_list_rev m in
     let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
     let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
     fprintf ppf "%a" (list_sep new_pp sep) lst
@@ -21,7 +21,7 @@ let type_variable ppf (t : type_variable) : unit = fprintf ppf "%a" Var.pp t
     fprintf ppf "%a" (list_sep new_pp sep) lst
 
   let record_sep_expr value sep ppf (m : 'a label_map) =
-    let lst = LMap.to_kv_list m in
+    let lst = LMap.to_kv_list_rev m in
     let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
     let new_pp ppf (k, v) = fprintf ppf "@[<h>%a -> %a@]" label k value v in
     fprintf ppf "%a" (list_sep new_pp sep) lst

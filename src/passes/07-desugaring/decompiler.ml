@@ -90,7 +90,7 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
       let%bind cases   = decompile_matching cases in
       return @@ I.E_matching {matchee;cases}
     | O.E_record record ->
-      let record = O.LMap.to_kv_list record in
+      let record = O.LMap.to_kv_list_rev record in
       let%bind record = 
         bind_map_list (fun (O.Label k,v) ->
           let%bind v = decompile_expression v in

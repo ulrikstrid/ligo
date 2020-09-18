@@ -47,7 +47,7 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
   let return te = ok @@ te in
   match te.type_content with
     T_sum sum ->
-    let sum = AST.LMap.to_kv_list sum in
+    let sum = AST.LMap.to_kv_list_rev sum in
     let aux (AST.Label c, AST.{associated_type;_}) =
       let constr = wrap c in
       let%bind arg = decompile_type_expr associated_type in
@@ -59,7 +59,7 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
     let%bind sum = list_to_nsepseq sum in
     return @@ CST.TSum (wrap sum)
   | T_record record ->
-    let record = AST.LMap.to_kv_list record in
+    let record = AST.LMap.to_kv_list_rev record in
     let aux (AST.Label c, AST.{associated_type;_}) =
       let field_name = wrap c in
       let colon = rg in
@@ -218,7 +218,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     let cases : _ CST.case = {kwd_match=rg;expr;kwd_with=rg;lead_vbar=None;cases} in
     return_expr @@ CST.ECase (wrap cases)
   | E_record record  ->
-    let record = AST.LMap.to_kv_list record in
+    let record = AST.LMap.to_kv_list_rev record in
     let aux (AST.Label str, expr) =
       let field_name = wrap str in
       let%bind field_expr = decompile_expression expr in

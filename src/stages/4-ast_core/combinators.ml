@@ -33,7 +33,7 @@ let t_record_ez ?loc ?sugar lst =
   let m = LMap.of_list lst in
   make_t ?loc ?sugar @@ T_record m
 let t_record ?loc ?sugar m  : type_expression =
-  let lst = Map.String.to_kv_list m in
+  let lst = SMap.to_kv_list_rev m in
   t_record_ez ?loc ?sugar lst
 
 let t_pair  ?loc ?sugar (a , b) : type_expression = t_record_ez ?loc ?sugar [("0",a) ; ("1",b)]
@@ -44,7 +44,7 @@ let ez_t_sum ?loc ?sugar (lst:(string * row_element) list) : type_expression =
   let map = List.fold_left aux LMap.empty lst in
   make_t ?loc ?sugar @@ T_sum map
 let t_sum ?loc ?sugar m : type_expression =
-  let lst = Map.String.to_kv_list m in
+  let lst = SMap.to_kv_list_rev m in
   ez_t_sum ?loc ?sugar lst
 
 let t_function ?loc ?sugar type1 type2  : type_expression = make_t ?loc ?sugar @@ T_arrow {type1; type2}
@@ -127,7 +127,7 @@ let assert_e_record_accessor = fun t ->
 let get_e_pair = fun t ->
   match t with
   | E_record r -> ( 
-  let lst = LMap.to_kv_list r in
+  let lst = LMap.to_kv_list_rev r in
     match lst with 
     | [(Label "O",a);(Label "1",b)]
     | [(Label "1",b);(Label "0",a)] -> 
@@ -164,7 +164,7 @@ let get_e_ascription = fun a ->
 let extract_pair : expression -> (expression * expression) option = fun e ->
   match e.content with
   | E_record r -> ( 
-  let lst = LMap.to_kv_list r in
+  let lst = LMap.to_kv_list_rev r in
     match lst with 
     | [(Label "O",a);(Label "1",b)]
     | [(Label "1",b);(Label "0",a)] -> 
@@ -175,7 +175,7 @@ let extract_pair : expression -> (expression * expression) option = fun e ->
 
 let extract_record : expression -> (label * expression) list option = fun e ->
   match e.content with
-  | E_record lst -> Some (LMap.to_kv_list lst)
+  | E_record lst -> Some (LMap.to_kv_list_rev lst)
   | _ -> None
 
 let extract_map : expression -> (expression * expression) list option = fun e ->

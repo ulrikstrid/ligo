@@ -82,7 +82,7 @@ let scopes : with_types:bool -> string -> string -> ((def_map * scopes), Main_er
         let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,exp.location) exp in
         (i,all_defs,scopes)
       in
-      let (i,all_defs,scopes) = List.fold_left aux (i,all_defs,scopes) (Ast_core.LMap.to_list emap) in
+      let (i,all_defs,scopes) = List.fold_left aux (i,all_defs,scopes) (Ast_core.LMap.to_list_rev emap) in
       (i,all_defs,env,scopes)
     )
     | E_record_update { record ; update ; _ } -> (

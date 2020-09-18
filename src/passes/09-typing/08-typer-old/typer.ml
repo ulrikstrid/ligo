@@ -71,7 +71,7 @@ and type_match : (environment -> I.expression -> (O.expression , typer_error) re
       let%bind variant_cases' =
         trace_option (match_error ~expected:i ~actual:t loc)
         @@ Ast_typed.Combinators.get_t_sum t in
-      let variant_cases = List.map fst @@ O.LMap.to_kv_list variant_cases' in
+      let variant_cases = List.map fst @@ O.LMap.to_kv_list_rev variant_cases' in
       let match_cases = List.map (fun ({constructor;_}:I.match_variant) -> constructor) lst in
       let test_case = fun c ->
         Assert.assert_true (corner_case "match case") (List.mem c match_cases)
@@ -174,28 +174,28 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
           let%bind lmap = match c.type_content with
             | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap.content)) -> ok lmap
             | _ -> fail (michelson_comb_no_record t.location) in
-          let record = Typer_common.Michelson_type_converter.convert_pair_to_right_comb (Ast_typed.LMap.to_kv_list lmap.content) in
+          let record = Typer_common.Michelson_type_converter.convert_pair_to_right_comb (Ast_typed.LMap.to_kv_list_rev lmap.content) in
           return @@ record
       | TC_michelson_pair_left_comb ->
           let%bind c = bind (evaluate_type e) @@ get_unary arguments in
           let%bind lmap = match c.type_content with
             | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap.content)) -> ok lmap
             | _ -> fail (michelson_comb_no_record t.location) in
-          let record = Typer_common.Michelson_type_converter.convert_pair_to_left_comb (Ast_typed.LMap.to_kv_list lmap.content) in
+          let record = Typer_common.Michelson_type_converter.convert_pair_to_left_comb (Ast_typed.LMap.to_kv_list_rev lmap.content) in
           return @@ record
       | TC_michelson_or_right_comb ->
           let%bind c = bind (evaluate_type e) @@ get_unary arguments in
           let%bind cmap = match c.type_content with
             | T_sum cmap -> ok cmap
             | _ -> fail (michelson_comb_no_variant t.location) in
-          let pair = Typer_common.Michelson_type_converter.convert_variant_to_right_comb (Ast_typed.LMap.to_kv_list cmap) in
+          let pair = Typer_common.Michelson_type_converter.convert_variant_to_right_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
           return @@ pair
       | TC_michelson_or_left_comb ->
           let%bind c = bind (evaluate_type e) @@ get_unary arguments in
           let%bind cmap = match c.type_content with
             | T_sum cmap -> ok cmap
             | _ -> fail (michelson_comb_no_variant t.location) in
-          let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list cmap) in
+          let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
           return @@ pair
       | TC_michelson_comb ->
         let%bind c = bind (evaluate_type e) @@ get_unary arguments in
@@ -586,7 +586,7 @@ let rec untype_expression (e:O.expression) : (I.expression , typer_error) result
       let Label n = constructor in
       return (e_constructor n p')
   | E_record r ->
-    let r = O.LMap.to_kv_list r in
+    let r = O.LMap.to_kv_list_rev r in
     let%bind r' = bind_map_list (fun (Label k,e) -> let%bind e = untype_expression e in ok (I.Label k,e)) r in
     return (e_record @@ LMap.of_list r')
   | E_record_accessor {record; path} ->
