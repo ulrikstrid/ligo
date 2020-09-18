@@ -37,7 +37,6 @@ let rec type_content : formatter -> type_expression -> unit =
   | T_tuple  t -> fprintf ppf "(%a)" (list_sep_d type_expression) t
   | T_arrow  a -> fprintf ppf "%a -> %a" type_expression a.type1 type_expression a.type2
   | T_variable tv -> type_variable ppf tv
-  | T_wildcard -> fprintf ppf "_"
   | T_constant (tc, lst) -> fprintf ppf "%a%a" type_constant tc (list_sep_d_par type_expression) lst
 
 and type_expression ppf (te : type_expression) : unit =

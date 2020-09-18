@@ -105,8 +105,6 @@ let rec decompile_type_expr : dialect -> AST.type_expression -> _ result = fun d
   | T_variable var ->
     let var = decompile_variable var in
     return @@ CST.TVar (var)
-  | T_wildcard->
-    return @@ CST.TWild rg
   | T_constant (const, []) ->
     let const = Predefined.type_constant_to_string const in
     return @@ CST.TVar (wrap const)

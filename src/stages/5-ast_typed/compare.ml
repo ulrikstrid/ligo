@@ -35,8 +35,6 @@ let type_expression_tag ty_expr =
   | T_sum      _ -> 3
   | T_record   _ -> 4
   | T_arrow    _ -> 5
-  (* TODO: remove this when we remove the old typer *)
-  | T_wildcard   -> 6
 
 let rec type_expression a b =
   match a.type_content,b.type_content with
@@ -45,8 +43,8 @@ let rec type_expression a b =
   | T_sum      a, T_sum      b -> label_map ~compare:row a b
   | T_record   a, T_record   b -> record a b
   | T_arrow    a, T_arrow    b -> arrow a b
-  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_wildcard ),
-    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_wildcard ) ->
+  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ ),
+    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ ) ->
     Int.compare (type_expression_tag a) (type_expression_tag b)
 
 

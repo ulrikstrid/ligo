@@ -207,7 +207,6 @@ and type_content = function
   | T_arrow    t -> `List [ `String "t_arrow"; arrow t]
   | T_variable t -> `List [ `String "t_variable"; type_variable_to_yojson t]
   | T_constant t -> `List [ `String "t_constant"; type_operator t]
-  | T_wildcard   -> `List [ `String "t_wildcard"; `Null]
   | T_annoted  t -> `List [ `String "t_annoted"; `List [type_expression @@ fst t;`String (snd t)]]
 
 and row_element {associated_type; decl_pos} =

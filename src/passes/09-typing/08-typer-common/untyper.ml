@@ -34,7 +34,6 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
     )
      
   | O.T_variable name -> return @@ I.T_variable (Var.todo_cast name)
-  | O.T_wildcard -> return @@ I.T_wildcard
   | O.T_arrow {type1;type2} ->
      let%bind type1 = untype_type_expression type1 in
      let%bind type2 = untype_type_expression type2 in

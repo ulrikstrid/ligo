@@ -142,7 +142,6 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
   | T_variable (name) when Var.equal name Ast_typed.Constant.t_bool -> return (T_base TB_bool)
   | t when (compare t (t_bool ()).type_content) = 0-> return (T_base TB_bool)
   | T_variable (name) -> fail @@ no_type_variable @@ name
-  | T_wildcard        -> failwith "trying to compile wildcard"
   | T_constant {type_constant=TC_int      ; arguments=[]} -> return (T_base TB_int)
   | T_constant {type_constant=TC_nat      ; arguments=[]} -> return (T_base TB_nat)
   | T_constant {type_constant=TC_mutez    ; arguments=[]} -> return (T_base TB_mutez)

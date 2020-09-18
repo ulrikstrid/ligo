@@ -10,7 +10,6 @@ type type_content =
   | T_tuple  of type_expression list
   | T_arrow of arrow
   | T_variable of type_variable
-  | T_wildcard
   | T_constant of (type_constant * type_expression list)
   | T_annoted  of (type_expression * string)
 

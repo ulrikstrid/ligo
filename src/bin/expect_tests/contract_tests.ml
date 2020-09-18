@@ -1498,8 +1498,8 @@ let%expect_test _ =
   run_ligo_bad ["print-ast-typed"; bad_contract "funarg_tuple_wrong.religo"];
   [%expect {|
     ligo: error
-          in file "funarg_tuple_wrong.religo", line 1, characters 10-17
-          The tuple "b, c, d" does not match the type "(int, int)".
+
+          Invalid record field "2" in record "#1.2".
 
 
           If you're not sure how to fix this error, you can do one of the following:

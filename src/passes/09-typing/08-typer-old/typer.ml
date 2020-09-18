@@ -132,8 +132,6 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
         trace_option (unbound_type_variable e name t.location)
         @@ Environment.get_type_opt (Var.todo_cast name) e in
       ok tv
-  | T_wildcard ->
-    return @@ T_wildcard
   | T_constant {type_constant; arguments} ->
     let assert_constant lst = match lst with
       [] -> ok () 
@@ -523,7 +521,7 @@ and type_lambda e {
         bind_map_option (evaluate_type e) output_type
       in
       let binder = cast_var binder in
-      let input_type = Option.unopt ~default: (make_t T_wildcard None) input_type in
+      let%bind input_type = trace_option (missing_funarg_annotation binder) input_type in
       let e' = Environment.add_ez_binder binder input_type e in
       let%bind body = type_expression' ?tv_opt:output_type e' result in
       let output_type = body.type_expression in

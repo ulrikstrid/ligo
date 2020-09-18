@@ -48,8 +48,6 @@ and type_content =
   | T_record of field_label_map
   | T_arrow of arrow
   | T_variable of type_variable
-  (* TODO: remove this when we remove the old typer *)
-  | T_wildcard
   | T_constant of content_type_constant
 
 and arrow = {

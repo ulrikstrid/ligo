@@ -4,6 +4,7 @@ open Simple_utils.Display
 let stage = "typer"
 
 type typer_error = [
+  | `Typer_missing_funarg_annotation of Ast_typed.expression_variable
   | `Typer_michelson_comb_no_record of Location.t
   | `Typer_michelson_comb_no_variant of Location.t
   | `Typer_unbound_type_variable of Ast_typed.Environment.t * Ast_typed.type_variable * Location.t
@@ -68,6 +69,7 @@ type typer_error = [
   | `Typer_record_redefined_error of Location.t
 ]
 
+let missing_funarg_annotation v = `Typer_missing_funarg_annotation v
 let record_redefined_error (loc:Location.t) = `Typer_record_redefined_error loc
 let michelson_comb_no_record (loc:Location.t) = `Typer_michelson_comb_no_record loc
 let michelson_comb_no_variant (loc:Location.t) = `Typer_michelson_comb_no_variant loc
@@ -151,6 +153,11 @@ let rec error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
+    | `Typer_missing_funarg_annotation v ->
+      Format.fprintf f
+        "@[<hv>%a@.Missing a type annotation for argument \"%a\".@]"
+          Location.pp v.location
+          Ast_typed.PP.expression_variable v
     | `Typer_michelson_comb_no_record loc ->
       Format.fprintf f
         "@[<hv>%a@.Invalid usage of type \"michelson_pair\".@.The \"michelson_pair\" type expects a record type as argument. @]"
@@ -492,6 +499,13 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
+  | `Typer_missing_funarg_annotation v ->
+    let message = Format.asprintf "Missing type annotation for argument" in
+    let content = `Assoc [
+      ("value", Stage_common.Types.expression_variable_to_yojson v );
+      ("message", `String message );
+      ("location", Location.to_yojson v.location); ] in
+    json_error ~stage ~content
   | `Typer_michelson_comb_no_record loc ->
     let message = `String "michelson pair comb can only be used on a record type" in
     let loc = Format.asprintf "%a" Location.pp loc in

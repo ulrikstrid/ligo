@@ -207,5 +207,3 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
       return (E_literal (Literal_string n))
   | T_variable _ ->
     fail @@ corner_case ~loc:__LOC__ "trying to decompile at variable type"
-  | T_wildcard ->
-    fail @@ corner_case ~loc:__LOC__ "trying to decompile a wildcard type"
