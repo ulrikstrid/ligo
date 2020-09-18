@@ -6,21 +6,6 @@ let bad_contract basename =
   "../../test/contracts/negative/" ^ basename
 
 let%expect_test _ =
-  run_ligo_bad [ "interpret" ; "--init-file="^(bad_contract "michelson_converter_no_annotation.mligo") ; "l4"] ;
-  [%expect {|
-    ligo: error
-          in file "michelson_converter_no_annotation.mligo", line 4, characters 9-39
-          Incorrect argument provided to Layout.convert_to_(left|right)_comb.
-          The given argument must be annotated with the type of the value.
-
-
-          If you're not sure how to fix this error, you can do one of the following:
-
-          * Visit our documentation: https://ligolang.org/docs/intro/introduction
-          * Ask a question on our Discord: https://discord.gg/9rhYaEt
-          * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
-          * Check the changelog by running 'ligo changelog' |}] ;
-
   run_ligo_bad [ "interpret" ; "--init-file="^(bad_contract "michelson_converter_short_record.mligo") ; "l1"] ;
   [%expect {|
     ligo: error
