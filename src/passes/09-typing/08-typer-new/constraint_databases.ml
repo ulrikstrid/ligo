@@ -74,7 +74,7 @@ let rm_constraints_related_to : type_variable -> constraints -> structured_dbs -
               })
           dbs.grouped_by_variable
       with
-        exception CouldNotRemove -> fail `Typer_could_not_remove
+        exception CouldNotRemove -> fail Typer_common.Errors.could_not_remove
       | result -> ok result
     in
     let dbs = { dbs with grouped_by_variable } in

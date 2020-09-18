@@ -57,15 +57,15 @@ let select_and_propagate : 'old_input 'selector_output 'private_storage . ('old_
   in
   ok (already_selected , private_storage , List.flatten new_constraints)
 
-let apply_update : (type_constraint list * structured_dbs) -> update -> (type_constraint list * structured_dbs) result =
+let apply_removals : (type_constraint list * structured_dbs) -> update -> (type_constraint list * structured_dbs) result =
   fun (acc, dbs) update ->
   let%bind dbs' = bind_fold_list Normalizer.normalizers_remove dbs update.remove_constraints in
   (* TODO: don't append list like this, it's inefficient. *)
   ok @@ (acc @ update.add_constraints, dbs')
 
-let apply_updates : update list -> structured_dbs -> (type_constraint list * structured_dbs) result =
+let apply_multiple_removals : update list -> structured_dbs -> (type_constraint list * structured_dbs) result =
   fun updates dbs ->
-  bind_fold_list apply_update ([], dbs) updates
+  bind_fold_list apply_removals ([], dbs) updates
 
 let select_and_propagate_one :
   type_constraint_simpl selector_input ->

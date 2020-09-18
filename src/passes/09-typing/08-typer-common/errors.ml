@@ -154,6 +154,7 @@ let different_types a b = `Typer_different_types (a,b)
 let different_constant_tag_number_of_arguments loc opa opb lena lenb : typer_error = `Typer_constant_tag_number_of_arguments (loc, opa, opb, lena, lenb)
 let typeclass_not_a_rectangular_matrix = `Typer_typeclass_not_a_rectangular_matrix
 let internal_error (loc : string) (msg : string) : typer_error = `Typer_internal_error (loc, msg)
+let could_not_remove : typer_error = `Typer_could_not_remove
 
 let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> typer_error -> unit =
