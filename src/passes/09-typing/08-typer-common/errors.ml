@@ -508,7 +508,7 @@ The following forms of subtractions are possible:
         Expected these two n-ary type constructors to be the same, but they have different number\
         of arguments (both use the %s type constructor, but they have %d and %d arguments, respectively)@ \
         Thrown by compiler at %s@]"
-        (Format.asprintf "%a" Ast_typed.PP_generic.constant_tag opa) lena lenb loc
+        (Format.asprintf "%a" Ast_typed.PP.constant_tag opa) lena lenb loc
     | `Typer_typeclass_not_a_rectangular_matrix ->
       Format.fprintf f "@[<hv>internal error: typeclass is not represented as a rectangular matrix with one column per argument@]"
     | `Typer_internal_error (loc, msg) -> Format.fprintf f "internal error at %s: %s" loc msg
@@ -1162,9 +1162,9 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     let message = `String "different number of arguments to type constructors.\ 
       Expected these two n-ary type constructors to be the same, but they have different number\ 
       of arguments" in
-    let a = `String (Format.asprintf "%a" Ast_typed.PP_generic.constant_tag opa) in
-    let b = `String (Format.asprintf "%a" Ast_typed.PP_generic.constant_tag opb) in
-    let op = `String (Format.asprintf "%a" Ast_typed.PP_generic.constant_tag opa) in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.constant_tag opa) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.constant_tag opb) in
+    let op = `String (Format.asprintf "%a" Ast_typed.PP.constant_tag opa) in
     let len_a = `Int lena in
     let len_b = `Int lenb in
     let loc = `String loc in

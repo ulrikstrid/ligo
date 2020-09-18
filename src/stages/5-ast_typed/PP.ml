@@ -154,6 +154,11 @@ let typeVariableMap = fun f ppf tvmap   ->
       let aux ppf (k, v) =
         fprintf ppf "(Var %a, %a)" Var.pp k f v in
       fprintf ppf "typeVariableMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
+let identifierMap = fun f ppf idmap ->
+      let lst = List.sort (fun (ConstraintIdentifier a, _) (ConstraintIdentifier b, _) -> Int64.compare a b) (RedBlackTrees.PolyMap.bindings idmap) in
+      let aux ppf (ConstraintIdentifier k, v) =
+        fprintf ppf "(ConstraintIdentifier %Li, %a)" k f v in
+      fprintf ppf "typeVariableMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
 let poly_unionfind = (fun f ppf p   ->
   let lst = (UnionFind.Poly2.partitions p) in
   let aux1 ppf l = fprintf ppf "[@,@[<hv 2> (*%a*) %a @]@,]"
@@ -305,12 +310,14 @@ let c_poly_simpl ppf ({reason_poly_simpl; tv; forall}) =
     type_variable tv
     p_forall forall
 
-let c_typeclass_simpl ppf ({reason_typeclass_simpl; tc; args}) =
+let c_typeclass_simpl ppf ({id_typeclass_simpl = ConstraintIdentifier ci; reason_typeclass_simpl; tc; args}) =
   fprintf ppf "{@,@[<hv 2>
+              id_typeclass_simpl : %Li; @
               reason_typeclass_simpl : %s; @
               tc : %a ;@
               args : %a
               @]@,}"
+    ci
     reason_typeclass_simpl
     typeclass tc
     (list_sep_d type_variable) args
@@ -346,8 +353,9 @@ let constraints ppf ({constructor; poly; tc; row}: constraints) =
     (list_sep_d c_typeclass_simpl) tc
     (list_sep_d c_row_simpl) row
 
-let structured_dbs ppf ({all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort} : structured_dbs) =
-  fprintf ppf "{@,@[<hv 2> all_constraints : %a ;@ aliases : %a ;@ assignments : %a;@ gouped_by_variable : %a;@ cycle_detection_toposort : %a @]@,}"
+let structured_dbs ppf ({by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort} : structured_dbs) =
+  fprintf ppf "{@,@[<hv 2> by_constraint_identifier : %a ;@ all_constraints : %a ;@ aliases : %a ;@ assignments : %a;@ gouped_by_variable : %a;@ cycle_detection_toposort : %a @]@,}"
+    (identifierMap c_typeclass_simpl) by_constraint_identifier
     (list_sep_d type_constraint_simpl) all_constraints
     (poly_unionfind type_variable) aliases
     (typeVariableMap c_constructor_simpl) assignments
@@ -369,3 +377,14 @@ let output_specialize1 ppf ({poly;a_k_var}) =
               @]@,}"
     c_poly_simpl poly
     c_constructor_simpl a_k_var
+let output_tc_fundep ppd (t : output_tc_fundep) =
+  let lst = t.tc in
+  let a = t.c in fprintf ppd "{tc:{tcs:%a vars:%a};a:%a}" c_typeclass_simpl lst.tcs (list_sep_d (fun x _ ->fprintf x "," ) ) ( (fun x ->( List.map (fun y-> Format.asprintf "%a" Var.pp y) @@ ( RedBlackTrees.PolySet.elements x))) lst.vars) c_constructor_simpl a
+let updates_list _ppd =
+  failwith "this got removed, please add it back?"
+  (* function
+   *   SC_Constructor { reason_constr_simpl; tv; c_tag; tv_list } -> 
+   * | SC_Alias x ->  c_alias x
+   * | SC_Poly x -> c_poly_simpl x
+   * | SC_Typeclass x -> c_typeclass_simpl x
+   * | SC_Row x->c_row_simpl x *)

@@ -34,7 +34,7 @@ let normalizer_all_constraints_remove : type_constraint_simpl normalizer_rm =
   (* TODO: use a set, not a list. *)
   (* TODO: compare type constraints by their constrain id instead of by equality. *)
   (* TODO: proper failure if the element doesn't exist (don't catch the exception as the comparator may throw a similar exception on its own). *)
-  let all_constraints = List.remove_element ~compare:Ast_typed.Compare_generic.type_constraint_simpl constraint_to_rm dbs.all_constraints in
+  let all_constraints = List.remove_element ~compare:Ast_typed.Compare.type_constraint_simpl constraint_to_rm dbs.all_constraints in
   ok { dbs with all_constraints }
 
 (** Updates the dbs.grouped_by_variable field when new constraints are

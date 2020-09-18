@@ -40,7 +40,7 @@ let get_or_add_refined_typeclass : structured_dbs ->private_storage -> c_typecla
     let refined_typeclasses = PolyMap.add tc rtc refined_typeclasses in
     let aux' = function
         Some set -> Some (Set.add tc set)
-      | None -> Some (Set.add tc (Set.create ~cmp:Ast_typed.Compare_generic.constraint_identifier)) in
+      | None -> Some (Set.add tc (Set.create ~cmp:Ast_typed.Compare.constraint_identifier)) in
     let aux typeclasses_constrained_by tv =
       Map.update tv aux' typeclasses_constrained_by in
     let typeclasses_constrained_by =
@@ -127,7 +127,7 @@ let selector : (type_constraint_simpl , output_tc_fundep , private_storage) sele
 let restrict_one (c : c_constructor_simpl) (allowed : type_value) =
   match c, allowed.t with
   | { reason_constr_simpl=_; tv=_; c_tag; tv_list }, P_constant { p_ctor_tag; p_ctor_args } ->
-    if Ast_typed.Compare_generic.constant_tag c_tag p_ctor_tag = 0
+    if Ast_typed.Compare.constant_tag c_tag p_ctor_tag = 0
     then if List.compare_lengths tv_list p_ctor_args = 0
       then Some p_ctor_args
       else None (* case removed because type constructors are different *)
@@ -160,7 +160,7 @@ let restrict (({ reason_constr_simpl = _; tv = _; c_tag = _; tv_list } as c) : c
 let replace_var_and_possibilities_1 ((x : type_variable) , (possibilities_for_x : type_value list)) =
   let%bind tags_and_args = bind_map_list get_tag_and_args_of_constant possibilities_for_x in
   let tags_of_constructors, arguments_of_constructors = List.split @@ tags_and_args in
-  match all_equal Ast_typed.Compare_generic.constant_tag tags_of_constructors with
+  match all_equal Ast_typed.Compare.constant_tag tags_of_constructors with
   | Different ->
     (* The "changed" boolean return indicates whether any update was done.
        It is used to detect when the variable doesn't need any further cleanup. *)
@@ -190,7 +190,7 @@ let replace_var_and_possibilities_1 ((x : type_variable) , (possibilities_for_x 
         reason_typeclass_simpl = Format.asprintf
             "sub-part of a typeclass: expansion of the possible \
              arguments for the constructor associated with %a"
-            Ast_typed.PP_generic.type_variable x;
+            Ast_typed.PP.type_variable x;
         id_typeclass_simpl = ConstraintIdentifier (-1L) ; (* TODO: this and the reason_typeclass_simpl should simply not be used here *)
         args = fresh_vars ;
         tc = arguments_of_constructors ;
@@ -286,10 +286,10 @@ let heuristic =
     {
       selector ;
       propagator ;
-      printer = Ast_typed.PP_generic.output_tc_fundep ;
+      printer = Ast_typed.PP.output_tc_fundep ;
       comparator = Solver_should_be_generated.compare_output_tc_fundep ;
       initial_private_storage = {
-        refined_typeclasses = Map.create ~cmp:Ast_typed.Compare_generic.constraint_identifier ;
+        refined_typeclasses = Map.create ~cmp:Ast_typed.Compare.constraint_identifier ;
         typeclasses_constrained_by = Map.create ~cmp:Var.compare ;
       } ;
     }

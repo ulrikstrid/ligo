@@ -539,8 +539,9 @@ let c_poly_simpl {reason_poly_simpl; tv; forall} =
     ("forall", p_forall forall)
   ]
 
-let c_typeclass_simpl {reason_typeclass_simpl;tc;args} =
+let c_typeclass_simpl {id_typeclass_simpl=ConstraintIdentifier ci;reason_typeclass_simpl;tc;args} =
   `Assoc [
+    ("id_typeclass_simpl", `String (Format.sprintf "%Li" ci));
     ("reason_typeclass_simpl", `String reason_typeclass_simpl);
     ("tc", typeclass tc);
     ("args", list type_variable_to_yojson args)
@@ -574,6 +575,12 @@ let typeVariableMap f tvmap =
     `Assoc [ Format.asprintf "%a" Var.pp k , f v ] in
   let lst' = List.map aux lst in
   `Assoc ["typeVariableMap",  `List lst']
+let ciMap f tvmap =
+  let lst = List.sort (fun (ConstraintIdentifier a, _) (ConstraintIdentifier b, _) -> Int64.compare a b) (RedBlackTrees.PolyMap.bindings tvmap) in
+  let aux (ConstraintIdentifier k, v) =
+    `Assoc [ Format.asprintf "%Li" k , f v ] in
+  let lst' = List.map aux lst in
+  `Assoc ["typeVariableMap",  `List lst']
 
 let constraints {constructor; poly; tc; row} =
   `Assoc [
@@ -582,8 +589,9 @@ let constraints {constructor; poly; tc; row} =
     ("tc", list c_typeclass_simpl tc);
     ("row", list c_row_simpl row);
   ]
-let structured_dbs {all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort=_} =
+let structured_dbs {by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort=_} =
   `Assoc [
+    ("by_constraint_identifier", ciMap c_typeclass_simpl by_constraint_identifier); 
     ("all_constrants", list type_constraint_simpl all_constraints);
     ("aliases", unionfind aliases);
     ("assignments", typeVariableMap c_constructor_simpl assignments);

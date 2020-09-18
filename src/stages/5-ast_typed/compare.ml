@@ -36,7 +36,19 @@ let type_expression_tag ty_expr =
   | T_record   _ -> 4
   | T_arrow    _ -> 5
 
-let rec type_expression a b =
+let rec constant_tag (ct : constant_tag) =
+  match ct with
+    Ast_typed__.Types.C_arrow->1|Ast_typed__.Types.C_option->2|Ast_typed__.Types.C_map->3
+  |Ast_typed__.Types.C_big_map->4|Ast_typed__.Types.C_list->5|Ast_typed__.Types.C_set->6
+  |Ast_typed__.Types.C_unit->8|Ast_typed__.Types.C_string->7|Ast_typed__.Types.C_nat->9
+  |Ast_typed__.Types.C_mutez->10|Ast_typed__.Types.C_timestamp->11
+  |Ast_typed__.Types.C_int->12|Ast_typed__.Types.C_address->13
+  |Ast_typed__.Types.C_bytes->14|Ast_typed__.Types.C_key_hash->15
+  |Ast_typed__.Types.C_key->16|Ast_typed__.Types.C_signature->17
+  |Ast_typed__.Types.C_operation->18|Ast_typed__.Types.C_contract->19
+  |Ast_typed__.Types.C_chain_id -> 0
+
+and type_expression a b =
   match a.type_content,b.type_content with
     T_variable a, T_variable b -> type_variable a b
   | T_constant a, T_constant b -> type_operator a b
@@ -58,6 +70,11 @@ and type_operator {type_constant=tca;arguments=la} {type_constant=tcb;arguments=
     type_constant tca tcb
     (List.compare ~compare:type_expression) la lb
 
+and constraint_identifier (ConstraintIdentifier a) (ConstraintIdentifier b) =
+  cmp2
+    Int64.compare a b
+    (List.compare ~compare:type_expression) [] []
+
 and row {associated_type=aa;michelson_annotation=ma;decl_pos=da} {associated_type=ab;michelson_annotation=mb;decl_pos=db} =
   cmp3
     type_expression aa ab
@@ -68,6 +85,9 @@ and arrow {type1=ta1;type2=tb1} {type1=ta2;type2=tb2} =
   cmp2
     type_expression ta1 ta2
     type_expression tb1 tb2
+
+let constant_tag (ct : constant_tag) (ct2 : constant_tag) =
+  Int.compare (constant_tag ct ) (constant_tag ct2 ) 
 
 let binder (va,ta) (vb,tb) =
   cmp2 expression_variable va vb type_expression ta tb
@@ -283,3 +303,48 @@ let unionfind a b =
   let a = UnionFind.Poly2.partitions a in
   let b = UnionFind.Poly2.partitions b in
   List.compare ~compare:(List.compare ~compare:type_variable) a b
+
+let type_constraint_simpl _ppd =
+  failwith "this got removed, please add it back?"
+  (* function
+   *   SC_Constructor { reason_constr_simpl; tv; c_tag; tv_list } -> 
+   * | SC_Alias x ->  c_alias x
+   * | SC_Poly x -> c_poly_simpl x
+   * | SC_Typeclass x -> c_typeclass_simpl x
+   * | SC_Row x->c_row_simpl x *)
+
+
+let type_value_ _ppd =
+  failwith "this got removed, please add it back?"
+  (* function
+   *   SC_Constructor { reason_constr_simpl; tv; c_tag; tv_list } -> 
+   * | SC_Alias x ->  c_alias x
+   * | SC_Poly x -> c_poly_simpl x
+   * | SC_Typeclass x -> c_typeclass_simpl x
+   * | SC_Row x->c_row_simpl x *)
+
+let row_tag _ppd =
+  failwith "this got removed, please add it back?"
+  (* function
+   *   SC_Constructor { reason_constr_simpl; tv; c_tag; tv_list } -> 
+   * | SC_Alias x ->  c_alias x
+   * | SC_Poly x -> c_poly_simpl x
+   * | SC_Typeclass x -> c_typeclass_simpl x
+   * | SC_Row x->c_row_simpl x *)
+
+let deduce_and_clean_result _ppd =
+  failwith "this got removed, please add it back?"
+  (* function
+   *   SC_Constructor { reason_constr_simpl; tv; c_tag; tv_list } -> 
+   * | SC_Alias x ->  c_alias x
+   * | SC_Poly x -> c_poly_simpl x
+   * | SC_Typeclass x -> c_typeclass_simpl x
+   * | SC_Row x->c_row_simpl x *)
+let type_constraint_ _ppd =
+  failwith "this got removed, please add it back?"
+  (* function
+   *   SC_Constructor { reason_constr_simpl; tv; c_tag; tv_list } -> 
+   * | SC_Alias x ->  c_alias x
+   * | SC_Poly x -> c_poly_simpl x
+   * | SC_Typeclass x -> c_typeclass_simpl x
+   * | SC_Row x->c_row_simpl x *)

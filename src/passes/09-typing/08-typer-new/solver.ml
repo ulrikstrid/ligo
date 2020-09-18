@@ -28,7 +28,7 @@ let initial_state : _ typer_state = {
         assignments              = (Map.create ~cmp:Var.compare : (type_variable, c_constructor_simpl) Map.t);
         grouped_by_variable      = (Map.create ~cmp:Var.compare : (type_variable,         constraints) Map.t);
         cycle_detection_toposort = ();
-        by_constraint_identifier = (Map.create ~cmp:Ast_typed.Compare_generic.constraint_identifier : (constraint_identifier, c_typeclass_simpl) Map.t);
+        by_constraint_identifier = (Map.create ~cmp:Ast_typed.Compare.constraint_identifier : (constraint_identifier, c_typeclass_simpl) Map.t);
       } ;
     already_selected_and_propagators = List.map init_propagator_heuristic propagator_heuristics
   }
@@ -52,7 +52,7 @@ let select_and_propagate : 'old_input 'selector_output 'private_storage . ('old_
   let () =
     if Ast_typed.Debug.debug_new_typer && false then
       Format.printf "propagator produced\nupdates = %a\n"
-        Ast_typed.PP_helpers.updates_list
+        Ast_typed.PP.updates_list
         new_constraints
   in
   ok (already_selected , private_storage , List.flatten new_constraints)

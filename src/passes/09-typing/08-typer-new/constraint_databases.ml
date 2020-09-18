@@ -52,7 +52,7 @@ let rm_constraints_related_to : type_variable -> constraints -> structured_dbs -
               List.remove_element
                 ~compare:(fun a b ->
                     try
-                      Ast_typed.Compare_generic.constraint_identifier a.id_typeclass_simpl b.id_typeclass_simpl
+                      Ast_typed.Compare.constraint_identifier a.id_typeclass_simpl b.id_typeclass_simpl
                     with
                       Failure msg -> raise (NestedFailure msg))
                 ci
