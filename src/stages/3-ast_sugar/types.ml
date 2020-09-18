@@ -14,13 +14,17 @@ type type_content =
   | T_constant of (type_constant * type_expression list)
 
 and record_type = {
-  fields : row_element label_map;
-  layout : bool (* Attribute *)
+  fields     : row_element label_map;
+  attributes : attributes
   }
 
 and arrow = {type1: type_expression; type2: type_expression}
 
-and row_element = {associated_type : type_expression ; michelson_annotation : string option ; decl_pos : int}
+and row_element = {
+  associated_type : type_expression;
+  attributes      : attributes;
+  decl_pos        : int
+  }
 
 and type_expression = {type_content: type_content; location: Location.t}
 

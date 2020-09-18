@@ -14,11 +14,21 @@ let lmap_sep value sep ppf m =
 
 let lmap_sep_d x = lmap_sep x (tag " ,@ ")
 
+let attributes_2 (attr: string list) : string =
+  List.map (fun s -> "[@@" ^ s ^ "]") attr |> String.concat ""
+
+let attributes_1 (attr: string list) : string =
+  List.map (fun s -> "[@" ^ s ^ "]") attr |> String.concat ""
+
+
 let record_sep_t value sep ppf (m : 'a label_map) =
   let lst = LMap.to_kv_list m in
-  let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
-  let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
-  fprintf ppf "%a" (list_sep new_pp sep) lst
+  let lst =
+    List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
+  let new_pp ppf (k, {associated_type; attributes; _}) =
+    let attr = attributes_2 attributes in
+    fprintf ppf "@[<h>%a -> %a %s@]" label k value associated_type attr
+  in fprintf ppf "%a" (list_sep new_pp sep) lst
 
 let expression_variable ppf (ev : expression_variable) : unit =
   fprintf ppf "%a" Var.pp ev.wrap_content
@@ -35,10 +45,11 @@ let rec type_content : formatter -> type_expression -> unit =
 
   | T_record m ->
      let r = record_sep_t type_expression (const ";") in
-     if m.layout then
-       fprintf ppf "({%a} [@@layout])" r m.fields
-     else
+     if m.attributes = [] then
        fprintf ppf "{%a}" r m.fields
+     else
+       let attr : string = attributes_1 m.attributes in
+       fprintf ppf "({%a} %s)" r m.fields attr
 
   | T_tuple  t -> fprintf ppf "(%a)" (list_sep_d type_expression) t
   | T_arrow  a -> fprintf ppf "%a -> %a" type_expression a.type1 type_expression a.type2
@@ -188,9 +199,6 @@ and matching_type ppf m = match m with
 
 and matching_variant_case_type ppf ((c,n),_a) =
   fprintf ppf "| %a %a" label c expression_variable n
-
-and layout_attribute ppf layout =
-  if layout then fprintf ppf "[@layout]" else fprintf ppf ""
 
 and inline_attribute ppf inline =
   if inline then fprintf ppf "[@@inline]" else fprintf ppf ""

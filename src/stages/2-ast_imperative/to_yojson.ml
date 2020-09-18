@@ -199,13 +199,15 @@ let rec type_expression {type_content=tc;location} =
     ("location", Location.to_yojson location);
   ]
 
+and attributes attr =
+  let list = List.map (fun string -> `String string) attr
+  in `Assoc [("attributes", `List list)]
+
 and type_content = function
   | T_sum      t -> `List [ `String "t_sum"; label_map row_element t ]
-  | T_record   t -> let fields = [ `String "t_record";
-                                  label_map row_element t.fields] in
-                    if t.layout then
-                      `List (fields @ [`String "[@layout]"])
-                    else `List fields
+  | T_record   t -> `List [ `String "t_record";
+                            label_map row_element t.fields;
+                            attributes t.attributes]
   | T_tuple    t -> `List [ `String "t_tuple";  list type_expression t]
   | T_arrow    t -> `List [ `String "t_arrow"; arrow t]
   | T_variable t -> `List [ `String "t_variable"; type_variable_to_yojson t]
@@ -213,11 +215,12 @@ and type_content = function
   | T_wildcard   -> `List [ `String "t_wildcard"; `Null]
   | T_annoted  t -> `List [ `String "t_annoted"; `List [type_expression @@ fst t;`String (snd t)]]
 
-and row_element {associated_type; decl_pos} =
+and row_element {associated_type; attributes=attr; decl_pos} =
   `Assoc [
-    ("associated_type", type_expression associated_type);
-    ("decl_pos", `Int decl_pos);
-  ]
+     ("associated_type", type_expression associated_type);
+     ("attributes", attributes attr);
+     ("decl_pos", `Int decl_pos);
+   ]
 
 and arrow {type1;type2} =
   `Assoc [

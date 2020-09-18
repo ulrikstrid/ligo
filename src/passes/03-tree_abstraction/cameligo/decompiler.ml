@@ -15,16 +15,13 @@ let decompile_attribute_inline = function
     true -> [wrap "inline"]
   | false -> []
 
-let decompile_attribute_layout = function
-    true -> [wrap "layout"]
-  | false -> []
-
 let list_to_sepseq lst =
   match lst with
     [] -> None
   |  hd :: lst ->
       let aux e = (ghost, e) in
       Some (hd, List.map aux lst)
+
 let list_to_nsepseq lst =
   match list_to_sepseq lst with
     Some s -> ok @@ s
@@ -79,20 +76,20 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
     let%bind sum = bind_map_list aux sum in
     let%bind sum = list_to_nsepseq sum in
     return @@ CST.TSum (wrap sum)
-  | T_record {fields; layout} ->
+  | T_record {fields; attributes} ->
      let record = AST.LMap.to_kv_list fields in
-     let aux (AST.Label c, AST.{associated_type;_}) =
+     let aux (AST.Label c, AST.{associated_type; attributes; _}) =
       let field_name = wrap c in
       let colon = ghost in
       let%bind field_type = decompile_type_expr associated_type in
-      let variant : CST.field_decl =
-        {field_name;colon;field_type; attributes=[] (* TODO *)} in
-      ok @@ wrap variant
+      let attributes = List.map Utils.wrap_ghost attributes in
+      let field : CST.field_decl =
+        {field_name; colon; field_type; attributes} in
+      ok @@ wrap field
     in
     let%bind record = bind_map_list aux record in
     let%bind record = list_to_nsepseq record in
-    let attr = decompile_attribute_layout layout in
-    return @@ CST.TRecord (wrap @@ ne_inject braces record ~attr)
+    return @@ CST.TRecord (wrap @@ ne_inject braces record ~attr:attributes)
   | T_tuple tuple ->
     let%bind tuple = bind_map_list decompile_type_expr tuple in
     let%bind tuple = list_to_nsepseq @@ tuple in

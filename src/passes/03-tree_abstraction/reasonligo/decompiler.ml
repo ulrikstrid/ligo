@@ -14,10 +14,6 @@ let decompile_attribute_inline = function
     true -> [wrap "inline"]
   | false -> []
 
-let decompile_attribute_layout = function
-    true -> [wrap "layout"]
-  | false -> []
-
 let list_to_sepseq lst =
   match lst with
     [] -> None
@@ -67,8 +63,8 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
     let%bind sum = bind_map_list aux sum in
     let%bind sum = list_to_nsepseq sum in
     return @@ CST.TSum (wrap sum)
-  | T_record {fields; layout} ->
-     let () = ignore layout in (* TODO *)
+  | T_record {fields; attributes} ->
+     let () = ignore attributes in (* TODO *)
      let record = AST.LMap.to_kv_list fields in
      let aux (AST.Label c, AST.{associated_type;_}) =
        let field_name = wrap c in

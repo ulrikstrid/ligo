@@ -187,6 +187,10 @@ let rec type_expression {type_content=tc;location} =
     ("location", Location.to_yojson location);
   ]
 
+and attributes attr =
+  let list = List.map (fun string -> `String string) attr
+  in `Assoc [("attributes", `List list)]
+
 and type_content = function
   | T_sum      t -> `List [ `String "t_sum"; label_map row_element t]
   | T_record   t -> `List [ `String "t_record"; label_map row_element t.fields]
@@ -196,10 +200,11 @@ and type_content = function
   | T_constant t -> `List [ `String "t_constant"; type_operator t]
   | T_wildcard   -> `List [ `String "t_wildcard"; `Null]
 
-and row_element {associated_type; michelson_annotation; decl_pos} =
+and row_element {associated_type; attributes=attr; decl_pos} =
+  let attributes =
   `Assoc [
     ("associated_type", type_expression associated_type);
-    ("michelson_annotation", option (fun s -> `String s) michelson_annotation);
+    ("attributes", attributes attr);
     ("decl_pos", `Int decl_pos);
   ]
 
@@ -394,7 +399,7 @@ let declaration_constant (binder,ty,inline,expr) =
     ("binder",expression_variable_to_yojson binder);
     ("type_expression", type_expression ty);
     ("expr", expression expr);
-    ("attribute", `Bool inline);
+    ("inline", `Bool inline);
   ]
 let declaration = function
   | Declaration_type     dt -> `List [ `String "Declaration_type"; declaration_type dt]

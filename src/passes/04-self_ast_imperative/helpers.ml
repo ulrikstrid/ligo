@@ -276,9 +276,9 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
   | T_sum temap ->
     let%bind temap' = bind_map_lmap_t self temap in
     return @@ (T_sum temap')
-  | T_record {fields; layout} ->
+  | T_record {fields; attributes} ->
     let%bind fields = bind_map_lmap_t self fields in
-    return @@ (T_record {fields; layout})
+    return @@ (T_record {fields; attributes})
   | T_tuple telst ->
     let%bind telst' = bind_map_list self telst in
     return @@ (T_tuple telst')
