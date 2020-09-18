@@ -1181,11 +1181,6 @@ and pp_type_expr state = function
     pp_loc_node   state "TApp" region;
     pp_ident      (state#pad 2 0) name;
     pp_type_tuple (state#pad 2 1) tuple
-| TAttr {value={inside; _}; region} ->
-    let type_expr, attributes = inside in
-    pp_loc_node   state "TAttr" region;
-    pp_type_expr  (state#pad 2 0) type_expr;
-    pp_attributes (state#pad 2 1) (Utils.nseq_to_list attributes)
 | TFun {value; region} ->
     pp_loc_node state "TFun" region;
     let apply len rank =
@@ -1195,6 +1190,11 @@ and pp_type_expr state = function
 | TPar {value={inside;_}; region} ->
     pp_loc_node  state "TPar" region;
     pp_type_expr (state#pad 1 0) inside
+| TAttr {value={inside; _}; region} ->
+    let type_expr, attributes = inside in
+    pp_loc_node   state "TAttr" region;
+    pp_type_expr  (state#pad 2 0) type_expr;
+    pp_attributes (state#pad 2 1) (Utils.nseq_to_list attributes)
 | TVar v ->
     pp_node  state "TVar";
     pp_ident (state#pad 1 0) v

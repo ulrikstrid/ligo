@@ -185,7 +185,7 @@ type_expr_attr:
 
 core_type:
   type_name           {    TVar $1 }
-| "_"                 {  TWild  $1 }
+| "_"                 {   TWild $1 }
 | par(type_expr)      {    TPar $1 }
 | par(type_expr_attr) {   TAttr $1 }
 | "<string>"          { TString $1 }
