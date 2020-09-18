@@ -470,6 +470,7 @@ and c_poly_simpl = {
 }
 and type_constraint_simpl = {
   sc: type_constraint_simpl_;
+  is_mandatory_constraint: bool; (* If false, the constraint can be deleted without compromising the correctness of the typechecker: it might be a constraint used for bookkeeping which helps with inference, but its removal does not risk causing an ill-typed program to be accepted. If true, this constraint might (or might not) be necessary for correctness. It is always safe to use "true" for correctness. Use "false" only when being sure it is safe to remove that constraint. *)
 }
 and type_constraint_simpl_ =
   | SC_Constructor of c_constructor_simpl             (* α = ctor(β, …) *)
