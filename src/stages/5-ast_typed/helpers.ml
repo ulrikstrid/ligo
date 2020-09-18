@@ -114,7 +114,7 @@ let kv_list_of_t_record_or_tuple ?(layout = L_tree) (m: _ LMap.t) =
   let lst =
     if (is_tuple_lmap m)
     then tuple_of_record m
-    else LMap.to_kv_list_rev m
+    else LMap.to_kv_list m
   in
   match layout with
   | L_tree -> lst
@@ -127,12 +127,12 @@ let kv_list_of_record_or_tuple ?(layout=L_tree) record_t_content record =
   let exps =
     if (is_tuple_lmap record)
     then tuple_of_record record
-    else LMap.to_kv_list_rev record
+    else LMap.to_kv_list record
   in
   match layout with
   | L_tree -> List.map snd exps
   | L_comb -> (
-    let types = LMap.to_kv_list_rev record_t_content in
+    let types = LMap.to_kv_list record_t_content in
     let te = List.map (fun ((label_t,t),(label_e,e)) ->
       assert (label_t = label_e) ; (*TODO TEST*)
       (t,e)) (List.combine types exps) in
