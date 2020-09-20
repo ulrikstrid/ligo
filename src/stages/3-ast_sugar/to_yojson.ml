@@ -201,7 +201,6 @@ and type_content = function
   | T_wildcard   -> `List [ `String "t_wildcard"; `Null]
 
 and row_element {associated_type; attributes=attr; decl_pos} =
-  let attributes =
   `Assoc [
     ("associated_type", type_expression associated_type);
     ("attributes", attributes attr);

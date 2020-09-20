@@ -32,8 +32,8 @@ let t_variable ?loc n     : type_expression = make_t ?loc @@ T_variable (Var.of_
 let t_wildcard ?loc ()    : type_expression = make_t ?loc @@ T_wildcard
 let t_record_ez ?loc lst =
   let lst = List.map (fun (k, v) -> (Label k, v)) lst in
-  let m = LMap.of_list lst in
-  make_t ?loc @@ T_record m
+  let fields = LMap.of_list lst in
+  make_t ?loc @@ T_record {fields ; attributes=[]}
 let t_record ?loc m  : type_expression =
   let lst = Map.String.to_kv_list m in
   t_record_ez ?loc lst

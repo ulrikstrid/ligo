@@ -42,12 +42,13 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
     return @@ t_sum_ez ~loc sum
   | TRecord record ->
      let injection, loc = r_split record in
-     let attributes = injection.attributes in
+     let attributes = List.map (fun (el: _ CST.reg) -> el.value) injection.attributes in
      let lst = npseq_to_list injection.ne_elements in
      let aux (field : CST.field_decl CST.reg) =
        let (f, _) = r_split field in
        let%bind type_expr = compile_type_expression f.field_type in
-       return @@ (f.field_name.value,type_expr,f.attributes) in
+       let attributes = List.map (fun (el: _ CST.reg) -> el.value) f.attributes in
+       return @@ (f.field_name.value,type_expr,attributes) in
      let%bind record = bind_map_list aux lst in
      return @@ t_record_ez ~loc record ~attr:attributes
   | TProd prod ->

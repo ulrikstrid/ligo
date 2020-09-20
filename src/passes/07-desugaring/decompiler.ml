@@ -18,21 +18,23 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, des
           Stage_common.Helpers.bind_map_lmap (fun v ->
             let {associated_type;michelson_annotation;decl_pos} : O.row_element = v in
             let%bind associated_type = decompile_type_expression associated_type in
-            let v' : I.row_element = {associated_type;michelson_annotation;decl_pos} in
+            let attributes = match michelson_annotation with | Some a -> [a] | None -> [] in
+            let v' : I.row_element = {associated_type;attributes;decl_pos} in
             ok @@ v'
           ) sum
         in
         return @@ I.T_sum sum
-      | O.T_record record -> 
-        let%bind record = 
+      | O.T_record fields -> 
+        let%bind fields = 
           Stage_common.Helpers.bind_map_lmap (fun v ->
             let {associated_type;michelson_annotation;decl_pos} : O.row_element = v in
             let%bind associated_type = decompile_type_expression associated_type in
-            let v' : I.row_element = {associated_type ; michelson_annotation=michelson_annotation ; decl_pos} in
+            let attributes = match michelson_annotation with | Some a -> [a] | None -> [] in
+            let v' : I.row_element = {associated_type ; attributes ; decl_pos} in
             ok @@ v'
-          ) record
+          ) fields
         in
-        return @@ I.T_record record
+        return @@ I.T_record { fields ; attributes = [] }
       | O.T_arrow {type1;type2} ->
         let%bind type1 = decompile_type_expression type1 in
         let%bind type2 = decompile_type_expression type2 in

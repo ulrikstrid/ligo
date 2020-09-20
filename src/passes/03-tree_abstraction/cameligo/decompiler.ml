@@ -82,13 +82,14 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
       let field_name = wrap c in
       let colon = ghost in
       let%bind field_type = decompile_type_expr associated_type in
-      let attributes = List.map Utils.wrap_ghost attributes in
+      let attributes = List.map wrap attributes in
       let field : CST.field_decl =
         {field_name; colon; field_type; attributes} in
       ok @@ wrap field
     in
     let%bind record = bind_map_list aux record in
     let%bind record = list_to_nsepseq record in
+    let attributes = List.map (fun el -> wrap el) attributes in
     return @@ CST.TRecord (wrap @@ ne_inject braces record ~attr:attributes)
   | T_tuple tuple ->
     let%bind tuple = bind_map_list decompile_type_expr tuple in
