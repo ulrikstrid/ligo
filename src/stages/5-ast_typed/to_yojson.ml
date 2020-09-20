@@ -580,6 +580,23 @@ let ciMap f tvmap =
     `Assoc [ Format.asprintf "%Li" k , f v ] in
   let lst' = List.map aux lst in
   `Assoc ["typeVariableMap",  `List lst']
+let constraint_identifier_set s =
+  let lst = List.sort (fun (ConstraintIdentifier a) (ConstraintIdentifier b) -> Int64.compare a b) (RedBlackTrees.PolySet.elements s) in
+  let aux (ConstraintIdentifier ci) =
+    `String (Format.asprintf "ConstraintIdentifier %Li" ci) in
+  let lst' = List.map aux lst in
+  `Assoc ["constraintIdentifierSet",  `List lst']
+let type_variable_set s =
+  let lst = List.sort Var.compare (RedBlackTrees.PolySet.elements s) in
+  let aux v =
+    `String (Format.asprintf "%a" Var.pp v) in
+  let lst' = List.map aux lst in
+  `Assoc ["typeVariableSet",  `List lst']
+let refined_typeclass ({ tcs; vars } : refined_typeclass) =
+  `Assoc [
+    "tcs", c_typeclass_simpl tcs;
+    "vars", type_variable_set vars
+  ]
 
 let constraints {constructor; poly; tc; row} =
   `Assoc [
@@ -588,8 +605,10 @@ let constraints {constructor; poly; tc; row} =
     ("tc", list c_typeclass_simpl tc);
     ("row", list c_row_simpl row);
   ]
-let structured_dbs {by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort=_} =
+let structured_dbs {refined_typeclasses;typeclasses_constrained_by;by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort=_} =
   `Assoc [
+    ("refined_typeclasses", ciMap refined_typeclass refined_typeclasses); 
+    ("typeclasses_constrained_by", typeVariableMap constraint_identifier_set typeclasses_constrained_by);
     ("by_constraint_identifier", ciMap c_typeclass_simpl by_constraint_identifier); 
     ("all_constrants", list type_constraint_simpl all_constraints);
     ("aliases", unionfind aliases);

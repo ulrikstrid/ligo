@@ -19,16 +19,17 @@ let tc_to_constraint_identifier : c_typeclass_simpl -> constraint_identifier =
   fun tc -> tc.id_typeclass_simpl
 
 type 'v constraint_identifierMap = (constraint_identifier, 'v) RedBlackTrees.PolyMap.t
-type refined_typeclass_constraint_identifierMap = refined_typeclass constraint_identifierMap
-type constraint_identifier_set = constraint_identifier Set.t
-type constraint_identifier_set_map = constraint_identifier_set typeVariableMap
+(* type refined_typeclass_constraint_identifierMap = refined_typeclass constraint_identifierMap *)
+(* type constraint_identifier_set = constraint_identifier Set.t
+ * type constraint_identifier_set_map = constraint_identifier_set typeVariableMap *)
 
-type private_storage = {
-  (* This rule maintains in its private storage a representation of
-     the latest version of each typeclass *)
-  refined_typeclasses: refined_typeclass_constraint_identifierMap ;
-  typeclasses_constrained_by : constraint_identifier_set_map ;
-}
+type private_storage = unit
+(* type private_storage = {
+ *   (\* This rule maintains in its private storage a representation of
+ *      the latest version of each typeclass *\)
+ *   refined_typeclasses: refined_typeclass_constraint_identifierMap ;
+ *   typeclasses_constrained_by : constraint_identifier_set_map ;
+ * } *)
 
 let constraint_identifier_to_tc (dbs : structured_dbs) (ci : constraint_identifier) =
   (* TODO: this can fail: catch the exception and throw an error *)

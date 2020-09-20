@@ -31,13 +31,13 @@ open Heuristic_tc_fundep_utils
 
 (* gets the refined_typeclass from for tc the private_storage (and
    stores a copy of the tc if there was no existing refined_typeclass) *)
-let get_or_add_refined_typeclass : structured_dbs ->private_storage -> c_typeclass_simpl -> (private_storage * refined_typeclass) =
-  fun dbs { refined_typeclasses; typeclasses_constrained_by } tcs ->
+let get_or_add_refined_typeclass : structured_dbs -> private_storage -> c_typeclass_simpl -> (private_storage * refined_typeclass) =
+  fun dbs () tcs ->
   let tc = tc_to_constraint_identifier tcs in
-  match PolyMap.find_opt tc refined_typeclasses with
+  match PolyMap.find_opt tc dbs.refined_typeclasses with
     None ->
     let rtc = make_refined_typeclass @@ constraint_identifier_to_tc dbs tc in
-    let refined_typeclasses = PolyMap.add tc rtc refined_typeclasses in
+    let refined_typeclasses = PolyMap.add tc rtc dbs.refined_typeclasses in
     let aux' = function
         Some set -> Some (Set.add tc set)
       | None -> Some (Set.add tc (Set.create ~cmp:Ast_typed.Compare.constraint_identifier)) in
@@ -46,11 +46,11 @@ let get_or_add_refined_typeclass : structured_dbs ->private_storage -> c_typecla
     let typeclasses_constrained_by =
       List.fold_left
         aux
-        typeclasses_constrained_by
+        dbs.typeclasses_constrained_by
         (List.rev (constraint_identifier_to_tc dbs tc).args) in
-    { refined_typeclasses; typeclasses_constrained_by }, rtc
+    (), (* { refined_typeclasses; typeclasses_constrained_by }, TODO2 *) rtc
   | Some rtc ->
-    { refined_typeclasses; typeclasses_constrained_by }, rtc
+    (), (* { refined_typeclasses; typeclasses_constrained_by }, TODO2 *) rtc
 
 let is_variable_constrained_by_typeclass : structured_dbs -> type_variable -> refined_typeclass -> bool =
   fun dbs var refined_typeclass ->

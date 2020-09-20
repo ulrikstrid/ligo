@@ -154,6 +154,17 @@ let typeVariableMap = fun f ppf tvmap   ->
       let aux ppf (k, v) =
         fprintf ppf "(Var %a, %a)" Var.pp k f v in
       fprintf ppf "typeVariableMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
+let typeVariableSet = fun ppf s   ->
+      let lst = List.sort (fun (a) (b) -> Var.compare a b) (RedBlackTrees.PolySet.elements s) in
+      let aux ppf (k) =
+        fprintf ppf "(Var %a)" Var.pp k in
+      fprintf ppf "typeVariableSet [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
+let constraint_identifier_set = fun ppf s   ->
+      let lst = List.sort (fun (ConstraintIdentifier a) (ConstraintIdentifier b) -> Int64.compare a b) (RedBlackTrees.PolySet.elements s) in
+      let aux ppf (ConstraintIdentifier k) =
+        fprintf ppf "(ConstraintIdentifier %Li)" k in
+      fprintf ppf "constraint_identifier_set [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
+        
 let identifierMap = fun f ppf idmap ->
       let lst = List.sort (fun (ConstraintIdentifier a, _) (ConstraintIdentifier b, _) -> Int64.compare a b) (RedBlackTrees.PolyMap.bindings idmap) in
       let aux ppf (ConstraintIdentifier k, v) =
@@ -352,9 +363,16 @@ let constraints ppf ({constructor; poly; tc; row}: constraints) =
     (list_sep_d c_poly_simpl) poly
     (list_sep_d c_typeclass_simpl) tc
     (list_sep_d c_row_simpl) row
+let refined_typeclass ppf ({ tcs; vars } : refined_typeclass) =
+  fprintf ppf "{@,@[<hv 2> tcs : %a ;@ vars : %a @]@,}"
+    c_typeclass_simpl tcs
+    typeVariableSet vars
 
-let structured_dbs ppf ({by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort} : structured_dbs) =
-  fprintf ppf "{@,@[<hv 2> by_constraint_identifier : %a ;@ all_constraints : %a ;@ aliases : %a ;@ assignments : %a;@ gouped_by_variable : %a;@ cycle_detection_toposort : %a @]@,}"
+
+let structured_dbs ppf ({refined_typeclasses;typeclasses_constrained_by;by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort} : structured_dbs) =
+  fprintf ppf "{@,@[<hv 2> refined_typeclasses : %a ;@ typeclasses_constrained_by : %a ;@ by_constraint_identifier : %a ;@ all_constraints : %a ;@ aliases : %a ;@ assignments : %a;@ gouped_by_variable : %a;@ cycle_detection_toposort : %a @]@,}"
+    (identifierMap refined_typeclass) refined_typeclasses
+    (typeVariableMap constraint_identifier_set) typeclasses_constrained_by
     (identifierMap c_typeclass_simpl) by_constraint_identifier
     (list_sep_d type_constraint_simpl) all_constraints
     (poly_unionfind type_variable) aliases

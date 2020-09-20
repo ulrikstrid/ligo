@@ -394,8 +394,7 @@ type constraint_identifier =
 type 'v constraint_identifierMap = (constraint_identifier, 'v) RedBlackTrees.PolyMap.t
 
 type refined_typeclass = {
-  refined : c_typeclass_simpl ;
-  original : c_typeclass_simpl ;
+  tcs : c_typeclass_simpl ;
   vars : type_variable_set ;
 }
 
@@ -410,17 +409,19 @@ and constraints_typeVariableMap = constraints typeVariableMap
 and c_typeclass_simpl_constraint_identifierMap = c_typeclass_simpl constraint_identifierMap
 and type_constraint_simpl_list = type_constraint_simpl list
 and structured_dbs = {
-  all_constraints          : type_constraint_simpl_list ;
-  aliases                  : unionfind ;
+  all_constraints            : type_constraint_simpl_list ;
+  aliases                    : unionfind ;
   (* assignments (passive data structure). *)
-  (*   Now                 : just a map from unification vars to types (pb: what about partial types?) *)
+  (*   Now                   : just a map from unification vars to types (pb: what about partial types?) *)
   (*   maybe just local assignments (allow only vars as children of pair(α,β)) *)
-  (* TODO                  : the rhs of the map should not repeat the variable name. *)
-  assignments              : c_constructor_simpl_typeVariableMap ;
-  grouped_by_variable      : constraints_typeVariableMap ; (* map from (unionfind) variables to constraints containing them *)
-  cycle_detection_toposort : unit ;                        (* example of structured db that we'll add later *)
+  (* TODO                    : the rhs of the map should not repeat the variable name. *)
+  assignments                : c_constructor_simpl_typeVariableMap ;
+  grouped_by_variable        : constraints_typeVariableMap ; (* map from (unionfind) variables to constraints containing them *)
+  cycle_detection_toposort   : unit ;                        (* example of structured db that we'll add later *)
   (* TODO: later have all constraints get an identtifier, not just typeclass constraints. *)
-  by_constraint_identifier : c_typeclass_simpl_constraint_identifierMap ;
+  by_constraint_identifier   : c_typeclass_simpl_constraint_identifierMap ;
+  refined_typeclasses        : refined_typeclass_constraint_identifierMap ;
+  typeclasses_constrained_by : constraint_identifier_set_map ;
 }
 
 and c_constructor_simpl_list = c_constructor_simpl list
@@ -506,11 +507,6 @@ type output_specialize1 = {
     a_k_var : c_constructor_simpl ;
   }
 
-type type_variable_set = type_variable poly_set
-type refined_typeclass = {
-  tcs : c_typeclass_simpl ;
-  vars : type_variable_set ;
-}
 type output_tc_fundep = {
     tc : refined_typeclass ;
     c : c_constructor_simpl ;
