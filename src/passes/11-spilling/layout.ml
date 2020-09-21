@@ -5,6 +5,8 @@ module Append_tree = Tree.Append
 open! Mini_c
 open Trace
 
+let annotation_or_label annot label = Option.unopt ~default:label (Helpers.remove_empty_annotation annot)
+
 let t_record_to_pairs ?(layout = L_tree) return compile_type m =
   let open AST.Helpers in
   let is_tuple_lmap = is_tuple_lmap m in
@@ -19,12 +21,12 @@ let t_record_to_pairs ?(layout = L_tree) return compile_type m =
         ok (None, t)
       in
       let%bind m' = Append_tree.fold_ne
-          (fun (Label ann, ({associated_type;_}: AST.row_element)) ->
+          (fun (Label label, ({associated_type;michelson_annotation}: AST.row_element)) ->
              let%bind a = compile_type associated_type in
              ok ((if is_tuple_lmap then 
                     None 
-                  else 
-                    Some ann), 
+                  else
+                    Some (annotation_or_label michelson_annotation label)),
                  a)
           )
           aux node in
@@ -34,11 +36,7 @@ let t_record_to_pairs ?(layout = L_tree) return compile_type m =
       (* Right combs *)
       let aux (Label l , x) =
         let%bind t = compile_type x.associated_type in
-        let annot_opt =
-          match remove_empty_annotation x.michelson_annotation with
-          | None -> Some l
-          | annot -> annot
-        in
+        let annot_opt = Some (annotation_or_label x.michelson_annotation l) in
         ok (t , annot_opt)
       in
       let rec lst_fold = function
@@ -111,9 +109,9 @@ let record_access_to_lr ?(layout = L_tree) ty m_ty index =
   
 let record_to_pairs compile_expression (return:?tv:_ -> _) record_t record : Mini_c.expression spilling_result =
   let open AST.Helpers in
-  let lst = kv_list_of_record_or_tuple ?layout:record_t.layout_opt record_t.content record in
-  match record_t.layout_opt with
-  | Some L_tree | None -> (
+  let lst = kv_list_of_record_or_tuple ~layout:record_t.layout record_t.content record in
+  match record_t.layout with
+  | L_tree -> (
     let node = Append_tree.of_list lst in
     let aux a b : (expression , spilling_error) result =
       let%bind a = a in
@@ -126,7 +124,7 @@ let record_to_pairs compile_expression (return:?tv:_ -> _) record_t record : Min
     trace_strong (corner_case ~loc:__LOC__ "record build") @@
     Append_tree.fold_ne (compile_expression) aux node
   )
-  | Some L_comb -> (
+  | L_comb -> (
     let rec aux = function
     | [] -> fail (corner_case ~loc:__LOC__ "record build")
     | [x] -> compile_expression x
@@ -143,4 +141,39 @@ let record_to_pairs compile_expression (return:?tv:_ -> _) record_t record : Min
       return ~tv (ec_pair hd' tl')
     ) in
     aux lst
+  )
+
+let extract_record ~(layout:layout) (v : value) (lst : (AST.label * AST.type_expression) list) : _ list spilling_result =
+  match layout with
+  | L_tree -> (
+    let open Append_tree in
+    let%bind tree = match Append_tree.of_list lst with
+      | Empty -> fail @@ corner_case ~loc:__LOC__ "empty record"
+      | Full t -> ok t in
+    let rec aux tv : (AST.label * (value * AST.type_expression)) list spilling_result =
+      match tv with
+      | Leaf (s, t), v -> ok @@ [s, (v, t)]
+      | Node {a;b}, D_pair (va, vb) ->
+          let%bind a' = aux (a, va) in
+          let%bind b' = aux (b, vb) in
+          ok (a' @ b')
+      | _ -> fail @@ corner_case ~loc:__LOC__ "bad record path"
+    in
+    aux (tree, v)
+  )
+  | L_comb -> (
+    let rec aux lst_record v : (AST.label * (value * AST.type_expression)) list spilling_result =
+      match lst_record,v with
+      | [], _ -> fail @@ corner_case ~loc:__LOC__ "empty record"
+      | [(s,t)], v -> ok [s,(v,t)]
+      | [(sa,ta);(sb,tb)], D_pair (va,vb) ->
+          let%bind a' = aux [sa, ta] va in
+          let%bind b' = aux [sb, tb] vb in
+          ok (a' @ b')
+      | (shd,thd)::tl, D_pair (va,vb) -> 
+        let%bind tl' = aux tl vb in
+        ok ((shd,(va,thd))::tl')
+      | _ -> fail @@ corner_case ~loc:__LOC__ "bad record path"
+    in
+    aux lst v
   )

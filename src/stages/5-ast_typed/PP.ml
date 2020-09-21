@@ -69,10 +69,9 @@ let rec type_content : formatter -> type_content -> unit =
   | T_variable tv -> type_variable ppf tv
   | T_constant {type_constant=tc;arguments} -> fprintf ppf "%a%a" type_constant tc (list_sep_d_par type_expression) arguments
 
-and record ppf {content; layout_opt} =
-  fprintf ppf "%a %a" 
+and record ppf {content; layout=_} =
+  fprintf ppf "%a" 
     (tuple_or_record_sep_type type_expression) content
-    option_layout layout_opt
 
 and option_layout ppf l = match l with
   | Some l -> fprintf ppf "[layout:%s]" @@ layout_to_string l

@@ -48,10 +48,10 @@ let rec type_expression a b =
     Int.compare (type_expression_tag a) (type_expression_tag b)
 
 
-and record {content=ca; layout_opt=la} {content=cb; layout_opt=lb} =
+and record {content=ca; layout=la} {content=cb; layout=lb} =
   cmp2
     (label_map ~compare:row) ca cb
-    (Option.compare layout) la lb
+    layout la lb
 
 and type_operator {type_constant=tca;arguments=la} {type_constant=tcb;arguments=lb} =
   cmp2

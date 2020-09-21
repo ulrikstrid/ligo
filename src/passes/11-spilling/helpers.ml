@@ -29,29 +29,3 @@ let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value 
   in
   let%bind (s, v, t) = aux (tree, v) in
   ok (s, v, t)
-
-let extract_tuple (v : value) (tree : AST.type_expression Append_tree.t') : ((value * AST.type_expression) list , spilling_error) result =
-  let open Append_tree in
-  let rec aux tv : ((value * AST.type_expression) list , spilling_error) result =
-    match tv with
-    | Leaf t, v -> ok @@ [v, t]
-    | Node {a;b}, D_pair (va, vb) ->
-        let%bind a' = aux (a, va) in
-        let%bind b' = aux (b, vb) in
-        ok (a' @ b')
-    | _ -> fail @@ corner_case ~loc:__LOC__ "bad tuple path"
-  in
-  aux (tree, v)
-
-let extract_record (v : value) (tree : _ Append_tree.t') : (_ list , spilling_error) result =
-  let open Append_tree in
-  let rec aux tv : ((AST.label * (value * AST.type_expression)) list , spilling_error) result =
-    match tv with
-    | Leaf (s, t), v -> ok @@ [s, (v, t)]
-    | Node {a;b}, D_pair (va, vb) ->
-        let%bind a' = aux (a, va) in
-        let%bind b' = aux (b, vb) in
-        ok (a' @ b')
-    | _ -> fail @@ corner_case ~loc:__LOC__ "bad record path"
-  in
-  aux (tree, v)

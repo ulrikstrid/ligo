@@ -3,7 +3,7 @@ open Types
 val make_n_t : type_variable -> type_expression -> named_type_content
 val make_t : ?loc:Location.t -> type_content -> S.type_expression option -> type_expression
 val make_e : ?location:Location.t -> expression_content -> type_expression -> expression
-
+val default_layout : layout
 val t_bool      : ?loc:Location.t -> ?core:S.type_expression -> unit -> type_expression
 val t_string    : ?loc:Location.t -> ?core:S.type_expression -> unit -> type_expression
 val t_bytes     : ?loc:Location.t -> ?core:S.type_expression -> unit -> type_expression
@@ -24,9 +24,9 @@ val t_option    : ?loc:Location.t -> ?core:S.type_expression -> type_expression 
 val t_pair      : ?loc:Location.t -> ?core:S.type_expression -> type_expression -> type_expression -> type_expression
 val t_list      : ?loc:Location.t -> ?core:S.type_expression -> type_expression -> type_expression
 val t_variable  : type_variable -> ?loc:Location.t -> ?core:S.type_expression -> unit -> type_expression
-val t_record    : ?loc:Location.t -> ?core:S.type_expression -> layout_opt:layout option -> te_lmap -> type_expression
-val make_t_ez_record : ?loc:Location.t -> ?core:S.type_expression -> ?layout_opt:layout -> (string* type_expression) list -> type_expression 
-val ez_t_record : ?loc:Location.t -> ?core:S.type_expression -> ?layout_opt:layout -> ( label * row_element ) list -> type_expression 
+val t_record    : ?loc:Location.t -> ?core:S.type_expression -> layout:layout -> te_lmap -> type_expression
+val make_t_ez_record : ?loc:Location.t -> ?core:S.type_expression -> ?layout:layout -> (string* type_expression) list -> type_expression 
+val ez_t_record : ?loc:Location.t -> ?core:S.type_expression -> ?layout:layout -> ( label * row_element ) list -> type_expression 
 
 val t_map            : ?loc:Location.t -> ?core:S.type_expression -> type_expression -> type_expression -> type_expression
 val t_big_map        : ?loc:Location.t -> ?core:S.type_expression -> type_expression -> type_expression -> type_expression
@@ -122,10 +122,10 @@ val e_a_pair : expression -> expression -> expression
 val e_a_some : expression -> expression
 val e_a_lambda : lambda -> type_expression -> type_expression -> expression
 val e_a_none : type_expression -> expression
-val e_a_record : ?layout_opt:layout -> expression label_map -> expression
+val e_a_record : ?layout:layout -> expression label_map -> expression
 val e_a_application : expression -> expression -> expression
 val e_a_variable : expression_variable -> type_expression -> expression
-val ez_e_a_record : ?layout_opt:layout -> ( label * expression ) list -> expression
+val ez_e_a_record : ?layout:layout -> ( label * expression ) list -> expression
 val e_a_let_in : expression_variable -> bool -> expression -> expression -> expression
 
 val get_a_int : expression -> Z.t option

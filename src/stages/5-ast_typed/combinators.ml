@@ -34,16 +34,16 @@ let t_big_map        ?loc ?core k v : type_expression = t_constant ?loc ?core TC
 let t_map_or_big_map ?loc ?core k v : type_expression = t_constant ?loc ?core TC_map_or_big_map  [ k ; v ]
 
 
-let t_record ?loc ?core ~layout_opt content  : type_expression = make_t ?loc (T_record {content;layout_opt}) core
-
-let make_t_ez_record ?loc ?core ?layout_opt (lst:(string * type_expression) list) : type_expression =
+let t_record ?loc ?core ~layout content  : type_expression = make_t ?loc (T_record {content;layout}) core
+let default_layout = L_tree
+let make_t_ez_record ?loc ?core ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
   let lst = List.mapi (fun i (x,y) -> (Label x, {associated_type=y;michelson_annotation=None;decl_pos=i}) ) lst in
   let map = LMap.of_list lst in
-  t_record ?loc ?core ~layout_opt map
+  t_record ?loc ?core ~layout map
 
-let ez_t_record ?loc ?core ?layout_opt lst : type_expression =
+let ez_t_record ?loc ?core ?(layout=default_layout) lst : type_expression =
   let m = LMap.of_list lst in
-  t_record ?loc ?core ~layout_opt m
+  t_record ?loc ?core ~layout m
 let t_pair ?loc ?core a b : type_expression =
   ez_t_record ?loc ?core [
     (Label "0",{associated_type=a;michelson_annotation=None ; decl_pos = 0}) ;
@@ -290,7 +290,7 @@ let e_a_pair a b = make_e (e_pair a b)
 let e_a_some s = make_e (e_some s) (t_option s.type_expression)
 let e_a_lambda l in_ty out_ty = make_e (e_lambda l) (t_function in_ty out_ty ())
 let e_a_none t = make_e (e_none ()) (t_option t)
-let e_a_record ?layout_opt r = make_e (e_record r) (t_record ~layout_opt
+let e_a_record ?(layout=default_layout) r = make_e (e_record r) (t_record ~layout
   (LMap.map
     (fun t ->
       let associated_type = get_type_expression t in
@@ -298,7 +298,7 @@ let e_a_record ?layout_opt r = make_e (e_record r) (t_record ~layout_opt
     r ))
 let e_a_application a b = make_e (e_application a b) (get_type_expression b)
 let e_a_variable v ty = make_e (e_variable v) ty
-let ez_e_a_record ?layout_opt r = make_e (ez_e_record r) (ez_t_record ?layout_opt (List.mapi (fun i (x, y) -> x, {associated_type = y.type_expression ; michelson_annotation = None ; decl_pos = i}) r))
+let ez_e_a_record ?layout r = make_e (ez_e_record r) (ez_t_record ?layout (List.mapi (fun i (x, y) -> x, {associated_type = y.type_expression ; michelson_annotation = None ; decl_pos = i}) r))
 let e_a_let_in binder expr body attributes = make_e (e_let_in binder expr body attributes) (get_type_expression body)
 
 

@@ -186,15 +186,12 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
         extract_constructor v node in
       let%bind sub = decompile v tv in
       return (E_constructor {constructor=Label name;element=sub})
-  | T_record m ->
+  | T_record {layout ; content } ->
       (* GA TODO*)
-      let lst = List.map (fun (k,{associated_type;_}) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_record_or_tuple ?layout:m.layout_opt m.content in
-      let%bind node = match Append_tree.of_list lst with
-        | Empty -> fail @@ corner_case ~loc:__LOC__ "empty record"
-        | Full t -> ok t in
+      let lst = List.map (fun (k,{associated_type;_}) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_record_or_tuple ~layout content in
       let%bind lst =
         trace_strong (corner_case ~loc:__LOC__ "record extract") @@
-        extract_record v node in
+        Layout.extract_record ~layout v lst in
       let%bind lst = bind_list
         @@ List.map (fun (x, (y, z)) -> let%bind yz = decompile y z in ok (x, yz)) lst in
       let m' = AST.LMap.of_list lst in

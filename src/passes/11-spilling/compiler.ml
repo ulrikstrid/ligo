@@ -207,7 +207,7 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
                         ok (Some (String.uncapitalize_ascii ann), a))
                       aux node in
       ok @@ snd m'
-  | T_record { content = m ; layout_opt } -> (
+  | T_record { content = m ; layout } -> (
       let open Ast_typed.Helpers in
       match is_michelson_pair m with
       | Some (a , b) -> (
@@ -221,7 +221,7 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
           let t = T_pair (a' , b') in
           return t
         )
-      | None -> Layout.t_record_to_pairs ?layout:layout_opt return compile_type m
+      | None -> Layout.t_record_to_pairs ~layout return compile_type m
     )
   | T_arrow {type1;type2} -> (
       let%bind param' = compile_type type1 in
@@ -647,41 +647,3 @@ let compile_program (lst : AST.program) : (program , spilling_error) result =
   in
   let%bind (statements, _) = List.fold_left aux (ok ([], Environment.empty)) (temp_unwrap_loc_list lst) in
   ok statements
-
-let extract_constructor (v : value) (tree : _ Append_tree.t') : (string * value * AST.type_expression , spilling_error) result =
-  let open Append_tree in
-  let rec aux tv : (string * value * AST.type_expression , spilling_error) result=
-    match tv with
-    | Leaf (k, t), v -> ok (k, v, t)
-    | Node {a}, D_left v -> aux (a, v)
-    | Node {b}, D_right v -> aux (b, v)
-    | _ -> fail (corner_case ~loc:__LOC__ "extract constructor")
-  in
-  let%bind (s, v, t) = aux (tree, v) in
-  ok (s, v, t)
-
-let extract_tuple (v : value) (tree : AST.type_expression Append_tree.t') : ((value * AST.type_expression) list , spilling_error) result =
-  let open Append_tree in
-  let rec aux tv : ((value * AST.type_expression) list , spilling_error) result =
-    match tv with
-    | Leaf t, v -> ok @@ [v, t]
-    | Node {a;b}, D_pair (va, vb) ->
-        let%bind a' = aux (a, va) in
-        let%bind b' = aux (b, vb) in
-        ok (a' @ b')
-    | _ -> fail (corner_case ~loc:__LOC__ "extract tuple")
-  in
-  aux (tree, v)
-
-let extract_record (v : value) (tree : _ Append_tree.t') : (_ list , spilling_error) result =
-  let open Append_tree in
-  let rec aux tv : ((string * (value * AST.type_expression)) list , spilling_error) result =
-    match tv with
-    | Leaf (s, t), v -> ok @@ [s, (v, t)]
-    | Node {a;b}, D_pair (va, vb) ->
-        let%bind a' = aux (a, va) in
-        let%bind b' = aux (b, vb) in
-        ok (a' @ b')
-    | _ -> fail (corner_case ~loc:__LOC__ "bad record path")
-  in
-  aux (tree, v)

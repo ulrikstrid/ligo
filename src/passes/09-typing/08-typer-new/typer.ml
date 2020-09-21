@@ -69,7 +69,8 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
     let%bind lmap = Stage_common.Helpers.bind_map_lmap aux m.fields in
     let%bind () = trace_assert_fail_option (record_redefined_error t.location) @@
       Environment.get_record lmap e in
-    return (T_record {content = lmap;layout_opt=m.layout})
+    let layout = Option.unopt ~default:default_layout m.layout in
+    return (T_record {content = lmap;layout})
   | T_variable name ->
     (* Check that the variable is in the environment *)
     let name : O.type_variable = Var.todo_cast name in
@@ -138,34 +139,6 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
             | _ -> fail (michelson_comb_no_variant t.location) in
           let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
           return @@ pair
-      | TC_michelson_comb ->
-        let%bind c = bind (evaluate_type e) @@ get_unary arguments in
-        let%bind record = match c.type_content with
-          | T_record record -> ok @@ record
-          (* | _ -> fail (michelson_no_record "comb" t.location) *)
-          | _ -> fail (record_redefined_error t.location) (*ERROR TODO*)
-        in
-        let%bind layout = match record.layout_opt with
-          None   -> ok O.L_comb
-        (* | Some _ -> fail (michelson_already_layout "comb" t.location)  *)
-          | _ -> fail (record_redefined_error t.location) (*ERROR TODO*)
-        in
-        let record = {record with layout_opt = Some layout} in
-        return @@ (T_record record)
-      | TC_michelson_tree ->
-        let%bind c = bind (evaluate_type e) @@ get_unary arguments in
-        let%bind record = match c.type_content with
-          | T_record record -> ok @@ record
-          (* | _ -> fail (michelson_no_record "tree" t.location) *)
-          | _ -> fail (record_redefined_error t.location) (*ERROR TODO*)
-        in
-        let%bind layout = match record.layout_opt with
-          None   -> ok O.L_tree
-        (* | Some _ -> fail (michelson_already_layout "tree" t.location)  *)
-        | _ -> fail (record_redefined_error t.location) (*ERROR TODO*)
-        in
-        let record = {record with layout_opt = Some layout} in
-        return @@ T_record record
       | _ -> fail @@ unrecognized_type_constant t
 
 and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (_ O'.typer_state * O.expression, typer_error) result = fun ?tv_opt e state ae ->
@@ -295,7 +268,7 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
     (* Do we need row_element for AST_typed ? *)
     let lmap = O.LMap.map (fun e -> ({associated_type = get_type_expression e ; michelson_annotation = None ; decl_pos = 0}: O.row_element)) m' in
     let record_type = match Environment.get_record lmap e with
-      | None -> O.{content=lmap;layout_opt=None}
+      | None -> O.{content=lmap;layout=default_layout}
       | Some r -> r
     in
     let wrapped = Wrap.record record_type in

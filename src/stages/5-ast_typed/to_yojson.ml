@@ -29,8 +29,6 @@ let type_constant = function
   | TC_michelson_pair_left_comb  -> `List [ `String "TC_michelson_pair_left_comb"; `Null]
   | TC_michelson_or_right_comb   -> `List [ `String "TC_michelson_or_right_comb"; `Null]
   | TC_michelson_or_left_comb    -> `List [ `String "TC_michelson_or_left_comb"; `Null]
-  | TC_michelson_comb            -> `List [ `String "TC_michelson_comb"; `Null ]
-  | TC_michelson_tree            -> `List [ `String "TC_michelson_tree"; `Null ]
 
 let constant' = function
   | C_INT                -> `List [`String "C_INT"; `Null ]
@@ -201,10 +199,10 @@ and type_content = function
   | T_variable t -> `List [ `String "t_variable"; type_variable_to_yojson t]
   | T_constant t -> `List [ `String "t_constant"; type_operator t]
 
-and record {content; layout_opt} =
+and record {content; layout = l } =
   `Assoc [
     ("content", label_map row_element content);
-    ("layout_opt", option layout layout_opt);
+    ("layout", layout l);
   ]
 and row_element {associated_type; michelson_annotation; decl_pos} =
   `Assoc [

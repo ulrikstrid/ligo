@@ -123,7 +123,9 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
     in
     let%bind lmap = Stage_common.Helpers.bind_map_lmap aux m.fields in
     let record : O.record = match Environment.get_record lmap e with
-    | None -> ({content=lmap;layout_opt=m.layout})
+    | None ->
+      let layout = Option.unopt ~default:default_layout m.layout in
+      {content=lmap;layout}
     | Some r ->  r
     in
     return @@ T_record record
@@ -197,34 +199,6 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
             | _ -> fail (michelson_comb_no_variant t.location) in
           let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
           return @@ pair
-      | TC_michelson_comb ->
-        let%bind c = bind (evaluate_type e) @@ get_unary arguments in
-        let%bind record = match c.type_content with
-          | T_record record -> ok @@ record
-          (* | _ -> fail (michelson_no_record "comb" t.location) *)
-          | _ -> fail (corner_case "ll") (*ERROR TODO*)
-        in
-        let%bind layout = match record.layout_opt with
-          None   -> ok O.L_comb
-        (* | Some _ -> fail (michelson_already_layout "comb" t.location)  *)
-          | _ -> fail (corner_case "ll") (*ERROR TODO*)
-        in
-        let record = {record with layout_opt = Some layout} in
-        return @@ T_record record
-      | TC_michelson_tree ->
-        let%bind c = bind (evaluate_type e) @@ get_unary arguments in
-        let%bind record = match c.type_content with
-          | T_record record -> ok @@ record
-          (* | _ -> fail (michelson_no_record "tree" t.location) *)
-          | _ -> fail (corner_case "ll") (*ERROR TODO*)
-        in
-        let%bind layout = match record.layout_opt with
-          None   -> ok O.L_tree
-        (* | Some _ -> fail (michelson_already_layout "tree" t.location)  *)
-          | _ -> fail (corner_case "ll") (*ERROR TODO*)
-        in
-        let record = {record with layout_opt = Some layout} in
-        return @@ T_record record
       | _ -> fail @@ unrecognized_type_constant t
 
 and type_expression : environment -> _ O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * _ O'.typer_state, typer_error) result
@@ -319,7 +293,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let%bind m' = Stage_common.Helpers.bind_map_lmap (type_expression' e) m in
       let lmap = O.LMap.map (fun e -> ({associated_type = get_type_expression e; michelson_annotation = None; decl_pos=0}:O.row_element)) m' in
       let record_type = match Environment.get_record lmap e with
-        | None -> (t_record ~layout_opt:None lmap)
+        | None -> t_record ~layout:default_layout lmap
         | Some r -> make_t  (T_record r) None
       in
       return (E_record m') record_type

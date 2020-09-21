@@ -22,7 +22,7 @@ and type_content =
 
 and record = {
   content : row_element label_map;
-  layout_opt : layout option ;
+  layout : layout ;
 }
 
 and arrow = {

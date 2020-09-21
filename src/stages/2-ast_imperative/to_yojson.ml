@@ -30,8 +30,6 @@ let type_constant = function
   | TC_michelson_pair_left_comb  -> `List [ `String "TC_michelson_pair_left_comb"; `Null]
   | TC_michelson_or_right_comb   -> `List [ `String "TC_michelson_or_right_comb"; `Null]
   | TC_michelson_or_left_comb    -> `List [ `String "TC_michelson_or_left_comb"; `Null]
-  | TC_michelson_comb            -> `List [ `String "TC_michelson_comb"; `Null ]
-  | TC_michelson_tree            -> `List [ `String "TC_michelson_tree"; `Null ]
 
 let constant' = function
   | C_INT                -> `List [`String "C_INT"; `Null ]

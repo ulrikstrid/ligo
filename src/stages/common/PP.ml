@@ -186,7 +186,5 @@ let s =
   | TC_michelson_pair_left_comb  -> "michelson_pair_left_comb" 
   | TC_michelson_or_right_comb   -> "michelson_or_right_comb"  
   | TC_michelson_or_left_comb    -> "michelson_or_left_comb"   
-  | TC_michelson_comb            -> "michelson_comb"
-  | TC_michelson_tree            -> "michelson_tree"
 in
 fprintf ppf "%s" s

@@ -39,7 +39,7 @@ let rec to_right_comb_pair l new_map =
       (Label "1" , annotate_field row_element_r ann_r) ] new_map
   | (Label ann, field)::tl ->
     let new_map' = LMap.add (Label "0") (annotate_field field ann) new_map in
-    LMap.add (Label "1") (comb_pair (T_record {content=(to_right_comb_pair tl new_map');layout_opt=None})) new_map'
+    LMap.add (Label "1") (comb_pair (T_record {content=(to_right_comb_pair tl new_map');layout=default_layout})) new_map'
 
 let rec to_right_comb_variant l new_map =
   match l with
@@ -62,7 +62,7 @@ let rec to_left_comb_pair' first l new_map =
     to_left_comb_pair' false tl new_map'
   | (Label ann, field)::tl ->
     let new_map' = LMap.add_bindings [
-      (Label "0" , comb_pair (T_record {content=new_map;layout_opt=None})) ;
+      (Label "0" , comb_pair (T_record {content=new_map;layout=default_layout})) ;
       (Label "1" , annotate_field field ann ) ;] LMap.empty in
     to_left_comb_pair' first tl new_map'
 let to_left_comb_pair = to_left_comb_pair' true
@@ -124,25 +124,25 @@ let rec from_left_comb_variant (l:row_element label_map) (size:int) : (row_eleme
 
 let convert_pair_to_right_comb l =
   let l' = List.sort (fun (_,{decl_pos=a;_}) (_,{decl_pos=b;_}) -> Int.compare a b) l in
-  T_record {content=(to_right_comb_pair l' LMap.empty);layout_opt=None}
+  T_record {content=(to_right_comb_pair l' LMap.empty);layout=default_layout}
 
 let convert_pair_to_left_comb l =
   let l' = List.sort (fun (_,{decl_pos=a;_}) (_,{decl_pos=b;_}) -> Int.compare a b) l in
-  T_record {content=(to_left_comb_pair l' LMap.empty);layout_opt=None}
+  T_record {content=(to_left_comb_pair l' LMap.empty);layout=default_layout}
 
 let convert_pair_from_right_comb (src: row_element label_map) (dst: row_element label_map) : (type_content , typer_error) result =
   let%bind fields = from_right_comb_pair src (LMap.cardinal dst) in
   let labels = List.map (fun (l,_) -> l) @@
     List.sort (fun (_,{decl_pos=a;_}) (_,{decl_pos=b;_}) -> Int.compare a b ) @@
     LMap.to_kv_list_rev dst in
-  ok @@ T_record {content=(LMap.of_list @@ List.combine labels fields);layout_opt=None}
+  ok @@ T_record {content=(LMap.of_list @@ List.combine labels fields);layout=default_layout}
 
 let convert_pair_from_left_comb (src: row_element label_map) (dst: row_element label_map) : (type_content , typer_error) result =
   let%bind fields = from_left_comb_pair src (LMap.cardinal dst) in
   let labels = List.map (fun (l,_) -> l) @@
     List.sort (fun (_,{decl_pos=a;_}) (_,{decl_pos=b;_}) -> Int.compare a b ) @@
     LMap.to_kv_list_rev dst in
-  ok @@ T_record {content=(LMap.of_list @@ List.combine labels fields);layout_opt=None}
+  ok @@ T_record {content=(LMap.of_list @@ List.combine labels fields);layout=default_layout}
 
 let convert_variant_to_right_comb l =
   let l' = List.sort (fun (_,{decl_pos=a;_}) (_,{decl_pos=b;_}) -> Int.compare a b) l in

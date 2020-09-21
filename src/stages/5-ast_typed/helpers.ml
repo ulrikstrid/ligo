@@ -59,8 +59,6 @@ let string_of_type_constant = function
   | TC_michelson_pair_left_comb  -> "TC_michelson_pair_left_comb"
   | TC_michelson_or_right_comb   -> "TC_michelson_or_right_comb"
   | TC_michelson_or_left_comb    -> "TC_michelson_or_left_comb"
-  | TC_michelson_comb            -> "TC_michelson_comb"
-  | TC_michelson_tree            -> "TC_michelson_tree"
 
 let bind_lmap (l:_ label_map) =
   let open Trace in

@@ -60,7 +60,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
       in
       let%bind _ =
         Assert.assert_true (different_types a b) @@ 
-          Option.equal (Misc.layout_eq) ra.layout_opt rb.layout_opt in
+          Misc.layout_eq ra.layout rb.layout in
       let%bind _ =
         Assert.assert_list_same_size (different_types a b) ra' rb' in
       trace (fun _ -> different_types a b)

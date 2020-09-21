@@ -31,8 +31,6 @@ type type_constant =
   | TC_michelson_pair_left_comb
   | TC_michelson_or_right_comb
   | TC_michelson_or_left_comb
-  | TC_michelson_comb
-  | TC_michelson_tree
 
 type literal =
   | Literal_unit

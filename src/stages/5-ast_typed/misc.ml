@@ -74,7 +74,6 @@ let layout_eq a b = match (a,b) with
   | L_comb, L_comb
   | L_tree, L_tree -> true
   | _ -> false
-let assert_layout_opt_eq = fun a b -> if (Option.equal (layout_eq) a b) then Some () else None
 
 let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : unit option =
   let open Option in
@@ -125,7 +124,7 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
         assert_eq ka kb >>= fun _ ->
         assert_type_expression_eq (va, vb)
       in
-      assert_layout_opt_eq ra.layout_opt rb.layout_opt >>= fun _ ->
+      assert_eq ra.layout rb.layout >>= fun _ ->
       assert_same_size ra' rb' >>= fun _ ->
       List.fold_left (fun acc p -> match acc with | None -> None | Some () -> aux p) (Some ()) (List.combine ra' rb')
 
