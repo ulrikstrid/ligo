@@ -11,11 +11,28 @@ let is_michelson_annotation attr =
     Some (String.sub attr 6 ((String.length attr)-6))
   else None
 
+let is_layout attr =
+  if String.length attr > 7 && String.sub attr 0 7 = "layout:" then
+    Some (String.sub attr 7 ((String.length attr)-7))
+  else None
+
 let get_michelson_annotation : (string list) -> string option = fun attributes ->
   let rec aux lst = match lst with
     | hd::tl -> ( match is_michelson_annotation hd with
       | Some ann -> Some ann
       | None -> aux tl
+    )
+    | [] -> None
+  in
+  aux attributes
+
+let get_layout : (string list) -> O.layout option = fun attributes ->
+  let rec aux lst = match lst with
+    | hd::tl -> ( match is_layout hd with
+      | Some "tree" -> Some O.L_tree
+      | Some "comb" -> Some O.L_comb
+      (*deal with wrong layout*)
+      | None | Some _ -> aux tl
     )
     | [] -> None
   in
@@ -36,8 +53,7 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression , desu
         ) sum
       in
       return @@ O.T_sum sum
-    | I.T_record {fields ; attributes=_TODO} -> 
-    (* GA TODO*)
+    | I.T_record {fields ; attributes} -> 
       let%bind fields = 
         Stage_common.Helpers.bind_map_lmap (fun v ->
           let {associated_type ; attributes ; decl_pos} : I.row_element = v in
@@ -47,14 +63,15 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression , desu
           ok @@ v'
         ) fields
       in
-      return @@ O.T_record fields
+      let layout = get_layout attributes in
+      return @@ O.T_record {fields ; layout}
     | I.T_tuple tuple ->
       let aux (i,acc) el = 
         let%bind el = compile_type_expression el in
         ok @@ (i+1,(O.Label (string_of_int i), ({associated_type=el;michelson_annotation=None;decl_pos=0}:O.row_element))::acc) in
       let%bind (_, lst ) = bind_fold_list aux (0,[]) tuple in
       let record = O.LMap.of_list lst in
-      return @@ O.T_record record
+      return @@ O.T_record {fields = record ; layout = None} 
     | I.T_arrow {type1;type2} ->
       let%bind type1 = compile_type_expression type1 in
       let%bind type2 = compile_type_expression type2 in

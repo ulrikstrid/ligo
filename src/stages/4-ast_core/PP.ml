@@ -10,7 +10,8 @@ let type_variable ppf (t : type_variable) : unit = fprintf ppf "%a" Var.pp t
   let record_sep value sep ppf (m : 'a label_map) =
     let lst = LMap.to_kv_list_rev m in
     let lst = List.sort_uniq (fun (Label a,_) (Label b,_) -> String.compare a b) lst in
-    let new_pp ppf (k, {associated_type;_}) = fprintf ppf "@[<h>%a -> %a@]" label k value associated_type in
+    let pp_atttr ppf s = match s with None -> fprintf ppf "" | Some s -> fprintf ppf "%s" s in
+    let new_pp ppf (k, {associated_type;michelson_annotation;_}) = fprintf ppf "@[<h>%a -> %a [%a] @]" label k value associated_type pp_atttr michelson_annotation in
     fprintf ppf "%a" (list_sep new_pp sep) lst
   let variant_sep_d x = record_sep x (tag " ,@ ")
 
@@ -58,7 +59,7 @@ let rec type_content : formatter -> type_expression -> unit =
   fun ppf te ->
   match te.type_content with
   | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (variant_sep_d type_expression) m
-  | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type type_expression) m
+  | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type type_expression) m.fields
   | T_arrow a -> fprintf ppf "%a -> %a" type_expression a.type1 type_expression a.type2
   | T_variable tv -> type_variable ppf tv
   | T_constant {type_constant=tc;arguments} -> fprintf ppf "%a%a" type_constant tc (list_sep_d_par type_expression) arguments

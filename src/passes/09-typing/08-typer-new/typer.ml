@@ -66,10 +66,10 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
       let%bind associated_type = evaluate_type e associated_type in
       ok @@ ({associated_type ; michelson_annotation ; decl_pos}:O.row_element)
     in
-    let%bind lmap = Stage_common.Helpers.bind_map_lmap aux m in
+    let%bind lmap = Stage_common.Helpers.bind_map_lmap aux m.fields in
     let%bind () = trace_assert_fail_option (record_redefined_error t.location) @@
       Environment.get_record lmap e in
-    return (T_record {content = lmap;layout_opt=None})
+    return (T_record {content = lmap;layout_opt=m.layout})
   | T_variable name ->
     (* Check that the variable is in the environment *)
     let name : O.type_variable = Var.todo_cast name in

@@ -56,8 +56,8 @@ let get_record : _ label_map -> t -> record option = fun lmap e ->
   let aux = fun {type_variable=_ ; type_} ->
     match type_.type_content with
     | T_record m -> Option.(
-      let lst_kv = LMap.to_kv_list_rev lmap in
-      let lst_kv' = LMap.to_kv_list_rev m.content in
+      let lst_kv = LMap.to_kv_list lmap in
+      let lst_kv' = LMap.to_kv_list m.content in
       map (fun () -> m) @@ Misc.assert_list_eq (
         fun (ka,va) (kb,vb) ->
           let Label ka = ka in

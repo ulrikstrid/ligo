@@ -121,10 +121,12 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
       let%bind associated_type = evaluate_type e associated_type in
       ok @@ ({associated_type;michelson_annotation;decl_pos} : O.row_element)
     in
-    let%bind lmap = Stage_common.Helpers.bind_map_lmap aux m in
-    match Environment.get_record lmap e with
-    | None -> return (T_record {content=lmap;layout_opt=None})
-    | Some r -> return (T_record r)
+    let%bind lmap = Stage_common.Helpers.bind_map_lmap aux m.fields in
+    let record : O.record = match Environment.get_record lmap e with
+    | None -> ({content=lmap;layout_opt=m.layout})
+    | Some r ->  r
+    in
+    return @@ T_record record
    )
   | T_variable name ->
       let name = Var.todo_cast name in

@@ -302,7 +302,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       return ~tv ae
     )
   | E_record m -> (
-      let%bind record_t = trace_option (`Spilling_corner_case ("aa","TODO")) (AST.get_t_record ae.type_expression) in
+      let%bind record_t = trace_option (corner_case ~loc:__LOC__ "TODO") (AST.get_t_record ae.type_expression) in
       Layout.record_to_pairs compile_expression return record_t m
     )
   | E_record_accessor {record; path} ->

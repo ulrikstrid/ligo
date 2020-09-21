@@ -9,10 +9,6 @@ include Stage_common.Enums (*@ follow ../common/enums.ml *)
    provided by the Comparable module *)
 (*@ typeclass poly_unionfind comparable *)
 (*@ typeclass poly_set       comparable *)
-type layout =
-  | L_comb
-  | L_tree
-
 
 type te_lmap = row_element label_map
 and type_meta = ast_core_type_expression option

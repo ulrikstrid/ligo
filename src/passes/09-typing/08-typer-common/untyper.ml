@@ -23,7 +23,7 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
       let v' = ({associated_type ; michelson_annotation ; decl_pos} : I.row_element) in
       ok @@ v' in
     let%bind x' = Stage_common.Helpers.bind_map_lmap aux content in
-    let%bind te = return @@ I.T_record x' in
+    let%bind te = return @@ I.T_record {fields = x' ; layout = layout_opt} in
     (match layout_opt with
       None -> ok @@ te
     | Some l ->

@@ -28,10 +28,10 @@ let t_timestamp ?loc ?sugar () : type_expression = type_constant ?loc ?sugar TC_
 let t_option    ?loc ?sugar o  : type_expression = type_constant ?loc ?sugar TC_option [o]
 let t_list      ?loc ?sugar t  : type_expression = type_constant ?loc ?sugar TC_list [t]
 let t_variable  ?loc ?sugar n  : type_expression = make_t ?loc ?sugar @@ T_variable (Var.of_name n)
-let t_record_ez ?loc ?sugar lst =
+let t_record_ez ?loc ?sugar ?layout lst =
   let lst = List.map (fun (k, v) -> (Label k, v)) lst in
   let m = LMap.of_list lst in
-  make_t ?loc ?sugar @@ T_record m
+  make_t ?loc ?sugar @@ T_record { layout ; fields = m }
 let t_record ?loc ?sugar m  : type_expression =
   let lst = SMap.to_kv_list_rev m in
   t_record_ez ?loc ?sugar lst
