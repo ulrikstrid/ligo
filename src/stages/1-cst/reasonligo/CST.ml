@@ -188,7 +188,8 @@ and variant = {
 and field_decl = {
   field_name : field_name;
   colon      : colon;
-  field_type : type_expr
+  field_type : type_expr;
+  attributes : attributes
 }
 
 and type_tuple = (type_expr, comma) nsepseq par reg
@@ -279,7 +280,8 @@ and 'a injection = {
 and 'a ne_injection = {
   compound    : compound option;
   ne_elements : ('a, semi) nsepseq;
-  terminator  : semi option
+  terminator  : semi option;
+  attributes  : attributes
 }
 
 and compound =

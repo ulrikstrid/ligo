@@ -76,7 +76,7 @@ let print_token state region lexeme =
     sprintf "%s: %s\n" (compact state region) lexeme
   in Buffer.add_string state#buffer line
 
-let  print_braced state f {lbrace;inside;rbrace} =
+let print_braced state f {lbrace;inside;rbrace} =
   print_token state lbrace "{";
   f state inside;
   print_token state rbrace "}"
@@ -143,18 +143,18 @@ let rec print_tokens state {decl;eof} =
   Utils.nseq_iter (print_statement state) decl;
   print_token state eof "EOF"
 
-and print_attributes state attributes =
+and print_attributes_1 state attributes =
   let apply {value = attribute; region} =
-    let attribute_formatted = sprintf "[@@%s]" attribute in
+    let attribute_formatted = sprintf "[@%s]" attribute in
     print_token state region attribute_formatted
   in List.iter apply attributes
 
 and print_statement state = function
   ConstDecl {value=kwd_let, kwd_rec, let_binding, attributes; _} ->
-    print_token       state kwd_let "let";
-    print_token_opt   state kwd_rec "rec";
-    print_let_binding state let_binding;
-    print_attributes  state attributes
+    print_token        state kwd_let "let";
+    print_token_opt    state kwd_rec "rec";
+    print_let_binding  state let_binding;
+    print_attributes_1 state attributes
 | TypeDecl {value={kwd_type; name; eq; type_expr}; _} ->
     print_token     state kwd_type "type";
     print_var       state name;
@@ -162,9 +162,8 @@ and print_statement state = function
     print_type_expr state type_expr
 
 and print_type_expr state = function
-  TProd prod      -> print_cartesian state prod
-| TSum {value; _} -> print_nsepseq state "|" print_variant value
-| TRecord t       -> print_rec_type_expr state t
+  TProd prod      -> print_cartesian state prod | TSum {value; _} -> print_nsepseq state "|" print_variant value
+| TRecord t       -> print_record_type state t
 | TApp app        -> print_type_app state app
 | TPar par        -> print_type_par state par
 | TVar var        -> print_var state var
@@ -231,18 +230,15 @@ and print_variant state {value = {constr; arg}; _} =
       print_token     state kwd_of "of";
       print_type_expr state t_expr
 
-and print_rec_type_expr state {value; _} =
-  let {compound; ne_elements; terminator} = value in
-  print_open_compound  state compound;
-  print_nsepseq        state ";" print_field_decl ne_elements;
-  print_terminator     state terminator;
-  print_close_compound state compound
+and print_record_type state =
+  print_ne_injection state print_field_decl
 
 and print_field_decl state {value; _} =
-  let {field_name; colon; field_type} = value
-  in print_var       state field_name;
-     print_token     state colon ":";
-     print_type_expr state field_type
+  let {field_name; colon; field_type; attributes} = value
+  in print_attributes_1 state attributes;
+     print_var          state field_name;
+     print_token        state colon ":";
+     print_type_expr    state field_type
 
 and print_injection :
   'a.state -> (state -> 'a -> unit) -> 'a injection reg -> unit =
@@ -256,7 +252,8 @@ and print_injection :
 and print_ne_injection :
   'a.state -> (state -> 'a -> unit) -> 'a ne_injection reg -> unit =
   fun state print {value; _} ->
-    let {compound; ne_elements; terminator} = value in
+  let {compound; ne_elements; terminator; attributes} = value in
+    print_attributes_1   state attributes;
     print_open_compound  state compound;
     print_nsepseq        state ";" print ne_elements;
     print_terminator     state terminator;
@@ -264,15 +261,13 @@ and print_ne_injection :
 
 and print_open_compound state = function
   None -> ()
-| Some compound -> match compound with
-  | Braces   (lbrace,_)    -> print_token state lbrace    "{"
-  | Brackets (lbracket,_)  -> print_token state lbracket  "["
+| Some Braces   (lbrace,  _)  -> print_token state lbrace   "{"
+| Some Brackets (lbracket,_)  -> print_token state lbracket "["
 
 and print_close_compound state = function
   None -> ()
-| Some compound -> match compound with
-  | Braces   (_,rbrace)   -> print_token state rbrace   "}"
-  | Brackets (_,rbracket) -> print_token state rbracket "]"
+| Some Braces   (_, rbrace)   -> print_token state rbrace   "}"
+| Some Brackets (_, rbracket) -> print_token state rbracket "]"
 
 and print_terminator state = function
   Some semi -> print_token state semi ";"
@@ -590,12 +585,12 @@ and print_case_clause state {value; _} =
 
 and print_let_in state {value; _} =
   let {kwd_let; kwd_rec; binding; semi; body; attributes} = value in
-  print_token       state kwd_let "let";
-  print_token_opt   state kwd_rec "rec";
-  print_let_binding state binding;
-  print_attributes  state attributes;
-  print_token       state semi ";";
-  print_expr        state body
+  print_token        state kwd_let "let";
+  print_token_opt    state kwd_rec "rec";
+  print_let_binding  state binding;
+  print_attributes_1 state attributes;
+  print_token        state semi ";";
+  print_expr         state body
 
 and print_fun_expr state {value; _} =
   let {binders; lhs_type; arrow; body} = value in
@@ -805,10 +800,13 @@ and pp_injection :
 and pp_ne_injection :
   'a.(state -> 'a -> unit) -> state -> 'a ne_injection -> unit =
   fun printer state inj ->
-  let ne_elements    = Utils.nsepseq_to_list inj.ne_elements in
-  let length         = List.length ne_elements in
-  let apply len rank = printer (state#pad len rank)
-  in List.iteri (apply length) ne_elements
+    let ne_elements    = Utils.nsepseq_to_list inj.ne_elements in
+    let length         = List.length ne_elements in
+    let arity          = if inj.attributes = [] then length else length + 1
+    and apply len rank = printer (state#pad len rank)
+    in List.iteri (apply arity) ne_elements;
+       let state = state#pad arity (arity-1)
+       in pp_attributes_1 state inj.attributes
 
 and pp_bytes state {value=lexeme,hex; region} =
   pp_loc_node (state#pad 2 0) lexeme region;
@@ -1222,9 +1220,18 @@ and pp_type_tuple state {value; _} =
   let apply len rank = pp_type_expr (state#pad len rank)
   in List.iteri (List.length components |> apply) components
 
+and pp_attributes_1 state attributes =
+  pp_node state "[@attr]";
+  let length         = List.length attributes in
+  let apply len rank = pp_ident (state#pad len rank)
+  in List.iteri (apply length) attributes
+
 and pp_field_decl state {value; _} =
-  pp_ident     state value.field_name;
-  pp_type_expr (state#pad 1 0) value.field_type
+  let arity = if value.attributes = [] then 1 else 2 in
+  pp_ident      state value.field_name;
+  pp_type_expr  (state#pad arity 0) value.field_type;
+  if value.attributes <> [] then
+    pp_attributes_1 (state#pad arity 1) value.attributes
 
 and pp_cartesian state {lpar;inside;rpar} =
   let t_exprs        = Utils.nsepseq_to_list inside in
