@@ -398,11 +398,23 @@ let output_specialize1 ppf ({poly;a_k_var}) =
 let output_tc_fundep ppd (t : output_tc_fundep) =
   let lst = t.tc in
   let a = t.c in fprintf ppd "{tc:{tcs:%a vars:%a};a:%a}" c_typeclass_simpl lst.tcs (list_sep_d (fun x _ ->fprintf x "," ) ) ( (fun x ->( List.map (fun y-> Format.asprintf "%a" Var.pp y) @@ ( RedBlackTrees.PolySet.elements x))) lst.vars) c_constructor_simpl a
-let updates_list _ppd =
-  failwith "this got removed, please add it back?"
-  (* function
-   *   SC_Constructor { reason_constr_simpl; tv; c_tag; tv_list } -> 
-   * | SC_Alias x ->  c_alias x
-   * | SC_Poly x -> c_poly_simpl x
-   * | SC_Typeclass x -> c_typeclass_simpl x
-   * | SC_Row x->c_row_simpl x *)
+
+let deduce_and_clean_result ppf {deduced;cleaned} =
+  fprintf ppf "{@,@[<hv 2>
+              deduced : %a ;@
+              cleaned : %a
+              @]@,}"
+    (list c_constructor_simpl) deduced
+    c_typeclass_simpl cleaned
+
+let update ppf {remove_constraints;add_constraints;justification} =
+  fprintf ppf "{@,@[<hv 2>
+              remove_constraints : %a ;@
+              add_constraints : %a ;@
+              justification : %s
+              @]@,}"
+    (list type_constraint_simpl) remove_constraints
+    (list type_constraint) add_constraints
+    justification
+
+let updates_list ppf = fprintf ppf "%a" (list (list update))

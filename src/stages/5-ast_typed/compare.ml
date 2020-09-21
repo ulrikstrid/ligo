@@ -38,15 +38,26 @@ let type_expression_tag ty_expr =
 
 let rec constant_tag (ct : constant_tag) =
   match ct with
-    Ast_typed__.Types.C_arrow->1|Ast_typed__.Types.C_option->2|Ast_typed__.Types.C_map->3
-  |Ast_typed__.Types.C_big_map->4|Ast_typed__.Types.C_list->5|Ast_typed__.Types.C_set->6
-  |Ast_typed__.Types.C_unit->8|Ast_typed__.Types.C_string->7|Ast_typed__.Types.C_nat->9
-  |Ast_typed__.Types.C_mutez->10|Ast_typed__.Types.C_timestamp->11
-  |Ast_typed__.Types.C_int->12|Ast_typed__.Types.C_address->13
-  |Ast_typed__.Types.C_bytes->14|Ast_typed__.Types.C_key_hash->15
-  |Ast_typed__.Types.C_key->16|Ast_typed__.Types.C_signature->17
-  |Ast_typed__.Types.C_operation->18|Ast_typed__.Types.C_contract->19
-  |Ast_typed__.Types.C_chain_id -> 0
+    C_arrow     ->  1
+  | C_option    ->  2
+  | C_map       ->  3
+  | C_big_map   ->  4
+  | C_list      ->  5
+  | C_set       ->  6
+  | C_unit      ->  8
+  | C_string    ->  7
+  | C_nat       ->  9
+  | C_mutez     -> 10
+  | C_timestamp -> 11
+  | C_int       -> 12
+  | C_address   -> 13
+  | C_bytes     -> 14
+  | C_key_hash  -> 15
+  | C_key       -> 16
+  | C_signature -> 17
+  | C_operation -> 18
+  | C_contract  -> 19
+  | C_chain_id  ->  0
 
 and type_expression a b =
   match a.type_content,b.type_content with
@@ -304,47 +315,144 @@ let unionfind a b =
   let b = UnionFind.Poly2.partitions b in
   List.compare ~compare:(List.compare ~compare:type_variable) a b
 
-let type_constraint_simpl _ppd =
-  failwith "this got removed, please add it back?"
-  (* function
-   *   SC_Constructor { reason_constr_simpl; tv; c_tag; tv_list } -> 
-   * | SC_Alias x ->  c_alias x
-   * | SC_Poly x -> c_poly_simpl x
-   * | SC_Typeclass x -> c_typeclass_simpl x
-   * | SC_Row x->c_row_simpl x *)
+let type_constraint_tag = function
+  | C_equation     _ -> 1
+  | C_typeclass    _ -> 2
+  | C_access_label _ -> 3
+
+let type_value_tag = function
+  | P_forall   _  -> 1
+  | P_variable _  -> 2
+  | P_constant _  -> 3
+  | P_apply    _  -> 4
+  | P_row      _  -> 5
 
 
-let type_value_ _ppd =
-  failwith "this got removed, please add it back?"
-  (* function
-   *   SC_Constructor { reason_constr_simpl; tv; c_tag; tv_list } -> 
-   * | SC_Alias x ->  c_alias x
-   * | SC_Poly x -> c_poly_simpl x
-   * | SC_Typeclass x -> c_typeclass_simpl x
-   * | SC_Row x->c_row_simpl x *)
+let row_tag = function
+  | C_record  -> 1
+  | C_variant -> 2
 
-let row_tag _ppd =
-  failwith "this got removed, please add it back?"
-  (* function
-   *   SC_Constructor { reason_constr_simpl; tv; c_tag; tv_list } -> 
-   * | SC_Alias x ->  c_alias x
-   * | SC_Poly x -> c_poly_simpl x
-   * | SC_Typeclass x -> c_typeclass_simpl x
-   * | SC_Row x->c_row_simpl x *)
+let row_tag a b = Int.compare (row_tag a) (row_tag b)
 
-let deduce_and_clean_result _ppd =
-  failwith "this got removed, please add it back?"
-  (* function
-   *   SC_Constructor { reason_constr_simpl; tv; c_tag; tv_list } -> 
-   * | SC_Alias x ->  c_alias x
-   * | SC_Poly x -> c_poly_simpl x
-   * | SC_Typeclass x -> c_typeclass_simpl x
-   * | SC_Row x->c_row_simpl x *)
-let type_constraint_ _ppd =
-  failwith "this got removed, please add it back?"
-  (* function
-   *   SC_Constructor { reason_constr_simpl; tv; c_tag; tv_list } -> 
-   * | SC_Alias x ->  c_alias x
-   * | SC_Poly x -> c_poly_simpl x
-   * | SC_Typeclass x -> c_typeclass_simpl x
-   * | SC_Row x->c_row_simpl x *)
+let rec type_value_ a b = match (a,b) with
+  P_forall   a, P_forall   b -> p_forall a b
+| P_variable a, P_variable b -> type_variable a b
+| P_constant a, P_constant b -> p_constant a b
+| P_apply    a, P_apply    b -> p_apply a b
+| P_row      a, P_row      b -> p_row a b
+| a, b -> Int.compare (type_value_tag a) (type_value_tag b)
+
+and type_value {tsrc=sa;t=ta} {tsrc=sb;t=tb} =
+  cmp2
+    String.compare sa sb
+    type_value_ ta tb
+
+and p_constraints c = List.compare ~compare:type_constraint c
+
+and p_forall {binder=ba;constraints=ca;body=a} {binder=bb;constraints=cb;body=b} =
+  cmp3
+    type_variable ba bb
+    p_constraints ca cb
+    type_value    a  b
+
+and p_constant {p_ctor_tag=ca;p_ctor_args=la} {p_ctor_tag=cb;p_ctor_args=lb} =
+  cmp2
+    constant_tag ca cb
+    (List.compare ~compare:type_value) la lb
+
+and p_apply {tf=ta;targ=la} {tf=tb;targ=lb} =
+  cmp2
+    type_value ta tb
+    type_value la lb
+
+and p_row {p_row_tag=ra;p_row_args=la} {p_row_tag=rb;p_row_args=lb} =
+  cmp2
+    row_tag ra rb
+    (label_map ~compare:type_value) la lb
+
+and type_constraint {reason=ra;c=ca} {reason=rb;c=cb} =
+  cmp2
+    String.compare   ra rb
+    type_constraint_ ca cb
+
+and type_constraint_ a b = match (a,b) with
+  | C_equation     a, C_equation     b -> c_equation a b
+  | C_typeclass    a, C_typeclass    b -> c_typeclass a b
+  | C_access_label a, C_access_label b -> c_access_label a b
+  | a, b -> Int.compare (type_constraint_tag a) (type_constraint_tag b)
+
+and c_equation {aval=a1;bval=b1} {aval=a2;bval=b2} =
+  cmp2
+    type_value a1 a2
+    type_value b1 b2
+
+and tc_args a = List.compare ~compare:type_value a
+
+and c_typeclass {tc_args=ta;typeclass=ca} {tc_args=tb;typeclass=cb} =
+  cmp2
+    tc_args ta tb
+    typeclass ca cb
+
+and c_access_label 
+      {c_access_label_tval=val1;accessor=a1;c_access_label_tvar=var1}
+      {c_access_label_tval=val2;accessor=a2;c_access_label_tvar=var2} =
+  cmp3
+    type_value val1 val2
+    label a1 a2
+    type_variable var1 var2
+
+and tc_allowed t = List.compare ~compare:type_value t
+and typeclass  t = List.compare ~compare:tc_allowed t
+
+let c_constructor_simpl {reason_constr_simpl=ra;tv=tva;c_tag=ca;tv_list=la} {reason_constr_simpl=rb;tv=tvb;c_tag=cb;tv_list=lb} =
+  cmp4
+    String.compare ra rb
+    type_variable tva tvb
+    constant_tag ca cb
+    (List.compare ~compare:type_variable) la lb
+
+let c_alias {reason_alias_simpl=ra;a=aa;b=ba} {reason_alias_simpl=rb;a=ab;b=bb} =
+  cmp3
+    String.compare ra rb
+    type_variable  aa ab
+    type_variable  ba bb
+
+let c_poly_simpl {reason_poly_simpl=ra;tv=tva;forall=fa} {reason_poly_simpl=rb;tv=tvb;forall=fb} =
+  cmp3
+    String.compare ra  rb
+    type_variable  tva tvb
+    p_forall       fa  fb
+
+let c_typeclass_simpl {reason_typeclass_simpl=ra;id_typeclass_simpl=ida;tc=ta;args=la} {reason_typeclass_simpl=rb;id_typeclass_simpl=idb;tc=tb;args=lb} =
+  cmp4
+    String.compare ra rb
+    constraint_identifier ida idb
+    (List.compare ~compare:tc_allowed) ta tb
+    (List.compare ~compare:type_variable) la lb
+
+let c_row_simpl {reason_row_simpl=ra;tv=tva;r_tag=rta;tv_map=ma} {reason_row_simpl=rb;tv=tvb;r_tag=rtb;tv_map=mb} =
+  cmp4
+    String.compare ra rb
+    type_variable  tva tvb
+    row_tag        rta rtb
+    (label_map ~compare:type_variable) ma mb
+
+let type_constraint_simpl_tag = function
+  | SC_Constructor _ -> 1
+  | SC_Alias       _ -> 2
+  | SC_Poly        _ -> 3
+  | SC_Typeclass   _ -> 4
+  | SC_Row         _ -> 5
+
+let type_constraint_simpl a b = match (a,b) with
+  SC_Constructor ca, SC_Constructor cb -> c_constructor_simpl ca cb
+| SC_Alias       aa, SC_Alias       ab -> c_alias aa ab
+| SC_Poly        pa, SC_Poly        pb -> c_poly_simpl pa pb
+| SC_Typeclass   ta, SC_Typeclass   tb -> c_typeclass_simpl ta tb
+| SC_Row         ra, SC_Row         rb -> c_row_simpl ra rb
+| a, b -> Int.compare (type_constraint_simpl_tag a) (type_constraint_simpl_tag b)
+
+let deduce_and_clean_result {deduced=da;cleaned=ca} {deduced=db;cleaned=cb} =
+  cmp2
+    (List.compare ~compare:c_constructor_simpl) da db
+    c_typeclass_simpl ca cb
