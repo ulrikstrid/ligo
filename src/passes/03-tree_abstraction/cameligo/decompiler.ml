@@ -85,8 +85,7 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
       let attributes = List.map wrap attributes in
       let field : CST.field_decl =
         {field_name; colon; field_type; attributes} in
-      ok @@ wrap field
-    in
+      ok @@ wrap field in
     let%bind record = bind_map_list aux record in
     let%bind record = list_to_nsepseq record in
     let attributes = List.map (fun el -> wrap el) attributes in

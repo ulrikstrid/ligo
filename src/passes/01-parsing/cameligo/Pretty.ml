@@ -26,14 +26,18 @@ and pp_let_decl {value; _} =
         None -> "let "
     | Some _ -> "let rec " in
   let binding = pp_let_binding binding
-  and attr    = pp_attributes attr
+  and attr    = pp_attributes_2 attr
   in string let_str ^^ binding ^^ attr
 
-and pp_attributes = function
+and pp_attributes header = function
     [] -> empty
 | attr ->
-    let make s = string "[@@" ^^ string s.value ^^ string "]" in
+    let make s = string header ^^ string s.value ^^ string "]" in
     group (nest 2 (break 1 ^^ separate_map (break 0) make attr))
+
+and pp_attributes_1 attr = pp_attributes "[@" attr
+
+and pp_attributes_2 attr = pp_attributes "[@@" attr
 
 and pp_ident {value; _} = string value
 
@@ -280,12 +284,14 @@ and pp_field_assign {value; _} =
 and pp_ne_injection :
   'a.('a -> document) -> 'a ne_injection reg -> document =
   fun printer {value; _} ->
-    let {compound; ne_elements; _} = value in
+    let {compound; ne_elements; attributes; _} = value in
     let elements = pp_nsepseq ";" printer ne_elements in
-    match Option.map pp_compound compound with
-      None -> elements
-    | Some (opening, closing) ->
-        string opening ^^ nest 1 elements ^^ string closing
+    let inj =
+      match Option.map pp_compound compound with
+        None -> elements
+      | Some (opening, closing) ->
+         string opening ^^ nest 1 elements ^^ string closing
+    in inj ^^ pp_attributes_1 attributes
 
 and pp_nsepseq :
   'a.string -> ('a -> document) -> ('a, t) Utils.nsepseq -> document =
@@ -355,7 +361,7 @@ and pp_let_in {value; _} =
         None -> "let "
     | Some _ -> "let rec " in
   let binding = pp_let_binding binding
-  and attr    = pp_attributes attributes
+  and attr    = pp_attributes_2 attributes
   in string let_str ^^ binding ^^ attr ^^ string " in"
      ^^ hardline ^^ group (pp_expr body)
 
@@ -424,7 +430,7 @@ and pp_field_decl {value; _} =
   let name = pp_ident field_name in
   let t_expr = pp_type_expr field_type
   in prefix 2 1 (name ^^ string " :") t_expr
-     ^^ pp_attributes attributes
+     ^^ pp_attributes_2 attributes
 
 and pp_type_app {value = ctor, tuple; _} =
   pp_type_tuple tuple ^^ group (nest 2 (break 1 ^^ pp_type_constr ctor))
