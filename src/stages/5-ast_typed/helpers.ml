@@ -155,8 +155,9 @@ let is_michelson_pair (t: _ label_map) : (row_element * row_element) option =
   match LMap.to_list t with
   | [ a ; b ] -> (
       if List.for_all (fun i -> LMap.mem i t) @@ (label_range 0 2)
-       && Option.is_some a.michelson_annotation
-       && Option.is_some b.michelson_annotation
+      && Option.(
+        is_some a.michelson_annotation || is_some b.michelson_annotation
+      )
       then Some (a , b)
       else None
     )

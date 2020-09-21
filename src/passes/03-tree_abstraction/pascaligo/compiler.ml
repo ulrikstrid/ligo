@@ -36,10 +36,10 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
     let aux (field : CST.field_decl CST.reg) =
       let (f, _) = r_split field in
       let%bind type_expr = compile_type_expression f.field_type in
-      return @@ (f.field_name.value, type_expr, [] (* TODO *))
+      return @@ (f.field_name.value, type_expr) (* TODO *)
     in
     let%bind record = bind_map_list aux lst in
-    return @@ t_record_ez ~loc record ~attr:[] (* TODO *)
+    return @@ t_record_ez ~loc ~attr:[] record (* TODO *)
   | TProd prod ->
     let (nsepseq, loc) = r_split prod in
     let lst = npseq_to_list nsepseq in

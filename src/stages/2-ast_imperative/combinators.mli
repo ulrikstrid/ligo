@@ -26,8 +26,8 @@ val t_tuple  : ?loc:Location.t -> type_expression list -> type_expression
 val t_record    : ?loc:Location.t -> record_type -> type_expression
 val t_record_ez :
   ?loc:Location.t ->
-  (string * type_expression * attributes) list ->
-  attr:attributes ->
+  ?attr:attributes ->
+  (string * type_expression) list ->
   type_expression
 
 val t_sum    : ?loc:Location.t -> row_element label_map -> type_expression

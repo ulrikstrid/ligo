@@ -26,9 +26,9 @@ let t_variable ?loc n     : type_expression = make_t ?loc @@ T_variable n
 let t_variable_ez ?loc n  : type_expression = t_variable ?loc @@ Var.of_name n
 
 let t_record ?loc record  : type_expression = make_t ?loc @@ T_record record
-let t_record_ez ?loc lst ~attr =
-  let aux i (k, v, attr) =
-    (Label k, {associated_type=v; decl_pos=i; attributes=attr}) in
+let t_record_ez ?loc ?(attr=[]) lst =
+  let aux i (k, v) =
+    (Label k, {associated_type=v; decl_pos=i; attributes=[]}) in
   let lst = List.mapi aux lst in
   let fields : row_element label_map = LMap.of_list lst
   in t_record ?loc {fields; attributes=attr}
