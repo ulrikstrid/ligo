@@ -11,9 +11,7 @@ let ghost = Region.ghost
 
 let wrap = Region.wrap_ghost
 
-let decompile_attribute_inline = function
-    true -> [wrap "inline"]
-  | false -> []
+let decompile_attributes = List.map wrap
 
 let list_to_sepseq lst =
   match lst with
@@ -210,14 +208,14 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     return_expr_with_par @@ CST.EFun (wrap @@ fun_expr)
   | E_recursive _ ->
     failwith "corner case : annonymous recursive function"
-  | E_let_in {let_binder;rhs;let_result;inline} ->
+  | E_let_in {let_binder;rhs;let_result;attributes} ->
     let var = CST.PVar (decompile_variable @@ (fst let_binder).wrap_content) in
     let binders = (var,[]) in
     let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) @@ snd let_binder in
     let%bind let_rhs = decompile_expression rhs in
     let binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
     let%bind body = decompile_expression let_result in
-    let attributes = decompile_attribute_inline inline in
+    let attributes = decompile_attributes attributes in
     let lin : CST.let_in = {kwd_let=ghost;kwd_rec=None;binding;kwd_in=ghost;body;attributes} in
     return_expr @@ CST.ELetIn (wrap lin)
   | E_raw_code {language; code} ->
@@ -486,8 +484,8 @@ let decompile_declaration : AST.declaration Location.wrap -> (CST.declaration, _
     let name = decompile_variable name in
     let%bind type_expr = decompile_type_expr te in
     ok @@ CST.TypeDecl (wrap (CST.{kwd_type=ghost; name; eq=ghost; type_expr}))
-  | Declaration_constant (var, ty_opt, inline, expr) ->
-    let attributes : CST.attributes = decompile_attribute_inline inline in
+  | Declaration_constant (var, ty_opt, attr, expr) ->
+    let attributes : CST.attributes = decompile_attributes attr in
     let var = CST.PVar (decompile_variable var.wrap_content) in
     let binders = (var,[]) in
     match expr.expression_content with
