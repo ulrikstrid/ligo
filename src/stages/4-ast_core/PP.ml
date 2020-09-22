@@ -58,7 +58,7 @@ let list_sep_d_par f ppf lst =
 let rec type_content : formatter -> type_expression -> unit =
   fun ppf te ->
   match te.type_content with
-  | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (variant_sep_d type_expression) m
+  | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (variant_sep_d type_expression) m.fields
   | T_record m -> fprintf ppf "%a" (tuple_or_record_sep_type type_expression) m.fields
   | T_arrow a -> fprintf ppf "%a -> %a" type_expression a.type1 type_expression a.type2
   | T_variable tv -> type_variable ppf tv

@@ -18,6 +18,10 @@ let bind_fold_lmap f init lmap =
     acc >>? fun acc ->
     f acc k v in 
   ok init |> fold aux lmap 
+let bind_iter_lmap f lmap =
+  let aux () k v = f k v in
+  bind_fold_lmap aux () lmap
+
  
 let bind_fold_map_lmap f init lmap =
   let open Trace in

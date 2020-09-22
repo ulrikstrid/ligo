@@ -63,7 +63,7 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
   let return te = ok @@ te in
   match te.type_content with
     T_sum sum ->
-    let sum = AST.LMap.to_kv_list_rev sum in
+    let sum = AST.LMap.to_kv_list_rev sum.fields in
     let aux (AST.Label c, AST.{associated_type;_}) =
       let constr = wrap c in
       let%bind arg = decompile_type_expr associated_type in

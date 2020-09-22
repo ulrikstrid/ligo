@@ -179,8 +179,9 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
       fail @@ corner_case ~loc:"spilling" "These types should have been resolved before spilling"
   | T_constant _ ->
       fail @@ corner_case ~loc:"spilling" "Type constant with invalid arguments (wrong number or wrong kinds)"
-  | T_sum m when Ast_typed.Helpers.is_michelson_or m ->
-      let node = Append_tree.of_list @@ kv_list_of_lmap m in
+  | T_sum m when Ast_typed.Helpers.is_michelson_or m.content ->
+      (*GA TODO*)
+      let node = Append_tree.of_list @@ kv_list_of_lmap m.content in
       let aux a b : (type_expression annotated , spilling_error) result =
         let%bind a = a in
         let%bind b = b in
@@ -194,7 +195,7 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
                       aux node in
       ok @@ snd m'
   | T_sum m ->
-      let node = Append_tree.of_list @@ kv_list_of_lmap m in
+      let node = Append_tree.of_list @@ kv_list_of_lmap m.content in
       let aux a b : (type_expression annotated , spilling_error) result =
         let%bind a = a in
         let%bind b = b in
@@ -248,7 +249,7 @@ and tree_of_sum : AST.type_expression -> ((AST.label * AST.type_expression) Appe
   let%bind map_tv =
     trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
     get_t_sum t in
-  let kt_list = List.map (fun (k,({associated_type;_}:AST.row_element)) -> (k,associated_type)) (kv_list_of_lmap map_tv) in
+  let kt_list = List.map (fun (k,({associated_type;_}:AST.row_element)) -> (k,associated_type)) (kv_list_of_lmap map_tv.content) in
   ok @@ Append_tree.of_list kt_list
 
 and compile_expression (ae:AST.expression) : (expression , spilling_error) result =

@@ -30,9 +30,10 @@ let rec compile_type_expression
           (* TODO: attributes on variants *)
           bind_map_option (compile_type_expression ~attr:[] <@ snd) v.arg in
         let type_expr = Option.unopt ~default:(t_unit ()) type_expr in
-        ok @@ (v.constr.value,type_expr) in
-      let%bind sum = bind_map_list aux lst
-      in return @@ t_sum_ez ~loc sum
+        ok @@ (v.constr.value,type_expr,[]) in
+        (*CR TODO*)
+      let%bind fields = bind_map_list aux lst
+      in return @@ t_sum_ez_attr ~loc ~attr fields
   | TRecord record ->
       let nsepseq, loc = r_split record in
       let lst = npseq_to_list nsepseq.ne_elements in

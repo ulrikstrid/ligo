@@ -193,13 +193,13 @@ let rec type_expression {type_content=tc;type_meta;location} =
   ]
 
 and type_content = function
-  | T_sum      t -> `List [ `String "t_sum"; label_map row_element t]
-  | T_record   t -> `List [ `String "t_record"; record t]
+  | T_sum      t -> `List [ `String "t_sum"; rows t]
+  | T_record   t -> `List [ `String "t_record"; rows t]
   | T_arrow    t -> `List [ `String "t_arrow"; arrow t]
   | T_variable t -> `List [ `String "t_variable"; type_variable_to_yojson t]
   | T_constant t -> `List [ `String "t_constant"; type_operator t]
 
-and record {content; layout = l } =
+and rows {content; layout = l } =
   `Assoc [
     ("content", label_map row_element content);
     ("layout", layout l);

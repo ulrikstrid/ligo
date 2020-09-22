@@ -47,17 +47,18 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression , desu
   fun te ->
   let return tc = ok @@ O.make_t ~loc:te.location ~sugar:te tc in
   match te.type_content with
-    | I.T_sum sum -> 
-      let%bind sum = 
+    | I.T_sum {fields ; attributes} -> 
+      let%bind fields = 
         Stage_common.Helpers.bind_map_lmap (fun v ->
           let {associated_type ; attributes ; decl_pos} : I.row_element = v in
           let michelson_annotation = get_michelson_annotation attributes in
           let%bind associated_type = compile_type_expression associated_type in
           let v' : O.row_element = {associated_type ; michelson_annotation ; decl_pos} in
           ok @@ v'
-        ) sum
+        ) fields
       in
-      return @@ O.T_sum sum
+      let layout = get_layout attributes in
+      return @@ O.T_sum {fields ; layout }
     | I.T_record {fields ; attributes} -> 
       let%bind fields = 
         Stage_common.Helpers.bind_map_lmap (fun v ->
@@ -69,7 +70,7 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression , desu
         ) fields
       in
       let layout = get_layout attributes in
-      return @@ O.T_record {fields ; layout}
+      return @@ O.T_record {fields ; layout }
     | I.T_tuple tuple ->
       let aux (i,acc) el = 
         let%bind el = compile_type_expression el in

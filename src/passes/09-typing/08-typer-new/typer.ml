@@ -52,24 +52,25 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
     let%bind type1 = evaluate_type e type1 in
     let%bind type2 = evaluate_type e type2 in
     return (T_arrow {type1;type2})
-  | T_sum m ->
+  | T_sum {fields ; layout} ->
     let aux v =
       let {associated_type ; michelson_annotation ; decl_pos} : I.row_element = v in
       let%bind associated_type = evaluate_type e associated_type in
       ok @@ ({associated_type ; michelson_annotation ; decl_pos}:O.row_element)
     in
-    let%bind m = Stage_common.Helpers.bind_map_lmap aux m in
-    return (T_sum m)
-  | T_record m ->
+    let%bind fields = Stage_common.Helpers.bind_map_lmap aux fields in
+    let layout = Option.unopt ~default:default_layout layout in
+    return (T_sum {content=fields ; layout=layout})
+  | T_record {fields ; layout} ->
     let aux v =
       let {associated_type ; michelson_annotation ; decl_pos} : I.row_element = v in
       let%bind associated_type = evaluate_type e associated_type in
       ok @@ ({associated_type ; michelson_annotation ; decl_pos}:O.row_element)
     in
-    let%bind lmap = Stage_common.Helpers.bind_map_lmap aux m.fields in
+    let%bind lmap = Stage_common.Helpers.bind_map_lmap aux fields in
     let%bind () = trace_assert_fail_option (record_redefined_error t.location) @@
       Environment.get_record lmap e in
-    let layout = Option.unopt ~default:default_layout m.layout in
+    let layout = Option.unopt ~default:default_layout layout in
     return (T_record {content = lmap;layout})
   | T_variable name ->
     (* Check that the variable is in the environment *)
@@ -128,14 +129,14 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
       | TC_michelson_or_right_comb ->
           let%bind c = bind (evaluate_type e) @@ get_unary arguments in
           let%bind cmap = match c.type_content with
-            | T_sum cmap -> ok cmap
+            | T_sum cmap -> ok cmap.content
             | _ -> fail (michelson_comb_no_variant t.location) in
           let pair = Typer_common.Michelson_type_converter.convert_variant_to_right_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
           return @@ pair
       | TC_michelson_or_left_comb ->
           let%bind c = bind (evaluate_type e) @@ get_unary arguments in
           let%bind cmap = match c.type_content with
-            | T_sum cmap -> ok cmap
+            | T_sum cmap -> ok cmap.content
             | _ -> fail (michelson_comb_no_variant t.location) in
           let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
           return @@ pair
@@ -410,7 +411,7 @@ and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.match
         let%bind variant_cases' =
           trace_option (match_error ~expected:i ~actual:t loc)
           @@ Ast_typed.Combinators.get_t_sum variant in
-        let variant_cases = List.map fst @@ O.LMap.to_kv_list_rev variant_cases' in
+        let variant_cases = List.map fst @@ O.LMap.to_kv_list_rev variant_cases'.content in
         let match_cases = List.map (fun ({constructor;_} : I.match_variant) -> constructor) lst in
         let test_case = fun c ->
           Assert.assert_true (corner_case "match case") (List.mem c match_cases)

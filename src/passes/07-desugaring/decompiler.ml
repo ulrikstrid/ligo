@@ -13,17 +13,18 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, des
     Some te -> ok @@ te
   | None ->
     match te.type_content with
-      | O.T_sum sum -> 
-        let%bind sum = 
+      | O.T_sum {fields;layout} -> 
+        let%bind fields = 
           Stage_common.Helpers.bind_map_lmap (fun v ->
             let {associated_type;michelson_annotation;decl_pos} : O.row_element = v in
             let%bind associated_type = decompile_type_expression associated_type in
             let attributes = match michelson_annotation with | Some a -> [a] | None -> [] in
             let v' : I.row_element = {associated_type;attributes;decl_pos} in
             ok @@ v'
-          ) sum
+          ) fields
         in
-        return @@ I.T_sum sum
+        let attributes = match layout with Some l -> [("layout:"^(Format.asprintf "%a" O.PP.layout l))] | None -> [] in
+        return @@ I.T_sum {fields ; attributes}
       | O.T_record {fields;layout} -> 
         let%bind fields = 
           Stage_common.Helpers.bind_map_lmap (fun v ->
@@ -34,8 +35,7 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, des
             ok @@ v'
           ) fields
         in
-        let layout_to_string : I.layout -> string = function L_tree -> "tree" | L_comb -> "comb" in
-        let attributes = match layout with Some l -> [("layout:"^layout_to_string l)] | None -> [] in
+        let attributes = match layout with Some l -> [("layout:"^(Format.asprintf "%a" O.PP.layout l))] | None -> [] in
         return @@ I.T_record { fields ; attributes }
       | O.T_arrow {type1;type2} ->
         let%bind type1 = decompile_type_expression type1 in

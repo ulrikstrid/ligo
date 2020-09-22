@@ -39,10 +39,10 @@ let t_record ?loc ?sugar m  : type_expression =
 let t_pair  ?loc ?sugar (a , b) : type_expression = t_record_ez ?loc ?sugar [("0",a) ; ("1",b)]
 let t_tuple ?loc ?sugar lst     : type_expression = t_record_ez ?loc ?sugar (tuple_to_record lst)
 
-let ez_t_sum ?loc ?sugar (lst:(string * row_element) list) : type_expression =
-  let aux prev (k, v) = LMap.add (Label k) v prev in
-  let map = List.fold_left aux LMap.empty lst in
-  make_t ?loc ?sugar @@ T_sum map
+let ez_t_sum ?loc ?sugar ?layout (lst:(string * row_element) list) : type_expression =
+  let lst = List.map (fun (k, v) -> (Label k, v)) lst in
+  let m = LMap.of_list lst in
+  make_t ?loc ?sugar @@ T_sum { layout ; fields = m }
 let t_sum ?loc ?sugar m : type_expression =
   let lst = SMap.to_kv_list_rev m in
   ez_t_sum ?loc ?sugar lst

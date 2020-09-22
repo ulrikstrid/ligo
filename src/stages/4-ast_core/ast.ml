@@ -44,13 +44,13 @@ and content_type_constant = {
     arguments : type_expression_list ;
   }
 and type_content =
-  | T_sum of field_label_map
-  | T_record of record
+  | T_sum of rows 
+  | T_record of rows
   | T_arrow of arrow
   | T_variable of type_variable
   | T_constant of content_type_constant
 
-and record = { fields : field_label_map ; layout : layout option }
+and rows = { fields : field_label_map ; layout : layout option }
 
 and arrow = {
     type1: type_expression ;

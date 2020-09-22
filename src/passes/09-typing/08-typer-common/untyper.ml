@@ -10,13 +10,13 @@ module O = Ast_typed
 let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer_error) result =
   let return t = ok @@ I.make_t t in
   match t.type_content with
-  | O.T_sum x ->
+  | O.T_sum {content ; layout} ->
      let aux ({associated_type ; michelson_annotation ; decl_pos} : O.row_element) =
        let%bind associated_type = untype_type_expression associated_type in
        let v' = ({associated_type ; michelson_annotation ; decl_pos} : I.row_element) in
        ok @@ v' in
-     let%bind x' = Stage_common.Helpers.bind_map_lmap aux x in
-     return @@ I.T_sum x'
+     let%bind x' = Stage_common.Helpers.bind_map_lmap aux content in
+     return @@ I.T_sum { fields = x' ; layout = Some layout }
   | O.T_record {content;layout} -> (
     let aux ({associated_type ; michelson_annotation ; decl_pos} : O.row_element) =
       let%bind associated_type = untype_type_expression associated_type in

@@ -69,8 +69,9 @@ let decompile_variable : type a. a Var.t -> CST.variable = fun var ->
 let rec decompile_type_expr : dialect -> AST.type_expression -> _ result = fun dialect te ->
   let return te = ok @@ te in
   match te.type_content with
-    T_sum sum ->
-    let sum = AST.LMap.to_kv_list_rev sum in
+    T_sum {fields ; attributes} ->
+    ignore attributes; (*CR TODO*)
+    let sum = AST.LMap.to_kv_list_rev fields in
     let aux (AST.Label c, AST.{associated_type;_}) =
       let constr = wrap c in
       let%bind arg = decompile_type_expr dialect associated_type in
@@ -82,7 +83,7 @@ let rec decompile_type_expr : dialect -> AST.type_expression -> _ result = fun d
     let%bind sum = list_to_nsepseq sum in
     return @@ CST.TSum (wrap sum)
   | T_record {fields; attributes} ->
-     let () = ignore attributes in (* GA TODO *)
+     ignore attributes; (* CR TODO *)
      let record = AST.LMap.to_kv_list_rev fields in
      let aux (AST.Label c, AST.{associated_type;_}) =
        let field_name = wrap c in

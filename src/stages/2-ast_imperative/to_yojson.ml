@@ -205,7 +205,9 @@ and attributes attr =
   in `Assoc [("attributes", `List list)]
 
 and type_content = function
-  | T_sum      t -> `List [ `String "t_sum"; label_map row_element t ]
+  | T_sum   t -> `List [ `String "t_sum";
+                            label_map row_element t.fields;
+                            attributes t.attributes]
   | T_record   t -> `List [ `String "t_record";
                             label_map row_element t.fields;
                             attributes t.attributes]

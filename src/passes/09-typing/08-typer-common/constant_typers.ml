@@ -579,7 +579,7 @@ let convert_to_right_comb loc = typer_1 loc "CONVERT_TO_RIGHT_COMB" @@ fun _loc 
       let pair = Michelson_type_converter.convert_pair_to_right_comb kvl in
       ok {t with type_content = pair}
     | T_sum cmap ->
-      let kvl = LMap.to_kv_list_rev cmap in
+      let kvl = LMap.to_kv_list_rev cmap.content in
       let%bind () = Michelson_type_converter.field_checks kvl loc in
       let michelson_or = Michelson_type_converter.convert_variant_to_right_comb kvl in
       ok {t with type_content = michelson_or}
@@ -593,7 +593,7 @@ let convert_to_left_comb loc = typer_1 loc "CONVERT_TO_LEFT_COMB" @@ fun _loc t 
       let pair = Michelson_type_converter.convert_pair_to_left_comb kvl in
       ok {t with type_content = pair}
     | T_sum cmap ->
-      let kvl = LMap.to_kv_list_rev cmap in
+      let kvl = LMap.to_kv_list_rev cmap.content in
       let%bind () = Michelson_type_converter.field_checks kvl loc in
       let michelson_or = Michelson_type_converter.convert_variant_to_left_comb kvl in
       ok {t with type_content = michelson_or}
@@ -608,7 +608,7 @@ let convert_from_right_comb loc = typer_1_opt loc "CONVERT_FROM_RIGHT_COMB" @@ f
       ok {t with type_content = record}
     | T_sum src_cmap ->
       let%bind dst_cmap = trace_option (expected_variant loc dst_t) @@ get_t_sum dst_t in
-      let%bind variant = Michelson_type_converter.convert_variant_from_right_comb src_cmap dst_cmap in
+      let%bind variant = Michelson_type_converter.convert_variant_from_right_comb src_cmap.content dst_cmap.content in
       ok {t with type_content = variant}
     | _ -> fail @@ wrong_converter t
 
@@ -621,7 +621,7 @@ let convert_from_left_comb loc = typer_1_opt loc "CONVERT_FROM_LEFT_COMB" @@ fun
       ok {t with type_content = record}
     | T_sum src_cmap ->
       let%bind dst_cmap = trace_option (expected_variant loc dst_t) @@ get_t_sum dst_t in
-      let%bind variant = Michelson_type_converter.convert_variant_from_left_comb src_cmap dst_cmap in
+      let%bind variant = Michelson_type_converter.convert_variant_from_left_comb src_cmap.content dst_cmap.content in
       ok {t with type_content = variant}
     | _ -> fail @@ wrong_converter t
 
