@@ -299,7 +299,9 @@ record_type:
     and value  = {kind      = NEInjRecord $1;
                   enclosing = End $3;
                   ne_elements;
-                  terminator}
+                  terminator;
+(*                  (* TODO Until we have a self-pass for attributes. *)
+                  attributes=[]*)}
     in TRecord {region; value}
   }
 | "record" "[" sep_or_term_list(field_decl,";") "]" {
@@ -308,7 +310,9 @@ record_type:
    and value  = {kind      = NEInjRecord $1;
                  enclosing = Brackets ($2,$4);
                  ne_elements;
-                 terminator}
+                 terminator;
+(*                 (* TODO Until we have a self-pass for attributes. *)
+                 attributes=[]*)}
    in TRecord {region; value} }
 
 field_decl:
@@ -316,8 +320,9 @@ field_decl:
     let stop   = type_expr_to_region $3 in
     let region = cover $1.region stop
     and value  = {field_name=$1; colon=$2; field_type=$3}
-    in {region; value} }
-
+    in FieldDecl {region; value}
+  }
+| open_attr_decl { FieldAttrDecl $1 }
 
 fun_expr:
   "function" parameters type_annot? "is" expr {
@@ -345,7 +350,8 @@ open_fun_decl:
                   kwd_is       = $6;
                   return       = $7;
                   terminator   = None;
-                  attributes   = None}
+(*                  (* TODO Until we have a self-pass for attributes. *)
+                  attributes   = []*)}
     in {region; value} }
 
 fun_decl:
@@ -420,8 +426,9 @@ open_const_decl:
                   const_type;
                   equal;
                   init;
-                  terminator = None;
-                  attributes = None}
+                  terminator=None;
+(*                  (* TODO Until we have a self-pass for attributes. *)
+                  attributes = []*)}
     in {region; value} }
 
 open_var_decl:
@@ -547,7 +554,9 @@ ne_injection(Kind,element):
       and value  = {kind      = mk_kwd $1;
                     enclosing = End $3;
                     ne_elements;
-                    terminator}
+                    terminator;
+(*                    (* TODO Until we have a self-pass for attributes. *)
+                    attributes=[]*)}
       in {region; value}
   }
 | Kind "[" sep_or_term_list(element,";") "]" {
@@ -557,7 +566,9 @@ ne_injection(Kind,element):
       and value = {kind      = mk_kwd $1;
                    enclosing = Brackets ($2,$4);
                    ne_elements;
-                   terminator}
+                   terminator;
+(*                   (* TODO Until we have a self-pass for attributes. *)
+                   attributes=[]*)}
       in {region; value} }
 
 binding:

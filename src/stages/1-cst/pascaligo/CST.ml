@@ -169,7 +169,8 @@ and const_decl = {
   equal      : equal;
   init       : expr;
   terminator : semi option;
-  attributes : attr_decl option
+(*  (* TODO Until we have a self-pass for attributes. *)
+  attributes : attr_decl option*)
 }
 
 (* Type declarations *)
@@ -185,7 +186,7 @@ and type_decl = {
 and type_expr =
   TProd   of cartesian
 | TSum    of (variant reg, vbar) nsepseq reg
-| TRecord of field_decl reg ne_injection reg
+| TRecord of field ne_injection reg
 | TApp    of (type_constr * type_tuple) reg
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
@@ -193,17 +194,22 @@ and type_expr =
 | TWild   of wild
 | TString of lexeme reg
 
+and field =
+  FieldDecl     of field_decl reg
+| FieldAttrDecl of attr_decl
+
+and field_decl = {
+  field_name : field_name;
+  colon      : colon;
+  field_type : type_expr;
+  (*  attributes : attr_decl (* TODO Until we have a self-pass for attributes. *)*)
+}
+
 and cartesian = (type_expr, times) nsepseq reg
 
 and variant = {
   constr : constr;
   arg    : (kwd_of * type_expr) option
-}
-
-and field_decl = {
-  field_name : field_name;
-  colon      : colon;
-  field_type : type_expr
 }
 
 and type_tuple = (type_expr, comma) nsepseq par reg
@@ -227,7 +233,7 @@ and fun_decl = {
   kwd_is        : kwd_is;
   return        : expr;
   terminator    : semi option;
-  attributes    : attr_decl option
+  (*  attributes    : attr_decl (* TODO Until we have a self-pass for attributes. *)*)
 }
 
 and block_with = {
@@ -611,7 +617,9 @@ and 'a ne_injection = {
   kind        : ne_injection_kwd;
   enclosing   : enclosing;
   ne_elements : ('a, semi) nsepseq;
-  terminator  : semi option
+  terminator  : semi option;
+(*  (* TODO Until we have a self-pass for attributes. *)
+  attributes  : attr_decl*)
 }
 
 and ne_injection_kwd =
@@ -823,6 +831,3 @@ let lhs_to_region : lhs -> Region.t = function
 let selection_to_region = function
   FieldName {region; _}
 | Component {region; _} -> region
-
-let map_ne_injection f ne_injection =
-  { ne_injection with ne_elements = nsepseq_map f ne_injection.ne_elements }

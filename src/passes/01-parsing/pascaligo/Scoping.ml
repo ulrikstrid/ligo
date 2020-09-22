@@ -182,10 +182,13 @@ let check_parameters params =
 (* Checking record fields *)
 
 let check_fields fields =
-  let add acc {value; _} =
-    if VarSet.mem (value: field_decl).field_name acc then
-      raise (Error (Duplicate_field value.field_name))
-    else VarSet.add value.field_name acc in
+  let add acc = function
+    FieldDecl field ->
+      let name = field.value.field_name in
+      if VarSet.mem name acc then
+        raise (Error (Duplicate_field name))
+      else VarSet.add name acc
+  | FieldAttrDecl _ -> acc in
   let fields =
     List.fold_left add VarSet.empty fields
   in ignore fields

@@ -39,10 +39,7 @@ and pp_declaration = function
 and pp_attr_decl decl = pp_ne_injection pp_string decl
 
 and pp_const_decl {value; _} =
-  let {name; const_type; init; attributes; _} = value in
-  let attr  = match attributes with
-                None -> empty
-              | Some a -> hardline ^^ pp_attr_decl a in
+  let {name; const_type; init; _} = value in
   let start = string ("const " ^ name.value) in
   let start =
     match const_type with
@@ -51,7 +48,6 @@ and pp_const_decl {value; _} =
         group (start ^/^ nest 2 (string ": " ^^ pp_type_expr e)) in
   start
   ^^ group (break 1 ^^ nest 2 (string "= " ^^ pp_expr init))
-  ^^ attr
 
 (* Type declarations *)
 
@@ -63,7 +59,7 @@ and pp_type_decl decl =
 and pp_type_expr = function
   TProd t   -> pp_cartesian t
 | TSum t    -> pp_variants t
-| TRecord t -> pp_fields t
+| TRecord t -> pp_record_type t
 | TApp t    -> pp_type_app t
 | TFun t    -> pp_fun_type t
 | TPar t    -> pp_type_par t
@@ -96,7 +92,11 @@ and pp_variant {value; _} =
   | Some (_, e) ->
       prefix 4 1 (pp_ident constr ^^ string " of") (pp_type_expr e)
 
-and pp_fields fields = pp_ne_injection pp_field_decl fields
+and pp_record_type fields = pp_ne_injection pp_fields fields
+
+and pp_fields = function
+  FieldDecl decl     -> pp_field_decl decl
+| FieldAttrDecl decl -> pp_attr_decl decl
 
 and pp_field_decl {value; _} =
   let {field_name; field_type; _} = value in
@@ -145,7 +145,7 @@ and pp_fun_expr {value; _} =
 
 and pp_fun_decl {value; _} =
   let {kwd_recursive; fun_name; param; ret_type;
-       return; attributes; _} = value in
+       return; _} = value in
   let start =
     match kwd_recursive with
         None -> string "function"
@@ -164,14 +164,9 @@ and pp_fun_decl {value; _} =
     match return with
       EBlock _ -> group (break 1 ^^ expr)
     | _ -> group (nest 2 (break 1 ^^ expr))
-  and attr =
-    match attributes with
-      None -> empty
-    | Some a -> hardline ^^ pp_attr_decl a in
-  prefix 2 1 start parameters
-  ^^ t_annot_is
-  ^^ body
-  ^^ attr
+in prefix 2 1 start parameters
+   ^^ t_annot_is
+   ^^ body
 
 and pp_parameters p = pp_nsepseq ";" pp_param_decl p
 

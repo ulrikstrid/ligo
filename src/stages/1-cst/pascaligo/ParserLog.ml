@@ -186,7 +186,7 @@ and print_sum_type state {value; _} =
   print_nsepseq state "|" print_variant value
 
 and print_record_type state =
-  print_ne_injection state print_field_decl
+  print_ne_injection state print_field
 
 and print_type_app state {value; _} =
   let type_name, type_tuple = value in
@@ -204,6 +204,10 @@ and print_par_type state {value; _} =
   print_token     state lpar "(";
   print_type_expr state inside;
   print_token     state rpar ")"
+
+and print_field state = function
+  FieldDecl decl     -> print_field_decl state decl
+| FieldAttrDecl decl -> print_attr_decl state decl
 
 and print_field_decl state {value; _} =
   let {field_name; colon; field_type} = value in
@@ -992,11 +996,7 @@ and pp_type_expr state = function
     List.iteri (List.length variants |> apply) variants
 | TRecord {value; region} ->
     pp_loc_node state "TRecord" region;
-    let apply len rank field_decl =
-      pp_field_decl (state#pad len rank)
-                    field_decl.value in
-    let fields = Utils.nsepseq_to_list value.ne_elements in
-    List.iteri (List.length fields |> apply) fields
+    pp_ne_injection pp_field state value
 | TString s ->
     pp_node   state "TString";
     pp_string (state#pad 1 0) s
@@ -1016,9 +1016,17 @@ and pp_variant state {constr; arg} =
           None -> ()
   | Some (_,c) -> pp_type_expr (state#pad 1 0) c
 
-and pp_field_decl state decl =
-  pp_ident state decl.field_name;
-  pp_type_expr (state#pad 1 0) decl.field_type
+and pp_field state = function
+  FieldDecl decl ->
+    pp_node state "FieldDecl";
+    pp_field_decl (state#pad 1 0) decl
+| FieldAttrDecl decl ->
+    pp_node state "FieldAttrDecl";
+    pp_attr_decl state decl.value
+
+and pp_field_decl state {value; _} =
+  pp_ident state value.field_name;
+  pp_type_expr (state#pad 1 0) value.field_type
 
 and pp_type_tuple state {value; _} =
   let components = Utils.nsepseq_to_list value.inside in
