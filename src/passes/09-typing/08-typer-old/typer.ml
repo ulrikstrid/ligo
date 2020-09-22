@@ -71,7 +71,7 @@ and type_match : (environment -> I.expression -> (O.expression , typer_error) re
       let%bind variant_cases' =
         trace_option (match_error ~expected:i ~actual:t loc)
         @@ Ast_typed.Combinators.get_t_sum t in
-      let variant_cases = List.map fst @@ O.LMap.to_kv_list_rev variant_cases' in
+      let variant_cases = List.map fst @@ O.LMap.to_kv_list_rev variant_cases'.content in
       let match_cases = List.map (fun ({constructor;_}:I.match_variant) -> constructor) lst in
       let test_case = fun c ->
         Assert.assert_true (corner_case "match case") (List.mem c match_cases)
@@ -86,7 +86,7 @@ and type_match : (environment -> I.expression -> (O.expression , typer_error) re
           let proj = cast_var proj in
           let%bind {associated_type=constructor_t;_} =
             trace_option (unbound_constructor e constructor loc) @@
-            O.LMap.find_opt constructor variant_cases' in
+            O.LMap.find_opt constructor variant_cases'.content in
           let e' = Environment.add_ez_binder proj constructor_t e in
           let%bind body = f e' body in
           let constructor = constructor in
@@ -102,34 +102,44 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
       let%bind type1 = evaluate_type e type1 in
       let%bind type2 = evaluate_type e type2 in
       return (T_arrow {type1;type2})
-  | T_sum m ->
-      let aux prev k ({associated_type;michelson_annotation;decl_pos} : I.row_element) =
+  | T_sum m -> (
+    let%bind () =
+      let aux k _v = match Environment.get_constructor k e with
+          | Some _ ->
+            if I.LMap.mem (Label "M_left") m.fields || I.LMap.mem (Label "M_right") m.fields then ok ()
+            else fail (redundant_constructor e k t.location)
+          | None -> ok () in
+      Stage_common.Helpers.bind_iter_lmap aux m.fields
+    in
+    let%bind lmap =
+      let aux ({associated_type;michelson_annotation;decl_pos} : I.row_element) =
         let%bind associated_type = evaluate_type e associated_type in
-        let%bind () = match Environment.get_constructor k e with
-        | Some _ ->
-          if I.LMap.mem (Label "M_left") m || I.LMap.mem (Label "M_right") m then
-            ok ()
-          else fail (redundant_constructor e k t.location)
-        | None -> ok () in
-        let v' : O.row_element = {associated_type;michelson_annotation;decl_pos} in
-        ok @@ O.LMap.add k v' prev
+        ok @@ ({associated_type;michelson_annotation;decl_pos} : O.row_element)
       in  
-      let%bind m = Stage_common.Helpers.bind_fold_lmap aux O.LMap.empty m in
-      return (T_sum m)
+      Stage_common.Helpers.bind_map_lmap aux m.fields
+    in
+    let sum : O.rows  = match Environment.get_sum lmap e with
+      | None ->
+        let layout = Option.unopt ~default:default_layout m.layout in
+        {content = lmap; layout}
+      | Some r -> r
+    in
+    return @@ T_sum sum
+  )
   | T_record m -> (
     let aux ({associated_type;michelson_annotation;decl_pos}: I.row_element) =
       let%bind associated_type = evaluate_type e associated_type in
       ok @@ ({associated_type;michelson_annotation;decl_pos} : O.row_element)
     in
     let%bind lmap = Stage_common.Helpers.bind_map_lmap aux m.fields in
-    let record : O.record = match Environment.get_record lmap e with
+    let record : O.rows = match Environment.get_record lmap e with
     | None ->
       let layout = Option.unopt ~default:default_layout m.layout in
       {content=lmap;layout}
     | Some r ->  r
     in
     return @@ T_record record
-   )
+  )
   | T_variable name ->
       let name = Var.todo_cast name in
       let%bind tv =
@@ -188,14 +198,14 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
       | TC_michelson_or_right_comb ->
           let%bind c = bind (evaluate_type e) @@ get_unary arguments in
           let%bind cmap = match c.type_content with
-            | T_sum cmap -> ok cmap
+            | T_sum cmap -> ok cmap.content
             | _ -> fail (michelson_comb_no_variant t.location) in
           let pair = Typer_common.Michelson_type_converter.convert_variant_to_right_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
           return @@ pair
       | TC_michelson_or_left_comb ->
           let%bind c = bind (evaluate_type e) @@ get_unary arguments in
           let%bind cmap = match c.type_content with
-            | T_sum cmap -> ok cmap
+            | T_sum cmap -> ok cmap.content
             | _ -> fail (michelson_comb_no_variant t.location) in
           let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
           return @@ pair
@@ -275,7 +285,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     let%bind expr' = type_expression' e element in
     ( match t.type_content with
       | T_sum c ->
-        let {associated_type ; _} : O.row_element = O.LMap.find (Label s) c in
+        let {associated_type ; _} : O.row_element = O.LMap.find (Label s) c.content in
         let%bind () = assert_type_expression_eq expr'.location (expr'.type_expression, associated_type) in
         return (E_constructor {constructor = Label s; element=expr'}) t
       | _ -> fail (michelson_or (Label s) ae.location)

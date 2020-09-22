@@ -5,8 +5,8 @@ module Location = Simple_utils.Location
 include Stage_common.Types
 
 type type_content =
-  | T_sum of row_element label_map
-  | T_record of record_type
+  | T_sum of rows
+  | T_record of rows
   | T_tuple  of type_expression list
   | T_arrow of arrow
   | T_variable of type_variable
@@ -14,7 +14,7 @@ type type_content =
 
 and attributes = string list
 
-and record_type = {
+and rows = {
   fields     : row_element label_map;
   attributes : attributes
   }

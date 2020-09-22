@@ -41,7 +41,7 @@ let t_tuple ?loc lst    : type_expression = make_t ?loc @@ T_tuple lst
 let t_pair ?loc (a , b) : type_expression = t_tuple ?loc [a; b]
 
 let t_sum ?loc sum : type_expression = make_t ?loc @@ T_sum sum
-let t_sum_ez ?loc ?(attr=[]) lst : type_expression =
+let t_sum_ez_attr ?loc ?(attr=[]) lst =
   let aux i (name, t_expr, attributes) =
     (Label name, {associated_type=t_expr; decl_pos=i; attributes}) in
   let lst = List.mapi aux lst in

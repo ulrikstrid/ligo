@@ -49,14 +49,14 @@ let t_pair ?loc ?core a b : type_expression =
     (Label "0",{associated_type=a;michelson_annotation=None ; decl_pos = 0}) ;
     (Label "1",{associated_type=b;michelson_annotation=None ; decl_pos = 0}) ]
 
-let t_sum m ?loc ?core () : type_expression = make_t ?loc (T_sum m) core
-let make_t_ez_sum ?loc ?core (lst:(label * row_element) list) : type_expression =
-  let aux prev (k, v) = LMap.add k v prev in
-  let map = List.fold_left aux LMap.empty lst in
-  make_t ?loc (T_sum map) core
+let t_sum ?loc ?core ~layout content () : type_expression = make_t ?loc (T_sum {content;layout}) core
+let t_sum_ez ?loc ?core ?(layout=default_layout) (lst:(string * type_expression) list) : type_expression =
+  let lst = List.mapi (fun i (x,y) -> (Label x, {associated_type=y;michelson_annotation=None;decl_pos=i}) ) lst in
+  let map = LMap.of_list lst in
+  t_sum ?loc ?core ~layout map ()
 
-let t_bool ?loc ?core ()       : type_expression = make_t_ez_sum ?loc ?core
-  [(Label "true", {associated_type=t_unit ();michelson_annotation=None;decl_pos=0});(Label "false", {associated_type=t_unit ();michelson_annotation=None;decl_pos=1})]
+let t_bool ?loc ?core ()       : type_expression = t_sum_ez ?loc ?core
+  [("true", t_unit ());("false", t_unit ())]
 
 let t_function param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
 let t_shallow_closure param result ?loc ?s () : type_expression = make_t ?loc (T_arrow {type1=param; type2=result}) s
@@ -161,15 +161,15 @@ let get_t_function_exn t = match get_t_function t with
   | Some x -> x
   | None -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
 
-let get_t_sum (t:type_expression) : row_element label_map option = match t.type_content with
+let get_t_sum (t:type_expression) : rows option = match t.type_content with
   | T_sum m -> Some m
   | _ -> None
 
-let get_t_sum_exn (t:type_expression) : row_element label_map = match t.type_content with
+let get_t_sum_exn (t:type_expression) : rows = match t.type_content with
   | T_sum m -> m
   | _ -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
 
-let get_t_record (t:type_expression) : record option = match t.type_content with
+let get_t_record (t:type_expression) : rows option = match t.type_content with
   | T_record m -> Some m
   | _ -> None
 

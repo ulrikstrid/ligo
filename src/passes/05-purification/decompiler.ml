@@ -8,16 +8,16 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, Err
   fun te ->
   let return te = ok @@ I.make_t te in
   match te.type_content with
-    | O.T_sum sum ->
+    | O.T_sum {fields ; attributes } ->
       (* This type sum could be a michelson_or as well, we could use is_michelson_or *)
-      let%bind sum =
+      let%bind fields =
         Stage_common.Helpers.bind_map_lmap (fun v ->
           let {associated_type;attributes;decl_pos} : O.row_element = v in
           let%bind v = decompile_type_expression associated_type in
           ok @@ ({associated_type=v;attributes;decl_pos}:I.row_element)
-        ) sum
+        ) fields
       in
-      return @@ I.T_sum sum
+      return @@ I.T_sum {fields ; attributes}
     | O.T_record {fields ; attributes} ->
       let%bind fields =
         Stage_common.Helpers.bind_map_lmap (fun v ->

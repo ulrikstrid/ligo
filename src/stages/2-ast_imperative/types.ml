@@ -5,20 +5,18 @@ module Location = Simple_utils.Location
 include Stage_common.Types
 
 type type_content =
-  | T_sum      of variant_type
-  | T_record   of record_type
-  | T_tuple    of type_expression list
-  | T_arrow    of arrow
+  | T_sum of rows
+  | T_record of rows
+  | T_tuple  of type_expression list
+  | T_arrow of arrow
   | T_variable of type_variable
   | T_constant of (type_constant * type_expression list)
   | T_annoted  of (type_expression * string)
 
-and record_type = {
+and rows = {
   fields     : row_element label_map;
   attributes : attributes
 }
-
-and variant_type = record_type
 
 and arrow = {type1: type_expression; type2: type_expression}
 

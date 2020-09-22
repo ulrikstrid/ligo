@@ -14,13 +14,13 @@ type te_lmap = row_element label_map
 and type_meta = ast_core_type_expression option
 
 and type_content =
-  | T_sum of te_lmap
-  | T_record of record
+  | T_sum of rows
+  | T_record of rows
   | T_arrow of arrow
   | T_variable of type_variable
   | T_constant of type_operator
 
-and record = {
+and rows = {
   content : row_element label_map;
   layout : layout ;
 }

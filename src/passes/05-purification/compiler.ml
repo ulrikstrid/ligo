@@ -117,15 +117,15 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors
   fun te ->
   let return tc = ok @@ O.make_t ~loc:te.location tc in
   match te.type_content with
-    | I.T_sum sum ->
-      let%bind sum =
+    | I.T_sum { fields ; attributes } ->
+      let%bind fields =
         Stage_common.Helpers.bind_map_lmap (fun (({associated_type = v; decl_pos ; attributes}:I.row_element)) ->
           let%bind v = compile_type_expression v in
           let content : O.row_element = {associated_type = v ; attributes ; decl_pos } in
           ok @@ content
-        ) sum
+        ) fields
       in
-      return @@ O.T_sum sum
+      return @@ O.T_sum { fields ; attributes }
     | I.T_record {fields ; attributes} ->
       let%bind fields =
         Stage_common.Helpers.bind_map_lmap (fun (({associated_type = v; decl_pos ; attributes}:I.row_element)) ->
@@ -151,7 +151,7 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors
         (O.Label "M_left" , {associated_type = l ; attributes = [ "annot:"^l_ann ] ; decl_pos = 0});
         (O.Label "M_right", {associated_type = r ; attributes = [ "annot:"^r_ann ] ; decl_pos = 1}); ]
       in
-      return @@ O.T_sum (O.LMap.of_list sum)
+      return @@ O.T_sum { fields = O.LMap.of_list sum ; attributes = [] }
     | I.T_constant (TC_michelson_pair, [l;r]) ->
       let%bind (l, l_ann) = trace_option (Errors.corner_case "not an annotated type") @@ I.get_t_annoted l in
       let%bind (r, r_ann) = trace_option (Errors.corner_case "not an annotated type") @@ I.get_t_annoted r in

@@ -58,13 +58,18 @@ module Substitution = struct
       ok @@ type_name
 
     and s_type_content : (T.type_content,_) w = fun ~substs -> function
-        | T.T_sum s ->
+        | T.T_sum rows ->
            let aux T.{ associated_type; michelson_annotation ; decl_pos } =
              let%bind associated_type = s_type_expression ~substs associated_type in
              ok @@ T.{ associated_type; michelson_annotation; decl_pos } in
-           let%bind s = Ast_typed.Helpers.bind_map_lmap aux s in
-           ok @@ T.T_sum s
-        | T.T_record _ -> failwith "TODO: T_record"
+           let%bind content = Ast_typed.Helpers.bind_map_lmap aux rows.content in
+           ok @@ T.T_sum {content ; layout = rows.layout }
+        | T.T_record rows ->
+           let aux T.{ associated_type; michelson_annotation ; decl_pos } =
+             let%bind associated_type = s_type_expression ~substs associated_type in
+             ok @@ T.{ associated_type; michelson_annotation; decl_pos } in
+           let%bind content = Ast_typed.Helpers.bind_map_lmap aux rows.content in
+           ok @@ T.T_record {content ; layout = rows.layout }
         | T.T_variable variable ->
            begin
              match substs ~variable with

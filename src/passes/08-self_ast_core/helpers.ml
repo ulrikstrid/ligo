@@ -148,9 +148,9 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
   let%bind te' = f te in
   let return type_content = ok @@ ({ type_content; sugar; location}: type_expression) in
   match type_content with
-  | T_sum temap ->
-    let%bind temap' = bind_map_lmap_t self temap in
-    return @@ (T_sum temap')
+  | T_sum { fields ; layout } ->
+    let%bind fields = bind_map_lmap_t self fields in
+    return @@ (T_sum { fields ; layout })
   | T_record {fields ; layout} ->
     let%bind fields = bind_map_lmap_t self fields in
     return @@ T_record {fields;layout}

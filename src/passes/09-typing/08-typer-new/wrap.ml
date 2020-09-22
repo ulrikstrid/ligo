@@ -12,7 +12,7 @@ let fresh_binder () = Core.fresh_type_variable ()
 
 let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun te ->
   match te.type_content with
-  | T_sum kvmap ->
+  | T_sum {content=kvmap ; layout=_} ->
     let tmap = T.LMap.map (fun ({associated_type;_}:T.row_element) -> associated_type) kvmap in
     p_row C_variant @@ T.LMap.map type_expression_to_type_value tmap
   | T_record {content=kvmap;layout=_} ->
@@ -131,7 +131,7 @@ let matching : T.type_expression list -> (constraints * T.type_variable) =
   let cs = List.map (fun e -> c_equation { tsrc = "wrap: matching: case" ; t = P_variable whole_expr } e "wrap: matching: case (whole)") type_expressions
   in cs, whole_expr
 
-let record : T.record -> (constraints * T.type_variable) = fun {content;layout} ->
+let record : T.rows -> (constraints * T.type_variable) = fun {content;layout} ->
   let record_type = type_expression_to_type_value (T.t_record ~layout content) in
   let whole_expr = Core.fresh_type_variable () in
   [c_equation { tsrc = "wrap: record: whole" ; t = P_variable whole_expr } record_type "wrap: record: whole"] , whole_expr

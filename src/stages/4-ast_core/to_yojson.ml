@@ -187,7 +187,7 @@ let rec type_expression {type_content=tc;sugar=_;location} =
   ]
 
 and type_content = function
-  | T_sum      t -> `List [ `String "t_sum"; label_map row_element t]
+  | T_sum      t -> `List [ `String "t_sum"; label_map row_element t.fields]
   | T_record   t -> `List [ `String "t_record"; label_map row_element t.fields]
   | T_arrow    t -> `List [ `String "t_arrow"; arrow t]
   | T_variable t -> `List [ `String "t_variable"; type_variable_to_yojson t]

@@ -102,8 +102,8 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   )
   | T_constant _, _ -> None
   | T_sum sa, T_sum sb -> (
-      let sa' = LMap.to_kv_list_rev sa in
-      let sb' = LMap.to_kv_list_rev sb in
+      let sa' = LMap.to_kv_list_rev sa.content in
+      let sb' = LMap.to_kv_list_rev sb.content in
       let aux ((ka, {associated_type=va;_}), (kb, {associated_type=vb;_})) =
         assert_eq ka kb >>= fun _ ->
           assert_type_expression_eq (va, vb)

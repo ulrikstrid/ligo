@@ -43,9 +43,9 @@ let t_pair ?loc (a , b) : type_expression = t_record_ez ?loc [
 let t_tuple ?loc lst    : type_expression = t_record_ez ?loc (tuple_to_record lst)
 
 let ez_t_sum ?loc (lst:((string * row_element) list)) : type_expression =
-  let aux prev (k, v) = LMap.add (Label k) v prev in
-  let map = List.fold_left aux LMap.empty lst in
-  make_t ?loc @@ T_sum map
+  let lst = List.map (fun (k, v) -> (Label k, v)) lst in
+  let fields = LMap.of_list lst in
+  make_t ?loc @@ T_sum {fields ; attributes=[]}
 let t_sum ?loc m : type_expression =
   let lst = SMap.to_kv_list_rev m in
   ez_t_sum ?loc lst

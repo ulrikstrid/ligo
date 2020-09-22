@@ -176,7 +176,7 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
       fail @@ corner_case ~loc:"unspiller" "Wrong number of args or wrong kinds for the type constant"
   )
   | T_sum m ->
-      let lst = List.map (fun (k,{associated_type;_}) -> (k,associated_type)) @@ kv_list_of_lmap m in
+      let lst = List.map (fun (k,{associated_type;_}) -> (k,associated_type)) @@ kv_list_of_lmap m.content in
       let%bind node = match Append_tree.of_list lst with
         | Empty -> fail @@ corner_case ~loc:__LOC__ "empty sum type"
         | Full t -> ok t
