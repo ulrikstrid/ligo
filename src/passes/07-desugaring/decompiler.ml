@@ -81,7 +81,8 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
       let%bind ty_opt = bind_map_option decompile_type_expression ascr in
       let%bind rhs = decompile_expression rhs in
       let%bind let_result = decompile_expression let_result in
-      return @@ I.E_let_in {let_binder=(binder,ty_opt);mut=false;inline;rhs;let_result}
+      let attributes = if inline then ["inline"] else [] in
+      return @@ I.E_let_in {let_binder=(binder,ty_opt);mut=false;attributes;rhs;let_result}
     | O.E_raw_code {language;code} ->
       let%bind code = decompile_expression code in
       return @@ I.E_raw_code {language;code} 
@@ -152,7 +153,8 @@ let decompile_declaration : O.declaration Location.wrap -> _ result = fun {wrap_
     let binder = cast_var binder in
     let%bind expr = decompile_expression expr in
     let%bind te_opt = bind_map_option decompile_type_expression type_opt in
-    return @@ I.Declaration_constant (binder, te_opt, inline, expr)
+    let attributes = if inline then ["inline"] else [] in
+    return @@ I.Declaration_constant (binder, te_opt, attributes, expr)
   | O.Declaration_type {type_binder ; type_expr} ->
     let type_binder = Var.todo_cast type_binder in
     let%bind te = decompile_type_expression type_expr in

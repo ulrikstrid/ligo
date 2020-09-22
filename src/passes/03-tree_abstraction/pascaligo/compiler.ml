@@ -39,7 +39,7 @@ let rec compile_type_expression
       let rev_fields = List.rev lst in
       let%bind (_, fields) =
         bind_fold_list compile_field (None, []) rev_fields in
-      return @@ t_record_ez ~loc ~attr fields
+      return @@ t_record_ez_attr ~loc ~attr fields
   | TProd prod ->
     let (nsepseq, loc) = r_split prod in
     let lst = npseq_to_list nsepseq in

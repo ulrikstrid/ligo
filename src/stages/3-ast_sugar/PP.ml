@@ -86,12 +86,12 @@ and expression_content ppf (ec : expression_content) =
   | E_matching {matchee; cases; _} ->
       fprintf ppf "match %a with %a" expression matchee (matching expression)
         cases
-  | E_let_in { let_binder ; rhs ; let_result; inline; mut} ->    
+  | E_let_in { let_binder ; rhs ; let_result; attributes=attr; mut} ->    
       fprintf ppf "let %a%a = %a%a in %a" 
         option_type_name let_binder 
         option_mut mut
         expression rhs
-        option_inline inline
+        attributes attr
         expression let_result
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
@@ -172,20 +172,19 @@ and option_mut ppf mut =
   else
     fprintf ppf ""
 
-and option_inline ppf inline =
-  if inline then
-    fprintf ppf "[@inline]"
-  else
-    fprintf ppf ""
+and attributes ppf attributes =
+  let attr =
+    List.map (fun attr -> "[@@" ^ attr ^ "]") attributes |> String.concat ""
+  in fprintf ppf "%s" attr
 
 let declaration ppf (d : declaration) =
   match d with
   | Declaration_type (type_name, te) ->
       fprintf ppf "type %a = %a" type_variable type_name type_expression te
-  | Declaration_constant (name, ty_opt, i, expr) ->
+  | Declaration_constant (name, ty_opt, attr, expr) ->
       fprintf ppf "const %a = %a%a" option_type_name (name, ty_opt) expression
         expr
-        option_inline i
+        attributes attr
 
 let program ppf (p : program) =
   fprintf ppf "@[<v>%a@]"

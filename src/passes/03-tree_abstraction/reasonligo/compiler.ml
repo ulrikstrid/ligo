@@ -49,7 +49,7 @@ let rec compile_type_expression : CST.type_expr -> _ result =
       let field_attr = List.map (fun x -> x.Region.value) f.attributes in
       return @@ (f.field_name.value, type_expr, field_attr) in
     let%bind fields = bind_map_list aux lst in
-    return @@ t_record_ez ~loc ~attr:attributes fields
+    return @@ t_record_ez_attr ~loc ~attr:attributes fields
   | TProd prod ->
     let (nsepseq, loc) = r_split prod in
     let lst = npseq_to_list nsepseq.inside in

@@ -194,10 +194,10 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression, 'err) res
       let%bind (lamb,args) = bind_map_pair self ab in
       return @@ E_application {lamb;args}
     )
-  | E_let_in { let_binder ; mut; rhs ; let_result; inline } -> (
+  | E_let_in { let_binder ; mut; rhs ; let_result; attributes } -> (
       let%bind rhs = self rhs in
       let%bind let_result = self let_result in
-      return @@ E_let_in { let_binder ; mut; rhs ; let_result; inline }
+      return @@ E_let_in { let_binder ; mut; rhs ; let_result; attributes }
     )
   | E_lambda { binder ; input_type ; output_type ; result } -> (
       let%bind result = self result in
@@ -369,10 +369,10 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> ('a 
       let%bind (res,(a,b)) = bind_fold_map_pair self init' ab in
       ok (res, return @@ E_application {lamb=a;args=b})
     )
-  | E_let_in { let_binder ; mut; rhs ; let_result; inline } -> (
+  | E_let_in { let_binder ; mut; rhs ; let_result; attributes } -> (
       let%bind (res,rhs) = self init' rhs in
       let%bind (res,let_result) = self res let_result in
-      ok (res, return @@ E_let_in { let_binder ; mut; rhs ; let_result ; inline })
+      ok (res, return @@ E_let_in { let_binder ; mut; rhs ; let_result ; attributes })
     )
   | E_lambda { binder ; input_type ; output_type ; result } -> (
       let%bind (res,result) = self init' result in

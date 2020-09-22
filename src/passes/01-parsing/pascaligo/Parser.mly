@@ -350,8 +350,7 @@ open_fun_decl:
                   kwd_is       = $6;
                   return       = $7;
                   terminator   = None;
-(*                  (* TODO Until we have a self-pass for attributes. *)
-                  attributes   = []*)}
+                  attributes   = None}
     in {region; value} }
 
 fun_decl:
@@ -427,8 +426,7 @@ open_const_decl:
                   equal;
                   init;
                   terminator=None;
-(*                  (* TODO Until we have a self-pass for attributes. *)
-                  attributes = []*)}
+                  attributes = None}
     in {region; value} }
 
 open_var_decl:

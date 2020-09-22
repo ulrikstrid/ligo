@@ -169,8 +169,7 @@ and const_decl = {
   equal      : equal;
   init       : expr;
   terminator : semi option;
-(*  (* TODO Until we have a self-pass for attributes. *)
-  attributes : attr_decl option*)
+  attributes : attr_decl option
 }
 
 (* Type declarations *)
@@ -233,7 +232,7 @@ and fun_decl = {
   kwd_is        : kwd_is;
   return        : expr;
   terminator    : semi option;
-  (*  attributes    : attr_decl (* TODO Until we have a self-pass for attributes. *)*)
+  attributes    : attr_decl option; (* TODO Until we have a self-pass for attributes.*)
 }
 
 and block_with = {
