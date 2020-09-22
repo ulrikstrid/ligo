@@ -298,12 +298,12 @@ and recursive {fun_name;fun_type;lambda=l} =
     ("lambda", lambda l)
   ]
 
-and let_in {let_binder;rhs;let_result;inline } =
+and let_in {let_binder; rhs; let_result; attributes=attr} =
   `Assoc [
     ("let_binder", expression_variable_to_yojson @@ fst let_binder);
     ("rhs", expression rhs);
     ("let_result", expression let_result);
-    ("inline", `Bool inline);
+    ("attributes", attributes attr);
   ]
 
 and raw_code {language;code} =
@@ -449,12 +449,12 @@ let declaration_type (type_binder, type_expr) =
     ("type_expr", type_expression type_expr);
   ]
 
-let declaration_constant (binder,ty_opt,inline,expr) =
+let declaration_constant (binder, ty_opt, attr, expr) =
   `Assoc [
     ("binder",expression_variable_to_yojson binder);
     ("type_expression", yojson_opt type_expression ty_opt);
     ("expr", expression expr);
-    ("inline", `Bool inline);
+    ("attributes", attributes attr);
   ]
 let declaration = function
   | Declaration_type     dt -> `List [ `String "Declaration_type"; declaration_type dt]

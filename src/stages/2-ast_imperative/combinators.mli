@@ -27,7 +27,7 @@ val t_record    : ?loc:Location.t -> record_type -> type_expression
 val t_record_ez :
   ?loc:Location.t ->
   ?attr:attributes ->
-  (string * type_expression) list ->
+  (string * type_expression * attributes) list ->
   type_expression
 
 val t_sum    : ?loc:Location.t -> row_element label_map -> type_expression
@@ -91,7 +91,15 @@ val e_application : ?loc:Location.t -> expression -> expression -> expression
 val e_lambda : ?loc:Location.t -> expression_variable -> type_expression option -> type_expression option -> expression -> expression
 val e_recursive : ?loc:Location.t -> expression_variable -> type_expression -> lambda -> expression
 (* val e_recursive_ez : ?loc:Location.t -> string -> type_expression -> lambda -> expression *)
-val e_let_in : ?loc:Location.t -> ( expression_variable * type_expression option ) -> bool -> expression -> expression -> expression
+
+val e_let_in :
+  ?loc:Location.t ->
+  ( expression_variable * type_expression option ) ->
+  attributes ->
+  expression ->
+  expression ->
+  expression
+
 (* val e_let_in_ez : ?loc:Location.t -> string -> type_expression option -> bool -> expression -> expression -> expression *)
 val e_raw_code : ?loc:Location.t -> string -> expression -> expression
 

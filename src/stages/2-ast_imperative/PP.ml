@@ -89,7 +89,7 @@ and expression_content ppf (ec : expression_content) =
   | E_set lst ->
       fprintf ppf "set[%a]" (list_sep_d expression) lst
   | E_lambda {binder; input_type; output_type; result} ->
-      fprintf ppf "lambda (%a:%a) : %a return %a" 
+      fprintf ppf "lambda (%a:%a) : %a return %a"
         expression_variable binder
         (PP_helpers.option type_expression)
         input_type
@@ -104,8 +104,8 @@ and expression_content ppf (ec : expression_content) =
         expression_variable fun_name
         type_expression fun_type
         expression_content (E_lambda lambda)
-  | E_let_in { let_binder ; rhs ; let_result; inline } ->    
-      fprintf ppf "let %a = %a%a in %a" option_type_name let_binder expression rhs inline_attribute inline expression let_result
+  | E_let_in {let_binder; rhs; let_result; attributes=attr} ->
+      fprintf ppf "let %a = %a%a in %a" option_type_name let_binder expression rhs attributes attr expression let_result
   | E_raw_code {language; code} ->
       fprintf ppf "[%%%s %a]" language expression code
   | E_ascription {anno_expr; type_annotation} ->
@@ -206,18 +206,20 @@ and matching_type ppf m = match m with
 and matching_variant_case_type ppf ((c,n),_a) =
   fprintf ppf "| %a %a" label c expression_variable n
 
-and inline_attribute ppf inline =
-  if inline then fprintf ppf "[@@inline]" else fprintf ppf ""
+and attributes ppf attributes =
+  let attr =
+    List.map (fun attr -> "[@@" ^ attr ^ "]") attributes |> String.concat ""
+  in fprintf ppf "%s" attr
 
 let declaration ppf (d : declaration) =
   match d with
   | Declaration_type (type_name, te) ->
       fprintf ppf "type %a = %a" type_variable type_name type_expression te
-  | Declaration_constant (name, ty_opt, i, expr) ->
+  | Declaration_constant (name, ty_opt, attr, expr) ->
       fprintf ppf "const %a = %a%a"
         option_type_name (name, ty_opt)
         expression expr
-        inline_attribute i
+        attributes attr
 
 let program ppf (p : program) =
   fprintf ppf "@[<v>%a@]"

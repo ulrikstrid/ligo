@@ -30,6 +30,7 @@ and michelson_prct_annotation = string
 
 and type_expression = {type_content: type_content; location: Location.t}
 
+and attributes = string list
 
 type program = declaration Location.wrap list
 and declaration =
@@ -38,9 +39,10 @@ and declaration =
   (* A Declaration_constant is described by
    *   a name
    *   an optional type annotation
-   *   a boolean indicating whether it should be inlined
+   *   attributes
    *   an expression *)
-  | Declaration_constant of (expression_variable * type_expression option * bool * expression)
+  | Declaration_constant of
+      (expression_variable * type_expression option * attributes * expression)
 
 (* | Macro_declaration of macro_declaration *)
 and expression = {expression_content: expression_content; location: Location.t}
@@ -101,11 +103,12 @@ and recursive = {
   lambda : lambda;
 }
 
-and let_in =
-  { let_binder: expression_variable * type_expression option
-  ; rhs: expression
-  ; let_result: expression
-  ; inline: bool }
+and let_in = {
+  let_binder : expression_variable * type_expression option;
+  rhs        : expression;
+  let_result : expression;
+  attributes : string list
+}
 
 and raw_code = {
   language : string ;
