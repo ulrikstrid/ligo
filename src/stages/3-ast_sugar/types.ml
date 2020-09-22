@@ -12,6 +12,8 @@ type type_content =
   | T_variable of type_variable
   | T_constant of (type_constant * type_expression list)
 
+and attributes = string list
+
 and record_type = {
   fields     : row_element label_map;
   attributes : attributes
@@ -37,7 +39,7 @@ and declaration =
    *   an optional type annotation
    *   a boolean indicating whether it should be inlined
    *   an expression *)
-  | Declaration_constant of (expression_variable * type_expression option * bool * expression)
+  | Declaration_constant of (expression_variable * type_expression option * attributes * expression)
 
 (* | Macro_declaration of macro_declaration *)
 and expression = {expression_content: expression_content; location: Location.t}
@@ -97,7 +99,7 @@ and let_in = {
   let_binder: expression_variable * type_expression option ;
   rhs: expression ;
   let_result: expression ;
-  inline: bool ;
+  attributes : attributes ;
   mut: bool;
   }
 

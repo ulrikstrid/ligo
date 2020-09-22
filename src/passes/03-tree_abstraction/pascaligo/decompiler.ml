@@ -289,7 +289,7 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     return_expr_with_par @@ CST.EFun (wrap @@ fun_expr)
   | E_recursive _ ->
     failwith "corner case : annonymous recursive function"
-  | E_let_in {let_binder;rhs={expression_content=E_update {record={expression_content=E_variable var;_};path;update};_};let_result;inline=_}
+  | E_let_in {let_binder;rhs={expression_content=E_update {record={expression_content=E_variable var;_};path;update};_};let_result;attributes=_}
       when Var.equal (fst let_binder).wrap_content var.wrap_content ->
     let%bind lhs = (match List.rev path with
       Access_map e :: path ->
@@ -312,8 +312,8 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     )
     in
     return @@ (stat,expr)
-  | E_let_in {let_binder;rhs;let_result;inline} ->
-    let%bind lin = decompile_to_data_decl dialect let_binder rhs inline in
+  | E_let_in {let_binder;rhs;let_result;attributes} ->
+    let%bind lin = decompile_to_data_decl dialect let_binder rhs attributes in
     let%bind (lst, expr) = decompile_eos dialect Expression let_result in
     let lst = match lst with
       Some lst -> List.Ne.cons (CST.Data lin) lst
@@ -543,12 +543,14 @@ and decompile_if_clause : dialect -> AST.expression -> (CST.if_clause, _) result
     let clause = nelist_to_npseq clause, Some rg in
     ok @@ CST.ClauseBlock (ShortBlock (wrap @@ braces @@ clause))
 
-and decompile_to_data_decl : dialect -> (AST.expression_variable * AST.type_expression option) -> AST.expression -> bool -> (CST.data_decl, _) result = fun dialect (name,ty_opt) expr inline ->
+and decompile_to_data_decl : dialect -> (AST.expression_variable * AST.type_expression option) -> AST.expression -> AST.attributes -> (CST.data_decl, _) result =
+    fun dialect (name,ty_opt) expr attributes ->
   let name = decompile_variable name.wrap_content in
   let%bind const_type = Trace.bind_map_option (fun ty ->  bind_compose (ok <@ prefix_colon) (decompile_type_expr dialect) ty) ty_opt in
-  let attributes : CST.attr_decl option = match inline with
-    true -> Some (wrap @@ ne_inject dialect (NEInjAttr rg) @@ (wrap @@ "inline",[]))
-  | false -> None
+  let attributes : CST.attr_decl option =
+    match List.map wrap attributes with
+    | hd::tl -> Some (wrap @@ ne_inject dialect (NEInjAttr rg) @@ (nelist_to_npseq (hd, tl)))
+    | [] -> None
   in
   let fun_name = name in
   let terminator = terminator dialect in
@@ -671,14 +673,11 @@ let decompile_declaration ~dialect : AST.declaration Location.wrap -> (CST.decla
     let%bind type_expr = decompile_type_expr dialect te in
     let terminator = terminator dialect in
     ok @@ CST.TypeDecl (wrap (CST.{kwd_type; name; kwd_is; type_expr; terminator}))
-  | Declaration_constant (var, ty_opt, inline, expr) ->
-    let attributes = match inline with
-      true ->
-       let attr = wrap "inline" in
-       let ne_inj = ne_inject dialect (NEInjAttr rg) (attr, []) in
-        let attr_decl = wrap ne_inj in
-        Some attr_decl
-    | false -> None
+  | Declaration_constant (var, ty_opt, attributes, expr) ->
+    let attributes : CST.attr_decl option =
+      match List.map wrap attributes with
+      | hd::tl -> Some (wrap @@ ne_inject dialect (NEInjAttr rg) @@ (nelist_to_npseq (hd, tl)))
+      | [] -> None
     in
     let name = decompile_variable var.wrap_content in
     let fun_name = name in

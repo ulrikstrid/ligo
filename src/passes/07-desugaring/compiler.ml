@@ -16,6 +16,8 @@ let is_layout attr =
     Some (String.sub attr 7 ((String.length attr)-7))
   else None
 
+let is_inline attr = String.equal "inline" attr
+
 let get_michelson_annotation : (string list) -> string option = fun attributes ->
   let rec aux lst = match lst with
     | hd::tl -> ( match is_michelson_annotation hd with
@@ -37,6 +39,9 @@ let get_layout : (string list) -> O.layout option = fun attributes ->
     | [] -> None
   in
   aux attributes
+
+let get_inline : (string list) -> bool = List.exists is_inline
+
 
 let rec compile_type_expression : I.type_expression -> (O.type_expression , desugaring_error) result =
   fun te ->
@@ -104,12 +109,13 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       let%bind fun_type = compile_type_expression fun_type in
       let%bind lambda = compile_lambda lambda in
       return @@ O.E_recursive {fun_name;fun_type;lambda}
-    | I.E_let_in {let_binder;inline;rhs;let_result} ->
+    | I.E_let_in {let_binder;attributes;rhs;let_result} ->
       let (binder,ty_opt) = let_binder in
       let binder = cast_var binder in
       let%bind ascr = bind_map_option compile_type_expression ty_opt in
       let%bind rhs = compile_expression rhs in
       let%bind let_result = compile_expression let_result in
+      let inline = get_inline attributes in
       return @@ O.E_let_in {let_binder= {binder;ascr} ;inline;rhs;let_result}
     | I.E_raw_code {language;code} ->
       let%bind code = compile_expression code in
@@ -308,10 +314,11 @@ let compile_declaration : I.declaration Location.wrap -> _ =
   fun {wrap_content=declaration;location} ->
   let return decl = ok @@ Location.wrap ~loc:location decl in
   match declaration with 
-  | I.Declaration_constant (binder, te_opt, inline, expr) ->
+  | I.Declaration_constant (binder, te_opt, attributes, expr) ->
     let binder = cast_var binder in
     let%bind expr = compile_expression expr in
     let%bind type_opt = bind_map_option compile_type_expression te_opt in
+    let inline = get_inline attributes in
     return @@ O.Declaration_constant {binder; type_opt; attr={inline}; expr}
   | I.Declaration_type (type_binder, type_expr) ->
     let type_binder = Var.todo_cast type_binder in

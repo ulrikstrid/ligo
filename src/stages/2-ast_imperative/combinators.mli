@@ -24,10 +24,15 @@ val t_pair   : ?loc:Location.t -> ( type_expression * type_expression ) -> type_
 val t_tuple  : ?loc:Location.t -> type_expression list -> type_expression
 
 val t_record    : ?loc:Location.t -> record_type -> type_expression
-val t_record_ez :
+val t_record_ez_attr :
   ?loc:Location.t ->
   ?attr:attributes ->
   (string * type_expression * attributes) list ->
+  type_expression
+val t_record_ez :
+  ?loc:Location.t ->
+  ?attr:attributes ->
+  (string * type_expression) list ->
   type_expression
 
 val t_sum    : ?loc:Location.t -> variant_type -> type_expression

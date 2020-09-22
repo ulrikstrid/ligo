@@ -60,12 +60,12 @@ let rec decompile_expression : O.expression -> (I.expression, Errors.purificatio
     let%bind fun_type = decompile_type_expression fun_type in
     let%bind lambda = decompile_lambda lambda in
     return @@ I.E_recursive {fun_name;fun_type;lambda}
-  | O.E_let_in {let_binder;inline;rhs;let_result} ->
+  | O.E_let_in {let_binder;attributes;rhs;let_result} ->
     let (binder,ty_opt) = let_binder in
     let%bind ty_opt = bind_map_option decompile_type_expression ty_opt in
     let%bind rhs = decompile_expression rhs in
     let%bind let_result = decompile_expression let_result in
-    return @@ I.E_let_in {let_binder=(binder,ty_opt);inline;rhs;let_result}
+    return @@ I.E_let_in {let_binder=(binder,ty_opt);attributes;rhs;let_result}
   | O.E_raw_code {language;code} ->
     let%bind code  = decompile_expression code in
     return @@ I.E_raw_code {language;code}
