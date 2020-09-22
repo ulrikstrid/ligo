@@ -134,7 +134,6 @@ and print_decl state = function
   TypeDecl  decl -> print_type_decl  state decl
 | ConstDecl decl -> print_const_decl state decl
 | FunDecl   decl -> print_fun_decl   state decl
-| AttrDecl  decl -> print_attr_decl  state decl
 
 and print_const_decl state {value; _} =
   let {kwd_const; name; const_type;
@@ -186,7 +185,7 @@ and print_sum_type state {value; _} =
   print_nsepseq state "|" print_variant value
 
 and print_record_type state =
-  print_ne_injection state print_field
+  print_ne_injection state print_field_decl
 
 and print_type_app state {value; _} =
   let type_name, type_tuple = value in
@@ -204,10 +203,6 @@ and print_par_type state {value; _} =
   print_token     state lpar "(";
   print_type_expr state inside;
   print_token     state rpar ")"
-
-and print_field state = function
-  FieldDecl decl     -> print_field_decl state decl
-| FieldAttrDecl decl -> print_attr_decl state decl
 
 and print_field_decl state {value; _} =
   let {field_name; colon; field_type} = value in
@@ -316,7 +311,6 @@ and print_statements state sequence =
 and print_statement state = function
   Instr instr -> print_instruction state instr
 | Data  data  -> print_data_decl   state data
-| Attr  attr  -> print_attr_decl   state attr
 
 and print_instruction state = function
   Cond        {value; _} -> print_conditional state value
@@ -748,8 +742,7 @@ and print_ne_injection :
         print_token      state kwd_end "end"
 
 and print_ne_injection_kwd state = function
-  NEInjAttr   kwd_attributes -> print_token state kwd_attributes "attributes"
-| NEInjSet    kwd_set        -> print_token state kwd_set "set"
+  NEInjSet    kwd_set        -> print_token state kwd_set "set"
 | NEInjMap    kwd_map        -> print_token state kwd_map "map"
 | NEInjRecord kwd_record     -> print_token state kwd_record "record"
 
@@ -917,9 +910,6 @@ and pp_declaration state = function
 | FunDecl {value; region} ->
     pp_loc_node state "FunDecl" region;
     pp_fun_decl state value
-| AttrDecl {value; region} ->
-    pp_loc_node state "AttrDecl" region;
-    pp_attr_decl state value
 
 and pp_attr_decl state = pp_ne_injection pp_string state
 
@@ -996,7 +986,7 @@ and pp_type_expr state = function
     List.iteri (List.length variants |> apply) variants
 | TRecord {value; region} ->
     pp_loc_node state "TRecord" region;
-    pp_ne_injection pp_field state value
+    pp_ne_injection pp_field_decl state value
 | TString s ->
     pp_node   state "TString";
     pp_string (state#pad 1 0) s
@@ -1015,14 +1005,6 @@ and pp_variant state {constr; arg} =
   match arg with
           None -> ()
   | Some (_,c) -> pp_type_expr (state#pad 1 0) c
-
-and pp_field state = function
-  FieldDecl decl ->
-    pp_node state "FieldDecl";
-    pp_field_decl (state#pad 1 0) decl
-| FieldAttrDecl decl ->
-    pp_node state "FieldAttrDecl";
-    pp_attr_decl state decl.value
 
 and pp_field_decl state {value; _} =
   pp_ident state value.field_name;
@@ -1109,9 +1091,6 @@ and pp_statement state = function
 | Data data_decl ->
     pp_node state "Data";
     pp_data_decl (state#pad 1 0) data_decl
-| Attr attr_decl ->
-    pp_node state "Attr";
-    pp_attr_decl state attr_decl.value
 
 and pp_instruction state = function
   Cond {value; region} ->

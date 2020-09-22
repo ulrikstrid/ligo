@@ -37,12 +37,12 @@ let t_tuple ?loc lst    : type_expression = make_t ?loc @@ T_tuple lst
 let t_pair ?loc (a , b) : type_expression = t_tuple ?loc [a; b]
 
 let t_sum ?loc sum : type_expression = make_t ?loc @@ T_sum sum
-let t_sum_ez ?loc (lst:(string * type_expression) list) : type_expression =
-  let aux (prev,i) (k, v) =
-    LMap.add (Label k) {associated_type=v;decl_pos=i;attributes=[]} prev,
-    i+1 in
-  let (map,_) = List.fold_left aux (LMap.empty,0) lst in
-  t_sum ?loc (map: row_element label_map)
+let t_sum_ez ?loc ?(attr=[]) lst : type_expression =
+  let aux i (name, t_expr, attributes) =
+    (Label name, {associated_type=t_expr; decl_pos=i; attributes}) in
+  let lst = List.mapi aux lst in
+  let fields : row_element label_map = LMap.of_list lst
+  in t_sum ?loc {fields; attributes=attr}
 
 let t_annoted ?loc ty str : type_expression = make_t ?loc @@ T_annoted (ty, str)
 

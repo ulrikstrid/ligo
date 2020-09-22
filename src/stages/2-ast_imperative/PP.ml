@@ -40,7 +40,9 @@ let list_sep_d_par f ppf lst =
 let rec type_content : formatter -> type_expression -> unit =
   fun ppf te ->
   match te.type_content with
-  | T_sum m -> fprintf ppf "@[<hv 4>sum[%a]@]" (lmap_sep_d type_expression) m
+  | T_sum m ->
+     (* TODO: print the attributes *)
+     fprintf ppf "@[<hv 4>sum[%a]@]" (lmap_sep_d type_expression) m.fields
 
   | T_record m ->
      let r = record_sep_t type_expression (const ";") in

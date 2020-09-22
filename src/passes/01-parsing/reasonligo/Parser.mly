@@ -199,10 +199,21 @@ sum_type:
     in TSum {region; value=$2} }
 
 variant:
-  "<constr>" { {$1 with value={constr=$1; arg=None}} }
+  nseq("[@attr]") "<constr>" {
+    let region  = cover (fst $1).region $2.region in
+    let value = {constr=$2; arg=None; attributes=Utils.nseq_to_list $1}
+    in {region; value}
+  }
+| "<constr>" {
+    {$1 with value = {constr=$1; arg=None; attributes=[]}}
+  }
 | "<constr>" "(" fun_type ")" {
     let region = cover $1.region $4
-    and value  = {constr=$1; arg = Some (ghost,$3)}
+    and value  = {constr=$1; arg = Some (ghost,$3); attributes=[]}
+    in {region; value} }
+| nseq("[@attr]") "<constr>" "(" fun_type ")" {
+    let region = cover (fst $1).region $5
+    and value  = {constr=$2; arg = Some (ghost,$4); attributes=[]}
     in {region; value} }
 
 record_type:

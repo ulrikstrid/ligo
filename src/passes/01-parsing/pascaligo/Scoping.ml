@@ -181,14 +181,12 @@ let check_parameters params =
 
 (* Checking record fields *)
 
-let check_fields fields =
-  let add acc = function
-    FieldDecl field ->
+let check_fields (fields : CST.field_decl Region.reg list) =
+  let add acc (field : CST.field_decl Region.reg) =
       let name = field.value.field_name in
       if VarSet.mem name acc then
         raise (Error (Duplicate_field name))
-      else VarSet.add name acc
-  | FieldAttrDecl _ -> acc in
+      else VarSet.add name acc in
   let fields =
     List.fold_left add VarSet.empty fields
   in ignore fields

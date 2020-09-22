@@ -26,18 +26,14 @@ and pp_let_decl {value; _} =
         None -> "let "
     | Some _ -> "let rec " in
   let binding = pp_let_binding binding
-  and attr    = pp_attributes_2 attr
-  in string let_str ^^ binding ^^ attr
+  and attr    = pp_attributes attr
+  in attr ^^ string let_str ^^ binding
 
-and pp_attributes header = function
+and pp_attributes = function
     [] -> empty
 | attr ->
-    let make s = string header ^^ string s.value ^^ string "]" in
+    let make s = string "[@" ^^ string s.value ^^ string "]" in
     group (nest 2 (break 1 ^^ separate_map (break 0) make attr))
-
-and pp_attributes_1 attr = pp_attributes "[@" attr
-
-and pp_attributes_2 attr = pp_attributes "[@@" attr
 
 and pp_ident {value; _} = string value
 
@@ -291,7 +287,7 @@ and pp_ne_injection :
         None -> elements
       | Some (opening, closing) ->
          string opening ^^ nest 1 elements ^^ string closing
-    in inj ^^ pp_attributes_1 attributes
+    in pp_attributes attributes ^^ inj
 
 and pp_nsepseq :
   'a.string -> ('a -> document) -> ('a, t) Utils.nsepseq -> document =
@@ -361,8 +357,8 @@ and pp_let_in {value; _} =
         None -> "let "
     | Some _ -> "let rec " in
   let binding = pp_let_binding binding
-  and attr    = pp_attributes_2 attributes
-  in string let_str ^^ binding ^^ attr ^^ string " in"
+  and attr    = pp_attributes attributes
+  in attr ^^ string let_str ^^ binding ^^ string " in"
      ^^ hardline ^^ group (pp_expr body)
 
 and pp_fun {value; _} =
@@ -429,8 +425,7 @@ and pp_field_decl {value; _} =
   let {field_name; field_type; attributes; _} = value in
   let name = pp_ident field_name in
   let t_expr = pp_type_expr field_type
-  in prefix 2 1 (name ^^ string " :") t_expr
-     ^^ pp_attributes_2 attributes
+  in prefix 2 1 (pp_attributes attributes ^^ name ^^ string " :") t_expr
 
 and pp_type_app {value = ctor, tuple; _} =
   pp_type_tuple tuple ^^ group (nest 2 (break 1 ^^ pp_type_constr ctor))

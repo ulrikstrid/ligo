@@ -138,24 +138,18 @@ let rec print_tokens state {decl;eof} =
   Utils.nseq_iter (print_statement state) decl;
   print_token state eof "EOF"
 
-and print_attributes_1 state attributes =
+and print_attributes state attributes =
   let apply {value = attribute; region} =
     let attribute_formatted = sprintf "[@%s]" attribute in
     print_token state region attribute_formatted
   in List.iter apply attributes
 
-and print_attributes_2 state attributes =
-  let apply {value = attribute; region} =
-    let attribute_formatted = sprintf "[@@%s]" attribute in
-    print_token state region attribute_formatted
-  in List.iter apply attributes
-
 and print_statement state = function
   Let {value=kwd_let, kwd_rec, let_binding, attributes; _} ->
+    print_attributes   state attributes;
     print_token        state kwd_let "let";
     print_token_opt    state kwd_rec "rec";
     print_let_binding  state let_binding;
-    print_attributes_2 state attributes
 | TypeDecl {value={kwd_type; name; eq; type_expr}; _} ->
     print_token     state kwd_type "type";
     print_var       state name;
@@ -221,7 +215,8 @@ and print_selection state = function
 and print_cartesian state Region.{value;_} =
   print_nsepseq state "*" print_type_expr value
 
-and print_variant state {value = {constr; arg}; _} =
+and print_variant state {value = {constr; arg; attributes=attr}; _} =
+  print_attributes state attr;
   print_constr state constr;
   match arg with
     None -> ()
@@ -231,10 +226,10 @@ and print_variant state {value = {constr; arg}; _} =
 
 and print_field_decl state {value; _} =
   let {field_name; colon; field_type; attributes} = value
-  in print_var          state field_name;
-     print_token        state colon ":";
-     print_type_expr    state field_type;
-     print_attributes_2 state attributes
+  in print_attributes state attributes;
+     print_var        state field_name;
+     print_token      state colon ":";
+     print_type_expr  state field_type
 
 and print_injection :
   'a.state -> (state -> 'a -> unit) -> 'a injection reg -> unit =
@@ -249,11 +244,11 @@ and print_ne_injection :
   'a.state -> (state -> 'a -> unit) -> 'a ne_injection reg -> unit =
   fun state print {value; _} ->
     let {compound; ne_elements; terminator; attributes} = value in
+    print_attributes     state attributes;
     print_open_compound  state compound;
     print_nsepseq        state ";" print ne_elements;
     print_terminator     state terminator;
-    print_close_compound state compound;
-    print_attributes_1   state attributes
+    print_close_compound state compound
 
 and print_record_type state =
   print_ne_injection state print_field_decl
@@ -580,10 +575,10 @@ and print_case_clause state {value; _} =
 
 and print_let_in state {value; _} =
   let {kwd_let; kwd_rec; binding; kwd_in; body; attributes} = value in
+  print_attributes   state attributes;
   print_token        state kwd_let "let";
   print_token_opt    state kwd_rec "rec";
   print_let_binding  state binding;
-  print_attributes_2 state attributes;
   print_token        state kwd_in "in";
   print_expr         state body
 
@@ -675,29 +670,32 @@ and pp_declaration state = function
 
 and pp_let_binding state node attr =
   let {binders; lhs_type; let_rhs; _} = node in
-  let arity = if lhs_type = None then 2 else 3 in
-  let arity = if attr = [] then arity else arity+1 in
-  let rank =
-    let state = state#pad arity 0 in
+  let fields = if lhs_type = None then 2 else 3 in
+  let fields = if attr = [] then fields else fields+1 in
+  let arity =
+    let state = state#pad fields 0 in
     pp_node    state "<binders>";
-    pp_binders state binders; 0 in
-  let rank =
+    pp_pattern state binders; 0 in
+  let arity =
     match lhs_type with
-      None -> rank
+      None -> arity
     | Some (_, type_expr) ->
-       let state = state#pad arity (rank+1) in
+       let state = state#pad fields (arity+1) in
        pp_node state "<lhs type>";
        pp_type_expr (state#pad 1 0) type_expr;
-       rank+1 in
-  let rank =
-    let state = state#pad arity (rank+1) in
+       arity+1 in
+  let arity =
+    let state = state#pad fields (arity+1) in
     pp_node state "<rhs>";
     pp_expr (state#pad 1 0) let_rhs;
-    rank+1 in
+    arity+1 in
   let () =
     if attr <> [] then
-      let state = state#pad arity (rank+1)
-      in pp_attributes_2 state attr
+      let state = state#pad fields (arity+1) in
+      pp_node state "<attributes>";
+      let length         = List.length attr in
+      let apply len rank = pp_ident (state#pad len rank)
+      in List.iteri (apply length) attr
   in ()
 
 and pp_type_decl state decl =
@@ -795,7 +793,7 @@ and pp_ne_injection :
     and apply len rank = printer (state#pad len rank)
     in List.iteri (apply arity) ne_elements;
        let state = state#pad arity (arity-1)
-       in pp_attributes_1 state inj.attributes
+       in pp_attributes state inj.attributes
 
 and pp_record_type state = pp_ne_injection pp_field_decl state
 
@@ -925,50 +923,47 @@ and pp_code_inj state rc =
 and pp_let_in state node =
   let {binding; body; attributes; kwd_rec; _} = node in
   let {binders; lhs_type; let_rhs; _} = binding in
-  let arity = if lhs_type = None then 3 else 4 in
-  let arity = if kwd_rec = None then arity else arity+1 in
-  let arity = if attributes = [] then arity else arity+1 in
+  let fields = if lhs_type = None then 3 else 4 in
+  let fields = if kwd_rec = None then fields else fields+1 in
+  let fields = if attributes = [] then fields else fields+1 in
   let rank =
     match kwd_rec with
       None -> 0
     | Some (_) ->
-      let state = state#pad arity 0 in
+      let state = state#pad fields 0 in
       pp_node state "rec"; 0 in
   let rank =
-    let state = state#pad arity 0 in
+    let state = state#pad fields 0 in
     pp_node state "<binders>";
-    pp_binders state binders; rank in
+    pp_pattern state binders; rank in
   let rank =
     match lhs_type with
       None -> rank
     | Some (_, type_expr) ->
-       let state = state#pad arity (rank+1) in
+       let state = state#pad fields (rank+1) in
        pp_node state "<lhs type>";
        pp_type_expr (state#pad 1 0) type_expr;
        rank+1 in
   let rank =
-    let state = state#pad arity (rank+1) in
+    let state = state#pad fields (rank+1) in
     pp_node state "<rhs>";
     pp_expr (state#pad 1 0) let_rhs;
     rank+1 in
   let rank =
-    let state = state#pad arity (rank+1) in
+    let state = state#pad fields (rank+1) in
     pp_node state "<body>";
     pp_expr (state#pad 1 0) body;
     rank+1 in
   let () =
     if attributes <> [] then
-      let state = state#pad arity (rank+1) in
-      pp_attributes_2 state attributes
+      let state = state#pad fields (rank+1) in
+      pp_node state "<attributes>";
+      let length         = List.length attributes in
+      let apply len rank = pp_ident (state#pad len rank)
+      in List.iteri (apply length) attributes
   in ()
 
-and pp_attributes_2 state attributes =
-  pp_node state "[@@attr]";
-  let length         = List.length attributes in
-  let apply len rank = pp_ident (state#pad len rank)
-  in List.iteri (apply length) attributes
-
-and pp_attributes_1 state attributes =
+and pp_attributes state attributes =
   pp_node state "[@attr]";
   let length         = List.length attributes in
   let apply len rank = pp_ident (state#pad len rank)
@@ -1217,7 +1212,7 @@ and pp_field_decl state {value; _} =
   pp_ident      state value.field_name;
   pp_type_expr  (state#pad arity 0) value.field_type;
   if value.attributes <> [] then
-    pp_attributes_2 (state#pad arity 1) value.attributes
+    pp_attributes (state#pad arity 1) value.attributes
 
 and pp_cartesian state t_exprs =
   let t_exprs        = Utils.nsepseq_to_list t_exprs in
@@ -1225,8 +1220,14 @@ and pp_cartesian state t_exprs =
   let apply len rank = pp_type_expr (state#pad len rank)
   in List.iteri (apply arity) t_exprs
 
-and pp_variant state {constr; arg} =
-  pp_ident state constr;
-  match arg with
-    None -> ()
-  | Some (_,c) -> pp_type_expr (state#pad 1 0) c
+and pp_variant state {constr; arg; attributes=attr} =
+  let arity = if attr = [] then 0 else 1 in
+  let arity = if arg = None then arity else arity + 1 in
+  let rank  = 0 in
+  let () = pp_ident state constr in
+  let rank = match arg with
+             None -> rank
+           | Some (_,c) -> pp_type_expr (state#pad arity rank) c; rank+1 in
+  let _ = if attr <> [] then
+            pp_attributes (state#pad arity rank) attr
+  in ()

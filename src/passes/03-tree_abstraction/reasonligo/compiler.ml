@@ -22,21 +22,25 @@ let r_split = Location.r_split
 
 let compile_variable var = Location.map Var.of_name @@ Location.lift_region var
 
+let compile_attributes attributes : string list =
+  List.map (fst <@ r_split) attributes
+
 let rec compile_type_expression : CST.type_expr -> _ result =
   fun te ->
   let return te = ok @@ te in
   match te with
     TSum sum ->
-      let (nsepseq, loc) = r_split sum in
+      let nsepseq, loc = r_split sum in
       let lst = npseq_to_list nsepseq in
       let aux (variant : CST.variant CST.reg) =
-        let (v, _) = r_split variant in
+        let v, _ = r_split variant in
         let%bind type_expr =
           bind_map_option (compile_type_expression <@ snd) v.arg in
         let type_expr = Option.unopt ~default:(t_unit ()) type_expr in
-        ok @@ (v.constr.value,type_expr) in
+        let variant_attr = List.map (fun x -> x.Region.value) v.attributes in
+        ok @@ (v.constr.value, type_expr, variant_attr) in
       let%bind sum = bind_map_list aux lst
-      in return @@ t_sum_ez ~loc sum
+      in return @@ t_sum_ez ~loc ~attr:[] sum
   | TRecord record ->
     let injection, loc = r_split record in
     let attributes =

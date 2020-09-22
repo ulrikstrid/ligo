@@ -34,9 +34,6 @@ and pp_declaration = function
   TypeDecl  d -> pp_type_decl  d
 | ConstDecl d -> pp_const_decl d
 | FunDecl   d -> pp_fun_decl   d
-| AttrDecl  d -> pp_attr_decl  d
-
-and pp_attr_decl decl = pp_ne_injection pp_string decl
 
 and pp_const_decl {value; _} =
   let {name; const_type; init; _} = value in
@@ -92,11 +89,7 @@ and pp_variant {value; _} =
   | Some (_, e) ->
       prefix 4 1 (pp_ident constr ^^ string " of") (pp_type_expr e)
 
-and pp_record_type fields = pp_ne_injection pp_fields fields
-
-and pp_fields = function
-  FieldDecl decl     -> pp_field_decl decl
-| FieldAttrDecl decl -> pp_attr_decl decl
+and pp_record_type fields = pp_ne_injection pp_field_decl fields
 
 and pp_field_decl {value; _} =
   let {field_name; field_type; _} = value in
@@ -200,7 +193,6 @@ and pp_statements s = pp_nsepseq ";" pp_statement s
 and pp_statement = function
   Instr s -> pp_instruction s
 | Data  s -> pp_data_decl   s
-| Attr  s -> pp_attr_decl   s
 
 and pp_data_decl = function
   LocalConst d -> pp_const_decl d
@@ -588,8 +580,7 @@ and pp_ne_injection :
            ^^ break 0 ^^ string "]")
 
 and pp_ne_injection_kwd = function
-  NEInjAttr   _ -> "attributes"
-| NEInjSet    _ -> "set"
+  NEInjSet    _ -> "set"
 | NEInjMap    _ -> "map"
 | NEInjRecord _ -> "record"
 

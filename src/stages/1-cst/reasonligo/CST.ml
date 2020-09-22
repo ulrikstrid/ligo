@@ -181,8 +181,9 @@ and type_expr =
 and cartesian = (type_expr, comma) nsepseq par reg
 
 and variant = {
-  constr : constr;
-  arg    : (kwd_of * type_expr) option
+  constr     : constr;
+  arg        : (kwd_of * type_expr) option;
+  attributes : attributes
 }
 
 and field_decl = {

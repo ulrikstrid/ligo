@@ -25,7 +25,7 @@ type t =
 | String   of string Region.reg
 | Verbatim of string Region.reg
 | Bytes    of (string * Hex.t) Region.reg
-| Attr1    of string Region.reg
+| Attr     of string Region.reg
 | Lang     of lexeme Region.reg Region.reg
 
   (* Symbols *)
@@ -127,8 +127,8 @@ let proj_token = function
     region, sprintf "Ident %S" value
 | Constr Region.{region; value} ->
     region, sprintf "Constr %S" value
-| Attr1 Region.{region; value} ->
-   region, sprintf "Attr1 %S" value
+| Attr Region.{region; value} ->
+   region, sprintf "Attr %S" value
 | Lang Region.{region; value} ->
    region, sprintf "Lang %S" (value.Region.value)
 
@@ -188,7 +188,7 @@ let to_lexeme = function
 | Mutez i    -> fst i.Region.value
 | Ident  id  -> id.Region.value
 | Constr id  -> id.Region.value
-| Attr1 a    -> a.Region.value
+| Attr a     -> a.Region.value
 | Lang lang  -> Region.(lang.value.value)
 
   (* Symbols *)
@@ -261,7 +261,6 @@ type ident_err = Reserved_name
 type   nat_err = Invalid_natural
                | Non_canonical_zero_nat
 type   sym_err = Invalid_symbol
-type  attr_err = Invalid_attribute
 type   kwd_err = Invalid_keyword
 
 (* LEXIS *)
@@ -486,10 +485,7 @@ let mk_constr lexeme region = mk_constr' lexeme region lexicon
 
 (* Attributes *)
 
-let mk_attr header lexeme region =
-  if header = "[@" then
-    Ok (Attr1 Region.{value=lexeme; region})
-  else Error Invalid_attribute
+let mk_attr lexeme region = Attr Region.{value=lexeme; region}
 
 (* Language injection *)
 

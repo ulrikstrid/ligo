@@ -6,14 +6,18 @@ open Trace
 open Function
 
 (* Utils *)
+
 let rg = Region.ghost
-let wrap : type a. a -> a CST.reg = fun value -> {value;region=rg}
+
+let wrap = Utils.wrap_ghost
+
 let list_to_sepseq lst =
   match lst with
     [] -> None
   |  hd :: lst ->
       let aux e = (rg, e) in
       Some (hd, List.map aux lst)
+
 let list_to_nsepseq lst =
   match list_to_sepseq lst with
     Some s -> ok @@ s
@@ -46,10 +50,13 @@ let block_enclosing = function
 
 let inject dialect kind a =
   CST.{kind;enclosing=enclosing dialect;elements=a;terminator=terminator dialect}
+
 let ne_inject dialect kind a =
   CST.{kind;enclosing=enclosing dialect;ne_elements=a;terminator=terminator dialect}
+
 let to_block dialect a =
   CST.{enclosing=block_enclosing dialect;statements=a;terminator=terminator dialect}
+
 let empty_block dialect =
   to_block dialect (CST.Instr (CST.Skip rg),[])
 
@@ -65,7 +72,11 @@ let decompile_variable : type a. a Var.t -> CST.variable = fun var ->
       wrap @@ "user__" ^ var
     else
       wrap @@ var
-
+let decompile_attributes : dialect -> string list -> CST.attr_decl =
+  fun dialect attributes ->
+     let attr = List.map Region.wrap_ghost attributes in
+     let attr = list_to_sepseq attr
+     in wrap @@ ne_inject dialect (NEInjRecord rg) attr
 let rec decompile_type_expr : dialect -> AST.type_expression -> _ result = fun dialect te ->
   let return te = ok @@ te in
   match te.type_content with
@@ -84,15 +95,19 @@ let rec decompile_type_expr : dialect -> AST.type_expression -> _ result = fun d
   | T_record {fields; attributes} ->
      let () = ignore attributes in (* GA TODO *)
      let record = AST.LMap.to_kv_list_rev fields in
-     let aux (AST.Label c, AST.{associated_type;_}) =
+     let aux (AST.Label c, AST.{associated_type; attributes=attr; _}) =
        let field_name = wrap c in
        let colon = rg in
        let%bind field_type = decompile_type_expr dialect associated_type in
-       let variant : CST.field_decl = {field_name;colon;field_type} in
-       ok @@ wrap variant
+       let field : CST.field =
+         CST.FieldDecl {field_name; colon; field_type} in
+       let field_attr : CST.field =
+         CST.FieldAttrDecl (decompile_attributes attr) in
+       ok @@ wrap field
     in
     let%bind record = bind_map_list aux record in
     let%bind record = list_to_nsepseq record in
+    let
     return @@ CST.TRecord (wrap @@ ne_inject dialect (NEInjRecord rg) record)
   | T_tuple tuple ->
     let%bind tuple = bind_map_list (decompile_type_expr dialect) tuple in

@@ -30,8 +30,12 @@ val t_record_ez :
   (string * type_expression * attributes) list ->
   type_expression
 
-val t_sum    : ?loc:Location.t -> row_element label_map -> type_expression
-val t_sum_ez : ?loc:Location.t -> ( string * type_expression ) list -> type_expression
+val t_sum    : ?loc:Location.t -> variant_type -> type_expression
+val t_sum_ez :
+  ?loc:Location.t ->
+  ?attr:attributes ->
+  (string * type_expression * attributes) list ->
+  type_expression
 
 val t_function : ?loc:Location.t -> type_expression -> type_expression -> type_expression
 val t_map      : ?loc:Location.t -> type_expression -> type_expression -> type_expression

@@ -7,6 +7,12 @@ open Simple_utils.Region
 module CST = Cst.Cameligo
 open CST
 
+(* Utilities *)
+
+let first_region = function
+  [] -> None
+| x::_ -> Some x.Region.region
+
 (* END HEADER *)
 %}
 
@@ -32,8 +38,7 @@ open CST
 %on_error_reduce seq(core_expr)
 %on_error_reduce bin_op(add_expr_level,MINUS,mult_expr_level)
 %on_error_reduce bin_op(add_expr_level,PLUS,mult_expr_level)
-%on_error_reduce seq(Attr1)
-%on_error_reduce seq(Attr2)
+%on_error_reduce seq(Attr)
 %on_error_reduce constr_pattern
 %on_error_reduce tail
 %on_error_reduce nsepseq(sub_irrefutable,COMMA)
@@ -218,44 +223,67 @@ sum_type:
     in TSum {region; value=$2} }
 
 variant:
-  "<constr>" {
-    {$1 with value={constr=$1; arg=None}}
+  nseq("[@attr]") "<constr>" {
+    let region  = cover (fst $1).region $2.region in
+    let value = {constr=$2; arg=None; attributes=Utils.nseq_to_list $1}
+    in {region; value}
+  }
+| "<constr>" {
+    {$1 with value = {constr=$1; arg=None; attributes=[]}}
+  }
+| nseq("[@attr]") "<constr>" "of" fun_type {
+    let stop   = type_expr_to_region $4 in
+    let region = cover (fst $1).region stop
+    and value  = {constr=$2;
+                  arg = Some ($3,$4);
+                  attributes=Utils.nseq_to_list $1}
+    in {region; value}
   }
 | "<constr>" "of" fun_type {
-    let region = cover $1.region (type_expr_to_region $3)
-    and value  = {constr=$1; arg = Some ($2,$3)}
+    let stop   = type_expr_to_region $3 in
+    let region = cover $1.region stop
+    and value  = {constr=$1;
+                  arg = Some ($2,$3);
+                  attributes=[]}
     in {region; value} }
 
 record_type:
-  "{" sep_or_term_list(field_decl,";") "}" seq("[@attr]") {
-    let fields, terminator = $2 in
+  seq("[@attr]") "{" sep_or_term_list(field_decl,";") "}" {
+    let fields, terminator = $3 in
     let () = Utils.nsepseq_to_list fields |> Scoping.check_fields in
-    let region = cover $1 $3
+    let region =
+      match first_region $1 with
+        None -> cover $2 $4
+      | Some start -> cover start $4
     and value = {
-      compound = Some (Braces ($1,$3));
+      compound = Some (Braces ($2,$4));
       ne_elements = fields;
       terminator;
-      attributes=$4}
+      attributes=$1}
     in TRecord {region; value} }
 
 field_decl:
-  field_name ":" type_expr seq("[@@attr]") {
-    let stop   = type_expr_to_region $3 in
-    let region = cover $1.region stop
-    and value  = {field_name=$1; colon=$2; field_type=$3; attributes=$4}
+  seq("[@attr]") field_name ":" type_expr {
+    let stop   = type_expr_to_region $4 in
+    let region = match first_region $1 with
+                   None -> cover $2.region stop
+                 | Some start -> cover start stop
+    and value  = {field_name=$2; colon=$3; field_type=$4; attributes=$1}
     in {region; value} }
 
 (* Top-level definitions *)
 
 let_declaration:
-  "let" ioption("rec") let_binding seq("[@@attr]") {
-    let kwd_let    = $1 in
-    let kwd_rec    = $2 in
-    let attributes = $4 in
-    let binding    = $3 in
+  seq("[@attr]") "let" ioption("rec") let_binding {
+    let attributes = $1 in
+    let kwd_let    = $2 in
+    let kwd_rec    = $3 in
+    let binding    = $4 in
     let value      = kwd_let, kwd_rec, binding, attributes in
     let stop       = expr_to_region binding.let_rhs in
-    let region     = cover $1 stop
+    let region     = match first_region $1 with
+                       None -> cover $2 stop
+                     | Some start -> cover start stop
     in {region; value} }
 
 let_binding:
@@ -487,13 +515,15 @@ case_clause(right_expr):
     {pattern=$1; arrow=$2; rhs=$3} }
 
 let_expr(right_expr):
-  "let" ioption("rec") let_binding seq("[@@attr]") "in" right_expr  {
+   seq("[@attr]") "let" ioption("rec") let_binding "in" right_expr  {
     let stop   = expr_to_region $6 in
-    let region = cover $1 stop
-    and value  = {kwd_let    = $1;
-                  kwd_rec    = $2;
-                  binding    = $3;
-                  attributes = $4;
+    let region = match first_region $1 with
+                   None -> cover $2 stop
+                 | Some start -> cover start stop
+    and value  = {attributes = $1;
+                  kwd_let    = $2;
+                  kwd_rec    = $3;
+                  binding    = $4;
                   kwd_in     = $5;
                   body       = $6}
     in ELetIn {region; value} }
@@ -730,18 +760,20 @@ last_expr:
 | let_in_sequence       { $1 }
 
 let_in_sequence:
-  "let" ioption("rec") let_binding seq("[@@attr]") "in" series  {
+  seq("[@attr]") "let" ioption("rec") let_binding "in" series  {
     let seq      = $6 in
     let stop     = nsepseq_to_region expr_to_region seq in
-    let region   = cover $1 stop in
+    let region   = match first_region $1 with
+                     None -> cover $2 stop
+                   | Some start -> cover start stop in
     let compound = None in
     let elements = Some seq in
     let value    = {compound; elements; terminator=None} in
     let body     = ESeq {region; value} in
-    let value    = {kwd_let    = $1;
-                    kwd_rec    = $2;
-                    binding    = $3;
-                    attributes = $4;
+    let value    = {attributes = $1;
+                    kwd_let    = $2;
+                    kwd_rec    = $3;
+                    binding    = $4;
                     kwd_in     = $5;
                     body}
     in ELetIn {region; value} }

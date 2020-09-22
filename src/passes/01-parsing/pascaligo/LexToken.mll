@@ -23,14 +23,15 @@ type attribute = {
 type t =
   (* Literals *)
 
-  String   of lexeme Region.reg
-| Verbatim of lexeme Region.reg
-| Bytes    of (lexeme * Hex.t) Region.reg
+| Ident    of lexeme Region.reg
+| Constr   of lexeme Region.reg
 | Int      of (lexeme * Z.t) Region.reg
 | Nat      of (lexeme * Z.t) Region.reg
 | Mutez    of (lexeme * Z.t) Region.reg
-| Ident    of lexeme Region.reg
-| Constr   of lexeme Region.reg
+| String   of lexeme Region.reg
+| Verbatim of lexeme Region.reg
+| Bytes    of (lexeme * Hex.t) Region.reg
+| Attr     of string Region.reg
 | Lang     of lexeme Region.reg Region.reg
 
   (* Symbols *)
@@ -65,7 +66,6 @@ type t =
   (* Keywords *)
 
 | And        of Region.t  (* "and"        *)
-| Attributes of Region.t  (* "attributes" *)
 | Begin      of Region.t  (* "begin"      *)
 | BigMap     of Region.t  (* "big_map"    *)
 | Block      of Region.t  (* "block"      *)
@@ -144,6 +144,9 @@ let proj_token = function
     region, sprintf "Constr %S" value
 | Lang Region.{region; value} ->
     region, sprintf "Lang %S" (value.Region.value)
+| Attr Region.{region; value} ->
+   region, sprintf "Attr1 %S" value
+
 
   (* Symbols *)
 
@@ -177,7 +180,6 @@ let proj_token = function
   (* Keywords *)
 
 | And        region -> region, "And"
-| Attributes region -> region, "Attributes"
 | Begin      region -> region, "Begin"
 | BigMap     region -> region, "BigMap"
 | Block      region -> region, "Block"
@@ -238,6 +240,7 @@ let to_lexeme = function
 | Ident id
 | Constr id  -> id.Region.value
 | Lang lang  -> Region.(lang.value.value)
+| Attr a     -> a.Region.value
 
   (* Symbols *)
 
@@ -271,7 +274,6 @@ let to_lexeme = function
   (* Keywords *)
 
 | And        _ -> "and"
-| Attributes _ -> "attributes"
 | Begin      _ -> "begin"
 | BigMap     _ -> "big_map"
 | Block      _ -> "block"
@@ -332,7 +334,6 @@ let to_region token = proj_token token |> fst
 
 let keywords = [
   (fun reg -> And        reg);
-  (fun reg -> Attributes reg);
   (fun reg -> Begin      reg);
   (fun reg -> BigMap     reg);
   (fun reg -> Block      reg);
@@ -544,9 +545,7 @@ let mk_constr lexeme region =
 
 (* Attributes *)
 
-type attr_err = Invalid_attribute
-
-let mk_attr _ _ _ = Error Invalid_attribute
+let mk_attr lexeme region = Attr Region.{value=lexeme; region}
 
 (* Language injection *)
 
