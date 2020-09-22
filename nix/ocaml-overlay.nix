@@ -69,6 +69,9 @@ in {
         tezos-protocol-ligo006-PsCARTHA = osuper.tezos-protocol-ligo006-PsCARTHA.override { dune = oself.dune_2; };
         tezos-protocol-ligo006-PsCARTHA-parameters = osuper.tezos-protocol-ligo006-PsCARTHA-parameters.override { dune = oself.dune_2; };
         tezos-client-ligo006-PsCARTHA = osuper.tezos-client-ligo006-PsCARTHA.override { dune = oself.dune_2; };
+        tezos-protocol-ligo007-PsDELPH1 = osuper.tezos-protocol-ligo007-PsDELPH1.override { dune = oself.dune_2; };
+        tezos-protocol-ligo007-PsDELPH1-parameters = osuper.tezos-protocol-ligo007-PsDELPH1-parameters.override { dune = oself.dune_2; };
+        tezos-client-ligo007-PsDELPH1 = osuper.tezos-client-ligo007-PsDELPH1.override { dune = oself.dune_2; };
         tezos-memory-proto-alpha = osuper.tezos-memory-proto-alpha.override { dune = oself.dune_2; };
         tezos-utils = osuper.tezos-utils.override { dune = oself.dune_2; };
 
