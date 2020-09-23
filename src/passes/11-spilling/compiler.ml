@@ -397,56 +397,40 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
             let%bind match_false = get_case "false" in
             let%bind (t , f) = bind_map_pair (compile_expression) (match_true, match_false) in
             return @@ E_if_bool (expr', t, f)
-          | _ ->
-            let%bind rows = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
-              get_t_sum tv in
-            let tree = Layout.tree_of_sum rows in
-          let%bind tree' = match tree with
-            | Empty -> fail (corner_case ~loc:__LOC__ "match empty variant")
-            | Full x -> ok x in
-          let%bind tree'' =
-            let rec aux t =
-              match (t : _ Append_tree.t') with
-              | Leaf (name , tv) ->
-                  let%bind tv' = compile_type tv in
-                  ok (`Leaf name , tv')
-              | Node {a ; b} ->
-                  let%bind a' = aux a in
-                  let%bind b' = aux b in
-                  let tv' = Mini_c.t_union (None, snd a') (None, snd b') in
-                  ok (`Node (a' , b') , tv')
-            in aux tree'
-          in
-
-          let rec aux top t =
-            match t with
-            | ((`Leaf (Label constructor_name)) , tv) -> (
-                let%bind {constructor=_ ; pattern ; body} =
-                  trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
-                    let aux ({constructor = Label c ; pattern=_ ; body=_} : AST.matching_content_case) =
-                      (c = constructor_name) in
-                  List.find_opt aux cases in
-                let%bind body' = compile_expression body in
-                return @@ E_let_in ((Location.map Var.todo_cast pattern , tv) , false , top , body')
-              )
-            | ((`Node (a , b)) , tv) ->
-                let%bind a' =
-                  let%bind a_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_left tv in
-                  let left_var = Location.wrap @@ Var.fresh ~name:"left" () in
-                  let%bind e = aux (((Expression.make (E_variable left_var) a_ty))) a in
-                  ok ((left_var , a_ty) , e)
-                in
-                let%bind b' =
-                  let%bind b_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_right tv in
-                  let right_var = Location.wrap @@ Var.fresh ~name:"right" () in
-                  let%bind e = aux (((Expression.make (E_variable right_var) b_ty))) b in
-                  ok ((right_var , b_ty) , e)
-                in
-                return @@ E_if_left (top , a' , b')
-          in
-          trace_strong (corner_case ~loc:__LOC__ "building constructor") @@
-          aux expr' tree''
-       )
+          | _ -> (
+              let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
+                get_t_sum tv in
+              let%bind tree = Layout.match_variant_to_tree ~layout ~compile_type content in
+              let rec aux top t =
+                match t with
+                | ((`Leaf (Label constructor_name)) , tv) -> (
+                    let%bind {constructor=_ ; pattern ; body} =
+                      trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
+                      let aux ({constructor = Label c ; pattern=_ ; body=_} : AST.matching_content_case) =
+                        (c = constructor_name) in
+                      List.find_opt aux cases in
+                    let%bind body' = compile_expression body in
+                    return @@ E_let_in ((Location.map Var.todo_cast pattern , tv) , false , top , body')
+                  )
+                | ((`Node (a , b)) , tv) ->
+                  let%bind a' =
+                    let%bind a_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_left tv in
+                    let left_var = Location.wrap @@ Var.fresh ~name:"left" () in
+                    let%bind e = aux (((Expression.make (E_variable left_var) a_ty))) a in
+                    ok ((left_var , a_ty) , e)
+                  in
+                  let%bind b' =
+                    let%bind b_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_right tv in
+                    let right_var = Location.wrap @@ Var.fresh ~name:"right" () in
+                    let%bind e = aux (((Expression.make (E_variable right_var) b_ty))) b in
+                    ok ((right_var , b_ty) , e)
+                  in
+                  return @@ E_if_left (top , a' , b')
+              in
+              trace_strong (corner_case ~loc:__LOC__ "building constructor") @@
+              aux expr' tree
+            )
+      )
   )
   | E_raw_code { language; code} -> 
     let backend = "Michelson" in
@@ -534,25 +518,9 @@ and compile_recursive {fun_name; fun_type; lambda} =
           let%bind (t , f) = bind_map_pair (replace_callback fun_name loop_type shadowed) (match_true, match_false) in
           return @@ E_if_bool (expr, t, f)
       | Match_variant {cases;tv} -> (
-          let%bind rows = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
+          let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
             get_t_sum tv in
-          let tree = Layout.tree_of_sum rows in
-          let%bind tree' = match tree with
-            | Empty -> fail (corner_case ~loc:__LOC__ "match empty variant")
-            | Full x -> ok x in
-          let%bind tree'' =
-            let rec aux t =
-              match (t : _ Append_tree.t') with
-              | Leaf (name , tv) ->
-                  let%bind tv' = compile_type tv in
-                  ok (`Leaf name , tv')
-              | Node {a ; b} ->
-                  let%bind a' = aux a in
-                  let%bind b' = aux b in
-                  let tv' = Mini_c.t_union (None, snd a') (None, snd b') in
-                  ok (`Node (a' , b') , tv')
-            in aux tree'
-          in
+          let%bind tree = Layout.match_variant_to_tree ~layout ~compile_type content in
           let rec aux top t =
             match t with
             | ((`Leaf (Label constructor_name)) , tv) -> (
@@ -580,7 +548,7 @@ and compile_recursive {fun_name; fun_type; lambda} =
                 return @@ E_if_left (top , a' , b')
           in
           trace_strong (corner_case ~loc:__LOC__ "building constructor") @@
-          aux expr tree''
+          aux expr tree
        )
   in
   let%bind fun_type = compile_type fun_type in

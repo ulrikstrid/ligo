@@ -168,27 +168,23 @@ let record_to_pairs compile_expression (return:?tv:_ -> _) record_t record : Min
     Append_tree.fold_ne (compile_expression) aux node
   )
   | L_comb -> (
-    let rec aux = function
-    | [] -> fail (corner_case ~loc:__LOC__ "record build")
-    | [x] -> compile_expression x
-    | [ a ; b ] -> (
-      let%bind a' = compile_expression a in
-      let%bind b' = compile_expression b in
-      let tv = t_pair (None,a'.type_expression) (None,b'.type_expression) in
-      return ~tv (ec_pair a' b')
+      let rec aux = function
+        | [] -> fail (corner_case ~loc:__LOC__ "record build")
+        | [x] -> compile_expression x
+        | [ a ; b ] -> (
+            let%bind a' = compile_expression a in
+            let%bind b' = compile_expression b in
+            let tv = t_pair (None,a'.type_expression) (None,b'.type_expression) in
+            return ~tv (ec_pair a' b')
+          )
+        | hd::tl -> (
+            let%bind hd' = compile_expression hd in
+            let%bind tl' = aux tl in
+            let tv = t_pair (None,hd'.type_expression) (None,tl'.type_expression) in
+            return ~tv (ec_pair hd' tl')
+          ) in
+      aux lst
     )
-    | hd::tl -> (
-      let%bind hd' = compile_expression hd in
-      let%bind tl' = aux tl in
-      let tv = t_pair (None,hd'.type_expression) (None,tl'.type_expression) in
-      return ~tv (ec_pair hd' tl')
-    ) in
-    aux lst
-  )
-
-let tree_of_sum : AST.rows -> (AST.label * AST.type_expression) Append_tree.t = fun { content ; _ } ->
-  let kt_list = List.map (fun (k,({associated_type;_}:AST.row_element)) -> (k,associated_type)) (LMap.to_kv_list content) in
-  Append_tree.of_list kt_list
 
 let constructor_to_lr ?(layout = L_tree) ty m_ty index =
   let open AST.Helpers in
@@ -242,6 +238,64 @@ let constructor_to_lr ?(layout = L_tree) ty m_ty index =
       in
       let last = (index + 1 = List.length lst) in
       aux index ty last
+    )
+
+type variant_tree = [
+  | `Leaf of label
+  | `Node of variant_pair * variant_pair
+]
+
+and variant_pair = variant_tree * Mini_c.type_expression
+
+let match_variant_to_tree ~layout ~compile_type content : variant_pair spilling_result =
+  match layout with
+  | L_tree -> (
+      let kt_tree =
+        let kt_list = List.map (fun (k,({associated_type;_}:AST.row_element)) -> (k,associated_type)) (LMap.to_kv_list content) in
+        Append_tree.of_list kt_list
+      in
+      let%bind ne_tree = match kt_tree with
+        | Empty -> fail (corner_case ~loc:__LOC__ "match empty variant")
+        | Full x -> ok x in
+      let%bind vp =
+        let rec aux t : variant_pair spilling_result =
+          match (t : _ Append_tree.t') with
+          | Leaf (name , tv) ->
+            let%bind tv' = compile_type tv in
+            ok (`Leaf name , tv')
+          | Node {a ; b} ->
+            let%bind a' = aux a in
+            let%bind b' = aux b in
+            let tv' = t_union (None, snd a') (None, snd b') in
+            ok (`Node (a' , b') , tv')
+        in
+        aux ne_tree
+      in
+      ok vp
+    )
+  | L_comb -> (
+      let rec aux : _ -> variant_pair spilling_result = function
+        | [] -> fail (corner_case ~loc:__LOC__ "variant build")
+        | [(k , ty)] -> (
+            let%bind t = compile_type ty in
+            ok (`Leaf k , t)
+          )
+        | [ (ka , ta) ; (kb , tb) ] -> (
+            let%bind ta' = compile_type ta in
+            let%bind tb' = compile_type tb in
+            let tv = Mini_c.t_union (None, ta') (None, tb') in
+            ok (`Node ((`Leaf ka , ta') , (`Leaf kb , tb')) , tv)
+          )
+        | (khd , thd)::tl -> (
+            let%bind thd' = compile_type thd in
+            let%bind (tl',ttl) = aux tl in
+            let tv' = t_union (None, thd') (None, ttl) in
+            let left = `Leaf khd , thd' in
+            ok (`Node (left , (tl' , ttl)) , tv')
+          ) in
+      let lst = List.map (fun (k,({associated_type;_}:AST.row_element)) -> (k,associated_type)) (LMap.to_kv_list content) in
+      let%bind vp = aux lst in
+      ok vp
     )
 
 let extract_record ~(layout:layout) (v : value) (lst : (AST.label * AST.type_expression) list) : _ list spilling_result =
