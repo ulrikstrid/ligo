@@ -15,7 +15,7 @@ open Predefined.Tree_abstraction.Pascaligo
 
 let r_split = Location.r_split
 
-let compile_attributes attributes : string list =
+let compile_attributes : CST.attributes -> AST.attributes = fun attributes ->
   List.map (fst <@ r_split) attributes
 
 let rec compile_type_expression : CST.type_expr ->_ result =
@@ -724,24 +724,26 @@ and compile_instruction : ?next: AST.expression -> CST.instruction -> _ result  
 and compile_data_declaration : next:AST.expression -> CST.data_decl -> _ =
   fun ~next data_decl ->
   let return loc name type_ attr init =
-    let attr = compile_attributes attr in
-    let%bind type_ = bind_map_option (compile_type_expression <@ snd) type_
-    in ok @@ e_let_in ~loc (name, type_) attr init next in
+    ok @@ e_let_in ~loc (name, type_) attr init next
+  in
   match data_decl with
     LocalConst const_decl ->
       let (cd, loc) = r_split const_decl in
       let (name, ploc) = r_split cd.name in
       let%bind init = compile_expression cd.init in
       let p = Location.wrap ?loc:(Some ploc) @@ Var.of_name name
-      and attr = const_decl.value.attributes
-      in return loc p cd.const_type attr init
+      and attr = const_decl.value.attributes in
+      let attr = compile_attributes attr in
+      let%bind type_ = bind_map_option (compile_type_expression <@ snd) cd.const_type in
+      return loc p type_ attr init
 
   | LocalVar var_decl ->
       let (vd, loc) = r_split var_decl in
       let (name, ploc) = r_split vd.name in
       let%bind init = compile_expression vd.init in
-      let p = Location.wrap ?loc:(Some ploc) @@ Var.of_name name
-      in return loc p vd.var_type [] init
+      let p = Location.wrap ?loc:(Some ploc) @@ Var.of_name name in
+      let%bind type_ = bind_map_option (compile_type_expression <@ snd) vd.var_type in
+      return loc p type_ [] init
 
   | LocalFun fun_decl ->
       let fun_decl, loc = r_split fun_decl in
@@ -774,8 +776,8 @@ and compile_block : ?next:AST.expression -> CST.block CST.reg -> _ result =
     Some block -> return block
   | None -> fail @@ block_start_with_attribute block
 
-and compile_fun_decl
-  ({kwd_recursive; fun_name; param; ret_type; return=r; attributes}: CST.fun_decl) =
+and compile_fun_decl : CST.fun_decl -> (expression_variable * type_expression option * AST.attributes * expression , _) Trace.result =
+  fun ({kwd_recursive; fun_name; param; ret_type; return=r; attributes}: CST.fun_decl) ->
   let return = ok in
   let (fun_name, loc) = r_split fun_name in
   let fun_binder = Location.wrap ?loc:(Some loc) @@ Var.of_name fun_name in
@@ -815,9 +817,10 @@ and compile_fun_decl
         trace_option (untyped_recursive_fun loc) @@ fun_type in
       return @@ e_recursive ~loc:(Location.lift reg) fun_binder fun_type lambda
     | None   ->
-       return @@ make_e ~loc @@ E_lambda lambda in
-  let attr = compile_attributes attributes
-  in return (fun_binder, fun_type, attr, func)
+      return @@ make_e ~loc @@ E_lambda lambda
+  in
+  let attr = compile_attributes attributes in
+  return (fun_binder, fun_type, attr, func)
 
 let compile_declaration : CST.declaration -> _ =
   fun decl ->
@@ -839,8 +842,7 @@ let compile_declaration : CST.declaration -> _ =
       @@ AST.Declaration_constant (name, const_type, attr, init)
   | FunDecl {value;region} ->
      let%bind (fun_name, fun_type, attr, lambda) = compile_fun_decl value in
-     let attr = compile_attributes attr in
      return region
-      @@ AST.Declaration_constant (fun_name, fun_type, attr, lambda)
+      @@ AST.Declaration_constant (fun_name, (fun_type : type_expression option), attr, lambda)
 let compile_program : CST.ast -> _ result =
   fun t -> bind_map_list compile_declaration @@ nseq_to_list t.decl
