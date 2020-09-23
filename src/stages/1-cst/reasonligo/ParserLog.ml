@@ -222,7 +222,9 @@ and print_cartesian state Region.{value;_} =
   print_nsepseq state "," print_type_expr inside;
   print_token state rpar ")"
 
-and print_variant state {value = {constr; arg}; _} =
+and print_variant state {value; _} =
+  let {constr; arg; attributes=attr} = value in
+  print_attributes state attr;
   print_constr state constr;
   match arg with
     None -> ()
@@ -676,7 +678,7 @@ let rec pp_cst state {decl; _} =
 
 and pp_declaration state = function
   ConstDecl {value = (_, kwd_rec, let_binding, attr); region} ->
-    pp_loc_node    state "Let" region;
+    pp_loc_node state "Let" region;
     (match kwd_rec with
     | None -> ()
     | Some (_) -> pp_node (state#pad 0 0) "rec"
@@ -694,7 +696,7 @@ and pp_let_binding state node attr =
   let arity =
     let state = state#pad fields 0 in
     pp_node    state "<binders>";
-    pp_pattern state binders; 0 in
+    pp_pattern (state#pad 1 0) binders; 0 in
   let arity =
     match lhs_type with
       None -> arity
@@ -1221,7 +1223,7 @@ and pp_type_tuple state {value; _} =
   in List.iteri (List.length components |> apply) components
 
 and pp_attributes state attributes =
-  pp_node state "[@attr]";
+  pp_node state "<attributes>";
   let length         = List.length attributes in
   let apply len rank = pp_ident (state#pad len rank)
   in List.iteri (apply length) attributes
@@ -1242,8 +1244,15 @@ and pp_cartesian state {lpar;inside;rpar} =
   List.iteri (apply arity) t_exprs;
   print_token state rpar "(";
 
-and pp_variant state {constr; arg} =
-  pp_ident state constr;
-  match arg with
-    None -> ()
-  | Some (_,c) -> pp_type_expr (state#pad 1 0) c
+and pp_variant state {constr; arg; attributes=attr} =
+  let arity = if attr = [] then 0 else 1 in
+  let arity = if arg = None then arity else arity + 1 in
+  let rank  = 0 in
+  let () = pp_ident state constr in
+  let rank =
+    match arg with
+      None -> rank
+    | Some (_,c) -> pp_type_expr (state#pad arity rank) c; rank+1 in
+  let _ = if attr <> [] then
+            pp_attributes (state#pad arity rank) attr
+  in ()

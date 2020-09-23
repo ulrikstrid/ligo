@@ -215,7 +215,8 @@ and print_selection state = function
 and print_cartesian state Region.{value;_} =
   print_nsepseq state "*" print_type_expr value
 
-and print_variant state {value = {constr; arg; attributes=attr}; _} =
+and print_variant state {value; _} =
+  let {constr; arg; attributes=attr} = value in
   print_attributes state attr;
   print_constr state constr;
   match arg with
@@ -670,28 +671,28 @@ and pp_declaration state = function
 
 and pp_let_binding state node attr =
   let {binders; lhs_type; let_rhs; _} = node in
-  let fields = if lhs_type = None then 2 else 3 in
-  let fields = if attr = [] then fields else fields+1 in
-  let arity =
-    let state = state#pad fields 0 in
+  let arity = if lhs_type = None then 2 else 3 in
+  let arity = if attr = [] then arity else arity+1 in
+  let rank =
+    let state = state#pad arity 0 in
     pp_node    state "<binders>";
-    pp_pattern state binders; 0 in
-  let arity =
+    pp_binders state binders; 0 in
+  let rank =
     match lhs_type with
-      None -> arity
+      None -> rank
     | Some (_, type_expr) ->
-       let state = state#pad fields (arity+1) in
+       let state = state#pad arity (rank+1) in
        pp_node state "<lhs type>";
        pp_type_expr (state#pad 1 0) type_expr;
-       arity+1 in
-  let arity =
-    let state = state#pad fields (arity+1) in
+       rank+1 in
+  let rank =
+    let state = state#pad arity (rank+1) in
     pp_node state "<rhs>";
     pp_expr (state#pad 1 0) let_rhs;
-    arity+1 in
+    rank+1 in
   let () =
     if attr <> [] then
-      let state = state#pad fields (arity+1) in
+      let state = state#pad arity (rank+1) in
       pp_node state "<attributes>";
       let length         = List.length attr in
       let apply len rank = pp_ident (state#pad len rank)
@@ -891,20 +892,20 @@ and pp_expr state = function
 
 and pp_fun_expr state node =
   let {binders; lhs_type; body; _} = node in
-  let fields = if lhs_type = None then 2 else 3 in
+  let arity = if lhs_type = None then 2 else 3 in
   let () =
-    let state = state#pad fields 0 in
+    let state = state#pad arity 0 in
     pp_node state "<parameters>";
     pp_binders state binders in
   let () =
     match lhs_type with
       None -> ()
     | Some (_, type_expr) ->
-       let state = state#pad fields 1 in
+       let state = state#pad arity 1 in
        pp_node state "<lhs type>";
        pp_type_expr (state#pad 1 0) type_expr in
   let () =
-    let state = state#pad fields (fields - 1) in
+    let state = state#pad arity (arity - 1) in
     pp_node state "<body>";
     pp_expr (state#pad 1 0) body
   in ()
@@ -923,40 +924,40 @@ and pp_code_inj state rc =
 and pp_let_in state node =
   let {binding; body; attributes; kwd_rec; _} = node in
   let {binders; lhs_type; let_rhs; _} = binding in
-  let fields = if lhs_type = None then 3 else 4 in
-  let fields = if kwd_rec = None then fields else fields+1 in
-  let fields = if attributes = [] then fields else fields+1 in
+  let arity = if lhs_type = None then 3 else 4 in
+  let arity = if kwd_rec = None then arity else arity+1 in
+  let arity = if attributes = [] then arity else arity+1 in
   let rank =
     match kwd_rec with
       None -> 0
     | Some (_) ->
-      let state = state#pad fields 0 in
+      let state = state#pad arity 0 in
       pp_node state "rec"; 0 in
   let rank =
-    let state = state#pad fields 0 in
+    let state = state#pad arity 0 in
     pp_node state "<binders>";
-    pp_pattern state binders; rank in
+    pp_binders state binders; rank in
   let rank =
     match lhs_type with
       None -> rank
     | Some (_, type_expr) ->
-       let state = state#pad fields (rank+1) in
+       let state = state#pad arity (rank+1) in
        pp_node state "<lhs type>";
        pp_type_expr (state#pad 1 0) type_expr;
        rank+1 in
   let rank =
-    let state = state#pad fields (rank+1) in
+    let state = state#pad arity (rank+1) in
     pp_node state "<rhs>";
     pp_expr (state#pad 1 0) let_rhs;
     rank+1 in
   let rank =
-    let state = state#pad fields (rank+1) in
+    let state = state#pad arity (rank+1) in
     pp_node state "<body>";
     pp_expr (state#pad 1 0) body;
     rank+1 in
   let () =
     if attributes <> [] then
-      let state = state#pad fields (rank+1) in
+      let state = state#pad arity (rank+1) in
       pp_node state "<attributes>";
       let length         = List.length attributes in
       let apply len rank = pp_ident (state#pad len rank)
@@ -964,7 +965,7 @@ and pp_let_in state node =
   in ()
 
 and pp_attributes state attributes =
-  pp_node state "[@attr]";
+  pp_node state "<attributes>";
   let length         = List.length attributes in
   let apply len rank = pp_ident (state#pad len rank)
   in List.iteri (apply length) attributes
@@ -1209,8 +1210,8 @@ and pp_type_tuple state {value; _} =
 
 and pp_field_decl state {value; _} =
   let arity = if value.attributes = [] then 1 else 2 in
-  pp_ident      state value.field_name;
-  pp_type_expr  (state#pad arity 0) value.field_type;
+  pp_ident     state value.field_name;
+  pp_type_expr (state#pad arity 0) value.field_type;
   if value.attributes <> [] then
     pp_attributes (state#pad arity 1) value.attributes
 
@@ -1225,9 +1226,10 @@ and pp_variant state {constr; arg; attributes=attr} =
   let arity = if arg = None then arity else arity + 1 in
   let rank  = 0 in
   let () = pp_ident state constr in
-  let rank = match arg with
-             None -> rank
-           | Some (_,c) -> pp_type_expr (state#pad arity rank) c; rank+1 in
+  let rank =
+    match arg with
+      None -> rank
+    | Some (_,c) -> pp_type_expr (state#pad arity rank) c; rank+1 in
   let _ = if attr <> [] then
             pp_attributes (state#pad arity rank) attr
   in ()

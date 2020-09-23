@@ -305,7 +305,7 @@ variant:
     in {region; value} }
 
 record_type:
-  seq("[@attr]") "{" sep_or_term_list(field_decl,";") "}" {
+  seq("[@attr]") "record" sep_or_term_list(field_decl,";") "end" {
     let fields, terminator = $3 in
     let () = Utils.nsepseq_to_list fields |> Scoping.check_fields in
     let region =
@@ -320,18 +320,18 @@ record_type:
     in TRecord {region; value}
   }
 | seq("[@attr]") "record" "[" sep_or_term_list(field_decl,";") "]" {
-   let fields, terminator = $4 in
+    let fields, terminator = $4 in
     let () = Utils.nsepseq_to_list fields |> Scoping.check_fields in
     let region =
       match first_region $1 with
         None -> cover $2 $5
       | Some start -> cover start $5
-   and value  = {kind      = NEInjRecord $2;
-                 enclosing = Brackets ($3,$5);
-                 ne_elements = fields;
-                 terminator;
-                 attributes=$1}
-   in TRecord {region; value} }
+    and value  = {kind      = NEInjRecord $2;
+                  enclosing = Brackets ($3,$5);
+                  ne_elements = fields;
+                  terminator;
+                  attributes=$1}
+    in TRecord {region; value} }
 
 field_decl:
   seq("[@attr]") field_name ":" type_expr {
@@ -340,8 +340,7 @@ field_decl:
                    None -> cover $2.region stop
                  | Some start -> cover start stop
     and value  = {attributes=$1; field_name=$2; colon=$3; field_type=$4}
-    in {region; value}
-  }
+    in {region; value} }
 
 fun_expr:
   "function" parameters type_annot? "is" expr {

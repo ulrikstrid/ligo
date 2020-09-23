@@ -145,7 +145,7 @@ let proj_token = function
 | Lang Region.{region; value} ->
     region, sprintf "Lang %S" (value.Region.value)
 | Attr Region.{region; value} ->
-   region, sprintf "Attr1 %S" value
+   region, sprintf "Attr %S" value
 
 
   (* Symbols *)

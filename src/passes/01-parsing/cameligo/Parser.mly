@@ -224,19 +224,19 @@ sum_type:
 
 variant:
   nseq("[@attr]") "<constr>" {
-    let region  = cover (fst $1).region $2.region in
-    let value = {constr=$2; arg=None; attributes=Utils.nseq_to_list $1}
+    let attr   = Utils.nseq_to_list $1 in
+    let region = cover (fst $1).region $2.region
+    and value  = {constr=$2; arg=None; attributes=attr}
     in {region; value}
   }
 | "<constr>" {
     {$1 with value = {constr=$1; arg=None; attributes=[]}}
   }
 | nseq("[@attr]") "<constr>" "of" fun_type {
+    let attr   = Utils.nseq_to_list $1 in
     let stop   = type_expr_to_region $4 in
     let region = cover (fst $1).region stop
-    and value  = {constr=$2;
-                  arg = Some ($3,$4);
-                  attributes=Utils.nseq_to_list $1}
+    and value  = {constr=$2; arg = Some ($3,$4); attributes=attr}
     in {region; value}
   }
 | "<constr>" "of" fun_type {

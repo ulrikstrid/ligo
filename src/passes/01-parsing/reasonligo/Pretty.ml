@@ -21,15 +21,16 @@ and pp_const_decl = function
     match rec_opt with
         None -> "let "
     | Some _ -> "let rec " in
-  let bindings = pp_let_binding let_str binding
-  and attr    = pp_attributes attr
-  in group (attr ^^ bindings ^^ string ";")
+  let bindings = pp_let_binding let_str binding in
+  let bindings = if attr = [] then bindings
+                 else pp_attributes attr ^/^ bindings
+  in group (bindings ^^ string ";")
 
 and pp_attributes = function
     [] -> empty
 | attr ->
-    let make s = string "[@" ^^ string s.value ^^ string "]" in
-    group (break 0 ^^ separate_map (break 0) make attr) ^^ hardline
+   let make s = string "[@" ^^ string s.value ^^ string "]"
+   in concat_map make attr
 
 and pp_ident {value; _} = string value
 
@@ -282,12 +283,17 @@ and pp_field_assign {value; _} =
 and pp_ne_injection :
   'a.('a -> document) -> 'a ne_injection reg -> document =
   fun printer {value; _} ->
-    let {compound; ne_elements; _} = value in
+    let {compound; ne_elements; attributes; _} = value in
     let elements = pp_nsepseq "," printer ne_elements in
-    match Option.map pp_compound compound with
-      None -> elements
-    | Some (opening, closing) ->
-        string opening ^^ nest 2 (break 0 ^^ elements) ^^ break 1 ^^ string closing
+    let inj =
+      match Option.map pp_compound compound with
+        None -> elements
+      | Some (opening, closing) ->
+          string opening ^^ nest 2 (break 0 ^^ elements)
+          ^^ break 1 ^^ string closing in
+    let inj = if attributes = [] then inj
+              else break 0 ^^ pp_attributes attributes ^/^ inj
+    in inj
 
 and pp_nsepseq :
   'a.string -> ('a -> document) -> ('a, t) Utils.nsepseq -> document =
@@ -391,7 +397,7 @@ and pp_seq {value; _} =
 and pp_type_expr = function
   TProd t   -> pp_cartesian t
 | TSum t    -> break 0 ^^ pp_variants t
-| TRecord t -> pp_fields t
+| TRecord t -> pp_record_type t
 | TApp t    -> pp_type_app t
 | TFun t    -> pp_fun_type t
 | TPar t    -> pp_type_par t
@@ -412,30 +418,30 @@ and pp_cartesian {value; _} =
 and pp_variants {value; _} =
   let head, tail = value in
   let head = pp_variant head in
-  let head = if tail = [] then head
-             else ifflat head (string "  " ^^ head) in
+  let head = if tail = [] then head else ifflat head (blank 2 ^^ head) in
   let rest = List.map snd tail in
   let app variant = break 1 ^^ string "| " ^^ pp_variant variant
   in head ^^ concat_map app rest
 
 and pp_variant {value; _} =
-  let {constr; arg} = value in
+  let {constr; arg; attributes=attr} = value in
+  let pre = if attr = [] then pp_ident constr
+            else group (pp_attributes attr ^/^ pp_ident constr) in
   match arg with
-    None -> pp_ident constr
-  | Some (_, e) ->
-      prefix 2 0 (pp_ident constr) (string "(" ^^ pp_type_expr e ^^ string ")")
+    None -> pre
+  | Some (_,e) -> prefix 2 1 pre (string "(" ^^ pp_type_expr e ^^ string ")")
 
-and pp_fields fields = group (pp_ne_injection pp_field_decl fields)
+and pp_record_type fields = group (pp_ne_injection pp_field_decl fields)
 
 and pp_field_decl {value; _} =
-  let {field_name; field_type; _} = value in
-  let name = pp_ident field_name in
+  let {field_name; field_type; attributes; _} = value in
+  let attr = pp_attributes attributes in
+  let name = if attributes = [] then pp_ident field_name
+             else attr ^/^ pp_ident field_name in
   match field_type with
-  | TVar v when v = field_name ->
-    name
-  | _ ->
-    let t_expr = pp_type_expr field_type
-    in prefix 2 1 (name ^^ string ":") t_expr
+    TVar v when v = field_name -> name
+  | _ -> let t_expr = pp_type_expr field_type
+        in prefix 2 1 (name ^^ string ":") t_expr
 
 and pp_type_app {value; _} =
   let ctor, tuple = value in

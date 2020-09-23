@@ -23,17 +23,17 @@ and pp_let_decl {value; _} =
   let _, rec_opt, binding, attr = value in
   let let_str =
     match rec_opt with
-        None -> "let "
-    | Some _ -> "let rec " in
-  let binding = pp_let_binding binding
-  and attr    = pp_attributes attr
-  in attr ^^ string let_str ^^ binding
+        None -> string "let "
+    | Some _ -> string "let rec " in
+  let let_str = if attr = [] then let_str
+                else pp_attributes attr ^/^ let_str
+  in let_str ^^ pp_let_binding binding
 
 and pp_attributes = function
     [] -> empty
 | attr ->
-    let make s = string "[@" ^^ string s.value ^^ string "]" in
-    group (nest 2 (break 1 ^^ separate_map (break 0) make attr))
+   let make s = string "[@" ^^ string s.value ^^ string "]"
+   in separate_map (break 0) make attr
 
 and pp_ident {value; _} = string value
 
@@ -286,8 +286,10 @@ and pp_ne_injection :
       match Option.map pp_compound compound with
         None -> elements
       | Some (opening, closing) ->
-         string opening ^^ nest 1 elements ^^ string closing
-    in pp_attributes attributes ^^ inj
+         string opening ^^ nest 1 elements ^^ string closing in
+    let inj = if attributes = [] then inj
+              else pp_attributes attributes ^/^ inj
+    in inj
 
 and pp_nsepseq :
   'a.string -> ('a -> document) -> ('a, t) Utils.nsepseq -> document =
@@ -413,21 +415,24 @@ and pp_variants {value; _} =
   in head ^^ concat_map app rest
 
 and pp_variant {value; _} =
-  let {constr; arg} = value in
+  let {constr; arg; attributes=attr} = value in
+  let pre = if attr = [] then pp_ident constr
+            else group (pp_attributes attr ^/^ pp_ident constr) in
   match arg with
-    None -> pp_ident constr
-  | Some (_, e) ->
-      prefix 4 1 (pp_ident constr ^^ string " of") (pp_type_expr e)
+    None -> pre
+  | Some (_,e) -> prefix 4 1 (pre ^^ string " of") (pp_type_expr e)
 
 and pp_record_type fields = group (pp_ne_injection pp_field_decl fields)
 
 and pp_field_decl {value; _} =
   let {field_name; field_type; attributes; _} = value in
-  let name = pp_ident field_name in
+  let attr = pp_attributes attributes in
+  let name = if attributes = [] then pp_ident field_name
+             else attr ^/^ pp_ident field_name in
   let t_expr = pp_type_expr field_type
-  in prefix 2 1 (pp_attributes attributes ^^ name ^^ string " :") t_expr
+  in prefix 2 1 (name ^^ string " :") t_expr
 
-and pp_type_app {value = ctor, tuple; _} =
+and pp_type_app {value=ctor, tuple; _} =
   pp_type_tuple tuple ^^ group (nest 2 (break 1 ^^ pp_type_constr ctor))
 
 and pp_type_tuple {value; _} =

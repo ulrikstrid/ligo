@@ -36,8 +36,11 @@ and pp_declaration = function
 | FunDecl   d -> pp_fun_decl   d
 
 and pp_const_decl {value; _} =
-  let {name; const_type; init; _} = value in
+  let {name; const_type; init; attributes; _} = value in
+  let attr  = pp_attributes attributes in
   let start = string ("const " ^ name.value) in
+  let start = if attributes = [] then start
+              else pp_attributes attributes ^/^ start in
   let start =
     match const_type with
       None -> start
@@ -83,17 +86,26 @@ and pp_variants {value; _} =
   in head ^^ concat_map app rest
 
 and pp_variant {value; _} =
-  let {constr; arg} = value in
+  let {constr; arg; attributes=attr} = value in
+  let pre = if attr = [] then pp_ident constr
+            else group (pp_attributes attr ^/^ pp_ident constr) in
   match arg with
-    None -> pp_ident constr
-  | Some (_, e) ->
-      prefix 4 1 (pp_ident constr ^^ string " of") (pp_type_expr e)
+    None -> pre
+  | Some (_,e) -> prefix 4 1 (pre ^^ string " of") (pp_type_expr e)
 
-and pp_record_type fields = pp_ne_injection pp_field_decl fields
+and pp_attributes = function
+    [] -> empty
+| attr ->
+   let make s = string "[@" ^^ string s.value ^^ string "]"
+   in separate_map (break 0) make attr
+
+and pp_record_type fields = group (pp_ne_injection pp_field_decl fields)
 
 and pp_field_decl {value; _} =
-  let {field_name; field_type; _} = value in
-  let name   = pp_ident field_name in
+  let {field_name; field_type; attributes; _} = value in
+  let attr = pp_attributes attributes in
+  let name = if attributes = [] then pp_ident field_name
+             else attr ^/^ pp_ident field_name in
   let t_expr = pp_type_expr field_type
   in prefix 2 1 (name ^^ string " :") t_expr
 
@@ -138,11 +150,13 @@ and pp_fun_expr {value; _} =
 
 and pp_fun_decl {value; _} =
   let {kwd_recursive; fun_name; param; ret_type;
-       return; _} = value in
+       return; attributes; _} = value in
   let start =
     match kwd_recursive with
         None -> string "function"
-    | Some _ -> string "recursive" ^/^ string "function" in
+      | Some _ -> string "recursive" ^/^ string "function" in
+  let start = if attributes = [] then start
+              else pp_attributes attributes ^/^ start in
   let start = start ^^ group (break 1 ^^ nest 2 (pp_ident fun_name))
   and parameters = pp_par pp_parameters param
   and t_annot_is =
@@ -572,12 +586,15 @@ and pp_injection_kwd = function
 and pp_ne_injection :
   'a.('a -> document) -> 'a ne_injection reg -> document =
   fun printer {value; _} ->
-    let {kind; ne_elements; _} = value in
+    let {kind; ne_elements; attributes; _} = value in
     let elements = pp_nsepseq ";" printer ne_elements in
     let kwd      = pp_ne_injection_kwd kind in
-    group (string (kwd ^ " [")
-           ^^ group (nest 2 (break 0 ^^ elements ))
-           ^^ break 0 ^^ string "]")
+    let inj      = group (string (kwd ^ " [")
+                          ^^ group (nest 2 (break 0 ^^ elements ))
+                          ^^ break 0 ^^ string "]") in
+    let inj      = if attributes = [] then inj
+                   else pp_attributes attributes ^/^ inj
+    in inj
 
 and pp_ne_injection_kwd = function
   NEInjSet    _ -> "set"
