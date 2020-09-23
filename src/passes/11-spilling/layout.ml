@@ -7,6 +7,49 @@ open Trace
 
 let annotation_or_label annot label = Option.unopt ~default:label (Helpers.remove_empty_annotation annot)
 
+let t_sum ?(layout = L_tree) return compile_type m =
+  let open AST.Helpers in
+  let lst = kv_list_of_t_sum ~layout m in
+  match layout with
+  | L_tree -> (
+    let node = Append_tree.of_list lst in
+    let aux a b : (type_expression annotated, spilling_error) result =
+      let%bind a = a in
+      let%bind b = b in
+      let%bind t = return @@ T_or (a, b) in
+      ok (None, t)
+    in
+    let%bind m' = Append_tree.fold_ne
+      (fun (Label label, ({associated_type;michelson_annotation}: AST.row_element)) ->
+          let label = String.uncapitalize_ascii label in
+          let%bind a = compile_type associated_type in
+          ok (Some (annotation_or_label michelson_annotation label), a)
+      )
+      aux node in
+    ok @@ snd m'
+  )
+  | L_comb -> (
+    (* Right combs *)
+    let aux (Label l , x) =
+      let l = String.uncapitalize_ascii l in
+      let%bind t = compile_type x.associated_type in
+      let annot_opt = Some (annotation_or_label x.michelson_annotation l) in
+      ok (t , annot_opt)
+    in
+    let rec lst_fold = function
+      | [] -> fail (corner_case ~loc:__LOC__ "t_record empty")
+      | [ x ] -> aux x
+      | hd :: tl -> (
+          let%bind (hd_t , hd_annot_opt) = aux hd in
+          let%bind (tl_t , tl_annot_opt) = lst_fold tl in
+          let%bind t = return @@ T_or ((hd_annot_opt , hd_t) , (tl_annot_opt , tl_t)) in
+          ok (t , None)
+        )
+    in
+    let%bind (t , _ ) = lst_fold lst in
+    ok t
+  )
+
 let t_record_to_pairs ?(layout = L_tree) return compile_type m =
   let open AST.Helpers in
   let is_tuple_lmap = is_tuple_lmap m in
@@ -142,6 +185,64 @@ let record_to_pairs compile_expression (return:?tv:_ -> _) record_t record : Min
     ) in
     aux lst
   )
+
+let tree_of_sum : AST.rows -> (AST.label * AST.type_expression) Append_tree.t = fun { content ; _ } ->
+  let kt_list = List.map (fun (k,({associated_type;_}:AST.row_element)) -> (k,associated_type)) (LMap.to_kv_list content) in
+  Append_tree.of_list kt_list
+
+let constructor_to_lr ?(layout = L_tree) ty m_ty index =
+  let open AST.Helpers in
+  let lst = kv_list_of_t_sum ~layout m_ty in
+  match layout with
+  | L_tree -> (
+      let node_tv = Append_tree.of_list lst in
+      let%bind path =
+        let aux (i , _) = i = index in
+        trace_option (corner_case ~loc:__LOC__ "constructor leaf") @@
+        Append_tree.exists_path aux node_tv
+      in
+      let lr_path = List.map (fun b -> if b then `Right else `Left) path in
+      let%bind (_ , lst) =
+        let aux = fun (ty , acc) cur ->
+          let%bind (a , b) =
+            trace_option (corner_case ~loc:__LOC__ "constructor union") @@
+            Mini_c.get_t_or ty
+          in
+          match cur with
+          | `Left -> ok (a , acc @ [(ty , `Left)])
+          | `Right -> ok (b , acc @ [(ty , `Right)] )
+        in
+        bind_fold_list aux (ty , []) lr_path
+      in
+      ok @@ List.rev lst
+    )
+  | L_comb -> (
+      let rec aux n ty last =
+        match n , last with
+        | 0 , true -> ok []
+        | 0 , false -> (
+            let%bind (a , _) =
+              trace_option (corner_case ~loc:__LOC__ "constructor leaf") @@
+              Mini_c.get_t_or ty
+            in
+            ok [(a , `Left)]
+          )
+        | n , last -> (
+            let%bind (_ , b) =
+              trace_option (corner_case ~loc:__LOC__ "constructor union") @@
+              Mini_c.get_t_or ty
+            in
+            let%bind prec = aux (n - 1) b last in
+            ok (prec @ [(b , `Right)])
+          )
+      in
+      let%bind index =
+        Trace.generic_try (corner_case ~loc:__LOC__ "constructor access") @@
+        fun () -> List.find_index (fun (label , _) -> label = index) lst
+      in
+      let last = (index + 1 = List.length lst) in
+      aux index ty last
+    )
 
 let extract_record ~(layout:layout) (v : value) (lst : (AST.label * AST.type_expression) list) : _ list spilling_result =
   match layout with

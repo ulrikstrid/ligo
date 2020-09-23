@@ -108,6 +108,15 @@ let tuple_of_record (m: _ LMap.t) =
   in
   Base.Sequence.to_list @@ Base.Sequence.unfold ~init:0 ~f:aux
 
+let kv_list_of_t_sum ?(layout = L_tree) (m: _ LMap.t) =
+  let lst = LMap.to_kv_list m in
+  match layout with
+  | L_tree -> lst
+  | L_comb -> (
+      let aux (_ , { decl_pos = a ; _ }) (_ , { decl_pos = b ; _ }) = Int.compare a b in
+      List.sort aux lst
+    )
+
 let kv_list_of_t_record_or_tuple ?(layout = L_tree) (m: _ LMap.t) =
   let lst =
     if (is_tuple_lmap m)
@@ -145,9 +154,11 @@ let remove_empty_annotation (ann : string option) : string option =
   | None -> None
 
 let is_michelson_or (t: _ label_map) =
-  LMap.cardinal t = 2 &&
-  (LMap.mem (Label "M_left") t) &&
-  (LMap.mem (Label "M_right") t)
+  let s = List.sort (fun (Label k1, _) (Label k2, _) -> String.compare k1 k2) @@
+    LMap.to_kv_list t in
+  match s with
+  | [ (Label "M_left", ta) ; (Label "M_right", tb) ] -> Some (ta,tb)
+  | _ -> None
 
 let is_michelson_pair (t: _ label_map) : (row_element * row_element) option =
   match LMap.to_list t with

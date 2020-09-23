@@ -131,12 +131,8 @@ let%expect_test _ =
         (or (pair %option1 (string %bar) (nat %baz)) (pair %option2 (string %bar) (nat %baz))) ;
       storage nat ;
       code { CAR ;
-             IF_LEFT
-               { LEFT (pair (string %bar) (nat %baz)) }
-               { RIGHT (pair (string %bar) (nat %baz)) } ;
-             IF_LEFT
-               { LEFT (pair (string %bar) (nat %baz)) }
-               { RIGHT (pair (string %bar) (nat %baz)) } ;
+             IF_LEFT { LEFT (pair string nat) } { RIGHT (pair string nat) } ;
+             IF_LEFT { LEFT (pair string nat) } { RIGHT (pair string nat) } ;
              IF_LEFT { CDR ; NIL operation ; PAIR } { CDR ; NIL operation ; PAIR } } } |}]
 
 let%expect_test _ =

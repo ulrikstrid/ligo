@@ -19,7 +19,7 @@ let%expect_test _ =
   [%expect {| 479 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "issue-184-combs.mligo" ; "main2" ] ;
-  [%expect {| 295 bytes |}] ;
+  [%expect {| 231 bytes |}] ;
 
   run_ligo_good [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {| (Left (Left 1)) |}] ;
