@@ -754,11 +754,11 @@ and compile_statement : ?next:AST.expression -> CST.statement -> _ result =
   match statement with
     Instr i ->
       let%bind i = compile_instruction ?next i in
-      return (Some i, None)
+      return (Some i)
   | Data dd ->
     let next = Option.unopt ~default:(e_skip ()) next in
     let%bind dd = compile_data_declaration ~next dd
-    in return (Some dd, None)
+    in return (Some dd)
 
 and compile_block : ?next:AST.expression -> CST.block CST.reg -> _ result =
   fun ?next block ->
@@ -769,7 +769,7 @@ and compile_block : ?next:AST.expression -> CST.block CST.reg -> _ result =
     let%bind statement = compile_statement ?next statement
     in return statement
   in
-  let%bind (block', _) = bind_fold_right_list aux next statements in
+  let%bind block' = bind_fold_right_list aux next statements in
   match block' with
     Some block -> return block
   | None -> fail @@ block_start_with_attribute block
@@ -838,8 +838,9 @@ let compile_declaration : CST.declaration -> _ =
       in return region
       @@ AST.Declaration_constant (name, const_type, attr, init)
   | FunDecl {value;region} ->
-     let%bind (fun_name, fun_type, attr, lambda) = compile_fun_decl value
-     in return region
+     let%bind (fun_name, fun_type, attr, lambda) = compile_fun_decl value in
+     let attr = compile_attributes attr in
+     return region
       @@ AST.Declaration_constant (fun_name, fun_type, attr, lambda)
 let compile_program : CST.ast -> _ result =
   fun t -> bind_map_list compile_declaration @@ nseq_to_list t.decl
