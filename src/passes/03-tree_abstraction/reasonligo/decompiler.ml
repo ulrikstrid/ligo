@@ -62,15 +62,14 @@ let decompile_variable : type a. a Var.t -> CST.variable = fun var ->
 let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
   let return te = ok @@ te in
   match te.type_content with
-    T_sum { fields ; attributes=_ (*TODO*) } ->
+    T_sum { fields ; attributes } ->
     let sum = AST.LMap.to_kv_list_rev fields in
     let aux (AST.Label c, AST.{associated_type;_}) =
       let constr = wrap c in
       let%bind arg = decompile_type_expr associated_type in
       let arg = Some (ghost, arg) in
-      (* CR TODO *)
-      (* let attributes = List.map wrap attributes in *)
-      let variant : CST.variant = {constr;arg} in
+      let attributes = List.map wrap attributes in
+      let variant : CST.variant = {constr;arg;attributes} in
       ok @@ wrap variant
     in
     let%bind sum = bind_map_list aux sum in

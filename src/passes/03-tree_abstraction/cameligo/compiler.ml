@@ -40,7 +40,7 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
         let variant_attr = List.map (fun x -> x.Region.value) v.attributes in
         ok @@ (v.constr.value, type_expr, variant_attr) in
       let%bind sum = bind_map_list aux lst
-      in return @@ t_sum_ez ~loc ~attr:[] sum
+      in return @@ t_sum_ez_attr ~loc ~attr:[] sum
   | TRecord record ->
       let injection, loc = r_split record in
       let attributes =

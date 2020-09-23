@@ -187,7 +187,6 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
       let%bind sub = decompile v tv in
       return (E_constructor {constructor=Label name;element=sub})
   | T_record {layout ; content } ->
-      (* GA TODO*)
       let lst = List.map (fun (k,{associated_type;_}) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_record_or_tuple ~layout content in
       let%bind lst =
         trace_strong (corner_case ~loc:__LOC__ "record extract") @@
