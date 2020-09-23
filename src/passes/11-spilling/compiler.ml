@@ -3,7 +3,6 @@
 For more info, see back-end.md: https://gitlab.com/ligolang/ligo/blob/dev/gitlab-pages/docs/contributors/big-picture/back-end.md *)
 
 open Trace
-open Helpers
 module Errors = Errors
 open Errors
 
@@ -179,35 +178,21 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
       fail @@ corner_case ~loc:"spilling" "These types should have been resolved before spilling"
   | T_constant _ ->
       fail @@ corner_case ~loc:"spilling" "Type constant with invalid arguments (wrong number or wrong kinds)"
-  | T_sum m when Ast_typed.Helpers.is_michelson_or m.content ->
-      (*GA TODO*)
-      let node = Append_tree.of_list @@ kv_list_of_lmap m.content in
-      let aux a b : (type_expression annotated , spilling_error) result =
-        let%bind a = a in
-        let%bind b = b in
-        let%bind t = return @@ T_or (a,b) in
-        ok (None, t)
+  | T_sum { content = m ; layout } -> (
+    let open Ast_typed.Helpers in
+    match is_michelson_or m with
+    | Some (a , b) -> (
+      let aux (x : AST.row_element) =
+        let%bind t = compile_type x.associated_type in
+        let annot = remove_empty_annotation x.michelson_annotation in
+        ok (annot , t)
       in
-      let%bind m' = Append_tree.fold_ne
-                      (fun (_, ({associated_type ; michelson_annotation}: AST.row_element)) ->
-                        let%bind a = compile_type associated_type in
-                        ok (Ast_typed.Helpers.remove_empty_annotation michelson_annotation, a) )
-                      aux node in
-      ok @@ snd m'
-  | T_sum m ->
-      let node = Append_tree.of_list @@ kv_list_of_lmap m.content in
-      let aux a b : (type_expression annotated , spilling_error) result =
-        let%bind a = a in
-        let%bind b = b in
-        let%bind t = return @@ T_or (a,b) in
-        ok (None, t)
-      in
-      let%bind m' = Append_tree.fold_ne
-                      (fun (Label ann, ({associated_type ; _}: AST.row_element)) ->
-                        let%bind a = compile_type associated_type in
-                        ok (Some (String.uncapitalize_ascii ann), a))
-                      aux node in
-      ok @@ snd m'
+      let%bind a' = aux a in
+      let%bind b' = aux b in
+      return @@ T_or (a' , b')
+    )
+    | None -> Layout.t_sum ~layout return compile_type m
+  )
   | T_record { content = m ; layout } -> (
       let open Ast_typed.Helpers in
       match is_michelson_pair m with
@@ -245,13 +230,6 @@ let rec compile_literal : AST.literal -> value = fun l -> match l with
   | Literal_operation op -> D_operation op
   | Literal_unit -> D_unit
 
-and tree_of_sum : AST.type_expression -> ((AST.label * AST.type_expression) Append_tree.t, spilling_error) result = fun t ->
-  let%bind map_tv =
-    trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
-    get_t_sum t in
-  let kt_list = List.map (fun (k,({associated_type;_}:AST.row_element)) -> (k,associated_type)) (kv_list_of_lmap map_tv.content) in
-  ok @@ Append_tree.of_list kt_list
-
 and compile_expression (ae:AST.expression) : (expression , spilling_error) result =
   let%bind tv = compile_type ae.type_expression in
   let return ?(tv = tv) expr = ok @@ Combinators.Expression.make_tpl ~loc:ae.location (expr, tv) in
@@ -272,36 +250,22 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
   | E_constructor {constructor=Label name;element} when (String.equal name "true"|| String.equal name "false") && element.expression_content = AST.e_unit () ->
     return @@ E_literal (D_bool (bool_of_string name))
   | E_constructor {constructor;element} -> (
-      let%bind param' = compile_expression element in
-      let (param'_expr , param'_tv) = Combinators.Expression.(get_content param' , get_type param') in
-      let%bind node_tv =
-        trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@
-        tree_of_sum ae.type_expression in
-      let leaf (k, tv) : (expression_content option * type_expression , spilling_error) result =
-        if k = constructor then (
-          let%bind _ =
-            trace_option (corner_case ~loc:__LOC__ "wrong type for constructor parameter")
-            @@ AST.assert_type_expression_eq (tv, element.type_expression) in
-          ok (Some (param'_expr), param'_tv)
-        ) else (
-          let%bind tv = compile_type tv in
-          ok (None, tv)
-        ) in
-      let node a b : (expression_content option * type_expression , spilling_error) result =
-        let%bind a = a in
-        let%bind b = b in
-        match (a, b) with
-        | (None, a), (None, b) -> ok (None, Expression.make_t @@ T_or ((None, a), (None, b)))
-        | (Some _, _), (Some _, _) -> fail @@ corner_case ~loc:__LOC__ "multiple identical constructors in the same variant"
-        | (Some v, a), (None, b) -> ok (Some (E_constant {cons_name=C_LEFT ;arguments= [Combinators.Expression.make_tpl (v, a)]}), Expression.make_t @@ T_or ((None, a), (None, b)))
-        | (None, a), (Some v, b) -> ok (Some (E_constant {cons_name=C_RIGHT;arguments= [Combinators.Expression.make_tpl (v, b)]}), Expression.make_t @@ T_or ((None, a), (None, b)))
+    let%bind ty' = compile_type ae.type_expression in
+    let%bind ty_variant =
+      trace_option (corner_case ~loc:__LOC__ "not a record") @@
+      get_t_sum (get_type_expression ae) in
+    let%bind path = Layout.constructor_to_lr ty' ty_variant.content constructor in
+    let aux = fun pred (ty, lr) ->
+      let c = match lr with
+        | `Left  -> C_LEFT
+        | `Right -> C_RIGHT
       in
-      let%bind (ae_opt, tv) = Append_tree.fold_ne leaf node node_tv in
-      let%bind ae =
-        trace_option (corner_case ~loc:__LOC__ "inexistant constructor")
-          ae_opt in
-      return ~tv ae
-    )
+      return ~tv:ty @@ E_constant {cons_name=c;arguments=[pred]}
+    in
+    let%bind record' = compile_expression element in
+    let%bind expr = bind_fold_list aux record' path in
+    ok expr
+  )
   | E_record m -> (
       let%bind record_t = trace_option (corner_case ~loc:__LOC__ "TODO") (AST.get_t_record ae.type_expression) in
       Layout.record_to_pairs compile_expression return record_t m
@@ -434,9 +398,9 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
             let%bind (t , f) = bind_map_pair (compile_expression) (match_true, match_false) in
             return @@ E_if_bool (expr', t, f)
           | _ ->
-          let%bind tree =
-            trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@
-            tree_of_sum tv in
+            let%bind rows = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
+              get_t_sum tv in
+            let tree = Layout.tree_of_sum rows in
           let%bind tree' = match tree with
             | Empty -> fail (corner_case ~loc:__LOC__ "match empty variant")
             | Full x -> ok x in
@@ -570,9 +534,9 @@ and compile_recursive {fun_name; fun_type; lambda} =
           let%bind (t , f) = bind_map_pair (replace_callback fun_name loop_type shadowed) (match_true, match_false) in
           return @@ E_if_bool (expr, t, f)
       | Match_variant {cases;tv} -> (
-          let%bind tree =
-            trace_strong (corner_case ~loc:__LOC__ "getting lr tree") @@
-            tree_of_sum tv in
+          let%bind rows = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
+            get_t_sum tv in
+          let tree = Layout.tree_of_sum rows in
           let%bind tree' = match tree with
             | Empty -> fail (corner_case ~loc:__LOC__ "match empty variant")
             | Full x -> ok x in
