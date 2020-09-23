@@ -45,7 +45,7 @@ let rec compile_type_expression : CST.type_expr ->_ result =
         let field_attr = List.map (fun x -> x.Region.value) f.attributes
         in return @@ (f.field_name.value, type_expr, field_attr) in
       let%bind fields = bind_map_list aux lst in
-      return @@ t_record_ez ~loc ~attr:attributes fields
+      return @@ t_record_ez_attr ~loc ~attr:attributes fields
   | TProd prod ->
     let (nsepseq, loc) = r_split prod in
     let lst = npseq_to_list nsepseq in
@@ -723,30 +723,30 @@ and compile_instruction : ?next: AST.expression -> CST.instruction -> _ result  
 
 and compile_data_declaration : next:AST.expression -> CST.data_decl -> _ =
   fun ~next data_decl ->
+  let return loc name type_ attr init =
+    let attr = compile_attributes attr in
+    let%bind type_ = bind_map_option (compile_type_expression <@ snd) type_
+    in ok @@ e_let_in ~loc (name, type_) attr init next in
   match data_decl with
     LocalConst const_decl ->
       let (cd, loc) = r_split const_decl in
       let (name, ploc) = r_split cd.name in
-      let%bind type_ =
-        bind_map_option (compile_type_expression <@ snd)
-                        cd.const_type in
       let%bind init = compile_expression cd.init in
-      let p = Location.wrap ?loc:(Some ploc) @@ Var.of_name name in
-      let attr = compile_attributes const_decl.value.attributes in
-      ok @@ e_let_in ~loc (p,type_) attr init
+      let p = Location.wrap ?loc:(Some ploc) @@ Var.of_name name
+      and attr = const_decl.value.attributes
+      in return loc p cd.const_type attr init
+
   | LocalVar var_decl ->
       let (vd, loc) = r_split var_decl in
       let (name, ploc) = r_split vd.name in
-      let%bind type_ =
-        bind_map_option (compile_type_expression <@ snd)
-                        vd.var_type in
       let%bind init = compile_expression vd.init in
       let p = Location.wrap ?loc:(Some ploc) @@ Var.of_name name
-      in ok @@ e_let_in ~loc (p,type_) [] init
+      in return loc p vd.var_type [] init
+
   | LocalFun fun_decl ->
       let fun_decl, loc = r_split fun_decl in
-      let%bind (fun_name, fun_type, attr, lambda) = compile_fun_decl fun_decl
-      in ok @@ e_let_in ~loc (fun_name, fun_type) attr lambda
+      let%bind (fun_name,fun_type,attr,lambda) = compile_fun_decl fun_decl in
+      return loc fun_name fun_type attr lambda
 
 and compile_statement : ?next:AST.expression -> CST.statement -> _ result =
   fun ?next statement ->
@@ -819,10 +819,10 @@ and compile_fun_decl
   let attr = compile_attributes attributes
   in return (fun_binder, fun_type, attr, func)
 
-let compile_declaration : _ -> CST.declaration -> _ =
-  fun lst decl ->
-  let return ?attr reg decl =
-    ok @@ (attr, (Location.wrap ~loc:(Location.lift reg) decl)::lst) in
+let compile_declaration : CST.declaration -> _ =
+  fun decl ->
+  let return reg decl =
+    ok @@ Location.wrap ~loc:(Location.lift reg) decl in
   match decl with
     TypeDecl {value={name; type_expr; _}; region} ->
       let name, _ = r_split name in
@@ -843,14 +843,3 @@ let compile_declaration : _ -> CST.declaration -> _ =
       @@ AST.Declaration_constant (fun_name, fun_type, attr, lambda)
 let compile_program : CST.ast -> _ result =
   fun t -> bind_map_list compile_declaration @@ nseq_to_list t.decl
-
-(*
-let compile_program : CST.ast -> _ result =
-  fun t ->
-  let return = ok in
-  let rev_decl = List.rev @@ nseq_to_list t.decl in
-  let attr = (None, []) in
-  let%bind (_, declarations) =
-    bind_fold_list compile_declaration attr rev_decl
-  in return declarations
- *)
