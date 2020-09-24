@@ -1,5 +1,3 @@
-open Helpers
-
 module AST = Ast_typed
 module Append_tree = Tree.Append
 module Errors = Errors
@@ -175,22 +173,14 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
     | _ -> 
       fail @@ corner_case ~loc:"unspiller" "Wrong number of args or wrong kinds for the type constant"
   )
-  | T_sum m ->
-      let lst = List.map (fun (k,{associated_type;_}) -> (k,associated_type)) @@ kv_list_of_lmap m.content in
-      let%bind node = match Append_tree.of_list lst with
-        | Empty -> fail @@ corner_case ~loc:__LOC__ "empty sum type"
-        | Full t -> ok t
-      in
-      let%bind (name, v, tv) =
-        trace_strong (corner_case ~loc:__LOC__ "sum extract constructor") @@
-        extract_constructor v node in
+  | T_sum {layout ; content} ->
+      let lst = List.map (fun (k,{associated_type;_}) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_sum ~layout content in
+      let%bind (constructor, v, tv) = Layout.extract_constructor ~layout v lst in
       let%bind sub = decompile v tv in
-      return (E_constructor {constructor=Label name;element=sub})
+      return (E_constructor {constructor;element=sub})
   | T_record {layout ; content } ->
       let lst = List.map (fun (k,{associated_type;_}) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_record_or_tuple ~layout content in
-      let%bind lst =
-        trace_strong (corner_case ~loc:__LOC__ "record extract") @@
-        Layout.extract_record ~layout v lst in
+      let%bind lst = Layout.extract_record ~layout v lst in
       let%bind lst = bind_list
         @@ List.map (fun (x, (y, z)) -> let%bind yz = decompile y z in ok (x, yz)) lst in
       let m' = AST.LMap.of_list lst in

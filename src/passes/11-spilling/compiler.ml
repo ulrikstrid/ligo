@@ -254,7 +254,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
     let%bind ty_variant =
       trace_option (corner_case ~loc:__LOC__ "not a record") @@
       get_t_sum (get_type_expression ae) in
-    let%bind path = Layout.constructor_to_lr ty' ty_variant.content constructor in
+    let%bind path = Layout.constructor_to_lr ~layout:ty_variant.layout ty' ty_variant.content constructor in
     let aux = fun pred (ty, lr) ->
       let c = match lr with
         | `Left  -> C_LEFT
@@ -262,12 +262,12 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       in
       return ~tv:ty @@ E_constant {cons_name=c;arguments=[pred]}
     in
-    let%bind record' = compile_expression element in
-    let%bind expr = bind_fold_list aux record' path in
+    let%bind element' = compile_expression element in
+    let%bind expr = bind_fold_list aux element' path in
     ok expr
   )
   | E_record m -> (
-      let%bind record_t = trace_option (corner_case ~loc:__LOC__ "TODO") (AST.get_t_record ae.type_expression) in
+      let%bind record_t = trace_option (corner_case ~loc:__LOC__ "record expected") (AST.get_t_record ae.type_expression) in
       Layout.record_to_pairs compile_expression return record_t m
     )
   | E_record_accessor {record; path} ->

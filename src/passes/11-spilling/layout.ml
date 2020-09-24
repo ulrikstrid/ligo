@@ -186,7 +186,7 @@ let record_to_pairs compile_expression (return:?tv:_ -> _) record_t record : Min
       aux lst
     )
 
-let constructor_to_lr ?(layout = L_tree) ty m_ty index =
+let constructor_to_lr ~(layout) ty m_ty index =
   let open AST.Helpers in
   let lst = kv_list_of_t_sum ~layout m_ty in
   match layout with
@@ -213,31 +213,25 @@ let constructor_to_lr ?(layout = L_tree) ty m_ty index =
       ok @@ List.rev lst
     )
   | L_comb -> (
-      let rec aux n ty last =
-        match n , last with
-        | 0 , true -> ok []
-        | 0 , false -> (
-            let%bind (a , _) =
-              trace_option (corner_case ~loc:__LOC__ "constructor leaf") @@
-              Mini_c.get_t_or ty
-            in
-            ok [(a , `Left)]
-          )
-        | n , last -> (
-            let%bind (_ , b) =
-              trace_option (corner_case ~loc:__LOC__ "constructor union") @@
-              Mini_c.get_t_or ty
-            in
-            let%bind prec = aux (n - 1) b last in
-            ok (prec @ [(b , `Right)])
-          )
-      in
-      let%bind index =
-        Trace.generic_try (corner_case ~loc:__LOC__ "constructor access") @@
-        fun () -> List.find_index (fun (label , _) -> label = index) lst
-      in
-      let last = (index + 1 = List.length lst) in
-      aux index ty last
+    let%bind index =
+      Trace.generic_try (corner_case ~loc:__LOC__ "constructor access") @@
+      fun () -> List.find_index (fun (label , _) -> label = index) lst
+    in
+    let last = (index + 1 = List.length lst) in
+    let rec aux n ty =
+      match n , last with
+      | 0 , true -> ok []
+      | 0 , false -> ok [(ty , `Left)]
+      | n , _ -> (
+          let%bind (_ , b) =
+            trace_option (corner_case ~loc:__LOC__ "constructor union") @@
+            Mini_c.get_t_or ty
+          in
+          let%bind prec = aux (n - 1) b in
+          ok (prec @ [(ty , `Right)])
+        )
+    in
+    aux index ty
     )
 
 type variant_tree = [
@@ -293,7 +287,7 @@ let match_variant_to_tree ~layout ~compile_type content : variant_pair spilling_
             let left = `Leaf khd , thd' in
             ok (`Node (left , (tl' , ttl)) , tv')
           ) in
-      let lst = List.map (fun (k,({associated_type;_}:AST.row_element)) -> (k,associated_type)) (LMap.to_kv_list content) in
+      let lst = List.map (fun (k,{associated_type;_}) -> (k,associated_type)) @@ Ast_typed.Helpers.kv_list_of_t_sum ~layout content in
       let%bind vp = aux lst in
       ok vp
     )
@@ -331,4 +325,33 @@ let extract_record ~(layout:layout) (v : value) (lst : (AST.label * AST.type_exp
       | _ -> fail @@ corner_case ~loc:__LOC__ "bad record path"
     in
     aux lst v
+  )
+
+let extract_constructor ~(layout:layout) (v : value) (lst : (AST.label * AST.type_expression) list) : (label * value * AST.type_expression) spilling_result =
+  match layout with
+  | L_tree ->
+    let open Append_tree in
+    let%bind tree = match Append_tree.of_list lst with
+      | Empty -> fail @@ corner_case ~loc:__LOC__ "empty variant"
+      | Full t -> ok t in
+    let rec aux tv : (label * value * AST.type_expression) spilling_result=
+      match tv with
+      | Leaf (k, t), v -> ok (k, v, t)
+      | Node {a}, D_left v -> aux (a, v)
+      | Node {b}, D_right v -> aux (b, v)
+      | _ -> fail @@ corner_case ~loc:__LOC__ "bad constructor path"
+    in
+    let%bind (s, v, t) = aux (tree, v) in
+    ok (s, v, t)
+  | L_comb -> (
+    let rec aux tv : (label * value * AST.type_expression) spilling_result =
+      match tv with
+      | [], _ -> failwith "lal"
+      | ((l,t)::tl), v-> ( match v with
+        | D_left v -> ok (l,v,t)
+        | D_right v -> aux (tl,v)
+        | v -> ok (l,v,t)
+      )
+    in
+    aux (lst,v)
   )
