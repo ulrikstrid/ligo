@@ -22,5 +22,5 @@ let compare ?(compare=compare) a b = match a,b with
   | (Verbatim a, Verbatim b) -> compare a b
 
 let extract = function
-    Standard s -> s
+    Standard s -> Scanf.unescaped s
   | Verbatim v -> v
