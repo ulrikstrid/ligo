@@ -53,6 +53,7 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
         let%bind n =
           trace_option (wrong_mini_c_value t v) @@
           get_string v in
+        let n = String.escaped n in
         let n = Ligo_string.Standard n in
         return (E_literal (Literal_string n))
       )

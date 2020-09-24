@@ -2404,13 +2404,13 @@ let loop_bugs_ligo () : (unit, _) result =
 let string_escaping_mligo () : (unit, _) result =
   let%bind program = mtype_file "./contracts/string_escaping.mligo" in
   let%bind () =
-    let expected = e_list [e_string "\n" (* TODO "\\n" *)] in
+    let expected = e_list [e_string "\\n"] in
     expect_fail program "ss1" expected in
   let%bind () =
     let expected = e_list [e_string "S"] in
     expect_fail program "ss2" expected in
   let%bind () =
-    let expected = e_list [e_string "\\" (* TODO "\\\\" *) ; e_string "n"] in
+    let expected = e_list [e_string "\\\\"; e_string "n"] in
     expect_fail program "ss3" expected in
   ok ()
 
