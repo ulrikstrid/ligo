@@ -166,16 +166,16 @@ let literal = function
   | Literal_operation l -> `List [`String "Literal_unit"; bytes_to_yojson l ]
 
 let option f o =
-    match o with
-    | None   -> `List [ `String "None" ; `Null ]
-    | Some v -> `List [ `String "Some" ; f v ]
+  match o with
+  | None   -> `List [ `String "None" ; `Null ]
+  | Some v -> `List [ `String "Some" ; f v ]
 
 let list f lst = `List (List.map f lst)
 let label_map f lmap =
   let lst = List.sort (fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
   let lst' = List.fold_left
-    (fun acc (Label k, v) -> (k , f v)::acc)
-    [] lst
+      (fun acc (Label k, v) -> (k , f v)::acc)
+      [] lst
   in
   `Assoc lst'
 
@@ -244,6 +244,8 @@ and expression_content = function
   | E_record_accessor e -> `List [ `String "E_record_accessor"; record_accessor e ]
   | E_record_update   e -> `List [ `String "E_record_update"; record_update e ]
   | E_ascription      e -> `List [ `String "E_ascription"; ascription e ]
+  (* Modules *)
+  | E_import      e -> `List [ `String "E_import"; import e ]
 
 and constant {cons_name;arguments} =
   `Assoc [
@@ -317,17 +319,20 @@ and ascription {anno_expr; type_annotation} =
     ("type_annotation", type_expression type_annotation);
   ]
 
+and import {path = (hd, tl)} =
+  `List(`String hd :: (List.map (fun x -> `String x) tl))
+
 and matching_expr = function
   | Match_list    {match_nil;match_cons} -> `List [ `String "Match_list";    
-    `Assoc [
-      ("match_nil", expression match_nil);
-      ("match_cons", matching_cons match_cons);
-    ]]
+                                                    `Assoc [
+                                                      ("match_nil", expression match_nil);
+                                                      ("match_cons", matching_cons match_cons);
+                                                    ]]
   | Match_option  {match_none;match_some} -> `List [ `String "Match_option";
-    `Assoc [
-      ("match_none", expression match_none);
-      ("match_some", matching_some match_some);
-    ]]
+                                                     `Assoc [
+                                                       ("match_none", expression match_none);
+                                                       ("match_some", matching_some match_some);
+                                                     ]]
   | Match_variant m -> `List [ `String "Match_variant"; list matching_content_case m ]
 
 and matching_cons {hd; tl; body} =

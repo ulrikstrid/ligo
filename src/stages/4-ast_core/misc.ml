@@ -65,15 +65,15 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
       else None
     )
   | E_record_update ura, E_record_update urb -> (
-    match assert_value_eq (ura.record, urb.record) with
-    | None -> None
-    | Some () ->
-      let aux (Label a,Label b) =
-        assert (String.equal a b)
-      in
-      let () = aux (ura.path, urb.path) in
-      assert_value_eq (ura.update,urb.update)
-  )
+      match assert_value_eq (ura.record, urb.record) with
+      | None -> None
+      | Some () ->
+        let aux (Label a,Label b) =
+          assert (String.equal a b)
+        in
+        let () = aux (ura.path, urb.path) in
+        assert_value_eq (ura.update,urb.update)
+    )
   | E_record_update _, _ -> None
   | (E_ascription a ,  _b') -> assert_value_eq (a.anno_expr , b)
   | (_a' , E_ascription b) -> assert_value_eq (a , b.anno_expr)
@@ -83,15 +83,16 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
   | (E_raw_code _, _)
   | (E_recursive _,_) | (E_record_accessor _, _)
   | (E_matching _, _)
-   -> None
+    -> None
 
   | E_literal _ , _
   | E_constant _ , E_constant _
   | E_constant _ , _
   | E_constructor _, E_constructor _
   | E_record _, _
-  | E_constructor _, _ ->
-      None
+  | E_constructor _, _
+  | E_import _, _ ->
+    None
 
 let is_value_eq (a , b) =
   match assert_value_eq (a , b) with

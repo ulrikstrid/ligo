@@ -18,18 +18,18 @@ and program = program_loc list
 and binder = { 
   var : expression_variable ;
   ty : type_expression ;
-  }
+}
 
 and declaration_type = {
-    type_binder : type_variable ;
-    type_expr : type_expression ;
-  }
+  type_binder : type_variable ;
+  type_expr : type_expression ;
+}
 
 and declaration_constant = {
-    binder : binder;
-    attr : attribute ;
-    expr : expression ;
-  }
+  binder : binder;
+  attr : attribute ;
+  expr : expression ;
+}
 and declaration =
   | Declaration_type of declaration_type
   (* A Declaration_constant is described by
@@ -45,9 +45,9 @@ and field_label_map = row_element label_map
 and type_expression_list = type_expression list
 
 and content_type_constant = {
-    type_constant : type_constant ;
-    arguments : type_expression_list ;
-  }
+  type_constant : type_constant ;
+  arguments : type_expression_list ;
+}
 and type_content =
   | T_sum of field_label_map
   | T_record of field_label_map
@@ -58,26 +58,26 @@ and type_content =
   | T_constant of content_type_constant
 
 and arrow = {
-    type1: type_expression ;
-    type2: type_expression ;
-  }
+  type1: type_expression ;
+  type2: type_expression ;
+}
 and row_element = {
-    associated_type : type_expression ;
-    michelson_annotation : string_option ;
-    decl_pos : int ;
-  }
+  associated_type : type_expression ;
+  michelson_annotation : string_option ;
+  decl_pos : int ;
+}
 
 and type_expression = {
   type_content  : type_content ;
   sugar    : sugar_type_expression_option ;
   location : location ;
-  }
+}
 
 and expression = {
   content  : expression_content ;
   sugar    : sugar_expression_option ;
   location : location ;
-  }
+}
 
 and expression_label_map = expression label_map
 and expression_content =
@@ -95,79 +95,80 @@ and expression_content =
   | E_record_accessor of record_accessor
   | E_record_update   of record_update
   | E_ascription of ascription
+  | E_import of import
 
 and expression_list = expression list
 
 and constant = {
-    cons_name: constant' ;
-    arguments: expression_list ;
-  }
+  cons_name: constant' ;
+  arguments: expression_list ;
+}
 
 and application = {
-    lamb: expression ;
-    args: expression ;
-  }
+  lamb: expression ;
+  args: expression ;
+}
 
 
 and lambda = {
-    binder: binder ;
-    result: expression ;
-  }
+  binder: binder ;
+  result: expression ;
+}
 
 and recursive = {
-    fun_name : expression_variable ;
-    fun_type : type_expression ;
-    lambda : lambda ;
-  }
- 
+  fun_name : expression_variable ;
+  fun_type : type_expression ;
+  lambda : lambda ;
+}
+
 and let_in = {
-    let_binder: binder ;
-    rhs: expression ;
-    let_result: expression ;
-    inline: bool ;
-  }
+  let_binder: binder ;
+  rhs: expression ;
+  let_result: expression ;
+  inline: bool ;
+}
 
 and raw_code = { 
   language : string ;
   code : expression ;
-  }
+}
 
 and constructor = {
-    constructor: label ;
-    element: expression ;
-  }
+  constructor: label ;
+  element: expression ;
+}
 
 and record_accessor = {
-    record: expression ;
-    path: label ;
-  }
+  record: expression ;
+  path: label ;
+}
 and record_update = {
-    record: expression ;
-    path: label ;
-    update: expression ;
-  }
+  record: expression ;
+  path: label ;
+  update: expression ;
+}
 and match_cons = {
-    hd : expression_variable ;
-    tl : expression_variable ;
-    body : expression ;
-  }
+  hd : expression_variable ;
+  tl : expression_variable ;
+  body : expression ;
+}
 and match_list = {
-    match_nil  : expression ;
-    match_cons : match_cons ;
-  }
+  match_nil  : expression ;
+  match_cons : match_cons ;
+}
 and match_some = {
-    opt : expression_variable ;
-    body : expression ;
-  }
+  opt : expression_variable ;
+  body : expression ;
+}
 and match_option = {
-    match_none : expression ;
-    match_some : match_some ;
-  }
+  match_none : expression ;
+  match_some : match_some ;
+}
 and match_variant = {
-    constructor : label ;
-    proj : expression_variable ;
-    body : expression ;
-  }
+  constructor : label ;
+  proj : expression_variable ;
+  body : expression ;
+}
 
 and match_variant_list = match_variant list
 and matching_expr =
@@ -176,11 +177,15 @@ and matching_expr =
   | Match_variant of match_variant_list
 
 and matching = {
-    matchee: expression ;
-    cases: matching_expr ;
-  }
+  matchee: expression ;
+  cases: matching_expr ;
+}
 
 and ascription = {
-    anno_expr: expression ;
-    type_annotation: type_expression ;
-  }
+  anno_expr: expression ;
+  type_annotation: type_expression ;
+}
+
+and import = {
+  path: string * string list ;
+}

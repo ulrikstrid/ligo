@@ -252,13 +252,6 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
        let%bind field_path = bind list_to_nsepseq @@ bind_map_list decompile_to_selection path in
        let%bind struct_name = map (decompile_variable) @@ get_e_variable record in
        let proj : CST.projection = {struct_name;selector=rg;field_path} in
-       let%bind e = decompile_expression e in
-       let arg = e,[CST.EProj (wrap proj)] in
-       return_expr @@ CST.ECall( wrap (CST.EVar (wrap "Map.find_opt"), arg))
-     | _ ->
-       let%bind field_path = bind list_to_nsepseq @@ bind_map_list decompile_to_selection path in
-       let%bind struct_name = map (decompile_variable) @@ get_e_variable record in
-       let proj : CST.projection = {struct_name;selector=rg;field_path} in
        return_expr @@ CST.EProj (wrap proj)
     )
   (* Update on multiple field of the same record. may be removed by adding sugar *)

@@ -108,6 +108,8 @@ val e_typed_map : ?loc:Location.t -> ( expression * expression ) list  -> type_e
 val e_typed_big_map : ?loc:Location.t -> ( expression * expression ) list  -> type_expression -> type_expression -> expression
 val e_typed_set : ?loc:Location.t -> expression list -> type_expression -> expression
 
+val e_import : ?loc:Location.t -> import -> expression
+
 
 val assert_e_accessor : expression_content -> unit option
 

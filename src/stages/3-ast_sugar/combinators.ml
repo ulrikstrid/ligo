@@ -5,7 +5,7 @@ module SMap = Map.String
 
 let make_t ?(loc = Location.generated) type_content = {type_content; location=loc}
 
-  
+
 let tuple_to_record lst =
   let aux (i,acc) el = (i+1,(string_of_int i, el)::acc) in
   let (_, lst ) = List.fold_left aux (0,[]) lst in
@@ -39,8 +39,8 @@ let t_record ?loc m  : type_expression =
   t_record_ez ?loc lst
 
 let t_pair ?loc (a , b) : type_expression = t_record_ez ?loc [
-  ("0",{associated_type=a ; michelson_annotation=None ; decl_pos=0}) ;
-  ("1",{associated_type=b ; michelson_annotation=None ; decl_pos=0})]
+    ("0",{associated_type=a ; michelson_annotation=None ; decl_pos=0}) ;
+    ("1",{associated_type=b ; michelson_annotation=None ; decl_pos=0})]
 let t_tuple ?loc lst    : type_expression = t_record_ez ?loc (tuple_to_record lst)
 
 let ez_t_sum ?loc (lst:((string * row_element) list)) : type_expression =
@@ -136,6 +136,7 @@ let e_typed_big_map ?loc lst k v = e_annotation ?loc (e_big_map lst) (t_big_map 
 
 let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 
+let e_import ?loc import = make_e ?loc @@ E_import import
 
 
 let get_e_accessor = fun t ->

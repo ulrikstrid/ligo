@@ -167,16 +167,16 @@ let literal = function
 
 let label = label_to_yojson
 let option f o =
-    match o with
-    | None   -> `List [ `String "None" ; `Null ]
-    | Some v -> `List [ `String "Some" ; f v ]
+  match o with
+  | None   -> `List [ `String "None" ; `Null ]
+  | Some v -> `List [ `String "Some" ; f v ]
 
 let list f lst = `List (List.map f lst)
 let label_map f lmap =
   let lst = List.sort (fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
   let lst' = List.fold_left
-    (fun acc (Label k, v) -> (k , f v)::acc)
-    [] lst
+      (fun acc (Label k, v) -> (k , f v)::acc)
+      [] lst
   in
   `Assoc lst'
 
@@ -262,6 +262,8 @@ and expression_content = function
   | E_for         e -> `List [ `String "E_for"; for_ e ]
   | E_for_each    e -> `List [ `String "E_for_each"; for_each e ]
   | E_while       e -> `List [ `String "E_while"; while_loop e ]
+  (* Modules *)
+  | E_import      e -> `List [ `String "E_import"; import e ]
 
 
 and constant {cons_name;arguments} =
@@ -385,31 +387,36 @@ and while_loop {condition;body} =
     ("condition", expression condition);
     ("body", expression body);
   ]
+
+and import {path = (hd, tl)} =
+  `List(`String hd :: (List.map (fun x -> `String x) tl))
+
 and matching_expr = function
-  | Match_list    {match_nil;match_cons} -> `List [ `String "Match_list";    
-    `Assoc [
-      ("match_nil", expression match_nil);
-      ("match_cons", matching_content_cons match_cons);
-    ]]
+  | Match_list    {match_nil;match_cons} ->
+    `List [ `String "Match_list";
+            `Assoc [
+              ("match_nil", expression match_nil);
+              ("match_cons", matching_content_cons match_cons);
+            ]]
   | Match_option  {match_none;match_some} -> `List [ `String "Match_option";
-    `Assoc [
-      ("match_none", expression match_none);
-      ("match_some", matching_content_some match_some);
-    ]]
+                                                     `Assoc [
+                                                       ("match_none", expression match_none);
+                                                       ("match_some", matching_content_some match_some);
+                                                     ]]
   | Match_variant m -> `List [ `String "Match_variant"; list matching_content_case m ]
   | Match_tuple   (lst,e) -> `List [ `String "Match_tuple";
-    `List [
-      list (fun (e,t) -> `List [expression_variable_to_yojson e; type_expression t]) lst;
-      expression e;
-    ]]
+                                     `List [
+                                       list (fun (e,t) -> `List [expression_variable_to_yojson e; type_expression t]) lst;
+                                       expression e;
+                                     ]]
   | Match_record (lst, e) -> `List [`String "Match_record";
-    `List [
-      list (fun (l,e,t) -> `List [label l; expression_variable_to_yojson e; type_expression t]) lst;
-      expression e;
-    ]]
+                                    `List [
+                                      list (fun (l,e,t) -> `List [label l; expression_variable_to_yojson e; type_expression t]) lst;
+                                      expression e;
+                                    ]]
   | Match_variable ((ev,t),e) -> `List [`String "Match_varible";
-    `List [expression_variable_to_yojson ev; type_expression t; expression e];
-    ]
+                                        `List [expression_variable_to_yojson ev; type_expression t; expression e];
+                                       ]
 
 and matching_content_cons (hd, tl, body) =
   `Assoc [

@@ -13,35 +13,35 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, des
     Some te -> ok @@ te
   | None ->
     match te.type_content with
-      | O.T_sum sum -> 
-        let%bind sum = 
-          Stage_common.Helpers.bind_map_lmap (fun v ->
+    | O.T_sum sum ->
+      let%bind sum =
+        Stage_common.Helpers.bind_map_lmap (fun v ->
             let {associated_type;michelson_annotation;decl_pos} : O.row_element = v in
             let%bind associated_type = decompile_type_expression associated_type in
             let v' : I.row_element = {associated_type;michelson_annotation;decl_pos} in
             ok @@ v'
           ) sum
-        in
-        return @@ I.T_sum sum
-      | O.T_record record -> 
-        let%bind record = 
-          Stage_common.Helpers.bind_map_lmap (fun v ->
+      in
+      return @@ I.T_sum sum
+    | O.T_record record ->
+      let%bind record =
+        Stage_common.Helpers.bind_map_lmap (fun v ->
             let {associated_type;michelson_annotation;decl_pos} : O.row_element = v in
             let%bind associated_type = decompile_type_expression associated_type in
             let v' : I.row_element = {associated_type ; michelson_annotation=michelson_annotation ; decl_pos} in
             ok @@ v'
           ) record
-        in
-        return @@ I.T_record record
-      | O.T_arrow {type1;type2} ->
-        let%bind type1 = decompile_type_expression type1 in
-        let%bind type2 = decompile_type_expression type2 in
-        return @@ T_arrow {type1;type2}
-      | O.T_variable type_variable -> return @@ T_variable (Var.todo_cast type_variable)
-      | O.T_wildcard -> return @@ T_wildcard
-      | O.T_constant { type_constant ; arguments } ->
-        let%bind lst = bind_map_list decompile_type_expression arguments in
-        return @@ T_constant (type_constant, lst)
+      in
+      return @@ I.T_record record
+    | O.T_arrow {type1;type2} ->
+      let%bind type1 = decompile_type_expression type1 in
+      let%bind type2 = decompile_type_expression type2 in
+      return @@ T_arrow {type1;type2}
+    | O.T_variable type_variable -> return @@ T_variable (Var.todo_cast type_variable)
+    | O.T_wildcard -> return @@ T_wildcard
+    | O.T_constant { type_constant ; arguments } ->
+      let%bind lst = bind_map_list decompile_type_expression arguments in
+      return @@ T_constant (type_constant, lst)
 
 let rec decompile_expression : O.expression -> (I.expression, desugaring_error) result =
   fun e ->
@@ -86,9 +86,9 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
       let record = O.LMap.to_kv_list record in
       let%bind record = 
         bind_map_list (fun (O.Label k,v) ->
-          let%bind v = decompile_expression v in
-          ok @@ (I.Label k,v)
-        ) record
+            let%bind v = decompile_expression v in
+            ok @@ (I.Label k,v)
+          ) record
       in
       return @@ I.E_record (I.LMap.of_list record)
     | O.E_record_accessor {record;path} ->
@@ -104,6 +104,8 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
       let%bind anno_expr = decompile_expression anno_expr in
       let%bind type_annotation = decompile_type_expression type_annotation in
       return @@ I.E_ascription {anno_expr; type_annotation}
+    | O.E_import {path} ->
+      return @@ I.E_import {path}
 
 and decompile_binder : O.binder -> _ result = fun {var; ty} ->
   let var = cast_var var in
@@ -112,31 +114,31 @@ and decompile_binder : O.binder -> _ result = fun {var; ty} ->
 
 and decompile_lambda : O.lambda -> (I.lambda, desugaring_error) result =
   fun {binder;result}->
-    let%bind binder = decompile_binder binder in
-    let%bind result = decompile_expression result in
-    ok @@ I.{binder;result}
+  let%bind binder = decompile_binder binder in
+  let%bind result = decompile_expression result in
+  ok @@ I.{binder;result}
 and decompile_matching : O.matching_expr -> (I.matching_expr, desugaring_error) result =
   fun m -> 
   match m with 
-    | O.Match_list {match_nil;match_cons = { hd ; tl ; body }} ->
-      let hd = cast_var hd in
-      let tl = cast_var tl in
-      let%bind match_nil = decompile_expression match_nil in
-      let%bind expr = decompile_expression body in
-      ok @@ I.Match_list {match_nil; match_cons=(hd,tl,expr)}
-    | O.Match_option {match_none; match_some = { opt ; body }} ->
-      let opt = cast_var opt in
-      let%bind match_none = decompile_expression match_none in
-      let%bind expr = decompile_expression body in
-      ok @@ I.Match_option {match_none; match_some=(opt,expr)}
-    | O.Match_variant lst ->
-      let%bind lst = bind_map_list (
+  | O.Match_list {match_nil;match_cons = { hd ; tl ; body }} ->
+    let hd = cast_var hd in
+    let tl = cast_var tl in
+    let%bind match_nil = decompile_expression match_nil in
+    let%bind expr = decompile_expression body in
+    ok @@ I.Match_list {match_nil; match_cons=(hd,tl,expr)}
+  | O.Match_option {match_none; match_some = { opt ; body }} ->
+    let opt = cast_var opt in
+    let%bind match_none = decompile_expression match_none in
+    let%bind expr = decompile_expression body in
+    ok @@ I.Match_option {match_none; match_some=(opt,expr)}
+  | O.Match_variant lst ->
+    let%bind lst = bind_map_list (
         fun ({ constructor; proj ; body } : O.match_variant) ->
           let%bind expr = decompile_expression body in
           ok @@ ((constructor, cast_var proj),expr)
       ) lst 
-      in
-      ok @@ I.Match_variant lst
+    in
+    ok @@ I.Match_variant lst
 
 let decompile_declaration : O.declaration Location.wrap -> _ result = fun {wrap_content=declaration;location} ->
   let return decl = ok @@ Location.wrap ~loc:location decl in

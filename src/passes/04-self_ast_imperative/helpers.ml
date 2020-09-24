@@ -461,7 +461,7 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> ('a 
       let%bind res,condition = self init' condition in
       let%bind res,body = self res body in
       ok (res, return @@ E_while {condition; body})
-    | E_literal _ | E_variable _ | E_raw_code _ | E_skip as e' -> ok (init', return e')
+    | E_literal _ | E_variable _ | E_raw_code _ | E_skip | E_import _ as e' -> ok (init', return e')
 
 and fold_map_cases : ('a , 'err) fold_mapper -> 'a -> matching_expr -> ('a * matching_expr , 'err) result = fun f init m ->
   match m with

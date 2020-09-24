@@ -26,25 +26,16 @@ let mk_state ~offsets ~mode ~buffer =
     val pad_node    = ""
     method pad_node = pad_node
 
-                      <<<<<<< HEAD
-                      (** The method [pad] updates the current padding, which is
-                          comprised of two components: the padding to reach the new node
-                          (space before reaching a subtree, then a vertical bar for it)
-                          and the padding for the new node itself (Is it the last child
-                          of its parent?).
-                      *)
-                      =======
-                      (* The method [pad] updates the current padding, which is
-                         comprised of two components: the padding to reach the new node
-                         (space before reaching a subtree, then a vertical bar for it)
-                         and the padding for the new node itself (Is it the last child
-                         of its parent?).
+    (* The method [pad] updates the current padding, which is
+       comprised of two components: the padding to reach the new node
+       (space before reaching a subtree, then a vertical bar for it)
+       and the padding for the new node itself (Is it the last child
+       of its parent?).
 
-                         A child node that is not the last satisfies [rank < arity] and
-                         the last child satisfies [rank = arity], where the rank of the
-                         first child is 0. *)
+       A child node that is not the last satisfies [rank < arity] and
+       the last child satisfies [rank = arity], where the rank of the
+       first child is 0. *)
 
-                      >>>>>>> dev
     method pad arity rank =
       {< pad_path =
            pad_node ^ (if rank = arity-1 then "`-- " else "|-- ");
@@ -901,7 +892,7 @@ and pp_expr state = function
     pp_code_inj state value
   | EImport {value; region} ->
     pp_loc_node state "EImport" region;
-    pp_path state value
+    pp_import state value
 
 and pp_fun_expr state node =
   let {binders; lhs_type; body; _} = node in
@@ -1230,3 +1221,9 @@ and pp_variant state {constr; arg} =
   match arg with
     None -> ()
   | Some (_,c) -> pp_type_expr (state#pad 1 0) c
+
+and pp_import state import =
+  let segs = Utils.nsepseq_to_list import in
+  let region = nsepseq_to_region (fun x -> x.region) import in
+  let pathstring = String.concat "." @@ List.map (fun x -> x.value) segs in
+  pp_ident state {value = pathstring; region = region}

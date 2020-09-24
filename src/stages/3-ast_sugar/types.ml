@@ -63,6 +63,8 @@ and expression_content =
   | E_big_map of (expression * expression) list
   | E_list of expression list
   | E_set of expression list
+  (* Modules *)
+  |E_import of import
 
 and constant =
   { cons_name: constant' (* this is at the end because it is huge *)
@@ -71,12 +73,12 @@ and constant =
 and application = {
   lamb: expression ; 
   args: expression ;
-  }
+}
 
 and lambda = {
   binder: (expression_variable, type_expression) binder; 
   result: expression 
-  }
+}
 
 and recursive = {
   fun_name :  expression_variable;
@@ -90,12 +92,12 @@ and let_in = {
   let_result: expression ;
   inline: bool ;
   mut: bool;
-  }
+}
 
 and raw_code = { 
   language : string ;
   code : expression ;
-  }
+}
 
 and constructor = {constructor: label; element: expression}
 and accessor = {record: expression; path: access list}
@@ -136,4 +138,6 @@ and conditional = {
 and sequence = {
   expr1: expression ;
   expr2: expression ;
-  }
+}
+
+and import = { path : string * string list }
