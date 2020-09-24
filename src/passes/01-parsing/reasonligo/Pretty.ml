@@ -396,7 +396,7 @@ and pp_seq {value; _} =
 
 and pp_type_expr = function
   TProd t   -> pp_cartesian t
-| TSum t    -> break 0 ^^ pp_variants t
+| TSum t    -> break 0 ^^ pp_sum_type t
 | TRecord t -> pp_record_type t
 | TApp t    -> pp_type_app t
 | TFun t    -> pp_fun_type t
@@ -415,13 +415,22 @@ and pp_cartesian {value; _} =
   in
   string "(" ^^ nest 1 (pp_type_expr head ^^ (if tail <> [] then string "," else empty) ^^ app (List.map snd tail)) ^^ string ")"
 
-and pp_variants {value; _} =
-  let head, tail = value in
+and pp_sum_type {value; _} =
+  let {variants; attributes; _} = value in
+  let head, tail = variants in
   let head = pp_variant head in
-  let head = if tail = [] then head else ifflat head (blank 2 ^^ head) in
+  let padding_flat =
+    if attributes = [] then empty else string "| " in
+  let padding_non_flat =
+    if attributes = [] then blank 2 else string "| " in
+  let head =
+    if tail = [] then head
+    else ifflat (padding_flat ^^ head) (padding_non_flat ^^ head) in
   let rest = List.map snd tail in
-  let app variant = break 1 ^^ string "| " ^^ pp_variant variant
-  in head ^^ concat_map app rest
+  let app variant = break 1 ^^ string "| " ^^ pp_variant variant in
+  let whole = head ^^ concat_map app rest in
+  if attributes = [] then whole
+  else pp_attributes attributes ^/^ whole
 
 and pp_variant {value; _} =
   let {constr; arg; attributes=attr} = value in

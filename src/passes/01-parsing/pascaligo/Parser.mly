@@ -272,12 +272,15 @@ type_tuple:
 sum_type:
   nsepseq(variant,"|") {
     Scoping.check_variants (Utils.nsepseq_to_list $1);
-    let region = nsepseq_to_region (fun x -> x.region) $1
-    in TSum {region; value=$1} }
-| "|" nsepseq(variant,"|") {
-    Scoping.check_variants (Utils.nsepseq_to_list $2);
-    let region = nsepseq_to_region (fun x -> x.region) $2
-    in TSum {region; value=$2} }
+    let region = nsepseq_to_region (fun x -> x.region) $1 in
+    let value  = {variants=$1; attributes=[]; lead_vbar=None}
+    in TSum {region; value}
+  }
+| seq("[@attr]") "|" nsepseq(variant,"|") {
+    Scoping.check_variants (Utils.nsepseq_to_list $3);
+    let region = nsepseq_to_region (fun x -> x.region) $3 in
+    let value  = {variants=$3; attributes=$1; lead_vbar = Some $2}
+    in TSum {region; value} }
 
 variant:
   nseq("[@attr]") "<constr>" {
@@ -312,8 +315,8 @@ record_type:
       match first_region $1 with
         None -> cover $2 $4
       | Some start -> cover start $4
-    and value  = {kind      = NEInjRecord $2;
-                  enclosing = End $4;
+    and value  = {kind        = NEInjRecord $2;
+                  enclosing   = End $4;
                   ne_elements = fields;
                   terminator;
                  attributes=$1}

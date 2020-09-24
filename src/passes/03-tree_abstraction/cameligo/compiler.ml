@@ -30,8 +30,10 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
   let return te = ok @@ te in
   match te with
     TSum sum ->
-      let nsepseq, loc = r_split sum in
-      let lst = npseq_to_list nsepseq in
+      let sum_type, loc = r_split sum in
+      let {variants; attributes; _} : CST.sum_type = sum_type in
+      let lst = npseq_to_list variants in
+      let attr = compile_attributes attributes in
       let aux (variant : CST.variant CST.reg) =
         let v, _ = r_split variant in
         let%bind type_expr =
@@ -40,11 +42,10 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
         let variant_attr = List.map (fun x -> x.Region.value) v.attributes in
         ok @@ (v.constr.value, type_expr, variant_attr) in
       let%bind sum = bind_map_list aux lst
-      in return @@ t_sum_ez_attr ~loc ~attr:[] sum
+      in return @@ t_sum_ez_attr ~loc ~attr sum
   | TRecord record ->
       let injection, loc = r_split record in
-      let attributes =
-        List.map (fun (el: _ CST.reg) -> el.value) injection.attributes in
+      let attr = compile_attributes injection.attributes in
       let lst = npseq_to_list injection.ne_elements in
       let aux (field : CST.field_decl CST.reg) =
         let f, _ = r_split field in
@@ -52,7 +53,7 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
         let field_attr = List.map (fun x -> x.Region.value) f.attributes
         in return @@ (f.field_name.value, type_expr, field_attr) in
       let%bind fields = bind_map_list aux lst in
-      return @@ t_record_ez_attr ~loc ~attr:attributes fields
+      return @@ t_record_ez_attr ~loc ~attr fields
   | TProd prod ->
     let (nsepseq, loc) = r_split prod in
     let lst = npseq_to_list nsepseq in

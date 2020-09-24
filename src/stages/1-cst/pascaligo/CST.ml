@@ -183,7 +183,7 @@ and type_decl = {
 
 and type_expr =
   TProd   of cartesian
-| TSum    of (variant reg, vbar) nsepseq reg
+| TSum    of sum_type reg
 | TRecord of field_decl reg ne_injection reg
 | TApp    of (type_constr * type_tuple) reg
 | TFun    of (type_expr * arrow * type_expr) reg
@@ -191,6 +191,12 @@ and type_expr =
 | TVar    of variable
 | TWild   of wild
 | TString of lexeme reg
+
+and sum_type = {
+  lead_vbar  : vbar option;
+  variants   : (variant reg, vbar) nsepseq;
+  attributes : attributes
+}
 
 and field_decl = {
   field_name : field_name;

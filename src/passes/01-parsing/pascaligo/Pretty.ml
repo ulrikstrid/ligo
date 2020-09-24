@@ -58,7 +58,7 @@ and pp_type_decl decl =
 
 and pp_type_expr = function
   TProd t   -> pp_cartesian t
-| TSum t    -> pp_variants t
+| TSum t    -> pp_sum_type t
 | TRecord t -> pp_record_type t
 | TApp t    -> pp_type_app t
 | TFun t    -> pp_fun_type t
@@ -66,6 +66,24 @@ and pp_type_expr = function
 | TVar t    -> pp_ident t
 | TWild   _ -> string "_"
 | TString s -> pp_string s
+
+and pp_sum_type {value; _} =
+  let {variants; attributes; _} = value in
+  let head, tail = variants in
+  let head = pp_variant head in
+  let padding_flat =
+    if attributes = [] then empty else string "| " in
+  let padding_non_flat =
+    if attributes = [] then blank 2 else string "| " in
+  let head =
+    if tail = [] then head
+    else ifflat (padding_flat ^^ head) (padding_non_flat ^^ head) in
+  let rest = List.map snd tail in
+  let app variant =
+    group (break 1 ^^ string "| " ^^ pp_variant variant) in
+  let whole = head ^^ concat_map app rest in
+  if attributes = [] then whole
+  else pp_attributes attributes ^/^ whole
 
 and pp_cartesian {value; _} =
   let head, tail = value in

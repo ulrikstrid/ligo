@@ -2080,9 +2080,9 @@ interactive_expr: LPAR Verbatim COLON Constr With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 11, spurious reduction of production variant -> Constr 
-## In state 18, spurious reduction of production nsepseq(variant,VBAR) -> variant 
-## In state 55, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 8, spurious reduction of production variant -> Constr 
+## In state 32, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 57, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
 ## In state 47, spurious reduction of production type_expr -> sum_type 
 ## In state 588, spurious reduction of production annot_expr -> expr COLON type_expr 
 ##
@@ -3007,9 +3007,9 @@ contract: Let Ident WILD COLON WILD With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 31, spurious reduction of production cartesian -> core_type 
-## In state 38, spurious reduction of production fun_type -> cartesian 
-## In state 56, spurious reduction of production type_expr -> fun_type 
+## In state 18, spurious reduction of production cartesian -> core_type 
+## In state 25, spurious reduction of production fun_type -> cartesian 
+## In state 58, spurious reduction of production type_expr -> fun_type 
 ## In state 172, spurious reduction of production type_annotation -> COLON type_expr 
 ## In state 173, spurious reduction of production option(type_annotation) -> type_annotation 
 ##
@@ -3065,9 +3065,9 @@ contract: Let WILD COLON Constr With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 11, spurious reduction of production variant -> Constr 
-## In state 18, spurious reduction of production nsepseq(variant,VBAR) -> variant 
-## In state 55, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 8, spurious reduction of production variant -> Constr 
+## In state 32, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 57, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
 ## In state 47, spurious reduction of production type_expr -> sum_type 
 ## In state 172, spurious reduction of production type_annotation -> COLON type_expr 
 ## In state 173, spurious reduction of production option(type_annotation) -> type_annotation 
@@ -3108,7 +3108,7 @@ contract: Let With
 
 contract: Type Ident EQ Attr Constr Of With
 ##
-## Ends in an error in state: 24.
+## Ends in an error in state: 39.
 ##
 ## variant -> nseq(Attr) Constr Of . fun_type [ VBAR Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
 ##
@@ -3120,7 +3120,7 @@ contract: Type Ident EQ Attr Constr Of With
 
 contract: Type Ident EQ Constr DOT With
 ##
-## Ends in an error in state: 12.
+## Ends in an error in state: 11.
 ##
 ## core_type -> Constr DOT . Ident [ VBAR Type TIMES SEMI RPAR RBRACE Let Ident EQ EOF COMMA Attr ARROW ]
 ##
@@ -3132,7 +3132,7 @@ contract: Type Ident EQ Constr DOT With
 
 contract: Type Ident EQ Constr Of With
 ##
-## Ends in an error in state: 7.
+## Ends in an error in state: 9.
 ##
 ## variant -> Constr Of . fun_type [ VBAR Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
 ##
@@ -3144,7 +3144,7 @@ contract: Type Ident EQ Constr Of With
 
 contract: Type Ident EQ Constr VBAR With
 ##
-## Ends in an error in state: 19.
+## Ends in an error in state: 33.
 ##
 ## nsepseq(variant,VBAR) -> variant VBAR . nsepseq(variant,VBAR) [ Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
 ##
@@ -3156,7 +3156,7 @@ contract: Type Ident EQ Constr VBAR With
 
 contract: Type Ident EQ LBRACE Ident COLON Constr SEMI Ident COLON Constr With
 ##
-## Ends in an error in state: 65.
+## Ends in an error in state: 67.
 ##
 ## nsepseq(field_decl,SEMI) -> field_decl . [ RBRACE ]
 ## nsepseq(field_decl,SEMI) -> field_decl . SEMI nsepseq(field_decl,SEMI) [ RBRACE ]
@@ -3169,18 +3169,18 @@ contract: Type Ident EQ LBRACE Ident COLON Constr SEMI Ident COLON Constr With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 11, spurious reduction of production variant -> Constr 
-## In state 18, spurious reduction of production nsepseq(variant,VBAR) -> variant 
-## In state 55, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 8, spurious reduction of production variant -> Constr 
+## In state 32, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 57, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
 ## In state 47, spurious reduction of production type_expr -> sum_type 
-## In state 53, spurious reduction of production field_decl -> seq(Attr) Ident COLON type_expr 
+## In state 55, spurious reduction of production field_decl -> seq(Attr) Ident COLON type_expr 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Type Ident EQ LBRACE Ident COLON Constr With
 ##
-## Ends in an error in state: 61.
+## Ends in an error in state: 63.
 ##
 ## nsepseq(field_decl,SEMI) -> field_decl . [ RBRACE ]
 ## nsepseq(field_decl,SEMI) -> field_decl . SEMI nsepseq(field_decl,SEMI) [ RBRACE ]
@@ -3193,18 +3193,18 @@ contract: Type Ident EQ LBRACE Ident COLON Constr With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 11, spurious reduction of production variant -> Constr 
-## In state 18, spurious reduction of production nsepseq(variant,VBAR) -> variant 
-## In state 55, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 8, spurious reduction of production variant -> Constr 
+## In state 32, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 57, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
 ## In state 47, spurious reduction of production type_expr -> sum_type 
-## In state 53, spurious reduction of production field_decl -> seq(Attr) Ident COLON type_expr 
+## In state 55, spurious reduction of production field_decl -> seq(Attr) Ident COLON type_expr 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Type Ident EQ LBRACE Ident With
 ##
-## Ends in an error in state: 51.
+## Ends in an error in state: 53.
 ##
 ## field_decl -> seq(Attr) Ident . COLON type_expr [ SEMI RBRACE ]
 ##
@@ -3216,7 +3216,7 @@ contract: Type Ident EQ LBRACE Ident With
 
 contract: Type Ident EQ LBRACE With
 ##
-## Ends in an error in state: 50.
+## Ends in an error in state: 52.
 ##
 ## field_decl -> seq(Attr) . Ident COLON type_expr [ SEMI RBRACE ]
 ##
@@ -3227,14 +3227,14 @@ contract: Type Ident EQ LBRACE With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 49, spurious reduction of production seq(Attr) -> 
+## In state 51, spurious reduction of production seq(Attr) -> 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Type Ident EQ LPAR WILD COMMA Constr RPAR With
 ##
-## Ends in an error in state: 26.
+## Ends in an error in state: 13.
 ##
 ## core_type -> type_tuple . Ident [ VBAR Type TIMES SEMI RPAR RBRACE Let Ident EQ EOF COMMA Attr ARROW ]
 ##
@@ -3258,9 +3258,9 @@ contract: Type Ident EQ LPAR WILD COMMA WILD With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 31, spurious reduction of production cartesian -> core_type 
-## In state 38, spurious reduction of production fun_type -> cartesian 
-## In state 56, spurious reduction of production type_expr -> fun_type 
+## In state 18, spurious reduction of production cartesian -> core_type 
+## In state 25, spurious reduction of production fun_type -> cartesian 
+## In state 58, spurious reduction of production type_expr -> fun_type 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3279,16 +3279,16 @@ contract: Type Ident EQ LPAR WILD With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 31, spurious reduction of production cartesian -> core_type 
-## In state 38, spurious reduction of production fun_type -> cartesian 
-## In state 56, spurious reduction of production type_expr -> fun_type 
+## In state 18, spurious reduction of production cartesian -> core_type 
+## In state 25, spurious reduction of production fun_type -> cartesian 
+## In state 58, spurious reduction of production type_expr -> fun_type 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Type Ident EQ VBAR Attr With
 ##
-## Ends in an error in state: 22.
+## Ends in an error in state: 37.
 ##
 ## variant -> nseq(Attr) . Constr [ VBAR Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
 ## variant -> nseq(Attr) . Constr Of fun_type [ VBAR Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
@@ -3300,27 +3300,27 @@ contract: Type Ident EQ VBAR Attr With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 20, spurious reduction of production seq(Attr) -> 
-## In state 21, spurious reduction of production nseq(Attr) -> Attr seq(Attr) 
+## In state 35, spurious reduction of production seq(Attr) -> 
+## In state 36, spurious reduction of production nseq(Attr) -> Attr seq(Attr) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Type Ident EQ VBAR With
 ##
-## Ends in an error in state: 5.
+## Ends in an error in state: 49.
 ##
-## sum_type -> VBAR . nsepseq(variant,VBAR) [ Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
+## sum_type -> seq(Attr) VBAR . nsepseq(variant,VBAR) [ Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## VBAR
+## seq(Attr) VBAR
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Type Ident EQ WILD ARROW With
 ##
-## Ends in an error in state: 39.
+## Ends in an error in state: 26.
 ##
 ## fun_type -> cartesian ARROW . fun_type [ VBAR Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
 ##
@@ -3332,7 +3332,7 @@ contract: Type Ident EQ WILD ARROW With
 
 contract: Type Ident EQ WILD TIMES Constr With
 ##
-## Ends in an error in state: 25.
+## Ends in an error in state: 10.
 ##
 ## core_type -> Constr . DOT Ident [ VBAR Type TIMES SEMI RPAR RBRACE Let Ident EQ EOF COMMA Attr ARROW ]
 ##
@@ -3344,7 +3344,7 @@ contract: Type Ident EQ WILD TIMES Constr With
 
 contract: Type Ident EQ WILD TIMES WILD TIMES With
 ##
-## Ends in an error in state: 35.
+## Ends in an error in state: 22.
 ##
 ## nsepseq(core_type,TIMES) -> core_type TIMES . nsepseq(core_type,TIMES) [ VBAR Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ARROW ]
 ##
@@ -3356,7 +3356,7 @@ contract: Type Ident EQ WILD TIMES WILD TIMES With
 
 contract: Type Ident EQ WILD TIMES With
 ##
-## Ends in an error in state: 32.
+## Ends in an error in state: 19.
 ##
 ## cartesian -> core_type TIMES . nsepseq(core_type,TIMES) [ VBAR Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ARROW ]
 ##
@@ -3371,6 +3371,7 @@ contract: Type Ident EQ With
 ## Ends in an error in state: 48.
 ##
 ## record_type -> seq(Attr) . LBRACE sep_or_term_list(field_decl,SEMI) RBRACE [ Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
+## sum_type -> seq(Attr) . VBAR nsepseq(variant,VBAR) [ Type SEMI RPAR RBRACE Let EQ EOF COMMA Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr)

@@ -217,10 +217,17 @@ type_tuple:
   par(tuple(type_expr)) { $1 }
 
 sum_type:
-  ioption("|") nsepseq(variant,"|") {
-    Scoping.check_variants (Utils.nsepseq_to_list $2);
-    let region = nsepseq_to_region (fun x -> x.region) $2
-    in TSum {region; value=$2} }
+  nsepseq(variant,"|") {
+    Scoping.check_variants (Utils.nsepseq_to_list $1);
+    let region = nsepseq_to_region (fun x -> x.region) $1 in
+    let value  = {variants=$1; attributes=[]; lead_vbar=None}
+    in TSum {region; value}
+  }
+| seq("[@attr]") "|" nsepseq(variant,"|") {
+    Scoping.check_variants (Utils.nsepseq_to_list $3);
+    let region = nsepseq_to_region (fun x -> x.region) $3 in
+    let value  = {variants=$3; attributes=$1; lead_vbar = Some $2}
+    in TSum {region; value} }
 
 variant:
   nseq("[@attr]") "<constr>" {

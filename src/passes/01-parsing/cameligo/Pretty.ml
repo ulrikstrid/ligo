@@ -388,7 +388,7 @@ and pp_seq {value; _} =
 
 and pp_type_expr = function
   TProd t   -> pp_cartesian t
-| TSum t    -> pp_variants t
+| TSum t    -> pp_sum_type t
 | TRecord t -> pp_record_type t
 | TApp t    -> pp_type_app t
 | TFun t    -> pp_fun_type t
@@ -406,13 +406,23 @@ and pp_cartesian {value; _} =
       group (break 1 ^^ pp_type_expr e ^^ string " *") ^^ app items
   in pp_type_expr head ^^ string " *" ^^ app (List.map snd tail)
 
-and pp_variants {value; _} =
-  let head, tail = value in
+and pp_sum_type {value; _} =
+  let {variants; attributes; _} = value in
+  let head, tail = variants in
   let head = pp_variant head in
-  let head = if tail = [] then head else ifflat head (blank 2 ^^ head) in
+  let padding_flat =
+    if attributes = [] then empty else string "| " in
+  let padding_non_flat =
+    if attributes = [] then blank 2 else string "| " in
+  let head =
+    if tail = [] then head
+    else ifflat (padding_flat ^^ head) (padding_non_flat ^^ head) in
   let rest = List.map snd tail in
-  let app variant = group (break 1 ^^ string "| " ^^ pp_variant variant)
-  in head ^^ concat_map app rest
+  let app variant =
+    group (break 1 ^^ string "| " ^^ pp_variant variant) in
+  let whole = head ^^ concat_map app rest in
+  if attributes = [] then whole
+  else pp_attributes attributes ^/^ whole
 
 and pp_variant {value; _} =
   let {constr; arg; attributes=attr} = value in
@@ -426,9 +436,9 @@ and pp_record_type fields = group (pp_ne_injection pp_field_decl fields)
 
 and pp_field_decl {value; _} =
   let {field_name; field_type; attributes; _} = value in
-  let attr = pp_attributes attributes in
-  let name = if attributes = [] then pp_ident field_name
-             else attr ^/^ pp_ident field_name in
+  let attr   = pp_attributes attributes in
+  let name   = if attributes = [] then pp_ident field_name
+               else attr ^/^ pp_ident field_name in
   let t_expr = pp_type_expr field_type
   in prefix 2 1 (name ^^ string " :") t_expr
 

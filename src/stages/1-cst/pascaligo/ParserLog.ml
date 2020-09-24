@@ -181,7 +181,10 @@ and print_variant state {value; _} =
       print_type_expr state t_expr
 
 and print_sum_type state {value; _} =
-  print_nsepseq state "|" print_variant value
+  let {variants; attributes; lead_vbar} = value in
+  print_attributes state attributes;
+  print_token_opt  state lead_vbar "|";
+  print_nsepseq    state "|" print_variant variants
 
 and print_record_type state =
   print_ne_injection state print_field_decl
@@ -1007,10 +1010,7 @@ and pp_type_expr state = function
     List.iteri (apply 2) [domain; range]
 | TSum {value; region} ->
     pp_loc_node state "TSum" region;
-    let apply len rank variant =
-      pp_variant (state#pad len rank) variant.value in
-    let variants = Utils.nsepseq_to_list value in
-    List.iteri (List.length variants |> apply) variants
+    pp_sum_type state value
 | TRecord {value; region} ->
     pp_loc_node state "TRecord" region;
     pp_ne_injection pp_field_decl state value
@@ -1020,6 +1020,18 @@ and pp_type_expr state = function
 | TWild wild ->
     pp_node  state "TWild";
     pp_loc_node state "TWild" wild
+
+and pp_sum_type state {variants; attributes; _} =
+  let variants = Utils.nsepseq_to_list variants in
+  let arity    = List.length variants in
+  let arity    = if attributes = [] then arity else arity+1 in
+  let apply arity rank variant =
+    let state = state#pad arity rank in
+    pp_variant state variant.value in
+  let () = List.iteri (apply arity) variants in
+  if attributes <> [] then
+    let state = state#pad arity (arity-1)
+    in pp_attributes state attributes
 
 and pp_cartesian state {value; _} =
   let apply len rank =

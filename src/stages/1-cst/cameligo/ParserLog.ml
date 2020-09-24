@@ -158,7 +158,7 @@ and print_statement state = function
 
 and print_type_expr state = function
   TProd prod      -> print_cartesian state prod
-| TSum {value; _} -> print_nsepseq state "|" print_variant value
+| TSum sum        -> print_sum_type state sum
 | TRecord t       -> print_record_type state t
 | TApp app        -> print_type_app state app
 | TPar par        -> print_type_par state par
@@ -166,6 +166,12 @@ and print_type_expr state = function
 | TWild wild      -> print_token state wild " "
 | TFun t          -> print_fun_type state t
 | TString s       -> print_string state s
+
+and print_sum_type state {value; _} =
+  let {variants; attributes; lead_vbar} = value in
+  print_attributes state attributes;
+  print_token_opt  state lead_vbar "|";
+  print_nsepseq    state "|" print_variant variants
 
 and print_fun_type state {value; _} =
   let domain, arrow, range = value in
@@ -790,7 +796,7 @@ and pp_ne_injection :
   fun printer state inj ->
     let ne_elements    = Utils.nsepseq_to_list inj.ne_elements in
     let length         = List.length ne_elements in
-    let arity          = if inj.attributes = [] then length else length + 1
+    let arity          = if inj.attributes = [] then length else length+1
     and apply len rank = printer (state#pad len rank)
     in List.iteri (apply arity) ne_elements;
        let state = state#pad arity (arity-1)
@@ -1152,12 +1158,12 @@ and pp_case :
   'a.(state -> 'a -> unit) -> state -> 'a case -> unit =
   fun printer state case ->
   let clauses = Utils.nsepseq_to_list case.cases.value in
-  let clauses = List.map (fun {value; _} -> value) clauses in
-  let length  = List.length clauses + 1 in
+  let clauses = List.map (fun x -> x.value) clauses in
+  let arity  = List.length clauses + 1 in
   let apply len rank =
     pp_case_clause printer (state#pad len (rank+1))
-  in pp_expr (state#pad length 0) case.expr;
-     List.iteri (apply length) clauses
+  in pp_expr (state#pad arity 0) case.expr;
+     List.iteri (apply arity) clauses
 
 and pp_case_clause :
   'a.(state -> 'a -> unit) -> state -> 'a case_clause -> unit =
@@ -1172,13 +1178,9 @@ and pp_type_expr state = function
     pp_cartesian state value
 | TSum {value; region} ->
     pp_loc_node state "TSum" region;
-    let apply len rank variant =
-      let state = state#pad len rank in
-      pp_variant state variant.value in
-    let variants = Utils.nsepseq_to_list value in
-    List.iteri (List.length variants |> apply) variants
+    pp_sum_type state value
 | TRecord {value; region} ->
-    pp_loc_node state "TRecord" region;
+    pp_loc_node    state "TRecord" region;
     pp_record_type state value
 | TApp {value=name,tuple; region} ->
     pp_loc_node   state "TApp" region;
@@ -1202,6 +1204,18 @@ and pp_type_expr state = function
 | TString s ->
     pp_node   state "TString";
     pp_string (state#pad 1 0) s
+
+and pp_sum_type state {variants; attributes; _} =
+  let variants = Utils.nsepseq_to_list variants in
+  let arity    = List.length variants in
+  let arity    = if attributes = [] then arity else arity+1 in
+  let apply arity rank variant =
+    let state = state#pad arity rank in
+    pp_variant state variant.value in
+  let () = List.iteri (apply arity) variants in
+  if attributes <> [] then
+    let state = state#pad arity (arity-1)
+    in pp_attributes state attributes
 
 and pp_type_tuple state {value; _} =
   let components     = Utils.nsepseq_to_list value.inside in

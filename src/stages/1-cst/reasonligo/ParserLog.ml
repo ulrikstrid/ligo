@@ -162,7 +162,8 @@ and print_statement state = function
     print_type_expr state type_expr
 
 and print_type_expr state = function
-  TProd prod      -> print_cartesian state prod | TSum {value; _} -> print_nsepseq state "|" print_variant value
+  TProd prod      -> print_cartesian state prod
+| TSum sum        -> print_sum_type state sum
 | TRecord t       -> print_record_type state t
 | TApp app        -> print_type_app state app
 | TPar par        -> print_type_par state par
@@ -170,6 +171,12 @@ and print_type_expr state = function
 | TFun t          -> print_fun_type state t
 | TWild wild      -> print_token state wild " "
 | TString s       -> print_string state s
+
+and print_sum_type state {value; _} =
+  let {variants; attributes; lead_vbar} = value in
+  print_attributes state attributes;
+  print_token_opt  state lead_vbar "|";
+  print_nsepseq    state "|" print_variant variants
 
 and print_fun_type state {value; _} =
   let domain, arrow, range = value in
@@ -1186,11 +1193,7 @@ and pp_type_expr state = function
     pp_cartesian state value
 | TSum {value; region} ->
     pp_loc_node state "TSum" region;
-    let apply len rank variant =
-      let state = state#pad len rank in
-      pp_variant state variant.value in
-    let variants = Utils.nsepseq_to_list value in
-    List.iteri (List.length variants |> apply) variants
+    pp_sum_type state value
 | TRecord {value; region} ->
     pp_loc_node state "TRecord" region;
     pp_ne_injection pp_field_decl state value
@@ -1216,6 +1219,18 @@ and pp_type_expr state = function
 | TString s ->
     pp_node   state "TString";
     pp_string (state#pad 1 0) s
+
+and pp_sum_type state {variants; attributes; _} =
+  let variants = Utils.nsepseq_to_list variants in
+  let arity    = List.length variants in
+  let arity    = if attributes = [] then arity else arity+1 in
+  let apply arity rank variant =
+    let state = state#pad arity rank in
+    pp_variant state variant.value in
+  let () = List.iteri (apply arity) variants in
+  if attributes <> [] then
+    let state = state#pad arity (arity-1)
+    in pp_attributes state attributes
 
 and pp_type_tuple state {value; _} =
   let components     = Utils.nsepseq_to_list value.inside in
