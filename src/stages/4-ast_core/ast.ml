@@ -7,16 +7,26 @@ type string_option = string option
 
 type attribute = {
   inline: bool ;
-} 
+}
+
+let location_of_yojson loc = Location.of_yojson loc
+let location_to_yojson loc = Location.to_yojson loc
+
 type program_loc = declaration location_wrap
 and program = program_loc list
+
+and binder = { 
+  var : expression_variable ;
+  ty : type_expression ;
+  }
+
 and declaration_type = {
     type_binder : type_variable ;
     type_expr : type_expression ;
   }
+
 and declaration_constant = {
-    binder : expression_variable ;
-    type_opt : type_expression_option ;
+    binder : binder;
     attr : attribute ;
     expr : expression ;
   }
@@ -34,8 +44,8 @@ and declaration =
 and field_label_map = row_element label_map
 and type_expression_list = type_expression list
 
-and content_type_operator = {
-    type_operator : type_operator' ;
+and content_type_constant = {
+    type_constant : type_constant ;
     arguments : type_expression_list ;
   }
 and type_content =
@@ -45,8 +55,7 @@ and type_content =
   | T_variable of type_variable
   (* TODO: remove this when we remove the old typer *)
   | T_wildcard
-  | T_constant of type_constant
-  | T_operator of content_type_operator
+  | T_constant of content_type_constant
 
 and arrow = {
     type1: type_expression ;
@@ -59,7 +68,7 @@ and row_element = {
   }
 
 and type_expression = {
-  content  : type_content ;
+  type_content  : type_content ;
   sugar    : sugar_type_expression_option ;
   location : location ;
   }
@@ -88,6 +97,7 @@ and expression_content =
   | E_ascription of ascription
 
 and expression_list = expression list
+
 and constant = {
     cons_name: constant' ;
     arguments: expression_list ;
@@ -98,12 +108,9 @@ and application = {
     args: expression ;
   }
 
-and type_expression_option = type_expression option
 
 and lambda = {
-    binder: expression_variable ;
-    input_type: type_expression_option ;
-    output_type: type_expression_option ;
+    binder: binder ;
     result: expression ;
   }
 
@@ -113,12 +120,8 @@ and recursive = {
     lambda : lambda ;
   }
  
-and let_binder = {
-    binder : expression_variable ;
-    ascr : type_expression_option ;
-  }
 and let_in = {
-    let_binder: let_binder ;
+    let_binder: binder ;
     rhs: expression ;
     let_result: expression ;
     inline: bool ;
@@ -165,6 +168,7 @@ and match_variant = {
     proj : expression_variable ;
     body : expression ;
   }
+
 and match_variant_list = match_variant list
 and matching_expr =
   | Match_list of match_list
@@ -180,37 +184,3 @@ and ascription = {
     anno_expr: expression ;
     type_annotation: type_expression ;
   }
-
-and env_def_declaration = {
-  expr : expression ;
-  free_variables : free_variables ;
-}
-and environment_element_definition =
-  | ED_binder
-  | ED_declaration of env_def_declaration
-
-and free_variables = expression_variable list
-
-and environment_element = {
-    type_value: type_expression ;
-    source_environment: environment ;
-    definition: environment_element_definition ;
-  }
-
-and expr_env_binding = {
-    binder : expression_variable ;
-    element : environment_element ;
-  }
-
-and expr_environment = expr_env_binding list
-
-and type_env_binding = {
-    binder : type_variable ;
-    element : type_expression ;
-}
-and type_environment = type_env_binding list
-
-and environment = {
-  expr_environment : expr_environment ;
-  type_environment : type_environment ;
-}

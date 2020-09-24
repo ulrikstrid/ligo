@@ -28,9 +28,9 @@ let compile_main () =
 
 let empty_op_list =
   (e_typed_list [] (t_operation ()))
-let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments")
-  (Some (t_unit ())) (Some (t_list (t_operation ())))
-  empty_op_list
+let empty_message = e_lambda (Location.wrap @@ Var.of_name "arguments",t_unit ()) 
+  @@ e_annotation empty_op_list (t_list (t_operation ()))
+
 
 let call msg = e_constructor "Call" msg
 let mk_time st =
@@ -54,7 +54,7 @@ let early_call () =
   expect_string_failwith ~options (program, state) "main"
     (e_pair (e_unit ())  init_storage) exp_failwith
 
-let fake_decompiled_empty_message = e_string "[lambda of type: (lambda unit (list operation)) ]"
+let fake_decompiled_empty_message = e_string "[lambda of type: (lambda %execute unit (list operation)) ]"
 
 (* Test that when we use the contract the next use time advances by correct interval *)
 let interval_advance () =

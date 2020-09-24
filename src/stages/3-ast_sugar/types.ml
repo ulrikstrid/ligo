@@ -11,8 +11,7 @@ type type_content =
   | T_arrow of arrow
   | T_variable of type_variable
   | T_wildcard
-  | T_constant of type_constant
-  | T_operator of (type_operator' * type_expression list)
+  | T_constant of (type_constant * type_expression list)
 
 and arrow = {type1: type_expression; type2: type_expression}
 
@@ -22,15 +21,15 @@ and type_expression = {type_content: type_content; location: Location.t}
 
 
 type program = declaration Location.wrap list
+
 and declaration =
   | Declaration_type of (type_variable * type_expression)
-
   (* A Declaration_constant is described by
    *   a name
    *   an optional type annotation
    *   a boolean indicating whether it should be inlined
    *   an expression *)
-  | Declaration_constant of (expression_variable * type_expression option * bool * expression)
+  | Declaration_constant of (expression_variable * type_expression * bool * expression)
 
 (* | Macro_declaration of macro_declaration *)
 and expression = {expression_content: expression_content; location: Location.t}
@@ -74,11 +73,10 @@ and application = {
   args: expression ;
   }
 
-and lambda =
-  { binder: expression_variable
-  ; input_type: type_expression option
-  ; output_type: type_expression option
-  ; result: expression }
+and lambda = {
+  binder: (expression_variable, type_expression) binder; 
+  result: expression 
+  }
 
 and recursive = {
   fun_name :  expression_variable;
@@ -87,7 +85,7 @@ and recursive = {
 }
 
 and let_in = { 
-  let_binder: expression_variable * type_expression option ;
+  let_binder: (expression_variable, type_expression) binder ;
   rhs: expression ;
   let_result: expression ;
   inline: bool ;
@@ -104,9 +102,9 @@ and accessor = {record: expression; path: access list}
 and update   = {record: expression; path: access list ; update: expression}
 
 and access =
-  | Access_tuple of Z.t
+  | Access_tuple of z
   | Access_record of string
-  | Access_map of expr
+  | Access_map of expression
 
 and matching_expr =
   | Match_variant of ((label * expression_variable) * expression) list
@@ -118,9 +116,9 @@ and matching_expr =
       match_none : expression ;
       match_some : expression_variable * expression ;
     }
-  | Match_tuple of expression_variable list * type_expression list option * expression
-  | Match_record of (label * expression_variable) list * type_expression list option * expression
-  | Match_variable of expression_variable * type_expression option * expression
+  | Match_tuple of (expression_variable * type_expression) list  * expression
+  | Match_record of (label * expression_variable * type_expression) list * expression
+  | Match_variable of (expression_variable * type_expression ) * expression
 
 and matching =
   { matchee: expression
@@ -134,29 +132,8 @@ and conditional = {
   then_clause : expression ;
   else_clause : expression ;
 }
+
 and sequence = {
   expr1: expression ;
   expr2: expression ;
   }
-
-and environment_element_definition =
-  | ED_binder
-  | ED_declaration of (expression * free_variables)
-
-and free_variables = expression_variable list
-
-and environment_element =
-  { type_value: type_expression
-  ; source_environment: environment
-  ; definition: environment_element_definition }
-
-and expr_environment = (expression_variable * environment_element) list
-
-and type_environment = (type_variable * type_expression) list
-
-(* SUBST ??? *)
-and environment = expr_environment * type_environment
-
-and expr = expression
-
-and texpr = type_expression

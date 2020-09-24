@@ -14,8 +14,6 @@ type type_constant =
   | TC_chain_id
   | TC_signature
   | TC_timestamp
-
-type type_operator' =
   | TC_contract
   | TC_option
   | TC_list
@@ -43,7 +41,7 @@ type literal =
   | Literal_key of string
   | Literal_key_hash of string
   | Literal_chain_id of string
-  | Literal_operation of packed_internal_operation
+  | Literal_operation of bytes
 
 type constant' =
   | C_INT
@@ -54,6 +52,7 @@ type constant' =
   | C_SOME
   | C_NONE
   | C_ASSERTION
+  | C_ASSERT_SOME
   | C_ASSERT_INFERRED
   | C_FAILWITH
   | C_UPDATE
@@ -163,3 +162,12 @@ type constant' =
   | C_CONVERT_TO_RIGHT_COMB
   | C_CONVERT_FROM_LEFT_COMB
   | C_CONVERT_FROM_RIGHT_COMB
+
+type deprecated = {
+    name : string ;
+    const : constant' ;
+  }
+
+type rich_constant =
+  | Deprecated of deprecated
+  | Const of constant'

@@ -26,7 +26,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a,'err) res
       let%bind res = bind_fold_pair self init' ab in
       ok res
     )
-  | E_lambda { binder = _ ; input_type = _ ; output_type = _ ; result = e }
+  | E_lambda { binder = _ ; result = e }
   | E_ascription {anno_expr=e; _} | E_constructor {element=e} -> (
       let%bind res = self init' e in
       ok res
@@ -128,9 +128,9 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression , 'err) re
       let%bind let_result = self let_result in
       return @@ E_let_in { let_binder ; rhs ; let_result; inline }
     )
-  | E_lambda { binder ; input_type ; output_type ; result } -> (
+  | E_lambda { binder ; result } -> (
       let%bind result = self result in
-      return @@ E_lambda { binder ; input_type ; output_type ; result }
+      return @@ E_lambda { binder ; result }
     )
   | E_recursive { fun_name; fun_type; lambda} ->
       let%bind result = self lambda.result in
@@ -143,11 +143,11 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression , 'err) re
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> return e'
 
 and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_expression , 'err) result =
-    fun f ({content ; sugar; location } as te) ->
+    fun f ({type_content ; sugar; location } as te) ->
   let self = map_type_expression f in
   let%bind te' = f te in
-  let return content = ok @@ ({ content; sugar; location}: type_expression) in
-  match content with
+  let return type_content = ok @@ ({ type_content; sugar; location}: type_expression) in
+  match type_content with
   | T_sum temap ->
     let%bind temap' = bind_map_lmap_t self temap in
     return @@ (T_sum temap')
@@ -158,7 +158,6 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
     let%bind type1' = self type1 in
     let%bind type2' = self type2 in
     return @@ (T_arrow {type1=type1' ; type2=type2'})
-  | T_operator _
   | T_variable _ | T_wildcard  | T_constant _ -> ok te'
 
 and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr , 'err) result = fun f m ->
@@ -243,9 +242,9 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a
       let%bind (res,let_result) = self res let_result in
       ok (res, return @@ E_let_in { let_binder ; rhs ; let_result ; inline })
     )
-  | E_lambda { binder ; input_type ; output_type ; result } -> (
+  | E_lambda { binder ; result } -> (
       let%bind (res,result) = self init' result in
-      ok ( res, return @@ E_lambda { binder ; input_type ; output_type ; result })
+      ok ( res, return @@ E_lambda { binder ; result })
     )
   | E_recursive { fun_name; fun_type; lambda} ->
       let%bind (res, result) = self init' lambda.result in

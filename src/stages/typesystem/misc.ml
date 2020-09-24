@@ -17,10 +17,10 @@ module Substitution = struct
     let rec rec_yes = true
     and s_environment_element_definition ~substs = function
       | T.ED_binder -> ok @@ T.ED_binder
-      | T.ED_declaration T.{expr ; free_variables} ->
-        let%bind expr = s_expression ~substs expr in
+      | T.ED_declaration T.{expression ; free_variables} ->
+        let%bind expression = s_expression ~substs expression in
         let%bind free_variables = bind_map_list (s_variable ~substs) free_variables in
-        ok @@ T.ED_declaration {expr ; free_variables}
+        ok @@ T.ED_declaration {expression ; free_variables}
     and s_expr_environment : (T.expression_environment,_) w = fun ~substs env ->
       bind_map_list (fun T.{expr_var=variable ; env_elt={ type_value; source_environment; definition }} ->
           let%bind type_value = s_type_expression ~substs type_value in
@@ -65,20 +65,17 @@ module Substitution = struct
            let%bind s = Ast_typed.Helpers.bind_map_lmap aux s in
            ok @@ T.T_sum s
         | T.T_record _ -> failwith "TODO: T_record"
-        | T.T_constant type_name ->
-          let%bind type_name = s_type_name_constant ~substs type_name in
-          ok @@ T.T_constant (type_name)
         | T.T_variable variable ->
-          begin
-            match substs ~variable with
-            | Some expr -> s_type_content ~substs expr (* TODO: is it the right thing to recursively examine this? We mustn't go into an infinite loop. *)
-            | None -> ok @@ T.T_variable variable
-          end
+           begin
+             match substs ~variable with
+             | Some expr -> s_type_content ~substs expr (* TODO: is it the right thing to recursively examine this? We mustn't go into an infinite loop. *)
+             | None -> ok @@ T.T_variable variable
+           end
         | T.T_wildcard ->
           ok @@ T.T_wildcard
-        | T.T_operator {operator;args} ->
-          let%bind args = bind_map_list (s_type_expression ~substs) args in
-          ok @@ T.T_operator {operator;args}
+        | T.T_constant {type_constant;arguments} ->
+          let%bind arguments = bind_map_list (s_type_expression ~substs) arguments in
+          ok @@ T.T_constant {type_constant;arguments}
         | T.T_arrow { type1; type2 } ->
            let%bind type1 = s_type_expression ~substs type1 in
            let%bind type2 = s_type_expression ~substs type2 in
@@ -90,18 +87,16 @@ module Substitution = struct
       | Ast_core.T_arrow _ -> failwith "TODO: subst: unimplemented case s_type_expression arrow"
       | Ast_core.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression variable"
       | Ast_core.T_wildcard -> failwith "TODO: subst: unimplemented case s_type_expression wildcard"
-      | Ast_core.T_operator {type_operator;arguments} ->
+      | Ast_core.T_constant {type_constant;arguments} ->
          let%bind arguments = bind_map_list
              (s_abstr_type_expression ~substs)
              arguments in
          (* TODO: when we have generalized operators, we might need to subst the operator name itself? *)
-         ok @@ Ast_core.T_operator {type_operator;arguments}
-      | Ast_core.T_constant constant ->
-         ok @@ Ast_core.T_constant constant
+         ok @@ Ast_core.T_constant {type_constant;arguments}
 
-    and s_abstr_type_expression : (Ast_core.type_expression,_) w = fun ~substs {content;sugar;location} ->
-      let%bind content = s_abstr_type_content ~substs content in
-      ok @@ (Ast_core.{content;sugar;location} : Ast_core.type_expression)
+    and s_abstr_type_expression : (Ast_core.type_expression,_) w = fun ~substs {type_content;sugar;location} ->
+      let%bind type_content = s_abstr_type_content ~substs type_content in
+      ok @@ (Ast_core.{type_content;sugar;location} : Ast_core.type_expression)
 
     and s_type_expression : (T.type_expression,_) w = fun ~substs { type_content; location; type_meta } ->
       let%bind type_content = s_type_content ~substs type_content in

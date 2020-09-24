@@ -41,6 +41,14 @@ let syntax =
     info ~docv ~doc ["syntax" ; "s"] in
   value @@ opt string "auto" info
 
+let dialect =
+  let open Arg in
+  let info =
+    let docv = "PASCALIGO_DIALECT" in
+    let doc = "$(docv) is the pascaligo dialect that will be used. Currently supported dialects are \"terse\" and \"verbose\". By default the dialect is \"terse\"." in
+    info ~docv ~doc ["dialect" ; "d"] in
+  value @@ opt string "terse" info
+
 let req_syntax n =
   let open Arg in
   let info =
@@ -166,7 +174,7 @@ module Run = Ligo.Run.Of_michelson
 
 let compile_file =
   let f source_file entry_point syntax display_format disable_typecheck michelson_format output_file brief =
-    return_result ~output_file ~brief ~display_format (Tezos_utils.Michelson.michelson_format michelson_format) @@
+    return_result ~output_file ~brief ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
       let%bind typed,_    = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let%bind mini_c     = Compile.Of_typed.compile typed in
       let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
@@ -218,7 +226,7 @@ let print_ast =
   let doc = "Subcommand: Print the AST.\n Warning: Intended for development of LIGO and can break at any time." in
   (Term.ret term, Term.info ~doc cmdname)
 
- 
+
 let print_ast_sugar =
   let f source_file syntax display_format brief =
     return_result ~display_format ~brief (Ast_sugar.Formatter.program_format) @@
@@ -237,7 +245,7 @@ let print_ast_core =
   let term = Term.(const f $ source_file 0 $ syntax $ display_format $ brief) in
   let cmdname = "print-ast-core" in
   let doc = "Subcommand: Print the AST.\n Warning: Intended for development of LIGO and can break at any time." in
-  (Term.ret term, Term.info ~doc cmdname) 
+  (Term.ret term, Term.info ~doc cmdname)
 
 let print_ast_typed =
   let f source_file syntax display_format brief =
@@ -268,11 +276,9 @@ let print_mini_c =
 
 let measure_contract =
   let f source_file entry_point syntax display_format brief =
-    let value =
+    return_result ~display_format ~brief Formatter.contract_size_format @@
       let%bind contract   = Compile.Utils.compile_file source_file syntax entry_point in
-      ok @@ Tezos_utils.Michelson.measure contract in
-    let format = Display.bind_format Formatter.contract_size_format Main.Formatter.error_format in
-    toplevel ~display_format ~brief (Display.Displayable { value ; format }) value
+      Compile.Of_michelson.measure contract
   in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ display_format $ brief) in
@@ -282,7 +288,7 @@ let measure_contract =
 
 let compile_parameter =
   let f source_file entry_point expression syntax amount balance sender source now display_format michelson_format output_file brief =
-    return_result ~output_file ~display_format ~brief (Tezos_utils.Michelson.michelson_format michelson_format) @@
+    return_result ~output_file ~display_format ~brief (Formatter.Michelson_formatter.michelson_format michelson_format) @@
       let%bind typed_prg,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
       let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
@@ -295,7 +301,6 @@ let compile_parameter =
       let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
       let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c_param in
       let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_parameter entry_point typed_prg typed_param in
-      let%bind ()               = Compile.Of_michelson.assert_equal_contract_type Check_parameter michelson_prg compiled_param in
       let%bind options          = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
       Run.evaluate_expression ~options compiled_param.expr compiled_param.expr_ty
     in
@@ -343,7 +348,7 @@ let temp_ligo_interpreter =
 
 let compile_storage =
   let f source_file entry_point expression syntax amount balance sender source now display_format michelson_format output_file brief =
-    return_result ~output_file ~display_format ~brief (Tezos_utils.Michelson.michelson_format michelson_format) @@
+    return_result ~output_file ~display_format ~brief (Formatter.Michelson_formatter.michelson_format michelson_format) @@
       let%bind typed_prg,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
       let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
@@ -356,7 +361,6 @@ let compile_storage =
       let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
       let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c_param in
       let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_storage entry_point typed_prg typed_param in
-      let%bind ()               = Compile.Of_michelson.assert_equal_contract_type Check_storage michelson_prg compiled_param in
       let%bind options          = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
       Run.evaluate_expression ~options compiled_param.expr compiled_param.expr_ty in
   let term =
@@ -435,7 +439,7 @@ let evaluate_value =
 
 let compile_expression =
   let f expression syntax display_format michelson_format brief =
-    return_result ~display_format ~brief (Tezos_utils.Michelson.michelson_format michelson_format) @@
+    return_result ~display_format ~brief (Formatter.Michelson_formatter.michelson_format michelson_format) @@
       let env = Environment.default in
       let state = Typer.Solver.initial_state in
       let%bind compiled_exp  = Compile.Utils.compile_expression None syntax expression env state in
@@ -472,25 +476,28 @@ let list_declarations =
   (Term.ret term , Term.info ~doc cmdname)
 
 let transpile_contract =
-  let f source_file new_syntax syntax display_format brief =
+  let f source_file new_syntax syntax new_dialect display_format brief =
     return_result ~display_format ~brief (Parser.Formatter.ppx_format) @@
       let%bind core       = Compile.Utils.to_core source_file syntax in
       let%bind sugar      = Decompile.Of_core.decompile core in
       let%bind imperative = Decompile.Of_sugar.decompile sugar in
-      let%bind buffer     = Decompile.Of_imperative.decompile imperative (Syntax_name new_syntax) in
+      let dialect         = Decompile.Helpers.Dialect_name new_dialect in
+      let%bind buffer     =
+        Decompile.Of_imperative.decompile ~dialect imperative (Syntax_name new_syntax) in
       ok @@ buffer
   in
   let term =
-    Term.(const f $ source_file 0 $ req_syntax 1 $ syntax $ display_format $ brief) in
+    Term.(const f $ source_file 0 $ req_syntax 1 $ syntax $ dialect $ display_format $ brief) in
   let cmdname = "transpile-contract" in
   let doc = "Subcommand: Transpile a contract to another syntax." in
   (Term.ret term , Term.info ~doc cmdname)
 
 let transpile_expression =
-  let f expression new_syntax syntax display_format brief =
+  let f expression new_syntax syntax new_dialect display_format brief =
     return_result ~display_format ~brief (Parser.Formatter.ppx_format) @@
       let%bind v_syntax   = Helpers.syntax_to_variant (Syntax_name syntax) None in
-      let%bind n_syntax   = Decompile.Helpers.syntax_to_variant (Syntax_name new_syntax) None in
+      let      dialect    = Decompile.Helpers.Dialect_name new_dialect in
+      let%bind n_syntax   = Decompile.Helpers.syntax_to_variant ~dialect (Syntax_name new_syntax) None in
       let%bind imperative = Compile.Of_source.compile_expression v_syntax expression in
       let%bind sugar      = Compile.Of_imperative.compile_expression imperative in
       let%bind core       = Compile.Of_sugar.compile_expression sugar in
@@ -500,7 +507,7 @@ let transpile_expression =
       ok @@ buffer
   in
   let term =
-    Term.(const f $ expression "" 1  $ req_syntax 2 $ req_syntax 0 $ display_format $ brief) in
+    Term.(const f $ expression "" 1  $ req_syntax 2 $ req_syntax 0 $ dialect $ display_format $ brief) in
   let cmdname = "transpile-expression" in
   let doc = "Subcommand: Transpile an expression to another syntax." in
   (Term.ret term , Term.info ~doc cmdname)

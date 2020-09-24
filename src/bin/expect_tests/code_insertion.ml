@@ -9,7 +9,7 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_michelson_insertion_1.ligo" ; "main" ] ;
   [%expect{|
     ligo: error
-          Compiler bug
+          Error(s) occurred while type checking the contract:
           Ill typed contract:
             1: { parameter nat ;
             2:   storage nat ;
@@ -29,10 +29,9 @@ let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_michelson_insertion_2.ligo" ; "main" ] ;
   [%expect{|
     ligo: error
-          in file "bad_michelson_insertion_2.ligo", line 5, characters 32-40
-          Bad types:
-          expected nat
-          got ( nat * nat )
+          in file "bad_michelson_insertion_2.ligo", line 5, characters 34-40
+          Invalid type(s).
+          Expected: "nat", but got: "( nat * nat )".
 
 
           If you're not sure how to fix this error, you can do one of the following:
@@ -47,4 +46,4 @@ let%expect_test _ =
   [%expect{|
     { parameter nat ;
       storage nat ;
-      code { DUP ; CDR ; SWAP ; CAR ; ADD ; NIL operation ; PAIR } } |}]
+      code { UNPAIR ; ADD ; NIL operation ; PAIR } } |}]
