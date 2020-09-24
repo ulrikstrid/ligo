@@ -43,8 +43,8 @@ let%expect_test _ =
       | Buy_single of action_buy_single
 
     function transfer_single
-      (const gen__parameters4 : action_transfer_single * storage) is
-      case gen__parameters4 of [
+      (const gen__parameters1 : action_transfer_single * storage) is
+      case gen__parameters1 of [
         (action, s) ->
           block {
             const cards : cards = s.cards;
@@ -65,8 +65,8 @@ let%expect_test _ =
       ]
 
     function sell_single
-      (const gen__parameters3 : action_sell_single * storage) is
-      case gen__parameters3 of [
+      (const gen__parameters2 : action_sell_single * storage) is
+      case gen__parameters2 of [
         (action, s) ->
           block {
             const card : card
@@ -114,8 +114,8 @@ let%expect_test _ =
       ]
 
     function buy_single
-      (const gen__parameters2 : action_buy_single * storage) is
-      case gen__parameters2 of [
+      (const gen__parameters3 : action_buy_single * storage) is
+      case gen__parameters3 of [
         (action, s) ->
           block {
             const card_pattern : card_pattern
@@ -149,8 +149,8 @@ let%expect_test _ =
           } with ((list [] : list (operation)), s)
       ]
 
-    function main (const gen__parameters1 : parameter * storage) is
-      case gen__parameters1 of [
+    function main (const gen__parameters4 : parameter * storage) is
+      case gen__parameters4 of [
         (action, s) ->
           case action of [
             Buy_single (bs) -> buy_single (bs, s)
@@ -194,8 +194,8 @@ let%expect_test _ =
 
     let transfer_single
     : action_transfer_single * storage -> return =
-      (fun gen__parameters4 : action_transfer_single * storage ->
-         match gen__parameters4 with
+      (fun gen__parameters1 : action_transfer_single * storage ->
+         match gen__parameters1 with
          action : action_transfer_single, s : storage ->
              let cards : cards = s.cards in
              let card : card =
@@ -220,8 +220,8 @@ let%expect_test _ =
              end)
 
     let sell_single : action_sell_single * storage -> return =
-      (fun gen__parameters3 : action_sell_single * storage ->
-         match gen__parameters3 with
+      (fun gen__parameters2 : action_sell_single * storage ->
+         match gen__parameters2 with
          action : action_sell_single, s : storage ->
              let card : card =
                match Map.find_opt action.card_to_sell s.cards
@@ -279,8 +279,8 @@ let%expect_test _ =
              end)
 
     let buy_single : action_buy_single * storage -> return =
-      (fun gen__parameters2 : action_buy_single * storage ->
-         match gen__parameters2 with
+      (fun gen__parameters3 : action_buy_single * storage ->
+         match gen__parameters3 with
          action : action_buy_single, s : storage ->
              let card_pattern : card_pattern =
                match Map.find_opt
@@ -326,8 +326,8 @@ let%expect_test _ =
              end)
 
     let main : parameter * storage -> return =
-      (fun gen__parameters1 : parameter * storage ->
-         match gen__parameters1 with
+      (fun gen__parameters4 : parameter * storage ->
+         match gen__parameters4 with
          action : parameter, s : storage ->
              match action with
                Buy_single bs -> buy_single bs s
@@ -364,15 +364,15 @@ type action_transfer_single = {
 };
 
 type parameter =
-  Transfer_single(action_transfer_single)
-| Sell_single(action_sell_single)
-| Buy_single(action_buy_single);
+  Transfer_single (action_transfer_single)
+| Sell_single (action_sell_single)
+| Buy_single (action_buy_single);
 
 let transfer_single
 : (action_transfer_single, storage) => return =
-  ((gen__parameters4: (action_transfer_single, storage))
+  ((gen__parameters1: (action_transfer_single, storage))
    : return =>
-     switch(gen__parameters4) {
+     switch(gen__parameters1) {
      | action: action_transfer_single, s: storage =>
          let cards: cards = s.cards;
          let card: card =
@@ -400,8 +400,8 @@ let transfer_single
      });
 
 let sell_single: (action_sell_single, storage) => return =
-  ((gen__parameters3: (action_sell_single, storage)): return =>
-     switch(gen__parameters3) {
+  ((gen__parameters2: (action_sell_single, storage)): return =>
+     switch(gen__parameters2) {
      | action: action_sell_single, s: storage =>
          let card: card =
            switch(Map.find_opt(action.card_to_sell, s.cards)) {
@@ -464,8 +464,8 @@ let sell_single: (action_sell_single, storage) => return =
      });
 
 let buy_single: (action_buy_single, storage) => return =
-  ((gen__parameters2: (action_buy_single, storage)): return =>
-     switch(gen__parameters2) {
+  ((gen__parameters3: (action_buy_single, storage)): return =>
+     switch(gen__parameters3) {
      | action: action_buy_single, s: storage =>
          let card_pattern: card_pattern =
            switch(
@@ -517,8 +517,8 @@ let buy_single: (action_buy_single, storage) => return =
      });
 
 let main: (parameter, storage) => return =
-  ((gen__parameters1: (parameter, storage)): return =>
-     switch(gen__parameters1) {
+  ((gen__parameters4: (parameter, storage)): return =>
+     switch(gen__parameters4) {
      | action: parameter, s: storage =>
          switch(action) {
          | Buy_single bs => buy_single(bs, s)
@@ -900,7 +900,7 @@ type transferMichelson = michelson_pair_right_comb
 
 type transferParameter = list(transferMichelson);
 
-type parameter = Transfer(transferParameter);
+type parameter = Transfer (transferParameter);
 
 type storage = big_map(tokenId, tokenOwner);
 
@@ -1039,8 +1039,8 @@ let%expect_test _ =
       | Approve of approve
 
     function transfer
-      (const gen__parameters6 : transfer * storage) is
-      case gen__parameters6 of [
+      (const gen__parameters1 : transfer * storage) is
+      case gen__parameters1 of [
         (p, s) ->
           block {
             const new_allowances : allowances = big_map [];
@@ -1139,8 +1139,8 @@ let%expect_test _ =
       ]
 
     function approve
-      (const gen__parameters5 : approve * storage) is
-      case gen__parameters5 of [
+      (const gen__parameters2 : approve * storage) is
+      case gen__parameters2 of [
         (p, s) ->
           block {
             const previous_value : nat
@@ -1176,8 +1176,8 @@ let%expect_test _ =
       ]
 
     function getAllowance
-      (const gen__parameters4 : getAllowance * storage) is
-      case gen__parameters4 of [
+      (const gen__parameters3 : getAllowance * storage) is
+      case gen__parameters3 of [
         (p, s) ->
           block {
             const value : nat
@@ -1193,8 +1193,8 @@ let%expect_test _ =
       ]
 
     function getBalance
-      (const gen__parameters3 : getBalance * storage) is
-      case gen__parameters3 of [
+      (const gen__parameters4 : getBalance * storage) is
+      case gen__parameters4 of [
         (p, s) ->
           block {
             const value : nat
@@ -1208,8 +1208,8 @@ let%expect_test _ =
       ]
 
     function getTotalSupply
-      (const gen__parameters2 : getTotalSupply * storage) is
-      case gen__parameters2 of [
+      (const gen__parameters5 : getTotalSupply * storage) is
+      case gen__parameters5 of [
         (p, s) ->
           block {
             const total : nat = s.total_amount;
@@ -1218,8 +1218,8 @@ let%expect_test _ =
           } with (list [op], s)
       ]
 
-    function main (const gen__parameters1 : action * storage) is
-      case gen__parameters1 of [
+    function main (const gen__parameters6 : action * storage) is
+      case gen__parameters6 of [
         (a, s) ->
           case a of [
             Transfer (p) -> transfer (p, s)
@@ -1263,8 +1263,8 @@ let%expect_test _ =
 
     let transfer
     : transfer * storage -> operation list * storage =
-      (fun gen__parameters6 : transfer * storage ->
-         match gen__parameters6 with
+      (fun gen__parameters1 : transfer * storage ->
+         match gen__parameters1 with
          p : transfer, s : storage ->
              let new_allowances : allowances = Big_map.empty in
              let gen__env9 = {new_allowances = new_allowances} in
@@ -1372,8 +1372,8 @@ let%expect_test _ =
                 tokens = new_tokens}})
 
     let approve : approve * storage -> operation list * storage =
-      (fun gen__parameters5 : approve * storage ->
-         match gen__parameters5 with
+      (fun gen__parameters2 : approve * storage ->
+         match gen__parameters2 with
          p : approve, s : storage ->
              let previous_value : nat =
                match (Map.find_opt
@@ -1413,8 +1413,8 @@ let%expect_test _ =
 
     let getAllowance
     : getAllowance * storage -> operation list * storage =
-      (fun gen__parameters4 : getAllowance * storage ->
-         match gen__parameters4 with
+      (fun gen__parameters3 : getAllowance * storage ->
+         match gen__parameters3 with
          p : getAllowance, s : storage ->
              let value : nat =
                match (Map.find_opt
@@ -1429,8 +1429,8 @@ let%expect_test _ =
 
     let getBalance
     : getBalance * storage -> operation list * storage =
-      (fun gen__parameters3 : getBalance * storage ->
-         match gen__parameters3 with
+      (fun gen__parameters4 : getBalance * storage ->
+         match gen__parameters4 with
          p : getBalance, s : storage ->
              let value : nat =
                match (Map.find_opt (p.owner) (s.tokens)) with
@@ -1442,8 +1442,8 @@ let%expect_test _ =
 
     let getTotalSupply
     : getTotalSupply * storage -> operation list * storage =
-      (fun gen__parameters2 : getTotalSupply * storage ->
-         match gen__parameters2 with
+      (fun gen__parameters5 : getTotalSupply * storage ->
+         match gen__parameters5 with
          p : getTotalSupply, s : storage ->
              let total : nat = s.total_amount in
              let op : operation =
@@ -1451,8 +1451,8 @@ let%expect_test _ =
              [op], s)
 
     let main : action * storage -> operation list * storage =
-      (fun gen__parameters1 : action * storage ->
-         match gen__parameters1 with
+      (fun gen__parameters6 : action * storage ->
+         match gen__parameters6 with
          a : action, s : storage ->
              match a with
                Transfer p -> transfer p s
@@ -1487,17 +1487,17 @@ type getBalance = {owner: address, callback: contract(nat) };
 type getTotalSupply = {callback: contract(nat) };
 
 type action =
-  Transfer(transfer)
-| GetTotalSupply(getTotalSupply)
-| GetBalance(getBalance)
-| GetAllowance(getAllowance)
-| Approve(approve);
+  Transfer (transfer)
+| GetTotalSupply (getTotalSupply)
+| GetBalance (getBalance)
+| GetAllowance (getAllowance)
+| Approve (approve);
 
 let transfer
 : (transfer, storage) => (list(operation), storage) =
-  ((gen__parameters6: (transfer, storage))
+  ((gen__parameters1: (transfer, storage))
    : (list(operation), storage) =>
-     switch(gen__parameters6) {
+     switch(gen__parameters1) {
      | p: transfer, s: storage =>
          let new_allowances: allowances = Big_map.empty;
          let gen__env9 = {
@@ -1624,9 +1624,9 @@ let transfer
 
 let approve
 : (approve, storage) => (list(operation), storage) =
-  ((gen__parameters5: (approve, storage))
+  ((gen__parameters2: (approve, storage))
    : (list(operation), storage) =>
-     switch(gen__parameters5) {
+     switch(gen__parameters2) {
      | p: approve, s: storage =>
          let previous_value: nat =
            switch((
@@ -1671,9 +1671,9 @@ let approve
 
 let getAllowance
 : (getAllowance, storage) => (list(operation), storage) =
-  ((gen__parameters4: (getAllowance, storage))
+  ((gen__parameters3: (getAllowance, storage))
    : (list(operation), storage) =>
-     switch(gen__parameters4) {
+     switch(gen__parameters3) {
      | p: getAllowance, s: storage =>
          let value: nat =
            switch((
@@ -1692,9 +1692,9 @@ let getAllowance
 
 let getBalance
 : (getBalance, storage) => (list(operation), storage) =
-  ((gen__parameters3: (getBalance, storage))
+  ((gen__parameters4: (getBalance, storage))
    : (list(operation), storage) =>
-     switch(gen__parameters3) {
+     switch(gen__parameters4) {
      | p: getBalance, s: storage =>
          let value: nat =
            switch((Map.find_opt((p.owner), (s.tokens)))) {
@@ -1711,9 +1711,9 @@ let getBalance
 
 let getTotalSupply
 : (getTotalSupply, storage) => (list(operation), storage) =
-  ((gen__parameters2: (getTotalSupply, storage))
+  ((gen__parameters5: (getTotalSupply, storage))
    : (list(operation), storage) =>
-     switch(gen__parameters2) {
+     switch(gen__parameters5) {
      | p: getTotalSupply, s: storage =>
          let total: nat = s.total_amount;
          let op: operation =
@@ -1725,9 +1725,9 @@ let getTotalSupply
      });
 
 let main: (action, storage) => (list(operation), storage) =
-  ((gen__parameters1: (action, storage))
+  ((gen__parameters6: (action, storage))
    : (list(operation), storage) =>
-     switch(gen__parameters1) {
+     switch(gen__parameters6) {
      | a: action, s: storage =>
          switch(a) {
          | Transfer p => transfer(p, s)
@@ -1888,7 +1888,7 @@ let%expect_test _ =
          end) |}];
   run_ligo_good [ "transpile-contract" ; "../../test/contracts/failwith.ligo" ; "reasonligo" ] ;
   [%expect {|
-type parameter = Zero(nat) | Pos(nat);
+type parameter = Zero (nat) | Pos (nat);
 
 type storage = unit;
 
@@ -1987,8 +1987,8 @@ let failer: int => int =
 let%expect_test _ =
   run_ligo_good [ "transpile-contract" ; "../../test/contracts/recursion.ligo" ; "pascaligo" ] ;
   [%expect {|
-    recursive function sum (const gen__parameters2 : int * int) is
-      case gen__parameters2 of [
+    recursive function sum (const gen__parameters1 : int * int) is
+      case gen__parameters1 of [
         (n, acc) ->
           if LT (n, 1)
           then acc
@@ -1997,8 +1997,8 @@ let%expect_test _ =
 
     recursive
     function fibo
-      (const gen__parameters1 : int * int * int) is
-      case gen__parameters1 of [
+      (const gen__parameters2 : int * int * int) is
+      case gen__parameters2 of [
         (n, n_1, n_0) ->
           if LT (n, 2)
           then n_1
@@ -2007,16 +2007,16 @@ let%expect_test _ =
   run_ligo_good [ "transpile-contract" ; "../../test/contracts/recursion.ligo" ; "cameligo" ] ;
   [%expect {|
     let rec sum : int * int -> int =
-      (fun gen__parameters2 : int * int ->
-         match gen__parameters2 with
+      (fun gen__parameters1 : int * int ->
+         match gen__parameters1 with
          n : int, acc : int ->
              if (LT (n) (1))
              then acc
              else sum (SUB (n) (1)) (ADD (acc) (n)))
 
     let rec fibo : int * int * int -> int =
-      (fun gen__parameters1 : int * int * int ->
-         match gen__parameters1 with
+      (fun gen__parameters2 : int * int * int ->
+         match gen__parameters2 with
          n : int, n_1 : int, n_0 : int ->
              if (LT (n) (2))
              then n_1
@@ -2024,8 +2024,8 @@ let%expect_test _ =
   run_ligo_good [ "transpile-contract" ; "../../test/contracts/recursion.ligo" ; "reasonligo" ] ;
   [%expect {|
     let rec sum: (int, int) => int =
-      ((gen__parameters2: (int, int)): int =>
-         switch(gen__parameters2) {
+      ((gen__parameters1: (int, int)): int =>
+         switch(gen__parameters1) {
          | n: int, acc: int =>
              if ((LT((n), (1)))) {
                acc
@@ -2035,8 +2035,8 @@ let%expect_test _ =
          });
 
     let rec fibo: (int, int, int) => int =
-      ((gen__parameters1: (int, int, int)): int =>
-         switch(gen__parameters1) {
+      ((gen__parameters2: (int, int, int)): int =>
+         switch(gen__parameters2) {
          | n: int, n_1: int, n_0: int =>
              if ((LT((n), (2)))) {
                n_1

@@ -27,7 +27,7 @@ type check_message_pt = {
 
 type return = (list(operation), storage);
 
-type parameter = CheckMessage(check_message_pt);
+type parameter = CheckMessage (check_message_pt);
 
 let check_message = ((param, s): (check_message_pt, storage))
 : return => {

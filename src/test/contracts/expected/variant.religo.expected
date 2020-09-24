@@ -1,4 +1,4 @@
-type foobar = Foo(int) | Bar(bool) | Kee(nat);
+type foobar = Foo (int) | Bar (bool) | Kee (nat);
 
 let foo: foobar = Foo (42);
 

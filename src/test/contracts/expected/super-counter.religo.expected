@@ -1,4 +1,4 @@
-type parameter = Increment(int) | Decrement(int);
+type parameter = Increment (int) | Decrement (int);
 
 type storage = int;
 

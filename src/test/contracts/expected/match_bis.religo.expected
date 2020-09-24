@@ -1,6 +1,6 @@
 type storage = int;
 
-type parameter = Increment(int) | Decrement(int);
+type parameter = Increment (int) | Decrement (int);
 
 let add = ((a: int), (b: int)) => a + b;
 

@@ -1,6 +1,6 @@
 type storage = int;
 
-type parameter = Add(int) | Sub(int);
+type parameter = Add (int) | Sub (int);
 
 type return = (list(operation), storage);
 

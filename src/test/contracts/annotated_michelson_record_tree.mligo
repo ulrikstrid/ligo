@@ -1,21 +1,31 @@
-type comb_two = {
-  foo : int [@@annot:anfoo] ;
-  bar : string [@@annot:anbar] ;
-} [@layout:tree]
+type comb_two = [@layout:tree] {
+  [@annot:anfoo]
+  foo : int ;
+  [@annot:anbar]
+  bar : string ;
+}
 
-type comb_three = {
-  a : int [@@annot:ana] ;
-  b : string [@@annot:anb] ;
-  c : nat [@@annot:anc] ;
-} [@layout:tree]
+type comb_three = [@layout:tree] {
+  [@annot:ana]
+  a : int ;
+  [@annot:anb]
+  b : string ;
+  [@annot:anc] 
+  c : nat ;
+}
 
-type comb_five = {
-  one : int [@@annot:an_One] ;
-  two : string [@@annot:an_Two] ;
-  three : bool [@@annot:an_Three] ;
-  four : nat [@@annot:an_Four] ;
-  five : int [@@annot:an_Five] ;
-} [@layout:tree]
+type comb_five = [@layout:tree] {
+  [@annot:an_One]
+  one : int ;
+  [@annot:an_Two]
+  two : string ;
+  [@annot:an_Three]
+  three : bool;
+  [@annot:an_Four]
+  four : nat ;
+  [@annot:an_Five]
+  five : int ;
+}
 
 type parameter = unit
 type op_list = operation list

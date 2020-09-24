@@ -1,4 +1,4 @@
-type foo = Bar(int) | Baz;
+type foo = Bar (int) | Baz;
 
 let main = (f: foo): int => 
   switch(f) {
