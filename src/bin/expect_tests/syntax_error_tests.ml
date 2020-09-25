@@ -5,7 +5,14 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           Parse error in file "error_syntax.ligo", line 1, characters 16-17 at "-", after "bar":
-          583: <syntax error>
+          Ill-formed declaration.
+          At this point, if the attributes (if any) are complete, one of the
+          following is expected:
+            * the keyword 'const' if defining a constant;
+            * the keyword 'function' if defining a function;
+            * the keywords 'recursive function' if defining a recursive
+              function.
+
 
 
           If you're not sure how to fix this error, you can do one of the following:

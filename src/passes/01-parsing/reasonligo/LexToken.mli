@@ -180,3 +180,9 @@ val check_right_context :
   (Lexing.lexbuf -> (Markup.t list * token) option) ->
   Lexing.lexbuf ->
   unit
+
+(* Unlexing the tokens: from strings containing the textual
+   representation of tokens to lexemes. For example, [concrete "SEMI"
+   = ";"]. *)
+
+val concrete : string -> string

@@ -5,7 +5,12 @@ let%expect_test _ =
   [%expect {|
     ligo: error
           Parse error in file "gitlab_111.religo", line 2, characters 0-3 at "let", after "=":
-          184: <syntax error>
+          This is an incorrect let binding.
+          Examples of correct let bindings:
+          let a: int = 4;
+          let (a: int, b: int) = (1, 2);
+          let func = (a: int, b: int) => a + b;
+
 
 
           If you're not sure how to fix this error, you can do one of the following:

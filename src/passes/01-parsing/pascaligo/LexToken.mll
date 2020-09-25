@@ -650,5 +650,112 @@ let check_right_context token next_token buffer : unit =
               else ()
         | _::_ -> ()
 
+(* Unlexing the tokens *)
+
+let gen_sym prefix =
+  let count = ref 0 in
+  fun () -> incr count;
+         prefix ^ string_of_int !count
+
+let id_sym   = gen_sym "id"
+and ctor_sym = gen_sym "C"
+
+let concrete = function
+  (* Literals *)
+
+| "Ident"    -> id_sym ()
+| "Constr"   -> ctor_sym ()
+| "Int"      -> "1"
+| "Nat"      -> "1n"
+| "Mutez"    -> "1mutez"
+| "String"   -> "\"a string\""
+| "Verbatim" -> "{|verbatim|}"
+| "Bytes"    -> "0xAA"
+| "Attr"     -> "[@attr]"
+| "Lang"     -> "[%Michelson {UNPAIR}]"
+
+  (* Symbols *)
+
+| "SEMI"     -> ";"
+| "COMMA"    -> ","
+| "LPAR"     -> "("
+| "RPAR"     -> ")"
+| "LBRACE"   -> "{"
+| "RBRACE"   -> "}"
+| "LBRACKET" -> "["
+| "RBRACKET" -> "]"
+| "CONS"     -> "#"
+| "VBAR"     -> "|"
+| "ARROW"    -> "->"
+| "ASS"      -> ":="
+| "EQ"       -> "="
+| "COLON"    -> ":"
+| "LT"       -> "<"
+| "LE"       -> "<="
+| "GT"       -> ">"
+| "GE"       -> ">="
+| "NE"       -> "=/="
+| "PLUS"     -> "+"
+| "MINUS"    -> "-"
+| "SLASH"    -> "/"
+| "TIMES"    -> "*"
+| "DOT"      -> "."
+| "WILD"     -> "_"
+| "CAT"      -> "^"
+
+  (* Keywords *)
+
+| "And"       -> "and"
+| "Begin"     -> "begin"
+| "BigMap"    -> "big_map"
+| "Block"     ->  "block"
+| "Case"      -> "case"
+| "Const"     -> "const"
+| "Contains"  -> "contains"
+| "Else"      -> "else"
+| "End"       -> "end"
+| "False"     -> "False"
+| "For"       -> "for"
+| "From"      -> "from"
+| "Function"  -> "function"
+| "Recursive" -> "recursive"
+| "If"        -> "if"
+| "In"        -> "in"
+| "Is"        -> "is"
+| "List"      -> "list"
+| "Map"       -> "map"
+| "Mod"       -> "mod"
+| "Nil"       -> "nil"
+| "Not"       -> "not"
+| "Of"        -> "of"
+| "Or"        -> "or"
+| "Patch"     -> "patch"
+| "Record"    -> "record"
+| "Remove"    -> "remove"
+| "Set"       -> "set"
+| "Skip"      -> "skip"
+| "Step"      -> "step"
+| "Then"      -> "then"
+| "To"        -> "to"
+| "True"      -> "True"
+| "Type"      -> "type"
+| "Unit"      -> "Unit"
+| "Var"       -> "var"
+| "While"     -> "while"
+| "With"      -> "with"
+
+  (* Data constructors *)
+
+| "C_None"    -> "None"
+| "C_Some"    -> "Some"
+
+  (* Virtual tokens *)
+
+| "EOF" -> ""
+
+  (* This case should not happen! *)
+
+| _  -> "\\Unknown" (* Backslash meant to trigger an error *)
+
 (* END TRAILER *)
 }
