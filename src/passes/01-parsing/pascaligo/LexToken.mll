@@ -230,7 +230,7 @@ let to_lexeme = function
   (* Literals *)
 
   String s   -> String.escaped s.Region.value
-| Verbatim v -> String.escaped v.Region.value
+| Verbatim v -> v.Region.value
 | Bytes b    -> fst b.Region.value
 | Int i
 | Nat i
@@ -451,7 +451,9 @@ and scan_constr region lexicon = parse
 
 (* Smart constructors (injections) *)
 
-let mk_string lexeme region = String Region.{region; value=lexeme}
+let mk_string lexeme region =
+  let lexeme = Scanf.unescaped lexeme in
+  String Region.{region; value=lexeme}
 
 let mk_verbatim lexeme region = Verbatim Region.{region; value=lexeme}
 

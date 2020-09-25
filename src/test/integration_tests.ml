@@ -2401,6 +2401,13 @@ let loop_bugs_ligo () : (unit, _) result =
     expect_eq program "shadowing_assigned_in_body" input expected in
   ok ()
 
+let string_escaping_mligo () : (unit, _) result =
+  let%bind program = mtype_file "./contracts/string_escaping.mligo" in
+  let%bind () =
+    let expected = e_bool true in
+    expect_fail program "test" expected in
+  ok ()
+
 let main = test_suite "Integration (End to End)" [
     test "chain id" chain_id ;                         (* record *)
     test "bytes unpack" bytes_unpack ;                 (* record *)
@@ -2584,4 +2591,5 @@ let main = test_suite "Integration (End to End)" [
     test "loop_bugs (ligo)" loop_bugs_ligo ;
     test "tuple_list (religo)" tuple_list_religo ;
     test "single_record_expr (religo)" single_record_expr_religo ;
+    test "string_escaping (mligo)" string_escaping_mligo ;
   ]
