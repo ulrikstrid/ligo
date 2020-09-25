@@ -33,7 +33,7 @@ and pp_attributes = function
 
 and pp_ident {value; _} = string value
 
-and pp_string s = string "\"" ^^ pp_ident s ^^ string "\""
+and pp_string s = string "\"" ^^ pp_ident (Region.map String.escaped s) ^^ string "\""
 
 and pp_verbatim s = string "{|" ^^ pp_ident s ^^ string "|}"
 

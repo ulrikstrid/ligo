@@ -166,3 +166,7 @@ let of_yojson = fun t ->
      | (Error _ as e), _ | _, (Error _ as e) -> e end
   | _ ->
      Utils.error_yojson_format "{start: Pos.t, stop: Pos.t}"
+
+let map (f : 'a -> 'b) (r : 'a reg) : 'b reg =
+  let {region; value} = r in
+  {region; value = f value}
