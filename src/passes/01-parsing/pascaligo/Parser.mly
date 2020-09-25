@@ -41,61 +41,58 @@ let mk_arith f arg1 op arg2 =
 %type <CST.t> contract
 %type <CST.expr> interactive_expr
 
-%on_error_reduce
-  nsepseq(case_clause(expr),VBAR)
-  nsepseq(core_pattern,SEMI)
-  seq(__anonymous_0(core_pattern,SEMI))
-  pattern
-  nsepseq(core_pattern,CONS)
-  nsepseq(case_clause(if_clause),VBAR)
-  lhs
-  map_lookup
-  nsepseq(statement,SEMI)
-  seq(__anonymous_0(statement,SEMI))
-  nsepseq(core_pattern,COMMA)
-  constr_pattern
-  core_expr
-  module_fun
-  nsepseq(param_decl,SEMI)
-  nsepseq(selection,DOT)
-  nsepseq(field_path_assignment,SEMI)
-  seq(__anonymous_0(field_path_assignment,SEMI))
-  nsepseq(binding,SEMI)
-  seq(__anonymous_0(binding,SEMI))
-  nsepseq(field_assignment,SEMI)
-  seq(__anonymous_0(field_assignment,SEMI))
-  nsepseq(expr,SEMI)
-  seq(__anonymous_0(expr,SEMI))
-  add_expr
-  unary_expr
-  const_decl
-  open_const_decl
-  fun_decl
-  variant
-  core_type
-  nsepseq(field_decl,SEMI)
-  seq(__anonymous_0(field_decl,SEMI))
-  nsepseq(core_type,TIMES)
-  type_decl
-  cartesian
-  fun_type
-  cons_expr
-  cat_expr
-  set_membership
-  disj_expr
-  nsepseq(variant,VBAR)
-  core_pattern
-  nsepseq(type_expr,COMMA)
-  expr
-  nsepseq(expr,COMMA)
-  option(SEMI)
-  option(VBAR)
-%on_error_reduce
-   projection
-%on_error_reduce
-   option(arguments)
-%on_error_reduce
-   path
+%on_error_reduce nseq(__anonymous_0(field_path_assignment,SEMI))
+%on_error_reduce nseq(__anonymous_0(binding,SEMI))
+%on_error_reduce nseq(__anonymous_0(field_assignment,SEMI))
+%on_error_reduce nseq(__anonymous_0(core_pattern,SEMI))
+%on_error_reduce nseq(__anonymous_0(expr,SEMI))
+%on_error_reduce nsepseq(field_assignment,SEMI)
+%on_error_reduce nseq(__anonymous_0(statement,SEMI))
+%on_error_reduce seq(Attr)
+%on_error_reduce nsepseq(case_clause(expr),VBAR)
+%on_error_reduce nsepseq(core_pattern,SEMI)
+%on_error_reduce pattern
+%on_error_reduce nsepseq(core_pattern,CONS)
+%on_error_reduce nsepseq(case_clause(if_clause),VBAR)
+%on_error_reduce lhs
+%on_error_reduce map_lookup
+%on_error_reduce nsepseq(statement,SEMI)
+%on_error_reduce nsepseq(core_pattern,COMMA)
+%on_error_reduce constr_pattern
+%on_error_reduce core_expr
+%on_error_reduce module_fun
+%on_error_reduce nsepseq(param_decl,SEMI)
+%on_error_reduce nsepseq(selection,DOT)
+%on_error_reduce nsepseq(field_path_assignment,SEMI)
+%on_error_reduce nsepseq(binding,SEMI)
+%on_error_reduce nsepseq(expr,SEMI)
+%on_error_reduce add_expr
+%on_error_reduce unary_expr
+%on_error_reduce const_decl
+%on_error_reduce open_const_decl
+%on_error_reduce fun_decl
+%on_error_reduce variant
+%on_error_reduce core_type
+%on_error_reduce nsepseq(field_decl,SEMI)
+%on_error_reduce nsepseq(core_type,TIMES)
+%on_error_reduce type_decl
+%on_error_reduce cartesian
+%on_error_reduce fun_type
+%on_error_reduce cons_expr
+%on_error_reduce cat_expr
+%on_error_reduce set_membership
+%on_error_reduce disj_expr
+%on_error_reduce nsepseq(variant,VBAR)
+%on_error_reduce core_pattern
+%on_error_reduce nsepseq(type_expr,COMMA)
+%on_error_reduce expr
+%on_error_reduce nsepseq(expr,COMMA)
+%on_error_reduce option(SEMI)
+%on_error_reduce option(VBAR)
+%on_error_reduce projection
+%on_error_reduce option(arguments)
+%on_error_reduce path
+
 %%
 
 (* RULES *)
@@ -161,7 +158,8 @@ seq(X):
 (* Non-empty sequence of items *)
 
 nseq(X):
-  X seq(X) { $1,$2 }
+  X         { $1, [] }
+| X nseq(X) { let hd,tl = $2 in $1, hd::tl }
 
 (* Non-empty separated sequence of items *)
 
