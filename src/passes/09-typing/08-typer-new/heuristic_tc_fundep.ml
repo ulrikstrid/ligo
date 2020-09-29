@@ -31,26 +31,37 @@ open Heuristic_tc_fundep_utils
 
 (* gets the refined_typeclass from for tc the private_storage (and
    stores a copy of the tc if there was no existing refined_typeclass) *)
+(* let get_or_add_refined_typeclass : structured_dbs -> private_storage -> c_typeclass_simpl -> (private_storage * refined_typeclass) =
+ *   fun dbs () tcs ->
+ *   let tc = tc_to_constraint_identifier tcs in
+ *   (\* TODO2: do we need the match in the normalizer? *\)
+ *   match PolyMap.find_opt tc dbs.refined_typeclasses with
+ *     None ->
+ *     let rtc = make_refined_typeclass @@ constraint_identifier_to_tc dbs tc in
+ *     (\* TODO: instead store the old constraint to be updated by the propagator? *\)
+ *     (\* let refined_typeclasses = PolyMap.add tc rtc dbs.refined_typeclasses in *\)
+ *     (\* let aux' = function
+ *      *     Some set -> Some (Set.add tc set)
+ *      *   | None -> Some (Set.add tc (Set.create ~cmp:Ast_typed.Compare.constraint_identifier)) in
+ *      * let aux typeclasses_constrained_by tv =
+ *      *   Map.update tv aux' typeclasses_constrained_by in
+ *      * (\\* TODO2: move this to the normalizer *\\)
+ *      * let typeclasses_constrained_by =
+ *      *   List.fold_left
+ *      *     aux
+ *      *     dbs.typeclasses_constrained_by
+ *      *     (List.rev (constraint_identifier_to_tc dbs tc).args) in *\)
+ *     (), (\* { refined_typeclasses; typeclasses_constrained_by }, TODO2 *\) rtc
+ *   | Some rtc ->
+ *     (), (\* { refined_typeclasses; typeclasses_constrained_by }, TODO2 *\) rtc *)
+
 let get_or_add_refined_typeclass : structured_dbs -> private_storage -> c_typeclass_simpl -> (private_storage * refined_typeclass) =
   fun dbs () tcs ->
+  let open Heuristic_tc_fundep_utils in
   let tc = tc_to_constraint_identifier tcs in
   match PolyMap.find_opt tc dbs.refined_typeclasses with
-    None ->
-    let rtc = make_refined_typeclass @@ constraint_identifier_to_tc dbs tc in
-    let refined_typeclasses = PolyMap.add tc rtc dbs.refined_typeclasses in
-    let aux' = function
-        Some set -> Some (Set.add tc set)
-      | None -> Some (Set.add tc (Set.create ~cmp:Ast_typed.Compare.constraint_identifier)) in
-    let aux typeclasses_constrained_by tv =
-      Map.update tv aux' typeclasses_constrained_by in
-    let typeclasses_constrained_by =
-      List.fold_left
-        aux
-        dbs.typeclasses_constrained_by
-        (List.rev (constraint_identifier_to_tc dbs tc).args) in
-    (), (* { refined_typeclasses; typeclasses_constrained_by }, TODO2 *) rtc
-  | Some rtc ->
-    (), (* { refined_typeclasses; typeclasses_constrained_by }, TODO2 *) rtc
+    Some x -> (), x
+  | None -> failwith "internal error: couldn't find refined version of the typeclass constraint"
 
 let is_variable_constrained_by_typeclass : structured_dbs -> type_variable -> refined_typeclass -> bool =
   fun dbs var refined_typeclass ->
@@ -76,13 +87,12 @@ let selector_by_ctor_in_db : private_storage -> structured_dbs -> c_constructor_
 (* Find typeclass constraints in the private_storage which constrain c.tv *)
 let selector_by_ctor_in_private_storage : private_storage -> structured_dbs -> c_constructor_simpl -> (private_storage * output_tc_fundep selector_outputs) =
   fun private_storage dbs c ->
-  let refined_typeclasses = List.map snd @@ Map.bindings private_storage.refined_typeclasses in
+  let refined_typeclasses = List.map snd @@ Map.bindings dbs.refined_typeclasses in
   let typeclasses =
     List.filter
       (is_variable_constrained_by_typeclass dbs c.tv)
       refined_typeclasses in
   let cs_pairs_db = List.map (fun tc -> { tc ; c }) typeclasses in
-  (* TODO: remove the WasSelected *)
   private_storage, cs_pairs_db
 
 let selector_by_ctor : private_storage -> structured_dbs -> c_constructor_simpl -> (private_storage * output_tc_fundep selector_outputs) =
@@ -113,7 +123,7 @@ let selector_by_tc : private_storage -> structured_dbs -> c_typeclass_simpl -> (
 
 let selector : (type_constraint_simpl , output_tc_fundep , private_storage) selector =
   fun type_constraint_simpl private_storage dbs ->
-  match type_constraint_simpl.sc with
+  match type_constraint_simpl with
     SC_Constructor c  -> selector_by_ctor private_storage dbs c
   | SC_Row r          -> ignore r; failwith "TODO: call selector_by_ctor private_storage dbs r"
   | SC_Alias       _  -> private_storage, [] (* TODO: ? *)
@@ -148,7 +158,7 @@ let restrict (({ reason_constr_simpl = _; tv = _; c_tag = _; tv_list } as c) : c
      variables passed to the type constructor *)
   let args = splice (fun _arg -> tv_list) index tcs.args in
   let id_typeclass_simpl = tcs.id_typeclass_simpl in
-  { reason_typeclass_simpl = tcs.reason_typeclass_simpl; id_typeclass_simpl ; tc ; args }
+  { reason_typeclass_simpl = tcs.reason_typeclass_simpl; is_mandatory_constraint = tcs.is_mandatory_constraint; id_typeclass_simpl ; tc ; args }
 
 (* input:
      x ? [ map3( nat , unit , float ) ; map3( bytes , mutez , float ) ]
@@ -181,6 +191,7 @@ let replace_var_and_possibilities_1 ((x : type_variable) , (possibilities_for_x 
       let fresh_vars = List.map (fun _arg -> Var.fresh_like x) arguments_of_first_constructor in
       let deduced : c_constructor_simpl = {
         reason_constr_simpl = "inferred because it is the only remaining possibility at this point according to the typeclass [TODO:link to the typeclass here]" ;
+        is_mandatory_constraint = false;
         tv = x;
         c_tag ;
         tv_list = fresh_vars
@@ -191,6 +202,7 @@ let replace_var_and_possibilities_1 ((x : type_variable) , (possibilities_for_x 
             "sub-part of a typeclass: expansion of the possible \
              arguments for the constructor associated with %a"
             Ast_typed.PP.type_variable x;
+        is_mandatory_constraint = false;
         id_typeclass_simpl = ConstraintIdentifier (-1L) ; (* TODO: this and the reason_typeclass_simpl should simply not be used here *)
         args = fresh_vars ;
         tc = arguments_of_constructors ;
@@ -241,7 +253,7 @@ let deduce_and_clean : c_typeclass_simpl -> (deduce_and_clean_result, _) result 
          deduced:
          [ x         = map3  ( fresh_x_1 , fresh_x_2 , fresh_x_3 ) ;
            fresh_x_3 = float (                                   ) ; ] *)
-  let%bind cleaned = transpose_back tcs.reason_typeclass_simpl tcs.id_typeclass_simpl vars_and_possibilities in
+  let%bind cleaned = transpose_back (tcs.reason_typeclass_simpl, tcs.is_mandatory_constraint) tcs.id_typeclass_simpl vars_and_possibilities in
   ok { deduced ; cleaned }
 
 let propagator : (output_tc_fundep, private_storage , typer_error) propagator =
@@ -252,10 +264,21 @@ let propagator : (output_tc_fundep, private_storage , typer_error) propagator =
   let restricted = restrict selected.c selected.tc.tcs in
   let%bind {deduced ; cleaned} = deduce_and_clean restricted in
   let cleaned : refined_typeclass = make_refined_typeclass cleaned in
-  let refined_typeclasses = PolyMap.add (tc_to_constraint_identifier selected.tc.tcs) cleaned private_storage.refined_typeclasses in
-  let typeclasses_constrained_by =
-    ( failwith "TODO" ) (* update private_storage.typeclasses_constrained_by *) in
-  let private_storage : private_storage = { refined_typeclasses ; typeclasses_constrained_by } in
+  (* TODO: this is because we cannot return a simplified constraint,
+     and instead need to retun a constraint as it would appear if it
+     came from the program (generated by the ill-named module
+     "Wrap"). type_constraint_simpl is more or less a subset of
+     type_constraint, but some parts have been shuffled
+     around. Hopefully this can be sorted out so that we don't need a
+     dummy value for the srcloc and maybe even so that we don't need a
+     conversion (one may dream). *)
+  let cleaned : type_constraint = {
+    reason = cleaned.tcs.reason_typeclass_simpl;
+    c = C_typeclass {
+        tc_args = (List.map (fun x -> { tsrc = "no idea"; t = P_variable x }) cleaned.tcs.args);
+        typeclass = cleaned.tcs.tc;
+      }
+  } in
   let aux (x : c_constructor_simpl) : type_constraint = {
     reason = "inferred: only possible type for that variable in the typeclass";
     c = C_equation {
@@ -271,8 +294,8 @@ let propagator : (output_tc_fundep, private_storage , typer_error) propagator =
   let deduced : type_constraint list = List.map aux deduced in
   ok (private_storage, [
       {
-        remove_constraints = [];
-        add_constraints = deduced;
+        remove_constraints = [SC_Typeclass selected.tc.tcs];
+        add_constraints = cleaned :: deduced;
         justification = "no removal so no justification needed"
       }
     ])
@@ -288,9 +311,6 @@ let heuristic =
       propagator ;
       printer = Ast_typed.PP.output_tc_fundep ;
       comparator = Solver_should_be_generated.compare_output_tc_fundep ;
-      initial_private_storage = {
-        refined_typeclasses = Map.create ~cmp:Ast_typed.Compare.constraint_identifier ;
-        typeclasses_constrained_by = Map.create ~cmp:Var.compare ;
-      } ;
+      initial_private_storage = () ;
     }
 

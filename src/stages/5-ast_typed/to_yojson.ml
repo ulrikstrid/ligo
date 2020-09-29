@@ -517,38 +517,39 @@ and p_row {p_row_tag;p_row_args} =
     ("p_row_args", label_map type_value p_row_args);
   ]
 
-let c_constructor_simpl {reason_constr_simpl;tv;c_tag;tv_list} =
+let c_constructor_simpl {is_mandatory_constraint;reason_constr_simpl;tv;c_tag;tv_list} =
   `Assoc [
+        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
     ("reason_constr_simpl", `String reason_constr_simpl);
     ("tv", type_variable_to_yojson tv);
     ("c_tag", constant_tag c_tag);
     ("tv_list", list type_variable_to_yojson tv_list)
   ]
 
-let c_alias {reason_alias_simpl; a; b} =
-  `Assoc [
+let c_alias {is_mandatory_constraint;reason_alias_simpl; a; b} =
+  `Assoc [        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
     ("reason_alias_simpl", `String reason_alias_simpl);
     ("a", type_variable_to_yojson a);
     ("b", type_variable_to_yojson b);
   ]
 
-let c_poly_simpl {reason_poly_simpl; tv; forall} =
-  `Assoc [
+let c_poly_simpl {is_mandatory_constraint;reason_poly_simpl; tv; forall} =
+  `Assoc [        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
     ("reason_poly_simpl", `String reason_poly_simpl);
     ("tv", type_variable_to_yojson tv);
     ("forall", p_forall forall)
   ]
 
-let c_typeclass_simpl {id_typeclass_simpl=ConstraintIdentifier ci;reason_typeclass_simpl;tc;args} =
-  `Assoc [
+let c_typeclass_simpl {is_mandatory_constraint;id_typeclass_simpl=ConstraintIdentifier ci;reason_typeclass_simpl;tc;args} =
+  `Assoc [        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
     ("id_typeclass_simpl", `String (Format.sprintf "%Li" ci));
     ("reason_typeclass_simpl", `String reason_typeclass_simpl);
     ("tc", typeclass tc);
     ("args", list type_variable_to_yojson args)
   ]
 
-let c_row_simpl {reason_row_simpl; tv;r_tag;tv_map} =
-  `Assoc [
+let c_row_simpl {is_mandatory_constraint;reason_row_simpl; tv;r_tag;tv_map} =
+  `Assoc [        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
     ("reason_row_simpl", `String reason_row_simpl);
     ("tv", type_variable_to_yojson tv);
     ("r_tag", row_tag r_tag);

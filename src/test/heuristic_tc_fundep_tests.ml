@@ -32,9 +32,9 @@ let test''
   test name @@ fun () ->
   let%bind e =
     trace typer_tracer @@
-    let info = { reason_constr_simpl = "unit test" ; tv ; c_tag ; tv_list } in
-    let tc =  { reason_typeclass_simpl = "unit test"; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
-    let expected =  { reason_typeclass_simpl = "unit test" ; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
+    let info = { reason_constr_simpl = "unit test" ; is_mandatory_constraint = true; tv ; c_tag ; tv_list } in
+    let tc =  { reason_typeclass_simpl = "unit test"; is_mandatory_constraint = false; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
+    let expected =  { reason_typeclass_simpl = "unit test" ; is_mandatory_constraint = false; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
     (* TODO: use an error not an assert *)
     (* Format.printf "\n\nActual: %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl (restrict info tc);
      * Format.printf "\n\nExpected %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl expected; *)

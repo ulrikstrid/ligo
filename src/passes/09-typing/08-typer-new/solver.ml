@@ -23,12 +23,14 @@ let init_propagator_heuristic (Propagator_heuristic { selector ; propagator ; pr
 let initial_state : _ typer_state = {
     structured_dbs =
       {
-        all_constraints          = ([] : type_constraint_simpl list) ;
-        aliases                  = UF.empty (fun s -> Format.asprintf "%a" Var.pp s) Var.compare;
-        assignments              = (Map.create ~cmp:Var.compare : (type_variable, c_constructor_simpl) Map.t);
-        grouped_by_variable      = (Map.create ~cmp:Var.compare : (type_variable,         constraints) Map.t);
-        cycle_detection_toposort = ();
-        by_constraint_identifier = (Map.create ~cmp:Ast_typed.Compare.constraint_identifier : (constraint_identifier, c_typeclass_simpl) Map.t);
+        all_constraints            = ([] : type_constraint_simpl list) ;
+        aliases                    = UF.empty (fun s -> Format.asprintf "%a" Var.pp s) Var.compare;
+        assignments                = (Map.create ~cmp:Var.compare : (type_variable, c_constructor_simpl) Map.t);
+        grouped_by_variable        = (Map.create ~cmp:Var.compare : (type_variable,         constraints) Map.t);
+        cycle_detection_toposort   = ();
+        by_constraint_identifier   = (Map.create ~cmp:Ast_typed.Compare.constraint_identifier : (constraint_identifier, c_typeclass_simpl) Map.t);
+        refined_typeclasses        = (Map.create ~cmp:Ast_typed.Compare.constraint_identifier : (constraint_identifier, refined_typeclass) Map.t);
+        typeclasses_constrained_by = (Map.create ~cmp:Var.compare)
       } ;
     already_selected_and_propagators = List.map init_propagator_heuristic propagator_heuristics
   }

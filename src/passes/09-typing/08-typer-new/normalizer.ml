@@ -20,6 +20,10 @@ type 'a normalizer_rm = structured_dbs -> 'a -> (structured_dbs, Typer_common.Er
  *   rm: 'a normalizer_rm;
  * } *)
 
+(* TODO: make this be threaded around (not essential, but we tend to
+   avoid mutable stuff). *)
+let global_next_constraint_id : int64 ref = ref 0L
+
 (** Updates the dbs.all_constraints field when new constraints are
    discovered.
 
@@ -51,7 +55,7 @@ let normalizer_grouped_by_variable : (type_constraint_simpl , type_constraint_si
       Constraint_databases.add_constraints_related_to tvar constraints dbs
     in List.fold_left aux dbs tvars
   in
-  let dbs = match new_constraint.sc with
+  let dbs = match new_constraint with
       SC_Constructor ({tv ; c_tag = _ ; tv_list} as c) -> store_constraint (tv :: tv_list)             {constructor = [c] ; poly = []  ; tc = [] ; row = []}
     | SC_Row         ({tv ; r_tag = _ ; tv_map } as c) -> store_constraint (tv :: LMap.to_list tv_map) {constructor = []  ; poly = []  ; tc = [] ; row = [c]}
     | SC_Typeclass   ({tc = _ ; args}            as c) -> store_constraint args                        {constructor = []  ; poly = []  ; tc = [c]; row = []}
@@ -68,7 +72,7 @@ let normalizer_grouped_by_variable_remove : type_constraint_simpl normalizer_rm 
       Constraint_databases.rm_constraints_related_to tvar constraints dbs
     in bind_fold_list aux dbs tvars
   in
-  match constraint_to_rm.sc with
+  match constraint_to_rm with
       SC_Constructor ({tv ; c_tag = _ ; tv_list} as c) -> rm_constraint (tv :: tv_list)             {constructor = [c] ; poly = []  ; tc = [] ; row = []}
     | SC_Row         ({tv ; r_tag = _ ; tv_map } as c) -> rm_constraint (tv :: LMap.to_list tv_map) {constructor = []  ; poly = []  ; tc = [] ; row = [c]}
     | SC_Typeclass   ({tc = _ ; args}            as c) -> rm_constraint args                        {constructor = []  ; poly = []  ; tc = [c]; row = []}
@@ -79,27 +83,81 @@ let normalizer_grouped_by_variable_remove : type_constraint_simpl normalizer_rm 
 
 let normalizer_by_constraint_identifier : (type_constraint_simpl , type_constraint_simpl) normalizer =
   fun dbs new_constraint ->
-  let dbs = match new_constraint.sc with
+  let dbs = match new_constraint with
     | SC_Typeclass c -> Constraint_databases.register_by_constraint_identifier c dbs
     | _ -> dbs
   in (dbs , [new_constraint])
 
 let normalizer_by_constraint_identifier_remove : type_constraint_simpl normalizer_rm =
   fun dbs constraint_to_rm ->
-  let%bind by_constraint_identifier = match constraint_to_rm.sc with
+  let%bind by_constraint_identifier = match constraint_to_rm with
     | Ast_typed.Types.SC_Typeclass { id_typeclass_simpl; _ } ->
       (* TODO: a proper error instead of an exception *)
       ok @@ Map.remove id_typeclass_simpl dbs.by_constraint_identifier
     | _ -> ok dbs.by_constraint_identifier in
   ok { dbs with by_constraint_identifier }
 
-(** Stores the first assignment ('a = ctor('b, …)) that is encountered. -> why ?
+
+let normalizer_refined_typeclasses : (type_constraint_simpl , type_constraint_simpl) normalizer =
+  fun dbs new_constraint ->
+  match new_constraint with
+  | SC_Typeclass c ->
+    (* dbs.refined_typeclasses : map id → id *)
+
+    (* stores a copy of the typeclass constraint c if there was no
+       existing refined_typeclass for it *)
+    let open Heuristic_tc_fundep_utils in
+    let tc = tc_to_constraint_identifier c in
+    (match PolyMap.find_opt tc dbs.refined_typeclasses with
+       None ->
+       let copied = {
+         c with
+         is_mandatory_constraint = false;
+         id_typeclass_simpl = ConstraintIdentifier (!global_next_constraint_id);
+       } in
+       let metadata = make_refined_typeclass copied in
+       let copied' = SC_Typeclass copied in
+       let dbs = {
+         dbs with
+         refined_typeclasses = PolyMap.add tc metadata dbs.refined_typeclasses
+       } in
+       dbs, [copied'; new_constraint]
+     | Some _ -> dbs, [new_constraint])
+  | _ -> dbs, [new_constraint]
+
+let normalizer_refined_typeclasses_remove : type_constraint_simpl normalizer_rm =
+  fun dbs constraint_to_rm ->
+  let _ = failwith "TODO normalizer_refined_typeclasses_remove" in
+
+  match constraint_to_rm with
+  | SC_Typeclass c ->
+    let open Heuristic_tc_fundep_utils in
+    let tc = tc_to_constraint_identifier c in
+    ok @@ {
+      dbs with
+      refined_typeclasses = PolyMap.remove tc dbs.refined_typeclasses
+    }
+  | _ -> ok dbs
+
+let normalizer_typeclasses_constrained_by : (type_constraint_simpl , type_constraint_simpl) normalizer =
+  fun dbs new_constraint ->
+  let dbs = match new_constraint with
+    | SC_Typeclass c -> Constraint_databases.register_typeclasses_constrained_by c dbs
+    | _ -> dbs
+  in (dbs , [new_constraint])
+
+let normalizer_typeclasses_constrained_by_remove : type_constraint_simpl normalizer_rm =
+  failwith "TODO normalizer_typeclasses_constrained_by_remove"
+
+
+(** Stores the first assignment ('a = ctor('b, …)) that is encountered
+    (all assignments should use compatible types).
 
     Subsequent ('a = ctor('b2, …)) with the same 'a are ignored. *)
 
 let normalizer_assignments : (type_constraint_simpl , type_constraint_simpl) normalizer =
   fun dbs new_constraint ->
-    match new_constraint.sc with
+    match new_constraint with
     | SC_Constructor ({tv ; c_tag = _ ; tv_list = _} as c) ->
       let assignments = Map.update tv (function None -> Some c | e -> e) dbs.assignments in
       let dbs = {dbs with assignments} in
@@ -109,10 +167,6 @@ let normalizer_assignments : (type_constraint_simpl , type_constraint_simpl) nor
 
 (* TODO: at some point there may be uses of named type aliases (type
    foo = int; let x : foo = 42). These should be inlined. *)
-
-(* TODO: make this be threaded around (not essential, but we tend to
-   avoid mutable stuff). *)
-let global_next_constraint_id : int64 ref = ref 0L
 
 (** This function converts constraints from type_constraint to
     type_constraint_simpl. The former has more possible cases, and the
@@ -133,7 +187,7 @@ and type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
     let fresh_eqns = List.map (fun (v,t) -> c_equation { tsrc = "solver: normalizer: split_constant" ; t = P_variable v } t "normalizer: split_constant") (List.combine fresh_vars args) in
     let recur = List.map type_constraint_simpl fresh_eqns in
-    [{ is_mandatory_constraint = true; sc = SC_Constructor {tv=a;c_tag;tv_list=fresh_vars;reason_constr_simpl=Format.asprintf "normalizer: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.constant_tag c_tag (PP_helpers.list_sep Ast_typed.PP.type_value (fun ppf () -> Format.fprintf ppf ", ")) args} }] @ List.flatten recur in
+    [SC_Constructor { is_mandatory_constraint = true; tv=a;c_tag;tv_list=fresh_vars;reason_constr_simpl=Format.asprintf "normalizer: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.constant_tag c_tag (PP_helpers.list_sep Ast_typed.PP.type_value (fun ppf () -> Format.fprintf ppf ", ")) args}] @ List.flatten recur in
   let split_row a r_tag args =
     let aux const _ v =
       let var = Core.fresh_type_variable () in
@@ -142,9 +196,9 @@ and type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     in
     let fresh_eqns, fresh_vars = LMap.fold_map aux [] args in
     let recur = List.map type_constraint_simpl fresh_eqns in
-    [{ is_mandatory_constraint = true; sc = SC_Row {tv=a;r_tag;tv_map=fresh_vars;reason_row_simpl=Format.asprintf "normalizer: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.row_tag r_tag (Ast_typed.PP.record_sep Ast_typed.PP.type_value (fun ppf () -> Format.fprintf ppf ", ")) args} }] @ List.flatten recur in
-  let gather_forall a forall = [{ is_mandatory_constraint = true; sc = SC_Poly { tv=a; forall ; reason_poly_simpl="normalizer: gather_forall"} }] in
-  let gather_alias a b = [{ is_mandatory_constraint = true; sc = SC_Alias { a ; b ; reason_alias_simpl="normalizer: gather_alias"} }] in
+    [SC_Row {is_mandatory_constraint = true; tv=a;r_tag;tv_map=fresh_vars;reason_row_simpl=Format.asprintf "normalizer: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.row_tag r_tag (Ast_typed.PP.record_sep Ast_typed.PP.type_value (fun ppf () -> Format.fprintf ppf ", ")) args}] @ List.flatten recur in
+  let gather_forall a forall = [SC_Poly { is_mandatory_constraint = true; tv=a; forall ; reason_poly_simpl="normalizer: gather_forall"}] in
+  let gather_alias a b = [SC_Alias { is_mandatory_constraint = true; a ; b ; reason_alias_simpl="normalizer: gather_alias"}] in
   let reduce_type_app a b =
     let (reduced, new_constraints) = Typelang.check_applied @@ Typelang.type_level_eval b in
     let recur = List.map type_constraint_simpl new_constraints in
@@ -156,7 +210,7 @@ and type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     let recur = List.map type_constraint_simpl fresh_eqns in
     let id_typeclass_simpl = ConstraintIdentifier (!global_next_constraint_id) in
     global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
-    [{ is_mandatory_constraint = true; sc = SC_Typeclass { tc ; args = fresh_vars ; id_typeclass_simpl ; reason_typeclass_simpl="normalizer: split_typeclass"} }] @ List.flatten recur in
+    [SC_Typeclass { is_mandatory_constraint = true; tc ; args = fresh_vars ; id_typeclass_simpl ; reason_typeclass_simpl="normalizer: split_typeclass"}] @ List.flatten recur in
 
   match new_constraint.c with
   (* break down (forall 'b, body = forall 'c, body') into ('a = forall 'b, body and 'a = forall 'c, body')) *)
@@ -194,6 +248,8 @@ let normalizers : type_constraint -> structured_dbs -> (structured_dbs , 'modifi
   fun new_constraint dbs ->
     (fun x -> x)
     (* TODO: this does no exhaustiveness check to ensure that all parts of the database were updated as needed. *)
+    @@ lift normalizer_refined_typeclasses
+    @@ lift normalizer_typeclasses_constrained_by
     @@ lift normalizer_by_constraint_identifier
     @@ lift normalizer_grouped_by_variable
     @@ lift normalizer_assignments
@@ -212,6 +268,8 @@ let normalizers_remove : structured_dbs -> type_constraint_simpl -> (structured_
     let%bind (dbs, _) =
       ok (dbs, constraint_to_remove)
       (* TODO: this does no exhaustiveness check to ensure that all parts of the database were updated as needed. *)
+      >>? normalizer_refined_typeclasses_remove
+      >>? normalizer_typeclasses_constrained_by_remove
       >>? normalizer_by_constraint_identifier_remove
       >>? normalizer_grouped_by_variable_remove
       (* >>? lift normalizer_assignments_remove *)

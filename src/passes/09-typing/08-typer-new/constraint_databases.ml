@@ -84,6 +84,23 @@ let register_by_constraint_identifier : c_typeclass_simpl -> structured_dbs -> s
   fun c dbs ->
   { dbs with by_constraint_identifier = Map.add c.id_typeclass_simpl c dbs.by_constraint_identifier }
 
+open Heuristic_tc_fundep_utils
+
+let register_typeclasses_constrained_by : c_typeclass_simpl -> structured_dbs -> structured_dbs =
+  fun c dbs ->
+  let tc = tc_to_constraint_identifier c in
+  let aux' = function
+      Some set -> Some (Set.add tc set)
+    | None -> Some (Set.add tc (Set.create ~cmp:Ast_typed.Compare.constraint_identifier)) in
+  let aux typeclasses_constrained_by tv =
+    Map.update tv aux' typeclasses_constrained_by in
+  let typeclasses_constrained_by =
+    List.fold_left
+      aux
+      dbs.typeclasses_constrained_by
+      (List.rev (constraint_identifier_to_tc dbs tc).args) in
+  { dbs with typeclasses_constrained_by }
+
 
 let merge_constraints : type_variable -> type_variable -> structured_dbs -> structured_dbs =
   fun variable_a variable_b dbs ->
