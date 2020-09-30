@@ -1055,10 +1055,7 @@ let%expect_test "stacking" =
   error (`Stacking_contract_entrypoint "xxx") ;
   [%expect {|contract entrypoint must be given as a literal string: xxx |}] ;
   error (`Stacking_bad_iterator C_INT) ;
-  [%expect {|bad iterator: iter INT |}] ;
-  error `Stacking_not_comparable_pair_struct ;
-  [%expect
-    {|Invalid comparable value. When using a tuple of with more than 2 components, structure the tuple like this: "(a, (b, c))". |}]
+  [%expect {|bad iterator: iter INT |}]
 
 
 let%expect_test "decompile_michelson" = () (* same as stacking *)

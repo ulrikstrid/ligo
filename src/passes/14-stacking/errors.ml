@@ -4,7 +4,6 @@ type stacking_error = [
   | `Stacking_corner_case of string * string
   | `Stacking_contract_entrypoint of string
   | `Stacking_bad_iterator of Mini_c.constant'
-  | `Stacking_not_comparable_pair_struct
   | `Stacking_could_not_tokenize_michelson of string
   | `Stacking_could_not_parse_michelson of string
   | `Stacking_untranspilable of Michelson.t * Michelson.t
@@ -19,7 +18,6 @@ let corner_case_msg () =
 let corner_case ~loc  message = `Stacking_corner_case (loc,message)
 let contract_entrypoint_must_be_literal ~loc = `Stacking_contract_entrypoint loc
 let bad_iterator cst = `Stacking_bad_iterator cst
-let not_comparable_pair_struct = `Stacking_not_comparable_pair_struct
 let unrecognized_data errs = `Stacking_unparsing_unrecognized_data errs
 let untranspilable m_type m_data = `Stacking_untranspilable (m_type, m_data)
 let bad_constant_arity c = `Stacking_bad_constant_arity c
@@ -42,9 +40,6 @@ let error_ppformat : display_format:string display_format ->
       (Location.dummy, s);
     | `Stacking_bad_iterator cst ->
        let s = Format.asprintf "bad iterator: iter %a" Mini_c.PP.constant cst in
-      (Location.dummy, s);
-    | `Stacking_not_comparable_pair_struct ->
-      let s = "Invalid comparable value. When using a tuple of with more than 2 components, structure the tuple like this: \"(a, (b, c))\". " in
       (Location.dummy, s);
     | `Stacking_could_not_tokenize_michelson code ->
       (Location.dummy, Format.asprintf "Could not tokenize raw Michelson: %s" code)
@@ -79,12 +74,6 @@ let error_jsonformat : stacking_error -> Yojson.Safe.t = fun a ->
     let content = `Assoc [
        ("message", `String "bad iterator");
        ("iterator", `String s); ]
-    in
-    json_error ~stage ~content
-  | `Stacking_not_comparable_pair_struct ->
-    let content = `Assoc [
-       ("message", `String "pair does not have a comparable structure");
-       ("hint", `String "use (a,(b,c)) instead of (a,b,c)"); ]
     in
     json_error ~stage ~content
   | `Stacking_could_not_tokenize_michelson code ->
