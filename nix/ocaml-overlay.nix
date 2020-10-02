@@ -45,6 +45,7 @@ in {
         bigstring = osuper.bigstring.overrideAttrs (_: { doCheck = false; });
         xmldiff = osuper.xmldiff.overrideAttrs (_: { src = sources.xmldiff; });
         getopt = osuper.getopt.overrideAttrs (_: { configurePhase = "true"; });
+        
         # Force certain versions
         cohttp-lwt = osuper.cohttp-lwt.versions."2.4.0";
         ocaml-migrate-parsetree =
@@ -74,6 +75,7 @@ in {
             ligo-tests
             ligo-doc
             ligo-coverage
+            ligo-ocamlformat
           ];
         };
 
@@ -119,6 +121,23 @@ in {
           installPhase = "mkdir $out";
           buildInputs = oa.buildInputs ++ oa.checkInputs;
         });
+
+        # LIGO formatting test
+        ligo-ocamlformat = osuper.ligo.overrideAttrs (oa: {
+          name = "ligo-ocamlformat";
+          buildInputs = oa.buildInputs
+            ++ [oself.ocaml oself.ocamlformat];
+          outputs = [ "out" ];
+          buildPhase = ''
+          cp -r ${builtins.path { name = "git"; path = ../.git; }} .git
+          bash scripts/ocamlformat.sh
+          '';
+          nativeBuildInputs = oa.nativeBuildInputs
+            ++ [ self.buildPackages.rakudo self.buildPackages.git self.buildPackages.gnugrep self.buildPackages.bash ];
+          installPhase = "true";
+        });
+        # LIGO test
+
         # LIGO odoc documentation
         ligo-doc = osuper.ligo.overrideAttrs (oa: {
           name = "ligo-doc";

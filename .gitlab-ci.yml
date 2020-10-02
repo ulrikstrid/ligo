@@ -235,6 +235,13 @@ changelog:
       - release-notes.md
       - release-notes.txt
 
+ocamlformat:
+  extends: .nix
+  only:
+    - merge_requests
+  script: 
+    - nix-build nix -A ligo-ocamlformat
+
 release:
   stage: push
   image: registry.gitlab.com/gitlab-org/release-cli
@@ -245,6 +252,7 @@ release:
     - changelog
     - static-binary
     - deb
+    - ocamlformat
   ## FIXME find a better solution to upload the binary
   artifacts:
     expire_in: 1000 yrs
@@ -276,3 +284,4 @@ pages-attempt:
   only:
     - merge_requests
     - /^.*-run-dev$/
+

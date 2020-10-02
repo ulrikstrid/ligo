@@ -6,5 +6,6 @@ in {
     ligo-bin ligo-static ligo-docker ligo-docker-large ligo-deb
     ligo-editor ligo-editor-docker
     ligo-website
-    ligo-changelog;
+    ligo-changelog
+    ligo-ocamlformat;
 }

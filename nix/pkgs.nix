@@ -28,7 +28,7 @@ let
   tmp = pkgs.runCommandNoCC "tmpdir" { } "mkdir -p $out/tmp";
 
 in pkgs.extend (self: super: {
-  inherit (self.ocamlPackages) ligo ligo-out ligo-tests ligo-doc ligo-coverage;
+  inherit (self.ocamlPackages) ligo ligo-out ligo-tests ligo-doc ligo-coverage ligo-ocamlformat;
   ligo-bin = separateBinary self.ligo-out.bin;
   ligo-docker = self.callPackage ./docker.nix { ligo = self.ligo-bin; };
   ligo-docker-large = self.callPackage ./docker.nix {
