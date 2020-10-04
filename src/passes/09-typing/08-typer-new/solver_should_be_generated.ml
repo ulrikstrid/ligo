@@ -207,8 +207,9 @@ let compare_c_typeclass_simpl
     { reason_typeclass_simpl = _ ; tc = b1 ; args = b2 } =
   compare_typeclass a1 b1 <? fun () -> compare_c_typeclass_simpl_args a2 b2
 
-let compare_refined_typeclass { tcs=a1; vars=a2 } { tcs=b1; vars=b2 } =
+let compare_refined_typeclass { original=a1; refined=r1; vars=a2 } { original=b1; refined=r2; vars=b2 } =
   compare_c_typeclass_simpl a1 b1 <? fun () ->
+  compare_c_typeclass_simpl r1 r2 <? fun () ->
     List.compare ~compare:compare_type_variable (PolySet.elements a2) (PolySet.elements b2)
 
 let compare_output_tc_fundep { tc=a1; c=a2 } { tc=b1; c=b2 } =

@@ -115,11 +115,24 @@ let normalizer_refined_typeclasses : (type_constraint_simpl , type_constraint_si
          is_mandatory_constraint = false;
          id_typeclass_simpl = ConstraintIdentifier (!global_next_constraint_id);
        } in
-       let metadata = make_refined_typeclass copied in
+       let metadata = make_refined_typeclass copied ~original:c in
        let copied' = SC_Typeclass copied in
        let dbs = {
          dbs with
-         refined_typeclasses = PolyMap.add tc metadata dbs.refined_typeclasses
+         refined_typeclasses = PolyMap.update
+             tc
+             (function
+                 Some _existing ->
+                 failwith "Internal error: attempted to register two refined typeclasses for the same typeclass"
+               | None -> Some metadata)
+             dbs.refined_typeclasses;
+         refined_typeclasses_back = PolyMap.update
+             metadata.refined
+             (function
+                 Some _existing -> 
+                 failwith "Internal error: ???"
+               | None -> Some tc)
+             dbs.refined_typeclasses_back
        } in
        dbs, [copied'; new_constraint]
      | Some _ -> dbs, [new_constraint])
@@ -127,15 +140,21 @@ let normalizer_refined_typeclasses : (type_constraint_simpl , type_constraint_si
 
 let normalizer_refined_typeclasses_remove : type_constraint_simpl normalizer_rm =
   fun dbs constraint_to_rm ->
-  let _ = failwith "TODO normalizer_refined_typeclasses_remove" in
-
   match constraint_to_rm with
   | SC_Typeclass c ->
-    let open Heuristic_tc_fundep_utils in
-    let tc = tc_to_constraint_identifier c in
+    let original =
+      try
+        PolyMap.find c dbs.refined_typeclasses_back
+      with
+        Not_found ->
+        failwith "Internal error: Can't remove refined typeclass: it is not attached to a typeclass."
+    in
     ok @@ {
       dbs with
-      refined_typeclasses = PolyMap.remove tc dbs.refined_typeclasses
+      refined_typeclasses =
+        PolyMap.remove original dbs.refined_typeclasses;
+      refined_typeclasses_back =
+        PolyMap.remove c dbs.refined_typeclasses_back
     }
   | _ -> ok dbs
 
@@ -146,8 +165,29 @@ let normalizer_typeclasses_constrained_by : (type_constraint_simpl , type_constr
     | _ -> dbs
   in (dbs , [new_constraint])
 
+let constraint_identifier_to_tc (dbs : structured_dbs) (ci : constraint_identifier) =
+  (* TODO: this can fail: catch the exception and throw an error *)
+  RedBlackTrees.PolyMap.find ci dbs.by_constraint_identifier 
+let tc_to_constraint_identifier : c_typeclass_simpl -> constraint_identifier =
+  fun tc -> tc.id_typeclass_simpl
+
 let normalizer_typeclasses_constrained_by_remove : type_constraint_simpl normalizer_rm =
-  failwith "TODO normalizer_typeclasses_constrained_by_remove"
+  fun dbs c ->
+  match c with
+  | Ast_typed.Types.SC_Typeclass c ->
+    let tc = tc_to_constraint_identifier c in
+    let aux' = function
+        Some set -> Some (Set.remove tc set)
+      | None -> Some (Set.remove tc (Set.create ~cmp:Ast_typed.Compare.constraint_identifier)) in
+    let aux typeclasses_constrained_by tv =
+      Map.update tv aux' typeclasses_constrained_by in
+    let typeclasses_constrained_by =
+      List.fold_left
+        aux
+        dbs.typeclasses_constrained_by
+        (List.rev (constraint_identifier_to_tc dbs tc).args) in
+    ok { dbs with typeclasses_constrained_by }
+  | _ -> ok dbs
 
 
 (** Stores the first assignment ('a = ctor('b, …)) that is encountered

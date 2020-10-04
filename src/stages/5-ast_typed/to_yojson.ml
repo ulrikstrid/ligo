@@ -581,6 +581,12 @@ let ciMap f tvmap =
     `Assoc [ Format.asprintf "%Li" k , f v ] in
   let lst' = List.map aux lst in
   `Assoc ["typeVariableMap",  `List lst']
+let jmap (fk : _ -> json) (fv : _ -> json)  tvmap : json =
+  let lst = RedBlackTrees.PolyMap.bindings tvmap in
+  let aux (k, v) =
+    `List [ fk k ; fv v ] in
+  let lst' = List.map aux lst in
+  `Assoc ["typeVariableMap",  `List lst']
 let constraint_identifier_set s =
   let lst = List.sort (fun (ConstraintIdentifier a) (ConstraintIdentifier b) -> Int64.compare a b) (RedBlackTrees.PolySet.elements s) in
   let aux (ConstraintIdentifier ci) =
@@ -593,10 +599,16 @@ let type_variable_set s =
     `String (Format.asprintf "%a" Var.pp v) in
   let lst' = List.map aux lst in
   `Assoc ["typeVariableSet",  `List lst']
-let refined_typeclass ({ tcs; vars } : refined_typeclass) =
+let refined_typeclass ({ original; refined; vars } : refined_typeclass) : json =
   `Assoc [
-    "tcs", c_typeclass_simpl tcs;
+    "original", c_typeclass_simpl original;
+    "refined", c_typeclass_simpl refined;
     "vars", type_variable_set vars
+  ]
+
+let constraint_identifier (ConstraintIdentifier ci : constraint_identifier) : json =
+  `Assoc [
+    "ConstraintIdentifier", `String (Format.asprintf "%Li" ci);
   ]
 
 let constraints {constructor; poly; tc; row} =
@@ -606,9 +618,10 @@ let constraints {constructor; poly; tc; row} =
     ("tc", list c_typeclass_simpl tc);
     ("row", list c_row_simpl row);
   ]
-let structured_dbs {refined_typeclasses;typeclasses_constrained_by;by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort=_} =
+let structured_dbs {refined_typeclasses;refined_typeclasses_back;typeclasses_constrained_by;by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort=_} =
   `Assoc [
-    ("refined_typeclasses", ciMap refined_typeclass refined_typeclasses); 
+    ("refined_typeclasses", jmap constraint_identifier refined_typeclass refined_typeclasses);
+    ("refined_typeclasses", jmap c_typeclass_simpl constraint_identifier refined_typeclasses_back);
     ("typeclasses_constrained_by", typeVariableMap constraint_identifier_set typeclasses_constrained_by);
     ("by_constraint_identifier", ciMap c_typeclass_simpl by_constraint_identifier); 
     ("all_constrants", list type_constraint_simpl all_constraints);

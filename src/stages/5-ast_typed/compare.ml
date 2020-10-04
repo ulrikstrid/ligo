@@ -4,6 +4,7 @@ open Compare_enum
 let cmp2 f a1 b1 g a2 b2 = match f a1 b1 with 0 -> g a2 b2 | c -> c
 let cmp3 f a1 b1 g a2 b2 h a3 b3 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> h a3 b3 | c -> c) | c -> c
 let cmp4 f a1 b1 g a2 b2 h a3 b3 i a4 b4 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> (match h a3 b3 with 0 -> i a4 b4 | c -> c) | c -> c) | c -> c
+let cmp5 f a1 b1 g a2 b2 h a3 b3 i a4 b4 j a5 b5 = match f a1 b1 with 0 -> (match g a2 b2 with 0 -> (match h a3 b3 with 0 -> (match i a4 b4 with 0 -> j a5 b5 | c -> c) | c -> c) | c -> c) | c -> c
 
 let compare_lmap_entry  compare (Label na, va) (Label nb, vb) = cmp2 String.compare na nb compare va vb
 let compare_tvmap_entry compare (tva, va) (tvb, vb) = cmp2 Var.compare tva tvb compare va vb
@@ -404,35 +405,40 @@ and c_access_label
 and tc_allowed t = List.compare ~compare:type_value t
 and typeclass  t = List.compare ~compare:tc_allowed t
 
-let c_constructor_simpl {reason_constr_simpl=ra;tv=tva;c_tag=ca;tv_list=la} {reason_constr_simpl=rb;tv=tvb;c_tag=cb;tv_list=lb} =
-  cmp4
+let c_constructor_simpl {reason_constr_simpl=ra;is_mandatory_constraint=imca;tv=tva;c_tag=ca;tv_list=la} {reason_constr_simpl=rb;is_mandatory_constraint=imcb;tv=tvb;c_tag=cb;tv_list=lb} =
+  cmp5
     String.compare ra rb
+    Bool.compare imca imcb
     type_variable tva tvb
     constant_tag ca cb
     (List.compare ~compare:type_variable) la lb
 
-let c_alias {reason_alias_simpl=ra;a=aa;b=ba} {reason_alias_simpl=rb;a=ab;b=bb} =
-  cmp3
+let c_alias {reason_alias_simpl=ra;is_mandatory_constraint=imca;a=aa;b=ba} {reason_alias_simpl=rb;is_mandatory_constraint=imcb;a=ab;b=bb} =
+  cmp4
     String.compare ra rb
+    Bool.compare imca imcb
     type_variable  aa ab
     type_variable  ba bb
 
-let c_poly_simpl {reason_poly_simpl=ra;tv=tva;forall=fa} {reason_poly_simpl=rb;tv=tvb;forall=fb} =
-  cmp3
+let c_poly_simpl {reason_poly_simpl=ra;is_mandatory_constraint=imca;tv=tva;forall=fa} {reason_poly_simpl=rb;is_mandatory_constraint=imcb;tv=tvb;forall=fb} =
+  cmp4
     String.compare ra  rb
+    Bool.compare imca imcb
     type_variable  tva tvb
     p_forall       fa  fb
 
-let c_typeclass_simpl {reason_typeclass_simpl=ra;id_typeclass_simpl=ida;tc=ta;args=la} {reason_typeclass_simpl=rb;id_typeclass_simpl=idb;tc=tb;args=lb} =
-  cmp4
+let c_typeclass_simpl {reason_typeclass_simpl=ra;is_mandatory_constraint=imca;id_typeclass_simpl=ida;tc=ta;args=la} {reason_typeclass_simpl=rb;is_mandatory_constraint=imcb;id_typeclass_simpl=idb;tc=tb;args=lb} =
+  cmp5
     String.compare ra rb
+    Bool.compare imca imcb
     constraint_identifier ida idb
     (List.compare ~compare:tc_allowed) ta tb
     (List.compare ~compare:type_variable) la lb
 
-let c_row_simpl {reason_row_simpl=ra;tv=tva;r_tag=rta;tv_map=ma} {reason_row_simpl=rb;tv=tvb;r_tag=rtb;tv_map=mb} =
-  cmp4
+let c_row_simpl {reason_row_simpl=ra;is_mandatory_constraint=imca;tv=tva;r_tag=rta;tv_map=ma} {reason_row_simpl=rb;is_mandatory_constraint=imcb;tv=tvb;r_tag=rtb;tv_map=mb} =
+  cmp5
     String.compare ra rb
+    Bool.compare imca imcb
     type_variable  tva tvb
     row_tag        rta rtb
     (label_map ~compare:type_variable) ma mb

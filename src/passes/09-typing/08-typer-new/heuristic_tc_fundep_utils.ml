@@ -9,7 +9,7 @@ module Set = RedBlackTrees.PolySet
 
 let set_of_vars l = (Set.add_list l (Set.create ~cmp:Var.compare)).set
 
-let make_refined_typeclass tcs : refined_typeclass = { tcs ; vars = set_of_vars tcs.args }
+let make_refined_typeclass refined ~original : refined_typeclass = { refined; original ; vars = set_of_vars refined.args }
 
 let constraint_identifier_to_tc (dbs : structured_dbs) (ci : constraint_identifier) =
   (* TODO: this can fail: catch the exception and throw an error *)

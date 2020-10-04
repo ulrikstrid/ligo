@@ -87,10 +87,10 @@ let test'
   test name @@ fun () ->
   let%bind e =
     trace typer_tracer @@
-    let input_tc =  { reason_typeclass_simpl = "unit test" ; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
-    let expected_tc =  { reason_typeclass_simpl = "unit test" ; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
+    let input_tc =  { reason_typeclass_simpl = "unit test" ; is_mandatory_constraint = false ; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
+    let expected_tc =  { reason_typeclass_simpl = "unit test" ; is_mandatory_constraint = false ; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
     let expected_inferred = List.map
-        (fun (tv , c_tag , tv_list) -> {reason_constr_simpl = "unit test" ; tv ; c_tag ; tv_list})
+        (fun (tv , c_tag , tv_list) -> {reason_constr_simpl = "unit test" ; is_mandatory_constraint = false ; tv ; c_tag ; tv_list})
         expected_inferred in
     let%bind actual = deduce_and_clean input_tc in
     (match to_stdlib_result @@ Heuristic_tc_fundep_tests_compare_cleaned.compare_and_check_vars_deduce_and_clean_result { deduced = expected_inferred ; cleaned = expected_tc } actual with

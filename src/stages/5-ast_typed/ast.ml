@@ -394,7 +394,8 @@ type constraint_identifier =
 type 'v constraint_identifierMap = (constraint_identifier, 'v) RedBlackTrees.PolyMap.t
 
 type refined_typeclass = {
-  tcs : c_typeclass_simpl ;
+  refined : c_typeclass_simpl ;
+  original : c_typeclass_simpl ;
   vars : type_variable_set ;
 }
 
@@ -407,6 +408,7 @@ and constraint_identifier_set_map = constraint_identifier_set typeVariableMap
 and c_constructor_simpl_typeVariableMap = c_constructor_simpl typeVariableMap
 and constraints_typeVariableMap = constraints typeVariableMap
 and c_typeclass_simpl_constraint_identifierMap = c_typeclass_simpl constraint_identifierMap
+and constraint_identifier_c_typeclass_simplMap = (c_typeclass_simpl, constraint_identifier) RedBlackTrees.PolyMap.t
 and type_constraint_simpl_list = type_constraint_simpl list
 and structured_dbs = {
   all_constraints            : type_constraint_simpl_list ;
@@ -421,6 +423,7 @@ and structured_dbs = {
   (* TODO: later have all constraints get an identtifier, not just typeclass constraints. *)
   by_constraint_identifier   : c_typeclass_simpl_constraint_identifierMap ;
   refined_typeclasses        : refined_typeclass_constraint_identifierMap ;
+  refined_typeclasses_back   : constraint_identifier_c_typeclass_simplMap ;
   typeclasses_constrained_by : constraint_identifier_set_map ;
 }
 

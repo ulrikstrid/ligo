@@ -154,6 +154,7 @@ let typeVariableMap = fun f ppf tvmap   ->
       let aux ppf (k, v) =
         fprintf ppf "(Var %a, %a)" Var.pp k f v in
       fprintf ppf "typeVariableMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
+
 let typeVariableSet = fun ppf s   ->
       let lst = List.sort (fun (a) (b) -> Var.compare a b) (RedBlackTrees.PolySet.elements s) in
       let aux ppf (k) =
@@ -169,6 +170,12 @@ let identifierMap = fun f ppf idmap ->
       let lst = List.sort (fun (ConstraintIdentifier a, _) (ConstraintIdentifier b, _) -> Int64.compare a b) (RedBlackTrees.PolyMap.bindings idmap) in
       let aux ppf (ConstraintIdentifier k, v) =
         fprintf ppf "(ConstraintIdentifier %Li, %a)" k f v in
+      fprintf ppf "typeVariableMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
+
+let biMap = fun fk fv ppf idmap ->
+      let lst = RedBlackTrees.PolyBiMap.bindings idmap in
+      let aux ppf (k, v) =
+        fprintf ppf "(%a, %a)" fk k fv v in
       fprintf ppf "typeVariableMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
 let poly_unionfind = (fun f ppf p   ->
   let lst = (UnionFind.Poly2.partitions p) in
@@ -341,6 +348,12 @@ let c_typeclass_simpl ppf ({is_mandatory_constraint;id_typeclass_simpl = Constra
     typeclass tc
     (list_sep_d type_variable) args
 
+let c_typeclass_simplMap = fun f ppf tvmap   ->
+      let lst = RedBlackTrees.PolyMap.bindings tvmap in
+      let aux ppf (k, v) =
+        fprintf ppf "(%a, %a)" c_typeclass_simpl k f v in
+      fprintf ppf "typeVariableMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
+
 let c_row_simpl ppf ({is_mandatory_constraint;reason_row_simpl; tv; r_tag; tv_map}) =
   fprintf ppf "{@,@[<hv 2>
              is_mandatory_constraint : %b ; @
@@ -373,15 +386,19 @@ let constraints ppf ({constructor; poly; tc; row}: constraints) =
     (list_sep_d c_poly_simpl) poly
     (list_sep_d c_typeclass_simpl) tc
     (list_sep_d c_row_simpl) row
-let refined_typeclass ppf ({ tcs; vars } : refined_typeclass) =
-  fprintf ppf "{@,@[<hv 2> tcs : %a ;@ vars : %a @]@,}"
-    c_typeclass_simpl tcs
+let constraint_identifier ppf (ConstraintIdentifier ci) =
+  fprintf ppf "ConstraintIdentifier %Li" ci
+let refined_typeclass ppf ({ refined; original; vars } : refined_typeclass) =
+  fprintf ppf "{@,@[<hv 2> refined : %a ; original : %a ;@ vars : %a @]@,}"
+    c_typeclass_simpl refined
+    c_typeclass_simpl original
     typeVariableSet vars
 
 
-let structured_dbs ppf ({refined_typeclasses;typeclasses_constrained_by;by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort} : structured_dbs) =
-  fprintf ppf "{@,@[<hv 2> refined_typeclasses : %a ;@ typeclasses_constrained_by : %a ;@ by_constraint_identifier : %a ;@ all_constraints : %a ;@ aliases : %a ;@ assignments : %a;@ gouped_by_variable : %a;@ cycle_detection_toposort : %a @]@,}"
+let structured_dbs ppf ({refined_typeclasses;refined_typeclasses_back;typeclasses_constrained_by;by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort} : structured_dbs) =
+  fprintf ppf "{@,@[<hv 2> refined_typeclasses : %a ;@ refined_typeclasses_back : %a ;@ typeclasses_constrained_by : %a ;@ by_constraint_identifier : %a ;@ all_constraints : %a ;@ aliases : %a ;@ assignments : %a;@ gouped_by_variable : %a;@ cycle_detection_toposort : %a @]@,}"
     (identifierMap refined_typeclass) refined_typeclasses
+    (c_typeclass_simplMap constraint_identifier) refined_typeclasses_back
     (typeVariableMap constraint_identifier_set) typeclasses_constrained_by
     (identifierMap c_typeclass_simpl) by_constraint_identifier
     (list_sep_d type_constraint_simpl) all_constraints
@@ -407,7 +424,7 @@ let output_specialize1 ppf ({poly;a_k_var}) =
     c_constructor_simpl a_k_var
 let output_tc_fundep ppd (t : output_tc_fundep) =
   let lst = t.tc in
-  let a = t.c in fprintf ppd "{tc:{tcs:%a vars:%a};a:%a}" c_typeclass_simpl lst.tcs (list_sep_d (fun x _ ->fprintf x "," ) ) ( (fun x ->( List.map (fun y-> Format.asprintf "%a" Var.pp y) @@ ( RedBlackTrees.PolySet.elements x))) lst.vars) c_constructor_simpl a
+  let a = t.c in fprintf ppd "{tc:{refined:%a original:%a vars:%a};a:%a}" c_typeclass_simpl lst.refined c_typeclass_simpl lst.original (list_sep_d (fun x _ ->fprintf x "," ) ) ( (fun x ->( List.map (fun y-> Format.asprintf "%a" Var.pp y) @@ ( RedBlackTrees.PolySet.elements x))) lst.vars) c_constructor_simpl a
 
 let deduce_and_clean_result ppf {deduced;cleaned} =
   fprintf ppf "{@,@[<hv 2>
