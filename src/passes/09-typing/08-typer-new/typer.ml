@@ -446,8 +446,12 @@ and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.match
         bind_fold_map_list aux (e,state) lst in
       return e state @@ O.Match_variant {cases ; tv=variant }
 
+let check_has_no_unification_vars (O.Program_With_Unification_Vars p) =
+  Format.printf "TODO: check_has_no_unification_vars";
+  O.Program_Fully_Typed p
+
 (* Apply type_declaration on every node of the AST_core from the root p *)
-let type_program_returns_env ((env, state, p) : environment * _ O'.typer_state * I.program) : (environment * _ O'.typer_state * O.program, Typer_common.Errors.typer_error) result =
+let type_program_returns_env ((env, state, p) : environment * _ O'.typer_state * I.program) : (environment * _ O'.typer_state * O.program_with_unification_vars, Typer_common.Errors.typer_error) result =
   let aux ((e : environment), (s : _ O'.typer_state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let%bind (e , s' , d') = type_declaration e s (Location.unwrap d) in
     (* TODO: Move this filter to the spiller *)
@@ -461,7 +465,7 @@ let type_program_returns_env ((env, state, p) : environment * _ O'.typer_state *
     trace (program_error_tracer p) @@
     bind_fold_list aux (env , state , []) p in
   let declarations = List.rev declarations in (* Common hack to have O(1) append: prepend and then reverse *)
-  ok (env', state, declarations)
+  ok (env', state, O.Program_With_Unification_Vars declarations)
 
 let print_env_state_node (node_printer : Format.formatter -> 'a -> unit) ((env,state,node) : environment * _ O'.typer_state * 'a) =
   ignore node; (* TODO *)
@@ -512,10 +516,11 @@ let type_and_subst
   let () = ignore env in        (* TODO: shouldn't we use the `env` somewhere? *)
   ok (node, state)
 
-let type_program (p : I.program) : (O.program * _ O'.typer_state, typer_error) result =
+let type_program (p : I.program) : (O.program_fully_typed * _ O'.typer_state, typer_error) result =
   let empty_env = DEnv.default in
   let empty_state = Solver.initial_state in
-  type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") (fun ppf p -> Format.fprintf ppf "%a" Yojson.Safe.pp (Ast_typed.Yojson.program p)) (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env
+  let%bind (p, state) = type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") (fun ppf p -> Format.fprintf ppf "%a" Yojson.Safe.pp (Ast_typed.Yojson.program_with_unification_vars p)) (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env in
+  ok (check_has_no_unification_vars p, state)
 
 let type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * _ O'.typer_state , typer_error) result =
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
@@ -529,7 +534,7 @@ and [@warning "-32"] type_match : environment -> _ O'.typer_state -> O.type_expr
 and [@warning "-32"] evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, typer_error) result = evaluate_type e t
 and [@warning "-32"] type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (environment * _ O'.typer_state * O.expression, typer_error) result = type_expression
 and [@warning "-32"] type_lambda e state lam = type_lambda e state lam
-let [@warning "-32"] type_program_returns_env ((env, state, p) : environment * _ O'.typer_state * I.program) : (environment * _ O'.typer_state * O.program, typer_error) result = type_program_returns_env (env, state, p)
+let [@warning "-32"] type_program_returns_env ((env, state, p) : environment * _ O'.typer_state * I.program) : (environment * _ O'.typer_state * O.program_with_unification_vars, typer_error) result = type_program_returns_env (env, state, p)
 let [@warning "-32"] type_and_subst (in_printer : (Format.formatter -> 'a -> unit)) (out_printer : (Format.formatter -> 'b -> unit)) (env_state_node : environment * _ O'.typer_state * 'a) (apply_substs : ('b,typer_error) Typesystem.Misc.Substitution.Pattern.w) (types_and_returns_env : (environment * _ O'.typer_state * 'a) -> (environment * _ O'.typer_state * 'b, typer_error) result) : ('b * _ O'.typer_state, typer_error) result = type_and_subst in_printer out_printer env_state_node apply_substs types_and_returns_env
-let [@warning "-32"] type_program (p : I.program) : (O.program * _ O'.typer_state, typer_error) result = type_program p
+let [@warning "-32"] type_program (p : I.program) : (O.program_fully_typed * _ O'.typer_state, typer_error) result = type_program p
 let [@warning "-32"] type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * _ O'.typer_state, typer_error) result = type_expression_subst env state ?tv_opt e

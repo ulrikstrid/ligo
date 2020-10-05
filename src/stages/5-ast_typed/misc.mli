@@ -26,7 +26,7 @@ end
 val assert_literal_eq : ( literal * literal ) -> unit result
 *)
 
-val get_entry : program -> string -> expression option
+val get_entry : program_fully_typed -> string -> expression option
 
 val p_constant : constant_tag -> p_ctor_args -> type_value
 val p_row      : row_tag      -> tv_lmap     -> type_value

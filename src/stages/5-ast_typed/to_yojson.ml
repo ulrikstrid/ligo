@@ -377,7 +377,8 @@ let declaration = function
   | Declaration_type     dt -> `List [ `String "Declaration_type"; declaration_type dt]
   | Declaration_constant dc -> `List [ `String "Declaration_constant"; declaration_constant dc]
 
-let program = list (Location.wrap_to_yojson declaration)
+let program_with_unification_vars (Program_With_Unification_Vars p) = list (Location.wrap_to_yojson declaration) p
+let program_fully_typed (Program_Fully_Typed p) = list (Location.wrap_to_yojson declaration) p
 
 
 (* Environment *)

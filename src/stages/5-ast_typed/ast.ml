@@ -95,7 +95,11 @@ and matching_expr =
 
 and declaration_loc = declaration location_wrap
 
-and program = declaration_loc list
+and program_ = declaration_loc list
+
+and program_with_unification_vars = Program_With_Unification_Vars of program_
+
+and program_fully_typed = Program_Fully_Typed of program_
 
 (* A Declaration_constant is described by
  *   a name + a type-annotated expression

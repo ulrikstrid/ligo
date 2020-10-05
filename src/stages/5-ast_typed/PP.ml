@@ -144,7 +144,12 @@ let declaration ppf (d : declaration) =
   | Declaration_type {type_binder; type_expr} ->
       fprintf ppf "type %a = %a" type_variable type_binder type_expression type_expr
 
-let program ppf (p : program) =
+let program_fully_typed ppf (Program_Fully_Typed p : program_fully_typed) =
+  fprintf ppf "@[<v>%a@]"
+    (list_sep declaration (tag "@;"))
+    (List.map Location.unwrap p)
+
+let program_with_unification_vars ppf (Program_With_Unification_Vars p : program_with_unification_vars) =
   fprintf ppf "@[<v>%a@]"
     (list_sep declaration (tag "@;"))
     (List.map Location.unwrap p)
