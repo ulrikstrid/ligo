@@ -76,16 +76,12 @@ end
    TODO: negative tests (expected type error) *)
 
 let main = test_suite "Typer (from core AST)" [
-    (*
     test "int" int ;
     test "unit"        TestExpressions.unit ;
     test "int2"        TestExpressions.int ;
-    (*
-    test "bool"        TestExpressions.bool ; (* needs variants *)
-    *)
+    (* test "bool"        TestExpressions.bool ; (\* needs variants *\) *)
     test "string"      TestExpressions.string ;
     test "bytes"       TestExpressions.bytes ;
-    *)
     (*
     test "tuple"       TestExpressions.tuple ;
     test "constructor" TestExpressions.constructor ;

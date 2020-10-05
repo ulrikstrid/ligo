@@ -2413,21 +2413,23 @@ let main = test_suite "Integration (End to End)" [
     test "check signature" check_signature ;                 (* C_access_label *)
     test "check signature (mligo)" check_signature_mligo ;   (* C_access_label *)
     test "check signature (religo)" check_signature_religo ; (* C_access_label *)
-
     *)
 
     test "type alias" type_alias ;
 
-    (*
+    
     test "function" function_ ;                        (* tests don't typecheck the test case's application *)
 
+    (*
     test "blockless function" blockless;
     (* test "procedure"  procedure ; *)
     test "assign" assign ;
     test "declaration local" declaration_local ;
     test "complex function" complex_function ;
+    *)
     test "anon function" anon_function ;
     test "various applications" application ;
+    (*
     test "closure" closure ;
     test "closure (mligo)" closure_mligo ;
     test "closure (religo)" closure_religo ;
@@ -2437,9 +2439,11 @@ let main = test_suite "Integration (End to End)" [
     test "higher order" higher_order ;
     test "higher order (mligo)" higher_order_mligo ;
     test "higher order (religo)" higher_order_religo ;
+    *)
     test "variant" variant ;
     test "variant (mligo)" variant_mligo ;
     test "variant (religo)" variant_religo ;
+    (*
     test "variant matching" variant_matching ;
     test "tuple" tuple ;
     test "tuple (mligo)" tuple_mligo ;
@@ -2456,7 +2460,9 @@ let main = test_suite "Integration (End to End)" [
     test "eq bool (mligo)" eq_bool_mligo ;
     test "eq bool (religo)" eq_bool_religo ;
     test "shadow" shadow ;
+*)
     test "annotation" annotation ;
+    (*
     test "multiple parameters" multiple_parameters ;
     test "multiple parameters (mligo)" multiple_parameters_mligo ;
     test "multiple parameters (religo)" multiple_parameters_religo ;
@@ -2481,11 +2487,13 @@ let main = test_suite "Integration (End to End)" [
     (* test "set_arithmetic" set_arithmetic ; *)
     test "set_arithmetic (mligo)" set_arithmetic_mligo ;
     test "set_arithmetic (religo)" set_arithmetic_religo ;
+    *)
     test "unit" unit_expression ;
     test "string" string_expression ;
-    test "option" option ;
+    (* test "option" option ; *)
     test "option (mligo)" moption ;
     test "option (religo)" reoption ;
+    (*
     test "map" map ;
     test "map (mligo)" mmap ;
     (* test "map (religo)" remap ; *)
@@ -2501,12 +2509,10 @@ let main = test_suite "Integration (End to End)" [
     test "quote declaration" quote_declaration ;
     test "quote declarations" quote_declarations ;
     *)
-
-    (*
+    
     test "#include directives" include_ ;
     test "#include directives (mligo)" include_mligo ;
     test "#include directives (religo)" include_religo ;
-    *)
 
     (*
     test "counter contract" counter_contract ;
@@ -2514,8 +2520,10 @@ let main = test_suite "Integration (End to End)" [
     test "super counter contract" super_counter_contract_mligo ;
     test "super counter contract (reasonligo)" super_counter_contract_religo ;
     test "dispatch counter contract" dispatch_counter_contract ;
+    *)
     test "basic (mligo)" basic_mligo ;
     test "basic (religo)" basic_religo ;
+    (*
     test "counter contract (mligo)" counter_mligo ;
     test "counter contract (religo)" counter_religo ;
     test "let-in (mligo)" let_in_mligo ;
@@ -2537,8 +2545,10 @@ let main = test_suite "Integration (End to End)" [
     test "lambda mligo" lambda_mligo ;
     test "lambda religo" lambda_religo ;
     test "lambda ligo" lambda_ligo ;
+    *)
     test "tez (ligo)" tez_ligo ;
     test "tez (mligo)" tez_mligo ;
+    (*
     test "lambda2 mligo" lambda2_mligo ;
     test "lambda2 religo" lambda2_religo ;
     (* test "fibo (mligo)" fibo_mligo ; *)
@@ -2563,23 +2573,29 @@ let main = test_suite "Integration (End to End)" [
     test "address" address ;
     test "address (mligo)" address_mligo ;
     test "address (religo)" address_religo ;
+    *)
     test "self address" self_address ;
     test "self address (mligo)" self_address_mligo ;
     test "self address (religo)" self_address_religo ;
     test "implicit account" implicit_account ;
     test "implicit account (mligo)" implicit_account_mligo ;
     test "implicit account (religo)" implicit_account_religo ;
+    (*
     test "set delegate" set_delegate ;
     test "set delegate (mligo)" set_delegate_mligo ;
     test "set delegate (religo)" set_delegate_religo ;
     test "is_nat" is_nat ;
     test "is_nat (mligo)" is_nat_mligo ;
     test "is_nat (religo)" is_nat_religo ;
+    *)
     test "tuples_sequences_functions (religo)" tuples_sequences_functions_religo ;
+    (*
     test "simple_access (ligo)" simple_access_ligo;
     test "deep_access (ligo)" deep_access_ligo;
     test "get_contract (ligo)" get_contract_ligo;
+    *)
     test "entrypoints (ligo)" entrypoints_ligo ;
+    (*
     test "curry (mligo)" curry ;
     test "type tuple destruct (mligo)" type_tuple_destruct ;
     test "attributes (ligo)" attributes_ligo;
@@ -2595,7 +2611,7 @@ let main = test_suite "Integration (End to End)" [
     test "tuple type (religo)" tuple_type_religo ;
     test "no semicolon (religo)" no_semicolon_religo ;
     test "loop_bugs (ligo)" loop_bugs_ligo ;
+    *)
     test "tuple_list (religo)" tuple_list_religo ;
     test "single_record_expr (religo)" single_record_expr_religo ;
-    *)
   ]
