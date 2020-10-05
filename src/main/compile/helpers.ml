@@ -4,6 +4,10 @@ open Main_errors
 type s_syntax = Syntax_name of string
 type v_syntax = PascaLIGO | CameLIGO | ReasonLIGO
 
+type source_type =
+  | Expr_in_string of string
+  | Expr_in_stdin
+
 let syntax_to_variant (Syntax_name syntax) source =
   match syntax, source with
     "auto", Some sf ->
@@ -26,8 +30,10 @@ let parse_and_abstract_pascaligo source =
   in ok imperative
 
 let parse_and_abstract_expression_pascaligo source =
-  let%bind raw = trace parser_tracer @@
-    Parser.Pascaligo.parse_expression source in
+  let%bind raw = trace parser_tracer @@ match source with
+    | Expr_in_string expr -> Parser.Pascaligo.parse_expression_string expr
+    | Expr_in_stdin -> Parser.Pascaligo.parse_expression_stdin ()
+  in
   let%bind imperative = trace cit_pascaligo_tracer @@
     Tree_abstraction.Pascaligo.compile_expression raw
   in ok imperative
@@ -40,8 +46,10 @@ let parse_and_abstract_cameligo source =
   in ok imperative
 
 let parse_and_abstract_expression_cameligo source =
-  let%bind raw = trace parser_tracer @@
-    Parser.Cameligo.parse_expression source in
+  let%bind raw = trace parser_tracer @@ match source with
+    | Expr_in_string expr -> Parser.Cameligo.parse_expression_string expr
+    | Expr_in_stdin -> Parser.Cameligo.parse_expression_stdin ()
+  in
   let%bind imperative = trace cit_cameligo_tracer @@
     Tree_abstraction.Cameligo.compile_expression raw
   in ok imperative
@@ -54,8 +62,10 @@ let parse_and_abstract_reasonligo source =
   in ok imperative
 
 let parse_and_abstract_expression_reasonligo source =
-  let%bind raw = trace parser_tracer @@
-    Parser.Reasonligo.parse_expression source in
+  let%bind raw = trace parser_tracer @@ match source with
+    | Expr_in_string expr -> Parser.Reasonligo.parse_expression_string expr
+    | Expr_in_stdin -> Parser.Reasonligo.parse_expression_stdin ()
+  in
   let%bind imperative = trace cit_reasonligo_tracer @@
     Tree_abstraction.Reasonligo.compile_expression raw
   in ok imperative

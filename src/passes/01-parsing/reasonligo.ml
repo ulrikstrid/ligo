@@ -139,7 +139,11 @@ let parse_string source = apply (fun () -> Unit.contract_in_string source)
 
 (* Parsing an expression in a string *)
 
-let parse_expression source = apply (fun () -> Unit.expr_in_string source)
+let parse_expression_string source = apply (fun () -> Unit.expr_in_string source)
+
+(* Parsing an expression from standard input *)
+
+let parse_expression_stdin () = apply (fun () -> Unit.expr_in_stdin ())
 
 (* Preprocessing a contract in a file *)
 

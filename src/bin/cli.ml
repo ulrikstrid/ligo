@@ -24,7 +24,7 @@ let source_file n =
     let docv = "SOURCE_FILE" in
     let doc = "$(docv) is the path to the smart contract file." in
     info ~docv ~doc [] in
-  required @@ pos n (some string) None info
+  required @@ pos n (some non_dir_file) None info
 
 let entry_point n =
   let open Arg in
@@ -36,10 +36,21 @@ let entry_point n =
 
 let expression purpose n =
   let open Arg in
-  let docv = purpose ^ "_EXPRESSION" in
+  let docv = match purpose with
+    | "" -> "EXPRESSION"
+    | _ -> purpose ^ "_EXPRESSION" in
   let doc = "$(docv) is the expression that will be compiled." in
   let info = info ~docv ~doc [] in
-  required @@ pos n (some string) None info
+  required @@ pos n (some string) (Some "") info
+
+let _expression_stdin purpose n = (*to be used with get_scopes*)
+  let open Arg in
+  let docv = match purpose with
+    | "" -> "EXPRESSION"
+    | _ -> purpose ^ "_EXPRESSION" in
+  let doc = "$(docv) is the expression to be compiled. If no expression is specified reads standard input" in
+  let info = info ~docv ~doc [] in
+  value @@ pos n (some string) None info
 
 let syntax =
   let open Arg in
@@ -297,7 +308,7 @@ let compile_parameter =
         (* fails if the given entry point is not a valid contract *)
         Compile.Of_michelson.build_contract michelson_prg in
 
-      let%bind (typed_param,_)  = Compile.Utils.type_expression (Some source_file) syntax expression env state in
+      let%bind (typed_param,_)  = Compile.Utils.type_expression (Some source_file) syntax (Expr_in_string expression) env state in
       let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
       let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c_param in
       let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_parameter entry_point typed_prg typed_param in
@@ -320,7 +331,7 @@ let interpret =
           ok (mini_c_prg,state,env)
         | None -> ok ([],Typer.Solver.initial_state,Environment.default) in
 
-      let%bind (typed_exp,_)  = Compile.Utils.type_expression init_file syntax expression env state in
+      let%bind (typed_exp,_)  = Compile.Utils.type_expression init_file syntax (Expr_in_string expression) env state in
       let%bind mini_c_exp     = Compile.Of_typed.compile_expression typed_exp in
       let%bind compiled_exp   = Compile.Of_mini_c.aggregate_and_compile_expression decl_list mini_c_exp in
       let%bind options        = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
@@ -328,7 +339,7 @@ let interpret =
       Decompile.Of_michelson.decompile_expression typed_exp.type_expression runres
   in
   let term =
-    Term.(const f $ expression "EXPRESSION" 0 $ init_file $ syntax $ amount $ balance $ sender $ source $ now $ display_format) in
+    Term.(const f $ expression "" 0 $ init_file $ syntax $ amount $ balance $ sender $ source $ now $ display_format) in
   let cmdname = "interpret" in
   let doc = "Subcommand: Interpret the expression in the context initialized by the provided source file." in
   (Term.ret term , Term.info ~doc cmdname)
@@ -355,7 +366,7 @@ let compile_storage =
         (* fails if the given entry point is not a valid contract *)
         Compile.Of_michelson.build_contract michelson_prg in
 
-      let%bind (typed_param,_)  = Compile.Utils.type_expression (Some source_file) syntax expression env state in
+      let%bind (typed_param,_)  = Compile.Utils.type_expression (Some source_file) syntax (Expr_in_string expression) env state in
       let%bind mini_c_param     = Compile.Of_typed.compile_expression typed_param in
       let%bind compiled_param   = Compile.Of_mini_c.aggregate_and_compile_expression mini_c_prg mini_c_param in
       let%bind ()               = Compile.Of_typed.assert_equal_contract_type Check_storage entry_point typed_prg typed_param in
@@ -377,7 +388,7 @@ let dry_run =
         (* fails if the given entry point is not a valid contract *)
         Compile.Of_michelson.build_contract michelson_prg in
 
-      let%bind compiled_params   = Compile.Utils.compile_storage storage input source_file syntax env state mini_c_prg in
+      let%bind compiled_params   = Compile.Utils.compile_storage (Expr_in_string storage) (Expr_in_string input) source_file syntax env state mini_c_prg in
       let%bind args_michelson    = Run.evaluate_expression compiled_params.expr compiled_params.expr_ty in
 
       let%bind options           = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
@@ -398,7 +409,7 @@ let run_function =
 
 
       let%bind v_syntax         = Helpers.syntax_to_variant (Syntax_name syntax) (Some source_file) in
-      let%bind imperative_param = Compile.Of_source.compile_expression v_syntax parameter in
+      let%bind imperative_param = Compile.Of_source.compile_expression v_syntax (Expr_in_string parameter) in
       let%bind sugar_param      = Compile.Of_imperative.compile_expression imperative_param in
       let%bind core_param       = Compile.Of_sugar.compile_expression sugar_param in
       let%bind app              = Compile.Of_core.apply entry_point core_param in
@@ -443,7 +454,7 @@ let compile_expression =
           ok (mini_c_prg,state,env)
         | None -> ok ([],Typer.Solver.initial_state,Environment.default) in
 
-      let%bind (typed_exp,_)  = Compile.Utils.type_expression init_file syntax expression env state in
+      let%bind (typed_exp,_)  = Compile.Utils.type_expression init_file syntax (Expr_in_string expression) env state in
       let%bind mini_c_exp     = Compile.Of_typed.compile_expression typed_exp in
       let%bind compiled_exp   = Compile.Of_mini_c.aggregate_and_compile_expression decl_list mini_c_exp in
       Run.evaluate_expression compiled_exp.expr compiled_exp.expr_ty
@@ -501,7 +512,7 @@ let transpile_expression =
       let%bind v_syntax   = Helpers.syntax_to_variant (Syntax_name syntax) None in
       let      dialect    = Decompile.Helpers.Dialect_name new_dialect in
       let%bind n_syntax   = Decompile.Helpers.syntax_to_variant ~dialect (Syntax_name new_syntax) None in
-      let%bind imperative = Compile.Of_source.compile_expression v_syntax expression in
+      let%bind imperative = Compile.Of_source.compile_expression v_syntax (Expr_in_string expression) in
       let%bind sugar      = Compile.Of_imperative.compile_expression imperative in
       let%bind core       = Compile.Of_sugar.compile_expression sugar in
       let%bind sugar      = Decompile.Of_core.decompile_expression core in

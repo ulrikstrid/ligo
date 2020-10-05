@@ -17,7 +17,9 @@ val parse_string : string -> (CST.t, parser_error) result
     This is intended to be used for interactive interpreters, or other
     scenarios where you would want to parse a PascaLIGO expression
     outside of a contract. *)
-val parse_expression : string -> (CST.expr, parser_error) result
+val parse_expression_string : string -> (CST.expr, parser_error) result
+
+val parse_expression_stdin : unit -> (CST.expr, parser_error) result
 
 (** Preprocess a given PascaLIGO file and preprocess it. *)
 val preprocess : string -> (Buffer.t, parser_error) result

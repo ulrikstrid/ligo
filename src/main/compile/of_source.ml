@@ -10,11 +10,11 @@ let compile_string (source:string) syntax : (Ast_imperative.program , _) result 
   let%bind abstract = parse_and_abstract_string syntax source in
   ok abstract
 
-let compile_expression : v_syntax -> string -> (Ast_imperative.expression , _) result =
+let compile_expression : v_syntax -> source_type -> (Ast_imperative.expression , _) result =
     fun syntax exp ->
   parse_and_abstract_expression syntax exp
 
-let compile_contract_input : string -> string -> v_syntax -> (Ast_imperative.expression , _) result =
+let compile_contract_input : source_type -> source_type -> v_syntax -> (Ast_imperative.expression , _) result =
     fun storage parameter syntax ->
   let%bind (storage,parameter) = bind_map_pair (compile_expression syntax) (storage,parameter) in
   ok @@ Ast_imperative.e_pair storage parameter

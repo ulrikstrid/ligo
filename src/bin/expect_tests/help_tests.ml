@@ -617,11 +617,11 @@ let%expect_test _ =
            ligo-compile-expression - Subcommand: Compile to a michelson value.
 
     SYNOPSIS
-           ligo compile-expression [OPTION]... SYNTAX _EXPRESSION
+           ligo compile-expression [OPTION]... SYNTAX EXPRESSION
 
     ARGUMENTS
-           _EXPRESSION (required)
-               _EXPRESSION is the expression that will be compiled.
+           EXPRESSION (required)
+               EXPRESSION is the expression that will be compiled.
 
            SYNTAX (required)
                SYNTAX is the syntax that will be used. Currently supported
