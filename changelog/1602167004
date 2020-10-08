@@ -1,0 +1,4 @@
+author: Rémi Lesénéchal
+merge_request: '834'
+title: compile-expression syntax argument is not positional anymore (we now have --init-file)
+type: changed
