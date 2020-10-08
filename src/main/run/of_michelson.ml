@@ -174,5 +174,5 @@ let run_no_failwith ?options (exp:Michelson.t) (exp_type:Michelson.t) =
 let evaluate_expression ?options exp exp_type =
   let%bind etv = run_expression ?options exp exp_type in
   match etv with
-    | Success (_, value) -> ok value
+    | Success (ty, value) -> ok (ty,value)
     | Fail res -> fail @@ Errors.failwith res

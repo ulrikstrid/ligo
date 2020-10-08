@@ -175,7 +175,7 @@ module Run = Ligo.Run.Of_michelson
 
 let compile_file =
   let f source_file entry_point syntax display_format disable_typecheck michelson_format output_file =
-    return_result ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
+    return_result ~output_file ~display_format (Formatter.Michelson_formatter.contract_format michelson_format) @@
       let%bind typed,_,_  = Compile.Utils.type_file source_file syntax (Contract entry_point) in
       let%bind mini_c     = Compile.Of_typed.compile typed in
       let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
@@ -371,16 +371,16 @@ let dry_run =
   let f source_file entry_point storage input amount balance sender source now syntax display_format =
     return_result ~display_format (Decompile.Formatter.expression_format) @@
       let%bind typed_prg,env,state = Compile.Utils.type_file source_file syntax (Contract entry_point) in
-      let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
-      let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
+      let%bind mini_c_prg          = Compile.Of_typed.compile typed_prg in
+      let%bind michelson_prg       = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
       let%bind (_contract: Tezos_utils.Michelson.michelson) =
         (* fails if the given entry point is not a valid contract *)
         Compile.Of_michelson.build_contract michelson_prg in
 
-      let%bind compiled_params   = Compile.Utils.compile_storage storage input source_file syntax env state mini_c_prg in
-      let%bind args_michelson    = Run.evaluate_expression compiled_params.expr compiled_params.expr_ty in
+      let%bind compiled_params  = Compile.Utils.compile_storage storage input source_file syntax env state mini_c_prg in
+      let%bind _,args_michelson = Run.evaluate_expression compiled_params.expr compiled_params.expr_ty in
 
-      let%bind options           = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
+      let%bind options = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
       let%bind runres  = Run.run_contract ~options michelson_prg.expr michelson_prg.expr_ty args_michelson in
       Decompile.Of_michelson.decompile_typed_program_entry_function_result typed_prg entry_point runres
     in

@@ -54,32 +54,75 @@ module Michelson_formatter = struct
     | `Hex
   ]
 
-  let michelson_ppformat michelson_format ~display_format f (a,_) =
+  let michelson_ppformat michelson_format ~display_format f ((ty,v),_) =
     let mich_pp = fun michelson_format ->  match michelson_format with
       | `Text -> pp
       | `Json -> pp_json
       | `Hex -> pp_hex in
+    let pp = mich_pp michelson_format in
     match display_format with
-    | Display.Human_readable | Dev -> (
-       let m = Format.asprintf "%a\n" (mich_pp michelson_format) a in
-       Format.pp_print_string f m
-    )
+    | Human_readable | Dev -> Format.fprintf f "@[<hv>%a@ : %a@]" pp v pp ty
 
-  let michelson_jsonformat michelson_format (a,_) : Display.json = match michelson_format with
+  let michelson_jsonformat michelson_format ((ty,v),_) : Display.json = match michelson_format with
     | `Text ->
-      let code_as_str = Format.asprintf "%a" pp a in
-      `Assoc [("text_code" , `String code_as_str)]
+      let code_as_str = Format.asprintf "%a" pp v in
+      let type_as_str = Format.asprintf "%a" pp ty in
+      `Assoc [
+        ("text_code" , `String code_as_str);
+        ("text_type" , `String type_as_str);
+      ]
     | `Hex -> 
-      let code_as_hex = Format.asprintf "%a" pp_hex a in
-      `Assoc [("hex_code" , `String code_as_hex)]
-    | `Json ->
-      (* Ideally , would like to do that :
-      Michelson.get_json a *)
-      let code_as_str = Format.asprintf "%a" pp_json a in
-      `Assoc [("json_code" , `String code_as_str)]
+      let code_as_hex = Format.asprintf "%a" pp_hex v in
+      let type_as_hex = Format.asprintf "%a" pp_hex ty in
+      `Assoc [
+        ("hex_code" , `String code_as_hex);
+        ("hex_type" , `String type_as_hex);
+      ]
+      | `Json ->
+        (* Ideally , would like to do that :
+        Michelson.get_json a *)
+        let code_as_str = Format.asprintf "%a" pp_json v in
+        let type_as_str = Format.asprintf "%a" pp_json ty in
+      `Assoc [
+        ("json_code" , `String code_as_str);
+        ("json_type" , `String type_as_str);
+      ]
 
   let michelson_format : michelson_format -> 'a Display.format = fun mf -> {
     pp = michelson_ppformat mf;
     to_json = michelson_jsonformat mf;
+  }
+
+  let contract_ppformat michelson_format ~display_format f (v,_) =
+    let mich_pp = fun michelson_format ->  match michelson_format with
+      | `Text -> pp
+      | `Json -> pp_json
+      | `Hex -> pp_hex in
+    let pp = mich_pp michelson_format in
+    match display_format with
+    | Human_readable | Dev -> Format.fprintf f "%a" pp v
+
+  let contract_jsonformat michelson_format (v,_) : Display.json = match michelson_format with
+    | `Text ->
+      let code_as_str = Format.asprintf "%a" pp v in
+      `Assoc [
+        ("text_code" , `String code_as_str);
+      ]
+    | `Hex -> 
+      let code_as_hex = Format.asprintf "%a" pp_hex v in
+      `Assoc [
+        ("hex_code" , `String code_as_hex);
+      ]
+      | `Json ->
+        (* Ideally , would like to do that :
+        Michelson.get_json a *)
+        let code_as_str = Format.asprintf "%a" pp_json v in
+      `Assoc [
+        ("json_code" , `String code_as_str);
+      ]
+
+  let contract_format : michelson_format -> 'a Display.format = fun mf -> {
+    pp = contract_ppformat mf;
+    to_json = contract_jsonformat mf;
   }
 end
