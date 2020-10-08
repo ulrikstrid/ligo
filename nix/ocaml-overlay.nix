@@ -55,7 +55,26 @@ in {
           src = builtins.fetchTarball
             "https://github.com/aantron/bisect_ppx/archive/02dfb10188033a26d07d23480c2bc44a3a670357.tar.gz";
         });
-
+        ocamlformat = osuper.buildDunePackage rec {
+          pname = "ocamlformat";
+          version = "0.10";
+          buildInputs = [
+            osuper.octavius
+            osuper.base
+            osuper.cmdliner
+            osuper.fpath
+            osuper.ocaml-migrate-parsetree
+            osuper.odoc
+            osuper.re
+            osuper.stdio
+            osuper.uuseg
+            osuper.uutf
+          ];
+          src = builtins.fetchurl {
+            url = "https://github.com/ocaml-ppx/ocamlformat/archive/0.10.tar.gz";
+            sha256 = "0acxa119l8b7azgl2xr28dfa2adqzcd9gdrmw4qzqy25yi75y5kp";
+          };
+        };
         proto-alpha-utils = osuper.proto-alpha-utils.overrideAttrs (oa: rec {
           buildInputs = oa.buildInputs
             ++ [ oself.tezos-protocol-006-PsCARTHA-parameters ];
@@ -136,7 +155,6 @@ in {
             ++ [ self.buildPackages.rakudo self.buildPackages.git self.buildPackages.gnugrep self.buildPackages.bash ];
           installPhase = "true";
         });
-        # LIGO test
 
         # LIGO odoc documentation
         ligo-doc = osuper.ligo.overrideAttrs (oa: {
