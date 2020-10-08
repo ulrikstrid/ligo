@@ -28,7 +28,7 @@ let rec type_program (e:environment) (p:I.program) : (environment * O.program_fu
   let p = List.rev lst in
   (* the typer currently in use doesn't use unification variables, so there is no need to check for their absence. *)
   let p = O.Program_Fully_Typed p in
-  ok @@ (e,List.rev lst , (Solver.placeholder_for_state_of_new_typer ()))
+  ok @@ (e,p , (Solver.placeholder_for_state_of_new_typer ()))
 
 
 and type_declaration env (_placeholder_for_state_of_new_typer : _ O'.typer_state) : I.declaration -> (environment * _ O'.typer_state * O.declaration, typer_error) result = function
