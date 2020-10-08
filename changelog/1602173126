@@ -1,0 +1,6 @@
+---
+  title: "Check OCaml formatting in CI"
+  merge_request: "831"
+  author: "SanderSpies"
+  type: "internal"
+
