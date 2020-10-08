@@ -434,7 +434,7 @@ let evaluate_value =
   (Term.ret term , Term.info ~doc cmdname)
 
 let compile_expression =
-  let f expression syntax init_file display_format michelson_format =
+  let f expression init_file syntax display_format michelson_format =
     return_result ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
       let%bind (decl_list,state,env) = match init_file with
         | Some init_file ->
@@ -449,7 +449,7 @@ let compile_expression =
       Run.evaluate_expression compiled_exp.expr compiled_exp.expr_ty
     in
   let term =
-    Term.(const f $ expression "" 1 $ req_syntax 0 $ init_file $ display_format $ michelson_code_format) in
+    Term.(const f $ expression "" 0 $ init_file $ syntax $ display_format $ michelson_code_format) in
   let cmdname = "compile-expression" in
   let doc = "Subcommand: Compile to a michelson value." in
   (Term.ret term , Term.info ~doc cmdname)
