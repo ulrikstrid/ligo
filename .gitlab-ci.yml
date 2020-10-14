@@ -1,5 +1,6 @@
 # TODO: remove this as submodules aren't used anymore.
 variables:
+  GIT_DEPTH: 5
   GIT_SUBMODULE_STRATEGY: recursive
   LIGO_REGISTRY_IMAGE_BASE_NAME: "${CI_PROJECT_PATH}/${CI_PROJECT_NAME}"
   WEBIDE_IMAGE_NAME: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
