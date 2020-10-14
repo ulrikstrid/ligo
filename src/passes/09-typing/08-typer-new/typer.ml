@@ -471,7 +471,7 @@ end = struct
     | O.E_variable        _ -> ok ()
     | O.E_application     { lamb; args } -> let%bind () = expression lamb in expression args
     | O.E_lambda          { binder=_; result } -> expression result
-    | O.E_recursive       { fun_name=_; fun_type; lambda={ binder=_; result } } -> let%bind () = te where fun_type in expression result
+    | O.E_recursive       { fun_name=_; fun_type; lambda={ binder=_; result } } -> let%bind () = expression result in te where fun_type
     | O.E_let_in          { let_binder=_; rhs; let_result; inline=_ } -> let%bind () = expression rhs in expression let_result
     | O.E_raw_code        { language=_; code } -> expression code
     | O.E_constructor     { constructor=_; element } -> expression element
