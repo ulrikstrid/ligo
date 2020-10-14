@@ -242,6 +242,10 @@ let%expect_test _ =
                SOURCE_FILE is the path to the smart contract file.
 
     OPTIONS
+           --disable-create-contract-check
+               (temporary option) disable purity checks on contract given to
+               Tezos.create_contract
+
            --disable-michelson-typechecking
                disable Michelson typecking, this might produce ill-typed
                Michelson code.

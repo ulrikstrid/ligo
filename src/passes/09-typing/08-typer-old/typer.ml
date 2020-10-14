@@ -15,9 +15,9 @@ type environment = Environment.t
 let cast_var (orig: 'a Var.t Location.wrap) = { orig with wrap_content = Var.todo_cast orig.wrap_content}
 let assert_type_expression_eq = Typer_common.Helpers.assert_type_expression_eq
 
-let rec type_program (e:environment) (p:I.program) : (environment * O.program * _ O'.typer_state, typer_error) result =
+let rec type_program (disable_create_contract_check:bool) (e:environment) (p:I.program) : (environment * O.program * _ O'.typer_state, typer_error) result =
   let aux (e, acc:(environment * O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
-    let%bind ed' = (bind_map_location (type_declaration e (Solver.placeholder_for_state_of_new_typer ()))) d in
+    let%bind ed' = (bind_map_location (type_declaration disable_create_contract_check e (Solver.placeholder_for_state_of_new_typer ()))) d in
     let loc : 'a . 'a Location.wrap -> _ -> _ = fun x v -> Location.wrap ~loc:x.location v in
     let (e', _placeholder_for_state_of_new_typer , d') = Location.unwrap ed' in
     ok (e', loc ed' d' :: acc)
@@ -28,7 +28,7 @@ let rec type_program (e:environment) (p:I.program) : (environment * O.program * 
   ok @@ (e,List.rev lst , (Solver.placeholder_for_state_of_new_typer ()))
 
 
-and type_declaration env (_placeholder_for_state_of_new_typer : _ O'.typer_state) : I.declaration -> (environment * _ O'.typer_state * O.declaration, typer_error) result = function
+and type_declaration disable_create_contract_check env (_placeholder_for_state_of_new_typer : _ O'.typer_state) : I.declaration -> (environment * _ O'.typer_state * O.declaration, typer_error) result = function
   | Declaration_type {type_binder ; type_expr} ->
       let type_binder = Var.todo_cast type_binder in
       let%bind tv = evaluate_type env type_expr in
@@ -38,7 +38,7 @@ and type_declaration env (_placeholder_for_state_of_new_typer : _ O'.typer_state
       let%bind tv'_opt = bind_map_option (evaluate_type env) type_opt in
       let%bind expr =
         trace (constant_declaration_error_tracer binder expr tv'_opt) @@
-        type_expression' ?tv_opt:tv'_opt env expr in
+        type_expression' disable_create_contract_check ?tv_opt:tv'_opt env expr in
       let binder : O.expression_variable = cast_var binder in
       let post_env = Environment.add_ez_declaration binder expr env in
       ok (post_env, (Solver.placeholder_for_state_of_new_typer ()) , (O.Declaration_constant { binder ; expr ; inline}))
@@ -210,12 +210,13 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
           return @@ pair
       | _ -> fail @@ unrecognized_type_constant t
 
-and type_expression : environment -> _ O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * _ O'.typer_state, typer_error) result
-  = fun e _placeholder_for_state_of_new_typer ?tv_opt ae ->
-    let%bind res = type_expression' e ?tv_opt ae in
+and type_expression : bool -> environment -> _ O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * _ O'.typer_state, typer_error) result
+  = fun disable_create_contract_check e _placeholder_for_state_of_new_typer ?tv_opt ae ->
+    let%bind res = type_expression' disable_create_contract_check e ?tv_opt ae in
     ok (res, (Solver.placeholder_for_state_of_new_typer ()))
 
-and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression -> (O.expression, typer_error) result = fun e ?tv_opt ae ->
+and type_expression' : bool -> environment -> ?tv_opt:O.type_expression -> I.expression -> (O.expression, typer_error) result = fun disable_create_contract_check e ?tv_opt ae ->
+  let type_expression' = type_expression' disable_create_contract_check in
   let module L = Logger.Stateful() in
   let return expr tv =
     let%bind () =
@@ -323,7 +324,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     return (E_record_update {record; path; update}) wrapped
   (* Data-structure *)
   | E_lambda lambda ->
-   let%bind (lambda, lambda_type) = type_lambda e lambda in
+   let%bind (lambda, lambda_type) = type_lambda disable_create_contract_check e lambda in
    return (E_lambda lambda ) lambda_type
   | E_constant {cons_name=( C_LIST_FOLD | C_MAP_FOLD | C_SET_FOLD) as opname ;
                 arguments=[
@@ -377,13 +378,16 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       return (E_constant {cons_name=opname';arguments=lst'}) tv
   | E_constant {cons_name=C_CREATE_CONTRACT as cons_name;arguments} ->
       let%bind lst' = bind_list @@ List.map (type_expression' e) arguments in
-      let%bind () = match lst' with
+      let%bind () =
+        if disable_create_contract_check then ok () else (
+        match lst' with
         | { expression_content = O.E_lambda l ; _ } :: _ ->
           let open Ast_typed.Misc in
           let fvs = Free_variables.lambda [] l in
           if List.length fvs = 0 then ok ()
           else fail @@ fvs_in_create_contract_lambda ae (List.hd fvs)
-        | _ -> fail @@ create_contract_lambda C_CREATE_CONTRACT ae
+          | _ -> fail @@ create_contract_lambda C_CREATE_CONTRACT ae
+        )
       in
       let tv_lst = List.map get_type_expression lst' in
       let%bind (name', tv) =
@@ -476,7 +480,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     let fun_name = cast_var fun_name in
     let%bind fun_type = evaluate_type e fun_type in
     let e' = Environment.add_ez_binder fun_name fun_type e in
-    let%bind (lambda,_) = type_lambda e' lambda in
+    let%bind (lambda,_) = type_lambda disable_create_contract_check e' lambda in
     return (E_recursive {fun_name;fun_type;lambda}) fun_type
   | E_ascription {anno_expr; type_annotation} ->
     let%bind tv = evaluate_type e type_annotation in
@@ -494,7 +498,7 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       | Some tv' -> assert_type_expression_eq anno_expr.location (tv' , type_annotation) in
     ok {expr' with type_expression=type_annotation}
 
-and type_lambda e {
+and type_lambda disable_create_contract_check e {
       binder ;
       input_type ;
       output_type ;
@@ -508,7 +512,7 @@ and type_lambda e {
       let binder = cast_var binder in
       let%bind input_type = trace_option (missing_funarg_annotation binder) input_type in
       let e' = Environment.add_ez_binder binder input_type e in
-      let%bind body = type_expression' ?tv_opt:output_type e' result in
+      let%bind body = type_expression' disable_create_contract_check ?tv_opt:output_type e' result in
       let output_type = body.type_expression in
       ok (({binder; result=body}:O.lambda),(t_function input_type output_type ()))
 

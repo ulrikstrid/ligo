@@ -5,8 +5,8 @@ type form =
   | Contract of string
   | Env
 
-let compile ?(env=Environment.default) (cform: form) (program : Ast_core.program) : (Ast_typed.program * Ast_typed.environment * _ Typesystem.Solver_types.typer_state , _) result =
-  let%bind (e, prog_typed , state) = trace typer_tracer @@ Typer.type_program env program in
+let compile ?(env=Environment.default) ?(disable_create_contract_check=false) (cform: form) (program : Ast_core.program) : (Ast_typed.program * Ast_typed.environment * _ Typesystem.Solver_types.typer_state , _) result =
+  let%bind (e, prog_typed , state) = trace typer_tracer @@ Typer.type_program disable_create_contract_check env program in
   let () = Typer.Solver.discard_state state in
   let%bind applied = trace self_ast_typed_tracer @@
     let%bind selfed = Self_ast_typed.all_program prog_typed in
