@@ -106,6 +106,7 @@ let typed_program_with_imperative_input_to_michelson
   let%bind sugar            = Compile.Of_imperative.compile_expression input in
   let%bind core             = Compile.Of_sugar.compile_expression sugar in
 let () = (if Ast_typed.Debug.debug_new_typer then Printf.printf "\nINPUT = %s\n\n%!" (Format.asprintf "%a" Ast_core.PP.expression core)) in
+  Format.printf "expect_eq\n";
   let%bind app              = Compile.Of_core.apply entry_point core in
 let () = (if Ast_typed.Debug.debug_new_typer then Format.printf "\n\nSTATE IZ=%a\n\n" Typesystem.Solver_types.pp_typer_state state) in
   let%bind (typed_app,new_state)    = Compile.Of_core.compile_expression ~env ~state app in

@@ -13,6 +13,7 @@ type ('old_constraint_type , 'selector_output , 'private_storage, 'errors) propa
   (* constraint propagation: (buch of constraints) → (new constraints * assignments) *)
   propagator        : ('selector_output , 'private_storage, 'errors) propagator ;
   printer           : Format.formatter -> 'selector_output -> unit ;
+  printer_json      : 'selector_output -> Yojson.Safe.t ;
   comparator        : 'selector_output -> 'selector_output -> int ;
   initial_private_storage : 'private_storage;
 }
@@ -21,6 +22,7 @@ type ('old_constraint_type , 'selector_output , 'private_storage, 'errors) propa
   selector          : ('old_constraint_type , 'selector_output , 'private_storage) selector ;
   propagator        : ('selector_output , 'private_storage, 'errors) propagator ;
   printer           : Format.formatter -> 'selector_output -> unit ;
+  printer_json      : 'selector_output -> Yojson.Safe.t ;
   already_selected  : 'selector_output Set.t;
   private_storage   : 'private_storage;
 }
@@ -45,7 +47,7 @@ let pp_already_selected = fun printer ppf set ->
   let lst = (RedBlackTrees.PolySet.elements set) in
     Format.fprintf ppf "Set [@,@[<hv 2> %a @]@,]" (list_sep printer (fun ppf () -> fprintf ppf " ;@ ")) lst
 
-let pp_ex_propagator_state = fun ppf (Propagator_state { selector ; propagator ; printer ; already_selected }) ->
+let pp_ex_propagator_state = fun ppf (Propagator_state { selector ; propagator ; printer ; printer_json=_ ; already_selected }) ->
   ignore ( selector, propagator );
   Format.fprintf ppf "{ selector = (* OCaml function *); propagator = (* OCaml function *); already_selected = %a }"
   (pp_already_selected printer) already_selected
@@ -56,19 +58,19 @@ let pp_typer_state = fun ppf ({ structured_dbs; already_selected_and_propagators
     (list_sep pp_ex_propagator_state (fun ppf () -> fprintf ppf " ;@ ")) already_selected_and_propagators
 
 
-let json_already_selected = fun printer ppf set ->
+let json_already_selected = fun printer_json set : Yojson.Safe.t ->
   let lst = (RedBlackTrees.PolySet.elements set) in
-    Format.fprintf ppf "[ \"Set\" %a ]" (list_sep printer (fun ppf () -> fprintf ppf " , ")) lst
+let list f lst = `List (List.map f lst) in
+    `List [`String "Set"; (list printer_json lst)]
 
-let json_ex_propagator_state = fun ppf (Propagator_state { selector; propagator; printer ; already_selected }) ->
+let json_ex_propagator_state = fun (Propagator_state { selector; propagator; printer=_ ; printer_json ; already_selected }) : Yojson.Safe.t ->
   ignore (selector,propagator);
-  Format.fprintf ppf "{ \"selector\": \"OCaml function\"; \"propagator\": \"OCaml function\"; \"already_selected\": %a }"
-  (json_already_selected printer) already_selected
+  `Assoc[ ("selector", `String "OCaml function"); ("propagator", `String "OCaml function"); ("already_selected" ,          (json_already_selected printer_json) already_selected)]
 
-let json_typer_state = fun ppf ({ structured_dbs; already_selected_and_propagators } : _ typer_state) ->
-  Format.fprintf ppf "{ \"structured_dbs\": %a ; \"already_selected_and_propagators\": [ %a ] }"
-    Yojson.Safe.pp (Ast_typed.Yojson.structured_dbs structured_dbs)
-    (list_sep json_ex_propagator_state (fun ppf () -> fprintf ppf " , ")) already_selected_and_propagators
+let json_typer_state = fun ({ structured_dbs; already_selected_and_propagators } : _ typer_state) : Yojson.Safe.t ->
+  `Assoc[ ("structured_dbs", (Ast_typed.Yojson.structured_dbs structured_dbs)); ("already_selected_and_propagators", 
+let list f lst = `List (List.map f lst) in
+    (list json_ex_propagator_state already_selected_and_propagators))]
 
 (* state+list monad *)
 type ('state, 'elt) state_list_monad = { state: 'state ; list : 'elt list }

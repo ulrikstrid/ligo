@@ -70,6 +70,7 @@ let heuristic =
       selector ;
       propagator ;
       printer = Ast_typed.PP.output_specialize1 ;
+      printer_json = Ast_typed.Yojson.output_specialize1 ;
       comparator = Solver_should_be_generated.compare_output_specialize1 ;
       initial_private_storage = () ;
     }

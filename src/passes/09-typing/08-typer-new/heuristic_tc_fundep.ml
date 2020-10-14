@@ -285,6 +285,7 @@ let heuristic =
       selector ;
       propagator ;
       printer = Ast_typed.PP.output_tc_fundep ;
+      printer_json = Ast_typed.Yojson.output_tc_fundep ;
       comparator = Solver_should_be_generated.compare_output_tc_fundep ;
       initial_private_storage = () ;
     }

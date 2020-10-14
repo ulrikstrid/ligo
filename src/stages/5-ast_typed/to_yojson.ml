@@ -631,3 +631,22 @@ let structured_dbs {refined_typeclasses;refined_typeclasses_back;typeclasses_con
     ("grouped_by_variable", typeVariableMap constraints grouped_by_variable);
     ("cycl_detection_toposort", `Null)
   ]
+
+let output_break_ctor ({a_k_var;a_k'_var'}) =
+  `Assoc [
+    ("a_k_var", c_constructor_simpl a_k_var);
+    ("a_k'_var'", c_constructor_simpl a_k'_var')]
+
+let output_specialize1  ({poly;a_k_var}) =`Assoc [
+    ("poly", c_poly_simpl poly);
+("a_k_var",     c_constructor_simpl a_k_var)]
+let output_tc_fundep (t : output_tc_fundep) =
+  let lst = t.tc in
+  let a = t.c in `Assoc
+    [
+      ("tc",`Assoc[
+          ("refined",c_typeclass_simpl lst.refined);
+          ("original",c_typeclass_simpl lst.original);
+          ("vars",list Var.to_yojson ( RedBlackTrees.PolySet.elements lst.vars))])
+      ;("a",c_constructor_simpl a)]
+

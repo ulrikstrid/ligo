@@ -526,9 +526,9 @@ let type_program_returns_env ((env, state, p) : environment * _ O'.typer_state *
 let print_env_state_node (node_printer : Format.formatter -> 'a -> unit) ((env,state,node) : environment * _ O'.typer_state * 'a) =
   ignore node; (* TODO *)
   Printf.printf "%s" @@
-    Format.asprintf "{ \"ENV\": %a,\n\"STATE\": %a,\n\"NODE\": %a\n},\n"
-      Yojson.Safe.pp (Ast_typed.Yojson.environment env)
-      Typesystem.Solver_types.json_typer_state state
+    Format.asprintf "{ \"ENV\": %s,\n\"STATE\": %s,\n\"NODE\": %a\n},\n"
+      (Yojson.Safe.to_string (Ast_typed.Yojson.environment env))
+      (Yojson.Safe.to_string (Typesystem.Solver_types.json_typer_state state))
       node_printer node
 
 let type_and_subst
@@ -575,13 +575,13 @@ let type_and_subst
 let type_program (p : I.program) : (O.program_fully_typed * _ O'.typer_state, typer_error) result =
   let empty_env = DEnv.default in
   let empty_state = Solver.initial_state in
-  let%bind (p, state) = type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") (fun ppf p -> Format.fprintf ppf "%a" Yojson.Safe.pp (Ast_typed.Yojson.program_with_unification_vars p)) (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env in
+  let%bind (p, state) = type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") (fun ppf p -> Format.fprintf ppf "%s" (Yojson.Safe.to_string (Ast_typed.Yojson.program_with_unification_vars p))) (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env in
   let%bind p = check_has_no_unification_vars p in
   ok (p, state)
 
 let type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * _ O'.typer_state , typer_error) result =
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
-  type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.expression\"") (fun ppf p -> Format.fprintf ppf "%a" Yojson.Safe.pp (Ast_typed.Yojson.expression p)) (env , state , e) Typesystem.Misc.Substitution.Pattern.s_expression (fun (a,b,c) -> type_expression a b c)
+  type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.expression\"") (fun ppf p -> Format.fprintf ppf "%s" (Yojson.Safe.to_string (Ast_typed.Yojson.expression p))) (env , state , e) Typesystem.Misc.Substitution.Pattern.s_expression (fun (a,b,c) -> type_expression a b c)
 
 let untype_expression       = Untyper.untype_expression
 

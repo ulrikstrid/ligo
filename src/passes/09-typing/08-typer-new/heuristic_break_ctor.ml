@@ -66,6 +66,7 @@ let heuristic =
       selector ;
       propagator ;
       printer = Ast_typed.PP.output_break_ctor ; (* TODO: use an accessor that can get the printer for PP or PP_json alike *)
+      printer_json = Ast_typed.Yojson.output_break_ctor ; (* TODO: use an accessor that can get the printer for PP or PP_json alike *)
       comparator = Solver_should_be_generated.compare_output_break_ctor ;
       initial_private_storage = () ;
     }

@@ -17,8 +17,8 @@ let propagator_heuristics =
     Heuristic_tc_fundep.heuristic ;
   ]
 
-let init_propagator_heuristic (Propagator_heuristic { selector ; propagator ; printer ; comparator ; initial_private_storage }) =
-  Propagator_state { selector ; propagator ; printer ; already_selected = Set.create ~cmp:comparator ; private_storage = initial_private_storage }
+let init_propagator_heuristic (Propagator_heuristic { selector ; propagator ; printer ; printer_json ; comparator ; initial_private_storage }) =
+  Propagator_state { selector ; propagator ; printer ; printer_json ; already_selected = Set.create ~cmp:comparator ; private_storage = initial_private_storage }
 
 let initial_state : _ typer_state = {
     structured_dbs =
@@ -78,13 +78,13 @@ let select_and_propagate_one :
   fun
     new_constraint
     (new_states , new_constraints , dbs)
-    (Propagator_state { selector; propagator; printer ; already_selected ; private_storage }) ->
+    (Propagator_state { selector; propagator; printer ; printer_json ; already_selected ; private_storage }) ->
   let sel_propag = (select_and_propagate selector propagator) in
   let%bind (already_selected , private_storage, updates) =
     sel_propag already_selected private_storage new_constraint dbs in
   let%bind new_constraints'', dbs = apply_multiple_removals updates dbs in
   ok @@ (
-    (Propagator_state { selector; propagator; printer ; already_selected ; private_storage }
+    (Propagator_state { selector; propagator; printer ; printer_json ; already_selected ; private_storage }
      :: new_states),
     new_constraints'' @ new_constraints,
     dbs
