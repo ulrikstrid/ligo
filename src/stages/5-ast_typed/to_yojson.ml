@@ -565,7 +565,10 @@ let type_constraint_simpl = function
 
 let poly_unionfind f p =
   let lst = (UnionFind.Poly2.partitions p) in
-  let lst' = List.map (fun l -> f (UnionFind.Poly2.repr (List.hd l) p )) lst in
+  let lst' = List.map
+      (fun l ->
+         let repr = f (UnionFind.Poly2.repr (List.hd l) p ) in
+         `List (repr :: List.map f l)) lst in
   `Assoc ["UnionFind", `List lst']
 
 let unionfind = poly_unionfind type_variable_to_yojson

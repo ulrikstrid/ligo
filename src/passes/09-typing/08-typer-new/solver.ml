@@ -54,7 +54,7 @@ let select_and_propagate : 'old_input 'selector_output 'private_storage . ('old_
   (* return so that the new constraints are pushed to some kind of work queue *)
   let () =
     if Ast_typed.Debug.debug_new_typer && false then
-      Format.printf "propagator produced\nupdates = %a\n"
+      Printf.fprintf stderr "%s" @@ Format.asprintf "propagator produced\nupdates = %a\n"
         Ast_typed.PP.updates_list
         new_constraints
   in

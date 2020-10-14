@@ -1,6 +1,7 @@
 module Types = Types
 module Environment = Environment
 module PP = PP
+module PP_annotated = PP_annotated
 module Yojson = To_yojson
 module Formatter = Formatter
 module Combinators = struct
