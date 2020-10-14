@@ -238,7 +238,10 @@ and type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     let recur = List.map type_constraint_simpl fresh_eqns in
     [SC_Row {is_mandatory_constraint = true; tv=a;r_tag;tv_map=fresh_vars;reason_row_simpl=Format.asprintf "normalizer: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.row_tag r_tag (Ast_typed.PP.record_sep Ast_typed.PP.type_value (fun ppf () -> Format.fprintf ppf ", ")) args}] @ List.flatten recur in
   let gather_forall a forall = [SC_Poly { is_mandatory_constraint = true; tv=a; forall ; reason_poly_simpl="normalizer: gather_forall"}] in
-  let gather_alias a b = [SC_Alias { is_mandatory_constraint = true; a ; b ; reason_alias_simpl="normalizer: gather_alias"}] in
+  let gather_alias a b =
+    if Var.equal a b
+    then [] (* Don't include trivial aliases. *)
+    else [SC_Alias { is_mandatory_constraint = true; a ; b ; reason_alias_simpl="normalizer: gather_alias"}] in
   let reduce_type_app a b =
     let (reduced, new_constraints) = Typelang.check_applied @@ Typelang.type_level_eval b in
     let recur = List.map type_constraint_simpl new_constraints in
@@ -288,12 +291,15 @@ let normalizers : type_constraint -> structured_dbs -> (structured_dbs , 'modifi
   fun new_constraint dbs ->
     (fun x -> x)
     (* TODO: this does no exhaustiveness check to ensure that all parts of the database were updated as needed. *)
+
+    (* Below are normalizers which store constraints into some sort of database to enable fast lookups. *)
     @@ lift normalizer_refined_typeclasses
     @@ lift normalizer_typeclasses_constrained_by
     @@ lift normalizer_by_constraint_identifier
     @@ lift normalizer_grouped_by_variable
     @@ lift normalizer_assignments
     @@ lift normalizer_all_constraints
+    (* below are a different sort of normalizers, they break down constraints into more elementrary ones *)
     @@ lift normalizer_simpl
     @@ lift_state_list_monad ~state:dbs ~list:[new_constraint]
 
