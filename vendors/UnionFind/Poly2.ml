@@ -39,7 +39,7 @@ type 'item node =
 type ('item, 'value) map = ('item, 'value) RedBlackTrees.PolyMap.t
 let map_empty (compare : 'item -> 'item -> int) : ('item, 'value) map = RedBlackTrees.PolyMap.create ~cmp:compare
 let map_find : 'item 'value . 'item -> ('item, 'value) map -> 'value = RedBlackTrees.PolyMap.find
-let map_iter : 'item 'value . ('item -> 'value -> unit) -> ('item, 'value) map -> unit = RedBlackTrees.PolyMap.iter
+(* let map_iter : 'item 'value . ('item -> 'value -> unit) -> ('item, 'value) map -> unit = RedBlackTrees.PolyMap.iter *)
 let map_add : 'item 'value . 'item -> 'value -> ('item, 'value) map -> ('item, 'value) map = RedBlackTrees.PolyMap.add
 let map_sorted_keys : 'item 'value . ('item, 'value) map -> 'item list = fun m -> List.map fst @@ RedBlackTrees.PolyMap.bindings m
 
@@ -71,29 +71,30 @@ let rec seek (i: 'item) (p: 'item partition) : 'item * height =
 
 let repr i p = fst (seek i p)
 
-let is_equiv (i: 'item) (j: 'item) (p: 'item partition) : bool =
-  try equal p.compare (repr i p) (repr j p) with
-    Not_found -> false
+(* let is_equiv (i: 'item) (j: 'item) (p: 'item partition) : bool =
+ *   try equal p.compare (repr i p) (repr j p) with
+ *     Not_found -> false *)
 
 let get_or_set_h (i: 'item) (p: 'item partition) =
   try seek i p, p with
     Not_found -> let n = i,0 in (n, root n p)
 
 let get_or_set (i: 'item) (p: 'item partition) =
+  Printf.fprintf stderr "\nUNION_FIND GET_OR_SET %s\n" (p.to_string i);
   let (i, _h), p = get_or_set_h i p in (i, p)
 
-let mem i p = try Some (repr i p) with Not_found -> None
+(* let mem i p = try Some (repr i p) with Not_found -> None *)
 
 let repr i p = try repr i p with Not_found -> i
 
-let equiv (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
-  let (ri,hi as ni), p = get_or_set_h i p in
-  let (rj,hj as nj), p = get_or_set_h j p in
-  if   equal p.compare ri rj
-  then p
-  else if   hi > hj
-  then link nj ri p
-  else link ni rj (if hi < hj then p else root (rj, hj+1) p)
+(* let equiv (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
+ *   let (ri,hi as ni), p = get_or_set_h i p in
+ *   let (rj,hj as nj), p = get_or_set_h j p in
+ *   if   equal p.compare ri rj
+ *   then p
+ *   else if   hi > hj
+ *   then link nj ri p
+ *   else link ni rj (if hi < hj then p else root (rj, hj+1) p) *)
 
 (** The call [alias i j p] results in the same partition as [equiv
     i j p], except that [i] is not the representative of its class
@@ -106,6 +107,7 @@ let equiv (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
     applied (which, without the constraint above, would yield a
     height-balanced new tree). *)
 let alias (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
+  Printf.fprintf stderr "\nUNION_FIND ALIAS %s -> %s\n" (p.to_string i) (p.to_string j);
   let (ri,hi as ni), p = get_or_set_h i p in
   let (rj,hj as nj), p = get_or_set_h j p in
   if   equal p.compare ri rj
@@ -117,9 +119,9 @@ let alias (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
 
 (** {1 iteration over the elements} *)
 
-let elements : 'item . 'item partition -> 'item list =
-  fun { to_string=_; compare=_; map } ->
-  map_sorted_keys map
+(* let elements : 'item . 'item partition -> 'item list =
+ *   fun { to_string=_; compare=_; map } ->
+ *   map_sorted_keys map *)
 
 let partitions : 'item . 'item partition -> 'item list list =
   let compare_lists_by_first cmp la lb =
@@ -145,20 +147,20 @@ let partitions : 'item . 'item partition -> 'item list list =
   let partitions = List.sort (compare_lists_by_first compare) partitions in
   partitions
 
-let get_compare p = p.compare
+(* let get_compare p = p.compare *)
 
 (** {1 Printing} *)
 
-let print ppf (p: 'item partition) =
-  let print i node =
-    let hi, hj, j =
-      match node with
-        Root hi -> hi,hi,i
-      | Link (j,hi) ->
-         match map_find j p.map with
-           Root hj | Link (_,hj) -> hi,hj,j in
-    let () =
-      Format.fprintf ppf "%s,%d -> %s,%d\n"
-        (p.to_string i) hi (p.to_string j) hj
-    in ()
-  in map_iter print p.map
+(* let print ppf (p: 'item partition) =
+ *   let print i node =
+ *     let hi, hj, j =
+ *       match node with
+ *         Root hi -> hi,hi,i
+ *       | Link (j,hi) ->
+ *          match map_find j p.map with
+ *            Root hj | Link (_,hj) -> hi,hj,j in
+ *     let () =
+ *       Format.fprintf ppf "%s,%d -> %s,%d\n"
+ *         (p.to_string i) hi (p.to_string j) hj
+ *     in ()
+ *   in map_iter print p.map *)

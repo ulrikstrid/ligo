@@ -45,8 +45,8 @@ let type_constraint : _ -> type_constraint_simpl -> unit = fun ppf c ->
 let all_constraints ppf ac =
   fprintf ppf "[%a]" (pp_print_list ~pp_sep:(fun ppf () -> fprintf ppf ";\n") type_constraint) ac
 
-let aliases ppf (al : unionfind) =
-  fprintf ppf "ALIASES %a" UF.print al
+let aliases ppf (_al : unionfind) =
+  fprintf ppf "ALIASES [DEBUG:temporarily disabled to debug union-find]" (* fprintf ppf "ALIASES %a" UF.print al *)
 
 let structured_dbs : _ -> structured_dbs -> unit = fun ppf structured_dbs ->
   let { all_constraints = a ; aliases = b ; _ } = structured_dbs in
