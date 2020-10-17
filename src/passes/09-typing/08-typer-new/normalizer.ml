@@ -15,6 +15,7 @@ open Trace
 (* TODO: If implemented in a language with decent sets, should be 'b set not 'b list. *)
 type ('a , 'b) normalizer = structured_dbs -> 'a -> (structured_dbs * 'b list)
 type 'a normalizer_rm = structured_dbs -> 'a -> (structured_dbs, Typer_common.Errors.typer_error) result
+
 (* type ('a , 'b) normalizer = {
  *   add: ('a, 'b) normalizer_add;
  *   rm: 'a normalizer_rm;
@@ -127,7 +128,7 @@ let normalizer_refined_typeclasses : (type_constraint_simpl , type_constraint_si
                | None -> Some metadata)
              dbs.refined_typeclasses;
          refined_typeclasses_back = PolyMap.update
-             metadata.refined
+             metadata.refined.id_typeclass_simpl
              (function
                  Some _existing -> 
                  failwith "Internal error: ???"
@@ -144,7 +145,7 @@ let normalizer_refined_typeclasses_remove : type_constraint_simpl normalizer_rm 
   | SC_Typeclass c ->
     let original =
       try
-        PolyMap.find c dbs.refined_typeclasses_back
+        PolyMap.find c.id_typeclass_simpl dbs.refined_typeclasses_back
       with
         Not_found ->
         failwith "Internal error: Can't remove refined typeclass: it is not attached to a typeclass."
@@ -154,7 +155,7 @@ let normalizer_refined_typeclasses_remove : type_constraint_simpl normalizer_rm 
       refined_typeclasses =
         PolyMap.remove original dbs.refined_typeclasses;
       refined_typeclasses_back =
-        PolyMap.remove c dbs.refined_typeclasses_back
+        PolyMap.remove c.id_typeclass_simpl dbs.refined_typeclasses_back
     }
   | _ -> ok dbs
 

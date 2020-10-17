@@ -260,26 +260,14 @@ and named_type_content = {
 
 
 
-(* Solver types *)
+(* Solver types
 
-type 'a poly_unionfind = 'a UnionFind.Poly2.t
-type 'a poly_set = 'a RedBlackTrees.PolySet.t
-
-(* typevariable: to_string = (fun s -> Format.asprintf "%a" Var.pp s) *)
-(* representant for an equivalence class of type variables *)
-type 'v typeVariableMap = (type_variable, 'v) RedBlackTrees.PolyMap.t
-let typeVariableMap_to_yojson f tvmap =
-  bindings_to_yojson type_variable_to_yojson f @@ RedBlackTrees.PolyMap.bindings tvmap
-
-let typeVariableMap_of_yojson f tvmap =
-  Stdlib.Result.bind (Stage_common.Of_yojson.bindings type_variable_of_yojson f tvmap)
-    (Stdlib.Option.to_result ~none:"Map with duplicates" <@ RedBlackTrees.PolyMap.from_list ~cmp:compare)
-
-(* typevariable: to_string = (fun s -> Format.asprintf "%a" Var.pp s) *)
-type unionfind = type_variable poly_unionfind
-let unionfind_to_yojson _ = `String "type_varianle unionfind"
-(* TODO : use error monad *)
-let unionfind_of_yojson _ = Error ("can't parse unionfind")
+   The solver types are not actually part of the AST,
+   so they could be moved to a separate file, but doing so would
+   require updating every use of the Ast_typed.Types module to also
+   include the solver types (a lot of work). Also, there is a lot of
+   semi-duplication between the AST and the solver, so it's best to
+   keep the two together until that gets refactored. *)
 
 (* core *)
 
@@ -393,6 +381,25 @@ and typeclass = tc_allowed list
 
 (* end core *)
 
+type 'a poly_unionfind = 'a UnionFind.Poly2.t
+type 'a poly_set = 'a RedBlackTrees.PolySet.t
+
+(* typevariable: to_string = (fun s -> Format.asprintf "%a" Var.pp s) *)
+(* representant for an equivalence class of type variables *)
+type 'v typeVariableMap = (type_variable, 'v) RedBlackTrees.PolyMap.t
+let typeVariableMap_to_yojson f tvmap =
+  bindings_to_yojson type_variable_to_yojson f @@ RedBlackTrees.PolyMap.bindings tvmap
+
+let typeVariableMap_of_yojson f tvmap =
+  Stdlib.Result.bind (Stage_common.Of_yojson.bindings type_variable_of_yojson f tvmap)
+    (Stdlib.Option.to_result ~none:"Map with duplicates" <@ RedBlackTrees.PolyMap.from_list ~cmp:compare)
+
+(* typevariable: to_string = (fun s -> Format.asprintf "%a" Var.pp s) *)
+type unionfind = type_variable poly_unionfind
+let unionfind_to_yojson _ = `String "type_varianle unionfind"
+(* TODO : use error monad *)
+let unionfind_of_yojson _ = Error ("can't parse unionfind")
+
 type constraint_identifier =
 | ConstraintIdentifier of int64
 type 'v constraint_identifierMap = (constraint_identifier, 'v) RedBlackTrees.PolyMap.t
@@ -412,8 +419,9 @@ and constraint_identifier_set_map = constraint_identifier_set typeVariableMap
 and c_constructor_simpl_typeVariableMap = c_constructor_simpl typeVariableMap
 and constraints_typeVariableMap = constraints typeVariableMap
 and c_typeclass_simpl_constraint_identifierMap = c_typeclass_simpl constraint_identifierMap
-and constraint_identifier_c_typeclass_simplMap = (c_typeclass_simpl, constraint_identifier) RedBlackTrees.PolyMap.t
+and constraint_identifier_constraint_identifierMap = (constraint_identifier, constraint_identifier) RedBlackTrees.PolyMap.t
 and type_constraint_simpl_list = type_constraint_simpl list
+
 and structured_dbs = {
   all_constraints            : type_constraint_simpl_list ;
   aliases                    : unionfind ;
@@ -427,7 +435,7 @@ and structured_dbs = {
   (* TODO: later have all constraints get an identtifier, not just typeclass constraints. *)
   by_constraint_identifier   : c_typeclass_simpl_constraint_identifierMap ;
   refined_typeclasses        : refined_typeclass_constraint_identifierMap ;
-  refined_typeclasses_back   : constraint_identifier_c_typeclass_simplMap ;
+  refined_typeclasses_back   : constraint_identifier_constraint_identifierMap ;
   typeclasses_constrained_by : constraint_identifier_set_map ;
 }
 
@@ -541,3 +549,70 @@ type update = {
 }
 type updates = update list
 type updates_list = updates list
+
+
+
+
+
+
+(* This is in a functor to fix a dependency cycle between ast.ml and
+   typer_errors.ml. *)
+module Dep_cycle (Typer_errors : sig type typer_error end) = struct
+
+type ('old, 'new_) updater = {
+  map : 'v . 'old -> 'old -> ('old, 'v) PolyMap.t -> ('new_, 'v) PolyMap.t;
+}
+
+
+(* Each normalizer returns an updated database (after storing the
+   incoming constraint) and a list of constraints, used when the
+   normalizer rewrites the constraints e.g. into simpler ones. *)
+(* TODO: If implemented in a language with decent sets, should be 'b set not 'b list. *)
+type ('state, 'a , 'b) normalizer = 'state -> 'a -> ('state * 'b list)
+type ('state, 'a) normalizer_rm = 'state -> 'a -> ('state, Typer_errors.typer_error) result
+
+module type DBPlugin = sig
+  type 'typeVariable t
+  val empty : cmp:('typeVariable -> 'typeVariable -> int) -> 'typeVariable t
+  val add_constraint : (type_variable t, type_constraint_simpl, type_constraint_simpl) normalizer
+  val remove_constraint : (type_variable t, type_constraint_simpl) normalizer_rm
+  val merge_aliases : ('old, 'new_) updater -> 'old -> 'old -> 'old t -> 'new_ t
+end
+
+module Assignments : DBPlugin = struct
+  type 'typeVariable t = ('typeVariable, c_constructor_simpl) PolyMap.t
+  let empty ~cmp = PolyMap.create ~cmp
+  let add_constraint _ = failwith "todo"
+  let remove_constraint _ = failwith "todo"
+  let merge_aliases : 'old 'new_ . ('old, 'new_) updater -> 'old -> 'old -> 'old t -> 'new_ t =
+    fun updater a b state -> updater.map a b state
+end
+
+type 't plugin_instance = {
+  state : 't;
+  merge_aliases : type_variable -> type_variable -> 't -> 't;
+}
+
+type ex_plugin_instance =
+  | Plugin_instance : 't plugin_instance -> ex_plugin_instance
+
+type ex_deus =
+  | Deus : (module DBPlugin) -> ex_deus
+
+(* WIP prototype of the solver's main loop with plugins *)
+let main (plugins : (module DBPlugin) list) =
+  let updater = {
+    map = fun _a _b m -> (*ReprMap.merge a b*) m
+  } in
+  let plugin_instances = List.map
+      (fun plugin ->
+         let module Plugin = (val plugin : DBPlugin) in
+         Plugin_instance {
+           state = Plugin.empty ~cmp:Var.compare;
+           merge_aliases = fun a b state ->
+             Plugin.merge_aliases updater a b state;
+         })
+      plugins
+  in
+  ignore plugin_instances;
+end

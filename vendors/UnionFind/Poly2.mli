@@ -6,6 +6,7 @@
 
 type 'item partition
 type 'item t = 'item partition
+type 'item repr
 
 (** {1 Creation} *)
 

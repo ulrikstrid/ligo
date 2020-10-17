@@ -1,4 +1,4 @@
-open Types
+open Ast
 module S = Ast_core
 
 let make_t ?(loc = Location.generated) type_content core = {type_content; location=loc; type_meta = core}

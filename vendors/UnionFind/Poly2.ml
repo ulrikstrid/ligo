@@ -54,6 +54,8 @@ type 'item partition = {
 
 type 'item t = 'item partition
 
+type 'item repr = 'item
+
 let empty to_string compare = { to_string ; compare ; map = map_empty compare }
 
 let root : 'item * height -> 'item t -> 'item t =

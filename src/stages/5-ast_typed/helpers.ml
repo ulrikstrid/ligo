@@ -1,4 +1,4 @@
-open Types
+open Ast
 open Trace
 
 let type_expression'_of_string = fun t ->

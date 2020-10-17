@@ -30,7 +30,7 @@ let initial_state : _ typer_state = {
         cycle_detection_toposort   = ();
         by_constraint_identifier   = (Map.create ~cmp:Ast_typed.Compare.constraint_identifier : (constraint_identifier, c_typeclass_simpl) Map.t);
         refined_typeclasses        = (Map.create ~cmp:Ast_typed.Compare.constraint_identifier : (constraint_identifier, refined_typeclass) Map.t);
-        refined_typeclasses_back   = (Map.create ~cmp:Ast_typed.Compare.c_typeclass_simpl : (c_typeclass_simpl, constraint_identifier) Map.t);
+        refined_typeclasses_back   = (Map.create ~cmp:Ast_typed.Compare.constraint_identifier : (constraint_identifier, constraint_identifier) Map.t);
         typeclasses_constrained_by = (Map.create ~cmp:Var.compare)
       } ;
     already_selected_and_propagators = List.map init_propagator_heuristic propagator_heuristics

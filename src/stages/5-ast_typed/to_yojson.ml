@@ -1,4 +1,4 @@
-open Types
+open Ast
 
 type json = Yojson.Safe.t
 
@@ -625,7 +625,7 @@ let constraints {constructor; poly; tc; row} =
 let structured_dbs {refined_typeclasses;refined_typeclasses_back;typeclasses_constrained_by;by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort=_} =
   `Assoc [
     ("refined_typeclasses", jmap constraint_identifier refined_typeclass refined_typeclasses);
-    ("refined_typeclasses", jmap c_typeclass_simpl constraint_identifier refined_typeclasses_back);
+    ("refined_typeclasses", jmap constraint_identifier constraint_identifier refined_typeclasses_back);
     ("typeclasses_constrained_by", typeVariableMap constraint_identifier_set typeclasses_constrained_by);
     ("by_constraint_identifier", ciMap c_typeclass_simpl by_constraint_identifier); 
     ("all_constrants", list type_constraint_simpl all_constraints);

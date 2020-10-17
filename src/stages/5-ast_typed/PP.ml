@@ -1,5 +1,5 @@
 [@@@coverage exclude_file]
-open Types
+open Ast
 open Format
 open PP_helpers
 include Stage_common.PP
@@ -352,12 +352,14 @@ let c_typeclass_simpl ppf ({is_mandatory_constraint;id_typeclass_simpl = Constra
     reason_typeclass_simpl
     typeclass tc
     (list_sep_d type_variable) args
+let constraint_identifier ppf (ConstraintIdentifier ci) =
+  fprintf ppf "ConstraintIdentifier %Li" ci
 
-let c_typeclass_simplMap = fun f ppf tvmap   ->
+let constraint_identifierMap = fun f ppf tvmap   ->
       let lst = RedBlackTrees.PolyMap.bindings tvmap in
       let aux ppf (k, v) =
-        fprintf ppf "(%a, %a)" c_typeclass_simpl k f v in
-      fprintf ppf "typeVariableMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
+        fprintf ppf "(%a, %a)" constraint_identifier k f v in
+      fprintf ppf "constraint_identifierMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
 
 let c_row_simpl ppf ({is_mandatory_constraint;reason_row_simpl; tv; r_tag; tv_map}) =
   fprintf ppf "{@,@[<hv 2>
@@ -403,7 +405,7 @@ let refined_typeclass ppf ({ refined; original; vars } : refined_typeclass) =
 let structured_dbs ppf ({refined_typeclasses;refined_typeclasses_back;typeclasses_constrained_by;by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort} : structured_dbs) =
   fprintf ppf "{@,@[<hv 2> refined_typeclasses : %a ;@ refined_typeclasses_back : %a ;@ typeclasses_constrained_by : %a ;@ by_constraint_identifier : %a ;@ all_constraints : %a ;@ aliases : %a ;@ assignments : %a;@ gouped_by_variable : %a;@ cycle_detection_toposort : %a @]@,}"
     (identifierMap refined_typeclass) refined_typeclasses
-    (c_typeclass_simplMap constraint_identifier) refined_typeclasses_back
+    (constraint_identifierMap constraint_identifier) refined_typeclasses_back
     (typeVariableMap constraint_identifier_set) typeclasses_constrained_by
     (identifierMap c_typeclass_simpl) by_constraint_identifier
     (list_sep_d type_constraint_simpl) all_constraints
