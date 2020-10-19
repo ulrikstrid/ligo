@@ -1,7 +1,7 @@
-[@@@warning "-30"]
+[@@@warning "-30-32"]
 
-open Types_utils
-include Stage_common.Enums (*@ follow ../common/enums.ml *)
+open Simple_utils.Function
+include Stage_common.Types
 
 (* pseudo-typeclasses: interfaces that must be provided for arguments
    of the givent polymmorphic types. For now, only one typeclass can
@@ -9,40 +9,28 @@ include Stage_common.Enums (*@ follow ../common/enums.ml *)
    provided by the Comparable module *)
 (*@ typeclass poly_unionfind comparable *)
 (*@ typeclass poly_set       comparable *)
+type ast_core_type_expression = Ast_core.type_expression
 
 type te_lmap = row_element label_map
 and type_meta = ast_core_type_expression option
 
 and type_content =
-  | T_sum of rows
-  | T_record of rows
-  | T_arrow of arrow
   | T_variable of type_variable
-  | T_constant of type_operator
+  | T_constant of ty_expr type_operator
+  | T_sum      of rows
+  | T_record   of rows
+  | T_arrow    of ty_expr arrow
 
 and rows = {
   content : row_element label_map;
   layout : layout ;
 }
 
-and arrow = {
-    type1: type_expression;
-    type2: type_expression;
-  }
-
 and te_list = type_expression list
-and type_operator = {
-    type_constant : type_constant;
-    arguments     : te_list;
-  }
 
 and annot_option = string option
 
-and row_element = {
-    associated_type : type_expression;
-    michelson_annotation : annot_option;
-    decl_pos : int;
-}
+and row_element = type_expression row_element_mini_c
 
 and type_map_args = {
     k : type_expression;
@@ -59,6 +47,7 @@ and type_expression = {
     type_meta: type_meta;
     location: location;
   }
+and ty_expr = type_expression
 
 and matching_content_cons = {
     hd : expression_variable;
@@ -106,7 +95,11 @@ and matching_expr =
 
 and declaration_loc = declaration location_wrap
 
-and program = declaration_loc list
+and program_ = declaration_loc list
+
+and program_with_unification_vars = Program_With_Unification_Vars of program_
+
+and program_fully_typed = Program_Fully_Typed of program_
 
 (* A Declaration_constant is described by
  *   a name + a type-annotated expression
@@ -269,6 +262,19 @@ and named_type_content = {
 
 (* Solver types *)
 
+type 'a poly_unionfind = 'a UnionFind.Poly2.t
+type 'a poly_set = 'a RedBlackTrees.PolySet.t
+
+(* typevariable: to_string = (fun s -> Format.asprintf "%a" Var.pp s) *)
+(* representant for an equivalence class of type variables *)
+type 'v typeVariableMap = (type_variable, 'v) RedBlackTrees.PolyMap.t
+let typeVariableMap_to_yojson f tvmap =
+  bindings_to_yojson type_variable_to_yojson f @@ RedBlackTrees.PolyMap.bindings tvmap
+
+let typeVariableMap_of_yojson f tvmap =
+  Stdlib.Result.bind (Stage_common.Of_yojson.bindings type_variable_of_yojson f tvmap)
+    (Stdlib.Option.to_result ~none:"Map with duplicates" <@ RedBlackTrees.PolyMap.from_list ~cmp:compare)
+
 (* typevariable: to_string = (fun s -> Format.asprintf "%a" Var.pp s) *)
 type unionfind = type_variable poly_unionfind
 let unionfind_to_yojson _ = `String "type_varianle unionfind"
@@ -323,6 +329,7 @@ and p_apply = {
   }
 
 and p_ctor_args = type_value list
+and p_ctor_args_list = p_ctor_args list
 and p_constant = {
     p_ctor_tag : constant_tag ;
     p_ctor_args : p_ctor_args ;
@@ -333,7 +340,7 @@ and p_row = {
     p_row_tag  : row_tag ;
     p_row_args : tv_lmap ;
   }
- 
+
 and p_constraints = type_constraint list
 
 and p_forall = {
@@ -386,19 +393,42 @@ and typeclass = tc_allowed list
 
 (* end core *)
 
-type c_constructor_simpl_typeVariableMap = c_constructor_simpl typeVariableMap
+type constraint_identifier =
+| ConstraintIdentifier of int64
+type 'v constraint_identifierMap = (constraint_identifier, 'v) RedBlackTrees.PolyMap.t
+
+type refined_typeclass = {
+  refined : c_typeclass_simpl ;
+  original : c_typeclass_simpl ;
+  vars : type_variable_set ;
+}
+
+and type_variable_set = type_variable poly_set
+and refined_typeclass_constraint_identifierMap = refined_typeclass constraint_identifierMap
+
+and constraint_identifier_set = constraint_identifier RedBlackTrees.PolySet.t
+and constraint_identifier_set_map = constraint_identifier_set typeVariableMap
+
+and c_constructor_simpl_typeVariableMap = c_constructor_simpl typeVariableMap
 and constraints_typeVariableMap = constraints typeVariableMap
+and c_typeclass_simpl_constraint_identifierMap = c_typeclass_simpl constraint_identifierMap
+and constraint_identifier_c_typeclass_simplMap = (c_typeclass_simpl, constraint_identifier) RedBlackTrees.PolyMap.t
 and type_constraint_simpl_list = type_constraint_simpl list
 and structured_dbs = {
-  all_constraints          : type_constraint_simpl_list ;
-  aliases                  : unionfind ;
+  all_constraints            : type_constraint_simpl_list ;
+  aliases                    : unionfind ;
   (* assignments (passive data structure). *)
-  (*   Now                 : just a map from unification vars to types (pb: what about partial types?) *)
+  (*   Now                   : just a map from unification vars to types (pb: what about partial types?) *)
   (*   maybe just local assignments (allow only vars as children of pair(α,β)) *)
-  (* TODO                  : the rhs of the map should not repeat the variable name. *)
-  assignments              : c_constructor_simpl_typeVariableMap ;
-  grouped_by_variable      : constraints_typeVariableMap ; (* map from (unionfind) variables to constraints containing them *)
-  cycle_detection_toposort : unit ;                        (* example of structured db that we'll add later *)
+  (* TODO                    : the rhs of the map should not repeat the variable name. *)
+  assignments                : c_constructor_simpl_typeVariableMap ;
+  grouped_by_variable        : constraints_typeVariableMap ; (* map from (unionfind) variables to constraints containing them *)
+  cycle_detection_toposort   : unit ;                        (* example of structured db that we'll add later *)
+  (* TODO: later have all constraints get an identtifier, not just typeclass constraints. *)
+  by_constraint_identifier   : c_typeclass_simpl_constraint_identifierMap ;
+  refined_typeclasses        : refined_typeclass_constraint_identifierMap ;
+  refined_typeclasses_back   : constraint_identifier_c_typeclass_simplMap ;
+  typeclasses_constrained_by : constraint_identifier_set_map ;
 }
 
 and c_constructor_simpl_list = c_constructor_simpl list
@@ -416,12 +446,17 @@ and type_variable_list = type_variable list
 and type_variable_lmap = type_variable label_map
 and c_constructor_simpl = {
   reason_constr_simpl : string ;
+  (* If false, the constraint can be deleted without compromising the correctness of the typechecker: it might be a constraint used for bookkeeping which helps with inference, but its removal does not risk causing an ill-typed program to be accepted. If true, this constraint might (or might not) be necessary for correctness. It is always safe to use "true" for correctness. Use "false" only when being sure it is safe to remove that constraint. *)
+  is_mandatory_constraint : bool ;
   tv : type_variable;
   c_tag : constant_tag;
+  (* Types wih no arguments like int, string etc. have an empty tv_list *)
   tv_list : type_variable_list;
 }
 and c_row_simpl = {
   reason_row_simpl : string ;
+  (* see description above in c_constructor_simpl *)
+  is_mandatory_constraint : bool ;
   tv : type_variable;
   r_tag : row_tag;
   tv_map : type_variable_lmap;
@@ -436,11 +471,16 @@ and c_equation_e = {
   }
 and c_typeclass_simpl = {
   reason_typeclass_simpl : string ;
+  (* see description above in c_constructor_simpl *)
+  is_mandatory_constraint : bool ;
+  id_typeclass_simpl     : constraint_identifier ;
   tc   : typeclass          ;
   args : type_variable_list ;
 }
 and c_poly_simpl = {
   reason_poly_simpl : string ;
+  (* see description above in c_constructor_simpl *)
+  is_mandatory_constraint : bool ;
   tv     : type_variable ;
   forall : p_forall      ;
 }
@@ -451,8 +491,15 @@ and type_constraint_simpl =
   | SC_Typeclass   of c_typeclass_simpl               (* TC(α, …) *)
   | SC_Row         of c_row_simpl                     (* α = row(l -> β, …) *)
 
+and deduce_and_clean_result = {
+  deduced : c_constructor_simpl_list ;
+  cleaned : c_typeclass_simpl ;
+}
+
 and c_alias = {
     reason_alias_simpl : string ;
+    (* see description above in c_constructor_simpl *)
+    is_mandatory_constraint : bool ;
     a : type_variable ;
     b : type_variable ;
   }
@@ -473,6 +520,11 @@ type output_specialize1 = {
     a_k_var : c_constructor_simpl ;
   }
 
+type output_tc_fundep = {
+    tc : refined_typeclass ;
+    c : c_constructor_simpl ;
+  }
+
 type m_break_ctor__already_selected = output_break_ctor poly_set
 type m_specialize1__already_selected = output_specialize1 poly_set
 
@@ -480,3 +532,12 @@ type already_selected = {
   break_ctor  : m_break_ctor__already_selected  ;
   specialize1 : m_specialize1__already_selected ;
 }
+
+type type_constraint_list = type_constraint list
+type update = {
+  remove_constraints : type_constraint_simpl_list ;
+  add_constraints : type_constraint_list ;
+  justification : string ;
+}
+type updates = update list
+type updates_list = updates list

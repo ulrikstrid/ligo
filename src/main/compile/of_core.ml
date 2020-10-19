@@ -1,11 +1,11 @@
 open Main_errors
 open Trace
 
-type form = 
+type form =
   | Contract of string
   | Env
 
-let compile ?(env=Environment.default) (cform: form) (program : Ast_core.program) : (Ast_typed.program * Ast_typed.environment * _ Typesystem.Solver_types.typer_state , _) result =
+let compile ?(env=Environment.default) (cform: form) (program : Ast_core.program) : (Ast_typed.program_fully_typed * Ast_typed.environment * _ Typesystem.Solver_types.typer_state , _) result =
   let%bind (e, prog_typed , state) = trace typer_tracer @@ Typer.type_program env program in
   let () = Typer.Solver.discard_state state in
   let%bind applied = trace self_ast_typed_tracer @@
@@ -27,7 +27,7 @@ let apply (entry_point : string) (param : Ast_core.expression) : (Ast_core.expre
     { content  = Ast_core.E_variable name ;
       sugar    = None ;
       location = Virtual "generated entry-point variable" } in
-  let applied : Ast_core.expression = 
+  let applied : Ast_core.expression =
     { content  = Ast_core.E_application {lamb=entry_point_var; args=param} ;
       sugar    = None ;
       location = Virtual "generated application" } in
@@ -35,12 +35,12 @@ let apply (entry_point : string) (param : Ast_core.expression) : (Ast_core.expre
 
 let list_declarations (program : Ast_core.program) : string list =
   List.fold_left
-    (fun prev el -> 
+    (fun prev el ->
       let open Location in
       let open Ast_core in
       match el.wrap_content with
-      | Declaration_constant {binder;_} -> (Var.to_name binder.wrap_content)::prev
-      | _ -> prev) 
+      | Declaration_constant {binder;_} -> (Var.to_name binder.var.wrap_content)::prev
+      | _ -> prev)
     [] program
 
 let evaluate_type (env : Ast_typed.Environment.t) (t: Ast_core.type_expression) = trace typer_tracer @@ Typer.evaluate_type env t

@@ -1,6 +1,5 @@
 open Simple_utils.Display
 
-
 let stage = "typer"
 
 type typer_error = [
@@ -68,6 +67,10 @@ type typer_error = [
   | `Typer_different_types of Ast_typed.type_expression * Ast_typed.type_expression
   | `Typer_variant_redefined_error of Location.t
   | `Typer_record_redefined_error of Location.t
+  | `Typer_constant_tag_number_of_arguments of string * Ast_typed.constant_tag * Ast_typed.constant_tag * int * int
+  | `Typer_typeclass_not_a_rectangular_matrix
+  | `Typer_could_not_remove
+  | `Typer_internal_error of string * string
 ]
 
 let missing_funarg_annotation v = `Typer_missing_funarg_annotation v
@@ -148,6 +151,10 @@ let constant_declaration_tracer (name: Ast_core.expression_variable) (ae:Ast_cor
 let in_match_variant_tracer (ae:Ast_core.matching_expr) (err:typer_error) =
   `Typer_match_variant_tracer (ae,err)
 let different_types a b = `Typer_different_types (a,b)
+let different_constant_tag_number_of_arguments loc opa opb lena lenb : typer_error = `Typer_constant_tag_number_of_arguments (loc, opa, opb, lena, lenb)
+let typeclass_not_a_rectangular_matrix = `Typer_typeclass_not_a_rectangular_matrix
+let internal_error (loc : string) (msg : string) : typer_error = `Typer_internal_error (loc, msg)
+let could_not_remove : typer_error = `Typer_could_not_remove
 
 let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> typer_error -> unit =
@@ -179,10 +186,10 @@ let rec error_ppformat : display_format:string display_format ->
         Snippet.pp loc
         Ast_typed.PP.expression_variable v
     | `Typer_match_missing_case (m, v, loc) ->
-      let missing = List.fold_left (fun all o -> 
-        match List.find_opt (fun f -> f = o) v with 
+      let missing = List.fold_left (fun all o ->
+        match List.find_opt (fun f -> f = o) v with
         | Some _ -> all
-        | None -> 
+        | None ->
           let (Label o) = o in
           o :: all
       ) [] m in
@@ -197,20 +204,20 @@ let rec error_ppformat : display_format:string display_format ->
       | Label l :: remaining -> (
         match (List.find_opt (fun f -> f = Label l) m)  with
         | Some _ -> (
-          match (List.find_opt (fun f -> f = l) processed) with 
+          match (List.find_opt (fun f -> f = l) processed) with
           | Some _ -> extra processed (l :: redundant) unknown remaining
           | None -> extra (l :: processed) redundant unknown remaining
         )
         | None -> extra processed redundant (l :: unknown) remaining)
       | [] -> (List.rev redundant, List.rev unknown)
       in
-      let (redundant, unknown) = extra [] [] [] v in   
+      let (redundant, unknown) = extra [] [] [] v in
       Format.fprintf f "@[<hv>%a@.Pattern matching over too many cases.@]"
         Snippet.pp loc;
       if List.length redundant > 0 then (
         let redundant = String.concat ", " redundant in
         Format.fprintf f
-          "@[<hv>@.These case(s) are duplicate:@.%s@]"          
+          "@[<hv>@.These case(s) are duplicate:@.%s@]"
           redundant
       );
       if List.length unknown > 0 then (
@@ -302,7 +309,7 @@ let rec error_ppformat : display_format:string display_format ->
 The following forms of subtractions are possible:
   * timestamp - int = timestamp
   * timestamp - timestamp = int
-  * int/nat - int/nat = int 
+  * int/nat - int/nat = int
   * mutez/tez - mutez/tez = mutez.@]"
         Snippet.pp loc
     | `Typer_wrong_size (loc,_t) ->
@@ -354,7 +361,7 @@ The following forms of subtractions are possible:
       Format.fprintf f
         "@[<hv>%a@.Invalid type(s).@.Expected: \"%a\", but got: \"%a\". @]"
         Snippet.pp loc
-        Ast_typed.PP.type_expression expected 
+        Ast_typed.PP.type_expression expected
         Ast_typed.PP.type_expression actual
     | `Typer_expected_record (loc,t) ->
       Format.fprintf f
@@ -495,6 +502,17 @@ The following forms of subtractions are possible:
       Format.fprintf f
         "@[<hv>%a@.Redefined record. @]"
         Snippet.pp loc
+    | `Typer_constant_tag_number_of_arguments (loc, opa, _opb, lena, lenb) ->
+      Format.fprintf f
+        "@[<hv> different number of arguments to type constructors.@ \
+        Expected these two n-ary type constructors to be the same, but they have different number\
+        of arguments (both use the %s type constructor, but they have %d and %d arguments, respectively)@ \
+        Thrown by compiler at %s@]"
+        (Format.asprintf "%a" Ast_typed.PP.constant_tag opa) lena lenb loc
+    | `Typer_typeclass_not_a_rectangular_matrix ->
+      Format.fprintf f "@[<hv>internal error: typeclass is not represented as a rectangular matrix with one column per argument@]"
+    | `Typer_internal_error (loc, msg) -> Format.fprintf f "internal error at %s: %s" loc msg
+    | `Typer_could_not_remove -> Format.fprintf f "Heuristic requested removal of a constraint that cannot be removed"
   )
 
 let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
@@ -553,15 +571,15 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     ] in
     json_error ~stage ~content
   | `Typer_match_missing_case (m, v, loc) ->
-    let missing = List.fold_left (fun all o -> 
-      match List.find_opt (fun f -> f = o) v with 
+    let missing = List.fold_left (fun all o ->
+      match List.find_opt (fun f -> f = o) v with
       | Some _ -> all
-      | None -> 
+      | None ->
         let (Label o) = o in
         `String o :: all
     ) [] m in
     let message = `String "Missing match case" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in    
+    let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [
       ("message", message);
       ("location", loc);
@@ -574,14 +592,14 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     | Label l :: remaining -> (
       match (List.find_opt (fun f -> f = Label l) m)  with
       | Some _ -> (
-        match (List.find_opt (fun f -> f = l) processed) with 
+        match (List.find_opt (fun f -> f = l) processed) with
         | Some _ -> extra processed (`String l :: redundant) unknown remaining
         | None -> extra (l :: processed) redundant unknown remaining
       )
       | None -> extra processed redundant (`String l :: unknown) remaining)
     | [] -> (List.rev redundant, List.rev unknown)
     in
-    let (redundant, unknown) = extra [] [] [] v in   
+    let (redundant, unknown) = extra [] [] [] v in
     let message = `String "Redundant case in match cases" in
     let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [
@@ -709,7 +727,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     ] in
     json_error ~stage ~content
   | `Typer_create_contract_lambda (cst,e) ->
-    let message = `String (Format.asprintf "First argument of %a must be inlined using a lambda" Ast_core.PP.constant cst) in
+    let message = `String (Format.asprintf "First argument of %a must be inlined using a lambda" Ast_core.PP.constant' cst) in
     let loc = `String (Format.asprintf "%a" Location.pp e.location) in
     let expression = `String (Format.asprintf "%a" Ast_core.PP.expression e) in
     let content = `Assoc [
@@ -1049,7 +1067,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Typer_converter t ->
     let message = `String "converters can only be used on records or variants" in
-    let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in 
+    let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
     let content = `Assoc [
       ("message", message);
       ("value", value);
@@ -1116,7 +1134,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     ] in
     json_error ~stage ~content
   | `Typer_different_types (a,b) ->
-    let message = `String ("Types are different.\ 
+    let message = `String ("Types are different.\
       Expected these two types to be the same, but they're different") in
     let a = `String (Format.asprintf "%a" Ast_typed.PP.type_expression a) in
     let b = `String (Format.asprintf "%a" Ast_typed.PP.type_expression b) in
@@ -1137,6 +1155,44 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     let message = `String "Redefined record" in
     let content = `Assoc [
       ("message", message) ;
-      ("location", Location.to_yojson loc) ;
+      ("location", Location.to_yojson loc)
+    ] in
+    json_error ~stage ~content
+  | `Typer_constant_tag_number_of_arguments (loc, opa, opb, lena, lenb) ->
+    let message = `String "different number of arguments to type constructors.\ 
+      Expected these two n-ary type constructors to be the same, but they have different number\ 
+      of arguments" in
+    let a = `String (Format.asprintf "%a" Ast_typed.PP.constant_tag opa) in
+    let b = `String (Format.asprintf "%a" Ast_typed.PP.constant_tag opb) in
+    let op = `String (Format.asprintf "%a" Ast_typed.PP.constant_tag opa) in
+    let len_a = `Int lena in
+    let len_b = `Int lenb in
+    let loc = `String loc in
+    let content = `Assoc [
+      ("message", message) ;
+      ("a", a) ;
+      ("b", b) ;
+      ("op", op) ;
+      ("len_a", len_a) ;
+      ("len_b", len_b) ;
+      ("thrown by compiler at", loc) ;
+    ] in
+    json_error ~stage ~content
+  | `Typer_typeclass_not_a_rectangular_matrix ->
+    let message = `String "internal error: typeclass is not represented as a rectangular matrix with one column per argument" in
+    let content = `Assoc [
+      ("message", message);
+    ] in
+    json_error ~stage ~content
+  | `Typer_internal_error (loc, msg) ->
+    let message = `String (Format.sprintf "internal error at %s: %s" loc msg) in
+    let content = `Assoc [
+      ("message", message);
+    ] in
+    json_error ~stage ~content
+  | `Typer_could_not_remove ->
+    let message = `String (Format.sprintf "Heuristic requested removal of a constraint that cannot be removed" ) in
+    let content = `Assoc [
+      ("message", message);
     ] in
     json_error ~stage ~content

@@ -20,7 +20,7 @@ let error display_format error =
   Formatter.error_ppformat ~display_format formatter error ;
   Format.pp_print_flush formatter () ;
   print_string (Buffer.contents buffer)
-  
+
 let human_readable_error e =
   let display_format = Display.human_readable in
   let display_format =
@@ -155,7 +155,7 @@ let%expect_test "main_parser" =
     {|
   in file "a dummy file name", line 20, characters 5-5
 
-  It looks like you are using a wild pattern where it cannot be used
+  It looks like you are using a catch-all pattern where it cannot be used
   |}]
 
 let%expect_test "pretty" = () (* not used *)
@@ -1143,7 +1143,8 @@ let%expect_test "spilling" =
   error (`Spilling_wrong_mini_c_value (type_expression, value)) ;
   [%expect {|
     Invalid type.
-    Expected "foo", but got "None". |}] ;
+    Expected "foo",
+    but got "None". |}] ;
   error (`Spilling_bad_decompile value) ;
   [%expect {|Cannot untranspile: None |}]
 

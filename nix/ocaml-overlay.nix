@@ -98,8 +98,10 @@ in {
           ];
         };
 
+        ligo-dune = osuper.ligo.override { dune = osuper.dune_2; };
+
         # LIGO executable and public libraries
-        ligo-out = osuper.ligo.overrideAttrs (oa: {
+        ligo-out = oself.ligo-dune.overrideAttrs (oa: {
           name = "ligo-out";
           LIGO_VERSION = if isNull
           (builtins.match "[0-9]+\\.[0-9]+\\.[0-9]+" CI_COMMIT_TAG) then
@@ -123,7 +125,7 @@ in {
         });
 
         # LIGO test suite; output empty on purpose
-        ligo-tests = osuper.ligo.overrideAttrs (oa: {
+        ligo-tests = oself.ligo-dune.overrideAttrs (oa: {
           name = "ligo-tests";
           src = filterOut [
             ".git"
@@ -157,7 +159,7 @@ in {
         });
 
         # LIGO odoc documentation
-        ligo-doc = osuper.ligo.overrideAttrs (oa: {
+        ligo-doc = oself.ligo-dune.overrideAttrs (oa: {
           name = "ligo-doc";
           buildInputs = oa.buildInputs
             ++ [ oself.odoc oself.tezos-protocol-updater ];

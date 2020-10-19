@@ -28,15 +28,15 @@ let rec type_declaration env state : I.declaration -> (environment * _ O'.typer_
     let%bind type_expr = evaluate_type env type_expr in
     let env' = Environment.add_type (type_binder) type_expr env in
     ok (env', state , O.Declaration_type {type_binder; type_expr})
-  | Declaration_constant {binder; type_opt; attr; expr} -> (
+  | Declaration_constant {binder; attr; expr} -> (
     (*
       Determine the type of the expression and add it to the environment
     *)
-    let%bind tv_opt = bind_map_option (evaluate_type env) type_opt in
+    let%bind tv_opt = bind_map_option (evaluate_type env) binder.ascr in
     let%bind e, state', expr =
-      trace (constant_declaration_tracer binder expr tv_opt) @@
+      trace (constant_declaration_tracer binder.var expr tv_opt) @@
       type_expression env state ?tv_opt expr in
-    let binder = Location.map Var.todo_cast binder in
+    let binder = Location.map Var.todo_cast binder.var in
     let post_env = Environment.add_ez_declaration binder expr e in
     ok (post_env, state' , O.Declaration_constant { binder ; expr ; inline=attr.inline})
     )
@@ -54,9 +54,9 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
     return (T_arrow {type1;type2})
   | T_sum {fields ; layout} ->
     let aux v =
-      let {associated_type ; michelson_annotation ; decl_pos} : I.row_element = v in
+      let {associated_type ; michelson_annotation ; decl_pos} : _ I.row_element_mini_c = v in
       let%bind associated_type = evaluate_type e associated_type in
-      ok @@ ({associated_type ; michelson_annotation ; decl_pos}:O.row_element)
+      ok @@ ({associated_type ; michelson_annotation ; decl_pos}:_ O.row_element_mini_c)
     in
     let%bind content = Stage_common.Helpers.bind_map_lmap aux fields in
     let%bind () = trace_assert_fail_option (variant_redefined_error t.location) @@
@@ -65,9 +65,9 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
     return (T_sum {content ; layout})
   | T_record {fields ; layout} ->
     let aux v =
-      let {associated_type ; michelson_annotation ; decl_pos} : I.row_element = v in
+      let {associated_type ; michelson_annotation ; decl_pos} : _ I.row_element_mini_c = v in
       let%bind associated_type = evaluate_type e associated_type in
-      ok @@ ({associated_type ; michelson_annotation ; decl_pos}:O.row_element)
+      ok @@ ({associated_type ; michelson_annotation ; decl_pos}:_ O.row_element_mini_c)
     in
     let%bind content = Stage_common.Helpers.bind_map_lmap aux fields in
     let%bind () = trace_assert_fail_option (record_redefined_error t.location) @@
@@ -314,7 +314,7 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
   | E_let_in {let_binder ; rhs ; let_result; inline} ->
     let%bind rhs_tv_opt = bind_map_option (evaluate_type e) (let_binder.ascr) in
     let%bind e, state, rhs = type_expression e state rhs in
-    let let_binder = cast_var let_binder.binder in
+    let let_binder = cast_var let_binder.var in
     let e = Environment.add_ez_declaration let_binder rhs e in
     let%bind e, state, let_result = type_expression e state let_result in
     let wrapped =
@@ -347,13 +347,12 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
 
 and type_lambda e state {
       binder ;
-      input_type ;
       output_type ;
       result ;
     } =
-      let binder = cast_var binder in
-      let%bind input_type'  = bind_map_option (evaluate_type e) input_type in
+      let%bind input_type'  = bind_map_option (evaluate_type e) binder.ascr in
       let%bind output_type' = bind_map_option (evaluate_type e) output_type in
+      let binder = cast_var binder.var in
 
       let fresh : O.type_expression = t_variable (Wrap.fresh_binder ()) in
       let e' = Environment.add_ez_binder (binder) fresh e in
@@ -447,8 +446,68 @@ and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.match
         bind_fold_map_list aux (e,state) lst in
       return e state @@ O.Match_variant {cases ; tv=variant }
 
+let check_has_no_unification_vars (O.Program_With_Unification_Vars p) =
+  let rec ec where : O.expression_content -> _ = function
+      O.E_literal (O.Literal_unit)|O.E_literal (O.Literal_int _)|O.E_literal
+        (O.Literal_nat _)|O.E_literal (O.Literal_timestamp _)|O.E_literal
+        (O.Literal_mutez _)|O.E_literal (O.Literal_string _)|O.E_literal
+        (O.Literal_bytes _)|O.E_literal (O.Literal_address _)|O.E_literal
+        (O.Literal_signature _)|O.E_literal (O.Literal_key _)|O.E_literal
+        (O.Literal_key_hash _)|O.E_literal (O.Literal_chain_id _)|O.E_literal
+        (O.Literal_operation _) -> ok ()
+    | O.E_constant        { cons_name=_; arguments } -> bind_fold_list (fun () e -> expression e) () arguments
+    | O.E_variable        _ -> ok ()
+    | O.E_application     { lamb; args } -> let%bind () = expression lamb in expression args
+    | O.E_lambda          { binder=_; result } -> expression result
+    | O.E_recursive       { fun_name=_; fun_type; lambda={ binder=_; result } } -> let%bind () = te where fun_type in expression result
+    | O.E_let_in          { let_binder=_; rhs; let_result; inline=_ } -> let%bind () = expression rhs in expression let_result
+    | O.E_raw_code        { language=_; code } -> expression code
+    | O.E_constructor     { constructor=_; element } -> expression element
+    | O.E_matching        { matchee; cases } -> let%bind () = expression matchee in
+      (match cases with
+         O.Match_list    { match_nil; match_cons = { hd = _; tl = _; body; tv } } ->
+         let%bind () = expression match_nil in
+         let%bind () = expression body in
+         te where tv
+       | O.Match_option  { match_none; match_some = { opt=_; body; tv } } ->
+         let%bind () = expression match_none in
+         let%bind () = expression body in
+         te where tv
+       | O.Match_variant { cases; tv } ->
+         let%bind () = bind_fold_list (fun () ({ constructor = _ ; pattern = _ ; body } : Ast_typed.matching_content_case) -> expression body) () cases in
+         te where tv
+      )
+    | O.E_record          m -> bind_fold_list (fun () (_key, e) -> expression e) () @@ Ast_typed.LMap.bindings m
+    | O.E_record_accessor { record; path=_ } -> expression record
+    | O.E_record_update   { record; path=_; update } -> let%bind () = expression record in expression update
+  and re where : O.row_element -> _ = function { associated_type; michelson_annotation=_; decl_pos=_ } ->
+    te where associated_type
+  and tc where : O.type_content -> _ = function
+      O.T_sum      m ->
+      bind_fold_list (fun () (_key, row_element) -> re where row_element) () @@ Ast_typed.LMap.bindings m.content
+    | O.T_record   m ->
+      bind_fold_list (fun () (_key, row_element) -> re where row_element) () @@ Ast_typed.LMap.bindings m.content
+    | O.T_arrow    { type1; type2 } ->
+      let%bind () = te where type1 in
+      te where type2
+    | O.T_variable tv -> failwith (Format.asprintf "Unbound type variable %a cann't be generalized (LIGO does not support generalization of variables in user code for now). You can try to annotate the expression. The type variable occurred in the %s" Var.pp tv (where ()))
+    | O.T_constant { type_constant = _; arguments } ->
+      bind_fold_list (fun () texpr -> te where texpr) () arguments
+  and te where : O.type_expression -> _ = function { type_content; type_meta=_; location=_ } -> tc where type_content
+  and expression : O.expression -> _ = function { expression_content; location=_; type_expression } ->
+    let where () = Format.asprintf "expression %a which was assigned the type %a" O.PP.expression_content expression_content O.PP.type_expression type_expression in
+    let%bind () = ec where expression_content in
+    te where type_expression in
+  let decl : O.declaration -> _ = fun d -> match d with
+      O.Declaration_constant { binder=_; expr; inline=_ } -> expression expr
+    | O.Declaration_type { type_binder=_; type_expr } ->
+      let where () = Format.asprintf "type declaration %a" O.PP.declaration d in
+      te where type_expr in
+  let%bind () = bind_fold_list (fun () Location.{wrap_content;location=_} -> decl wrap_content) () p in
+  ok @@ O.Program_Fully_Typed p
+
 (* Apply type_declaration on every node of the AST_core from the root p *)
-let type_program_returns_env ((env, state, p) : environment * _ O'.typer_state * I.program) : (environment * _ O'.typer_state * O.program, Typer_common.Errors.typer_error) result =
+let type_program_returns_env ((env, state, p) : environment * _ O'.typer_state * I.program) : (environment * _ O'.typer_state * O.program_with_unification_vars, Typer_common.Errors.typer_error) result =
   let aux ((e : environment), (s : _ O'.typer_state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
     let%bind (e , s' , d') = type_declaration e s (Location.unwrap d) in
     (* TODO: Move this filter to the spiller *)
@@ -462,7 +521,7 @@ let type_program_returns_env ((env, state, p) : environment * _ O'.typer_state *
     trace (program_error_tracer p) @@
     bind_fold_list aux (env , state , []) p in
   let declarations = List.rev declarations in (* Common hack to have O(1) append: prepend and then reverse *)
-  ok (env', state, declarations)
+  ok (env', state, O.Program_With_Unification_Vars declarations)
 
 let print_env_state_node (node_printer : Format.formatter -> 'a -> unit) ((env,state,node) : environment * _ O'.typer_state * 'a) =
   ignore node; (* TODO *)
@@ -513,10 +572,12 @@ let type_and_subst
   let () = ignore env in        (* TODO: shouldn't we use the `env` somewhere? *)
   ok (node, state)
 
-let type_program (p : I.program) : (O.program * _ O'.typer_state, typer_error) result =
+let type_program (p : I.program) : (O.program_fully_typed * _ O'.typer_state, typer_error) result =
   let empty_env = DEnv.default in
   let empty_state = Solver.initial_state in
-  type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") (fun ppf p -> Format.fprintf ppf "%a" Yojson.Safe.pp (Ast_typed.Yojson.program p)) (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env
+  let%bind (p, state) = type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") (fun ppf p -> Format.fprintf ppf "%a" Yojson.Safe.pp (Ast_typed.Yojson.program_with_unification_vars p)) (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env in
+  let%bind p = check_has_no_unification_vars p in
+  ok (p, state)
 
 let type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * _ O'.typer_state , typer_error) result =
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
@@ -530,7 +591,7 @@ and [@warning "-32"] type_match : environment -> _ O'.typer_state -> O.type_expr
 and [@warning "-32"] evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, typer_error) result = evaluate_type e t
 and [@warning "-32"] type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (environment * _ O'.typer_state * O.expression, typer_error) result = type_expression
 and [@warning "-32"] type_lambda e state lam = type_lambda e state lam
-let [@warning "-32"] type_program_returns_env ((env, state, p) : environment * _ O'.typer_state * I.program) : (environment * _ O'.typer_state * O.program, typer_error) result = type_program_returns_env (env, state, p)
+let [@warning "-32"] type_program_returns_env ((env, state, p) : environment * _ O'.typer_state * I.program) : (environment * _ O'.typer_state * O.program_with_unification_vars, typer_error) result = type_program_returns_env (env, state, p)
 let [@warning "-32"] type_and_subst (in_printer : (Format.formatter -> 'a -> unit)) (out_printer : (Format.formatter -> 'b -> unit)) (env_state_node : environment * _ O'.typer_state * 'a) (apply_substs : ('b,typer_error) Typesystem.Misc.Substitution.Pattern.w) (types_and_returns_env : (environment * _ O'.typer_state * 'a) -> (environment * _ O'.typer_state * 'b, typer_error) result) : ('b * _ O'.typer_state, typer_error) result = type_and_subst in_printer out_printer env_state_node apply_substs types_and_returns_env
-let [@warning "-32"] type_program (p : I.program) : (O.program * _ O'.typer_state, typer_error) result = type_program p
+let [@warning "-32"] type_program (p : I.program) : (O.program_fully_typed * _ O'.typer_state, typer_error) result = type_program p
 let [@warning "-32"] type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * _ O'.typer_state, typer_error) result = type_expression_subst env state ?tv_opt e
