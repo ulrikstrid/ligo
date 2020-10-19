@@ -558,61 +558,155 @@ type updates_list = updates list
 (* This is in a functor to fix a dependency cycle between ast.ml and
    typer_errors.ml. *)
 module Dep_cycle (Typer_errors : sig type typer_error end) = struct
+  type ('old, 'new_) updater = {
+    map : 'v . 'old -> 'old -> ('old, 'v) PolyMap.t -> ('new_, 'v) PolyMap.t;
+  }
 
-type ('old, 'new_) updater = {
-  map : 'v . 'old -> 'old -> ('old, 'v) PolyMap.t -> ('new_, 'v) PolyMap.t;
-}
 
+  (* Each normalizer returns an updated database (after storing the
+     incoming constraint) and a list of constraints, used when the
+     normalizer rewrites the constraints e.g. into simpler ones. *)
+  (* TODO: If implemented in a language with decent sets, should be 'b set not 'b list. *)
+  type ('state, 'a , 'b) normalizer = 'state -> 'a -> ('state * 'b list)
+  type ('state, 'a) normalizer_rm = 'state -> 'a -> ('state, Typer_errors.typer_error) result
 
-(* Each normalizer returns an updated database (after storing the
-   incoming constraint) and a list of constraints, used when the
-   normalizer rewrites the constraints e.g. into simpler ones. *)
-(* TODO: If implemented in a language with decent sets, should be 'b set not 'b list. *)
-type ('state, 'a , 'b) normalizer = 'state -> 'a -> ('state * 'b list)
-type ('state, 'a) normalizer_rm = 'state -> 'a -> ('state, Typer_errors.typer_error) result
+  module type DBPlugin = sig
+    type 'typeVariable t
+    val empty : cmp:('typeVariable -> 'typeVariable -> int) -> 'typeVariable t
+    val add_constraint : (type_variable t, type_constraint_simpl, type_constraint_simpl) normalizer
+    val remove_constraint : (type_variable t, type_constraint_simpl) normalizer_rm
+    val merge_aliases : ('old, 'new_) updater -> 'old -> 'old -> 'old t -> 'new_ t
+  end
 
-module type DBPlugin = sig
-  type 'typeVariable t
-  val empty : cmp:('typeVariable -> 'typeVariable -> int) -> 'typeVariable t
-  val add_constraint : (type_variable t, type_constraint_simpl, type_constraint_simpl) normalizer
-  val remove_constraint : (type_variable t, type_constraint_simpl) normalizer_rm
-  val merge_aliases : ('old, 'new_) updater -> 'old -> 'old -> 'old t -> 'new_ t
-end
+  module Assignments : DBPlugin = struct
+    type 'typeVariable t = ('typeVariable, c_constructor_simpl) PolyMap.t
+    let empty ~cmp = PolyMap.create ~cmp
+    let add_constraint _ = failwith "todo"
+    let remove_constraint _ = failwith "todo"
+    let merge_aliases : 'old 'new_ . ('old, 'new_) updater -> 'old -> 'old -> 'old t -> 'new_ t =
+      fun updater a b state -> updater.map a b state
+  end
 
-module Assignments : DBPlugin = struct
-  type 'typeVariable t = ('typeVariable, c_constructor_simpl) PolyMap.t
-  let empty ~cmp = PolyMap.create ~cmp
-  let add_constraint _ = failwith "todo"
-  let remove_constraint _ = failwith "todo"
-  let merge_aliases : 'old 'new_ . ('old, 'new_) updater -> 'old -> 'old -> 'old t -> 'new_ t =
-    fun updater a b state -> updater.map a b state
-end
+  module GroupedByVariable : DBPlugin = struct
+    (* map from (unionfind) variables to constraints containing them *)
+    type 'typeVariable t = ('typeVariable, constraints) PolyMap.t
+    let empty ~cmp = PolyMap.create ~cmp
+    let add_constraint _ = failwith "todo"
+    let remove_constraint _ = failwith "todo"
+    let merge_aliases =
+      fun updater a b state -> updater.map a b state
+  end
+  
+  type 't plugin_instance = {
+    state : 't;
+    merge_aliases : type_variable -> type_variable -> 't -> 't;
+  }
 
-type 't plugin_instance = {
-  state : 't;
-  merge_aliases : type_variable -> type_variable -> 't -> 't;
-}
+  type ex_plugin_instance =
+    | Plugin_instance : 't plugin_instance -> ex_plugin_instance
 
-type ex_plugin_instance =
-  | Plugin_instance : 't plugin_instance -> ex_plugin_instance
+  module type DBPluginInstance = sig
+    module M : DBPlugin
+    val v : 'a M.t
+  end
 
-type ex_deus =
-  | Deus : (module DBPlugin) -> ex_deus
+  type 'typeVariable plugin_instances = {
+    assignments         : 'typeVariable       Assignments.t;
+    grouped_by_variable : 'typeVariable GroupedByVariable.t;
+  }
 
-(* WIP prototype of the solver's main loop with plugins *)
-let main (plugins : (module DBPlugin) list) =
-  let updater = {
-    map = fun _a _b m -> (*ReprMap.merge a b*) m
-  } in
-  let plugin_instances = List.map
-      (fun plugin ->
-         let module Plugin = (val plugin : DBPlugin) in
-         Plugin_instance {
-           state = Plugin.empty ~cmp:Var.compare;
-           merge_aliases = fun a b state ->
-             Plugin.merge_aliases updater a b state;
-         })
-      plugins
-  in
-  ignore plugin_instances;
+  module Functor(In : sig type 'a t end)(Out : sig type 'a t end) = struct
+    module type M = sig
+      module M(P : DBPlugin) : sig
+        module P = P
+        val f : In.t P.t -> Out.t P.t
+      end
+    end
+  end
+  module type Functor = module type of Functor
+
+  module Phunctor(In : sig type t end)(Out : sig type t end) = struct
+    module type M = sig
+      module P = P
+      val f : In.t -> Out.t
+    end
+  end
+
+  (* PerPluginType takes a type for 'typeVariable, a Plugin.t, and
+     produces an arbitrary type which can depend on these two.
+
+     e.g. given a module
+       Ppt : PerPluginType
+     the type
+       Ppt.M(type_variable)(SomePlugin).t
+     could be one of:
+       type_variable SomePlugin.t
+       int SomePlugin.t
+       type_variable list
+       int                                                          *)
+  (* type PerPluginType = 🞰→(🞰→🞰)→🞰 *)
+  module type PerPluginType = sig
+    module M(TypeVariable : sig type t end)(Plugin : sig type 'typeVariable t end) : sig
+      type t
+    end
+  end
+
+  module MMM(TypeVariable : sig type t end)(Plugin : sig type 'typeVariable t end) = struct
+    type t
+  end
+
+  module type Toto = functor (A : sig type t end) (B : sig type t end) -> sig
+    val f : A.t -> B.t
+  end
+
+  let g (m : (module Toto)) =
+    let module M' = ((val m)(struct type t = int end)(struct type t = string end)) in
+    M'.f 42
+
+  module type PluginInstances = functor (TypeVariable : sig type t end)(Ppt : PerPluginType) -> sig
+    (* type t = { *)
+    val assignments         : Ppt.M(TypeVariable)(Assignments).t
+    val grouped_by_variable : Ppt.M(TypeVariable)(GroupedByVariable).t
+    (* } *)
+  end
+  
+  (* map_plugins :: (In : PerPluginType) →
+                    (Out : PerPluginType) →
+                    (f : Functor(In)(Out)) →
+                    (TypeVarable : 🞰) →
+                    (pluginInstances :  PluginInstances TypeVarable In) →
+                    PluginInstances TypeVarable Out
+   *)
+  module MapPlugins (In : PerPluginType) (Out : PerPluginType) = struct
+    module IA = In.M(struct type t = type_variable end)(Assignments)
+    module OA = Out.M(struct type t = type_variable end)(Assignments)
+    module type A = Phunctor(IA)(OA).M
+    (* .M.M(Assignments) *)
+    
+    let map_plugins (f : (module Functor)) (instances : 'a plugin_instances) : 'b plugin_instances =
+      let { assignments=_; grouped_by_variable=_ } = instances in
+      let module Functor = (val f) in
+      {
+        (* Functor (In typeVariable Assignments) (Out typeVariable Assignments) *)
+        assignments = (let module F = … in (failwith "F.f assignments"));
+        grouped_by_variable = (let module F = Functor.M(GroupedByVariable) in (failwith "F.f grouped_by_variable"));
+      }
+  end
+
+  (* WIP prototype of the solver's main loop with plugins *)
+  let main (plugins : (module DBPlugin) list) =
+    let updater = {
+      map = fun _a _b m -> (*ReprMap.merge a b*) m
+    } in
+    let plugin_instances = List.map
+        (fun plugin ->
+           let module Plugin = (val plugin : DBPlugin) in
+           Plugin_instance {
+             state = Plugin.empty ~cmp:Var.compare;
+             merge_aliases = fun a b state ->
+               Plugin.merge_aliases updater a b state;
+           })
+        plugins
+    in
+    ignore plugin_instances;
 end
