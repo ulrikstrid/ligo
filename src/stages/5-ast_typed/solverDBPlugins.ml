@@ -17,11 +17,13 @@ include Ast                     (* TODO: this is quick & dirty, should write the
    (additions but no deletions), unless one has access to the
    comparison function (which we do not provide to other modules), and
    the 'typeVariable type is always quantified/hidden in positions
-   where it could be used in an update.
- *)
+   where it could be used to remove from a map/set or completely empty
+   it. *)
 
-(* This is in a functor to fix a dependency cycle between ast.ml and
-   typer_errors.ml. *)
+(* This is (temporary?) in a functor to give access to
+   Typer_errors.typer_error. Maybe this file should be moved to
+   src/passes to solve that issue and hardcode the type for errors
+   (which would limit extensibility by plugins though). *)
 module Dep_cycle (Typer_errors : sig type typer_error end) = struct
   open UnionFind
   (* The types are given in an approximative haskell, because its
@@ -64,34 +66,6 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
     val merge_aliases : ('old, 'new_) merge_keys -> 'old t -> 'new_ t
   end
 
-  (* Haskell doesn't have easy-to-use type-level functions or types as
-     fields of records, so we're bending its syntax here.
-
-     type "Assignments.t" typeVariable = map typeVariable
-     c_constructor_simpl data Assignments :: Plugin "Assignments.t" *)
-  module Assignments : Plugin = struct
-    type 'typeVariable t = ('typeVariable, c_constructor_simpl) ReprMap.t
-    let create_state ~cmp =
-      let merge c1 c2 = (* assert (Compare.c_constructor_simpl c1 c2 = 0); *) ignore c2; c1 in
-      ReprMap.create ~cmp ~merge
-    let add_constraint _ = failwith "todo"
-    let remove_constraint _ = failwith "todo"
-    let merge_aliases : 'old 'new_ . ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
-      fun merge_keys state -> merge_keys.map state
-  end
-
-  module GroupedByVariable : Plugin = struct
-    (* map from (unionfind) variables to constraints containing them *)
-    type 'typeVariable t = ('typeVariable, constraints) ReprMap.t
-    let create_state ~cmp =
-      let merge cs1 cs2 = (* assert (Compare.constraints cs1 cs2 = 0); *) ignore cs2; cs1 in
-      ReprMap.create ~cmp ~merge
-    let add_constraint _ = failwith "todo"
-    let remove_constraint _ = failwith "todo"
-    let merge_aliases =
-      fun updater state -> updater.map state
-  end
-  
   (* The kind PerPluginType describes type-level functions which take
      a type Plugin.t, and produce an arbitrary type which can depend
      on it.
@@ -110,86 +84,152 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
     type t
   end
 
-  (* data PluginFields (Ppt :: PerPluginType) = PluginFields {
-       assignments       :: Ppt Assignments,
-       groupedByVariable :: Ppt GroupedByVariable,
-       …
-     }
-  *)
-  module PluginFields (Ppt : PerPluginType) = struct
-    module type S = sig
-      val assignments         : Ppt(Assignments).t
-      val grouped_by_variable : Ppt(GroupedByVariable).t
-    end
-  end
+  (* These are two useful PerPlugin type-level functions. The first
+     gives a `unit' type for each plugin, the second *)
+  module PerPluginUnit = functor (Plugin : Plugin) -> struct type t = unit end
+  module PerPluginState = functor (Plugin : Plugin) -> struct type t = type_variable Plugin.t end
 
-  (* type Functor (t :: 🞰) (Plugin :: 🞰→🞰) =
+  (* type MappedFunction (t :: 🞰) (Plugin :: 🞰→🞰) =
        Plugin t → MakeInType t → MakeOutType t *)
-  module type Functor = sig
+  module type MappedFunction = sig
+    type extra_args
     module MakeInType : PerPluginType
     module MakeOutType : PerPluginType
     module F(Plugin : Plugin) : sig
-      val f : MakeInType(Plugin).t -> MakeOutType(Plugin).t
+      val f : extra_args -> MakeInType(Plugin).t -> MakeOutType(Plugin).t
     end
   end
 
-  (* mapPlugins :: (F : Functor) → (PluginFields F.MakeIn) → (PluginFields F.MakeOut) *)
-  module MapPlugins(F : Functor) = struct
-    let f :
-      (module PluginFields(F.MakeInType).S) ->
-      (module PluginFields(F.MakeOutType).S)
-      = fun fieldsIn ->
-        let module FieldsIn = (val fieldsIn) in
-        (module struct
-          let assignments = (let module F = F.F(Assignments) in F.f FieldsIn.assignments)
-          let grouped_by_variable = (let module F = F.F(GroupedByVariable) in F.f FieldsIn.grouped_by_variable)
-        end)
-  end
+  module type Plugins = sig
+    (* S is a record-like module containing one field per plug-in *)
+    module PluginFields : functor (Ppt : PerPluginType) -> sig module type S end
 
-  module PerPluginState = functor (Plugin : Plugin) -> struct type t = type_variable Plugin.t end
-  module type PluginStates = PluginFields(PerPluginState).S
-  type pluginStates = (module PluginStates)
+    (* A default value where the field for each plug-in has type unit *)
+    module PluginFieldsUnit : PluginFields(PerPluginUnit).S
 
-  (* A value containing an empty (dummy) unit associated each plugin
-     name This allows us to use `map' to discard this `unit' and
-     e.g. initialize each plugin. *)
-  module PerPluginUnit = functor (Plugin : Plugin) -> struct type t = unit end
-  module type PluginUnits = PluginFields(PerPluginUnit).S
-  module PluginFieldsUnit : PluginUnits = struct
-    let assignments = ()
-    let grouped_by_variable = ()
-  end
-  let pluginFieldsUnit = (module PluginFieldsUnit : PluginUnits)
-
-  (* Function which merges all aliases withing a single plugin's state *)
-  module MergeAliases = struct
-    module MakeInType = PerPluginState
-    module MakeOutType = PerPluginState
-    module F(Plugin : Plugin) = struct
-      let f state =
-        let other_repr = failwith "TODO: thread the other_repr until here" in
-        let new_repr = failwith "TODO: thread the new_repr until here" in
-        let merge_keys = {
-          map = (fun m -> ReprMap.alias ~other_repr ~new_repr m);
-          set = (fun s -> (*ReprSet.alias a b s*) s);
-        } in
-        Plugin.merge_aliases merge_keys state
+    (* A function which applies F to each field *)
+    module MapPlugins : functor (F : MappedFunction) ->
+    sig
+      val f :
+        F.extra_args ->
+        (module PluginFields(F.MakeInType).S) ->
+        (module PluginFields(F.MakeOutType).S)
     end
   end
 
-  (* Function which creates a plugin's initial state *)
-  module CreateState = struct
-    module MakeInType = PerPluginUnit
-    module MakeOutType = PerPluginState
-    module F(Plugin : Plugin) = struct
-      let f (() as _state) = Plugin.create_state ~cmp:Compare.type_variable
+  module MakeSolver(Plugins : Plugins) : sig
+    module type PluginStates = Plugins.PluginFields(PerPluginState).S
+    val main : unit -> (module PluginStates)
+  end = struct
+    module type PluginStates = Plugins.PluginFields(PerPluginState).S
+    module type PluginUnits = Plugins.PluginFields(PerPluginUnit).S
+
+    type pluginStates = (module PluginStates)
+    let pluginFieldsUnit = (module Plugins.PluginFieldsUnit : PluginUnits)
+
+    (* Function which merges all aliases withing a single plugin's state *)
+    module MergeAliases = struct
+      type extra_args = { other_repr : type_variable ; new_repr : type_variable }
+      module MakeInType = PerPluginState
+      module MakeOutType = PerPluginState
+      module F(Plugin : Plugin) = struct
+        let f { other_repr ; new_repr } state =
+          let merge_keys = {
+            map = (fun m -> ReprMap.alias ~other_repr ~new_repr m);
+            set = (fun s -> (*ReprSet.alias a b s*) s);
+          }
+          in Plugin.merge_aliases merge_keys state
+      end
+    end
+
+    (* Function which creates a plugin's initial state *)
+    module CreateState = struct
+      type extra_args = unit
+      module MakeInType = PerPluginUnit
+      module MakeOutType = PerPluginState
+      module F(Plugin : Plugin) = struct
+        let f () (() as _state) = Plugin.create_state ~cmp:Compare.type_variable
+      end
+    end
+
+    (* WIP prototype of the solver's main loop with plugins *)
+    let main () : pluginStates =
+      (* Create the initial state for each plugin *)
+      let module MapCreateState = Plugins.MapPlugins(CreateState) in
+      let states = MapCreateState.f () pluginFieldsUnit in
+      let (other_repr, new_repr) = failwith "should be returned by the union-find when aliasing two unification variables" in
+      let module MapMergeAliases = Plugins.MapPlugins(MergeAliases) in
+      let states = MapMergeAliases.f { other_repr ; new_repr } states in
+      states
+  end
+
+  (* This can be in a separate file. *)
+  module Plugins : Plugins = struct
+    (* Haskell doesn't have easy-to-use type-level functions or types as
+       fields of records, so we're bending its syntax here.
+
+       type "Assignments.t" typeVariable = map typeVariable
+       c_constructor_simpl data Assignments :: Plugin "Assignments.t" *)
+    module Assignments : Plugin = struct
+      type 'typeVariable t = ('typeVariable, c_constructor_simpl) ReprMap.t
+      let create_state ~cmp =
+        let merge c1 c2 = let _ = failwith "TODO: assert (Compare.c_constructor_simpl c1 c2 = 0);" in ignore c2; c1 in
+        ReprMap.create ~cmp ~merge
+      let add_constraint _ = failwith "todo"
+      let remove_constraint _ = failwith "todo"
+      let merge_aliases : 'old 'new_ . ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
+        fun merge_keys state -> merge_keys.map state
+    end
+
+    module GroupedByVariable : Plugin = struct
+      (* map from (unionfind) variables to constraints containing them *)
+      type 'typeVariable t = ('typeVariable, constraints) ReprMap.t
+      let create_state ~cmp =
+        let merge cs1 cs2 = let _ = failwith "assert (Compare.constraints cs1 cs2 = 0);" in ignore cs2; cs1 in
+        ReprMap.create ~cmp ~merge
+      let add_constraint _ = failwith "todo"
+      let remove_constraint _ = failwith "todo"
+      let merge_aliases =
+        fun updater state -> updater.map state
+    end
+
+    (* data PluginFields (Ppt :: PerPluginType) = PluginFields {
+         assignments       :: Ppt Assignments,
+         groupedByVariable :: Ppt GroupedByVariable,
+         …
+       }
+    *)
+    module PluginFields (Ppt : PerPluginType) = struct
+      module type S = sig
+        val assignments         : Ppt(Assignments).t
+        val grouped_by_variable : Ppt(GroupedByVariable).t
+      end
+    end
+
+    (* mapPlugins :: (F : MappedFunction) → (PluginFields F.MakeIn) → (PluginFields F.MakeOut) *)
+    module MapPlugins = functor (F : MappedFunction) -> struct
+      let f :
+        F.extra_args ->
+        (module PluginFields(F.MakeInType).S) ->
+        (module PluginFields(F.MakeOutType).S)
+        = fun extra_args fieldsIn ->
+          let module FieldsIn = (val fieldsIn) in
+          (module struct
+            let assignments = (let module F = F.F(Assignments) in F.f extra_args FieldsIn.assignments)
+            let grouped_by_variable = (let module F = F.F(GroupedByVariable) in F.f extra_args FieldsIn.grouped_by_variable)
+          end)
+    end
+
+    (* A value containing an empty (dummy) unit associated each plugin
+       name This allows us to use `map' to discard this `unit' and
+       e.g. initialize each plugin. *)
+    module type PluginUnits = PluginFields(PerPluginUnit).S
+    module PluginFieldsUnit : PluginUnits = struct
+      let assignments = ()
+      let grouped_by_variable = ()
     end
   end
 
-  (* WIP prototype of the solver's main loop with plugins *)
-  let main (pluginStates : pluginStates) : pluginStates =
-    let module MapCreateState = MapPlugins(CreateState) in
-    let _ = MapCreateState.f pluginFieldsUnit in
-    let module MapMergeAliases = MapPlugins(MergeAliases) in
-    MapMergeAliases.f pluginStates
+  (* Instantiate the solver with a selection of plugins *)
+  module Solver = MakeSolver(Plugins)
 end
