@@ -82,21 +82,23 @@ let get_or_set_h (i: 'item) (p: 'item partition) =
     Not_found -> let n = i,0 in (n, root n p)
 
 let get_or_set (i: 'item) (p: 'item partition) =
-  Printf.fprintf stderr "\nUNION_FIND GET_OR_SET %s\n" (p.to_string i);
   let (i, _h), p = get_or_set_h i p in (i, p)
 
 (* let mem i p = try Some (repr i p) with Not_found -> None *)
 
 let repr i p = try repr i p with Not_found -> i
 
-(* let equiv (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
- *   let (ri,hi as ni), p = get_or_set_h i p in
- *   let (rj,hj as nj), p = get_or_set_h j p in
- *   if   equal p.compare ri rj
- *   then p
- *   else if   hi > hj
- *   then link nj ri p
- *   else link ni rj (if hi < hj then p else root (rj, hj+1) p) *)
+type 'item changed_reprs = { demoted_repr : 'item; new_repr : 'item }
+type 'item equiv_result = { partition : 'item partition; changed_reprs : 'item changed_reprs list }
+
+let equiv (i: 'item) (j: 'item) (p: 'item partition) : 'item equiv_result =
+  let (ri,hi as ni), p = get_or_set_h i p in
+  let (rj,hj as nj), p = get_or_set_h j p in
+  if   equal p.compare ri rj
+  then { partition = p; changed_reprs = [ { demoted_repr = ri; new_repr = rj } ] }
+  else if   hi > hj
+       then { partition = link nj ri p; changed_reprs = [ { demoted_repr = rj; new_repr = ri } ] }
+       else { partition = link ni rj (if hi < hj then p else root (rj, hj+1) p); changed_reprs = [ { demoted_repr = ri; new_repr = rj } ] }
 
 (** The call [alias i j p] results in the same partition as [equiv
     i j p], except that [i] is not the representative of its class
@@ -108,16 +110,15 @@ let repr i p = try repr i p with Not_found -> i
     its class before calling [alias], then the height criteria is
     applied (which, without the constraint above, would yield a
     height-balanced new tree). *)
-let alias (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
-  Printf.fprintf stderr "\nUNION_FIND ALIAS %s -> %s\n" (p.to_string i) (p.to_string j);
+let [@warning "-32" ] alias (i: 'item) (j: 'item) (p: 'item partition) : 'item partition =
   let (ri,hi as ni), p = get_or_set_h i p in
   let (rj,hj as nj), p = get_or_set_h j p in
   if   equal p.compare ri rj
   then p
   else if   hi = hj || equal p.compare ri i
-  then link ni rj @@ root (rj, max hj (hi+1)) p
-  else if hi < hj then link ni rj p
-  else link nj ri p
+       then link ni rj @@ root (rj, max hj (hi+1)) p
+       else if hi < hj then link ni rj p
+                       else link nj ri p
 
 (** {1 iteration over the elements} *)
 

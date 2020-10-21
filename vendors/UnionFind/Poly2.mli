@@ -16,14 +16,16 @@ val empty : ('a -> string) -> ('a -> 'a -> int) -> 'a partition
 (** The value of [equiv i j p] is the partition [p] extended with
         the equivalence of items [i] and [j]. If both [i] and [j] are
         already known to be equivalent, then [equiv i j p == p]. *)
-(* val equiv : 'item -> 'item -> 'item t -> 'item partition *)
+type 'item changed_reprs = { demoted_repr : 'item; new_repr : 'item }
+type 'item equiv_result = { partition : 'item partition; changed_reprs : 'item changed_reprs list }
+val equiv : 'item -> 'item -> 'item partition -> 'item equiv_result
 
 (** The value of [alias i j p] is the partition [p] extended with
         the fact that item [i] is an alias of item [j]. This is the
         same as [equiv i j p], except that it is guaranteed that the
         item [i] is not the representative of its equivalence class in
         [alias i j p]. *)
-val alias : 'item -> 'item -> 'item partition -> 'item partition
+(* val alias : 'item -> 'item -> 'item partition -> 'item partition *)
 
 (** {1 Projection} *)
 

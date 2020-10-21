@@ -110,7 +110,8 @@ let merge_constraints : type_variable -> type_variable -> structured_dbs -> stru
   let variable_repr_b , aliases = UF.get_or_set variable_b aliases in
 
   (* alias variable_a and variable_b together *)
-  let aliases = UF.alias variable_a variable_b aliases in
+  let UF.{ partition = aliases ; changed_reprs } = UF.equiv variable_a variable_b aliases in
+  ignore changed_reprs;         (* TODO: use this in the plugin system *)
   let dbs = { dbs with aliases } in
 
   (* Replace the two entries in grouped_by_variable by a single one *)
