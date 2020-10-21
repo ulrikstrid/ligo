@@ -1,5 +1,25 @@
 include Ast                     (* TODO: this is quick & dirty, should write the open statements we need here *)
-    
+
+(* This plug-in system ensures the following:
+
+ * the state of the plug-ins can only store unification vars in a few
+   specific types (ReprMap.t and ReprSet.t)
+
+ * when two unification variables are aliased, the plug-in is forced
+   to update its state accordingly (it can either update each map/set
+   with the supplied function or discard the entire map/set, but it
+   cannot forget to update one of the maps/sets in its state; it is
+   technically possible to modify the maps/sets (e.g. take a random
+   value from one map/set and add it to another) but this would hardly
+   be done accidentally).
+
+ * the ReprMap and ReprSet modules only allow monotonic updates
+   (additions but no deletions), unless one has access to the
+   comparison function (which we do not provide to other modules), and
+   the 'typeVariable type is always quantified/hidden in positions
+   where it could be used in an update.
+ *)
+
 (* This is in a functor to fix a dependency cycle between ast.ml and
    typer_errors.ml. *)
 module Dep_cycle (Typer_errors : sig type typer_error end) = struct
@@ -30,7 +50,7 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
 
   (* t is the type of the state of the plugin
      data Plugin (t :: 🞰→🞰) = Plugin {
-       empty :: forall typeVariable . (typeVariable → typeVariable → int) → t typeVariable
+       create_state :: forall typeVariable . (typeVariable → typeVariable → int) → t typeVariable
        add_constraint :: normalizer (t typeVariable) type_constraint_simpl type_constraint_simpl
        remove_constraint :: normalizer_rm (t typeVariable) type_constraint_simpl
        merge_aliases :: forall old new . merge_keys old new → old → old → t old → t new
@@ -38,9 +58,9 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
   *)
   module type Plugin = sig
     type 'typeVariable t
-    val empty : cmp:('typeVariable -> 'typeVariable -> int) -> 'typeVariable t
-    val add_constraint : (type_variable t, type_constraint_simpl, type_constraint_simpl) normalizer
-    val remove_constraint : (type_variable t, type_constraint_simpl) normalizer_rm
+    val create_state : cmp:('typeVariable -> 'typeVariable -> int) -> 'typeVariable t
+    val add_constraint : ('type_variable t, type_constraint_simpl, type_constraint_simpl) normalizer
+    val remove_constraint : ('type_variable t, type_constraint_simpl) normalizer_rm
     val merge_aliases : ('old, 'new_) merge_keys -> 'old t -> 'new_ t
   end
 
@@ -51,7 +71,7 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
      c_constructor_simpl data Assignments :: Plugin "Assignments.t" *)
   module Assignments : Plugin = struct
     type 'typeVariable t = ('typeVariable, c_constructor_simpl) ReprMap.t
-    let empty ~cmp =
+    let create_state ~cmp =
       let merge c1 c2 = (* assert (Compare.c_constructor_simpl c1 c2 = 0); *) ignore c2; c1 in
       ReprMap.create ~cmp ~merge
     let add_constraint _ = failwith "todo"
@@ -63,7 +83,7 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
   module GroupedByVariable : Plugin = struct
     (* map from (unionfind) variables to constraints containing them *)
     type 'typeVariable t = ('typeVariable, constraints) ReprMap.t
-    let empty ~cmp =
+    let create_state ~cmp =
       let merge cs1 cs2 = (* assert (Compare.constraints cs1 cs2 = 0); *) ignore cs2; cs1 in
       ReprMap.create ~cmp ~merge
     let add_constraint _ = failwith "todo"
@@ -72,56 +92,52 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
       fun updater state -> updater.map state
   end
   
-  (* The kind PerPluginType describes type-level functions
-     which take a type for 'typeVariable, a type Plugin.t, and
-     produces an arbitrary type which can depend on these two.
+  (* The kind PerPluginType describes type-level functions which take
+     a type Plugin.t, and produce an arbitrary type which can depend
+     on it.
 
      e.g. given a module
        Ppt : PerPluginType
      the type
-       Ppt.M(type_variable)(SomePlugin).t
+       Ppt.M(SomePlugin).t
      could be one of:
        type_variable SomePlugin.t
-       int SomePlugin.t
-       type_variable list
        int
        …
   *)
   (* type PerPluginType = 🞰→(🞰→🞰)→🞰 *)
-  module type PerPluginType = functor (TypeVariable : sig type t end)(Plugin : sig type 'typeVariable t end) -> sig
+  module type PerPluginType = functor (Plugin : Plugin) -> sig
     type t
   end
 
-  (* data PluginFields (TypeVariable :: 🞰) (Ppt :: PerPluginType) = PluginFields {
-       assignments       :: Ppt TypeVariable Assignments,
-       groupedByVariable :: Ppt TypeVariable GroupedByVariable,
+  (* data PluginFields (Ppt :: PerPluginType) = PluginFields {
+       assignments       :: Ppt Assignments,
+       groupedByVariable :: Ppt GroupedByVariable,
        …
      }
   *)
-  module PluginFields (TypeVariable : sig type t end) (Ppt : PerPluginType) = struct
+  module PluginFields (Ppt : PerPluginType) = struct
     module type S = sig
-      val assignments         : Ppt(TypeVariable)(Assignments).t
-      val grouped_by_variable : Ppt(TypeVariable)(GroupedByVariable).t
+      val assignments         : Ppt(Assignments).t
+      val grouped_by_variable : Ppt(GroupedByVariable).t
     end
   end
 
-  (* type Functor (t :: 🞰) (Plugin :: 🞰→🞰) (InTypeVariable :: 🞰) (OutTypeVariable :: 🞰) =
-       Plugin t → MakeInType InTypeVariable t → MakeOutType OutTypeVariable t *)
+  (* type Functor (t :: 🞰) (Plugin :: 🞰→🞰) =
+       Plugin t → MakeInType t → MakeOutType t *)
   module type Functor = sig
     module MakeInType : PerPluginType
     module MakeOutType : PerPluginType
-    module InTypeVariable : sig type t end
-    module OutTypeVariable : sig type t end
     module F(Plugin : Plugin) : sig
-      val f : MakeInType(InTypeVariable)(Plugin).t -> MakeOutType(OutTypeVariable)(Plugin).t
+      val f : MakeInType(Plugin).t -> MakeOutType(Plugin).t
     end
   end
 
   (* mapPlugins :: (F : Functor) → (PluginFields F.MakeIn) → (PluginFields F.MakeOut) *)
   module MapPlugins(F : Functor) = struct
     let f :
-      (module PluginFields(F.InTypeVariable)(F.MakeInType).S) ->
-      (module PluginFields(F.OutTypeVariable)(F.MakeOutType).S)
+      (module PluginFields(F.MakeInType).S) ->
+      (module PluginFields(F.MakeOutType).S)
       = fun fieldsIn ->
         let module FieldsIn = (val fieldsIn) in
         (module struct
@@ -130,21 +146,15 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
         end)
   end
 
-  module TypeVariable = struct type t = type_variable end
-  
-  module PerPluginState = functor (TypeVariable : sig type t end) (Plugin : sig type 'typeVariable t end) -> struct
-    type t = TypeVariable.t Plugin.t
-  end
-  
-  module type PluginStates = PluginFields(TypeVariable)(PerPluginState).S
+  module PerPluginState = functor (Plugin : Plugin) -> struct type t = type_variable Plugin.t end
+  module type PluginStates = PluginFields(PerPluginState).S
   type pluginStates = (module PluginStates)
 
-  (* An empty value for each plugin name *)
-  module Unit = struct type t = unit end
-  module PerPluginUnit = functor (TypeVariable : sig [@warning "-34"] type t end) (Plugin : sig [@warning "-34"] type 'typeVariable t end) -> struct
-    type t = unit
-  end
-  module type PluginUnits = PluginFields(Unit)(PerPluginUnit).S
+  (* A value containing an empty (dummy) unit associated each plugin
+     name This allows us to use `map' to discard this `unit' and
+     e.g. initialize each plugin. *)
+  module PerPluginUnit = functor (Plugin : Plugin) -> struct type t = unit end
+  module type PluginUnits = PluginFields(PerPluginUnit).S
   module PluginFieldsUnit : PluginUnits = struct
     let assignments = ()
     let grouped_by_variable = ()
@@ -155,8 +165,6 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
   module MergeAliases = struct
     module MakeInType = PerPluginState
     module MakeOutType = PerPluginState
-    module InTypeVariable = struct type t = type_variable end
-    module OutTypeVariable = struct type t = type_variable end
     module F(Plugin : Plugin) = struct
       let f state =
         let other_repr = failwith "TODO: thread the other_repr until here" in
@@ -173,10 +181,8 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
   module CreateState = struct
     module MakeInType = PerPluginUnit
     module MakeOutType = PerPluginState
-    module InTypeVariable = struct type t = unit end
-    module OutTypeVariable = struct type t = type_variable end
     module F(Plugin : Plugin) = struct
-      let f (() as _state) = Plugin.empty ~cmp:Compare.type_variable
+      let f (() as _state) = Plugin.create_state ~cmp:Compare.type_variable
     end
   end
 
