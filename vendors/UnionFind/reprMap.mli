@@ -1,16 +1,17 @@
-type ('item, 'a) reprMap = {
-  merge : 'a -> 'a -> 'a;
-  map : ('item, 'a) PolyMap.t;
+type ('key, 'value) t = {
+  merge : 'value -> 'value -> 'value;
+  map : ('key, 'value) PolyMap.t;
 }
-val create :
-  cmp:('a -> 'a -> int) -> merge:('b -> 'b -> 'b) -> ('a, 'b) reprMap
-val alias :
-  other_repr:'a -> new_repr:'a -> ('a, 'b) reprMap -> ('a, 'b) reprMap
-val empty : ('a, 'b) reprMap -> ('a, 'b) reprMap
-val is_empty : ('a, 'b) reprMap -> bool
-val add : 'a -> 'b -> ('a, 'b) reprMap -> ('a, 'b) reprMap
-val find_opt : 'a -> ('a, 'b) reprMap -> 'b
-val find_default :
-  'a -> ('a, ('b, 'c) PolyMap.t -> 'd) PolyMap.t -> ('b, 'c) reprMap -> 'd
-val has_key : 'a -> ('a, 'b) reprMap -> bool
-val bindings : ('a, 'b) reprMap -> ('a * 'b) list
+
+val alias : other_repr:'key -> new_repr:'key -> ('key, 'value) t -> ('key, 'value) t
+
+val create : cmp:('key -> 'key -> int) -> merge:('value -> 'value -> 'value) -> ('key, 'value) t
+(* We don't export empty, since elements can be removed via
+   List.fold add (empty s) (List.filter … @@ elements s) *)
+(* val empty : ('key, 'value) t -> ('key, 'value) t *)
+val is_empty : ('key, 'value) t -> bool
+val add : 'key -> 'value -> ('key, 'value) t -> ('key, 'value) t
+val find_opt : 'key -> ('key, 'value) t -> 'value option
+val find_default : 'key -> (unit -> 'value) -> ('key, 'value) t -> 'value * ('key, 'value) t
+val has_key : 'key -> ('key, 'value) t -> bool
+val bindings : ('key, 'value) t -> ('key * 'value) list

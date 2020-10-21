@@ -1,4 +1,4 @@
-open Types
+open Ast
 open Compare_enum
 
 let cmp2 f a1 b1 g a2 b2 = match f a1 b1 with 0 -> g a2 b2 | c -> c
