@@ -31,6 +31,7 @@ depends: [
   "RedBlackTrees"
   # work around upstream in-place update
   "ocaml-migrate-parsetree" { = "1.4.0" }
+  "sourcemaps"
 ]
 pin-depends: [
   ["bisect_ppx.git" "git+https://github.com/aantron/bisect_ppx.git#02dfb10188033a26d07d23480c2bc44a3a670357"]

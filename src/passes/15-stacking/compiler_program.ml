@@ -72,16 +72,14 @@ and apply_static_args : string -> (_, constant', literal) static_args -> _ node 
     let code = Prim (generated, "code", [Seq (generated, e)], []) in
     Prim (generated, prim, [Seq (generated, [parameter; storage; code])], [])
 
-and compile_operator : constant' -> (_, constant', literal) static_args -> (Location.t, string) node list =
-  fun c args ->
+and compile_operator : location -> constant' -> (_, constant', literal) static_args -> (location, string) node list =
+  fun loc c args ->
   match Predefined.Stacking.get_operators c with
-  | Some x -> [wipe_locations generated
-                 (* Handle predefined (and possibly special)
-                    operators, applying any type/annot/script args
-                    using apply_static_args. *)
-                 (Predefined.Stacking.unpredicate
-                    (fun prim -> wipe_locations () (apply_static_args prim args))
-                    x)]
+  | Some x -> [Predefined.Stacking.unpredicate
+                 loc
+                 (* hmm *)
+                 (fun prim -> wipe_locations () (apply_static_args prim args))
+                 x]
   | None ->
     failwith (Format.asprintf "no operator %a %s"
                 Stage_common.PP.constant' c

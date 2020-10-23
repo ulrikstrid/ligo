@@ -658,8 +658,81 @@ let test =
   let doc = "Subcommand: Test a contract with the LIGO interpreter (BETA)." in
   (Term.ret term , Term.info ~doc cmdname)
 
-let buffer = Buffer.create 100
+let source_map =
+  let f source_file entry_point syntax typer_switch protocol_version display_format output_file =
+    return_result ~output_file ~display_format
+    Formatter.Michelson_formatter.real_source_map_format
+    @@
+      let%bind init_env   = Helpers.get_initial_env protocol_version in
+      let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
+      let options = Compiler_options.make ~typer_switch ~init_env () in
+      let%bind typed,_,_  = Compile.Utils.type_file ~options source_file syntax (Contract entry_point) in
+      let%bind mini_c     = Compile.Of_typed.compile typed in
+      let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
+      let%bind contract   = Compile.Of_michelson.build_contract ~disable_typecheck:true michelson in
+      let module IntMap = Map.Make(struct type t = int ;; let compare = compare end) in
+      let logical_source_map = Compile.Of_michelson.source_map contract in
+      (* TODO this was going to be used to generated concrete_target_locations? *)
+      (*
+      let concrete_source_map = Compile.Of_michelson.michelson_location_map contract in
+      let concrete_source_map =
+        let logical_source_map = IntMap.of_list logical_source_map in
+        List.filter_map
+          (fun (canon, conc) -> Option.map (fun src -> (conc, src)) (IntMap.find_opt canon logical_source_map))
+          concrete_source_map in
+      let module Generated = Tezos_micheline.Micheline_parser in
+      let compare_generated : Generated.location -> Generated.location -> int =
+        fun gen1 gen2 ->
+          let c = Int.compare gen1.start.point gen2.start.point in
+          if c == 0
+          then Int.compare gen2.stop.point gen1.stop.point
+          else c in
+      let concrete_source_map =
+        List.sort (fun (gen1, _) (gen2, _) -> compare_generated gen1 gen2) concrete_source_map in
+      let xxx =
+        List.fold_left
+          (fun last (gen, orig) ->
+             match last with
+             | None -> (??)
+             | Some (last : Generated.point) ->
+               (??))
+          None
+          concrete_source_map in
+      *)
+      let concrete_target_locations : Sourcemaps.Sourcemap.line_col IntMap.t = IntMap.empty (* TODO *) in
+      let source_map =
+        List.fold_left
+          (fun map (t, s) ->
+             match s with
+             | Location.File r ->
+               let o1 = r#start#offset `Point in
+               let _o2 = r#stop#offset `Point in
+               let l1 = r#start#line in
+               let _l2 = r#stop#line in
+               (match IntMap.find_opt t concrete_target_locations with
+                | None -> map
+                | Some generated ->
+                  Sourcemaps.Sourcemap.add_mapping
+                    ~original:{ source = r#file ;
+                                original_loc = { line = l1 ; col = o1 } ;
+                                name = None }
+                    ~generated
+                    map)
+             | Location.Virtual _ -> map)
+          (Sourcemaps.Sourcemap.create ())
+          logical_source_map in
+      ok source_map
+  in
+  let term =
+    Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ protocol_version $ typer_switch $ display_format $ output_file) in
+  let cmdname = "source-map" in
+  let doc = "Subcommand: Compile a contract and produce a \"source \
+             map\" in JSON, relating the source LIGO locations to the \
+             corresponding \"canonical\" Michelson locations." in
+  (Term.ret term , Term.info ~doc cmdname)
 
+
+let buffer = Buffer.create 100
 
 let run ?argv () =
   let err = Format.formatter_of_buffer buffer in
@@ -689,4 +762,5 @@ let run ?argv () =
     preprocess;
     pretty_print;
     get_scope;
+    source_map ;
   ]

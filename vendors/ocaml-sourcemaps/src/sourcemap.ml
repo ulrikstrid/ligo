@@ -100,13 +100,15 @@ let compose map map2 =
   ) ([], map.names) map.mappings in
   { map with mappings = List.rev mappings; names }
 
-let add_mapping ~original ~generated map =
-  let names = match original.name with
-  | Some name -> SSet.add name map.names
+let add_mapping ?original ~generated map =
+  let names = match original with
   | None -> map.names
+  | Some original -> match original.name with
+    | Some name -> SSet.add name map.names
+    | None -> map.names
   in
   let mapping = {
-    original = Some original;
+    original = original;
     generated_loc = generated;
   } in
   let mappings = mapping::map.mappings in

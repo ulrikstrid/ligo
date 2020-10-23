@@ -82,4 +82,59 @@ module Michelson_formatter = struct
     pp = michelson_ppformat mf;
     to_json = michelson_jsonformat mf;
   }
+
+  let source_map_ppformat ~display_format f source_map =
+    match display_format with
+    | Human_readable | Dev ->
+      Format.fprintf f "@[<v>%a@]"
+        (Format.pp_print_list
+           ~pp_sep:(fun f () -> Format.fprintf f "@ ")
+           (fun f (t, s) ->
+              Format.fprintf f "%d: %a"
+                t
+                Location.pp s))
+        source_map
+
+  let source_map_jsonformat source_map : json =
+    `List (List.map (fun (t, s) -> `Tuple [`Int t; Location.to_yojson s]) source_map)
+
+  let source_map_format : (int * Location.t) list Display.format = {
+    pp = source_map_ppformat;
+    to_json = source_map_jsonformat;
+  }
+
+  open Sourcemaps
+  module Json_builder : Sourcemap.Json_writer_intf with type t = json = struct
+    type t = json
+    let of_string s = `String s
+    let of_obj kvs = `Assoc kvs
+    let of_array xs = `List xs
+    let of_number hmm = `Intlit hmm
+    let null = `Null
+  end
+  module J = Sourcemap.Make_json_writer(Json_builder)
+
+  let real_source_map_format : Sourcemap.t Display.format = {
+    pp =
+      (fun ~display_format f map ->
+         ignore display_format;
+         Format.fprintf f "%a" Yojson.Safe.pp (J.json_of_sourcemap map) );
+    to_json = J.json_of_sourcemap ;
+  }
+
+  let wip_concrete_locations_format : (int * Tezos_micheline.Micheline_parser.location) list Display.format = {
+    pp =
+      (fun ~display_format f clocs ->
+         ignore display_format;
+         Format.fprintf f "@[<v>%a@]"
+           (Format.pp_print_list
+              ~pp_sep:(fun f () -> Format.fprintf f "@ ")
+              (fun f (loc, Tezos_micheline.Micheline_parser.{ start; stop }) ->
+                 Format.fprintf f "%d %d:%d-%d:%d"
+                   loc
+                   start.line start.column
+                   stop.line stop.column))
+           clocs);
+    to_json = (fun _ -> `Null) ;
+  }
 end

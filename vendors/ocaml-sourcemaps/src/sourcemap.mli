@@ -22,7 +22,7 @@ val find_original: t -> line_col -> original option
 
 val compose: t -> t -> t
 
-val add_mapping: original:original -> generated:line_col -> t -> t
+val add_mapping: ?original:original -> generated:line_col -> t -> t
 
 val add_source_content: source:string -> content:string -> t -> t
 

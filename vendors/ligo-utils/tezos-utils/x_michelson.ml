@@ -7,11 +7,16 @@ type 'l t = 'l michelson
 let prim ?(annot=[]) ?(children=[]) p : unit michelson =
   Prim ((), p, children, annot)
 
+let lprim (l : 'l) ?(annot=[]) ?(children=[]) p : 'l michelson =
+  Prim (l, p, children, annot)
+
 let annotate annot = function
   | Prim (l, p, c, []) -> Prim (l, p, c, [annot])
   | _ -> raise (Failure "annotate")
 
 let seq s : unit michelson = Seq ((), s)
+
+let lseq l s = Seq (l, s)
 
 
 let get_loc : 'l michelson -> 'l = function
@@ -26,6 +31,15 @@ let contract parameter storage code =
     prim ~children:[parameter] "parameter" ;
     prim ~children:[storage] "storage" ;
     prim ~children:[code] "code" ;
+  ]
+
+let lcontract :
+  type l. l -> l -> l t -> l -> l t -> l -> l t -> l t =
+  fun root_loc parameter_loc parameter storage_loc storage code_loc code ->
+  lseq root_loc [
+    lprim parameter_loc ~children:[parameter] "parameter" ;
+    lprim storage_loc ~children:[storage] "storage" ;
+    lprim code_loc ~children:[code] "code" ;
   ]
 
 let int n : unit michelson = Int ((), n)
