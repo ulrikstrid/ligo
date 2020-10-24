@@ -48,7 +48,7 @@ let select_and_propagate : 'old_input 'selector_output 'private_storage . ('old_
   fun already_selected private_storage old_type_constraint dbs ->
   (* TODO: thread some state to know which selector outputs were already seen *)
   let private_storage , selected_outputs = selector old_type_constraint private_storage dbs in
-  let Set.{ set = already_selected ; duplicates = _ ; added = selected_outputs } = Set.add_list selected_outputs already_selected in
+  let { Set.set = already_selected ; duplicates = _ ; added = selected_outputs } = Set.add_list selected_outputs already_selected in
   (* Call the propagation rule *)
   let%bind (private_storage, new_constraints) = bind_fold_map_list (fun private_storage selected -> propagator private_storage dbs selected) private_storage selected_outputs in
   (* return so that the new constraints are pushed to some kind of work queue *)
@@ -153,5 +153,53 @@ let placeholder_for_state_of_new_typer () = initial_state
 
 (*  ………………………………………………………………………………………………… Plugin-based solver below ………………………………………………………………………………………………… *)
 
+module MakeSolver(Plugins : Plugins) : sig
+  module type PluginStates = Plugins.PluginFields(PerPluginState).S
+  val main : unit -> (module PluginStates)
+end = struct
+  open  UnionFind
+  module type PluginStates = Plugins.PluginFields(PerPluginState).S
+  module type PluginUnits = Plugins.PluginFields(PerPluginUnit).S
+
+  type pluginStates = (module PluginStates)
+  let pluginFieldsUnit = (module Plugins.PluginFieldsUnit : PluginUnits)
+
+  (* Function which merges all aliases withing a single plugin's state *)
+  module MergeAliases = struct
+    type extra_args = { other_repr : type_variable ; new_repr : type_variable }
+    module MakeInType = PerPluginState
+    module MakeOutType = PerPluginState
+    module F(Plugin : Plugin) = struct
+      let f { other_repr ; new_repr } state =
+        let merge_keys = {
+          map = (fun m -> ReprMap.alias ~other_repr ~new_repr m);
+          set = (fun s -> (*ReprSet.alias a b s*) s);
+        }
+        in Plugin.merge_aliases merge_keys state
+    end
+  end
+
+  (* Function which creates a plugin's initial state *)
+  module CreateState = struct
+    type extra_args = unit
+    module MakeInType = PerPluginUnit
+    module MakeOutType = PerPluginState
+    module F(Plugin : Plugin) = struct
+      let f () (() as _state) = Plugin.create_state ~cmp:Ast_typed.Compare.type_variable
+    end
+  end
+
+  (* WIP prototype of the solver's main loop with plugins *)
+  let main () : pluginStates =
+    (* Create the initial state for each plugin *)
+    let module MapCreateState = Plugins.MapPlugins(CreateState) in
+    let states = MapCreateState.f () pluginFieldsUnit in
+    let (other_repr, new_repr) = failwith "should be returned by the union-find when aliasing two unification variables" in
+    let module MapMergeAliases = Plugins.MapPlugins(MergeAliases) in
+    let states = MapMergeAliases.f { other_repr ; new_repr } states in
+    states
+end
+
 (* Instantiate the solver with a selection of plugins *)
 module Solver = MakeSolver(Database_plugins)
+

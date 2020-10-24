@@ -80,7 +80,6 @@ let normalizer_grouped_by_variable_remove : type_constraint_simpl normalizer_rm 
     | SC_Poly        ({tv; forall = _}           as c) -> rm_constraint [tv]                        {constructor = []  ; poly = [c] ; tc = [] ; row = []}
     | SC_Alias { a; b } -> ignore (a,b); fail (Typer_common.Errors.internal_error __LOC__ "can't remove aliasing constraints")
       (* Constraint_databases.merge_constraints a b dbs *)
-  
 
 let normalizer_by_constraint_identifier : (type_constraint_simpl , type_constraint_simpl) normalizer =
   fun dbs new_constraint ->
