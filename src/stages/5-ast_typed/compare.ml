@@ -450,7 +450,9 @@ let type_constraint_simpl_tag = function
   | SC_Typeclass   _ -> 4
   | SC_Row         _ -> 5
 
-let type_constraint_simpl a b = match (a,b) with
+let type_constraint_simpl a b =
+  let _ = failwith "src/stages/5-ast_typed/compare.ml type_constraint_simpl should get a comparator for the type variables within" in
+  match (a,b) with
   SC_Constructor ca, SC_Constructor cb -> c_constructor_simpl ca cb
 | SC_Alias       aa, SC_Alias       ab -> c_alias aa ab
 | SC_Poly        pa, SC_Poly        pb -> c_poly_simpl pa pb

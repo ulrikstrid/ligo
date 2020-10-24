@@ -1,6 +1,6 @@
 (library
-  (name typer_new)
-  (public_name ligo.typer_new)
+  (name database_plugins)
+  (public_name ligo.typer_new.database_plugins)
   (libraries
     simple-utils
     tezos-utils
@@ -10,7 +10,6 @@
     UnionFind
     environment
     typer_common
-    database_plugins
   )
   (preprocess
     (pps ppx_let)

@@ -1,4 +1,4 @@
-include Ast                     (* TODO: this is quick & dirty, should write the open statements we need here *)
+open Ast
 
 (* This plug-in system ensures the following:
 
@@ -48,7 +48,7 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
   type ('state, 'a , 'b) normalizer = 'state -> 'a -> ('state * 'b PolySet.t)
 
   (* type normalizer_rm state a = state → a → MonadError typer_error state *)
-  type ('state, 'a) normalizer_rm = 'state -> 'a -> ('state, Typer_errors.typer_error) result
+  type ('state, 'a) normalizer_rm = 'state -> 'a -> ('state, Typer_errors.typer_error) Trace.result
 
   (* t is the type of the state of the plugin
      data Plugin (t :: 🞰→🞰) = Plugin {
@@ -162,74 +162,4 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
       let states = MapMergeAliases.f { other_repr ; new_repr } states in
       states
   end
-
-  (* This can be in a separate file. *)
-  module Plugins : Plugins = struct
-    (* Haskell doesn't have easy-to-use type-level functions or types as
-       fields of records, so we're bending its syntax here.
-
-       type "Assignments.t" typeVariable = map typeVariable
-       c_constructor_simpl data Assignments :: Plugin "Assignments.t" *)
-    module Assignments : Plugin = struct
-      type 'typeVariable t = ('typeVariable, c_constructor_simpl) ReprMap.t
-      let create_state ~cmp =
-        let merge c1 c2 = let _ = failwith "TODO: assert (Compare.c_constructor_simpl c1 c2 = 0);" in ignore c2; c1 in
-        ReprMap.create ~cmp ~merge
-      let add_constraint _ = failwith "todo"
-      let remove_constraint _ = failwith "todo"
-      let merge_aliases : 'old 'new_ . ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
-        fun merge_keys state -> merge_keys.map state
-    end
-
-    module GroupedByVariable : Plugin = struct
-      (* map from (unionfind) variables to constraints containing them *)
-      type 'typeVariable t = ('typeVariable, constraints) ReprMap.t
-      let create_state ~cmp =
-        let merge cs1 cs2 = let _ = failwith "assert (Compare.constraints cs1 cs2 = 0);" in ignore cs2; cs1 in
-        ReprMap.create ~cmp ~merge
-      let add_constraint _ = failwith "todo"
-      let remove_constraint _ = failwith "todo"
-      let merge_aliases =
-        fun updater state -> updater.map state
-    end
-
-    (* data PluginFields (Ppt :: PerPluginType) = PluginFields {
-         assignments       :: Ppt Assignments,
-         groupedByVariable :: Ppt GroupedByVariable,
-         …
-       }
-    *)
-    module PluginFields (Ppt : PerPluginType) = struct
-      module type S = sig
-        val assignments         : Ppt(Assignments).t
-        val grouped_by_variable : Ppt(GroupedByVariable).t
-      end
-    end
-
-    (* mapPlugins :: (F : MappedFunction) → (PluginFields F.MakeIn) → (PluginFields F.MakeOut) *)
-    module MapPlugins = functor (F : MappedFunction) -> struct
-      let f :
-        F.extra_args ->
-        (module PluginFields(F.MakeInType).S) ->
-        (module PluginFields(F.MakeOutType).S)
-        = fun extra_args fieldsIn ->
-          let module FieldsIn = (val fieldsIn) in
-          (module struct
-            let assignments = (let module F = F.F(Assignments) in F.f extra_args FieldsIn.assignments)
-            let grouped_by_variable = (let module F = F.F(GroupedByVariable) in F.f extra_args FieldsIn.grouped_by_variable)
-          end)
-    end
-
-    (* A value containing an empty (dummy) unit associated each plugin
-       name This allows us to use `map' to discard this `unit' and
-       e.g. initialize each plugin. *)
-    module type PluginUnits = PluginFields(PerPluginUnit).S
-    module PluginFieldsUnit : PluginUnits = struct
-      let assignments = ()
-      let grouped_by_variable = ()
-    end
-  end
-
-  (* Instantiate the solver with a selection of plugins *)
-  module Solver = MakeSolver(Plugins)
 end
