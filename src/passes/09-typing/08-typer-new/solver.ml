@@ -20,21 +20,203 @@ let propagator_heuristics =
 let init_propagator_heuristic (Propagator_heuristic { selector ; propagator ; printer ; printer_json ; comparator ; initial_private_storage }) =
   Propagator_state { selector ; propagator ; printer ; printer_json ; already_selected = Set.create ~cmp:comparator ; private_storage = initial_private_storage }
 
+(*  ………………………………………………………………………………………………… Plugin-based solver below ………………………………………………………………………………………………… *)
+
+(* library function *)
+let rec worklist : ('state -> 'element -> ('state * 'element list) result) -> 'state -> 'element list -> 'state result =
+  fun f state elements ->
+  match elements with
+    [] -> ok state
+  | element :: rest ->
+    let%bind new_state, new_elements = f state element in
+    worklist f new_state (new_elements @ rest)
+
+module MakeSolver(Plugins : Plugins) : sig
+  module type PluginStates = Plugins.PluginFields(PerPluginState).S
+  type typer_state = (typer_error, (module PluginStates)) __plugins__typer_state
+  (* val main : typer_state -> typer_state *)
+  val placeholder_for_state_of_new_typer : typer_state
+end = struct
+  open  UnionFind
+  module type PluginStates = Plugins.PluginFields(PerPluginState).S
+  module type PluginUnits = Plugins.PluginFields(PerPluginUnit).S
+
+  type pluginStates = (module PluginStates)
+  let pluginFieldsUnit = (module Plugins.PluginFieldsUnit : PluginUnits)
+
+  (* Function which merges all aliases withing a single plugin's state *)
+  module MergeAliases = struct
+    type extra_args = type_variable UnionFind.Poly2.changed_reprs
+    module MakeInType = PerPluginState
+    module MakeOutType = PerPluginState
+    module F(Plugin : Plugin) = struct
+      let f UnionFind.Poly2.{ demoted_repr ; new_repr } state =
+        let merge_keys = {
+          map = (fun m -> ReprMap.alias ~demoted_repr ~new_repr m);
+          set = (fun s -> (*ReprSet.alias a b s*) s);
+        }
+        in Plugin.merge_aliases merge_keys state
+    end
+  end
+
+  (* Function which creates a plugin's initial state *)
+  module CreateState = struct
+    type extra_args = unit
+    module MakeInType = PerPluginUnit
+    module MakeOutType = PerPluginState
+    module F(Plugin : Plugin) = struct
+      let f () (() as _state) = Plugin.create_state ~cmp:Ast_typed.Compare.type_variable
+    end
+  end
+
+  type typer_state = (typer_error, pluginStates) __plugins__typer_state
+  type nonrec 'a result = ('a, typer_error) Simple_utils.Trace.result
+
+  (* sub-component: constraint selector (worklist / dynamic queries) *)
+  let select_and_propagate : 'old_input 'selector_output 'private_storage . ('old_input, 'selector_output, 'private_storage) selector -> ('selector_output , 'private_storage, typer_error) propagator -> 'selector_output poly_set -> 'private_storage -> 'old_input -> pluginStates -> ('selector_output poly_set * 'private_storage * updates) result =
+    fun selector propagator ->
+    fun already_selected private_storage old_type_constraint dbs ->
+    (* TODO: thread some state to know which selector outputs were already seen *)
+    let private_storage , selected_outputs = selector old_type_constraint private_storage dbs in
+    let { Set.set = already_selected ; duplicates = _ ; added = selected_outputs } = Set.add_list selected_outputs already_selected in
+    (* Call the propagation rule *)
+    let%bind (private_storage, new_constraints) = bind_fold_map_list (fun private_storage selected -> propagator private_storage dbs selected) private_storage selected_outputs in
+    (* return so that the new constraints are pushed to some kind of work queue *)
+    let () =
+      if Ast_typed.Debug.debug_new_typer && false then
+        Printf.fprintf stderr "%s" @@ Format.asprintf "propagator produced\nupdates = %a\n"
+          Ast_typed.PP.updates_list
+          new_constraints
+    in
+    ok (already_selected , private_storage , List.flatten new_constraints)
+
+  (* ------------------------------------------------------------------------------------------------------------- *)
+  (* ------------------------------------------------------------------------------------------------------------- *)
+  (* ------------------------------------------------------------------------------------------------------------- *)
+  (* TODO:
+     - discard the heuristics' private state
+     - also iterate over the heuristics in the main loop (cartesian product)
+     - move the removal to the main loop *)
+  (* ------------------------------------------------------------------------------------------------------------- *)
+  (* ------------------------------------------------------------------------------------------------------------- *)
+  (* ------------------------------------------------------------------------------------------------------------- *)
+  
+  let apply_removals : (type_constraint list * typer_state) -> update -> (type_constraint list * typer_state) result =
+    fun (acc, dbs) update ->
+    let%bind dbs' = bind_fold_list Normalizer.normalizers_remove dbs update.remove_constraints in
+    (* TODO: don't append list like this, it's inefficient. *)
+    ok @@ (acc @ update.add_constraints(* , dbs' *))
+
+  let apply_multiple_removals : update list -> typer_state -> (type_constraint list * typer_state) result =
+    fun updates state ->
+    bind_fold_list apply_removals ([], state) updates
+
+
+  let select_and_propagate_one :
+    pluginStates ->
+    type_constraint_simpl selector_input ->
+    typer_error ex_propagator_state list * type_constraint list ->
+    typer_error ex_propagator_state ->
+    (typer_error ex_propagator_state list * type_constraint list) result =
+    fun
+      dbs
+      new_constraint
+      (new_states , new_constraints)
+      (Propagator_state { selector; propagator; printer ; printer_json ; already_selected ; private_storage }) ->
+      let sel_propag = (select_and_propagate selector propagator) in
+      let%bind (already_selected , private_storage, updates) =
+        sel_propag already_selected private_storage new_constraint dbs in
+      let%bind new_constraints'', dbs = apply_multiple_removals updates dbs in
+      ok @@ (
+        (Propagator_state { selector; propagator; printer ; printer_json ; already_selected ; private_storage }
+         :: new_states),
+        new_constraints'' @ new_constraints,
+      )
+
+  (* Takes a constraint, applies all selector+propagator pairs to it.
+     Keeps track of which constraints have already been selected. *)
+  let select_and_propagate_all' : typer_error ex_propagator_state list -> type_constraint_simpl -> pluginStates -> (typer_error ex_propagator_state list * type_constraint list) result =
+    (* TODO: should not return an updated typer_state! *)
+    fun already_selected_and_propagators new_constraint dbs ->
+    bind_fold_list
+      (select_and_propagate_one dbs new_constraint)
+      ([], [])
+      already_selected_and_propagators
+
+  (* adds a new constraint to the database and applies all the selector+propagator pairs to it *)
+  let add_constraint_and_propagate : typer_state -> type_constraint_simpl -> (typer_state * type_constraint list, typer_error) Simple_utils.Trace.result =
+    fun { all_constraints_ ; plugin_states ; aliases_ ; already_selected_and_propagators_ } new_constraint ->
+    let module MapMergeAliases = Plugins.MapPlugins(MergeAliases) in
+    match new_constraint with
+      Ast_typed.Types.SC_Alias { reason_alias_simpl=_; is_mandatory_constraint=_; a; b } ->
+      let all_constraints_ = new_constraint :: all_constraints_ in
+      let UnionFind.Poly2.{ partition = aliases_; changed_reprs } =
+        UnionFind.Poly2.equiv a b aliases_ in
+      let plugin_states = List.fold_left
+          (fun state changed_reprs -> MapMergeAliases.f changed_reprs state)
+          plugin_states changed_reprs in
+      ok ({ all_constraints_ ; plugin_states ; aliases_ ; already_selected_and_propagators_ }, [])
+    | new_constraint ->
+      let%bind (already_selected_and_propagators_ , new_constraints') =
+        select_and_propagate_all' already_selected_and_propagators_ new_constraint plugin_states in
+      ok ({ all_constraints_ ; plugin_states ; aliases_ ; already_selected_and_propagators_ }, new_constraints')
+
+  let simplify_constraint : type_constraint -> type_constraint_simpl list =
+    fun new_constraint ->
+    Normalizer.type_constraint_simpl new_constraint
+
+  let rec until predicate f state = if predicate state then ok state else let%bind state = f state in until predicate f state
+
+  (* Takes a list of constraints, applies all selector+propagator pairs
+     to each in turn. *)
+  let rec select_and_propagate_all : typer_state -> type_constraint list -> typer_state result =
+    fun state new_constraints ->
+    (* To change the order in which the constraints are processed, modify this loop. *)
+    until
+      (function (_, []) -> true | _ -> false)
+      (fun (state, constraints) ->
+         let new_constraints = List.flatten @@ List.map simplify_constraint new_constraints in
+         let%bind (state, new_constraints) = bind_fold_map_list add_constraint_and_propagate state new_constraints in
+         ok (state, List.flatten new_constraints @ constraints))
+      (state, new_constraints)
+    >>|? fst
+     (* already_selected_and_propagators_ ; all_constraints_ ; plugin_states ; aliases_ *)
+
+  let placeholder_for_state_of_new_typer : typer_state =
+    let module MapCreateState = Plugins.MapPlugins(CreateState) in
+    let plugin_states = MapCreateState.f () pluginFieldsUnit in
+    {
+      all_constraints_                  = [] ;
+      aliases_                          = UnionFind.Poly2.empty Var.pp Var.compare ;
+      plugin_states                    = plugin_states ;
+      already_selected_and_propagators_ = List.map init_propagator_heuristic propagator_heuristics ;
+    }
+
+end
+
+(* Instantiate the solver with a selection of plugins *)
+module Solver = MakeSolver(Database_plugins)
+
+(*  ………………………………………………………………………………………………… Plugin-based solver above ………………………………………………………………………………………………… *)
+
+
 let initial_state : _ typer_state = {
     structured_dbs =
       {
         all_constraints            = ([] : type_constraint_simpl list) ;
-        aliases                    = UF.empty (fun s -> Format.asprintf "%a" Var.pp s) Var.compare;
-        assignments                = (Map.create ~cmp:Var.compare : (type_variable, c_constructor_simpl) Map.t); (*  *)
-        grouped_by_variable        = (Map.create ~cmp:Var.compare : (type_variable,         constraints) Map.t); (*  *)
-        cycle_detection_toposort   = (); (*  *)
-        by_constraint_identifier   = (Map.create ~cmp:Ast_typed.Compare.constraint_identifier : (constraint_identifier, c_typeclass_simpl) Map.t); (*  *)
-        refined_typeclasses        = (Map.create ~cmp:Ast_typed.Compare.constraint_identifier : (constraint_identifier, refined_typeclass) Map.t); (*  *)
-        refined_typeclasses_back   = (Map.create ~cmp:Ast_typed.Compare.constraint_identifier : (constraint_identifier, constraint_identifier) Map.t); (*  *)
-        typeclasses_constrained_by = (Map.create ~cmp:Var.compare) (*  *)
+        aliases                    = UF.empty Var.pp Var.compare;
+        assignments                = (Map.create ~cmp:Var.compare : (type_variable, c_constructor_simpl) Map.t);
+        grouped_by_variable        = (Map.create ~cmp:Var.compare : (type_variable,         constraints) Map.t);
+        cycle_detection_toposort   = ();
+        by_constraint_identifier   = (Map.create ~cmp:Ast_typed.Compare.constraint_identifier : (constraint_identifier, c_typeclass_simpl) Map.t);
+        refined_typeclasses        = (Map.create ~cmp:Ast_typed.Compare.constraint_identifier : (constraint_identifier, refined_typeclass) Map.t);
+        refined_typeclasses_back   = (Map.create ~cmp:Ast_typed.Compare.constraint_identifier : (constraint_identifier, constraint_identifier) Map.t);
+        typeclasses_constrained_by = (Map.create ~cmp:Var.compare)
       } ;
     already_selected_and_propagators = List.map init_propagator_heuristic propagator_heuristics
   }
+
+(* ============================================================================ *)
 
 (* TODO : with our selectors, the selection depends on the order in which the constraints are added :-( :-( :-( :-(
    We need to return a lazy stream of constraints. *)
@@ -145,61 +327,3 @@ let aggregate_constraints = select_and_propagate_all
 let discard_state (_ : _ typer_state) = ()
 
 let placeholder_for_state_of_new_typer () = initial_state
-
-
-
-
-
-
-(*  ………………………………………………………………………………………………… Plugin-based solver below ………………………………………………………………………………………………… *)
-
-module MakeSolver(Plugins : Plugins) : sig
-  module type PluginStates = Plugins.PluginFields(PerPluginState).S
-  val main : unit -> (module PluginStates)
-end = struct
-  open  UnionFind
-  module type PluginStates = Plugins.PluginFields(PerPluginState).S
-  module type PluginUnits = Plugins.PluginFields(PerPluginUnit).S
-
-  type pluginStates = (module PluginStates)
-  let pluginFieldsUnit = (module Plugins.PluginFieldsUnit : PluginUnits)
-
-  (* Function which merges all aliases withing a single plugin's state *)
-  module MergeAliases = struct
-    type extra_args = { other_repr : type_variable ; new_repr : type_variable }
-    module MakeInType = PerPluginState
-    module MakeOutType = PerPluginState
-    module F(Plugin : Plugin) = struct
-      let f { other_repr ; new_repr } state =
-        let merge_keys = {
-          map = (fun m -> ReprMap.alias ~other_repr ~new_repr m);
-          set = (fun s -> (*ReprSet.alias a b s*) s);
-        }
-        in Plugin.merge_aliases merge_keys state
-    end
-  end
-
-  (* Function which creates a plugin's initial state *)
-  module CreateState = struct
-    type extra_args = unit
-    module MakeInType = PerPluginUnit
-    module MakeOutType = PerPluginState
-    module F(Plugin : Plugin) = struct
-      let f () (() as _state) = Plugin.create_state ~cmp:Ast_typed.Compare.type_variable
-    end
-  end
-
-  (* WIP prototype of the solver's main loop with plugins *)
-  let main () : pluginStates =
-    (* Create the initial state for each plugin *)
-    let module MapCreateState = Plugins.MapPlugins(CreateState) in
-    let states = MapCreateState.f () pluginFieldsUnit in
-    let (other_repr, new_repr) = failwith "should be returned by the union-find when aliasing two unification variables" in
-    let module MapMergeAliases = Plugins.MapPlugins(MergeAliases) in
-    let states = MapMergeAliases.f { other_repr ; new_repr } states in
-    states
-end
-
-(* Instantiate the solver with a selection of plugins *)
-module Solver = MakeSolver(Database_plugins)
-

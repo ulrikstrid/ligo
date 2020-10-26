@@ -10,9 +10,9 @@ let create ~cmp ~merge = {
   map = PolyMap.create ~cmp;
 }
 
-let alias ~other_repr ~new_repr (m : (_,_) t) =
+let alias ~demoted_repr ~new_repr (m : (_,_) t) =
   { m with
-    map = match PolyMap.find_opt other_repr m.map with
+    map = match PolyMap.find_opt demoted_repr m.map with
       | None -> m.map
       | Some other_value ->
         PolyMap.update

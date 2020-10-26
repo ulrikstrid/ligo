@@ -212,11 +212,7 @@ let normalizer_assignments : (type_constraint_simpl , type_constraint_simpl) nor
     type_constraint_simpl. The former has more possible cases, and the
     latter uses a more minimalistic constraint language.
 *)
-let rec normalizer_simpl : (type_constraint , type_constraint_simpl) normalizer =
-  fun dbs new_constraint ->
-  (dbs, type_constraint_simpl new_constraint)
-
-and type_constraint_simpl : type_constraint -> type_constraint_simpl list =
+let rec type_constraint_simpl : type_constraint -> type_constraint_simpl list =
   fun new_constraint ->
   let insert_fresh a b =
     let fresh = Core.fresh_type_variable () in
@@ -286,6 +282,10 @@ and type_constraint_simpl : type_constraint -> type_constraint_simpl list =
   (* break down (TC(args)) into (TC('a, …) and ('a = arg) …) *)
   | C_typeclass { tc_args; typeclass }                              -> split_typeclass tc_args typeclass
   | C_access_label { c_access_label_tval; accessor; c_access_label_tvar } -> let _todo = ignore (c_access_label_tval, accessor, c_access_label_tvar) in failwith "TODO C_access_label" (* tv, label, result *)
+
+let normalizer_simpl : (type_constraint , type_constraint_simpl) normalizer =
+  fun dbs new_constraint ->
+  (dbs, type_constraint_simpl new_constraint)
 
 let normalizers : type_constraint -> structured_dbs -> (structured_dbs , 'modified_constraint) state_list_monad =
   fun new_constraint dbs ->

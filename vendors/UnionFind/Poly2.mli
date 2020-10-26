@@ -11,7 +11,7 @@ type 'item repr
 (** {1 Creation} *)
 
 (** The value [empty] is an empty partition. *)
-val empty : ('a -> string) -> ('a -> 'a -> int) -> 'a partition
+val empty : (Format.formatter -> 'a -> unit) -> ('a -> 'a -> int) -> 'a partition
 
 (** The value of [equiv i j p] is the partition [p] extended with
         the equivalence of items [i] and [j]. If both [i] and [j] are

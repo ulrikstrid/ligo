@@ -40,6 +40,13 @@ type 'errors typer_state = {
   already_selected_and_propagators : 'errors ex_propagator_state list ;
 }
 
+type ('errors, 'plugin_states) __plugins__typer_state = {
+  all_constraints_                  : type_constraint_simpl list ;
+  aliases_                          : type_variable UnionFind.Poly2.t ;
+  plugin_states                    : 'plugin_states ;
+  already_selected_and_propagators_ : 'errors ex_propagator_state list ;
+}
+
 open Format
 open PP_helpers
 
@@ -72,6 +79,7 @@ let json_typer_state = fun ({ structured_dbs; already_selected_and_propagators }
 let list f lst = `List (List.map f lst) in
     (list json_ex_propagator_state already_selected_and_propagators))]
 
+(* TODO: remove lift_state_list_monad and lift: not needed after moving to plugin system *)
 (* state+list monad *)
 type ('state, 'elt) state_list_monad = { state: 'state ; list : 'elt list }
 let lift_state_list_monad ~state ~list = { state ; list }

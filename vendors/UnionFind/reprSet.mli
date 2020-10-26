@@ -9,7 +9,7 @@
 type 'elt t
 type 'elt set = 'elt t
 
-val alias : other_repr:'elt -> new_repr:'elt -> 'elt t -> 'elt t
+val alias : demoted_repr:'elt -> new_repr:'elt -> 'elt t -> 'elt t
 
 val create : cmp:('elt -> 'elt -> int) -> 'elt t
 (* We don't export empty, since elements can be removed via

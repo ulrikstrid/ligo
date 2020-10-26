@@ -27,13 +27,13 @@ module MapPlugins = functor (F : MappedFunction) -> struct
     = fun extra_args fieldsIn ->
       let module FieldsIn = (val fieldsIn) in
       (module struct
-        let assignments = (let module F = F.F(Assignments) in F.f extra_args FieldsIn.assignments)
-        let grouped_by_variable = (let module F = F.F(GroupedByVariable) in F.f extra_args FieldsIn.grouped_by_variable)
+        let assignments                      = (let module F = F.F(Assignments)                   in F.f extra_args FieldsIn.assignments)
+        let grouped_by_variable              = (let module F = F.F(GroupedByVariable)             in F.f extra_args FieldsIn.grouped_by_variable)
         let cycle_detection_topological_sort = (let module F = F.F(CycleDetectionTopologicalSort) in F.f extra_args FieldsIn.cycle_detection_topological_sort)
-        let by_constraint_identifier = (let module F = F.F(ByConstraintIdentifier) in F.f extra_args FieldsIn.by_constraint_identifier)
-        let refined_typeclasses = (let module F = F.F(RefinedTypeclasses) in F.f extra_args FieldsIn.refined_typeclasses)
-        let refined_typeclasses_back = (let module F = F.F(RefinedTypeclassesBack) in F.f extra_args FieldsIn.refined_typeclasses_back)
-        let typeclasses_constrained_by = (let module F = F.F(TypeclassesConstrainedBy) in F.f extra_args FieldsIn.typeclasses_constrained_by)
+        let by_constraint_identifier         = (let module F = F.F(ByConstraintIdentifier)        in F.f extra_args FieldsIn.by_constraint_identifier)
+        let refined_typeclasses              = (let module F = F.F(RefinedTypeclasses)            in F.f extra_args FieldsIn.refined_typeclasses)
+        let refined_typeclasses_back         = (let module F = F.F(RefinedTypeclassesBack)        in F.f extra_args FieldsIn.refined_typeclasses_back)
+        let typeclasses_constrained_by       = (let module F = F.F(TypeclassesConstrainedBy)      in F.f extra_args FieldsIn.typeclasses_constrained_by)
       end)
 end
 

@@ -3,7 +3,7 @@ type ('key, 'value) t = {
   map : ('key, 'value) PolyMap.t;
 }
 
-val alias : other_repr:'key -> new_repr:'key -> ('key, 'value) t -> ('key, 'value) t
+val alias : demoted_repr:'key -> new_repr:'key -> ('key, 'value) t -> ('key, 'value) t
 
 val create : cmp:('key -> 'key -> int) -> merge:('value -> 'value -> 'value) -> ('key, 'value) t
 (* We don't export empty, since elements can be removed via

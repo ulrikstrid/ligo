@@ -47,7 +47,7 @@ let map_sorted_keys : 'item 'value . ('item, 'value) map -> 'item list = fun m -
     equivalent items by means of a map from items to nodes of type
     [node] in trees. *)
 type 'item partition = {
-    to_string : 'item -> string ;
+    to_string : Format.formatter -> 'item -> unit ;
     compare : 'item -> 'item -> int ;
     map : ('item, 'item node) map ;
 }
@@ -163,7 +163,7 @@ let partitions : 'item . 'item partition -> 'item list list =
  *          match map_find j p.map with
  *            Root hj | Link (_,hj) -> hi,hj,j in
  *     let () =
- *       Format.fprintf ppf "%s,%d -> %s,%d\n"
- *         (p.to_string i) hi (p.to_string j) hj
+ *       Format.fprintf ppf "%a,%d -> %a,%d\n"
+ *         p.to_string i hi p.to_string j hj
  *     in ()
  *   in map_iter print p.map *)
