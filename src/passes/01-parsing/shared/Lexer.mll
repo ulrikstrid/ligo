@@ -200,17 +200,10 @@ module Make (Token : Token.S) =
       let lookahead_units = FQueue.rev lookahead_units in
       let units = FQueue.enq (markup_list, result) lookahead_units in
       let units = FQueue.rev units in
-      ignore(units);
-      if (List.length state#lookaheads > 1) then 
-        let tl = List.tl state#lookaheads in
-        let previous_lookahead = List.hd tl in
-        let tl = if List.length tl > 1 then
-          List.tl tl
-        else
-          []
-        in
+      match state#lookaheads with 
+      | _ :: previous_lookahead :: tl ->       
         state#set_lookaheads ((FQueue.concat units previous_lookahead) :: tl)
-      else (
+      | _ -> (
         let state = state#set_lookaheads [] in
         state#set_units (FQueue.concat units state#units)
       )
@@ -219,11 +212,10 @@ module Make (Token : Token.S) =
       let open Core in
       let {region; lexeme; state} = state#sync buffer in
       let state = 
-        if (Token.is_lookahead_trigger lexeme) then
-          state#add_lookahead FQueue.empty
-        else if (List.length state#lookaheads > 0 && Token.is_lookahead_decision_trigger lexeme) then (
+        if (List.length state#lookaheads > 0 && Token.is_lookahead_decision_trigger lexeme) then
           merge_lookahead_up lexeme state
-        )
+        else if (Token.is_lookahead_trigger lexeme) then
+          state#set_lookaheads (FQueue.empty :: state#lookaheads)
         else
           state
       in

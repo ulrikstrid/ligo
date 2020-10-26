@@ -138,36 +138,35 @@ type 'token config = <
 >
 
 type 'token state = <
-  config       : 'token config;
+  config         : 'token config;
 
-  units        : (Markup.t list * 'token) FQueue.t;
-  markup       : Markup.t list;
-  comments     : Markup.comment FQueue.t;
-  window       : 'token window option;
-  last         : Region.t;
-  pos          : Pos.t;
-  decoder      : Uutf.decoder;
-  supply       : Bytes.t -> int -> int -> unit;
-  lookaheads   : (Markup.t list * 'token) FQueue.t list;
+  units          : (Markup.t list * 'token) FQueue.t;
+  markup         : Markup.t list;
+  comments       : Markup.comment FQueue.t;
+  window         : 'token window option;
+  last           : Region.t;
+  pos            : Pos.t;
+  decoder        : Uutf.decoder;
+  supply         : Bytes.t -> int -> int -> unit;
+  lookaheads     : (Markup.t list * 'token) FQueue.t list;
 
-  enqueue      : 'token -> 'token state;
-  set_units    : (Markup.t list * 'token) FQueue.t -> 'token state;
-  set_last     : Region.t -> 'token state;
-  set_pos      : Pos.t -> 'token state;
-  slide_token  : 'token -> 'token state;
+  enqueue        : 'token -> 'token state;
+  set_units      : (Markup.t list * 'token) FQueue.t -> 'token state;
+  set_last       : Region.t -> 'token state;
+  set_pos        : Pos.t -> 'token state;
+  slide_token    : 'token -> 'token state;
 
-  sync         : Lexing.lexbuf -> 'token sync;
+  sync           : Lexing.lexbuf -> 'token sync;
 
-  push_newline : Lexing.lexbuf -> 'token state;
-  push_line    : thread -> 'token state;
-  push_block   : thread -> 'token state;
-  push_space   : Lexing.lexbuf -> 'token state;
-  push_tabs    : Lexing.lexbuf -> 'token state;
-  push_bom     : Lexing.lexbuf -> 'token state;
-  push_markup  : Markup.t -> 'token state;
-  push_comment : Markup.comment -> 'token state;
+  push_newline   : Lexing.lexbuf -> 'token state;
+  push_line      : thread -> 'token state;
+  push_block     : thread -> 'token state;
+  push_space     : Lexing.lexbuf -> 'token state;
+  push_tabs      : Lexing.lexbuf -> 'token state;
+  push_bom       : Lexing.lexbuf -> 'token state;
+  push_markup    : Markup.t -> 'token state;
+  push_comment   : Markup.comment -> 'token state;
 
-  add_lookahead  : (Markup.t list * 'token) FQueue.t -> 'token state;
   set_lookaheads : (Markup.t list * 'token) FQueue.t list -> 'token state
 >
 
