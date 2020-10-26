@@ -78,6 +78,12 @@ module type S =
     val mk_lang     : lexeme Region.reg -> Region.t -> token
     val eof         : Region.t -> token
 
+    (* Lookahead *)
+
+    val is_lookahead_trigger          : lexeme -> bool
+    val is_lookahead_decision_trigger : lexeme -> bool
+    val lookahead_result              : token -> lexeme -> token 
+
     (* Predicates *)
 
     val is_string   : token -> bool

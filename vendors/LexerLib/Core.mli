@@ -148,6 +148,7 @@ type 'token state = <
   pos          : Pos.t;
   decoder      : Uutf.decoder;
   supply       : Bytes.t -> int -> int -> unit;
+  lookaheads   : (Markup.t list * 'token) FQueue.t list;
 
   enqueue      : 'token -> 'token state;
   set_units    : (Markup.t list * 'token) FQueue.t -> 'token state;
@@ -164,7 +165,10 @@ type 'token state = <
   push_tabs    : Lexing.lexbuf -> 'token state;
   push_bom     : Lexing.lexbuf -> 'token state;
   push_markup  : Markup.t -> 'token state;
-  push_comment : Markup.comment -> 'token state
+  push_comment : Markup.comment -> 'token state;
+
+  add_lookahead  : (Markup.t list * 'token) FQueue.t -> 'token state;
+  set_lookaheads : (Markup.t list * 'token) FQueue.t list -> 'token state
 >
 
 and 'token sync = {

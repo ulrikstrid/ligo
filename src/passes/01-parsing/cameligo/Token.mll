@@ -548,6 +548,12 @@ and scan_constr region lexicon = parse
 
     let eof region = EOF region
 
+    let is_lookahead_trigger _ = false
+
+    let is_lookahead_decision_trigger _ = false
+
+    let lookahead_result _ _ = failwith "Should not happen"
+
     type sym_err = Invalid_symbol
 
     let mk_sym lexeme region =

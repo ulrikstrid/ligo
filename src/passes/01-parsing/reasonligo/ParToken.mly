@@ -77,5 +77,6 @@ module Token = Lexer_reasonligo.Token
   (* Virtual tokens *)
 
 %token <Region.t> EOF
+%token <Region.t> ES6FUN
 
 %%

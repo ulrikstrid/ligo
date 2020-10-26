@@ -62,6 +62,12 @@ module type TOKEN =
     val is_annot  : token -> bool
     val is_sym    : token -> bool
     val is_eof    : token -> bool
+
+    (* Lookahead *)
+
+    val is_lookahead_trigger          : lexeme -> bool
+    val is_lookahead_decision_trigger : lexeme -> bool
+    val lookahead_result              : token -> lexeme -> token 
   end
 
 (* The functorised interface *)

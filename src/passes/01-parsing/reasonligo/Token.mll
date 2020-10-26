@@ -85,6 +85,7 @@ module T =
     (* Virtual tokens *)
 
     | EOF of Region.t
+    | ES6FUN of Region.t
 
     (* Unlexing the tokens *)
 
@@ -261,6 +262,7 @@ module T =
     | C_None   region -> region, "C_None"
     | C_Some   region -> region, "C_Some"
     | EOF      region -> region, "EOF"
+    | ES6FUN   region -> region, "ES6FUN"
 
     let to_lexeme = function
       (* Literals *)
@@ -329,6 +331,7 @@ module T =
     (* Virtual tokens *)
 
     | EOF _ -> ""
+    | ES6FUN _ -> "("
 
     (* CONVERSIONS *)
 
@@ -516,6 +519,32 @@ and scan_constr region lexicon = parse
       else Ok (Mutez Region.{region; value = lexeme, z})
 
     let eof region = EOF region
+
+    type balance_state = 
+     | Unbalanced_lparen
+     | Balanced
+
+    let balanced_list: balance_state list ref = ref []
+
+    let is_lookahead_trigger lexeme = 
+      if lexeme = "(" then (
+        balanced_list := Unbalanced_lparen :: Balanced :: !balanced_list;
+        true
+      ) else 
+        false
+      
+    let is_lookahead_decision_trigger lexeme =
+      let result = List.hd !balanced_list = Balanced in
+      if lexeme = ")" then
+        balanced_list := List.tl !balanced_list;
+      result
+
+    let lookahead_result trigger decision = 
+      balanced_list := List.tl !balanced_list;
+      match trigger, decision with 
+      | LPAR region, "=>"
+      | LPAR region, ":" -> LPAR region
+      | _ ->  trigger
 
     type sym_err = Invalid_symbol
 

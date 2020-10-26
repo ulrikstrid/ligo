@@ -188,9 +188,45 @@ module Make (Token : Token.S) =
       let token              = Token.mk_lang lang region
       in state#enqueue token
 
+    let merge_lookahead_up lexeme state = 
+      let open Core in
+      let current_lookahead = List.hd state#lookaheads in
+      let lookahead_units, (markup_list, trigger_token) = 
+        match (FQueue.deq current_lookahead) with 
+          Some (units, (_, _token as ext_token)) -> units, ext_token
+        | None -> failwith "Should not happen"
+      in
+      let result = Token.lookahead_result trigger_token lexeme in
+      let lookahead_units = FQueue.rev lookahead_units in
+      let units = FQueue.enq (markup_list, result) lookahead_units in
+      let units = FQueue.rev units in
+      ignore(units);
+      if (List.length state#lookaheads > 1) then 
+        let tl = List.tl state#lookaheads in
+        let previous_lookahead = List.hd tl in
+        let tl = if List.length tl > 1 then
+          List.tl tl
+        else
+          []
+        in
+        state#set_lookaheads ((FQueue.concat units previous_lookahead) :: tl)
+      else (
+        let state = state#set_lookaheads [] in
+        state#set_units (FQueue.concat units state#units)
+      )
+
     let mk_sym state buffer =
       let open Core in
       let {region; lexeme; state} = state#sync buffer in
+      let state = 
+        if (Token.is_lookahead_trigger lexeme) then
+          state#add_lookahead FQueue.empty
+        else if (List.length state#lookaheads > 0 && Token.is_lookahead_decision_trigger lexeme) then (
+          merge_lookahead_up lexeme state
+        )
+        else
+          state
+      in
       match Token.mk_sym lexeme region with
         Ok token -> state#enqueue token
       | Error Token.Invalid_symbol -> fail region Invalid_symbol
@@ -198,8 +234,14 @@ module Make (Token : Token.S) =
     let mk_eof state buffer =
       let open Core in
       let {region; state; _} = state#sync buffer in
-      let token = Token.eof region
-      in state#enqueue token
+      let token = Token.eof region in
+      let state = 
+        List.fold_left 
+          (fun all _ -> merge_lookahead_up "<eof>" all) 
+          state 
+          state#lookaheads 
+      in
+      state#enqueue token
 
 (* END HEADER *)
 }

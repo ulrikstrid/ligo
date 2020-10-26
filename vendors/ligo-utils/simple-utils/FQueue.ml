@@ -1,10 +1,12 @@
-(* Purely functional queues based on a pair of lists *)
+ (* Purely functional queues based on a pair of lists *)
 
 type 'a t = {rear: 'a list; front: 'a list}
 
 let empty = {rear=[]; front=[]}
 
 let enq x q = {q with rear = x::q.rear}
+
+let concat x q = {q with rear = x.rear @ q.rear}
 
 let rec deq = function
   {rear=[]; front=  []} -> None
@@ -17,3 +19,5 @@ let rec peek = function
 | {rear=_;  front=x::_} as q -> Some (q,x)
 
 let is_empty q = (q = empty)
+
+let rev { rear; front } = { front = []; rear = List.rev rear @ front }
