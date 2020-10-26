@@ -4,6 +4,7 @@ type all = Types.all
 
 (* passes tracers *)
 
+let preproc_tracer (e:Preproc.Errors.preproc_error) : all = `Main_preproc e
 let parser_tracer (e:Parser.Errors.parse_error) : all = `Main_parser e
 let pretty_tracer (e:Parser.Errors.parse_error) : all = `Main_pretty e
 let cit_cameligo_tracer (e:Tree_abstraction.Cameligo.Errors.abs_error) : all = `Main_cit_cameligo e
@@ -29,6 +30,7 @@ let decompile_michelson : Stacking.Errors.stacking_error -> all = fun e -> `Main
 
 let syntax_auto_detection extension : all = `Main_invalid_extension extension
 let invalid_syntax syntax : all = `Main_invalid_syntax_name syntax
+let invalid_protocol_version possible actual = `Main_invalid_protocol_version (possible,actual)
 
 let entrypoint_not_a_function : all = `Main_entrypoint_not_a_function
 let entrypoint_not_found : all = `Main_entrypoint_not_found

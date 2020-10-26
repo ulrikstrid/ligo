@@ -3,7 +3,6 @@ module I = Ast_core
 module O = Ast_typed
 module O' = Typesystem.Solver_types
 open O.Combinators
-module DEnv = Environment
 module Environment = O.Environment
 module Solver = Solver
 type environment = Environment.t
@@ -74,75 +73,58 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
       Environment.get_record content e in
     let layout = Option.unopt ~default:default_layout layout in
     return (T_record {content ; layout})
-  | T_variable name ->
+  | T_variable variable ->
     (* Check that the variable is in the environment *)
-    let name : O.type_variable = Var.todo_cast name in
+    let name : O.type_variable = Var.todo_cast variable in
     trace_option (unbound_type_variable e name t.location)
-    @@ Environment.get_type_opt (name) e
-  | T_constant {type_constant; arguments} ->
-    let assert_constant lst = match lst with
-      [] -> ok ()
-    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 0 (List.length lst) t.location
-    in
-    let assert_unary lst = match lst with
-      [_] -> ok ()
-    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 1 (List.length lst) t.location
-    in
-    let get_unary lst = match lst with
-      [x] -> ok x
-    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 1 (List.length lst) t.location
-    in
-    let assert_binary lst = match lst with
-      [_;_] -> ok ()
-    | _ -> fail @@ type_constant_wrong_number_of_arguments type_constant 2 (List.length lst) t.location
-    in
-    match type_constant with
-      | (TC_unit | TC_string | TC_bytes | TC_nat | TC_int | TC_mutez | TC_operation | TC_address | TC_key | TC_key_hash | TC_chain_id | TC_signature | TC_timestamp) as type_constant ->
-        let%bind () = assert_constant arguments in
-        let%bind arguments = bind_map_list (evaluate_type e) arguments in
-        return @@ T_constant {type_constant; arguments}
-      | (TC_set | TC_list | TC_option | TC_contract) as type_constant ->
-        let%bind () = assert_unary arguments in
-        let%bind arguments = bind_map_list (evaluate_type e) arguments in
-        return @@ T_constant {type_constant; arguments}
-      | (TC_map | TC_big_map ) as type_constant ->
-        let%bind () = assert_binary arguments in
-        let%bind arguments = bind_map_list (evaluate_type e) arguments in
-        return @@ T_constant {type_constant; arguments}
-      (* TODO : remove when we have polymorphism *)
-      | TC_map_or_big_map ->
-        let%bind () = assert_binary arguments in
-        let%bind arguments = bind_map_list (evaluate_type e) arguments in
-        return @@ T_constant {type_constant=TC_map_or_big_map; arguments}
-      | TC_michelson_pair_right_comb ->
-          let%bind c = bind (evaluate_type e) @@ get_unary arguments in
-          let%bind lmap = match c.type_content with
+      @@ Environment.get_type_opt (name) e
+  | T_app {type_operator;arguments} -> (
+    let name : O.type_variable = Var.todo_cast type_operator in
+    let%bind v = trace_option (unbound_type_variable e name t.location) @@
+      Environment.get_type_opt name e in
+    let aux : O.type_injection -> (O.type_expression, typer_error) result = fun inj -> 
+      (*handles converters*)
+      let open Stage_common.Constant in
+      let {language=_ ; injection ; parameters} : O.type_injection = inj in
+      match Ligo_string.extract injection, parameters with
+      | (i, [t]) when String.equal i michelson_pair_right_comb_name ->
+        let%bind lmap = match t.type_content with
             | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap.content)) -> ok lmap
             | _ -> fail (michelson_comb_no_record t.location) in
-          let record = Typer_common.Michelson_type_converter.convert_pair_to_right_comb (Ast_typed.LMap.to_kv_list_rev lmap.content) in
-          return @@ record
-      | TC_michelson_pair_left_comb ->
-          let%bind c = bind (evaluate_type e) @@ get_unary arguments in
-          let%bind lmap = match c.type_content with
+        let record = Typer_common.Michelson_type_converter.convert_pair_to_right_comb (Ast_typed.LMap.to_kv_list_rev lmap.content) in
+        return @@ record
+      | (i, [t]) when String.equal i  michelson_pair_left_comb_name ->
+          let%bind lmap = match t.type_content with
             | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap.content)) -> ok lmap
             | _ -> fail (michelson_comb_no_record t.location) in
           let record = Typer_common.Michelson_type_converter.convert_pair_to_left_comb (Ast_typed.LMap.to_kv_list_rev lmap.content) in
           return @@ record
-      | TC_michelson_or_right_comb ->
-          let%bind c = bind (evaluate_type e) @@ get_unary arguments in
-          let%bind cmap = match c.type_content with
+      | (i, [t]) when String.equal i michelson_or_right_comb_name ->
+        let%bind cmap = match t.type_content with
             | T_sum cmap -> ok cmap.content
             | _ -> fail (michelson_comb_no_variant t.location) in
           let pair = Typer_common.Michelson_type_converter.convert_variant_to_right_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
           return @@ pair
-      | TC_michelson_or_left_comb ->
-          let%bind c = bind (evaluate_type e) @@ get_unary arguments in
-          let%bind cmap = match c.type_content with
+      | (i, [t]) when String.equal i michelson_or_left_comb_name ->
+        let%bind cmap = match t.type_content with
             | T_sum cmap -> ok cmap.content
             | _ -> fail (michelson_comb_no_variant t.location) in
           let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
-          return @@ pair
-      | _ -> fail @@ unrecognized_type_constant t
+          return @@ pair 
+      | _ -> return (T_constant inj)
+    in
+    match get_param_inj v with
+    | Some (language,injection,parameters) ->
+      let arg_env = List.length parameters in
+      let arg_actual = List.length arguments in
+      let%bind parameters =
+        if arg_env <> arg_actual then fail @@ type_constant_wrong_number_of_arguments type_operator arg_env arg_actual t.location
+        else bind_map_list (evaluate_type e) arguments
+      in
+      let inj : O.type_injection = {language ; injection ; parameters } in
+      aux inj
+    | None -> failwith "variable with parameters is not an injection"
+  )
 
 and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (environment * _ O'.typer_state * O.expression, typer_error) result = fun ?tv_opt e state ae ->
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
@@ -150,7 +132,7 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
   let module L = Logger.Stateful() in
   let return : _ -> _ -> _ O'.typer_state -> _ -> _ (* return of type_expression *) = fun expr e state constraints type_name ->
     let%bind new_state = aggregate_constraints state constraints in
-    let tv = t_variable type_name in
+    let tv = t_constant (Var.to_name type_name) [] in
     let location = ae.location in
     let expr' = make_e ~location expr tv in
     ok @@ (e,new_state, expr') in
@@ -491,8 +473,8 @@ let check_has_no_unification_vars (O.Program_With_Unification_Vars p) =
       let%bind () = te where type1 in
       te where type2
     | O.T_variable tv -> failwith (Format.asprintf "Unbound type variable %a cann't be generalized (LIGO does not support generalization of variables in user code for now). You can try to annotate the expression. The type variable occurred in the %s" Var.pp tv (where ()))
-    | O.T_constant { type_constant = _; arguments } ->
-      bind_fold_list (fun () texpr -> te where texpr) () arguments
+    | O.T_constant { language=_ ; injection = _; parameters } ->
+      bind_fold_list (fun () texpr -> te where texpr) () parameters
   and te where : O.type_expression -> _ = function { type_content; type_meta=_; location=_ } -> tc where type_content
   and expression : O.expression -> _ = function { expression_content; location=_; type_expression } ->
     let where () = Format.asprintf "expression %a which was assigned the type %a" O.PP.expression_content expression_content O.PP.type_expression type_expression in
@@ -572,10 +554,9 @@ let type_and_subst
   let () = ignore env in        (* TODO: shouldn't we use the `env` somewhere? *)
   ok (node, state)
 
-let type_program (p : I.program) : (O.program_fully_typed * _ O'.typer_state, typer_error) result =
-  let empty_env = DEnv.default in
+let type_program ~init_env (p : I.program) : (O.program_fully_typed * _ O'.typer_state, typer_error) result =
   let empty_state = Solver.initial_state in
-  let%bind (p, state) = type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") (fun ppf p -> Format.fprintf ppf "%a" Yojson.Safe.pp (Ast_typed.Yojson.program_with_unification_vars p)) (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env in
+  let%bind (p, state) = type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") (fun ppf p -> Format.fprintf ppf "%a" Yojson.Safe.pp (Ast_typed.Yojson.program_with_unification_vars p)) (init_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env in
   let%bind p = check_has_no_unification_vars p in
   ok (p, state)
 
@@ -593,5 +574,5 @@ and [@warning "-32"] type_expression : ?tv_opt:O.type_expression -> environment 
 and [@warning "-32"] type_lambda e state lam = type_lambda e state lam
 let [@warning "-32"] type_program_returns_env ((env, state, p) : environment * _ O'.typer_state * I.program) : (environment * _ O'.typer_state * O.program_with_unification_vars, typer_error) result = type_program_returns_env (env, state, p)
 let [@warning "-32"] type_and_subst (in_printer : (Format.formatter -> 'a -> unit)) (out_printer : (Format.formatter -> 'b -> unit)) (env_state_node : environment * _ O'.typer_state * 'a) (apply_substs : ('b,typer_error) Typesystem.Misc.Substitution.Pattern.w) (types_and_returns_env : (environment * _ O'.typer_state * 'a) -> (environment * _ O'.typer_state * 'b, typer_error) result) : ('b * _ O'.typer_state, typer_error) result = type_and_subst in_printer out_printer env_state_node apply_substs types_and_returns_env
-let [@warning "-32"] type_program (p : I.program) : (O.program_fully_typed * _ O'.typer_state, typer_error) result = type_program p
+let [@warning "-32"] type_program ~init_env (p : I.program) : (O.program_fully_typed * _ O'.typer_state, typer_error) result = type_program ~init_env p
 let [@warning "-32"] type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * _ O'.typer_state, typer_error) result = type_expression_subst env state ?tv_opt e

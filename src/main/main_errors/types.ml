@@ -5,6 +5,7 @@ type all =
  | `Main_invalid_syntax_name of string
  | `Main_invalid_dialect_name of string
  | `Main_invalid_extension of string
+ | `Main_invalid_protocol_version of string list *  string
  | `Main_unparse_tracer of tezos_alpha_error list
  | `Main_typecheck_contract_tracer of Michelson.michelson * tezos_alpha_error list
  | `Main_could_not_serialize of tezos_alpha_error list
@@ -19,6 +20,7 @@ type all =
  | `Main_parse_michelson_code of tezos_alpha_error list
  | `Main_michelson_execution_error of tezos_alpha_error list
 
+ | `Main_preproc of Preproc.Errors.preproc_error
  | `Main_parser of Parser.Errors.parse_error
  | `Main_pretty of Parser.Errors.parse_error
  | `Main_self_ast_imperative of Self_ast_imperative.Errors.self_ast_imperative_error
