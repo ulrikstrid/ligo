@@ -1,5 +1,15 @@
 #!/usr/bin/env bash
 
+if ! [ -x "$(command -v jq)" ]; then
+  echo 'Error: could not find "jq".' >&2
+  exit 1
+fi
+
+if ! [ -x "$(command -v json2yaml)" ]; then
+  echo 'Error: could not find "json2yaml".' >&2
+  exit 1
+fi
+
 ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )/.."
 
 set -euET -o pipefail
