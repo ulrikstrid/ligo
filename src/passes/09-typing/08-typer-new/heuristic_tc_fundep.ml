@@ -30,12 +30,12 @@ open Heuristic_tc_fundep_utils
  * Selector
  * *********************************************************************** *)
 
-let get_or_add_refined_typeclass : structured_dbs -> private_storage -> c_typeclass_simpl -> (private_storage * refined_typeclass) =
-  fun dbs () tcs ->
+let get_or_add_refined_typeclass : structured_dbs -> c_typeclass_simpl -> refined_typeclass =
+  fun dbs tcs ->
   let open Heuristic_tc_fundep_utils in
   let tc = tc_to_constraint_identifier tcs in
   match Map.find_opt tc dbs.refined_typeclasses with
-    Some x -> (), x
+    Some x -> x
   | None -> failwith "internal error: couldn't find refined version of the typeclass constraint"
 
 let is_variable_constrained_by_typeclass : structured_dbs -> type_variable -> refined_typeclass -> bool =
@@ -49,39 +49,38 @@ let is_variable_constrained_by_typeclass : structured_dbs -> type_variable -> re
          (UF.repr var dbs.aliases))
   @@ Set.elements refined_typeclass.vars
 
-(* Find typeclass constraints in the dbs which constrain c.tv
-   This is useful for the typeclass constraints which do not exist yet in the private_storage. *)
-let selector_by_ctor_in_db : private_storage -> structured_dbs -> c_constructor_simpl -> (private_storage * output_tc_fundep selector_outputs) =
-  fun private_storage dbs c ->
+(* Find typeclass constraints in the dbs which constrain c.tv *)
+let selector_by_ctor_in_db : structured_dbs -> c_constructor_simpl -> (output_tc_fundep selector_outputs) =
+  fun dbs c ->
   let typeclasses = (Constraint_databases.get_constraints_related_to c.tv dbs).tc in  
-  let typeclasses = List.fold_map (get_or_add_refined_typeclass dbs) private_storage typeclasses in
+  let typeclasses = List.map (get_or_add_refined_typeclass dbs) typeclasses in
   let typeclasses = List.filter (is_variable_constrained_by_typeclass dbs c.tv) typeclasses in
   let cs_pairs_db = List.map (fun tc -> { tc ; c }) typeclasses in
-  private_storage, cs_pairs_db
+  cs_pairs_db
 
-(* Find typeclass constraints in the private_storage which constrain c.tv *)
-let selector_by_ctor_in_private_storage : private_storage -> structured_dbs -> c_constructor_simpl -> (private_storage * output_tc_fundep selector_outputs) =
-  fun private_storage dbs c ->
+(* Find typeclass constraints elsewhere??? (not private_storage anymore) which constrain c.tv *)
+let selector_by_ctor_in_private_storage : structured_dbs -> c_constructor_simpl -> (output_tc_fundep selector_outputs) =
+  fun dbs c ->
   let refined_typeclasses = List.map snd @@ Map.bindings dbs.refined_typeclasses in
   let typeclasses =
     List.filter
       (is_variable_constrained_by_typeclass dbs c.tv)
       refined_typeclasses in
   let cs_pairs_db = List.map (fun tc -> { tc ; c }) typeclasses in
-  private_storage, cs_pairs_db
+  cs_pairs_db
 
-let selector_by_ctor : private_storage -> structured_dbs -> c_constructor_simpl -> (private_storage * output_tc_fundep selector_outputs) =
-  fun private_storage dbs c ->
-  let private_storage, cs_pairs_in_db = selector_by_ctor_in_db private_storage dbs c in
-  let private_storage, cs_pairs_in_private_storage = selector_by_ctor_in_private_storage private_storage dbs c in
-  private_storage, cs_pairs_in_db @ cs_pairs_in_private_storage
+let selector_by_ctor : structured_dbs -> c_constructor_simpl -> (output_tc_fundep selector_outputs) =
+  fun dbs c ->
+  let cs_pairs_in_db = selector_by_ctor_in_db dbs c in
+  let cs_pairs_in_private_storage = selector_by_ctor_in_private_storage dbs c in
+  cs_pairs_in_db @ cs_pairs_in_private_storage
 
 (* Find constructor constraints α = κ(β …) where α is one of the
    variables constrained by the (refined version of the) typeclass
    constraint tcs. *)
-let selector_by_tc : private_storage -> structured_dbs -> c_typeclass_simpl -> (private_storage * output_tc_fundep selector_outputs) =
-  fun private_storage dbs tcs ->
-  let private_storage, tc = get_or_add_refined_typeclass dbs private_storage tcs in
+let selector_by_tc : structured_dbs -> c_typeclass_simpl -> (output_tc_fundep selector_outputs) =
+  fun dbs tcs ->
+  let tc = get_or_add_refined_typeclass dbs tcs in
   (* TODO: this won't detect already-existing constructor
      constraints that would apply to future versions of the refined
      typeclass. *)
@@ -94,16 +93,16 @@ let selector_by_tc : private_storage -> structured_dbs -> c_typeclass_simpl -> (
     match PolyMap.find_opt tv dbs.assignments with
       Some c -> [({ tc ; c } : output_tc_fundep)]
     | None   -> [] in
-  private_storage, (List.flatten @@ List.map aux tc.refined.args)
+  List.flatten @@ List.map aux tc.refined.args
 
-let selector : (type_constraint_simpl , output_tc_fundep , private_storage) selector =
-  fun type_constraint_simpl private_storage dbs ->
+let selector : (type_constraint_simpl , output_tc_fundep) selector =
+  fun type_constraint_simpl dbs ->
   match type_constraint_simpl with
-    SC_Constructor c  -> selector_by_ctor private_storage dbs c
-  | SC_Row r          -> ignore r; failwith "TODO: call selector_by_ctor private_storage dbs r"
-  | SC_Alias       _  -> private_storage, [] (* TODO: ? *)
-  | SC_Poly        _  -> private_storage, [] (* TODO: ? *)
-  | SC_Typeclass   tc -> selector_by_tc private_storage dbs tc
+    SC_Constructor c  -> selector_by_ctor dbs c
+  | SC_Row r          -> ignore r; failwith "TODO: call selector_by_ctor dbs r"
+  | SC_Alias       _  -> [] (* TODO: ? *)
+  | SC_Poly        _  -> [] (* TODO: ? *)
+  | SC_Typeclass   tc -> selector_by_tc dbs tc
 
 (* ***********************************************************************
  * Propagator
@@ -231,8 +230,8 @@ let deduce_and_clean : c_typeclass_simpl -> (deduce_and_clean_result, _) result 
   let%bind cleaned = transpose_back (tcs.reason_typeclass_simpl, tcs.is_mandatory_constraint) tcs.id_typeclass_simpl vars_and_possibilities in
   ok { deduced ; cleaned }
 
-let propagator : (output_tc_fundep, private_storage , typer_error) propagator =
-  fun private_storage _dbs selected ->
+let propagator : (output_tc_fundep, typer_error) propagator =
+  fun selected ->
   (* The selector is expected to provide constraints with the shape (α
      = κ(β, …)) and to update the private storage to keep track of the
      refined typeclass *)
@@ -267,13 +266,13 @@ let propagator : (output_tc_fundep, private_storage , typer_error) propagator =
                                                      t    = P_variable v})
                                          x.tv_list ; } } } } in
   let deduced : type_constraint list = List.map aux deduced in
-  ok (private_storage, [
+  ok [
       {
         remove_constraints = [SC_Typeclass selected.tc.refined];
         add_constraints = cleaned :: deduced;
-        justification = "no removal so no justification needed"
+        proof_trace = Axiom (HandWaved "cut with the following (cleaned => removed_typeclass) to show that the removal does not lose info, (removed_typeclass => selected.c => cleaned) to show that the cleaned vesion does not introduce unwanted constraints.")
       }
-    ])
+    ]
 
 (* ***********************************************************************
  * Heuristic
@@ -287,6 +286,5 @@ let heuristic =
       printer = Ast_typed.PP.output_tc_fundep ;
       printer_json = Ast_typed.Yojson.output_tc_fundep ;
       comparator = Solver_should_be_generated.compare_output_tc_fundep ;
-      initial_private_storage = () ;
     }
 

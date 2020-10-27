@@ -542,10 +542,20 @@ type already_selected = {
 }
 
 type type_constraint_list = type_constraint list
+
+(* For now all our "axioms" are just human-readable justifications
+   used within the compiler to explain why an operation is valid. In
+   the future, we can have proper signatures for the axioms *)
+type axiom = HandWaved of string
+
+type proof_trace =
+  | Axiom of axiom
+  (* | … future extension: allow for proof traces *)
+
 type update = {
   remove_constraints : type_constraint_simpl_list ;
   add_constraints : type_constraint_list ;
-  justification : string ;
+  proof_trace : proof_trace ;
 }
 type updates = update list
 type updates_list = updates list

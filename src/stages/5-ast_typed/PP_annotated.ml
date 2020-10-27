@@ -449,14 +449,19 @@ let deduce_and_clean_result ppf {deduced;cleaned} =
     (list c_constructor_simpl) deduced
     c_typeclass_simpl cleaned
 
-let update ppf {remove_constraints;add_constraints;justification} =
+let axiom ppf = function |HandWaved s -> fprintf ppf "HandWaved %s" s
+
+let proof_trace ppf = function
+  Axiom a -> fprintf ppf "Axiom %a" axiom a
+
+let update ppf {remove_constraints;add_constraints;proof_trace=x} =
   fprintf ppf "{@,@[<hv 2>
               remove_constraints : %a ;@
               add_constraints : %a ;@
-              justification : %s
+              proof_trace : %a
               @]@,}"
     (list type_constraint_simpl) remove_constraints
     (list type_constraint) add_constraints
-    justification
+    proof_trace x
 
 let updates_list ppf = fprintf ppf "%a" (list (list update))

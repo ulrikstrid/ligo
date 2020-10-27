@@ -4,36 +4,34 @@ module Set = RedBlackTrees.PolySet
 
 type 'old_constraint_type selector_input = 'old_constraint_type (* some info about the constraint just added, so that we know what to look for *)
 type 'selector_output selector_outputs = 'selector_output list
-type ('old_constraint_type, 'selector_output , 'private_storage) selector = 'old_constraint_type selector_input -> 'private_storage -> structured_dbs -> 'private_storage * 'selector_output selector_outputs
-type ('selector_output , 'private_storage, 'errors) propagator = 'private_storage -> structured_dbs -> 'selector_output -> ('private_storage * updates, 'errors) result
-type ('old_constraint_type , 'selector_output , 'private_storage, 'errors) propagator_heuristic = {
+type ('old_constraint_type, 'selector_output) selector = 'old_constraint_type selector_input -> structured_dbs -> 'selector_output selector_outputs
+type ('selector_output , 'errors) propagator = 'selector_output -> (updates, 'errors) result
+type ('old_constraint_type , 'selector_output , 'errors) propagator_heuristic = {
   (* sub-sub component: lazy selector (don't re-try all selectors every time)
    * For now: just re-try everytime *)
-  selector          : ('old_constraint_type , 'selector_output , 'private_storage) selector ;
+  selector          : ('old_constraint_type , 'selector_output) selector ;
   (* constraint propagation: (buch of constraints) → (new constraints * assignments) *)
-  propagator        : ('selector_output , 'private_storage, 'errors) propagator ;
+  propagator        : ('selector_output , 'errors) propagator ;
   printer           : Format.formatter -> 'selector_output -> unit ;
   printer_json      : 'selector_output -> Yojson.Safe.t ;
   comparator        : 'selector_output -> 'selector_output -> int ;
-  initial_private_storage : 'private_storage;
 }
 
-type ('old_constraint_type , 'selector_output , 'private_storage, 'errors) propagator_state = {
-  selector          : ('old_constraint_type , 'selector_output , 'private_storage) selector ;
-  propagator        : ('selector_output , 'private_storage, 'errors) propagator ;
+type ('old_constraint_type , 'selector_output, 'errors) propagator_state = {
+  selector          : ('old_constraint_type , 'selector_output) selector ;
+  propagator        : ('selector_output , 'errors) propagator ;
   printer           : Format.formatter -> 'selector_output -> unit ;
   printer_json      : 'selector_output -> Yojson.Safe.t ;
   already_selected  : 'selector_output Set.t;
-  private_storage   : 'private_storage;
 }
 
 type 'errors ex_propagator_heuristic =
   (* For now only support a single type of input, make this polymorphic as needed. *)
-  | Propagator_heuristic : (type_constraint_simpl , 'selector_output , 'private_storage, 'errors) propagator_heuristic -> 'errors ex_propagator_heuristic
+  | Propagator_heuristic : (type_constraint_simpl , 'selector_output , 'errors) propagator_heuristic -> 'errors ex_propagator_heuristic
 
 type 'errors ex_propagator_state =
   (* For now only support a single type of input, make this polymorphic as needed. *)
-  | Propagator_state : (type_constraint_simpl , 'selector_output , 'private_storage, 'errors) propagator_state -> 'errors ex_propagator_state
+  | Propagator_state : (type_constraint_simpl , 'selector_output , 'errors) propagator_state -> 'errors ex_propagator_state
 
 type 'errors typer_state = {
   structured_dbs                   : structured_dbs   ;

@@ -17,8 +17,8 @@ let propagator_heuristics =
     Heuristic_tc_fundep.heuristic ;
   ]
 
-let init_propagator_heuristic (Propagator_heuristic { selector ; propagator ; printer ; printer_json ; comparator ; initial_private_storage }) =
-  Propagator_state { selector ; propagator ; printer ; printer_json ; already_selected = Set.create ~cmp:comparator ; private_storage = initial_private_storage }
+let init_propagator_heuristic (Propagator_heuristic { selector ; propagator ; printer ; printer_json ; comparator }) =
+  Propagator_state { selector ; propagator ; printer ; printer_json ; already_selected = Set.create ~cmp:comparator }
 
 (*  ………………………………………………………………………………………………… Plugin-based solver below ………………………………………………………………………………………………… *)
 
@@ -73,14 +73,14 @@ end = struct
   type nonrec 'a result = ('a, typer_error) Simple_utils.Trace.result
 
   (* sub-component: constraint selector (worklist / dynamic queries) *)
-  let select_and_propagate : 'old_input 'selector_output 'private_storage . ('old_input, 'selector_output, 'private_storage) selector -> ('selector_output , 'private_storage, typer_error) propagator -> 'selector_output poly_set -> 'private_storage -> 'old_input -> pluginStates -> ('selector_output poly_set * 'private_storage * updates) result =
+  let select_and_propagate : 'old_input 'selector_output . ('old_input, 'selector_output) selector -> ('selector_output , typer_error) propagator -> 'selector_output poly_set -> 'old_input -> pluginStates -> ('selector_output poly_set * updates) result =
     fun selector propagator ->
-    fun already_selected private_storage old_type_constraint dbs ->
+    fun already_selected old_type_constraint dbs ->
     (* TODO: thread some state to know which selector outputs were already seen *)
-    let private_storage , selected_outputs = selector old_type_constraint private_storage dbs in
+    let selected_outputs = selector old_type_constraint dbs in
     let { Set.set = already_selected ; duplicates = _ ; added = selected_outputs } = Set.add_list selected_outputs already_selected in
     (* Call the propagation rule *)
-    let%bind (private_storage, new_constraints) = bind_fold_map_list (fun private_storage selected -> propagator private_storage dbs selected) private_storage selected_outputs in
+    let%bind new_constraints = bind_map_list propagator selected_outputs in
     (* return so that the new constraints are pushed to some kind of work queue *)
     let () =
       if Ast_typed.Debug.debug_new_typer && false then
@@ -88,7 +88,7 @@ end = struct
           Ast_typed.PP.updates_list
           new_constraints
     in
-    ok (already_selected , private_storage , List.flatten new_constraints)
+    ok (already_selected , List.flatten new_constraints)
 
   (* ------------------------------------------------------------------------------------------------------------- *)
   (* ------------------------------------------------------------------------------------------------------------- *)
@@ -111,7 +111,6 @@ end = struct
     fun updates state ->
     bind_fold_list apply_removals ([], state) updates
 
-
   let select_and_propagate_one :
     pluginStates ->
     type_constraint_simpl selector_input ->
@@ -122,13 +121,13 @@ end = struct
       dbs
       new_constraint
       (new_states , new_constraints)
-      (Propagator_state { selector; propagator; printer ; printer_json ; already_selected ; private_storage }) ->
+      (Propagator_state { selector; propagator; printer ; printer_json ; already_selected }) ->
       let sel_propag = (select_and_propagate selector propagator) in
-      let%bind (already_selected , private_storage, updates) =
-        sel_propag already_selected private_storage new_constraint dbs in
+      let%bind (already_selected , updates) =
+        sel_propag already_selected new_constraint dbs in
       let%bind new_constraints'', dbs = apply_multiple_removals updates dbs in
       ok @@ (
-        (Propagator_state { selector; propagator; printer ; printer_json ; already_selected ; private_storage }
+        (Propagator_state { selector; propagator; printer ; printer_json ; already_selected }
          :: new_states),
         new_constraints'' @ new_constraints,
       )
@@ -225,14 +224,14 @@ let initial_state : _ typer_state = {
    entirely accidental (dfs/bfs/something in-between). *)
 
 (* sub-component: constraint selector (worklist / dynamic queries) *)
-let select_and_propagate : 'old_input 'selector_output 'private_storage . ('old_input, 'selector_output, 'private_storage) selector -> ('selector_output , 'private_storage, typer_error) propagator -> 'selector_output poly_set -> 'private_storage -> 'old_input -> structured_dbs -> ('selector_output poly_set * 'private_storage * updates) result =
+let select_and_propagate : 'old_input 'selector_output . ('old_input, 'selector_output) selector -> ('selector_output , typer_error) propagator -> 'selector_output poly_set -> 'old_input -> structured_dbs -> ('selector_output poly_set * updates) result =
   fun selector propagator ->
-  fun already_selected private_storage old_type_constraint dbs ->
+  fun already_selected old_type_constraint dbs ->
   (* TODO: thread some state to know which selector outputs were already seen *)
-  let private_storage , selected_outputs = selector old_type_constraint private_storage dbs in
+  let selected_outputs = selector old_type_constraint dbs in
   let { Set.set = already_selected ; duplicates = _ ; added = selected_outputs } = Set.add_list selected_outputs already_selected in
   (* Call the propagation rule *)
-  let%bind (private_storage, new_constraints) = bind_fold_map_list (fun private_storage selected -> propagator private_storage dbs selected) private_storage selected_outputs in
+  let%bind new_constraints = bind_map_list propagator private_storage selected_outputs in
   (* return so that the new constraints are pushed to some kind of work queue *)
   let () =
     if Ast_typed.Debug.debug_new_typer && false then
@@ -240,7 +239,7 @@ let select_and_propagate : 'old_input 'selector_output 'private_storage . ('old_
         Ast_typed.PP.updates_list
         new_constraints
   in
-  ok (already_selected , private_storage , List.flatten new_constraints)
+  ok (already_selected , List.flatten new_constraints)
 
 let apply_removals : (type_constraint list * structured_dbs) -> update -> (type_constraint list * structured_dbs) result =
   fun (acc, dbs) update ->

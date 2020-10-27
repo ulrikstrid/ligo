@@ -11,30 +11,29 @@ open Typesystem.Solver_types
 open Trace
 open Typer_common.Errors
 
-let selector : (type_constraint_simpl , output_specialize1 , unit) selector =
+let selector : (type_constraint_simpl , output_specialize1) selector =
   (* find two rules with the shape (x = forall b, d) and x = k'(var' …) or vice versa *)
   (* TODO: do the same for two rules with the shape (a = forall b, d) and tc(a…) *)
   (* TODO: do the appropriate thing for two rules with the shape (a = forall b, d) and (a = forall b', d') *)
-  fun type_constraint_simpl () dbs ->
+  fun type_constraint_simpl dbs ->
   match type_constraint_simpl with
     SC_Constructor c                ->
     (* vice versa *)
     let other_cs = (Constraint_databases.get_constraints_related_to c.tv dbs).poly in
     let other_cs = List.filter (fun (x : c_poly_simpl) -> Var.equal c.tv x.tv) other_cs in
     let cs_pairs = List.map (fun x -> { poly = x ; a_k_var = c }) other_cs in
-    () , cs_pairs
-  | SC_Alias       _                -> () , [] (* TODO: ??? *)
+    cs_pairs
+  | SC_Alias       _                -> [] (* TODO: ??? *)
   | SC_Poly        p                ->
     let other_cs = (Constraint_databases.get_constraints_related_to p.tv dbs).constructor in
     let other_cs = List.filter (fun (x : c_constructor_simpl) -> Var.equal x.tv p.tv) other_cs in
     let cs_pairs = List.map (fun x -> { poly = p ; a_k_var = x }) other_cs in
-    () , cs_pairs
-  | SC_Typeclass   _                -> () , []
-  | SC_Row _                        -> () , []
+    cs_pairs
+  | SC_Typeclass   _                -> []
+  | SC_Row _                        -> []
 
-let propagator : (output_specialize1 , unit, typer_error) propagator =
-  fun () dbs selected ->
-  let () = ignore (dbs) in (* this propagator doesn't need to use the dbs *)
+let propagator : (output_specialize1 , typer_error) propagator =
+  fun selected ->
   let a = selected.poly in
   let b = selected.a_k_var in
 
@@ -56,13 +55,13 @@ let propagator : (output_specialize1 , unit, typer_error) propagator =
   (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "apply = %a\nb = %a\nreduced = %a\nnew_constraints = [\n%a\n]\n" Ast_typed.PP.type_value apply Ast_typed.PP.c_constructor_simpl b Ast_typed.PP.type_value reduced (PP_helpers.list_sep Ast_typed.PP.type_constraint (fun ppf () -> Format.fprintf ppf " ;\n")) new_constraints);
   let eq1 = c_equation { tsrc = "solver: propagator: specialize1 eq1" ; t = P_variable b.tv } reduced "propagator: specialize1" in
   let eqs = eq1 :: new_constraints in
-    ok (() , [
+    ok [
         {
           remove_constraints = [];
           add_constraints = eqs;
-          justification = "no removal so no justification needed"
+          proof_trace = Axiom Axioms.specialize
         }
-      ])
+      ]
 
 let heuristic =
   Propagator_heuristic
@@ -72,5 +71,4 @@ let heuristic =
       printer = Ast_typed.PP.output_specialize1 ;
       printer_json = Ast_typed.Yojson.output_specialize1 ;
       comparator = Solver_should_be_generated.compare_output_specialize1 ;
-      initial_private_storage = () ;
     }
