@@ -256,9 +256,16 @@ and type_environment_binding = {
     type_: type_expression ;
   }
 
+and module_environment = module_environment_binding list
+
+and module_environment_binding = {
+  module_name : string ;
+  module_ : environment ;
+}
 and environment = {
   expression_environment: expression_environment ;
   type_environment: type_environment ;
+  module_environment : module_environment ;
   }
 
 and named_type_content = {
@@ -269,6 +276,7 @@ and named_type_content = {
 
 
 (* Solver types
+
 
    The solver types are not actually part of the AST,
    so they could be moved to a separate file, but doing so would
