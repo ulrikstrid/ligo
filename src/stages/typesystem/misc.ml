@@ -31,10 +31,15 @@ module Substitution = struct
       bind_map_list (fun T.{type_variable ; type_} ->
         let%bind type_ = s_type_expression ~substs type_ in
         ok @@ T.{type_variable ; type_}) tenv
-    and s_environment : (T.environment,_) w = fun ~substs T.{expression_environment ; type_environment} ->
+    and s_module_environment: (T.module_environment,_) w = fun ~substs menv ->
+      bind_map_list (fun T.{module_name ; module_} ->
+        let%bind module_ = s_environment ~substs module_ in
+        ok @@ T.{module_name;module_}) menv
+    and s_environment : (T.environment,_) w = fun ~substs T.{expression_environment ; type_environment ; module_environment} ->
       let%bind expression_environment = s_expr_environment ~substs expression_environment in
       let%bind type_environment = s_type_environment ~substs type_environment in
-      ok @@ T.{ expression_environment ; type_environment }
+      let%bind module_environment = s_module_environment ~substs module_environment in
+      ok @@ T.{ expression_environment ; type_environment ; module_environment}
 
     and s_variable : (T.expression_variable,_) w = fun ~substs var ->
       let () = ignore @@ substs in

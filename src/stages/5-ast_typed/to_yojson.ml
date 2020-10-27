@@ -397,10 +397,19 @@ and type_environment_binding {type_variable;type_} =
   ]
 and type_environment e = list type_environment_binding e
 
-and environment {expression_environment=ee;type_environment=te} =
+and module_environment_binding {module_name; module_} =
+  `Assoc [
+    ("module_name", `String module_name);
+    ("module_", environment module_)
+  ]
+
+and module_environment e = list module_environment_binding e
+
+and environment {expression_environment=ee;type_environment=te;module_environment=me} =
   `Assoc [
     ("expression_environment", expression_environment ee);
     ("type_environment", type_environment te);
+    ("module_environment", module_environment me)
   ]
 
 (* Solver types *)
@@ -608,12 +617,13 @@ let constraints {constructor; poly; (* tc; *) row} =
     (* ("tc", list c_typeclass_simpl tc); *)
     ("row", list c_row_simpl row);
   ]
+
 (* let structured_dbs {refined_typeclasses;refined_typeclasses_back;typeclasses_constrained_by;by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort=_} =
  *   `Assoc [
  *     ("refined_typeclasses", jmap constraint_identifier refined_typeclass refined_typeclasses);
  *     ("refined_typeclasses", jmap constraint_identifier constraint_identifier refined_typeclasses_back);
  *     ("typeclasses_constrained_by", typeVariableMap constraint_identifier_set typeclasses_constrained_by);
- *     ("by_constraint_identifier", ciMap c_typeclass_simpl by_constraint_identifier); 
+ *     ("by_constraint_identifier", ciMap c_typeclass_simpl by_constraint_identifier);
  *     ("all_constrants", list type_constraint_simpl all_constraints);
  *     ("aliases", unionfind aliases);
  *     ("assignments", typeVariableMap c_constructor_simpl assignments);
@@ -638,4 +648,3 @@ let output_tc_fundep (t : output_tc_fundep) =
           ("original",`String(Format.asprintf "%Li" (match lst.original with ConstraintIdentifier x -> x)));
           ("vars",list Var.to_yojson ( RedBlackTrees.PolySet.elements lst.vars))])
       ;("a",c_constructor_simpl a)]
-

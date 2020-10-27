@@ -51,7 +51,11 @@ let solve_graph : graph -> file_name -> (_ list,_) result =
     let order = Dfs.fold_component aux [] dep_g file_name in
     ok @@ order
 
-let add_module_in_env init_env _deps = init_env (*TODO*)
+let add_modules_in_env env deps =
+  let aux env (module_name, (_,ast_typed_env)) =
+    Ast_typed.Environment.add_module module_name ast_typed_env env
+  in
+  List.fold_left aux env deps
 
 (* TODO *)
 let build_michelson order_deps asts_typed entry_point =
@@ -61,7 +65,7 @@ let build_michelson order_deps asts_typed entry_point =
   | _ :: tl -> last tl
   in
   let%bind typed,_ = (last order_deps) in
-  let%bind typed =
+  let%bind typed,_ =
     trace_option (corner_case ~loc:__LOC__ "Present by contruction" ) @@
     SMap.find_opt typed asts_typed
   in
@@ -85,9 +89,9 @@ let build_contract : options:Compiler_options.t -> string -> string -> _ -> file
       in
       let%bind deps = bind_map_list aux deps in
       let%bind init_env   = trace compiler_error @@ Compile.Helpers.get_initial_env protocol_version in
-      let init_env = add_module_in_env init_env deps in
-      let%bind ast_typed,_,_ = trace compiler_error @@ Compile.Of_core.compile ~typer_switch:options.typer_switch ~init_env form ast_core in
-      ok @@ SMap.add file_name ast_typed asts_typed
+      let init_env = add_modules_in_env init_env deps in
+      let%bind ast_typed,ast_typed_env,_ = trace compiler_error @@ Compile.Of_core.compile ~typer_switch:options.typer_switch ~init_env form ast_core in
+      ok @@ SMap.add file_name (ast_typed,ast_typed_env) asts_typed
     in
     let%bind asts_typed = bind_fold_list aux (SMap.empty) order_deps in
     let%bind contract   = build_michelson order_deps asts_typed entry_point in

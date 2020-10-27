@@ -103,7 +103,7 @@ and arrow {type1=ta1;type2=tb1} {type1=ta2;type2=tb2} =
     type_expression tb1 tb2
 
 let constant_tag (ct : constant_tag) (ct2 : constant_tag) =
-  Int.compare (constant_tag ct ) (constant_tag ct2 ) 
+  Int.compare (constant_tag ct ) (constant_tag ct2 )
 
 let binder (va,ta) (vb,tb) =
   cmp2 expression_variable va vb type_expression ta tb
@@ -303,15 +303,20 @@ and environment_binding {expr_var=eva;env_elt=eea} {expr_var=evb;env_elt=eeb} =
 
 and expression_environment a b = List.compare ~compare:environment_binding a b
 
-and environment {expression_environment=eea;type_environment=tea} {expression_environment=eeb;type_environment=teb} =
+and module_environment_binding {module_name=mna;module_=ma}
+                               {module_name=mnb;module_=mb} =
   cmp2
+    String.compare mna mnb
+    environment    ma  mb
+
+and module_environment a b = List.compare ~compare:module_environment_binding a b
+
+and environment {expression_environment=eea;type_environment=tea; module_environment=mea}
+                {expression_environment=eeb;type_environment=teb; module_environment=meb} =
+  cmp3
    expression_environment eea eeb
    type_environment       tea teb
-
-let named_type_content {type_name=tna;type_value=tva} {type_name=tnb;type_value=tvb} =
-  cmp2
-    type_variable tna tnb
-    type_expression tva tvb
+   module_environment     mea meb
 
 (* Solver types *)
 
@@ -397,7 +402,7 @@ and c_typeclass {tc_args=ta;typeclass=ca; original_id=x} {tc_args=tb;typeclass=c
     typeclass ca cb
     (Option.compare (constraint_identifier ))x y
 
-and c_access_label 
+and c_access_label
       {c_access_label_tval=val1;accessor=a1;c_access_label_tvar=var1}
       {c_access_label_tval=val2;accessor=a2;c_access_label_tvar=var2} =
   cmp3
