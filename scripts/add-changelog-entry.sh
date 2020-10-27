@@ -37,7 +37,7 @@ if ! [ "1$2" -eq "1$2" ] 2>/dev/null; then
 fi
 
 if command -v nix-shell > /dev/null && [[ -z "${IN_NIX_SHELL-}" ]]; then
-    nix-shell -p jq -p remarshal --run "${0@Q} ${1@Q} ${2@Q} ${3@Q} ${4@Q}"
+    nix-shell -p jq -p remarshal --run "$0 $1 $2 $3 $4"
     exit $?
 fi
 
