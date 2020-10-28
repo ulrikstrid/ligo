@@ -605,7 +605,7 @@ and scan_constr region lexicon = parse
 
     let is_lookahead_decision_trigger _ = false
 
-    let lookahead_result _  _ = failwith "Should not happen"
+    let lookahead_result _  _ = None
 
     type sym_err = Invalid_symbol
 

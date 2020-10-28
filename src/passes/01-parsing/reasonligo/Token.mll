@@ -526,25 +526,36 @@ and scan_constr region lexicon = parse
 
     let balanced_list: balance_state list ref = ref []
 
-    let is_lookahead_trigger lexeme = 
-      if lexeme = "(" then (
+    let is_lookahead_trigger token = 
+      match token with 
+      | LPAR _ ->
         balanced_list := Unbalanced_lparen :: Balanced :: !balanced_list;
         true
-      ) else 
+      | _ -> 
         false
       
-    let is_lookahead_decision_trigger lexeme =
-      let result = List.hd !balanced_list = Balanced in
-      if lexeme = ")" then
-        balanced_list := List.tl !balanced_list;
-      result
+    let is_lookahead_decision_trigger token =
+      match !balanced_list with 
+      | hd :: tl -> (
+        let result = hd = Balanced in
+        (match token with 
+        | RPAR _ ->
+          balanced_list := tl;
+        | _ -> ());
+        result)
+      | _ -> false
 
     let lookahead_result trigger decision = 
-      balanced_list := List.tl !balanced_list;
+      (match !balanced_list with 
+      | _ :: tl -> 
+        balanced_list := tl
+      | _ -> 
+        balanced_list := []);
       match trigger, decision with 
-      | LPAR region, "=>"
-      | LPAR region, ":" -> LPAR region
-      | _ ->  trigger
+        (* TODO: *)
+        (* | LPAR region, ARROW _
+        | LPAR region, COLON _ -> Some (LPAR region) *)
+        | _ -> None
 
     type sym_err = Invalid_symbol
 

@@ -80,9 +80,9 @@ module type S =
 
     (* Lookahead *)
 
-    val is_lookahead_trigger          : lexeme -> bool
-    val is_lookahead_decision_trigger : lexeme -> bool
-    val lookahead_result              : token -> lexeme -> token 
+    val is_lookahead_trigger          : token -> bool
+    val is_lookahead_decision_trigger : token -> bool
+    val lookahead_result              : token -> token -> token option
 
     (* Predicates *)
 

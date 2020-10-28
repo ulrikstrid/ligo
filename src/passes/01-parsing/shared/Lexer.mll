@@ -188,39 +188,47 @@ module Make (Token : Token.S) =
       let token              = Token.mk_lang lang region
       in state#enqueue token
 
-    let merge_lookahead_up lexeme state = 
+    let merge_lookahead_up decision_token state = 
       let open Core in
-      let current_lookahead = List.hd state#lookaheads in
-      let lookahead_units, (markup_list, trigger_token) = 
-        match (FQueue.deq current_lookahead) with 
-          Some (units, (_, _token as ext_token)) -> units, ext_token
-        | None -> failwith "Should not happen"
-      in
-      let result = Token.lookahead_result trigger_token lexeme in
-      let lookahead_units = FQueue.rev lookahead_units in
-      let units = FQueue.enq (markup_list, result) lookahead_units in
-      let units = FQueue.rev units in
       match state#lookaheads with 
-      | _ :: previous_lookahead :: tl ->       
-        state#set_lookaheads ((FQueue.concat units previous_lookahead) :: tl)
-      | _ -> (
-        let state = state#set_lookaheads [] in
-        state#set_units (FQueue.concat units state#units)
+      | (trigger_token, current_lookahead) :: previous_lookaheads -> (
+        let result = Token.lookahead_result trigger_token decision_token in
+        (* let current_lookahead2 = match (FQueue.deq current_lookahead) with 
+        | Some (lookahead_units, _) -> lookahead_units
+        | None -> current_lookahead
+        in *)
+        let modified_lookahead = match result with 
+        | Some virtual_token ->
+          (* FQueue.append ([], virtual_token) current_lookahead2 *)
+          FQueue.append ([], virtual_token) current_lookahead
+        | None ->
+          current_lookahead
+        in
+        match previous_lookaheads with 
+        | (t, previous_lookahead) :: tl ->       
+          state#set_lookaheads ((t, FQueue.concat modified_lookahead previous_lookahead) :: tl)
+        | _ -> (
+          let state = state#set_lookaheads [] in
+          state#set_units (FQueue.concat modified_lookahead state#units)
+        )
       )
-
+    | [] -> 
+      state
+    
     let mk_sym state buffer =
       let open Core in
       let {region; lexeme; state} = state#sync buffer in
-      let state = 
-        if (List.length state#lookaheads > 0 && Token.is_lookahead_decision_trigger lexeme) then
-          merge_lookahead_up lexeme state
-        else if (Token.is_lookahead_trigger lexeme) then
-          state#set_lookaheads (FQueue.empty :: state#lookaheads)
-        else
-          state
-      in
       match Token.mk_sym lexeme region with
-        Ok token -> state#enqueue token
+        Ok token -> (
+          let state = if (state#lookaheads <> [] && Token.is_lookahead_decision_trigger token) then
+            merge_lookahead_up token state
+          else if (Token.is_lookahead_trigger token) then
+            state#set_lookaheads ((token, FQueue.empty) :: state#lookaheads)
+          else
+            state
+          in 
+          state#enqueue token
+        )
       | Error Token.Invalid_symbol -> fail region Invalid_symbol
 
     let mk_eof state buffer =
@@ -229,7 +237,7 @@ module Make (Token : Token.S) =
       let token = Token.eof region in
       let state = 
         List.fold_left 
-          (fun all _ -> merge_lookahead_up "<eof>" all) 
+          (fun all _ -> merge_lookahead_up token all) 
           state 
           state#lookaheads 
       in

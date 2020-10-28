@@ -17,4 +17,6 @@ val is_empty : 'a t -> bool
 
 val peek     : 'a t -> ('a t * 'a) option
 
-val rev      : 'a t -> 'a t
+(* val rev      : 'a t -> 'a t *)
+
+val append   : 'a -> 'a t -> 'a t
