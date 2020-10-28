@@ -19,7 +19,7 @@ let get_expr_environment : t -> expression_environment = fun { expression_enviro
 (* TODO: generate *)
 let get_type_environment : t -> type_environment = fun { expression_environment=_ ; type_environment ; module_environment=_} -> type_environment
 (* TODO: generate *)
-let _get_module_environment : t -> module_environment = fun { expression_environment=_ ; type_environment=_ ; module_environment} -> module_environment
+let get_module_environment : t -> module_environment = fun { expression_environment=_ ; type_environment=_ ; module_environment} -> module_environment
 
 let map_expr_environment : _ -> t -> t = fun f { expression_environment ; type_environment ; module_environment } -> { expression_environment = f expression_environment ; type_environment ; module_environment }
 let map_type_environment : _ -> t -> t = fun f { expression_environment ; type_environment ; module_environment } -> { expression_environment ; type_environment = f type_environment ; module_environment }
@@ -38,6 +38,9 @@ let get_opt : expression_variable -> t -> element option = fun k x ->
 let get_type_opt : type_variable -> t -> type_expression option = fun k x ->
   Option.bind (fun {type_variable=_ ; type_} -> Some type_) @@
     List.find_opt (fun {type_variable ; type_=_} -> Var.equal type_variable k) (get_type_environment x)
+let get_module_opt : string -> t -> environment option = fun k x ->
+  Option.bind (fun {module_name=_ ; module_} -> Some module_) @@
+    List.find_opt (fun {module_name; module_=_} -> String.equal module_name k) (get_module_environment x)
 
 let add_ez_binder : expression_variable -> type_expression -> t -> t = fun k v e ->
   add_expr k (make_element_binder v e) e

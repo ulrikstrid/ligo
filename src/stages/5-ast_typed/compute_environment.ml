@@ -67,6 +67,7 @@ let rec expression : environment -> expression -> expression = fun env expr ->
     let cases = self_cases c.cases in
     return @@ E_matching { matchee ; cases }
   )
+  | E_module_accessor _ -> return_id
 
 and cases : environment -> matching_expr -> matching_expr = fun env cs ->
   let return x = x in
@@ -127,7 +128,7 @@ let program : environment -> program_fully_typed -> environment * program_fully_
       (post_env , decl_wrapped' :: rev_decls)
     )
     | Declaration_type t -> (
-      let post_env = Environment.add_type t.type_binder t.type_expr pre_env in      
+      let post_env = Environment.add_type t.type_binder t.type_expr pre_env in
       let wrap_content = Declaration_type t in
       let decl_wrapped' = { decl_wrapped with wrap_content } in
       (post_env , decl_wrapped' :: rev_decls)

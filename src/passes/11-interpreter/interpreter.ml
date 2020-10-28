@@ -370,7 +370,7 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
       return @@ V_Construct ("Some" , s)
     (*
     >>>>>>>>
-      Test operators 
+      Test operators
     >>>>>>>>
     *)
     | ( C_TEST_ORIGINATE, [ code ; storage ] ) ->
@@ -589,6 +589,8 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
     | E_recursive {fun_name; fun_type=_; lambda} ->
       return @@ V_Func_rec (fun_name, lambda.binder, lambda.result, env)
     | E_raw_code _ -> failwith "can't evaluate a raw code insertion"
+    | E_module_accessor {module_name=_; element=_} ->
+      failwith "Can't evalute module yet"
 
 open Proto_alpha_utils.Memory_proto_alpha
 

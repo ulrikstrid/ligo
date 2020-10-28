@@ -151,7 +151,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
     let name : O.type_variable = Var.todo_cast type_operator in
     let%bind v = trace_option (unbound_type_variable e name t.location) @@
       Environment.get_type_opt name e in
-    let aux : O.type_injection -> (O.type_expression, typer_error) result = fun inj -> 
+    let aux : O.type_injection -> (O.type_expression, typer_error) result = fun inj ->
       (*handles converters*)
       let open Stage_common.Constant in
       let {language=_ ; injection ; parameters} : O.type_injection = inj in
@@ -179,7 +179,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
             | T_sum cmap -> ok cmap.content
             | _ -> fail (michelson_comb_no_variant t.location) in
           let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
-          return @@ pair 
+          return @@ pair
       | _ -> return (T_constant inj)
     in
     match get_param_inj v with
@@ -194,6 +194,12 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
       aux inj
     | None -> failwith "variable with parameters is not an injection"
   )
+  | T_module_accessor {module_name; element} ->
+    let%bind module_ = match Environment.get_module_opt module_name e with
+      Some m -> ok m
+    | None   -> fail @@ unbound_module e module_name t.location
+    in
+    evaluate_type module_ element
 
 and type_expression : environment -> _ O'.typer_state -> ?tv_opt:O.type_expression -> I.expression -> (O.expression * _ O'.typer_state, typer_error) result
   = fun e _placeholder_for_state_of_new_typer ?tv_opt ae ->
@@ -483,6 +489,12 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       | None -> ok ()
       | Some tv' -> assert_type_expression_eq anno_expr.location (tv' , type_annotation) in
     ok {expr' with type_expression=type_annotation}
+  | E_module_accessor {module_name; element} ->
+    let%bind module_ = match Environment.get_module_opt module_name e with
+      Some m -> ok m
+    | None   -> fail @@ unbound_module e module_name ae.location
+    in
+    type_expression' module_ element
 
 and type_lambda e {
       binder ;
@@ -528,7 +540,7 @@ let untype_literal (l:O.literal) : (I.literal , typer_error) result =
 
 let rec untype_expression (e:O.expression) : (I.expression , typer_error) result =
   untype_expression_content e.type_expression e.expression_content
-  and untype_expression_content ty (ec:O.expression_content) : (I.expression , typer_error) result =
+and untype_expression_content ty (ec:O.expression_content) : (I.expression , typer_error) result =
   let open I in
   let return e = ok e in
   match ec with
@@ -587,6 +599,9 @@ let rec untype_expression (e:O.expression) : (I.expression , typer_error) result
       let%bind unty_expr= untype_expression_content ty @@ E_lambda lambda in
       let lambda = match unty_expr.content with I.E_lambda l -> l | _ -> failwith "impossible case" in
       return @@ e_recursive fun_name fun_type lambda
+  | E_module_accessor ma ->
+    let%bind ma = Stage_common.Maps.module_access untype_expression ma in
+    return @@ I.make_e @@ E_module_accessor ma
 
 and untype_matching : (O.expression -> (I.expression , typer_error) result) -> O.matching_expr -> (I.matching_expr , typer_error) result = fun f m ->
   let open I in

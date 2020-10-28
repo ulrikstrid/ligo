@@ -113,6 +113,8 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
     return @@ CST.TApp (wrap (type_operator,wrap lst))
   | T_annoted _annot ->
     failwith "let's work on it later"
+  | T_module_accessor _ ->
+    failwith "TODO: frontend module command"
 
 let get_e_variable : AST.expression -> _ result = fun expr ->
   match expr.expression_content with
@@ -350,6 +352,8 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     let%bind expr = decompile_expression anno_expr in
     let%bind ty   = decompile_type_expr type_annotation in
     return_expr @@ CST.EAnnot (wrap @@ par (expr,ghost,ty))
+  | E_module_accessor _ ->
+    failwith "TODO: frontend module command"
   | E_cond {condition;then_clause;else_clause} ->
     let%bind test  = decompile_expression condition in
     let%bind ifso  = decompile_expression then_clause in

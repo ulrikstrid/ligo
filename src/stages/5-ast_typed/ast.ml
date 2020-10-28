@@ -20,6 +20,7 @@ and type_content =
   | T_sum      of rows
   | T_record   of rows
   | T_arrow    of ty_expr arrow
+  | T_module_accessor of ty_expr module_access
 
 and type_injection = {
   language : string ;
@@ -165,6 +166,7 @@ and expression_content =
   | E_record of expression_label_map
   | E_record_accessor of record_accessor
   | E_record_update   of record_update
+  | E_module_accessor of expression module_access
 
 and constant = {
     cons_name: constant' ;
@@ -267,13 +269,6 @@ and environment = {
   type_environment: type_environment ;
   module_environment : module_environment ;
   }
-
-and named_type_content = {
-    type_name : type_variable;
-    type_value : type_expression;
-  }
-
-
 
 (* Solver types
 

@@ -139,7 +139,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | (   C_TEST_ORIGINATE
       | C_TEST_SET_NOW
       | C_TEST_SET_SOURCE
-      | C_TEST_SET_BALANCE 
+      | C_TEST_SET_BALANCE
       | C_TEST_EXTERNAL_CALL
       | C_TEST_GET_STORAGE
       | C_TEST_GET_BALANCE
@@ -195,7 +195,7 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
     | (i, [t]) when String.equal i list_name ->
       let%bind t' = compile_type t in
       return (T_list t')
-    | (i, [t]) when String.equal i set_name -> 
+    | (i, [t]) when String.equal i set_name ->
       let%bind t' = compile_type t in
       return (T_set t')
     | _ -> fail @@ corner_case ~loc:__LOC__ "wrong constant"
@@ -236,6 +236,8 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
       let%bind result' = compile_type type2 in
       return @@ (T_function (param',result'))
   )
+  | T_module_accessor _ ->
+    fail @@ corner_case ~loc:__LOC__ "Module access should de resolved earlier"
 
 (* probably should use result monad for conformity? but these errors
    are supposed to be impossible *)
@@ -509,7 +511,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
     let open Tezos_micheline in
     let orig_code = code in
     let (code, errs) = Micheline_parser.tokenize code in
-    match errs with
+    (match errs with
     | _ :: _ -> fail (could_not_parse_raw_michelson ae.location orig_code)
     | [] ->
       let (code, errs) = Micheline_parser.parse_expression code in
@@ -524,6 +526,9 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
           return ~tv:type_anno' @@ E_raw_michelson code
         | _ ->
           fail (raw_michelson_must_be_seq ae.location code)
+    )
+  | E_module_accessor _ ->
+    fail @@ corner_case ~loc:__LOC__ "Module access should de resolved earlier"
 
 and compile_lambda l (input_type , output_type) =
   let { binder ; result } : AST.lambda = l in

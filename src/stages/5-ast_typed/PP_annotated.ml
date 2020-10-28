@@ -68,6 +68,7 @@ let rec type_content : formatter -> type_content -> unit =
   | T_arrow a -> fprintf ppf "@[<h>%a ->@ %a@]" type_expression a.type1 type_expression a.type2
   | T_variable tv -> type_variable ppf tv
   | T_constant tc -> type_injection ppf tc
+  | T_module_accessor ma -> module_access type_expression ppf ma
 
 and type_injection ppf {language;injection;parameters} =
   ignore language;
@@ -96,7 +97,7 @@ and expression_content ppf (ec: expression_content) =
   | E_variable n ->
       fprintf ppf "%a" expression_variable n
   | E_application {lamb;args} ->
-      fprintf ppf "(%a)@(%a)" expression lamb expression args 
+      fprintf ppf "(%a)@(%a)" expression lamb expression args
   | E_constructor c ->
       fprintf ppf "%a(%a)" label c.constructor expression c.element
   | E_constant c ->
@@ -123,6 +124,7 @@ and expression_content ppf (ec: expression_content) =
         expression_variable fun_name
         type_expression fun_type
         expression_content (E_lambda lambda)
+  | E_module_accessor ma -> module_access expression ppf ma
 
 and assoc_expression ppf : map_kv -> unit =
  fun {key ; value} -> fprintf ppf "%a -> %a" expression key expression value
@@ -182,7 +184,7 @@ let constraint_identifier_set = fun ppf s   ->
       let aux ppf (ConstraintIdentifier k) =
         fprintf ppf "(ConstraintIdentifier %Li)" k in
       fprintf ppf "constraint_identifier_set [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
-        
+
 let identifierMap = fun f ppf idmap ->
       let lst = List.sort (fun (ConstraintIdentifier a, _) (ConstraintIdentifier b, _) -> Int64.compare a b) (RedBlackTrees.PolyMap.bindings idmap) in
       let aux ppf (ConstraintIdentifier k, v) =
@@ -323,7 +325,7 @@ let c_constructor_simpl ppf ({is_mandatory_constraint;reason_constr_simpl;tv;c_t
               c_tag : %a ;@
               tv_list : %a
               @]@,}"
-    is_mandatory_constraint 
+    is_mandatory_constraint
     reason_constr_simpl
     type_variable tv
     constant_tag c_tag

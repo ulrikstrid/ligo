@@ -63,11 +63,12 @@ let list_sep_d_par f ppf lst =
 let rec type_content : formatter -> type_content -> unit =
   fun ppf tc ->
   match tc with
-  | T_variable tv -> type_variable                 ppf tv
-  | T_constant tc -> type_injection ppf tc
-  | T_sum m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d type_expression) (LMap.to_kv_list_rev @@ LMap.map (fun {associated_type;_} -> associated_type) m.content)
-  | T_record m -> fprintf ppf "%a" record m
-  | T_arrow     a -> arrow         type_expression ppf a
+  | T_variable        tv -> type_variable                 ppf tv
+  | T_constant        tc -> type_injection ppf tc
+  | T_sum              m -> fprintf ppf "@[<h>sum[%a]@]" (lmap_sep_d type_expression) (LMap.to_kv_list_rev @@ LMap.map (fun {associated_type;_} -> associated_type) m.content)
+  | T_record           m -> fprintf ppf "%a" record m
+  | T_arrow            a -> arrow         type_expression ppf a
+  | T_module_accessor ma -> module_access type_expression ppf ma
 
 and type_injection ppf {language;injection;parameters} =
   ignore language;
@@ -121,6 +122,7 @@ and expression_content ppf (ec: expression_content) =
         expression_variable fun_name
         type_expression fun_type
         expression_content (E_lambda lambda)
+  | E_module_accessor ma -> module_access expression ppf ma
 
 
 and option_inline ppf inline =
@@ -174,7 +176,7 @@ let constraint_identifier_set = fun ppf s   ->
       let aux ppf (ConstraintIdentifier k) =
         fprintf ppf "(ConstraintIdentifier %Li)" k in
       fprintf ppf "constraint_identifier_set [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
-        
+
 let identifierMap = fun f ppf idmap ->
       let lst = List.sort (fun (ConstraintIdentifier a, _) (ConstraintIdentifier b, _) -> Int64.compare a b) (RedBlackTrees.PolyMap.bindings idmap) in
       let aux ppf (ConstraintIdentifier k, v) =
@@ -315,7 +317,7 @@ let c_constructor_simpl ppf ({is_mandatory_constraint;reason_constr_simpl;tv;c_t
               c_tag : %a ;@
               tv_list : %a
               @]@,}"
-    is_mandatory_constraint 
+    is_mandatory_constraint
     reason_constr_simpl
     type_variable tv
     constant_tag c_tag

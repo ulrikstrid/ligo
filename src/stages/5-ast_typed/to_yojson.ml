@@ -1,6 +1,7 @@
 open Ast
-
+open Stage_common.To_yojson
 type json = Yojson.Safe.t
+
 
 let constant' = function
   | C_INT                -> `List [`String "C_INT"; `Null ]
@@ -177,11 +178,12 @@ let rec type_expression {type_content=tc;type_meta;location;orig_var} =
   ]
 
 and type_content = function
-  | T_variable t -> `List [ `String "t_variable"; type_variable_to_yojson t]
-  | T_sum      t -> `List [ `String "t_sum"; rows t]
-  | T_record   t -> `List [ `String "t_record"; rows t]
-  | T_arrow    t -> `List [ `String "t_arrow"; arrow t]
-  | T_constant t -> `List [ `String "t_constant"; type_injection t]
+  | T_variable        t -> `List [ `String "t_variable"; type_variable_to_yojson t]
+  | T_sum             t -> `List [ `String "t_sum"; rows t]
+  | T_record          t -> `List [ `String "t_record"; rows t]
+  | T_arrow           t -> `List [ `String "t_arrow"; arrow t]
+  | T_constant        t -> `List [ `String "t_constant"; type_injection t]
+  | T_module_accessor t -> `List [ `String "t_module_accessor"; module_access type_expression t]
 
 and type_injection {language;injection;parameters} =
   `Assoc [
@@ -232,6 +234,7 @@ and expression_content = function
   | E_record          e -> `List [ `String "E_record"; record e ]
   | E_record_accessor e -> `List [ `String "E_record_accessor"; record_accessor e ]
   | E_record_update   e -> `List [ `String "E_record_update"; record_update e ]
+  | E_module_accessor e -> `List [ `String "E_module_accessor"; module_access expression e]
 
 and constant {cons_name;arguments} =
   `Assoc [
