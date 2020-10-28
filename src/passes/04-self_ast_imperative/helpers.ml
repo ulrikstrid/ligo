@@ -40,6 +40,10 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a, 'err) re
   | E_let_in li -> Folds.let_in self (fun _ -> ok) init' li
   | E_cond c -> Folds.conditional self init' c
   | E_recursive r -> Folds.recursive self (fun _ -> ok) init' r
+  | E_module_accessor { module_name = _ ; element } -> (
+    let%bind res = self init' element in
+    ok res
+  )
   | E_sequence s -> Folds.sequence self init' s
   | E_assign a -> Folds.assign self init' a
   | E_for f -> Folds.for_ self init' f
@@ -172,6 +176,10 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression, 'err) res
   | E_while w ->
       let%bind w = Maps.while_loop self w in
       return @@ E_while w
+  | E_module_accessor { module_name; element } -> (
+    let%bind element = self element in
+    return @@ E_module_accessor { module_name; element }
+  )
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip as e' -> return e'
 
 and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_expression , _) result = fun f te ->
@@ -198,6 +206,9 @@ and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_express
     let%bind arguments = bind_map_list self arguments in
     return @@ T_app {type_operator;arguments}
   | T_variable _ -> ok te'
+  | T_module_accessor ma ->
+    let%bind ma = Maps.module_access self ma in
+    return @@ T_module_accessor ma
 
 and map_cases : 'err exp_mapper -> matching_expr -> (matching_expr , _) result = fun f m ->
   match m with
@@ -340,6 +351,10 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> ('a 
   | E_while w ->
       let%bind res,w = Fold_maps.while_loop self init' w in
       ok (res, return @@ E_while w)
+  | E_module_accessor { module_name; element } -> (
+    let%bind (res,element) = self init' element in
+    ok (res, return @@ E_module_accessor { module_name; element })
+  )
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip as e' -> ok (init', return e')
 
 and fold_map_cases : ('a , 'err) fold_mapper -> 'a -> matching_expr -> ('a * matching_expr , 'err) result = fun f init m ->

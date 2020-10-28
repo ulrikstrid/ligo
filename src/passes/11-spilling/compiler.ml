@@ -195,7 +195,7 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
     | (i, [t]) when String.equal i list_name ->
       let%bind t' = compile_type t in
       return (T_list t')
-    | (i, [t]) when String.equal i set_name -> 
+    | (i, [t]) when String.equal i set_name ->
       let%bind t' = compile_type t in
       return (T_set t')
     | _ -> fail @@ corner_case ~loc:__LOC__ "wrong constant"
@@ -236,6 +236,8 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
       let%bind result' = compile_type type2 in
       return @@ (T_function (param',result'))
   )
+  | T_module_accessor _ ->
+    fail @@ corner_case ~loc:__LOC__ "Module access should de resolved earlier"
 
 let rec compile_literal : AST.literal -> value = fun l -> match l with
   | Literal_int n -> D_int n
@@ -462,6 +464,8 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
     let%bind type_anno' = compile_type type_anno in
     let%bind code = trace_option (corner_case ~loc:__LOC__ "could not get a string") @@ get_a_string code in
     return ~tv:type_anno' @@ E_raw_michelson code
+  | E_module_accessor _ ->
+    fail @@ corner_case ~loc:__LOC__ "Module access should de resolved earlier"
 
 and compile_lambda l (input_type , output_type) =
   let { binder ; result } : AST.lambda = l in

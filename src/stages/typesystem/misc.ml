@@ -80,15 +80,20 @@ module Substitution = struct
           let%bind parameters = bind_map_list (s_type_expression ~substs) parameters in
           ok @@ T.T_constant {language;injection;parameters}
         | T.T_arrow { type1; type2 } ->
-           let%bind type1 = s_type_expression ~substs type1 in
-           let%bind type2 = s_type_expression ~substs type2 in
-           ok @@ T.T_arrow { type1; type2 }
+          let%bind type1 = s_type_expression ~substs type1 in
+          let%bind type2 = s_type_expression ~substs type2 in
+          ok @@ T.T_arrow { type1; type2 }
+        | T.T_module_accessor { module_name; element } ->
+          let%bind element = s_type_expression ~substs element in
+          ok @@ T.T_module_accessor { module_name; element }
+
 
     and s_abstr_type_content : (Ast_core.type_content,_) w = fun ~substs -> function
       | Ast_core.T_sum _ -> failwith "TODO: subst: unimplemented case s_type_expression sum"
       | Ast_core.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression record"
       | Ast_core.T_arrow _ -> failwith "TODO: subst: unimplemented case s_type_expression arrow"
       | Ast_core.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression variable"
+      | Ast_core.T_module_accessor _ -> failwith "TODO: subst: unimplemented case s_type_expression module_accessor"
       | Ast_core.T_app {type_operator;arguments} ->
         let%bind arguments = bind_map_list
           (s_abstr_type_expression ~substs)
@@ -184,6 +189,9 @@ module Substitution = struct
         let%bind matchee = s_expression ~substs matchee in
         let%bind cases = s_matching_expr ~substs cases in
         ok @@ T.E_matching {matchee;cases}
+      | T.E_module_accessor { module_name; element } ->
+        let%bind element = s_expression ~substs element in
+        ok @@ T.E_module_accessor { module_name; element }
 
     and s_expression : (T.expression,_) w = fun ~(substs:substs) { expression_content; type_expression; location } ->
       let%bind expression_content = s_expression_content ~substs expression_content in

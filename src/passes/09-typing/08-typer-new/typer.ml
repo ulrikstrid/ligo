@@ -81,7 +81,7 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
     let name : O.type_variable = Var.todo_cast type_operator in
     let%bind v = trace_option (unbound_type_variable e name t.location) @@
       Environment.get_type_opt name e in
-    let aux : O.type_injection -> (O.type_expression, typer_error) result = fun inj -> 
+    let aux : O.type_injection -> (O.type_expression, typer_error) result = fun inj ->
       (*handles converters*)
       let open Stage_common.Constant in
       let {language=_ ; injection ; parameters} : O.type_injection = inj in
@@ -109,7 +109,7 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
             | T_sum cmap -> ok cmap.content
             | _ -> fail (michelson_comb_no_variant t.location) in
           let pair = Typer_common.Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
-          return @@ pair 
+          return @@ pair
       | _ -> return (T_constant inj)
     in
     match get_param_inj v with
@@ -124,6 +124,13 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
       aux inj
     | None -> failwith "variable with parameters is not an injection"
   )
+  | T_module_accessor {module_name; element} ->
+    let%bind module_ = match Environment.get_module_opt module_name e with
+      Some m -> ok m
+    | None   -> fail @@ unbound_module e module_name t.location
+    in
+    evaluate_type module_ element
+
 
 and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (environment * _ O'.typer_state * O.expression, typer_error) result = fun ?tv_opt e state ae ->
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
@@ -324,6 +331,13 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
        but then this case is not like the others and doesn't call return_wrapped,
        which might do some necessary work *)
     in return_wrapped expr'.expression_content e state wrapped
+  | E_module_accessor {module_name; element} ->
+    let%bind module_ = match Environment.get_module_opt module_name e with
+      Some m -> ok m
+    | None   -> fail @@ unbound_module e module_name ae.location
+    in
+    type_expression module_ state element
+
 
 and type_lambda e state {
       binder ;
@@ -472,6 +486,7 @@ end = struct
     | O.E_record          m -> bind_fold_list (fun () (_key, e) -> expression e) () @@ Ast_typed.LMap.bindings m
     | O.E_record_accessor { record; path=_ } -> expression record
     | O.E_record_update   { record; path=_; update } -> let%bind () = expression record in expression update
+    | O.E_module_accessor { module_name=_; element} -> expression element
   and re where : O.row_element -> _ = function { associated_type; michelson_annotation=_; decl_pos=_ } ->
     te where associated_type
   and tc where : O.type_content -> _ = function
@@ -485,6 +500,7 @@ end = struct
     | O.T_variable tv -> failwith (Format.asprintf "Unassigned type variable %a cann't be generalized (LIGO does not support generalization of variables in user code for now). You can try to annotate the expression. The type variable occurred in the %s" Var.pp tv (where ()))
     | O.T_constant { parameters ; _ } ->
       bind_fold_list (fun () texpr -> te where texpr) () parameters
+    | O.T_module_accessor {module_name=_; element} -> te where element
   and te where : O.type_expression -> _ = function { type_content; type_meta=_; location=_ } -> tc where type_content
 
   let check_expression_has_no_unification_vars (expr : O.expression) =

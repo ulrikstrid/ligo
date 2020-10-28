@@ -24,6 +24,12 @@ let typeVariableMap compare a b = List.compare ~compare:(compare_tvmap_entry com
 let type_variable = Var.compare
 let expression_variable = Location.compare_wrap ~compare:Var.compare
 
+let module_access f {module_name=mna; element=ea}
+                    {module_name=mnb; element=eb} =
+  cmp2
+    String.compare mna mnb
+    f ea eb
+
 let layout_tag = function
   | L_comb -> 1
   | L_tree -> 2
@@ -32,11 +38,12 @@ let layout a b = Int.compare (layout_tag a) (layout_tag b)
 
 let type_expression_tag ty_expr =
   match ty_expr.type_content with
-    T_variable _ -> 1
-  | T_constant _ -> 2
-  | T_sum      _ -> 3
-  | T_record   _ -> 4
-  | T_arrow    _ -> 5
+    T_variable        _ -> 1
+  | T_constant        _ -> 2
+  | T_sum             _ -> 3
+  | T_record          _ -> 4
+  | T_arrow           _ -> 5
+  | T_module_accessor _ -> 6
 
 let rec constant_tag (ct : constant_tag) =
   match ct with
@@ -68,8 +75,9 @@ and type_expression a b =
   | T_sum      a, T_sum      b -> rows a b
   | T_record   a, T_record   b -> rows a b
   | T_arrow    a, T_arrow    b -> arrow a b
-  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ ),
-    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ ) ->
+  | T_module_accessor a, T_module_accessor b -> module_access type_expression a b
+  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_module_accessor _),
+    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_module_accessor _) ->
     Int.compare (type_expression_tag a) (type_expression_tag b)
 
 and injection {language=la ; injection=ia ; parameters=pa} {language=lb ; injection=ib ; parameters=pb} =
@@ -125,6 +133,7 @@ let expression_tag expr =
   | E_record          _ -> 11
   | E_record_accessor _ -> 12
   | E_record_update   _ -> 13
+  | E_module_accessor _ -> 14
 
 let rec expression a b =
   match a.expression_content,b.expression_content with
@@ -141,8 +150,9 @@ let rec expression a b =
   | E_record a, E_record b -> record a b
   | E_record_accessor a, E_record_accessor b -> record_accessor a b
   | E_record_update  a, E_record_update b -> record_update a b
-  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _),
-    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _) ->
+  | E_module_accessor a, E_module_accessor b -> module_access expression a b
+  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_module_accessor _),
+    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_module_accessor _) ->
     Int.compare (expression_tag a) (expression_tag b)
 
 and constant ({cons_name=ca;arguments=a}: constant) ({cons_name=cb;arguments=b}: constant) =
