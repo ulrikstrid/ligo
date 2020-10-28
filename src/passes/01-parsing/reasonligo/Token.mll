@@ -534,17 +534,24 @@ and scan_constr region lexicon = parse
         false
       
     let is_lookahead_decision_trigger lexeme =
-      let result = List.hd !balanced_list = Balanced in
-      if lexeme = ")" then
-        balanced_list := List.tl !balanced_list;
-      result
+      match !balanced_list with 
+      | hd :: tl -> (
+        let result = hd = Balanced in
+        if lexeme = ")" then
+          balanced_list := tl;
+        result)
+      | _ -> false
 
     let lookahead_result trigger decision = 
-      balanced_list := List.tl !balanced_list;
+      (match !balanced_list with 
+      | _ :: tl -> 
+        balanced_list := tl
+      | _ -> 
+        balanced_list := []);
       match trigger, decision with 
-      | LPAR region, "=>"
-      | LPAR region, ":" -> LPAR region
-      | _ ->  trigger
+        | LPAR region, "=>"
+        | LPAR region, ":" -> LPAR region
+        | _ -> trigger
 
     type sym_err = Invalid_symbol
 

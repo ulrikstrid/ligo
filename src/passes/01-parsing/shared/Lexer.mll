@@ -188,31 +188,34 @@ module Make (Token : Token.S) =
       let token              = Token.mk_lang lang region
       in state#enqueue token
 
-    let merge_lookahead_up lexeme state = 
+    let merge_lookahead_up lexeme state  = 
       let open Core in
-      let current_lookahead = List.hd state#lookaheads in
-      let lookahead_units, (markup_list, trigger_token) = 
-        match (FQueue.deq current_lookahead) with 
-          Some (units, (_, _token as ext_token)) -> units, ext_token
-        | None -> failwith "Should not happen"
-      in
-      let result = Token.lookahead_result trigger_token lexeme in
-      let lookahead_units = FQueue.rev lookahead_units in
-      let units = FQueue.enq (markup_list, result) lookahead_units in
-      let units = FQueue.rev units in
       match state#lookaheads with 
-      | _ :: previous_lookahead :: tl ->       
-        state#set_lookaheads ((FQueue.concat units previous_lookahead) :: tl)
-      | _ -> (
-        let state = state#set_lookaheads [] in
-        state#set_units (FQueue.concat units state#units)
-      )
+      | current_lookahead :: previous_lookaheads -> (
+        match (FQueue.deq current_lookahead) with 
+          Some (lookahead_units, (_, _token as ext_token)) -> (
+            let (markup_list, trigger_token) = ext_token in
+            let result = Token.lookahead_result trigger_token lexeme in
+            let lookahead_units_rev = FQueue.rev lookahead_units in
+            let units_rev = FQueue.enq (markup_list, result) lookahead_units_rev in
+            let units = FQueue.rev units_rev in
+            match previous_lookaheads with 
+            | previous_lookahead :: tl ->       
+              state#set_lookaheads ((FQueue.concat units previous_lookahead) :: tl)
+            | _ -> (
+              let state = state#set_lookaheads [] in
+              state#set_units (FQueue.concat units state#units)
+            )
+          )
+        | None -> state)
+      | [] -> 
+        state
 
     let mk_sym state buffer =
       let open Core in
       let {region; lexeme; state} = state#sync buffer in
       let state = 
-        if (List.length state#lookaheads > 0 && Token.is_lookahead_decision_trigger lexeme) then
+        if (state#lookaheads <> [] && Token.is_lookahead_decision_trigger lexeme) then
           merge_lookahead_up lexeme state
         else if (Token.is_lookahead_trigger lexeme) then
           state#set_lookaheads (FQueue.empty :: state#lookaheads)
