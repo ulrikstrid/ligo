@@ -50,3 +50,5 @@ module PluginFieldsUnit : PluginUnits = struct
   let refined_typeclasses_back         = ()
   let typeclasses_constrained_by       = ()
 end
+
+module All_plugins = All_plugins

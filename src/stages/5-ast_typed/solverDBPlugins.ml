@@ -100,9 +100,10 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
     end
   end
 
-  module type Plugins = sig
-    (* S is a record-like module containing one field per plug-in *)
-    module PluginFields : functor (Ppt : PerPluginType) -> sig module type S end
+  (* S is a record-like module containing one field per plug-in *)
+  module type Indexer_plugin_fields = functor (Ppt : PerPluginType) -> sig module type S end
+  module type IndexerPlugins = sig
+    module PluginFields : Indexer_plugin_fields
 
     (* A default value where the field for each plug-in has type unit *)
     module PluginFieldsUnit : PluginFields(PerPluginUnit).S

@@ -15,3 +15,5 @@ let add_constraint _ = failwith "todo"
 let remove_constraint _ = failwith "todo"
 let merge_aliases : 'old 'new_ . ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
   fun merge_keys state -> merge_keys.map state
+
+let find_opt : 'type_variable -> 'type_variable t -> c_constructor_simpl option = ReprMap.find_opt

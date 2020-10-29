@@ -6,6 +6,37 @@ type 'old_constraint_type selector_input = 'old_constraint_type (* some info abo
 type 'selector_output selector_outputs = 'selector_output list
 type ('old_constraint_type, 'selector_output) selector = 'old_constraint_type selector_input -> structured_dbs -> 'selector_output selector_outputs
 type ('selector_output , 'errors) propagator = 'selector_output -> (updates, 'errors) result
+
+module Heuristic_plugin = functor (Plugin_fields : Indexer_plugin_fields) -> struct
+  module type S = sig
+    type selector_output
+    val selector     : type_constraint_simpl -> (module Plugin_fields(PerPluginState).S) -> selector_output list
+    val propagator   : (selector_output, Ast_typed.Typer_errors.typer_error) propagator
+    val printer      : Format.formatter -> selector_output -> unit
+    val printer_json : selector_output -> Yojson.Safe.t
+    val comparator   : selector_output -> selector_output -> int
+  end
+end
+
+module Heuristic_state = functor (Indexers : Indexer_plugin_fields) -> struct
+  module type S = sig
+    include Heuristic_plugin(Indexers).S
+    val already_selected : selector_output Set.t
+  end
+end
+
+module Heuristic_plugins = functor (Indexers : Indexer_plugin_fields) -> struct
+  module type S = sig
+    val heuristics : (module Heuristic_plugin(Indexers).S)list
+  end
+end
+
+module type Plugins = sig
+  module Indexers : IndexerPlugins
+  module Heuristics : Heuristic_plugins(Indexers.PluginFields).S
+end
+
+
 type ('old_constraint_type , 'selector_output , 'errors) propagator_heuristic = {
   (* sub-sub component: lazy selector (don't re-try all selectors every time)
    * For now: just re-try everytime *)

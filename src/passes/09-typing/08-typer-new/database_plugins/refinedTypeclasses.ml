@@ -8,3 +8,5 @@ let remove_constraint _ = failwith "todo"
 let merge_aliases : 'old 'new_ . ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
   fun _merge_keys state -> state
 
+let find_opt : constraint_identifier -> 'typeVariable t -> refined_typeclass option = PolyMap.find_opt
+let values : 'typeVariable t -> refined_typeclass list = fun m -> List.map snd @@ PolyMap.bindings m

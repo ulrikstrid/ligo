@@ -23,64 +23,86 @@ module Map = RedBlackTrees.PolyMap
 module BiMap = RedBlackTrees.PolyBiMap
 module Set = RedBlackTrees.PolySet
 module UF = UnionFind.Poly2
+module ReprMap = UnionFind.ReprMap
+open Database_plugins.All_plugins
 
 open Heuristic_tc_fundep_utils
+
+module Plugin_fields = functor (Ppt : Ast_typed.PerPluginType) -> struct
+  module type S = sig
+    val assignments                : Ppt(Database_plugins.All_plugins.Assignments).t
+    val grouped_by_variable        : Ppt(Database_plugins.All_plugins.GroupedByVariable).t
+    val refined_typeclasses        : Ppt(Database_plugins.All_plugins.RefinedTypeclasses).t
+    val refined_typeclasses_back   : Ppt(Database_plugins.All_plugins.RefinedTypeclassesBack).t
+    val typeclasses_constrained_by : Ppt(Database_plugins.All_plugins.TypeclassesConstrainedBy).t
+  end
+end
+
+type indexes = (module Plugin_fields(PerPluginState).S)
+
+type selector_output = output_tc_fundep
 
 (* ***********************************************************************
  * Selector
  * *********************************************************************** *)
 
-let get_or_add_refined_typeclass : structured_dbs -> c_typeclass_simpl -> refined_typeclass =
-  fun dbs tcs ->
+let get_or_add_refined_typeclass : indexes -> c_typeclass_simpl -> refined_typeclass =
+  fun indexes tcs ->
+  let module Indexes = (val indexes) in
   let open Heuristic_tc_fundep_utils in
   let tc = tc_to_constraint_identifier tcs in
-  match Map.find_opt tc dbs.refined_typeclasses with
+  match RefinedTypeclasses.find_opt tc Indexes.refined_typeclasses with
     Some x -> x
   | None -> failwith "internal error: couldn't find refined version of the typeclass constraint"
 
-let is_variable_constrained_by_typeclass : structured_dbs -> type_variable -> refined_typeclass -> bool =
-  fun dbs var refined_typeclass ->
+let is_variable_constrained_by_typeclass : indexes -> type_variable -> refined_typeclass -> bool =
+  fun indexes var refined_typeclass ->
+  let module Indexes = (val indexes) in
   (* This won't work because the Set.mem function doesn't take into account the unification of two variables *)
   (* Set.mem var refined_typeclass *)
   List.exists
     (fun a ->
-       Var.equal
-         (UF.repr a dbs.aliases)
-         (UF.repr var dbs.aliases))
+       ignore (a, var); failwith "TODO: cmpare a & var using the appropriate allowed comparison function, or better use a set and check for membership"
+       (* Var.equal
+        *   (UF.repr a Indexes.aliases)
+        *   (UF.repr var Indexes.aliases) *))
   @@ Set.elements refined_typeclass.vars
 
 (* Find typeclass constraints in the dbs which constrain c.tv *)
-let selector_by_ctor_in_db : structured_dbs -> c_constructor_simpl -> (output_tc_fundep selector_outputs) =
-  fun dbs c ->
-  let typeclasses = (Constraint_databases.get_constraints_related_to c.tv dbs).tc in  
-  let typeclasses = List.map (get_or_add_refined_typeclass dbs) typeclasses in
-  let typeclasses = List.filter (is_variable_constrained_by_typeclass dbs c.tv) typeclasses in
+let selector_by_ctor_in_db : indexes -> c_constructor_simpl -> (output_tc_fundep selector_outputs) =
+  fun indexes c ->
+  let module Indexes = (val indexes) in
+  let typeclasses = (GroupedByVariable.get_constraints_related_to c.tv Indexes.grouped_by_variable).tc in  
+  let typeclasses = List.map (get_or_add_refined_typeclass indexes) typeclasses in
+  let typeclasses = List.filter (is_variable_constrained_by_typeclass indexes c.tv) typeclasses in
   let cs_pairs_db = List.map (fun tc -> { tc ; c }) typeclasses in
   cs_pairs_db
 
 (* Find typeclass constraints elsewhere??? (not private_storage anymore) which constrain c.tv *)
-let selector_by_ctor_in_private_storage : structured_dbs -> c_constructor_simpl -> (output_tc_fundep selector_outputs) =
-  fun dbs c ->
-  let refined_typeclasses = List.map snd @@ Map.bindings dbs.refined_typeclasses in
+let selector_by_ctor_in_private_storage : indexes -> c_constructor_simpl -> (output_tc_fundep selector_outputs) =
+  fun indexes c ->
+  let module Indexes = (val indexes) in
+  let refined_typeclasses = RefinedTypeclasses.values Indexes.refined_typeclasses in
   let typeclasses =
     List.filter
-      (is_variable_constrained_by_typeclass dbs c.tv)
+      (is_variable_constrained_by_typeclass indexes c.tv)
       refined_typeclasses in
   let cs_pairs_db = List.map (fun tc -> { tc ; c }) typeclasses in
   cs_pairs_db
 
-let selector_by_ctor : structured_dbs -> c_constructor_simpl -> (output_tc_fundep selector_outputs) =
-  fun dbs c ->
-  let cs_pairs_in_db = selector_by_ctor_in_db dbs c in
-  let cs_pairs_in_private_storage = selector_by_ctor_in_private_storage dbs c in
+let selector_by_ctor : indexes -> c_constructor_simpl -> (output_tc_fundep selector_outputs) =
+  fun indexes c ->
+  let cs_pairs_in_db = selector_by_ctor_in_db indexes c in
+  let cs_pairs_in_private_storage = selector_by_ctor_in_private_storage indexes c in
   cs_pairs_in_db @ cs_pairs_in_private_storage
 
 (* Find constructor constraints α = κ(β …) where α is one of the
    variables constrained by the (refined version of the) typeclass
    constraint tcs. *)
-let selector_by_tc : structured_dbs -> c_typeclass_simpl -> (output_tc_fundep selector_outputs) =
-  fun dbs tcs ->
-  let tc = get_or_add_refined_typeclass dbs tcs in
+let selector_by_tc : indexes -> c_typeclass_simpl -> (output_tc_fundep selector_outputs) =
+  fun indexes tcs ->
+  let module Indexes = (val indexes) in
+  let tc = get_or_add_refined_typeclass indexes tcs in
   (* TODO: this won't detect already-existing constructor
      constraints that would apply to future versions of the refined
      typeclass. *)
@@ -90,19 +112,19 @@ let selector_by_tc : structured_dbs -> c_typeclass_simpl -> (output_tc_fundep se
        node at a time, we only need the top-level assignment for
        that variable, e.g. α = κ(βᵢ, …). We can therefore look
        directly in the assignments. *)
-    match PolyMap.find_opt tv dbs.assignments with
+    match Assignments.find_opt tv Indexes.assignments with
       Some c -> [({ tc ; c } : output_tc_fundep)]
     | None   -> [] in
   List.flatten @@ List.map aux tc.refined.args
 
-let selector : (type_constraint_simpl , output_tc_fundep) selector =
-  fun type_constraint_simpl dbs ->
+let selector : type_constraint_simpl -> indexes -> selector_output list =
+  fun type_constraint_simpl indexes ->
   match type_constraint_simpl with
-    SC_Constructor c  -> selector_by_ctor dbs c
-  | SC_Row r          -> ignore r; failwith "TODO: call selector_by_ctor dbs r"
+    SC_Constructor c  -> selector_by_ctor indexes c
+  | SC_Row r          -> ignore r; failwith "TODO: call selector_by_ctor indexes r"
   | SC_Alias       _  -> [] (* TODO: ? *)
   | SC_Poly        _  -> [] (* TODO: ? *)
-  | SC_Typeclass   tc -> selector_by_tc dbs tc
+  | SC_Typeclass   tc -> selector_by_tc indexes tc
 
 (* ***********************************************************************
  * Propagator
@@ -278,13 +300,6 @@ let propagator : (output_tc_fundep, typer_error) propagator =
  * Heuristic
  * *********************************************************************** *)
 
-let heuristic =
-  Propagator_heuristic
-    {
-      selector ;
-      propagator ;
-      printer = Ast_typed.PP.output_tc_fundep ;
-      printer_json = Ast_typed.Yojson.output_tc_fundep ;
-      comparator = Solver_should_be_generated.compare_output_tc_fundep ;
-    }
-
+let printer = Ast_typed.PP.output_tc_fundep
+let printer_json = Ast_typed.Yojson.output_tc_fundep
+let comparator = Solver_should_be_generated.compare_output_tc_fundep

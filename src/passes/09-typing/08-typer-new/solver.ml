@@ -12,9 +12,9 @@ type nonrec 'a result = ('a, typer_error) result
 (* TODO: move the propagator_heuristics list to a separate module which calls the solver with a bunch of heuristics *)
 let propagator_heuristics =
   [
-    Heuristic_break_ctor.heuristic ;
-    Heuristic_specialize1.heuristic ;
-    Heuristic_tc_fundep.heuristic ;
+    (* Heuristic_break_ctor.heuristic ;
+     * Heuristic_specialize1.heuristic ;
+     * Heuristic_tc_fundep.heuristic ; *)
   ]
 
 let init_propagator_heuristic (Propagator_heuristic { selector ; propagator ; printer ; printer_json ; comparator }) =
@@ -32,17 +32,17 @@ let rec worklist : ('state -> 'element -> ('state * 'element list) result) -> 's
     worklist f new_state (new_elements @ rest)
 
 module MakeSolver(Plugins : Plugins) : sig
-  module type PluginStates = Plugins.PluginFields(PerPluginState).S
+  module type PluginStates = Plugins.Indexers.PluginFields(PerPluginState).S
   type typer_state = (typer_error, (module PluginStates)) __plugins__typer_state
   (* val main : typer_state -> typer_state *)
   val placeholder_for_state_of_new_typer : typer_state
 end = struct
   open  UnionFind
-  module type PluginStates = Plugins.PluginFields(PerPluginState).S
-  module type PluginUnits = Plugins.PluginFields(PerPluginUnit).S
+  module type PluginStates = Plugins.Indexers.PluginFields(PerPluginState).S
+  module type PluginUnits = Plugins.Indexers.PluginFields(PerPluginUnit).S
 
   type pluginStates = (module PluginStates)
-  let pluginFieldsUnit = (module Plugins.PluginFieldsUnit : PluginUnits)
+  let pluginFieldsUnit = (module Plugins.Indexers.PluginFieldsUnit : PluginUnits)
 
   (* Function which merges all aliases withing a single plugin's state *)
   module MergeAliases = struct
@@ -94,7 +94,6 @@ end = struct
   (* ------------------------------------------------------------------------------------------------------------- *)
   (* ------------------------------------------------------------------------------------------------------------- *)
   (* TODO:
-     - discard the heuristics' private state
      - also iterate over the heuristics in the main loop (cartesian product)
      - move the removal to the main loop *)
   (* ------------------------------------------------------------------------------------------------------------- *)
@@ -145,7 +144,7 @@ end = struct
   (* adds a new constraint to the database and applies all the selector+propagator pairs to it *)
   let add_constraint_and_propagate : typer_state -> type_constraint_simpl -> (typer_state * type_constraint list, typer_error) Simple_utils.Trace.result =
     fun { all_constraints_ ; plugin_states ; aliases_ ; already_selected_and_propagators_ } new_constraint ->
-    let module MapMergeAliases = Plugins.MapPlugins(MergeAliases) in
+    let module MapMergeAliases = Plugins.Indexers.MapPlugins(MergeAliases) in
     match new_constraint with
       Ast_typed.Types.SC_Alias { reason_alias_simpl=_; is_mandatory_constraint=_; a; b } ->
       let all_constraints_ = new_constraint :: all_constraints_ in
@@ -182,7 +181,7 @@ end = struct
      (* already_selected_and_propagators_ ; all_constraints_ ; plugin_states ; aliases_ *)
 
   let placeholder_for_state_of_new_typer : typer_state =
-    let module MapCreateState = Plugins.MapPlugins(CreateState) in
+    let module MapCreateState = Plugins.Indexers.MapPlugins(CreateState) in
     let plugin_states = MapCreateState.f () pluginFieldsUnit in
     {
       all_constraints_                  = [] ;
@@ -194,7 +193,7 @@ end = struct
 end
 
 (* Instantiate the solver with a selection of plugins *)
-module Solver = MakeSolver(Database_plugins)
+module Solver = MakeSolver(Plugins)
 
 (*  ………………………………………………………………………………………………… Plugin-based solver above ………………………………………………………………………………………………… *)
 

@@ -5,18 +5,6 @@ open Trace
 
 (* Light wrapper for API for grouped_by_variable in the structured
    db, to access it modulo unification variable aliases. *)
-let get_constraints_related_to : type_variable -> structured_dbs -> constraints =
-  fun variable dbs ->
-    (* get the class of the variable *)
-    let variable_repr , _ = UF.get_or_set variable dbs.aliases in
-    match Map.find_opt variable_repr dbs.grouped_by_variable with
-      Some l -> l
-    | None -> {
-        constructor = [] ;
-        poly        = [] ;
-        tc          = [] ;
-        row         = [] ;
-      }
 
 let add_constraints_related_to : type_variable -> constraints -> structured_dbs -> structured_dbs =
   fun variable c dbs ->

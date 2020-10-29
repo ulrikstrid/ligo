@@ -10,22 +10,32 @@ open Ast_typed.Types
 open Typesystem.Solver_types
 open Trace
 open Typer_common.Errors
+open Database_plugins.All_plugins
 
-let selector : (type_constraint_simpl , output_specialize1) selector =
+module Plugin_fields = functor (Ppt : PerPluginType) -> struct
+  module type S = sig
+    val grouped_by_variable : Ppt(GroupedByVariable).t
+  end
+end
+
+type selector_output = output_specialize1
+
+let selector : type_constraint_simpl -> (module Plugin_fields(PerPluginState).S) -> selector_output list =
   (* find two rules with the shape (x = forall b, d) and x = k'(var' …) or vice versa *)
   (* TODO: do the same for two rules with the shape (a = forall b, d) and tc(a…) *)
   (* TODO: do the appropriate thing for two rules with the shape (a = forall b, d) and (a = forall b', d') *)
-  fun type_constraint_simpl dbs ->
+  fun type_constraint_simpl indexes ->
+  let module Indexes = (val indexes) in
   match type_constraint_simpl with
     SC_Constructor c                ->
     (* vice versa *)
-    let other_cs = (Constraint_databases.get_constraints_related_to c.tv dbs).poly in
+    let other_cs = (GroupedByVariable.get_constraints_related_to c.tv Indexes.grouped_by_variable).poly in
     let other_cs = List.filter (fun (x : c_poly_simpl) -> Var.equal c.tv x.tv) other_cs in
     let cs_pairs = List.map (fun x -> { poly = x ; a_k_var = c }) other_cs in
     cs_pairs
   | SC_Alias       _                -> [] (* TODO: ??? *)
   | SC_Poly        p                ->
-    let other_cs = (Constraint_databases.get_constraints_related_to p.tv dbs).constructor in
+    let other_cs = (GroupedByVariable.get_constraints_related_to p.tv Indexes.grouped_by_variable).constructor in
     let other_cs = List.filter (fun (x : c_constructor_simpl) -> Var.equal x.tv p.tv) other_cs in
     let cs_pairs = List.map (fun x -> { poly = p ; a_k_var = x }) other_cs in
     cs_pairs
@@ -63,12 +73,6 @@ let propagator : (output_specialize1 , typer_error) propagator =
         }
       ]
 
-let heuristic =
-  Propagator_heuristic
-    {
-      selector ;
-      propagator ;
-      printer = Ast_typed.PP.output_specialize1 ;
-      printer_json = Ast_typed.Yojson.output_specialize1 ;
-      comparator = Solver_should_be_generated.compare_output_specialize1 ;
-    }
+let printer = Ast_typed.PP.output_specialize1
+let printer_json = Ast_typed.Yojson.output_specialize1
+let comparator = Solver_should_be_generated.compare_output_specialize1
