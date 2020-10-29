@@ -15,11 +15,13 @@ module Plugin_fields2 = functor (Ppt : PerPluginType) -> struct
   end
 end
 
-module H : Heuristic_plugin(Plugin_fields).S = Heuristic_break_ctor
-module H : Heuristic_plugin(Plugin_fields2).S = Heuristic_break_ctor
+module H1: Heuristic_plugin(Plugin_fields).S = Heuristic_break_ctor
+module H2: Heuristic_plugin(Plugin_fields2).S = Heuristic_break_ctor
 
 module P : Plugins = struct
   module Indexers = Database_plugins
+  module PF = Database_plugins.PluginFields
+  module type S = Heuristic_plugin(Indexers.PluginFields).S
   module Heuristics = struct
     let heuristics : (module Heuristic_plugin(Indexers.PluginFields).S) list = [
       (module Heuristic_break_ctor) ;

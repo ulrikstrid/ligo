@@ -29,6 +29,7 @@ open Database_plugins.All_plugins
 open Heuristic_tc_fundep_utils
 
 module Plugin_fields = functor (Ppt : Ast_typed.PerPluginType) -> struct
+  (* type z = int *)
   module type S = sig
     val assignments                : Ppt(Database_plugins.All_plugins.Assignments).t
     val grouped_by_variable        : Ppt(Database_plugins.All_plugins.GroupedByVariable).t

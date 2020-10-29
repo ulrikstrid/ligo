@@ -101,7 +101,7 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
   end
 
   (* S is a record-like module containing one field per plug-in *)
-  module type Indexer_plugin_fields = functor (Ppt : PerPluginType) -> sig module type S end
+  module type Indexer_plugin_fields = functor (Ppt : PerPluginType) -> sig (* type z = int *) module type S end
   module type IndexerPlugins = sig
     module PluginFields : Indexer_plugin_fields
 

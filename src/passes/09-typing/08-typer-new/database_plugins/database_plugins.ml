@@ -7,6 +7,7 @@ open Ast_typed.Types
    }
 *)
 module PluginFields (Ppt : PerPluginType) = struct
+  (* [@warning "-34"] type z = int *)
   module type S = sig
     val assignments                      : Ppt(Assignments).t
     val grouped_by_variable              : Ppt(GroupedByVariable).t
@@ -17,6 +18,7 @@ module PluginFields (Ppt : PerPluginType) = struct
     val typeclasses_constrained_by       : Ppt(TypeclassesConstrainedBy).t
   end
 end
+module PluginFields_ = PluginFields
 
 (* mapPlugins :: (F : MappedFunction) → (PluginFields F.MakeIn) → (PluginFields F.MakeOut) *)
 module MapPlugins = functor (F : MappedFunction) -> struct

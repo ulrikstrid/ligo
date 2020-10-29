@@ -9,6 +9,7 @@ open Typer_common.Errors
 open Database_plugins.All_plugins
 
 module Plugin_fields = functor (Ppt : PerPluginType) -> struct
+  (* type z = int *)
   module type S = sig
     val grouped_by_variable : Ppt(GroupedByVariable).t
   end
