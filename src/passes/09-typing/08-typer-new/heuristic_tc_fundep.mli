@@ -1,12 +1,12 @@
-module Plugin_fields : functor (Ppt : Ast_typed.PerPluginType) -> sig
-  (* type z = int *)
-  module type S = sig
-    val assignments                : Ppt(Database_plugins.All_plugins.Assignments).t
-    val grouped_by_variable        : Ppt(Database_plugins.All_plugins.GroupedByVariable).t
-    val refined_typeclasses        : Ppt(Database_plugins.All_plugins.RefinedTypeclasses).t
-    val refined_typeclasses_back   : Ppt(Database_plugins.All_plugins.RefinedTypeclassesBack).t
-    val typeclasses_constrained_by : Ppt(Database_plugins.All_plugins.TypeclassesConstrainedBy).t
-  end
-end
+open Database_plugins.All_plugins
+open Ast_typed.Types
+open Typesystem.Solver_types
 
-include Typesystem.Solver_types.Heuristic_plugin(Plugin_fields).S
+val heuristic : <
+    assignments                : type_variable Assignments.t ;
+    grouped_by_variable        : type_variable GroupedByVariable.t ;
+    refined_typeclasses        : type_variable RefinedTypeclasses.t ;
+    refined_typeclasses_back   : type_variable RefinedTypeclassesBack.t ;
+    typeclasses_constrained_by : type_variable TypeclassesConstrainedBy.t ;
+  ..
+> ex_heuristic_plugin

@@ -1,10 +1,8 @@
 open Database_plugins.All_plugins
 open Ast_typed.Types
+open Typesystem.Solver_types
 
-module Plugin_fields : functor (Ppt : PerPluginType) -> sig
-  (* type z = int *)
-  module type S = sig
-    val grouped_by_variable : Ppt(GroupedByVariable).t
-  end
-end
-include Typesystem.Solver_types.Heuristic_plugin(Plugin_fields).S
+val heuristic : <
+  grouped_by_variable : type_variable GroupedByVariable.t ;
+  ..
+> ex_heuristic_plugin

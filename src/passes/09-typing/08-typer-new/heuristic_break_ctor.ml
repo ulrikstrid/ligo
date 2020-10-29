@@ -8,25 +8,22 @@ open Trace
 open Typer_common.Errors
 open Database_plugins.All_plugins
 
-module Plugin_fields = functor (Ppt : PerPluginType) -> struct
-  (* type z = int *)
-  module type S = sig
-    val grouped_by_variable : Ppt(GroupedByVariable).t
-  end
-end
+type 'a flds = <
+  grouped_by_variable : type_variable GroupedByVariable.t ;
+  ..
+> as 'a
 
 type selector_output = output_break_ctor
 
-let selector : type_constraint_simpl -> (module Plugin_fields(PerPluginState).S) -> selector_output list =
+let selector : type_constraint_simpl -> _ flds -> selector_output list =
   (* find two rules with the shape x = k(var …) and x = k'(var' …) *)
   fun type_constraint_simpl indexes ->
-  let module Indexes = (val indexes) in
   match type_constraint_simpl with
     SC_Constructor c ->
     (* finding other constraints related to the same type variable and
        with the same sort of constraint (constructor vs. constructor)
        is symmetric *)
-    let other_cs = (GroupedByVariable.get_constraints_related_to c.tv Indexes.grouped_by_variable).constructor in
+    let other_cs = (GroupedByVariable.get_constraints_related_to c.tv indexes#grouped_by_variable).constructor in
     let other_cs = List.filter (fun (o : c_constructor_simpl) -> Var.equal c.tv o.tv) other_cs in
     let cs_pairs = List.map (fun x -> { a_k_var = c ; a_k'_var' = x }) other_cs in
     cs_pairs
@@ -73,3 +70,5 @@ let propagator : (output_break_ctor, typer_error) propagator =
 let printer = Ast_typed.PP.output_break_ctor
 let printer_json = Ast_typed.Yojson.output_break_ctor
 let comparator = Solver_should_be_generated.compare_output_break_ctor
+
+let heuristic = Heuristic_plugin { selector; propagator; printer; printer_json; comparator }

@@ -101,20 +101,20 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
   end
 
   (* S is a record-like module containing one field per plug-in *)
-  module type Indexer_plugin_fields = functor (Ppt : PerPluginType) -> sig (* type z = int *) module type S end
+  module type Indexer_plugin_fields = functor (Ppt : PerPluginType) -> sig (* type z = int *) type flds end
   module type IndexerPlugins = sig
     module PluginFields : Indexer_plugin_fields
 
     (* A default value where the field for each plug-in has type unit *)
-    module PluginFieldsUnit : PluginFields(PerPluginUnit).S
+    val pluginFieldsUnit : PluginFields(PerPluginUnit).flds
 
     (* A function which applies F to each field *)
     module MapPlugins : functor (F : MappedFunction) ->
     sig
       val f :
         F.extra_args ->
-        (module PluginFields(F.MakeInType).S) ->
-        (module PluginFields(F.MakeOutType).S)
+        (PluginFields(F.MakeInType).flds) ->
+        (PluginFields(F.MakeOutType).flds)
     end
   end
 end
