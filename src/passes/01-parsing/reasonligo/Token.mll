@@ -526,9 +526,11 @@ and scan_constr region lexicon = parse
 
     let balanced_list: balance_state list ref = ref []
 
+    let is_lowercase: bool ref = ref true
+
     let is_lookahead_trigger token = 
       match token with 
-      | LPAR _ ->
+      | LPAR _ when !is_lowercase ->
         balanced_list := Unbalanced_lparen :: Balanced :: !balanced_list;
         true
       | _ -> 
@@ -551,11 +553,14 @@ and scan_constr region lexicon = parse
         balanced_list := tl
       | _ -> 
         balanced_list := []);
-      match trigger, decision with 
-        (* TODO: *)
-        (* | LPAR region, ARROW _
-        | LPAR region, COLON _ -> Some (LPAR region) *)
+      match trigger, decision, !balanced_list with 
+        | LPAR region, ARROW _, []
+        | LPAR region, COLON _, [] -> Some (ES6FUN region)
         | _ -> None
+
+    let is_lookahead_complete = function
+      | ARROW _ -> true
+      | _ -> false
 
     type sym_err = Invalid_symbol
 
@@ -604,11 +609,13 @@ and scan_constr region lexicon = parse
     (* Identifiers *)
 
     let mk_ident lexeme region =
+      is_lowercase := true;
       Lexing.from_string lexeme |> scan_ident region lexicon
 
     (* Constructors *)
 
     let mk_constr lexeme region =
+      is_lowercase := false;
       Lexing.from_string lexeme |> scan_constr region lexicon
 
     (* Attributes *)

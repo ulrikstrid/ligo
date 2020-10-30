@@ -19,4 +19,4 @@ val peek     : 'a t -> ('a t * 'a) option
 
 (* val rev      : 'a t -> 'a t *)
 
-val append   : 'a -> 'a t -> 'a t
+val prepend   : 'a -> 'a t -> 'a t

@@ -29,7 +29,7 @@ let is_empty q = (q = empty)
 
 (* let rev { rear; front } = { front = []; rear = List.rev rear @ front } *)
 
-let rec append i q = 
+let rec prepend i q = 
   let rec inner item = function 
   | hd :: tl -> hd :: (inner item tl)
   | [] -> [item]
@@ -38,6 +38,6 @@ let rec append i q =
   | { rear; front = [] } ->
     { front = []; rear = inner i rear }
   | {rear =  []; front } ->
-    append i {front = []; rear = List.rev front}
+    prepend i {front = []; rear = List.rev front}
   | {rear; front } ->
-    append i {front = []; rear = (List.rev front) @ rear}
+    prepend i {front = []; rear = (List.rev front) @ rear}

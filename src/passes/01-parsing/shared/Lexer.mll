@@ -200,12 +200,13 @@ module Make (Token : Token.S) =
         let modified_lookahead = match result with 
         | Some virtual_token ->
           (* FQueue.append ([], virtual_token) current_lookahead2 *)
-          FQueue.append ([], virtual_token) current_lookahead
+          FQueue.prepend ([], virtual_token) current_lookahead
         | None ->
           current_lookahead
         in
         match previous_lookaheads with 
         | (t, previous_lookahead) :: tl ->       
+          (* TODO: don't concat, but use lookahead where FQueue.deq is used. *)
           state#set_lookaheads ((t, FQueue.concat modified_lookahead previous_lookahead) :: tl)
         | _ -> (
           let state = state#set_lookaheads [] in

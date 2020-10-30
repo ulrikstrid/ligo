@@ -463,115 +463,66 @@ type_expr_simple:
 type_annotation_simple:
   ":" type_expr_simple { $1,$2 }
 
+fun_args:
+  "<ident>" ":" type_expr {  
+    let start  = $1.region in
+    let stop   = type_expr_to_region $3 in
+    let region = cover start stop in
+    let value  = {pattern=PVar $1; colon=$2; type_expr=$3}
+    in 
+    PTyped {region; value}
+  }
+| "<ident>" { PVar $1 }
+| "(" nsepseq(fun_args, ",") ")" type_annotation_simple? { 
+  let ptuple_region = nsepseq_to_region pattern_to_region $2 in
+  let pattern = PPar {
+    value = {
+      lpar = $1;
+      inside = PTuple {
+        value = $2;
+        region = ptuple_region
+      };
+      rpar = $3;
+    };
+    region = cover $1 $3;
+  }
+  in
+  match $4 with 
+  | Some (colon, type_expr) ->
+    let stop = type_expr_to_region type_expr in
+    let region = cover $1 stop in
+    let value = {
+      pattern;
+      colon;
+      type_expr; 
+    }
+    in
+    PTyped {region; value}
+  | None -> pattern
+}
 
 fun_expr(right_expr):
-  disj_expr_level "=>" right_expr {
-    let arrow, body = $2, $3 in
-    let start       = expr_to_region $1
-    and stop        = expr_to_region body in
-    let region      = cover start stop in
-
-    let rec arg_to_pattern = function
-      EVar v ->
-        if v.value = "_" then
-          PWild v.region
-        else (
-          Scoping.check_reserved_name v;
-          PVar v
-        )
-    | EAnnot {region; value = {inside = EVar v, colon, typ; _}} ->
-        Scoping.check_reserved_name v;
-        let value = {pattern = PVar v; colon; type_expr = typ} in
-        PTyped {region; value}
-    | EPar p ->
-        let value =
-          {p.value with inside = arg_to_pattern p.value.inside}
-        in PPar {p with value}
-    | EUnit u -> PUnit u
-    | ETuple { value; region } ->
-        PTuple { value = Utils.nsepseq_map arg_to_pattern value; region}
-    | EAnnot {region; value = {inside = t, colon, typ; _}} ->
-        let value = { pattern = arg_to_pattern t; colon; type_expr = typ} in
-        PTyped {region; value}
-    | e ->
-        let open! SyntaxError in
-        raise (Error (WrongFunctionArguments e)) in
-    let fun_args_to_pattern = function
-      EAnnot {
-        value = {
-          inside = ETuple _ as e, _, _;
-          _};
-        _} ->
-        (*  ((foo:x, bar) : type)  *)
-        arg_to_pattern e
-      | EAnnot {
-          value = {
-            inside = EPar _ as e, _, _;
-            _};
-          _} ->
-          (* ((foo:x, bar) : type) *)
-         arg_to_pattern e
-      (*function as argument *)
-      | EPar {value = {inside = EFun {
-          value = {
-              binders = PTyped { value = { pattern; colon; type_expr }; region = fun_region };
-              arrow;
-              body;
-              _
+  ES6FUN "(" nsepseq(fun_args, ",") ")" type_annotation_simple? "=>" right_expr {
+    let region = cover $1 (expr_to_region $7) in
+    let ptuple_region = nsepseq_to_region pattern_to_region $3 in
+    let value = {
+      binders = PPar { 
+        region = cover $2 $4;
+        value = {       
+          lpar = $2;
+          inside = PTuple {
+            value = $3;
+            region = ptuple_region;
           };
-          _
-        }; lpar;rpar; }; region} ->
-        let expr_to_type = function
-        | EVar v -> TVar v
-        | e -> let open! SyntaxError
-            in raise (Error (WrongFunctionArguments e))
-        in
-        let type_expr = (
-            TFun {
-              value = type_expr, arrow, expr_to_type body;
-              region = fun_region
-            }
-        )
-        in
-        PPar {value = {inside =
-          PTyped {
-            value = {
-              pattern;
-              colon;
-              type_expr
-            };
-            region;
-          };
-          lpar;
-          rpar;
-          };
-          region;
+          rpar = $4;
         }
-      | EPar _ as e ->
-          arg_to_pattern e
-      | EAnnot _ as e ->
-          arg_to_pattern e
-      | ETuple _ as e ->
-          arg_to_pattern e
-      | EUnit _ as e ->
-          arg_to_pattern e
-      | EVar _ as e ->
-          arg_to_pattern e
-      | e ->
-      let open! SyntaxError
-            in raise (Error (WrongFunctionArguments e))
-    in
-    let binders = fun_args_to_pattern $1 in
-    let lhs_type = match $1 with
-      EAnnot {value = {inside = _ , _, t; _}; region = r} -> Some (r,t)
-      | _ -> None
-    in
-    let value = {binders;
-             lhs_type;
-             arrow;
-             body
-            }
-    in EFun {region; value} }
+      };
+      lhs_type = $5;
+      arrow = $6;
+      body = $7
+    }
+    in EFun {region; value} 
+  }
 
 base_expr:
   disj_expr_level | fun_expr(expr) { $1 }

@@ -80,6 +80,7 @@ module type S =
 
     (* Lookahead *)
 
+    (* TODO: move to state machine with variants and syntax lookahead state *)
     val is_lookahead_trigger          : token -> bool
     val is_lookahead_decision_trigger : token -> bool
     val lookahead_result              : token -> token -> token option
