@@ -136,10 +136,7 @@ The components of LIGO's typer are as follows:
   be desirable to move this responsibility in a separate component.
 
 * Unification variables which remain unassigned after inference
-  finished could be generalized. This would be a separate component,
-  and would need to be inserted somewhere in the workflow. Currently,
-  polymorphism is only allowed for predefined standard library
-  functions.
+  finished can be generalized.
 
 * Finally, the substitution component replaces the unification
   variables in the AST according to the assignments deduced by the
@@ -160,10 +157,12 @@ omitted.
 ,-------+
 |       |
 |       v
-|     ______
-|    |      |
-|    | Wrap |
-|    |______|
+|   ___________
+|  |           |
+|  |  Wrapper  |
+|  |     &     |
+|  | scheduler |
+|  |___________|
 |       |
 |       |
 |       ,-----------------------------------------------------------------------------------------------,
@@ -256,7 +255,13 @@ omitted.
 |                                            \  /
 |                                             \/
 |                                             |
-|                                        assignments
+|                                       ______|_______ 
+|                                      |              |
+|                                      | Generalizers |
+|                                      |______________|
+|                                             |
+|                                             |
+|                                       .assignments
 |                                             |
 `------------------------------------------,  |
                                            |  |
@@ -278,6 +283,12 @@ more constraints for each node. For example, the AST node `f x` will
 be annotated as `((f : α) (x : β)) : δ`, and a single type_constraint
 `α = (β → δ)` will be returned.
 
+Simplifier
+----------
+
+The simplifier breaks down the constraints from the higher-level
+constraint language (`type_constraint`) to obtain constraints from the
+solver's kernel constraint language (`type_constraint_simpl`).
 
 Database
 --------
@@ -436,8 +447,38 @@ with the removal requests using free-form human-readable text.
 
 Generalizer
 -----------
-    Use the generalizer's selector to see if it can be applied
-    Apply the generalizer to produce a new type, possibly with some ∀s injected
+
+Unification variables which remain unassigned after inference finished
+can be generalized. This would be a separate component which is not
+implemented yet.
+
+A generalizer heuristic can decide whether or not to generalize an
+unassigned unification type variable, and where to place the ∀ in the
+generalized type.
+
+For example, a generalizer for bound expressions by let…in… could use
+prenex quantifiers (all ∀ binders at the beginning of the type), e.g.
+
+    ∀ a, ∀ b, (list a -> (a -> b) -> list b)`
+
+Conversely, a generalizer for expressions assigned to the fields of a
+record used as a module could place the ∀ inside each field, e.g.
+
+    {
+      id : (∀ a, a -> a) ;
+      map : (∀ a, ∀ b, (list a -> (a -> b) -> list b)) ;
+    }
+
+In order to allow for multiple strategies, a generalizer consists of a
+predicate deciding whether is is an adequate strategy for the current
+situation (e.g. are we generalizing a let…in…-bound expression? Are we
+generalizing the value assigned to a record field, for a record built
+with the `module` keyword?), and of the generalization strategy
+itself, which takes a type possibly containing unbound type variables,
+and returns a (partially) generalized type.
+
+Currently, polymorphism is only allowed for predefined standard
+library functions, and there is no generalizer componnt.
 
 Substitution
 ------------
