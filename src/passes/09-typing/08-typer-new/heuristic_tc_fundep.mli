@@ -1,3 +1,5 @@
+open Trace
+open Typer_common.Errors
 open Database_plugins.All_plugins
 open Ast_typed.Types
 open Typesystem.Solver_types
@@ -10,3 +12,6 @@ val heuristic : <
     typeclasses_constraining : type_variable TypeclassesConstraining.t ;
   ..
 > ex_heuristic_plugin
+
+val restrict : c_constructor_simpl -> c_typeclass_simpl -> c_typeclass_simpl
+val deduce_and_clean : c_typeclass_simpl -> (deduce_and_clean_result, typer_error) result

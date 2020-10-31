@@ -9,7 +9,6 @@ open Ast_typed.Types
 
 (* TODO: this is probably hidden by its signature somewhere? *)
 module PluginFields = functor (Ppt : PerPluginType) -> struct
-  (* [@warning "-34"] type z = int *)
   type flds = <
     assignments                      : Ppt(Assignments).t ;
     grouped_by_variable              : Ppt(GroupedByVariable).t ;
@@ -19,6 +18,9 @@ module PluginFields = functor (Ppt : PerPluginType) -> struct
     refined_typeclasses_back         : Ppt(RefinedTypeclassesBack).t ;
     typeclasses_constraining         : Ppt(TypeclassesConstraining).t ;
   >
+
+  module Assignments = Assignments
+  let assignments flds = (flds :> <assignments:_>)
 end
 (* TODO: try removing this _ workaround *)
 module PluginFields_ = PluginFields

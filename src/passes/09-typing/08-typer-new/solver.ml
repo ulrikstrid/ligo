@@ -24,6 +24,7 @@ module Make_solver(Plugins : Plugins) : sig
   type plugin_states = Plugins.Indexers.PluginFields(PerPluginState).flds
   type typer_state = (typer_error, plugin_states) __plugins__typer_state
   val main : typer_state -> type_constraint list -> typer_state result
+  val initial_state : typer_state
   val placeholder_for_state_of_new_typer : unit -> typer_state
   val discard_state : typer_state -> unit
 end = struct
@@ -35,18 +36,18 @@ end = struct
 
 
   let add_alias : typer_state -> type_constraint_simpl -> (typer_state option, typer_error) Simple_utils.Trace.result =
-    fun { all_constraints_ ; plugin_states ; aliases_ ; already_selected_and_propagators_ } new_constraint ->
+    fun { all_constraints ; plugin_states ; aliases ; already_selected_and_propagators } new_constraint ->
     match new_constraint with
     | Ast_typed.Types.SC_Alias { reason_alias_simpl=_; is_mandatory_constraint=_; a; b } ->
-      let all_constraints_ = new_constraint :: all_constraints_ in
-      let UnionFind.Poly2.{ partition = aliases_; changed_reprs } =
-        UnionFind.Poly2.equiv a b aliases_ in
+      let all_constraints = new_constraint :: all_constraints in
+      let UnionFind.Poly2.{ partition = aliases; changed_reprs } =
+        UnionFind.Poly2.equiv a b aliases in
       let plugin_states = List.fold_left
           (fun state changed_reprs ->
              let module MapMergeAliases = Plugins.Indexers.MapPlugins(MergeAliases) in
              MapMergeAliases.f changed_reprs state)
           plugin_states changed_reprs in
-      ok @@ Some { all_constraints_ ; plugin_states ; aliases_ ; already_selected_and_propagators_ }
+      ok @@ Some { all_constraints ; plugin_states ; aliases ; already_selected_and_propagators }
     | _ ->
       ok @@ None
 
@@ -75,7 +76,7 @@ end = struct
 
   (* apply all the selectors and propagators *)
   let apply_heuristics state constraint_ =
-    let%bind (state, new_constraints) = bind_fold_map_list (aux_heuristic constraint_) state state.already_selected_and_propagators_ in
+    let%bind (state, new_constraints) = bind_fold_map_list (aux_heuristic constraint_) state state.already_selected_and_propagators in
     ok (state, List.flatten new_constraints)           
   
    (* Takes a list of constraints, applies all selector+propagator pairs
@@ -105,7 +106,7 @@ end = struct
          ok (state, List.flatten new_constraints))
       (state, initial_constraints)
     >>|? fst
-  (* already_selected_and_propagators_ ; all_constraints_ ; plugin_states ; aliases_ *)
+  (* already_selected_and_propagators ; all_constraints ; plugin_states ; aliases *)
   
   
   let main = select_and_propagate_all
@@ -119,15 +120,17 @@ end = struct
      state any further. Suzanne *)
   let discard_state (_ : typer_state) = ()
   
-  let placeholder_for_state_of_new_typer : unit -> typer_state = fun () ->
+  let initial_state : typer_state =
     let module MapCreateState = Plugins.Indexers.MapPlugins(CreateState) in
     let plugin_states = MapCreateState.f () plugin_fields_unit in
     {
-      all_constraints_                  = [] ;
-      aliases_                          = UnionFind.Poly2.empty Var.pp Var.compare ;
+      all_constraints                  = [] ;
+      aliases                          = UnionFind.Poly2.empty Var.pp Var.compare ;
       plugin_states                     = plugin_states ;
-      already_selected_and_propagators_ = List.map init_propagator_heuristic Plugins.heuristics ;
+      already_selected_and_propagators = List.map init_propagator_heuristic Plugins.heuristics ;
     }
+
+  let placeholder_for_state_of_new_typer () = initial_state
 end
 
 (* TODO: make the typer a fonctor and move this instantiation as further outwards as possible. *)
@@ -137,13 +140,21 @@ type nonrec _ typer_state = typer_state
 
 (*  ………………………………………………………………………………………………… Plugin-based solver above ………………………………………………………………………………………………… *)
 
-let json_typer_state = fun ({ all_constraints_=_ ; plugin_states=_ ; aliases_=_ ; already_selected_and_propagators_ } : _ typer_state) : Yojson.Safe.t ->
+let pp_typer_state = fun ppf ({ all_constraints=_ ; plugin_states=_ ; aliases=_ ; already_selected_and_propagators } : _ typer_state) ->
   let open Typesystem.Solver_types in
-  `Assoc[ ("all_constraints_", `String "TODO");
+  let open Format in
+  let open PP_helpers in
+  Format.fprintf ppf "{ structured_dbs = TODO ; already_selected_and_propagators = [ %a ] }"
+    (* Ast_typed.PP.structured_dbs structured_dbs *)
+    (list_sep pp_ex_propagator_state (fun ppf () -> fprintf ppf " ;@ ")) already_selected_and_propagators
+
+let json_typer_state = fun ({ all_constraints=_ ; plugin_states=_ ; aliases=_ ; already_selected_and_propagators } : _ typer_state) : Yojson.Safe.t ->
+  let open Typesystem.Solver_types in
+  `Assoc[ ("all_constraints", `String "TODO");
           ("plugin_states", (* (Ast_typed.Yojson.structured_dbs structured_dbs) *) `String "TODO");
           ("aliases", `String "TODO");
           ("already_selected_and_propagators", 
            let list f lst = `List (List.map f lst) in
-           (list json_ex_propagator_state already_selected_and_propagators_))]
+           (list json_ex_propagator_state already_selected_and_propagators))]
 
 

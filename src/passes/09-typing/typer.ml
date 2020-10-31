@@ -2,7 +2,7 @@ let use_new_typer = true
 
 module I = Ast_core
 module O = Ast_typed
-module O' = Typesystem.Solver_types
+module O' = Typer_new.Solver
 module Errors = Typer_common.Errors
 
 module Environment = O.Environment

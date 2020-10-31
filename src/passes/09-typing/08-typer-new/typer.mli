@@ -5,7 +5,6 @@ module Errors = Typer_common.Errors
 module I = Ast_core
 module O = Ast_typed
 module O' = Solver              (* needs an instance of the solver now *)
-module Plugins = Plugins              (* needs an instance of the solver now *)
 
 module Environment = O.Environment
 

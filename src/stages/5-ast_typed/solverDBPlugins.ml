@@ -81,14 +81,15 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
        …
   *)
   (* type PerPluginType = 🞰→(🞰→🞰)→🞰 *)
-  module type PerPluginType = functor (Plugin : Plugin) -> sig
+  module type PerPluginTypeArg = sig type 'typeVariable t end (* just the part of Plugin we care about *)
+  module type PerPluginType = functor (Plugin : PerPluginTypeArg) -> sig
     type t
   end
 
   (* These are two useful PerPlugin type-level functions. The first
      gives a `unit' type for each plugin, the second *)
-  module PerPluginUnit = functor (Plugin : Plugin) -> struct type t = unit end
-  module PerPluginState = functor (Plugin : Plugin) -> struct type t = type_variable Plugin.t end
+  module PerPluginUnit = functor (Plugin : PerPluginTypeArg) -> struct type t = unit end
+  module PerPluginState = functor (Plugin : PerPluginTypeArg) -> struct type t = type_variable Plugin.t end
 
   module type Monad = sig
     type 'a t
@@ -115,7 +116,12 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
   end
 
   (* S is a record-like module containing one field per plug-in *)
-  module type Indexer_plugin_fields = functor (Ppt : PerPluginType) -> sig (* type z = int *) type flds end
+  module type Indexer_plugin_fields = functor (Ppt : PerPluginType) -> sig
+    type flds
+
+    module Assignments : sig type 'typeVariable t = ('typeVariable, c_constructor_simpl) ReprMap.t end
+    val assignments : flds -> < assignments : Ppt(Assignments).t >
+  end
   module type IndexerPlugins = sig
     module PluginFields : Indexer_plugin_fields
 

@@ -1,7 +1,6 @@
 open Ast_typed.Types
 
 module PluginFields_ (Ppt : PerPluginType) : sig
-  (* [@warning "-34"] type z = int *)
   type flds = <
     assignments                      : Ppt(Assignments).t ;
     grouped_by_variable              : Ppt(GroupedByVariable).t ;
@@ -11,6 +10,9 @@ module PluginFields_ (Ppt : PerPluginType) : sig
     refined_typeclasses_back         : Ppt(RefinedTypeclassesBack).t ;
     typeclasses_constraining         : Ppt(TypeclassesConstraining).t ;
   >
+
+  module Assignments : sig type 'typeVariable t = ('typeVariable, c_constructor_simpl) UnionFind.ReprMap.t end
+  val assignments : flds -> < assignments : Ppt(Assignments).t >
 end
 
 include Ast_typed.Types.IndexerPlugins
