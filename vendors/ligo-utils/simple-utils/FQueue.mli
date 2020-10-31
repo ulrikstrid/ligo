@@ -3,7 +3,6 @@
 type 'a t
 
 val empty    : 'a t
-val concat   : 'a t -> 'a t -> 'a t
 val enq      : 'a -> 'a t -> 'a t
 val deq      : 'a t -> ('a t * 'a) option
 
@@ -16,7 +15,3 @@ val is_empty : 'a t -> bool
    calls. *)
 
 val peek     : 'a t -> ('a t * 'a) option
-
-(* val rev      : 'a t -> 'a t *)
-
-val prepend   : 'a -> 'a t -> 'a t
