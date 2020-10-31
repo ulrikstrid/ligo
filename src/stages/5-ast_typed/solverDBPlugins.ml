@@ -62,6 +62,7 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
     type 'typeVariable t
     val create_state : cmp:('typeVariable -> 'typeVariable -> int) -> 'typeVariable t
     val add_constraint : ('type_variable t, type_constraint_simpl, type_constraint_simpl) normalizer
+      (* TODO: check this API to see if we're giving too much flexibility to the plugin *)
     val remove_constraint : ('type_variable t, type_constraint_simpl) normalizer_rm
     val merge_aliases : ('old, 'new_) merge_keys -> 'old t -> 'new_ t
   end
@@ -89,14 +90,27 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
   module PerPluginUnit = functor (Plugin : Plugin) -> struct type t = unit end
   module PerPluginState = functor (Plugin : Plugin) -> struct type t = type_variable Plugin.t end
 
+  module type Monad = sig
+    type 'a t
+    val return : 'a -> 'a t
+    val bind : 'a t -> f:('a -> 'b t) -> 'b t
+  end
+
+  module NoMonad = struct
+    type 'a t = 'a
+    let return x = x
+    let bind x ~f = f x
+  end
+
   (* type MappedFunction (t :: 🞰) (Plugin :: 🞰→🞰) =
        Plugin t → MakeInType t → MakeOutType t *)
   module type MappedFunction = sig
     type extra_args
     module MakeInType : PerPluginType
     module MakeOutType : PerPluginType
+    module Monad : Monad
     module F(Plugin : Plugin) : sig
-      val f : extra_args -> MakeInType(Plugin).t -> MakeOutType(Plugin).t
+      val f : extra_args -> MakeInType(Plugin).t -> MakeOutType(Plugin).t Monad.t
     end
   end
 
@@ -106,7 +120,7 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
     module PluginFields : Indexer_plugin_fields
 
     (* A default value where the field for each plug-in has type unit *)
-    val pluginFieldsUnit : PluginFields(PerPluginUnit).flds
+    val plugin_fields_unit : PluginFields(PerPluginUnit).flds
 
     (* A function which applies F to each field *)
     module MapPlugins : functor (F : MappedFunction) ->
@@ -114,7 +128,7 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
       val f :
         F.extra_args ->
         (PluginFields(F.MakeInType).flds) ->
-        (PluginFields(F.MakeOutType).flds)
+        (PluginFields(F.MakeOutType).flds F.Monad.t)
     end
   end
 end

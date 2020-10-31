@@ -303,7 +303,7 @@ type type_value_ =
   | P_forall       of p_forall
   | P_variable     of type_variable
   | P_constant     of p_constant
-  | P_apply        of p_apply
+  | P_apply        of p_apply   (* TODO: remove this until it is usead (for now waiting on a kinding system and appropriate evaluation heuristics similar to eval_beta_root in src/stages/typesystem/misc.ml) *)
   | P_row          of p_row
 
 and type_value = {

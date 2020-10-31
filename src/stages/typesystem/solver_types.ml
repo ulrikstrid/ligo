@@ -7,8 +7,10 @@ type 'selector_output selector_outputs = 'selector_output list
 (* type ('old_contraint_type, 'selector_output) selector = 'old_constraint_type selector_input -> structured_dbs -> 'selector_output selector_outputs *)
 type ('selector_output , 'errors) propagator = 'selector_output -> (updates, 'errors) result
 
+type ('selector_output, -'flds) selector = type_constraint_simpl -> 'flds -> 'selector_output list
+
 type ('selector_output, -'flds) heuristic_plugin = {
-  selector     : type_constraint_simpl -> 'flds -> 'selector_output list ;
+  selector     : ('selector_output, 'flds) selector ;
   propagator   : ('selector_output, Ast_typed.Typer_errors.typer_error) propagator ;
   printer      : Format.formatter -> 'selector_output -> unit ;
   printer_json : 'selector_output -> Yojson.Safe.t ;
@@ -27,6 +29,8 @@ type -'flds ex_heuristic_state =
     Heuristic_state : ('selector_output, 'flds) heuristic_state -> 'flds ex_heuristic_state
 
 type 'flds heuristic_plugins = 'flds ex_heuristic_plugin list
+
+type 'flds heuristic_states = 'flds ex_heuristic_state list
 
 module type Plugins = sig
   module Indexers : IndexerPlugins
@@ -66,12 +70,12 @@ end
  *   already_selected_and_propagators : 'errors ex_propagator_state list ;
  * } *)
 
-(* type ('errors, 'plugin_states) __plugins__typer_state = {
- *   all_constraints_                  : type_constraint_simpl list ;
- *   aliases_                          : type_variable UnionFind.Poly2.t ;
- *   plugin_states                    : 'plugin_states ;
- *   already_selected_and_propagators_ : 'errors ex_propagator_state list ;
- * } *)
+type ('errors, 'plugin_states) __plugins__typer_state = {
+  all_constraints_                  : type_constraint_simpl list ;
+  aliases_                          : type_variable UnionFind.Poly2.t ;
+  plugin_states                    : 'plugin_states ;
+  already_selected_and_propagators_ : 'plugin_states ex_heuristic_state list ;
+}
 
 open Format
 open PP_helpers
@@ -96,14 +100,9 @@ let json_already_selected = fun printer_json set : Yojson.Safe.t ->
 let list f lst = `List (List.map f lst) in
     `List [`String "Set"; (list printer_json lst)]
 
-(* let json_ex_propagator_state = fun (Propagator_state { selector; propagator; printer=_ ; printer_json ; already_selected }) : Yojson.Safe.t ->
- *   ignore (selector,propagator);
- *   `Assoc[ ("selector", `String "OCaml function"); ("propagator", `String "OCaml function"); ("already_selected" ,          (json_already_selected printer_json) already_selected)] *)
-
-(* let json_typer_state = fun ({ structured_dbs; already_selected_and_propagators } : _ typer_state) : Yojson.Safe.t ->
- *   `Assoc[ ("structured_dbs", (Ast_typed.Yojson.structured_dbs structured_dbs)); ("already_selected_and_propagators", 
- * let list f lst = `List (List.map f lst) in
- *     (list json_ex_propagator_state already_selected_and_propagators))] *)
+let json_ex_propagator_state = fun (Heuristic_state { plugin = { selector; propagator; printer=_ ; printer_json } ; already_selected }) : Yojson.Safe.t ->
+  ignore (selector,propagator);
+  `Assoc[ ("selector", `String "OCaml function"); ("propagator", `String "OCaml function"); ("already_selected" ,          (json_already_selected printer_json) already_selected)]
 
 (* TODO: remove lift_state_list_monad and lift: not needed after moving to plugin system *)
 (* state+list monad *)

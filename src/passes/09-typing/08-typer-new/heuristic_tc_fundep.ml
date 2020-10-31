@@ -29,11 +29,11 @@ open Database_plugins.All_plugins
 open Heuristic_tc_fundep_utils
 
 type 'a indexes = <
-    assignments                : type_variable Assignments.t ;
-    grouped_by_variable        : type_variable GroupedByVariable.t ;
-    refined_typeclasses        : type_variable RefinedTypeclasses.t ;
-    refined_typeclasses_back   : type_variable RefinedTypeclassesBack.t ;
-    typeclasses_constrained_by : type_variable TypeclassesConstrainedBy.t ;
+    assignments              : type_variable Assignments.t ;
+    grouped_by_variable      : type_variable GroupedByVariable.t ;
+    refined_typeclasses      : type_variable RefinedTypeclasses.t ;
+    refined_typeclasses_back : type_variable RefinedTypeclassesBack.t ;
+    typeclasses_constraining : type_variable TypeclassesConstraining.t ;
     ..
 > as 'a
 

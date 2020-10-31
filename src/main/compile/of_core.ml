@@ -5,7 +5,7 @@ type form =
   | Contract of string
   | Env
 
-let compile ?(env=Environment.default) (cform: form) (program : Ast_core.program) : (Ast_typed.program_fully_typed * Ast_typed.environment * _ Typesystem.Solver_types.typer_state , _) result =
+let compile ?(env=Environment.default) (cform: form) (program : Ast_core.program) : (Ast_typed.program_fully_typed * Ast_typed.environment * _ Typer.Solver.typer_state , _) result =
   let%bind (e, prog_typed , state) = trace typer_tracer @@ Typer.type_program env program in
   let () = Typer.Solver.discard_state state in
   let%bind applied = trace self_ast_typed_tracer @@
@@ -15,8 +15,8 @@ let compile ?(env=Environment.default) (cform: form) (program : Ast_core.program
     | Env -> ok selfed in
   ok @@ (applied, e, state)
 
-let compile_expression ?(env = Ast_typed.Environment.empty) ~(state : _ Typesystem.Solver_types.typer_state) (e : Ast_core.expression)
-    : (Ast_typed.expression * _ Typesystem.Solver_types.typer_state , _) result =
+let compile_expression ?(env = Ast_typed.Environment.empty) ~(state : _ Typer.Solver.typer_state) (e : Ast_core.expression)
+    : (Ast_typed.expression * _ Typer.Solver.typer_state , _) result =
   let%bind (ae_typed,state) = trace typer_tracer @@ Typer.type_expression_subst env state e in
   let%bind ae_typed' = trace self_ast_typed_tracer @@ Self_ast_typed.all_expression ae_typed in
   ok @@ (ae_typed',state)

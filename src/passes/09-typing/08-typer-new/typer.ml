@@ -1,7 +1,7 @@
 open Trace
 module I = Ast_core
 module O = Ast_typed
-module O' = Typesystem.Solver_types
+module O' = Solver
 open O.Combinators
 module DEnv = Environment
 module Environment = O.Environment
@@ -149,7 +149,7 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
   let open Solver in
   let module L = Logger.Stateful() in
   let return : _ -> _ -> _ O'.typer_state -> _ -> _ (* return of type_expression *) = fun expr e state constraints type_name ->
-    let%bind new_state = aggregate_constraints state constraints in
+    let%bind new_state = Solver.main state constraints in
     let tv = t_variable type_name in
     let location = ae.location in
     let expr' = make_e ~location expr tv in
@@ -550,7 +550,7 @@ let print_env_state_node (node_printer : Format.formatter -> 'a -> unit) ((env,s
   Printf.printf "%s" @@
     Format.asprintf "{ \"ENV\": %s,\n\"STATE\": %s,\n\"NODE\": %a\n},\n"
       (Yojson.Safe.to_string (Ast_typed.Yojson.environment env))
-      (Yojson.Safe.to_string (Typesystem.Solver_types.json_typer_state state))
+      (Yojson.Safe.to_string (Solver.json_typer_state state))
       node_printer node
 
 let type_and_subst
@@ -565,8 +565,8 @@ let type_and_subst
   let () = (if Ast_typed.Debug.debug_new_typer || Ast_typed.Debug.json_new_typer then print_env_state_node in_printer env_state_node) in
   let%bind (env, state, node) = types_and_returns_env env_state_node in
   let subst_all =
-    let aliases = state.structured_dbs.aliases in
-    let assignments = state.structured_dbs.assignments in
+    let aliases = state.aliases_ in
+    let assignments = state.plugin_states#assignments in
     let substs : variable: O.type_variable -> _ = fun ~variable ->
       to_option @@
       let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "Looking up var  %a\n" Var.pp variable) in
@@ -577,7 +577,7 @@ let type_and_subst
       let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "Looking up var  %a (its root is %a)\n" Var.pp variable Var.pp root) in
       let%bind assignment =
         trace_option (corner_case (Format.asprintf "can't find assignment for root %a" Var.pp root)) @@
-          (Map.find_opt root assignments) in
+          (UnionFind.ReprMap.find_opt root assignments) in
       let O.{ tv ; c_tag ; tv_list } = assignment in
       let () = ignore tv (* I think there is an issue where the tv is stored twice (as a key and in the element itself) *) in
       let%bind (expr : O.type_content) = trace_option (corner_case "wrong constant tag") @@

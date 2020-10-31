@@ -9,13 +9,15 @@ module PluginFields_ (Ppt : PerPluginType) : sig
     by_constraint_identifier         : Ppt(ByConstraintIdentifier).t ;
     refined_typeclasses              : Ppt(RefinedTypeclasses).t ;
     refined_typeclasses_back         : Ppt(RefinedTypeclassesBack).t ;
-    typeclasses_constrained_by       : Ppt(TypeclassesConstrainedBy).t ;
+    typeclasses_constraining         : Ppt(TypeclassesConstraining).t ;
   >
 end
 
 include Ast_typed.Types.IndexerPlugins
-with
-    module PluginFields = PluginFields_
+  (* TODO: do we need this & the definition above? *)
+  with module PluginFields = PluginFields_
+
+
 (* OCaml/dune hide the contents of a folder unless they are
    re-exported… this is just to be able to access the modules from
    outside. This has nothing to do with the plugin architecture. *)

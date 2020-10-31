@@ -7,4 +7,4 @@ module CycleDetectionTopologicalSort = CycleDetectionTopologicalSort
 module ByConstraintIdentifier        = ByConstraintIdentifier
 module RefinedTypeclasses            = RefinedTypeclasses
 module RefinedTypeclassesBack        = RefinedTypeclassesBack
-module TypeclassesConstrainedBy      = TypeclassesConstrainedBy
+module TypeclassesConstraining       = TypeclassesConstraining
