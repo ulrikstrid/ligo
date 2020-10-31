@@ -191,27 +191,27 @@ module Make (Token : Token.S) =
     let merge_lookahead_up decision_token state = 
       let open Core in
       match state#lookaheads with 
-      | (trigger_token, current_lookahead) :: previous_lookaheads -> (
-        let result = Token.lookahead_result trigger_token decision_token in
-        (* let current_lookahead2 = match (FQueue.deq current_lookahead) with 
-        | Some (lookahead_units, _) -> lookahead_units
-        | None -> current_lookahead
-        in *)
-        let modified_lookahead = match result with 
-        | Some virtual_token ->
-          (* FQueue.append ([], virtual_token) current_lookahead2 *)
-          FQueue.prepend ([], virtual_token) current_lookahead
-        | None ->
-          current_lookahead
-        in
-        match previous_lookaheads with 
-        | (t, previous_lookahead) :: tl ->       
-          (* TODO: don't concat, but use lookahead where FQueue.deq is used. *)
-          state#set_lookaheads ((t, FQueue.concat modified_lookahead previous_lookahead) :: tl)
-        | _ -> (
-          let state = state#set_lookaheads [] in
-          state#set_units (FQueue.concat modified_lookahead state#units)
+      | current_lookahead :: previous_lookaheads -> (
+        let rev_current_lookahead = List.rev current_lookahead in
+        match rev_current_lookahead with 
+        | (markup_list, trigger_token) :: _ -> (
+          let result = Token.lookahead_result trigger_token decision_token in
+          let modified_lookahead = match result with 
+          | Some virtual_token ->
+            (markup_list, virtual_token) :: rev_current_lookahead
+          | None ->
+            rev_current_lookahead
+          in
+          match previous_lookaheads with 
+          | previous_lookahead :: tl ->      
+            state#set_lookaheads ((List.rev_append modified_lookahead previous_lookahead) :: tl)
+          | _ -> (
+            let state = state#set_lookaheads [] in
+            state#set_units 
+              (List.fold_left (fun a token -> FQueue.enq token a) state#units modified_lookahead)
+          )
         )
+        | _ -> state
       )
     | [] -> 
       state
@@ -224,7 +224,7 @@ module Make (Token : Token.S) =
           let state = if (state#lookaheads <> [] && Token.is_lookahead_decision_trigger token) then
             merge_lookahead_up token state
           else if (Token.is_lookahead_trigger token) then
-            state#set_lookaheads ((token, FQueue.empty) :: state#lookaheads)
+            state#set_lookaheads ([] :: state#lookaheads)
           else
             state
           in 

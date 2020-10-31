@@ -186,7 +186,7 @@ type 'token state = <
   pos            : Pos.t;
   decoder        : Uutf.decoder;
   supply         : Bytes.t -> int -> int -> unit;
-  lookaheads     : ('token * (Markup.t list * 'token) FQueue.t) list;
+  lookaheads     : (Markup.t list * 'token) list list;
 
   enqueue        : 'token -> 'token state;
   set_units      : (Markup.t list * 'token) FQueue.t -> 'token state;
@@ -205,7 +205,7 @@ type 'token state = <
   push_markup    : Markup.t -> 'token state;
   push_comment   : Markup.comment -> 'token state;
 
-  set_lookaheads : ('token * (Markup.t list * 'token) FQueue.t) list -> 'token state
+  set_lookaheads : (Markup.t list * 'token) list list -> 'token state
 >
 
 and 'token sync = {
@@ -262,9 +262,9 @@ let mk_state ~config ~units ~markup ~comments
     
     method enqueue token =
       match lookaheads with 
-        (trigger_token, current_lookahead) :: rest ->
+        current_lookahead :: rest ->
           {< lookaheads = 
-              (trigger_token, FQueue.enq (markup, token) current_lookahead) :: rest;
+              ((markup, token) :: current_lookahead) :: rest;
              markup=[] >}
       | [] ->
           {< units = FQueue.enq (markup, token) units; markup=[] >}
