@@ -98,7 +98,6 @@ module MakeParser
          (File     : File.S)
          (Comments : Comments.S)
          (Token    : Token.S)
-         (Scoping  : sig exception Error of string * Token.t window end)
          (ParErr   : PAR_ERR)
          (Parser   : ParserLib.API.PARSER with type token = Token.t) =
   struct
@@ -118,19 +117,14 @@ module MakeParser
         LexerMainGen.Make (Comments) (File) (Token) (Config.Lexer_CLI) in
       let module MainParser =
         ParserLib.API.Make (MainLexer) (Parser) in
-      let tree =
-        let string = Buffer.contents buffer in
-        if Config.Preproc_CLI.show_pp then
-          Printf.printf "%s\n%!" string;
-        let lexbuf = Lexing.from_string string in
-        let     () = LexerLib.Core.reset ~file:file_path lexbuf in
-        let parser = MainParser.incr_from_lexbuf in
-        try Ok (fun () -> parser (module ParErr: PAR_ERR) lexbuf) with
-          Scoping.Error (value, window) ->
-            let token  = window#current_token in
-            let region = Token.to_region token
-            in Stdlib.Error ({value;region} : _ Simple_utils.Region.reg)
-      in MainLexer.clear (); tree
+      let string = Buffer.contents buffer in
+      if Config.Preproc_CLI.show_pp then
+        Printf.printf "%s\n%!" string;
+      let lexbuf = Lexing.from_string string in
+      let     () = LexerLib.Core.reset ~file:file_path lexbuf in
+      let parser = MainParser.incr_from_lexbuf in
+      let     () = MainLexer.clear () in
+      parser (module ParErr: PAR_ERR) lexbuf
 
     (* Parsing from a string to merge*)
 
@@ -146,18 +140,13 @@ module MakeParser
         LexerMainGen.Make (Comments) (File) (Token) (Config.Lexer_CLI) in
       let module MainParser =
         ParserLib.API.Make (MainLexer) (Parser) in
-      let tree =
-        let string = Buffer.contents buffer in
-        if Config.Preproc_CLI.show_pp then
-          Printf.printf "%s\n%!" string;
-        let lexbuf = Lexing.from_string string in
-        let parser = MainParser.incr_from_lexbuf in
-        try Ok (fun () -> parser (module ParErr: PAR_ERR) lexbuf) with
-          Scoping.Error (value, window) ->
-            let token  = window#current_token in
-            let region = Token.to_region token
-            in Stdlib.Error ({value;region} : _ Simple_utils.Region.reg)
-      in MainLexer.clear (); tree
+      let string = Buffer.contents buffer in
+      if Config.Preproc_CLI.show_pp then
+        Printf.printf "%s\n%!" string;
+      let lexbuf = Lexing.from_string string in
+      let parser = MainParser.incr_from_lexbuf in
+      let     () = MainLexer.clear () in
+      parser (module ParErr: PAR_ERR) lexbuf
   end
 
 (* PRETTY-PRINTING *)

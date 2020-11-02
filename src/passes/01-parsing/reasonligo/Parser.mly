@@ -147,7 +147,7 @@ declaration:
 
 type_decl:
   "type" type_name "=" type_expr {
-    Scoping.check_reserved_name $2;
+    (*    Scoping.check_reserved_name $2;*)
     let region = cover $1 (type_expr_to_region $4)
     and value = {kwd_type   = $1;
                  name       = $2;
@@ -194,13 +194,13 @@ core_type:
 
 sum_type:
   nsepseq(variant,"|") {
-    Scoping.check_variants (Utils.nsepseq_to_list $1);
+    (*    Scoping.check_variants (Utils.nsepseq_to_list $1);*)
     let region = nsepseq_to_region (fun x -> x.region) $1 in
     let value  = {variants=$1; attributes=[]; lead_vbar=None}
     in TSum {region; value}
   }
 | seq("[@attr]") "|" nsepseq(variant,"|") {
-    Scoping.check_variants (Utils.nsepseq_to_list $3);
+       (*    Scoping.check_variants (Utils.nsepseq_to_list $3);*)
     let region = nsepseq_to_region (fun x -> x.region) $3 in
     let value  = {variants=$3; attributes=$1; lead_vbar = Some $2}
     in TSum {region; value} }
@@ -229,8 +229,8 @@ variant:
 record_type:
   seq("[@attr]") "{" sep_or_term_list(field_decl,",") "}" {
     let ne_elements, terminator = $3 in
-    let () = Utils.nsepseq_to_list ne_elements
-             |> Scoping.check_fields in
+(*    let () = Utils.nsepseq_to_list ne_elements
+             |> Scoping.check_fields in *)
     let region = cover $2 $4
     and value  = {
       compound = Some (Braces ($2,$4));
@@ -284,15 +284,15 @@ let_binding:
   }
 
 let_pattern_simple :
-  Ident                       { Scoping.check_reserved_name $1; PVar $1 }
+    Ident                       { (*Scoping.check_reserved_name $1;*) PVar $1 }
 | "_"                         {                                PWild $1 }
 | unit                        {                                PUnit $1 }
-| record_pattern              { Scoping.check_pattern (PRecord $1);
+| record_pattern              { (*Scoping.check_pattern (PRecord $1);*)
                                 PRecord $1 }
-| par (closed_irrefutable)    { Scoping.check_pattern $1.value.inside;
+| par (closed_irrefutable)    { (*Scoping.check_pattern $1.value.inside;*)
                                 $1.value.inside }
 | tuple (sub_irrefutable)     {
-    Utils.nsepseq_iter Scoping.check_pattern $1;
+          (*    Utils.nsepseq_iter Scoping.check_pattern $1;*)
     let region  = nsepseq_to_region pattern_to_region $1 in
     PTuple {value=$1; region}
 }
@@ -476,11 +476,11 @@ fun_expr(right_expr):
         if v.value = "_" then
           PWild v.region
         else (
-          Scoping.check_reserved_name v;
+          (*          Scoping.check_reserved_name v;*)
           PVar v
         )
     | EAnnot {region; value = {inside = EVar v, colon, typ; _}} ->
-        Scoping.check_reserved_name v;
+       (*        Scoping.check_reserved_name v;*)
         let value = {pattern = PVar v; colon; type_expr = typ} in
         PTyped {region; value}
     | EPar p ->
@@ -639,7 +639,7 @@ cases(right_expr):
 
 case_clause(right_expr):
   "|" pattern "=>" right_expr ";"? {
-    Scoping.check_pattern $2;
+        (*    Scoping.check_pattern $2;*)
     let start  = pattern_to_region $2
     and stop   = expr_to_region $4 in
     let region = cover start stop

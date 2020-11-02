@@ -198,7 +198,7 @@ declaration:
 
 type_decl:
   "type" type_name "is" type_expr ";"? {
-    Scoping.check_reserved_name $2;
+    (*    Scoping.check_reserved_name $2;*)
     let stop =
       match $5 with
         Some region -> region
@@ -271,13 +271,13 @@ type_tuple:
 
 sum_type:
   nsepseq(variant,"|") {
-    Scoping.check_variants (Utils.nsepseq_to_list $1);
+    (*    Scoping.check_variants (Utils.nsepseq_to_list $1);*)
     let region = nsepseq_to_region (fun x -> x.region) $1 in
     let value  = {variants=$1; attributes=[]; lead_vbar=None}
     in TSum {region; value}
   }
 | seq("[@attr]") "|" nsepseq(variant,"|") {
-    Scoping.check_variants (Utils.nsepseq_to_list $3);
+       (*    Scoping.check_variants (Utils.nsepseq_to_list $3);*)
     let region = nsepseq_to_region (fun x -> x.region) $3 in
     let value  = {attributes=$1; lead_vbar = Some $2; variants=$3}
     in TSum {region; value} }
@@ -310,7 +310,7 @@ variant:
 record_type:
   seq("[@attr]") "record" sep_or_term_list(field_decl,";") "end" {
     let fields, terminator = $3 in
-    let () = Utils.nsepseq_to_list fields |> Scoping.check_fields in
+    (*    let () = Utils.nsepseq_to_list fields |> Scoping.check_fields in*)
     let region =
       match first_region $1 with
         None -> cover $2 $4
@@ -324,7 +324,7 @@ record_type:
   }
 | seq("[@attr]") "record" "[" sep_or_term_list(field_decl,";") "]" {
     let fields, terminator = $4 in
-    let () = Utils.nsepseq_to_list fields |> Scoping.check_fields in
+    (*    let () = Utils.nsepseq_to_list fields |> Scoping.check_fields in*)
     let region =
       match first_region $1 with
         None -> cover $2 $5
@@ -361,7 +361,7 @@ fun_expr:
 open_fun_decl:
   seq("[@attr]") ioption("recursive") "function" fun_name parameters
   ioption(type_annot) "is" expr {
-    Scoping.check_reserved_name $4;
+    (*    Scoping.check_reserved_name $4;*)
     let stop   = expr_to_region $8 in
     let region = match first_region $1 with
                    Some start -> cover start stop
@@ -385,13 +385,13 @@ fun_decl:
 
 parameters:
   par(nsepseq(param_decl,";")) {
-    let params =
+(*    let params =
       Utils.nsepseq_to_list ($1.value: _ par).inside
-    in Scoping.check_parameters params; $1 }
+    in Scoping.check_parameters params;*) $1 }
 
 param_decl:
   "var" var param_type? {
-    Scoping.check_reserved_name $2;
+    (*    Scoping.check_reserved_name $2;*)
     let stop   = match $3 with
                    None -> $2.region
                  | Some (_,t) -> type_expr_to_region t in
@@ -402,7 +402,7 @@ param_decl:
     in ParamVar {region; value}
   }
 | "const" var param_type? {
-    Scoping.check_reserved_name $2;
+            (*    Scoping.check_reserved_name $2;*)
     let stop   = match $3 with
                    None -> $2.region
                  | Some (_,t) -> type_expr_to_region t in
@@ -470,7 +470,7 @@ open_var_decl:
 
 unqualified_decl(OP):
   var ioption(type_annot) OP expr {
-    Scoping.check_reserved_name $1;
+        (*    Scoping.check_reserved_name $1;*)
     let region = expr_to_region $4
     in $1, $2, $3, $4, region }
 
@@ -680,7 +680,7 @@ cases(rhs):
 
 case_clause(rhs):
   pattern "->" rhs {
-    Scoping.check_pattern $1;
+            (*    Scoping.check_pattern $1;*)
     fun rhs_to_region ->
       let start  = pattern_to_region $1 in
       let region = cover start (rhs_to_region $3)
@@ -715,8 +715,8 @@ while_loop:
 
 for_loop:
   "for" var "->" var "in" "map" expr block {
-    Scoping.check_reserved_name $2;
-    Scoping.check_reserved_name $4;
+(*    Scoping.check_reserved_name $2;
+    Scoping.check_reserved_name $4; *)
     let region = cover $1 $8.region in
     let value  = {kwd_for    = $1;
                   var        = $2;
@@ -728,7 +728,7 @@ for_loop:
     in For (ForCollect {region; value})
   }
 | "for" var ":=" expr "to" expr ioption(step_clause) block {
-    Scoping.check_reserved_name $2;
+          (*    Scoping.check_reserved_name $2;*)
     let region = cover $1 $8.region in
     let value  = {kwd_for = $1;
                   binder  = $2;
@@ -741,7 +741,7 @@ for_loop:
     in For (ForInt {region; value})
   }
 | "for" var "in" collection expr block {
-    Scoping.check_reserved_name $2;
+          (*    Scoping.check_reserved_name $2;*)
     let region = cover $1 $6.region in
     let value  = {kwd_for    = $1;
                   var        = $2;
