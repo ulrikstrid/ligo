@@ -368,7 +368,7 @@ let compile_parameter =
 
 let interpret =
   let f expression init_file syntax typer_switch protocol_version amount balance sender source now display_format =
-    return_result ~display_format (Decompile.Formatter.expression_format) @@
+    return_result ~display_format (Decompile.Formatter.expression_format syntax) @@
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
       let options = Compiler_options.make ~typer_switch ~init_env () in
@@ -419,7 +419,7 @@ let compile_storage =
 
 let dry_run =
   let f source_file entry_point storage input amount balance sender source now syntax typer_switch protocol_version display_format =
-    return_result ~display_format (Decompile.Formatter.expression_format) @@
+    return_result ~display_format (Decompile.Formatter.expression_format syntax) @@
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
       let options = Compiler_options.make ~typer_switch ~init_env () in
@@ -445,7 +445,7 @@ let dry_run =
 
 let run_function =
   let f source_file entry_point parameter amount balance sender source now syntax typer_switch protocol_version display_format =
-    return_result ~display_format (Decompile.Formatter.expression_format) @@
+    return_result ~display_format (Decompile.Formatter.expression_format syntax) @@
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
       let options = Compiler_options.make ~typer_switch ~init_env () in
@@ -475,7 +475,7 @@ let run_function =
 
 let evaluate_value =
   let f source_file entry_point amount balance sender source now syntax typer_switch protocol_version display_format =
-    return_result ~display_format Decompile.Formatter.expression_format @@
+    return_result ~display_format (Decompile.Formatter.expression_format syntax) @@
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
       let options = Compiler_options.make ~typer_switch ~init_env () in

@@ -9,15 +9,25 @@ let failwith_to_string (f:failwith) : string =
     Format.asprintf "0X%a" Hex.pp (Hex.of_bytes b) in
   Format.asprintf "failwith(%s)" str
 
-let expression_ppformat ~display_format f runned_result =
+let expression_ppformat syntax ~display_format f runned_result =
   match display_format with
   | Display.Human_readable | Dev -> (
     match runned_result with
     | Fail fail_res ->
       let failstring = failwith_to_string fail_res in
       Format.pp_print_string f failstring
-    | Success typed ->
-      Ast_core.PP.expression f typed      
+    | Success core -> (
+      let open Option in
+      let dialect = Helpers.Dialect_name "terse" in
+      let buffer_opt = Trace.to_option @@ Helpers.syntax_to_variant ~dialect (Syntax_name syntax) None >>= fun syntax ->
+        Trace.to_option @@ Of_core.decompile_expression core >>= fun x ->
+        Trace.to_option @@ Of_sugar.decompile_expression x >>= fun x ->
+        Trace.to_option @@ Of_imperative.decompile_expression x syntax
+      in
+      match buffer_opt with
+      | Some buffer -> Format.fprintf f "%s" (Buffer.contents buffer)
+      | None -> Ast_core.PP.expression f core
+    )
   )
 
 let expression_jsonformat runned_result : Display.json =
@@ -28,7 +38,8 @@ let expression_jsonformat runned_result : Display.json =
   | Success typed ->
     `Assoc [("value", Ast_core.Yojson.expression typed) ; ("failure", `Null)]
 
-let expression_format : 'a Display.format = {
-  pp = expression_ppformat ;
-  to_json = expression_jsonformat ;
-}
+let expression_format : string -> 'a Display.format = fun syntax ->
+  {
+    pp = expression_ppformat syntax ;
+    to_json = expression_jsonformat ;
+  }

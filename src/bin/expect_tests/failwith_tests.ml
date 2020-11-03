@@ -21,7 +21,7 @@ let%expect_test _ =
 
   run_ligo_good [ "interpret" ; "assert(1=1)" ; "--syntax=pascaligo" ] ;
   [%expect {|
-    unit |}];
+    Unit |}];
 
   run_ligo_good [ "interpret" ; "assert(1=2)" ; "--syntax=pascaligo" ] ;
   [%expect {|
@@ -29,7 +29,7 @@ let%expect_test _ =
 
   run_ligo_good [ "interpret" ; "assert(1=1)" ; "--syntax=cameligo" ] ;
   [%expect {|
-    unit |}];
+    () |}];
 
   run_ligo_good [ "interpret" ; "assert(1=2)" ; "--syntax=cameligo" ] ;
   [%expect {|
