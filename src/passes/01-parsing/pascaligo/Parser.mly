@@ -340,7 +340,7 @@ record_type:
                   attributes=$1}
     in TRecord {region; value} }
 
-module_access_t :
+module_access_t:
   module_name "." module_var_t {
     let start       = $1.region in
     let stop        = type_expr_to_region $3 in
