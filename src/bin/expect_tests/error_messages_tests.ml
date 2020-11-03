@@ -17,5 +17,5 @@ let%expect_test _ =
     in file "../../test/contracts/negative/missing_rpar.religo", line 5, characters 0-3
       4 |
       5 | let z = 4;
-    Syntax error #273. |} ] ;
+    Syntax error #277. |} ] ;
 

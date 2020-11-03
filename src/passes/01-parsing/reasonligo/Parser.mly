@@ -177,17 +177,11 @@ type_args:
 | fun_type        { $1, [] }
 
 core_type:
-  type_name      {    TVar $1 }
-| "_"            {   TWild $1 }
-| par(type_expr) {    TPar $1 }
-| "<string>"     { TString $1 }
-| module_name "." type_name {
-    let module_name = $1.value in
-    let type_name   = $3.value in
-    let value       = module_name ^ "." ^ type_name in
-    let region      = cover $1.region $3.region
-    in TVar {region; value}
-  }
+  type_name       {    TVar $1 }
+| "_"             {   TWild $1 }
+| par(type_expr)  {    TPar $1 }
+| "<string>"      { TString $1 }
+| module_access_t {   TModA $1 }
 | type_name par(type_args) {
    let region = cover $1.region $2.region
    in TApp {region; value = $1,$2} }
@@ -238,6 +232,18 @@ record_type:
       terminator;
       attributes=$1}
     in TRecord {region; value} }
+
+module_access_t :
+  module_name "." module_var_t {
+    let start       = $1.region in
+    let stop        = type_expr_to_region $3 in
+    let region      = cover start stop in
+    let value       = {module_name=$1; selector=$2; field=$3}
+    in {region; value} }
+
+module_var_t:
+  module_access_t   { TModA $1 }
+| field_name        { TVar  $1 }
 
 type_expr_field:
   core_type | sum_type | record_type { $1 }
@@ -789,8 +795,9 @@ common_expr:
 | "<mutez>"                           {               EArith (Mutez $1) }
 | "<nat>"                             {                 EArith (Nat $1) }
 | "<bytes>"                           {                       EBytes $1 }
-| "<ident>" | module_field            {                         EVar $1 }
+| "<ident>"                           {                         EVar $1 }
 | projection                          {                        EProj $1 }
+| module_access_e                     {                        EModA $1 }
 | "_"                                 { EVar {value = "_"; region = $1} }
 | update_record                       {                      EUpdate $1 }
 | "<string>"                          {             EString (String $1) }
@@ -837,15 +844,6 @@ core_expr:
 | record_expr         { ERecord $1 }
 | par(expr)           {    EPar $1 }
 
-module_field:
-  module_name "." module_fun {
-    let region = cover $1.region $3.region in
-    {region; value = $1.value ^ "." ^ $3.value} }
-
-module_fun:
-  field_name { $1 }
-| "or"       { {value="or";  region=$1} }
-
 selection:
   "[" "<int>" "]" selection {
     let r, (hd, tl) = $4 in
@@ -872,18 +870,20 @@ projection:
                   field_path  = snd $2}
     in {region; value}
   }
-| module_name "." field_name selection {
-    let module_name = $1 in
-    let field_name  = $3 in
-    let value       = module_name.value ^ "." ^ field_name.value in
-    let struct_name = {$1 with value} in
+
+module_access_e :
+  module_name "." module_var_e {
     let start       = $1.region in
-    let stop        = nsepseq_to_region selection_to_region (snd $4) in
-    let region      = cover start stop
-    and value       = {struct_name;
-                       selector   = fst $4;
-                       field_path = snd $4}
+    let stop        = expr_to_region $3 in
+    let region      = cover start stop in
+    let value       = {module_name=$1; selector=$2; field=$3}
     in {region; value} }
+
+module_var_e:
+  module_access_e   { EModA $1 }
+| "or"              { EVar {value="or"; region=$1} }
+| field_name        { EVar  $1 }
+| projection        { EProj $1 }
 
 path:
  "<ident>"   { Name $1 }

@@ -1,6 +1,6 @@
 interactive_expr: Attr LBRACE
 ##
-## Ends in an error in state: 401.
+## Ends in an error in state: 399.
 ##
 ## let_expr(expr_with_let_expr) -> seq(Attr) . Let let_binding SEMI expr_with_let_expr [ SEMI RBRACE EOF ]
 ## let_expr(expr_with_let_expr) -> seq(Attr) . Let Rec let_binding SEMI expr_with_let_expr [ SEMI RBRACE EOF ]
@@ -12,15 +12,15 @@ interactive_expr: Attr LBRACE
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 33, spurious reduction of production seq(Attr) ->
-## In state 34, spurious reduction of production seq(Attr) -> Attr seq(Attr)
+## In state 33, spurious reduction of production seq(Attr) -> 
+## In state 34, spurious reduction of production seq(Attr) -> Attr seq(Attr) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: C_None WILD
 ##
-## Ends in an error in state: 284.
+## Ends in an error in state: 285.
 ##
 ## call_expr_level -> call_expr_level_in . option(type_annotation_simple) [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -32,7 +32,7 @@ interactive_expr: C_None WILD
 
 interactive_expr: C_Some VBAR
 ##
-## Ends in an error in state: 231.
+## Ends in an error in state: 232.
 ##
 ## constr_expr -> C_Some . core_expr [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -46,11 +46,11 @@ interactive_expr: Constr DOT Ident WILD
 ##
 ## Ends in an error in state: 215.
 ##
-## module_fun -> Ident . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## projection -> Constr DOT Ident . selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## module_var -> Ident . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## projection -> Ident . selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr DOT Ident
+## Ident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -59,8 +59,7 @@ interactive_expr: Constr DOT WILD
 ##
 ## Ends in an error in state: 213.
 ##
-## module_field -> Constr DOT . module_fun [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## projection -> Constr DOT . Ident selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## module_access -> Constr DOT . module_var [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Constr DOT
@@ -74,8 +73,7 @@ interactive_expr: Constr Switch
 ##
 ## constr_expr -> Constr . core_expr [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
 ## constr_expr -> Constr . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## module_field -> Constr . DOT module_fun [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## projection -> Constr . DOT Ident selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## module_access -> Constr . DOT module_var [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Constr
@@ -163,7 +161,7 @@ interactive_expr: Ident WILD
 
 interactive_expr: If LBRACE VBAR
 ##
-## Ends in an error in state: 339.
+## Ends in an error in state: 340.
 ##
 ## parenthesized_expr -> LBRACE . expr RBRACE [ LBRACE ]
 ##
@@ -175,7 +173,7 @@ interactive_expr: If LBRACE VBAR
 
 interactive_expr: If LBRACE WILD VBAR
 ##
-## Ends in an error in state: 340.
+## Ends in an error in state: 341.
 ##
 ## parenthesized_expr -> LBRACE expr . RBRACE [ LBRACE ]
 ##
@@ -186,19 +184,19 @@ interactive_expr: If LBRACE WILD VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -217,7 +215,7 @@ interactive_expr: If LPAR VBAR
 
 interactive_expr: If LPAR WILD RPAR LBRACE If LPAR Bytes RPAR LBRACE VBAR
 ##
-## Ends in an error in state: 399.
+## Ends in an error in state: 397.
 ##
 ## if_then_else(closed_if) -> If parenthesized_expr LBRACE . closed_if option(SEMI) RBRACE Else LBRACE closed_if option(SEMI) RBRACE [ SEMI RBRACE ]
 ##
@@ -229,7 +227,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE If LPAR Bytes RPAR LBRACE VBAR
 
 interactive_expr: If LPAR WILD RPAR LBRACE If LPAR Bytes RPAR LBRACE WILD RBRACE Else LBRACE VBAR
 ##
-## Ends in an error in state: 418.
+## Ends in an error in state: 416.
 ##
 ## if_then_else(closed_if) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE . closed_if option(SEMI) RBRACE [ SEMI RBRACE ]
 ##
@@ -241,7 +239,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE If LPAR Bytes RPAR LBRACE WILD RBRACE
 
 interactive_expr: If LPAR WILD RPAR LBRACE If LPAR Bytes RPAR LBRACE WILD RBRACE Else LBRACE WILD SEMI PLUS
 ##
-## Ends in an error in state: 420.
+## Ends in an error in state: 418.
 ##
 ## if_then_else(closed_if) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE closed_if option(SEMI) . RBRACE [ SEMI RBRACE ]
 ##
@@ -253,7 +251,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE If LPAR Bytes RPAR LBRACE WILD RBRACE
 
 interactive_expr: If LPAR WILD RPAR LBRACE If LPAR Bytes RPAR LBRACE WILD RBRACE Else LBRACE WILD VBAR
 ##
-## Ends in an error in state: 419.
+## Ends in an error in state: 417.
 ##
 ## if_then_else(closed_if) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE closed_if . option(SEMI) RBRACE [ SEMI RBRACE ]
 ##
@@ -264,26 +262,26 @@ interactive_expr: If LPAR WILD RPAR LBRACE If LPAR Bytes RPAR LBRACE WILD RBRACE
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 423, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr
-## In state 422, spurious reduction of production closed_if -> base_if_then_else__open(closed_if)
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 421, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr 
+## In state 420, spurious reduction of production closed_if -> base_if_then_else__open(closed_if) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: If LPAR WILD RPAR LBRACE If LPAR Bytes RPAR LBRACE WILD RBRACE Else WILD
 ##
-## Ends in an error in state: 417.
+## Ends in an error in state: 415.
 ##
 ## if_then_else(closed_if) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else . LBRACE closed_if option(SEMI) RBRACE [ SEMI RBRACE ]
 ##
@@ -295,7 +293,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE If LPAR Bytes RPAR LBRACE WILD RBRACE
 
 interactive_expr: If LPAR WILD RPAR LBRACE If LPAR Bytes RPAR LBRACE WILD RBRACE WILD
 ##
-## Ends in an error in state: 416.
+## Ends in an error in state: 414.
 ##
 ## if_then_else(closed_if) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE . Else LBRACE closed_if option(SEMI) RBRACE [ SEMI RBRACE ]
 ##
@@ -307,7 +305,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE If LPAR Bytes RPAR LBRACE WILD RBRACE
 
 interactive_expr: If LPAR WILD RPAR LBRACE If LPAR Bytes RPAR LBRACE WILD SEMI PLUS
 ##
-## Ends in an error in state: 415.
+## Ends in an error in state: 413.
 ##
 ## if_then_else(closed_if) -> If parenthesized_expr LBRACE closed_if option(SEMI) . RBRACE Else LBRACE closed_if option(SEMI) RBRACE [ SEMI RBRACE ]
 ##
@@ -319,7 +317,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE If LPAR Bytes RPAR LBRACE WILD SEMI P
 
 interactive_expr: If LPAR WILD RPAR LBRACE If LPAR Bytes RPAR LBRACE WILD VBAR
 ##
-## Ends in an error in state: 414.
+## Ends in an error in state: 412.
 ##
 ## if_then_else(closed_if) -> If parenthesized_expr LBRACE closed_if . option(SEMI) RBRACE Else LBRACE closed_if option(SEMI) RBRACE [ SEMI RBRACE ]
 ##
@@ -330,26 +328,26 @@ interactive_expr: If LPAR WILD RPAR LBRACE If LPAR Bytes RPAR LBRACE WILD VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 423, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr
-## In state 422, spurious reduction of production closed_if -> base_if_then_else__open(closed_if)
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 421, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr 
+## In state 420, spurious reduction of production closed_if -> base_if_then_else__open(closed_if) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: If LPAR WILD RPAR LBRACE If LPAR Bytes RPAR WILD
 ##
-## Ends in an error in state: 398.
+## Ends in an error in state: 396.
 ##
 ## if_then_else(closed_if) -> If parenthesized_expr . LBRACE closed_if option(SEMI) RBRACE Else LBRACE closed_if option(SEMI) RBRACE [ SEMI RBRACE ]
 ##
@@ -361,7 +359,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE If LPAR Bytes RPAR WILD
 
 interactive_expr: If LPAR WILD RPAR LBRACE If WILD
 ##
-## Ends in an error in state: 397.
+## Ends in an error in state: 395.
 ##
 ## if_then_else(closed_if) -> If . parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE closed_if option(SEMI) RBRACE [ SEMI RBRACE ]
 ##
@@ -373,7 +371,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE If WILD
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch VBAR
 ##
-## Ends in an error in state: 344.
+## Ends in an error in state: 345.
 ##
 ## switch_expr(base_if_then_else) -> Switch . switch_expr_ LBRACE cases(base_if_then_else) RBRACE [ SEMI RBRACE ]
 ##
@@ -385,7 +383,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch VBAR
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR VBAR
 ##
-## Ends in an error in state: 383.
+## Ends in an error in state: 381.
 ##
 ## case_clause(base_if_then_else) -> VBAR . pattern ARROW base_if_then_else option(SEMI) [ VBAR RBRACE ]
 ##
@@ -397,7 +395,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR VBAR
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW Bytes SEMI WILD
 ##
-## Ends in an error in state: 441.
+## Ends in an error in state: 439.
 ##
 ## nseq(case_clause(base_if_then_else)) -> case_clause(base_if_then_else) . seq(case_clause(base_if_then_else)) [ RBRACE ]
 ##
@@ -409,7 +407,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW By
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW Bytes VBAR Bytes ARROW Bytes SEMI WILD
 ##
-## Ends in an error in state: 443.
+## Ends in an error in state: 441.
 ##
 ## seq(case_clause(base_if_then_else)) -> case_clause(base_if_then_else) . seq(case_clause(base_if_then_else)) [ RBRACE ]
 ##
@@ -421,7 +419,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW By
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE VBAR
 ##
-## Ends in an error in state: 396.
+## Ends in an error in state: 394.
 ##
 ## if_then_else(base_if_then_else) -> If parenthesized_expr LBRACE . closed_if option(SEMI) RBRACE Else LBRACE base_if_then_else option(SEMI) RBRACE [ VBAR SEMI RBRACE ]
 ##
@@ -433,7 +431,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE WILD RBRACE Else LBRACE VBAR
 ##
-## Ends in an error in state: 428.
+## Ends in an error in state: 426.
 ##
 ## if_then_else(base_if_then_else) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE . base_if_then_else option(SEMI) RBRACE [ VBAR SEMI RBRACE ]
 ##
@@ -445,7 +443,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE WILD RBRACE Else LBRACE WILD SEMI PLUS
 ##
-## Ends in an error in state: 432.
+## Ends in an error in state: 430.
 ##
 ## if_then_else(base_if_then_else) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE base_if_then_else option(SEMI) . RBRACE [ VBAR SEMI RBRACE ]
 ##
@@ -457,7 +455,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE WILD RBRACE Else LBRACE WILD VBAR
 ##
-## Ends in an error in state: 431.
+## Ends in an error in state: 429.
 ##
 ## if_then_else(base_if_then_else) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE base_if_then_else . option(SEMI) RBRACE [ VBAR SEMI RBRACE ]
 ##
@@ -468,26 +466,26 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 434, spurious reduction of production base_if_then_else__open(base_if_then_else) -> base_expr
-## In state 430, spurious reduction of production base_if_then_else -> base_if_then_else__open(base_if_then_else)
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 432, spurious reduction of production base_if_then_else__open(base_if_then_else) -> base_expr 
+## In state 428, spurious reduction of production base_if_then_else -> base_if_then_else__open(base_if_then_else) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE WILD RBRACE Else WILD
 ##
-## Ends in an error in state: 427.
+## Ends in an error in state: 425.
 ##
 ## if_then_else(base_if_then_else) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else . LBRACE base_if_then_else option(SEMI) RBRACE [ VBAR SEMI RBRACE ]
 ##
@@ -499,7 +497,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE WILD RBRACE WILD
 ##
-## Ends in an error in state: 426.
+## Ends in an error in state: 424.
 ##
 ## if_then_else(base_if_then_else) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE . Else LBRACE base_if_then_else option(SEMI) RBRACE [ VBAR SEMI RBRACE ]
 ##
@@ -511,7 +509,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE WILD SEMI PLUS
 ##
-## Ends in an error in state: 425.
+## Ends in an error in state: 423.
 ##
 ## if_then_else(base_if_then_else) -> If parenthesized_expr LBRACE closed_if option(SEMI) . RBRACE Else LBRACE base_if_then_else option(SEMI) RBRACE [ VBAR SEMI RBRACE ]
 ##
@@ -523,7 +521,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If LPAR Bytes RPAR LBRACE WILD VBAR
 ##
-## Ends in an error in state: 424.
+## Ends in an error in state: 422.
 ##
 ## if_then_else(base_if_then_else) -> If parenthesized_expr LBRACE closed_if . option(SEMI) RBRACE Else LBRACE base_if_then_else option(SEMI) RBRACE [ VBAR SEMI RBRACE ]
 ##
@@ -534,26 +532,26 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 423, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr
-## In state 422, spurious reduction of production closed_if -> base_if_then_else__open(closed_if)
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 421, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr 
+## In state 420, spurious reduction of production closed_if -> base_if_then_else__open(closed_if) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If LPAR Bytes RPAR WILD
 ##
-## Ends in an error in state: 395.
+## Ends in an error in state: 393.
 ##
 ## if_then_else(base_if_then_else) -> If parenthesized_expr . LBRACE closed_if option(SEMI) RBRACE Else LBRACE base_if_then_else option(SEMI) RBRACE [ VBAR SEMI RBRACE ]
 ##
@@ -565,7 +563,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If WILD
 ##
-## Ends in an error in state: 394.
+## Ends in an error in state: 392.
 ##
 ## if_then_else(base_if_then_else) -> If . parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE base_if_then_else option(SEMI) RBRACE [ VBAR SEMI RBRACE ]
 ##
@@ -577,7 +575,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW If
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW VBAR
 ##
-## Ends in an error in state: 393.
+## Ends in an error in state: 391.
 ##
 ## case_clause(base_if_then_else) -> VBAR pattern ARROW . base_if_then_else option(SEMI) [ VBAR RBRACE ]
 ##
@@ -589,7 +587,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW VB
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW WILD Type
 ##
-## Ends in an error in state: 435.
+## Ends in an error in state: 433.
 ##
 ## case_clause(base_if_then_else) -> VBAR pattern ARROW base_if_then_else . option(SEMI) [ VBAR RBRACE ]
 ##
@@ -600,26 +598,26 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD ARROW WI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 434, spurious reduction of production base_if_then_else__open(base_if_then_else) -> base_expr
-## In state 430, spurious reduction of production base_if_then_else -> base_if_then_else__open(base_if_then_else)
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 432, spurious reduction of production base_if_then_else__open(base_if_then_else) -> base_expr 
+## In state 428, spurious reduction of production base_if_then_else -> base_if_then_else__open(base_if_then_else) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD COMMA Bytes RPAR
 ##
-## Ends in an error in state: 392.
+## Ends in an error in state: 390.
 ##
 ## case_clause(base_if_then_else) -> VBAR pattern . ARROW base_if_then_else option(SEMI) [ VBAR RBRACE ]
 ##
@@ -630,16 +628,16 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE VBAR WILD COMMA By
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 137, spurious reduction of production nsepseq(sub_pattern,COMMA) -> sub_pattern
-## In state 140, spurious reduction of production tuple(sub_pattern) -> sub_pattern COMMA nsepseq(sub_pattern,COMMA)
-## In state 390, spurious reduction of production pattern -> tuple(sub_pattern)
+## In state 137, spurious reduction of production nsepseq(sub_pattern,COMMA) -> sub_pattern 
+## In state 140, spurious reduction of production tuple(sub_pattern) -> sub_pattern COMMA nsepseq(sub_pattern,COMMA) 
+## In state 388, spurious reduction of production pattern -> tuple(sub_pattern) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE WILD
 ##
-## Ends in an error in state: 382.
+## Ends in an error in state: 380.
 ##
 ## switch_expr(base_if_then_else) -> Switch switch_expr_ LBRACE . cases(base_if_then_else) RBRACE [ SEMI RBRACE ]
 ##
@@ -651,7 +649,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD LBRACE WILD
 
 interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD WILD
 ##
-## Ends in an error in state: 381.
+## Ends in an error in state: 379.
 ##
 ## switch_expr(base_if_then_else) -> Switch switch_expr_ . LBRACE cases(base_if_then_else) RBRACE [ SEMI RBRACE ]
 ##
@@ -663,7 +661,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE Switch WILD WILD
 
 interactive_expr: If LPAR WILD RPAR LBRACE VBAR
 ##
-## Ends in an error in state: 343.
+## Ends in an error in state: 344.
 ##
 ## if_then(expr_with_let_expr) -> If parenthesized_expr LBRACE . closed_if option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
 ## if_then_else(expr_with_let_expr) -> If parenthesized_expr LBRACE . closed_if option(SEMI) RBRACE Else LBRACE expr_with_let_expr option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
@@ -676,7 +674,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE VBAR
 
 interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE Else LBRACE VBAR
 ##
-## Ends in an error in state: 453.
+## Ends in an error in state: 451.
 ##
 ## if_then_else(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE . expr_with_let_expr option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
 ##
@@ -688,7 +686,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE Else LBRACE VBAR
 
 interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE Else LBRACE WILD SEMI PLUS
 ##
-## Ends in an error in state: 455.
+## Ends in an error in state: 453.
 ##
 ## if_then_else(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE expr_with_let_expr option(SEMI) . RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
 ##
@@ -700,7 +698,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE Else LBRACE WILD SEMI PLU
 
 interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE Else LBRACE WILD VBAR
 ##
-## Ends in an error in state: 454.
+## Ends in an error in state: 452.
 ##
 ## if_then_else(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else LBRACE expr_with_let_expr . option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
 ##
@@ -711,27 +709,27 @@ interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE Else LBRACE WILD VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
-## In state 408, spurious reduction of production expr_with_let_expr -> expr
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
+## In state 406, spurious reduction of production expr_with_let_expr -> expr 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE Else WILD
 ##
-## Ends in an error in state: 452.
+## Ends in an error in state: 450.
 ##
 ## if_then_else(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE Else . LBRACE expr_with_let_expr option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
 ##
@@ -743,7 +741,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE Else WILD
 
 interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE WILD
 ##
-## Ends in an error in state: 451.
+## Ends in an error in state: 449.
 ##
 ## if_then(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE . [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
 ## if_then_else(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if option(SEMI) RBRACE . Else LBRACE expr_with_let_expr option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
@@ -756,7 +754,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE WILD RBRACE WILD
 
 interactive_expr: If LPAR WILD RPAR LBRACE WILD SEMI PLUS
 ##
-## Ends in an error in state: 450.
+## Ends in an error in state: 448.
 ##
 ## if_then(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if option(SEMI) . RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
 ## if_then_else(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if option(SEMI) . RBRACE Else LBRACE expr_with_let_expr option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
@@ -769,7 +767,7 @@ interactive_expr: If LPAR WILD RPAR LBRACE WILD SEMI PLUS
 
 interactive_expr: If LPAR WILD RPAR LBRACE WILD VBAR
 ##
-## Ends in an error in state: 449.
+## Ends in an error in state: 447.
 ##
 ## if_then(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if . option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
 ## if_then_else(expr_with_let_expr) -> If parenthesized_expr LBRACE closed_if . option(SEMI) RBRACE Else LBRACE expr_with_let_expr option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
@@ -781,26 +779,26 @@ interactive_expr: If LPAR WILD RPAR LBRACE WILD VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 423, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr
-## In state 422, spurious reduction of production closed_if -> base_if_then_else__open(closed_if)
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 421, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr 
+## In state 420, spurious reduction of production closed_if -> base_if_then_else__open(closed_if) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: If LPAR WILD RPAR WILD
 ##
-## Ends in an error in state: 342.
+## Ends in an error in state: 343.
 ##
 ## if_then(expr_with_let_expr) -> If parenthesized_expr . LBRACE closed_if option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
 ## if_then_else(expr_with_let_expr) -> If parenthesized_expr . LBRACE closed_if option(SEMI) RBRACE Else LBRACE expr_with_let_expr option(SEMI) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
@@ -813,7 +811,7 @@ interactive_expr: If LPAR WILD RPAR WILD
 
 interactive_expr: If LPAR WILD VBAR
 ##
-## Ends in an error in state: 337.
+## Ends in an error in state: 338.
 ##
 ## parenthesized_expr -> LPAR expr . RPAR [ LBRACE ]
 ##
@@ -824,19 +822,19 @@ interactive_expr: If LPAR WILD VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -854,45 +852,9 @@ interactive_expr: If WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: LBRACE ELLIPSIS Constr DOT Ident WILD
-##
-## Ends in an error in state: 363.
-##
-## projection -> Constr DOT Ident . selection [ COMMA COLON ]
-##
-## The known suffix of the stack is as follows:
-## Constr DOT Ident
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: LBRACE ELLIPSIS Constr DOT WILD
-##
-## Ends in an error in state: 362.
-##
-## projection -> Constr DOT . Ident selection [ COMMA COLON ]
-##
-## The known suffix of the stack is as follows:
-## Constr DOT
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: LBRACE ELLIPSIS Constr WILD
-##
-## Ends in an error in state: 361.
-##
-## projection -> Constr . DOT Ident selection [ COMMA COLON ]
-##
-## The known suffix of the stack is as follows:
-## Constr
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 interactive_expr: LBRACE ELLIPSIS Ident COLON
 ##
-## Ends in an error in state: 365.
+## Ends in an error in state: 363.
 ##
 ## update_record -> LBRACE ELLIPSIS path . COMMA sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -903,14 +865,14 @@ interactive_expr: LBRACE ELLIPSIS Ident COLON
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 360, spurious reduction of production path -> Ident
+## In state 361, spurious reduction of production path -> Ident 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes COMMA Ident COLON Bytes COMMA WILD
 ##
-## Ends in an error in state: 379.
+## Ends in an error in state: 377.
 ##
 ## nsepseq(field_path_assignment,COMMA) -> field_path_assignment COMMA . nsepseq(field_path_assignment,COMMA) [ RBRACE ]
 ## seq(__anonymous_0(field_path_assignment,COMMA)) -> field_path_assignment COMMA . seq(__anonymous_0(field_path_assignment,COMMA)) [ RBRACE ]
@@ -923,7 +885,7 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes COMMA Ident COLO
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes COMMA Ident COLON Bytes VBAR
 ##
-## Ends in an error in state: 378.
+## Ends in an error in state: 376.
 ##
 ## nsepseq(field_path_assignment,COMMA) -> field_path_assignment . [ RBRACE ]
 ## nsepseq(field_path_assignment,COMMA) -> field_path_assignment . COMMA nsepseq(field_path_assignment,COMMA) [ RBRACE ]
@@ -936,27 +898,27 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes COMMA Ident COLO
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
-## In state 371, spurious reduction of production field_path_assignment -> path COLON expr
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
+## In state 369, spurious reduction of production field_path_assignment -> path COLON expr 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes COMMA WILD
 ##
-## Ends in an error in state: 375.
+## Ends in an error in state: 373.
 ##
 ## nsepseq(field_path_assignment,COMMA) -> field_path_assignment COMMA . nsepseq(field_path_assignment,COMMA) [ RBRACE ]
 ## nseq(__anonymous_0(field_path_assignment,COMMA)) -> field_path_assignment COMMA . seq(__anonymous_0(field_path_assignment,COMMA)) [ RBRACE ]
@@ -969,7 +931,7 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes COMMA WILD
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes VBAR
 ##
-## Ends in an error in state: 374.
+## Ends in an error in state: 372.
 ##
 ## nsepseq(field_path_assignment,COMMA) -> field_path_assignment . [ RBRACE ]
 ## nsepseq(field_path_assignment,COMMA) -> field_path_assignment . COMMA nsepseq(field_path_assignment,COMMA) [ RBRACE ]
@@ -982,27 +944,27 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON Bytes VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
-## In state 371, spurious reduction of production field_path_assignment -> path COLON expr
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
+## In state 369, spurious reduction of production field_path_assignment -> path COLON expr 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON VBAR
 ##
-## Ends in an error in state: 370.
+## Ends in an error in state: 368.
 ##
 ## field_path_assignment -> path COLON . expr [ RBRACE COMMA ]
 ##
@@ -1014,7 +976,7 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COLON VBAR
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COMMA
 ##
-## Ends in an error in state: 369.
+## Ends in an error in state: 367.
 ##
 ## field_path_assignment -> path . COLON expr [ RBRACE COMMA ]
 ##
@@ -1025,14 +987,14 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA Ident COMMA
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 360, spurious reduction of production path -> Ident
+## In state 361, spurious reduction of production path -> Ident 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: LBRACE ELLIPSIS Ident COMMA WILD
 ##
-## Ends in an error in state: 366.
+## Ends in an error in state: 364.
 ##
 ## update_record -> LBRACE ELLIPSIS path COMMA . sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -1044,7 +1006,7 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA WILD
 
 interactive_expr: LBRACE ELLIPSIS Ident WILD
 ##
-## Ends in an error in state: 360.
+## Ends in an error in state: 361.
 ##
 ## path -> Ident . [ COMMA COLON ]
 ## projection -> Ident . selection [ COMMA COLON ]
@@ -1057,7 +1019,7 @@ interactive_expr: LBRACE ELLIPSIS Ident WILD
 
 interactive_expr: LBRACE ELLIPSIS WILD
 ##
-## Ends in an error in state: 359.
+## Ends in an error in state: 360.
 ##
 ## update_record -> LBRACE ELLIPSIS . path COMMA sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -1069,7 +1031,7 @@ interactive_expr: LBRACE ELLIPSIS WILD
 
 interactive_expr: LBRACE Ident COLON Bytes VBAR
 ##
-## Ends in an error in state: 475.
+## Ends in an error in state: 473.
 ##
 ## record_expr -> LBRACE field_assignment . option(more_field_assignments) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -1080,27 +1042,27 @@ interactive_expr: LBRACE Ident COLON Bytes VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
-## In state 461, spurious reduction of production field_assignment -> Ident COLON expr
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
+## In state 459, spurious reduction of production field_assignment -> Ident COLON expr 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: LBRACE Ident COLON VBAR
 ##
-## Ends in an error in state: 460.
+## Ends in an error in state: 458.
 ##
 ## field_assignment -> Ident COLON . expr [ RBRACE COMMA ]
 ##
@@ -1112,7 +1074,7 @@ interactive_expr: LBRACE Ident COLON VBAR
 
 interactive_expr: LBRACE Ident COMMA Ident COLON Bytes VBAR
 ##
-## Ends in an error in state: 465.
+## Ends in an error in state: 463.
 ##
 ## nsepseq(field_assignment_punning,COMMA) -> field_assignment_punning . [ RBRACE ]
 ## nsepseq(field_assignment_punning,COMMA) -> field_assignment_punning . COMMA nsepseq(field_assignment_punning,COMMA) [ RBRACE ]
@@ -1125,28 +1087,28 @@ interactive_expr: LBRACE Ident COMMA Ident COLON Bytes VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
-## In state 461, spurious reduction of production field_assignment -> Ident COLON expr
-## In state 472, spurious reduction of production field_assignment_punning -> field_assignment
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
+## In state 459, spurious reduction of production field_assignment -> Ident COLON expr 
+## In state 470, spurious reduction of production field_assignment_punning -> field_assignment 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: LBRACE Ident COMMA Ident COMMA Ident COLON Bytes VBAR
 ##
-## Ends in an error in state: 469.
+## Ends in an error in state: 467.
 ##
 ## nsepseq(field_assignment_punning,COMMA) -> field_assignment_punning . [ RBRACE ]
 ## nsepseq(field_assignment_punning,COMMA) -> field_assignment_punning . COMMA nsepseq(field_assignment_punning,COMMA) [ RBRACE ]
@@ -1159,28 +1121,28 @@ interactive_expr: LBRACE Ident COMMA Ident COMMA Ident COLON Bytes VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
-## In state 461, spurious reduction of production field_assignment -> Ident COLON expr
-## In state 472, spurious reduction of production field_assignment_punning -> field_assignment
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
+## In state 459, spurious reduction of production field_assignment -> Ident COLON expr 
+## In state 470, spurious reduction of production field_assignment_punning -> field_assignment 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: LBRACE Ident COMMA Ident COMMA Ident COMMA WILD
 ##
-## Ends in an error in state: 470.
+## Ends in an error in state: 468.
 ##
 ## nsepseq(field_assignment_punning,COMMA) -> field_assignment_punning COMMA . nsepseq(field_assignment_punning,COMMA) [ RBRACE ]
 ## seq(__anonymous_0(field_assignment_punning,COMMA)) -> field_assignment_punning COMMA . seq(__anonymous_0(field_assignment_punning,COMMA)) [ RBRACE ]
@@ -1193,7 +1155,7 @@ interactive_expr: LBRACE Ident COMMA Ident COMMA Ident COMMA WILD
 
 interactive_expr: LBRACE Ident COMMA Ident COMMA WILD
 ##
-## Ends in an error in state: 466.
+## Ends in an error in state: 464.
 ##
 ## nsepseq(field_assignment_punning,COMMA) -> field_assignment_punning COMMA . nsepseq(field_assignment_punning,COMMA) [ RBRACE ]
 ## nseq(__anonymous_0(field_assignment_punning,COMMA)) -> field_assignment_punning COMMA . seq(__anonymous_0(field_assignment_punning,COMMA)) [ RBRACE ]
@@ -1206,7 +1168,7 @@ interactive_expr: LBRACE Ident COMMA Ident COMMA WILD
 
 interactive_expr: LBRACE Ident COMMA Ident WILD
 ##
-## Ends in an error in state: 459.
+## Ends in an error in state: 457.
 ##
 ## field_assignment -> Ident . COLON expr [ RBRACE COMMA ]
 ## field_assignment_punning -> Ident . [ RBRACE COMMA ]
@@ -1219,7 +1181,7 @@ interactive_expr: LBRACE Ident COMMA Ident WILD
 
 interactive_expr: LBRACE Ident COMMA WILD
 ##
-## Ends in an error in state: 458.
+## Ends in an error in state: 456.
 ##
 ## more_field_assignments -> COMMA . sep_or_term_list(field_assignment_punning,COMMA) [ RBRACE ]
 ##
@@ -1231,7 +1193,7 @@ interactive_expr: LBRACE Ident COMMA WILD
 
 interactive_expr: LBRACE Ident WILD
 ##
-## Ends in an error in state: 457.
+## Ends in an error in state: 455.
 ##
 ## common_expr -> Ident . [ TIMES SLASH SEMI RBRACE PLUS Or NE Mod MINUS LT LPAR LE GT GE EQEQ COLON CAT BOOL_OR BOOL_AND ARROW ]
 ## field_assignment -> Ident . COLON expr [ RBRACE COMMA ]
@@ -1261,7 +1223,7 @@ interactive_expr: LBRACE VBAR
 
 interactive_expr: LBRACE WILD SEMI VBAR
 ##
-## Ends in an error in state: 482.
+## Ends in an error in state: 480.
 ##
 ## exprs -> expr_with_let_expr SEMI . exprs [ RBRACE ]
 ## option(SEMI) -> SEMI . [ RBRACE ]
@@ -1274,7 +1236,7 @@ interactive_expr: LBRACE WILD SEMI VBAR
 
 interactive_expr: LBRACE WILD VBAR
 ##
-## Ends in an error in state: 481.
+## Ends in an error in state: 479.
 ##
 ## exprs -> expr_with_let_expr . option(SEMI) [ RBRACE ]
 ## exprs -> expr_with_let_expr . SEMI exprs [ RBRACE ]
@@ -1286,20 +1248,20 @@ interactive_expr: LBRACE WILD VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
-## In state 408, spurious reduction of production expr_with_let_expr -> expr
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
+## In state 406, spurious reduction of production expr_with_let_expr -> expr 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -1320,7 +1282,7 @@ interactive_expr: LBRACKET VBAR
 
 interactive_expr: LBRACKET WILD COMMA ELLIPSIS VBAR
 ##
-## Ends in an error in state: 499.
+## Ends in an error in state: 497.
 ##
 ## list_or_spread -> LBRACKET expr COMMA ELLIPSIS . expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -1332,7 +1294,7 @@ interactive_expr: LBRACKET WILD COMMA ELLIPSIS VBAR
 
 interactive_expr: LBRACKET WILD COMMA ELLIPSIS WILD VBAR
 ##
-## Ends in an error in state: 500.
+## Ends in an error in state: 498.
 ##
 ## list_or_spread -> LBRACKET expr COMMA ELLIPSIS expr . RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -1343,26 +1305,26 @@ interactive_expr: LBRACKET WILD COMMA ELLIPSIS WILD VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: LBRACKET WILD COMMA VBAR
 ##
-## Ends in an error in state: 498.
+## Ends in an error in state: 496.
 ##
 ## list_or_spread -> LBRACKET expr COMMA . sep_or_term_list(expr,COMMA) RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
 ## list_or_spread -> LBRACKET expr COMMA . ELLIPSIS expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
@@ -1375,7 +1337,7 @@ interactive_expr: LBRACKET WILD COMMA VBAR
 
 interactive_expr: LBRACKET WILD COMMA WILD COMMA VBAR
 ##
-## Ends in an error in state: 507.
+## Ends in an error in state: 505.
 ##
 ## nsepseq(expr,COMMA) -> expr COMMA . nsepseq(expr,COMMA) [ RBRACKET ]
 ## nseq(__anonymous_0(expr,COMMA)) -> expr COMMA . seq(__anonymous_0(expr,COMMA)) [ RBRACKET ]
@@ -1388,7 +1350,7 @@ interactive_expr: LBRACKET WILD COMMA WILD COMMA VBAR
 
 interactive_expr: LBRACKET WILD COMMA WILD COMMA WILD COMMA VBAR
 ##
-## Ends in an error in state: 510.
+## Ends in an error in state: 508.
 ##
 ## nsepseq(expr,COMMA) -> expr COMMA . nsepseq(expr,COMMA) [ RBRACKET ]
 ## seq(__anonymous_0(expr,COMMA)) -> expr COMMA . seq(__anonymous_0(expr,COMMA)) [ RBRACKET ]
@@ -1401,7 +1363,7 @@ interactive_expr: LBRACKET WILD COMMA WILD COMMA WILD COMMA VBAR
 
 interactive_expr: LBRACKET WILD COMMA WILD COMMA WILD VBAR
 ##
-## Ends in an error in state: 509.
+## Ends in an error in state: 507.
 ##
 ## nsepseq(expr,COMMA) -> expr . [ RBRACKET ]
 ## nsepseq(expr,COMMA) -> expr . COMMA nsepseq(expr,COMMA) [ RBRACKET ]
@@ -1414,26 +1376,26 @@ interactive_expr: LBRACKET WILD COMMA WILD COMMA WILD VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: LBRACKET WILD COMMA WILD VBAR
 ##
-## Ends in an error in state: 506.
+## Ends in an error in state: 504.
 ##
 ## nsepseq(expr,COMMA) -> expr . [ RBRACKET ]
 ## nsepseq(expr,COMMA) -> expr . COMMA nsepseq(expr,COMMA) [ RBRACKET ]
@@ -1446,26 +1408,26 @@ interactive_expr: LBRACKET WILD COMMA WILD VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: LBRACKET WILD VBAR
 ##
-## Ends in an error in state: 497.
+## Ends in an error in state: 495.
 ##
 ## list_or_spread -> LBRACKET expr . COMMA sep_or_term_list(expr,COMMA) RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
 ## list_or_spread -> LBRACKET expr . COMMA ELLIPSIS expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
@@ -1478,19 +1440,19 @@ interactive_expr: LBRACKET WILD VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -1511,7 +1473,7 @@ interactive_expr: LPAR VBAR
 
 interactive_expr: LPAR WILD COMMA Bytes RPAR COLON Ident TIMES
 ##
-## Ends in an error in state: 276.
+## Ends in an error in state: 277.
 ##
 ## base_expr -> disj_expr_level . [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
 ## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level . BOOL_OR conj_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or Let EOF COMMA BOOL_OR Attr ARROW ]
@@ -1525,18 +1487,18 @@ interactive_expr: LPAR WILD COMMA Bytes RPAR COLON Ident TIMES
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 239, spurious reduction of production option(type_expr_simple_args) ->
-## In state 250, spurious reduction of production type_expr_simple -> Ident option(type_expr_simple_args)
-## In state 260, spurious reduction of production type_annotation_simple -> COLON type_expr_simple
-## In state 261, spurious reduction of production option(type_annotation_simple) -> type_annotation_simple
-## In state 262, spurious reduction of production disj_expr_level -> par(tuple(disj_expr_level)) option(type_annotation_simple)
+## In state 240, spurious reduction of production option(type_expr_simple_args) -> 
+## In state 251, spurious reduction of production type_expr_simple -> Ident option(type_expr_simple_args) 
+## In state 261, spurious reduction of production type_annotation_simple -> COLON type_expr_simple 
+## In state 262, spurious reduction of production option(type_annotation_simple) -> type_annotation_simple 
+## In state 263, spurious reduction of production disj_expr_level -> par(tuple(disj_expr_level)) option(type_annotation_simple) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: LPAR WILD COMMA Bytes RPAR WILD
 ##
-## Ends in an error in state: 236.
+## Ends in an error in state: 237.
 ##
 ## disj_expr_level -> par(tuple(disj_expr_level)) . option(type_annotation_simple) [ VBAR Type SEMI RPAR RBRACKET RBRACE Or Let EOF COMMA BOOL_OR Attr ARROW ]
 ##
@@ -1548,7 +1510,7 @@ interactive_expr: LPAR WILD COMMA Bytes RPAR WILD
 
 interactive_expr: LPAR WILD COMMA VBAR
 ##
-## Ends in an error in state: 490.
+## Ends in an error in state: 488.
 ##
 ## tuple(disj_expr_level) -> disj_expr_level COMMA . nsepseq(disj_expr_level,COMMA) [ RPAR ]
 ##
@@ -1560,7 +1522,7 @@ interactive_expr: LPAR WILD COMMA VBAR
 
 interactive_expr: LPAR WILD COMMA WILD COMMA VBAR
 ##
-## Ends in an error in state: 493.
+## Ends in an error in state: 491.
 ##
 ## nsepseq(disj_expr_level,COMMA) -> disj_expr_level COMMA . nsepseq(disj_expr_level,COMMA) [ RPAR ]
 ##
@@ -1572,7 +1534,7 @@ interactive_expr: LPAR WILD COMMA WILD COMMA VBAR
 
 interactive_expr: LPAR WILD COMMA WILD VBAR
 ##
-## Ends in an error in state: 492.
+## Ends in an error in state: 490.
 ##
 ## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level . BOOL_OR conj_expr_level [ RPAR Or COMMA BOOL_OR ]
 ## bin_op(disj_expr_level,Or,conj_expr_level) -> disj_expr_level . Or conj_expr_level [ RPAR Or COMMA BOOL_OR ]
@@ -1586,23 +1548,23 @@ interactive_expr: LPAR WILD COMMA WILD VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: LPAR WILD VBAR
 ##
-## Ends in an error in state: 489.
+## Ends in an error in state: 487.
 ##
 ## base_expr -> disj_expr_level . [ RPAR ]
 ## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level . BOOL_OR conj_expr_level [ RPAR Or COMMA BOOL_OR ARROW ]
@@ -1617,16 +1579,16 @@ interactive_expr: LPAR WILD VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -1645,7 +1607,7 @@ interactive_expr: Lang VBAR
 
 interactive_expr: Lang WILD VBAR
 ##
-## Ends in an error in state: 514.
+## Ends in an error in state: 512.
 ##
 ## code_inj -> Lang expr . RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -1656,26 +1618,26 @@ interactive_expr: Lang WILD VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: Let Rec Verbatim
 ##
-## Ends in an error in state: 403.
+## Ends in an error in state: 401.
 ##
 ## let_expr(expr_with_let_expr) -> seq(Attr) Let Rec . let_binding SEMI expr_with_let_expr [ SEMI RBRACE EOF ]
 ##
@@ -1687,7 +1649,7 @@ interactive_expr: Let Rec Verbatim
 
 interactive_expr: Let Rec WILD EQ Bytes SEMI VBAR
 ##
-## Ends in an error in state: 405.
+## Ends in an error in state: 403.
 ##
 ## let_expr(expr_with_let_expr) -> seq(Attr) Let Rec let_binding SEMI . expr_with_let_expr [ SEMI RBRACE EOF ]
 ##
@@ -1699,7 +1661,7 @@ interactive_expr: Let Rec WILD EQ Bytes SEMI VBAR
 
 interactive_expr: Let Rec WILD EQ Bytes VBAR
 ##
-## Ends in an error in state: 404.
+## Ends in an error in state: 402.
 ##
 ## let_expr(expr_with_let_expr) -> seq(Attr) Let Rec let_binding . SEMI expr_with_let_expr [ SEMI RBRACE EOF ]
 ##
@@ -1710,27 +1672,27 @@ interactive_expr: Let Rec WILD EQ Bytes VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
-## In state 530, spurious reduction of production let_binding -> let_pattern_simple option(type_annotation) EQ expr
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
+## In state 528, spurious reduction of production let_binding -> let_pattern_simple option(type_annotation) EQ expr 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: Let Verbatim
 ##
-## Ends in an error in state: 402.
+## Ends in an error in state: 400.
 ##
 ## let_expr(expr_with_let_expr) -> seq(Attr) Let . let_binding SEMI expr_with_let_expr [ SEMI RBRACE EOF ]
 ## let_expr(expr_with_let_expr) -> seq(Attr) Let . Rec let_binding SEMI expr_with_let_expr [ SEMI RBRACE EOF ]
@@ -1743,7 +1705,7 @@ interactive_expr: Let Verbatim
 
 interactive_expr: Let WILD EQ Bytes SEMI VBAR
 ##
-## Ends in an error in state: 410.
+## Ends in an error in state: 408.
 ##
 ## let_expr(expr_with_let_expr) -> seq(Attr) Let let_binding SEMI . expr_with_let_expr [ SEMI RBRACE EOF ]
 ##
@@ -1755,7 +1717,7 @@ interactive_expr: Let WILD EQ Bytes SEMI VBAR
 
 interactive_expr: Let WILD EQ Bytes VBAR
 ##
-## Ends in an error in state: 409.
+## Ends in an error in state: 407.
 ##
 ## let_expr(expr_with_let_expr) -> seq(Attr) Let let_binding . SEMI expr_with_let_expr [ SEMI RBRACE EOF ]
 ##
@@ -1766,20 +1728,20 @@ interactive_expr: Let WILD EQ Bytes VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
-## In state 530, spurious reduction of production let_binding -> let_pattern_simple option(type_annotation) EQ expr
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
+## In state 528, spurious reduction of production let_binding -> let_pattern_simple option(type_annotation) EQ expr 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -1810,10 +1772,9 @@ interactive_expr: NOT VBAR
 
 interactive_expr: Switch Constr WILD
 ##
-## Ends in an error in state: 218.
+## Ends in an error in state: 216.
 ##
-## module_field -> Constr . DOT module_fun [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## projection -> Constr . DOT Ident selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## module_access -> Constr . DOT module_var [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Constr
@@ -1823,7 +1784,7 @@ interactive_expr: Switch Constr WILD
 
 interactive_expr: Switch LBRACE WILD
 ##
-## Ends in an error in state: 358.
+## Ends in an error in state: 359.
 ##
 ## update_record -> LBRACE . ELLIPSIS path COMMA sep_or_term_list(field_path_assignment,COMMA) RBRACE [ LBRACE ]
 ##
@@ -1835,7 +1796,7 @@ interactive_expr: Switch LBRACE WILD
 
 interactive_expr: Switch LBRACKET VBAR
 ##
-## Ends in an error in state: 345.
+## Ends in an error in state: 346.
 ##
 ## list__(expr) -> LBRACKET . option(sep_or_term_list(expr,SEMI)) RBRACKET [ LBRACE ]
 ##
@@ -1847,7 +1808,7 @@ interactive_expr: Switch LBRACKET VBAR
 
 interactive_expr: Switch LBRACKET WILD SEMI VBAR
 ##
-## Ends in an error in state: 352.
+## Ends in an error in state: 353.
 ##
 ## nsepseq(expr,SEMI) -> expr SEMI . nsepseq(expr,SEMI) [ RBRACKET ]
 ## nseq(__anonymous_0(expr,SEMI)) -> expr SEMI . seq(__anonymous_0(expr,SEMI)) [ RBRACKET ]
@@ -1860,7 +1821,7 @@ interactive_expr: Switch LBRACKET WILD SEMI VBAR
 
 interactive_expr: Switch LBRACKET WILD SEMI WILD SEMI VBAR
 ##
-## Ends in an error in state: 356.
+## Ends in an error in state: 357.
 ##
 ## nsepseq(expr,SEMI) -> expr SEMI . nsepseq(expr,SEMI) [ RBRACKET ]
 ## seq(__anonymous_0(expr,SEMI)) -> expr SEMI . seq(__anonymous_0(expr,SEMI)) [ RBRACKET ]
@@ -1873,7 +1834,7 @@ interactive_expr: Switch LBRACKET WILD SEMI WILD SEMI VBAR
 
 interactive_expr: Switch LBRACKET WILD SEMI WILD VBAR
 ##
-## Ends in an error in state: 355.
+## Ends in an error in state: 356.
 ##
 ## nsepseq(expr,SEMI) -> expr . [ RBRACKET ]
 ## nsepseq(expr,SEMI) -> expr . SEMI nsepseq(expr,SEMI) [ RBRACKET ]
@@ -1886,26 +1847,26 @@ interactive_expr: Switch LBRACKET WILD SEMI WILD VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: Switch LBRACKET WILD VBAR
 ##
-## Ends in an error in state: 351.
+## Ends in an error in state: 352.
 ##
 ## nsepseq(expr,SEMI) -> expr . [ RBRACKET ]
 ## nsepseq(expr,SEMI) -> expr . SEMI nsepseq(expr,SEMI) [ RBRACKET ]
@@ -1918,19 +1879,19 @@ interactive_expr: Switch LBRACKET WILD VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -1950,7 +1911,7 @@ interactive_expr: Switch LPAR VBAR
 
 interactive_expr: Switch LPAR WILD VBAR
 ##
-## Ends in an error in state: 487.
+## Ends in an error in state: 485.
 ##
 ## par(expr) -> LPAR expr . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -1961,19 +1922,19 @@ interactive_expr: Switch LPAR WILD VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -1992,7 +1953,7 @@ interactive_expr: Switch VBAR
 
 interactive_expr: Switch WILD LBRACE VBAR LBRACKET VBAR
 ##
-## Ends in an error in state: 384.
+## Ends in an error in state: 382.
 ##
 ## list__(sub_pattern) -> LBRACKET . option(sep_or_term_list(sub_pattern,SEMI)) RBRACKET [ COMMA ARROW ]
 ## pattern -> LBRACKET . sub_pattern COMMA ELLIPSIS sub_pattern RBRACKET [ ARROW ]
@@ -2005,7 +1966,7 @@ interactive_expr: Switch WILD LBRACE VBAR LBRACKET VBAR
 
 interactive_expr: Switch WILD LBRACE VBAR LBRACKET WILD COMMA ELLIPSIS VBAR
 ##
-## Ends in an error in state: 387.
+## Ends in an error in state: 385.
 ##
 ## pattern -> LBRACKET sub_pattern COMMA ELLIPSIS . sub_pattern RBRACKET [ ARROW ]
 ##
@@ -2017,7 +1978,7 @@ interactive_expr: Switch WILD LBRACE VBAR LBRACKET WILD COMMA ELLIPSIS VBAR
 
 interactive_expr: Switch WILD LBRACE VBAR LBRACKET WILD COMMA ELLIPSIS WILD WILD
 ##
-## Ends in an error in state: 388.
+## Ends in an error in state: 386.
 ##
 ## pattern -> LBRACKET sub_pattern COMMA ELLIPSIS sub_pattern . RBRACKET [ ARROW ]
 ##
@@ -2029,7 +1990,7 @@ interactive_expr: Switch WILD LBRACE VBAR LBRACKET WILD COMMA ELLIPSIS WILD WILD
 
 interactive_expr: Switch WILD LBRACE VBAR LBRACKET WILD COMMA WILD
 ##
-## Ends in an error in state: 386.
+## Ends in an error in state: 384.
 ##
 ## pattern -> LBRACKET sub_pattern COMMA . ELLIPSIS sub_pattern RBRACKET [ ARROW ]
 ##
@@ -2041,7 +2002,7 @@ interactive_expr: Switch WILD LBRACE VBAR LBRACKET WILD COMMA WILD
 
 interactive_expr: Switch WILD LBRACE VBAR LBRACKET WILD WILD
 ##
-## Ends in an error in state: 385.
+## Ends in an error in state: 383.
 ##
 ## nsepseq(sub_pattern,SEMI) -> sub_pattern . [ RBRACKET ]
 ## nsepseq(sub_pattern,SEMI) -> sub_pattern . SEMI nsepseq(sub_pattern,SEMI) [ RBRACKET ]
@@ -2056,7 +2017,7 @@ interactive_expr: Switch WILD LBRACE VBAR LBRACKET WILD WILD
 
 interactive_expr: Switch WILD LBRACE VBAR LPAR Bytes RPAR WILD
 ##
-## Ends in an error in state: 391.
+## Ends in an error in state: 389.
 ##
 ## tuple(sub_pattern) -> sub_pattern . COMMA nsepseq(sub_pattern,COMMA) [ ARROW ]
 ##
@@ -2068,7 +2029,7 @@ interactive_expr: Switch WILD LBRACE VBAR LPAR Bytes RPAR WILD
 
 interactive_expr: Switch WILD LBRACE VBAR VBAR
 ##
-## Ends in an error in state: 518.
+## Ends in an error in state: 516.
 ##
 ## case_clause(base_cond) -> VBAR . pattern ARROW base_cond option(SEMI) [ VBAR RBRACE ]
 ##
@@ -2080,7 +2041,7 @@ interactive_expr: Switch WILD LBRACE VBAR VBAR
 
 interactive_expr: Switch WILD LBRACE VBAR WILD ARROW Bytes SEMI WILD
 ##
-## Ends in an error in state: 526.
+## Ends in an error in state: 524.
 ##
 ## nseq(case_clause(base_cond)) -> case_clause(base_cond) . seq(case_clause(base_cond)) [ RBRACE ]
 ##
@@ -2092,7 +2053,7 @@ interactive_expr: Switch WILD LBRACE VBAR WILD ARROW Bytes SEMI WILD
 
 interactive_expr: Switch WILD LBRACE VBAR WILD ARROW Bytes VBAR Bytes ARROW Bytes SEMI WILD
 ##
-## Ends in an error in state: 528.
+## Ends in an error in state: 526.
 ##
 ## seq(case_clause(base_cond)) -> case_clause(base_cond) . seq(case_clause(base_cond)) [ RBRACE ]
 ##
@@ -2104,7 +2065,7 @@ interactive_expr: Switch WILD LBRACE VBAR WILD ARROW Bytes VBAR Bytes ARROW Byte
 
 interactive_expr: Switch WILD LBRACE VBAR WILD ARROW VBAR
 ##
-## Ends in an error in state: 520.
+## Ends in an error in state: 518.
 ##
 ## case_clause(base_cond) -> VBAR pattern ARROW . base_cond option(SEMI) [ VBAR RBRACE ]
 ##
@@ -2116,7 +2077,7 @@ interactive_expr: Switch WILD LBRACE VBAR WILD ARROW VBAR
 
 interactive_expr: Switch WILD LBRACE VBAR WILD ARROW WILD Type
 ##
-## Ends in an error in state: 521.
+## Ends in an error in state: 519.
 ##
 ## case_clause(base_cond) -> VBAR pattern ARROW base_cond . option(SEMI) [ VBAR RBRACE ]
 ##
@@ -2127,25 +2088,25 @@ interactive_expr: Switch WILD LBRACE VBAR WILD ARROW WILD Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: Switch WILD LBRACE VBAR WILD COMMA Bytes RPAR
 ##
-## Ends in an error in state: 519.
+## Ends in an error in state: 517.
 ##
 ## case_clause(base_cond) -> VBAR pattern . ARROW base_cond option(SEMI) [ VBAR RBRACE ]
 ##
@@ -2156,9 +2117,9 @@ interactive_expr: Switch WILD LBRACE VBAR WILD COMMA Bytes RPAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 137, spurious reduction of production nsepseq(sub_pattern,COMMA) -> sub_pattern
-## In state 140, spurious reduction of production tuple(sub_pattern) -> sub_pattern COMMA nsepseq(sub_pattern,COMMA)
-## In state 390, spurious reduction of production pattern -> tuple(sub_pattern)
+## In state 137, spurious reduction of production nsepseq(sub_pattern,COMMA) -> sub_pattern 
+## In state 140, spurious reduction of production tuple(sub_pattern) -> sub_pattern COMMA nsepseq(sub_pattern,COMMA) 
+## In state 388, spurious reduction of production pattern -> tuple(sub_pattern) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -2202,7 +2163,7 @@ interactive_expr: Switch WILD LBRACE VBAR WILD COMMA WILD WILD
 
 interactive_expr: Switch WILD LBRACE VBAR WILD WILD
 ##
-## Ends in an error in state: 437.
+## Ends in an error in state: 435.
 ##
 ## pattern -> core_pattern . [ ARROW ]
 ## sub_pattern -> core_pattern . [ COMMA ]
@@ -2215,7 +2176,7 @@ interactive_expr: Switch WILD LBRACE VBAR WILD WILD
 
 interactive_expr: Switch WILD LBRACE WILD
 ##
-## Ends in an error in state: 517.
+## Ends in an error in state: 515.
 ##
 ## switch_expr(base_cond) -> Switch switch_expr_ LBRACE . cases(base_cond) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
 ##
@@ -2227,7 +2188,7 @@ interactive_expr: Switch WILD LBRACE WILD
 
 interactive_expr: Switch WILD WILD
 ##
-## Ends in an error in state: 516.
+## Ends in an error in state: 514.
 ##
 ## switch_expr(base_cond) -> Switch switch_expr_ . LBRACE cases(base_cond) RBRACE [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
 ##
@@ -2239,7 +2200,7 @@ interactive_expr: Switch WILD WILD
 
 interactive_expr: VBAR
 ##
-## Ends in an error in state: 540.
+## Ends in an error in state: 538.
 ##
 ## interactive_expr' -> . interactive_expr [ # ]
 ##
@@ -2251,7 +2212,7 @@ interactive_expr: VBAR
 
 interactive_expr: WILD ARROW VBAR
 ##
-## Ends in an error in state: 326.
+## Ends in an error in state: 327.
 ##
 ## fun_expr(expr) -> disj_expr_level ARROW . expr [ VBAR Type SEMI RPAR RBRACKET RBRACE Let EOF COMMA Attr ]
 ##
@@ -2263,7 +2224,7 @@ interactive_expr: WILD ARROW VBAR
 
 interactive_expr: WILD BOOL_AND VBAR
 ##
-## Ends in an error in state: 280.
+## Ends in an error in state: 281.
 ##
 ## bin_op(conj_expr_level,BOOL_AND,comp_expr_level) -> conj_expr_level BOOL_AND . comp_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or Let EOF COMMA BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -2275,7 +2236,7 @@ interactive_expr: WILD BOOL_AND VBAR
 
 interactive_expr: WILD BOOL_OR VBAR
 ##
-## Ends in an error in state: 324.
+## Ends in an error in state: 325.
 ##
 ## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level BOOL_OR . conj_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or Let EOF COMMA BOOL_OR Attr ARROW ]
 ##
@@ -2287,7 +2248,7 @@ interactive_expr: WILD BOOL_OR VBAR
 
 interactive_expr: WILD CAT VBAR
 ##
-## Ends in an error in state: 303.
+## Ends in an error in state: 304.
 ##
 ## bin_op(add_expr_level,CAT,cat_expr_level) -> add_expr_level CAT . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Let LT LE GT GE EQEQ EOF COMMA BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -2299,7 +2260,7 @@ interactive_expr: WILD CAT VBAR
 
 interactive_expr: WILD COLON Ident LPAR Ident COMMA WILD
 ##
-## Ends in an error in state: 242.
+## Ends in an error in state: 243.
 ##
 ## nsepseq(type_expr_simple,COMMA) -> type_expr_simple COMMA . nsepseq(type_expr_simple,COMMA) [ RPAR ]
 ##
@@ -2311,7 +2272,7 @@ interactive_expr: WILD COLON Ident LPAR Ident COMMA WILD
 
 interactive_expr: WILD COLON Ident LPAR Ident VBAR
 ##
-## Ends in an error in state: 241.
+## Ends in an error in state: 242.
 ##
 ## nsepseq(type_expr_simple,COMMA) -> type_expr_simple . [ RPAR ]
 ## nsepseq(type_expr_simple,COMMA) -> type_expr_simple . COMMA nsepseq(type_expr_simple,COMMA) [ RPAR ]
@@ -2323,15 +2284,15 @@ interactive_expr: WILD COLON Ident LPAR Ident VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 239, spurious reduction of production option(type_expr_simple_args) ->
-## In state 250, spurious reduction of production type_expr_simple -> Ident option(type_expr_simple_args)
+## In state 240, spurious reduction of production option(type_expr_simple_args) -> 
+## In state 251, spurious reduction of production type_expr_simple -> Ident option(type_expr_simple_args) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: WILD COLON Ident LPAR WILD
 ##
-## Ends in an error in state: 240.
+## Ends in an error in state: 241.
 ##
 ## par(nsepseq(type_expr_simple,COMMA)) -> LPAR . nsepseq(type_expr_simple,COMMA) RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -2343,7 +2304,7 @@ interactive_expr: WILD COLON Ident LPAR WILD
 
 interactive_expr: WILD COLON Ident WILD
 ##
-## Ends in an error in state: 239.
+## Ends in an error in state: 240.
 ##
 ## type_expr_simple -> Ident . option(type_expr_simple_args) [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -2355,7 +2316,7 @@ interactive_expr: WILD COLON Ident WILD
 
 interactive_expr: WILD COLON LPAR Ident ARROW Ident VBAR
 ##
-## Ends in an error in state: 256.
+## Ends in an error in state: 257.
 ##
 ## type_expr_simple -> LPAR type_expr_simple ARROW type_expr_simple . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -2366,15 +2327,15 @@ interactive_expr: WILD COLON LPAR Ident ARROW Ident VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 239, spurious reduction of production option(type_expr_simple_args) ->
-## In state 250, spurious reduction of production type_expr_simple -> Ident option(type_expr_simple_args)
+## In state 240, spurious reduction of production option(type_expr_simple_args) -> 
+## In state 251, spurious reduction of production type_expr_simple -> Ident option(type_expr_simple_args) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: WILD COLON LPAR Ident ARROW WILD
 ##
-## Ends in an error in state: 255.
+## Ends in an error in state: 256.
 ##
 ## type_expr_simple -> LPAR type_expr_simple ARROW . type_expr_simple RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -2386,7 +2347,7 @@ interactive_expr: WILD COLON LPAR Ident ARROW WILD
 
 interactive_expr: WILD COLON LPAR Ident COMMA WILD
 ##
-## Ends in an error in state: 253.
+## Ends in an error in state: 254.
 ##
 ## tuple(type_expr_simple) -> type_expr_simple COMMA . nsepseq(type_expr_simple,COMMA) [ RPAR ]
 ##
@@ -2398,7 +2359,7 @@ interactive_expr: WILD COLON LPAR Ident COMMA WILD
 
 interactive_expr: WILD COLON LPAR Ident RPAR WILD
 ##
-## Ends in an error in state: 263.
+## Ends in an error in state: 264.
 ##
 ## add_expr_level -> mult_expr_level . [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
 ## bin_op(mult_expr_level,Mod,unary_expr_level) -> mult_expr_level . Mod unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
@@ -2413,7 +2374,7 @@ interactive_expr: WILD COLON LPAR Ident RPAR WILD
 
 interactive_expr: WILD COLON LPAR Ident VBAR
 ##
-## Ends in an error in state: 251.
+## Ends in an error in state: 252.
 ##
 ## par(type_expr_simple) -> LPAR type_expr_simple . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
 ## tuple(type_expr_simple) -> type_expr_simple . COMMA nsepseq(type_expr_simple,COMMA) [ RPAR ]
@@ -2426,15 +2387,15 @@ interactive_expr: WILD COLON LPAR Ident VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 239, spurious reduction of production option(type_expr_simple_args) ->
-## In state 250, spurious reduction of production type_expr_simple -> Ident option(type_expr_simple_args)
+## In state 240, spurious reduction of production option(type_expr_simple_args) -> 
+## In state 251, spurious reduction of production type_expr_simple -> Ident option(type_expr_simple_args) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: WILD COLON LPAR WILD
 ##
-## Ends in an error in state: 238.
+## Ends in an error in state: 239.
 ##
 ## par(tuple(type_expr_simple)) -> LPAR . tuple(type_expr_simple) RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
 ## par(type_expr_simple) -> LPAR . type_expr_simple RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
@@ -2448,7 +2409,7 @@ interactive_expr: WILD COLON LPAR WILD
 
 interactive_expr: WILD COLON WILD
 ##
-## Ends in an error in state: 237.
+## Ends in an error in state: 238.
 ##
 ## type_annotation_simple -> COLON . type_expr_simple [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -2460,7 +2421,7 @@ interactive_expr: WILD COLON WILD
 
 interactive_expr: WILD EQEQ VBAR
 ##
-## Ends in an error in state: 313.
+## Ends in an error in state: 314.
 ##
 ## bin_op(comp_expr_level,EQEQ,cat_expr_level) -> comp_expr_level EQEQ . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Let LT LE GT GE EQEQ EOF COMMA BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -2472,7 +2433,7 @@ interactive_expr: WILD EQEQ VBAR
 
 interactive_expr: WILD GE VBAR
 ##
-## Ends in an error in state: 311.
+## Ends in an error in state: 312.
 ##
 ## bin_op(comp_expr_level,GE,cat_expr_level) -> comp_expr_level GE . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Let LT LE GT GE EQEQ EOF COMMA BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -2484,7 +2445,7 @@ interactive_expr: WILD GE VBAR
 
 interactive_expr: WILD GT VBAR
 ##
-## Ends in an error in state: 309.
+## Ends in an error in state: 310.
 ##
 ## bin_op(comp_expr_level,GT,cat_expr_level) -> comp_expr_level GT . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Let LT LE GT GE EQEQ EOF COMMA BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -2496,7 +2457,7 @@ interactive_expr: WILD GT VBAR
 
 interactive_expr: WILD LE VBAR
 ##
-## Ends in an error in state: 307.
+## Ends in an error in state: 308.
 ##
 ## bin_op(comp_expr_level,LE,cat_expr_level) -> comp_expr_level LE . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Let LT LE GT GE EQEQ EOF COMMA BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -2508,7 +2469,7 @@ interactive_expr: WILD LE VBAR
 
 interactive_expr: WILD LPAR VBAR
 ##
-## Ends in an error in state: 267.
+## Ends in an error in state: 268.
 ##
 ## par(nsepseq(expr,COMMA)) -> LPAR . nsepseq(expr,COMMA) RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
 ## unit -> LPAR . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
@@ -2521,7 +2482,7 @@ interactive_expr: WILD LPAR VBAR
 
 interactive_expr: WILD LPAR WILD COMMA VBAR
 ##
-## Ends in an error in state: 274.
+## Ends in an error in state: 275.
 ##
 ## nsepseq(expr,COMMA) -> expr COMMA . nsepseq(expr,COMMA) [ RPAR ]
 ##
@@ -2533,7 +2494,7 @@ interactive_expr: WILD LPAR WILD COMMA VBAR
 
 interactive_expr: WILD LPAR WILD VBAR
 ##
-## Ends in an error in state: 273.
+## Ends in an error in state: 274.
 ##
 ## nsepseq(expr,COMMA) -> expr . [ RPAR ]
 ## nsepseq(expr,COMMA) -> expr . COMMA nsepseq(expr,COMMA) [ RPAR ]
@@ -2545,26 +2506,26 @@ interactive_expr: WILD LPAR WILD VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: WILD LT VBAR
 ##
-## Ends in an error in state: 305.
+## Ends in an error in state: 306.
 ##
 ## bin_op(comp_expr_level,LT,cat_expr_level) -> comp_expr_level LT . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Let LT LE GT GE EQEQ EOF COMMA BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -2576,7 +2537,7 @@ interactive_expr: WILD LT VBAR
 
 interactive_expr: WILD MINUS VBAR
 ##
-## Ends in an error in state: 301.
+## Ends in an error in state: 302.
 ##
 ## bin_op(add_expr_level,MINUS,mult_expr_level) -> add_expr_level MINUS . mult_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -2588,7 +2549,7 @@ interactive_expr: WILD MINUS VBAR
 
 interactive_expr: WILD MINUS WILD COLON LPAR Ident RPAR WILD
 ##
-## Ends in an error in state: 302.
+## Ends in an error in state: 303.
 ##
 ## bin_op(add_expr_level,MINUS,mult_expr_level) -> add_expr_level MINUS mult_expr_level . [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
 ## bin_op(mult_expr_level,Mod,unary_expr_level) -> mult_expr_level . Mod unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
@@ -2603,7 +2564,7 @@ interactive_expr: WILD MINUS WILD COLON LPAR Ident RPAR WILD
 
 interactive_expr: WILD Mod VBAR
 ##
-## Ends in an error in state: 299.
+## Ends in an error in state: 300.
 ##
 ## bin_op(mult_expr_level,Mod,unary_expr_level) -> mult_expr_level Mod . unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -2615,7 +2576,7 @@ interactive_expr: WILD Mod VBAR
 
 interactive_expr: WILD NE VBAR
 ##
-## Ends in an error in state: 282.
+## Ends in an error in state: 283.
 ##
 ## bin_op(comp_expr_level,NE,cat_expr_level) -> comp_expr_level NE . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Let LT LE GT GE EQEQ EOF COMMA BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -2627,7 +2588,7 @@ interactive_expr: WILD NE VBAR
 
 interactive_expr: WILD Or VBAR
 ##
-## Ends in an error in state: 277.
+## Ends in an error in state: 278.
 ##
 ## bin_op(disj_expr_level,Or,conj_expr_level) -> disj_expr_level Or . conj_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or Let EOF COMMA BOOL_OR Attr ARROW ]
 ##
@@ -2639,7 +2600,7 @@ interactive_expr: WILD Or VBAR
 
 interactive_expr: WILD PLUS VBAR
 ##
-## Ends in an error in state: 295.
+## Ends in an error in state: 296.
 ##
 ## bin_op(add_expr_level,PLUS,mult_expr_level) -> add_expr_level PLUS . mult_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -2651,7 +2612,7 @@ interactive_expr: WILD PLUS VBAR
 
 interactive_expr: WILD PLUS WILD COLON LPAR Ident RPAR WILD
 ##
-## Ends in an error in state: 296.
+## Ends in an error in state: 297.
 ##
 ## bin_op(add_expr_level,PLUS,mult_expr_level) -> add_expr_level PLUS mult_expr_level . [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
 ## bin_op(mult_expr_level,Mod,unary_expr_level) -> mult_expr_level . Mod unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
@@ -2666,7 +2627,7 @@ interactive_expr: WILD PLUS WILD COLON LPAR Ident RPAR WILD
 
 interactive_expr: WILD SLASH VBAR
 ##
-## Ends in an error in state: 297.
+## Ends in an error in state: 298.
 ##
 ## bin_op(mult_expr_level,SLASH,unary_expr_level) -> mult_expr_level SLASH . unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -2678,7 +2639,7 @@ interactive_expr: WILD SLASH VBAR
 
 interactive_expr: WILD TIMES VBAR
 ##
-## Ends in an error in state: 264.
+## Ends in an error in state: 265.
 ##
 ## bin_op(mult_expr_level,TIMES,unary_expr_level) -> mult_expr_level TIMES . unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
 ##
@@ -2690,7 +2651,7 @@ interactive_expr: WILD TIMES VBAR
 
 interactive_expr: WILD VBAR
 ##
-## Ends in an error in state: 542.
+## Ends in an error in state: 540.
 ##
 ## interactive_expr -> expr_with_let_expr . EOF [ # ]
 ##
@@ -2701,27 +2662,27 @@ interactive_expr: WILD VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
-## In state 408, spurious reduction of production expr_with_let_expr -> expr
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
+## In state 406, spurious reduction of production expr_with_let_expr -> expr 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: WILD WILD
 ##
-## Ends in an error in state: 266.
+## Ends in an error in state: 267.
 ##
 ## call_expr -> core_expr . par(nsepseq(expr,COMMA)) [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
 ## call_expr -> core_expr . unit [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
@@ -2747,8 +2708,8 @@ contract: Attr LBRACE
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 33, spurious reduction of production seq(Attr) ->
-## In state 34, spurious reduction of production seq(Attr) -> Attr seq(Attr)
+## In state 33, spurious reduction of production seq(Attr) -> 
+## In state 34, spurious reduction of production seq(Attr) -> Attr seq(Attr) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -2986,9 +2947,9 @@ contract: Let LPAR Constr LPAR WILD COMMA Bytes ARROW
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 137, spurious reduction of production nsepseq(sub_pattern,COMMA) -> sub_pattern
-## In state 140, spurious reduction of production tuple(sub_pattern) -> sub_pattern COMMA nsepseq(sub_pattern,COMMA)
-## In state 133, spurious reduction of production ptuple -> tuple(sub_pattern)
+## In state 137, spurious reduction of production nsepseq(sub_pattern,COMMA) -> sub_pattern 
+## In state 140, spurious reduction of production tuple(sub_pattern) -> sub_pattern COMMA nsepseq(sub_pattern,COMMA) 
+## In state 133, spurious reduction of production ptuple -> tuple(sub_pattern) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3083,9 +3044,9 @@ contract: Let LPAR WILD COMMA Ident EQ
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 161, spurious reduction of production nsepseq(sub_irrefutable,COMMA) -> sub_irrefutable
-## In state 166, spurious reduction of production tuple(sub_irrefutable) -> sub_irrefutable COMMA nsepseq(sub_irrefutable,COMMA)
-## In state 158, spurious reduction of production irrefutable -> tuple(sub_irrefutable)
+## In state 161, spurious reduction of production nsepseq(sub_irrefutable,COMMA) -> sub_irrefutable 
+## In state 166, spurious reduction of production tuple(sub_irrefutable) -> sub_irrefutable COMMA nsepseq(sub_irrefutable,COMMA) 
+## In state 158, spurious reduction of production irrefutable -> tuple(sub_irrefutable) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3166,10 +3127,10 @@ contract: Let WILD COLON WILD Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 24, spurious reduction of production fun_type -> cartesian
-## In state 62, spurious reduction of production type_expr -> fun_type
-## In state 181, spurious reduction of production type_annotation -> COLON type_expr
-## In state 182, spurious reduction of production option(type_annotation) -> type_annotation
+## In state 24, spurious reduction of production fun_type -> cartesian 
+## In state 62, spurious reduction of production type_expr -> fun_type 
+## In state 181, spurious reduction of production type_annotation -> COLON type_expr 
+## In state 182, spurious reduction of production option(type_annotation) -> type_annotation 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3187,9 +3148,9 @@ contract: Let WILD COMMA Ident RPAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 161, spurious reduction of production nsepseq(sub_irrefutable,COMMA) -> sub_irrefutable
-## In state 166, spurious reduction of production tuple(sub_irrefutable) -> sub_irrefutable COMMA nsepseq(sub_irrefutable,COMMA)
-## In state 175, spurious reduction of production let_pattern_simple -> tuple(sub_irrefutable)
+## In state 161, spurious reduction of production nsepseq(sub_irrefutable,COMMA) -> sub_irrefutable 
+## In state 166, spurious reduction of production tuple(sub_irrefutable) -> sub_irrefutable COMMA nsepseq(sub_irrefutable,COMMA) 
+## In state 175, spurious reduction of production let_pattern_simple -> tuple(sub_irrefutable) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3233,7 +3194,7 @@ contract: Let WILD COMMA WILD WILD
 
 contract: Let WILD EQ Bytes VBAR
 ##
-## Ends in an error in state: 533.
+## Ends in an error in state: 531.
 ##
 ## declaration -> let_declaration . option(SEMI) [ Type Let EOF Attr ]
 ##
@@ -3244,21 +3205,21 @@ contract: Let WILD EQ Bytes VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 266, spurious reduction of production call_expr_level_in -> core_expr
-## In state 284, spurious reduction of production option(type_annotation_simple) ->
-## In state 285, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple)
-## In state 286, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 234, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 263, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 294, spurious reduction of production cat_expr_level -> add_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 276, spurious reduction of production base_expr -> disj_expr_level
-## In state 333, spurious reduction of production base_cond -> base_expr
-## In state 334, spurious reduction of production expr -> base_cond
-## In state 530, spurious reduction of production let_binding -> let_pattern_simple option(type_annotation) EQ expr
-## In state 532, spurious reduction of production let_declaration -> seq(Attr) Let let_binding
+## In state 267, spurious reduction of production call_expr_level_in -> core_expr 
+## In state 285, spurious reduction of production option(type_annotation_simple) -> 
+## In state 286, spurious reduction of production call_expr_level -> call_expr_level_in option(type_annotation_simple) 
+## In state 287, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 235, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 264, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 295, spurious reduction of production cat_expr_level -> add_expr_level 
+## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level 
+## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 277, spurious reduction of production base_expr -> disj_expr_level 
+## In state 334, spurious reduction of production base_cond -> base_expr 
+## In state 335, spurious reduction of production expr -> base_cond 
+## In state 528, spurious reduction of production let_binding -> let_pattern_simple option(type_annotation) EQ expr 
+## In state 530, spurious reduction of production let_declaration -> seq(Attr) Let let_binding 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3306,8 +3267,8 @@ contract: Type Ident EQ Attr Attr Let
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 33, spurious reduction of production seq(Attr) ->
-## In state 34, spurious reduction of production seq(Attr) -> Attr seq(Attr)
+## In state 33, spurious reduction of production seq(Attr) -> 
+## In state 34, spurious reduction of production seq(Attr) -> Attr seq(Attr) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3337,7 +3298,7 @@ contract: Type Ident EQ Attr Constr LPAR WILD Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 24, spurious reduction of production fun_type -> cartesian
+## In state 24, spurious reduction of production fun_type -> cartesian 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3418,7 +3379,7 @@ contract: Type Ident EQ Constr LPAR WILD Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 24, spurious reduction of production fun_type -> cartesian
+## In state 24, spurious reduction of production fun_type -> cartesian 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3436,18 +3397,18 @@ contract: Type Ident EQ Constr RPAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 28, spurious reduction of production variant -> Constr
-## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant
-## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
-## In state 51, spurious reduction of production type_expr -> sum_type
-## In state 84, spurious reduction of production type_decl -> Type Ident EQ type_expr
+## In state 28, spurious reduction of production variant -> Constr 
+## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 51, spurious reduction of production type_expr -> sum_type 
+## In state 84, spurious reduction of production type_decl -> Type Ident EQ type_expr 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Type Ident EQ Constr SEMI WILD
 ##
-## Ends in an error in state: 537.
+## Ends in an error in state: 535.
 ##
 ## declarations -> declaration . [ EOF ]
 ## declarations -> declaration . declarations [ EOF ]
@@ -3534,7 +3495,7 @@ contract: Type Ident EQ Ident LPAR WILD COMMA WILD Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 24, spurious reduction of production fun_type -> cartesian
+## In state 24, spurious reduction of production fun_type -> cartesian 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3553,7 +3514,7 @@ contract: Type Ident EQ Ident LPAR WILD Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 24, spurious reduction of production fun_type -> cartesian
+## In state 24, spurious reduction of production fun_type -> cartesian 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3585,8 +3546,8 @@ contract: Type Ident EQ LBRACE Attr Let
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 33, spurious reduction of production seq(Attr) ->
-## In state 34, spurious reduction of production seq(Attr) -> Attr seq(Attr)
+## In state 33, spurious reduction of production seq(Attr) -> 
+## In state 34, spurious reduction of production seq(Attr) -> Attr seq(Attr) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3695,10 +3656,10 @@ contract: Type Ident EQ LPAR Constr Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 28, spurious reduction of production variant -> Constr
-## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant
-## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
-## In state 51, spurious reduction of production type_expr -> sum_type
+## In state 28, spurious reduction of production variant -> Constr 
+## In state 36, spurious reduction of production nsepseq(variant,VBAR) -> variant 
+## In state 61, spurious reduction of production sum_type -> nsepseq(variant,VBAR) 
+## In state 51, spurious reduction of production type_expr -> sum_type 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3792,9 +3753,9 @@ contract: Type Ident EQ VBAR Attr Attr Let
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 33, spurious reduction of production seq(Attr) ->
-## In state 34, spurious reduction of production seq(Attr) -> Attr seq(Attr)
-## In state 40, spurious reduction of production nseq(Attr) -> Attr seq(Attr)
+## In state 33, spurious reduction of production seq(Attr) -> 
+## In state 34, spurious reduction of production seq(Attr) -> Attr seq(Attr) 
+## In state 40, spurious reduction of production nseq(Attr) -> Attr seq(Attr) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>

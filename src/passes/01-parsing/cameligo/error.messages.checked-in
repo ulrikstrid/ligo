@@ -218,7 +218,7 @@ interactive_expr: With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 611, spurious reduction of production seq(Attr) ->
+## In state 608, spurious reduction of production seq(Attr) ->
 ##
 contract: With
 ##
@@ -1247,7 +1247,7 @@ interactive_expr: Begin Match Verbatim Type
 ##
 interactive_expr: Match Verbatim Type
 ##
-## Ends in an error in state: 592.
+## Ends in an error in state: 589.
 ##
 ## match_expr(base_cond) -> Match expr . With option(VBAR) cases(base_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
 ##
@@ -1402,7 +1402,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD CONS Bytes SEMI
 ##
 interactive_expr: Match Verbatim With WILD CONS Bytes SEMI
 ##
-## Ends in an error in state: 595.
+## Ends in an error in state: 592.
 ##
 ## case_clause(base_cond) -> pattern . ARROW base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
 ##
@@ -1499,7 +1499,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Bytes VBAR Wit
 ##
 interactive_expr: Match Verbatim With VBAR Begin
 ##
-## Ends in an error in state: 594.
+## Ends in an error in state: 591.
 ##
 ## match_expr(base_cond) -> Match expr With option(VBAR) . cases(base_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
 ##
@@ -1508,7 +1508,7 @@ interactive_expr: Match Verbatim With VBAR Begin
 ##
 interactive_expr: Match Verbatim With WILD ARROW Bytes VBAR With
 ##
-## Ends in an error in state: 598.
+## Ends in an error in state: 595.
 ##
 ## cases(base_cond) -> cases(base_cond) VBAR . case_clause(base_cond) [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
 ##
@@ -1517,7 +1517,7 @@ interactive_expr: Match Verbatim With WILD ARROW Bytes VBAR With
 ##
 interactive_expr: Match Verbatim With With
 ##
-## Ends in an error in state: 593.
+## Ends in an error in state: 590.
 ##
 ## match_expr(base_cond) -> Match expr With . option(VBAR) cases(base_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Let In EOF COLON Attr ]
 ##
@@ -1579,17 +1579,7 @@ interactive_expr: Constr DOT With
 ##
 ## Ends in an error in state: 205.
 ##
-## module_field -> Constr DOT . module_fun [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
-## projection -> Constr DOT . Ident DOT nsepseq(selection,DOT) [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
-##
-## The known suffix of the stack is as follows:
-## Constr DOT
-##
-interactive_expr: LBRACE Constr DOT With
-##
-## Ends in an error in state: 541.
-##
-## projection -> Constr DOT . Ident DOT nsepseq(selection,DOT) [ With EQ ]
+## module_access -> Constr DOT . module_var [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Constr DOT
@@ -1650,15 +1640,6 @@ expected:
   * an arrow '->' followed by the function body as an expression, if
     there are no more parameters.
 
-interactive_expr: Constr DOT Ident DOT With
-##
-## Ends in an error in state: 208.
-##
-## projection -> Constr DOT Ident DOT . nsepseq(selection,DOT) [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
-##
-## The known suffix of the stack is as follows:
-## Constr DOT Ident DOT
-##
 interactive_expr: Ident DOT Int DOT With
 ##
 ## Ends in an error in state: 197.
@@ -1765,26 +1746,9 @@ Ill-formed function expression.
 At this point, the first parameter is expected as an irrefutable
 pattern, for example a variable.
 
-interactive_expr: LBRACE Constr DOT Ident With
-##
-## Ends in an error in state: 542.
-##
-## projection -> Constr DOT Ident . DOT nsepseq(selection,DOT) [ With EQ ]
-##
-## The known suffix of the stack is as follows:
-## Constr DOT Ident
-##
-
-Ill-formed selection in a record or a tuple.
-At this point, the selection operator '.' is expected, and one of
-following comes after:
-  * the name of a record field;
-  * the index of a component in a tuple, '0' denoting the first
-    component.
-
 interactive_expr: LBRACE Ident DOT Ident Verbatim
 ##
-## Ends in an error in state: 546.
+## Ends in an error in state: 543.
 ##
 ## update_record -> LBRACE path . With sep_or_term_list(field_path_assignment,SEMI) RBRACE [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
 ##
@@ -1797,7 +1761,7 @@ interactive_expr: LBRACE Ident DOT Ident Verbatim
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 196, spurious reduction of production nsepseq(selection,DOT) -> selection
 ## In state 199, spurious reduction of production projection -> Ident DOT nsepseq(selection,DOT)
-## In state 545, spurious reduction of production path -> projection
+## In state 542, spurious reduction of production path -> projection
 ##
 
 Ill-formed record update.
@@ -1807,7 +1771,7 @@ separated by semicolons ';'.
 
 interactive_expr: LBRACE Ident EQ Bytes SEMI Ident EQ Bytes SEMI With
 ##
-## Ends in an error in state: 571.
+## Ends in an error in state: 568.
 ##
 ## nsepseq(field_assignment,SEMI) -> field_assignment SEMI . nsepseq(field_assignment,SEMI) [ RBRACE ]
 ## seq(__anonymous_0(field_assignment,SEMI)) -> field_assignment SEMI . seq(__anonymous_0(field_assignment,SEMI)) [ RBRACE ]
@@ -1817,7 +1781,7 @@ interactive_expr: LBRACE Ident EQ Bytes SEMI Ident EQ Bytes SEMI With
 ##
 interactive_expr: LBRACE Ident EQ Bytes SEMI With
 ##
-## Ends in an error in state: 566.
+## Ends in an error in state: 563.
 ##
 ## nsepseq(field_assignment,SEMI) -> field_assignment SEMI . nsepseq(field_assignment,SEMI) [ RBRACE ]
 ## nseq(__anonymous_0(field_assignment,SEMI)) -> field_assignment SEMI . seq(__anonymous_0(field_assignment,SEMI)) [ RBRACE ]
@@ -1833,7 +1797,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LBRACE Ident EQ Bytes SEMI Ident EQ Bytes With
 ##
-## Ends in an error in state: 570.
+## Ends in an error in state: 567.
 ##
 ## nsepseq(field_assignment,SEMI) -> field_assignment . [ RBRACE ]
 ## nsepseq(field_assignment,SEMI) -> field_assignment . SEMI nsepseq(field_assignment,SEMI) [ RBRACE ]
@@ -1862,7 +1826,7 @@ interactive_expr: LBRACE Ident EQ Bytes SEMI Ident EQ Bytes With
 ##
 interactive_expr: LBRACE Ident EQ Bytes With
 ##
-## Ends in an error in state: 565.
+## Ends in an error in state: 562.
 ##
 ## nsepseq(field_assignment,SEMI) -> field_assignment . [ RBRACE ]
 ## nsepseq(field_assignment,SEMI) -> field_assignment . SEMI nsepseq(field_assignment,SEMI) [ RBRACE ]
@@ -1898,7 +1862,7 @@ one of the following is expected:
 
 interactive_expr: LBRACE Ident With Ident EQ Bytes SEMI Ident EQ Bytes With
 ##
-## Ends in an error in state: 560.
+## Ends in an error in state: 557.
 ##
 ## nsepseq(field_path_assignment,SEMI) -> field_path_assignment . [ RBRACE ]
 ## nsepseq(field_path_assignment,SEMI) -> field_path_assignment . SEMI nsepseq(field_path_assignment,SEMI) [ RBRACE ]
@@ -1923,11 +1887,11 @@ interactive_expr: LBRACE Ident With Ident EQ Bytes SEMI Ident EQ Bytes With
 ## In state 258, spurious reduction of production base_expr(expr) -> disj_expr_level
 ## In state 312, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
 ## In state 313, spurious reduction of production expr -> base_cond__open(expr)
-## In state 553, spurious reduction of production field_path_assignment -> path EQ expr
+## In state 550, spurious reduction of production field_path_assignment -> path EQ expr
 ##
 interactive_expr: LBRACE Ident With Ident EQ Bytes With
 ##
-## Ends in an error in state: 556.
+## Ends in an error in state: 553.
 ##
 ## nsepseq(field_path_assignment,SEMI) -> field_path_assignment . [ RBRACE ]
 ## nsepseq(field_path_assignment,SEMI) -> field_path_assignment . SEMI nsepseq(field_path_assignment,SEMI) [ RBRACE ]
@@ -1952,7 +1916,7 @@ interactive_expr: LBRACE Ident With Ident EQ Bytes With
 ## In state 258, spurious reduction of production base_expr(expr) -> disj_expr_level
 ## In state 312, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
 ## In state 313, spurious reduction of production expr -> base_cond__open(expr)
-## In state 553, spurious reduction of production field_path_assignment -> path EQ expr
+## In state 550, spurious reduction of production field_path_assignment -> path EQ expr
 ##
 
 Ill-formed record update.
@@ -1963,7 +1927,7 @@ complete, one of the following is expected:
 
 interactive_expr: LBRACE Ident EQ Bytes SEMI Ident With
 ##
-## Ends in an error in state: 567.
+## Ends in an error in state: 564.
 ##
 ## field_assignment -> Ident . EQ expr [ SEMI RBRACE ]
 ##
@@ -1997,7 +1961,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LBRACE Ident With Ident DOT Ident With
 ##
-## Ends in an error in state: 551.
+## Ends in an error in state: 548.
 ##
 ## field_path_assignment -> path . EQ expr [ SEMI RBRACE ]
 ##
@@ -2010,7 +1974,7 @@ interactive_expr: LBRACE Ident With Ident DOT Ident With
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 196, spurious reduction of production nsepseq(selection,DOT) -> selection
 ## In state 199, spurious reduction of production projection -> Ident DOT nsepseq(selection,DOT)
-## In state 545, spurious reduction of production path -> projection
+## In state 542, spurious reduction of production path -> projection
 ##
 
 Ill-formed record update.
@@ -2019,7 +1983,7 @@ expression (update).
 
 interactive_expr: LBRACE Ident With Ident EQ Bytes SEMI Ident EQ Bytes SEMI With
 ##
-## Ends in an error in state: 561.
+## Ends in an error in state: 558.
 ##
 ## nsepseq(field_path_assignment,SEMI) -> field_path_assignment SEMI . nsepseq(field_path_assignment,SEMI) [ RBRACE ]
 ## seq(__anonymous_0(field_path_assignment,SEMI)) -> field_path_assignment SEMI . seq(__anonymous_0(field_path_assignment,SEMI)) [ RBRACE ]
@@ -2029,7 +1993,7 @@ interactive_expr: LBRACE Ident With Ident EQ Bytes SEMI Ident EQ Bytes SEMI With
 ##
 interactive_expr: LBRACE Ident With Ident EQ Bytes SEMI With
 ##
-## Ends in an error in state: 557.
+## Ends in an error in state: 554.
 ##
 ## nsepseq(field_path_assignment,SEMI) -> field_path_assignment SEMI . nsepseq(field_path_assignment,SEMI) [ RBRACE ]
 ## nseq(__anonymous_0(field_path_assignment,SEMI)) -> field_path_assignment SEMI . seq(__anonymous_0(field_path_assignment,SEMI)) [ RBRACE ]
@@ -2045,7 +2009,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LBRACE Ident With Ident With
 ##
-## Ends in an error in state: 548.
+## Ends in an error in state: 545.
 ##
 ## path -> Ident . [ EQ ]
 ## projection -> Ident . DOT nsepseq(selection,DOT) [ EQ ]
@@ -2062,7 +2026,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LBRACE Ident With With
 ##
-## Ends in an error in state: 547.
+## Ends in an error in state: 544.
 ##
 ## update_record -> LBRACE path With . sep_or_term_list(field_path_assignment,SEMI) RBRACE [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
 ##
@@ -2092,7 +2056,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LBRACKET Verbatim SEMI Verbatim With
 ##
-## Ends in an error in state: 582.
+## Ends in an error in state: 579.
 ##
 ## nsepseq(expr,SEMI) -> expr . [ RBRACKET ]
 ## nsepseq(expr,SEMI) -> expr . SEMI nsepseq(expr,SEMI) [ RBRACKET ]
@@ -2120,7 +2084,7 @@ interactive_expr: LBRACKET Verbatim SEMI Verbatim With
 ##
 interactive_expr: LBRACKET Verbatim With
 ##
-## Ends in an error in state: 578.
+## Ends in an error in state: 575.
 ##
 ## nsepseq(expr,SEMI) -> expr . [ RBRACKET ]
 ## nsepseq(expr,SEMI) -> expr . SEMI nsepseq(expr,SEMI) [ RBRACKET ]
@@ -2170,7 +2134,7 @@ At this point, one of the following is expected:
 
 interactive_expr: LPAR Verbatim COLON Ident VBAR
 ##
-## Ends in an error in state: 589.
+## Ends in an error in state: 586.
 ##
 ## par(annot_expr) -> LPAR annot_expr . RPAR [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
 ##
@@ -2184,7 +2148,7 @@ interactive_expr: LPAR Verbatim COLON Ident VBAR
 ## In state 18, spurious reduction of production cartesian -> core_type
 ## In state 25, spurious reduction of production fun_type -> cartesian
 ## In state 58, spurious reduction of production type_expr -> fun_type
-## In state 588, spurious reduction of production annot_expr -> expr COLON type_expr
+## In state 585, spurious reduction of production annot_expr -> expr COLON type_expr
 ##
 
 Ill-formed annotated expression.
@@ -2218,7 +2182,7 @@ following is expected:
 
 interactive_expr: LPAR Verbatim With
 ##
-## Ends in an error in state: 585.
+## Ends in an error in state: 582.
 ##
 ## annot_expr -> expr . COLON type_expr [ RPAR ]
 ## par(expr) -> LPAR expr . RPAR [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
@@ -2253,7 +2217,7 @@ expected:
 
 interactive_expr: Lang Verbatim With
 ##
-## Ends in an error in state: 599.
+## Ends in an error in state: 596.
 ##
 ## code_inj -> Lang expr . RBRACKET [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
 ##
@@ -2509,19 +2473,9 @@ parentheses around what you think is the expression.
 
 interactive_expr: Verbatim Constr With
 ##
-## Ends in an error in state: 211.
+## Ends in an error in state: 208.
 ##
-## module_field -> Constr . DOT module_fun [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
-## projection -> Constr . DOT Ident DOT nsepseq(selection,DOT) [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
-##
-## The known suffix of the stack is as follows:
-## Constr
-##
-interactive_expr: LBRACE Constr With
-##
-## Ends in an error in state: 540.
-##
-## projection -> Constr . DOT Ident DOT nsepseq(selection,DOT) [ With EQ ]
+## module_access -> Constr . DOT module_var [ With Verbatim VBAR Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Constr CONS COMMA COLON CAT Bytes Begin BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Constr
@@ -2645,7 +2599,7 @@ parentheses around what you think is the expression.
 
 interactive_expr: Ident WILD
 ##
-## Ends in an error in state: 613.
+## Ends in an error in state: 610.
 ##
 ## interactive_expr -> expr . EOF [ # ]
 ##
@@ -3323,7 +3277,7 @@ contract: Type Ident EQ String TIMES With
 Ill-formed product type.
 At this point, one of the following type expressions is expected:
   * a type name;
-  * a selection of a type defined in a module, for example 'M.t';
+  * the selection of a type defined in a module, for example 'M.t';
   * an instantiation of a parametric type, for example 'int list' or
     '(int, string) map';
   * a parenthesised type expression.

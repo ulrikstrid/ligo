@@ -112,6 +112,7 @@ type eof = Region.t
 (* Literals *)
 
 type variable    = string reg
+type module_name = string reg
 type fun_name    = string reg
 type type_name   = string reg
 type type_constr = string reg
@@ -191,6 +192,7 @@ and type_expr =
 | TVar    of variable
 | TWild   of wild
 | TString of lexeme reg
+| TModA   of type_expr module_access reg
 
 and sum_type = {
   lead_vbar  : vbar option;
@@ -470,6 +472,7 @@ and expr =
 | EConstr  of constr_expr
 | ERecord  of record reg
 | EProj    of projection reg
+| EModA    of expr module_access reg
 | EUpdate  of update reg
 | EMap     of map_expr
 | EVar     of lexeme reg
@@ -565,6 +568,12 @@ and field_assignment = {
 }
 
 and record = field_assignment reg ne_injection
+
+and 'a module_access = {
+  module_name : module_name;
+  selector    : dot;
+  field       : 'a;
+}
 
 and projection = {
   struct_name : variable;
@@ -684,6 +693,7 @@ let type_expr_to_region = function
 | TString {region; _}
 | TVar    {region; _}
 | TWild    region
+| TModA   {region; _}
  -> region
 
 let rec expr_to_region = function
@@ -699,6 +709,7 @@ let rec expr_to_region = function
 | ETuple  e -> tuple_expr_to_region e
 | EUpdate  {region; _}
 | EProj    {region; _}
+| EModA    {region; _}
 | EVar     {region; _}
 | ECall    {region; _}
 | EBytes   {region; _}
