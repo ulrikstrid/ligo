@@ -18,7 +18,7 @@ let pseq_to_list = function
   | Some lst -> npseq_to_list lst
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
-let build_ins = ["Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout"]
+let build_ins = ["Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"Bitwise";"String";"Layout";"Test"]
   @ ["Michelson";"Loop";"Current"]
 
 open Predefined.Tree_abstraction.Cameligo
