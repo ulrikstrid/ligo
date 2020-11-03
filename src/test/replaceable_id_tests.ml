@@ -8,11 +8,12 @@ let get_program =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program = type_file "./contracts/replaceable_id.ligo" in
-        s := Some program ;
-        ok program
-      )
-
+      let options = Compiler_options.make () in
+      let%bind program = type_file ~options "./contracts/replaceable_id.ligo" in
+      s := Some program ;
+      ok program
+    )
+      
 let compile_main () =
   let%bind typed_prg,_,_   = get_program () in
   let%bind mini_c_prg      = Ligo.Compile.Of_typed.compile typed_prg in

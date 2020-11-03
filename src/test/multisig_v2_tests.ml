@@ -9,10 +9,10 @@ let get_program =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program = type_file "./contracts/multisig-v2.ligo" in
-        s := Some program ;
-        ok program
-      )
+      let%bind program = type_file ~options "./contracts/multisig-v2.ligo" in
+      s := Some program ;
+      ok program
+    )
 
 let compile_main () =
   let%bind typed_prg,_,_ = get_program () in

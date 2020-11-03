@@ -2,7 +2,8 @@ open Trace
 open Main_errors
 open Test_helpers
 
-let type_file f = Ligo.Compile.Utils.type_file f "pascaligo" (Contract "main")
+let type_file f =
+  Ligo.Compile.Utils.type_file  ~options f "pascaligo" (Contract "main")
 
 let get_program =
   let s = ref None in

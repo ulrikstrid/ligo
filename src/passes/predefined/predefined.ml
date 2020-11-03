@@ -10,12 +10,10 @@
 module Tree_abstraction = struct
 
   open Ast_imperative
-
+  
   module type Constant = sig
     val constants      : string -> rich_constant option
-    val type_constants : string -> type_constant option
     val constant_to_string      : rich_constant -> string
-    val type_constant_to_string : type_constant -> string
   end
 
   let some_const c = Some (Const c)
@@ -41,62 +39,6 @@ module Tree_abstraction = struct
     - The left-hand-side is the reserved name in the given front-end.
     - The right-hand-side is the name that will be used in the AST.
   *)
-  let type_constants s =
-    match s with
-      "chain_id"  -> Some TC_chain_id
-    | "unit"      -> Some TC_unit
-    | "string"    -> Some TC_string
-    | "bytes"     -> Some TC_bytes
-    | "nat"       -> Some TC_nat
-    | "int"       -> Some TC_int
-    | "tez"       -> Some TC_mutez
-    | "operation" -> Some TC_operation
-    | "address"   -> Some TC_address
-    | "key"       -> Some TC_key
-    | "key_hash"  -> Some TC_key_hash
-    | "signature" -> Some TC_signature
-    | "timestamp" -> Some TC_timestamp
-    | "list"                      -> Some (TC_list)
-    | "option"                    -> Some (TC_option)
-    | "set"                       -> Some (TC_set)
-    | "map"                       -> Some (TC_map)
-    | "big_map"                   -> Some (TC_big_map)
-    | "contract"                  -> Some (TC_contract)
-    | "michelson_pair_right_comb" -> Some (TC_michelson_pair_right_comb)
-    | "michelson_pair_left_comb"  -> Some (TC_michelson_pair_left_comb)
-    | "michelson_or_right_comb"   -> Some (TC_michelson_or_right_comb)
-    | "michelson_or_left_comb"    -> Some (TC_michelson_or_left_comb)
-    | _                           -> None
-
-  let type_constant_to_string tc =
-    match tc with
-      TC_chain_id  -> "chain_id"
-    | TC_unit      -> "unit"
-    | TC_string    -> "string"
-    | TC_bytes     -> "bytes"
-    | TC_nat       -> "nat"
-    | TC_int       -> "int"
-    | TC_mutez     -> "tez"
-    | TC_operation -> "operation"
-    | TC_address   -> "address"
-    | TC_key       -> "key"
-    | TC_key_hash  -> "key_hash"
-    | TC_signature -> "signature"
-    | TC_timestamp -> "timestamp"
-    | TC_list -> "list"
-    | TC_option -> "option"
-    | TC_set -> "set"
-    | TC_map -> "map"
-    | TC_big_map -> "big_map"
-    | TC_contract -> "contract"
-    | TC_michelson_pair -> "michelson_pair"
-    | TC_michelson_or -> "michelson_or"
-    | TC_michelson_pair_right_comb -> "michelson_pair_right_comb"
-    | TC_michelson_pair_left_comb -> "michelson_pair_left_comb"
-    | TC_michelson_or_right_comb -> "michelson_or_right_comb"
-    | TC_michelson_or_left_comb -> "michelson_or_left_comb"
-    | TC_map_or_big_map -> "map_or_big_map"
-
   let pseudo_modules x =
     match x with
     | "Tezos.chain_id"           -> some_const C_CHAIN_ID
@@ -198,6 +140,18 @@ module Tree_abstraction = struct
     | "Layout.convert_to_left_comb" -> some_const C_CONVERT_TO_LEFT_COMB
     | "Layout.convert_from_right_comb" -> some_const C_CONVERT_FROM_RIGHT_COMB
     | "Layout.convert_from_left_comb" -> some_const C_CONVERT_FROM_LEFT_COMB
+
+    (* Testing module *)
+
+    | "Test.originate" -> some_const C_TEST_ORIGINATE
+    | "Test.set_now" -> some_const C_TEST_SET_NOW
+    | "Test.set_source" -> some_const C_TEST_SET_SOURCE
+    | "Test.set_balance" -> some_const C_TEST_SET_BALANCE
+    | "Test.external_call" -> some_const C_TEST_EXTERNAL_CALL
+    | "Test.get_storage" -> some_const C_TEST_GET_STORAGE
+    | "Test.get_balance" -> some_const C_TEST_GET_BALANCE
+    | "Test.assert_failure" -> some_const C_TEST_ASSERT_FAILURE
+    | "Test.log" -> some_const C_TEST_LOG
 
     | _ -> None
 
@@ -472,8 +426,6 @@ module Tree_abstraction = struct
       | Deprecated {name;_} -> name
       | Const x -> constant'_to_string x
 
-    let type_constants = type_constants
-    let type_constant_to_string = type_constant_to_string
   end
 
   module Cameligo = struct
@@ -601,8 +553,6 @@ module Tree_abstraction = struct
       | Deprecated {name;_} -> name
       | Const x -> constant'_to_string x
 
-    let type_constants = type_constants
-    let type_constant_to_string = type_constant_to_string
   end
 
   module Reasonligo = struct
@@ -730,8 +680,6 @@ module Tree_abstraction = struct
       | Deprecated {name;_} -> name
       | Const x -> constant'_to_string x
 
-    let type_constants = type_constants
-    let type_constant_to_string = type_constant_to_string
   end
 end
 

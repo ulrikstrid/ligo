@@ -15,7 +15,6 @@ open Trace
 (* TODO: If implemented in a language with decent sets, should be 'b set not 'b list. *)
 type ('a , 'b) normalizer = structured_dbs -> 'a -> (structured_dbs * 'b list)
 type 'a normalizer_rm = structured_dbs -> 'a -> (structured_dbs, Typer_common.Errors.typer_error) result
-
 (* type ('a , 'b) normalizer = {
  *   add: ('a, 'b) normalizer_add;
  *   rm: 'a normalizer_rm;

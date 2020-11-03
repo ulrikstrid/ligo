@@ -16,10 +16,17 @@ and type_meta = ast_core_type_expression option
 
 and type_content =
   | T_variable of type_variable
-  | T_constant of ty_expr type_operator
+  | T_constant of type_injection
   | T_sum      of rows
   | T_record   of rows
   | T_arrow    of ty_expr arrow
+
+and type_injection = {
+  language : string ;
+  injection : Ligo_string.t ;
+  (* kind (?) *)
+  parameters : ty_expr list ;
+}
 
 and rows = {
   content : row_element label_map;
@@ -45,6 +52,7 @@ and michelson_or_args = {
 and type_expression = {
     type_content: type_content;
     type_meta: type_meta;
+    orig_var: type_variable option ;
     location: location;
   }
 and ty_expr = type_expression

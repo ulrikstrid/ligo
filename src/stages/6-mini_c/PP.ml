@@ -45,6 +45,14 @@ and type_constant ppf (tb:type_base) : unit =
     | TB_signature -> "signature"
     | TB_timestamp -> "timestamp"
     | TB_chain_id  -> "chain_id"
+    | TB_baker_hash          -> "baker_hash"
+    | TB_pvss_key            -> "pvss_key"
+    | TB_sapling_transaction -> "sapling_transaction"
+    | TB_sapling_state       -> "sapling_state"
+    | TB_baker_operation     -> "baker_operation"
+    | TB_bls12_381_g1        -> "bls12_381_g1"
+    | TB_bls12_381_g2        -> "bls12_381_g2"
+    | TB_bls12_381_fr        -> "bls12_381_fr"
     in
   fprintf ppf "%s" s
 
@@ -268,6 +276,15 @@ and constant ppf : constant' -> unit = function
   | C_CONVERT_TO_LEFT_COMB  -> fprintf ppf "CONVERT_TO_LEFT_COMB"
   | C_CONVERT_FROM_RIGHT_COMB -> fprintf ppf "CONVERT_FROM_RIGHT_COMB"
   | C_CONVERT_FROM_LEFT_COMB  -> fprintf ppf "CONVERT_FROM_LEFT_COMB"
+  | C_TEST_ORIGINATE -> fprintf ppf "TEST_ORIGINATE"
+  | C_TEST_SET_NOW -> fprintf ppf "TEST_SET_NOW"
+  | C_TEST_SET_SOURCE -> fprintf ppf "TEST_SET_SOURCE"
+  | C_TEST_SET_BALANCE -> fprintf ppf "TEST_SET_BALANCE"
+  | C_TEST_EXTERNAL_CALL -> fprintf ppf "TEST_EXTERNAL_CALL"
+  | C_TEST_GET_STORAGE -> fprintf ppf "TEST_GET_STORAGE"
+  | C_TEST_GET_BALANCE -> fprintf ppf "TEST_GET_BALANCE"
+  | C_TEST_ASSERT_FAILURE -> fprintf ppf "TEST_ASSERT_FAILURE"
+  | C_TEST_LOG -> fprintf ppf "TEST_LOG"
 
 let%expect_test _ =
   Format.printf "%a" value (D_bytes (Bytes.of_string "foo")) ;

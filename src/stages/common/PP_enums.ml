@@ -58,38 +58,6 @@ let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal
 let operation ppf (o: bytes) : unit =
   fprintf ppf "%s" @@ Bytes.to_string o
 
-let type_constant ppf (tc : type_constant) : unit =
-let s =
-  match tc with
-  | TC_unit                      -> "unit"
-  | TC_string                    -> "string"
-  | TC_bytes                     -> "bytes"
-  | TC_nat                       -> "nat"
-  | TC_int                       -> "int"
-  | TC_mutez                     -> "mutez"
-  | TC_operation                 -> "operation"
-  | TC_address                   -> "address"
-  | TC_key                       -> "key"
-  | TC_key_hash                  -> "key_hash"
-  | TC_signature                 -> "signature"
-  | TC_timestamp                 -> "timestamp"
-  | TC_chain_id                  -> "chain_id"
-  | TC_option                    -> "option"
-  | TC_list                      -> "list"
-  | TC_set                       -> "set"
-  | TC_map                       -> "Map"
-  | TC_big_map                   -> "Big Map"
-  | TC_map_or_big_map            -> "Map Or Big Map"
-  | TC_contract                  -> "Contract"
-  | TC_michelson_pair            -> "michelson_pair"
-  | TC_michelson_or              -> "michelson_or"
-  | TC_michelson_pair_right_comb -> "michelson_pair_right_comb"
-  | TC_michelson_pair_left_comb  -> "michelson_pair_left_comb"
-  | TC_michelson_or_right_comb   -> "michelson_or_right_comb"
-  | TC_michelson_or_left_comb    -> "michelson_or_left_comb"
-in
-fprintf ppf "%s" s
-
 let constant' ppf : constant' -> unit = function
   | C_INT                   -> fprintf ppf "INT"
   | C_UNIT                  -> fprintf ppf "UNIT"
@@ -211,6 +179,16 @@ let constant' ppf : constant' -> unit = function
   | C_CONVERT_FROM_LEFT_COMB  -> fprintf ppf "CONVERT_FROM_LEFT_COMB"
   | C_TRUE                  -> fprintf ppf "TRUE"
   | C_FALSE                 -> fprintf ppf "FALSE"
+  | C_TEST_ORIGINATE -> fprintf ppf "TEST_ORIGINATE"
+  | C_TEST_SET_NOW -> fprintf ppf "TEST_SET_NOW"
+  | C_TEST_SET_SOURCE -> fprintf ppf "TEST_SET_SOURCE"
+  | C_TEST_SET_BALANCE -> fprintf ppf "TEST_SET_BALANCE"
+  | C_TEST_EXTERNAL_CALL -> fprintf ppf "TEST_EXTERNAL_CALL"
+  | C_TEST_GET_STORAGE -> fprintf ppf "TEST_GET_STORAGE"
+  | C_TEST_GET_BALANCE -> fprintf ppf "TEST_GET_BALANCE"
+  | C_TEST_ASSERT_FAILURE -> fprintf ppf "TEST_ASSERT_FAILURE"
+  | C_TEST_LOG -> fprintf ppf "TEST_LOG"
+
 
 let literal ppf (l : literal) =
   match l with

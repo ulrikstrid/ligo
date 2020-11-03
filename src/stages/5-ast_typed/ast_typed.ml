@@ -7,7 +7,6 @@ module Formatter = Formatter
 module Combinators = struct
   include Combinators
 end
-module Constant = Constant
 module Misc = struct
   include Misc
   include Misc_smart
@@ -23,3 +22,4 @@ let program_environment env program = fst (Compute_environment.program env progr
 module Compare = struct include Compare end
 
 module Typer_errors = Typer_errors
+type typer_switch = Old | New

@@ -2,17 +2,17 @@ open Trace
 open Test_helpers
 open Ast_imperative
 
-let retype_file f = Ligo.Compile.Utils.type_file f "reasonligo" Env
+let retype_file f = Ligo.Compile.Utils.type_file ~options f "reasonligo" Env
 
 let get_program =
   let s = ref None in
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-        let%bind program = retype_file "./contracts/pledge.religo" in
-        s := Some program ;
-        ok program
-      )
+      let%bind program = retype_file "./contracts/pledge.religo" in
+      s := Some program ;
+      ok program
+    )
 
 let compile_main () =
   let%bind typed_prg,_,_  = get_program () in

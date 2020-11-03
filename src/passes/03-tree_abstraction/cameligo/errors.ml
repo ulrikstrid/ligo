@@ -6,7 +6,6 @@ module Parser = Parser.Cameligo
 let stage = "abstracter"
 
 type abs_error = [
-  | `Concrete_cameligo_unknown_predefined_type of Raw.type_constr
   | `Concrete_cameligo_recursive_fun of Region.t
   | `Concrete_cameligo_unsupported_pattern_type of Raw.pattern list
   | `Concrete_cameligo_unsupported_string_singleton of Raw.type_expr
@@ -18,7 +17,6 @@ type abs_error = [
   | `Concrete_cameligo_funarg_tuple_type_mismatch of Region.t * Raw.pattern * Raw.type_expr
   ]
 
-let unknown_predefined_type name = `Concrete_cameligo_unknown_predefined_type name
 let untyped_recursive_fun reg = `Concrete_cameligo_recursive_fun reg
 let unsupported_pattern_type pl = `Concrete_cameligo_unsupported_pattern_type pl
 let unsupported_deep_list_patterns cons = `Concrete_cameligo_unsupported_deep_list_pattern cons
@@ -35,11 +33,6 @@ let error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
-    | `Concrete_cameligo_unknown_predefined_type type_name ->
-      Format.fprintf f
-        "@[<hv>%a@.Unknown type \"%s\". @]"
-        Snippet.pp_lift type_name.Region.region
-        type_name.Region.value
     | `Concrete_cameligo_recursive_fun reg ->
       Format.fprintf f
       "@[<hv>%a@.Invalid function declaration.@.Recursive functions are required to have a type annotation (for now). @]"
@@ -52,7 +45,7 @@ If this is pattern matching on a list, then one of the following is expected:
   * an empty list pattern \"[]\";
   * a cons list pattern \"head#tail\".
 If this is pattern matching over variants, then a constructor of a variant is expected.
-      
+
 Other forms of pattern matching are not (yet) supported. @]"
         Snippet.pp_lift (List.fold_left (fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl)
     | `Concrete_cameligo_unsupported_string_singleton te ->
@@ -61,7 +54,7 @@ Other forms of pattern matching are not (yet) supported. @]"
         Snippet.pp_lift (Raw.type_expr_to_region te)
     | `Concrete_cameligo_unsupported_deep_list_pattern cons ->
       Format.fprintf f
-        "@[<hv>%a@.Invalid pattern matching. @.At this point, one of the following is expected: 
+        "@[<hv>%a@.Invalid pattern matching. @.At this point, one of the following is expected:
   * an empty list pattern \"[]\";
   * a cons list pattern \"head :: tail\".@]"
         Snippet.pp_lift @@ Raw.pattern_to_region cons
@@ -84,21 +77,14 @@ Other forms of pattern matching are not (yet) supported. @]"
           Snippet.pp_lift v.region
           v.value
     | `Concrete_cameligo_funarg_tuple_type_mismatch (region, pattern, texpr) -> (
-      let p = Parser.pretty_print_pattern pattern in
-      let t = Parser.pretty_print_type_expr texpr in
-      match Trace.(to_stdlib_result p, to_stdlib_result t) with 
-      | Ok (p, _), Ok (t, _) ->
-        let p = Buffer.contents p in
-        let t = Buffer.contents t in
-        Format.fprintf f
-          "@[<hv>%a@.The tuple \"%s\" does not match the type \"%s\". @]"
-          Snippet.pp_lift region
-          p
-          t
-      | _ ->
-        Format.fprintf f
-          "@[<hv>%a@.The tuple does not match the type. @]"
-          Snippet.pp_lift region
+      let p = Parser.pretty_print_pattern pattern |> Buffer.contents in
+      let t = Parser.pretty_print_type_expr texpr |> Buffer.contents in
+      Format.fprintf
+        f
+        "@[<hv>%a@.The tuple \"%s\" does not match the type \"%s\". @]"
+        Snippet.pp_lift region
+        p
+        t
     )
   )
 
@@ -111,15 +97,6 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
-  | `Concrete_cameligo_unknown_predefined_type type_name ->
-    let message = `String "Unknown predefined type" in
-    let t = `String type_name.Region.value in
-    let loc = Format.asprintf "%a" Location.pp_lift type_name.Region.region in
-    let content = `Assoc [
-      ("message", message );
-      ("location", `String loc);
-      ("type", t ) ] in
-    json_error ~stage ~content
   | `Concrete_cameligo_recursive_fun reg ->
     let message = `String "Untyped recursive functions are not supported yet" in
     let loc = Format.asprintf "%a" Location.pp_lift reg in
@@ -158,7 +135,7 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Concrete_cameligo_michelson_type_wrong (texpr,name) ->
     let message = Format.asprintf "Argument %s of %s must be a string singleton"
-        (Cst_cameligo.ParserLog.type_expr_to_string ~offsets:true ~mode:`Point texpr) name in
+        (Cst_cameligo.Printer.type_expr_to_string ~offsets:true ~mode:`Point texpr) name in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.type_expr_to_region texpr) in
     let content = `Assoc [
       ("message", `String message );
@@ -183,6 +160,6 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
     let loc = Format.asprintf "%a" Location.pp_lift r in
     let content = `Assoc [
       ("message", `String message );
-      ("location", `String loc); 
+      ("location", `String loc);
     ] in
     json_error ~stage ~content

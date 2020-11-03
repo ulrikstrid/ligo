@@ -56,9 +56,6 @@ let%expect_test _ =
                Subcommand: Interpret the expression in the context initialized by
                the provided source file.
 
-           ligo-interpret
-               Subcommand: (temporary / dev only) uses LIGO interpret.
-
            list-declarations
                Subcommand: List all the top-level declarations.
 
@@ -98,6 +95,9 @@ let%expect_test _ =
 
            run-function
                Subcommand: Run a function with the given parameter.
+
+           test
+               Subcommand: Test a contract with the LIGO interpreter (BETA).
 
            transpile-contract
                Subcommand: Transpile a contract to another syntax.
@@ -168,9 +168,6 @@ let%expect_test _ =
                Subcommand: Interpret the expression in the context initialized by
                the provided source file.
 
-           ligo-interpret
-               Subcommand: (temporary / dev only) uses LIGO interpret.
-
            list-declarations
                Subcommand: List all the top-level declarations.
 
@@ -210,6 +207,9 @@ let%expect_test _ =
 
            run-function
                Subcommand: Run a function with the given parameter.
+
+           test
+               Subcommand: Test a contract with the LIGO interpreter (BETA).
 
            transpile-contract
                Subcommand: Transpile a contract to another syntax.
@@ -268,11 +268,19 @@ let%expect_test _ =
                OUTPUT_FILE if used, prints the output into the specified file
                instead of stdout
 
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet). By default, the
+               current protocol (carthage) will be used
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
                the syntax is guessed from the extension (.ligo, .mligo, .religo
                respectively).
+
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;
@@ -333,6 +341,11 @@ let%expect_test _ =
                OUTPUT_FILE if used, prints the output into the specified file
                instead of stdout
 
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet). By default, the
+               current protocol (carthage) will be used
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
@@ -346,6 +359,9 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the Michelson interpreter transaction will
                use.
+
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;
@@ -407,6 +423,11 @@ let%expect_test _ =
                OUTPUT_FILE if used, prints the output into the specified file
                instead of stdout
 
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet). By default, the
+               current protocol (carthage) will be used
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
@@ -420,6 +441,9 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the Michelson interpreter transaction will
                use.
+
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;
@@ -473,6 +497,11 @@ let%expect_test _ =
                NOW is the NOW value the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet). By default, the
+               current protocol (carthage) will be used
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
@@ -486,6 +515,9 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the Michelson interpreter transaction will
                use.
+
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;
@@ -536,6 +568,11 @@ let%expect_test _ =
                NOW is the NOW value the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet). By default, the
+               current protocol (carthage) will be used
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
@@ -549,6 +586,9 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the Michelson interpreter transaction will
                use.
+
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;
@@ -594,6 +634,11 @@ let%expect_test _ =
                NOW is the NOW value the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet). By default, the
+               current protocol (carthage) will be used
+
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
@@ -607,6 +652,9 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the Michelson interpreter transaction will
                use.
+
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;
@@ -651,6 +699,14 @@ let%expect_test _ =
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
                are 'text' (default), 'json' and 'hex'.
+
+           -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
+               PROTOCOL_VERSION will decide protocol's types/values pre-loaded
+               into the LIGO environment (carthage , dalphanet). By default, the
+               current protocol (carthage) will be used
+
+           --typer=TYPER_SWITCH (absent=old)
+               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;

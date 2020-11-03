@@ -13,22 +13,24 @@ let int () : (unit, _) result =
   let open Typer in
   let e = Environment.empty in
   let state = Typer.Solver.initial_state in
-  let%bind (post , new_state) = trace typer_tracer @@ type_expression_subst e state pre in
+  let%bind (post , new_state) = trace typer_tracer @@ type_expression_subst typer_switch e state pre in
   let () = Typer.Solver.discard_state new_state in
   let open! Typed in
   let open Combinators in
   let%bind () = trace_option (test_internal __LOC__) @@ assert_type_expression_eq (post.type_expression, t_int ()) in
   ok ()
 
+let init_env = Environment.default Environment.Protocols.current
+
 module TestExpressions = struct
-  let test_expression ?(env = Environment.default)
+  let test_expression ?(env = init_env)
                       ?(state = Typer.Solver.initial_state)
                       (expr : expression)
                       (test_expected_ty : Typed.type_expression) =
     let pre = expr in
     let open Typer in
     let open! Typed in
-    let%bind (post , new_state) = trace typer_tracer @@ type_expression_subst env state pre in
+    let%bind (post , new_state) = trace typer_tracer @@ type_expression_subst typer_switch env state pre in
     let () = Typer.Solver.discard_state new_state in
     let%bind () = trace_option (test_internal __LOC__) @@ assert_type_expression_eq (post.type_expression, test_expected_ty) in
     ok ()

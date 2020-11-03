@@ -20,7 +20,7 @@ let error display_format error =
   Formatter.error_ppformat ~display_format formatter error ;
   Format.pp_print_flush formatter () ;
   print_string (Buffer.contents buffer)
-  
+
 let human_readable_error e =
   let display_format = Display.human_readable in
   let display_format =
@@ -155,7 +155,7 @@ let%expect_test "main_parser" =
     {|
   in file "a dummy file name", line 20, characters 5-5
 
-  It looks like you are using a wild pattern where it cannot be used
+  It looks like you are using a catch-all pattern where it cannot be used
   |}]
 
 let%expect_test "pretty" = () (* not used *)
@@ -350,12 +350,6 @@ let%expect_test "main_cit_cameligo" =
   let pvar = PVar variable in
   let type_expr = TVar {value= "dog"; region= default_region1} in
   let location_t = File default_location in
-  error (`Concrete_cameligo_unknown_predefined_type variable) ;
-  [%expect
-    {|
-      in file "a dummy file name", line 20, characters 5-5
-
-      Unknown type "dog".|}] ;
   error (`Concrete_cameligo_recursive_fun default_region1) ;
   [%expect
     {|
@@ -500,11 +494,13 @@ let%expect_test "typer" =
   let type_expression : Ast_typed.type_expression =
     { type_content= T_variable (Var.of_name "foo");
       type_meta= None;
+      orig_var = None ;
       location= File default_location }
   in
   let type_expression2 : Ast_typed.type_expression =
     { type_content= T_variable (Var.of_name "bar");
       type_meta= None;
+      orig_var = None ;
       location= File default_location }
   in
   let ast_core_matching_expr : Ast_core.matching_expr =
@@ -984,12 +980,14 @@ let%expect_test "self_ast_typed" =
   let location_t = File default_location in
   let type_expression : Ast_typed.type_expression =
     { type_content= T_variable (Var.of_name "foo");
-      type_meta= None;
+      type_meta= None ;
+      orig_var = None ;
       location= File default_location }
   in
   let type_expression2 : Ast_typed.type_expression =
     { type_content= T_variable (Var.of_name "bar");
-      type_meta= None;
+      type_meta= None ;
+      orig_var = None ;
       location= File default_location }
   in
   let expression_content = E_literal Literal_unit in
@@ -1107,7 +1105,8 @@ let%expect_test "spilling" =
   let expression_variable = Location.wrap (Var.of_name "bar") in
   let type_expression : Ast_typed.type_expression =
     { type_content= T_variable (Var.of_name "foo");
-      type_meta= None;
+      type_meta= None ;
+      orig_var = None ;
       location= File default_location }
   in
   let value = Mini_c.D_none in
