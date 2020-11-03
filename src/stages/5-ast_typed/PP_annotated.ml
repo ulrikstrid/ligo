@@ -67,7 +67,11 @@ let rec type_content : formatter -> type_content -> unit =
   | T_record m -> fprintf ppf "%a" record m
   | T_arrow a -> fprintf ppf "@[<h>%a ->@ %a@]" type_expression a.type1 type_expression a.type2
   | T_variable tv -> type_variable ppf tv
-  | T_constant {type_constant=tc;arguments} -> fprintf ppf "%a%a" type_constant tc (list_sep_d_par type_expression) arguments
+  | T_constant tc -> type_injection ppf tc
+
+and type_injection ppf {language;injection;parameters} =
+  ignore language;
+  fprintf ppf "%s%a" (Ligo_string.extract injection) (list_sep_d_par type_expression) parameters
 
 and record ppf {content; layout=_} =
   fprintf ppf "%a"

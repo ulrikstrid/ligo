@@ -484,8 +484,8 @@ end = struct
       let%bind () = te where type1 in
       te where type2
     | O.T_variable tv -> failwith (Format.asprintf "Unassigned type variable %a cann't be generalized (LIGO does not support generalization of variables in user code for now). You can try to annotate the expression. The type variable occurred in the %s" Var.pp tv (where ()))
-    | O.T_constant { type_constant = _; arguments } ->
-      bind_fold_list (fun () texpr -> te where texpr) () arguments
+    | O.T_constant { parameters ; _ } ->
+      bind_fold_list (fun () texpr -> te where texpr) () parameters
   and te where : O.type_expression -> _ = function { type_content; type_meta=_; location=_ } -> tc where type_content
 
   let check_expression_has_no_unification_vars (expr : O.expression) =
@@ -574,10 +574,9 @@ let type_and_subst
   let () = ignore env in        (* TODO: shouldn't we use the `env` somewhere? *)
   ok (node, state)
 
-let type_program (p : I.program) : (O.program_fully_typed * _ O'.typer_state, typer_error) result =
-  let empty_env = DEnv.default in
+let type_program ~init_env (p : I.program) : (O.program_fully_typed * _ O'.typer_state, typer_error) result =
   let empty_state = Solver.initial_state in
-  let%bind (p, state) = type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") (fun ppf p -> Format.fprintf ppf "%s" (Yojson.Safe.to_string (Ast_typed.Yojson.program_with_unification_vars p))) (empty_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env in
+  let%bind (p, state) = type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") (fun ppf p -> Format.fprintf ppf "%s" (Yojson.Safe.to_string (Ast_typed.Yojson.program_with_unification_vars p))) (init_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env in
   let%bind p = Check.check_has_no_unification_vars p in
   let () = (if Ast_typed.Debug.json_new_typer then Printf.printf "%!\"end of JSON\"],\n###############################END_OF_JSON\n%!") in
   ok (p, state)

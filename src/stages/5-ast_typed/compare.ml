@@ -87,11 +87,6 @@ and constraint_identifier (ConstraintIdentifier a) (ConstraintIdentifier b) =
     Int64.compare a b
     (List.compare ~compare:type_expression) [] []
 
-and constraint_identifier (ConstraintIdentifier a) (ConstraintIdentifier b) =
-  cmp2
-    Int64.compare a b
-    (List.compare ~compare:type_expression) [] []
-
 and constraint_identifier_set (a : constraint_identifier PolySet.t) (b : constraint_identifier PolySet.t) : int =
   List.compare ~compare:constraint_identifier (PolySet.elements a)  (PolySet.elements b)
 
