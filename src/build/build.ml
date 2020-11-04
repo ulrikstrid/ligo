@@ -44,24 +44,19 @@ let dependency_graph : options:Compiler_options.t -> string -> Compile.Of_core.f
 let print_graph dep_g =
   Dfs.prefix (Format.printf "Node : %s\n%!") dep_g
 
-let solve_graph : graph -> (_ list,_) result =
-  fun (dep_g,vertices) ->
+let solve_graph : graph -> file_name -> (_ list,_) result =
+  fun (dep_g,vertices) file_name ->
   if Dfs.has_cycle dep_g
   then (
     print_graph dep_g;
     fail @@ dependency_cycle ()
   )
   else
-    let order = ref [] in
-    let aux v =
+    let aux v order =
       let elem = SMap.find v vertices in
-      order := (v,elem)::!order
+      (v,elem)::order
     in
-    (* Their prefix order is broken, putting the root in the middle of the list
-      TODO: use our own graph library
-    *)
-    Dfs.postfix aux dep_g;
-    let order = List.rev @@ !order in
+    let order = Dfs.fold_component aux [] dep_g file_name in
     ok @@ order
 
 let add_module_in_env init_env _deps = init_env (*TODO*)
@@ -85,7 +80,7 @@ let build_michelson order_deps asts_typed entry_point =
 let build_contract : options:Compiler_options.t -> string -> string -> _ -> file_name -> (_, _) result =
   fun ~options syntax entry_point protocol_version file_name ->
     let%bind deps = dependency_graph syntax ~options (Contract entry_point) file_name in
-    let%bind order_deps = solve_graph deps in
+    let%bind order_deps = solve_graph deps file_name in
     let aux asts_typed (file_name, (meta,form,c_unit,deps)) =
       let%bind ast_core = trace compiler_error @@ Compile.Utils.to_core ~options ~meta c_unit file_name in
       let aux (file_name,module_name) =
