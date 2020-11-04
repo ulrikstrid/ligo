@@ -490,11 +490,40 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       | Some tv' -> assert_type_expression_eq anno_expr.location (tv' , type_annotation) in
     ok {expr' with type_expression=type_annotation}
   | E_module_accessor {module_name; element} ->
-    let%bind module_ = match Environment.get_module_opt module_name e with
-      Some m -> ok m
-    | None   -> fail @@ unbound_module e module_name ae.location
+    let module_record_type (module_env : environment) =
+      let aux (env_binding: O.environment_binding) =
+        let binder = Var.to_name env_binding.expr_var.wrap_content in
+        let ty     = env_binding.env_elt.type_value in
+        O.Label binder,
+        O.{associated_type=ty;michelson_annotation=None;decl_pos=0}
+      in
+      let record_t = List.map aux @@ module_env.expression_environment in
+      let record_t = Ast_typed.(ez_t_record record_t) in
+      record_t
     in
-    type_expression' module_ element
+    let rec aux env module_name (element : I.expression) =
+      let%bind module_ = match Environment.get_module_opt module_name env with
+        Some m -> ok m
+      | None   -> fail @@ unbound_module e module_name ae.location
+      in
+      let ty = module_record_type module_ in
+      match element.content with
+      | E_module_accessor {module_name;element} ->
+        let%bind modules, element, var, ty' = aux module_ module_name element in
+        let modules = (module_name,ty') :: modules in
+        ok @@ (modules, element, var, ty)
+      | E_variable var ->
+        let%bind element = type_expression' module_ element in
+        ok @@ ([], element, Var.to_name var.wrap_content,ty)
+      | _ -> failwith "cornercase : module_accessor cannot be parse like that"
+    in
+    let%bind (modules_ty, element,var,ty) = aux e module_name element in
+    let aux record (module_name,ty) =
+      make_e (E_record_accessor {record;path=Label module_name}) ty
+    in
+    let record = make_e (E_variable (Location.wrap @@ Var.of_name module_name)) @@ ty in
+    let record = List.fold_left aux record modules_ty in
+    return (E_record_accessor {record;path=Label var}) element.type_expression
 
 and type_lambda e {
       binder ;

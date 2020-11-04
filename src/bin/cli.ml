@@ -209,15 +209,6 @@ module Run = Ligo.Run.Of_michelson
 let compile_file =
   let f source_file entry_point syntax typer_switch protocol_version display_format disable_typecheck michelson_format output_file =
     return_result ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
-      (*
-      let%bind init_env   = Helpers.get_initial_env protocol_version in
-      let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
-      let options = Compiler_options.make ~typer_switch ~init_env () in
-      let%bind typed,_,_  = Compile.Utils.type_file ~options source_file syntax (Contract entry_point) in
-      let%bind mini_c     = Compile.Of_typed.compile typed in
-      let%bind michelson  = Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
-      Compile.Of_michelson.build_contract ~disable_typecheck michelson
-      *)
       let%bind typer_switch = trace Build.Errors.compiler_error @@ Helpers.typer_switch_to_variant typer_switch in
       let options = Compiler_options.make ~typer_switch () in
       let%bind michelson = Build.build_contract ~options syntax entry_point protocol_version source_file in
@@ -327,12 +318,14 @@ let print_ast_core =
 let print_ast_typed =
   let f source_file syntax typer_switch protocol_version display_format =
     return_result ~display_format (Ast_typed.Formatter.program_format_fully_typed) @@
-      trace (Build.Errors.compiler_error) @@
-      let%bind init_env   = Helpers.get_initial_env protocol_version in
-      let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
-      let options = Compiler_options.make ~typer_switch ~init_env () in
-      let%bind typed,_,_  = Compile.Utils.type_file ~options source_file syntax Env in
-      ok typed
+      let%bind options =
+        trace (Build.Errors.compiler_error) @@
+        let%bind init_env = Helpers.get_initial_env protocol_version in
+        let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
+        ok @@ Compiler_options.make ~typer_switch ~init_env ()
+      in
+      let%bind typed = Build.type_contract ~options syntax Env protocol_version source_file in
+      ok @@ typed
   in
   let term = Term.(const f $ source_file 0  $ syntax $ typer_switch $ protocol_version $ display_format) in
   let cmdname = "print-ast-typed" in
@@ -342,12 +335,14 @@ let print_ast_typed =
 let print_mini_c =
   let f source_file syntax typer_switch protocol_version display_format optimize =
     return_result ~display_format (Mini_c.Formatter.program_format) @@
+      let%bind options =
+        trace (Build.Errors.compiler_error) @@
+        let%bind init_env   = Helpers.get_initial_env protocol_version in
+        let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
+        ok @@ Compiler_options.make ~typer_switch ~init_env ()
+      in
+      let%bind mini_c = Build.build_mini_c ~options syntax Env protocol_version source_file in
       trace (Build.Errors.compiler_error) @@
-      let%bind init_env   = Helpers.get_initial_env protocol_version in
-      let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
-      let options = Compiler_options.make ~typer_switch ~init_env () in
-      let%bind typed,_,_  = Compile.Utils.type_file ~options source_file syntax Env in
-      let%bind mini_c     = Compile.Of_typed.compile typed in
       match optimize with
         | None -> ok @@ Mini_c.Formatter.Raw mini_c
         | Some entry_point ->
