@@ -5,7 +5,7 @@ module Node = struct
   let equal   = String.equal
 end
 
-module G=Graph.Persistent.Graph.Concrete(Node)
+module G=Graph.Persistent.Digraph.Concrete(Node)
 module GP = Graph.Graphml.Print(G)
 module Dfs = Graph.Traverse.Dfs(G)
 module SMap = Map.String
@@ -52,11 +52,16 @@ let solve_graph : graph -> (_ list,_) result =
     fail @@ dependency_cycle ()
   )
   else
-    let aux v acc =
+    let order = ref [] in
+    let aux v =
       let elem = SMap.find v vertices in
-      (v,elem)::acc
+      order := (v,elem)::!order
     in
-    let order = Dfs.fold aux [] dep_g in
+    (* Their prefix order is broken, putting the root in the middle of the list
+      TODO: use our own graph library
+    *)
+    Dfs.postfix aux dep_g;
+    let order = List.rev @@ !order in
     ok @@ order
 
 let add_module_in_env init_env _deps = init_env (*TODO*)
