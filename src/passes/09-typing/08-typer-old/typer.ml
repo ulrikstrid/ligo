@@ -501,17 +501,20 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
       let record_t = Ast_typed.(ez_t_record record_t) in
       record_t
     in
-    let rec aux env module_name (element : I.expression) =
+    let (* rec *) aux env module_name (element : I.expression) =
       let%bind module_ = match Environment.get_module_opt module_name env with
         Some m -> ok m
       | None   -> fail @@ unbound_module e module_name ae.location
       in
       let ty = module_record_type module_ in
       match element.content with
-      | E_module_accessor {module_name;element} ->
+      | E_module_accessor {module_name=_;element=_} ->
+        (* Worling code for module in module access
         let%bind modules, element, var, ty' = aux module_ module_name element in
         let modules = (module_name,ty') :: modules in
         ok @@ (modules, element, var, ty)
+        *)
+        fail @@ corner_case "Module in Module access is not permitted at the moment"
       | E_variable var ->
         let%bind element = type_expression' module_ element in
         ok @@ ([], element, Var.to_name var.wrap_content,ty)
