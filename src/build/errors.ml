@@ -10,7 +10,7 @@ module Display  = Simple_utils.Display
 (* Errors *)
 
 type build_error = [
-  | `Dependency_cycle
+  | `Dependency_cycle of string
   | `Building_corner_case of string * string
   | `Compiler_error of Main_errors.all
   ]
@@ -20,7 +20,7 @@ let corner_case_msg () =
   "Sorry, we don't have a proper error message for this error. Please report \
    this use case so we can improve on this."
 
-let dependency_cycle () = `Dependency_cycle
+let dependency_cycle trace = `Dependency_cycle trace
 let corner_case ~loc  message = `Building_corner_case (loc,message)
 let compiler_error e = `Compiler_error e
 
@@ -33,8 +33,8 @@ let error_ppformat :
   match display_format with
   | Human_readable | Dev -> (
     match a with
-    | `Dependency_cycle ->
-          let s = Format.asprintf "Dependency cycle detected, please resolve"
+    | `Dependency_cycle trace ->
+          let s = Format.asprintf "Dependency cycle detected : \n %s" trace
           in Format.pp_print_string f s
     | `Building_corner_case (loc,msg) ->
       let s = Format.asprintf "Stacking corner case at %s : %s.\n%s"
@@ -52,9 +52,10 @@ let error_jsonformat : build_error -> Yojson.Safe.t =
       ("stage",  `String stage);
       ("content", content )] in
   match error with
-    `Dependency_cycle ->
+    `Dependency_cycle trace ->
        let content = `Assoc [
          ("message",  `String "Dependency cycle detected");
+         ("cycle"  , `String trace);
        ]
     in json_error ~stage ~content
   | `Building_corner_case (loc,msg) ->
