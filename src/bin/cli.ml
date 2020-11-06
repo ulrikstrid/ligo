@@ -256,6 +256,23 @@ let pretty_print =
   let doc = "Subcommand: Pretty-print the source file."
   in (Term.ret term, Term.info ~doc cmdname)
 
+let print_graph =
+  let f source_file syntax display_format =
+    return_result ~display_format (Parser.Formatter.ppx_format) @@
+      let options = Compiler_options.make () in
+      let buffer = Buffer.create 59 in
+      let state = (* TODO: Should flow from the CLI *)
+        Build.mk_state
+          ~offsets:true
+          ~mode:`Point
+          ~buffer in
+      Build.pretty_print_graph ~options syntax state source_file
+  in
+  let term = Term.(const f $ source_file 0  $ syntax $ display_format) in
+  let cmdname = "print-graph" in
+  let doc = "Subcommand: Print the dependency graph.\nWarning: Intended for development of LIGO and can break at any time." in
+  (Term.ret term, Term.info ~doc cmdname)
+
 let print_cst =
   let f source_file syntax display_format =
     return_result ~display_format (Parser.Formatter.ppx_format) @@
@@ -676,6 +693,7 @@ let run ?argv () =
     run_function ;
     evaluate_value ;
     dump_changelog ;
+    print_graph ;
     print_cst ;
     print_ast ;
     print_ast_sugar ;
