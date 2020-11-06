@@ -5,8 +5,8 @@ module Node = struct
   let equal   = String.equal
 end
 
-module G=Graph.Persistent.Digraph.Concrete(Node)
-module GP = Graph.Graphml.Print(G)
+module G = Graph.Persistent.Digraph.Concrete(Node)
+(* module GP = Graph.Graphml.Print(G)(L) *)
 module Dfs = Graph.Traverse.Dfs(G)
 module SMap = Map.String
 module Errors = Errors
@@ -16,6 +16,63 @@ open Errors
 
 type file_name = string
 type graph = G.t * (Compile.Helpers.meta * Compile.Of_core.form * Buffer.t * (string * string) list) SMap.t
+
+(* For printing : stolen from Christian's work *)
+type state = <
+  offsets  : bool;
+  mode     : [`Point | `Byte];
+  buffer   : Buffer.t;
+  pad_path : string;
+  pad_node : string;
+  pad      : int -> int -> state
+>
+
+let mk_state ~offsets ~mode ~buffer =
+  object
+    method offsets  = offsets;
+    method mode     = mode;
+    method buffer   = buffer
+    val pad_path    = ""
+    method pad_path = pad_path
+    val pad_node    = ""
+    method pad_node = pad_node
+
+    (* The method [pad] updates the current padding, which is
+       comprised of two components: the padding to reach the new node
+       (space before reaching a subtree, then a vertical bar for it)
+       and the padding for the new node itself (Is it the last child
+       of its parent?).
+
+       A child node that is not the last satisfies [rank < arity] and
+       the last child satisfies [rank = arity], where the rank of the
+       first child is 0. *)
+
+    method pad arity rank =
+      {< pad_path =
+           pad_node ^ (if rank = arity-1 then "`-- " else "|-- ");
+         pad_node =
+           pad_node ^ (if rank = arity-1 then "    " else "|   ")
+      >}
+  end
+
+let print_graph state dep_g filename =
+  let open Format in
+  let len node =
+    let aux _node i = i + 1 in
+    G.fold_succ aux dep_g node 0
+  in
+  let rec pp_node state arity name rank =
+    let len = len name in
+    let state = state#pad arity rank in
+    let node = sprintf "%s%s\n" state#pad_path name
+    in Buffer.add_string state#buffer node;
+    let _ = G.fold_succ (pp_node state len) dep_g name 0 in
+    rank+1
+  in
+  let _ = pp_node state 1 filename 0 in ()
+
+
+(* Build system *)
 
 let dependency_graph : options:Compiler_options.t -> string -> Compile.Of_core.form -> file_name -> (graph, _) result =
   fun ~options syntax form file_name ->
@@ -41,14 +98,11 @@ let dependency_graph : options:Compiler_options.t -> string -> Compile.Of_core.f
   in
   dfs file_name (dep_g,vertices) @@ (file_name,form)
 
-let print_graph dep_g =
-  Dfs.prefix (Format.printf "Node : %s\n%!") dep_g
-
 let solve_graph : graph -> file_name -> (_ list,_) result =
   fun (dep_g,vertices) file_name ->
   if Dfs.has_cycle dep_g
   then (
-    print_graph dep_g;
+    (* Format.printf print_graph dep_g; *)
     fail @@ dependency_cycle ()
   )
   else
@@ -100,3 +154,9 @@ let build_contract : options:Compiler_options.t -> string -> string -> _ -> file
     let%bind asts_typed = bind_fold_list aux (SMap.empty) order_deps in
     let%bind contract   = build_michelson order_deps asts_typed entry_point in
     ok contract
+
+let pretty_print_graph =
+  fun ~options syntax state source ->
+  let%bind graph,_ = dependency_graph syntax ~options Env source in
+  let _ = print_graph state graph source in
+  ok @@ state#buffer
