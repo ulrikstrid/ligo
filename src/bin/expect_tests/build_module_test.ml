@@ -6,7 +6,19 @@ let contract basename =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; contract "cycle_A.mligo" ; "main" ] ;
   [%expect {|
-    Dependency cycle detected, please resolve |}]
+    Dependency cycle detected :
+     `-- ../../test/contracts/build/cycle_A.mligo
+        `-- ../../test/contracts/build/cycle_B.mligo
+            `-- ../../test/contracts/build/cycle_C.mligo
+                `-- ../../test/contracts/build/cycle_A.mligo |}]
+
+let%expect_test _ =
+  run_ligo_good [ "print-graph" ; contract "cycle_A.mligo" ] ;
+  [%expect {|
+    `-- ../../test/contracts/build/cycle_A.mligo
+        `-- ../../test/contracts/build/cycle_B.mligo
+            `-- ../../test/contracts/build/cycle_C.mligo
+                `-- ../../test/contracts/build/cycle_A.mligo |}]
 
 let%expect_test _ =
   run_ligo_good [ "print-graph" ; contract "D.mligo" ] ;

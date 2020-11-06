@@ -9,6 +9,7 @@ module G = Graph.Persistent.Digraph.Concrete(Node)
 (* module GP = Graph.Graphml.Print(G)(L) *)
 module Dfs = Graph.Traverse.Dfs(G)
 module SMap = Map.String
+module SSet = Set.Make(String)
 module Errors = Errors
 
 open Trace
@@ -56,20 +57,27 @@ let mk_state ~offsets ~mode ~buffer =
   end
 
 let print_graph state dep_g filename =
+  let exception Dependency_cycle of string in
   let open Format in
   let len node =
     let aux _node i = i + 1 in
     G.fold_succ aux dep_g node 0
   in
-  let rec pp_node state arity name rank =
-    let len = len name in
+  let set = SSet.empty in
+  let rec pp_node state set arity name rank =
     let state = state#pad arity rank in
-    let node = sprintf "%s%s\n" state#pad_path name
-    in Buffer.add_string state#buffer node;
-    let _ = G.fold_succ (pp_node state len) dep_g name 0 in
+    let node = sprintf "%s%s\n%!" state#pad_path name in
+    Buffer.add_string state#buffer node;
+    if SSet.mem name set then raise (Dependency_cycle name);
+    let set = SSet.add name set in
+    let len = len name in
+    let _ = G.fold_succ (pp_node state set len) dep_g name 0 in
     rank+1
   in
-  let _ = pp_node state 1 filename 0 in ()
+  let _ = try
+    pp_node state set 1 filename 0
+    with Dependency_cycle _ -> 0
+  in ()
 
 
 (* Build system *)
@@ -102,8 +110,13 @@ let solve_graph : graph -> file_name -> (_ list,_) result =
   fun (dep_g,vertices) file_name ->
   if Dfs.has_cycle dep_g
   then (
-    (* Format.printf print_graph dep_g; *)
-    fail @@ dependency_cycle ()
+    let buffer = Buffer.create 59 in
+    let state = mk_state
+        ~offsets:true
+        ~mode:`Point
+        ~buffer in
+    print_graph state dep_g file_name;
+    fail @@ dependency_cycle @@ Buffer.contents state#buffer
   )
   else
     let aux v order =
@@ -158,5 +171,5 @@ let build_contract : options:Compiler_options.t -> string -> string -> _ -> file
 let pretty_print_graph =
   fun ~options syntax state source ->
   let%bind graph,_ = dependency_graph syntax ~options Env source in
-  let _ = print_graph state graph source in
+  print_graph state graph source;
   ok @@ state#buffer
