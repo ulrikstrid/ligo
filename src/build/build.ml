@@ -80,6 +80,23 @@ let print_graph state dep_g filename =
   in ()
 
 
+let to_json state dep_g filename =
+  let set = SSet.empty in
+  let rec pp_node _state set name parent =
+    let node = ["file",  `String name] in
+    if SSet.mem name set then ("child", `Assoc node)::parent
+    else
+      let set = SSet.add name set in
+      let node = G.fold_succ (pp_node state set) dep_g name node in
+      let node = List.rev node in
+      ("child", `Assoc node)::parent
+  in
+  let root = ["root", `String filename] in
+  let root =
+    G.fold_succ (pp_node state set) dep_g filename root
+  in `Assoc (List.rev root)
+
+
 (* Build system *)
 
 let dependency_graph : options:Compiler_options.t -> string -> Compile.Of_core.form -> file_name -> (graph, _) result =
