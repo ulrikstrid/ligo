@@ -413,7 +413,7 @@ ptuple:
     in PTuple {region; value=$1} }
 
 unit:
-  "(" ")" { {region = cover $1 $2; value = ghost, ghost} }
+  "(" ")" { {region = cover $1 $2; value = $1,$2} }
 
 tail:
   sub_pattern { $1 }
