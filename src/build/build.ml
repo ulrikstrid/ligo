@@ -1,101 +1,14 @@
-module Node = struct
-  type t = String.t
-  let compare = String.compare
-  let hash    = Hashtbl.hash
-  let equal   = String.equal
-end
-
-module G = Graph.Persistent.Digraph.Concrete(Node)
-(* module GP = Graph.Graphml.Print(G)(L) *)
-module Dfs = Graph.Traverse.Dfs(G)
-module SMap = Map.String
-module SSet = Set.Make(String)
 module Errors = Errors
+module PP = PP
+module To_yojson = To_yojson
+module Formatter = Formatter
 
 open Trace
 open Errors
+open Types
 
 type file_name = string
 type graph = G.t * (Compile.Helpers.meta * Compile.Of_core.form * Buffer.t * (string * string) list) SMap.t
-
-(* For printing : stolen from Christian's work *)
-type state = <
-  offsets  : bool;
-  mode     : [`Point | `Byte];
-  buffer   : Buffer.t;
-  pad_path : string;
-  pad_node : string;
-  pad      : int -> int -> state
->
-
-let mk_state ~offsets ~mode ~buffer =
-  object
-    method offsets  = offsets;
-    method mode     = mode;
-    method buffer   = buffer
-    val pad_path    = ""
-    method pad_path = pad_path
-    val pad_node    = ""
-    method pad_node = pad_node
-
-    (* The method [pad] updates the current padding, which is
-       comprised of two components: the padding to reach the new node
-       (space before reaching a subtree, then a vertical bar for it)
-       and the padding for the new node itself (Is it the last child
-       of its parent?).
-
-       A child node that is not the last satisfies [rank < arity] and
-       the last child satisfies [rank = arity], where the rank of the
-       first child is 0. *)
-
-    method pad arity rank =
-      {< pad_path =
-           pad_node ^ (if rank = arity-1 then "`-- " else "|-- ");
-         pad_node =
-           pad_node ^ (if rank = arity-1 then "    " else "|   ")
-      >}
-  end
-
-let print_graph state dep_g filename =
-  let exception Dependency_cycle of string in
-  let open Format in
-  let len node =
-    let aux _node i = i + 1 in
-    G.fold_succ aux dep_g node 0
-  in
-  let set = SSet.empty in
-  let rec pp_node state set arity name rank =
-    let state = state#pad arity rank in
-    let node = sprintf "%s%s\n%!" state#pad_path name in
-    Buffer.add_string state#buffer node;
-    if SSet.mem name set then raise (Dependency_cycle name);
-    let set = SSet.add name set in
-    let len = len name in
-    let _ = G.fold_succ (pp_node state set len) dep_g name 0 in
-    rank+1
-  in
-  let _ = try
-    pp_node state set 1 filename 0
-    with Dependency_cycle _ -> 0
-  in ()
-
-
-let to_json state dep_g filename =
-  let set = SSet.empty in
-  let rec pp_node _state set name parent =
-    let node = ["file",  `String name] in
-    if SSet.mem name set then ("child", `Assoc node)::parent
-    else
-      let set = SSet.add name set in
-      let node = G.fold_succ (pp_node state set) dep_g name node in
-      let node = List.rev node in
-      ("child", `Assoc node)::parent
-  in
-  let root = ["root", `String filename] in
-  let root =
-    G.fold_succ (pp_node state set) dep_g filename root
-  in `Assoc (List.rev root)
-
 
 (* Build system *)
 
@@ -127,13 +40,8 @@ let solve_graph : graph -> file_name -> (_ list,_) result =
   fun (dep_g,vertices) file_name ->
   if Dfs.has_cycle dep_g
   then (
-    let buffer = Buffer.create 59 in
-    let state = mk_state
-        ~offsets:true
-        ~mode:`Point
-        ~buffer in
-    print_graph state dep_g file_name;
-    fail @@ dependency_cycle @@ Buffer.contents state#buffer
+    let graph = Format.asprintf "%a" PP.graph (dep_g,file_name) in
+    fail @@ dependency_cycle @@ graph
   )
   else
     let aux v order =
@@ -184,9 +92,3 @@ let build_contract : options:Compiler_options.t -> string -> string -> _ -> file
     let%bind asts_typed = bind_fold_list aux (SMap.empty) order_deps in
     let%bind contract   = build_michelson order_deps asts_typed entry_point in
     ok contract
-
-let pretty_print_graph =
-  fun ~options syntax state source ->
-  let%bind graph,_ = dependency_graph syntax ~options Env source in
-  print_graph state graph source;
-  ok @@ state#buffer

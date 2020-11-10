@@ -258,15 +258,10 @@ let pretty_print =
 
 let print_graph =
   let f source_file syntax display_format =
-    return_result ~display_format (Parser.Formatter.ppx_format) @@
+    return_result ~display_format (Build.Formatter.graph_format) @@
       let options = Compiler_options.make () in
-      let buffer = Buffer.create 59 in
-      let state = (* TODO: Should flow from the CLI *)
-        Build.mk_state
-          ~offsets:true
-          ~mode:`Point
-          ~buffer in
-      Build.pretty_print_graph ~options syntax state source_file
+      let%bind g,_ = Build.dependency_graph ~options syntax Env source_file in
+      ok @@ (g,source_file)
   in
   let term = Term.(const f $ source_file 0  $ syntax $ display_format) in
   let cmdname = "print-graph" in
