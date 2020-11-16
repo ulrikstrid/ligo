@@ -1,3 +1,7 @@
+(* External dependencies *)
+
+module Region = Simple_utils.Region
+
 (* CONFIGURATION *)
 
 type file_path = string
@@ -125,11 +129,12 @@ module MakeParser
         let lexbuf = Lexing.from_string string in
         let     () = LexerLib.Core.reset ~file:file_path lexbuf in
         let parser = MainParser.incr_from_lexbuf in
-        try Ok (fun () -> parser (module ParErr: PAR_ERR) lexbuf) with
-          Scoping.Error (value, window) ->
-            let token  = window#current_token in
-            let region = Token.to_region token
-            in Stdlib.Error ({value;region} : _ Simple_utils.Region.reg)
+        Ok (fun () ->
+              try parser (module ParErr: PAR_ERR) lexbuf with
+                Scoping.Error (value, window) ->
+                  let token  = window#current_token in
+                  let region = Token.to_region token
+                  in Stdlib.Error Region.{value; region})
       in MainLexer.clear (); tree
 
     (* Parsing from a string to merge*)
@@ -152,11 +157,12 @@ module MakeParser
           Printf.printf "%s\n%!" string;
         let lexbuf = Lexing.from_string string in
         let parser = MainParser.incr_from_lexbuf in
-        try Ok (fun () -> parser (module ParErr: PAR_ERR) lexbuf) with
-          Scoping.Error (value, window) ->
-            let token  = window#current_token in
-            let region = Token.to_region token
-            in Stdlib.Error ({value;region} : _ Simple_utils.Region.reg)
+        Ok (fun () ->
+              try parser (module ParErr: PAR_ERR) lexbuf with
+                Scoping.Error (value, window) ->
+                  let token  = window#current_token in
+                  let region = Token.to_region token
+                  in Stdlib.Error Region.{value; region})
       in MainLexer.clear (); tree
   end
 

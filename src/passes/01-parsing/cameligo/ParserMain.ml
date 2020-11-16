@@ -53,6 +53,7 @@ module Main = Shared.ParserMainGen.Make
                 (Token)
                 (CST)
                 (Parser)
+                (Scoping)
                 (ParErr)
                 (Printer)
                 (Pretty)

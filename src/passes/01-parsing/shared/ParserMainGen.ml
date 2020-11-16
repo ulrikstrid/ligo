@@ -27,12 +27,18 @@ module type PRETTY =
     val print : tree -> PPrint.document
   end
 
+type 'token window = <
+  last_token    : 'token option;
+  current_token : 'token           (* Including EOF *)
+>
+
 module Make (Comments : Comments.S)
             (File     : File.S)
             (Token    : Token.S)
             (CST      : sig type t end)
             (Parser   : PARSER with type token = Token.t
                                 and type tree = CST.t)
+            (Scoping  : sig exception Error of string * Token.t window end)
             (ParErr   : sig val message : int -> string end)
             (Printer  : PRINTER with type tree = CST.t)
             (Pretty   : PRETTY with type tree = CST.t)
@@ -116,7 +122,16 @@ module Make (Comments : Comments.S)
                 end
               else ();
             flush_all ()
-      | Error msg -> (flush_all (); print_in_red msg.Region.value)
+      | Error Region.{value; region}->
+         let msg =
+           Printf.sprintf
+             "Parse error %s:\n%s"
+             (region#to_string ~file:true ~offsets:true `Point)
+             value
+         in begin
+             flush_all ();
+             print_in_red msg
+           end
 
     module Preproc = Preprocessor.PreprocMainGen.Make (Preproc_CLI)
 
@@ -137,21 +152,35 @@ module Make (Comments : Comments.S)
             let string = Buffer.contents buffer in
             let lexbuf = Lexing.from_string string in
             let open MainParser in
-            if CLI.mono then
-              mono_from_lexbuf lexbuf |> wrap
-            else
-              incr_from_lexbuf (module ParErr) lexbuf |> wrap
+            let tree =
+              try
+                if CLI.mono then
+                  mono_from_lexbuf lexbuf
+                else
+                  incr_from_lexbuf (module ParErr) lexbuf
+              with Scoping.Error (value, window) ->
+                     let token  = window#current_token in
+                     let region = Token.to_region token
+                     in Stdlib.Error Region.{value; region}
+            in wrap tree
       else
         let open MainParser in
-        match Preproc_CLI.input with
-          None ->
-            if CLI.mono then
-              mono_from_channel stdin |> wrap
-            else
-              incr_from_channel (module ParErr) stdin |> wrap
-        | Some file_path ->
-            if CLI.mono then
-              mono_from_file file_path |> wrap
-            else
-              incr_from_file (module ParErr) file_path |> wrap
+        let tree =
+          try
+            match Preproc_CLI.input with
+              None ->
+                if CLI.mono then
+                  mono_from_channel stdin
+                else
+                  incr_from_channel (module ParErr) stdin
+            | Some file_path ->
+                if CLI.mono then
+                  mono_from_file file_path
+                else
+                  incr_from_file (module ParErr) file_path
+          with Scoping.Error (value, window) ->
+                 let token  = window#current_token in
+                 let region = Token.to_region token
+                 in Stdlib.Error Region.{value; region}
+        in wrap tree
   end
