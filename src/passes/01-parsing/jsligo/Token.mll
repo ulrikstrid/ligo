@@ -505,16 +505,34 @@ module T =
     (* LEXIS *)
 
     let keywords = [
-      (fun reg -> Else   reg);
-      (fun reg -> False  reg);
-      (fun reg -> If     reg);
-      (fun reg -> Let    reg);
-      (fun reg -> Rec    reg);
-      (fun reg -> Switch reg);
-      (fun reg -> Mod    reg);
-      (fun reg -> Or     reg);
-      (fun reg -> True   reg);
-      (fun reg -> Type   reg)
+        (* JavaScript Keywords *)
+
+       (fun reg -> Break   reg);
+       (fun reg -> Case    reg);
+       (fun reg -> Class   reg);
+       (fun reg -> Const   reg);
+       (fun reg -> Default reg);
+       (fun reg -> Else    reg);
+       (fun reg -> Enum    reg);
+       (fun reg -> False   reg);
+       (fun reg -> For     reg);
+       (fun reg -> If      reg);
+       (fun reg -> Let     reg);
+       (fun reg -> New     reg);
+       (fun reg -> Return  reg);
+       (fun reg -> Switch  reg);
+       (fun reg -> This    reg);
+       (fun reg -> True    reg);
+       (fun reg -> Void    reg);
+       (fun reg -> While   reg);
+       (fun reg -> With    reg);
+
+       (* TypeScript keywords *)
+
+       (fun reg -> Type        reg);
+       (fun reg -> Constructor reg);
+       (fun reg -> Get         reg);
+       (fun reg -> Set         reg)
     ]
 
     let reserved = SSet.empty
