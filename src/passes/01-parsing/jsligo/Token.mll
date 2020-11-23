@@ -100,12 +100,10 @@ module T =
     | Class    of Region.t  (* class    *)
     | Const    of Region.t  (* const    *)
     | Default  of Region.t  (* default  *)
-    (*    | Do       of Region.t  (* do       *)*)
     | Else     of Region.t  (* else     *)
     | Enum     of Region.t  (* enum     *)
     | False    of Region.t  (* false    *)
     | For      of Region.t  (* for      *)
-    (*    | Function of Region.t  (* function *)*)
     | If       of Region.t  (* if       *)
     | Let      of Region.t  (* let      *)
     | New      of Region.t  (* new      *)
@@ -113,7 +111,6 @@ module T =
     | Switch   of Region.t  (* switch   *)
     | This     of Region.t  (* this     *)
     | True     of Region.t  (* true     *)
-    (*    | Var      of Region.t  (* var      *)*)
     | Void     of Region.t  (* void     *)
     | While    of Region.t  (* while    *)
     | With     of Region.t  (* with     *)
@@ -147,8 +144,8 @@ module T =
     let concrete = function
         (* Identifiers, labels, numbers and strings *)
 
-      "Ident"   -> id_sym ()
-    | "Constr"  -> ctor_sym ()
+      "Ident"    -> id_sym ()
+    | "Constr"   -> ctor_sym ()
     | "Int"      -> "1"
     | "Nat"      -> "1n"
     | "Mutez"    -> "1mutez"
@@ -160,16 +157,13 @@ module T =
 
     (* Symbols *)
 
-    | "CAT" -> "++"
-
-    (* Arithmetics *)
-
-    | "MINUS"   -> "-"
-    | "PLUS"    -> "+"
-    | "SLASH"   -> "/"
-    | "TIMES"   -> "*"
-
-    (* Compounds *)
+    | "MINUS"    -> "-"
+    | "PLUS"     -> "+"
+    | "SLASH"    -> "/"
+    | "TIMES"    -> "*"
+    | "REM"      -> "%"
+    | "PLUS2"    -> "++"
+    | "MINUS2"   -> "--"
 
     | "LPAR"     -> "("
     | "RPAR"     -> ")"
@@ -178,53 +172,81 @@ module T =
     | "LBRACE"   -> "{"
     | "RBRACE"   -> "}"
 
-    (* Separators *)
-
     | "COMMA"    -> ","
     | "SEMI"     -> ";"
-    | "VBAR"     -> "|"
     | "COLON"    -> ":"
     | "DOT"      -> "."
     | "ELLIPSIS" -> "..."
-    | "ARROW"    -> "=>"
-
-    (* Wildcard *)
-
-    | "WILD" ->     "_"
-
-    (* Comparisons *)
-
-    | "EQ"   -> "="
-    | "EQEQ" -> "=="
-    | "NE"   -> "!="
-    | "LT"   -> "<"
-    | "GT"   -> ">"
-    | "LE"   -> "<="
-    | "GE"   -> ">="
-
-    (* Logic *)
+    | "QMARK"    -> "?"
 
     | "BOOL_OR"  -> "||"
     | "BOOL_AND" -> "&&"
-    | "BOOL_NOT"      -> "!"
+    | "BOOL_NOT" -> "!"
 
-    (* Keywords *)
+    | "BIT_OR"   -> "|"
+    | "BIT_AND"  -> "&"
+    | "BIT_NOT"  -> "~"
+    | "BIT_XOR"  -> "^"
+    | "SHIFT_L"  -> "<<<"
+    | "SHIFT_R"  -> ">>>"
 
-    | "Else"    -> "else"
-    | "False"   -> "false"
-    | "If"      -> "if"
-    | "Let"     -> "let"
-    | "Mod"     -> "mod"
-    | "Or"      -> "or"
-    | "Rec"     -> "rec"
-    | "Switch"  -> "switch"
-    | "True"    -> "true"
-    | "Type"    -> "type"
+    | "EQ"       -> "="
+    | "EQ3"      -> "==="
+    | "NE2"      -> "!=="
+
+    | "LT"       -> "<"
+    | "GT"       -> ">"
+    | "LE"       -> "<="
+    | "GE"       -> ">="
+
+    | "PLUS_EQ"  -> "+="
+    | "MINUS_EQ" -> "-="
+    | "MULT_EQ"  -> "*="
+    | "REM_EQ"   -> "%="
+    | "DIV_EQ"   -> "/="
+    | "SL_EQ"    -> "<<<="
+    | "SR_EQ"    -> ">>>="
+    | "AND_EQ"   -> "&="
+    | "OR_EQ"    -> "|="
+    | "XOR_EQ"   -> "^="
+
+    | "VBAR"     -> "|"
+    | "ARROW"    -> "=>"
+    | "WILD"     -> "_"
+
+    (* JavaScript Keywords *)
+
+    | "Break"    -> "break"
+    | "Case"     -> "case"
+    | "Class"    -> "class"
+    | "Const"    -> "const"
+    | "Default"  -> "default"
+    | "Else"     -> "else"
+    | "Enum"     -> "enum"
+    | "False"    -> "false"
+    | "For"      -> "for"
+    | "If"       -> "if"
+    | "Let"      -> "let"
+    | "New"      -> "new"
+    | "Return"   -> "return"
+    | "Switch"   -> "switch"
+    | "This"     -> "this"
+    | "True"     -> "true"
+    | "Void"     -> "void"
+    | "While"    -> "while"
+    | "With"     -> "with"
+
+    (* TypeScript keywords *)
+
+    | "Type"        -> "type"
+    | "Constructor" -> "constructor"
+    | "Get"         -> "get"
+    | "Set"         -> "set"
 
     (* Data constructors *)
 
-    | "C_None"  -> "None"
-    | "C_Some"  -> "Some"
+    | "C_None" -> "None"
+    | "C_Some" -> "Some"
 
     (* Virtual tokens *)
 
@@ -267,48 +289,98 @@ module T =
 
     (* Symbols *)
 
-    | CAT      region -> region, "CAT"
     | MINUS    region -> region, "MINUS"
     | PLUS     region -> region, "PLUS"
     | SLASH    region -> region, "SLASH"
     | TIMES    region -> region, "TIMES"
+    | REM      region -> region, "REM"
+    | PLUS2    region -> region, "PLUS2"
+    | MINUS2   region -> region, "MINUS2"
+
     | LPAR     region -> region, "LPAR"
     | RPAR     region -> region, "RPAR"
     | LBRACKET region -> region, "LBRACKET"
     | RBRACKET region -> region, "RBRACKET"
     | LBRACE   region -> region, "LBRACE"
     | RBRACE   region -> region, "RBRACE"
+
     | COMMA    region -> region, "COMMA"
     | SEMI     region -> region, "SEMI"
-    | VBAR     region -> region, "VBAR"
     | COLON    region -> region, "COLON"
     | DOT      region -> region, "DOT"
     | ELLIPSIS region -> region, "ELLIPSIS"
-    | WILD     region -> region, "WILD"
+    | QMARK    region -> region, "QMARK"
+
+    | BOOL_OR  region -> region, "BOOL_OR"
+    | BOOL_AND region -> region, "BOOL_AND"
+    | BOOL_NOT region -> region, "BOOL_NOT"
+
+    | BIT_OR   region -> region, "BIT_OR"
+    | BIT_AND  region -> region, "BIT_AND"
+    | BIT_NOT  region -> region, "BIT_NOT"
+    | BIT_XOR  region -> region, "BIT_XOR"
+    | SHIFT_L  region -> region, "SHIFT_L"
+    | SHIFT_R  region -> region, "SHIFT_R"
+
     | EQ       region -> region, "EQ"
-    | EQEQ     region -> region, "EQEQ"
-    | NE       region -> region, "NE"
+    | EQ3      region -> region, "EQ3"
+    | NE2      region -> region, "NE2"
+
     | LT       region -> region, "LT"
     | GT       region -> region, "GT"
     | LE       region -> region, "LE"
     | GE       region -> region, "GE"
+
+    | PLUS_EQ  region -> region, "PLUS_EQ"
+    | MINUS_EQ region -> region, "MINUS_EQ"
+    | MULT_EQ  region -> region, "MULT_EQ"
+    | REM_EQ   region -> region, "REM_EQ"
+    | DIV_EQ   region -> region, "DIV_EQ"
+    | SL_EQ    region -> region, "SL_EQ"
+    | SR_EQ    region -> region, "SR_EQ"
+    | AND_EQ   region -> region, "AND_EQ"
+    | OR_EQ    region -> region, "OR_EQ"
+    | XOR_EQ   region -> region, "XOR_EQ"
+
+    | VBAR     region -> region, "VBAR"
     | ARROW    region -> region, "ARROW"
-    | BOOL_NOT      region -> region, "BOOL_NOT"
-    | BOOL_OR  region -> region, "BOOL_OR"
-    | BOOL_AND region -> region, "BOOL_AND"
+    | WILD     region -> region, "WILD"
+
+    (* JavaScript Keywords *)
+
+    | Break    region -> region, "Break"
+    | Case     region -> region, "Case"
+    | Class    region -> region, "Class"
+    | Const    region -> region, "Const"
+    | Default  region -> region, "Default"
     | Else     region -> region, "Else"
+    | Enum     region -> region, "Enum"
     | False    region -> region, "False"
+    | For      region -> region, "For"
     | If       region -> region, "If"
     | Let      region -> region, "Let"
-    | Rec      region -> region, "Rec"
+    | New      region -> region, "New"
+    | Return   region -> region, "Return"
     | Switch   region -> region, "Switch"
-    | Mod      region -> region, "Mod"
-    | Or       region -> region, "Or"
+    | This     region -> region, "This"
     | True     region -> region, "True"
-    | Type     region -> region, "Type"
-    | C_None   region -> region, "C_None"
-    | C_Some   region -> region, "C_Some"
-    | EOF      region -> region, "EOF"
+    | Void     region -> region, "Void"
+    | While    region -> region, "While"
+    | With     region -> region, "With"
+
+    (* TypeScript keywords *)
+
+    | Type        region -> region, "Type"
+    | Constructor region -> region, "Constructor"
+    | Get         region -> region, "Get"
+    | Set         region -> region, "Set"
+
+    (* Data constructors *)
+
+    | C_None region -> region, "C_None"
+    | C_Some region -> region, "C_Some"
+    | EOF    region -> region, "EOF"
+
 
     let to_lexeme = function
       (* Literals *)
@@ -326,48 +398,91 @@ module T =
 
     (* Symbols *)
 
-    | CAT      _ -> "++"
-    | MINUS    _ -> "-"
-    | PLUS     _ -> "+"
-    | SLASH    _ -> "/"
-    | TIMES    _ -> "*"
-    | LPAR     _ -> "("
-    | RPAR     _ -> ")"
-    | LBRACKET _ -> "["
-    | RBRACKET _ -> "]"
-    | LBRACE   _ -> "{"
-    | RBRACE   _ -> "}"
-    | COMMA    _ -> ","
-    | SEMI     _ -> ";"
-    | VBAR     _ -> "|"
-    | COLON    _ -> ":"
-    | DOT      _ -> "."
-    | ELLIPSIS _ -> "..."
-    | WILD     _ -> "_"
-    | EQ       _ -> "="
-    | EQEQ     _ -> "=="
-    | NE       _ -> "!="
-    | LT       _ -> "<"
-    | GT       _ -> ">"
-    | LE       _ -> "<="
-    | GE       _ -> ">="
-    | ARROW    _ -> "=>"
-    | BOOL_OR  _ -> "||"
-    | BOOL_AND _ -> "&&"
-    | BOOL_NOT      _ -> "!"
+    | MINUS    -> "-"
+    | PLUS     -> "+"
+    | SLASH    -> "/"
+    | TIMES    -> "*"
+    | REM      -> "%"
+    | PLUS2    -> "++"
+    | MINUS2   -> "--"
 
-    (* Keywords *)
+    | LPAR     -> "("
+    | RPAR     -> ")"
+    | LBRACKET -> "["
+    | RBRACKET -> "]"
+    | LBRACE   -> "{"
+    | RBRACE   -> "}"
 
-    | Else    _ -> "else"
-    | False   _ -> "false"
-    | If      _ -> "if"
-    | Let     _ -> "let"
-    | Mod     _ -> "mod"
-    | Or      _ -> "or"
-    | Rec     _ -> "rec"
-    | Switch  _ -> "switch"
-    | True    _ -> "true"
-    | Type    _ -> "type"
+    | COMMA    -> ","
+    | SEMI     -> ";"
+    | COLON    -> ":"
+    | DOT      -> "."
+    | ELLIPSIS -> "..."
+    | QMARK    -> "?"
+
+    | BOOL_OR  -> "||"
+    | BOOL_AND -> "&&"
+    | BOOL_NOT -> "!"
+
+    | BIT_OR   -> "|"
+    | BIT_AND  -> "&"
+    | BIT_NOT  -> "~"
+    | BIT_XOR  -> "^"
+    | SHIFT_L  -> "<<<"
+    | SHIFT_R  -> ">>>"
+
+    | EQ       -> "="
+    | EQ3      -> "==="
+    | NE2      -> "!=="
+
+    | LT       -> "<"
+    | GT       -> ">"
+    | LE       -> "<="
+    | GE       -> ">="
+
+    | PLUS_EQ  -> "+="
+    | MINUS_EQ -> "-="
+    | MULT_EQ  -> "*="
+    | REM_EQ   -> "%="
+    | DIV_EQ   -> "/="
+    | SL_EQ    -> "<<<="
+    | SR_EQ    -> ">>>="
+    | AND_EQ   -> "&="
+    | OR_EQ    -> "|="
+    | XOR_EQ   -> "^="
+
+    | VBAR     -> "|"
+    | ARROW    -> "=>"
+    | WILD     -> "_"
+
+    (* JavaScript Keywords *)
+
+    | Break    -> "break"
+    | Case     -> "case"
+    | Class    -> "class"
+    | Const    -> "const"
+    | Default  -> "default"
+    | Else     -> "else"
+    | Enum     -> "enum"
+    | False    -> "false"
+    | For      -> "for"
+    | If       -> "if"
+    | Let      -> "let"
+    | New      -> "new"
+    | Return   -> "return"
+    | Switch   -> "switch"
+    | This     -> "this"
+    | True     -> "true"
+    | Void     -> "void"
+    | While    -> "while"
+    | With     -> "with"
+
+    (* TypeScript keywords *)
+
+    | Type        -> "type"
+    | Constructor -> "constructor"
+    | Get         -> "get"
+    | Set         -> "set"
 
     (* Data constructors *)
 
@@ -402,49 +517,7 @@ module T =
       (fun reg -> Type   reg)
     ]
 
-    let reserved =
-      let open SSet in
-      empty
-      |> add "as"
-      |> add "asr"
-      |> add "begin"
-      |> add "class"
-      |> add "constraint"
-      |> add "do"
-      |> add "done"
-      |> add "downto"
-      |> add "end"
-      |> add "exception"
-      |> add "external"
-      |> add "for"
-      |> add "function"
-      |> add "functor"
-      |> add "inherit"
-      |> add "initializer"
-      |> add "lazy"
-      |> add "lsl"
-      |> add "lsr"
-      |> add "match"
-      |> add "method"
-      |> add "module"
-      |> add "mutable"
-      |> add "new"
-      |> add "nonrec"
-      |> add "object"
-      |> add "of"
-      |> add "open"
-      |> add "private"
-      |> add "sig"
-      |> add "struct"
-      |> add "then"
-      |> add "to"
-      |> add "try"
-      |> add "val"
-      |> add "virtual"
-      |> add "when"
-      |> add "while"
-      |> add "pri"
-      |> add "pub"
+    let reserved = SSet.empty
 
     let constructors = [
       (fun reg -> C_None reg);
@@ -517,92 +590,126 @@ and scan_constr region lexicon = parse
 {
 (* START TRAILER *)
 
-    (* Smart constructors (injections) *)
+  (* Smart constructors (injections) *)
 
-    let mk_string lexeme region =
-      String Region.{region; value=lexeme}
+  let mk_string lexeme region =
+    String Region.{region; value=lexeme}
 
-    let mk_verbatim lexeme region =
-      Verbatim Region.{region; value=lexeme}
+  let mk_verbatim lexeme region =
+    Verbatim Region.{region; value=lexeme}
 
-    let mk_bytes lexeme region =
-      let norm = Str.(global_replace (regexp "_") "" lexeme) in
-      let value = lexeme, `Hex norm
-      in Bytes Region.{region; value}
+  let mk_bytes lexeme region =
+    let norm = Str.(global_replace (regexp "_") "" lexeme) in
+    let value = lexeme, `Hex norm
+    in Bytes Region.{region; value}
 
-    type int_err = Non_canonical_zero
+  type int_err = Non_canonical_zero
 
-    let mk_int lexeme region =
-      let z =
-        Str.(global_replace (regexp "_") "" lexeme) |> Z.of_string
-      in if   Z.equal z Z.zero && lexeme <> "0"
-         then Error Non_canonical_zero
-         else Ok (Int Region.{region; value = lexeme,z})
+  let mk_int lexeme region =
+    let z =
+      Str.(global_replace (regexp "_") "" lexeme) |> Z.of_string
+    in if   Z.equal z Z.zero && lexeme <> "0"
+       then Error Non_canonical_zero
+       else Ok (Int Region.{region; value = lexeme,z})
 
-    type nat_err =
-      Invalid_natural
-      | Non_canonical_zero_nat
+  type nat_err =
+    Invalid_natural
+  | Non_canonical_zero_nat
 
-    let mk_nat lexeme region =
-      match String.index_opt lexeme 'n' with
-        None -> Error Invalid_natural
-      | Some _ ->
-          let z =
-            Str.(global_replace (regexp "_") "" lexeme) |>
-              Str.(global_replace (regexp "n") "") |>
+  let mk_nat lexeme region =
+    match String.index_opt lexeme 'n' with
+      None -> Error Invalid_natural
+    | Some _ ->
+        let z =
+          Str.(global_replace (regexp "_") "" lexeme) |>
+            Str.(global_replace (regexp "n") "") |>
+            Z.of_string in
+        if   Z.equal z Z.zero && lexeme <> "0n"
+        then Error Non_canonical_zero_nat
+        else Ok (Nat Region.{region; value = lexeme,z})
+
+  let mk_mutez lexeme region =
+    let z = Str.(global_replace (regexp "_") "" lexeme) |>
+              Str.(global_replace (regexp "mutez") "") |>
               Z.of_string in
-          if   Z.equal z Z.zero && lexeme <> "0n"
-          then Error Non_canonical_zero_nat
-          else Ok (Nat Region.{region; value = lexeme,z})
+    if   Z.equal z Z.zero && lexeme <> "0mutez"
+    then Error Non_canonical_zero
+    else Ok (Mutez Region.{region; value = lexeme, z})
 
-    let mk_mutez lexeme region =
-      let z = Str.(global_replace (regexp "_") "" lexeme) |>
-                Str.(global_replace (regexp "mutez") "") |>
-                Z.of_string in
-      if   Z.equal z Z.zero && lexeme <> "0mutez"
-      then Error Non_canonical_zero
-      else Ok (Mutez Region.{region; value = lexeme, z})
+  let eof region = EOF region
 
-    let eof region = EOF region
+  type sym_err = Invalid_symbol
 
-    type sym_err = Invalid_symbol
+  let mk_sym lexeme region =
+    match lexeme with
+      (* Lexemes in common with all concrete syntaxes *)
 
-    let mk_sym lexeme region =
-      match lexeme with
-        (* Lexemes in common with all concrete syntaxes *)
+      ";"   -> Ok (SEMI     region)
+    | ","   -> Ok (COMMA    region)
+    | "("   -> Ok (LPAR     region)
+    | ")"   -> Ok (RPAR     region)
+    | "["   -> Ok (LBRACKET region)
+    | "]"   -> Ok (RBRACKET region)
+    | "{"   -> Ok (LBRACE   region)
+    | "}"   -> Ok (RBRACE   region)
+    | "="   -> Ok (EQ       region)
+    | ":"   -> Ok (COLON    region)
+    | "|"   -> Ok (VBAR     region)
+    | "."   -> Ok (DOT      region)
+    | "_"   -> Ok (WILD     region)
+    | "+"   -> Ok (PLUS     region)
+    | "-"   -> Ok (MINUS    region)
+    | "*"   -> Ok (TIMES    region)
+    | "/"   -> Ok (SLASH    region)
+    | "<"   -> Ok (LT       region)
+    | "<="  -> Ok (LE       region)
+    | ">"   -> Ok (GT       region)
+    | ">="  -> Ok (GE       region)
 
-        ";"   -> Ok (SEMI     region)
-      | ","   -> Ok (COMMA    region)
-      | "("   -> Ok (LPAR     region)
-      | ")"   -> Ok (RPAR     region)
-      | "["   -> Ok (LBRACKET region)
-      | "]"   -> Ok (RBRACKET region)
-      | "{"   -> Ok (LBRACE   region)
-      | "}"   -> Ok (RBRACE   region)
-      | "="   -> Ok (EQ       region)
-      | ":"   -> Ok (COLON    region)
-      | "|"   -> Ok (VBAR     region)
-      | "."   -> Ok (DOT      region)
-      | "_"   -> Ok (WILD     region)
-      | "+"   -> Ok (PLUS     region)
-      | "-"   -> Ok (MINUS    region)
-      | "*"   -> Ok (TIMES    region)
-      | "/"   -> Ok (SLASH    region)
-      | "<"   -> Ok (LT       region)
-      | "<="  -> Ok (LE       region)
-      | ">"   -> Ok (GT       region)
-      | ">="  -> Ok (GE       region)
+    (* Symbols specific to JsLIGO *)
 
-      (* Symbols specific to ReasonLIGO *)
+    | REM      of Region.t  (* "%"    *)
+    | PLUS2    of Region.t  (* "++"   *)
+    | MINUS2   of Region.t  (* "--"   *)
 
-      | "!="   -> Ok (NE       region)
-      | "||"   -> Ok (BOOL_OR  region)
-      | "&&"   -> Ok (BOOL_AND region)
-      | "..." ->  Ok (ELLIPSIS region)
-      | "=>"  ->  Ok (ARROW    region)
-      | "=="  ->  Ok (EQEQ     region)
-      | "!"   ->  Ok (BOOL_NOT      region)
-      | "++"  ->  Ok (CAT      region)
+    | ELLIPSIS of Region.t  (* "..."  *)
+    | QMARK    of Region.t  (* "?"    *)
+
+    | BOOL_OR  of Region.t  (* "||"   *)
+    | BOOL_AND of Region.t  (* "&&"   *)
+    | BOOL_NOT of Region.t  (* "!"    *)
+
+    | BIT_OR   of Region.t  (* "|"    *)
+    | BIT_AND  of Region.t  (* "&"    *)
+    | BIT_NOT  of Region.t  (* "~"    *)
+    | BIT_XOR  of Region.t  (* "^"    *)
+    | SHIFT_L  of Region.t  (* "<<<"  *)
+    | SHIFT_R  of Region.t  (* ">>>"  *)
+
+    | EQ       of Region.t  (* "="    *)
+    | EQ3      of Region.t  (* "==="  *)
+    | NE2      of Region.t  (* "!=="  *)
+
+    | LT       of Region.t  (* "<"    *)
+    | GT       of Region.t  (* ">"    *)
+    | LE       of Region.t  (* "<="   *)
+    | GE       of Region.t  (* ">="   *)
+
+    | PLUS_EQ  of Region.t  (* "+="   *)
+    | MINUS_EQ of Region.t  (* "-="   *)
+    | MULT_EQ  of Region.t  (* "*="   *)
+    | REM_EQ   of Region.t  (* "%="   *)
+    (*    | EXP_EQ   of Region.t  (* "**="  *)*)
+    | DIV_EQ   of Region.t  (* "/="   *)
+    | SL_EQ    of Region.t  (* "<<<=" *)
+    | SR_EQ    of Region.t  (* ">>>=" *)
+    | AND_EQ   of Region.t  (* "&="   *)
+    | OR_EQ    of Region.t  (* "|="   *)
+    | XOR_EQ   of Region.t  (* "^="   *)
+
+    | VBAR     of Region.t  (* "|"    *)
+    | ARROW    of Region.t  (* "=>"   *)
+    | WILD     of Region.t  (* "_"    *)
 
       (* Invalid symbols *)
 
