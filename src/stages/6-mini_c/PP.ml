@@ -5,8 +5,6 @@ open Format
 
 let list_sep_d x = list_sep x (tag " ,@ ")
 
-let lr = fun ppf -> function `Left -> fprintf ppf "L" | `Right -> fprintf ppf "R"
-
 let rec type_variable ppf : type_expression -> _ = fun te -> match te.type_content with
   | T_or(a, b) -> fprintf ppf "@[(%a) |@ (%a)@]" annotated a annotated b
   | T_pair(a, b) -> fprintf ppf "@[(%a) &@ (%a)@]" annotated a annotated b
@@ -30,7 +28,7 @@ and environment ppf (x:environment) =
   fprintf ppf "Env[%a]" (list_sep_d environment_element) x
 
 and type_constant ppf (tb:type_base) : unit =
-  let s = match tb with 
+  let s = match tb with
     | TB_unit      -> "unit"
     | TB_string    -> "string"
     | TB_bytes     -> "bytes"
@@ -90,7 +88,7 @@ and type_expression ppf : type_expression -> unit = fun te -> match te.type_cont
   | T_list e -> fprintf ppf "List (%a)" type_expression e
   | T_set e -> fprintf ppf "Set (%a)" type_expression e
   | T_contract c -> fprintf ppf "Contract (%a)" type_expression c
-  | T_option c -> fprintf ppf "Option (%a)" type_expression c 
+  | T_option c -> fprintf ppf "Option (%a)" type_expression c
 
 and value_assoc ppf : (value * value) -> unit = fun (a, b) ->
   fprintf ppf "%a -> %a" value a value b
@@ -127,10 +125,12 @@ and expression_content ppf (e:expression_content) = match e with
   | E_fold (((name , _) , body) , collection , initial) ->
       fprintf ppf "@[fold %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name.wrap_content expression body
 
-  | E_record_update (r, path,update) ->
-      fprintf ppf "@[{ %a@;<1 2>with@;<1 2>{ %a = %a } }@]" expression r (list_sep lr (const ".")) path expression update
   | E_raw_michelson code ->
-      fprintf ppf "%s" code 
+      let open Tezos_micheline in
+      let code = Micheline.Seq (Location.generated, code) in
+      let code = Micheline.strip_locations code in
+      let code = Micheline_printer.printable (fun prim -> prim) code in
+      fprintf ppf "%a" Micheline_printer.print_expr code
 
 and expression_with_type : _ -> expression -> _  = fun ppf e ->
   fprintf ppf "%a : %a"
@@ -142,8 +142,8 @@ and function_ ppf ({binder ; body}:anon_function) =
     Var.pp binder.wrap_content
     expression body
 
-and option_inline ppf inline = 
-  if inline then 
+and option_inline ppf inline =
+  if inline then
     fprintf ppf "[@@inline]"
   else
     fprintf ppf ""
@@ -229,6 +229,8 @@ and constant ppf : constant' -> unit = function
   | C_LIST_ITER             -> fprintf ppf "LIST_ITER"
   | C_LIST_MAP              -> fprintf ppf "LIST_MAP"
   | C_LIST_FOLD             -> fprintf ppf "LIST_FOLD"
+  | C_LIST_HEAD_OPT         -> fprintf ppf "LIST_HEAD_OPT"
+  | C_LIST_TAIL_OPT         -> fprintf ppf "LIST_TAIL_OPT"
   (* Maps *)
   | C_MAP                   -> fprintf ppf "MAP"
   | C_MAP_EMPTY             -> fprintf ppf "MAP_EMPTY"
