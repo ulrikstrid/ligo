@@ -567,7 +567,6 @@ and scan_constr region lexicon = parse
       | "|"   -> Ok (VBAR     region)
       | "."   -> Ok (DOT      region)
       | "_"   -> Ok (WILD     region)
-      | "^"   -> Ok (CARET    region)
       | "+"   -> Ok (PLUS     region)
       | "-"   -> Ok (MINUS    region)
       | "*"   -> Ok (TIMES    region)
@@ -579,11 +578,12 @@ and scan_constr region lexicon = parse
 
       (* Lexemes specific to CameLIGO *)
 
+      | "^"   -> Ok (CARET    region)
       | "->"  -> Ok (ARROW    region)
-      | "<>"  -> Ok (NE        region)
-      | "::"  -> Ok (CONS      region)
-      | "||"  -> Ok (BOOL_OR   region)
-      | "&&"  -> Ok (BOOL_AND  region)
+      | "<>"  -> Ok (NE       region)
+      | "::"  -> Ok (CONS     region)
+      | "||"  -> Ok (BOOL_OR  region)
+      | "&&"  -> Ok (BOOL_AND region)
 
       (* Invalid symbols *)
 
