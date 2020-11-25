@@ -65,33 +65,7 @@ module VarSet = Set.Make (Ord)
 
 (* Checking the definition of reserved names (shadowing) *)
 
-let reserved =
-  let open SSet in
-  empty
-  |> add "abs"
-  |> add "address"
-  |> add "amount"
-  |> add "assert"
-  |> add "balance"
-  |> add "black2b"
-  |> add "check"
-  |> add "continue"
-  |> add "failwith"
-  |> add "gas"
-  |> add "hash"
-  |> add "hash_key"
-  |> add "implicit_account"
-  |> add "int"
-  |> add "pack"
-  |> add "self_address"
-  |> add "sender"
-  |> add "sha256"
-  |> add "sha512"
-  |> add "source"
-  |> add "stop"
-  |> add "time"
-  |> add "unit"
-  |> add "unpack"
+let reserved = SSet.empty
 
 let check_reserved_names vars =
   let is_reserved elt = SSet.mem elt.value reserved in
