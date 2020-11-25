@@ -33,7 +33,7 @@ module Token = Lexer_cameligo.Token
 
 %token <Region.t> ARROW "->"
 %token <Region.t> CONS  "::"
-%token <Region.t> CAT   "^"
+%token <Region.t> CARET "^"
 (*%token <Region.t> APPEND "@" *)
 %token <Region.t> DOT   "."
 

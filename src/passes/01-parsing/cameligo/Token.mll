@@ -36,7 +36,7 @@ module T =
 
     | ARROW    of Region.t  (* "->" *)
     | CONS     of Region.t  (* "::" *)
-    | CAT      of Region.t  (* "^"  *)
+    | CARET    of Region.t  (* "^"  *)
     | MINUS    of Region.t  (* "-"  *)
     | PLUS     of Region.t  (* "+"  *)
     | SLASH    of Region.t  (* "/"  *)
@@ -119,7 +119,7 @@ module T =
 
     | "ARROW" ->   "->"
     | "CONS"  ->   "::"
-    | "CAT"   ->   "^"
+    | "CARET" ->   "^"
 
     (* Arithmetics *)
 
@@ -230,7 +230,7 @@ module T =
 
     | ARROW    region -> region, "ARROW"
     | CONS     region -> region, "CONS"
-    | CAT      region -> region, "CAT"
+    | CARET    region -> region, "CARET"
     | MINUS    region -> region, "MINUS"
     | PLUS     region -> region, "PLUS"
     | SLASH    region -> region, "SLASH"
@@ -305,7 +305,7 @@ module T =
 
     | ARROW    _ -> "->"
     | CONS     _ -> "::"
-    | CAT      _ -> "^"
+    | CARET    _ -> "^"
     | MINUS    _ -> "-"
     | PLUS     _ -> "+"
     | SLASH    _ -> "/"
@@ -567,7 +567,7 @@ and scan_constr region lexicon = parse
       | "|"   -> Ok (VBAR     region)
       | "."   -> Ok (DOT      region)
       | "_"   -> Ok (WILD     region)
-      | "^"   -> Ok (CAT      region)
+      | "^"   -> Ok (CARET    region)
       | "+"   -> Ok (PLUS     region)
       | "-"   -> Ok (MINUS    region)
       | "*"   -> Ok (TIMES    region)
@@ -630,7 +630,7 @@ and scan_constr region lexicon = parse
     let is_sym = function
       ARROW _
     | CONS _
-    | CAT _
+    | CARET _
     | MINUS _
     | PLUS _
     | SLASH _
