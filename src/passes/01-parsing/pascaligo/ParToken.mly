@@ -44,7 +44,7 @@ module Token = Lexer_pascaligo.Token
 %token <Region.t> TIMES       "*"
 %token <Region.t> DOT         "."
 %token <Region.t> WILD        "_"
-%token <Region.t> CAT         "^"
+%token <Region.t> CARET       "^"
 
   (* Keywords *)
 

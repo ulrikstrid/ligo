@@ -60,7 +60,7 @@ module T =
     | TIMES    of Region.t  (* "*"   *)
     | DOT      of Region.t  (* "."   *)
     | WILD     of Region.t  (* "_"   *)
-    | CAT      of Region.t  (* "^"   *)
+    | CARET    of Region.t  (* "^"   *)
 
     (* Keywords *)
 
@@ -164,7 +164,7 @@ module T =
       | "TIMES"    -> "*"
       | "DOT"      -> "."
       | "WILD"     -> "_"
-      | "CAT"      -> "^"
+      | "CARET"    -> "^"
 
       (* Keywords *)
 
@@ -278,7 +278,7 @@ module T =
     | TIMES    region -> region, "TIMES"
     | DOT      region -> region, "DOT"
     | WILD     region -> region, "WILD"
-    | CAT      region -> region, "CAT"
+    | CARET    region -> region, "CARET"
 
     (* Keywords *)
 
@@ -372,7 +372,7 @@ module T =
     | TIMES    _ -> "*"
     | DOT      _ -> "."
     | WILD     _ -> "_"
-    | CAT      _ -> "^"
+    | CARET    _ -> "^"
 
     (* Keywords *)
 
@@ -620,6 +620,7 @@ and scan_constr region lexicon = parse
       | "|"   -> Ok (VBAR     region)
       | "."   -> Ok (DOT      region)
       | "_"   -> Ok (WILD     region)
+      | "^"   -> Ok (CARET    region)
       | "+"   -> Ok (PLUS     region)
       | "-"   -> Ok (MINUS    region)
       | "*"   -> Ok (TIMES    region)
@@ -631,7 +632,6 @@ and scan_constr region lexicon = parse
 
       (* Lexemes specific to PascaLIGO *)
 
-      | "^"   -> Ok (CAT      region)
       | "->"  -> Ok (ARROW    region)
       | "=/=" -> Ok (NE       region)
       | "#"   -> Ok (CONS     region)
@@ -705,7 +705,7 @@ and scan_constr region lexicon = parse
     | TIMES _
     | DOT _
     | WILD _
-    | CAT _ -> true
+    | CARET _ -> true
     | _ -> false
   end
 
