@@ -22,7 +22,7 @@ interactive_expr: C_None WILD
 ##
 ## Ends in an error in state: 284.
 ##
-## call_expr_level -> call_expr_level_in . option(type_annotation_simple) [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## call_expr_level -> call_expr_level_in . option(type_annotation_simple) [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## call_expr_level_in
@@ -34,7 +34,7 @@ interactive_expr: C_Some VBAR
 ##
 ## Ends in an error in state: 231.
 ##
-## constr_expr -> C_Some . core_expr [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## constr_expr -> C_Some . core_expr [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## C_Some
@@ -46,8 +46,8 @@ interactive_expr: Constr DOT Ident WILD
 ##
 ## Ends in an error in state: 215.
 ##
-## module_fun -> Ident . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## projection -> Constr DOT Ident . selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## module_fun -> Ident . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## projection -> Constr DOT Ident . selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Constr DOT Ident
@@ -59,8 +59,8 @@ interactive_expr: Constr DOT WILD
 ##
 ## Ends in an error in state: 213.
 ##
-## module_field -> Constr DOT . module_fun [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## projection -> Constr DOT . Ident selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## module_field -> Constr DOT . module_fun [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## projection -> Constr DOT . Ident selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Constr DOT
@@ -72,10 +72,10 @@ interactive_expr: Constr Switch
 ##
 ## Ends in an error in state: 212.
 ##
-## constr_expr -> Constr . core_expr [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## constr_expr -> Constr . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## module_field -> Constr . DOT module_fun [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## projection -> Constr . DOT Ident selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## constr_expr -> Constr . core_expr [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## constr_expr -> Constr . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## module_field -> Constr . DOT module_fun [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## projection -> Constr . DOT Ident selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Constr
@@ -87,8 +87,8 @@ interactive_expr: Ident DOT Ident WILD
 ##
 ## Ends in an error in state: 207.
 ##
-## selection -> DOT Ident . selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## selection -> DOT Ident . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## selection -> DOT Ident . selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## selection -> DOT Ident . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## DOT Ident
@@ -100,8 +100,8 @@ interactive_expr: Ident DOT WILD
 ##
 ## Ends in an error in state: 206.
 ##
-## selection -> DOT . Ident selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## selection -> DOT . Ident [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## selection -> DOT . Ident selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## selection -> DOT . Ident [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## DOT
@@ -113,8 +113,8 @@ interactive_expr: Ident LBRACKET Int RBRACKET WILD
 ##
 ## Ends in an error in state: 205.
 ##
-## selection -> LBRACKET Int RBRACKET . selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## selection -> LBRACKET Int RBRACKET . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## selection -> LBRACKET Int RBRACKET . selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## selection -> LBRACKET Int RBRACKET . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACKET Int RBRACKET
@@ -126,8 +126,8 @@ interactive_expr: Ident LBRACKET Int WILD
 ##
 ## Ends in an error in state: 204.
 ##
-## selection -> LBRACKET Int . RBRACKET selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## selection -> LBRACKET Int . RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## selection -> LBRACKET Int . RBRACKET selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## selection -> LBRACKET Int . RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACKET Int
@@ -139,8 +139,8 @@ interactive_expr: Ident LBRACKET WILD
 ##
 ## Ends in an error in state: 203.
 ##
-## selection -> LBRACKET . Int RBRACKET selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## selection -> LBRACKET . Int RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## selection -> LBRACKET . Int RBRACKET selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## selection -> LBRACKET . Int RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACKET
@@ -152,8 +152,8 @@ interactive_expr: Ident WILD
 ##
 ## Ends in an error in state: 202.
 ##
-## common_expr -> Ident . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## projection -> Ident . selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## common_expr -> Ident . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## projection -> Ident . selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Ident
@@ -894,7 +894,7 @@ interactive_expr: LBRACE ELLIPSIS Ident COLON
 ##
 ## Ends in an error in state: 365.
 ##
-## update_record -> LBRACE ELLIPSIS path . COMMA sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## update_record -> LBRACE ELLIPSIS path . COMMA sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACE ELLIPSIS path
@@ -1034,7 +1034,7 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA WILD
 ##
 ## Ends in an error in state: 366.
 ##
-## update_record -> LBRACE ELLIPSIS path COMMA . sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## update_record -> LBRACE ELLIPSIS path COMMA . sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACE ELLIPSIS path COMMA
@@ -1059,7 +1059,7 @@ interactive_expr: LBRACE ELLIPSIS WILD
 ##
 ## Ends in an error in state: 359.
 ##
-## update_record -> LBRACE ELLIPSIS . path COMMA sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## update_record -> LBRACE ELLIPSIS . path COMMA sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACE ELLIPSIS
@@ -1071,7 +1071,7 @@ interactive_expr: LBRACE Ident COLON Bytes VBAR
 ##
 ## Ends in an error in state: 475.
 ##
-## record_expr -> LBRACE field_assignment . option(more_field_assignments) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## record_expr -> LBRACE field_assignment . option(more_field_assignments) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACE field_assignment
@@ -1233,10 +1233,10 @@ interactive_expr: LBRACE Ident WILD
 ##
 ## Ends in an error in state: 457.
 ##
-## common_expr -> Ident . [ TIMES SLASH SEMI RBRACE PLUS Or NE Mod MINUS LT LPAR LE GT GE EQEQ COLON CAT BOOL_OR BOOL_AND ARROW ]
+## common_expr -> Ident . [ TIMES SLASH SEMI RBRACE PLUS Or NE Mod MINUS LT LPAR LE GT GE EQEQ COLON PLUS2 BOOL_OR BOOL_AND ARROW ]
 ## field_assignment -> Ident . COLON expr [ RBRACE COMMA ]
-## projection -> Ident . selection [ TIMES SLASH SEMI RBRACE PLUS Or NE Mod MINUS LT LPAR LE GT GE EQEQ COLON CAT BOOL_OR BOOL_AND ARROW ]
-## record_expr -> LBRACE Ident . more_field_assignments RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## projection -> Ident . selection [ TIMES SLASH SEMI RBRACE PLUS Or NE Mod MINUS LT LPAR LE GT GE EQEQ COLON PLUS2 BOOL_OR BOOL_AND ARROW ]
+## record_expr -> LBRACE Ident . more_field_assignments RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACE Ident
@@ -1248,10 +1248,10 @@ interactive_expr: LBRACE VBAR
 ##
 ## Ends in an error in state: 198.
 ##
-## record_expr -> LBRACE . field_assignment option(more_field_assignments) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## record_expr -> LBRACE . Ident more_field_assignments RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## sequence -> LBRACE . exprs RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## update_record -> LBRACE . ELLIPSIS path COMMA sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## record_expr -> LBRACE . field_assignment option(more_field_assignments) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## record_expr -> LBRACE . Ident more_field_assignments RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## sequence -> LBRACE . exprs RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## update_record -> LBRACE . ELLIPSIS path COMMA sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACE
@@ -1308,9 +1308,9 @@ interactive_expr: LBRACKET VBAR
 ##
 ## Ends in an error in state: 196.
 ##
-## list_or_spread -> LBRACKET . expr COMMA sep_or_term_list(expr,COMMA) RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## list_or_spread -> LBRACKET . expr COMMA ELLIPSIS expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## list_or_spread -> LBRACKET . option(expr) RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## list_or_spread -> LBRACKET . expr COMMA sep_or_term_list(expr,COMMA) RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## list_or_spread -> LBRACKET . expr COMMA ELLIPSIS expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## list_or_spread -> LBRACKET . option(expr) RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACKET
@@ -1322,7 +1322,7 @@ interactive_expr: LBRACKET WILD COMMA ELLIPSIS VBAR
 ##
 ## Ends in an error in state: 499.
 ##
-## list_or_spread -> LBRACKET expr COMMA ELLIPSIS . expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## list_or_spread -> LBRACKET expr COMMA ELLIPSIS . expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACKET expr COMMA ELLIPSIS
@@ -1334,7 +1334,7 @@ interactive_expr: LBRACKET WILD COMMA ELLIPSIS WILD VBAR
 ##
 ## Ends in an error in state: 500.
 ##
-## list_or_spread -> LBRACKET expr COMMA ELLIPSIS expr . RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## list_or_spread -> LBRACKET expr COMMA ELLIPSIS expr . RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACKET expr COMMA ELLIPSIS expr
@@ -1364,8 +1364,8 @@ interactive_expr: LBRACKET WILD COMMA VBAR
 ##
 ## Ends in an error in state: 498.
 ##
-## list_or_spread -> LBRACKET expr COMMA . sep_or_term_list(expr,COMMA) RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## list_or_spread -> LBRACKET expr COMMA . ELLIPSIS expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## list_or_spread -> LBRACKET expr COMMA . sep_or_term_list(expr,COMMA) RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## list_or_spread -> LBRACKET expr COMMA . ELLIPSIS expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACKET expr COMMA
@@ -1467,8 +1467,8 @@ interactive_expr: LBRACKET WILD VBAR
 ##
 ## Ends in an error in state: 497.
 ##
-## list_or_spread -> LBRACKET expr . COMMA sep_or_term_list(expr,COMMA) RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## list_or_spread -> LBRACKET expr . COMMA ELLIPSIS expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## list_or_spread -> LBRACKET expr . COMMA sep_or_term_list(expr,COMMA) RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## list_or_spread -> LBRACKET expr . COMMA ELLIPSIS expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ## option(expr) -> expr . [ RBRACKET ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1499,9 +1499,9 @@ interactive_expr: LPAR VBAR
 ##
 ## Ends in an error in state: 197.
 ##
-## par(expr) -> LPAR . expr RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## par(expr) -> LPAR . expr RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ## par(tuple(disj_expr_level)) -> LPAR . tuple(disj_expr_level) RPAR [ VBAR Type SEMI RPAR RBRACKET RBRACE Or Let EOF COMMA COLON BOOL_OR Attr ARROW ]
-## unit -> LPAR . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## unit -> LPAR . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LPAR
@@ -1635,7 +1635,7 @@ interactive_expr: Lang VBAR
 ##
 ## Ends in an error in state: 192.
 ##
-## code_inj -> Lang . expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## code_inj -> Lang . expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Lang
@@ -1647,7 +1647,7 @@ interactive_expr: Lang WILD VBAR
 ##
 ## Ends in an error in state: 514.
 ##
-## code_inj -> Lang expr . RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## code_inj -> Lang expr . RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Lang expr
@@ -1788,7 +1788,7 @@ interactive_expr: MINUS VBAR
 ##
 ## Ends in an error in state: 195.
 ##
-## unary_expr_level -> MINUS . call_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## unary_expr_level -> MINUS . call_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## MINUS
@@ -1800,7 +1800,7 @@ interactive_expr: NOT VBAR
 ##
 ## Ends in an error in state: 193.
 ##
-## unary_expr_level -> NOT . call_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## unary_expr_level -> NOT . call_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## NOT
@@ -1812,8 +1812,8 @@ interactive_expr: Switch Constr WILD
 ##
 ## Ends in an error in state: 218.
 ##
-## module_field -> Constr . DOT module_fun [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## projection -> Constr . DOT Ident selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## module_field -> Constr . DOT module_fun [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## projection -> Constr . DOT Ident selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Constr
@@ -1939,8 +1939,8 @@ interactive_expr: Switch LPAR VBAR
 ##
 ## Ends in an error in state: 194.
 ##
-## par(expr) -> LPAR . expr RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## unit -> LPAR . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## par(expr) -> LPAR . expr RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## unit -> LPAR . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LPAR
@@ -1952,7 +1952,7 @@ interactive_expr: Switch LPAR WILD VBAR
 ##
 ## Ends in an error in state: 487.
 ##
-## par(expr) -> LPAR expr . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## par(expr) -> LPAR expr . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LPAR expr
@@ -2285,14 +2285,14 @@ interactive_expr: WILD BOOL_OR VBAR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: WILD CAT VBAR
+interactive_expr: WILD PLUS2 VBAR
 ##
 ## Ends in an error in state: 303.
 ##
-## bin_op(add_expr_level,CAT,cat_expr_level) -> add_expr_level CAT . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Let LT LE GT GE EQEQ EOF COMMA BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(add_expr_level,PLUS2,cat_expr_level) -> add_expr_level PLUS2 . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Let LT LE GT GE EQEQ EOF COMMA BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## add_expr_level CAT
+## add_expr_level PLUS2
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -2333,7 +2333,7 @@ interactive_expr: WILD COLON Ident LPAR WILD
 ##
 ## Ends in an error in state: 240.
 ##
-## par(nsepseq(type_expr_simple,COMMA)) -> LPAR . nsepseq(type_expr_simple,COMMA) RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## par(nsepseq(type_expr_simple,COMMA)) -> LPAR . nsepseq(type_expr_simple,COMMA) RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LPAR
@@ -2345,7 +2345,7 @@ interactive_expr: WILD COLON Ident WILD
 ##
 ## Ends in an error in state: 239.
 ##
-## type_expr_simple -> Ident . option(type_expr_simple_args) [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## type_expr_simple -> Ident . option(type_expr_simple_args) [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Ident
@@ -2357,7 +2357,7 @@ interactive_expr: WILD COLON LPAR Ident ARROW Ident VBAR
 ##
 ## Ends in an error in state: 256.
 ##
-## type_expr_simple -> LPAR type_expr_simple ARROW type_expr_simple . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## type_expr_simple -> LPAR type_expr_simple ARROW type_expr_simple . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LPAR type_expr_simple ARROW type_expr_simple
@@ -2376,7 +2376,7 @@ interactive_expr: WILD COLON LPAR Ident ARROW WILD
 ##
 ## Ends in an error in state: 255.
 ##
-## type_expr_simple -> LPAR type_expr_simple ARROW . type_expr_simple RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## type_expr_simple -> LPAR type_expr_simple ARROW . type_expr_simple RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LPAR type_expr_simple ARROW
@@ -2400,10 +2400,10 @@ interactive_expr: WILD COLON LPAR Ident RPAR WILD
 ##
 ## Ends in an error in state: 263.
 ##
-## add_expr_level -> mult_expr_level . [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
-## bin_op(mult_expr_level,Mod,unary_expr_level) -> mult_expr_level . Mod unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
-## bin_op(mult_expr_level,SLASH,unary_expr_level) -> mult_expr_level . SLASH unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
-## bin_op(mult_expr_level,TIMES,unary_expr_level) -> mult_expr_level . TIMES unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## add_expr_level -> mult_expr_level . [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,Mod,unary_expr_level) -> mult_expr_level . Mod unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,SLASH,unary_expr_level) -> mult_expr_level . SLASH unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,TIMES,unary_expr_level) -> mult_expr_level . TIMES unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## mult_expr_level
@@ -2415,9 +2415,9 @@ interactive_expr: WILD COLON LPAR Ident VBAR
 ##
 ## Ends in an error in state: 251.
 ##
-## par(type_expr_simple) -> LPAR type_expr_simple . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## par(type_expr_simple) -> LPAR type_expr_simple . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ## tuple(type_expr_simple) -> type_expr_simple . COMMA nsepseq(type_expr_simple,COMMA) [ RPAR ]
-## type_expr_simple -> LPAR type_expr_simple . ARROW type_expr_simple RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## type_expr_simple -> LPAR type_expr_simple . ARROW type_expr_simple RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LPAR type_expr_simple
@@ -2436,9 +2436,9 @@ interactive_expr: WILD COLON LPAR WILD
 ##
 ## Ends in an error in state: 238.
 ##
-## par(tuple(type_expr_simple)) -> LPAR . tuple(type_expr_simple) RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
-## par(type_expr_simple) -> LPAR . type_expr_simple RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
-## type_expr_simple -> LPAR . type_expr_simple ARROW type_expr_simple RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## par(tuple(type_expr_simple)) -> LPAR . tuple(type_expr_simple) RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## par(type_expr_simple) -> LPAR . type_expr_simple RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## type_expr_simple -> LPAR . type_expr_simple ARROW type_expr_simple RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LPAR
@@ -2450,7 +2450,7 @@ interactive_expr: WILD COLON WILD
 ##
 ## Ends in an error in state: 237.
 ##
-## type_annotation_simple -> COLON . type_expr_simple [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## type_annotation_simple -> COLON . type_expr_simple [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## COLON
@@ -2510,8 +2510,8 @@ interactive_expr: WILD LPAR VBAR
 ##
 ## Ends in an error in state: 267.
 ##
-## par(nsepseq(expr,COMMA)) -> LPAR . nsepseq(expr,COMMA) RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## unit -> LPAR . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## par(nsepseq(expr,COMMA)) -> LPAR . nsepseq(expr,COMMA) RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## unit -> LPAR . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## LPAR
@@ -2578,7 +2578,7 @@ interactive_expr: WILD MINUS VBAR
 ##
 ## Ends in an error in state: 301.
 ##
-## bin_op(add_expr_level,MINUS,mult_expr_level) -> add_expr_level MINUS . mult_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(add_expr_level,MINUS,mult_expr_level) -> add_expr_level MINUS . mult_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## add_expr_level MINUS
@@ -2590,10 +2590,10 @@ interactive_expr: WILD MINUS WILD COLON LPAR Ident RPAR WILD
 ##
 ## Ends in an error in state: 302.
 ##
-## bin_op(add_expr_level,MINUS,mult_expr_level) -> add_expr_level MINUS mult_expr_level . [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
-## bin_op(mult_expr_level,Mod,unary_expr_level) -> mult_expr_level . Mod unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
-## bin_op(mult_expr_level,SLASH,unary_expr_level) -> mult_expr_level . SLASH unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
-## bin_op(mult_expr_level,TIMES,unary_expr_level) -> mult_expr_level . TIMES unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(add_expr_level,MINUS,mult_expr_level) -> add_expr_level MINUS mult_expr_level . [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,Mod,unary_expr_level) -> mult_expr_level . Mod unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,SLASH,unary_expr_level) -> mult_expr_level . SLASH unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,TIMES,unary_expr_level) -> mult_expr_level . TIMES unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## add_expr_level MINUS mult_expr_level
@@ -2605,7 +2605,7 @@ interactive_expr: WILD Mod VBAR
 ##
 ## Ends in an error in state: 299.
 ##
-## bin_op(mult_expr_level,Mod,unary_expr_level) -> mult_expr_level Mod . unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,Mod,unary_expr_level) -> mult_expr_level Mod . unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## mult_expr_level Mod
@@ -2641,7 +2641,7 @@ interactive_expr: WILD PLUS VBAR
 ##
 ## Ends in an error in state: 295.
 ##
-## bin_op(add_expr_level,PLUS,mult_expr_level) -> add_expr_level PLUS . mult_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(add_expr_level,PLUS,mult_expr_level) -> add_expr_level PLUS . mult_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## add_expr_level PLUS
@@ -2653,10 +2653,10 @@ interactive_expr: WILD PLUS WILD COLON LPAR Ident RPAR WILD
 ##
 ## Ends in an error in state: 296.
 ##
-## bin_op(add_expr_level,PLUS,mult_expr_level) -> add_expr_level PLUS mult_expr_level . [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
-## bin_op(mult_expr_level,Mod,unary_expr_level) -> mult_expr_level . Mod unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
-## bin_op(mult_expr_level,SLASH,unary_expr_level) -> mult_expr_level . SLASH unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
-## bin_op(mult_expr_level,TIMES,unary_expr_level) -> mult_expr_level . TIMES unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(add_expr_level,PLUS,mult_expr_level) -> add_expr_level PLUS mult_expr_level . [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,Mod,unary_expr_level) -> mult_expr_level . Mod unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,SLASH,unary_expr_level) -> mult_expr_level . SLASH unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,TIMES,unary_expr_level) -> mult_expr_level . TIMES unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## add_expr_level PLUS mult_expr_level
@@ -2668,7 +2668,7 @@ interactive_expr: WILD SLASH VBAR
 ##
 ## Ends in an error in state: 297.
 ##
-## bin_op(mult_expr_level,SLASH,unary_expr_level) -> mult_expr_level SLASH . unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,SLASH,unary_expr_level) -> mult_expr_level SLASH . unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## mult_expr_level SLASH
@@ -2680,7 +2680,7 @@ interactive_expr: WILD TIMES VBAR
 ##
 ## Ends in an error in state: 264.
 ##
-## bin_op(mult_expr_level,TIMES,unary_expr_level) -> mult_expr_level TIMES . unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA CAT BOOL_OR BOOL_AND Attr ARROW ]
+## bin_op(mult_expr_level,TIMES,unary_expr_level) -> mult_expr_level TIMES . unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## mult_expr_level TIMES
@@ -2723,9 +2723,9 @@ interactive_expr: WILD WILD
 ##
 ## Ends in an error in state: 266.
 ##
-## call_expr -> core_expr . par(nsepseq(expr,COMMA)) [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## call_expr -> core_expr . unit [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
-## call_expr_level_in -> core_expr . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ARROW ]
+## call_expr -> core_expr . par(nsepseq(expr,COMMA)) [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## call_expr -> core_expr . unit [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
+## call_expr_level_in -> core_expr . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## core_expr

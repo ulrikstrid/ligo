@@ -34,7 +34,7 @@ module T =
 
     (* Symbols *)
 
-    | CAT      of Region.t (* "++"  *)
+    | PLUS2    of Region.t (* "++"  *)
     | MINUS    of Region.t (* "-"   *)
     | PLUS     of Region.t (* "+"   *)
     | SLASH    of Region.t (* "/"   *)
@@ -112,7 +112,7 @@ module T =
 
     (* Symbols *)
 
-    | "CAT" -> "++"
+    | "PLUS2" -> "++"
 
     (* Arithmetics *)
 
@@ -219,7 +219,7 @@ module T =
 
     (* Symbols *)
 
-    | CAT      region -> region, "CAT"
+    | PLUS2    region -> region, "PLUS2"
     | MINUS    region -> region, "MINUS"
     | PLUS     region -> region, "PLUS"
     | SLASH    region -> region, "SLASH"
@@ -278,7 +278,7 @@ module T =
 
     (* Symbols *)
 
-    | CAT      _ -> "++"
+    | PLUS2    _ -> "++"
     | MINUS    _ -> "-"
     | PLUS     _ -> "+"
     | SLASH    _ -> "/"
@@ -554,7 +554,7 @@ and scan_constr region lexicon = parse
       | "=>"  ->  Ok (ARROW    region)
       | "=="  ->  Ok (EQEQ     region)
       | "!"   ->  Ok (NOT      region)
-      | "++"  ->  Ok (CAT      region)
+      | "++"  ->  Ok (PLUS2    region)
 
       (* Invalid symbols *)
 
@@ -599,7 +599,7 @@ and scan_constr region lexicon = parse
     | _ -> false
 
     let is_sym = function
-      CAT _
+      PLUS2 _
     | MINUS _
     | PLUS _
     | SLASH _

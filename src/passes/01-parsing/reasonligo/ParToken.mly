@@ -31,7 +31,7 @@ module Token = Lexer_reasonligo.Token
 %token <Region.t> LBRACE   "{"
 %token <Region.t> RBRACE   "}"
 
-%token <Region.t> CAT       "++"
+%token <Region.t> PLUS2     "++"
 %token <Region.t> DOT       "."
 %token <Region.t> ELLIPSIS  "..."
 
