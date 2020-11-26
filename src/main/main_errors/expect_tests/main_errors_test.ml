@@ -195,37 +195,13 @@ let%expect_test "self_ast_imperative" =
   In the case of an address, a string is expected prefixed by either tz1, tz2, tz3 or KT1 and followed by a Base58 encoded hash and terminated by a 4-byte checksum.
   In the case of a key_hash, signature, or key a Base58 encoded hash is expected.
   |}] ;
-  error (`Self_ast_imperative_bad_empty_arity (C_INT, expression)) ;
+  error (`Self_ast_imperative_bad_empty_arity (Location.wrap @@ Var.of_name "TEST" , expression)) ;
   [%expect
     {|
   in file "a dummy file name", line 20, characters 5-5
 
   Ill-formed "INT" expression.
   No functions arguments are expected.
-  |}] ;
-  error (`Self_ast_imperative_bad_single_arity (C_ASSERTION, expression)) ;
-  [%expect
-    {|
-  in file "a dummy file name", line 20, characters 5-5
-
-  Ill-formed "ASSERTION" expression
-  One function argument is expected.
-  |}] ;
-  error (`Self_ast_imperative_bad_map_param_type (C_EDIV, expression)) ;
-  [%expect
-    {|
-  in file "a dummy file name", line 20, characters 5-5
-
-  Ill-formed "EDIV" expression.
-  A list of pair parameters is expected.
-  |}] ;
-  error (`Self_ast_imperative_bad_set_param_type (C_ITER, expression)) ;
-  [%expect
-    {|
-  in file "a dummy file name", line 20, characters 5-5
-
-  Ill-formed "ITER" expression.
-  A list of pair parameters is expected.
   |}] ;
   error (`Self_ast_imperative_bad_convertion_bytes expression) ;
   [%expect

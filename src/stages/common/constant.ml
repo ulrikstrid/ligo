@@ -71,3 +71,50 @@ let v_baker_operation : type_variable = Var.of_name baker_operation_name
 let v_bls12_381_g1 : type_variable = Var.of_name bls12_381_g1_name
 let v_bls12_381_g2 : type_variable = Var.of_name bls12_381_g2_name
 let v_bls12_381_fr : type_variable = Var.of_name  bls12_381_fr_name
+
+
+(* TODO : create Value/Type modules ? *)
+
+let ctor_some_name = "Some"
+let ctor_none_name = "None"
+let concat_name = "concat"
+let map_add_name = "map_add"
+
+let add_name = "add"
+let sub_name = "sub"
+let mult_name = "mult"
+let div_name = "div"
+let mod_name = "mod"
+let neg_name = "neg"
+let lt_name = "lt"
+let or_name = "or"
+let and_name = "and"
+let not_name = "not"
+let leq_name = "leq"
+let gt_name = "gt"
+let geq_name = "geq"
+let equal_name = "equal"
+let neq_name = "neq"
+let cons_name = "cons"
+let set_mem_name = "set_mem"
+let set_add_name = "set_add"
+let map_remove_name = "map_remove"
+let set_remove_name = "set_remove"
+let big_map_literal_name = "big_map_literal"
+let map_literal_name = "map_literal"
+let set_literal_name = "set_literal"
+let set_empty_name = "set_empty"
+let map_empty_name = "map_empty"
+let big_map_empty_name = "big_map_empty"
+let implicit_account_name = "implicit_account_name"
+
+let _todo_syntaxes_to_var : string -> expression_variable = fun _ ->
+  Location.wrap @@ Var.of_name "TODO" (* Call something in primitives *)
+
+let ev_map_literal : expression_ Var.t = Var.of_name map_literal_name
+let ev_big_map_literal : expression_ Var.t = Var.of_name big_map_literal_name
+let ev_set_literal : expression_ Var.t = Var.of_name set_literal_name
+let ev_set_empty : expression_ Var.t = Var.of_name set_empty_name
+let ev_map_empty : expression_ Var.t = Var.of_name map_empty_name
+let ev_big_map_empty : expression_ Var.t = Var.of_name big_map_empty_name
+let ev_implicit_account : expression_ Var.t = Var.of_name implicit_account_name

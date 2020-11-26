@@ -44,7 +44,7 @@ let external_contract =
 let from_  = e_address @@ addr 5
 let to_    = e_address @@ addr 2
 let sender = e_address @@ sender
-let external_contract = e_annotation (e_constant (Const C_IMPLICIT_ACCOUNT) [e_key_hash external_contract]) (t_contract (t_nat ()))
+let external_contract = e_annotation (constant_app Stage_common.Constant.implicit_account_name [e_key_hash external_contract]) (t_contract (t_nat ()))
 
 let transfer f s () =
   let%bind (program, env, state) = get_program f s () in

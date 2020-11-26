@@ -154,7 +154,6 @@ let get_e_tuple : AST.expression -> _ result = fun expr ->
     E_tuple tuple -> ok @@ tuple
   | E_variable _
   | E_literal _
-  | E_constant _
   | E_lambda _ -> ok @@ [expr]
   | _ -> failwith @@
     Format.asprintf "%a should be a tuple expression"
@@ -222,18 +221,6 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     E_variable name ->
     let var = decompile_variable name.wrap_content in
     return_expr @@ CST.EVar (var)
-  | E_constant {cons_name; arguments} ->
-    let expr = CST.EVar (wrap @@ Predefined.constant_to_string cons_name) in
-    (match arguments with
-      [] -> return_expr @@ expr
-    | _ ->
-      let%bind arguments = decompile_to_tuple_expr dialect arguments in
-      let const : CST.fun_call = wrap (expr, arguments) in
-      (match output with
-        Expression -> return_expr (CST.ECall const)
-      | Statements -> return_inst (CST.ProcCall const)
-      )
-    )
   | E_literal literal ->
     (match literal with
         Literal_unit  ->  return_expr @@ CST.EUnit ghost

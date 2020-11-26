@@ -556,6 +556,7 @@ and list_expr =
 and constr_expr =
   SomeApp   of (c_Some * arguments) reg
 | NoneExpr  of c_None
+(*TODO : SomeApp and NoneExpr should be removed*)
 | ConstrApp of (constr * arguments option) reg
 
 and field_assignment = {

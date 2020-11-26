@@ -64,10 +64,6 @@ and expression_content ppf (ec : expression_content) =
   | E_variable    n -> expression_variable    ppf n
   | E_application a -> application expression ppf a
   | E_constructor c -> constructor expression ppf c
-  | E_constant c ->
-      fprintf ppf "%a(%a)"
-        constant' (const_name c.cons_name)
-        (list_sep_d expression) c.arguments
   | E_record      r -> record      expression ppf r
   | E_tuple       t -> tuple       expression ppf t
   | E_accessor    a -> accessor    expression ppf a

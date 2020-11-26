@@ -18,7 +18,8 @@ let pseq_to_list = function
   | Some lst -> npseq_to_list lst
 let get_value : 'a Raw.reg -> 'a = fun x -> x.value
 
-open Predefined.Tree_abstraction.Cameligo
+open Stage_common.Constant
+(* open Predefined.Tree_abstraction.Cameligo *)
 
 let r_split = Location.r_split
 
@@ -150,24 +151,21 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
         let (sels, _) = List.split @@ List.map compile_selection @@ npseq_to_list proj.field_path in
         return @@ e_accessor var sels
   in
-  let compile_bin_op (op_type : AST.constant') (op : _ CST.bin_op CST.reg) =
+  let compile_bin_op (op_type : string) (op : _ CST.bin_op CST.reg) =
     let (op, loc) = r_split op in
     let%bind a = compile_expression op.arg1 in
     let%bind b = compile_expression op.arg2 in
-    return @@ e_constant ~loc (Const op_type) [a; b]
+    return @@ constant_app ~loc op_type [a; b]
   in
-  let compile_un_op (op_type : AST.constant') (op : _ CST.un_op CST.reg) =
+  let compile_un_op (op_type : string) (op : _ CST.un_op CST.reg) =
     let (op, loc) = r_split op in
     let%bind arg = compile_expression op.arg in
-    return @@ e_constant ~loc (Const op_type) [arg]
+    return @@ constant_app ~loc op_type [arg]
   in
   match e with
     EVar var ->
     let (var, loc) = r_split var in
-    (match constants var with
-      Some const -> return @@ e_constant ~loc const []
-    | None -> return @@ e_variable_ez ~loc var
-    )
+    return @@ e_variable_ez ~loc var
   | EPar par -> compile_expression par.value.inside
   | EUnit the_unit ->
     let loc = Location.lift the_unit.region in
@@ -178,11 +176,7 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     return @@ e_bytes_hex ~loc b
   | EString str ->(
     match str with
-      Cat c ->
-      let (op,loc) = r_split c in
-      let%bind a = compile_expression op.arg1 in
-      let%bind b = compile_expression op.arg2 in
-      return @@ e_constant ~loc (Const C_CONCAT) [a;b]
+      Cat c -> compile_bin_op concat_name c
     | String str ->
       let (str, loc) = r_split str in
       return @@ e_string ~loc str
@@ -192,12 +186,12 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
   )
   | EArith arth ->
     ( match arth with
-      Add plus   -> compile_bin_op C_ADD plus
-    | Sub minus  -> compile_bin_op C_SUB minus
-    | Mult times -> compile_bin_op C_MUL times
-    | Div slash  -> compile_bin_op C_DIV slash
-    | Mod mod_   -> compile_bin_op C_MOD mod_
-    | Neg minus  -> compile_un_op C_NEG minus
+      Add plus   -> compile_bin_op add_name plus
+    | Sub minus  -> compile_bin_op sub_name minus
+    | Mult times -> compile_bin_op mult_name times
+    | Div slash  -> compile_bin_op div_name slash
+    | Mod mod_   -> compile_bin_op mod_name mod_
+    | Neg minus  -> compile_un_op neg_name minus
     | Int i ->
       let ((_,i), loc) = r_split i in
       return @@ e_int_z ~loc i
@@ -212,20 +206,20 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     match logic with
       BoolExpr be -> (
       match be with
-        Or or_   -> compile_bin_op C_OR  or_
-      | And and_ -> compile_bin_op C_AND and_
-      | Not not_ -> compile_un_op  C_NOT not_
+        Or or_   -> compile_bin_op or_name  or_
+      | And and_ -> compile_bin_op and_name and_
+      | Not not_ -> compile_un_op  not_name not_
       | True  reg -> let loc = Location.lift reg in return @@ e_true  ~loc ()
       | False reg -> let loc = Location.lift reg in return @@ e_false ~loc ()
     )
     | CompExpr ce -> (
       match ce with
-        Lt lt    -> compile_bin_op C_LT  lt
-      | Leq le   -> compile_bin_op C_LE  le
-      | Gt gt    -> compile_bin_op C_GT  gt
-      | Geq ge   -> compile_bin_op C_GE  ge
-      | Equal eq -> compile_bin_op C_EQ  eq
-      | Neq ne   -> compile_bin_op C_NEQ ne
+        Lt lt    -> compile_bin_op lt_name lt
+      | Leq le   -> compile_bin_op leq_name le
+      | Gt gt    -> compile_bin_op gt_name gt
+      | Geq ge   -> compile_bin_op geq_name ge
+      | Equal eq -> compile_bin_op equal_name  eq
+      | Neq ne   -> compile_bin_op neq_name ne
     )
   )
   (* This case is due to a bad besign of our constant it as to change
@@ -233,15 +227,9 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
   | ECall {value=(EVar var,args);region} ->
     let loc = Location.lift region in
     let (var, loc_var) = r_split var in
-    (match constants var with
-      Some const ->
-      let%bind args = bind_map_list compile_expression @@ nseq_to_list args in
-      return @@ e_constant ~loc const args
-    | None ->
-      let func = e_variable_ez ~loc:loc_var var in
-      let%bind args = bind_map_list compile_expression @@ nseq_to_list args in
-      return @@ List.fold_left (e_application ~loc) func @@ args
-    )
+    let func = e_variable_ez ~loc:loc_var var in
+    let%bind args = bind_map_list compile_expression @@ nseq_to_list args in
+    return @@ List.fold_left (e_application ~loc) func @@ args
   | ECall call ->
     let ((func, args), loc) = r_split call in
     let%bind func = compile_expression func in
@@ -343,11 +331,7 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     return @@ e_cond ~loc test then_clause @@ Option.unopt ~default:(e_unit ~loc ()) else_clause
   | EList lst -> (
     match lst with
-      ECons cons ->
-      let (cons, loc) = r_split cons in
-      let%bind a  = compile_expression cons.arg1 in
-      let%bind b  = compile_expression cons.arg2 in
-      return @@ e_constant ~loc (Const C_CONS) [a; b]
+      ECons cons -> compile_bin_op cons_name cons
     | EListComp lc ->
       let (lc,loc) = r_split lc in
       let lst =

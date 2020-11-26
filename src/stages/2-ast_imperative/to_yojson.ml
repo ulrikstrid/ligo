@@ -48,7 +48,6 @@ let rec expression {expression_content=ec;location} =
 and expression_content = function
   (* Base *)
   | E_literal     e -> `List [ `String "E_literal";     literal e ]
-  | E_constant    e -> `List [ `String "E_constant";    constant e ]
   | E_variable    e -> `List [ `String "E_variable";    expression_variable_to_yojson e ]
   | E_application e -> `List [ `String "E_application"; application expression e ]
   | E_lambda      e -> `List [ `String "E_lambda";      lambda expression type_expression e ]

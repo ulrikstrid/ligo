@@ -16,7 +16,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a, 'err) re
   let%bind init' = f init e in
   match e.expression_content with
   | E_literal _ | E_variable _ | E_raw_code _ | E_skip -> ok init'
-  | E_list lst | E_set lst | E_constant {arguments=lst} -> (
+  | E_list lst | E_set lst  -> (
     let%bind res = bind_fold_list self init' lst in
     ok res
   )
@@ -148,10 +148,6 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression, 'err) res
   | E_recursive r ->
       let%bind r = Maps.recursive self ok r in
       return @@ E_recursive r
-  | E_constant c -> (
-      let%bind args = bind_map_list self c.arguments in
-      return @@ E_constant {c with arguments=args}
-    )
   | E_cond c ->
       let%bind c = Maps.conditional self c in
       return @@ E_cond c
@@ -317,10 +313,6 @@ let rec fold_map_expression : ('a, 'err) fold_mapper -> 'a -> expression -> ('a 
   | E_recursive r ->
       let%bind res,r = Fold_maps.recursive self idle init' r in
       ok ( res, return @@ E_recursive r)
-  | E_constant c -> (
-      let%bind (res,args) = bind_fold_map_list self init' c.arguments in
-      ok (res, return @@ E_constant {c with arguments=args})
-    )
   | E_cond c ->
       let%bind res,c = Fold_maps.conditional self init' c in
       ok (res, return @@ E_cond c)

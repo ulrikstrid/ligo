@@ -102,16 +102,19 @@ let e_bytes_hex_ez ?loc b : expression option =
 let e_bytes_raw ?loc (b: bytes) : expression = make_e ?loc @@ E_literal (Literal_bytes b)
 let e_bytes_hex ?loc b : expression = e_bytes_raw ?loc @@ Hex.to_bytes b
 let e_bytes_string ?loc (s: string) : expression = e_bytes_hex ?loc @@ Hex.of_string s
-let e_some ?loc s  : expression = make_e ?loc @@ E_constant {cons_name = Const C_SOME; arguments = [s]}
-let e_none ?loc () : expression = make_e ?loc @@ E_constant {cons_name = Const C_NONE; arguments = []}
-let e_string_cat ?loc sl sr : expression = make_e ?loc @@ E_constant {cons_name = Const C_CONCAT; arguments = [sl ; sr ]}
-let e_map_add ?loc k v old  : expression = make_e ?loc @@ E_constant {cons_name = Const C_MAP_ADD; arguments = [k ; v ; old]}
-let e_binop ?loc name a b  = make_e ?loc @@ E_constant {cons_name = name ; arguments = [a ; b]}
-
-let e_constant    ?loc name lst = make_e ?loc @@ E_constant {cons_name=name ; arguments = lst}
+let e_some ?loc s  : expression = make_e ?loc @@ E_constructor {constructor = Label Stage_common.Constant.ctor_some_name; element = s}
+let e_none ?loc () : expression = make_e ?loc @@ E_constructor {constructor = Label Stage_common.Constant.ctor_none_name; element = e_unit ()}
 let e_variable    ?loc v = make_e ?loc @@ E_variable v
 let e_variable_ez ?loc v = e_variable ?loc @@ Location.wrap ?loc (Var.of_name v)
+let e_tuple ?loc lst : expression = make_e ?loc @@ E_tuple lst
 let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
+let constant_app ?loc name args =
+  let lamb = e_variable_ez name in
+  let args = e_tuple args in
+  e_application ?loc lamb args
+let e_string_cat ?loc sl sr : expression = constant_app ?loc Stage_common.Constant.concat_name [ sl ; sr ]
+let e_map_add ?loc k v old  : expression = constant_app ?loc Stage_common.Constant.map_add_name [ k ; v ; old ]
+let e_binop ?loc name a b  = constant_app ?loc name [a ; b]
 let e_lambda    ?loc binder output_type result : expression = make_e ?loc @@ E_lambda {binder; output_type; result}
 let e_lambda_ez ?loc var ?ascr output_type result : expression = e_lambda ?loc {var;ascr} output_type result
 let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_name; fun_type; lambda}
@@ -132,9 +135,6 @@ let e_accessor ?loc record path      = make_e ?loc @@ E_accessor {record; path}
 let e_update ?loc record path update = make_e ?loc @@ E_update {record; path; update}
 
 let e_annotation ?loc anno_expr ty = make_e ?loc @@ E_ascription {anno_expr; type_annotation = ty}
-
-let e_tuple ?loc lst : expression = make_e ?loc @@ E_tuple lst
-
 let e_pair ?loc a b  : expression = e_tuple ?loc [a;b]
 let e_cond ?loc condition then_clause else_clause = make_e ?loc @@ E_cond {condition;then_clause;else_clause}
 let e_sequence ?loc expr1 expr2 = make_e ?loc @@ E_sequence {expr1; expr2}
@@ -183,9 +183,6 @@ let e_typed_none ?loc t_opt =
   e_annotation ?loc (e_none ?loc ()) type_annotation
 
 let e_typed_list ?loc lst t = e_annotation ?loc (e_list lst) (t_list t)
-let e_typed_list_literal ?loc lst t =
-  e_annotation ?loc (e_constant (Const C_LIST_LITERAL) lst) (t_list t)
-
 let e_typed_map ?loc lst k v = e_annotation ?loc (e_map lst) (t_map k v)
 let e_typed_big_map ?loc lst k v = e_annotation ?loc (e_big_map lst) (t_big_map k v)
 
@@ -197,7 +194,10 @@ let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 let e_assign ?loc variable access_path expression = make_e ?loc @@ E_assign {variable;access_path;expression}
 let e_assign_ez ?loc variable access_path expression = e_assign ?loc (Location.wrap ?loc @@ Var.of_name variable) access_path expression
 
-
+let get_e_variable = fun t ->
+  match t with
+  | E_variable x -> Some x
+  | _ -> None
 let get_e_accessor = fun t ->
   match t with
   | E_accessor {record; path} -> Some (record , path)

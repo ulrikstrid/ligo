@@ -14,17 +14,17 @@
    repeated or aliased type variables in the arguments, i.e. of the
    form […;x;…;y;…] ∈ […] where x and y are identical or aliased. *)
 
-module Core = Typesystem.Core
+(* module Core = Typesystem.Core *)
 open Ast_typed.Types
 open Typesystem.Solver_types
 open Trace
 open Typer_common.Errors
 open Ast_typed.Reasons
-module Map = RedBlackTrees.PolyMap
+(* module Map = RedBlackTrees.PolyMap
 module BiMap = RedBlackTrees.PolyBiMap
 module Set = RedBlackTrees.PolySet
 module UF = UnionFind.Poly2
-module ReprMap = UnionFind.ReprMap
+module ReprMap = UnionFind.ReprMap *)
 open Database_plugins.All_plugins
 
 open Heuristic_tc_fundep_utils

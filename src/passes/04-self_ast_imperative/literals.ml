@@ -2,6 +2,10 @@ open Errors
 open Ast_imperative
 open Trace
 
+open Stage_common.Constant
+
+(* TODO: those checks should be moved to the (michelson) backend *)
+
 let peephole_expression : expression -> (expression , self_ast_imperative_error) result = fun e ->
   let return expression_content = ok { e with expression_content } in
   match e.expression_content with
@@ -9,8 +13,7 @@ let peephole_expression : expression -> (expression , self_ast_imperative_error)
     let open Tezos_crypto in
     match Signature.Public_key_hash.of_b58check_opt s with
     | None -> fail (bad_format e)
-    | Some _ ->
-      return l
+    | Some _ -> return l
     )
   | E_literal (Literal_address _) as l -> (
     return l
@@ -19,82 +22,91 @@ let peephole_expression : expression -> (expression , self_ast_imperative_error)
     let open Tezos_crypto in
     match Signature.of_b58check_opt s with
     | None -> fail (bad_format e)
-    | Some _ ->
-      return l
+    | Some _ -> return l
     )
   | E_literal (Literal_key s) as l -> (
     let open Tezos_crypto in
     match Signature.Public_key.of_b58check_opt s with
     | None -> fail (bad_format e)
-    | Some _ ->
-      return l
+    | Some _ -> return l
     )
-  | E_constant {cons_name=cst; arguments=lst} as e_const ->
-     let cst = const_name cst in
-     begin match cst with
-     | C_BIG_MAP_LITERAL -> (
-       let%bind elt =
-         trace_option (bad_single_arity cst e) @@
-           List.to_singleton lst
-       in
-       let%bind lst =
-         trace_option (bad_map_param_type cst e) @@
-           get_e_list elt.expression_content
-       in
-       let aux = fun (e : expression) ->
-         trace_option (bad_map_param_type cst e) @@
-           Option.(get_e_tuple e.expression_content >>= fun t ->
-                   List.to_pair t)
-       in
-       let%bind pairs = bind_map_list aux lst in
-       return @@ E_big_map pairs
-     )
-     | C_MAP_LITERAL -> (
-       let%bind elt =
-         trace_option (bad_single_arity cst e) @@
-           List.to_singleton lst
-       in
-       let%bind lst =
-         trace_option (bad_map_param_type cst e) @@
-           get_e_list elt.expression_content
-       in
-       let aux = fun (e : expression) ->
-         trace_option (bad_map_param_type cst e) @@
-           Option.(get_e_tuple e.expression_content >>= fun t ->
-                   List.to_pair t)
-       in
-       let%bind pairs = bind_map_list aux lst in
-       return @@ E_map pairs
-     )
-     | C_BIG_MAP_EMPTY -> (
-       let%bind () =
-         Assert.assert_list_empty (bad_empty_arity cst e) lst
-       in
-       return @@ E_big_map []
-     )
-     | C_MAP_EMPTY -> (
-       let%bind () =
-         Assert.assert_list_empty (bad_empty_arity cst e) lst
-       in
-       return @@ E_map []
-     )
+  | E_application {lamb; args} as e_const -> (
+    let lst = get_e_tuple args.expression_content in
+    match get_e_variable lamb.expression_content with
+    | Some v when Var.equal v.wrap_content ev_big_map_literal -> (
+      let%bind elt =
+        trace_option (bad_single_arity v e) @@
+          match lst with
+          | Some lst -> List.to_singleton lst
+          | None -> None
+      in
+      let%bind lst =
+        trace_option (bad_map_param_type v e) @@
+          get_e_list elt.expression_content
+      in
+      let aux = fun (e : expression) ->
+        trace_option (bad_map_param_type v e) @@
+          Option.(get_e_tuple e.expression_content >>= fun t ->
+                  List.to_pair t)
+      in
+      let%bind pairs = bind_map_list aux lst in
+      return @@ E_big_map pairs
+    )
+    | Some v when Var.equal v.wrap_content ev_map_literal -> (
+      let%bind elt =
+        trace_option (bad_single_arity v e) @@
+          match lst with
+          | Some lst -> List.to_singleton lst
+          | None -> None
+      in
+      let%bind lst =
+        trace_option (bad_map_param_type v e) @@
+          get_e_list elt.expression_content
+      in
+      let aux = fun (e : expression) ->
+        trace_option (bad_map_param_type v e) @@
+          Option.(get_e_tuple e.expression_content >>= fun t ->
+                  List.to_pair t)
+      in
+      let%bind pairs = bind_map_list aux lst in
+      return @@ E_map pairs
+    )
 
-     | C_SET_LITERAL -> (
-       let%bind elt =
-         trace_option (bad_single_arity cst e) @@
-           List.to_singleton lst
-       in
-       let%bind lst =
-         trace_option (bad_set_param_type cst e) @@
-           get_e_list elt.expression_content
-       in
-       return @@ E_set lst
-     )
-     | C_SET_EMPTY -> (
-       let%bind () =
-         Assert.assert_list_empty (bad_empty_arity cst e) lst
-       in
-       return @@ E_set []
-     )
-     | _ -> return e_const end
+    | Some v when Var.equal v.wrap_content ev_big_map_empty -> (
+      let%bind () = match lst with
+        | Some [] -> ok ()
+        | _ -> fail (bad_empty_arity v e)
+      in
+      return @@ E_big_map []
+    )
+    | Some v when Var.equal v.wrap_content ev_map_empty -> (
+      let%bind () = match lst with
+        | Some [] -> ok ()
+        | _ -> fail (bad_empty_arity v e)
+      in
+      return @@ E_map []
+    )
+
+    | Some v when Var.equal v.wrap_content ev_set_literal -> (
+      let%bind elt =
+        trace_option (bad_single_arity v e) @@
+          match lst with
+          | Some lst -> List.to_singleton lst
+          | None -> None
+      in
+      let%bind lst =
+        trace_option (bad_set_param_type v e) @@
+          get_e_list elt.expression_content
+      in
+      return @@ E_set lst
+    )
+    | Some v when Var.equal v.wrap_content ev_set_empty -> (
+      let%bind () = match lst with
+        | Some [] -> ok ()
+        | _ -> fail (bad_empty_arity v e)
+      in
+      return @@ E_set []
+    )
+    | _ -> return e_const
+  )
   | e -> return e

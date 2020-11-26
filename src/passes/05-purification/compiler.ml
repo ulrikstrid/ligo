@@ -170,9 +170,6 @@ and compile_expression' : I.expression -> (O.expression option -> O.expression, 
   let return expr = return' @@ O.make_e ~loc:e.location expr in
   match e.expression_content with
     | I.E_literal literal   -> return @@ O.E_literal literal
-    | I.E_constant {cons_name;arguments} ->
-      let%bind arguments = bind_map_list compile_expression arguments in
-      return' @@ O.e_constant ~loc:e.location (Stage_common.Types.const_name cons_name) arguments
     | I.E_variable name     -> return @@ O.E_variable name
     | I.E_application app ->
       let%bind app = application self app in
@@ -401,7 +398,7 @@ and compile_while I.{cond;body} =
 and compile_for I.{binder;start;final;incr;f_body} =
   let env_rec = Location.wrap @@ Var.fresh ~name:"env_rec" () in
   (*Make the cond and the step *)
-  let cond = I.e_annotation (I.e_constant (Const C_LE) [I.e_variable binder ; final]) (I.t_bool ()) in
+  let cond = I.e_annotation (I.constant_app (Stage_common.Constant.leq_name) [I.e_variable binder ; final]) (I.t_bool ()) in
   let%bind cond = compile_expression cond in
   let%bind step = compile_expression incr in
   let continue_expr = O.e_constant C_FOLD_CONTINUE [(O.e_variable env_rec)] in
