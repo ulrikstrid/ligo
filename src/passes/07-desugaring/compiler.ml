@@ -133,7 +133,7 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
         | I.Access_record a -> ok @@ O.e_record_accessor ?loc expr (Label a)
         | I.Access_map k ->
           let%bind k = self k in
-          ok @@ O.e_constant ?loc C_MAP_FIND_OPT [k;expr]
+          ok @@ O.constant_app ?loc Stage_common.Constant.ev_map_find_opt [k;expr]
       in
       bind_fold_list accessor record path
     | I.E_update {record;path;update} ->
@@ -145,7 +145,7 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
         | I.Access_record a -> ok @@ O.e_record_accessor ?loc expr (Label a)
         | I.Access_map k ->
           let%bind k = self k in
-          ok @@ O.e_constant ?loc C_MAP_FIND_OPT [k;expr]
+          ok @@ O.constant_app ?loc Stage_common.Constant.ev_map_find_opt [k;expr]
       in
       let updator ?loc (s:O.expression) a expr =
         match a with
@@ -153,7 +153,7 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
         | I.Access_record a -> ok @@ O.e_record_update ?loc s (Label a) expr
         | I.Access_map k ->
           let%bind k = self k in
-          ok @@ O.e_constant ?loc C_MAP_ADD [k;expr;s]
+          ok @@ O.constant_app ?loc Stage_common.Constant.ev_map_add [k;expr;s]
       in
       let aux (s, e : O.expression * _) lst =
         let%bind s' = accessor ~loc:s.location s lst in
@@ -169,32 +169,39 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       let map = List.sort_uniq compare map in
       let aux = fun prev (k, v) ->
         let%bind (k', v') = bind_map_pair (self) (k, v) in
-        return @@ E_constant {cons_name=C_MAP_ADD;arguments=[k' ; v' ; prev]}
+        let args = O.e_record_ez [k' ; v' ; prev] in
+        return @@ E_application {lamb=O.e_variable Stage_common.Constant.ev_map_add;args}
       in
-      let%bind init = return @@ E_constant {cons_name=C_MAP_EMPTY;arguments=[]} in
+      let%bind init = return @@ E_application {lamb=O.e_variable Stage_common.Constant.ev_map_empty;args=O.e_record_ez []} in
       bind_fold_right_list aux init map
     )
     | I.E_big_map big_map -> (
       let big_map = List.sort_uniq compare big_map in
       let aux = fun prev (k, v) ->
         let%bind (k', v') = bind_map_pair (self) (k, v) in
-        return @@ E_constant {cons_name=C_MAP_ADD;arguments=[k' ; v' ; prev]}
+        let args = O.e_record_ez [k' ; v' ; prev] in
+        return @@ E_application {lamb=O.e_variable Stage_common.Constant.ev_map_add;args}
       in
-      let%bind init = return @@ E_constant {cons_name=C_BIG_MAP_EMPTY;arguments=[]} in
+      let%bind init = return @@ E_application {lamb=O.e_variable Stage_common.Constant.ev_big_map_empty;args=O.e_record_ez []} in
       bind_fold_right_list aux init big_map
     )
     | I.E_list lst ->
       let%bind lst' = bind_map_list (self) lst in
       let aux = fun prev cur ->
-        return @@ E_constant {cons_name=C_CONS;arguments=[cur ; prev]} in
-      let%bind init  = return @@ E_constant {cons_name=C_LIST_EMPTY;arguments=[]} in
+        let args = O.e_record_ez [ cur ; prev ] in
+        return @@ E_application {lamb = O.e_variable Stage_common.Constant.ev_cons ; args}
+      in
+      let args = O.e_record_ez [] in
+      let%bind init  = return @@ E_application {lamb = O.e_variable Stage_common.Constant.ev_list_empty;args} in
       bind_fold_right_list aux init lst'
     | I.E_set set -> (
       let%bind lst' = bind_map_list (self) set in
       let lst' = List.sort_uniq compare lst' in
       let aux = fun prev cur ->
-        return @@ E_constant {cons_name=C_SET_ADD;arguments=[cur ; prev]} in
-      let%bind init = return @@ E_constant {cons_name=C_SET_EMPTY;arguments=[]} in
+        let args = O.e_record_ez [ cur ; prev ] in
+        return @@ E_application {lamb=O.e_variable Stage_common.Constant.ev_set_add;args} in
+      let args = O.e_record_ez [] in
+      let%bind init = return @@ E_application {lamb=O.e_variable Stage_common.Constant.ev_set_empty;args} in
       bind_fold_list aux init lst'
       )
     | I.E_ascription {anno_expr; type_annotation} ->

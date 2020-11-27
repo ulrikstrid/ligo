@@ -196,6 +196,7 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
       return_wrapped (e_unit ()) e state @@ Wrap.literal (t_unit ())
     )
 
+  (* REMITODO (remove) 
   | E_constant {cons_name; arguments=lst} ->
     let%bind t = Typer_common.Constant_typers_new.Operators_types.constant_type cons_name in
     let%bind (e,state),lst = bind_fold_map_list
@@ -206,7 +207,7 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
     in
     let lst_annot = List.map get_type_expression lst in
     let wrapped = Wrap.constant t lst_annot in
-    return_wrapped (E_constant {cons_name;arguments=lst}) e state wrapped
+    return_wrapped (E_constant {cons_name;arguments=lst}) e state wrapped *)
 
   | E_lambda lambda ->
     let%bind lambda,e,state,wrapped = type_lambda e state lambda in

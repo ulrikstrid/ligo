@@ -62,7 +62,6 @@ and expr = expression
 and expression_label_map = expression label_map
 and expression_content =
   | E_literal of literal
-  | E_constant of expr constant
   | E_variable of expression_variable
   | E_application of expr application
   | E_lambda    of (expr, ty_expr) lambda

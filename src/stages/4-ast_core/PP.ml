@@ -59,7 +59,6 @@ and expression_content ppf (ec : expression_content) =
   | E_variable         n -> expression_variable        ppf n
   | E_application      a -> application     expression ppf a
   | E_constructor      c -> constructor     expression ppf c
-  | E_constant         c -> constant        expression ppf c
   | E_record           r -> record          expression ppf r
   | E_record_accessor ra -> record_accessor expression ppf ra
   | E_record_update   ru -> record_update   expression ppf ru

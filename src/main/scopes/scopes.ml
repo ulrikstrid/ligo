@@ -83,14 +83,6 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.program -
       let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,record.location) bindings record in
       find_scopes' (i,all_defs,env,scopes,update.location) bindings update
     )
-    | E_constant { arguments ; _ } -> (
-      let aux = fun (i,all_defs,scopes) (exp:Ast_core.expression) ->
-        let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,exp.location) bindings exp in
-        (i,all_defs,scopes)
-      in
-      let (i,all_defs,scopes) = List.fold_left aux (i,all_defs,scopes) arguments in
-      (i,all_defs,env,scopes)
-    )
     | E_application { lamb ; args } -> (
       let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,lamb.location) bindings lamb in
       find_scopes' (i,all_defs,env,scopes,args.location) bindings args

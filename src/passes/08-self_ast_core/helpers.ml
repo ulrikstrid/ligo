@@ -18,7 +18,6 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expression -> ('a,'err) res
   let%bind init' = f init e in
   match e.content with
   | E_literal _ | E_variable _ | E_raw_code _ -> ok init'
-  | E_constant c -> Folds.constant self init' c
   | E_application app -> Folds.application self init' app
   | E_lambda l -> Folds.lambda self (fun _ -> ok) init' l
   | E_ascription a -> Folds.ascription self (fun _ -> ok) init' a
@@ -109,10 +108,6 @@ let rec map_expression : 'err exp_mapper -> expression -> (expression , 'err) re
   | E_recursive r ->
       let%bind r = Maps.recursive self ok r in
       return @@ E_recursive r
-  | E_constant c -> (
-      let%bind c = Maps.constant self c in
-      return @@ E_constant c
-    )
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> return e'
 
 and map_type_expression : 'err ty_exp_mapper -> type_expression -> (type_expression , 'err) result =
@@ -223,10 +218,6 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a
   | E_recursive r ->
       let%bind res,r = Fold_maps.recursive self idle init' r in
       ok ( res, return @@ E_recursive r)
-  | E_constant c -> (
-      let%bind res,c = Fold_maps.constant self init' c in
-      ok (res, return @@ E_constant c)
-    )
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> ok (init', return e')
 
 and fold_map_cases : ('a , 'err) fold_mapper -> 'a -> matching_expr -> ('a * matching_expr , 'err) result =

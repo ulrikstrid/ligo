@@ -51,9 +51,7 @@ let rec untype_expression (e:O.expression) : (I.expression, typer_error) result 
   match e.expression_content with
   | E_variable n -> return @@ E_variable (Location.map Var.todo_cast n)
   | E_literal l -> return @@ E_literal l
-  | E_constant {cons_name;arguments} ->
-    let%bind arguments = bind_map_list untype_expression arguments in
-    return @@ E_constant {cons_name;arguments}
+  | E_constant {cons_name;arguments} -> ignore (cons_name,arguments) ; failwith "REMITODO"
   | E_lambda lambda ->
     let%bind lambda = untype_lambda e.type_expression lambda in
     return @@ E_lambda lambda

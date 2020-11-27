@@ -44,11 +44,6 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
   match (a.content , b.content) with
   | E_literal a , E_literal b ->
     assert_literal_eq (a, b)
-  | E_constant (ca) , E_constant (cb) when ca.cons_name = cb.cons_name -> (
-      let lst = List.combine ca.arguments cb.arguments in
-      let all = List.map assert_value_eq lst in
-      if List.exists (Option.is_none) all then None else Some ()
-    )
   | E_constructor (ca), E_constructor (cb) when ca.constructor = cb.constructor -> (
       assert_value_eq (ca.element, cb.element)
     )
@@ -86,8 +81,6 @@ let rec assert_value_eq (a, b: (expression * expression )) : unit option =
    -> None
 
   | E_literal _ , _
-  | E_constant _ , E_constant _
-  | E_constant _ , _
   | E_constructor _, E_constructor _
   | E_record _, _
   | E_constructor _, _ ->

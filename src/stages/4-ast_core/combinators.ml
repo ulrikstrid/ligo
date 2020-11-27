@@ -80,14 +80,12 @@ let e_bytes_raw ?loc ?sugar (b: bytes) : expression =
   make_e ?loc ?sugar @@ E_literal (Literal_bytes b)
 let e_bytes_string ?loc ?sugar (s: string) : expression =
   make_e ?loc ?sugar @@ E_literal (Literal_bytes (Hex.to_bytes (Hex.of_string s)))
-let e_some       ?loc ?sugar s        : expression = make_e ?loc ?sugar @@ E_constant {cons_name = C_SOME; arguments = [s]}
-let e_none       ?loc ?sugar ()       : expression = make_e ?loc ?sugar @@ E_constant {cons_name = C_NONE; arguments = []}
-let e_string_cat ?loc ?sugar sl sr    : expression = make_e ?loc ?sugar @@ E_constant {cons_name = C_CONCAT; arguments = [sl ; sr ]}
-let e_map_add    ?loc ?sugar k v old  : expression = make_e ?loc ?sugar @@ E_constant {cons_name = C_MAP_ADD; arguments = [k ; v ; old]}
-
-let e_constant    ?loc ?sugar name lst                             = make_e ?loc ?sugar @@ E_constant {cons_name=name ; arguments = lst}
-let e_variable    ?loc ?sugar v                                    = make_e ?loc ?sugar @@ E_variable v
+let e_variable ?loc ?sugar v = make_e ?loc ?sugar @@ E_variable v
 let e_application ?loc ?sugar a b                                  = make_e ?loc ?sugar @@ E_application {lamb=a ; args=b}
+let e_some ?loc s  : expression = make_e ?loc @@
+  E_constructor {constructor = Label Stage_common.Constant.ctor_some_name; element = s}
+let e_none ?loc () : expression = make_e ?loc @@
+  E_constructor {constructor = Label Stage_common.Constant.ctor_none_name; element = e_unit ()}
 let e_lambda      ?loc ?sugar binder output_type result            = make_e ?loc ?sugar @@ E_lambda {binder; output_type; result ;  }
 let e_lambda_ez   ?loc ?sugar var ?ascr output_type result         = e_lambda ?loc ?sugar {var;ascr} output_type result
 let e_recursive   ?loc ?sugar fun_name fun_type lambda             = make_e ?loc ?sugar @@ E_recursive {fun_name; fun_type; lambda}
@@ -101,7 +99,17 @@ let e_matching    ?loc ?sugar a b : expression = make_e ?loc ?sugar @@ E_matchin
 let e_record          ?loc ?sugar map = make_e ?loc ?sugar @@ E_record map
 let e_record_accessor ?loc ?sugar record path        = make_e ?loc ?sugar @@ E_record_accessor ({record; path} : _ record_accessor)
 let e_record_update   ?loc ?sugar record path update = make_e ?loc ?sugar @@ E_record_update ({record; path; update} : _ record_update)
-
+let e_record_ez ?loc ?sugar kvl =
+  let rec aux i x =
+    match x with
+    | hd::tl -> (Label (string_of_int i) , hd) :: aux (i+1) tl
+    | [] -> []
+  in
+  e_record ?loc ?sugar (LMap.of_list (aux 0 kvl))
+let constant_app ?loc name args =
+  let lamb = e_variable name in
+  let args = e_record_ez args in
+  e_application ?loc lamb args
 let e_annotation ?loc ?sugar anno_expr ty = make_e ?loc ?sugar @@ E_ascription {anno_expr; type_annotation = ty}
 
 let e_bool ?loc ?sugar b : expression = e_constructor ?loc ?sugar (string_of_bool b) (e_unit ())
@@ -140,13 +148,21 @@ let get_e_pair = fun t ->
   | _ -> None
 
 let get_e_list = fun t ->
+  let open Stage_common.Constant in
   let rec aux t =
     match t with
-      E_constant {cons_name=C_CONS;arguments=[key;lst]} ->
-        let lst = aux lst.content in
-        (Some key)::(lst)
-    | E_constant {cons_name=C_LIST_EMPTY;arguments=[]} ->
-        []
+    | E_application {lamb;args} -> (
+      match lamb.content, args.content with
+      | E_variable v , E_record x when Var.equal v.wrap_content ev_cons.wrap_content -> (
+        match LMap.to_list x with
+        | [ key ; lst ] ->
+          let lst = aux lst.content in
+          (Some key)::(lst)
+        | _ -> [None]
+      )
+      | E_variable v , E_record x when Var.equal v.wrap_content ev_list_empty.wrap_content && LMap.cardinal x = 0 -> []
+      | _ -> [None]
+    )
     | _ -> [None]
   in
   let opts = aux t in
@@ -182,12 +198,25 @@ let extract_record : expression -> (label * expression) list option = fun e ->
   | _ -> None
 
 let extract_map : expression -> (expression * expression) list option = fun e ->
+  let open Stage_common.Constant in
   let rec aux e =
     match e.content with
-      E_constant {cons_name=C_UPDATE|C_MAP_ADD; arguments=[k;v;map]} ->
-        let map = aux map in
-        (Some (k,v))::map
-    | E_constant {cons_name=C_MAP_EMPTY|C_BIG_MAP_EMPTY; arguments=[]} -> []
+    | E_application {lamb ; args} -> (
+      match lamb.content, args.content with
+      | E_variable v , E_record x when Var.equal v.wrap_content ev_map_add.wrap_content || Var.equal v.wrap_content ev_update.wrap_content -> (
+        match LMap.to_list x with
+        | [ k ; v ; map ] ->
+          let map = aux map in
+          (Some (k,v))::map
+        | _ -> [None]
+      )
+      | E_variable v , E_record x when Var.equal v.wrap_content ev_big_map_empty.wrap_content || Var.equal v.wrap_content ev_map_empty.wrap_content -> (
+        match LMap.to_list x with
+          | [] -> []
+          | _ -> [None]
+      )
+      | _ -> [None]
+    )
     | _ -> [None]
   in
   let opts = aux e in

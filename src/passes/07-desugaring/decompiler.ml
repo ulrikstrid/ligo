@@ -57,7 +57,6 @@ let rec decompile_expression : O.expression -> (I.expression, desugaring_error) 
   | None ->
     match e.content with
       O.E_literal lit -> return @@ I.E_literal (lit)
-    | O.E_constant {cons_name;arguments} -> ignore (cons_name,arguments) ; failwith "REMITODO"
     | O.E_variable name -> return @@ I.E_variable (cast_var name)
     | O.E_application app ->
       let%bind app = application self app in
