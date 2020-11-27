@@ -34,7 +34,6 @@ and expr = expression
 and expression_content =
   (* Base *)
   | E_literal of literal
-  | E_constant of expr constant (* For language constants, like (Cons hd tl) or (plus i j) *)
   | E_variable of expression_variable
   | E_application of expr application
   | E_lambda of (expr, ty_expr) lambda

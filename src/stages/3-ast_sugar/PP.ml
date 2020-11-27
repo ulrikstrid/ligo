@@ -54,7 +54,6 @@ and expression_content ppf (ec : expression_content) =
       fprintf ppf "(%a)@(%a)" expression lamb expression args
   | E_constructor c ->
       fprintf ppf "%a(%a)" label c.constructor expression c.element
-  | E_constant c -> constant expression ppf c
   | E_record m ->
       fprintf ppf "{%a}" (record_sep_expr expression (const ";")) m
   | E_accessor {record;path} ->

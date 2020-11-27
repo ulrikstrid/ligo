@@ -84,12 +84,17 @@ let e_bytes_raw ?loc (b: bytes) : expression =
   make_e ?loc @@ E_literal (Literal_bytes b)
 let e_bytes_string ?loc (s: string) : expression =
   make_e ?loc @@ E_literal (Literal_bytes (Hex.to_bytes (Hex.of_string s)))
-let e_some ?loc s  : expression = make_e ?loc @@ E_constant {cons_name = C_SOME; arguments = [s]}
-let e_none ?loc () : expression = make_e ?loc @@ E_constant {cons_name = C_NONE; arguments = []}
-
-let e_constant ?loc name lst = make_e ?loc @@ E_constant {cons_name=name ; arguments = lst}
 let e_variable ?loc v = make_e ?loc @@ E_variable v
+let e_tuple ?loc lst : expression = make_e ?loc @@ E_tuple lst
+let e_some ?loc s  : expression = make_e ?loc @@
+  E_constructor {constructor = Label Stage_common.Constant.ctor_some_name; element = s}
+let e_none ?loc () : expression = make_e ?loc @@
+  E_constructor {constructor = Label Stage_common.Constant.ctor_none_name; element = e_unit ()}
 let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
+let constant_app ?loc cst_v args =
+  let lamb = e_variable cst_v in
+  let args = e_tuple args in
+  e_application ?loc lamb args
 let e_lambda    ?loc binder output_type result : expression = make_e ?loc @@ E_lambda {binder; output_type; result}
 let e_lambda_ez ?loc var ?ascr output_type result : expression = e_lambda ?loc {var;ascr} output_type result
 let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_name; fun_type; lambda}
@@ -139,7 +144,10 @@ let e_typed_big_map ?loc lst k v = e_annotation ?loc (e_big_map lst) (t_big_map 
 let e_typed_set ?loc lst k = e_annotation ?loc (e_set lst) (t_set k)
 
 
-
+let get_e_variable = fun t ->
+  match t with
+  | E_variable v -> Some v
+  | _ -> None
 let get_e_accessor = fun t ->
   match t with
   | E_accessor {record; path} -> Some (record, path)

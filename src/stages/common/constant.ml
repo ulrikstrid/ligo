@@ -107,14 +107,28 @@ let set_empty_name = "set_empty"
 let map_empty_name = "map_empty"
 let big_map_empty_name = "big_map_empty"
 let implicit_account_name = "implicit_account_name"
+let map_fold_name = "map_fold"
+let list_fold_name = "list_fold"
+let set_fold_name = "set_fold"
+let fold_continue_name = "fold_continue"
+let fold_stop_name = "fold_stop"
+let fold_while_name = "fold_while"
 
 let _todo_syntaxes_to_var : string -> expression_variable = fun _ ->
   Location.wrap @@ Var.of_name "TODO" (* Call something in primitives *)
 
-let ev_map_literal : expression_ Var.t = Var.of_name map_literal_name
-let ev_big_map_literal : expression_ Var.t = Var.of_name big_map_literal_name
-let ev_set_literal : expression_ Var.t = Var.of_name set_literal_name
-let ev_set_empty : expression_ Var.t = Var.of_name set_empty_name
-let ev_map_empty : expression_ Var.t = Var.of_name map_empty_name
-let ev_big_map_empty : expression_ Var.t = Var.of_name big_map_empty_name
-let ev_implicit_account : expression_ Var.t = Var.of_name implicit_account_name
+let lwrap = Location.wrap ~loc:(Location.generated)
+let ev_add : expression_variable = lwrap @@ Var.of_name add_name
+let ev_map_literal : expression_variable = lwrap @@ Var.of_name map_literal_name
+let ev_big_map_literal : expression_variable = lwrap @@ Var.of_name big_map_literal_name
+let ev_set_literal : expression_variable = lwrap @@ Var.of_name set_literal_name
+let ev_set_empty : expression_variable = lwrap @@ Var.of_name set_empty_name
+let ev_map_empty : expression_variable = lwrap @@ Var.of_name map_empty_name
+let ev_big_map_empty : expression_variable = lwrap @@ Var.of_name big_map_empty_name
+let ev_implicit_account : expression_variable = lwrap @@ Var.of_name implicit_account_name
+let ev_map_fold : expression_variable = lwrap @@ Var.of_name map_fold_name
+let ev_list_fold : expression_variable = lwrap @@ Var.of_name list_fold_name
+let ev_set_fold : expression_variable = lwrap @@ Var.of_name set_fold_name
+let ev_fold_continue : expression_variable = lwrap @@ Var.of_name fold_continue_name
+let ev_fold_stop : expression_variable = lwrap @@ Var.of_name fold_stop_name
+let ev_fold_while : expression_variable = lwrap @@ Var.of_name fold_while_name

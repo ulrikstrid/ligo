@@ -34,13 +34,8 @@ let rec decompile_expression : O.expression -> (I.expression, Errors.purificatio
   let self_type = decompile_type_expression in
   let return expr = ok @@ I.make_e ~loc:e.location expr in
   match e.expression_content with
-    O.E_literal lit -> return @@ I.E_literal lit
-  | O.E_variable name     -> return @@ I.E_variable name
-  | O.E_constant {cons_name;arguments} ->
-    ignore (cons_name,arguments) ; failwith "REMITODO"
-     (* let cons_name = Stage_common.Enums.Const cons_name in
-    let%bind arguments = bind_map_list decompile_expression arguments in
-    return @@ I.E_constant {cons_name;arguments} *)
+  | O.E_literal lit -> return @@ I.E_literal lit
+  | O.E_variable name -> return @@ I.E_variable name
   | O.E_application app ->
     let%bind app = application self app in
     return @@ I.E_application app

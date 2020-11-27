@@ -32,19 +32,28 @@ let repair_mutable_variable_in_matching (match_body : O.expression) (element_nam
             let expr = O.e_let_in_ez env false [] (O.e_update (O.e_variable env) [O.Access_record (Var.to_name name.wrap_content)] (O.e_variable name)) let_result in
             ok (true,(decl_var, free_var), O.e_let_in let_binder false [] rhs expr)
           )
-        | E_constant {cons_name=C_MAP_FOLD;arguments= _}
-        | E_constant {cons_name=C_SET_FOLD;arguments= _}
-        | E_constant {cons_name=C_LIST_FOLD;arguments= _}
+        | E_application { lamb ; args=_ } -> (
+          match O.get_e_variable lamb.expression_content with
+          | Some v ->
+            if Stage_common.Constant.(
+              Var.equal v.wrap_content ev_list_fold.wrap_content ||
+              Var.equal v.wrap_content ev_set_fold.wrap_content ||
+              Var.equal v.wrap_content ev_map_fold.wrap_content
+            ) then
+              ok @@ (false, (decl_var,free_var),ass_exp)
+            else
+              ok (true, (decl_var,free_var),ass_exp)
+          | None -> ok (true, (decl_var, free_var),ass_exp)
+        )
         | E_cond _
         | E_matching _ -> ok @@ (false, (decl_var,free_var),ass_exp)
-      | E_constant _
-      | E_skip
-      | E_literal _ | E_variable _
-      | E_application _ | E_lambda _| E_recursive _ | E_raw_code _
-      | E_constructor _ | E_record _| E_accessor _|E_update _
-      | E_ascription _  | E_sequence _ | E_tuple _
-      | E_map _ | E_big_map _ |E_list _ | E_set _
-       -> ok (true, (decl_var, free_var),ass_exp)
+        | E_skip
+        | E_literal _ | E_variable _
+        | E_lambda _| E_recursive _ | E_raw_code _
+        | E_constructor _ | E_record _| E_accessor _|E_update _
+        | E_ascription _  | E_sequence _ | E_tuple _
+        | E_map _ | E_big_map _ |E_list _ | E_set _
+        -> ok (true, (decl_var, free_var),ass_exp)
     )
       (element_names,[])
       match_body in
@@ -78,19 +87,28 @@ and repair_mutable_variable_in_loops (for_body : O.expression) (element_names : 
               let_result in
             ok (true,(decl_var, free_var), O.e_let_in let_binder false  [] rhs expr)
           )
-        | E_constant {cons_name=C_MAP_FOLD;arguments= _}
-        | E_constant {cons_name=C_SET_FOLD;arguments= _}
-        | E_constant {cons_name=C_LIST_FOLD;arguments= _}
+        | E_application { lamb ; args=_ } -> (
+          match O.get_e_variable lamb.expression_content with
+          | Some v ->
+            if Stage_common.Constant.(
+              Var.equal v.wrap_content ev_list_fold.wrap_content ||
+              Var.equal v.wrap_content ev_set_fold.wrap_content ||
+              Var.equal v.wrap_content ev_map_fold.wrap_content
+            ) then
+              ok @@ (false,(decl_var,free_var),ass_exp)
+            else
+              ok (true, (decl_var,free_var),ass_exp)
+          | None -> ok (true, (decl_var, free_var),ass_exp)
+        )
         | E_cond _
         | E_matching _ -> ok @@ (false,(decl_var,free_var),ass_exp)
-      | E_constant _
-      | E_skip
-      | E_literal _ | E_variable _
-      | E_application _ | E_lambda _| E_recursive _ | E_raw_code _
-      | E_constructor _ | E_record _| E_accessor _| E_update _
-      | E_ascription _  | E_sequence _ | E_tuple _
-      | E_map _ | E_big_map _ |E_list _ | E_set _
-       -> ok (true, (decl_var, free_var),ass_exp)
+        | E_skip
+        | E_literal _ | E_variable _
+        | E_lambda _| E_recursive _ | E_raw_code _
+        | E_constructor _ | E_record _| E_accessor _| E_update _
+        | E_ascription _  | E_sequence _ | E_tuple _
+        | E_map _ | E_big_map _ |E_list _ | E_set _
+          -> ok (true, (decl_var, free_var),ass_exp)
     )
       (element_names,[])
       for_body in
@@ -379,13 +397,13 @@ and compile_while I.{cond;body} =
   in
   let init_rec = O.e_tuple [store_mutable_variable @@ captured_name_list] in
   let restore = fun expr -> List.fold_right aux captured_name_list expr in
-  let continue_expr = O.e_constant C_FOLD_CONTINUE [for_body] in
-  let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable binder] in
+  let continue_expr = O.constant_app Stage_common.Constant.ev_fold_continue [for_body] in
+  let stop_expr = O.constant_app Stage_common.Constant.ev_fold_stop [O.e_variable binder] in
   let aux_func =
     O.e_lambda_ez binder None @@
     restore @@
     O.e_cond cond continue_expr stop_expr in
-  let loop = O.e_constant C_FOLD_WHILE [aux_func; O.e_variable env_rec] in
+  let loop = O.constant_app Stage_common.Constant.ev_fold_while [aux_func; O.e_variable env_rec] in
   let return_expr = fun expr ->
     O.e_let_in_ez env_rec false [] init_rec @@
     O.e_let_in_ez env_rec false [] loop @@
@@ -398,12 +416,12 @@ and compile_while I.{cond;body} =
 and compile_for I.{binder;start;final;incr;f_body} =
   let env_rec = Location.wrap @@ Var.fresh ~name:"env_rec" () in
   (*Make the cond and the step *)
-  let cond = I.e_annotation (I.constant_app (Stage_common.Constant.leq_name) [I.e_variable binder ; final]) (I.t_bool ()) in
+  let cond = I.e_annotation (I.constant_app Stage_common.Constant.leq_name [I.e_variable binder ; final]) (I.t_bool ()) in
   let%bind cond = compile_expression cond in
   let%bind step = compile_expression incr in
-  let continue_expr = O.e_constant C_FOLD_CONTINUE [(O.e_variable env_rec)] in
+  let continue_expr = O.constant_app Stage_common.Constant.ev_fold_continue [(O.e_variable env_rec)] in
   let ctrl =
-    O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] (O.e_constant C_ADD [ O.e_variable binder ; step ]) @@
+    O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] (O.constant_app Stage_common.Constant.ev_add [ O.e_variable binder ; step ]) @@
     O.e_let_in_ez env_rec false [] (O.e_update (O.e_variable env_rec) [Access_tuple Z.one] @@ O.e_variable binder)@@
     continue_expr
   in
@@ -420,13 +438,13 @@ and compile_for I.{binder;start;final;incr;f_body} =
   let restore = fun expr -> List.fold_right aux captured_name_list expr in
 
   (*Prep the lambda for the fold*)
-  let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable env_rec] in
+  let stop_expr = O.constant_app Stage_common.Constant.ev_fold_stop [O.e_variable env_rec] in
   let aux_func = O.e_lambda_ez env_rec None @@
                  O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] (O.e_accessor (O.e_variable env_rec) [Access_tuple Z.one]) @@
                  O.e_cond cond (restore for_body) (stop_expr) in
 
   (* Make the fold_while en precharge the vakye *)
-  let loop = O.e_constant C_FOLD_WHILE [aux_func; O.e_variable env_rec] in
+  let loop = O.constant_app Stage_common.Constant.ev_fold_while [aux_func; O.e_variable env_rec] in
   let init_rec = O.e_pair (store_mutable_variable captured_name_list) @@ O.e_variable binder in
 
   let%bind start = compile_expression start in
@@ -467,11 +485,13 @@ and compile_for_each I.{fe_binder;collection;collection_type; fe_body} =
     | _ -> fun expr -> restore (O.e_let_in_ez (fst fe_binder) false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one]) expr)
   in
   let lambda = O.e_lambda_ez args  None (restore for_body) in
-  let%bind op_name = match collection_type with
-   | Map -> ok @@ O.C_MAP_FOLD | Set -> ok @@ O.C_SET_FOLD | List -> ok @@ O.C_LIST_FOLD
+  let op_name = match collection_type with
+    | Map -> Stage_common.Constant.ev_map_fold
+    | Set -> Stage_common.Constant.ev_set_fold
+    | List -> Stage_common.Constant.ev_list_fold
   in
   let fold = fun expr ->
-    O.e_let_in_ez env_rec false [] (O.e_constant op_name [lambda; collect ; init_record]) expr
+    O.e_let_in_ez env_rec false [] (O.constant_app op_name [lambda; collect ; init_record]) expr
   in
   ok @@ restore_mutable_variable fold free_vars env_rec
 

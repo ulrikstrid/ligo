@@ -97,9 +97,6 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
   let return expr = ok @@ O.make_e ~loc:sugar.location ~sugar expr in
   match sugar.expression_content with
     | I.E_literal literal -> return @@ O.E_literal literal
-    | I.E_constant cons ->
-      let%bind cons = constant self cons in
-      return @@ O.E_constant cons
     | I.E_variable name -> return @@ O.E_variable (cast_var name)
     | I.E_application app ->
       let%bind app = application self app in

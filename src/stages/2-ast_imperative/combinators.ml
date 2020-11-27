@@ -102,8 +102,10 @@ let e_bytes_hex_ez ?loc b : expression option =
 let e_bytes_raw ?loc (b: bytes) : expression = make_e ?loc @@ E_literal (Literal_bytes b)
 let e_bytes_hex ?loc b : expression = e_bytes_raw ?loc @@ Hex.to_bytes b
 let e_bytes_string ?loc (s: string) : expression = e_bytes_hex ?loc @@ Hex.of_string s
-let e_some ?loc s  : expression = make_e ?loc @@ E_constructor {constructor = Label Stage_common.Constant.ctor_some_name; element = s}
-let e_none ?loc () : expression = make_e ?loc @@ E_constructor {constructor = Label Stage_common.Constant.ctor_none_name; element = e_unit ()}
+let e_some ?loc s  : expression = make_e ?loc @@
+  E_constructor {constructor = Label Stage_common.Constant.ctor_some_name; element = s}
+let e_none ?loc () : expression = make_e ?loc @@
+  E_constructor {constructor = Label Stage_common.Constant.ctor_none_name; element = e_unit ()}
 let e_variable    ?loc v = make_e ?loc @@ E_variable v
 let e_variable_ez ?loc v = e_variable ?loc @@ Location.wrap ?loc (Var.of_name v)
 let e_tuple ?loc lst : expression = make_e ?loc @@ E_tuple lst
