@@ -1,0 +1,23 @@
+;; Build of the preprocessor of ReasonLIGO as a library
+
+(library
+  (name preproc_reasonligo)
+  (public_name ligo.preproc.reasonligo)
+  (libraries
+     ;; Vendors
+     Preprocessor)
+  (modules Comments File)
+  (preprocess
+    (pps bisect_ppx --conditional)))
+
+;; Build of a standalone preprocessor for ReasonLIGO
+
+(executable
+  (name PreprocMain)
+  (libraries
+    ;; LIGO
+    preproc_reasonligo
+    preproc_shared)
+  (modules PreprocMain)
+  (preprocess
+    (pps bisect_ppx --conditional)))
