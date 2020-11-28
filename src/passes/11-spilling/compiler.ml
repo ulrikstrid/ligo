@@ -270,6 +270,9 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
     let%bind rhs' = compile_expression rhs in
     let%bind result' = compile_expression let_result in
     return (E_let_in ((Location.map Var.todo_cast let_binder, rhs'.type_expression), inline, rhs', result'))
+  | E_type_in {type_binder=_; rhs=_; let_result} ->
+    let%bind result' = compile_expression let_result in
+    ok result'
   | E_literal l -> return @@ E_literal l
   | E_variable name -> (
       return @@ E_variable (Location.map Var.todo_cast name)
@@ -514,7 +517,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
     match errs with
     | _ :: _ -> fail (could_not_parse_raw_michelson ae.location orig_code)
     | [] ->
-      let (code, errs) = Micheline_parser.parse_expression code in
+      let (code, errs) = Micheline_parser.parse_expression ~check:false code in
       match errs with
       | _ :: _ -> fail (could_not_parse_raw_michelson ae.location orig_code)
       | [] ->

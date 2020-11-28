@@ -369,6 +369,7 @@ and print_constr_app_pattern state node =
 
 and print_expr state = function
   ELetIn let_in -> print_let_in      state let_in
+| ETypeIn type_in -> print_type_in   state type_in
 | ECond cond    -> print_conditional state cond
 | ETuple tuple  -> print_csv         state print_expr tuple
 | ECase case    -> print_match_expr  state case
@@ -429,12 +430,10 @@ and print_fun_call state {value=f,l; _} =
      print_token state rpar ")"
 
 and print_annot_expr state {value; _} =
-  let {lpar; inside=e,colon,t; rpar} = value in
-  print_token state lpar "(";
+  let (e,colon,t) = value in
   print_expr  state e;
   print_token state colon ":";
   print_type_expr state t;
-  print_token state rpar ")"
 
 and print_list_expr state = function
   ECons {value={lbracket;lexpr;comma;ellipsis;rexpr;rbracket}; _} ->
@@ -598,6 +597,16 @@ and print_let_in state {value; _} =
   print_token       state kwd_let "let";
   print_token_opt   state kwd_rec "rec";
   print_let_binding state binding;
+  print_token       state semi ";";
+  print_expr        state body
+
+and print_type_in state {value; _} =
+  let {type_decl; semi; body} = value in
+  let {kwd_type; name; eq; type_expr} = type_decl in
+  print_token       state kwd_type "type";
+  print_var         state name;
+  print_token       state eq     "eq";
+  print_type_expr   state type_expr;
   print_token       state semi ";";
   print_expr        state body
 
@@ -899,6 +908,9 @@ and pp_expr state = function
 | ELetIn {value; region} ->
     pp_loc_node state  "ELetIn" region;
     pp_let_in state value
+| ETypeIn {value; region} ->
+    pp_loc_node state  "ELetIn" region;
+    pp_type_in state value
 | EFun {value; region} ->
     pp_loc_node state "EFun" region;
     pp_fun_expr state value
@@ -981,6 +993,23 @@ and pp_let_in state node =
       let length         = List.length attributes in
       let apply len rank = pp_ident (state#pad len rank)
       in List.iteri (apply length) attributes
+  in ()
+
+and pp_type_in state node =
+  let {type_decl; body; _} = node in
+  let {name; type_expr; _} = type_decl in
+  let () =
+    let state = state#pad 3 0 in
+    pp_node state "<name>";
+    pp_ident state name in
+  let () =
+    let state = state#pad 3 1 in
+    pp_node state "<type>";
+    pp_type_expr (state#pad 1 0) type_expr in
+  let () =
+    let state = state#pad 3 2 in
+    pp_node state "<body>";
+    pp_expr (state#pad 1 0) body
   in ()
 
 and pp_tuple_expr state {value; _} =
@@ -1148,7 +1177,7 @@ and pp_bin_op node region state op =
   pp_expr (state#pad 2 1) op.arg2
 
 and pp_annotated state annot =
-  let expr, _, t_expr = annot.inside in
+  let expr, _, t_expr = annot in
   pp_expr      (state#pad 2 0) expr;
   pp_type_expr (state#pad 2 1) t_expr
 
