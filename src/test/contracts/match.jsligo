@@ -1,0 +1,29 @@
+type storage = int;
+
+type Add = {
+  kind: 'Add',
+  value: int
+}
+type Sub = {
+  kind: 'Sub',
+  value: int
+}
+
+type parameter =
+| Add
+| Sub;
+
+type return = [list <operation>, storage];
+
+let main = ([action, store]: [parameter, storage]) => {
+  switch (action.kind) {
+    case 'Add': {
+      let store = store + action.value;
+      return [([] as list <operation>), store];
+    }
+    case 'Sub': {
+      let store = store - action.value;
+      return [([] as list <operation>), store];
+    }
+  }
+}

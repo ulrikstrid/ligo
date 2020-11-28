@@ -1,0 +1,5 @@
+/* Test boolean comparison in ReasonLIGO */
+
+let main = ([a, b] : [bool, bool]) => {
+  if (a == b) { return 999; } else { return 1; }
+}
