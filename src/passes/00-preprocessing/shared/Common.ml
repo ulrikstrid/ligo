@@ -1,11 +1,18 @@
+(* Interfacing the preprocessor. *)
+
+(* Vendor dependencies *)
+
+module Trace = Simple_utils.Trace
+
 (* CONFIGURATION *)
+
 type file_path = string
 
 module type FILE =
   sig
     val input     : file_path option
-    val extension : string (* No option here *)
-    val dirs      : file_path list
+    val extension : string            (* No option here *)
+    val dirs      : file_path list    (* #include *)
   end
 
 module Config (File : FILE) (Comments : Comments.S) =
@@ -34,22 +41,6 @@ module Config (File : FILE) (Comments : Comments.S) =
         let status = `Done
       end
 
-    module Lexer_CLI : LexerLib.CLI.S =
-      struct
-        module Preproc_CLI = Preproc_CLI
-
-        let preproc = true
-        let mode    = `Point
-        let command = None
-
-        type status = [
-          Preproc_CLI.status
-        | `Conflict of string * string (* Two conflicting options *)
-        ]
-
-        let status = `Done
-      end
-
     (* Configurations for the preprocessor based on the
        librairies CLIs. *)
 
@@ -65,13 +56,20 @@ module Config (File : FILE) (Comments : Comments.S) =
 
 (* PREPROCESSING *)
 
+type dirs = file_path list (* For #include directives *)
 
+(* Results *)
+
+type success = Preprocessor.API.success
+type error   = Errors.preproc_error
+type result  = (success, error) Trace.result
+
+let fail msg = Trace.fail @@ Errors.generic msg
 module MakePreproc (File : File.S) (Comments : Comments.S) =
   struct
-
     (* Preprocessing a contract in a file *)
 
-    let preprocess dirs file_path =
+    let preprocess_file dirs file_path =
       let module File =
         struct
           let input     = Some file_path
@@ -82,12 +80,12 @@ module MakePreproc (File : File.S) (Comments : Comments.S) =
       let preprocessed =
         Preprocessor.API.from_file Config.preproc file_path
       in match preprocessed with
-           Stdlib.Error (_, msg) -> Stdlib.Error msg
+           Stdlib.Error (_, msg) -> fail msg
          | Ok (buffer, deps) ->
              let string = Buffer.contents buffer in
              if Config.Preproc_CLI.show_pp then
                Printf.printf "%s\n%!" string;
-             Ok (buffer,deps)
+             Trace.ok (buffer, deps)
 
     (* Preprocessing from a string *)
 
@@ -102,12 +100,12 @@ module MakePreproc (File : File.S) (Comments : Comments.S) =
       let preprocessed =
         Preprocessor.API.from_string Config.preproc string
       in match preprocessed with
-           Stdlib.Error (_, msg) -> Stdlib.Error msg
+           Stdlib.Error (_, msg) -> fail msg
          | Ok (buffer, deps) ->
              let string = Buffer.contents buffer in
              if Config.Preproc_CLI.show_pp then
                Printf.printf "%s\n%!" string;
-             Ok (buffer,deps)
+             Trace.ok (buffer, deps)
 
     (* Preprocessing from a channel *)
 
@@ -122,10 +120,10 @@ module MakePreproc (File : File.S) (Comments : Comments.S) =
       let preprocessed =
         Preprocessor.API.from_channel Config.preproc channel
       in match preprocessed with
-           Stdlib.Error (_, msg) -> Stdlib.Error msg
+           Stdlib.Error (_, msg) -> fail msg
          | Ok (buffer, deps) ->
              let string = Buffer.contents buffer in
              if Config.Preproc_CLI.show_pp then
                Printf.printf "%s\n%!" string;
-             Ok (buffer,deps)
+             Trace.ok (buffer, deps)
   end

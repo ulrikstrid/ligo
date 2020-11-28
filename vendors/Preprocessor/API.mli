@@ -50,10 +50,10 @@ type config = <
    returned. In case of an error, we return the preprocessed buffer so
    far. *)
 
+type success = Buffer.t * (file_path * module_name) list
 type message = string Region.reg
 
-type preprocessed =
-  (Buffer.t * (file_path * module_name) list, Buffer.t option * message) Stdlib.result
+type preprocessed = (success, Buffer.t option * message) Stdlib.result
 
 type 'src preprocessor = config -> 'src -> preprocessed
 

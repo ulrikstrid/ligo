@@ -3,13 +3,14 @@
   (public_name ligo.preproc)
   (libraries
     ;; Vendors
+    Preprocessor
     simple-utils
-    tezos-utils
     ;; LIGO
-    lexer_pascaligo
-    lexer_cameligo
-    lexer_reasonligo)
-  (modules_without_implementation
-    Comments File)
+    preproc_pascaligo
+    preproc_cameligo
+    preproc_reasonligo
+    preproc_shared)
+  (modules
+     Preproc Pascaligo Cameligo Reasonligo)
   (preprocess
     (pps ppx_let bisect_ppx --conditional)))
