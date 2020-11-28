@@ -18,7 +18,6 @@ let add = (a: int, b: int) => a + b;
 let sub = (a: int, b: int) => a - b;
 
 let main = ([action, store] : [parameter, storage]) => {
-  
   switch (action.kind) {
     case "increment": 
       return (([] as list <operation>), add (store, action.value)); 
