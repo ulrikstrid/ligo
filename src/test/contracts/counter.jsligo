@@ -1,0 +1,4 @@
+type storage = int;
+
+let main9 = ([p, s] : [int, storage]) : [list <operation>, storage] =>
+  [[] as list <operation>, p + s];

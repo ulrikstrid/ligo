@@ -1,0 +1,177 @@
+type tokens = big_map <[address, nat]>
+type allowances = big_map <[[address, address], nat]> /* (sender,account) -> value */
+
+type storage = {
+  tokens      : tokens,
+  allowances  : allowances,
+  total_amount : nat,
+}
+
+type transfer = {
+	address_from : address,
+	address_to   : address,
+	value        : nat,
+}
+
+type approve = {
+	spender : address,
+	value   : nat,
+}
+
+type getAllowance = {
+	owner    : address,
+	spender  : address,
+	callback : contract <nat>,
+}
+
+type getBalance = {
+	owner    : address,
+	callback : contract <nat>,
+}
+
+type getTotalSupply = {
+	callback : contract <nat>,
+}
+
+type Transfer = {
+	kind: 'Transfer',
+	value: transfer
+}
+type Approve = {
+	kind: 'Approve',
+	value: approve
+}
+type GetAllowance = {
+	kind: 'GetAllowance',
+	value: getAllowance
+} 
+type GetBalance = {
+	kind: 'GetBalance',
+	value: getBalance
+}
+type GetTotalSupply = {
+	kind: 'GetTotalSupply',
+	value: getTotalSupply
+} 
+
+type action =
+|	Transfer
+|	Approve
+|	GetAllowance
+|	GetBalance
+|	GetTotalSupply
+
+let transfer = ([p,s] : [transfer, storage]) : [list <operation>, storage] => {
+  let new_allowances; 
+  if (Tezos.sender == p.address_from) { 
+	new_allowances = s.allowances; 
+  }
+  else {
+	let opt = Big_map.find_opt ([Tezos.sender,p.address_from], s.allowances);
+	let authorized_value;
+	switch (opt) {
+	  case "Some":
+	    authorized_value = opt.value;
+	  case "None":
+	    authorized_value = 0 as nat;	
+	};
+	if (authorized_value < p.value) { 
+	  (failwith ("Not Enough Allowance") as allowances); 
+	}
+	else { 
+	  new_allowances = Big_map.update ((Tezos.sender,p.address_from), (Some (abs(authorized_value - p.value))), s.allowances); 
+	};
+  };
+  let opt = Big_map.find_opt (p.address_from, s.tokens);
+  let sender_balance;
+  switch (opt.kind) {
+	case "Some": 
+	  sender_balance = opt.value; 
+	  break
+	case "None": 
+	  sender_balance = 0 as nat; 
+	  break
+	};
+	if (sender_balance < p.value) { 
+	  (failwith ("Not Enough Balance") as [list <operation>, storage]); 
+	}
+	else {
+	  let new_tokens = Big_map.update (p.address_from, (Some (abs(sender_balance - p.value))), s.tokens);
+	  let opt = Big_map.find_opt (p.address_to, s.tokens);
+	  let receiver_balance; 
+	  switch (opt.kind) {
+	    case "Some":
+		  receiver_balance = opt.value;
+		case "None":
+		  receiver_balance = 0 as nat
+	  };
+	  let new_tokens = Big_map.update (p.address_to, (Some (receiver_balance + p.value)), new_tokens);
+	  return [([] as list <operation>), { ...s,tokens:new_tokens, allowances:new_allowances}];
+	};
+};
+
+let approve = ([p,s] : [approve, storage]) : [list <operation>, storage] => {
+  let opt = Big_map.find_opt ((p.spender, Tezos.sender), s.allowances);
+  let previous_value = 0;
+  switch (opt.kind){
+	case "Some":
+	  previous_value = opt.value;
+	  break;
+	case "None":
+	  previous_value = 0 as nat;	
+	  break;
+  };
+  if (previous_value > (0 as nat) && p.value > (0 as nat)) { 
+    (failwith ("Unsafe Allowance Change") as [list <operation>, storage]); 
+  }
+  else {
+    let new_allowances = Big_map.update ([p.spender, Tezos.sender], (Some (p.value)), s.allowances);
+    return [([] as list <operation>), { ...s, allowances : new_allowances}];
+  };
+};
+
+let getAllowance = ([p,s] : [getAllowance, storage]) : [list <operation>, storage] => {
+  let opt = Big_map.find_opt ([p.owner, p.spender], s.allowances);
+  switch (opt.kind) {
+	case "Some": 
+	  let op = Tezos.transaction (value, 0 as mutez, p.callback);
+	  return [[op], s];
+	case "None":
+	  let op2 = Tezos.transaction (0 as nat, 0 as mutez, p.callback);
+	  return [[op2], s];
+	};
+};
+
+let getBalance = ([p,s] : [getBalance, storage]) : [list <operation>, storage] => {
+  let opt = Big_map.find_opt (p.owner, s.tokens);
+  switch (opt.kind) {
+    case "Some":
+	  let op1 = Tezos.transaction (opt.value, 0 as mutez, p.callback);
+	  return [[op1],s]
+    case "None":
+	  let op = Tezos.transaction (0 as nat, 0 as mutez, p.callback);
+	  return [[op], s]
+  }
+};
+
+let getTotalSupply = ([p,s] : [getTotalSupply, storage]) : [list <operation>, storage] => {
+  let total = s.total_amount;
+  let op    = Tezos.transaction (total, 0 as mutez, p.callback);
+  return [[op],s]
+};
+
+
+let main = ([a,s]: [action, storage]) => {
+  switch (a.kind) {
+	case "Transfer":
+	  return transfer([a.value, s]);
+	case "Approve":
+	  return approve ([a.value,s]);
+	case "GetAllowance":
+	  return getAllowance ([a.value,s]);
+	case "GetBalance":
+	  return getBalance ([a.value,s]);
+	case "GetTotalSupply":
+	  return getTotalSupply ([a.value,s])
+	};
+}

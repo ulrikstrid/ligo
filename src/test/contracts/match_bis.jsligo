@@ -1,0 +1,29 @@
+type storage = int;
+
+type Increment = {
+  kind: 'increment', 
+  value: int
+}
+
+type Decrement = {
+  kind: 'decrement',
+  value: int
+}
+
+type parameter =
+  Increment
+| Decrement;
+
+let add = (a: int, b: int) => a + b;
+let sub = (a: int, b: int) => a - b;
+
+let main = ([action, store] : [parameter, storage]) => {
+  
+  switch (action.kind) {
+    case "increment": 
+      return (([] as list <operation>), add (store, action.value)); 
+    case "decrement": 
+      return (([] as list <operation>), sub (store, action.value));
+  };
+
+};
