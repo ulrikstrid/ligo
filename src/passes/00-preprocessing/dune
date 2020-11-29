@@ -1,6 +1,6 @@
 (library
-  (name preproc)
-  (public_name ligo.preproc)
+  (name preprocessing)
+  (public_name ligo.preprocessing)
   (libraries
     ;; Vendors
     Preprocessor
@@ -11,6 +11,6 @@
     preproc_reasonligo
     preproc_shared)
   (modules
-     Preproc Pascaligo Cameligo Reasonligo)
+     Preprocessing Pascaligo Cameligo Reasonligo)
   (preprocess
     (pps ppx_let bisect_ppx --conditional)))
