@@ -247,7 +247,7 @@ let rec error_ppformat : display_format:string display_format ->
         Ast_core.PP.label c
     | `Typer_type_constant_wrong_number_of_arguments (op,e,a,loc) ->
       Format.fprintf f
-        "@[<hv>%a@ Wrong number of arguments for type constant: %a@ expected: %i@ got: %i@]"
+        "@[<hv>%a@ Wrong number of arguments for type constant \"%a\" expected %i, but got %i@]"
         Snippet.pp loc
         Ast_core.PP.type_variable op
         e a

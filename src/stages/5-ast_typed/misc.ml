@@ -129,7 +129,9 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
     assert_type_expression_eq (type1, type1') >>= fun _ ->
     assert_type_expression_eq (type2, type2')
   | T_arrow _, _ -> None
-  | T_variable x, T_variable y -> let _ = (x = y) in failwith "TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding"
+  | T_variable x, T_variable y ->
+    (* TODO : we must check that the two types were bound at the same location (even if they have the same name), i.e. use something like De Bruijn indices or a propper graph encoding *)
+    ignore (x,y) ; None
   | T_variable _, _ -> None
 
 let type_expression_eq ab = Option.is_some @@ assert_type_expression_eq ab
