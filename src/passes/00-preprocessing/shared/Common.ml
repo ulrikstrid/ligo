@@ -69,7 +69,7 @@ module MakePreproc (File : File.S) (Comments : Comments.S) =
   struct
     (* Preprocessing a contract in a file *)
 
-    let preprocess_file dirs file_path =
+    let from_file dirs file_path =
       let module File =
         struct
           let input     = Some file_path
@@ -89,7 +89,7 @@ module MakePreproc (File : File.S) (Comments : Comments.S) =
 
     (* Preprocessing from a string *)
 
-    let preprocess_string dirs string =
+    let from_string dirs string =
       let module File =
         struct
           let input     = None

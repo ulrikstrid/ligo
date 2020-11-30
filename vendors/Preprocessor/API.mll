@@ -787,12 +787,15 @@ and preproc state = parse
    that the trace is empty at the end.  Note that we discard the state
    at the end. *)
 
-type success = Buffer.t * (file_path * module_name) list
-type message = string Region.reg
+type module_deps = (file_path * module_name) list
+type success     = Buffer.t * module_deps
+type message     = string Region.reg
 
-type preprocessed = (success, Buffer.t option * message) Stdlib.result
+type result = (success, Buffer.t option * message) Stdlib.result
 
-type 'src preprocessor = config -> 'src -> preprocessed
+type 'src preprocessor = config -> 'src -> result
+
+(* Preprocessing from various sources *)
 
 let from_lexbuf config buffer =
   let path = Lexing.(buffer.lex_curr_p.pos_fname) in

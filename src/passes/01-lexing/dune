@@ -1,0 +1,20 @@
+;; Build of all LIGO lexers as a library
+
+(library
+  (name lexing)
+  (public_name ligo.lexing)
+  (libraries
+     ;; Vendors
+     simple-utils
+     ;; LIGO
+     preproc_pascaligo
+     preproc_cameligo
+     preproc_reasonligo
+     lexer_pascaligo
+     lexer_cameligo
+     lexer_reasonligo
+     lexer_shared)
+  (modules
+     Lexing Pascaligo Cameligo Reasonligo)
+  (preprocess
+    (pps ppx_let bisect_ppx --conditional)))
