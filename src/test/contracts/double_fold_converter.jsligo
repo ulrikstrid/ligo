@@ -2,18 +2,18 @@ type tokenId = nat;
 type tokenOwner = address;
 type tokenAmount = nat;
 type transferContents = {
-    to_: tokenOwner,
-    token_id: tokenId,
-    amount: tokenAmount
+  to_: tokenOwner,
+  token_id: tokenId,
+  amount: tokenAmount
 };
 type transfer = {
-    from_: tokenOwner,
-    txs: list<transferContents>
+  from_: tokenOwner,
+  txs: list<transferContents>
 };
 type transferContentsMichelson = michelson_pair_right_comb<transferContents>;
 type transferAuxiliary = {
-    from_: tokenOwner,
-    txs: list<transferContentsMichelson>
+  from_: tokenOwner,
+  txs: list<transferContentsMichelson>
 };
 type transferMichelson = michelson_pair_right_comb<transferAuxiliary>;
 type transferParameter = list<transferMichelson>;
