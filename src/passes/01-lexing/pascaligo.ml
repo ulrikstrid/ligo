@@ -46,9 +46,9 @@ let filter = function
   Stdlib.Ok tokens -> Trace.ok tokens
 | Error msg -> Trace.fail @@ Errors.generic msg
 
-let only_lex_file file_path =
+let lex_file file_path =
   let config = mk_config ~input:(Some file_path)
   in Scan.all_from_file config file_path |> filter
 
-let only_lex_string string =
+let lex_string string =
   Scan.all_from_string (mk_config ~input:None) string |> filter
