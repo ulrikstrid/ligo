@@ -49,11 +49,14 @@ module type S =
        The difference between extracting the lexeme and a string from
        a token is that the latter is the textual representation of the
        OCaml value denoting the token (its abstract syntax), rather
-       than its lexeme (concrete syntax). *)
+       than its lexeme (concrete syntax). Note that [concrete] is used
+       by the modukle [UnlexerGen] to transform the textual
+       representation of a token (not a lexeme) into a lexeme. *)
 
     val to_lexeme : token -> lexeme
     val to_string : offsets:bool -> [`Byte | `Point] -> token -> string
     val to_region : token -> Region.t
+    val concrete  : string -> lexeme
 
     (* Injections *)
 

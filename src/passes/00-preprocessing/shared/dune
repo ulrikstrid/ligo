@@ -1,8 +1,8 @@
 ;; Build of the LIGO preprocessors as libraries
 
 (library
-  (name preproc_shared)
-  (public_name ligo.preproc.shared)
+  (name preprocessing_shared)
+  (public_name ligo.preprocessing.shared)
   (libraries
      ;; Vendors
      Preprocessor)

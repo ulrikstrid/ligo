@@ -2,14 +2,14 @@
 
 (* LIGO dependencies *)
 
-module Comments = Preproc_pascaligo.Comments
-module File     = Preproc_pascaligo.File
+module Comments = Preprocessing_pascaligo.Comments
+module File     = Preprocessing_pascaligo.File
 
 (* Internal dependencies *)
 
-module Token  = Lexer_pascaligo.Token
-module Lexer  = Lexer_shared.Lexer.Make (Token)
-module Errors = Lexer_shared.Errors
+module Token  = Lexing_pascaligo.Token
+module Lexer  = Lexing_shared.Lexer.Make (Token)
+module Errors = Lexing_shared.Errors
 
 (* Vendor dependencies *)
 

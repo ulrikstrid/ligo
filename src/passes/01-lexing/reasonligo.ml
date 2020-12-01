@@ -2,14 +2,14 @@
 
 (* LIGO dependencies *)
 
-module Comments = Preproc_reasonligo.Comments
-module File     = Preproc_reasonligo.File
+module Comments = Preprocessing_reasonligo.Comments
+module File     = Preprocessing_reasonligo.File
 
 (* Internal dependencies *)
 
-module Token  = Lexer_reasonligo.Token
-module Lexer  = Lexer_shared.Lexer.Make (Token)
-module Errors = Lexer_shared.Errors
+module Token  = Lexing_reasonligo.Token
+module Lexer  = Lexing_shared.Lexer.Make (Token)
+module Errors = Lexing_shared.Errors
 
 (* Vendor dependencies *)
 

@@ -6,11 +6,11 @@ module Trace = Simple_utils.Trace
 
 (* Internal dependencies *)
 
-module Token = Lexer_cameligo.Token
+module Token = Lexing_cameligo.Token
 
 (* Results and errors *)
 
-type error  = Lexer_shared.Errors.lexing_error
+type error  = Lexing_shared.Errors.lexing_error
 type result = (Token.t list, error) Trace.result
 
 type file_path = string

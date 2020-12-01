@@ -3,15 +3,15 @@
 module Trace = Simple_utils.Trace
 
 type success = Preprocessor.API.success
-type error   = Preproc_shared.Errors.preproc_error
+type error   = Preprocessing_shared.Errors.preproc_error
 type result  = (success, error) Trace.result
 
 type file_path = string
 type dirs      = file_path list (* For #include and #import *)
 
-module Common      = Preproc_shared.Common
-module File        = Preproc_reasonligo.File
-module Comments    = Preproc_reasonligo.Comments
+module Common      = Preprocessing_shared.Common
+module File        = Preprocessing_reasonligo.File
+module Comments    = Preprocessing_reasonligo.Comments
 module Preprocess  = Common.MakePreproc (File) (Comments)
 
 let preprocess_file   = Preprocess.from_file

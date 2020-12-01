@@ -1,8 +1,8 @@
 ;; Build of the preprocessor of PascaLIGO as a library
 
 (library
-  (name preproc_pascaligo)
-  (public_name ligo.preproc.pascaligo)
+  (name preprocessing_pascaligo)
+  (public_name ligo.preprocessing.pascaligo)
   (libraries
      ;; Vendors
      Preprocessor)
@@ -16,8 +16,8 @@
   (name PreprocMain)
   (libraries
     ;; LIGO
-    preproc_pascaligo
-    preproc_shared)
+    preprocessing_pascaligo
+    preprocessing_shared)
   (modules PreprocMain)
   (preprocess
     (pps bisect_ppx --conditional)))

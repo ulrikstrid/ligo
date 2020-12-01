@@ -1,8 +1,8 @@
 ;; Build of the preprocessor of CameLIGO as a library
 
 (library
-  (name preproc_cameligo)
-  (public_name ligo.preproc.cameligo)
+  (name preprocessing_cameligo)
+  (public_name ligo.preprocessing.cameligo)
   (libraries
      ;; Vendors
      Preprocessor)
@@ -16,8 +16,8 @@
   (name PreprocMain)
   (libraries
     ;; LIGO
-    preproc_cameligo
-    preproc_shared)
+    preprocessing_cameligo
+    preprocessing_shared)
   (modules PreprocMain)
   (preprocess
     (pps bisect_ppx --conditional)))

@@ -4,8 +4,8 @@ module Region = Simple_utils.Region
 
 (* LIGO dependencies *)
 
-module type FILE     = Preproc_shared.File.S
-module type COMMENTS = Preproc_shared.Comments.S
+module type FILE     = Preprocessing_shared.File.S
+module type COMMENTS = Preprocessing_shared.Comments.S
 
 (* This module factors the common actions expected from LexerMain in
    all LIGO syntaxes, like reading and checking the command-line,

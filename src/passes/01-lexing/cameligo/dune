@@ -5,12 +5,12 @@
 ;; Build of the CameLIGO lexer as a library
 
 (library
-  (name lexer_cameligo)
-  (public_name ligo.lexer.cameligo)
+  (name lexing_cameligo)
+  (public_name ligo.lexing.cameligo)
   (modules Token Self_tokens)
   (libraries
     ;; LIGO
-    lexer_shared
+    lexing_shared
     ;; Third party
     str
     hex)
@@ -23,9 +23,9 @@
   (name LexerMain)
   (libraries
     ;; LIGO
-    preproc_cameligo
-    lexer_shared
-    lexer_cameligo
+    preprocessing_cameligo
+    lexing_shared
+    lexing_cameligo
     ;; Third party
     str)
   (modules Version LexerMain)
@@ -40,7 +40,8 @@
   (name Unlexer)
   (libraries
     ;; LIGO
-    lexer_cameligo
+    lexing_shared
+    lexing_cameligo
     ;; Third party
     str)
   (modules Unlexer)

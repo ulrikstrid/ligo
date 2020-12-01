@@ -2,14 +2,14 @@
 
 (* LIGO dependencies *)
 
-module Comments = Preproc_cameligo.Comments
-module File     = Preproc_cameligo.File
+module Comments = Preprocessing_cameligo.Comments
+module File     = Preprocessing_cameligo.File
 
 (* Internal dependencies *)
 
-module Token  = Lexer_cameligo.Token
-module Lexer  = Lexer_shared.Lexer.Make (Token)
-module Errors = Lexer_shared.Errors
+module Token  = Lexing_cameligo.Token
+module Lexer  = Lexing_shared.Lexer.Make (Token)
+module Errors = Lexing_shared.Errors
 
 (* Vendor dependencies *)
 

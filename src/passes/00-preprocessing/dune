@@ -6,10 +6,10 @@
     Preprocessor
     simple-utils
     ;; LIGO
-    preproc_pascaligo
-    preproc_cameligo
-    preproc_reasonligo
-    preproc_shared)
+    preprocessing_pascaligo
+    preprocessing_cameligo
+    preprocessing_reasonligo
+    preprocessing_shared)
   (modules
      Preprocessing Pascaligo Cameligo Reasonligo)
   (preprocess

@@ -1,8 +1,8 @@
 (* Driving the preprocessor for PascaLIGO *)
 
-module Comments       = Preproc_pascaligo.Comments
-module File           = Preproc_pascaligo.File
-module PreprocMainGen = Preproc_shared.PreprocMainGen
+module Comments       = Preprocessing_pascaligo.Comments
+module File           = Preprocessing_pascaligo.File
+module PreprocMainGen = Preprocessing_shared.PreprocMainGen
 module PreprocMain    = PreprocMainGen.Make (Comments) (File)
 
 let () = PreprocMain.check_cli ()
