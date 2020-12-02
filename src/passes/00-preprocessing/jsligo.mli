@@ -1,4 +1,4 @@
-(* Interfacing the CameLIGO preprocessor *)
+(* Interfacing the JsLIGO preprocessor *)
 
 module Trace = Simple_utils.Trace
 

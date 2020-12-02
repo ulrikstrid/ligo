@@ -1,18 +1,24 @@
 (* Interfacing the CameLIGO preprocessor. *)
 
+(* Vendors dependencies *)
+
 module Trace = Simple_utils.Trace
-
 type success = Preprocessor.API.success
-type error   = Preprocessing_shared.Errors.preproc_error
-type result  = (success, error) Trace.result
 
-type file_path = string
-type dirs      = file_path list (* For #include and #import *)
+(* Internal dependencies *)
 
-module Common     = Preprocessing_shared.Common
 module File       = Preprocessing_cameligo.File
 module Comments   = Preprocessing_cameligo.Comments
+module Common     = Preprocessing_shared.Common
 module Preprocess = Common.MakePreproc (File) (Comments)
+
+type error   = Preprocessing_shared.Errors.t
+
+(* Preprocessing *)
+
+type result    = (success, error) Trace.result
+type file_path = string
+type dirs      = file_path list (* For #include and #import *)
 
 let preprocess_file   = Preprocess.from_file
 let preprocess_string = Preprocess.from_string

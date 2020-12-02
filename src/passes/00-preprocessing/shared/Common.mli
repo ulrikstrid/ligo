@@ -12,8 +12,7 @@ type dirs = file_path list (* #include and #import *)
 (* Results *)
 
 type success = Preprocessor.API.success
-type error   = Errors.preproc_error
-type result  = (success, error) Trace.result
+type result  = (success, Errors.t) Trace.result
 
 module MakePreproc (File : File.S) (Comments : Comments.S) :
   sig

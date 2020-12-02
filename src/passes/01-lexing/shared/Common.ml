@@ -1,21 +1,26 @@
+(* Vendor dependencies *)
+
+module Trace = Simple_utils.Trace
+
+(* Internal dependencies *)
+
 module type COMMENTS = Preprocessing_shared.Comments.S
-module type TOKEN = Token.S
 
-module Make (Comments : COMMENTS) (Token : TOKEN) =
+(* File system *)
+
+type file_path = string
+type dirs      = file_path list (* For #include and #import *)
+
+(* Making lexers *)
+
+module Make (Comments : COMMENTS) (Token : Token.S) =
   struct
-    (* Internal dependencies *)
-
     module Lexer = Lexer.Make (Token)
-
-    (* Vendor dependencies *)
-
-    module Trace = Simple_utils.Trace
     module Scan  = LexerLib.API.Make (Lexer)
 
     (* Results and errors *)
 
-    type error  = Errors.lexing_error
-    type result = (Token.t list, error) Trace.result
+    type result = (Token.t list, Errors.t) Trace.result
 
     (* Lexer configurations *)
 
@@ -35,9 +40,6 @@ module Make (Comments : COMMENTS) (Token : TOKEN) =
 
     (* Lexing functions *)
 
-    type file_path = string
-    type dirs      = file_path list (* For #include and #import *)
-
     let filter = function
       Stdlib.Ok tokens -> Trace.ok tokens
     | Error msg -> Trace.fail @@ Errors.generic msg
@@ -48,4 +50,7 @@ module Make (Comments : COMMENTS) (Token : TOKEN) =
 
     let lex_string string =
       Scan.all_from_string (mk_config ~input:None) string |> filter
+
+    let lex_channel channel =
+      Scan.all_from_channel (mk_config ~input:None) channel |> filter
   end

@@ -28,7 +28,7 @@ module Config (File : FILE) (Comments : Comments.S) =
         let extension = Some File.extension
         let dirs      = File.dirs
         let show_pp   = false
-        let offsets   = true
+        let offsets   = true  (* TODO: Should flow from CLI *)
 
         type status = [
           `Done
@@ -45,7 +45,7 @@ module Config (File : FILE) (Comments : Comments.S) =
     (* Configurations for the preprocessor based on the
        librairies CLIs. *)
 
-    let preproc =
+    let preprocessor =
       object
         method block   = Preprocessor_CLI.block
         method line    = Preprocessor_CLI.line
@@ -60,8 +60,7 @@ module Config (File : FILE) (Comments : Comments.S) =
 (* Results *)
 
 type success = Preprocessor.API.success
-type error   = Errors.preproc_error
-type result  = (success, error) Trace.result
+type result  = (success, Errors.t) Trace.result
 
 let fail msg = Trace.fail @@ Errors.generic msg
 module MakePreproc (File : File.S) (Comments : Comments.S) =
@@ -86,8 +85,9 @@ module MakePreproc (File : File.S) (Comments : Comments.S) =
           let dirs      = dirs
         end in
       let module Config = Config (File) (Comments) in
+      let config = Config.preprocessor in
       let preprocessed =
-        Preprocessor.API.from_file Config.preproc file_path in
+        Preprocessor.API.from_file config file_path in
       finalise Config.Preprocessor_CLI.show_pp preprocessed
 
     (* Preprocessing a string *)
@@ -100,8 +100,9 @@ module MakePreproc (File : File.S) (Comments : Comments.S) =
           let dirs      = dirs
         end in
       let module Config = Config (File) (Comments) in
+      let config = Config.preprocessor in
       let preprocessed =
-        Preprocessor.API.from_string Config.preproc string in
+        Preprocessor.API.from_string config string in
       finalise Config.Preprocessor_CLI.show_pp preprocessed
 
     (* Preprocessing a channel *)
@@ -114,7 +115,8 @@ module MakePreproc (File : File.S) (Comments : Comments.S) =
           let dirs      = dirs
         end in
       let module Config = Config (File) (Comments) in
+      let config = Config.preprocessor in
       let preprocessed =
-        Preprocessor.API.from_channel Config.preproc channel in
+        Preprocessor.API.from_channel config channel in
       finalise Config.Preprocessor_CLI.show_pp preprocessed
   end

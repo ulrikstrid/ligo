@@ -1,4 +1,4 @@
-(* Interfacing the ReasonLIGO preprocessor. *)
+(* Interfacing the JsLIGO preprocessor. *)
 
 (* Vendors dependencies *)
 
@@ -7,8 +7,8 @@ type success = Preprocessor.API.success
 
 (* Internal dependencies *)
 
-module File       = Preprocessing_reasonligo.File
-module Comments   = Preprocessing_reasonligo.Comments
+module File       = Preprocessing_jsligo.File
+module Comments   = Preprocessing_jsligo.Comments
 module Common     = Preprocessing_shared.Common
 module Preprocess = Common.MakePreproc (File) (Comments)
 
