@@ -162,7 +162,7 @@ module Make (File        : FILE)
       Preprocessor.PreprocMainGen.Make (CLI.Preprocessor_CLI)
 
     let scan_all () : (token list, message) Stdlib.result =
-      if CLI.preproc then
+      if CLI.preprocess then
         match Preproc.preprocess () with
           Stdlib.Error (_buffer, msg) ->
             (* The preprocessed buffer so far is dropped. *)

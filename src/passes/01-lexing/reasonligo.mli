@@ -10,8 +10,8 @@ module Token = Lexing_reasonligo.Token
 
 (* Results and errors *)
 
-type error  = Lexing_shared.Errors.lexing_error
-type result = (Token.t list, error) Trace.result
+type errors = Lexing_shared.Errors.t
+type result = (Token.t list, errors) Trace.result
 
 type file_path = string
 type dirs      = file_path list (* For #include and #import *)

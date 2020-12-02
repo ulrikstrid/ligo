@@ -43,7 +43,7 @@ module type S =
 
     (* Run the preprocessor before lexing *)
 
-    val preproc : bool
+    val preprocess : bool
 
     (* If the value [mode] is [`Byte], then the unit in which source
        positions and regions are expressed in messages is the byte. If
