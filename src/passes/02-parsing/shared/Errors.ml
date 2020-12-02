@@ -1,3 +1,7 @@
+(* Parsing errors for the compiler *)
+
+let stage = "parsing"
+
 (* Vendor dependencies *)
 
 module Region   = Simple_utils.Region
@@ -7,19 +11,19 @@ module Display  = Simple_utils.Display
 
 (* Internal dependencies *)
 
-module CST = Cst.Reasonligo
+module CST = Cst_reasonligo.CST
 
 (* Errors *)
 
-type parse_error = [
-  | `Parser_generic of string Region.reg
-  | `Parser_invalid_wild of CST.expr
-  ]
+type t = [
+  `Parsing_generic      of string Region.reg
+| `Parsing_invalid_wild of CST.expr
+]
 
-let stage = "parser"
+type error = t
 
-let generic reg = `Parser_generic reg
-let invalid_wild expr = `Parser_invalid_wild expr
+let generic reg       = `Parsing_generic reg
+let invalid_wild expr = `Parsing_invalid_wild expr
 
 let wrong_function_msg =
   "It looks like you are defining a function, \
@@ -31,46 +35,49 @@ let wrong_function_msg =
    let x = (a: string) : string => \"Hello, \" ++ a;\n"
 
 let wild_pattern_msg =
-  "It looks like you are using a catch-all pattern where it cannot be used"
+  "It looks like you are using a catch-all pattern \
+   where it cannot be used"
+
+(* Colour snippet *)
 
 let error_ppformat :
       display_format:(string Display.display_format) ->
       Format.formatter ->
-      parse_error ->
+      error ->
       unit =
-  fun ~display_format f a ->
+  fun ~display_format format error ->
   match display_format with
-  | Human_readable | Dev -> (
-    match a with
-    | `Parser_generic {value; region} ->
-      Snippet.pp_lift f region;
-      Format.pp_print_string f value
-    | `Parser_invalid_wild expr ->
-      let loc = Format.asprintf "%a"
-        Snippet.pp_lift @@ CST.expr_to_region expr in
-      let s = Format.asprintf "%s\n%s" loc wild_pattern_msg in
-      Format.pp_print_string f s ;
-  )
+    Human_readable | Dev ->
+      match error with
+        `Parsing_generic Region.{value; region} ->
+           Snippet.pp_lift format region;
+           Format.pp_print_string format value
+      | `Parsing_invalid_wild expr ->
+         let loc = Format.asprintf "%a" Snippet.pp_lift
+                   @@ CST.expr_to_region expr in
+         Format.(pp_print_string format @@
+                   asprintf "%s\n%s" loc wild_pattern_msg)
 
-let error_jsonformat : parse_error -> Yojson.Safe.t =
+(* JSON *)
+
+let error_jsonformat : error -> Yojson.Safe.t =
   fun error ->
   let json_error ~stage ~content =
     `Assoc [
-      ("status", `String "error") ;
-      ("stage", `String stage) ;
-      ("content",  content )]
-  in
+      ("status",  `String "error");
+      ("stage",   `String stage);
+      ("content",  content)] in
   match error with
-    `Parser_generic {value; region} ->
+    `Parsing_generic Region.{value; region} ->
        let loc = Location.lift @@ region in
        let content = `Assoc [
          ("message",  `String value);
          ("location", Location.to_yojson loc)]
-    in json_error ~stage ~content
-  | `Parser_invalid_wild expr ->
-    let loc = Location.lift @@ CST.expr_to_region expr in
-    let content = `Assoc [
-      ("message", `String wild_pattern_msg);
-      ("location", Location.to_yojson loc); ]
-    in
-    json_error ~stage ~content
+       in json_error ~stage ~content
+  | `Parsing_invalid_wild expr ->
+       let loc = Location.lift @@ CST.expr_to_region expr in
+       let content =
+         `Assoc [
+            ("message", `String wild_pattern_msg);
+            ("location", Location.to_yojson loc)]
+       in json_error ~stage ~content

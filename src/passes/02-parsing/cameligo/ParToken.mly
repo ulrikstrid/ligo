@@ -1,5 +1,5 @@
 %{
-module Token = Lexer_cameligo.Token
+module Token = Lexing_cameligo.Token
 %}
 
 (* Tokens (mirroring thise defined in module Token) *)

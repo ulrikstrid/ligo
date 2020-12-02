@@ -2,7 +2,7 @@
 
 module Region = Simple_utils.Region
 module CST    = Cst.Pascaligo
-module Token  = Lexer_pascaligo.Token
+module Token  = Lexing_pascaligo.Token
 
 type window = <
   last_token    : Token.t option;

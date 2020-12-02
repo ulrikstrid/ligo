@@ -6,7 +6,7 @@
 
 module Region = Simple_utils.Region
 module CST    = Cst.Pascaligo
-module Token  = Lexer_pascaligo.Token
+module Token  = Lexing_pascaligo.Token
 
 open Region
 

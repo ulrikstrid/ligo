@@ -1,19 +1,26 @@
+(* Parser and pretty-printer factory *)
+
+(* Vendors dependencies *)
+
+module Region = Simple_utils.Region
+
+(* Internal dependencies *)
+
+module type FILE        = Preprocessing_shared.Common.FILE
+module type COMMENTS    = Preprocessing_shared.Comments.S
+module type TOKEN       = Lexing_shared.Token.S
+module type SELF_TOKENS = Lexing_shared.Self_tokens.S
+module type PARSER      = ParserLib.API.PARSER
+
+module LexerMainGen = Lexing_shared.LexerMainGen
+
 (* CONFIGURATION *)
 
-type file_path = string
-
-module type FILE =
-  sig
-    val input     : file_path option
-    val extension : string (* No option here *)
-    val dirs      : file_path list
-  end
-
-module Config (File : FILE) (Comments : Shared_lexer.Comments.S) =
+module Config (File : FILE) (Comments : COMMENTS) =
   struct
     (* Stubs for the libraries CLIs *)
 
-    module Preproc_CLI : Preprocessor.CLI.S =
+    module Preprocessor_CLI : Preprocessor.CLI.S =
       struct
         include Comments
 
@@ -37,31 +44,30 @@ module Config (File : FILE) (Comments : Shared_lexer.Comments.S) =
 
     module Lexer_CLI : LexerLib.CLI.S =
       struct
-        module Preproc_CLI = Preproc_CLI
+        module Preprocessor_CLI = Preprocessor_CLI
 
-        let preproc = true
-        let mode    = `Point
-        let command = None
+        let preprocess = true
+        let mode       = `Point
+        let command    = None
 
         type status = [
-          Preproc_CLI.status
+          Preprocessor_CLI.status
         | `Conflict of string * string (* Two conflicting options *)
         ]
 
         let status = `Done
       end
 
-    (* Configurations for the parsers based on the
-       librairies CLIs. *)
+    (* Configurations for the parsers based on the librairies CLIs. *)
 
     let parser =
       object
-        method offsets = Preproc_CLI.offsets
+        method offsets = Preprocessor_CLI.offsets
         method mode    = Lexer_CLI.mode
       end
   end
 
-(* PARSING *)
+(* PRETTY-PRINTING *)
 
 module type PRETTY =
   sig
@@ -75,6 +81,8 @@ module type PRETTY =
     val print_type_expr : type_expr -> PPrint.document
     val print_pattern   : pattern   -> PPrint.document
   end
+
+(* PARSING *)
 
 module type CST =
   sig
@@ -95,19 +103,31 @@ type 'token window = <
 >
 
 module MakeParser
-         (File        : Shared_lexer.File.S)
-         (Comments    : Shared_lexer.Comments.S)
-         (Token       : Shared_lexer.Token.S)
+         (File        : FILE)
+         (Comments    : COMMENTS)
+         (Token       : TOKEN)
          (Scoping     : sig exception Error of string * Token.t window end)
          (ParErr      : PAR_ERR)
-         (Parser      : ParserLib.API.PARSER with type token = Token.t)
-         (Self_lexing : Shared_lexer.Self_lexing.S with type token = Token.t) =
+         (CST         : sig type t end)
+         (Parser      : PARSER with type token = Token.t
+                                and type tree = CST.t)
+         (Self_tokens : SELF_TOKENS with type token = Token.t) =
   struct
-    (* PARSING *)
 
-    (* Parsing from a file *)
+    type file_path = string list
 
-    let parse_file dirs buffer file_path =
+    (* We always parse a string buffer of type [Buffer.t], but the
+       interpretation of its contents depends on the functions
+       below. In [parse_file dirs buffer file_path], the argument
+       [buffer] is interpreted as the contents of the file located at
+       [file_path]. In [parse_string dirs buffer], the argument
+       [buffer] is interpreted as the contents of a string given on
+       the CLI. *)
+
+    (* Parsing a file *)
+
+    let parse_file dirs buffer file_path
+        : (CST.t, string Region.reg) Stdlib.result =
       let module File =
         struct
           let input     = Some file_path
@@ -116,26 +136,28 @@ module MakeParser
         end in
       let module Config = Config (File) (Comments) in
       let module MainLexer =
-        Shared_lexer.LexerMainGen.Make (Comments) (File) (Token) (Config.Lexer_CLI) (Self_lexing) in
+        LexerMainGen.Make
+          (File) (Token) (Config.Lexer_CLI) (Self_tokens) in
       let module MainParser =
         ParserLib.API.Make (MainLexer) (Parser) in
       let tree =
         let string = Buffer.contents buffer in
-        if Config.Preproc_CLI.show_pp then
+        if Config.Preprocessor_CLI.show_pp then
           Printf.printf "%s\n%!" string;
         let lexbuf = Lexing.from_string string in
         let     () = LexerLib.Core.reset ~file:file_path lexbuf in
         let parser = MainParser.incr_from_lexbuf in
-        try Ok (fun () -> parser (module ParErr: PAR_ERR) lexbuf) with
+        try parser (module ParErr: PAR_ERR) lexbuf with
           Scoping.Error (value, window) ->
             let token  = window#current_token in
             let region = Token.to_region token
-            in Stdlib.Error ({value;region} : _ Simple_utils.Region.reg)
+            in Stdlib.Error Region.{value; region}
       in MainLexer.clear (); tree
 
-    (* Parsing from a string to merge*)
+    (* Parsing a string *)
 
-    let parse_string dirs buffer =
+    let parse_string dirs buffer
+        : (CST.t, string Region.reg) Stdlib.result =
       let module File =
         struct
           let input     = None
@@ -144,20 +166,21 @@ module MakeParser
         end in
       let module Config = Config (File) (Comments) in
       let module MainLexer =
-        Shared_lexer.LexerMainGen.Make (Comments) (File) (Token) (Config.Lexer_CLI) (Self_lexing) in
+        LexerMainGen.Make
+          (File) (Token) (Config.Lexer_CLI) (Self_tokens) in
       let module MainParser =
         ParserLib.API.Make (MainLexer) (Parser) in
       let tree =
         let string = Buffer.contents buffer in
-        if Config.Preproc_CLI.show_pp then
+        if Config.Preprocessor_CLI.show_pp then
           Printf.printf "%s\n%!" string;
         let lexbuf = Lexing.from_string string in
         let parser = MainParser.incr_from_lexbuf in
-        try Ok (fun () -> parser (module ParErr: PAR_ERR) lexbuf) with
+        try parser (module ParErr: PAR_ERR) lexbuf with
           Scoping.Error (value, window) ->
             let token  = window#current_token in
             let region = Token.to_region token
-            in Stdlib.Error ({value;region} : _ Simple_utils.Region.reg)
+            in Stdlib.Error Region.{value; region}
       in MainLexer.clear (); tree
   end
 
