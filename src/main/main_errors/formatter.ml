@@ -51,7 +51,7 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
       "@[<hv>Invalid protocol version '%s'. Available versions: %a"
         actual
-        (Simple_utils.PP_helpers.list_sep_d Format.pp_print_string) possible
+        Simple_utils.PP_helpers.(list_sep Format.pp_print_string (tag " ,")) possible
     | `Main_invalid_typer_switch actual ->
       Format.fprintf f
       "@[<hv>Invalid typer switch '%s'. Available: 'new' 'old'"

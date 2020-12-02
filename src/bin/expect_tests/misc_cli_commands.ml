@@ -58,5 +58,4 @@ let%expect_test _ =
 
   run_ligo_bad [ "interpret" ; "1" ; "--syntax=cameligo" ; "--protocol=do_not_exist" ] ;
   [%expect {|
-    Invalid protocol version 'do_not_exist'. Available versions: carthage ,
-    dalphanet |}] ;
+    Invalid protocol version 'do_not_exist'. Available versions: carthage ,dalphanet ,edo |}] ;

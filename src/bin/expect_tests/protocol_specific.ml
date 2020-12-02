@@ -24,7 +24,8 @@ let%expect_test _ =
     const main = lambda (#1) return let s = #1.1 in let p = #1.0 in ( LIST_EMPTY() , (pairing_check)@(p) ) |xxx}] 
 
 let%expect_test _ =
-  run_ligo_bad [ "compile-contract" ; contract "protocol_dalphanet.mligo" ; "main" ] ;
+  (* using a type which is not part of the required protocol should not go through AST typed *)
+  run_ligo_bad [ "compile-contract" ; contract "protocol_dalphanet.mligo" ; "main" ; "--protocol=carthage" ] ;
   [%expect {|
     in file "../../test/contracts/protocol_dalphanet.mligo", line 1, characters 14-26
       1 | type bls_l = (bls12_381_g1 * bls12_381_g2) list
@@ -32,7 +33,7 @@ let%expect_test _ =
 
     Type "bls12_381_g1" not found. |}] ;
 
-  run_ligo_bad [ "print-ast-typed" ; contract "protocol_dalphanet.mligo" ] ;
+  run_ligo_bad [ "print-ast-typed" ; contract "protocol_dalphanet.mligo" ; "--protocol=carthage"] ;
   [%expect {|
     in file "../../test/contracts/protocol_dalphanet.mligo", line 1, characters 14-26
       1 | type bls_l = (bls12_381_g1 * bls12_381_g2) list

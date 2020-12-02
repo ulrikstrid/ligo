@@ -35,6 +35,7 @@ let baker_operation_name = "baker_operation"
 let bls12_381_g1_name = "bls12_381_g1"
 let bls12_381_g2_name = "bls12_381_g2"
 let bls12_381_fr_name = "bls12_381_fr"
+let never_name = "never"
 
 let v_bool : type_variable = Var.of_name bool_name
 let v_string : type_variable = Var.of_name string_name
@@ -70,4 +71,5 @@ let v_sapling_state : type_variable = Var.of_name sapling_state_name
 let v_baker_operation : type_variable = Var.of_name baker_operation_name
 let v_bls12_381_g1 : type_variable = Var.of_name bls12_381_g1_name
 let v_bls12_381_g2 : type_variable = Var.of_name bls12_381_g2_name
-let v_bls12_381_fr : type_variable = Var.of_name  bls12_381_fr_name
+let v_bls12_381_fr : type_variable = Var.of_name bls12_381_fr_name
+let v_never : type_variable = Var.of_name never_name
