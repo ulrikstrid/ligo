@@ -4,8 +4,7 @@ module Region = Simple_utils.Region
 
 (* LIGO dependencies *)
 
-module type FILE     = Preprocessing_shared.File.S
-module type COMMENTS = Preprocessing_shared.Comments.S
+module type FILE = Preprocessing_shared.File.S
 
 (* This module factors the common actions expected from LexerMain in
    all LIGO syntaxes, like reading and checking the command-line,
@@ -14,8 +13,7 @@ module type COMMENTS = Preprocessing_shared.Comments.S
    that a side-effect is performed (reading from and writing to
    [Sys.argv]: see module [LexerLib.CLI].). *)
 
-module Make (Comments    : COMMENTS)
-            (File        : FILE)
+module Make (File        : FILE)
             (Token'      : Token.S)
             (CLI         : LexerLib.CLI.S)
             (Self_tokens : Self_tokens.S with type token = Token'.t) :

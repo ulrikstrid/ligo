@@ -7,14 +7,16 @@
      ;; Vendors
      simple-utils
      ;; LIGO
+     lexing_shared
      preprocessing_pascaligo
-     preprocessing_cameligo
-     preprocessing_reasonligo
      lexing_pascaligo
+     preprocessing_cameligo
      lexing_cameligo
+     preprocessing_reasonligo
      lexing_reasonligo
-     lexing_shared)
+     preprocessing_jsligo
+     lexing_jsligo)
   (modules
-     Lexing Pascaligo Cameligo Reasonligo)
+     Lexing Pascaligo Cameligo Reasonligo Jsligo)
   (preprocess
     (pps ppx_let bisect_ppx --conditional)))

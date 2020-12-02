@@ -18,9 +18,9 @@
      zarith
      str)
   (modules
-     Errors Formatter Comments File Token
+     Errors Formatter Token Common
      Lexer Self_tokens LexerMainGen UnlexerGen)
   (modules_without_implementation
-     Token Comments File Self_tokens)
+     Token Self_tokens)
   (preprocess
     (pps bisect_ppx --conditional)))

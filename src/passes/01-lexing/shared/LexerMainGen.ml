@@ -9,13 +9,11 @@ module Markup = LexerLib.Markup
 
 (* LIGO dependencies *)
 
-module type FILE     = Preprocessing_shared.File.S
-module type COMMENTS = Preprocessing_shared.Comments.S
+module type FILE = Preprocessing_shared.File.S
 
 (* The functor *)
 
-module Make (Comments    : COMMENTS)
-            (File        : FILE)
+module Make (File        : FILE)
             (Token       : Token.S)
             (CLI         : LexerLib.CLI.S)
             (Self_tokens : Self_tokens.S with type token = Token.t) =
