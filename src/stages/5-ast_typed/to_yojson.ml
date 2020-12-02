@@ -1,5 +1,6 @@
 open Ast
 
+open Stage_common.To_yojson
 type json = Yojson.Safe.t
 
 let constant' = function
@@ -135,21 +136,6 @@ let constant' = function
   | C_TEST_ASSERT_FAILURE      -> `List [`String "TEST_ASSERT_FAILURE"; `Null ]
   | C_TEST_LOG                 -> `List [`String "TEST_LOG"; `Null ]
 
-let literal = function
-  | Literal_unit        -> `List [`String "Literal_unit"; `Null ]
-  | Literal_int       l -> `List [`String "Literal_unit"; z_to_yojson l ]
-  | Literal_nat       l -> `List [`String "Literal_unit"; z_to_yojson l ]
-  | Literal_timestamp l -> `List [`String "Literal_unit"; z_to_yojson l ]
-  | Literal_mutez     l -> `List [`String "Literal_unit"; z_to_yojson l ]
-  | Literal_string    l -> `List [`String "Literal_unit"; Ligo_string.to_yojson l ]
-  | Literal_bytes     l -> `List [`String "Literal_unit"; bytes_to_yojson l ]
-  | Literal_address   l -> `List [`String "Literal_unit"; `String l ]
-  | Literal_signature l -> `List [`String "Literal_unit"; `String l ]
-  | Literal_key       l -> `List [`String "Literal_unit"; `String l ]
-  | Literal_key_hash  l -> `List [`String "Literal_unit"; `String l ]
-  | Literal_chain_id  l -> `List [`String "Literal_unit"; `String l ]
-  | Literal_operation l -> `List [`String "Literal_unit"; bytes_to_yojson l ]
-
 let label = label_to_yojson
 let option f o =
     match o with
@@ -219,13 +205,14 @@ let rec expression {expression_content=ec;location;type_expression=te} =
 
 and expression_content = function
   (* Base *)
-  | E_literal     e -> `List [ `String "E_literal"; literal e ]
+  | E_literal     e -> `List [ `String "E_literal"; Stage_common.To_yojson.literal e ]
   | E_constant    e -> `List [ `String "E_constant"; constant e ]
   | E_variable    e -> `List [ `String "E_variable"; expression_variable_to_yojson e ]
   | E_application e -> `List [ `String "E_application"; application e ]
   | E_lambda      e -> `List [ `String "E_lambda"; lambda e ]
   | E_recursive   e -> `List [ `String "E_recursive"; recursive e ]
   | E_let_in      e -> `List [ `String "E_let_in"; let_in e ]
+  | E_type_in     e -> `List [ `String "E_type_in"; type_in   expression type_expression e ]
   | E_raw_code    e -> `List [ `String "E_raw_code"; raw_code e ]
   (* Variant *)
   | E_constructor     e -> `List [ `String "E_constructor"; constructor e ]
