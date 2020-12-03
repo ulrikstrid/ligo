@@ -1,0 +1,12 @@
+(library
+  (name cst_jsligo)
+  (public_name ligo.cst.jsligo)
+  (libraries
+    ;; Ligo
+    simple-utils
+    ;; Third party
+    hex
+    zarith)
+  (modules CST)
+  (preprocess
+    (pps ppx_let bisect_ppx --conditional)))
