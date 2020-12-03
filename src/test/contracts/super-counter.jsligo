@@ -15,11 +15,10 @@ type storage = int;
 
 type return = [list <operation>, storage];
 
-let main55 = ([action, store]: [parameter, storage]) : return => {
-  switch (action.kind) {
-    case 'Increment':
-      return [[] as list <operation>, store + action.value];
-    case 'Decrement':
-      return [[] as list <operation>, store - action.value];
-  }
+let main = ([action, store]: [parameter, storage]) : return => {
+  let storage = match (action) ({
+    Increment: (n: nat) => store + n,
+    Decrement: (n: nat) => store - n
+  });
+  return [[] as list <operation>, store];
 };

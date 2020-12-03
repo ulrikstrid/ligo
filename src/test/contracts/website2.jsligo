@@ -24,14 +24,11 @@ let sub = ([a,b]: [int, int]): int => a - b;
 /* real entrypoint that re-routes the flow based on the parameter provided */
 
 let main = ([p,storage]: [parameter, storage]) => {
-  switch (p.kind) {
-    case 'increment':
-      let storage2 = add ([storage, p.value]);
-      return [[] as list <operation>, storage2];
-    case 'decrement':
-      let storage3 = sub ([storage, p.value]);
-      return [[] as list <operation>, storage3];
-  }  
+  let storage2 = match(p)({
+    increment: (n: nat) => add ([storage, n]),
+    decrement: (n: nat) => sub ([storage, n]),
+  });
+  return [[] as list <operation>, storage2];
 };
 
 /* IF YOU CHANGE THIS, CHANGE THE EXAMPLE ON THE FRONT PAGE OF THE WEBSITE */

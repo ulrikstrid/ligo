@@ -18,11 +18,10 @@ let add = (a: int, b: int) => a + b;
 let sub = (a: int, b: int) => a - b;
 
 let main = ([action, store] : [parameter, storage]) => {
-  switch (action.kind) {
-    case "increment": 
-      return (([] as list <operation>), add (store, action.value)); 
-    case "decrement": 
-      return (([] as list <operation>), sub (store, action.value));
-  };
-
+  let store2 = match(action)({
+    increment: (value: int) => add (store, value),
+    decrement: (value: int) => sub (store, value),
+  });
+  return [([] as list <operation>), store2];
 };
+

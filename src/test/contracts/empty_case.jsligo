@@ -1,6 +1,6 @@
 type Bar = {
   kind: 'Bar',
-  i: int
+  value: int
 };
 
 type Baz = {
@@ -11,9 +11,8 @@ type fooBarBaz =
 | Bar
 | Baz;
 
-let main = (f : fooBarBaz) : int => {
-  switch (f.kind) {
-    case "Bar": return f.i
-    case "Baz": return -1
-  };
-}
+let main = (f : fooBarBaz) : int =>
+  match(f)({
+    Bar: (i: int) => i
+    Baz: () => -1
+  })
