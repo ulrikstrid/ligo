@@ -26,10 +26,10 @@ module Make (Token : Token.S) =
     | Reserved_name of string
     | Invalid_symbol
     | Invalid_natural
-    (*    | Invalid_attribute*)
     | Unterminated_verbatim
 
-      (* Style errors *)
+    (* Style errors *)
+
     | Odd_lengthed_bytes
     | Missing_break
     | Negative_byte_sequence

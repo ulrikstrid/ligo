@@ -5,7 +5,7 @@
 ;; Build of the lexer as a library
 
 (library
-  (name lexer_shared)
+  (name lexing_shared)
   (public_name ligo.lexing.shared)
   (libraries
      ;; Vendors
@@ -18,8 +18,9 @@
      zarith
      str)
   (modules
-     Errors Comments File Token Lexer Self_tokens LexerMainGen)
+     Errors Formatter Token Common
+     Lexer Self_tokens LexerMainGen UnlexerGen)
   (modules_without_implementation
-     Token Comments File Self_tokens)
+     Token Self_tokens)
   (preprocess
     (pps bisect_ppx --conditional)))

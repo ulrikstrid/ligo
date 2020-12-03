@@ -3,7 +3,7 @@
 module Trace = Simple_utils.Trace
 
 type success = Preprocessor.API.success
-type error   = Preproc_shared.Errors.preproc_error
+type error   = Preprocessing_shared.Errors.t
 type result  = (success, error) Trace.result
 
 type file_path = string

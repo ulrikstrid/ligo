@@ -5,12 +5,12 @@
 ;; Build of the PascaLIGO lexer as a library
 
 (library
-  (name lexer_pascaligo)
-  (public_name ligo.lexer.pascaligo)
+  (name lexing_pascaligo)
+  (public_name ligo.lexing.pascaligo)
   (modules Token Self_tokens)
   (libraries
     ;; LIGO
-    lexer_shared
+    lexing_shared
     ;; Third party
     str
     hex)
@@ -23,9 +23,9 @@
   (name LexerMain)
   (libraries
     ;; LIGO
-    preproc_pascaligo
-    lexer_shared
-    lexer_pascaligo
+    preprocessing_pascaligo
+    lexing_shared
+    lexing_pascaligo
     ;; Third party
     str)
   (modules Version LexerMain)
@@ -40,7 +40,8 @@
   (name Unlexer)
   (libraries
     ;; LIGO
-    lexer_pascaligo
+    lexing_shared
+    lexing_pascaligo
     ;; Third party
     str)
   (modules Unlexer)

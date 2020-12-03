@@ -9,13 +9,11 @@ module Markup = LexerLib.Markup
 
 (* LIGO dependencies *)
 
-module type FILE     = Preproc_shared.File.S
-module type COMMENTS = Preproc_shared.Comments.S
+module type FILE = Preprocessing_shared.File.S
 
 (* The functor *)
 
-module Make (Comments    : COMMENTS)
-            (File        : FILE)
+module Make (File        : FILE)
             (Token       : Token.S)
             (CLI         : LexerLib.CLI.S)
             (Self_tokens : Self_tokens.S with type token = Token.t) =
@@ -43,7 +41,7 @@ module Make (Comments    : COMMENTS)
       | `Conflict (o1,o2) ->
            cli_error (Printf.sprintf "Choose either %s or %s." o1 o2)
       | `Done ->
-           match CLI.Preproc_CLI.extension with
+           match CLI.Preprocessor_CLI.extension with
              Some ext when ext <> File.extension ->
                let msg =
                  Printf.sprintf "Expected extension %s." File.extension
@@ -60,10 +58,10 @@ module Make (Comments    : COMMENTS)
 
     let config =
       object
-        method block     = CLI.Preproc_CLI.block
-        method line      = CLI.Preproc_CLI.line
-        method input     = CLI.Preproc_CLI.input
-        method offsets   = CLI.Preproc_CLI.offsets
+        method block     = CLI.Preprocessor_CLI.block
+        method line      = CLI.Preprocessor_CLI.line
+        method input     = CLI.Preprocessor_CLI.input
+        method offsets   = CLI.Preprocessor_CLI.offsets
         method mode      = CLI.mode
         method command   = CLI.command
         method is_eof    = Token.is_eof
@@ -160,10 +158,11 @@ module Make (Comments    : COMMENTS)
 
     (* Scanning all tokens with or without a preprocessor *)
 
-    module Preproc = Preprocessor.PreprocMainGen.Make (CLI.Preproc_CLI)
+    module Preproc =
+      Preprocessor.PreprocMainGen.Make (CLI.Preprocessor_CLI)
 
     let scan_all () : (token list, message) Stdlib.result =
-      if CLI.preproc then
+      if CLI.preprocess then
         match Preproc.preprocess () with
           Stdlib.Error (_buffer, msg) ->
             (* The preprocessed buffer so far is dropped. *)

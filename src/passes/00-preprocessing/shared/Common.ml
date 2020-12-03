@@ -7,19 +7,20 @@ module Trace = Simple_utils.Trace
 (* CONFIGURATION *)
 
 type file_path = string
+type dirs = file_path list (* #include and #import *)
 
 module type FILE =
   sig
-    val input     : file_path option
-    val extension : string            (* No option here *)
-    val dirs      : file_path list    (* #include *)
+    include File.S
+    val input : file_path option
+    val dirs  : dirs
   end
 
 module Config (File : FILE) (Comments : Comments.S) =
   struct
     (* Stubs for the libraries CLIs *)
 
-    module Preproc_CLI : Preprocessor.CLI.S =
+    module Preprocessor_CLI : Preprocessor.CLI.S =
       struct
         include Comments
 
@@ -27,7 +28,7 @@ module Config (File : FILE) (Comments : Comments.S) =
         let extension = Some File.extension
         let dirs      = File.dirs
         let show_pp   = false
-        let offsets   = true
+        let offsets   = true  (* TODO: Should flow from CLI *)
 
         type status = [
           `Done
@@ -44,86 +45,78 @@ module Config (File : FILE) (Comments : Comments.S) =
     (* Configurations for the preprocessor based on the
        librairies CLIs. *)
 
-    let preproc =
+    let preprocessor =
       object
-        method block   = Preproc_CLI.block
-        method line    = Preproc_CLI.line
-        method input   = Preproc_CLI.input
-        method offsets = Preproc_CLI.offsets
-        method dirs    = Preproc_CLI.dirs
+        method block   = Preprocessor_CLI.block
+        method line    = Preprocessor_CLI.line
+        method input   = Preprocessor_CLI.input
+        method offsets = Preprocessor_CLI.offsets
+        method dirs    = Preprocessor_CLI.dirs
       end
   end
 
 (* PREPROCESSING *)
 
-type dirs = file_path list (* For #include directives *)
-
 (* Results *)
 
 type success = Preprocessor.API.success
-type error   = Errors.preproc_error
-type result  = (success, error) Trace.result
+type result  = (success, Errors.t) Trace.result
 
 let fail msg = Trace.fail @@ Errors.generic msg
 module MakePreproc (File : File.S) (Comments : Comments.S) =
   struct
-    (* Preprocessing a contract in a file *)
+    (* Postlude *)
+
+    let finalise show_pp = function
+      Stdlib.Error (_, msg) -> fail msg
+    | Ok (buffer, deps) ->
+        let string = Buffer.contents buffer in
+        if show_pp then
+          Printf.printf "%s\n%!" string;
+        Trace.ok (buffer, deps)
+
+    (* Preprocessing a file *)
 
     let from_file dirs file_path =
-      let module File =
+      let module File : FILE =
         struct
-          let input     = Some file_path
           let extension = File.extension
+          let input     = Some file_path
           let dirs      = dirs
         end in
       let module Config = Config (File) (Comments) in
+      let config = Config.preprocessor in
       let preprocessed =
-        Preprocessor.API.from_file Config.preproc file_path
-      in match preprocessed with
-           Stdlib.Error (_, msg) -> fail msg
-         | Ok (buffer, deps) ->
-             let string = Buffer.contents buffer in
-             if Config.Preproc_CLI.show_pp then
-               Printf.printf "%s\n%!" string;
-             Trace.ok (buffer, deps)
+        Preprocessor.API.from_file config file_path in
+      finalise Config.Preprocessor_CLI.show_pp preprocessed
 
-    (* Preprocessing from a string *)
+    (* Preprocessing a string *)
 
     let from_string dirs string =
-      let module File =
+      let module File : FILE =
         struct
-          let input     = None
           let extension = File.extension
+          let input     = None
           let dirs      = dirs
         end in
       let module Config = Config (File) (Comments) in
+      let config = Config.preprocessor in
       let preprocessed =
-        Preprocessor.API.from_string Config.preproc string
-      in match preprocessed with
-           Stdlib.Error (_, msg) -> fail msg
-         | Ok (buffer, deps) ->
-             let string = Buffer.contents buffer in
-             if Config.Preproc_CLI.show_pp then
-               Printf.printf "%s\n%!" string;
-             Trace.ok (buffer, deps)
+        Preprocessor.API.from_string config string in
+      finalise Config.Preprocessor_CLI.show_pp preprocessed
 
-    (* Preprocessing from a channel *)
+    (* Preprocessing a channel *)
 
-    let preprocess_channel dirs channel =
-      let module File =
+    let from_channel dirs channel =
+      let module File : FILE =
         struct
-          let input     = None
           let extension = File.extension
+          let input     = None
           let dirs      = dirs
         end in
       let module Config = Config (File) (Comments) in
+      let config = Config.preprocessor in
       let preprocessed =
-        Preprocessor.API.from_channel Config.preproc channel
-      in match preprocessed with
-           Stdlib.Error (_, msg) -> fail msg
-         | Ok (buffer, deps) ->
-             let string = Buffer.contents buffer in
-             if Config.Preproc_CLI.show_pp then
-               Printf.printf "%s\n%!" string;
-             Trace.ok (buffer, deps)
+        Preprocessor.API.from_channel config channel in
+      finalise Config.Preprocessor_CLI.show_pp preprocessed
   end

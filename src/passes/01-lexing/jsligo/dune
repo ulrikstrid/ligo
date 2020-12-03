@@ -5,12 +5,12 @@
 ;; Build of the JsLIGO lexer as a library
 
 (library
-  (name lexer_jsligo)
-  (public_name ligo.lexer.jsligo)
-  (modules Token Comments File)
+  (name lexing_jsligo)
+  (public_name ligo.lexing.jsligo)
+  (modules Token Self_tokens)
   (libraries
     ;; LIGO
-    lexer_shared
+    lexing_shared
     ;; Third party
     str
     hex)
@@ -23,11 +23,28 @@
   (name LexerMain)
   (libraries
     ;; LIGO
-    lexer_shared
-    lexer_jsligo
+    preprocessing_jsligo
+    lexing_shared
+    lexing_jsligo
     ;; Third party
     str)
   (modules Version LexerMain)
+  (preprocess
+    (pps bisect_ppx --conditional)))
+
+
+;; Build of the unlexer (for covering the
+;; error states of the LR automaton)
+
+(executable
+  (name Unlexer)
+  (libraries
+    ;; LIGO
+    lexing_shared
+    lexing_jsligo
+    ;; Third party
+    str)
+  (modules Unlexer)
   (preprocess
     (pps bisect_ppx --conditional)))
 

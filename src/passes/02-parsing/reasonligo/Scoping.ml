@@ -4,7 +4,7 @@
 
 module Region = Simple_utils.Region
 module CST    = Cst.Reasonligo
-module Token  = Lexer_reasonligo.Token
+module Token  = Lexing_reasonligo.Token
 
 open Region
 

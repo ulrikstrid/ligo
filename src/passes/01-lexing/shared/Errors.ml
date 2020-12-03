@@ -1,3 +1,7 @@
+(* Lexing errors for the compiler *)
+
+let stage = "lexing"
+
 (* Vendor dependencies *)
 
 module Region   = Simple_utils.Region
@@ -7,32 +11,32 @@ module Display  = Simple_utils.Display
 
 (* Errors *)
 
-type message = string Region.reg
-
-type lexing_error = [
-  `Lexer_generic of message
+type t = [
+  `Lexing_generic of string Region.reg
 ]
 
-let stage = "lexing"
+type error = t
 
-let generic reg = `Lexer_generic reg
+let generic reg = `Lexing_generic reg
 
-(* Formatting *)
+(* Colour snippet *)
 
 let error_ppformat :
       display_format:(string Display.display_format) ->
       Format.formatter ->
-      lexing_error ->
+      error ->
       unit =
-  fun ~display_format f a ->
+  fun ~display_format format error ->
   match display_format with
     Human_readable | Dev ->
-      match a with
-        `Lexer_generic Region.{value; region} ->
-          Snippet.pp_lift f region;
-          Format.pp_print_string f value
+      match error with
+        `Lexing_generic Region.{region; value} ->
+           Snippet.pp_lift format region;
+           Format.pp_print_string format value
 
-let error_jsonformat : lexing_error -> Yojson.Safe.t =
+(* JSON *)
+
+let error_jsonformat : error -> Yojson.Safe.t =
   fun error ->
     let json_error ~stage ~content =
       `Assoc [
@@ -40,10 +44,11 @@ let error_jsonformat : lexing_error -> Yojson.Safe.t =
          ("stage",  `String stage);
          ("content", content)] in
     match error with
-     `Lexer_generic Region.{value; region} ->
-        let loc = Location.lift @@ region in
-        let content =
-          `Assoc [
-             ("message",  `String value);
-             ("location", Location.to_yojson loc)]
-        in json_error ~stage ~content
+      `Lexing_generic Region.{region; value} ->
+         let loc =
+           Format.asprintf "%a" Location.pp_lift @@ region in
+         let content =
+           `Assoc [
+              ("message",  `String value);
+              ("location", `String loc)]
+         in json_error ~stage ~content

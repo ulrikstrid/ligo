@@ -4,7 +4,7 @@
 
 module Region = Simple_utils.Region
 module CST    = Cst.Cameligo
-module Token  = Lexer_cameligo.Token
+module Token  = Lexing_cameligo.Token
 
 open Region
 

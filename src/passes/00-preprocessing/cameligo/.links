@@ -2,5 +2,5 @@ $HOME/git/OCaml-build/Makefile
 
 ../shared/PreprocMainGen.ml
 
-./Stubs/Preproc_shared.ml
-./Stubs/Preproc_cameligo.ml
+./Stubs/Preprocessing_shared.ml
+./Stubs/Preprocessing_cameligo.ml

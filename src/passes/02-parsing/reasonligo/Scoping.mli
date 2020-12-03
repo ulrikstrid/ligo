@@ -2,7 +2,7 @@
 
 module Region = Simple_utils.Region
 module CST    = Cst.Reasonligo
-module Token  = Lexer_reasonligo.Token
+module Token  = Lexing_reasonligo.Token
 
 type window = <
   last_token    : Token.t option;

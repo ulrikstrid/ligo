@@ -5,12 +5,12 @@
 ;; Build of the ReasonLIGO lexer as a library
 
 (library
-  (name lexer_reasonligo)
-  (public_name ligo.lexer.reasonligo)
+  (name lexing_reasonligo)
+  (public_name ligo.lexing.reasonligo)
   (modules Token Self_tokens)
   (libraries
     ;; LIGO
-    lexer_shared
+    lexing_shared
     ;; Third party
     str
     hex)
@@ -23,9 +23,9 @@
   (name LexerMain)
   (libraries
     ;; LIGO
-    preproc_reasonligo
-    lexer_shared
-    lexer_reasonligo
+    preprocessing_reasonligo
+    lexing_shared
+    lexing_reasonligo
     ;; Third party
     str)
   (modules Version LexerMain)
@@ -39,7 +39,8 @@
   (name Unlexer)
   (libraries
     ;; LIGO
-    lexer_reasonligo
+    lexing_shared
+    lexing_reasonligo
     ;; Third party
     str)
   (modules Unlexer)
