@@ -34,7 +34,7 @@ let transferContentsIterator = ([accumulator, transferContentsMichelson]: [trans
   let [storage, from_] = accumulator;
   let transferContents: transferContents = Layout.convert_from_right_comb(transferContentsMichelson);
   let tokenOwner: option<tokenOwner> = Map.find_opt(transferContents.token_id, storage);
-  let tokenOwner2 = match(tokenOwner)({
+  let tokenOwner2 = match(tokenOwner, {
     None: () => (failwith(errorTokenUndefined) as tokenOwner),
     Some: (value: transferParameter) => {
       if (value == from_) {
@@ -74,6 +74,6 @@ let transfer = ([transferParameter, storage]: [transferParameter, storage]): ent
   return [([] as list<operation>), storage2];
 };
 let main = ([parameter, storage]: entrypointParameter): entrypointReturn =>
-  match(parameter)({
+  match(parameter, {
     Transfer: (transferParameter: transferParameter) => transfer([transferParameter, storage])
   })

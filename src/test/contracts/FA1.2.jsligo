@@ -68,7 +68,7 @@ let transfer = ([p,s] : [transfer, storage]) : [list <operation>, storage] => {
   }
   else {
 	let opt = Big_map.find_opt ([Tezos.sender,p.address_from], s.allowances);
-	let authorized_value = match(opt)({
+	let authorized_value = match(opt, {
 	  Some: (value: nat) => value,
 	  None: () => 0 as nat
 	});
@@ -91,7 +91,7 @@ let transfer = ([p,s] : [transfer, storage]) : [list <operation>, storage] => {
   else {
 	let new_tokens = Big_map.update (p.address_from, (Some (abs(sender_balance - p.value))), s.tokens);
 	let opt = Big_map.find_opt (p.address_to, s.tokens);
-	let receiver_balance = match(opt)({
+	let receiver_balance = match(opt, {
 	  Some: (value: nat) => value,
 	  None: () => 0 as nat
 	});
@@ -102,7 +102,7 @@ let transfer = ([p,s] : [transfer, storage]) : [list <operation>, storage] => {
 
 let approve = ([p,s] : [approve, storage]) : [list <operation>, storage] => {
   let opt = Big_map.find_opt ((p.spender, Tezos.sender), s.allowances);
-  let previous_value = match(opt)({
+  let previous_value = match(opt, {
 	Some: (value: nat) => value,
 	None: () => 0 as nat
   });
@@ -117,7 +117,7 @@ let approve = ([p,s] : [approve, storage]) : [list <operation>, storage] => {
 
 let getAllowance = ([p,s] : [getAllowance, storage]) : [list <operation>, storage] => {
   let opt = Big_map.find_opt ([p.owner, p.spender], s.allowances);
-  let value = match(opt)({
+  let value = match(opt, {
 	Some: (value: nat) => value,
 	None: () => 0 as nat
   });
@@ -143,7 +143,7 @@ let getTotalSupply = ([p,s] : [getTotalSupply, storage]) : [list <operation>, st
 
 
 let main = ([a,s]: [action, storage]) =>
-  match(a)({
+  match(a, {
 	Transfer: (p: transfer) => transfer([p, s]),
 	Approve: (p: nat) => approve ([p, s]),
 	GetAllowance: (p: getAllowance) => getAllowance ([p, s]),

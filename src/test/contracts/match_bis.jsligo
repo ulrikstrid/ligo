@@ -18,7 +18,7 @@ let add = (a: int, b: int) => a + b;
 let sub = (a: int, b: int) => a - b;
 
 let main = ([action, store] : [parameter, storage]) => {
-  let store2 = match(action)({
+  let store2 = match(action, {
     increment: (value: int) => add (store, value),
     decrement: (value: int) => sub (store, value),
   });
