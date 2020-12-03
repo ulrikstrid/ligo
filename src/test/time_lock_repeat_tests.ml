@@ -2,9 +2,9 @@ open Trace
 open Test_helpers
 open Ast_imperative
 open Main_errors
+open Proto_alpha_utils
 
 let type_file f = Ligo.Compile.Utils.type_file f "cameligo" (Contract "main")
-let options = Compiler_options.make ()
 
 let get_program =
   let s = ref None in

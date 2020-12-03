@@ -1,0 +1,8 @@
+(library
+  (name memory_proto_alpha_007_PsDELPH1)
+  (public_name tezos-memory-proto-alpha-007-PsDELPH1)
+  (libraries
+    tezos-protocol-environment
+    tezos-protocol-ligo007-PsDELPH1
+  )
+)

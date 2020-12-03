@@ -1,6 +1,6 @@
 (library
-  (name memory_proto_alpha)
-  (public_name tezos-memory-proto-alpha)
+  (name memory_proto_alpha_006_PsCARTHA)
+  (public_name tezos-memory-proto-alpha-006-PsCARTHA)
   (libraries
     tezos-protocol-environment
     tezos-protocol-ligo006-PsCARTHA

@@ -11,7 +11,6 @@ let get_program f st =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-      let options = Compiler_options.make () in
       let%bind program = Ligo.Compile.Utils.type_file ~options f st (Contract "main") in
       s := Some program ;
       ok program

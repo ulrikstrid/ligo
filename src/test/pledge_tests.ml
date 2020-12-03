@@ -1,6 +1,8 @@
 open Trace
 open Test_helpers
 open Ast_imperative
+open Proto_alpha_utils.Memory_proto_alpha
+
 
 let retype_file f = Ligo.Compile.Utils.type_file ~options f "reasonligo" Env
 
@@ -24,7 +26,6 @@ let compile_main () =
   ok ()
 
 let (oracle_addr , oracle_contract) =
-  let open Proto_alpha_utils.Memory_proto_alpha in
   let id = List.nth dummy_environment.identities 0 in
   let kt = id.implicit_contract in
   Protocol.Alpha_context.Contract.to_b58check kt , kt
@@ -48,7 +49,7 @@ let pledge () =
   let parameter = e_unit () in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
                   ~sender:oracle_contract
-                  ~amount:(Memory_proto_alpha.Protocol.Alpha_context.Tez.one) ()
+                  ~amount:(Protocol.Alpha_context.Tez.one) ()
   in
   expect_eq ~options (program, env, state) "donate"
     (e_pair parameter storage)

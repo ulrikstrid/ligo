@@ -1,7 +1,7 @@
 open Trace
 open Test_helpers
 open Ast_imperative
-
+open Proto_alpha_utils
 
 
 let get_program =
@@ -9,7 +9,6 @@ let get_program =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-      let options = Compiler_options.make () in
       let%bind program = Ligo.Compile.Utils.type_file ~options "./contracts/id.religo"  "reasonligo" (Contract "main") in
       s := Some program ;
       ok program

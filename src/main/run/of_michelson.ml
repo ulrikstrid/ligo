@@ -85,7 +85,22 @@ let fetch_lambda_types (contract_ty : _ Michelson.t) =
   | Prim (_, "lambda", [in_ty; out_ty], _) -> ok (in_ty, out_ty)
   | _ -> fail Errors.unknown (*TODO*)
 
-let run_contract ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (input_michelson : _ Michelson.t) =
+
+module type MY_TEZOS = sig
+
+end
+
+let run_contract ?options ~ligo_options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (input_michelson : _ Michelson.t) =
+  ignore ligo_options ;
+  (* let module My_tezos = (val
+    if true then (
+      (module Tezos_raw_protocol_ligo006_PsCARTHA)
+    ) else (
+      (module Tezos_raw_protocol_ligo007_PsDELPH1)
+    )
+  : MY_TEZOS)
+  in
+  let open! My_tezos in *)
   let open! Tezos_raw_protocol_ligo006_PsCARTHA in
   let%bind (input_ty, output_ty) = fetch_lambda_types exp_type in
   let%bind input_ty =
@@ -124,7 +139,8 @@ let run_contract ?options (exp : _ Michelson.t) (exp_type : _ Michelson.t) (inpu
     let (Item(output, Empty)) = stack in
     let%bind (ty, value) = ex_value_ty_to_michelson (Ex_typed_value (output_ty, output)) in
     ok @@ Success (ty, value)
-  | Memory_proto_alpha.Fail expr -> ( match Tezos_micheline.Micheline.root @@ Memory_proto_alpha.strings_of_prims expr with
+  | Memory_proto_alpha.Fail expr -> (
+    match Tezos_micheline.Micheline.root @@ Memory_proto_alpha.strings_of_prims expr with
     | Int (_ , i)    -> ok @@ Fail (Failwith_int (Z.to_int i))
     | String (_ , s) -> ok @@ Fail (Failwith_string s)
     | Bytes (_, s)   -> ok @@ Fail (Failwith_bytes s)

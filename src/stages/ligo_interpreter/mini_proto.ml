@@ -1,10 +1,8 @@
-open Proto_alpha_utils.Memory_proto_alpha.Protocol
-open Alpha_context
-
 type contract = int
 type addr = Counter of contract
 module StateMap = Map.Make(struct type t = addr let compare (Counter a) (Counter b) = Int.compare a b end)
 
+module Tez = Tez_repr_copied
 
 type script = {
     code :  Types.value ;
@@ -24,7 +22,7 @@ type step_constants = {
     amount : Tez.t ;
     balance : Tez.t ;
     chain_id : bytes ;
-    now : Script_timestamp.t ;
+    now : Types.Timestamp.t ;
     origination_counter : int ; (*used to generate fake address for originated contracts *)
   }
 
@@ -33,10 +31,16 @@ type t = {
     step_constants : step_constants ;
   }
 
-let option_to_context : Proto_alpha_utils.Memory_proto_alpha.options -> t =
+(* let option_to_context : Proto_alpha_utils.Memory_proto_alpha.options -> t =
   fun {tezos_context=_TODO;source;payer;self;amount;chain_id=_;balance;now} ->
     ignore source ; ignore payer; ignore self ;
     {
       contracts = StateMap.empty ;
       step_constants = { source=0 ; payer=0 ; self=0 ; amount ; balance ; now ; chain_id = Bytes.empty ; origination_counter = 0 }
+    } *)
+
+let option_to_context : unit -> t =
+  fun () ->
+    { contracts = StateMap.empty ;
+      step_constants = { source = 0 ; payer = 0 ; self = 0 ; amount = Tez.zero ; balance = Tez.zero ; now = Types.Timestamp.zero ; chain_id = Bytes.empty ; origination_counter = 0 }
     }

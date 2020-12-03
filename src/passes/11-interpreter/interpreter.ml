@@ -133,20 +133,24 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
       begin
         match a' with
         | None -> call Fail_overflow
-        | Some a' ->
+        | Some a' -> (
           let res = Tez.(b' *? a') in
-          let>> res = Lift_tz_result res in
-          return_ct (C_mutez res)
+          match res with
+          | Some res -> return_ct (C_mutez res)
+          | None ->  Errors.contract_failure "tez overflow"
+        )
       end
     | ( C_MUL    , [ V_Ct (C_mutez a')  ; V_Ct (C_nat b')  ] ) ->
       let>> b' = Int_to_int64 b' in
       begin
         match b' with
         | None -> call Fail_overflow
-        | Some b' ->
+        | Some b' -> (
           let res = Tez.(a' *? b') in
-          let>> res = Lift_tz_result res in
-          return_ct (C_mutez res)
+          match res with
+          | Some res -> return_ct (C_mutez res)
+          | None -> Errors.contract_failure "mutez overflow"
+        )
       end
     | ( C_DIV    , [ V_Ct (C_int a'  )  ; V_Ct (C_int b'  )  ] )
     | ( C_DIV    , [ V_Ct (C_int a'  )  ; V_Ct (C_nat b'  )  ] )
@@ -599,7 +603,7 @@ let ( let>>= ) o f = Trace.bind f o
 
 let eval : ?options:options -> Ast_typed.program_fully_typed -> (env , Errors.interpreter_error) result =
   fun ?(options = default_options) (Program_Fully_Typed prg) ->
-    let init_ctxt = Ligo_interpreter.Mini_proto.option_to_context options in
+    let init_ctxt = ignore options ; Ligo_interpreter.Mini_proto.option_to_context () in
     let aux : env -> declaration location_wrap -> (env, Errors.interpreter_error) Trace.result =
       fun top_env el ->
         match Location.unwrap el with

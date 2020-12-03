@@ -3,14 +3,13 @@
 open Trace
 open Test_helpers
 open Main_errors
-
+open Proto_alpha_utils
 
 let get_program =
   let s = ref None in
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-      let options = Compiler_options.make () in
       let%bind program  = Ligo.Compile.Utils.type_file ~options "./contracts/coase.ligo" "pascaligo" (Contract "main") in
       s := Some program;
       ok program

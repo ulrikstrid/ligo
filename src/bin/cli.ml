@@ -219,9 +219,11 @@ let compile_file =
       Compile.Of_michelson.build_contract ~disable_typecheck michelson
       *)
       let%bind typer_switch = trace Build.Errors.compiler_error @@ Helpers.typer_switch_to_variant typer_switch in
-      let options = Compiler_options.make ~typer_switch () in
-      let%bind michelson = Build.build_contract ~options syntax entry_point protocol_version source_file in
-      trace (Build.Errors.compiler_error) @@ Compile.Of_michelson.build_contract ~disable_typecheck michelson
+      let%bind init_env   = trace Build.Errors.compiler_error @@ Helpers.get_initial_env protocol_version in
+      let%bind protocol_version = trace Build.Errors.compiler_error @@ Helpers.protocol_to_variant protocol_version in
+      let options = Compiler_options.make ~init_env ~typer_switch ~protocol_version () in
+      let%bind michelson = Build.build_contract ~options syntax entry_point source_file in
+      trace Build.Errors.compiler_error @@ Compile.Of_michelson.build_contract ~disable_typecheck michelson
   in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ syntax $ typer_switch $ protocol_version $ display_format $ disable_michelson_typechecking $ michelson_code_format $ output_file) in
@@ -435,7 +437,8 @@ let compile_storage =
       trace (Build.Errors.compiler_error) @@
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
-      let options = Compiler_options.make ~typer_switch ~init_env () in
+      let%bind protocol_version = Helpers.protocol_to_variant protocol_version in
+      let options = Compiler_options.make ~typer_switch ~init_env ~protocol_version () in
       let%bind typed_prg,env,state = Compile.Utils.type_file ~options source_file syntax (Contract entry_point) in
       let%bind mini_c_prg          = Compile.Of_typed.compile typed_prg in
       let%bind michelson_prg       = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
@@ -461,19 +464,20 @@ let dry_run =
       trace (Build.Errors.compiler_error) @@
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
-      let options = Compiler_options.make ~typer_switch ~init_env () in
-      let%bind typed_prg,env,state = Compile.Utils.type_file ~options source_file syntax (Contract entry_point) in
+      let%bind protocol_version = Helpers.protocol_to_variant protocol_version in
+      let ligo_options = Compiler_options.make ~typer_switch ~init_env ~protocol_version () in
+      let%bind typed_prg,env,state = Compile.Utils.type_file ~options:(ligo_options) source_file syntax (Contract entry_point) in
       let%bind mini_c_prg      = Compile.Of_typed.compile typed_prg in
       let%bind michelson_prg   = Compile.Of_mini_c.aggregate_and_compile_contract mini_c_prg entry_point in
       let%bind _contract =
         (* fails if the given entry point is not a valid contract *)
         Compile.Of_michelson.build_contract michelson_prg in
 
-      let%bind compiled_params   = Compile.Utils.compile_storage ~options storage input source_file syntax env state mini_c_prg in
+      let%bind compiled_params   = Compile.Utils.compile_storage ~options:(ligo_options) storage input source_file syntax env state mini_c_prg in
       let%bind args_michelson    = Run.evaluate_expression compiled_params.expr compiled_params.expr_ty in
 
       let%bind options           = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
-      let%bind runres  = Run.run_contract ~options michelson_prg.expr michelson_prg.expr_ty args_michelson in
+      let%bind runres  = Run.run_contract ~options ~ligo_options michelson_prg.expr michelson_prg.expr_ty args_michelson in
       Decompile.Of_michelson.decompile_typed_program_entry_function_result typer_switch typed_prg entry_point runres
     in
   let term =

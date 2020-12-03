@@ -69,8 +69,8 @@ let build_michelson order_deps asts_typed entry_point =
   let%bind michelson  = trace compiler_error @@ Compile.Of_mini_c.aggregate_and_compile_contract mini_c entry_point in
   ok michelson
 
-let build_contract : options:Compiler_options.t -> string -> string -> _ -> file_name -> (_, _) result =
-  fun ~options syntax entry_point protocol_version file_name ->
+let build_contract : options:Compiler_options.t -> string -> _ -> file_name -> (_, _) result =
+  fun ~options syntax entry_point file_name ->
     let%bind deps = dependency_graph syntax ~options (Contract entry_point) file_name in
     let%bind order_deps = solve_graph deps file_name in
     let aux asts_typed (file_name, (meta,form,c_unit,deps)) =
@@ -84,8 +84,7 @@ let build_contract : options:Compiler_options.t -> string -> string -> _ -> file
         ok @@ (module_name, ast_typed)
       in
       let%bind deps = bind_map_list aux deps in
-      let%bind init_env   = trace compiler_error @@ Compile.Helpers.get_initial_env protocol_version in
-      let init_env = add_module_in_env init_env deps in
+      let init_env = add_module_in_env options.init_env deps in
       let%bind ast_typed,_,_ = trace compiler_error @@ Compile.Of_core.compile ~typer_switch:options.typer_switch ~init_env form ast_core in
       ok @@ SMap.add file_name ast_typed asts_typed
     in

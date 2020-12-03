@@ -8,7 +8,6 @@ let get_program =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-      let options = Compiler_options.make () in
       let%bind program = type_file ~options "./contracts/replaceable_id.ligo" in
       s := Some program ;
       ok program

@@ -10,7 +10,8 @@
     tezos-protocol-ligo007-PsDELPH1
     tezos-protocol-ligo007-PsDELPH1-parameters
     tezos-client-ligo007-PsDELPH1
-    tezos-memory-proto-alpha
+    tezos-memory-proto-alpha-006-PsCARTHA
+    tezos-memory-proto-alpha-007-PsDELPH1
     data-encoding
     simple-utils
     tezos-utils

@@ -1,10 +1,10 @@
 open Trace
 open Test_helpers
 open Main_errors
+open Proto_alpha_utils
 
 open Ast_imperative.Combinators
 
-let init_env = Environment.default Environment.Protocols.current
 let retype_file f =
   Ligo.Compile.Utils.type_file ~options f "reasonligo" Env
 let mtype_file f =

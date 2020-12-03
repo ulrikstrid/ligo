@@ -7,7 +7,7 @@ type test =
   | Test of test_case
 
 let typer_switch () = if Typer.force_new_typer () then Ast_typed.New else Ast_typed.Old
-let options = Compiler_options.make ()
+let options         = Compiler_options.make ~protocol_version:(Environment.Protocols.current) ()
 
 let test_format : 'a Simple_utils.Display.format = {
   (* do not display anything if test succeed *)

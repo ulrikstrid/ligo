@@ -10,8 +10,8 @@ module Env = Map.Make(
 (*TODO temporary hack to handle failwiths *)
 exception Temporary_hack of string
 
-module Tez = Proto_alpha_utils.Memory_proto_alpha.Protocol.Alpha_context.Tez
-module Timestamp = Memory_proto_alpha.Protocol.Alpha_context.Script_timestamp
+module Tez = Tez_repr_copied
+module Timestamp = Z
 module Int = Int_repr_copied
 
 type env = value Env.t

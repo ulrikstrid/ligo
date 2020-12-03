@@ -5,6 +5,7 @@ open Trace
 module LT = Ligo_interpreter.Types
 module Mini_proto = Ligo_interpreter.Mini_proto
 module Int_repr = Ligo_interpreter.Int_repr_copied
+module Tez_repr = Ligo_interpreter.Tez_repr_copied
 
 type context = Ligo_interpreter.Mini_proto.t
 type execution_trace = unit
@@ -34,7 +35,7 @@ module Command = struct
     | Credit_balance : Mini_proto.contract * LT.Tez.t -> unit t
     | Debit_balance : LT.Tez.t -> unit t
     | Parse_contract_for_script : Alpha_context.Contract.t * string -> unit t
-    | Now : Z.t t
+    | Now : LT.Timestamp.t t
     | Amount : LT.Tez.t t
     | Balance : LT.Tez.t t
     | Sender : Mini_proto.contract t
@@ -43,7 +44,6 @@ module Command = struct
     | Serialize_pack_data : 'a -> 'a t
     | Serialize_unpack_data : 'a -> 'a t
     | Generate_addr : Mini_proto.contract t
-    | Lift_tz_result : 'a Memory_proto_alpha.Alpha_environment.Error_monad.tzresult -> 'a t
     | Tez_compare_wrapped : LT.Tez.t * LT.Tez.t -> int t
     | Int_compare_wrapped : 'a Int_repr.num * 'a Int_repr.num -> int t
     | Int_compare : 'a Int_repr.num * 'a Int_repr.num -> int t
@@ -154,11 +154,10 @@ module Command = struct
       ok (balance, ctxt)
     | Inject_script (ctr, code, storage) ->
       let script : Mini_proto.script = { code ; storage } in
-      let contracts : Mini_proto.state = {script ; script_balance = Alpha_context.Tez.zero } in
+      let contracts : Mini_proto.state = {script ; script_balance = Tez_repr.zero } in
       let contracts = Mini_proto.StateMap.add (Counter ctr) contracts ctxt.contracts in
       ok ((), { ctxt with contracts})
     | Set_now now ->
-      let now = Alpha_context.Script_timestamp.of_zint now in
       ok ((), { ctxt with step_constants = { ctxt.step_constants with now } })
     | Set_source source ->
       ok ((), { ctxt with step_constants = { ctxt.step_constants with source } })
@@ -193,7 +192,7 @@ module Command = struct
       let contracts = Mini_proto.StateMap.update (Counter ctxt.step_constants.self) aux ctxt.contracts in
       let balance = (Mini_proto.StateMap.find (Counter ctxt.step_constants.self) ctxt.contracts).script_balance in
       ok ((), ({ contracts ; step_constants = { ctxt.step_constants with balance }} : Mini_proto.t))
-    | Now -> ok (LT.Timestamp.to_zint ctxt.step_constants.now, ctxt)
+    | Now -> ok (ctxt.step_constants.now, ctxt)
     | Amount -> ok (ctxt.step_constants.amount, ctxt)
     | Balance -> ok (ctxt.step_constants.balance, ctxt)
     | Sender -> ok (ctxt.step_constants.payer, ctxt)
@@ -213,9 +212,9 @@ module Command = struct
       ok (ctr, {ctxt with step_constants})
     | Parse_contract_for_script _ -> failwith "Parse_contract_for_script not implemented"
     | Tez_compare_wrapped (x, y) ->
-      ok (Memory_proto_alpha.Protocol.Script_ir_translator.wrap_compare LT.Tez.compare x y, ctxt)
+      ok (LT.Tez.compare x y, ctxt)
     | Int_compare_wrapped (x, y) ->
-      ok (Memory_proto_alpha.Protocol.Script_ir_translator.wrap_compare Int_repr.compare x y, ctxt)
+      ok (Proto_alpha_utils.Memory_proto_alpha.Protocol.Script_ir_translator.wrap_compare Int_repr.compare x y, ctxt)
     | Int_compare (x, y) -> ok (Int_repr.compare x y, ctxt)
     | Int_abs z -> ok (Int_repr.abs z, ctxt)
     | Int_of_int i -> ok (Int_repr.of_int i, ctxt)
@@ -239,9 +238,6 @@ module Command = struct
     | Int_logxor (x, y) -> ok (Int_repr.logxor x y, ctxt)
     | Int_lognot n -> ok (Int_repr.lognot n, ctxt)
     | Int_int n -> ok (Int_repr.int n, ctxt)
-    | Lift_tz_result r ->
-      let>>= r = Proto_alpha_utils.Trace.trace_alpha_tzresult (Errors.dummy) r in
-      ok (r, ctxt)
 end
 
 type 'a t =

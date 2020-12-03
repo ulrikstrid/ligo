@@ -1,3 +1,4 @@
+
 open Trace
 open Test_helpers
 open Main_errors
@@ -8,7 +9,6 @@ let get_program =
   fun () -> match !s with
     | Some s -> ok s
     | None -> (
-      let options = Compiler_options.make () in
       let%bind program = Ligo.Compile.Utils.type_file ~options "./contracts/vote.mligo" "cameligo" (Contract "main") in
       s := Some program ;
       ok program

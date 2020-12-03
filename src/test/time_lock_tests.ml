@@ -1,6 +1,7 @@
 open Trace
 open Main_errors
 open Test_helpers
+open Proto_alpha_utils
 
 let type_file f =
   Ligo.Compile.Utils.type_file  ~options f "pascaligo" (Contract "main")

@@ -58,6 +58,6 @@ let contract_not_found : string -> _ = fun addr ->
     Format.asprintf
     "Could not find address %s in the context" addr
 
-let trace_alpha_contract_failure : string -> 'a Proto_alpha_utils.Trace.AE.Error_monad.tzresult -> 'a = fun s f ->
-  let v  = Trace.to_option @@ Proto_alpha_utils.Trace.trace_alpha_tzresult dummy f in
-  match v with Some x -> x | None -> contract_failure s 
+let trace_alpha_contract_failure : string -> 'a option -> 'a = fun s f ->
+  (* let v  = Trace.to_option @@ Proto_alpha_utils.Trace.trace_alpha_tzresult dummy f in *)
+  match f with Some x -> x | None -> contract_failure s 
