@@ -26,3 +26,5 @@ declare namespace Tezos {
     export function implicit_account<parameter>(key_hash): contract<parameter>;
     export function address<parameter>(contract: contract<parameter>): address;
 }
+
+declare function match<T extends {[k in keyof T]:(value?: Parameters<T[k]>[0]) => R}, R>(matchee: {kind: keyof T, value?: Parameters<T[keyof T]>[0]}, cases: T): R;
