@@ -1,23 +1,30 @@
 module type MY_PROTOCOL_IN = module type of Memory_proto_alpha_006_PsCARTHA
-(* module type MY_PROTOCOL_OUT = sig
+
+
+module type MY_PROTOCOL_OUT = sig
   module Trace : sig
     type tezos_alpha_error
-    val trace_tzresult : (tezos_alpha_error list -> 'b) -> ('a, Tezos_error_monad.Error_monad.error list) Stdlib.result -> ('a, 'b) Trace.result 
+    val trace_tzresult : (tezos_alpha_error list -> 'b) -> ('a, Tezos_error_monad.Error_monad.error list) Stdlib.result -> ('a, 'b) Trace.result
+    val trace_tzresult_lwt : (tezos_alpha_error list -> 'a) -> 'b Tezos_error_monad.Error_monad.tzresult Lwt.t -> ('b, 'a) Trace.result
   end
   module Memory_proto_alpha : sig
     type options
-
     module Protocol : sig
       module Alpha_context : sig
         module Contract : sig
           type t
+          val implicit_contract : Tezos_base.TzPervasives.Signature.public_key_hash -> t
+          val to_b58check : t -> string
         end
+      end
+      module Script_ir_translator : sig
+        val wrap_compare : ('a -> 'b -> int) -> 'a -> 'b -> int
       end
     end
   end
-end *)
+end
 
-module Make(My_protocol : MY_PROTOCOL_IN) (* : MY_PROTOCOL_OUT *) = struct
+module Make(My_protocol : MY_PROTOCOL_IN) : MY_PROTOCOL_OUT = struct
   open My_protocol
 
   module Environment = My_protocol
@@ -59,7 +66,7 @@ module Make(My_protocol : MY_PROTOCOL_IN) (* : MY_PROTOCOL_OUT *) = struct
   module Trace = struct
     include Simple_utils.Trace
 
-    module AE = Memory_proto_alpha_006_PsCARTHA.Alpha_environment
+    module AE = Alpha_environment
     module TP = Tezos_error_monad.Error_monad
 
     type tezos_alpha_error =  [`Tezos_alpha_error of TP.error]
@@ -192,7 +199,7 @@ module Make(My_protocol : MY_PROTOCOL_IN) (* : MY_PROTOCOL_OUT *) = struct
           Stdlib.failwith "Must have one account with a roll to bake";
 
         (* Check there is at least one roll *)
-        let constants : Constants_repr.parametric = Tezos_protocol_ligo006_PsCARTHA_parameters.Default_parameters.constants_test in
+        let constants : Constants_repr.parametric = Parameters.Default_parameters.constants_test in
         check_constants_consistency constants >>=? fun () ->
 
         let hash =

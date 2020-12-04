@@ -1,7 +1,7 @@
 open Main_errors
 open Tezos_utils
-open Proto_alpha_utils
 open Trace
+open Proto_alpha_utils
 
 (* should preserve locations, currently wipes them *)
 let build_contract : ?disable_typecheck:bool -> Stacking.compiled_expression -> (_ Michelson.michelson , _) result =
@@ -17,7 +17,7 @@ let build_contract : ?disable_typecheck:bool -> Stacking.compiled_expression -> 
     ok contract
   else
     let%bind contract' =
-      Trace.trace_tzresult_lwt (typecheck_contract_tracer contract)
+      Proto_alpha_utils.Trace.trace_tzresult_lwt (typecheck_contract_tracer contract)
         (Memory_proto_alpha.prims_of_strings contract) in
     let%bind _ = Trace.trace_tzresult_lwt (typecheck_contract_tracer contract) @@
       Proto_alpha_utils.Memory_proto_alpha.typecheck_contract contract' in

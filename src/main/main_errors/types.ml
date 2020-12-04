@@ -1,4 +1,4 @@
-type tezos_alpha_error =  [`Tezos_alpha_error of Tezos_error_monad.Error_monad.error]
+type tezos_alpha_error = Proto_alpha_utils.Trace.tezos_alpha_error
 
 type all =
 [
