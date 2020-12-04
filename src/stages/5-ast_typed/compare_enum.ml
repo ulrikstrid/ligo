@@ -67,7 +67,7 @@ let constant'_tag = function
   | C_SET_REMOVE              ->  57
   | C_SET_ITER                ->  58
   | C_SET_FOLD                ->  59
-  | C_SET_FOLD                ->  60
+  | C_SET_FOLD_RIGHT          ->  60
   | C_SET_MEM                 ->  61
   (* List *)
   | C_LIST_EMPTY              ->  60
@@ -114,7 +114,7 @@ let constant'_tag = function
   | C_CONTRACT_ENTRYPOINT_OPT ->  97
   | C_AMOUNT                  ->  98
   | C_BALANCE                 ->  99
-  | C_SOURCE                  ->  100
+  | C_SOURCE                  -> 100
   | C_SENDER                  -> 101
   | C_ADDRESS                 -> 102
   | C_SELF                    -> 103
