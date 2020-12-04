@@ -131,9 +131,8 @@ module Make (File        : FILE)
     type message = string Region.reg
     type menhir_lexer = Lexing.lexbuf -> (token, message) Stdlib.result
 
-    let token_store : token list ref = ref []
-
     let rec scan : menhir_lexer =
+      let token_store : token list ref = ref [] in
       fun lexbuf ->
         if !called then
           let token =

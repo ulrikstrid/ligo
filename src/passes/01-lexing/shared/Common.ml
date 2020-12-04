@@ -7,17 +7,16 @@ module type COMMENTS = Preprocessing_shared.Comments.S
 module Make (Comments : COMMENTS) (Token : Token.S) =
   struct
     module Trace = Simple_utils.Trace
+    module Errors = Errors
 
     type file_path = string
-    type dirs      = file_path list (* For #include and #import *)
 
     module Lexer = Lexer.Make (Token)
     module Scan  = LexerLib.API.Make (Lexer)
 
-    (* Results and errors *)
+    (* Results *)
 
-    type errors = Errors.t
-    type result = (Token.t list, errors) Trace.result
+    type result = (Token.t list, Errors.t) Trace.result
 
     (* Lexer configurations *)
 
@@ -35,19 +34,24 @@ module Make (Comments : COMMENTS) (Token : Token.S) =
         method to_string = Token.to_string
       end
 
-    (* Lexing functions *)
+    (* Lifting [Stdlib.result] to [Trace.result]. *)
 
-    let filter = function
+    let lift = function
       Stdlib.Ok tokens -> Trace.ok tokens
     | Error msg -> Trace.fail @@ Errors.generic msg
 
-    let lex_file file_path =
+    (* Lexing functions *)
+
+    let from_file file_path =
       let config = mk_config ~input:(Some file_path)
-      in Scan.all_from_file config file_path |> filter
+      in Scan.all_from_file config file_path |> lift
 
-    let lex_string string =
-      Scan.all_from_string (mk_config ~input:None) string |> filter
+    let from_string string =
+      Scan.all_from_string (mk_config ~input:None) string |> lift
 
-    let lex_channel channel =
-      Scan.all_from_channel (mk_config ~input:None) channel |> filter
+    let from_buffer buffer =
+      Scan.all_from_buffer (mk_config ~input:None) buffer |> lift
+
+    let from_channel channel =
+      Scan.all_from_channel (mk_config ~input:None) channel |> lift
   end

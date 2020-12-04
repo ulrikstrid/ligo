@@ -12,6 +12,7 @@ module Token         = Lexing_cameligo.Token
 module Self_tokens   = Lexing_cameligo.Self_tokens
 module CST           = Cst.Cameligo
 module ParErr        = Parser_msg
+module Scoping       = Parsing_cameligo.Scoping
 module ParserMainGen = Parsing_shared.ParserMainGen
 
 (* CLIs *)

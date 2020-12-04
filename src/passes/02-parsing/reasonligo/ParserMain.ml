@@ -12,6 +12,7 @@ module Token         = Lexing_reasonligo.Token
 module Self_tokens   = Lexing_reasonligo.Self_tokens
 module CST           = Cst.Reasonligo
 module ParErr        = Parser_msg
+module Scoping       = Parsing_reasonligo.Scoping
 module ParserMainGen = Parsing_shared.ParserMainGen
 
 (* CLIs *)

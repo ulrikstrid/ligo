@@ -35,6 +35,8 @@
   (name ParserMain)
   (libraries
     ;; LIGO
+    preprocessing_pascaligo
+    lexing_pascaligo
     parsing_shared
     parsing_pascaligo
     cst

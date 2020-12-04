@@ -6,30 +6,42 @@ module Trace = Simple_utils.Trace
 
 (* Internal dependencies *)
 
-module CST = Cst.Pascaligo
+module CST    = Cst.Pascaligo
+module Errors = Parsing_shared.Errors
 
-(* Results and errors *)
+(* Results *)
 
-type error  = Errors.parse_error
-type cst    = (CST.t, error) Trace.result
-type expr   = (CST.expr, error) Trace.result
-type buffer = (Buffer.t, error) Trace.result
-
-(* Some parameter types *)
-
-type file_path = string
-type dirs      = file_path list (* For #include directives *)
+type cst    = (CST.t,    Errors.t) Trace.result
+type expr   = (CST.expr, Errors.t) Trace.result
+type buffer = (Buffer.t, Errors.t) Trace.result
 
 (* Parsing *)
 
-val parse_file       : dirs -> Buffer.t -> file_path -> cst
-val parse_contract   : dirs -> Buffer.t -> cst
-val parse_expression : dirs -> Buffer.t -> expr
+type file_path = string
+
+(* All function read a string buffer but they differ in the way they
+   interpret it: [from_file] assumes that its contents comes
+   originally from a file, [from_string] assumes that its contents
+   comes originally from a string, and [expression] assumes that is
+   contents is an expression and comes from a string. *)
+
+val from_file   : Buffer.t -> file_path -> cst
+val from_string : Buffer.t -> cst
+val expression  : Buffer.t -> expr
+
+(* Aliases *)
+
+val parse_file       : Buffer.t -> file_path -> cst
+val parse_string     : Buffer.t -> cst
+val parse_expression : Buffer.t -> expr
 
 (* Pretty-printing *)
+
+(* The function [pretty_print_file] reads a string buffer and assumes
+   that its contents originally comes from a file. *)
 
 val pretty_print             : CST.t -> Buffer.t
 val pretty_print_expression  : CST.expr -> Buffer.t
 val pretty_print_pattern     : CST.pattern -> Buffer.t
 val pretty_print_type_expr   : CST.type_expr -> Buffer.t
-val pretty_print_file        : dirs -> Buffer.t -> file_path -> buffer
+val pretty_print_file        : Buffer.t -> file_path -> buffer

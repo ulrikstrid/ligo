@@ -35,6 +35,8 @@
   (name ParserMain)
   (libraries
     ;; LIGO
+    preprocessing_cameligo
+    lexing_cameligo
     parsing_shared
     parsing_cameligo
     cst

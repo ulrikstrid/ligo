@@ -33,11 +33,13 @@ module type S =
     val from_lexbuf  : (Lexing.lexbuf, token Core.instance) lexer
     val from_channel : (in_channel,    token Core.instance) lexer
     val from_string  : (string,        token Core.instance) lexer
+    val from_buffer  : (Buffer.t,      token Core.instance) lexer
     val from_file    : (file_path,     token Core.instance) lexer
 
     val all_from_lexbuf  : (Lexing.lexbuf, token list) lexer
     val all_from_channel : (in_channel,    token list) lexer
     val all_from_string  : (string,        token list) lexer
+    val all_from_buffer  : (Buffer.t,      token list) lexer
     val all_from_file    : (file_path,     token list) lexer
   end
 
@@ -64,9 +66,12 @@ module Make (Lexer: LEXER) =
 
     (* Lexing the input to recognise one token *)
 
-    let from_lexbuf  config = generic (fun x -> x) config
-    let from_channel config = generic Lexing.from_channel config
-    let from_string  config = generic Lexing.from_string config
+    let from_lexbuf  = generic (fun x -> x)
+    let from_channel = generic Lexing.from_channel
+    let from_string  = generic Lexing.from_string
+
+    let from_buffer config buffer =
+      from_string config @@ Buffer.contents buffer
 
     let from_file config path =
       Core.open_token_stream
@@ -94,11 +99,14 @@ module Make (Lexer: LEXER) =
     let all_from_lexbuf config lexbuf =
       from_lexbuf config lexbuf |> scan_all_tokens config
 
-    let all_from_channel config src =
-      generic Lexing.from_channel config src |> scan_all_tokens config
+    let all_from_channel config chan =
+      from_channel config chan |> scan_all_tokens config
 
-    let all_from_string config src =
-      generic Lexing.from_string config src |> scan_all_tokens config
+    let all_from_string config str =
+      from_string config str |> scan_all_tokens config
+
+    let all_from_buffer config buf =
+      from_buffer config buf |> scan_all_tokens config
 
     let all_from_file config src =
       from_file config src |> scan_all_tokens config

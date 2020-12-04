@@ -3,8 +3,8 @@
 module Trace = Simple_utils.Trace
 
 type success = Preprocessor.API.success
-type error   = Preprocessing_shared.Errors.t
-type result  = (success, error) Trace.result
+type errors  = Preprocessing_shared.Errors.t
+type result  = (success, errors) Trace.result
 
 type file_path = string
 type dirs      = file_path list (* For #include and #import *)

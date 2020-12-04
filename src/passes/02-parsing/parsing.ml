@@ -1,5 +1,5 @@
 module Pascaligo  = Pascaligo
 module Cameligo   = Cameligo
 module Reasonligo = Reasonligo
-module Errors     = Errors
-module Formatter  = Formatter
+module Errors     = Parsing_shared.Errors
+module Formatter  = Parsing_shared.Formatter

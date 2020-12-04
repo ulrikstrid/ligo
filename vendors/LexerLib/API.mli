@@ -36,11 +36,13 @@ module type S =
     val from_lexbuf  : (Lexing.lexbuf, token Core.instance) lexer
     val from_channel : (in_channel,    token Core.instance) lexer
     val from_string  : (string,        token Core.instance) lexer
+    val from_buffer  : (Buffer.t,      token Core.instance) lexer
     val from_file    : (file_path,     token Core.instance) lexer
 
     val all_from_lexbuf  : (Lexing.lexbuf, token list) lexer
     val all_from_channel : (in_channel,    token list) lexer
     val all_from_string  : (string,        token list) lexer
+    val all_from_buffer  : (Buffer.t,      token list) lexer
     val all_from_file    : (file_path,     token list) lexer
   end
 

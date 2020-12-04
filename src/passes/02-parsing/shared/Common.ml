@@ -16,7 +16,7 @@ module LexerMainGen = Lexing_shared.LexerMainGen
 
 (* CONFIGURATION *)
 
-module Config (File : FILE) (Comments : COMMENTS) =
+module CLI (File : FILE) (Comments : COMMENTS) =
   struct
     (* Stubs for the libraries CLIs *)
 
@@ -46,7 +46,7 @@ module Config (File : FILE) (Comments : COMMENTS) =
       struct
         module Preprocessor_CLI = Preprocessor_CLI
 
-        let preprocess = true
+        let preprocess = false
         let mode       = `Point
         let command    = None
 
@@ -58,13 +58,14 @@ module Config (File : FILE) (Comments : COMMENTS) =
         let status = `Done
       end
 
-    (* Configurations for the parsers based on the librairies CLIs. *)
+(*    (* Configurations for the parsers based on the librairies CLIs. *)
 
     let parser =
       object
         method offsets = Preprocessor_CLI.offsets
         method mode    = Lexer_CLI.mode
       end
+ *)
   end
 
 (* PRETTY-PRINTING *)
@@ -103,7 +104,7 @@ type 'token window = <
 >
 
 module MakeParser
-         (File        : FILE)
+         (File        : Preprocessing_shared.File.S)
          (Comments    : COMMENTS)
          (Token       : TOKEN)
          (Scoping     : sig exception Error of string * Token.t window end)
@@ -113,36 +114,34 @@ module MakeParser
                                 and type tree = CST.t)
          (Self_tokens : SELF_TOKENS with type token = Token.t) =
   struct
-
     type file_path = string list
+    type result = (CST.t, string Region.reg) Stdlib.result
 
     (* We always parse a string buffer of type [Buffer.t], but the
        interpretation of its contents depends on the functions
-       below. In [parse_file dirs buffer file_path], the argument
-       [buffer] is interpreted as the contents of the file located at
-       [file_path]. In [parse_string dirs buffer], the argument
-       [buffer] is interpreted as the contents of a string given on
-       the CLI. *)
+       below. In [parse_file buffer file_path], the argument [buffer]
+       is interpreted as the contents of the file located at
+       [file_path]. In [parse_string buffer], the argument [buffer] is
+       interpreted as the contents of a string given on the CLI. *)
 
     (* Parsing a file *)
 
-    let parse_file dirs buffer file_path
-        : (CST.t, string Region.reg) Stdlib.result =
+    let parse_file buffer file_path : result =
       let module File =
         struct
           let input     = Some file_path
           let extension = File.extension
-          let dirs      = dirs
+          let dirs      = []
         end in
-      let module Config = Config (File) (Comments) in
+      let module CLI = CLI (File) (Comments) in
       let module MainLexer =
         LexerMainGen.Make
-          (File) (Token) (Config.Lexer_CLI) (Self_tokens) in
+          (File) (Token) (CLI.Lexer_CLI) (Self_tokens) in
       let module MainParser =
         ParserLib.API.Make (MainLexer) (Parser) in
       let tree =
         let string = Buffer.contents buffer in
-        if Config.Preprocessor_CLI.show_pp then
+        if CLI.Preprocessor_CLI.show_pp then
           Printf.printf "%s\n%!" string;
         let lexbuf = Lexing.from_string string in
         let     () = LexerLib.Core.reset ~file:file_path lexbuf in
@@ -156,23 +155,22 @@ module MakeParser
 
     (* Parsing a string *)
 
-    let parse_string dirs buffer
-        : (CST.t, string Region.reg) Stdlib.result =
+    let parse_string buffer : result =
       let module File =
         struct
           let input     = None
           let extension = File.extension
-          let dirs      = dirs
+          let dirs      = []
         end in
-      let module Config = Config (File) (Comments) in
+      let module CLI = CLI (File) (Comments) in
       let module MainLexer =
         LexerMainGen.Make
-          (File) (Token) (Config.Lexer_CLI) (Self_tokens) in
+          (File) (Token) (CLI.Lexer_CLI) (Self_tokens) in
       let module MainParser =
         ParserLib.API.Make (MainLexer) (Parser) in
       let tree =
         let string = Buffer.contents buffer in
-        if Config.Preprocessor_CLI.show_pp then
+        if CLI.Preprocessor_CLI.show_pp then
           Printf.printf "%s\n%!" string;
         let lexbuf = Lexing.from_string string in
         let parser = MainParser.incr_from_lexbuf in

@@ -1,4 +1,2 @@
-module Comments    = Comments
-module File        = File
 module Token       = Token
-module Self_lexing = Self_lexing
+module Self_tokens = Self_tokens

@@ -7,14 +7,13 @@ module type COMMENTS = Preprocessing_shared.Comments.S
 module Make (Comments : COMMENTS) (Token : Token.S) :
   sig
     module Trace = Simple_utils.Trace
+    module Errors = Errors
 
     type file_path = string
-    type dirs      = file_path list (* For #include and #import *)
+    type result = (Token.t list, Errors.t) Trace.result
 
-    type errors = Errors.t
-    type result = (Token.t list, errors) Trace.result
-
-    val lex_file    : file_path  -> result
-    val lex_string  : string     -> result
-    val lex_channel : in_channel -> result
+    val from_file    : file_path  -> result
+    val from_string  : string     -> result
+    val from_buffer  : Buffer.t   -> result
+    val from_channel : in_channel -> result
   end
