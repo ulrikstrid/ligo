@@ -4,9 +4,9 @@ let [x, y]: [int, int] = [1,2];
 
 let main = (p : unit): int => x + y;
 
-let [x, y]: [int, int] = [3,3];
+let [x2, y2]: [int, int] = [3,3];
 
-let main_paren = (p : unit): int => x + y;
+let main_paren = (p : unit): int => x2 + y2;
 
 let foobar : [int, int] = [23, 42];
 

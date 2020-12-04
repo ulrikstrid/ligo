@@ -24,9 +24,9 @@ let sub = ([a,b]: [int, int]): int => a - b;
 /* real entrypoint that re-routes the flow based on the parameter provided */
 
 let main = ([p,storage]: [parameter, storage]) => {
-  let storage2 = match(p)({
-    increment: (n: nat) => add ([storage, n]),
-    decrement: (n: nat) => sub ([storage, n]),
+  let storage2 = match(p, {
+    increment: (n: int) => add ([storage, n]),
+    decrement: (n: int) => sub ([storage, n]) 
   });
   return [[] as list <operation>, storage2];
 };

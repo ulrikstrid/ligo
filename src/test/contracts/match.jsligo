@@ -13,10 +13,10 @@ type parameter =
 | Add
 | Sub;
 
-type return = [list <operation>, storage];
+type return_ = [list <operation>, storage];
 
 let main = ([action, store]: [parameter, storage]) => {
-  let store2 = match (action) ({
+  let store2 = match (action, {
     Add: (n: nat) => n,
     Sub: (n: nat) => -n
   });  

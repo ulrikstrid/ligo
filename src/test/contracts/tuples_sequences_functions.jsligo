@@ -1,7 +1,7 @@
 let a = 1;
 let b = 1 as nat;
 let c = 2 as mutez;
-let d = 1n + 2n;
+let d = 1 as nat + 2 as nat;
 let e = 1 as mutez + 3 as mutez;
 let f = [a, c];
 let g = [a + 1, c];
@@ -16,8 +16,8 @@ let j = (a: int, b: int) => a - b;
 // };
 let n = (a: int): int => a + 1;
 let o = (a: int): int => a + 1;
-let n = (a: int, b: int): int => a + 1;
-let o = (a: int, b: int): int => a + 1;
+let n2 = (a: int, b: int): int => a + 1;
+let o2 = (a: int, b: int): int => a + 1;
 // let p = {{
 //     3;
 // }};

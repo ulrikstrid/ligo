@@ -13,6 +13,6 @@ type fooBarBaz =
 
 let main = (f : fooBarBaz) : int =>
   match(f, {
-    Bar: (i: int) => i
+    Bar: (i: int) => i,
     Baz: () => -1
   })
