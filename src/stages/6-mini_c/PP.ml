@@ -51,7 +51,7 @@ and type_constant ppf (tb:type_base) : unit =
     | TB_bls12_381_g1        -> "bls12_381_g1"
     | TB_bls12_381_g2        -> "bls12_381_g2"
     | TB_bls12_381_fr        -> "bls12_381_fr"
-    in
+  in
   fprintf ppf "%s" s
 
 let rec value ppf : value -> unit = function
@@ -64,7 +64,7 @@ let rec value ppf : value -> unit = function
   | D_unit -> fprintf ppf "unit"
   | D_string s -> fprintf ppf "\"%s\"" s
   | D_bytes x ->
-     fprintf ppf "0x%a" Hex.pp @@ Hex.of_bytes x
+    fprintf ppf "0x%a" Hex.pp @@ Hex.of_bytes x
   | D_pair (a, b) -> fprintf ppf "(%a), (%a)" value a value b
   | D_left a -> fprintf ppf "L(%a)" value a
   | D_right b -> fprintf ppf "R(%a)" value b
@@ -115,22 +115,22 @@ and expression_content ppf (e:expression_content) = match e with
     fprintf ppf "@[%a ?? %a : (%a :: %a) -> %a@]"
       expression c expression n Var.pp hd_name.wrap_content Var.pp tl_name.wrap_content expression cons
   | E_if_left (c, ((name_l, _) , l), ((name_r, _) , r)) ->
-      fprintf ppf
-        "@[match %a with@ @[<hv>| Left %a ->@;<1 2>%a@ | Right %a ->@;<1 2>%a@]@]"
-        expression c Var.pp name_l.wrap_content expression l Var.pp name_r.wrap_content expression r
+    fprintf ppf
+      "@[match %a with@ @[<hv>| Left %a ->@;<1 2>%a@ | Right %a ->@;<1 2>%a@]@]"
+      expression c Var.pp name_l.wrap_content expression l Var.pp name_r.wrap_content expression r
   | E_let_in ((name , _) , inline, expr , body) ->
-      fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" Var.pp name.wrap_content expression expr option_inline inline expression body
+    fprintf ppf "@[let %a =@;<1 2>%a%a in@ %a@]" Var.pp name.wrap_content expression expr option_inline inline expression body
   | E_iterator (b , ((name , _) , body) , expr) ->
-      fprintf ppf "@[for_%a %a of %a do ( %a )@]" constant b Var.pp name.wrap_content expression expr expression body
+    fprintf ppf "@[for_%a %a of %a do ( %a )@]" constant b Var.pp name.wrap_content expression expr expression body
   | E_fold (((name , _) , body) , collection , initial) ->
-      fprintf ppf "@[fold %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name.wrap_content expression body
+    fprintf ppf "@[fold %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name.wrap_content expression body
 
   | E_raw_michelson code ->
-      let open Tezos_micheline in
-      let code = Micheline.Seq (Location.generated, code) in
-      let code = Micheline.strip_locations code in
-      let code = Micheline_printer.printable (fun prim -> prim) code in
-      fprintf ppf "%a" Micheline_printer.print_expr code
+    let open Tezos_micheline in
+    let code = Micheline.Seq (Location.generated, code) in
+    let code = Micheline.strip_locations code in
+    let code = Micheline_printer.printable (fun prim -> prim) code in
+    fprintf ppf "%a" Micheline_printer.print_expr code
 
 and expression_with_type : _ -> expression -> _  = fun ppf e ->
   fprintf ppf "%a : %a"
@@ -170,6 +170,8 @@ and constant ppf : constant' -> unit = function
   | C_UPDATE                -> fprintf ppf "UPDATE"
   (* Loops *)
   | C_FOLD                  -> fprintf ppf "FOLD"
+  | C_FOLD_LEFT             -> fprintf ppf "FOLD_LEFT"
+  | C_FOLD_RIGHT            -> fprintf ppf "FOLD_RIGHT"
   | C_FOLD_WHILE            -> fprintf ppf "FOLD_WHILE"
   | C_FOLD_CONTINUE         -> fprintf ppf "CONTINUE"
   | C_FOLD_STOP             -> fprintf ppf "STOP"
@@ -222,6 +224,7 @@ and constant ppf : constant' -> unit = function
   | C_SET_REMOVE            -> fprintf ppf "SET_REMOVE"
   | C_SET_ITER              -> fprintf ppf "SET_ITER"
   | C_SET_FOLD              -> fprintf ppf "SET_FOLD"
+  | C_SET_FOLD_RIGHT        -> fprintf ppf "SET_FOLD_RIGHT"
   | C_SET_MEM               -> fprintf ppf "SET_MEM"
   (* List *)
   | C_LIST_EMPTY            -> fprintf ppf "LIST_EMPTY"
@@ -229,6 +232,8 @@ and constant ppf : constant' -> unit = function
   | C_LIST_ITER             -> fprintf ppf "LIST_ITER"
   | C_LIST_MAP              -> fprintf ppf "LIST_MAP"
   | C_LIST_FOLD             -> fprintf ppf "LIST_FOLD"
+  | C_LIST_FOLD_LEFT        -> fprintf ppf "LIST_FOLD_LEFT"
+  | C_LIST_FOLD_RIGHT       -> fprintf ppf "LIST_FOLD_RIGHT"
   | C_LIST_HEAD_OPT         -> fprintf ppf "LIST_HEAD_OPT"
   | C_LIST_TAIL_OPT         -> fprintf ppf "LIST_TAIL_OPT"
   (* Maps *)

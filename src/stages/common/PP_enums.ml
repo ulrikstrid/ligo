@@ -2,14 +2,14 @@ open Format
 open Types
 
 (** old code
-let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation) : unit =
-  let print_option f ppf o =
+    let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation) : unit =
+    let print_option f ppf o =
     match o with
       Some (s) -> fprintf ppf "%a" f s
     | None -> fprintf ppf "None"
-  in
+    in
     let open Tezos_micheline.Micheline in
-  let rec prim ppf (node : (_,Memory_proto_alpha.Protocol.Alpha_context.Script.prim) node)= match node with
+    let rec prim ppf (node : (_,Memory_proto_alpha.Protocol.Alpha_context.Script.prim) node)= match node with
     | Int (l , i) -> fprintf ppf "Int (%i, %a)" l Z.pp_print i
     | String (l , s) -> fprintf ppf "String (%i, %s)" l s
     | Bytes (l, b) -> fprintf ppf "B (%i, %s)" l (Bytes.to_string b)
@@ -19,15 +19,15 @@ let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal
         (list_sep_d (fun ppf s -> fprintf ppf "%s" s)) a
     | Seq (l, nl) -> fprintf ppf "S (%i, %a)" l
         (list_sep_d prim) nl
-  in
-  let l ppf (l: Memory_proto_alpha.Protocol.Alpha_context.Script.lazy_expr) =
+    in
+    let l ppf (l: Memory_proto_alpha.Protocol.Alpha_context.Script.lazy_expr) =
     let oo = Data_encoding.force_decode l in
     match oo with
       Some o -> fprintf ppf "%a" prim (Tezos_micheline.Micheline.root o)
     | None  -> fprintf ppf "Fail decoding"
-  in
+    in
 
-  let op ppf (type a) : a Memory_proto_alpha.Protocol.Alpha_context.manager_operation -> unit = function
+    let op ppf (type a) : a Memory_proto_alpha.Protocol.Alpha_context.manager_operation -> unit = function
     | Reveal (s: Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key.t) ->
       fprintf ppf "R %a" Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key.pp s
     | Transaction {amount; parameters; entrypoint; destination} ->
@@ -46,9 +46,9 @@ let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal
 
     | Delegation so ->
       fprintf ppf "D %a" (print_option Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key_hash.pp) so
-  in
-  let Internal_operation {source;operation;nonce} = o in
-  fprintf ppf "{source: %s; operation: %a; nonce: %i"
+    in
+    let Internal_operation {source;operation;nonce} = o in
+    fprintf ppf "{source: %s; operation: %a; nonce: %i"
     (Memory_proto_alpha.Protocol.Alpha_context.Contract.to_b58check source)
     op operation
     nonce
@@ -74,6 +74,8 @@ let constant' ppf : constant' -> unit = function
   (* Loops *)
   | C_ITER                  -> fprintf ppf "ITER"
   | C_FOLD                  -> fprintf ppf "FOLD"
+  | C_FOLD_LEFT             -> fprintf ppf "FOLD_LEFT"
+  | C_FOLD_RIGHT            -> fprintf ppf "FOLD_RIGHT"
   | C_FOLD_WHILE            -> fprintf ppf "FOLD_WHILE"
   | C_FOLD_CONTINUE         -> fprintf ppf "CONTINUE"
   | C_FOLD_STOP             -> fprintf ppf "STOP"
@@ -123,6 +125,7 @@ let constant' ppf : constant' -> unit = function
   | C_SET_REMOVE            -> fprintf ppf "SET_REMOVE"
   | C_SET_ITER              -> fprintf ppf "SET_ITER"
   | C_SET_FOLD              -> fprintf ppf "SET_FOLD"
+  | C_SET_FOLD_RIGHT        -> fprintf ppf "SET_FOLD_RIGHT"
   | C_SET_MEM               -> fprintf ppf "SET_MEM"
   (* List *)
   | C_LIST_EMPTY            -> fprintf ppf "LIST_EMPTY"
@@ -130,6 +133,8 @@ let constant' ppf : constant' -> unit = function
   | C_LIST_ITER             -> fprintf ppf "LIST_ITER"
   | C_LIST_MAP              -> fprintf ppf "LIST_MAP"
   | C_LIST_FOLD             -> fprintf ppf "LIST_FOLD"
+  | C_LIST_FOLD_LEFT        -> fprintf ppf "LIST_FOLD_LEFT"
+  | C_LIST_FOLD_RIGHT       -> fprintf ppf "LIST_FOLD_RIGHT"
   | C_LIST_HEAD_OPT         -> fprintf ppf "LIST_HEAD_OPT"
   | C_LIST_TAIL_OPT         -> fprintf ppf "LIST_TAIL_OPT"
   (* Maps *)

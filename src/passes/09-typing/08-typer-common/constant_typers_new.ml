@@ -83,11 +83,14 @@ module Operators_types = struct
   let t_set_empty     = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple0 --> set a
   let t_set_iter      = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 (a --> unit) (set a) --> unit
   (* TODO: check that the implementation has this type *)
-  let t_set_fold      = forall2_tc "a" "b" @@ fun a b -> [tc_comparable b] => tuple3 (pair a b --> a) (set b) a --> a
+  let t_set_fold        = forall2_tc "a" "b" @@ fun a b -> [tc_comparable b] => tuple3 (pair a b --> a) (set b) a --> a
+  let t_set_fold_right  = forall2_tc "a" "b" @@ fun a b -> [tc_comparable b] => tuple3 (pair b a --> a) (set b) a --> a
   let t_list_iter     = forall "a" @@ fun a -> tuple2 (a --> unit) (list a) --> unit
   let t_list_map      = forall2 "a" "b" @@ fun a b -> tuple2 (a --> b) (list a) --> (list b)
   (* TODO: check that the implementation has this type *)
   let t_list_fold     = forall2 "a" "b" @@ fun a b -> tuple3 (pair a b --> a) (list b) a --> a
+  let t_list_fold_left  = forall2 "a" "b" @@ fun a b -> tuple3 (pair a b --> a) a (list b) --> a
+  let t_list_fold_right = forall2 "a" "b" @@ fun a b -> tuple3 (pair b a --> a) (list b) a --> a
   let t_list_head_opt = forall "a" @@ fun a -> (list a) --> (option a)
   let t_list_tail_opt = forall "a" @@ fun a -> (list a) --> (option (list a))
   let t_self_address  = tuple0 --> address
@@ -104,11 +107,11 @@ module Operators_types = struct
     | C_ASSERTION           -> ok @@ t_assertion ;
     | C_ASSERT_SOME         -> ok @@ t_assert_some ;
     | C_FAILWITH            -> ok @@ t_failwith ;
-    (* LOOPS *)
+      (* LOOPS *)
     | C_FOLD_WHILE          -> ok @@ t_fold_while ;
     | C_FOLD_CONTINUE       -> ok @@ t_continuation ;
     | C_FOLD_STOP           -> ok @@ t_continuation ;
-    (* MATH *)
+      (* MATH *)
     | C_NEG                 -> ok @@ t_neg ;
     | C_ABS                 -> ok @@ t_abs ;
     | C_ADD                 -> ok @@ t_add ;
@@ -117,43 +120,46 @@ module Operators_types = struct
     | C_EDIV                -> ok @@ t_ediv ;
     | C_DIV                 -> ok @@ t_div ;
     | C_MOD                 -> ok @@ t_mod ;
-    (* LOGIC *)
+      (* LOGIC *)
     | C_NOT                 -> ok @@ t_not ;
     | C_AND                 -> ok @@ t_and ;
     | C_OR                  -> ok @@ t_or ;
     | C_XOR                 -> ok @@ t_xor ;
     | C_LSL                 -> ok @@ t_lsl ;
     | C_LSR                 -> ok @@ t_lsr ;
-    (* COMPARATOR *)
+      (* COMPARATOR *)
     | C_EQ                  -> ok @@ t_comp ;
     | C_NEQ                 -> ok @@ t_comp ;
     | C_LT                  -> ok @@ t_comp ;
     | C_GT                  -> ok @@ t_comp ;
     | C_LE                  -> ok @@ t_comp ;
     | C_GE                  -> ok @@ t_comp ;
-    (* BYTES / STRING *)
+      (* BYTES / STRING *)
     | C_SIZE                -> ok @@ t_size ;
     | C_CONCAT              -> ok @@ t_concat ;
     | C_SLICE               -> ok @@ t_slice ;
     | C_BYTES_PACK          -> ok @@ t_bytes_pack ;
     | C_BYTES_UNPACK        -> ok @@ t_bytes_unpack ;
     | C_CONS                -> ok @@ t_cons ;
-    (* SET  *)
+      (* SET  *)
     | C_SET_EMPTY           -> ok @@ t_set_empty ;
     | C_SET_ADD             -> ok @@ t_set_add ;
     | C_SET_REMOVE          -> ok @@ t_set_remove ;
     | C_SET_ITER            -> ok @@ t_set_iter ;
     | C_SET_FOLD            -> ok @@ t_set_fold ;
+    | C_SET_FOLD_RIGHT      -> ok @@ t_set_fold_right ;
     | C_SET_MEM             -> ok @@ t_set_mem ;
 
-    (* LIST *)
+      (* LIST *)
     | C_LIST_ITER           -> ok @@ t_list_iter ;
     | C_LIST_MAP            -> ok @@ t_list_map ;
     | C_LIST_FOLD           -> ok @@ t_list_fold ;
+    | C_LIST_FOLD_LEFT      -> ok @@ t_list_fold_left ;
+    | C_LIST_FOLD_RIGHT     -> ok @@ t_list_fold_right ;
     | C_LIST_HEAD_OPT       -> ok @@ t_list_head_opt ;
     | C_LIST_TAIL_OPT       -> ok @@ t_list_tail_opt ;
 
-    (* MAP *)
+      (* MAP *)
     | C_MAP_ADD             -> ok @@ t_map_add ;
     | C_MAP_REMOVE          -> ok @@ t_map_remove ;
     | C_MAP_UPDATE          -> ok @@ t_map_update ;
@@ -163,15 +169,15 @@ module Operators_types = struct
     | C_MAP_MEM             -> ok @@ t_map_mem ;
     | C_MAP_FIND            -> ok @@ t_map_find ;
     | C_MAP_FIND_OPT        -> ok @@ t_map_find_opt ;
-    (* BIG MAP *)
-    (* CRYPTO *)
+      (* BIG MAP *)
+      (* CRYPTO *)
     | C_SHA256              -> ok @@ t_hash256 ;
     | C_SHA512              -> ok @@ t_hash512 ;
     | C_BLAKE2b             -> ok @@ t_blake2b ;
     | C_HASH_KEY            -> ok @@ t_hash_key ;
     | C_CHECK_SIGNATURE     -> ok @@ t_check_signature ;
     | C_CHAIN_ID            -> ok @@ t_chain_id ;
-    (*BLOCKCHAIN *)
+      (*BLOCKCHAIN *)
     | C_CONTRACT            -> ok @@ t_get_contract ;
     | C_CONTRACT_ENTRYPOINT -> ok @@ failwith "t_get_entrypoint" ;
     | C_AMOUNT              -> ok @@ t_amount ;

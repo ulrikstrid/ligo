@@ -25,6 +25,8 @@ let constant' = function
   | C_LOOP_CONTINUE      -> `List [`String "C_LOOP_CONTINUE"; `Null ]
   | C_LOOP_STOP          -> `List [`String "C_LOOP_STOP"; `Null ]
   | C_FOLD               -> `List [`String "C_FOLD"; `Null ]
+  | C_FOLD_LEFT          -> `List [`String "C_FOLD_LEFT"; `Null ]
+  | C_FOLD_RIGHT         -> `List [`String "C_FOLD_RIGHT"; `Null ]
   (* MATH *)
   | C_NEG                -> `List [`String "C_NEG"; `Null ]
   | C_ABS                -> `List [`String "C_ABS"; `Null ]
@@ -70,6 +72,7 @@ let constant' = function
   | C_SET_REMOVE         -> `List [`String "C_SET_REMOVE"; `Null ]
   | C_SET_ITER           -> `List [`String "C_SET_ITER"; `Null ]
   | C_SET_FOLD           -> `List [`String "C_SET_FOLD"; `Null ]
+  | C_SET_FOLD_RIGHT     -> `List [`String "C_SET_FOLD_RIGHT"; `Null ]
   | C_SET_MEM            -> `List [`String "C_SET_MEM"; `Null ]
   (* List *)
   | C_LIST_EMPTY         -> `List [`String "C_LIST_EMPTY"; `Null ]
@@ -77,6 +80,8 @@ let constant' = function
   | C_LIST_ITER          -> `List [`String "C_LIST_ITER"; `Null ]
   | C_LIST_MAP           -> `List [`String "C_LIST_MAP"; `Null ]
   | C_LIST_FOLD          -> `List [`String "C_LIST_FOLD"; `Null ]
+  | C_LIST_FOLD_LEFT     -> `List [`String "C_LIST_FOLD_LEFT"; `Null ]
+  | C_LIST_FOLD_RIGHT    -> `List [`String "C_LIST_FOLD_RIGHT"; `Null ]
   | C_LIST_HEAD_OPT      -> `List [`String "C_HEAD_OPT"; `Null ]
   | C_LIST_TAIL_OPT      -> `List [`String "C_TAIL_OPT"; `Null ]
   (* Maps *)
@@ -138,16 +143,16 @@ let constant' = function
 
 let label = label_to_yojson
 let option f o =
-    match o with
-    | None   -> `List [ `String "None" ; `Null ]
-    | Some v -> `List [ `String "Some" ; f v ]
+  match o with
+  | None   -> `List [ `String "None" ; `Null ]
+  | Some v -> `List [ `String "Some" ; f v ]
 
 let list f lst = `List (List.map f lst)
 let label_map f lmap =
   let lst = List.sort (fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
   let lst' = List.fold_left
-    (fun acc (Label k, v) -> (k , f v)::acc)
-    [] lst
+      (fun acc (Label k, v) -> (k , f v)::acc)
+      [] lst
   in
   `Assoc lst'
 
@@ -494,7 +499,7 @@ and p_row {p_row_tag;p_row_args} =
 
 let c_constructor_simpl {is_mandatory_constraint;reason_constr_simpl;tv;c_tag;tv_list} =
   `Assoc [
-        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
+    ("is_mandatory_constraint", `Bool is_mandatory_constraint);
     ("reason_constr_simpl", `String reason_constr_simpl);
     ("tv", type_variable_to_yojson tv);
     ("c_tag", constant_tag c_tag);
@@ -503,34 +508,34 @@ let c_constructor_simpl {is_mandatory_constraint;reason_constr_simpl;tv;c_tag;tv
 
 let c_alias {is_mandatory_constraint;reason_alias_simpl; a; b} =
   `Assoc [        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
-    ("reason_alias_simpl", `String reason_alias_simpl);
-    ("a", type_variable_to_yojson a);
-    ("b", type_variable_to_yojson b);
-  ]
+                  ("reason_alias_simpl", `String reason_alias_simpl);
+                  ("a", type_variable_to_yojson a);
+                  ("b", type_variable_to_yojson b);
+         ]
 
 let c_poly_simpl {is_mandatory_constraint;reason_poly_simpl; tv; forall} =
   `Assoc [        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
-    ("reason_poly_simpl", `String reason_poly_simpl);
-    ("tv", type_variable_to_yojson tv);
-    ("forall", p_forall forall)
-  ]
+                  ("reason_poly_simpl", `String reason_poly_simpl);
+                  ("tv", type_variable_to_yojson tv);
+                  ("forall", p_forall forall)
+         ]
 
 let c_typeclass_simpl {is_mandatory_constraint;id_typeclass_simpl=ConstraintIdentifier ci;reason_typeclass_simpl;original_id;tc;args} =
   `Assoc [        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
-    ("id_typeclass_simpl", `String (Format.sprintf "%Li" ci));
+                  ("id_typeclass_simpl", `String (Format.sprintf "%Li" ci));
                   ("reason_typeclass_simpl", `String reason_typeclass_simpl);
                   ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
-    ("tc", typeclass tc);
-    ("args", list type_variable_to_yojson args)
-  ]
+                  ("tc", typeclass tc);
+                  ("args", list type_variable_to_yojson args)
+         ]
 
 let c_row_simpl {is_mandatory_constraint;reason_row_simpl; tv;r_tag;tv_map} =
   `Assoc [        ("is_mandatory_constraint", `Bool is_mandatory_constraint);
-    ("reason_row_simpl", `String reason_row_simpl);
-    ("tv", type_variable_to_yojson tv);
-    ("r_tag", row_tag r_tag);
-    ("tv_map", label_map type_variable_to_yojson tv_map)
-  ]
+                  ("reason_row_simpl", `String reason_row_simpl);
+                  ("tv", type_variable_to_yojson tv);
+                  ("r_tag", row_tag r_tag);
+                  ("tv_map", label_map type_variable_to_yojson tv_map)
+         ]
 let type_constraint_simpl = function
   | SC_Constructor c -> `List [`String "SC_constructor"; c_constructor_simpl c]
   | SC_Alias       c -> `List [`String "SC_alias"; c_alias c]
@@ -617,7 +622,7 @@ let output_break_ctor ({a_k_var;a_k'_var'}) =
 
 let output_specialize1  ({poly;a_k_var}) =`Assoc [
     ("poly", c_poly_simpl poly);
-("a_k_var",     c_constructor_simpl a_k_var)]
+    ("a_k_var",     c_constructor_simpl a_k_var)]
 let output_tc_fundep (t : output_tc_fundep) =
   let lst = t.tc in
   let a = t.c in `Assoc
@@ -626,4 +631,4 @@ let output_tc_fundep (t : output_tc_fundep) =
           ("refined",c_typeclass_simpl lst.refined);
           ("original",`String(Format.asprintf "%Li" (match lst.original with ConstraintIdentifier x -> x)));
           ("vars",list Var.to_yojson ( RedBlackTrees.PolySet.elements lst.vars))])
-      ;("a",c_constructor_simpl a)]
+    ;("a",c_constructor_simpl a)]

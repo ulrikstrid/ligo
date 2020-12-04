@@ -1,6 +1,6 @@
 (* The compiler is a function that takes as input the Typed AST, and outputs expressions in a language that is basically a Michelson with named variables and first-class-environments.
 
-For more info, see back-end.md: https://gitlab.com/ligolang/ligo/blob/dev/gitlab-pages/docs/contributors/big-picture/back-end.md *)
+   For more info, see back-end.md: https://gitlab.com/ligolang/ligo/blob/dev/gitlab-pages/docs/contributors/big-picture/back-end.md *)
 
 open Trace
 module Errors = Errors
@@ -37,6 +37,8 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_LOOP_CONTINUE -> C_LOOP_CONTINUE
   | C_LOOP_STOP -> C_LOOP_STOP
   | C_FOLD -> C_FOLD
+  | C_FOLD_LEFT -> C_FOLD_LEFT
+  | C_FOLD_RIGHT -> C_FOLD_RIGHT
   (* MATH *)
   | C_NEG -> C_NEG
   | C_ABS -> C_ABS
@@ -82,6 +84,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_SET_REMOVE -> C_SET_REMOVE
   | C_SET_ITER -> C_SET_ITER
   | C_SET_FOLD -> C_SET_FOLD
+  | C_SET_FOLD_RIGHT -> C_SET_FOLD_RIGHT
   | C_SET_MEM -> C_SET_MEM
   (* List *)
   | C_LIST_EMPTY -> C_LIST_EMPTY
@@ -89,6 +92,8 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_LIST_ITER -> C_LIST_ITER
   | C_LIST_MAP -> C_LIST_MAP
   | C_LIST_FOLD -> C_LIST_FOLD
+  | C_LIST_FOLD_LEFT -> C_LIST_FOLD_LEFT
+  | C_LIST_FOLD_RIGHT -> C_LIST_FOLD_RIGHT
   | C_LIST_HEAD_OPT -> C_LIST_HEAD_OPT
   | C_LIST_TAIL_OPT -> C_LIST_TAIL_OPT
   (* Maps *)
@@ -139,14 +144,14 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_CONVERT_FROM_LEFT_COMB -> C_CONVERT_FROM_LEFT_COMB
   | C_CONVERT_FROM_RIGHT_COMB -> C_CONVERT_FROM_RIGHT_COMB
   | (   C_TEST_ORIGINATE
-      | C_TEST_SET_NOW
-      | C_TEST_SET_SOURCE
-      | C_TEST_SET_BALANCE
-      | C_TEST_EXTERNAL_CALL
-      | C_TEST_GET_STORAGE
-      | C_TEST_GET_BALANCE
-      | C_TEST_ASSERT_FAILURE
-      | C_TEST_LOG ) as c ->
+    | C_TEST_SET_NOW
+    | C_TEST_SET_SOURCE
+    | C_TEST_SET_BALANCE
+    | C_TEST_EXTERNAL_CALL
+    | C_TEST_GET_STORAGE
+    | C_TEST_GET_BALANCE
+    | C_TEST_ASSERT_FAILURE
+    | C_TEST_LOG ) as c ->
     failwith (Format.asprintf "%a is only available for LIGO interpreter" PP.constant c)
 
 let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error) result =
@@ -155,68 +160,68 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
   | T_variable (name) -> fail @@ no_type_variable @@ name
   | t when (compare t (t_bool ()).type_content) = 0-> return (T_base TB_bool)
   | T_constant {language ; injection ; parameters} -> (
-    let open Stage_common.Constant in
-    let%bind () = Assert.assert_true (corner_case ~loc:__LOC__ "unsupported language") @@ String.equal language Stage_common.Backends.michelson in
-    match Ligo_string.extract injection , parameters with
-    | (i, []) when String.equal i bool_name -> return (T_base TB_bool)
-    | (i, []) when String.equal i unit_name -> return (T_base TB_unit)
-    | (i, []) when String.equal i int_name -> return (T_base TB_int)
-    | (i, []) when String.equal i nat_name -> return (T_base TB_nat)
-    | (i, []) when String.equal i timestamp_name -> return (T_base TB_timestamp)
-    | (i, []) when String.equal i tez_name -> return (T_base TB_mutez)
-    | (i, []) when String.equal i string_name -> return (T_base TB_string)
-    | (i, []) when String.equal i bytes_name -> return (T_base TB_bytes)
-    | (i, []) when String.equal i address_name -> return (T_base TB_address)
-    | (i, []) when String.equal i operation_name -> return (T_base TB_operation)
-    | (i, []) when String.equal i key_name -> return (T_base TB_key)
-    | (i, []) when String.equal i key_hash_name -> return (T_base TB_key_hash)
-    | (i, []) when String.equal i chain_id_name -> return (T_base TB_chain_id)
-    | (i, []) when String.equal i signature_name -> return (T_base TB_signature)
-    | (i, []) when String.equal i baker_hash_name -> return (T_base TB_baker_hash)
-    | (i, []) when String.equal i pvss_key_name -> return (T_base TB_pvss_key)
-    | (i, []) when String.equal i sapling_transaction_name -> return (T_base TB_sapling_transaction)
-    | (i, []) when String.equal i sapling_state_name -> return (T_base TB_sapling_state)
-    | (i, []) when String.equal i baker_operation_name -> return (T_base TB_baker_operation)
-    | (i, []) when String.equal i bls12_381_g1_name -> return (T_base TB_bls12_381_g1)
-    | (i, []) when String.equal i bls12_381_g2_name -> return (T_base TB_bls12_381_g2)
-    | (i, []) when String.equal i bls12_381_fr_name -> return (T_base TB_bls12_381_fr)
-    | (i, [x]) when String.equal i contract_name ->
-      let%bind x' = compile_type x in
-      return (T_contract x')
-    | (i, [o]) when String.equal i option_name ->
-      let%bind o' = compile_type o in
-      return (T_option o')
-    | (i, [k;v]) when String.equal i map_name ->
-      let%bind kv' = bind_map_pair compile_type (k, v) in
-      return (T_map kv')
-    | (i, [k; v]) when String.equal i big_map_name ->
-      let%bind kv' = bind_map_pair compile_type (k, v) in
-      return (T_big_map kv')
-    | (i, _) when String.equal i map_or_big_map_name ->
-      fail @@ corner_case ~loc:"spilling" "TC_map_or_big_map should have been resolved before spilling"
-    | (i, [t]) when String.equal i list_name ->
-      let%bind t' = compile_type t in
-      return (T_list t')
-    | (i, [t]) when String.equal i set_name ->
-      let%bind t' = compile_type t in
-      return (T_set t')
-    | _ -> fail @@ corner_case ~loc:__LOC__ "wrong constant"
-  )
-  | T_sum { content = m ; layout } -> (
-    let open Ast_typed.Helpers in
-    match is_michelson_or m with
-    | Some (a , b) -> (
-      let aux (x : AST.row_element) =
-        let%bind t = compile_type x.associated_type in
-        let annot = remove_empty_annotation x.michelson_annotation in
-        ok (annot , t)
-      in
-      let%bind a' = aux a in
-      let%bind b' = aux b in
-      return @@ T_or (a' , b')
+      let open Stage_common.Constant in
+      let%bind () = Assert.assert_true (corner_case ~loc:__LOC__ "unsupported language") @@ String.equal language Stage_common.Backends.michelson in
+      match Ligo_string.extract injection , parameters with
+      | (i, []) when String.equal i bool_name -> return (T_base TB_bool)
+      | (i, []) when String.equal i unit_name -> return (T_base TB_unit)
+      | (i, []) when String.equal i int_name -> return (T_base TB_int)
+      | (i, []) when String.equal i nat_name -> return (T_base TB_nat)
+      | (i, []) when String.equal i timestamp_name -> return (T_base TB_timestamp)
+      | (i, []) when String.equal i tez_name -> return (T_base TB_mutez)
+      | (i, []) when String.equal i string_name -> return (T_base TB_string)
+      | (i, []) when String.equal i bytes_name -> return (T_base TB_bytes)
+      | (i, []) when String.equal i address_name -> return (T_base TB_address)
+      | (i, []) when String.equal i operation_name -> return (T_base TB_operation)
+      | (i, []) when String.equal i key_name -> return (T_base TB_key)
+      | (i, []) when String.equal i key_hash_name -> return (T_base TB_key_hash)
+      | (i, []) when String.equal i chain_id_name -> return (T_base TB_chain_id)
+      | (i, []) when String.equal i signature_name -> return (T_base TB_signature)
+      | (i, []) when String.equal i baker_hash_name -> return (T_base TB_baker_hash)
+      | (i, []) when String.equal i pvss_key_name -> return (T_base TB_pvss_key)
+      | (i, []) when String.equal i sapling_transaction_name -> return (T_base TB_sapling_transaction)
+      | (i, []) when String.equal i sapling_state_name -> return (T_base TB_sapling_state)
+      | (i, []) when String.equal i baker_operation_name -> return (T_base TB_baker_operation)
+      | (i, []) when String.equal i bls12_381_g1_name -> return (T_base TB_bls12_381_g1)
+      | (i, []) when String.equal i bls12_381_g2_name -> return (T_base TB_bls12_381_g2)
+      | (i, []) when String.equal i bls12_381_fr_name -> return (T_base TB_bls12_381_fr)
+      | (i, [x]) when String.equal i contract_name ->
+        let%bind x' = compile_type x in
+        return (T_contract x')
+      | (i, [o]) when String.equal i option_name ->
+        let%bind o' = compile_type o in
+        return (T_option o')
+      | (i, [k;v]) when String.equal i map_name ->
+        let%bind kv' = bind_map_pair compile_type (k, v) in
+        return (T_map kv')
+      | (i, [k; v]) when String.equal i big_map_name ->
+        let%bind kv' = bind_map_pair compile_type (k, v) in
+        return (T_big_map kv')
+      | (i, _) when String.equal i map_or_big_map_name ->
+        fail @@ corner_case ~loc:"spilling" "TC_map_or_big_map should have been resolved before spilling"
+      | (i, [t]) when String.equal i list_name ->
+        let%bind t' = compile_type t in
+        return (T_list t')
+      | (i, [t]) when String.equal i set_name ->
+        let%bind t' = compile_type t in
+        return (T_set t')
+      | _ -> fail @@ corner_case ~loc:__LOC__ "wrong constant"
     )
-    | None -> Layout.t_sum ~layout return compile_type m
-  )
+  | T_sum { content = m ; layout } -> (
+      let open Ast_typed.Helpers in
+      match is_michelson_or m with
+      | Some (a , b) -> (
+          let aux (x : AST.row_element) =
+            let%bind t = compile_type x.associated_type in
+            let annot = remove_empty_annotation x.michelson_annotation in
+            ok (annot , t)
+          in
+          let%bind a' = aux a in
+          let%bind b' = aux b in
+          return @@ T_or (a' , b')
+        )
+      | None -> Layout.t_sum ~layout return compile_type m
+    )
   | T_record { content = m ; layout } -> (
       let open Ast_typed.Helpers in
       match is_michelson_pair m with
@@ -237,7 +242,7 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
       let%bind param' = compile_type type1 in
       let%bind result' = compile_type type2 in
       return @@ (T_function (param',result'))
-  )
+    )
 
 (* probably should use result monad for conformity? but these errors
    are supposed to be impossible *)
@@ -278,112 +283,112 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       return @@ E_variable (Location.map Var.todo_cast name)
     )
   | E_application {lamb; args} ->
-      let%bind a = compile_expression lamb in
-      let%bind b = compile_expression args in
-      return @@ E_application (a, b)
+    let%bind a = compile_expression lamb in
+    let%bind b = compile_expression args in
+    return @@ E_application (a, b)
   | E_constructor {constructor=Label name;element} when (String.equal name "true"|| String.equal name "false") && element.expression_content = AST.e_unit () ->
     return @@ E_constant { cons_name = if bool_of_string name then C_TRUE else C_FALSE ; arguments = [] }
   | E_constructor {constructor;element} -> (
-    let%bind ty' = compile_type ae.type_expression in
-    let%bind ty_variant =
-      trace_option (corner_case ~loc:__LOC__ "not a record") @@
-      get_t_sum (get_type_expression ae) in
-    let%bind path = Layout.constructor_to_lr ~layout:ty_variant.layout ty' ty_variant.content constructor in
-    let aux = fun pred (ty, lr) ->
-      let c = match lr with
-        | `Left  -> C_LEFT
-        | `Right -> C_RIGHT
+      let%bind ty' = compile_type ae.type_expression in
+      let%bind ty_variant =
+        trace_option (corner_case ~loc:__LOC__ "not a record") @@
+        get_t_sum (get_type_expression ae) in
+      let%bind path = Layout.constructor_to_lr ~layout:ty_variant.layout ty' ty_variant.content constructor in
+      let aux = fun pred (ty, lr) ->
+        let c = match lr with
+          | `Left  -> C_LEFT
+          | `Right -> C_RIGHT
+        in
+        return ~tv:ty @@ E_constant {cons_name=c;arguments=[pred]}
       in
-      return ~tv:ty @@ E_constant {cons_name=c;arguments=[pred]}
-    in
-    let%bind element' = compile_expression element in
-    let%bind expr = bind_fold_list aux element' path in
-    ok expr
-  )
+      let%bind element' = compile_expression element in
+      let%bind expr = bind_fold_list aux element' path in
+      ok expr
+    )
   | E_record m -> (
       let%bind record_t = trace_option (corner_case ~loc:__LOC__ "record expected") (AST.get_t_record ae.type_expression) in
       Layout.record_to_pairs compile_expression return record_t m
     )
   | E_record_accessor {record; path} ->
-      let%bind ty' = compile_type (get_type_expression record) in
-      let%bind {content ; layout} = trace_option (corner_case ~loc:__LOC__ "not a record") @@
-        get_t_record (get_type_expression record) in
-      let%bind path = Layout.record_access_to_lr ~layout ty' content path in
-      let aux = fun pred (ty, lr) ->
-        let c = match lr with
-          | `Left  -> C_CAR
-          | `Right -> C_CDR
-        in
-        return ~tv:ty @@ E_constant {cons_name=c;arguments=[pred]}
+    let%bind ty' = compile_type (get_type_expression record) in
+    let%bind {content ; layout} = trace_option (corner_case ~loc:__LOC__ "not a record") @@
+      get_t_record (get_type_expression record) in
+    let%bind path = Layout.record_access_to_lr ~layout ty' content path in
+    let aux = fun pred (ty, lr) ->
+      let c = match lr with
+        | `Left  -> C_CAR
+        | `Right -> C_CDR
       in
-      let%bind record' = compile_expression record in
-      let%bind expr = bind_fold_list aux record' path in
-      ok expr
+      return ~tv:ty @@ E_constant {cons_name=c;arguments=[pred]}
+    in
+    let%bind record' = compile_expression record in
+    let%bind expr = bind_fold_list aux record' path in
+    ok expr
   | E_record_update {record; path; update} ->
     (* Compile record update to simple constructors &
        projections. This will be optimized to some degree by eta
        contraction in a later pass. *)
 
     let rec aux res (r,p,up) =
-        let ty = get_type_expression r in
-        let%bind {content;layout} =
-          trace_option (corner_case ~loc:__LOC__ "not a record") @@
-          get_t_record (ty) in
-        let%bind ty' = compile_type (ty) in
-        let%bind p' =
-          trace_strong (corner_case ~loc:__LOC__ "record access") @@
-          Layout.record_access_to_lr ~layout ty' content p in
-        let res' = res @ p' in
-        match (up:AST.expression).expression_content with
-        | AST.E_record_update {record=record'; path=path'; update=update'} -> (
+      let ty = get_type_expression r in
+      let%bind {content;layout} =
+        trace_option (corner_case ~loc:__LOC__ "not a record") @@
+        get_t_record (ty) in
+      let%bind ty' = compile_type (ty) in
+      let%bind p' =
+        trace_strong (corner_case ~loc:__LOC__ "record access") @@
+        Layout.record_access_to_lr ~layout ty' content p in
+      let res' = res @ p' in
+      match (up:AST.expression).expression_content with
+      | AST.E_record_update {record=record'; path=path'; update=update'} -> (
           match record'.expression_content with
-            | AST.E_record_accessor {record;path} ->
-              if (AST.Misc.equal_variables record r && path = p) then
-                aux res' (record',path',update')
-              else ok @@ (up,res')
-            | _ -> ok @@ (up,res')
+          | AST.E_record_accessor {record;path} ->
+            if (AST.Misc.equal_variables record r && path = p) then
+              aux res' (record',path',update')
+            else ok @@ (up,res')
+          | _ -> ok @@ (up,res')
         )
-        | _ -> ok @@ (up,res')
-      in
-      let%bind (update, path) = aux [] (record, path, update) in
-      let path = List.map snd path in
-      let%bind update = compile_expression update in
-      let%bind record = compile_expression record in
-      let record_var = Var.fresh () in
-      let car (e : expression) : expression =
-        match e.type_expression.type_content with
-        | T_pair ((_, a), _) ->
-          { e with
-            content = E_constant { cons_name = C_CAR ; arguments = [e] } ;
-            type_expression = a }
-        | _ -> internal_error __LOC__ "record did not have pair type" in
-      let cdr (e : expression) : expression =
-        match e.type_expression.type_content with
-        | T_pair (_, (_, b)) ->
-          { e with
-            content = E_constant { cons_name = C_CDR ; arguments = [e] } ;
-            type_expression = b }
-        | _ -> internal_error __LOC__ "record did not have pair type" in
-      let rec build_record_update record path =
-        match path with
-        | [] -> update
-        | `Left :: path ->
-          { record with
-            content = E_constant { cons_name = C_PAIR ;
-                                   arguments = [ build_record_update (car record) path;
-                                                 cdr record ] } }
-        | `Right :: path ->
-          { record with
-            content = E_constant { cons_name = C_PAIR ;
-                                   arguments = [ car record;
-                                                 build_record_update (cdr record) path ] } } in
-      return
-        (E_let_in ((Location.wrap record_var, record.type_expression),
-                   false,
-                   record,
-                   build_record_update
-                     (e_var (Location.wrap record_var) record.type_expression)
-                     path))
+      | _ -> ok @@ (up,res')
+    in
+    let%bind (update, path) = aux [] (record, path, update) in
+    let path = List.map snd path in
+    let%bind update = compile_expression update in
+    let%bind record = compile_expression record in
+    let record_var = Var.fresh () in
+    let car (e : expression) : expression =
+      match e.type_expression.type_content with
+      | T_pair ((_, a), _) ->
+        { e with
+          content = E_constant { cons_name = C_CAR ; arguments = [e] } ;
+          type_expression = a }
+      | _ -> internal_error __LOC__ "record did not have pair type" in
+    let cdr (e : expression) : expression =
+      match e.type_expression.type_content with
+      | T_pair (_, (_, b)) ->
+        { e with
+          content = E_constant { cons_name = C_CDR ; arguments = [e] } ;
+          type_expression = b }
+      | _ -> internal_error __LOC__ "record did not have pair type" in
+    let rec build_record_update record path =
+      match path with
+      | [] -> update
+      | `Left :: path ->
+        { record with
+          content = E_constant { cons_name = C_PAIR ;
+                                 arguments = [ build_record_update (car record) path;
+                                               cdr record ] } }
+      | `Right :: path ->
+        { record with
+          content = E_constant { cons_name = C_PAIR ;
+                                 arguments = [ car record;
+                                               build_record_update (cdr record) path ] } } in
+    return
+      (E_let_in ((Location.wrap record_var, record.type_expression),
+                 false,
+                 record,
+                 build_record_update
+                   (e_var (Location.wrap record_var) record.type_expression)
+                   path))
   | E_constant {cons_name=name; arguments=lst} -> (
       let iterator_generator iterator_name =
         let expression_to_iterator_body (f : AST.expression) =
@@ -407,9 +412,86 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
               let%bind collection' = compile_expression collection in
               return @@ E_fold (f' , collection' , initial')
             )
+          | [ f ; initial ; collection ], C_FOLD_LEFT -> (
+              let%bind f' = expression_to_iterator_body f in
+              let%bind initial' = compile_expression initial in
+              let%bind collection' = compile_expression collection in
+              return @@ E_fold (f' , collection' , initial')
+            )
+          | [ f ; collection ; initial ], C_FOLD_RIGHT -> (
+              let%bind (input , output) = trace_option (corner_case ~loc:__LOC__ "expected function type") @@ AST.get_t_function f.type_expression in
+              let%bind f' = compile_expression f in
+              let%bind input' = compile_type input in
+              let%bind (item_type, acc_type) = trace_option (corner_case ~loc:__LOC__ "expected pair of element type and accumulator type") (Mini_c.Combinators.get_t_pair input') in
+              let annot_item_type = (None, item_type) in
+              let annot_acc_type = (None, acc_type) in
+              let rev_input_var = Location.wrap @@ Var.fresh ~name:"reversed" () in
+              let rev_input_type = Mini_c.Combinators.t_pair annot_acc_type annot_item_type in
+              let%bind output' = compile_type output in
+              let binder = Location.wrap @@ Var.fresh ~name:"iterated" () in
+              let application = Mini_c.Combinators.e_application f' output' (Mini_c.Combinators.e_var binder input') in
+              let rev_input_var_sym = Mini_c.Combinators.e_var rev_input_var rev_input_type in
+              let f'' = ((rev_input_var, rev_input_type),
+                         Mini_c.Combinators.e_let_in binder input' false
+                           (Mini_c.Combinators.Expression.make (E_constant {cons_name = C_PAIR; arguments = [
+                                Mini_c.Combinators.Expression.make (E_constant {cons_name = C_CDR; arguments = [rev_input_var_sym]}) item_type;
+                                Mini_c.Combinators.Expression.make (E_constant {cons_name = C_CAR; arguments = [rev_input_var_sym]}) acc_type;
+                              ]}) input')
+                           application
+                        ) in
+              let%bind initial' = compile_expression initial in
+              let%bind collection' = compile_expression collection in
+              let list_type = collection'.type_expression in
+              let annot_list_type = (None, list_type) in
+              let rev_var = Location.wrap @@ Var.fresh ~name:"reversed" () in
+              let%bind elem_type = trace_option (corner_case ~loc:__LOC__ "expected list with element type") (Mini_c.Combinators.get_t_list list_type) in
+              let annot_elem_type = (None, elem_type) in
+              let rev_arg_type = Mini_c.Combinators.t_pair annot_list_type annot_elem_type in
+              let rev_var_sym = Mini_c.Combinators.e_var rev_var rev_arg_type in
+              let rev_fun = ((rev_var, Mini_c.Combinators.t_pair annot_list_type annot_elem_type),
+                             Mini_c.Combinators.Expression.make (E_constant {cons_name = C_CONS; arguments = [
+                                 Mini_c.Combinators.Expression.make (E_constant {cons_name = C_CDR; arguments = [rev_var_sym]}) elem_type;
+                                 Mini_c.Combinators.Expression.make (E_constant {cons_name = C_CAR; arguments = [rev_var_sym]}) list_type;
+                               ]}) list_type
+                            ) in
+              let collection'' = Mini_c.Combinators.Expression.make
+                  (E_fold (rev_fun, collection', Mini_c.Combinators.Expression.make (E_constant {cons_name = C_LIST_EMPTY; arguments = []}) list_type ))
+                  list_type
+              in
+              return @@ E_fold (f'' , collection'' , initial')
+            )
+          | [ f ; collection ; initial ] , C_SET_FOLD_RIGHT -> (
+              let%bind (input , output) = trace_option (corner_case ~loc:__LOC__ "expected function type") @@ AST.get_t_function f.type_expression in
+              let%bind f' = compile_expression f in
+              let%bind input' = compile_type input in
+              let%bind (item_type, acc_type) = trace_option (corner_case ~loc:__LOC__ "expected pair of element type and accumulator type") (Mini_c.Combinators.get_t_pair input') in
+              let annot_item_type = (None, item_type) in
+              let annot_acc_type = (None, acc_type) in
+              let rev_input_var = Location.wrap @@ Var.fresh ~name:"reversed" () in
+              let rev_input_type = Mini_c.Combinators.t_pair annot_acc_type annot_item_type in
+              let%bind output' = compile_type output in
+              let binder = Location.wrap @@ Var.fresh ~name:"iterated" () in
+              let application = Mini_c.Combinators.e_application f' output' (Mini_c.Combinators.e_var binder input') in
+              let rev_input_var_sym = Mini_c.Combinators.e_var rev_input_var rev_input_type in
+              let f'' = ((rev_input_var, rev_input_type),
+                         Mini_c.Combinators.e_let_in binder input' false
+                           (Mini_c.Combinators.Expression.make (E_constant {cons_name = C_PAIR; arguments = [
+                                Mini_c.Combinators.Expression.make (E_constant {cons_name = C_CDR; arguments = [rev_input_var_sym]}) item_type;
+                                Mini_c.Combinators.Expression.make (E_constant {cons_name = C_CAR; arguments = [rev_input_var_sym]}) acc_type;
+                              ]}) input')
+                           application
+                        ) in
+              let%bind initial' = compile_expression initial in
+              let%bind collection' = compile_expression collection in
+              return @@ E_fold (f'' , collection' , initial')
+            )
           | _ -> fail @@ corner_case ~loc:__LOC__ (Format.asprintf "bad iterator arity: %a" PP.constant iterator_name)
       in
-      let (iter , map , fold) = iterator_generator C_ITER, iterator_generator C_MAP, iterator_generator C_FOLD in
+      let (iter , map , fold, fold_left, fold_right) = iterator_generator C_ITER,
+                                                       iterator_generator C_MAP,
+                                                       iterator_generator C_FOLD,
+                                                       iterator_generator C_FOLD_LEFT,
+                                                       iterator_generator C_FOLD_RIGHT in
       match (name , lst) with
       | (C_SET_ITER , lst) -> iter lst
       | (C_LIST_ITER , lst) -> iter lst
@@ -419,6 +501,9 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       | (C_LIST_FOLD , lst) -> fold lst
       | (C_SET_FOLD , lst) -> fold lst
       | (C_MAP_FOLD , lst) -> fold lst
+      | (C_LIST_FOLD_LEFT, lst) -> fold_left lst
+      | (C_LIST_FOLD_RIGHT, lst) -> fold_right lst
+      | (C_SET_FOLD_RIGHT , lst) -> iterator_generator C_SET_FOLD_RIGHT lst
       | _ -> (
           let%bind lst' = bind_map_list (compile_expression) lst in
           return @@ E_constant {cons_name=compile_constant' name;arguments=lst'}
@@ -434,13 +519,13 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
       let%bind expr' = compile_expression expr in
       match m with
       | Match_option { match_none; match_some = {opt; body; tv} } ->
-          let%bind n = compile_expression match_none in
-          let%bind (tv' , s') =
-            let%bind tv' = compile_type tv in
-            let%bind s' = compile_expression body in
-            ok (tv' , s')
-          in
-          return @@ E_if_none (expr' , n , ((Location.map Var.todo_cast opt , tv') , s'))
+        let%bind n = compile_expression match_none in
+        let%bind (tv' , s') =
+          let%bind tv' = compile_type tv in
+          let%bind s' = compile_expression body in
+          ok (tv' , s')
+        in
+        return @@ E_if_none (expr' , n , ((Location.map Var.todo_cast opt , tv') , s'))
       | Match_list {
           match_nil ;
           match_cons = {hd; tl; body; tv} ;
@@ -454,7 +539,7 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
           return @@ E_if_cons (expr' , nil , cons)
         )
       | Match_variant {cases ; tv} -> (
-        match expr'.type_expression.type_content with
+          match expr'.type_expression.type_content with
           | T_base TB_bool ->
             let ctor_body (case : AST.matching_content_case) = (case.constructor, case.body) in
             let cases = AST.LMap.of_list (List.map ctor_body cases) in
@@ -499,8 +584,8 @@ and compile_expression (ae:AST.expression) : (expression , spilling_error) resul
               trace_strong (corner_case ~loc:__LOC__ "building constructor") @@
               aux expr' tree
             )
-      )
-  )
+        )
+    )
   | E_raw_code { language; code} ->
     let backend = "Michelson" in
     let%bind () =
@@ -544,98 +629,98 @@ and compile_recursive {fun_name; fun_type; lambda} =
   let rec map_lambda : AST.expression_variable -> type_expression -> AST.expression -> (expression * expression_variable list , spilling_error) result = fun fun_name loop_type e ->
     match e.expression_content with
       E_lambda {binder;result} ->
-        let binder = Location.map Var.todo_cast binder in
-        let%bind (body,l) = map_lambda fun_name loop_type result in
-        ok @@ (Expression.make ~loc:e.location (E_closure {binder;body}) loop_type, binder::l)
-      | _  ->
-        let%bind res = replace_callback fun_name loop_type false e in
-        ok @@ (res, [])
+      let binder = Location.map Var.todo_cast binder in
+      let%bind (body,l) = map_lambda fun_name loop_type result in
+      ok @@ (Expression.make ~loc:e.location (E_closure {binder;body}) loop_type, binder::l)
+    | _  ->
+      let%bind res = replace_callback fun_name loop_type false e in
+      ok @@ (res, [])
 
   and replace_callback : AST.expression_variable -> type_expression -> bool -> AST.expression -> (expression , spilling_error) result = fun fun_name loop_type shadowed e ->
     match e.expression_content with
       E_let_in li ->
-        let shadowed = shadowed || Var.equal li.let_binder.wrap_content fun_name.wrap_content in
-        let%bind let_result = replace_callback fun_name loop_type shadowed li.let_result in
-        let%bind rhs = compile_expression li.rhs in
-        let%bind ty  = compile_type li.rhs.type_expression in
-        ok @@ e_let_in (Location.map Var.todo_cast li.let_binder) ty li.inline rhs let_result |
+      let shadowed = shadowed || Var.equal li.let_binder.wrap_content fun_name.wrap_content in
+      let%bind let_result = replace_callback fun_name loop_type shadowed li.let_result in
+      let%bind rhs = compile_expression li.rhs in
+      let%bind ty  = compile_type li.rhs.type_expression in
+      ok @@ e_let_in (Location.map Var.todo_cast li.let_binder) ty li.inline rhs let_result |
       E_matching m ->
-        let%bind ty = compile_type e.type_expression in
-        matching fun_name loop_type shadowed m ty |
+      let%bind ty = compile_type e.type_expression in
+      matching fun_name loop_type shadowed m ty |
       E_application {lamb;args} -> (
         match lamb.expression_content,shadowed with
-        E_variable name, false when Var.equal fun_name.wrap_content name.wrap_content ->
+          E_variable name, false when Var.equal fun_name.wrap_content name.wrap_content ->
           let%bind expr = compile_expression args in
           ok @@ Expression.make (E_constant {cons_name=C_LOOP_CONTINUE;arguments=[expr]}) loop_type |
-        _ ->
+          _ ->
           let%bind expr = compile_expression e in
           ok @@ Expression.make (E_constant {cons_name=C_LOOP_STOP;arguments=[expr]}) loop_type
       ) |
       _ ->
-        let%bind expr = compile_expression e in
-        ok @@ Expression.make (E_constant {cons_name=C_LOOP_STOP;arguments=[expr]}) loop_type
+      let%bind expr = compile_expression e in
+      ok @@ Expression.make (E_constant {cons_name=C_LOOP_STOP;arguments=[expr]}) loop_type
 
   and matching : AST.expression_variable -> type_expression -> bool -> AST.matching -> type_expression -> (expression , spilling_error) result = fun fun_name loop_type shadowed m ty ->
     let return ret = ok @@ Expression.make ret @@ ty in
     let%bind expr = compile_expression m.matchee in
     match m.cases with
-      | Match_option { match_none; match_some = {opt; body; tv} } ->
-          let%bind n = replace_callback fun_name loop_type shadowed match_none in
-          let%bind (tv' , s') =
-            let%bind tv' = compile_type tv in
-            let%bind s' = replace_callback fun_name loop_type shadowed body in
-            ok (tv' , s')
-          in
-          return @@ E_if_none (expr , n , ((Location.map Var.todo_cast opt , tv') , s'))
-      | Match_list {
-          match_nil ;
-          match_cons = { hd ; tl ; body ; tv } ;
-        } -> (
-          let%bind nil = replace_callback fun_name loop_type shadowed match_nil in
-          let%bind cons =
-            let%bind ty' = compile_type tv in
-            let%bind match_cons' = replace_callback fun_name loop_type shadowed body in
-            ok (((Location.map Var.todo_cast hd , ty') , (Location.map Var.todo_cast tl , ty')) , match_cons')
-          in
-          return @@ E_if_cons (expr , nil , cons)
-        )
-      | Match_variant {cases=[{constructor=Label t;body=match_true};{constructor=Label f;body=match_false}];_}
-        when String.equal t "true" && String.equal f "false" ->
-          let%bind (t , f) = bind_map_pair (replace_callback fun_name loop_type shadowed) (match_true, match_false) in
-          return @@ E_if_bool (expr, t, f)
-      | Match_variant {cases;tv} -> (
-          let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
-            get_t_sum tv in
-          let%bind tree = Layout.match_variant_to_tree ~layout ~compile_type content in
-          let rec aux top t =
-            match t with
-            | ((`Leaf (Label constructor_name)) , tv) -> (
-                let%bind {constructor=_ ; pattern ; body} =
-                  trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
-                    let aux ({constructor = Label c ; pattern=_ ; body=_} : AST.matching_content_case) =
-                      (c = constructor_name) in
-                  List.find_opt aux cases in
-                let%bind body' = replace_callback fun_name loop_type shadowed body in
-                return @@ E_let_in ((Location.map Var.todo_cast pattern , tv) , false , top , body')
-              )
-            | ((`Node (a , b)) , tv) ->
-                let%bind a' =
-                  let%bind a_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_left tv in
-                  let left_var = Location.wrap @@ Var.fresh ~name:"left" () in
-                  let%bind e = aux (((Expression.make (E_variable left_var) a_ty))) a in
-                  ok ((left_var , a_ty) , e)
-                in
-                let%bind b' =
-                  let%bind b_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_right tv in
-                  let right_var = Location.wrap @@ Var.fresh ~name:"right" () in
-                  let%bind e = aux (((Expression.make (E_variable right_var) b_ty))) b in
-                  ok ((right_var , b_ty) , e)
-                in
-                return @@ E_if_left (top , a' , b')
-          in
-          trace_strong (corner_case ~loc:__LOC__ "building constructor") @@
-          aux expr tree
-       )
+    | Match_option { match_none; match_some = {opt; body; tv} } ->
+      let%bind n = replace_callback fun_name loop_type shadowed match_none in
+      let%bind (tv' , s') =
+        let%bind tv' = compile_type tv in
+        let%bind s' = replace_callback fun_name loop_type shadowed body in
+        ok (tv' , s')
+      in
+      return @@ E_if_none (expr , n , ((Location.map Var.todo_cast opt , tv') , s'))
+    | Match_list {
+        match_nil ;
+        match_cons = { hd ; tl ; body ; tv } ;
+      } -> (
+        let%bind nil = replace_callback fun_name loop_type shadowed match_nil in
+        let%bind cons =
+          let%bind ty' = compile_type tv in
+          let%bind match_cons' = replace_callback fun_name loop_type shadowed body in
+          ok (((Location.map Var.todo_cast hd , ty') , (Location.map Var.todo_cast tl , ty')) , match_cons')
+        in
+        return @@ E_if_cons (expr , nil , cons)
+      )
+    | Match_variant {cases=[{constructor=Label t;body=match_true};{constructor=Label f;body=match_false}];_}
+      when String.equal t "true" && String.equal f "false" ->
+      let%bind (t , f) = bind_map_pair (replace_callback fun_name loop_type shadowed) (match_true, match_false) in
+      return @@ E_if_bool (expr, t, f)
+    | Match_variant {cases;tv} -> (
+        let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
+          get_t_sum tv in
+        let%bind tree = Layout.match_variant_to_tree ~layout ~compile_type content in
+        let rec aux top t =
+          match t with
+          | ((`Leaf (Label constructor_name)) , tv) -> (
+              let%bind {constructor=_ ; pattern ; body} =
+                trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
+                let aux ({constructor = Label c ; pattern=_ ; body=_} : AST.matching_content_case) =
+                  (c = constructor_name) in
+                List.find_opt aux cases in
+              let%bind body' = replace_callback fun_name loop_type shadowed body in
+              return @@ E_let_in ((Location.map Var.todo_cast pattern , tv) , false , top , body')
+            )
+          | ((`Node (a , b)) , tv) ->
+            let%bind a' =
+              let%bind a_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_left tv in
+              let left_var = Location.wrap @@ Var.fresh ~name:"left" () in
+              let%bind e = aux (((Expression.make (E_variable left_var) a_ty))) a in
+              ok ((left_var , a_ty) , e)
+            in
+            let%bind b' =
+              let%bind b_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_right tv in
+              let right_var = Location.wrap @@ Var.fresh ~name:"right" () in
+              let%bind e = aux (((Expression.make (E_variable right_var) b_ty))) b in
+              ok ((right_var , b_ty) , e)
+            in
+            return @@ E_if_left (top , a' , b')
+        in
+        trace_strong (corner_case ~loc:__LOC__ "building constructor") @@
+        aux expr tree
+      )
   in
   let%bind fun_type = compile_type fun_type in
   let%bind (input_type,output_type) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_function fun_type in
@@ -650,11 +735,11 @@ and compile_recursive {fun_name; fun_type; lambda} =
 let compile_declaration env (d:AST.declaration) : (toplevel_statement option , spilling_error) result =
   match d with
   | Declaration_constant { binder ; expr ; inline } ->
-      let%bind expression = compile_expression expr in
-      let binder = Location.map Var.todo_cast binder in
-      let tv = Combinators.Expression.get_type expression in
-      let env' = Environment.add (binder, tv) env in
-      ok @@ Some ((binder, inline, expression), environment_wrap env env')
+    let%bind expression = compile_expression expr in
+    let binder = Location.map Var.todo_cast binder in
+    let tv = Combinators.Expression.get_type expression in
+    let env' = Environment.add (binder, tv) env in
+    ok @@ Some ((binder, inline, expression), environment_wrap env env')
   | _ -> ok None
 
 let compile_program ((AST.Program_Fully_Typed lst) : AST.program_fully_typed) : (program , spilling_error) result =
