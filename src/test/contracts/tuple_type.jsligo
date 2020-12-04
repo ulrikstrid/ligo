@@ -11,11 +11,11 @@
 
 type fun_type = (a: int, b: int) => int;
 
-let arguments = (b: int, c: int) => b + c;
+let arguments_ = (b: int, c: int) => b + c;
 
 let arguments_type_def = (b: fun_type) => b (5, 3);
 
-let arguments_test = (_: int) => arguments_type_def (arguments);
+let arguments_test = (_: int) => arguments_type_def (arguments_);
 
 type tuple_type = (a: [int, int]) => int;
 

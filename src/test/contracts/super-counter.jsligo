@@ -13,13 +13,12 @@ type parameter =
 
 type storage = int;
 
-type return = [list <operation>, storage];
+type return_ = [list <operation>, storage];
 
-let main55 = ([action, store]: [parameter, storage]) : return => {
-  switch (action.kind) {
-    case 'Increment':
-      return [[] as list <operation>, store + action.value];
-    case 'Decrement':
-      return [[] as list <operation>, store - action.value];
-  }
+let main = ([action, store]: [parameter, storage]) : return_ => {
+  let storage: nat = match (action, {
+    Increment: (n: nat) => store + n,
+    Decrement: (n: nat) => store - n
+  });
+  return [[] as list <operation>, storage];
 };

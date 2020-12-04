@@ -1,4 +1,4 @@
-type foobar = map <[int, int]>;
+type foobar = map <int, int>;
 
 let empty_map: foobar = Map.empty;
 
@@ -38,6 +38,7 @@ let mem = (km: [int, foobar]): bool => Map.mem (km[0], km[1]);
 let iter_op = (m: foobar): unit => {
   let assert_eq = (i: int, j: int) => assert (i == j);
   Map.iter (assert_eq, m);
+  return unit;
 };
 
 let map_op = (m: foobar) : foobar => {
@@ -45,14 +46,14 @@ let map_op = (m: foobar) : foobar => {
   return Map.map (increment, m);
 };
 
-let fold_op = (m: foobar): foobar => {
+let fold_op = (m: foobar): int => {
   let aggregate = (i: int, j: [int, int]) => i + j[0] + j[1];
   return Map.fold (aggregate, m, 10);
 };
 
 let deep_op = (m: foobar) : foobar => {
-  let coco = [0, m];
-  let coco1 = [0, Map.remove (42, coco[1])];
-  let coco2 = [0, Map.update (32, Some (16), coco1[1])];
+  let coco:[number, foobar] = [0, m];
+  let coco1:[number, foobar] = [0, Map.remove (42, coco[1])];
+  let coco2:[number, foobar] = [0, Map.update (32, Some (16), coco1[1])];
   return coco2[1];
 };
