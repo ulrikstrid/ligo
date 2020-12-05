@@ -54,4 +54,11 @@ module Make (Comments : COMMENTS) (Token : Token.S) =
 
     let from_channel channel =
       Scan.all_from_channel (mk_config ~input:None) channel |> lift
+
+    (* Aliases *)
+
+    let lex_file    = from_file
+    let lex_string  = from_string
+    let lex_buffer  = from_buffer
+    let lex_channel = from_channel
   end
