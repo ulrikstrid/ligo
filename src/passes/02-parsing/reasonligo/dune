@@ -84,14 +84,14 @@
 ;; Error messages
 
 (rule
- (targets error.messages)
+ (targets errors.msg)
  (mode (promote (until-clean) (only *)))
- (deps Parser.mly ParToken.mly error.messages.checked-in)
+ (deps Parser.mly ParToken.mly errors.msg.in)
  (action
   (with-stdout-to %{targets}
   (run menhir
        --unused-tokens
-       --update-errors error.messages.checked-in
+       --update-errors errors.msg.in
        --table
        --strict
        --external-tokens Lexer_reasonligo.Token
@@ -100,7 +100,7 @@
        Parser.mly))))
 
 (rule
-  (target error.messages.new)
+  (target errors.msg.new)
   (mode (promote (until-clean) (only *)))
   (action
     (with-stdout-to %{target}
@@ -116,7 +116,7 @@
 
 (rule
   (alias runtest)
-  (deps error.messages error.messages.new)
+  (deps errors.msg errors.msg.new)
   (action
     (run menhir
          --unused-tokens
@@ -126,13 +126,13 @@
          --base Parser.mly
          ParToken.mly
          Parser.mly
-         --compare-errors error.messages.new
-         --compare-errors error.messages)))
+         --compare-errors errors.msg.new
+         --compare-errors errors.msg)))
 
 (rule
  (targets ParErr.ml)
  (mode (promote (until-clean) (only *)))
- (deps Parser.mly ParToken.mly error.messages.checked-in)
+ (deps Parser.mly ParToken.mly errors.msg.in)
  (action
   (with-stdout-to %{targets}
   (run menhir
@@ -143,4 +143,4 @@
        --base Parser.mly
        ParToken.mly
        Parser.mly
-       --compile-errors error.messages.checked-in))))
+       --compile-errors errors.msg.in))))
