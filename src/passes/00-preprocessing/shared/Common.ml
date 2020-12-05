@@ -57,14 +57,14 @@ module Config (File : FILE) (Comments : Comments.S) =
 
 (* PREPROCESSING *)
 
-(* Results *)
-
-type success = Preprocessor.API.success
-type result  = (success, Errors.t) Trace.result
-
-let fail msg = Trace.fail @@ Errors.generic msg
-module MakePreproc (File : File.S) (Comments : Comments.S) =
+module Make (File : File.S) (Comments : Comments.S) =
   struct
+    (* Results *)
+
+    type success = Preprocessor.API.success
+    type result  = (success, Errors.t) Trace.result
+
+    let fail msg = Trace.fail @@ Errors.generic msg
     (* Postlude *)
 
     let finalise show_pp = function
@@ -90,6 +90,8 @@ module MakePreproc (File : File.S) (Comments : Comments.S) =
         Preprocessor.API.from_file config file_path in
       finalise Config.Preprocessor_CLI.show_pp preprocessed
 
+    let preprocess_file = from_file
+
     (* Preprocessing a string *)
 
     let from_string dirs string =
@@ -105,6 +107,8 @@ module MakePreproc (File : File.S) (Comments : Comments.S) =
         Preprocessor.API.from_string config string in
       finalise Config.Preprocessor_CLI.show_pp preprocessed
 
+    let preprocess_string = from_string
+
     (* Preprocessing a channel *)
 
     let from_channel dirs channel =
@@ -119,4 +123,6 @@ module MakePreproc (File : File.S) (Comments : Comments.S) =
       let preprocessed =
         Preprocessor.API.from_channel config channel in
       finalise Config.Preprocessor_CLI.show_pp preprocessed
+
+    let preprocess_channel = from_channel
   end

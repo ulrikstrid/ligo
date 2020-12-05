@@ -1,3 +1,5 @@
+;; Build of the LIGO preprocessors
+
 (library
   (name preprocessing)
   (public_name ligo.preprocessing)
@@ -6,11 +8,12 @@
     Preprocessor
     simple-utils
     ;; LIGO
+    preprocessing_shared
     preprocessing_pascaligo
     preprocessing_cameligo
     preprocessing_reasonligo
-    preprocessing_shared)
+    preprocessing_jsligo)
   (modules
-     Preprocessing Pascaligo Cameligo Reasonligo)
+     Preprocessing Pascaligo Cameligo Reasonligo Jsligo)
   (preprocess
     (pps ppx_let bisect_ppx --conditional)))
