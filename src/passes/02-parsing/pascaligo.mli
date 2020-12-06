@@ -40,8 +40,9 @@ val parse_expression : Buffer.t -> expr
 (* The function [pretty_print_file] reads a string buffer and assumes
    that its contents originally comes from a file. *)
 
-val pretty_print             : CST.t -> Buffer.t
-val pretty_print_expression  : CST.expr -> Buffer.t
-val pretty_print_pattern     : CST.pattern -> Buffer.t
-val pretty_print_type_expr   : CST.type_expr -> Buffer.t
-val pretty_print_file        : Buffer.t -> file_path -> buffer
+val pretty_print            : CST.t -> Buffer.t
+val pretty_print_expression : CST.expr -> Buffer.t
+val pretty_print_pattern    : CST.pattern -> Buffer.t
+val pretty_print_type_expr  : CST.type_expr -> Buffer.t
+val pretty_print_file       : Buffer.t -> file_path -> buffer
+val pretty_print_cst        : Buffer.t -> file_path -> buffer

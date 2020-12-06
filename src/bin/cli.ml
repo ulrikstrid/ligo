@@ -231,7 +231,7 @@ let compile_file =
 
 let preprocess =
   let f source_file syntax display_format =
-    return_result ~display_format (Parser.Formatter.ppx_format) @@
+    return_result ~display_format (Parsing.Formatter.ppx_format) @@
       map fst @@
         trace (Build.Errors.compiler_error) @@
         let options   = Compiler_options.make () in
@@ -245,7 +245,7 @@ let preprocess =
 
 let pretty_print =
   let f source_file syntax display_format =
-    return_result ~display_format (Parser.Formatter.ppx_format) @@
+    return_result ~display_format (Parsing.Formatter.ppx_format) @@
       trace (Build.Errors.compiler_error) @@
         let options = Compiler_options.make () in
         let%bind meta = Compile.Of_source.extract_meta syntax source_file in
@@ -270,7 +270,7 @@ let print_graph =
 
 let print_cst =
   let f source_file syntax display_format =
-    return_result ~display_format (Parser.Formatter.ppx_format) @@
+    return_result ~display_format (Parsing.Formatter.ppx_format) @@
       trace (Build.Errors.compiler_error) @@
       let options = Compiler_options.make () in
       let%bind meta = Compile.Of_source.extract_meta syntax source_file in
@@ -495,7 +495,7 @@ let run_function =
 
       let%bind meta             = Compile.Of_source.extract_meta syntax source_file in
       let%bind c_unit_param,_   = Compile.Of_source.compile_string ~options ~meta parameter in
-      let%bind imperative_param = Compile.Of_c_unit.compile_expression ~options ~meta c_unit_param in
+      let%bind imperative_param = Compile.Of_c_unit.compile_expression ~meta c_unit_param in
       let%bind sugar_param      = Compile.Of_imperative.compile_expression imperative_param in
       let%bind core_param       = Compile.Of_sugar.compile_expression sugar_param in
       let%bind app              = Compile.Of_core.apply entry_point core_param in
@@ -589,7 +589,7 @@ let list_declarations =
 
 let transpile_contract =
   let f source_file new_syntax syntax new_dialect display_format =
-    return_result ~display_format (Parser.Formatter.ppx_format) @@
+    return_result ~display_format (Parsing.Formatter.ppx_format) @@
       trace (Build.Errors.compiler_error) @@
       let options         = Compiler_options.make () in
       let%bind meta       = Compile.Of_source.extract_meta syntax source_file in
@@ -610,13 +610,13 @@ let transpile_contract =
 
 let transpile_expression =
   let f expression new_syntax syntax new_dialect display_format =
-    return_result ~display_format (Parser.Formatter.ppx_format) @@
+    return_result ~display_format (Parsing.Formatter.ppx_format) @@
       trace (Build.Errors.compiler_error) @@
       (* Compiling chain *)
       let options            = Compiler_options.make () in
       let%bind meta          = Compile.Of_source.make_meta syntax None in
       let%bind c_unit_expr,_ = Compile.Of_source.compile_string ~options ~meta expression in
-      let%bind imperative    = Compile.Of_c_unit.compile_expression ~options ~meta c_unit_expr in
+      let%bind imperative    = Compile.Of_c_unit.compile_expression ~meta c_unit_expr in
       let%bind sugar         = Compile.Of_imperative.compile_expression imperative in
       let%bind core          = Compile.Of_sugar.compile_expression sugar in
       (* Decompiling chain *)

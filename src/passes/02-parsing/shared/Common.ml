@@ -328,13 +328,11 @@ module MakePretty (CST    : CST)
         | Some c -> c
       in width, buffer
 
-    let print_cst cst =
+    let pretty_print cst =
       let width, buffer = set () in
       let doc = Pretty.print cst in
       let () = PPrint.ToBuffer.pretty 1.0 width buffer doc
       in buffer
-
-    let pretty_print = print_cst
 
     (* Pretty-print an expression from its CST *)
 

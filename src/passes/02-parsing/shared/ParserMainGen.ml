@@ -133,7 +133,10 @@ module Make (Comments    : COMMENTS)
                 end
               else ();
             flush_all ()
-      | Error msg -> (flush_all (); print_in_red msg.Region.value)
+      | Error Region.{value; region} ->
+         let reg = region#to_string ~file:true ~offsets:true `Point in
+         let msg = Printf.sprintf "Parse error %s:\n%s" reg value
+         in (flush_all (); print_in_red msg)
 
     let config =
       object

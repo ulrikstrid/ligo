@@ -21,9 +21,9 @@ type all =
  | `Main_parse_michelson_code of tezos_alpha_error list
  | `Main_michelson_execution_error of tezos_alpha_error list
 
- | `Main_preproc of Preproc.Errors.preproc_error
- | `Main_parser of Parser.Errors.parse_error
- | `Main_pretty of Parser.Errors.parse_error
+ | `Main_preproc of Preprocessing.Errors.t
+ | `Main_parser of Parsing.Errors.t
+ | `Main_pretty of Parsing.Errors.t
  | `Main_self_ast_imperative of Self_ast_imperative.Errors.self_ast_imperative_error
  | `Main_purification   of Purification.Errors.purification_error
  | `Main_depurification of Purification.Errors.purification_error

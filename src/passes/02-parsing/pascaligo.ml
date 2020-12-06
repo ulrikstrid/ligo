@@ -35,3 +35,15 @@ include Parsing_shared.Common.MakePretty (CST) (Pretty)
 
 let pretty_print_file buffer file_path =
   ContractParser.parse_file buffer file_path |> Trace.map pretty_print
+
+let pretty_print_cst buffer file_path =
+  let cst = parse_file buffer file_path in
+  let buffer = Buffer.create 59 in
+  let state =
+    Cst_pascaligo.Printer.mk_state
+      ~offsets:true
+      ~mode:`Point
+      ~buffer in
+  let apply tree =
+    Cst_pascaligo.Printer.pp_cst state tree; buffer
+  in Trace.map apply cst

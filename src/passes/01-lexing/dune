@@ -17,6 +17,6 @@
      preprocessing_jsligo
      lexing_jsligo)
   (modules
-     Lexing Pascaligo Cameligo Reasonligo Jsligo)
+     Lexing Errors Pascaligo Cameligo Reasonligo jsligo)
   (preprocess
     (pps ppx_let bisect_ppx --conditional)))
