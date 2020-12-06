@@ -59,7 +59,18 @@ module Config (File : FILE) (Comments : Comments.S) =
 
 module Make (File : File.S) (Comments : Comments.S) =
   struct
+    (* Vendor dependencies *)
+
+    module Trace = Simple_utils.Trace
+
+    (* Directories and files *)
+
+    type nonrec file_path = file_path
+    type nonrec dirs = dirs
+
     (* Results *)
+
+    module Errors = Errors
 
     type success = Preprocessor.API.success
     type result  = (success, Errors.t) Trace.result
