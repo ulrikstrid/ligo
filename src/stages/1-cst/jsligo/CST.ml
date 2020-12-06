@@ -30,16 +30,20 @@ type lexeme = string
 
 (* Keywords of Reason *)
 
-type kwd_else   = Region.t
-type kwd_false  = Region.t
-type kwd_if     = Region.t
-type kwd_let    = Region.t
-type kwd_or     = Region.t
-type kwd_then   = Region.t
-type kwd_true   = Region.t
-type kwd_type   = Region.t
-type kwd_return = Region.t
-type kwd_unit   = Region.t
+type kwd_else    = Region.t
+type kwd_false   = Region.t
+type kwd_if      = Region.t
+type kwd_let     = Region.t
+type kwd_const   = Region.t
+type kwd_or      = Region.t
+type kwd_then    = Region.t
+type kwd_true    = Region.t
+type kwd_type    = Region.t
+type kwd_return  = Region.t
+type kwd_switch  = Region.t
+type kwd_case    = Region.t
+type kwd_default = Region.t
+type kwd_unit    = Region.t
 
 (* Data constructors *)
 
@@ -118,6 +122,12 @@ type 'a braced = {
   rbrace : rbrace
 }
 
+type 'a brackets = {
+  lbracket : lbracket;
+  inside   : 'a;
+  rbracket : rbracket
+}
+
 type 'a chevrons = {
   lchevron   : lt;
   inside     : 'a;
@@ -135,28 +145,27 @@ type the_unit = lpar * rpar
 (* The Abstract Syntax Tree *)
 
 type t = {
-  decl : declaration nseq;
+  statements : statements;
   eof  : eof
 }
+
+and statements = (statement, semi) nsepseq
 
 and ast = t
 
 and attributes = attribute list
 
-and declaration =
-  ConstDecl of let_decl reg
-| TypeDecl  of type_decl reg
-
 (* Non-recursive values *)
 
-and let_decl =
-  (kwd_let * let_binding * attributes)
+and let_rhs = {
+  eq       : equal;
+  expr     : expr
+}
 
 and let_binding = {
-  binders  : pattern;
+  binders  : binding_pattern;
   lhs_type : (colon * type_expr) option;
-  eq       : equal;
-  let_rhs  : expr
+  let_rhs  : let_rhs option;
 }
 
 (* Type declarations *)
@@ -200,10 +209,36 @@ and field_decl = {
 
 and type_tuple = (type_expr, comma) nsepseq chevrons reg
 
-and pattern =
+and rest_pattern = {
+  ellipsis  : ellipsis;
+  rest      : variable
+}
+
+and assign_pattern = {
+  property  : variable;
+  eq        : equal;
+  value     : expr
+}
+
+and destruct = {
+  property  : variable;
+  colon     : colon;
+  target    : let_binding;
+}
+
+and binding_pattern =
+  PRest     of rest_pattern reg
+| PAssign   of assign_pattern reg
+| PVar      of variable
+| PDestruct of destruct reg
+| PObject   of (binding_pattern, comma) nsepseq braced reg
+| PWild 
+| PArray    of (binding_pattern, comma) nsepseq brackets reg
+
+and pattern = 
   PConstr   of constr_pattern
 | PUnit     of the_unit reg
-| PVar      of variable
+| PVar2      of variable
 | PInt      of (lexeme * Z.t) reg
 | PNat      of (lexeme * Z.t) reg
 | PBytes    of (lexeme * Hex.t) reg
@@ -254,8 +289,31 @@ and field_pattern = {
 
 and return = {
   kwd_return: kwd_return;
-  expr: expr;
+  expr: expr option;
 }
+
+and switch = {
+  kwd_switch  : kwd_switch;
+  lpar        : lpar;
+  expr        : expr;
+  rpar        : rpar;
+  lbrace      : lbrace;
+  cases       : switch_case nseq;
+  rbrace      : rbrace;
+}
+
+and switch_case = 
+  Switch_case of {
+    kwd_case    : kwd_case;
+    expr        : expr;
+    colon       : colon;
+    statements  : statements option;
+  }
+| Switch_default_case of {
+    kwd_default : kwd_default;
+    colon       : colon;
+    statements  : statements option;
+  }
 
 and expr =
   EAnnot   of annot_expr reg
@@ -275,13 +333,15 @@ and expr =
 | ECodeInj of code_inj reg
 
 and statement = 
-| SBlock   of statement injection reg
-| SVar     of variable
-| SExpr    of expr
-| SCond    of cond_expr reg
-| SReturn  of return reg
-| SLet     of let_in reg
-| STypeIn  of type_in reg
+| SBlock      of statement injection reg
+| SVar        of variable
+| SExpr       of expr
+| SCond       of cond_expr reg
+| SReturn     of return reg
+| SLet        of let_ reg
+| SConst      of const_ reg
+| STypeIn     of type_in reg
+| SSwitch     of switch reg
 
 and arguments =
   Multiple of (expr,comma) nsepseq par reg
@@ -403,11 +463,15 @@ and path =
   Name of variable
 | Path of projection reg
 
-and let_in = {
+and let_ = {
   kwd_let    : kwd_let;
-  binding    : let_binding;
-  semi       : semi;
-  body       : statement list;
+  bindings   : (let_binding, comma) nsepseq;
+  attributes : attributes
+}
+
+and const_ = {
+  kwd_const  : kwd_const;
+  bindings   : (let_binding, comma) nsepseq;
   attributes : attributes
 }
 
@@ -426,9 +490,9 @@ and fun_expr = {
 
 and cond_expr = {
   kwd_if   : kwd_if;
-  test     : expr;
-  ifso     : (statement list * semi option) braced;
-  ifnot    : (kwd_else * (statement list * semi option) braced) option;
+  test     : expr par;
+  ifso     : statement;
+  ifnot    : (kwd_else * statement) option;
 }
 
 (* Code injection.  Note how the field [language] wraps a region in
@@ -447,10 +511,6 @@ let rec last to_region = function
     [] -> Region.ghost
 |  [x] -> to_region x
 | _::t -> last to_region t
-
-let nsepseq_to_region to_region (hd,tl) =
-  let reg (_, item) = to_region item in
-  Region.cover (to_region hd) (last reg tl)
 
 let type_expr_to_region = function
   TProd   {region; _}
@@ -472,11 +532,14 @@ let constr_pattern_to_region = function
 | PTrue region | PFalse region
 | PConstrApp {region;_} -> region
 
+let binding_pattern_to_region = 
+  failwith "todo"
+
 let pattern_to_region = function
 | PList p -> list_pattern_to_region p
 | PConstr c -> constr_pattern_to_region c
 | PUnit {region;_}
-| PTuple {region;_} | PVar {region;_}
+| PTuple {region;_} | PVar2 {region;_}
 | PInt {region;_}
 | PString {region;_} | PVerbatim {region;_}
 | PWild region | PPar {region;_}
@@ -533,12 +596,10 @@ let statement_to_region = function
 | SVar {region; _}
 | SCond {region; _}
 | SReturn {region; _}
-| SLet {region; _}
+| SLet  {region; _}
+| SConst {region; _}
+| SSwitch {region; _}
 | STypeIn {region; _} -> region
-
-let declaration_to_region = function
-| ConstDecl {region;_}
-| TypeDecl {region;_} -> region
 
 let selection_to_region = function
   FieldName f -> f.region

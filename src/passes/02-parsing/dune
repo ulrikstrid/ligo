@@ -10,6 +10,7 @@
      parsing_shared
      parsing_pascaligo
      parsing_cameligo
-     parsing_reasonligo)
+     parsing_reasonligo
+     parsing_jsligo)
   (preprocess
     (pps ppx_let bisect_ppx --conditional)))
