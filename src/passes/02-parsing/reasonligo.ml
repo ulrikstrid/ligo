@@ -11,7 +11,6 @@ module File        = Preprocessing_reasonligo.File
 module Comments    = Preprocessing_reasonligo.Comments
 module Token       = Lexing_reasonligo.Token
 module Self_tokens = Lexing_reasonligo.Self_tokens
-module Scoping     = Parsing_reasonligo.Scoping
 module ParErr      = Parsing_reasonligo.ParErr
 module Parser      = Parsing_reasonligo.Parser
 module CST         = Cst.Reasonligo
@@ -26,7 +25,7 @@ module ReasonligoParser =
   end
 
 include Parsing_shared.Common.MakeTwoParsers
-          (File) (Comments) (Token) (Scoping) (ParErr) (Self_tokens)
+          (File) (Comments) (Token) (ParErr) (Self_tokens)
           (CST) (ReasonligoParser)
 
 (* Making the pretty-printers *)

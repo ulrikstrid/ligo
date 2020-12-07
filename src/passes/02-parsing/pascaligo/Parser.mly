@@ -61,7 +61,8 @@ let mk_arith f arg1 op arg2 =
 %on_error_reduce nsepseq(core_pattern,COMMA)
 %on_error_reduce constr_pattern
 %on_error_reduce core_expr
-%on_error_reduce module_fun
+%on_error_reduce module_var_e
+%on_error_reduce module_var_t
 %on_error_reduce nsepseq(param_decl,SEMI)
 %on_error_reduce nsepseq(selection,DOT)
 %on_error_reduce nsepseq(field_path_assignment,SEMI)
@@ -91,6 +92,8 @@ let mk_arith f arg1 op arg2 =
 %on_error_reduce option(SEMI)
 %on_error_reduce option(VBAR)
 %on_error_reduce projection
+%on_error_reduce module_access_e
+%on_error_reduce module_access_t
 %on_error_reduce option(arguments)
 %on_error_reduce path
 %on_error_reduce nseq(Attr)
@@ -198,7 +201,6 @@ declaration:
 
 open_type_decl:
   "type" type_name "is" type_expr {
-    Scoping.check_reserved_name $2;
     let stop   = type_expr_to_region $4 in
     let region = cover $1 stop in
     let value  = {kwd_type   = $1;
@@ -237,10 +239,11 @@ cartesian:
     in TProd {region; value} }
 
 core_type:
-  type_name      { TVar    $1 }
-| "_"            { TWild   $1 }
-| "<string>"     { TString $1 }
-| par(type_expr) { TPar    $1 }
+  type_name       { TVar    $1 }
+| "_"             { TWild   $1 }
+| "<string>"      { TString $1 }
+| module_access_t {   TModA $1 }
+| par(type_expr)  { TPar    $1 }
 | type_name type_tuple {
     let region = cover $1.region $2.region
     in TApp {region; value = $1,$2}
@@ -275,13 +278,11 @@ type_tuple:
 
 sum_type:
   nsepseq(variant,"|") {
-    Scoping.check_variants (Utils.nsepseq_to_list $1);
     let region = nsepseq_to_region (fun x -> x.region) $1 in
     let value  = {variants=$1; attributes=[]; lead_vbar=None}
     in TSum {region; value}
   }
 | seq("[@attr]") "|" nsepseq(variant,"|") {
-    Scoping.check_variants (Utils.nsepseq_to_list $3);
     let region = nsepseq_to_region (fun x -> x.region) $3 in
     let value  = {attributes=$1; lead_vbar = Some $2; variants=$3}
     in TSum {region; value} }
@@ -314,7 +315,6 @@ variant:
 record_type:
   seq("[@attr]") "record" sep_or_term_list(field_decl,";") "end" {
     let fields, terminator = $3 in
-    let () = Utils.nsepseq_to_list fields |> Scoping.check_fields in
     let region =
       match first_region $1 with
         None -> cover $2 $4
@@ -328,7 +328,6 @@ record_type:
   }
 | seq("[@attr]") "record" "[" sep_or_term_list(field_decl,";") "]" {
     let fields, terminator = $4 in
-    let () = Utils.nsepseq_to_list fields |> Scoping.check_fields in
     let region =
       match first_region $1 with
         None -> cover $2 $5
@@ -339,6 +338,18 @@ record_type:
                   terminator;
                   attributes=$1}
     in TRecord {region; value} }
+
+module_access_t:
+  module_name "." module_var_t {
+    let start       = $1.region in
+    let stop        = type_expr_to_region $3 in
+    let region      = cover start stop in
+    let value       = {module_name=$1; selector=$2; field=$3}
+    in {region; value} }
+
+module_var_t:
+  module_access_t   { TModA $1 }
+| field_name        { TVar  $1 }
 
 field_decl:
   seq("[@attr]") field_name ":" type_expr {
@@ -365,7 +376,6 @@ fun_expr:
 open_fun_decl:
   seq("[@attr]") ioption("recursive") "function" fun_name parameters
   ioption(type_annot) "is" expr {
-    Scoping.check_reserved_name $4;
     let stop   = expr_to_region $8 in
     let region = match first_region $1 with
                    Some start -> cover start stop
@@ -388,14 +398,10 @@ fun_decl:
     {$1 with value = {$1.value with terminator=$2}} }
 
 parameters:
-  par(nsepseq(param_decl,";")) {
-    let params =
-      Utils.nsepseq_to_list ($1.value: _ par).inside
-    in Scoping.check_parameters params; $1 }
+  par(nsepseq(param_decl,";")) {$1}
 
 param_decl:
   "var" var param_type? {
-    Scoping.check_reserved_name $2;
     let stop   = match $3 with
                    None -> $2.region
                  | Some (_,t) -> type_expr_to_region t in
@@ -406,7 +412,6 @@ param_decl:
     in ParamVar {region; value}
   }
 | "const" var param_type? {
-    Scoping.check_reserved_name $2;
     let stop   = match $3 with
                    None -> $2.region
                  | Some (_,t) -> type_expr_to_region t in
@@ -475,7 +480,6 @@ open_var_decl:
 
 unqualified_decl(OP):
   var ioption(type_annot) OP expr {
-    Scoping.check_reserved_name $1;
     let region = expr_to_region $4
     in $1, $2, $3, $4, region }
 
@@ -685,7 +689,6 @@ cases(rhs):
 
 case_clause(rhs):
   pattern "->" rhs {
-    Scoping.check_pattern $1;
     fun rhs_to_region ->
       let start  = pattern_to_region $1 in
       let region = cover start (rhs_to_region $3)
@@ -720,8 +723,6 @@ while_loop:
 
 for_loop:
   "for" var "->" var "in" "map" expr block {
-    Scoping.check_reserved_name $2;
-    Scoping.check_reserved_name $4;
     let region = cover $1 $8.region in
     let value  = {kwd_for    = $1;
                   var        = $2;
@@ -733,7 +734,6 @@ for_loop:
     in For (ForCollect {region; value})
   }
 | "for" var ":=" expr "to" expr ioption(step_clause) block {
-    Scoping.check_reserved_name $2;
     let region = cover $1 $8.region in
     let value  = {kwd_for = $1;
                   binder  = $2;
@@ -746,7 +746,6 @@ for_loop:
     in For (ForInt {region; value})
   }
 | "for" var "in" collection expr block {
-    Scoping.check_reserved_name $2;
     let region = cover $1 $6.region in
     let value  = {kwd_for    = $1;
                   var        = $2;
@@ -881,7 +880,7 @@ core_expr:
   "<int>"                       { EArith (Int $1)              }
 | "<nat>"                       { EArith (Nat $1)              }
 | "<mutez>"                     { EArith (Mutez $1)            }
-| "<ident>" | module_field      { EVar $1                      }
+| "<ident>"                     { EVar $1                      }
 | "<string>"                    { EString (String $1)          }
 | "<verbatim>"                  { EString (Verbatim $1)        }
 | "<bytes>"                     { EBytes $1                    }
@@ -893,6 +892,7 @@ core_expr:
 | list_expr                     { EList $1                     }
 | "None"                        { EConstr (NoneExpr $1)        }
 | fun_call_or_par_or_projection { $1                           }
+| module_access_e               { EModA $1                     }
 | map_expr                      { EMap $1                      }
 | set_expr                      { ESet $1                      }
 | record_expr                   { ERecord $1                   }
@@ -952,18 +952,6 @@ path:
   var        { Name $1 }
 | projection { Path $1 }
 
-module_field:
-  module_name "." module_fun {
-    let region = cover $1.region $3.region in
-    {region; value = $1.value ^ "." ^ $3.value} }
-
-module_fun:
-  field_name { $1 }
-| "map"      { {value="map";    region=$1} }
-| "or"       { {value="or";     region=$1} }
-| "and"      { {value="and";    region=$1} }
-| "remove"   { {value="remove"; region=$1} }
-
 projection:
   struct_name "." nsepseq(selection,".") {
     let stop   = nsepseq_to_region selection_to_region $3 in
@@ -971,14 +959,23 @@ projection:
     and value  = {struct_name=$1; selector=$2; field_path=$3}
     in {region; value}
   }
-| module_name "." field_name "." nsepseq(selection,".") {
-    let value       = $1.value ^ "." ^ $3.value in
-    let struct_name = {$1 with value} in
+
+module_access_e :
+  module_name "." module_var_e {
     let start       = $1.region in
-    let stop        = nsepseq_to_region selection_to_region $5 in
+    let stop        = expr_to_region $3 in
     let region      = cover start stop in
-    let value       = {struct_name; selector=$4; field_path=$5}
+    let value       = {module_name=$1; selector=$2; field=$3}
     in {region; value} }
+
+module_var_e :
+  module_access_e { EModA $1                         }
+| field_name      { EVar $1                          }
+| "map"           { EVar {value="map";    region=$1} }
+| "or"            { EVar {value="or";     region=$1} }
+| "and"           { EVar {value="and";    region=$1} }
+| "remove"        { EVar {value="remove"; region=$1} }
+| projection      { EProj $1                         }
 
 selection:
   field_name { FieldName $1 }
@@ -1014,10 +1011,13 @@ code_inj:
     in {region; value} }
 
 fun_call:
-  fun_name     arguments
-| module_field arguments {
+  fun_name arguments {
     let region = cover $1.region $2.region
-    in {region; value = (EVar $1),$2} }
+    in {region; value = (EVar $1), $2}
+  }
+| module_access_e arguments {
+    let region = cover $1.region $2.region
+    in {region; value = (EModA $1), $2} }
 
 tuple_expr:
   par(tuple_comp) { $1 }

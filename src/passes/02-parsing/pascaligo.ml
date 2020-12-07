@@ -11,7 +11,6 @@ module File        = Preprocessing_pascaligo.File
 module Comments    = Preprocessing_pascaligo.Comments
 module Token       = Lexing_pascaligo.Token
 module Self_tokens = Lexing_pascaligo.Self_tokens
-module Scoping     = Parsing_pascaligo.Scoping
 module ParErr      = Parsing_pascaligo.ParErr
 module Parser      = Parsing_pascaligo.Parser
 module CST         = Cst.Pascaligo
@@ -26,7 +25,7 @@ module PascaligoParser =
   end
 
 include Parsing_shared.Common.MakeTwoParsers
-          (File) (Comments) (Token) (Scoping) (ParErr) (Self_tokens)
+          (File) (Comments) (Token) (ParErr) (Self_tokens)
           (CST) (PascaligoParser)
 
 (* Making the pretty-printers *)

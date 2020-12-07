@@ -6,6 +6,11 @@ let rec error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
+    | `Build_error_tracer err -> error_ppformat ~display_format f err
+    | `Build_dependency_cycle trace ->
+      Format.fprintf f "@[<hv>Dependency cycle detected :@, %s@]" trace
+    | `Build_corner_case (loc,msg) ->
+      Format.fprintf f "[@<hv>Building corner case at %s : %s@]" loc msg
     | `Test_err_tracer (name,err) ->
       Format.fprintf f "@[<hv>Test '%s'@ %a@]"
         name (error_ppformat ~display_format) err
@@ -131,14 +136,17 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_preproc e -> Preprocessing.Errors.error_ppformat ~display_format f e
     | `Main_parser e -> Parsing.Errors.error_ppformat ~display_format f e
     | `Main_pretty _e -> () (*no error in this pass*)
+    | `Main_self_cst_cameligo e -> Self_cst.Cameligo.Errors.error_ppformat ~display_format f e
+    | `Main_self_cst_pascaligo e -> Self_cst.Pascaligo.Errors.error_ppformat ~display_format f e
+    | `Main_self_cst_reasonligo e -> Self_cst.Reasonligo.Errors.error_ppformat ~display_format f e
+    | `Main_cit_pascaligo e -> Tree_abstraction.Pascaligo.Errors.error_ppformat ~display_format f e
+    | `Main_cit_cameligo e -> Tree_abstraction.Cameligo.Errors.error_ppformat ~display_format f e
+    | `Main_cit_reasonligo e -> Tree_abstraction.Reasonligo.Errors.error_ppformat ~display_format f e
     | `Main_self_ast_imperative e -> Self_ast_imperative.Errors.error_ppformat ~display_format f e
     | `Main_purification e -> Purification.Errors.error_ppformat ~display_format f e
     | `Main_depurification _e -> () (*no error in this pass*)
     | `Main_desugaring _e -> () (*no error in this pass*)
     | `Main_sugaring _e -> () (*no error in this pass*)
-    | `Main_cit_pascaligo e -> Tree_abstraction.Pascaligo.Errors.error_ppformat ~display_format f e
-    | `Main_cit_cameligo e -> Tree_abstraction.Cameligo.Errors.error_ppformat ~display_format f e
-    | `Main_cit_reasonligo e -> Tree_abstraction.Reasonligo.Errors.error_ppformat ~display_format f e
     | `Main_typer e -> Typer.Errors.error_ppformat ~display_format f e
     | `Main_interpreter e -> Interpreter.Errors.error_ppformat ~display_format f e
     | `Main_self_ast_typed e -> Self_ast_typed.Errors.error_ppformat ~display_format f e
@@ -175,6 +183,18 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   -> `Null
 
   (* Top-level errors *)
+  | `Build_error_tracer e -> json_error ~stage:"build system" ~content:(error_jsonformat e)
+  | `Build_dependency_cycle trace ->
+    let content = `Assoc [
+      ("message", `String "dependency cycle detected") ;
+      ("cycle",    `String trace) ; ] in
+    json_error ~stage:"build system" ~content
+  | `Build_corner_case (loc,msg) ->
+    let content = `Assoc [
+      ("message", `String msg) ;
+      ("loc", `String loc) ]
+    in
+    json_error ~stage:"build system" ~content
   | `Main_invalid_syntax_name _ ->
     json_error ~stage:"command line interpreter" ~content:(`String "bad syntax name")
   | `Main_invalid_dialect_name _ ->
@@ -279,14 +299,17 @@ let rec error_jsonformat : Types.all -> Yojson.Safe.t = fun a ->
   | `Main_preproc e -> Preprocessing.Errors.error_jsonformat e
   | `Main_parser e -> Parsing.Errors.error_jsonformat e
   | `Main_pretty _ -> `Null (*no error in this pass*)
+  | `Main_self_cst_cameligo e -> Self_cst.Cameligo.Errors.error_jsonformat e
+  | `Main_self_cst_pascaligo e -> Self_cst.Pascaligo.Errors.error_jsonformat e
+  | `Main_self_cst_reasonligo e -> Self_cst.Reasonligo.Errors.error_jsonformat e
+  | `Main_cit_pascaligo e -> Tree_abstraction.Pascaligo.Errors.error_jsonformat e
+  | `Main_cit_cameligo e -> Tree_abstraction.Cameligo.Errors.error_jsonformat e
+  | `Main_cit_reasonligo e -> Tree_abstraction.Reasonligo.Errors.error_jsonformat e
   | `Main_self_ast_imperative e -> Self_ast_imperative.Errors.error_jsonformat e
   | `Main_purification e -> Purification.Errors.error_jsonformat e
   | `Main_depurification _ -> `Null (*no error in this pass*)
   | `Main_desugaring _ -> `Null (*no error in this pass*)
   | `Main_sugaring _ -> `Null (*no error in this pass*)
-  | `Main_cit_pascaligo e -> Tree_abstraction.Pascaligo.Errors.error_jsonformat e
-  | `Main_cit_cameligo e -> Tree_abstraction.Cameligo.Errors.error_jsonformat e
-  | `Main_cit_reasonligo e -> Tree_abstraction.Reasonligo.Errors.error_jsonformat e
   | `Main_typer e -> Typer.Errors.error_jsonformat e
   | `Main_interpreter _ -> `Null (*no error*)
   | `Main_self_ast_typed e -> Self_ast_typed.Errors.error_jsonformat e

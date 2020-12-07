@@ -18,14 +18,20 @@ let get_initial_env  : string -> (Ast_typed.environment, all) result =
   let%bind protocol = protocol_to_variant protocol_as_str in
   ok @@ Environment.default protocol
 
+(*TODO : move this function to src/helpers so that src/build/.. can use it *)
+let file_extension_to_variant sf =
+  match sf with
+  | ".ligo" | ".pligo" -> Some PascaLIGO
+  | ".mligo"           -> Some CameLIGO
+  | ".religo"          -> Some ReasonLIGO
+  | _                  -> None
+
 let syntax_to_variant (Syntax_name syntax) source =
   match syntax, source with
-    "auto", Some sf ->
-      (match Filename.extension sf with
-         ".ligo" | ".pligo" -> ok PascaLIGO
-       | ".mligo"           -> ok CameLIGO
-       | ".religo"          -> ok ReasonLIGO
-       | ext                -> fail (syntax_auto_detection ext))
+  | "auto", Some sf ->
+    let sf = Filename.extension sf in
+    trace_option (syntax_auto_detection sf) @@
+      file_extension_to_variant sf
   | ("pascaligo" | "PascaLIGO"),   _ -> ok PascaLIGO
   | ("cameligo" | "CameLIGO"),     _ -> ok CameLIGO
   | ("reasonligo" | "ReasonLIGO"), _ -> ok ReasonLIGO
@@ -41,7 +47,8 @@ let typer_switch_to_variant t =
 
 type options = Compiler_options.t
 
-let preprocess_file ~(options:options) ~meta file_path =
+let preprocess_file ~(options:options) ~meta file_path
+  : (Preprocessing.Pascaligo.success, Main_errors.all) Trace.result =
   let open Preprocessing in
   let preprocess_file =
     match meta.syntax with
@@ -77,54 +84,72 @@ let parse_and_abstract_pascaligo buffer file_path =
   let%bind raw =
     trace parser_tracer @@
     Parsing.Pascaligo.parse_file buffer file_path in
+  let%bind applied =
+    trace self_cst_pascaligo_tracer @@
+    Self_cst.Pascaligo.all_program raw in
   let%bind imperative =
     trace cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.compile_program raw
+    Tree_abstraction.Pascaligo.compile_program applied
   in ok imperative
 
 let parse_and_abstract_expression_pascaligo buffer =
   let%bind raw =
     trace parser_tracer @@
     Parsing.Pascaligo.parse_expression buffer in
+  let%bind applied =
+    trace self_cst_pascaligo_tracer @@
+    Self_cst.Pascaligo.all_expression raw in
   let%bind imperative =
     trace cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.compile_expression raw
+    Tree_abstraction.Pascaligo.compile_expression applied
   in ok imperative
 
 let parse_and_abstract_cameligo buffer file_path =
   let%bind raw =
     trace parser_tracer @@
     Parsing.Cameligo.parse_file buffer file_path in
+  let%bind applied =
+    trace self_cst_cameligo_tracer @@
+    Self_cst.Cameligo.all_program raw in
   let%bind imperative =
     trace cit_cameligo_tracer @@
-    Tree_abstraction.Cameligo.compile_program raw
+    Tree_abstraction.Cameligo.compile_program applied
   in ok imperative
 
 let parse_and_abstract_expression_cameligo buffer =
   let%bind raw =
     trace parser_tracer @@
     Parsing.Cameligo.parse_expression buffer in
+  let%bind applied =
+    trace self_cst_cameligo_tracer @@
+    Self_cst.Cameligo.all_expression raw in
   let%bind imperative =
     trace cit_cameligo_tracer @@
-    Tree_abstraction.Cameligo.compile_expression raw
+    Tree_abstraction.Cameligo.compile_expression applied
   in ok imperative
 
 let parse_and_abstract_reasonligo buffer file_path =
   let%bind raw =
     trace parser_tracer @@
     Parsing.Reasonligo.parse_file buffer file_path in
+  let%bind applied =
+    trace self_cst_reasonligo_tracer @@
+    Self_cst.Reasonligo.all_program raw in
   let%bind imperative =
     trace cit_reasonligo_tracer @@
-    Tree_abstraction.Reasonligo.compile_program raw
+    Tree_abstraction.Reasonligo.compile_program applied
   in ok imperative
 
 let parse_and_abstract_expression_reasonligo buffer =
   let%bind raw =
     trace parser_tracer @@
     Parsing.Reasonligo.parse_expression buffer in
+  let%bind applied =
+    trace self_cst_reasonligo_tracer @@
+    Self_cst.Reasonligo.all_expression raw in
   let%bind imperative =
     trace cit_reasonligo_tracer @@
-    Tree_abstraction.Reasonligo.compile_expression raw
+    Tree_abstraction.Reasonligo.compile_expression applied
   in ok imperative
 
 let parse_and_abstract ~meta buffer file_path

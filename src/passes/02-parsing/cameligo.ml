@@ -11,7 +11,6 @@ module File        = Preprocessing_cameligo.File
 module Comments    = Preprocessing_cameligo.Comments
 module Token       = Lexing_cameligo.Token
 module Self_tokens = Lexing_cameligo.Self_tokens
-module Scoping     = Parsing_cameligo.Scoping
 module ParErr      = Parsing_cameligo.ParErr
 module Parser      = Parsing_cameligo.Parser
 module CST         = Cst.Cameligo
@@ -26,7 +25,7 @@ module CameligoParser =
   end
 
 include Parsing_shared.Common.MakeTwoParsers
-          (File) (Comments) (Token) (Scoping) (ParErr) (Self_tokens)
+          (File) (Comments) (Token) (ParErr) (Self_tokens)
           (CST) (CameligoParser)
 
 (* Making the pretty-printers *)

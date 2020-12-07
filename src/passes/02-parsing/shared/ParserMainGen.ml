@@ -41,18 +41,19 @@ type 'token window = <
   current_token : 'token           (* Including EOF *)
 >
 
-module Make (Comments    : COMMENTS)
-            (File        : FILE)
-            (Token       : TOKEN)
-            (CST         : sig type t end)
-            (Parser      : PARSER with type token = Token.t
-                                  and type tree = CST.t)
-            (Scoping     : sig exception Error of string * Token.t window end)
-            (ParErr      : sig val message : int -> string end)
-            (Printer     : PRINTER with type tree = CST.t)
-            (Pretty      : PRETTY with type tree = CST.t)
-            (CLI         : ParserLib.CLI.S)
-            (Self_tokens : SELF_TOKENS with type token = Token.t) =
+module Make
+         (File        : FILE)
+         (Comments    : COMMENTS)
+         (Token       : TOKEN)
+         (ParErr      : sig val message : int -> string end)
+         (Self_tokens : SELF_TOKENS with type token = Token.t)
+         (CST         : sig type t end)
+         (Parser      : PARSER with type token = Token.t
+                                and type tree = CST.t)
+         (Printer     : PRINTER with type tree = CST.t)
+         (Pretty      : PRETTY with type tree = CST.t)
+         (CLI         : ParserLib.CLI.S)
+ =
   struct
     (* Instantiating the lexer *)
 
@@ -147,37 +148,31 @@ module Make (Comments    : COMMENTS)
     module Preproc = PreprocMainGen.Make (Preprocessor_CLI)
 
     let parse () =
-      try
-        if Lexer_CLI.preprocess then
-          match Preproc.preprocess () with
-            Stdlib.Error _ -> ()
-          | Stdlib.Ok (buffer, _deps) ->
-              if Preprocessor_CLI.show_pp then
-                Printf.printf "%s%!" (Buffer.contents buffer)
-              else ();
-              let string = Buffer.contents buffer in
-              let lexbuf = Lexing.from_string string in
-              let open MainParser in
-              if CLI.mono then
-                mono_from_lexbuf lexbuf |> wrap
-              else
-                incr_from_lexbuf (module ParErr) lexbuf |> wrap
-        else
-          let open MainParser in
-          match Preprocessor_CLI.input with
-            None ->
-              if CLI.mono then
-                mono_from_channel stdin |> wrap
-              else
-                incr_from_channel (module ParErr) stdin |> wrap
-          | Some file_path ->
-              if CLI.mono then
-                mono_from_file file_path |> wrap
-              else
-                incr_from_file (module ParErr) file_path |> wrap
-      with
-        Scoping.Error (value, window) ->
-          let token  = window#current_token in
-          let region = Token.to_region token
-          in Stdlib.Error Region.{value; region} |> wrap
+      if Lexer_CLI.preprocess then
+        match Preproc.preprocess () with
+          Stdlib.Error _ -> ()
+        | Stdlib.Ok (buffer, _deps) ->
+            if Preprocessor_CLI.show_pp then
+              Printf.printf "%s%!" (Buffer.contents buffer)
+            else ();
+            let string = Buffer.contents buffer in
+            let lexbuf = Lexing.from_string string in
+            let open MainParser in
+            if CLI.mono then
+              mono_from_lexbuf lexbuf |> wrap
+            else
+              incr_from_lexbuf (module ParErr) lexbuf |> wrap
+      else
+        let open MainParser in
+        match Preprocessor_CLI.input with
+          None ->
+            if CLI.mono then
+              mono_from_channel stdin |> wrap
+            else
+              incr_from_channel (module ParErr) stdin |> wrap
+        | Some file_path ->
+            if CLI.mono then
+              mono_from_file file_path |> wrap
+            else
+              incr_from_file (module ParErr) file_path |> wrap
   end
