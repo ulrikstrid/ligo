@@ -10,7 +10,7 @@ open Trace
 
 type 'typeVariable t = ('typeVariable, c_constructor_simpl) ReprMap.t
 let create_state ~cmp =
-  let merge c1 c2 = assert (Ast_typed.Compare.c_constructor_simpl c1 c2 = 0); c1 in
+  let merge c1 c2 = assert (compare c1 c2 = 0); c1 in
   ReprMap.create ~cmp ~merge
 
 (** Stores the first assignment ('a = ctor('b, …)) that is encountered

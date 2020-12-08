@@ -8,7 +8,7 @@
     UnionFind
   )
   (preprocess
-    (pps ppx_let bisect_ppx --conditional)
+    (pps ppx_let bisect_ppx --conditional ppx_deriving_yojson)
   )
 ;;  (modules_without_implementation generated_fold_x)
   (flags (:standard -open Simple_utils))

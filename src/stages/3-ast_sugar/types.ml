@@ -13,7 +13,7 @@ type type_content =
   | T_app             of ty_expr type_app
   | T_module_accessor of ty_expr module_access
 
-and type_expression = {type_content: type_content; location: Location.t}
+and type_expression = {type_content: type_content; location: Location.t} [@@deriving to_yojson]
 and ty_expr = type_expression
 
 
@@ -29,7 +29,7 @@ and declaration =
   | Declaration_constant of (expr,ty_expr) declaration_constant
 
 (* | Macro_declaration of macro_declaration *)
-and expression = {expression_content: expression_content; location: Location.t}
+and expression = {expression_content: expression_content; location: Location.t} [@@deriving to_yojson]
 and expr = expression
 
 and expression_content =
@@ -71,7 +71,7 @@ and let_in = {
   let_result: expression ;
   attributes : attributes ;
   mut: bool;
-  }
+}
 
 and matching_expr =
   | Match_variant of ((label * expression_variable) * expression) list

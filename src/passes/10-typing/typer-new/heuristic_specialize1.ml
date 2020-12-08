@@ -74,9 +74,9 @@ let propagator : (output_specialize1 , typer_error) propagator =
   (* TODO: this should not use apply, universally-quantified types are *not* type-level functions, even though the substitution is identical on both. *)
   let apply =
     wrap Propagator_specialize_apply @@
-      P_apply { tf   = wrap Propagator_specialize_tf @@ P_forall a.forall ;
-                targ = wrap Propagator_specialize_targ @@ P_variable fresh_existential ;
-      }
+    P_apply { tf   = wrap Propagator_specialize_tf @@ P_forall a.forall ;
+              targ = wrap Propagator_specialize_targ @@ P_variable fresh_existential ;
+            }
   in
   let (reduced, new_constraints) = Typelang.check_applied @@ Typelang.type_level_eval apply in
   (if Ast_typed.Debug.debug_new_typer
@@ -86,19 +86,19 @@ let propagator : (output_specialize1 , typer_error) propagator =
        Ast_typed.PP.c_constructor_simpl b
        Ast_typed.PP.type_value reduced
        (PP_helpers.list_sep Ast_typed.PP.type_constraint (fun ppf () -> Format.fprintf ppf " ;\n")) new_constraints);
-  
+
   let eq1 = c_equation (wrap (Todo "solver: propagator: specialize1 eq1") @@ P_variable b.tv) reduced "propagator: specialize1" in
   let eqs = eq1 :: new_constraints in
-    ok [
-        {
-          remove_constraints = [];
-          add_constraints = eqs;
-          proof_trace = Axiom Axioms.specialize
-        }
-      ]
+  ok [
+    {
+      remove_constraints = [];
+      add_constraints = eqs;
+      proof_trace = Axiom Axioms.specialize
+    }
+  ]
 
 let printer = Ast_typed.PP.output_specialize1
-let printer_json = Ast_typed.Yojson.output_specialize1
-let comparator = Solver_should_be_generated.compare_output_specialize1
+let printer_json = Ast_typed.output_specialize1_to_yojson
+let comparator = compare
 
 let heuristic = Heuristic_plugin { selector; alias_selector; propagator; printer; printer_json; comparator }

@@ -65,3 +65,5 @@ let bindings map =
 let iter f map = RB.iter (fun (k,v) -> f k v) map.tree
 
 let fold_inc f map = RB.fold_inc (fun ~elt:(k,v) -> f k v) map.tree
+
+let to_yojson key_to_yojson value_to_yojson map = `List (List.map (fun (key, value) -> `List [key_to_yojson key; value_to_yojson value]) @@ bindings map)

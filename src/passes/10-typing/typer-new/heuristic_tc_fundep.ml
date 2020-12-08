@@ -133,7 +133,7 @@ let alias_selector : type_variable -> type_variable -> _ indexes -> selector_out
 let restrict_one (c : c_constructor_simpl) (allowed : type_value) =
   match c, allowed.wrap_content with
   | { reason_constr_simpl=_; tv=_; c_tag; tv_list }, P_constant { p_ctor_tag; p_ctor_args } ->
-    if Ast_typed.Compare.constant_tag c_tag p_ctor_tag = 0
+    if compare c_tag p_ctor_tag = 0
     then if List.compare_lengths tv_list p_ctor_args = 0
       then Some p_ctor_args
       else None (* case removed because type constructors are different *)
@@ -166,7 +166,7 @@ let restrict (({ reason_constr_simpl = _; tv = _; c_tag = _; tv_list } as c) : c
 let replace_var_and_possibilities_1 ((x : type_variable) , (possibilities_for_x : type_value list)) =
   let%bind tags_and_args = bind_map_list get_tag_and_args_of_constant possibilities_for_x in
   let tags_of_constructors, arguments_of_constructors = List.split @@ tags_and_args in
-  match all_equal Ast_typed.Compare.constant_tag tags_of_constructors with
+  match all_equal compare tags_of_constructors with
   | Different ->
     (* The "changed" boolean return indicates whether any update was done.
        It is used to detect when the variable doesn't need any further cleanup. *)
@@ -271,43 +271,43 @@ let propagator : (output_tc_fundep, typer_error) propagator =
      conversion (one may dream). *)
   let tc_args = List.map (fun x -> wrap (Todo "no idea") @@ P_variable x) cleaned.refined.args in
   let cleaned : type_constraint = {
-      reason = cleaned.refined.reason_typeclass_simpl;
-      c = C_typeclass {
+    reason = cleaned.refined.reason_typeclass_simpl;
+    c = C_typeclass {
         tc_args ;
         typeclass = cleaned.refined.tc;
         original_id = Some selected.tc.original;
       }
-    }
+  }
   in
   let aux (x : c_constructor_simpl) : type_constraint = {
     reason = "inferred: only possible type for that variable in the typeclass";
     c = C_equation {
-      aval = wrap (Todo "?") @@ P_variable x.tv ;
-      bval = wrap (Todo "? generated") @@ 
-              P_constant {
-                p_ctor_tag  = x.c_tag ;
-                p_ctor_args = List.map
-                  (fun v -> wrap (Todo "? probably generated") @@ P_variable v)
-                  x.tv_list ; 
-              }
+        aval = wrap (Todo "?") @@ P_variable x.tv ;
+        bval = wrap (Todo "? generated") @@
+          P_constant {
+            p_ctor_tag  = x.c_tag ;
+            p_ctor_args = List.map
+                (fun v -> wrap (Todo "? probably generated") @@ P_variable v)
+                x.tv_list ;
+          }
       }
-    }
+  }
   in
   let deduced : type_constraint list = List.map aux deduced in
   ok [
-      {
-        remove_constraints = [SC_Typeclass selected.tc.refined];
-        add_constraints = cleaned :: deduced;
-        proof_trace = Axiom (HandWaved "cut with the following (cleaned => removed_typeclass) to show that the removal does not lose info, (removed_typeclass => selected.c => cleaned) to show that the cleaned vesion does not introduce unwanted constraints.")
-      }
-    ]
+    {
+      remove_constraints = [SC_Typeclass selected.tc.refined];
+      add_constraints = cleaned :: deduced;
+      proof_trace = Axiom (HandWaved "cut with the following (cleaned => removed_typeclass) to show that the removal does not lose info, (removed_typeclass => selected.c => cleaned) to show that the cleaned vesion does not introduce unwanted constraints.")
+    }
+  ]
 
 (* ***********************************************************************
  * Heuristic
  * *********************************************************************** *)
 
 let printer = Ast_typed.PP.output_tc_fundep
-let printer_json = Ast_typed.Yojson.output_tc_fundep
-let comparator = Solver_should_be_generated.compare_output_tc_fundep
+let printer_json = Ast_typed.output_tc_fundep_to_yojson
+let comparator = compare
 
 let heuristic = Heuristic_plugin { selector; alias_selector; propagator; printer; printer_json; comparator }

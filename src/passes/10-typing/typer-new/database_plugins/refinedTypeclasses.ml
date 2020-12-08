@@ -11,8 +11,8 @@ let set_of_vars l = (PolySet.add_list l (PolySet.create ~cmp:Var.compare)).set
 let make_refined_typeclass refined original : refined_typeclass = { refined; original ; vars = set_of_vars refined.args }
 
 let create_state ~cmp:_ = {
-  forwards = PolyMap.create ~cmp:Ast_typed.Compare.constraint_identifier ;
-  backwards = PolyMap.create ~cmp:Ast_typed.Compare.constraint_identifier ;
+  forwards = PolyMap.create ~cmp:compare ;
+  backwards = PolyMap.create ~cmp:compare ;
 }
 
 let add_constraint _repr state new_constraint =

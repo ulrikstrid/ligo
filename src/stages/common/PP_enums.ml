@@ -2,14 +2,14 @@ open Format
 open Types
 
 (** old code
-let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation) : unit =
-  let print_option f ppf o =
+    let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal_operation) : unit =
+    let print_option f ppf o =
     match o with
       Some (s) -> fprintf ppf "%a" f s
     | None -> fprintf ppf "None"
-  in
+    in
     let open Tezos_micheline.Micheline in
-  let rec prim ppf (node : (_,Memory_proto_alpha.Protocol.Alpha_context.Script.prim) node)= match node with
+    let rec prim ppf (node : (_,Memory_proto_alpha.Protocol.Alpha_context.Script.prim) node)= match node with
     | Int (l , i) -> fprintf ppf "Int (%i, %a)" l Z.pp_print i
     | String (l , s) -> fprintf ppf "String (%i, %s)" l s
     | Bytes (l, b) -> fprintf ppf "B (%i, %s)" l (Bytes.to_string b)
@@ -19,15 +19,15 @@ let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal
         (list_sep_d (fun ppf s -> fprintf ppf "%s" s)) a
     | Seq (l, nl) -> fprintf ppf "S (%i, %a)" l
         (list_sep_d prim) nl
-  in
-  let l ppf (l: Memory_proto_alpha.Protocol.Alpha_context.Script.lazy_expr) =
+    in
+    let l ppf (l: Memory_proto_alpha.Protocol.Alpha_context.Script.lazy_expr) =
     let oo = Data_encoding.force_decode l in
     match oo with
       Some o -> fprintf ppf "%a" prim (Tezos_micheline.Micheline.root o)
     | None  -> fprintf ppf "Fail decoding"
-  in
+    in
 
-  let op ppf (type a) : a Memory_proto_alpha.Protocol.Alpha_context.manager_operation -> unit = function
+    let op ppf (type a) : a Memory_proto_alpha.Protocol.Alpha_context.manager_operation -> unit = function
     | Reveal (s: Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key.t) ->
       fprintf ppf "R %a" Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key.pp s
     | Transaction {amount; parameters; entrypoint; destination} ->
@@ -46,9 +46,9 @@ let operation ppf (o : Memory_proto_alpha.Protocol.Alpha_context.packed_internal
 
     | Delegation so ->
       fprintf ppf "D %a" (print_option Tezos_protocol_environment_ligo006_PsCARTHA__Environment.Signature.Public_key_hash.pp) so
-  in
-  let Internal_operation {source;operation;nonce} = o in
-  fprintf ppf "{source: %s; operation: %a; nonce: %i"
+    in
+    let Internal_operation {source;operation;nonce} = o in
+    fprintf ppf "{source: %s; operation: %a; nonce: %i"
     (Memory_proto_alpha.Protocol.Alpha_context.Contract.to_b58check source)
     op operation
     nonce

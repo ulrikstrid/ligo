@@ -15,7 +15,7 @@ type 'elt set = 'elt t
 
    The value [empty] is identical to the value of the call [create
    ~cmp:Pervasives.compare].
- *)
+*)
 
 val create : cmp:('elt -> 'elt -> int) -> 'elt t
 
@@ -92,3 +92,5 @@ val iter : ('elt -> unit) -> 'elt t -> unit
    initial value [init]. *)
 
 val fold_inc : ('elt -> acc:'a -> 'a) -> 'elt t -> init:'a -> 'a
+
+val to_yojson : ('elt -> 'b) -> 'elt t -> [> `List of 'b list ]

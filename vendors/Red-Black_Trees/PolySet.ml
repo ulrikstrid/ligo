@@ -43,3 +43,5 @@ let get_compare set = set.cmp
 let iter f set = RB.iter f set.tree
 
 let fold_inc f set = RB.fold_inc (fun ~elt -> f elt) set.tree
+
+let to_yojson elt_to_yojson set = `List (List.map elt_to_yojson @@ elements set)

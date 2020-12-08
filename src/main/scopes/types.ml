@@ -52,5 +52,5 @@ type scopes = scope list
 let add_scope (range,env) scopes = { range ; env } :: scopes
 
 
-module Bindings_map = Map.Make ( struct type t = Ast_typed.expression_variable let compare = Ast_typed.Compare.expression_variable end )
+module Bindings_map = Map.Make ( struct type t = Ast_typed.expression_variable let compare = compare end )
 type bindings_map = Ast_typed.type_expression Bindings_map.t

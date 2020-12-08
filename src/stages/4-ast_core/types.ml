@@ -2,8 +2,8 @@
 
 include Stage_common.Types
 
-type sugar_type_expression_option = Ast_sugar.type_expression option [@@deriving yojson]
-type sugar_expression_option = Ast_sugar.expression option [@@deriving yojson]
+type sugar_type_expression_option = Ast_sugar.type_expression option [@@deriving to_yojson]
+type sugar_expression_option = Ast_sugar.expression option [@@deriving to_yojson]
 
 type string_option = string option
 
@@ -12,17 +12,17 @@ let location_to_yojson loc = Location.to_yojson loc
 
 type attribute = {
   inline: bool ;
-}
+} [@@deriving to_yojson]
 
 
 type program_loc = declaration Location.wrap
 and program = program_loc list
 
 and declaration_constant = {
-    binder : ty_expr binder;
-    attr : attribute ;
-    expr : expression ;
-  }
+  binder : ty_expr binder;
+  attr : attribute ;
+  expr : expression ;
+}
 and declaration =
   | Declaration_type of ty_expr declaration_type
   (* A Declaration_constant is described by
@@ -48,16 +48,16 @@ and row_element = ty_expr row_element_mini_c
 
 and type_expression = {
   type_content  : type_content ;
-  sugar    : sugar_type_expression_option ;
+  sugar    : sugar_type_expression_option  ;
   location : location ;
-  }
+} [@@deriving to_yojson]
 and ty_expr = type_expression
 
 and expression = {
   content  : expression_content ;
   sugar    : sugar_expression_option ;
   location : location ;
-  }
+}
 and expr = expression
 
 and expression_label_map = expression label_map
@@ -82,34 +82,34 @@ and expression_content =
 and type_expression_option = type_expression option
 
 and let_in = {
-    let_binder: ty_expr binder ;
-    rhs: expression ;
-    let_result: expression ;
-    inline: bool ;
-  }
+  let_binder: ty_expr binder ;
+  rhs: expression ;
+  let_result: expression ;
+  inline: bool ;
+}
 
 and match_cons = {
-    hd : expression_variable ;
-    tl : expression_variable ;
-    body : expression ;
-  }
+  hd : expression_variable ;
+  tl : expression_variable ;
+  body : expression ;
+}
 and match_list = {
-    match_nil  : expression ;
-    match_cons : match_cons ;
-  }
+  match_nil  : expression ;
+  match_cons : match_cons ;
+}
 and match_some = {
-    opt : expression_variable ;
-    body : expression ;
-  }
+  opt : expression_variable ;
+  body : expression ;
+}
 and match_option = {
-    match_none : expression ;
-    match_some : match_some ;
-  }
+  match_none : expression ;
+  match_some : match_some ;
+}
 and match_variant = {
-    constructor : label ;
-    proj : expression_variable ;
-    body : expression ;
-  }
+  constructor : label ;
+  proj : expression_variable ;
+  body : expression ;
+}
 
 and match_variant_list = match_variant list
 and matching_expr =
@@ -118,6 +118,6 @@ and matching_expr =
   | Match_variant of match_variant_list
 
 and matching = {
-    matchee: expression ;
-    cases: matching_expr ;
-  }
+  matchee: expression ;
+  cases: matching_expr ;
+}

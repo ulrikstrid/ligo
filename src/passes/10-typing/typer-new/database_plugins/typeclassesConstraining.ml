@@ -5,7 +5,7 @@ open Trace
 type 'typeVariable t = ('typeVariable, constraint_identifier_set (* c_typeclass_simpl *)) ReprMap.t
 
 let create_state ~cmp =
-  let merge c1 c2 = assert (Ast_typed.Compare.constraint_identifier_set c1 c2 = 0); c1 in
+  let merge c1 c2 = assert (compare c1 c2 = 0); c1 in
   ReprMap.create ~cmp ~merge
 
 let tc_to_constraint_identifier : c_typeclass_simpl -> constraint_identifier =
@@ -26,7 +26,7 @@ let register_typeclasses_constrained_by : _ -> c_typeclass_simpl -> _ t -> _ t =
   let tc = tc_to_constraint_identifier c in
   let aux' = function
       Some set -> PolySet.add tc set
-    | None -> PolySet.add tc (PolySet.create ~cmp:Ast_typed.Compare.constraint_identifier) in
+    | None -> PolySet.add tc (PolySet.create ~cmp:compare) in
   let aux typeclasses_constrained_by tv =
     ReprMap.monotonic_update (repr tv) aux' typeclasses_constrained_by in
   List.fold_left
@@ -40,12 +40,12 @@ let add_constraint repr state new_constraint =
   | _ -> state
 
 let remove_constraint repr state constraint_to_remove =
-    match constraint_to_remove with
+  match constraint_to_remove with
   | Ast_typed.Types.SC_Typeclass constraint_to_remove ->
     let tc = tc_to_constraint_identifier constraint_to_remove in
     let aux' = function
         Some set -> PolySet.remove tc set
-      | None -> PolySet.remove tc (PolySet.create ~cmp:Ast_typed.Compare.constraint_identifier) in
+      | None -> PolySet.remove tc (PolySet.create ~cmp:compare) in
     let aux typeclasses_constrained_by tv =
       ReprMap.monotonic_update (repr tv) aux' typeclasses_constrained_by in
     let state =
@@ -60,5 +60,5 @@ let merge_aliases : 'old 'new_ . ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
   fun merge_keys state -> merge_keys.map state
 
 let get_typeclasses_constraining tv (state : 'typeVariable t) =
-  Option.unopt ~default:(PolySet.create ~cmp:Ast_typed.Compare.constraint_identifier)
+  Option.unopt ~default:(PolySet.create ~cmp:compare)
   @@ ReprMap.find_opt tv state
