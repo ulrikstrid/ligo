@@ -15,7 +15,7 @@ type 'elt set = 'elt t
 
    The value [empty] is identical to the value of the call [create
    ~cmp:Pervasives.compare].
- *)
+*)
 
 val create : cmp:('elt -> 'elt -> int) -> 'elt t
 

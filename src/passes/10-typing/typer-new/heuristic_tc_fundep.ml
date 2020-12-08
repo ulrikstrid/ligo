@@ -271,36 +271,40 @@ let propagator : (output_tc_fundep, typer_error) propagator =
      conversion (one may dream). *)
   let tc_args = List.map (fun x -> wrap (Todo "no idea") @@ P_variable x) cleaned.refined.args in
   let cleaned : type_constraint = {
-      reason = cleaned.refined.reason_typeclass_simpl;
-      c = C_typeclass {
+    reason = cleaned.refined.reason_typeclass_simpl;
+    c = C_typeclass {
         tc_args ;
         typeclass = cleaned.refined.tc;
         original_id = Some selected.tc.original;
       }
-    }
+  }
   in
   let aux (x : c_constructor_simpl) : type_constraint = {
     reason = "inferred: only possible type for that variable in the typeclass";
     c = C_equation {
-      aval = wrap (Todo "?") @@ P_variable x.tv ;
+        aval = wrap (Todo "?") @@ P_variable x.tv ;
+        bval = wrap (Todo "? generated") @@
       bval = wrap (Todo "? generated") @@ 
-              P_constant {
-                p_ctor_tag  = x.c_tag ;
-                p_ctor_args = List.map
-                  (fun v -> wrap (Todo "? probably generated") @@ P_variable v)
+        bval = wrap (Todo "? generated") @@
+          P_constant {
+            p_ctor_tag  = x.c_tag ;
+            p_ctor_args = List.map
+                (fun v -> wrap (Todo "? probably generated") @@ P_variable v)
+                x.tv_list ;
                   x.tv_list ; 
-              }
+                x.tv_list ;
+          }
       }
-    }
+  }
   in
   let deduced : type_constraint list = List.map aux deduced in
   ok [
-      {
-        remove_constraints = [SC_Typeclass selected.tc.refined];
-        add_constraints = cleaned :: deduced;
-        proof_trace = Axiom (HandWaved "cut with the following (cleaned => removed_typeclass) to show that the removal does not lose info, (removed_typeclass => selected.c => cleaned) to show that the cleaned vesion does not introduce unwanted constraints.")
-      }
-    ]
+    {
+      remove_constraints = [SC_Typeclass selected.tc.refined];
+      add_constraints = cleaned :: deduced;
+      proof_trace = Axiom (HandWaved "cut with the following (cleaned => removed_typeclass) to show that the removal does not lose info, (removed_typeclass => selected.c => cleaned) to show that the cleaned vesion does not introduce unwanted constraints.")
+    }
+  ]
 
 (* ***********************************************************************
  * Heuristic

@@ -66,12 +66,12 @@ let propagator : (output_break_ctor, typer_error) propagator =
       let p = Ast_typed.PP.c_constructor_simpl in
       Printf.fprintf stderr "%s" @@ Format.asprintf "\npropagator_break_ctor\na = %a\nb = %a\n%!" p a p b in
   (* a.c_tag = b.c_tag *)
-  if (Solver_should_be_generated.compare_simple_c_constant a.c_tag b.c_tag) <> 0 then
+  if (compare a.c_tag b.c_tag) <> 0 then
     (* TODO : use error monad *)
     failwith (Format.asprintf "type error: incompatible types, not same ctor %a vs. %a (compare returns %d)"
                 Solver_should_be_generated.debug_pp_c_constructor_simpl a
                 Solver_should_be_generated.debug_pp_c_constructor_simpl b
-                (Solver_should_be_generated.compare_simple_c_constant a.c_tag b.c_tag))
+                (compare a.c_tag b.c_tag))
   else
     (* Produce constraint a.tv_list = b.tv_list *)
     let aux = fun aa bb -> c_equation (wrap (Propagator_break_ctor "a") @@ P_variable aa) (wrap (Propagator_break_ctor "a") @@ P_variable bb) "propagator: break_ctor" in
