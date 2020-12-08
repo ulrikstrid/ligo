@@ -1,21 +1,21 @@
 type z = Z.t
-type ligo_string = Simple_utils.Ligo_string.t
+type ligo_string = Simple_utils.Ligo_string.t [@@deriving to_yojson]
 
 let [@warning "-32"] z_to_yojson x = `String (Z.to_string x)
 let [@warning "-32"] z_of_yojson x =
   try match x with
-      | `String s -> Ok (Z.of_string s)
-      | _ -> Utils.error_yojson_format "JSON string"
+    | `String s -> Ok (Z.of_string s)
+    | _ -> Utils.error_yojson_format "JSON string"
   with
   | Invalid_argument _ ->
-     Error "Invalid formatting.
+    Error "Invalid formatting.
             The Zarith library does not know how to handle this formatting."
 
 let bytes_to_yojson b = `String (Bytes.to_string b)
 
 type layout =
   | L_comb
-  | L_tree
+  | L_tree [@@deriving to_yojson]
 
 type literal =
   | Literal_unit
@@ -30,7 +30,7 @@ type literal =
   | Literal_key of string
   | Literal_key_hash of string
   | Literal_chain_id of string
-  | Literal_operation of bytes
+  | Literal_operation of bytes [@@deriving to_yojson]
 
 type constant' =
   | C_INT
@@ -165,12 +165,15 @@ type constant' =
   | C_TEST_EXTERNAL_CALL
   | C_TEST_ASSERT_FAILURE
   | C_TEST_LOG
+[@@deriving yojson]
 
 type deprecated = {
-    name : string ;
-    const : constant' ;
-  }
+  name : string ;
+  const : constant' ;
+}
+[@@deriving to_yojson]
 
 type rich_constant =
   | Deprecated of deprecated
   | Const of constant'
+[@@deriving to_yojson]

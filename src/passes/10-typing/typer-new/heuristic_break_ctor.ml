@@ -87,7 +87,7 @@ let propagator : (output_break_ctor, typer_error) propagator =
     ]
 
 let printer = Ast_typed.PP.output_break_ctor
-let printer_json = Ast_typed.Yojson.output_break_ctor
-let comparator = Solver_should_be_generated.compare_output_break_ctor
+let printer_json = Ast_typed.output_break_ctor_to_yojson
+let comparator = compare
 
 let heuristic = Heuristic_plugin { selector; alias_selector; propagator; printer; printer_json; comparator }

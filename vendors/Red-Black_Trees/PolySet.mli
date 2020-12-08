@@ -92,3 +92,5 @@ val iter : ('elt -> unit) -> 'elt t -> unit
    initial value [init]. *)
 
 val fold_inc : ('elt -> acc:'a -> 'a) -> 'elt t -> init:'a -> 'a
+
+val to_yojson : ('elt -> 'b) -> 'elt t -> [> `List of 'b list ]

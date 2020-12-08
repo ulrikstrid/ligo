@@ -156,7 +156,7 @@ let pp_typer_state = fun ppf ({ all_constraints=_ ; plugin_states=_ ; aliases=_ 
 let json_typer_state = fun ({ all_constraints=_ ; plugin_states=_ ; aliases=_ ; already_selected_and_propagators } : _ typer_state) : Yojson.Safe.t ->
   let open Typesystem.Solver_types in
   `Assoc[ ("all_constraints", `String "TODO");
-          ("plugin_states", (* (Ast_typed.Yojson.structured_dbs structured_dbs) *) `String "TODO");
+          ("plugin_states", (* (Ast_typed.structured_dbs_to_yojson structured_dbs) *) `String "TODO");
           ("aliases", `String "TODO");
           ("already_selected_and_propagators", 
            let list f lst = `List (List.map f lst) in

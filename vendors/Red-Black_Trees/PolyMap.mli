@@ -114,3 +114,6 @@ val iter : ('key -> 'value -> unit) -> ('key, 'value) t -> unit
    [v_n] are the associated values. *)
 
 val fold_inc : ('key -> 'value -> acc:'a -> 'a) -> ('key, 'value) t -> init:'a -> 'a
+
+
+val to_yojson : ('key -> 'b) -> ('value -> 'b) -> ('key, 'value) t -> [> `List of [> `List of 'b list ] list ]

@@ -545,14 +545,14 @@ end = struct
   let check_expression_has_no_unification_vars (expr : O.expression) =
     let print_checked p =
       Format.printf "{ \"CHECKING_EXPR\": %s\n},\n"
-        (Yojson.Safe.to_string (O.Yojson.expression p)) in
+        (Yojson.Safe.to_string (O.expression_to_yojson p)) in
     let () = (if Ast_typed.Debug.debug_new_typer || Ast_typed.Debug.json_new_typer then print_checked expr) in
     expression expr
 
   let check_has_no_unification_vars ((O.Program_With_Unification_Vars p) as pp) =
     let print_checked p =
       Format.printf "{ \"CHECKING\": %s\n},\n"
-        (Yojson.Safe.to_string (O.Yojson.program_with_unification_vars p)) in
+        (Yojson.Safe.to_string (O.program_with_unification_vars_to_yojson p)) in
     let () = (if Ast_typed.Debug.debug_new_typer || Ast_typed.Debug.json_new_typer then print_checked pp) in
     let decl : O.declaration -> _ = fun d -> match d with
         O.Declaration_constant { binder=_; expr; inline=_ } -> check_expression_has_no_unification_vars expr
@@ -583,10 +583,10 @@ let type_program_returns_env ((env, state, p) : environment * _ O'.typer_state *
 let print_env_state_node (node_printer : Format.formatter -> 'a -> unit) ((env,state,node) : environment * _ O'.typer_state * 'a) =
   ignore node; (* TODO *)
   Printf.printf "%s" @@
-    Format.asprintf "{ \"ENV\": %s,\n\"STATE\": %s,\n\"NODE\": %a\n},\n"
-      (Yojson.Safe.to_string (Ast_typed.Yojson.environment env))
-      (Yojson.Safe.to_string (Solver.json_typer_state state))
-      node_printer node
+  Format.asprintf "{ \"ENV\": %s,\n\"STATE\": %s,\n\"NODE\": %a\n},\n"
+    (Yojson.Safe.to_string (Ast_typed.environment_to_yojson env))
+    (Yojson.Safe.to_string (Solver.json_typer_state state))
+    node_printer node
 
 let type_and_subst
     (in_printer : Format.formatter -> 'a -> unit)
@@ -630,7 +630,7 @@ let type_and_subst
 
 let type_program ~init_env (p : I.program) : (O.program_fully_typed * _ O'.typer_state, typer_error) result =
   let empty_state = Solver.initial_state in
-  let%bind (p, state) = type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") (fun ppf p -> Format.fprintf ppf "%s" (Yojson.Safe.to_string (Ast_typed.Yojson.program_with_unification_vars p))) (init_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env in
+  let%bind (p, state) = type_and_subst (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.program\"") (fun ppf p -> Format.fprintf ppf "%s" (Yojson.Safe.to_string (Ast_typed.program_with_unification_vars_to_yojson p))) (init_env , empty_state , p) Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env in
   let%bind p = Check.check_has_no_unification_vars p in
   let () = (if Ast_typed.Debug.json_new_typer then Printf.printf "%!\"end of JSON\"],\n###############################END_OF_JSON\n%!") in
   ok (p, state)
@@ -639,7 +639,7 @@ let type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_op
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
   let%bind (expr, state) = type_and_subst
       (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.expression\"")
-      (fun ppf p -> Format.fprintf ppf "%s" (Yojson.Safe.to_string (Ast_typed.Yojson.expression p)))
+      (fun ppf p -> Format.fprintf ppf "%s" (Yojson.Safe.to_string (Ast_typed.expression_to_yojson p)))
       (env , state , e)
       Typesystem.Misc.Substitution.Pattern.s_expression
       (fun (a,b,c) -> type_expression a b c) in

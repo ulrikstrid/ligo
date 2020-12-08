@@ -98,7 +98,7 @@ let propagator : (output_specialize1 , typer_error) propagator =
   ]
 
 let printer = Ast_typed.PP.output_specialize1
-let printer_json = Ast_typed.Yojson.output_specialize1
-let comparator = Solver_should_be_generated.compare_output_specialize1
+let printer_json = Ast_typed.output_specialize1_to_yojson
+let comparator = compare
 
 let heuristic = Heuristic_plugin { selector; alias_selector; propagator; printer; printer_json; comparator }

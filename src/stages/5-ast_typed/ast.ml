@@ -10,6 +10,7 @@ include Stage_common.Types
 (*@ typeclass poly_unionfind comparable *)
 (*@ typeclass poly_set       comparable *)
 type ast_core_type_expression = Ast_core.type_expression
+let ast_core_type_expression_to_yojson = Ast_core.type_expression_to_yojson
 
 type te_lmap = row_element label_map
 and type_meta = ast_core_type_expression option
@@ -21,94 +22,95 @@ and type_content =
   | T_record   of rows
   | T_arrow    of ty_expr arrow
   | T_module_accessor of ty_expr module_access
+[@@deriving to_yojson]
 
 and type_injection = {
   language : string ;
   injection : Ligo_string.t ;
   (* kind (?) *)
   parameters : ty_expr list ;
-}
+} [@@deriving to_yojson]
 
 and rows = {
   content : row_element label_map;
   layout : layout ;
-}
+} [@@deriving to_yojson]
 
-and te_list = type_expression list
+and te_list = type_expression list [@@deriving to_yojson]
 
-and annot_option = string option
+and annot_option = string option [@@deriving to_yojson]
 
-and row_element = type_expression row_element_mini_c
+and row_element = type_expression row_element_mini_c [@@deriving to_yojson]
 
 and type_map_args = {
-    k : type_expression;
-    v : type_expression;
-  }
+  k : type_expression;
+  v : type_expression;
+} [@@deriving to_yojson]
 
 and michelson_or_args = {
-    l : type_expression;
-    r : type_expression;
-  }
+  l : type_expression;
+  r : type_expression;
+} [@@deriving to_yojson]
 
 and type_expression = {
-    type_content: type_content;
-    type_meta: type_meta;
-    orig_var: type_variable option ;
-    location: location;
-  }
+  type_content: type_content;
+  type_meta: type_meta;
+  orig_var: type_variable option ;
+  location: location;
+} [@@deriving to_yojson]
 and ty_expr = type_expression
 
 and matching_content_cons = {
-    hd : expression_variable;
-    tl : expression_variable;
-    body : expression;
-    tv : type_expression;
-  }
+  hd : expression_variable;
+  tl : expression_variable;
+  body : expression;
+  tv : type_expression;
+} [@@deriving to_yojson]
 
 and matching_content_list = {
-    match_nil : expression ;
-    match_cons : matching_content_cons;
-  }
+  match_nil : expression ;
+  match_cons : matching_content_cons;
+} [@@deriving to_yojson]
 
 and matching_content_some = {
-    opt  : expression_variable ;
-    body : expression ;
-    tv   : type_expression ;
-  }
+  opt  : expression_variable ;
+  body : expression ;
+  tv   : type_expression ;
+} [@@deriving to_yojson]
 
 and matching_content_option = {
-    match_none : expression ;
-    match_some : matching_content_some ;
-  }
+  match_none : expression ;
+  match_some : matching_content_some ;
+} [@@deriving to_yojson]
 
-and expression_variable_list = expression_variable list
-and type_expression_list = type_expression list
+and expression_variable_list = expression_variable list [@@deriving to_yojson]
+and type_expression_list = type_expression list [@@deriving to_yojson]
 
 and matching_content_case = {
-    constructor : label ;
-    pattern : expression_variable ;
-    body : expression ;
-  }
+  constructor : label ;
+  pattern : expression_variable ;
+  body : expression ;
+} [@@deriving to_yojson]
 
-and matching_content_case_list = matching_content_case list
+and matching_content_case_list = matching_content_case list [@@deriving to_yojson]
 
 and matching_content_variant = {
-    cases: matching_content_case_list;
-    tv: type_expression;
-  }
+  cases: matching_content_case_list;
+  tv: type_expression;
+} [@@deriving to_yojson]
 
 and matching_expr =
   | Match_list    of matching_content_list
   | Match_option  of matching_content_option
-  | Match_variant of matching_content_variant
+  | Match_variant of matching_content_variant [@@deriving to_yojson]
 
-and declaration_loc = declaration location_wrap
+and declaration_loc = declaration location_wrap [@@deriving to_yojson]
 
-and program_ = declaration_loc list
+and program_ = declaration_loc list [@@deriving yojson]
 
-and program_with_unification_vars = Program_With_Unification_Vars of program_
+and program_with_unification_vars = Program_With_Unification_Vars of program_ [@@deriving yojson]
 
-and program_fully_typed = Program_Fully_Typed of program_
+and program_fully_typed = Program_Fully_Typed of program_ [@@deriving yojson]
 
 (* A Declaration_constant is described by
  *   a name + a type-annotated expression
@@ -116,37 +118,37 @@ and program_fully_typed = Program_Fully_Typed of program_
  *   the environment before the declaration (the original environment)
  *   the environment after the declaration (i.e. with that new declaration added to the original environment). *)
 and declaration_constant = {
-    binder : expression_variable ;
-    expr : expression ;
-    inline : bool ;
-  }
+  binder : expression_variable ;
+  expr : expression ;
+  inline : bool ;
+} [@@deriving to_yojson]
 
 and declaration_type = {
-    type_binder : type_variable ;
-    type_expr : type_expression ;
-  }
+  type_binder : type_variable ;
+  type_expr : type_expression ;
+} [@@deriving to_yojson]
 
 and declaration =
   | Declaration_constant of declaration_constant
-  | Declaration_type of declaration_type
+  | Declaration_type of declaration_type [@@deriving to_yojson]
 
 and expression = {
-    expression_content: expression_content ;
-    location: location ;
-    type_expression: type_expression ;
-  }
+  expression_content: expression_content ;
+  location: location ;
+  type_expression: type_expression ;
+} [@@deriving yojson]
 
 and expr = expression
 
 and map_kv = {
-    key : expression ;
-    value : expression ;
-  }
+  key : expression ;
+  value : expression ;
+} [@@deriving to_yojson]
 
 and look_up = {
-    ds : expression;
-    ind : expression;
-  }
+  ds : expression;
+  ind : expression;
+} [@@deriving to_yojson]
 
 and expression_label_map = expression label_map
 and expression_list = expression list
@@ -170,108 +172,109 @@ and expression_content =
   | E_record_accessor of record_accessor
   | E_record_update   of record_update
   | E_module_accessor of expression module_access
+[@@deriving to_yojson]
 
 and constant = {
-    cons_name: constant' ;
-    arguments: expression_list ;
-  }
+  cons_name: constant' ;
+  arguments: expression_list ;
+} [@@deriving to_yojson]
 
 and application = {
   lamb: expression ;
   args: expression ;
-  }
+} [@@deriving to_yojson]
 
 and lambda =  {
-    binder: expression_variable ;
-    result: expression ;
-  }
+  binder: expression_variable ;
+  result: expression ;
+} [@@deriving to_yojson]
 
 and let_in = {
-    let_binder: expression_variable ;
-    rhs: expression ;
-    let_result: expression ;
-    inline : bool ;
-  }
+  let_binder: expression_variable ;
+  rhs: expression ;
+  let_result: expression ;
+  inline : bool ;
+} [@@deriving to_yojson]
 
 and raw_code = {
   language : string;
   code : expression;
-  }
+} [@@deriving to_yojson]
 
 and recursive = {
   fun_name : expression_variable;
   fun_type : type_expression;
   lambda : lambda;
-  }
+} [@@deriving to_yojson]
 
 and constructor = {
-    constructor: label;
-    element: expression ;
-  }
+  constructor: label;
+  element: expression ;
+} [@@deriving to_yojson]
 
 and record_accessor = {
-    record: expression ;
-    path: label ;
-  }
+  record: expression ;
+  path: label ;
+} [@@deriving to_yojson]
 
 and record_update = {
-    record: expression ;
-    path: label ;
-    update: expression ;
-  }
+  record: expression ;
+  path: label ;
+  update: expression ;
+} [@@deriving to_yojson]
 
 and matching = {
-    matchee: expression ;
-    cases: matching_expr ;
-  }
+  matchee: expression ;
+  cases: matching_expr ;
+} [@@deriving to_yojson]
 
 and ascription = {
-    anno_expr: expression ;
-    type_annotation: type_expression ;
-  }
+  anno_expr: expression ;
+  type_annotation: type_expression ;
+} [@@deriving to_yojson]
 
 and environment_element_definition =
   | ED_binder
-  | ED_declaration of environment_element_definition_declaration
+  | ED_declaration of environment_element_definition_declaration [@@deriving to_yojson]
 
 and environment_element_definition_declaration = {
-    expression: expression ;
-    free_variables: free_variables ;
-  }
+  expression: expression ;
+  free_variables: free_variables ;
+} [@@deriving to_yojson]
 
 and free_variables = expression_variable list
 
 and environment_element = {
-    type_value: type_expression ;
-    source_environment: environment ;
-    definition: environment_element_definition ;
-  }
+  type_value: type_expression ;
+  source_environment: environment ;
+  definition: environment_element_definition ;
+} [@@deriving to_yojson]
 
 and expression_environment = environment_binding list
 
 and environment_binding = {
-    expr_var: expression_variable ;
-    env_elt: environment_element ;
-  }
+  expr_var: expression_variable ;
+  env_elt: environment_element ;
+} [@@deriving to_yojson]
 
 and type_environment = type_environment_binding list
 
 and type_environment_binding = {
-    type_variable: type_variable ;
-    type_: type_expression ;
-  }
+  type_variable: type_variable ;
+  type_: type_expression ;
+} [@@deriving to_yojson]
 
 and module_environment = module_environment_binding list
 
 and module_environment_binding = {
   module_name : string ;
   module_ : environment ;
-}
+} [@@deriving to_yojson]
 and environment = {
   expression_environment: expression_environment ;
   type_environment: type_environment ;
   module_environment : module_environment ;
-  }
+} [@@deriving to_yojson]
 
 (* Solver types
 
@@ -307,10 +310,12 @@ type constant_tag =
   | C_operation (* * *)
   | C_contract  (* * -> * *)
   | C_chain_id  (* * *)
+[@@deriving yojson]
 
 type row_tag =
   | C_record    (* ( label , * ) … -> * *)
   | C_variant   (* ( label , * ) … -> * *)
+[@@deriving yojson]
 
 (* TODO: rename to type_expression or something similar (it includes variables, and unevaluated functions + applications *)
 type type_value_ =
@@ -323,22 +328,22 @@ type type_value_ =
 and type_value = type_value_ location_wrap
 
 and p_apply = {
-    tf : type_value ;
-    targ : type_value ;
-  }
+  tf : type_value ;
+  targ : type_value ;
+}
 
 and p_ctor_args = type_value list
 and p_ctor_args_list = p_ctor_args list
 and p_constant = {
-    p_ctor_tag : constant_tag ;
-    p_ctor_args : p_ctor_args ;
-  }
+  p_ctor_tag : constant_tag ;
+  p_ctor_args : p_ctor_args ;
+}
 
 and tv_lmap = type_value label_map
 and p_row = {
-    p_row_tag  : row_tag ;
-    p_row_args : tv_lmap ;
-  }
+  p_row_tag  : row_tag ;
+  p_row_args : tv_lmap ;
+}
 
 and p_constraints = type_constraint list
 
@@ -351,33 +356,33 @@ and p_forall = {
 (* Different type of constraint *)
 and ctor_args = type_variable list (* non-empty list *)
 and simple_c_constructor = {
-    ctor_tag : constant_tag ;
-    ctor_args : ctor_args ;
-  }
+  ctor_tag : constant_tag ;
+  ctor_args : ctor_args ;
+}
 and simple_c_constant = {
-    constant_tag: constant_tag ; (* for type constructors that do not take arguments *)
-  }
+  constant_tag: constant_tag ; (* for type constructors that do not take arguments *)
+}
 and c_const = {
-    c_const_tvar : type_variable ;
-    c_const_tval : type_value ;
-  }
+  c_const_tvar : type_variable ;
+  c_const_tval : type_value ;
+}
 and c_equation = {
   aval : type_value ;
   bval : type_value ;
 }
 and tc_args = type_value list
 and constraint_identifier =
-| ConstraintIdentifier of int64
+  | ConstraintIdentifier of int64 [@@deriving to_yojson]
 and c_typeclass = {
   tc_args : tc_args ;
   original_id : constraint_identifier option ;
   typeclass : typeclass ;
 }
 and c_access_label = {
-    c_access_label_tval : type_value ;
-    accessor : label ;
-    c_access_label_tvar : type_variable ;
-  }
+  c_access_label_tval : type_value ;
+  accessor : label ;
+  c_access_label_tvar : type_variable ;
+}
 and type_constraint = {
   reason : string ;
   c : type_constraint_ ;
@@ -396,7 +401,7 @@ and typeclass = tc_allowed list
 (* end core *)
 
 type 'a poly_unionfind = 'a UnionFind.Poly2.t
-type 'a poly_set = 'a RedBlackTrees.PolySet.t
+type 'a poly_set = 'a RedBlackTrees.PolySet.t [@@deriving to_yojson]
 
 (* typevariable: to_string = (fun s -> Format.asprintf "%a" Var.pp s) *)
 (* representant for an equivalence class of type variables *)
@@ -414,7 +419,7 @@ let unionfind_to_yojson _ = `String "type_varianle unionfind"
 (* TODO : use error monad *)
 let unionfind_of_yojson _ = Error ("can't parse unionfind")
 
-type 'v constraint_identifierMap = (constraint_identifier, 'v) RedBlackTrees.PolyMap.t
+type 'v constraint_identifierMap = (constraint_identifier, 'v) RedBlackTrees.PolyMap.t [@@deriving to_yojson]
 
 type refined_typeclass = {
   refined : c_typeclass_simpl ;
@@ -455,7 +460,7 @@ and c_constructor_simpl = {
   c_tag : constant_tag;
   (* Types wih no arguments like int, string etc. have an empty tv_list *)
   tv_list : type_variable_list;
-}
+} [@@deriving to_yojson]
 and c_row_simpl = {
   reason_row_simpl : string ;
   (* see description above in c_constructor_simpl *)
@@ -465,13 +470,13 @@ and c_row_simpl = {
   tv_map : type_variable_lmap;
 }
 and c_const_e = {
-    c_const_e_tv : type_variable ;
-    c_const_e_te : type_expression ;
-  }
+  c_const_e_tv : type_variable ;
+  c_const_e_te : type_expression ;
+}
 and c_equation_e = {
-    aex : type_expression ;
-    bex : type_expression ;
-  }
+  aex : type_expression ;
+  bex : type_expression ;
+}
 and c_typeclass_simpl = {
   reason_typeclass_simpl : string ;
   (* see description above in c_constructor_simpl *)
@@ -501,13 +506,13 @@ and deduce_and_clean_result = {
 }
 
 and c_alias = {
-    reason_alias_simpl : string ;
-    (* see description above in c_constructor_simpl *)
-    is_mandatory_constraint : bool ;
-    a : type_variable ;
-    b : type_variable ;
-  }
-
+  reason_alias_simpl : string ;
+  (* see description above in c_constructor_simpl *)
+  is_mandatory_constraint : bool ;
+  a : type_variable ;
+  b : type_variable ;
+}
+let constraint_identifier_set_to_yojson _ _ = `List []
 
 (* sub-sub component: lazy selector (don't re-try all selectors every time) *)
 (* For now: just re-try everytime *)
@@ -515,19 +520,19 @@ and c_alias = {
 (* selector / propagation rule for breaking down composite types *)
 (* For now: break pair(a, b) = pair(c, d) into a = c, b = d *)
 type output_break_ctor = {
-    a_k_var : c_constructor_simpl ;
-    a_k'_var' : c_constructor_simpl ;
-  }
+  a_k_var : c_constructor_simpl ;
+  a_k'_var' : c_constructor_simpl ;
+} [@@deriving to_yojson]
 
 type output_specialize1 = {
-    poly : c_poly_simpl ;
-    a_k_var : c_constructor_simpl ;
-  }
+  poly : c_poly_simpl ;
+  a_k_var : c_constructor_simpl ;
+} [@@deriving to_yojson]
 
 type output_tc_fundep = {
-    tc : refined_typeclass ;
-    c : c_constructor_simpl ;
-  }
+  tc : refined_typeclass ;
+  c : c_constructor_simpl ;
+} [@@deriving to_yojson]
 
 type m_break_ctor__already_selected = output_break_ctor poly_set
 type m_specialize1__already_selected = output_specialize1 poly_set

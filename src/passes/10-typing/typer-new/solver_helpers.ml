@@ -63,7 +63,7 @@ module CreateState = struct
   module MakeOutType = PerPluginState
   module Monad = NoMonad
   module F(Plugin : Plugin) = struct
-    let f () (() as _state) = Plugin.create_state ~cmp:Ast_typed.Compare.type_variable
+    let f () (() as _state) = Plugin.create_state ~cmp:compare
   end
 end
 

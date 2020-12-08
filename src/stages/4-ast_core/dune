@@ -7,7 +7,7 @@
     ast_sugar
   )
   (preprocess
-    (pps ppx_let bisect_ppx --conditional)
+    (pps ppx_let bisect_ppx ppx_deriving_yojson --conditional)
   )
   (flags (:standard -open Simple_utils ))
 )

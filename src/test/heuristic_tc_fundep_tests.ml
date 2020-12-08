@@ -39,7 +39,7 @@ let test''
     (* TODO: use an error not an assert *)
     (* Format.printf "\n\nActual: %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl (restrict info tc);
      * Format.printf "\n\nExpected %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl expected; *)
-    if Ast_typed.Compare.c_typeclass_simpl (restrict info tc) expected != 0 then ok @@ Some (test_internal __LOC__)
+    if compare (restrict info tc) expected != 0 then ok @@ Some (test_internal __LOC__)
     else ok None
   in match e with None -> ok () | Some e -> fail e
 
