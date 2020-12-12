@@ -85,6 +85,12 @@ let remove_constraint _repr state constraint_to_remove =
 let merge_aliases : 'old 'new_ . ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
   fun _merge_keys state -> { forwards = state.forwards ; backwards = state.backwards }
 
+let pp _type_variable ppf state =
+  let open PP_helpers in
+  Format.fprintf ppf "{ forwards: %a; backwards: %a }"
+    (list_sep_d (pair Ast_typed.PP.constraint_identifier Ast_typed.PP.refined_typeclass)) (PolyMap.bindings state.forwards)
+    (list_sep_d (pair Ast_typed.PP.constraint_identifier Ast_typed.PP.constraint_identifier)) (PolyMap.bindings state.backwards)
+
 let find_opt : constraint_identifier -> 'typeVariable t -> refined_typeclass option = fun id state ->
   PolyMap.find_opt id state.forwards
 let find : c_typeclass_simpl -> 'typeVariable t -> refined_typeclass = fun c state ->

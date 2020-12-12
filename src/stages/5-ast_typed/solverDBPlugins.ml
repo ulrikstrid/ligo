@@ -71,6 +71,7 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
     (* Update the state to merge entries of maps and sets of type
        variables.  *)
     val merge_aliases : ('old, 'new_) merge_keys -> 'old t -> 'new_ t
+    val pp : (Format.formatter -> 'typeVariable -> unit) -> Format.formatter -> 'typeVariable t -> unit
   end
 
   (* The kind PerPluginType describes type-level functions which take

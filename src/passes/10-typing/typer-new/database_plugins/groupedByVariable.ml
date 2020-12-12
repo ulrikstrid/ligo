@@ -106,6 +106,11 @@ let remove_constraint repr state constraint_to_rm =
 let merge_aliases =
   fun updater state -> updater.map state
 
+let pp type_variable ppf state =
+  let open PP_helpers in
+  list_sep_d (pair type_variable Ast_typed.PP.constraints) ppf (ReprMap.bindings state)
+
+
 let get_constraints_by_lhs : 'type_variable -> 'type_variable t -> constraints =
   fun variable state ->
   (* get the class of the variable *)

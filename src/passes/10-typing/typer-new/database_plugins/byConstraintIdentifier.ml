@@ -19,5 +19,10 @@ let remove_constraint _repr state constraint_to_rm =
 let merge_aliases : 'old 'new_ . ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
   fun _merge_keys state -> state
 
+let pp _type_variable ppf state =
+  let open PP_helpers in
+  list_sep_d (pair Ast_typed.PP.constraint_identifier Ast_typed.PP.c_typeclass_simpl) ppf (PolyMap.bindings state)
 
 let find_opt : constraint_identifier -> 'type_variable t -> c_typeclass_simpl option = PolyMap.find_opt
+
+let get_state_for_tests state = state

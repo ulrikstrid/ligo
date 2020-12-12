@@ -340,6 +340,17 @@ let make_c_row_simpl ?(reason_row_simpl="") tv r_tag tv_map_as_lst : c_row_simpl
   tv_map = LMap.of_list tv_map_as_lst ;
 }
 
+
+let make_c_typeclass_simpl ?(reason_typeclass_simpl="") id_typeclass_simpl original_id args tc : c_typeclass_simpl =
+  {
+    reason_typeclass_simpl ;
+    is_mandatory_constraint = true ;
+    id_typeclass_simpl = ConstraintIdentifier (Int64.of_int id_typeclass_simpl) ;
+    original_id = (match original_id with None -> None | Some i -> Some (ConstraintIdentifier (Int64.of_int i))) ;
+    tc ;
+    args ;
+  }
+
 let make_constructor_or ?(reason_constr_simpl = "") tv c_tag tv_list =
   `Constructor (make_c_constructor_simpl ~reason_constr_simpl tv c_tag tv_list)
 
