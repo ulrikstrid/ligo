@@ -48,6 +48,16 @@ let remove_constraint repr state constraint_to_remove =
 let merge_aliases : 'old 'new_ . ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
   fun merge_keys state -> merge_keys.map state
 
+let pp type_variable ppf state =
+  let open PP_helpers in
+  list_sep_d
+    (pair
+       type_variable
+       (fun ppf set -> list_sep_d Ast_typed.PP.c_typeclass_simpl ppf (PolySet.elements set)))
+    ppf
+    (ReprMap.bindings state)
+
+
 let get_typeclasses_constraining tv (state : 'typeVariable t) =
   Option.unopt ~default:(PolySet.create ~cmp:Ast_typed.Compare.c_typeclass_simpl)
   @@ ReprMap.find_opt tv state

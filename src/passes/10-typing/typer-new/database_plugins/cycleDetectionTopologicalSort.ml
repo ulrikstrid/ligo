@@ -8,4 +8,7 @@ let remove_constraint _repr () _constraint = ok ()
 let merge_aliases : 'old 'new_ . ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
   fun _merge_keys state -> state
 
+let pp _type_variable ppf () = Format.fprintf ppf "()"
+
+
 let get_state_for_tests state = state

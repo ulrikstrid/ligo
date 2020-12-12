@@ -35,6 +35,11 @@ let remove_constraint _repr state _constraint_to_remove =
 let merge_aliases : 'old 'new_ . ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
   fun merge_keys state -> merge_keys.map state
 
+let pp type_variable ppf state =
+  let open PP_helpers in
+  list_sep_d (pair type_variable Ast_typed.PP.constructor_or_row) ppf (ReprMap.bindings state)
+
+
 let find_opt : 'type_variable -> 'type_variable t -> constructor_or_row option = ReprMap.find_opt
 
 let bindings : 'type_variable t -> ('type_variable * constructor_or_row) list = fun state -> ReprMap.bindings state
