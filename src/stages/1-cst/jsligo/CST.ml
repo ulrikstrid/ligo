@@ -109,7 +109,6 @@ type eof = Region.t
 type variable    = string reg
 type fun_name    = string reg
 type type_name   = string reg
-type field_name  = string reg
 type type_constr = string reg
 type constr      = string reg
 type attribute   = string reg
@@ -223,7 +222,7 @@ and assign_pattern = {
 and destruct = {
   property  : variable;
   colon     : colon;
-  target    : let_binding;
+  target    : let_binding reg;
 }
 
 and binding_pattern =
@@ -232,7 +231,7 @@ and binding_pattern =
 | PVar      of variable
 | PDestruct of destruct reg
 | PObject   of (binding_pattern, comma) nsepseq braced reg
-| PWild 
+| PWild
 | PArray    of (binding_pattern, comma) nsepseq brackets reg
 
 and pattern = 
@@ -313,23 +312,51 @@ and switch_case =
     kwd_default : kwd_default;
     colon       : colon;
     statements  : statements option;
-  }
+  } 
+
+and array_item_rest = {
+  ellipsis : ellipsis;
+  expr     : expr
+}
+
+and array_item = 
+  | Empty_entry
+  | Expr_entry of expr
+  | Rest_entry of array_item_rest reg
+
+and property2 = {
+  name  : expr; 
+  colon : colon; 
+  value : expr
+}
+
+and property_rest = { 
+  ellipsis : ellipsis; 
+  expr     : expr
+}
+
+and property =  
+  Punned_property of expr reg
+| Property of property2 reg
+| Property_rest of property_rest reg
 
 and expr =
-  EAnnot   of annot_expr reg
+  EFun     of fun_expr reg
+| EPar     of expr par reg
+| ESeq     of (expr, comma) nsepseq reg
+| EVar     of variable
 | ELogic   of logic_expr
 | EArith   of arith_expr
-| EString  of string_expr
-| ERecord  of record reg
-| EProj    of projection reg
-| EUpdate  of update reg
-| EVar     of variable
 | ECall    of (expr * arguments) reg
+| ENew     of expr reg
 | EBytes   of (string * Hex.t) reg
+| EArray   of (array_item, comma) nsepseq brackets reg
+| EObject  of (property, comma) nsepseq braced reg
+| EString  of string_expr
+| EProj    of projection reg
+
+| EAnnot   of annot_expr reg
 | EUnit    of the_unit reg
-| ETuple   of (expr, comma) nsepseq reg
-| EPar     of expr par reg
-| EFun     of fun_expr reg
 | ECodeInj of code_inj reg
 
 and statement = 
@@ -340,7 +367,7 @@ and statement =
 | SReturn     of return reg
 | SLet        of let_ reg
 | SConst      of const_ reg
-| STypeIn     of type_in reg
+| SType       of type_decl reg
 | SSwitch     of switch reg
 
 and arguments =
@@ -426,66 +453,40 @@ and comp_expr =
 | Equal of equal_cmp bin_op reg
 | Neq   of neq       bin_op reg
 
-and record = field_assign reg ne_injection
-
 and projection = {
-  struct_name : variable;
-  selector    : dot;
-  field_path  : (selection, dot) nsepseq
+  expr      : expr;
+  selection : selection;
 }
+
+and field_name =
+  { dot: dot; value : variable }
 
 and selection =
-  FieldName of variable
-| Component of (string * Z.t) reg
-
-and field_assign = {
-  field_name : field_name;
-  assignment : colon;
-  field_expr : expr
-}
-
-and update = {
-  lbrace   : lbrace;
-  ellipsis : ellipsis;
-  record   : path;
-  comma    : comma;
-  updates  : field_path_assignment reg ne_injection reg;
-  rbrace   : rbrace
-}
-
-and field_path_assignment = {
-  field_path : path;
-  assignment : colon;
-  field_expr : expr
-}
-
-and path =
-  Name of variable
-| Path of projection reg
+  FieldName of field_name reg
+| Component of expr brackets reg
 
 and let_ = {
   kwd_let    : kwd_let;
-  bindings   : (let_binding, comma) nsepseq;
+  bindings   : (let_binding reg, comma) nsepseq;
   attributes : attributes
 }
 
 and const_ = {
   kwd_const  : kwd_const;
-  bindings   : (let_binding, comma) nsepseq;
+  bindings   : (let_binding reg, comma) nsepseq;
   attributes : attributes
 }
 
-and type_in = {
-  type_decl  : type_decl;
-  semi       : semi;
-  body       : expr;
-}
+
+and fun_expr_body = 
+  FunctionBody of statements braced reg
+| ExpressionBody of expr
 
 and fun_expr = {
-  binders    : pattern;
+  parameters : expr;
   lhs_type   : (colon * type_expr) option;
   arrow      : arrow;
-  body       : expr;
+  body       : fun_expr_body;
 }
 
 and cond_expr = {
@@ -512,6 +513,10 @@ let rec last to_region = function
 |  [x] -> to_region x
 | _::t -> last to_region t
 
+let nsepseq_to_region to_region (hd,tl) =
+  let reg (_, item) = to_region item in
+  Region.cover (to_region hd) (last reg tl)
+
 let type_expr_to_region = function
   TProd   {region; _}
 | TSum    {region; _}
@@ -532,8 +537,11 @@ let constr_pattern_to_region = function
 | PTrue region | PFalse region
 | PConstrApp {region;_} -> region
 
-let binding_pattern_to_region = 
-  failwith "todo"
+let binding_pattern_to_region = function
+  PRest {region;_ }   | PAssign {region ;_ }
+| PVar {region ;_ }    | PDestruct {region ;_ }
+| PObject {region ;_ } | PArray {region; _} -> region
+| PWild -> Region.ghost
 
 let pattern_to_region = function
 | PList p -> list_pattern_to_region p
@@ -584,14 +592,14 @@ let expr_to_region = function
 | EArith e -> arith_expr_to_region e
 | EString e -> string_expr_to_region e
 | EAnnot {region;_ } | EFun {region;_}
-| ETuple {region;_}  
 | ECall {region;_}   | EVar {region; _}    | EProj {region; _}
 | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
-| ERecord {region; _} | EUpdate {region; _}
+| ESeq {region; _}   | EObject {region; _} | EArray { region; _}
+| ENew {region; _}
 | ECodeInj {region; _} -> region
 
 let statement_to_region = function 
-| SExpr e -> expr_to_region e
+  SExpr e -> expr_to_region e
 | SBlock {region; _ }
 | SVar {region; _}
 | SCond {region; _}
@@ -599,12 +607,12 @@ let statement_to_region = function
 | SLet  {region; _}
 | SConst {region; _}
 | SSwitch {region; _}
-| STypeIn {region; _} -> region
+| SType {region; _} -> region
 
 let selection_to_region = function
   FieldName f -> f.region
 | Component c -> c.region
 
-let path_to_region = function
-  Name var -> var.region
-| Path {region; _} -> region
+let arrow_function_body_to_region = function
+  FunctionBody {region; _} -> region
+| ExpressionBody s -> expr_to_region s

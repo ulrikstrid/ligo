@@ -101,10 +101,8 @@ module Token = Lexing_jsligo.Token
 
 (* TypeScript keywords *)
 
+%token <Region.t> As          "as"
 %token <Region.t> Type        "type"
-%token <Region.t> Constructor "constructor"
-%token <Region.t> Get         "get"
-%token <Region.t> Set         "set"
 
 (* Data constructors *)
 

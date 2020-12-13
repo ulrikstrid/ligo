@@ -23,6 +23,7 @@ let first_region = function
 %nonassoc below_ELSE
 %nonassoc Else
 
+
 (* See [ParToken.mly] for the definition of tokens. *)
 
 (* Entry points *)
@@ -95,9 +96,9 @@ sep_or_term_list(item,sep):
 
 (* Helpers *)
 
-(*
+
 %inline type_name        : "<ident>"  { $1 }
-%inline field_name       : "<ident>"  { $1 }
+(*%inline field_name       : "<ident>"  { $1 }
 %inline struct_name      : "<ident>"  { $1 }
 %inline module_name      : "<constr>" { $1 }
 *)
@@ -123,8 +124,8 @@ list__(item):
 
 (* Main *)
 
-variable_statement:
-  "<ident>" {  SVar $1 }
+// variable_statement:
+//   "<ident>" {  SVar $1 }
 
 block_statement:
   "{" statements "}" {
@@ -137,7 +138,10 @@ block_statement:
 
 return_statement: 
   "return" expr? {
-    let region = cover $1 Region.ghost in
+    let region = match $2 with 
+      Some s -> cover $1 (expr_to_region s) 
+    | None -> $1 
+    in
     let value = {
       kwd_return  = $1;
       expr        = $2;
@@ -148,7 +152,7 @@ return_statement:
 
 if_else_statement:
   "if" par(expr) statement "else" statement {
-    let region = cover $1 Region.ghost in
+    let region = cover $1 (statement_to_region $5) in
     let value = {
       kwd_if = $1;
       test   = $2.value;
@@ -159,7 +163,7 @@ if_else_statement:
     SCond {region; value}
 }
 | "if" par(expr) statement %prec below_ELSE {
-    let region = cover $1 Region.ghost in
+    let region = cover $1 (statement_to_region $3) in
     let value = {
       kwd_if = $1;
       test   = $2.value;
@@ -170,8 +174,12 @@ if_else_statement:
     SCond {region; value}
   }
 
+initializer_expr:
+  expr             { $1 }
+| object_literal   { $1 }
+
 initializer_:
-  "=" expr {
+  "=" initializer_expr {
     ($1, $2)
   }
 
@@ -192,7 +200,7 @@ object_binding_property:
   "<ident>" initializer_?  { 
     match $2 with 
     | Some (eq, expr) -> 
-      let region = cover $1.region Region.ghost in
+      let region = cover $1.region (expr_to_region expr) in
       let value = {
          property = $1;
          eq;
@@ -205,12 +213,12 @@ object_binding_property:
     | None -> 
       PVar $1 
   }
-| "<ident>" ":" binding   { 
-    let region = cover $1.region Region.ghost in
+| "<ident>" ":" binding_initializer   { 
+    let region = cover $1.region $3.region in
     let value = {
-      property    = $1;
-      colon  = $2;
-      target = $3;
+      property = $1;
+      colon    = $2;
+      target   = $3;
     } in
     PDestruct {
       region;
@@ -259,53 +267,46 @@ array_binding_pattern:
     PArray { region; value }
   }
 
-binding:
-  "<ident>" initializer_?              { 
-    {
-      binders  = PVar $1;
+binding_pattern:
+  "<ident>"               { PVar $1 }
+| object_binding_pattern  { $1 }
+| array_binding_pattern   { $1 }
+
+binding_initializer:
+  binding_pattern initializer_? { 
+    let region = match $2 with 
+    | Some (_, expr) -> cover (binding_pattern_to_region $1) (expr_to_region expr)
+    | None -> binding_pattern_to_region $1 
+    in
+    let value = {
+      binders  = $1;
       lhs_type = None; (* TODO *)
       let_rhs  = match $2 with 
       | Some (eq, expr) -> Some { eq; expr }
       | None -> None
+    } in
+    {
+      region; value
     }
    }
-| object_binding_pattern initializer_? { 
-  {
-    binders  = $1;
-    lhs_type = None; (* TODO *)
-    let_rhs  = match $2 with 
-    | Some (eq, expr) -> Some { eq; expr }
-    | None -> None
-  }
-}
-| array_binding_pattern initializer_? {  
-  {
-    binders  = $1;
-    lhs_type = None; (* TODO *)
-    let_rhs = match $2 with 
-    | Some (eq, expr) -> Some { eq; expr }
-    | None -> None
-  }
-}
 
 binding_list:
-  nsepseq(binding, ",") {
+  nsepseq(binding_initializer, ",") {
     $1
   }
 
 declaration:
   "let" binding_list {
-    let region = cover $1 Region.ghost in
+    let region = cover $1 (nsepseq_to_region (fun e -> e.region) $2) in
     let value = {
       kwd_let    = $1;
       bindings   = $2;
       attributes = []
-    }
-    in 
+    } in
     SLet { region; value }
   }
 | "const" binding_list {
-    let region = cover $1 Region.ghost in
+    let region = cover $1 (nsepseq_to_region (fun e -> e.region) $2) in
     let value = {
       kwd_const  = $1;
       bindings   = $2;
@@ -313,10 +314,19 @@ declaration:
     }
     in 
     SConst { region; value }
-}
+  }
+| type_declaration { $1 }
 
-type_statement:
-  "type" { (* TODO *) failwith "333" }
+object_type: 
+"{" "}" { failwith "444" }
+
+type_expr: 
+  object_type { $1 }
+
+type_decl:
+  "type" type_name "=" type_expr { 
+    (* TODO *) failwith "333" 
+  }
 
 switch_statement:
   "switch" "(" expr ")" "{" nseq(case_block) "}" {
@@ -354,12 +364,10 @@ case_block:
 }
 
 statement:
-  variable_statement
-// | expression_statement
+  expr_statement { SExpr $1 }
 | block_statement
 | if_else_statement
 | switch_statement
-| type_statement
 | return_statement 
 | declaration
   { $1 }
@@ -377,13 +385,321 @@ contract:
 
 (* Expressions *)
 
+expr_sequence:
+  expr "," expr_sequence { 
+    let region = cover (expr_to_region $1) $3.region in
+    {
+      value = Utils.nsepseq_cons $1 $2 $3.value;
+      region
+    }
+  }
+| expr {
+    {
+      value = ($1, []);
+      region = expr_to_region $1;
+    }
+}
+
+arrow_function_body:
+  "{" statements "}" { 
+    let region = cover $1 $3 in
+    FunctionBody {
+      region;
+      value = {
+        lbrace   = $1;
+        inside = $2;
+        rbrace   = $3;
+      }
+    }
+  }
+| expr { ExpressionBody $1 }
+
+arrow_function:
+  "(" expr_sequence ")" "=>" arrow_function_body { 
+    let region = cover $1 (arrow_function_body_to_region $5) in
+    let value = {
+      parameters = EPar {
+        region = cover $1 $3;
+        value = {
+          lpar = $1;
+          inside = ESeq $2;
+          rpar = $3;
+        }
+      };
+      lhs_type = None;
+      arrow    = $4;
+      body     = $5;
+    }
+    in 
+    EFun {
+      region;
+      value;
+    }
+ }
+| "<ident>" "=>" arrow_function_body { 
+    let region = cover $1.region (arrow_function_body_to_region $3) in
+    let value = {
+      parameters = EVar $1;
+      lhs_type = None; (* TODO *)
+      arrow = $2;
+      body = $3
+    } in
+    EFun {
+      region;
+      value
+    }
+  }
+
+disj_expr_level:
+  bin_op(disj_expr_level, "||", conj_expr_level) {
+    ELogic (BoolExpr (Or $1)) }
+| conj_expr_level { $1 }
+
+bin_op(arg1,op,arg2):
+  arg1 op arg2 {
+    let start  = expr_to_region $1 in
+    let stop   = expr_to_region $3 in
+    let region = cover start stop
+    and value  = {arg1=$1; op=$2; arg2=$3}
+    in {region; value} }
+
+conj_expr_level:
+  bin_op(conj_expr_level, "&&", comp_expr_level) {
+    ELogic (BoolExpr (And $1)) }
+| comp_expr_level { $1 }
+
+comp_expr_level:
+  bin_op(comp_expr_level, "<", add_expr_level) {
+    ELogic (CompExpr (Lt $1)) }
+| bin_op(comp_expr_level, "<=", add_expr_level) {
+    ELogic (CompExpr (Leq $1)) }
+| bin_op(comp_expr_level, ">", add_expr_level) {
+    ELogic (CompExpr (Gt $1)) }
+| bin_op(comp_expr_level, ">=", add_expr_level) {
+    ELogic (CompExpr (Geq $1)) }
+| bin_op(comp_expr_level, "===", add_expr_level) {
+    ELogic (CompExpr (Equal $1)) }
+| bin_op(comp_expr_level, "!==", add_expr_level) {
+    ELogic (CompExpr (Neq $1)) }
+| add_expr_level { $1 }
+
+add_expr_level:
+  bin_op(add_expr_level, "+", mult_expr_level)     {  EArith (Add $1) }
+| bin_op(add_expr_level, "-", mult_expr_level)     {  EArith (Sub $1) }
+| mult_expr_level                                  {               $1 }
+
+mult_expr_level:
+  bin_op(mult_expr_level, "*", unary_expr_level)   { EArith (Mult $1) }
+| bin_op(mult_expr_level, "/", unary_expr_level)   {  EArith (Div $1) }
+| bin_op(mult_expr_level, "%", unary_expr_level)   {  EArith (Mod $1) }
+| unary_expr_level                                 {               $1 }
+
+unary_expr_level:
+  "-" call_expr_level {
+    let start = $1 in
+    let stop = expr_to_region $2 in
+    let region = cover start stop
+    and value  = {op=$1; arg=$2}
+    in EArith (Neg {region; value})
+  }
+| "!" call_expr_level {
+    let start = $1 in
+    let stop = expr_to_region $2 in
+    let region = cover start stop
+    and value  = {op=$1; arg=$2} in
+    ELogic (BoolExpr (Not ({region; value})))
+  }
+| call_expr_level { $1 }
+
+call_expr_level:
+  call_expr { $1 }
+| new_expr  { $1 }
+| call_expr_level "as" type_expr { $1 }
+
+array_item:
+  /* */                 { Empty_entry }
+| assignment_expr       { Expr_entry $1 }
+| "..." assignment_expr { 
+  let region = cover $1 (expr_to_region $2) in 
+  let value: array_item_rest = {
+    ellipsis = $1;
+    expr     = $2;
+  } in
+  Rest_entry {
+    region;
+    value
+  }
+ }
+
+array_items:
+  array_item "," array_items { Utils.nsepseq_cons $1 $2 $3 }
+| array_item                { ($1, []) }
+
+array_literal:
+  "[" array_items "]" {
+    let region = cover $1 $3 in
+    let value = {
+      lbracket = $1;
+      inside   = $2; 
+      rbracket = $3
+    } in
+    EArray {
+      region;
+      value
+    }
+  }
+
+property_name: 
+  "<int>"    { EArith (Int $1) }
+| "<ident>"  {         EVar $1 }
+| "<string>" {      EString (String $1) }
+
+property:
+  "<ident>" { 
+    let region = $1.region in 
+    let value = EVar $1 in
+    Punned_property {
+      region;
+      value
+    }
+  }
+| property_name ":" assignment_expr {
+  let region = cover (expr_to_region $1) (expr_to_region $3) in 
+  let value = {
+    name  = $1;
+    colon = $2;
+    value = $3;
+  } in 
+  Property {
+    region;
+    value
+  }
+ }
+| "..." assignment_expr             { 
+  let region = cover $1 (expr_to_region $2) in
+  let value = {
+    ellipsis = $1;
+    expr     = $2;
+  } in
+  Property_rest {
+    region;
+    value
+  }
+ }
+
+properties:
+  property "," properties { Utils.nsepseq_cons $1 $2 $3 }
+| property                { ($1, []) }
+
+object_literal:
+  "{" properties "}" { 
+    let region = cover $1 $3 in
+    let value = {
+      lbrace = $1;
+      inside = $2;
+      rbrace = $3
+    } in
+    EObject {
+      region;
+      value;
+    }
+  }
+
+member_expr:
+  "<ident>"                  {                      EVar $1 }
+| "<int>"                    {              EArith (Int $1) }
+| "<bytes>"                  {                    EBytes $1 }
+// | unit
+| "false"                    { ELogic (BoolExpr (False $1)) }
+| "true"                     {  ELogic (BoolExpr (True $1)) }
+| member_expr "[" expr "]"   { 
+  let region = cover (expr_to_region $1) $4 in 
+  let value = {
+    expr = $1;
+    selection = Component {
+      region = cover $2 $4;
+      value = {
+        lbracket = $2;
+        inside   = $3;
+        rbracket = $4;
+      }
+    }
+  } in
+  EProj {
+    region;
+    value
+  }
+}
+| member_expr "." "<ident>"  { 
+  let region = cover (expr_to_region $1) $3.region in
+  let value = {
+    expr = $1;
+    selection = FieldName {
+      region = cover $2 $3.region;
+      value = {
+        dot   = $2;
+        value = $3;
+      }
+    }
+  } in
+  EProj {
+    region;
+    value
+  }
+ }
+| array_literal           { $1 }
+| "(" object_literal ")"  { 
+    let region = cover $1 $3 in
+    let value = {
+      lpar    = $1;
+      inside  = $2;
+      rpar    = $3;
+    } in 
+    EPar { region; value }
+  }
+| "(" expr_sequence ")"  { 
+    let region = cover $1 $3 in
+    let value = {
+      lpar   = $1;
+      inside = ESeq $2;
+      rpar   = $3;
+    } in
+    EPar { region; value }
+  }
+
+call_expr:
+  member_expr par(nsepseq(assignment_expr, ",")) 
+| call_expr par(nsepseq(assignment_expr, ",")) {
+    let start  = expr_to_region $1 in
+    let stop   = $2 in
+    let region = cover start stop.region in
+    ECall {region; value = $1,Multiple $2}
+  }
+| call_expr "(" ")"
+| member_expr "(" ")" {
+    let start  = expr_to_region $1 in
+    let stop   = $3 in
+    let region = cover start stop
+    and value  = $1, (Unit {region = cover $2 $3; value = $2, $3})
+    in ECall {region; value} }
+
+new_expr:
+  member_expr    { $1 }
+| "new" new_expr { 
+    let region = cover $1 (expr_to_region $2) in
+    let value = $2 in
+    ENew {region; value}
+}
+
+expr_statement:
+  arrow_function                        { $1 }
+| disj_expr_level                       { $1 }
+
+assignment_expr:
+  expr_statement                        { $1 }  
+
 expr:
-
-  "(" { failwith "1" }
-
-// expression_statement:
-//   (* not: {, function, async [no LineTerminator here] function, class, let [ *)
-
+  assignment_expr                       { $1 }
 
 interactive_expr:
   EOF { failwith "a2" }
