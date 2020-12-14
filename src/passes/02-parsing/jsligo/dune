@@ -12,9 +12,10 @@
   (name parsing_jsligo)
   (public_name ligo.parsing.jsligo)
   (modules
-    ; Scoping 
+    Scoping 
     Parser 
-    ; ParErr Pretty
+    ParErr 
+    ; Pretty
     )
   (libraries
     ;; LIGO

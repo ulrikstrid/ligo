@@ -27,6 +27,7 @@ type 'a reg = 'a Region.reg
 (* Lexemes *)
 
 type lexeme = string
+type field_name = string reg
 
 (* Keywords of Reason *)
 
@@ -179,7 +180,7 @@ and type_decl = {
 and type_expr =
   TProd   of cartesian
 | TSum    of sum_type reg
-| TRecord of field_decl reg ne_injection reg
+| TObject of field_decl reg ne_injection reg
 | TApp    of (type_constr * type_tuple) reg
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
@@ -234,57 +235,9 @@ and binding_pattern =
 | PWild
 | PArray    of (binding_pattern, comma) nsepseq brackets reg
 
-and pattern = 
-  PConstr   of constr_pattern
-| PUnit     of the_unit reg
-| PVar2      of variable
-| PInt      of (lexeme * Z.t) reg
-| PNat      of (lexeme * Z.t) reg
-| PBytes    of (lexeme * Hex.t) reg
-| PString   of string reg
-| PVerbatim of string reg
-| PWild     of wild
-| PList     of list_pattern
-| PTuple    of (pattern, comma) nsepseq reg
-| PPar      of pattern par reg
-| PRecord   of field_pattern reg ne_injection reg
-| PTyped    of typed_pattern reg
-
-and constr_pattern =
-  PNone      of c_None
-| PSomeApp   of (c_Some * pattern) reg
-| PFalse    of kwd_false
-| PTrue     of kwd_true
-| PConstrApp of (constr * pattern option) reg
-
-and list_pattern =
-  PListComp of pattern injection reg
-| PCons     of cons_pattern reg
-
-and cons_pattern =
-  { lbracket : lbracket;
-    lpattern : pattern;
-    comma    : comma;
-    ellipsis : ellipsis;
-    rpattern : pattern;
-    rbracket : rbracket;
-  }
-
 and string_expr =
   String   of string reg
 | Verbatim of string reg
-
-and typed_pattern = {
-  pattern   : pattern;
-  colon     : colon;
-  type_expr : type_expr
-}
-
-and field_pattern = {
-  field_name : field_name;
-  eq         : equal;
-  pattern    : pattern
-}
 
 and return = {
   kwd_return: kwd_return;
@@ -360,7 +313,7 @@ and expr =
 | ECodeInj of code_inj reg
 
 and statement = 
-| SBlock      of statement injection reg
+| SBlock      of (statement, semi) nsepseq braced reg
 | SVar        of variable
 | SExpr       of expr
 | SCond       of cond_expr reg
@@ -392,25 +345,6 @@ and 'a ne_injection = {
 and compound =
 | Braces   of lbrace * rbrace
 | Brackets of lbracket * rbracket
-
-and list_expr =
-  ECons     of cons_expr reg
-| EListComp of expr injection reg
-(*| Append of (expr * append * expr) reg*)
-
-and cons_expr =
-  { lbracket : lbracket;
-    lexpr    : expr;
-    comma    : comma;
-    ellipsis : ellipsis;
-    rexpr    : expr;
-    rbracket : rbracket;
-  }
-
-and constr_expr =
-  ENone      of c_None
-| ESomeApp   of (c_Some * expr) reg
-| EConstrApp of (constr * expr option) reg
 
 and arith_expr =
   Add   of plus bin_op reg
@@ -458,11 +392,11 @@ and projection = {
   selection : selection;
 }
 
-and field_name =
+and selection_field_name =
   { dot: dot; value : variable }
 
 and selection =
-  FieldName of field_name reg
+  FieldName of selection_field_name reg
 | Component of expr brackets reg
 
 and let_ = {
@@ -476,7 +410,6 @@ and const_ = {
   bindings   : (let_binding reg, comma) nsepseq;
   attributes : attributes
 }
-
 
 and fun_expr_body = 
   FunctionBody of statements braced reg
@@ -520,7 +453,7 @@ let nsepseq_to_region to_region (hd,tl) =
 let type_expr_to_region = function
   TProd   {region; _}
 | TSum    {region; _}
-| TRecord {region; _}
+| TObject {region; _}
 | TApp    {region; _}
 | TFun    {region; _}
 | TPar    {region; _}
@@ -529,31 +462,11 @@ let type_expr_to_region = function
 | TWild    region
  -> region
 
-let list_pattern_to_region = function
-  PListComp {region; _} | PCons {region; _} -> region
-
-let constr_pattern_to_region = function
-  PNone region | PSomeApp {region;_}
-| PTrue region | PFalse region
-| PConstrApp {region;_} -> region
-
 let binding_pattern_to_region = function
   PRest {region;_ }   | PAssign {region ;_ }
 | PVar {region ;_ }    | PDestruct {region ;_ }
 | PObject {region ;_ } | PArray {region; _} -> region
 | PWild -> Region.ghost
-
-let pattern_to_region = function
-| PList p -> list_pattern_to_region p
-| PConstr c -> constr_pattern_to_region c
-| PUnit {region;_}
-| PTuple {region;_} | PVar2 {region;_}
-| PInt {region;_}
-| PString {region;_} | PVerbatim {region;_}
-| PWild region | PPar {region;_}
-| PRecord {region; _} | PTyped {region; _}
-| PNat {region; _} | PBytes {region; _}
-  -> region
 
 let bool_expr_to_region = function
   Or {region;_} | And {region;_}
@@ -577,15 +490,6 @@ let arith_expr_to_region = function
 
 let string_expr_to_region = function
   Verbatim {region;_} | String {region;_} -> region
-
-let list_expr_to_region = function
-  ECons {region; _} | EListComp {region; _}
-(* | Append {region; _}*) -> region
-
-and constr_expr_to_region = function
-  ENone region
-| EConstrApp {region; _}
-| ESomeApp   {region; _} -> region
 
 let expr_to_region = function
   ELogic e -> logic_expr_to_region e

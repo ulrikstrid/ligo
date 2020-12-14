@@ -27,7 +27,7 @@ let raise_reserved_name var : 'a =
       "Reserved name %S.\nHint: Change the name.\n" var.value
   in raise (Error (msg, mk_window var))
 
-let raise_duplicate_variant var : 'a =
+(* let raise_duplicate_variant var : 'a =
   let msg =
     Printf.sprintf
       "Duplicate constructor %S in this sum type declaration.\n\
@@ -41,7 +41,7 @@ let raise_non_linear_pattern var : 'a =
       "Repeated variable %S in this pattern.\n\
        Hint: Change the name.\n" var.value
   in raise (Error (msg, mk_window var))
-
+*)
 
 let raise_duplicate_field_name var : 'a =
   let msg =
@@ -68,38 +68,36 @@ module VarSet = Set.Make (Ord)
 let reserved =
   let open SSet in
   empty
-  |> add "abs"
-  |> add "address"
-  |> add "amount"
-  |> add "assert"
-  |> add "balance"
-  |> add "black2b"
-  |> add "check"
+  |> add "await" 
+  |> add "break"
+  |> add "case"
+  |> add "catch"
+  |> add "class"
+  |> add "const"
   |> add "continue"
-  |> add "failwith"
-  |> add "gas"
-  |> add "hash"
-  |> add "hash_key"
-  |> add "implicit_account"
-  |> add "int"
-  |> add "pack"
-  |> add "self_address"
-  |> add "sender"
-  |> add "sha256"
-  |> add "sha512"
-  |> add "source"
-  |> add "stop"
-  |> add "time"
-  |> add "unit"
-  |> add "unpack"
+  |> add "debugger"
+  |> add "default"
+  |> add "delete"
+  |> add "do"
+  |> add "else"
+  |> add "enum"
+  |> add "export"
+  |> add "extends"
+  |> add "false"
+  |> add "finally"
+  |> add "for"
+  |> add "function"
+  |> add "if"
+  |> add "import"
+  |> add "in"
 
-let check_reserved_names vars =
+(* let check_reserved_names vars =
   let is_reserved elt = SSet.mem elt.value reserved in
   let inter = VarSet.filter is_reserved vars in
   if not (VarSet.is_empty inter) then
     let clash = VarSet.choose inter in
     raise_reserved_name clash
-  else vars
+  else vars *)
 
 let check_reserved_name var =
   if SSet.mem var.value reserved then
@@ -109,71 +107,22 @@ let check_reserved_name var =
 
 open! CST
 
-let rec vars_of_pattern env = function
-  PConstr p -> vars_of_pconstr env p
-| PUnit _
-| PInt _ | PNat _ | PBytes _
-| PString _ | PVerbatim _
-| PWild _ -> env
-| PVar var ->
-    if VarSet.mem var env then
-      raise_non_linear_pattern var
-    else VarSet.add var env
-| PList l -> vars_of_plist env l
-| PTuple t -> Utils.nsepseq_foldl vars_of_pattern env t.value
-| PPar p -> vars_of_pattern env p.value.inside
-| PRecord p -> vars_of_fields env p.value.ne_elements
-| PTyped p -> vars_of_pattern env p.value.pattern
-
-and vars_of_fields env fields =
-  Utils.nsepseq_foldl vars_of_field_pattern env fields
-
-and vars_of_field_pattern env field =
-  let var = field.value.field_name in
-  if VarSet.mem var env then
-    raise_non_linear_pattern var
-  else
-    let p = field.value.pattern
-    in vars_of_pattern (VarSet.add var env) p
-
-and vars_of_pconstr env = function
-  PNone _ -> env
-| PSomeApp {value=_, pattern; _} ->
-    vars_of_pattern env pattern
-| PFalse _ | PTrue _ -> env
-| PConstrApp {value=_, Some pattern; _} ->
-    vars_of_pattern env pattern
-| PConstrApp {value=_,None; _} -> env
-
-and vars_of_plist env = function
-  PListComp {value; _} ->
-    Utils.sepseq_foldl vars_of_pattern env value.elements
-| PCons {value; _} ->
-    let {lpattern;rpattern;_} = value in
-    List.fold_left vars_of_pattern env [lpattern; rpattern]
-
-let check_linearity = vars_of_pattern VarSet.empty
-
-(* Checking patterns *)
-
-let check_pattern p =
-  check_linearity p |> check_reserved_names |> ignore
 
 (* Checking variants for duplicates *)
 
-let check_variants variants =
+(* let check_variants variants =
   let add acc {value; _} =
     if VarSet.mem value.constr acc then
       raise_duplicate_variant value.constr
     else VarSet.add value.constr acc in
   let variants =
     List.fold_left add VarSet.empty variants
-  in ignore variants
+  in ignore variants *)
 
 (* Checking record fields *)
 
 let check_fields fields =
-  let add acc {value; _} =
+  let add acc ({value; _}: CST.field_decl CST.reg) =
     let field_name = (value: field_decl).field_name in
     if VarSet.mem field_name acc then
       raise_duplicate_field_name value.field_name

@@ -23,7 +23,6 @@ let first_region = function
 %nonassoc below_ELSE
 %nonassoc Else
 
-
 (* See [ParToken.mly] for the definition of tokens. *)
 
 (* Entry points *)
@@ -43,6 +42,13 @@ par(X):
     let region = cover $1 $3
     and value  = {lpar=$1; inside=$2; rpar=$3}
     in {region; value} }
+
+chevrons(X):
+  "<" X ">" {
+    let region = cover $1 $3
+    and value  = {lchevron=$1; inside=$2; rchevron=$3}
+    in {region; value} }
+
 
 (* Sequences
 
@@ -98,10 +104,9 @@ sep_or_term_list(item,sep):
 
 
 %inline type_name        : "<ident>"  { $1 }
-(*%inline field_name       : "<ident>"  { $1 }
-%inline struct_name      : "<ident>"  { $1 }
+%inline field_name       : "<ident>"  { $1 }
+(* %inline struct_name      : "<ident>"  { $1 } *)
 %inline module_name      : "<constr>" { $1 }
-*)
 
 (* Non-empty comma-separated values (at least two values) *)
 
@@ -129,10 +134,12 @@ list__(item):
 
 block_statement:
   "{" statements "}" {
-    let region = cover $1 $3
-    and compound = Some (Braces ($1, $3)) in
-    let elements = Some $2 in
-    let value = {compound; elements; terminator=None}
+    let region = cover $1 $3 in
+    let value = {
+      lbrace = $1; 
+      inside = $2; 
+      rbrace = $3;
+    }
     in SBlock {region; value}
   }
 
@@ -315,17 +322,113 @@ declaration:
     in 
     SConst { region; value }
   }
-| type_declaration { $1 }
+| type_decl { $1 }
 
-object_type: 
-"{" "}" { failwith "444" }
 
-type_expr: 
-  object_type { $1 }
+type_expr:
+  fun_type | sum_type | record_type { $1 }
+
+fun_type:
+  cartesian { $1 }
+| cartesian "=>" fun_type {
+    let start  = type_expr_to_region $1
+    and stop   = type_expr_to_region $3 in
+    let region = cover start stop in
+    TFun {region; value=$1,$2,$3} } 
+
+cartesian:
+  core_type { $1 }
+| par(tuple (cartesian)) { TProd $1 }
+
+type_args:
+  tuple(fun_type) { $1 }
+| fun_type        { $1, [] }
+
+core_type:
+  type_name           {    TVar $1 }
+| "_"                 {   TWild $1 }
+| par(type_expr)      {    TPar $1 }
+| "<string>"          { TString $1 }
+| module_name "." type_name {
+    let module_name = $1.value in
+    let type_name   = $3.value in
+    let value       = module_name ^ "." ^ type_name in
+    let region      = cover $1.region $3.region
+    in TVar {region; value}
+  }
+| type_name chevrons(type_args) {
+   let region = cover $1.region $2.region
+   in TApp {region; value = $1,$2} }
+
+sum_type:
+  variant "|" nsepseq(variant,"|") {    
+    let variants = Utils.nsepseq_cons $1 $2 $3 in
+    (*Scoping.check_variants (Utils.nsepseq_to_list variants);*)
+    let region = nsepseq_to_region (fun x -> x.region) variants in
+    let value  = {variants=variants; attributes=[]; lead_vbar=None}
+    in TSum {region; value}
+  }
+| "|" variant {
+  TSum {
+    region = cover $1 $2.region;
+    value = {
+      variants   = ($2, []);
+      attributes = [];
+      lead_vbar  = Some $1;
+    }
+  }
+}
+
+variant:
+  "<string>" {
+    {region = $1.region; value = VString $1}
+  }
+| "<ident>" {
+    {region = $1.region; value = VVar $1}
+}
+
+record_type:
+  "{" sep_or_term_list(field_decl,",") "}" {
+    let fields, terminator = $2 in
+    let () = Utils.nsepseq_to_list fields |> Scoping.check_fields in
+    let region = cover $1 $3
+    and value = {
+      compound = Some (Braces ($1,$3));
+      ne_elements = fields;
+      terminator;
+      attributes=[]}
+    in TObject {region; value} }
+
+field_decl:
+  field_name {
+    let value = {
+      field_name=$1;
+      colon=ghost;
+      field_type = TVar $1;
+      attributes=[]}
+    in {$1 with value}
+  }
+| field_name ":" type_expr {
+    let stop   = type_expr_to_region $3 in
+    let region = cover $1.region stop in
+    let field_name = $1 in
+    let value: field_decl = {
+      field_name = field_name;
+      colon=$2; 
+      field_type=$3; 
+      attributes= []}
+    in {region; value} 
+  }
 
 type_decl:
   "type" type_name "=" type_expr { 
-    (* TODO *) failwith "333" 
+    Scoping.check_reserved_name $2;
+    let region = cover $1 (type_expr_to_region $4) in
+    let value  = {kwd_type  = $1;
+                  name      = $2;
+                  eq        = $3;
+                  type_expr = $4}
+    in SType {region; value}  
   }
 
 switch_statement:
@@ -469,9 +572,11 @@ conj_expr_level:
 | comp_expr_level { $1 }
 
 comp_expr_level:
-  bin_op(comp_expr_level, "<", add_expr_level) {
-    ELogic (CompExpr (Lt $1)) }
-| bin_op(comp_expr_level, "<=", add_expr_level) {
+// TODO: fix shift reduce error
+//   bin_op(comp_expr_level, "<", add_expr_level) {
+//     ELogic (CompExpr (Lt $1)) }
+// | 
+bin_op(comp_expr_level, "<=", add_expr_level) {
     ELogic (CompExpr (Leq $1)) }
 | bin_op(comp_expr_level, ">", add_expr_level) {
     ELogic (CompExpr (Gt $1)) }
