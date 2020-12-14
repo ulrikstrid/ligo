@@ -1,7 +1,7 @@
 open Ast
-
 open Stage_common.To_yojson
 type json = Yojson.Safe.t
+
 
 let constant' = function
   | C_INT                -> `List [`String "C_INT"; `Null ]
@@ -165,11 +165,12 @@ let rec type_expression {type_content=tc;type_meta;location;orig_var} =
   ]
 
 and type_content = function
-  | T_variable t -> `List [ `String "t_variable"; type_variable_to_yojson t]
-  | T_sum      t -> `List [ `String "t_sum"; rows t]
-  | T_record   t -> `List [ `String "t_record"; rows t]
-  | T_arrow    t -> `List [ `String "t_arrow"; arrow t]
-  | T_constant t -> `List [ `String "t_constant"; type_injection t]
+  | T_variable        t -> `List [ `String "t_variable"; type_variable_to_yojson t]
+  | T_sum             t -> `List [ `String "t_sum"; rows t]
+  | T_record          t -> `List [ `String "t_record"; rows t]
+  | T_arrow           t -> `List [ `String "t_arrow"; arrow t]
+  | T_constant        t -> `List [ `String "t_constant"; type_injection t]
+  | T_module_accessor t -> `List [ `String "t_module_accessor"; module_access type_expression t]
 
 and type_injection {language;injection;parameters} =
   `Assoc [
@@ -221,6 +222,7 @@ and expression_content = function
   | E_record          e -> `List [ `String "E_record"; record e ]
   | E_record_accessor e -> `List [ `String "E_record_accessor"; record_accessor e ]
   | E_record_update   e -> `List [ `String "E_record_update"; record_update e ]
+  | E_module_accessor e -> `List [ `String "E_module_accessor"; module_access expression e]
 
 and constant {cons_name;arguments} =
   `Assoc [
@@ -386,10 +388,19 @@ and type_environment_binding {type_variable;type_} =
   ]
 and type_environment e = list type_environment_binding e
 
-and environment {expression_environment=ee;type_environment=te} =
+and module_environment_binding {module_name; module_} =
+  `Assoc [
+    ("module_name", `String module_name);
+    ("module_", environment module_)
+  ]
+
+and module_environment e = list module_environment_binding e
+
+and environment {expression_environment=ee;type_environment=te;module_environment=me} =
   `Assoc [
     ("expression_environment", expression_environment ee);
     ("type_environment", type_environment te);
+    ("module_environment", module_environment me)
   ]
 
 (* Solver types *)
@@ -597,6 +608,7 @@ let constraints {constructor; poly; (* tc; *) row} =
     (* ("tc", list c_typeclass_simpl tc); *)
     ("row", list c_row_simpl row);
   ]
+
 (* let structured_dbs {refined_typeclasses;refined_typeclasses_back;typeclasses_constrained_by;by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort=_} =
  *   `Assoc [
  *     ("refined_typeclasses", jmap constraint_identifier refined_typeclass refined_typeclasses);
@@ -609,15 +621,20 @@ let constraints {constructor; poly; (* tc; *) row} =
  *     ("grouped_by_variable", typeVariableMap constraints grouped_by_variable);
  *     ("cycl_detection_toposort", `Null)
  *   ] *)
+let constructor_or_row (t : constructor_or_row ) =
+  match t with
+  | `Row r -> `Assoc [ ("row" , c_row_simpl r) ]
+  | `Constructor c -> `Assoc [ ("constructor" , c_constructor_simpl c) ]
 
 let output_break_ctor ({a_k_var;a_k'_var'}) =
   `Assoc [
-    ("a_k_var", c_constructor_simpl a_k_var);
-    ("a_k'_var'", c_constructor_simpl a_k'_var')]
+    ("a_k_var", constructor_or_row a_k_var);
+    ("a_k'_var'", constructor_or_row a_k'_var')]
 
 let output_specialize1  ({poly;a_k_var}) =`Assoc [
     ("poly", c_poly_simpl poly);
 ("a_k_var",     c_constructor_simpl a_k_var)]
+
 let output_tc_fundep (t : output_tc_fundep) =
   let lst = t.tc in
   let a = t.c in `Assoc
@@ -626,4 +643,4 @@ let output_tc_fundep (t : output_tc_fundep) =
           ("refined",c_typeclass_simpl lst.refined);
           ("original",`String(Format.asprintf "%Li" (match lst.original with ConstraintIdentifier x -> x)));
           ("vars",list Var.to_yojson ( RedBlackTrees.PolySet.elements lst.vars))])
-      ;("a",c_constructor_simpl a)]
+      ;("a",constructor_or_row a)]

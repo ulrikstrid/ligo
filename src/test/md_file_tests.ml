@@ -2,8 +2,8 @@ open Trace
 open Test_helpers
 open Main_errors
 
+let () = Unix.putenv "LIGO_FORCE_NEW_TYPER" "false"
 module SnippetsGroup = Map.Make(struct type t = (string * string) let compare a b = compare a b end)
-
 (**
   binds the snippets by (syntax, group_name)
   e.g. :(pascaligo, a) -> "let .. in let .. in"
@@ -62,7 +62,7 @@ let compile_groups filename grp_list =
       let {typer_switch;init_env} : Compiler_options.t = options in
       let%bind meta       = Compile.Of_source.make_meta s None in
       let%bind c_unit,_   = Compile.Of_source.compile_string ~options ~meta contents in
-      let%bind imperative = Compile.Of_c_unit.compile ~options ~meta c_unit filename in
+      let%bind imperative = Compile.Of_c_unit.compile ~meta c_unit filename in
       let%bind sugar      = Ligo.Compile.Of_imperative.compile imperative in
       let%bind core       = Ligo.Compile.Of_sugar.compile sugar in
       let%bind typed,_,_  = Compile.Of_core.compile ~typer_switch ~init_env Env core in

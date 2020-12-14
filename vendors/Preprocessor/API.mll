@@ -251,14 +251,14 @@ let rec last_mode = function
 
 (* Finding a file to #include *)
 
-let rec find base = function
+let rec find file_path = function
          [] -> None
 | dir::dirs ->
     let path =
-      if dir = "." || dir = "" then base
-      else dir ^ Filename.dir_sep ^ base in
+      if dir = "." || dir = "" then file_path
+      else dir ^ Filename.dir_sep ^ file_path in
     try Some (path, open_in path) with
-      Sys_error _ -> find base dirs
+      Sys_error _ -> find file_path dirs
 
 let find dir file dirs =
   let path =
@@ -535,14 +535,13 @@ rule scan state = parse
     | "import" ->
         let reg, import_path, imported_module = scan_import state lexbuf in
         if state.mode = Copy then
-          let path = mk_path state in
-          let imp_path =
-            match find path import_path state.config#dirs with
-              Some p -> fst p
+          let file_path = mk_path state in
+          let imported_file =
+            match find file_path import_path state.config#dirs with
+              Some (file, in_channel) -> close_in in_channel; file
             | None -> fail state reg (File_not_found import_path) in
-          let import = (imp_path, imported_module) :: state.import in
-          let state  = {state with import}
-          in scan state lexbuf
+          let import = (imported_file, imported_module) :: state.import
+          in scan {state with import} lexbuf
         else scan state lexbuf
     | "if" ->
         let mode  = expr state lexbuf in

@@ -12,7 +12,6 @@ module Token         = Lexing_reasonligo.Token
 module Self_tokens   = Lexing_reasonligo.Self_tokens
 module CST           = Cst.Reasonligo
 module ParErr        = Parser_msg
-module Scoping       = Parsing_reasonligo.Scoping
 module ParserMainGen = Parsing_shared.ParserMainGen
 
 (* CLIs *)
@@ -51,17 +50,16 @@ module Printer =
 (* Finally... *)
 
 module Main = ParserMainGen.Make
-                (Comments)
                 (File)
+                (Comments)
                 (Token)
+                (ParErr)
+                (Self_tokens)
                 (CST)
                 (Parser)
-                (Scoping)
-                (ParErr)
                 (Printer)
                 (Pretty)
                 (Parser_CLI)
-                (Self_tokens)
 
 let () = Main.check_cli ()
 let () = Main.parse ()

@@ -1,9 +1,5 @@
 (* PREPROCESSING *)
 
-(* Vendor dependencies *)
-
-module Trace = Simple_utils.Trace
-
 (* Directories and files *)
 
 type file_path = string
@@ -11,7 +7,18 @@ type dirs = file_path list (* #include and #import *)
 
 module Make (File : File.S) (Comments : Comments.S) :
   sig
+    (* Vendor dependencies *)
+
+    module Trace = Simple_utils.Trace
+
+    (* Directories and files *)
+
+    type nonrec file_path = file_path
+    type nonrec dirs = dirs
+
     (* Results *)
+
+    module Errors = Errors
 
     type success = Preprocessor.API.success
     type result  = (success, Errors.t) Trace.result

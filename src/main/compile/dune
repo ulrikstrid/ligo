@@ -6,8 +6,10 @@
     simple-utils
     tezos-utils
     proto-alpha-utils
-    preproc
-    parser
+    preprocessing
+    parsing
+    cst
+    self_cst
     tree_abstraction
     ast_imperative
     self_ast_imperative

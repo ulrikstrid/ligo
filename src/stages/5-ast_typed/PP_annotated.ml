@@ -68,6 +68,7 @@ let rec type_content : formatter -> type_content -> unit =
   | T_arrow a -> fprintf ppf "@[<h>%a ->@ %a@]" type_expression a.type1 type_expression a.type2
   | T_variable tv -> type_variable ppf tv
   | T_constant tc -> type_injection ppf tc
+  | T_module_accessor ma -> module_access type_expression ppf ma
 
 and type_injection ppf {language;injection;parameters} =
   ignore language;
@@ -124,6 +125,7 @@ and expression_content ppf (ec: expression_content) =
         expression_variable fun_name
         type_expression fun_type
         expression_content (E_lambda lambda)
+  | E_module_accessor ma -> module_access expression ppf ma
 
 and assoc_expression ppf : map_kv -> unit =
  fun {key ; value} -> fprintf ppf "%a -> %a" expression key expression value
@@ -431,13 +433,18 @@ let refined_typeclass ppf ({ refined; original; vars } : refined_typeclass) =
  *     (typeVariableMap constraints) grouped_by_variable
  *     (fun _ppf _ -> ()) cycle_detection_toposort *)
 
+ let constructor_or_row ppf (t : constructor_or_row ) =
+  match t with
+  | `Row r -> c_row_simpl ppf r
+  | `Constructor c -> c_constructor_simpl ppf c
+
 let output_break_ctor ppf ({a_k_var;a_k'_var'}) =
   fprintf ppf "{@,@[<hv 2>
               a_k_var : %a ;@
               a_k'_var' : %a
               @]@,}"
-    c_constructor_simpl a_k_var
-    c_constructor_simpl a_k'_var'
+    constructor_or_row a_k_var
+    constructor_or_row a_k'_var'
 
 let output_specialize1 ppf ({poly;a_k_var}) =
   fprintf ppf "{@,@[<hv 2>
@@ -446,9 +453,16 @@ let output_specialize1 ppf ({poly;a_k_var}) =
               @]@,}"
     c_poly_simpl poly
     c_constructor_simpl a_k_var
-let output_tc_fundep ppd (t : output_tc_fundep) =
+
+let output_tc_fundep ppf (t : output_tc_fundep) =
   let lst = t.tc in
-  let a = t.c in fprintf ppd "{tc:{refined:%a original:%Li vars:%a};a:%a}" c_typeclass_simpl lst.refined (match lst.original with ConstraintIdentifier a -> a) (list_sep_d (fun x _ ->fprintf x "," ) ) ( (fun x ->( List.map (fun y-> Format.asprintf "%a" Var.pp y) @@ ( RedBlackTrees.PolySet.elements x))) lst.vars) c_constructor_simpl a
+  let a = t.c in
+  fprintf ppf "{tc:{refined:%a original:%Li vars:%a}; c:%a}"
+    c_typeclass_simpl
+    lst.refined
+    (match lst.original with ConstraintIdentifier a -> a) (list_sep_d (fun x _ ->fprintf x "," ) )
+    ( (fun x ->( List.map (fun y-> Format.asprintf "%a" Var.pp y) @@ ( RedBlackTrees.PolySet.elements x))) lst.vars) 
+    constructor_or_row a
 
 let deduce_and_clean_result ppf {deduced;cleaned} =
   fprintf ppf "{@,@[<hv 2>

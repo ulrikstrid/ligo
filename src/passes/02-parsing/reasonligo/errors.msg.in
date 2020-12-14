@@ -11,6 +11,19 @@ interactive_expr: C_Some WILD
 Ill-formed application to the predefined data constructor 'Some'.
 At this point, its argument is expected as an expression.
 
+interactive_expr: Constr DOT Ident WILD
+##
+## Ends in an error in state: 206.
+##
+## module_var_e -> Ident . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## projection -> Ident . selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+##
+## The known suffix of the stack is as follows:
+## Ident
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
 interactive_expr: Constr DOT WILD
 ##
 ## Ends in an error in state: 201.
@@ -1097,42 +1110,6 @@ interactive_expr: If WILD
 ##
 ## The known suffix of the stack is as follows:
 ## If
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: LBRACE ELLIPSIS Constr DOT Ident WILD
-##
-## Ends in an error in state: 540.
-##
-## projection -> Constr DOT Ident . selection [ COMMA COLON ]
-##
-## The known suffix of the stack is as follows:
-## Constr DOT Ident
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: LBRACE ELLIPSIS Constr DOT WILD
-##
-## Ends in an error in state: 539.
-##
-## projection -> Constr DOT . Ident selection [ COMMA COLON ]
-##
-## The known suffix of the stack is as follows:
-## Constr DOT
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: LBRACE ELLIPSIS Constr WILD
-##
-## Ends in an error in state: 538.
-##
-## projection -> Constr . DOT Ident selection [ COMMA COLON ]
-##
-## The known suffix of the stack is as follows:
-## Constr
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>

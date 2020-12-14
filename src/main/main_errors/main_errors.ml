@@ -2,11 +2,19 @@ module Formatter = Formatter
 module Types = Types
 type all = Types.all
 
+(* build system *)
+let build_error_tracer (e:all) : all = `Build_error_tracer e
+let build_dependency_cycle (s:string) : all = `Build_dependency_cycle s
+let build_corner_case (loc:string) (msg:string)  = `Build_corner_case (loc,msg)
+
 (* passes tracers *)
 
-let preproc_tracer (e:Preproc.Errors.preproc_error) : all = `Main_preproc e
-let parser_tracer (e:Parser.Errors.parse_error) : all = `Main_parser e
-let pretty_tracer (e:Parser.Errors.parse_error) : all = `Main_pretty e
+let preproc_tracer (e:Preprocessing.Errors.t) : all = `Main_preproc e
+let parser_tracer (e:Parsing.Errors.t) : all = `Main_parser e
+let pretty_tracer (e:Parsing.Errors.t) : all = `Main_pretty e
+let self_cst_cameligo_tracer (e:Self_cst.Cameligo.Errors.self_cst_cameligo_error) : all = `Main_self_cst_cameligo e
+let self_cst_pascaligo_tracer (e:Self_cst.Pascaligo.Errors.self_cst_pascaligo_error) : all = `Main_self_cst_pascaligo e
+let self_cst_reasonligo_tracer (e:Self_cst.Reasonligo.Errors.self_cst_reasonligo_error) : all = `Main_self_cst_reasonligo e
 let cit_cameligo_tracer (e:Tree_abstraction.Cameligo.Errors.abs_error) : all = `Main_cit_cameligo e
 let cit_pascaligo_tracer (e:Tree_abstraction.Pascaligo.Errors.abs_error) : all = `Main_cit_pascaligo e
 let cit_reasonligo_tracer (e:Tree_abstraction.Reasonligo.Errors.abs_error) : all = `Main_cit_reasonligo e
@@ -49,7 +57,7 @@ let could_not_serialize errs : all = `Main_could_not_serialize errs
 let unknown : all = `Main_unknown
 
 let unknown_failwith_type : all = `Main_unknown_failwith_type
-let failwith fw : all = `Main_execution_failed fw
+let main_failwith fw : all = `Main_execution_failed fw
 
 let unparsing_michelson_tracer err : all = `Main_unparse_michelson_result err
 let parsing_payload_tracer err : all = `Main_parse_payload err

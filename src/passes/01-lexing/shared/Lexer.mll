@@ -224,6 +224,7 @@ let byte       = hexa_digit hexa_digit
 let byte_seq   = byte | byte (byte | '_')* byte
 let bytes      = "0x" (byte_seq? as seq)
 let string     = [^'"' '\\' '\n']*  (* For strings of #include *)
+let directive  = '#' (blank* as space) (small+ as id) (* For #include *)
 
 (* Symbols *)
 
@@ -254,8 +255,8 @@ rule scan state = parse
 | natural                { mk_int          state lexbuf }
 | symbol                 { mk_sym          state lexbuf }
 | eof                    { mk_eof          state lexbuf }
-| "[@"  (attr as a) "]"  { mk_attr       a state lexbuf }
-| "[%"  (attr as l)      { mk_lang       l state lexbuf }
+| "[@" (attr as a) "]"   { mk_attr       a state lexbuf }
+| "[%" (attr as l)       { mk_lang       l state lexbuf }
 
 | "{|" {
     let Core.{region; state; _} = state#sync lexbuf in

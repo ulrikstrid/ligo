@@ -24,6 +24,12 @@ let typeVariableMap compare a b = List.compare ~compare:(compare_tvmap_entry com
 let type_variable = Var.compare
 let expression_variable = Location.compare_wrap ~compare:Var.compare
 
+let module_access f {module_name=mna; element=ea}
+                    {module_name=mnb; element=eb} =
+  cmp2
+    String.compare mna mnb
+    f ea eb
+
 let layout_tag = function
   | L_comb -> 1
   | L_tree -> 2
@@ -32,11 +38,12 @@ let layout a b = Int.compare (layout_tag a) (layout_tag b)
 
 let type_expression_tag ty_expr =
   match ty_expr.type_content with
-    T_variable _ -> 1
-  | T_constant _ -> 2
-  | T_sum      _ -> 3
-  | T_record   _ -> 4
-  | T_arrow    _ -> 5
+    T_variable        _ -> 1
+  | T_constant        _ -> 2
+  | T_sum             _ -> 3
+  | T_record          _ -> 4
+  | T_arrow           _ -> 5
+  | T_module_accessor _ -> 6
 
 let rec constant_tag (ct : constant_tag) =
   match ct with
@@ -68,8 +75,9 @@ and type_expression a b =
   | T_sum      a, T_sum      b -> rows a b
   | T_record   a, T_record   b -> rows a b
   | T_arrow    a, T_arrow    b -> arrow a b
-  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ ),
-    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ ) ->
+  | T_module_accessor a, T_module_accessor b -> module_access type_expression a b
+  | (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_module_accessor _),
+    (T_variable _| T_constant _| T_sum _| T_record _| T_arrow _ | T_module_accessor _) ->
     Int.compare (type_expression_tag a) (type_expression_tag b)
 
 and injection {language=la ; injection=ia ; parameters=pa} {language=lb ; injection=ib ; parameters=pb} =
@@ -126,6 +134,7 @@ let expression_tag expr =
   | E_record          _ -> 12
   | E_record_accessor _ -> 13
   | E_record_update   _ -> 14
+  | E_module_accessor _ -> 15
 
 let rec expression a b =
   match a.expression_content,b.expression_content with
@@ -143,8 +152,9 @@ let rec expression a b =
   | E_record a, E_record b -> record a b
   | E_record_accessor a, E_record_accessor b -> record_accessor a b
   | E_record_update  a, E_record_update b -> record_update a b
-  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _),
-    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _) ->
+  | E_module_accessor a, E_module_accessor b -> module_access expression a b
+  | (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_module_accessor _),
+    (E_literal _| E_constant _| E_variable _| E_application _| E_lambda _| E_recursive _| E_let_in _| E_type_in _| E_raw_code _| E_constructor _| E_matching _| E_record _| E_record_accessor _| E_record_update _ | E_module_accessor _) ->
     Int.compare (expression_tag a) (expression_tag b)
 
 and constant ({cons_name=ca;arguments=a}: constant) ({cons_name=cb;arguments=b}: constant) =
@@ -311,15 +321,20 @@ and environment_binding {expr_var=eva;env_elt=eea} {expr_var=evb;env_elt=eeb} =
 
 and expression_environment a b = List.compare ~compare:environment_binding a b
 
-and environment {expression_environment=eea;type_environment=tea} {expression_environment=eeb;type_environment=teb} =
+and module_environment_binding {module_name=mna;module_=ma}
+                               {module_name=mnb;module_=mb} =
   cmp2
+    String.compare mna mnb
+    environment    ma  mb
+
+and module_environment a b = List.compare ~compare:module_environment_binding a b
+
+and environment {expression_environment=eea;type_environment=tea; module_environment=mea}
+                {expression_environment=eeb;type_environment=teb; module_environment=meb} =
+  cmp3
    expression_environment eea eeb
    type_environment       tea teb
-
-let named_type_content {type_name=tna;type_value=tva} {type_name=tnb;type_value=tvb} =
-  cmp2
-    type_variable tna tnb
-    type_expression tva tvb
+   module_environment     mea meb
 
 (* Solver types *)
 
@@ -438,14 +453,17 @@ let c_poly_simpl {reason_poly_simpl=ra;is_mandatory_constraint=imca;tv=tva;foral
     type_variable  tva tvb
     p_forall       fa  fb
 
-let c_typeclass_simpl {reason_typeclass_simpl=ra;is_mandatory_constraint=imca;id_typeclass_simpl=ida;original_id=oia;tc=ta;args=la} {reason_typeclass_simpl=rb;is_mandatory_constraint=imcb;id_typeclass_simpl=idb;original_id=oib;tc=tb;args=lb} =
-  cmp6
-    String.compare ra rb
-    Bool.compare imca imcb
-    constraint_identifier ida idb
-    (Option.compare constraint_identifier) oia oib
-    (List.compare ~compare:tc_allowed) ta tb
-    (List.compare ~compare:type_variable) la lb
+(* let c_typeclass_simpl {reason_typeclass_simpl=ra;is_mandatory_constraint=imca;id_typeclass_simpl=ida;original_id=oia;tc=ta;args=la} {reason_typeclass_simpl=rb;is_mandatory_constraint=imcb;id_typeclass_simpl=idb;original_id=oib;tc=tb;args=lb} =
+ *   cmp6
+ *     String.compare ra rb
+ *     Bool.compare imca imcb
+ *     constraint_identifier ida idb
+ *     (Option.compare constraint_identifier) oia oib
+ *     (List.compare ~compare:tc_allowed) ta tb
+ *     (List.compare ~compare:type_variable) la lb *)
+
+let c_typeclass_simpl a b =
+  constraint_identifier a.id_typeclass_simpl b.id_typeclass_simpl
 
 let c_row_simpl {reason_row_simpl=ra;is_mandatory_constraint=imca;tv=tva;r_tag=rta;tv_map=ma} {reason_row_simpl=rb;is_mandatory_constraint=imcb;tv=tvb;r_tag=rtb;tv_map=mb} =
   cmp5
@@ -455,6 +473,15 @@ let c_row_simpl {reason_row_simpl=ra;is_mandatory_constraint=imca;tv=tva;r_tag=r
     row_tag        rta rtb
     (label_map ~compare:type_variable) ma mb
 
+let constructor_or_row
+    (a : constructor_or_row)
+    (b : constructor_or_row) =
+  match a,b with
+  | `Row a , `Row b -> c_row_simpl a b
+  | `Constructor a , `Constructor b -> c_constructor_simpl a b
+  | `Constructor _ , `Row _ -> -1
+  | `Row _ , `Constructor _ -> 1
+
 let type_constraint_simpl_tag = function
   | SC_Constructor _ -> 1
   | SC_Alias       _ -> 2
@@ -463,7 +490,6 @@ let type_constraint_simpl_tag = function
   | SC_Row         _ -> 5
 
 let type_constraint_simpl a b =
-  let _ = failwith "src/stages/5-ast_typed/compare.ml type_constraint_simpl should get a comparator for the type variables within" in
   match (a,b) with
   SC_Constructor ca, SC_Constructor cb -> c_constructor_simpl ca cb
 | SC_Alias       aa, SC_Alias       ab -> c_alias aa ab

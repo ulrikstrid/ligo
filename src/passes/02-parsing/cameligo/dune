@@ -12,7 +12,7 @@
   (name parsing_cameligo)
   (public_name ligo.parsing.cameligo)
   (modules
-    Scoping Parser ParErr Pretty)
+    Parser ParErr Pretty)
   (libraries
     ;; LIGO
     lexing_cameligo

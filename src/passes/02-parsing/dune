@@ -12,5 +12,7 @@
      parsing_cameligo
      parsing_reasonligo
      parsing_jsligo)
+  (modules
+     Parsing Errors Pascaligo Cameligo Reasonligo Jsligo)
   (preprocess
     (pps ppx_let bisect_ppx --conditional)))

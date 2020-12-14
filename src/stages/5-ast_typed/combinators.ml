@@ -9,10 +9,8 @@ let make_e ?(location = Location.generated) expression_content type_expression =
   type_expression ;
   location ;
   }
-let make_n_t type_name type_value = { type_name ; type_value }
-
 let t_variable   ?loc ?core t  : type_expression = make_t ?loc (T_variable t) core
-  
+
 let t_constant ?loc ?core injection parameters : type_expression =
   make_t ?loc (T_constant {language=Stage_common.Backends.michelson; injection = Ligo_string.verbatim injection ; parameters}) core
 
@@ -324,3 +322,61 @@ let get_declaration_by_name : program_fully_typed -> string -> declaration optio
     | Declaration_type _ -> false
   in
   List.find_opt aux @@ List.map Location.unwrap p
+
+let make_c_constructor_simpl ?(reason_constr_simpl="") tv c_tag tv_list =
+  {
+    reason_constr_simpl ;
+    is_mandatory_constraint = true ;
+    tv ;
+    c_tag;
+    tv_list
+  }
+
+let make_c_row_simpl ?(reason_row_simpl="") tv r_tag tv_map_as_lst : c_row_simpl = { 
+  reason_row_simpl ;
+  is_mandatory_constraint = true ;
+  tv;
+  r_tag;
+  tv_map = LMap.of_list tv_map_as_lst ;
+}
+
+let make_constructor_or ?(reason_constr_simpl = "") tv c_tag tv_list =
+  `Constructor (make_c_constructor_simpl ~reason_constr_simpl tv c_tag tv_list)
+
+let make_row_or ?(reason_row_simpl = "") tv r_tag tv_map_as_lst : constructor_or_row =
+  `Row (make_c_row_simpl ~reason_row_simpl tv r_tag tv_map_as_lst)
+
+let make_alias ?(reason_alias_simpl="") a b :  type_constraint_simpl = SC_Alias {
+  reason_alias_simpl ;
+  is_mandatory_constraint = true ;
+  a ;
+  b ;
+}
+
+let make_sc_alias ?(reason_alias_simpl="") a b : type_constraint_simpl =
+  SC_Alias {
+    reason_alias_simpl ;
+    is_mandatory_constraint = true ;
+    a ;
+    b ;
+  }
+let make_sc_constructor ?(reason_constr_simpl="") tv c_tag tv_list : type_constraint_simpl =
+  SC_Constructor (make_c_constructor_simpl ~reason_constr_simpl tv c_tag tv_list)
+let make_sc_row ?(reason_row_simpl="") tv r_tag tv_map_as_lst : type_constraint_simpl =
+  SC_Row (make_c_row_simpl ~reason_row_simpl tv r_tag tv_map_as_lst)
+let make_sc_typeclass ?(reason_typeclass_simpl="") (tc : typeclass) (args : type_variable_list) =
+  SC_Typeclass {
+    reason_typeclass_simpl ;
+    is_mandatory_constraint = true ;
+    id_typeclass_simpl = ConstraintIdentifier 1L ;
+    original_id = None ;
+    tc ;
+    args ;
+  }
+let make_sc_poly ?(reason_poly_simpl="") (tv:type_variable) (forall:p_forall) =
+  SC_Poly {
+    reason_poly_simpl ;
+    is_mandatory_constraint = true ;
+    tv ;
+    forall ;
+  }

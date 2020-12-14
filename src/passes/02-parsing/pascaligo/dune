@@ -12,7 +12,7 @@
   (name parsing_pascaligo)
   (public_name ligo.parsing.pascaligo)
   (modules
-    Scoping Parser ParErr Pretty)
+    Parser ParErr Pretty)
   (libraries
     ;; LIGO
     lexing_pascaligo

@@ -20,6 +20,7 @@ and type_content =
   | T_sum      of rows
   | T_record   of rows
   | T_arrow    of ty_expr arrow
+  | T_module_accessor of ty_expr module_access
 
 and type_injection = {
   language : string ;
@@ -168,6 +169,7 @@ and expression_content =
   | E_record of expression_label_map
   | E_record_accessor of record_accessor
   | E_record_update   of record_update
+  | E_module_accessor of expression module_access
 
 and constant = {
     cons_name: constant' ;
@@ -259,19 +261,20 @@ and type_environment_binding = {
     type_: type_expression ;
   }
 
+and module_environment = module_environment_binding list
+
+and module_environment_binding = {
+  module_name : string ;
+  module_ : environment ;
+}
 and environment = {
   expression_environment: expression_environment ;
   type_environment: type_environment ;
+  module_environment : module_environment ;
   }
-
-and named_type_content = {
-    type_name : type_variable;
-    type_value : type_expression;
-  }
-
-
 
 (* Solver types
+
 
    The solver types are not actually part of the AST,
    so they could be moved to a separate file, but doing so would
@@ -506,24 +509,30 @@ and c_alias = {
   }
 
 
-(* sub-sub component: lazy selector (don't re-try all selectors every time) *)
-(* For now: just re-try everytime *)
+(* sub-sub component: lazy selector *)
+  
+type constructor_or_row = [ (* TODO : c_row_simpl and c_constructor_simpl must be merged*)
+  | `Constructor of c_constructor_simpl
+  | `Row of c_row_simpl
+]
 
 (* selector / propagation rule for breaking down composite types *)
 (* For now: break pair(a, b) = pair(c, d) into a = c, b = d *)
-type output_break_ctor = {
-    a_k_var : c_constructor_simpl ;
-    a_k'_var' : c_constructor_simpl ;
+
+type output_break_ctor = { (* TODO : this type must be local heuristic_... *)
+    a_k_var : constructor_or_row ;
+    a_k'_var' : constructor_or_row ;
   }
 
-type output_specialize1 = {
+type output_specialize1 = { (* TODO : this type must be local heuristic_... *) 
     poly : c_poly_simpl ;
     a_k_var : c_constructor_simpl ;
   }
 
-type output_tc_fundep = {
+
+type output_tc_fundep = { (* TODO : this type must be local heuristic_tc_fundep.. *)
     tc : refined_typeclass ;
-    c : c_constructor_simpl ;
+    c :  constructor_or_row ;
   }
 
 type m_break_ctor__already_selected = output_break_ctor poly_set

@@ -59,16 +59,27 @@ module Config (File : FILE) (Comments : Comments.S) =
 
 module Make (File : File.S) (Comments : Comments.S) =
   struct
+    (* Vendor dependencies *)
+
+    module Trace = Simple_utils.Trace
+
+    (* Directories and files *)
+
+    type nonrec file_path = file_path
+    type nonrec dirs = dirs
+
     (* Results *)
+
+    module Errors = Errors
 
     type success = Preprocessor.API.success
     type result  = (success, Errors.t) Trace.result
 
-    let fail msg = Trace.fail @@ Errors.generic msg
     (* Postlude *)
 
     let finalise show_pp = function
-      Stdlib.Error (_, msg) -> fail msg
+      Stdlib.Error (_, msg) ->
+        Trace.fail @@ Errors.generic msg
     | Ok (buffer, deps) ->
         let string = Buffer.contents buffer in
         if show_pp then

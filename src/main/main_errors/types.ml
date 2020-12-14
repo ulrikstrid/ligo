@@ -2,6 +2,10 @@ type tezos_alpha_error =  [`Tezos_alpha_error of Tezos_error_monad.Error_monad.e
 
 type all =
 [
+ | `Build_error_tracer of all
+ | `Build_dependency_cycle of string
+ | `Build_corner_case of string * string (* TO REMOVE *)
+
  | `Main_invalid_syntax_name of string
  | `Main_invalid_dialect_name of string
  | `Main_invalid_extension of string
@@ -21,17 +25,20 @@ type all =
  | `Main_parse_michelson_code of tezos_alpha_error list
  | `Main_michelson_execution_error of tezos_alpha_error list
 
- | `Main_preproc of Preproc.Errors.preproc_error
- | `Main_parser of Parser.Errors.parse_error
- | `Main_pretty of Parser.Errors.parse_error
+ | `Main_preproc of Preprocessing.Errors.t
+ | `Main_parser of Parsing.Errors.t
+ | `Main_pretty of Parsing.Errors.t
+ | `Main_self_cst_cameligo of Self_cst.Cameligo.Errors.self_cst_cameligo_error
+ | `Main_self_cst_pascaligo of Self_cst.Pascaligo.Errors.self_cst_pascaligo_error
+ | `Main_self_cst_reasonligo of Self_cst.Reasonligo.Errors.self_cst_reasonligo_error
+ | `Main_cit_pascaligo of Tree_abstraction.Pascaligo.Errors.abs_error
+ | `Main_cit_cameligo of Tree_abstraction.Cameligo.Errors.abs_error
+ | `Main_cit_reasonligo of Tree_abstraction.Reasonligo.Errors.abs_error
  | `Main_self_ast_imperative of Self_ast_imperative.Errors.self_ast_imperative_error
  | `Main_purification   of Purification.Errors.purification_error
  | `Main_depurification of Purification.Errors.purification_error
  | `Main_desugaring of Desugaring.Errors.desugaring_error
  | `Main_sugaring   of Desugaring.Errors.desugaring_error
- | `Main_cit_pascaligo of Tree_abstraction.Pascaligo.Errors.abs_error
- | `Main_cit_cameligo of Tree_abstraction.Cameligo.Errors.abs_error
- | `Main_cit_reasonligo of Tree_abstraction.Reasonligo.Errors.abs_error
  | `Main_typer of Typer.Errors.typer_error
  | `Main_interpreter of Interpreter.interpreter_error
  | `Main_self_ast_typed of Self_ast_typed.Errors.self_ast_typed_error
