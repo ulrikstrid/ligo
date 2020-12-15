@@ -1,10 +1,12 @@
 open Ast_typed.Types
 open Trace
 
-type 'typeVariable t = {
+type 'typeVariable t_for_tests = {
   forwards: (constraint_identifier, refined_typeclass) PolyMap.t ;
   backwards: (constraint_identifier, constraint_identifier) PolyMap.t (* maybe not needed anymore now that c_typeclass_simpl has an "original" field ? *)
 }
+
+type 'a t = 'a t_for_tests
 
 let set_of_vars l = (PolySet.add_list l (PolySet.create ~cmp:Var.compare)).set
 
@@ -99,3 +101,4 @@ let find : c_typeclass_simpl -> 'typeVariable t -> refined_typeclass = fun c sta
   | None -> make_refined_typeclass c c.id_typeclass_simpl
 let values : 'typeVariable t -> refined_typeclass list = fun m -> List.map snd @@ PolyMap.bindings m.forwards
 
+let get_state_for_tests state = state
