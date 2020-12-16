@@ -762,11 +762,16 @@ and pp_int state {value=lexeme,z; region} =
 and pp_expr state = function
   EFun {value; region} -> 
     pp_loc_node state "EFun" region;
+    pp_fun_expr state value
 | EPar {value = {inside; _}; region} -> 
     pp_loc_node state "EPar" region;
     pp_expr (state#pad 1 0) inside
 | ESeq {value; region} ->
     pp_loc_node state "ESeq" region;
+    let exprs = Utils.nsepseq_to_list value in
+    let length     = List.length exprs in
+    let apply len rank = pp_expr (state#pad len rank) in
+    List.iteri (List.length exprs |> apply) exprs
 | EVar v ->
     pp_node  state "EVar";
     pp_ident (state#pad 1 0) v
@@ -786,6 +791,10 @@ and pp_expr state = function
     pp_bytes state b
 | EArray {value = {inside; _}; region} ->
     pp_loc_node state "EArray" region;
+    let items  = Utils.nsepseq_to_list inside in
+    let length = List.length items in
+    let apply len rank = pp_array_item (state#pad len rank) in
+    List.iteri (List.length items |> apply) items
 | EObject {value = {inside; _}; region} ->
     pp_loc_node state "EObject" region;
 | EString e_string ->
@@ -801,6 +810,15 @@ and pp_expr state = function
 | ECodeInj {value; region} ->
     pp_loc_node state "ECodeInj" region;
     pp_code_inj state value
+
+and pp_array_item state = function 
+  Empty_entry -> pp_node state "<empty>"
+| Expr_entry e -> 
+    pp_node state "<expr>";
+    pp_expr (state#pad 1 0) e
+| Rest_entry {value; region} ->
+    pp_loc_node state "<rest>" region;
+    pp_expr    (state#pad 1 0) value.expr
 
 and pp_fun_expr state node =
   let {parameters; lhs_type; body; _} = node in
