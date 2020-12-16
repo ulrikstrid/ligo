@@ -150,16 +150,39 @@ and print_attributes state attributes =
   in List.iter apply attributes
 
 and print_statement state = function
-  ConstDecl {value=kwd_let, kwd_rec, let_binding, attributes; _} ->
-    print_attributes   state attributes;
-    print_token        state kwd_let "let";
-    print_token_opt    state kwd_rec "rec";
-    print_let_binding  state let_binding
-| TypeDecl {value={kwd_type; name; eq; type_expr}; _} ->
-    print_token     state kwd_type "type";
-    print_var       state name;
-    print_token     state eq "=";
-    print_type_expr state type_expr
+  SBlock {value = { lbrace; inside; rbrace}; _} ->
+    print_token   state lbrace "{";
+    print_nsepseq state ";" print_statement inside;
+    print_token   state rbrace "}";
+| SVar var ->   print_var state var
+| SExpr expr -> print_expr state expr
+| SCond cond -> print_conditional state cond
+| SReturn {value = {kwd_return; expr}} ->
+    print_token state kwd_return "return";
+    print_expr  state expr
+| SLet { value; _ }
+| SConst { value; _ }
+| SType { value = {kwd_type; name; eq; type_expr}; _ } ->
+  print_token     state kwd_type "type";
+  print_var       state name;
+  print_token     state eq       "=";
+  print_type_expr state type_expr
+| SSwitch { value = {
+  kwd_switch; 
+  lpar; 
+  expr; 
+  rpar; 
+  lbrace; 
+  cases; 
+  rbrace}; _ } -> 
+    print_token state kwd_switch "switch";
+    print_token state lpar       "(";
+    print_expr  state expr;
+    print_token state rpar       ")";
+    print_token state lbrace    "{";
+    print_cases state cases;
+    print_token state rbrace    "}"
+
 
 and print_type_expr state = function
   TProd prod      -> print_cartesian state prod

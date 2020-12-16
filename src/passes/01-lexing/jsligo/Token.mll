@@ -115,10 +115,8 @@ module T =
 
     (* TypeScript keywords *)
 
+    | As          of Region.t  (* as          *)
     | Type        of Region.t  (* type        *)
-    | Constructor of Region.t  (* constructor *)
-    | Get         of Region.t  (* get         *)
-    | Set         of Region.t  (* set         *)
 
     (* Data constructors *)
 
@@ -237,10 +235,8 @@ module T =
     (* TypeScript keywords *)
 
     | "Type"        -> "type"
-    | "Constructor" -> "constructor"
-    | "Get"         -> "get"
-    | "Set"         -> "set"
-
+    | "As"          -> "as"
+    
     (* Data constructors *)
 
     | "C_None" -> "None"
@@ -369,9 +365,7 @@ module T =
     (* TypeScript keywords *)
 
     | Type        region -> region, "Type"
-    | Constructor region -> region, "Constructor"
-    | Get         region -> region, "Get"
-    | Set         region -> region, "Set"
+    | As          region -> region, "As"
 
     (* Data constructors *)
 
@@ -478,9 +472,7 @@ module T =
     (* TypeScript keywords *)
 
     | Type        _ -> "type"
-    | Constructor _ -> "constructor"
-    | Get         _ -> "get"
-    | Set         _ -> "set"
+    | As          _ -> "as"
 
     (* Data constructors *)
 
@@ -528,9 +520,7 @@ module T =
        (* TypeScript keywords *)
 
        (fun reg -> Type        reg);
-       (fun reg -> Constructor reg);
-       (fun reg -> Get         reg);
-       (fun reg -> Set         reg)
+       (fun reg -> As          reg);
     ]
 
     let reserved = SSet.empty
