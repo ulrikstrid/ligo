@@ -16,7 +16,8 @@ open Db_index_tests_common
 
 module Refined_typeclasses_tests = struct
   include Test_vars
-  include RefinedTypeclasses
+  module Plugin_under_test = RefinedTypeclasses
+  include Plugin_under_test
   let repr : type_variable -> type_variable = fun tv ->
     match tv with
     | tv when Var.equal tv tva -> tva

@@ -1,21 +1,11 @@
 open Trace
-
-(* module Core = Typesystem.Core *)
 open Ast_typed.Types
-(* open Ast_typed.Reasons *)
-(* open Ast_typed.Combinators *)
 open Database_plugins.All_plugins
-(* module Assignments                   = Assignments
-module GroupedByVariable             = GroupedByVariable
-module CycleDetectionTopologicalSort = CycleDetectionTopologicalSort
-module ByConstraintIdentifier        = ByConstraintIdentifier
-module RefinedTypeclasses            = RefinedTypeclasses
-module TypeclassesConstraining       = TypeclassesConstraining *)
-
 open Db_index_tests_common
 
 open Test_vars
 open GroupedByVariable
+ resulting index
 let repr : type_variable -> type_variable = fun tv ->
   match tv with
   | tv when Var.equal tv tva -> tva
@@ -1016,5 +1006,9 @@ let grouped_by_variable () =
   (* let%bind () = row_add_and_remove () in *)
   let%bind () = poly_add_and_merge () in
   (* let%bind () = poly_add_and_remove () in *)
+<<<<<<< HEAD
   let%bind () = mixte () in
   ok ()
+=======
+  ok ()
+>>>>>>> 64cb4d541... Tests for the invariant that the moment at which a merge is done should not have an impact on the resulting index
