@@ -45,6 +45,7 @@ type kwd_switch  = Region.t
 type kwd_case    = Region.t
 type kwd_default = Region.t
 type kwd_unit    = Region.t
+type kwd_new    = Region.t
 
 (* Data constructors *)
 
@@ -301,7 +302,7 @@ and expr =
 | ELogic   of logic_expr
 | EArith   of arith_expr
 | ECall    of (expr * arguments) reg
-| ENew     of expr reg
+| ENew     of (kwd_new * expr) reg
 | EBytes   of (string * Hex.t) reg
 | EArray   of (array_item, comma) nsepseq brackets reg
 | EObject  of (property, comma) nsepseq braced reg
@@ -316,7 +317,7 @@ and statement =
 | SBlock      of (statement, semi) nsepseq braced reg
 | SVar        of variable
 | SExpr       of expr
-| SCond       of cond_expr reg
+| SCond       of cond_statement reg
 | SReturn     of return reg
 | SLet        of let_ reg
 | SConst      of const_ reg
@@ -422,7 +423,7 @@ and fun_expr = {
   body       : fun_expr_body;
 }
 
-and cond_expr = {
+and cond_statement = {
   kwd_if   : kwd_if;
   test     : expr par;
   ifso     : statement;

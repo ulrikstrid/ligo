@@ -573,10 +573,9 @@ conj_expr_level:
 
 comp_expr_level:
 // TODO: fix shift reduce error
-//   bin_op(comp_expr_level, "<", add_expr_level) {
-//     ELogic (CompExpr (Lt $1)) }
-// | 
-bin_op(comp_expr_level, "<=", add_expr_level) {
+  // bin_op(comp_expr_level, "<", add_expr_level) {
+  //   ELogic (CompExpr (Lt $1)) }
+| bin_op(comp_expr_level, "<=", add_expr_level) {
     ELogic (CompExpr (Leq $1)) }
 | bin_op(comp_expr_level, ">", add_expr_level) {
     ELogic (CompExpr (Gt $1)) }
@@ -792,7 +791,7 @@ new_expr:
   member_expr    { $1 }
 | "new" new_expr { 
     let region = cover $1 (expr_to_region $2) in
-    let value = $2 in
+    let value = $1,$2 in
     ENew {region; value}
 }
 
