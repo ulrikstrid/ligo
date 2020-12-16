@@ -10,7 +10,6 @@ open Db_index_typeclasses_constraining_tests
 open Trace
 open Ast_typed.Types
 open Ast_typed.Combinators
-open Database_plugins.All_plugins
 open Db_index_tests_common
 module X (M : sig module Plugin_under_test : Plugin val same_state : type_variable Plugin_under_test.t -> type_variable Plugin_under_test.t -> (unit, Main_errors.all) result end) = struct
   open Test_vars
