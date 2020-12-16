@@ -7,3 +7,5 @@ val get_refined_typeclasses_constraining_list :
   < refined_typeclasses : 'type_variable RefinedTypeclasses.t;
     typeclasses_constraining : 'type_variable t; .. > ->
   refined_typeclass list
+
+val get_state_for_tests : 'typeVariable t -> ('typeVariable, c_typeclass_simpl PolySet.t) UnionFind.ReprMap.t
