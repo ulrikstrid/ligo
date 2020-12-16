@@ -18,4 +18,7 @@ module Test_vars = struct
   let tva : type_variable = Var.of_name "a"
   let tvb : type_variable = Var.of_name "b"
   let tvc : type_variable = Var.of_name "c"
+  let tvd : type_variable = Var.of_name "d"
+  let tve : type_variable = Var.of_name "e"
+  let tvf : type_variable = Var.of_name "f"
 end
