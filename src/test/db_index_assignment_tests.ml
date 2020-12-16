@@ -5,33 +5,30 @@ open Ast_typed.Types
 (* open Ast_typed.Reasons *)
 open Ast_typed.Combinators
 open Database_plugins.All_plugins
-(* module Assignments                   = Assignments
-module GroupedByVariable             = GroupedByVariable
-module CycleDetectionTopologicalSort = CycleDetectionTopologicalSort
-module ByConstraintIdentifier        = ByConstraintIdentifier
-module RefinedTypeclasses            = RefinedTypeclasses
-module TypeclassesConstraining       = TypeclassesConstraining *)
 
 open Db_index_tests_common
 
-open Test_vars
-open Assignments
-let repr : type_variable -> type_variable = fun tv ->
-  match tv with
-  | tv when Var.equal tv tva -> tva
-  | tv when Var.equal tv tvb -> tva
-  | _ -> tv
-let same_state sa sb =
-  let sa = bindings sa in
-  let sb = bindings sb in
-  let%bind () = tst_assert "Length sa = Length sb" (List.length sa = List.length sb) in
-  bind_list_iter
-    (fun ((tva,cora) , (tvb,corb)) ->
-      let%bind () = tst_assert "" (Ast_typed.Compare.type_variable tva tvb = 0) in
-      let%bind () = tst_assert "" (Ast_typed.Compare.constructor_or_row cora corb = 0) in
-      ok ()
-    )
-    (List.combine sa sb)
+module Assignments_tests = struct
+  open Test_vars
+  module Plugin_under_test = Assignments
+  open Plugin_under_test
+  let repr : type_variable -> type_variable = fun tv ->
+    match tv with
+    | tv when Var.equal tv tva -> tva
+    | tv when Var.equal tv tvb -> tva
+    | _ -> tv
+  let same_state sa sb =
+    let sa = bindings sa in
+    let sb = bindings sb in
+    let%bind () = tst_assert "Length sa = Length sb" (List.length sa = List.length sb) in
+    bind_list_iter
+      (fun ((tva,cora) , (tvb,corb)) ->
+         let%bind () = tst_assert "" (Ast_typed.Compare.type_variable tva tvb = 0) in
+         let%bind () = tst_assert "" (Ast_typed.Compare.constructor_or_row cora corb = 0) in
+         ok ()
+      )
+      (List.combine sa sb)
+end
 
 (* Test independant add + remove + merge pour chaque type de contraintes:
    test add ctor constraint + add other ctor constraint + merge ctor constraint + add third ctor constraint
@@ -88,6 +85,7 @@ let ctor_add_and_merge () =
   in 
   ok ()
 
+<<<<<<< HEAD
 (*
    test add ctor constraint + add other ctor constraint + remove ctor constraint + add third ctor constraint
 
@@ -194,3 +192,16 @@ let assignments () =
   let%bind () = row_add_and_merge () in
   let%bind () = invariant () in
   ok ()
+=======
+
+(* Test independant add + remove + merge pour chaque type de contraintes:
+   test add ctor constraint + add other ctor constraint + merge ctor constraint + add third ctor constraint
+   test add ctor constraint + add other ctor constraint + remove ctor constraint + add third ctor constraint
+   
+   test add row constraint + add other row constraint + merge row constraint + add third row constraint
+   test add row constraint + add other row constraint + remove row constraint + add third row constraint
+   
+   test mixed
+
+   *)
+>>>>>>> 64cb4d541... Tests for the invariant that the moment at which a merge is done should not have an impact on the resulting index
