@@ -519,8 +519,8 @@ module T =
 
        (* TypeScript keywords *)
 
-       (fun reg -> Type        reg);
-       (fun reg -> As          reg);
+       (fun reg -> Type    reg);
+       (fun reg -> As      reg);
     ]
 
     let reserved = SSet.empty

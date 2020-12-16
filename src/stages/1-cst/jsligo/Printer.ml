@@ -1,6 +1,7 @@
 [@@@warning "-42"]
 [@@@warning "-27"]
 [@@@warning "-26"]
+[@@@warning "-32"]
 [@@@coverage exclude_file]
 
 open CST

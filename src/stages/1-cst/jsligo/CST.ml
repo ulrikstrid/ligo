@@ -197,6 +197,8 @@ and sum_type = {
   attributes : attributes
 }
 
+and pattern 
+
 and variant =
 | VString of string reg
 | VVar    of variable

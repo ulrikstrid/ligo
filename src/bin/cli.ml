@@ -60,7 +60,7 @@ let syntax =
   let open Arg in
   let info =
     let docv = "SYNTAX" in
-    let doc = "$(docv) is the syntax that will be used. Currently supported syntaxes are \"pascaligo\", \"cameligo\" and \"reasonligo\". By default, the syntax is guessed from the extension (.ligo, .mligo, .religo respectively)." in
+    let doc = "$(docv) is the syntax that will be used. Currently supported syntaxes are \"pascaligo\", \"cameligo\" and \"reasonligo\". By default, the syntax is guessed from the extension (.ligo, .mligo, .religo, .jsligo respectively)." in
     info ~docv ~doc ["syntax" ; "s"] in
   value @@ opt string "auto" info
 
@@ -87,7 +87,7 @@ let req_syntax n =
   let open Arg in
   let info =
     let docv = "SYNTAX" in
-    let doc = "$(docv) is the syntax that will be used. Currently supported syntaxes are \"pascaligo\", \"cameligo\" and \"reasonligo\". By default, the syntax is guessed from the extension (.ligo, .mligo, .religo respectively)." in
+    let doc = "$(docv) is the syntax that will be used. Currently supported syntaxes are \"pascaligo\", \"cameligo\" and \"reasonligo\". By default, the syntax is guessed from the extension (.ligo, .mligo, .religo, .jsligo respectively)." in
     info ~docv ~doc [] in
   required @@ pos n (some string) None info
 
