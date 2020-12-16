@@ -297,7 +297,7 @@ let client =
 let scan = Core.mk_scan client
 
 (* Style checking *)
-
+(*
 let check_right_context config token next_token lexbuf =
   let pos    = (config#to_region token)#stop in
   let region = Region.make ~start:pos ~stop:pos in
@@ -315,7 +315,7 @@ let check_right_context config token next_token lexbuf =
             else ()
         | _::_ -> ()
   in lift next lexbuf
-
+     *)
 end (* of functor [Make] in HEADER *)
 
 (* END TRAILER *)

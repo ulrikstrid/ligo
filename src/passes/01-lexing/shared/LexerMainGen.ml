@@ -148,7 +148,7 @@ module Make (File        : FILE)
             | [] -> Token.eof Region.ghost
           in Stdlib.Ok token
         else
-          match Scan.all_from_lexbuf config lexbuf with
+          match Scan.Tokens.from_lexbuf config lexbuf with
             Stdlib.Ok tokens ->
               store := Self_tokens.process tokens;
               called := true;
@@ -170,11 +170,11 @@ module Make (File        : FILE)
             (* Module dependencies are dropped. *)
             let string = Buffer.contents buffer in
             let lexbuf = Lexing.from_string string
-            in Scan.all_from_lexbuf config lexbuf
+            in Scan.Tokens.from_lexbuf config lexbuf
       else
         match config#input with
-          Some path -> Scan.all_from_file config path
-        |      None -> Scan.all_from_channel config stdin
+          Some path -> Scan.Tokens.from_file config path
+        |      None -> Scan.Tokens.from_channel config stdin
 
     let scan_all () : unit =
       match scan_all () with

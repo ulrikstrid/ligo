@@ -11,45 +11,45 @@ module FQueue = Simple_utils.FQueue
 
 (* Rolling back one lexeme _within the current semantic action_ *)
 
-let rollback buffer =
+let rollback lexbuf =
   let open Lexing in
-  let len = String.length (lexeme buffer) in
-  let pos_cnum = buffer.lex_curr_p.pos_cnum - len in
-  buffer.lex_curr_pos <- buffer.lex_curr_pos - len;
-  buffer.lex_curr_p <- {buffer.lex_curr_p with pos_cnum}
+  let len = String.length (lexeme lexbuf) in
+  let pos_cnum = lexbuf.lex_curr_p.pos_cnum - len in
+  lexbuf.lex_curr_pos <- lexbuf.lex_curr_pos - len;
+  lexbuf.lex_curr_p <- {lexbuf.lex_curr_p with pos_cnum}
 
 (* LEXER ENGINE *)
 
 (* Resetting file name and line number in the lexing buffer
 
-   The call [reset ~file ~line buffer] modifies in-place the lexing
-   buffer [buffer] so the lexing engine records that the file
-   associated with [buffer] is named [file], and the current line is
+   The call [reset ~file ~line lexbuf] modifies in-place the lexing
+   buffer [lexbuf] so the lexing engine records that the file
+   associated with [lexbuf] is named [file], and the current line is
    [line]. *)
 
-let reset_file file buffer =
+let reset_file file lexbuf =
   let open Lexing in
-  buffer.lex_curr_p <- {buffer.lex_curr_p with pos_fname = file}
+  lexbuf.lex_curr_p <- {lexbuf.lex_curr_p with pos_fname = file}
 
-let reset_line line buffer =
+let reset_line line lexbuf =
   assert (line >= 0);
   let open Lexing in
-  buffer.lex_curr_p <- {buffer.lex_curr_p with pos_lnum = line}
+  lexbuf.lex_curr_p <- {lexbuf.lex_curr_p with pos_lnum = line}
 
-let reset_offset offset buffer =
+let reset_offset offset lexbuf =
   assert (offset >= 0);
   let open Lexing in
-  let bol = buffer.lex_curr_p.pos_bol in
-  buffer.lex_curr_p <- {buffer.lex_curr_p with pos_cnum = bol + offset }
+  let bol = lexbuf.lex_curr_p.pos_bol in
+  lexbuf.lex_curr_p <- {lexbuf.lex_curr_p with pos_cnum = bol + offset }
 
-let reset ?file ?(line=1) ?offset buffer =
+let reset ?file ?(line=1) ?offset lexbuf =
   let () =
     match file with
-      Some file -> reset_file file buffer
+      Some file -> reset_file file lexbuf
     |      None -> () in
-  let () = reset_line line buffer in
+  let () = reset_line line lexbuf in
   match offset with
-    Some offset -> reset_offset offset buffer
+    Some offset -> reset_offset offset lexbuf
   |        None -> ()
 
 (* Utility types *)
@@ -151,6 +151,10 @@ let mk_thread region : thread =
    the scanning rule [scan]). The function [patch_buffer] is, of
    course, also called just before returning the token, so the parser
    has a view of the lexing buffer consistent with the token. *)
+
+type 'token lex_unit =
+  Token  of 'token
+| Markup of Markup.t
 
 type 'token window = <
   last_token    : 'token option;
@@ -276,8 +280,8 @@ let mk_state ~config ~units ~markup ~comments
             end
       in {< window = Some new_window >}
 
-    method sync buffer : 'token sync =
-      let lexeme = Lexing.lexeme buffer in
+    method sync lexbuf : 'token sync =
+      let lexeme = Lexing.lexeme lexbuf in
       let length = String.length lexeme
       and start  = pos in
       let stop   = start#shift_bytes length in
@@ -294,9 +298,9 @@ let mk_state ~config ~units ~markup ~comments
 
     method push_markup unit = {< markup = unit :: markup >}
 
-    method push_newline buffer =
-      let ()     = Lexing.new_line buffer in
-      let value  = Lexing.lexeme buffer in
+    method push_newline lexbuf =
+      let ()     = Lexing.new_line lexbuf in
+      let value  = Lexing.lexeme lexbuf in
       let start  = self#pos in
       let stop   = start#new_line value in
       let region = Region.make ~start ~stop in
@@ -319,20 +323,20 @@ let mk_state ~config ~units ~markup ~comments
       let unit   = Markup.BlockCom reg
       in (self#push_markup unit)#push_comment (Markup.Block reg)
 
-    method push_space buffer =
-      let {region; lexeme; state} = self#sync buffer in
+    method push_space lexbuf =
+      let {region; lexeme; state} = self#sync lexbuf in
       let value  = String.length lexeme in
       let unit   = Markup.Space Region.{region; value}
       in state#push_markup unit
 
-    method push_tabs buffer =
-      let {region; lexeme; state} = self#sync buffer in
+    method push_tabs lexbuf =
+      let {region; lexeme; state} = self#sync lexbuf in
       let value  = String.length lexeme in
       let unit   = Markup.Tabs Region.{region; value}
       in state#push_markup unit
 
-    method push_bom buffer =
-      let {region; lexeme; state} = self#sync buffer in
+    method push_bom lexbuf =
+      let {region; lexeme; state} = self#sync lexbuf in
       let unit = Markup.BOM Region.{region; value=lexeme}
       in state#push_markup unit
   end
@@ -376,7 +380,7 @@ let output_token config out_channel (left_mark, token) =
 type 'token instance = {
   input        : input;
   read         : Lexing.lexbuf -> ('token, message) Stdlib.result;
-  buffer       : Lexing.lexbuf;
+  lexbuf       : Lexing.lexbuf;
   close        : unit -> unit;
   get_win      : unit -> 'token window option;
   get_pos      : unit -> Pos.t;
@@ -408,13 +412,6 @@ let lexbuf_from_input config = function
       in Ok (lexbuf, close)
     with Sys_error msg -> Stdlib.Error (Region.wrap_ghost msg)
 
-type 'token style_checker =
-  'token config ->
-  'token ->
-  (Lexing.lexbuf -> (Markup.t list * 'token) option) ->
-  Lexing.lexbuf ->
-  (unit, message) Stdlib.result
-
 (* Errors (NOT EXPORTED) *)
 
 exception Error of string Region.reg
@@ -431,11 +428,11 @@ let lift scanner lexbuf =
 let drop scanner lexbuf =
   match scanner lexbuf with
     Stdlib.Ok state -> state
-  | Stdlib.Error msg -> raise (Error msg)
+  | Error msg -> raise (Error msg)
 
 (* The main function *)
 
-let open_token_stream config ~scan ~style input =
+let open_token_stream config ~scan input =
   let scan state = drop (scan state) in
   let file_path  = match config#input with
                      Some path -> path
@@ -461,51 +458,50 @@ let open_token_stream config ~scan ~style input =
   and get_comments () = !state#comments
   and get_file     () = file_path in
 
-  let patch_buffer (start, stop) buffer =
+  let patch_lexbuf (start, stop) lexbuf =
     let open Lexing in
-    let file_path = buffer.lex_curr_p.pos_fname in
-    buffer.lex_start_p <- {start with pos_fname = file_path};
-    buffer.lex_curr_p  <- {stop  with pos_fname = file_path}
+    let file_path = lexbuf.lex_curr_p.pos_fname in
+    lexbuf.lex_start_p <- {start with pos_fname = file_path};
+    lexbuf.lex_curr_p  <- {stop  with pos_fname = file_path}
 
-  and save_region buffer =
-    buf_reg := Lexing.(buffer.lex_start_p, buffer.lex_curr_p) in
+  and save_region lexbuf =
+    buf_reg := Lexing.(lexbuf.lex_start_p, lexbuf.lex_curr_p) in
 
-  let scan' scan buffer =
-    patch_buffer !buf_reg buffer;
-    state := scan !state buffer;
-    save_region buffer in
+  let scan' scan lexbuf =
+    patch_lexbuf !buf_reg lexbuf;
+    state := scan !state lexbuf;
+    save_region lexbuf in
 
-  let next_token scan buffer =
-    scan' scan buffer;
+(*  let next_token scan lexbuf =
+    scan' scan lexbuf;
     match FQueue.peek !state#units with
       None -> None
     | Some (units, ext_token) ->
-        state := !state#set_units units; Some ext_token in
+        state := !state#set_units units; Some ext_token in *)
 
-  let rec read scan ~style ~log buffer =
+  let rec read scan ~log lexbuf =
     match FQueue.deq !state#units with
       None ->
-        scan' scan buffer;
-        read scan ~style ~log buffer
+        scan' scan lexbuf;
+        read scan ~log lexbuf
     | Some (units, (_, token as ext_token)) ->
-        let style  = style config token (next_token scan)
-        and region = config#to_region token in
+        let region = config#to_region token in
         begin
           log ext_token;
           state := ((!state#set_units units)
                       #set_last region)
                      #slide_token token;
-          drop style buffer;
-          patch_buffer region#byte_pos buffer;
+          (*          drop (next_token scan) lexbuf;*)
+          patch_lexbuf region#byte_pos lexbuf;
           token
         end in
 
   match lexbuf_from_input config input with
-    Stdlib.Ok (buffer, close) ->
+    Stdlib.Ok (lexbuf, close) ->
       let log = output_token config stdout in
-      let read = lift (read scan ~style ~log) in
+      let read = lift (read scan ~log) in
       let instance = {
-          read; input; buffer; close; get_win;
+          read; input; lexbuf; close; get_win;
           get_pos; get_last; get_file; get_comments}
       in Ok instance
   | Error _ as e -> e
@@ -655,7 +651,7 @@ rule scan client state = parse
 
 | '"'  { let {region; state; _} = state#sync lexbuf in
          let thread             = mk_thread region
-         in  scan_string thread state lexbuf |> client#mk_string }
+         in scan_string thread state lexbuf |> client#mk_string }
 
   (* Comment *)
 

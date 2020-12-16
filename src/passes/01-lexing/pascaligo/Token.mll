@@ -662,51 +662,7 @@ and scan_constr region lexicon = parse
 
     (* Predicates *)
 
-    let is_string   = function String _   -> true | _ -> false
-    let is_verbatim = function Verbatim _ -> true | _ -> false
-    let is_bytes    = function Bytes _    -> true | _ -> false
-    let is_int      = function Int _      -> true | _ -> false
-    let is_nat      = function Nat _      -> true | _ -> false
-    let is_mutez    = function Mutez _    -> true | _ -> false
-    let is_ident    = function Ident _    -> true | _ -> false
-    let is_constr   = function Constr _   -> true | _ -> false
-    let is_lang     = function Lang _     -> true | _ -> false
-    let is_minus    = function MINUS _    -> true | _ -> false
-    let is_eof      = function EOF _      -> true | _ -> false
-
-    let is_hexa = function
-      Constr Region.{value="A"|"a"|"B"|"b"|"C"|"c"
-                     |"D"|"d"|"E"|"e"|"F"|"f"; _} -> true
-    | _ -> false
-
-    let is_sym = function
-      SEMI _
-    | COMMA _
-    | LPAR _
-    | RPAR _
-    | LBRACE _
-    | RBRACE _
-    | LBRACKET _
-    | RBRACKET _
-    | CONS _
-    | VBAR _
-    | ARROW _
-    | ASS _
-    | EQ _
-    | COLON _
-    | LT _
-    | LE _
-    | GT _
-    | GE _
-    | NE _
-    | PLUS _
-    | MINUS _
-    | SLASH _
-    | TIMES _
-    | DOT _
-    | WILD _
-    | CARET _ -> true
-    | _ -> false
+    let is_eof = function EOF _ -> true | _ -> false
   end
 
 include T

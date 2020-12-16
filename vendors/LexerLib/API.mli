@@ -1,5 +1,4 @@
-(* Using Core to make UTF-8 aware lexers that scan for one token or
-   all of them in a variety of inputs. *)
+(* Using Core to make UTF-8 aware lexers *)
 
 (* Vendor dependencies *)
 
@@ -12,18 +11,15 @@ module type LEXER =
     type token
 
     val scan : token Core.scanner
-
-    (* The function [check_right_context] is used for checking
-       stylistic conventions, e.g. the need for at least a space
-       between a string and an identifier. *)
-
-    val check_right_context : token Core.style_checker
   end
 
 (* The functor itself *)
 
 module type S =
   sig
+    (* The traditional API offers functions to lex various inputs and
+       return token instances (see type [Core.instance]). *)
+
     type token
     type file_path = string
     type message   = string Region.reg
@@ -39,11 +35,29 @@ module type S =
     val from_buffer  : (Buffer.t,      token Core.instance) lexer
     val from_file    : (file_path,     token Core.instance) lexer
 
-    val all_from_lexbuf  : (Lexing.lexbuf, token list) lexer
-    val all_from_channel : (in_channel,    token list) lexer
-    val all_from_string  : (string,        token list) lexer
-    val all_from_buffer  : (Buffer.t,      token list) lexer
-    val all_from_file    : (file_path,     token list) lexer
+    (* The advanced API offers functions to lex all tokens from all
+       sources (module [Tokens]) or to lex all lexical units (module
+       [Units]), that is, tokens and markup (see module [Markup]. *)
+
+    module Tokens :
+      sig
+        val from_lexbuf  : (Lexing.lexbuf, token list) lexer
+        val from_channel : (in_channel,    token list) lexer
+        val from_string  : (string,        token list) lexer
+        val from_buffer  : (Buffer.t,      token list) lexer
+        val from_file    : (file_path,     token list) lexer
+      end
+
+    module Units :
+      sig
+        type t = token Core.lex_unit
+
+        val from_lexbuf  : (Lexing.lexbuf, t list) lexer
+        val from_channel : (in_channel,    t list) lexer
+        val from_string  : (string,        t list) lexer
+        val from_buffer  : (Buffer.t,      t list) lexer
+        val from_file    : (file_path,     t list) lexer
+      end
   end
 
 module Make (Lexer : LEXER) : S with type token = Lexer.token

@@ -236,7 +236,7 @@ module T =
 
     | "Type"        -> "type"
     | "As"          -> "as"
-    
+
     (* Data constructors *)
 
     | "C_None" -> "None"
@@ -732,83 +732,7 @@ and scan_constr region lexicon = parse
     let mk_lang lang region = Lang Region.{value=lang; region}
 
     (* Predicates *)
-
-    let is_string   = function String _   -> true | _ -> false
-    let is_verbatim = function Verbatim _ -> true | _ -> false
-    let is_bytes    = function Bytes _    -> true | _ -> false
-    let is_int      = function Int _      -> true | _ -> false
-    let is_nat      = function Nat _      -> true | _ -> false
-    let is_mutez    = function Mutez _    -> true | _ -> false
-    let is_ident    = function Ident _    -> true | _ -> false
-    let is_constr   = function Constr _   -> true | _ -> false
-    let is_lang     = function Lang _     -> true | _ -> false
-    let is_minus    = function MINUS _    -> true | _ -> false
-    let is_eof      = function EOF _      -> true | _ -> false
-
-    let is_hexa = function
-      Constr Region.{value="A"|"a"|"B"|"b"|"C"|"c"
-                     |"D"|"d"|"E"|"e"|"F"|"f"; _} -> true
-    | _ -> false
-
-    let is_sym = function
-      MINUS _  (* "-"    *)
-    | PLUS     _ (* "+"    *)
-    | SLASH    _ (* "/"    *)
-    | TIMES    _ (* "*"    *)
-    | REM      _ (* "%"    *)
-    | PLUS2    _ (* "++"   *)
-    | MINUS2   _ (* "--"   *)
-
-    | LPAR     _ (* "("    *)
-    | RPAR     _ (* ")"    *)
-    | LBRACKET _ (* "["    *)
-    | RBRACKET _ (* "]"    *)
-    | LBRACE   _ (* "{"    *)
-    | RBRACE   _ (* "}"    *)
-
-    | COMMA    _ (* ","    *)
-    | SEMI     _ (* ";"    *)
-    | COLON    _ (* ":"    *)
-    | DOT      _ (* "."    *)
-    | ELLIPSIS _ (* "..."  *)
-    | QMARK    _ (* "?"    *)
-
-    | BOOL_OR  _ (* "||"   *)
-    | BOOL_AND _ (* "&&"   *)
-    | BOOL_NOT _ (* "!"    *)
-
-    | BIT_OR   _ (* "|"    *)
-    | BIT_AND  _ (* "&"    *)
-    | BIT_NOT  _ (* "~"    *)
-    | BIT_XOR  _ (* "^"    *)
-    | SHIFT_L  _ (* "<<<"  *)
-    | SHIFT_R  _ (* ">>>"  *)
-
-    | EQ       _ (* "="    *)
-    | EQ3      _ (* "==="  *)
-    | NE2      _ (* "!=="  *)
-
-    | LT       _ (* "<"    *)
-    | GT       _ (* ">"    *)
-    | LE       _ (* "<="   *)
-    | GE       _ (* ">="   *)
-
-    | PLUS_EQ  _ (* "+="   *)
-    | MINUS_EQ _ (* "-="   *)
-    | MULT_EQ  _ (* "*="   *)
-    | REM_EQ   _ (* "%="   *)
-    | DIV_EQ   _ (* "/="   *)
-    | SL_EQ    _ (* "<<<=" *)
-    | SR_EQ    _ (* ">>>=" *)
-    | AND_EQ   _ (* "&="   *)
-    | OR_EQ    _ (* "|="   *)
-    | XOR_EQ   _ (* "^="   *)
-
-    | VBAR     _ (* "|"    *)
-    | ARROW    _ (* "=>"   *)
-    | WILD     _ (* "_"    *) -> true
-    | _ -> false
-
+    let is_eof = function EOF _ -> true | _ -> false
   end
 
 include T

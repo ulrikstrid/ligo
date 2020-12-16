@@ -34,6 +34,6 @@ let mk_state ~offsets ~mode ~buffer =
       >}
   end
 
-let print_tokens = failwith "Printer.print_tokens: TODO"
+let print_tokens _state _cst = ()
 
-let pp_cst = failwith "Printer.pp_cst"
+let pp_cst _state _cst = ()

@@ -28,12 +28,6 @@ module Make (Token : Token.S) =
     | Invalid_natural
     | Unterminated_verbatim
 
-    (* Style errors *)
-
-    | Odd_lengthed_bytes
-    | Missing_break
-    | Negative_byte_sequence
-
     let sprintf = Printf.sprintf
 
     let error_to_string = function
@@ -53,15 +47,6 @@ module Make (Token : Token.S) =
     | Unterminated_verbatim ->
        "Unterminated verbatim.\n\
         Hint: Close with \"|}\"."
-    | Odd_lengthed_bytes ->
-        "The length of the byte sequence is an odd number.\n\
-         Hint: Add or remove a digit."
-    | Missing_break ->
-       "Missing break.\n\
-        Hint: Insert some space."
-    | Negative_byte_sequence ->
-       "Negative byte sequence.\n\
-        Hint: Remove the leading minus sign."
 
     type message = string Region.reg
 
@@ -234,13 +219,21 @@ let common_sym     =   ';' | ',' | '(' | ')'  | '[' | ']'  | '{' | '}'
 let pascaligo_sym  = "->" | "=/=" | '#' | ":="
 let cameligo_sym   = "->" | "<>" | "::" | "||" | "&&"
 let reasonligo_sym = '!' | "=>" | "!=" | "==" | "++" | "..." | "||" | "&&"
+let jsligo_sym     = "++" | "--" | "..." | '?' | '&' | '!' | '~'
+                     | "<<<" | ">>>" | "===" | "!==" | "+=" | "-=" | "*="
+                     | "%=" | "<<<=" | ">>>=" | "&=" | "|=" | "^=" | "=>"
 
-let symbol = common_sym | pascaligo_sym | cameligo_sym | reasonligo_sym
+let symbol =
+  common_sym
+| pascaligo_sym
+| cameligo_sym
+| reasonligo_sym
+| jsligo_sym
 
 (* RULES *)
 
-(* The scanner [scan] has a parameter [state] that is thread through
-   recursive calls. *)
+(* The scanner [scan] has a parameter [state] that is threaded
+   through recursive calls. *)
 
 rule scan state = parse
   ident                  { mk_ident        state lexbuf }
@@ -283,59 +276,26 @@ and scan_verbatim thread state = parse
 {
 (* START TRAILER *)
 
-(* Encoding a function call in exception-raising style (ERS) to
-   error-passing style (EPS) *)
+    (* Encoding a function call in exception-raising style (ERS) to
+       error-passing style (EPS) *)
 
-let lift scanner lexbuf =
-  try Stdlib.Ok (scanner lexbuf) with
-    Error msg -> Stdlib.Error msg
+    let lift scanner lexbuf =
+      try Stdlib.Ok (scanner lexbuf) with
+        Error msg -> Stdlib.Error msg
 
-(* Function [scan] is the main exported function *)
+    (* Function [scan] is the main exported function *)
 
-let client : token Core.client =
-    let open Simple_utils.Utils in
-    object
-      method mk_string = mk_string
-      method mk_eof    = lift <@ mk_eof
-      method callback  = lift <@ scan
-    end
+    let client : token Core.client =
+      let open Simple_utils.Utils in
+      object
+        method mk_string = mk_string
+        method mk_eof    = lift <@ mk_eof
+        method callback  = lift <@ scan
+      end
 
-let scan = Core.mk_scan client
+    let scan = Core.mk_scan client
 
-(* Style checking *)
-
-let check_right_context config token next_token lexbuf =
-  let pos    = (config#to_region token)#stop in
-  let region = Region.make ~start:pos ~stop:pos in
-  let next lexbuf =
-    match next_token lexbuf with
-      None -> ()
-    | Some (markup, next) ->
-        let open Token in
-        if   is_minus token && is_bytes next
-        then let region =
-               Region.cover (to_region token) (to_region next)
-             in fail region Negative_byte_sequence
-        else
-          match markup with
-            [] ->
-              if   is_int token || is_string token
-              then if   is_sym next || is_eof next
-                   then ()
-                   else fail region Missing_break
-              else
-                if   is_bytes token
-                then if   is_int next || is_hexa next
-                     then fail region Odd_lengthed_bytes
-                     else
-                       if   is_sym next || is_eof next
-                       then ()
-                       else fail region Missing_break
-                else ()
-          | _::_ -> ()
-  in lift next lexbuf
-
-end (* of functor [Make] in HEADER *)
+  end (* of functor [Make] in HEADER *)
 
 (* END TRAILER *)
 }

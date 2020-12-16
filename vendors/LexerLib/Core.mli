@@ -102,17 +102,19 @@ val mk_thread : Region.t -> thread
    reset to the empty list.
 
      The call [state#slide_token token] pushes the token [token] in
-   the buffer [buffer]. If the buffer is full, that is, it is [Two
+   the buffer [lexbuf]. If the buffer is full, that is, it is [Two
    (t1,t2)], then the token [t2] is discarded to make room for
    [token].
 
-     The call [state#sync buffer] updates the current position in
+     The call [state#sync lexbuf] updates the current position in
    accordance with the contents of the lexing buffer, more precisely,
    depending on the length of the string which has just been
    recognised by the scanner: that length is used as a positive offset
    to the current column. *)
 
-(* The signature of the functor application *)
+type 'token lex_unit =
+  Token  of 'token
+| Markup of Markup.t
 
 type 'token window = <
   last_token    : 'token option;
@@ -208,7 +210,7 @@ val mk_scan : 'token client -> 'token scanner
      * the input [input] of type [input];
      * a function [read] that extracts a token from a lexing
        buffer;
-     * a lexing buffer [buffer] to read tokens from;
+     * a lexing buffer [lexbuf] to read tokens from;
      * a function [close] that closes that buffer;
      * a function [get_win] that returns a window of zero, one or
        two tokens;
@@ -236,7 +238,7 @@ type input =
 type 'token instance = {
   input        : input;
   read         : Lexing.lexbuf -> ('token, message) Stdlib.result;
-  buffer       : Lexing.lexbuf;
+  lexbuf       : Lexing.lexbuf;
   close        : unit -> unit;
   get_win      : unit -> 'token window option;
   get_pos      : unit -> Pos.t;
@@ -250,16 +252,8 @@ val lexbuf_from_input :
   input ->
   (Lexing.lexbuf * (unit -> unit), message) Stdlib.result
 
-type 'token style_checker =
-  'token config ->
-  'token ->
-  (Lexing.lexbuf -> (Markup.t list * 'token) option) ->
-  Lexing.lexbuf ->
-  (unit, message) Stdlib.result
-
 val open_token_stream :
   'token config ->
   scan:('token scanner) ->
-  style:('token style_checker) ->
   input ->
   ('token instance, message) Stdlib.result
