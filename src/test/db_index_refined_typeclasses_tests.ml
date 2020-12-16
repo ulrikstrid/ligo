@@ -116,3 +116,4 @@ let refined_typeclasses () =
   in
   ok ()
   
+(* Test add + remove + merge pour les 2 sortes de contraintes typeclasses *)

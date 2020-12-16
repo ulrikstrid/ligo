@@ -106,4 +106,22 @@ let by_constraint_identifier () =
     ]
   in
   ok ()
+
+  (* Test remove *)
+
+  (* Test independant pour les deux sortes de contraintes typeclass en les mélangeant (SC_Typeclass Some / SC_Typeclass None):
+     add add merge add
+     add add remove add  *)
+  (* Test mixtes *)
+
+
+  (*                              ctor row poly tc  (alias)      <---- variant des types de contraintes
+   assignment                     test t   t    t   (impossible)
+   by_ctr_identifier              t    t   …
+   cycle_detection
+   grouped_by_variable
+   refined_typeclasses
+   typeclasses_constraining
+   ^--- indexers
   
+   *)
