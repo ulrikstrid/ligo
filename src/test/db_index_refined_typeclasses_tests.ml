@@ -108,8 +108,6 @@ let refined_typeclasses () =
   let state'''' = merge_aliases merge_keys state''' in
   (* assert that c has been merged to a in state'''' *)
   (* state'''' = same as above, because this indexer does not store any type variable. *)
-    Format.printf "%a" Ast_typed.PP.refined_typeclass (snd (List.hd @@ PolyMap.bindings @@ (get_state_for_tests state''').forwards));
-
   let%bind () = same_state state'''' [
       (ConstraintIdentifier 1L, { refined=tc_b ; original=(ConstraintIdentifier 1L) ; vars = set[tvb] })
     ] [

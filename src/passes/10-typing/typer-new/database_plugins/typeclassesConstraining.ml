@@ -57,6 +57,8 @@ let pp type_variable ppf state =
     ppf
     (ReprMap.bindings state)
 
+let get_state_for_tests state = state
+
 
 let get_typeclasses_constraining tv (state : 'typeVariable t) =
   Option.unopt ~default:(PolySet.create ~cmp:Ast_typed.Compare.c_typeclass_simpl)
