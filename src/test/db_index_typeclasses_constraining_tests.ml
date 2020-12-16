@@ -23,7 +23,7 @@ module Typeclasses_constraining_tests = struct
     | tv when Var.equal tv tva -> tva
     | tv when Var.equal tv tvb -> tva
     | _ -> tv
-  let same_state sa sb =
+  let same_state2 sa sb =
     (* This index is not implemented yet, its state is just a unit value *)
     let sa = UnionFind.ReprMap.bindings @@ (get_state_for_tests sa) in
     let%bind () = tst_assert "Length saf = Length sbf" (List.length sa = List.length sb) in
@@ -34,6 +34,9 @@ module Typeclasses_constraining_tests = struct
         ok ()
       )
       (List.combine sa (List.sort (fun (x,_) (y,_) -> Var.compare x y) sb))
+  let same_state sa sb =
+    let sb = UnionFind.ReprMap.bindings @@ (get_state_for_tests sb) in
+    same_state2 sa sb
 end
 
 let tval ?(loc = Location.generated) tag args = 
@@ -54,13 +57,13 @@ let typeclasses_constraining () =
   (* create empty state *)
   let state = create_state ~cmp:Ast_typed.Compare.type_variable in
   (* assert state = {} *)
-  let%bind () = same_state state [] in
+  let%bind () = same_state2 state [] in
 
   (* (\* add `tva = unit()' to the state *\)
    * let ctor_a = make_c_constructor_simpl tva C_unit [] in
    * let state' = add_constraint repr state (SC_Constructor ctor_a) in
    * (\* assert state' = {} because only typeclass constraints are indexed by this indexer. *\)
-   * let%bind () = same_state state' [] in *)
+   * let%bind () = same_state2 state' [] in *)
   let state' = state in
   
   (* add ([tvb;tvc] ∈ { [int;unit] , [unit;int] , [map(int,unit);map(int,unit)] } ) to the state *)
@@ -73,7 +76,7 @@ let typeclasses_constraining () =
   let state'' = add_constraint repr state' (SC_Typeclass tc_bc) in
   Format.printf "%a" (pp Var.pp) state'';
   (* assert state'' = [], [] because there is no refined typeclass yet *)
-  let%bind () = same_state state'' [
+  let%bind () = same_state2 state'' [
       (tva, set[tc_bc]);
       (tvc, set[tc_bc]);
     ]
@@ -87,7 +90,7 @@ let typeclasses_constraining () =
   let tc_b = make_c_typeclass_simpl 2 (Some 1) [tvb] tc_allowed_b in
   let state''' = add_constraint repr state'' (SC_Typeclass tc_b) in
   (* assert state''' = … *)
-  let%bind () = same_state state''' [
+  let%bind () = same_state2 state''' [
       (tva, set[tc_bc;tc_b]);  (* TODO: should the old one still be there? *)
       (tvc, set[tc_bc]);        (* TODO: should the old one still be there? *)
     ]
@@ -105,7 +108,7 @@ let typeclasses_constraining () =
   let state'''' = merge_aliases merge_keys state''' in
   (* assert that c has been merged to a in state'''' *)
   (* state'''' = same as above, because this indexer does not store any type variable. *)
-  let%bind () = same_state state'''' [
+  let%bind () = same_state2 state'''' [
       (tvd, set[tc_bc;tc_b]);  (* TODO: should the old one still be there? *)
       (tvc, set[tc_bc]);        (* TODO: should the old one still be there? *)
     ] in
