@@ -189,7 +189,7 @@ and type_expr =
 | TWild   of wild
 | TString of lexeme reg
 
-and cartesian = (type_expr, comma) nsepseq par reg
+and cartesian = (type_expr, comma) nsepseq brackets reg
 
 and sum_type = {
   lead_vbar  : vbar option;

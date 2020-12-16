@@ -247,10 +247,10 @@ and print_projection state {value; _} =
       print_token state lbracket "]"
       
 and print_cartesian state Region.{value;_} =
-  let {lpar;inside;rpar} = value in
-  print_token state lpar "(";
+  let {lbracket;inside;rbracket} = value in
+  print_token state lbracket "[";
   print_nsepseq state "," print_type_expr inside;
-  print_token state rpar ")"
+  print_token state rbracket "]"
 
 and print_variant state {value; _} =
   match value with 
@@ -1022,14 +1022,14 @@ and pp_field_decl state {value; _} =
   if value.attributes <> [] then
     pp_attributes (state#pad arity 1) value.attributes
 
-and pp_cartesian state {lpar;inside;rpar} =
+and pp_cartesian state {lbracket;inside;rbracket} =
   let t_exprs        = Utils.nsepseq_to_list inside in
   let arity          = List.length t_exprs in
   let apply len rank = pp_type_expr (state#pad len rank)
   in
-  print_token state lpar "(";
+  print_token state lbracket "[";
   List.iteri (apply arity) t_exprs;
-  print_token state rpar "(";
+  print_token state rbracket "]";
 
 and pp_variant state = function
   VString v -> 

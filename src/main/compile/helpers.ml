@@ -287,7 +287,7 @@ let pretty_print_cst ~meta buffer file_path=
       PascaLIGO  -> pretty_print_pascaligo_cst
     | CameLIGO   -> pretty_print_cameligo_cst
     | ReasonLIGO -> pretty_print_reasonligo_cst
-    | JsLIGO -> pretty_print_reasonligo_cst
+    | JsLIGO     -> pretty_print_jsligo_cst
   in trace parser_tracer @@ print buffer file_path
 
 let pretty_print_pascaligo =
