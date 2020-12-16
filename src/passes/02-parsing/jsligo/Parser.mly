@@ -136,18 +136,18 @@ block_statement:
   "{" statements "}" {
     let region = cover $1 $3 in
     let value = {
-      lbrace = $1; 
-      inside = $2; 
+      lbrace = $1;
+      inside = $2;
       rbrace = $3;
     }
     in SBlock {region; value}
   }
 
-return_statement: 
+return_statement:
   "return" expr? {
-    let region = match $2 with 
-      Some s -> cover $1 (expr_to_region s) 
-    | None -> $1 
+    let region = match $2 with
+      Some s -> cover $1 (expr_to_region s)
+    | None -> $1
     in
     let value = {
       kwd_return  = $1;
@@ -191,7 +191,7 @@ initializer_:
   }
 
 rest:
-  "..." "<ident>" { 
+  "..." "<ident>" {
     let region = cover $1 $2.region in
     let value = {
       ellipsis = $1;
@@ -204,9 +204,9 @@ rest:
   }
 
 object_binding_property:
-  "<ident>" initializer_?  { 
-    match $2 with 
-    | Some (eq, expr) -> 
+  "<ident>" initializer_?  {
+    match $2 with
+    | Some (eq, expr) ->
       let region = cover $1.region (expr_to_region expr) in
       let value = {
          property = $1;
@@ -214,13 +214,13 @@ object_binding_property:
          value = expr;
       } in
       PAssign {
-        region; 
+        region;
         value
       }
-    | None -> 
-      PVar $1 
+    | None ->
+      PVar $1
   }
-| "<ident>" ":" binding_initializer   { 
+| "<ident>" ":" binding_initializer   {
     let region = cover $1.region $3.region in
     let value = {
       property = $1;
@@ -235,15 +235,15 @@ object_binding_property:
 
 object_binding_pattern_items:
   object_binding_property "," object_binding_pattern_items? {
-    match $3 with 
+    match $3 with
     | Some s -> Utils.nsepseq_cons $1 $2 s
     | None -> ($1, [])
   }
 | object_binding_property { ($1, []) }
 | rest                    { ($1, []) }
 
-object_binding_pattern: 
-  "{" object_binding_pattern_items "}" { 
+object_binding_pattern:
+  "{" object_binding_pattern_items "}" {
     let region = cover $1 $3 in
     let value = {
       lbrace = $1;
@@ -280,15 +280,15 @@ binding_pattern:
 | array_binding_pattern   { $1 }
 
 binding_initializer:
-  binding_pattern initializer_? { 
-    let region = match $2 with 
+  binding_pattern initializer_? {
+    let region = match $2 with
     | Some (_, expr) -> cover (binding_pattern_to_region $1) (expr_to_region expr)
-    | None -> binding_pattern_to_region $1 
+    | None -> binding_pattern_to_region $1
     in
     let value = {
       binders  = $1;
       lhs_type = None; (* TODO *)
-      let_rhs  = match $2 with 
+      let_rhs  = match $2 with
       | Some (eq, expr) -> Some { eq; expr }
       | None -> None
     } in
@@ -319,7 +319,7 @@ declaration:
       bindings   = $2;
       attributes = []
     }
-    in 
+    in
     SConst { region; value }
   }
 | type_decl { $1 }
@@ -334,7 +334,7 @@ fun_type:
     let start  = type_expr_to_region $1
     and stop   = type_expr_to_region $3 in
     let region = cover start stop in
-    TFun {region; value=$1,$2,$3} } 
+    TFun {region; value=$1,$2,$3} }
 
 cartesian:
   core_type { $1 }
@@ -361,9 +361,8 @@ core_type:
    in TApp {region; value = $1,$2} }
 
 sum_type:
-  variant "|" nsepseq(variant,"|") {    
+  variant "|" nsepseq(variant,"|") {
     let variants = Utils.nsepseq_cons $1 $2 $3 in
-    (*Scoping.check_variants (Utils.nsepseq_to_list variants);*)
     let region = nsepseq_to_region (fun x -> x.region) variants in
     let value  = {variants=variants; attributes=[]; lead_vbar=None}
     in TSum {region; value}
@@ -390,7 +389,6 @@ variant:
 record_type:
   "{" sep_or_term_list(field_decl,",") "}" {
     let fields, terminator = $2 in
-    let () = Utils.nsepseq_to_list fields |> Scoping.check_fields in
     let region = cover $1 $3
     and value = {
       compound = Some (Braces ($1,$3));
@@ -414,21 +412,20 @@ field_decl:
     let field_name = $1 in
     let value: field_decl = {
       field_name = field_name;
-      colon=$2; 
-      field_type=$3; 
+      colon=$2;
+      field_type=$3;
       attributes= []}
-    in {region; value} 
+    in {region; value}
   }
 
 type_decl:
-  "type" type_name "=" type_expr { 
-    Scoping.check_reserved_name $2;
+  "type" type_name "=" type_expr {
     let region = cover $1 (type_expr_to_region $4) in
     let value  = {kwd_type  = $1;
                   name      = $2;
                   eq        = $3;
                   type_expr = $4}
-    in SType {region; value}  
+    in SType {region; value}
   }
 
 switch_statement:
@@ -442,14 +439,14 @@ switch_statement:
       lbrace      = $5;
       cases       = $6;
       rbrace      = $7;
-    } in 
+    } in
     SSwitch {
       region;
       value
     }
   }
 
-case_block: 
+case_block:
   "case" expr ":" statements? {
     Switch_case {
       kwd_case   = $1;
@@ -471,17 +468,17 @@ statement:
 | block_statement
 | if_else_statement
 | switch_statement
-| return_statement 
+| return_statement
 | declaration
   { $1 }
 
 statements:
   statement ";" statements? {
-    match $3 with 
+    match $3 with
     | Some s ->  Utils.nsepseq_cons $1 $2 s
     | None -> ($1, [])
   }
-| statement { $1, [] }  
+| statement { $1, [] }
 
 contract:
   statements EOF { {statements=$1; eof=$2} }
@@ -489,7 +486,7 @@ contract:
 (* Expressions *)
 
 expr_sequence:
-  expr "," expr_sequence { 
+  expr "," expr_sequence {
     let region = cover (expr_to_region $1) $3.region in
     {
       value = Utils.nsepseq_cons $1 $2 $3.value;
@@ -504,7 +501,7 @@ expr_sequence:
 }
 
 arrow_function_body:
-  "{" statements "}" { 
+  "{" statements "}" {
     let region = cover $1 $3 in
     FunctionBody {
       region;
@@ -518,7 +515,7 @@ arrow_function_body:
 | expr { ExpressionBody $1 }
 
 arrow_function:
-  "(" expr_sequence ")" "=>" arrow_function_body { 
+  "(" expr_sequence ")" "=>" arrow_function_body {
     let region = cover $1 (arrow_function_body_to_region $5) in
     let value = {
       parameters = EPar {
@@ -533,13 +530,13 @@ arrow_function:
       arrow    = $4;
       body     = $5;
     }
-    in 
+    in
     EFun {
       region;
       value;
     }
  }
-| "<ident>" "=>" arrow_function_body { 
+| "<ident>" "=>" arrow_function_body {
     let region = cover $1.region (arrow_function_body_to_region $3) in
     let value = {
       parameters = EVar $1;
@@ -573,9 +570,10 @@ conj_expr_level:
 
 comp_expr_level:
 // TODO: fix shift reduce error
-  // bin_op(comp_expr_level, "<", add_expr_level) {
-  //   ELogic (CompExpr (Lt $1)) }
-| bin_op(comp_expr_level, "<=", add_expr_level) {
+//   bin_op(comp_expr_level, "<", add_expr_level) {
+//     ELogic (CompExpr (Lt $1)) }
+// |
+bin_op(comp_expr_level, "<=", add_expr_level) {
     ELogic (CompExpr (Leq $1)) }
 | bin_op(comp_expr_level, ">", add_expr_level) {
     ELogic (CompExpr (Gt $1)) }
@@ -623,8 +621,8 @@ call_expr_level:
 array_item:
   /* */                 { Empty_entry }
 | assignment_expr       { Expr_entry $1 }
-| "..." assignment_expr { 
-  let region = cover $1 (expr_to_region $2) in 
+| "..." assignment_expr {
+  let region = cover $1 (expr_to_region $2) in
   let value: array_item_rest = {
     ellipsis = $1;
     expr     = $2;
@@ -644,7 +642,7 @@ array_literal:
     let region = cover $1 $3 in
     let value = {
       lbracket = $1;
-      inside   = $2; 
+      inside   = $2;
       rbracket = $3
     } in
     EArray {
@@ -653,14 +651,14 @@ array_literal:
     }
   }
 
-property_name: 
+property_name:
   "<int>"    { EArith (Int $1) }
 | "<ident>"  {         EVar $1 }
 | "<string>" {      EString (String $1) }
 
 property:
-  "<ident>" { 
-    let region = $1.region in 
+  "<ident>" {
+    let region = $1.region in
     let value = EVar $1 in
     Punned_property {
       region;
@@ -668,18 +666,18 @@ property:
     }
   }
 | property_name ":" assignment_expr {
-  let region = cover (expr_to_region $1) (expr_to_region $3) in 
+  let region = cover (expr_to_region $1) (expr_to_region $3) in
   let value = {
     name  = $1;
     colon = $2;
     value = $3;
-  } in 
+  } in
   Property {
     region;
     value
   }
  }
-| "..." assignment_expr             { 
+| "..." assignment_expr             {
   let region = cover $1 (expr_to_region $2) in
   let value = {
     ellipsis = $1;
@@ -696,7 +694,7 @@ properties:
 | property                { ($1, []) }
 
 object_literal:
-  "{" properties "}" { 
+  "{" properties "}" {
     let region = cover $1 $3 in
     let value = {
       lbrace = $1;
@@ -716,8 +714,8 @@ member_expr:
 // | unit
 | "false"                    { ELogic (BoolExpr (False $1)) }
 | "true"                     {  ELogic (BoolExpr (True $1)) }
-| member_expr "[" expr "]"   { 
-  let region = cover (expr_to_region $1) $4 in 
+| member_expr "[" expr "]"   {
+  let region = cover (expr_to_region $1) $4 in
   let value = {
     expr = $1;
     selection = Component {
@@ -734,7 +732,7 @@ member_expr:
     value
   }
 }
-| member_expr "." "<ident>"  { 
+| member_expr "." "<ident>"  {
   let region = cover (expr_to_region $1) $3.region in
   let value = {
     expr = $1;
@@ -752,16 +750,16 @@ member_expr:
   }
  }
 | array_literal           { $1 }
-| "(" object_literal ")"  { 
+| "(" object_literal ")"  {
     let region = cover $1 $3 in
     let value = {
       lpar    = $1;
       inside  = $2;
       rpar    = $3;
-    } in 
+    } in
     EPar { region; value }
   }
-| "(" expr_sequence ")"  { 
+| "(" expr_sequence ")"  {
     let region = cover $1 $3 in
     let value = {
       lpar   = $1;
@@ -772,7 +770,7 @@ member_expr:
   }
 
 call_expr:
-  member_expr par(nsepseq(assignment_expr, ",")) 
+  member_expr par(nsepseq(assignment_expr, ","))
 | call_expr par(nsepseq(assignment_expr, ",")) {
     let start  = expr_to_region $1 in
     let stop   = $2 in
@@ -789,7 +787,7 @@ call_expr:
 
 new_expr:
   member_expr    { $1 }
-| "new" new_expr { 
+| "new" new_expr {
     let region = cover $1 (expr_to_region $2) in
     let value = $1,$2 in
     ENew {region; value}
@@ -800,7 +798,7 @@ expr_statement:
 | disj_expr_level                       { $1 }
 
 assignment_expr:
-  expr_statement                        { $1 }  
+  expr_statement                        { $1 }
 
 expr:
   assignment_expr                       { $1 }

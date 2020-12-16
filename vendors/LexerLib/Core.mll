@@ -180,7 +180,7 @@ type 'token state = <
 
   units        : (Markup.t list * 'token) FQueue.t;
   markup       : Markup.t list;
-  comments     : Markup.comment FQueue.t;
+  comments     : Markup.basic_comment FQueue.t;
   window       : 'token window option;
   last         : Region.t;
   pos          : Pos.t;
@@ -202,7 +202,7 @@ type 'token state = <
   push_tabs    : Lexing.lexbuf -> 'token state;
   push_bom     : Lexing.lexbuf -> 'token state;
   push_markup  : Markup.t -> 'token state;
-  push_comment : Markup.comment -> 'token state
+  push_comment : Markup.basic_comment -> 'token state
 >
 
 and 'token sync = {
@@ -382,7 +382,7 @@ type 'token instance = {
   get_pos      : unit -> Pos.t;
   get_last     : unit -> Region.t;
   get_file     : unit -> file_path;
-  get_comments : unit -> Markup.comment FQueue.t
+  get_comments : unit -> Markup.basic_comment FQueue.t
 }
 
 let lexbuf_from_input config = function
@@ -557,10 +557,10 @@ let scan_utf8_wrap scan_utf8 callback thread state lexbuf =
   let delta          = thread#length - len in
   let stop           = state#pos#shift_one_uchar delta in
   match status with
-    Stdlib.Ok () -> callback thread (state#set_pos stop) lexbuf
+    Ok () -> callback thread (state#set_pos stop) lexbuf
   | Stdlib.Error error ->
-     let region = Region.make ~start:state#pos ~stop
-     in fail region error
+      let region = Region.make ~start:state#pos ~stop
+      in fail region error
 
 (* An input program may contain preprocessing directives, and the
    entry modules (named *Main.ml) run the preprocessor on them, as if

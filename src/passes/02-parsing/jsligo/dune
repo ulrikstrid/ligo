@@ -12,11 +12,7 @@
   (name parsing_jsligo)
   (public_name ligo.parsing.jsligo)
   (modules
-    Scoping 
-    Parser 
-    ParErr 
-    ; Pretty
-    )
+    Parser ParErr Pretty)
   (libraries
     ;; LIGO
     lexing_jsligo
@@ -36,20 +32,20 @@
 
 ; ;; Local build of a standalone parser for JsLIGO
 
-; (executable
-;   (name ParserMain)
-;   (libraries
-;     ;; LIGO
-;     preprocessing_jsligo
-;     lexing_jsligo
-;     parsing_shared
-;     parsing_jsligo
-;     cst
-;     ;; Third party
-;     hex)
-;   (modules ParserMain Parser_msg)
-;   (preprocess
-;     (pps bisect_ppx --conditional)))
+(executable
+  (name ParserMain)
+  (libraries
+    ;; LIGO
+    preprocessing_jsligo
+    lexing_jsligo
+    parsing_shared
+    parsing_jsligo
+    cst
+    ;; Third party
+    hex)
+  (modules ParserMain Parser_msg)
+  (preprocess
+    (pps bisect_ppx --conditional)))
 
 ;; Build of the covering of error states in the LR automaton
 

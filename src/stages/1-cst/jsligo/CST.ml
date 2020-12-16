@@ -1,4 +1,4 @@
-(* Abstract Syntax Tree (AST) for JsLIGO *)
+(* Concrete Syntax Tree (CST) for JsLIGO *)
 
 (* To disable warning about multiply-defined record labels. *)
 
@@ -197,7 +197,7 @@ and sum_type = {
   attributes : attributes
 }
 
-and variant = 
+and variant =
 | VString of string reg
 | VVar    of variable
 
@@ -255,7 +255,7 @@ and switch = {
   rbrace      : rbrace;
 }
 
-and switch_case = 
+and switch_case =
   Switch_case of {
     kwd_case    : kwd_case;
     expr        : expr;
@@ -266,30 +266,30 @@ and switch_case =
     kwd_default : kwd_default;
     colon       : colon;
     statements  : statements option;
-  } 
+  }
 
 and array_item_rest = {
   ellipsis : ellipsis;
   expr     : expr
 }
 
-and array_item = 
+and array_item =
   | Empty_entry
   | Expr_entry of expr
   | Rest_entry of array_item_rest reg
 
 and property2 = {
-  name  : expr; 
-  colon : colon; 
+  name  : expr;
+  colon : colon;
   value : expr
 }
 
-and property_rest = { 
-  ellipsis : ellipsis; 
+and property_rest = {
+  ellipsis : ellipsis;
   expr     : expr
 }
 
-and property =  
+and property =
   Punned_property of expr reg
 | Property of property2 reg
 | Property_rest of property_rest reg
@@ -313,7 +313,7 @@ and expr =
 | EUnit    of the_unit reg
 | ECodeInj of code_inj reg
 
-and statement = 
+and statement =
 | SBlock      of (statement, semi) nsepseq braced reg
 | SVar        of variable
 | SExpr       of expr
@@ -412,7 +412,7 @@ and const_ = {
   attributes : attributes
 }
 
-and fun_expr_body = 
+and fun_expr_body =
   FunctionBody of statements braced reg
 | ExpressionBody of expr
 
@@ -503,7 +503,7 @@ let expr_to_region = function
 | ENew {region; _}
 | ECodeInj {region; _} -> region
 
-let statement_to_region = function 
+let statement_to_region = function
   SExpr e -> expr_to_region e
 | SBlock {region; _ }
 | SVar {region; _}

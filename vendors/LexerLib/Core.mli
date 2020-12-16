@@ -142,7 +142,7 @@ type 'token state = <
 
   units        : (Markup.t list * 'token) FQueue.t;
   markup       : Markup.t list;
-  comments     : Markup.comment FQueue.t;
+  comments     : Markup.basic_comment FQueue.t;
   window       : 'token window option;
   last         : Region.t;
   pos          : Pos.t;
@@ -164,7 +164,7 @@ type 'token state = <
   push_tabs    : Lexing.lexbuf -> 'token state;
   push_bom     : Lexing.lexbuf -> 'token state;
   push_markup  : Markup.t -> 'token state;
-  push_comment : Markup.comment -> 'token state
+  push_comment : Markup.basic_comment -> 'token state
 >
 
 and 'token sync = {
@@ -242,7 +242,7 @@ type 'token instance = {
   get_pos      : unit -> Pos.t;
   get_last     : unit -> Region.t;
   get_file     : unit -> file_path;
-  get_comments : unit -> Markup.comment FQueue.t
+  get_comments : unit -> Markup.basic_comment FQueue.t
 }
 
 val lexbuf_from_input :

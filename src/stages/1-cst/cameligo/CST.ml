@@ -1,4 +1,4 @@
-(* Abstract Syntax Tree (AST) for CameLIGO *)
+(* Concrete Syntax Tree (CST) for CameLIGO *)
 
 (* To disable warning about multiply-defined record labels. *)
 

@@ -51,6 +51,11 @@ let to_string ?(offsets=true) mode markup =
 
 (* Comments *)
 
-type comment =
+type basic_comment =
   Line  of lexeme Region.reg
 | Block of lexeme Region.reg
+
+type contextual_comment =
+  Title   of basic_comment
+| Header  of basic_comment
+| Trailer of basic_comment

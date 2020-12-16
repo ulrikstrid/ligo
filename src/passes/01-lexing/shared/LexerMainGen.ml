@@ -132,25 +132,25 @@ module Make (File        : FILE)
     type menhir_lexer = Lexing.lexbuf -> (token, message) Stdlib.result
 
     let rec scan : menhir_lexer =
-      let token_store : token list ref = ref [] in
+      let store : token list ref = ref [] in
       fun lexbuf ->
         if !called then
           let token =
-            match !token_store with
+            match !store with
               token::tokens ->
                 let last =
                   match !window with
                     None -> None
                   | Some window -> Some window#current_token in
                 set_window ~current:token ~last;
-                token_store := tokens;
+                store := tokens;
                 token
             | [] -> Token.eof Region.ghost
           in Stdlib.Ok token
         else
           match Scan.all_from_lexbuf config lexbuf with
             Stdlib.Ok tokens ->
-              token_store := Self_tokens.process tokens;
+              store := Self_tokens.process tokens;
               called := true;
               scan lexbuf
           | Error _ as err -> err
