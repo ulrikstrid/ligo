@@ -234,8 +234,16 @@ let common_sym     =   ';' | ',' | '(' | ')'  | '[' | ']'  | '{' | '}'
 let pascaligo_sym  = "->" | "=/=" | '#' | ":="
 let cameligo_sym   = "->" | "<>" | "::" | "||" | "&&"
 let reasonligo_sym = '!' | "=>" | "!=" | "==" | "++" | "..." | "||" | "&&"
+let jsligo_sym     = "++" | "--" | "..." | '?' | '&' | '!' | '~'
+                     | "<<<" | ">>>" | "===" | "!==" | "+=" | "-=" | "*="
+                     | "%=" | "<<<=" | ">>>=" | "&=" | "|=" | "^=" | "=>"
 
-let symbol = common_sym | pascaligo_sym | cameligo_sym | reasonligo_sym
+let symbol =
+  common_sym
+| pascaligo_sym
+| cameligo_sym
+| reasonligo_sym
+| jsligo_sym
 
 (* RULES *)
 
