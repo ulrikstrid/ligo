@@ -1,4 +1,4 @@
-(* Abstract Syntax Tree (AST) for ReasonLIGO *)
+(* Concrete Syntax Tree (CST) for ReasonLIGO *)
 
 (* To disable warning about multiply-defined record labels. *)
 

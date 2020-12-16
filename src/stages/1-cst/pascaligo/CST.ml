@@ -1,4 +1,4 @@
-(* Abstract Syntax Tree (AST) for LIGO *)
+(* Concrete Syntax Tree (CST) for LIGO *)
 
 (* To disable warning about multiply-defined record labels. *)
 

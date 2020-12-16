@@ -663,10 +663,13 @@ let to_string ~offsets ~mode printer node =
 
 let tokens_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_tokens
+
 let pattern_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_pattern
+
 let expr_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_expr
+
 let type_expr_to_string ~offsets ~mode =
   to_string ~offsets ~mode print_type_expr
 
