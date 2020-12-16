@@ -117,3 +117,13 @@ let invariant () =
   let%bind () = same_state state_a state_b in
   ok ()
   
+(* Test independant add + remove + merge pour chaque type de contraintes:
+   test add ctor constraint + add other ctor constraint + merge ctor constraint + add third ctor constraint
+   test add ctor constraint + add other ctor constraint + remove ctor constraint + add third ctor constraint
+   
+   test add row constraint + add other row constraint + merge row constraint + add third row constraint
+   test add row constraint + add other row constraint + remove row constraint + add third row constraint
+   
+   test mixed
+
+   *)

@@ -6,7 +6,8 @@ open Test_helpers
 (* open Ast_typed.Reasons *)
 (* open Ast_typed.Combinators *)
 (* open Database_plugins.All_plugins *)
-(* module Assignments                   = Assignments
+(*
+module Assignments                   = Assignments
 module GroupedByVariable             = GroupedByVariable
 module CycleDetectionTopologicalSort = CycleDetectionTopologicalSort
 module ByConstraintIdentifier        = ByConstraintIdentifier
