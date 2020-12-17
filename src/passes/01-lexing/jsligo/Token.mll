@@ -118,11 +118,6 @@ module T =
     | As          of Region.t  (* as          *)
     | Type        of Region.t  (* type        *)
 
-    (* Data constructors *)
-
-    | C_None  of Region.t  (* None *)
-    | C_Some  of Region.t  (* Some *)
-
     (* Virtual tokens *)
 
     | EOF of Region.t
@@ -237,11 +232,6 @@ module T =
     | "Type"        -> "type"
     | "As"          -> "as"
     
-    (* Data constructors *)
-
-    | "C_None" -> "None"
-    | "C_Some" -> "Some"
-
     (* Virtual tokens *)
 
     | "EOF" -> ""
@@ -367,10 +357,6 @@ module T =
     | Type        region -> region, "Type"
     | As          region -> region, "As"
 
-    (* Data constructors *)
-
-    | C_None region -> region, "C_None"
-    | C_Some region -> region, "C_Some"
     | EOF    region -> region, "EOF"
 
 
@@ -474,10 +460,6 @@ module T =
     | Type        _ -> "type"
     | As          _ -> "as"
 
-    (* Data constructors *)
-
-    | C_None  _ -> "None"
-    | C_Some  _ -> "Some"
 
     (* Virtual tokens *)
 
@@ -525,10 +507,7 @@ module T =
 
     let reserved = SSet.empty
 
-    let constructors = [
-      (fun reg -> C_None reg);
-      (fun reg -> C_Some reg)
-    ]
+    let constructors = []
 
     let add map (key, value) = SMap.add key value map
 
