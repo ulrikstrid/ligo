@@ -286,7 +286,7 @@ binding_pattern:
 | ":" type_expr { Some ($1, $2)}
 
 %inline type_annot:
-  ":" type_expr { $1, $2}
+  ":" type_expr { $1, $2 }
   
 binding_initializer:
   binding_pattern type_annot_opt initializer_? {
@@ -640,7 +640,14 @@ unary_expr_level:
 call_expr_level:
   call_expr { $1 }
 | new_expr  { $1 }
-| call_expr_level "as" type_expr { $1 }
+| call_expr_level "as" type_expr { 
+    let region = cover (expr_to_region $1) (type_expr_to_region $3) in
+    let value = $1, $2, $3 in
+    EAnnot {
+      region;
+      value
+    }
+  }
 
 array_item:
   /* */                 { Empty_entry }
