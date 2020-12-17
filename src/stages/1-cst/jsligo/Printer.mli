@@ -12,6 +12,15 @@ val mk_state :
 
 val print_tokens  : state -> CST.t -> unit
 
+(* Printing tokens from the CST in a string *)
+
+val tokens_to_string :
+  offsets:bool -> mode:[`Point|`Byte] -> CST.t -> string
+val type_expr_to_string :
+  offsets:bool -> mode:[`Point|`Byte] -> CST.type_expr -> string
+val expr_to_string :
+  offsets:bool -> mode:[`Point|`Byte] -> CST.expr -> string
+
 (* Pretty-printing *)
 
 val pp_cst  : state -> CST.t -> unit

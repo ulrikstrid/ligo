@@ -53,8 +53,8 @@ module Token = Lexing_jsligo.Token
 %token <Region.t> SHIFT_R  ">>>"
 
 %token <Region.t> EQ    "="
-%token <Region.t> EQ3   "==="
-%token <Region.t> NE2   "!=="
+%token <Region.t> EQ2   "=="
+%token <Region.t> NE    "!="
 
 %token <Region.t> LT    "<"
 %token <Region.t> GT    ">"
