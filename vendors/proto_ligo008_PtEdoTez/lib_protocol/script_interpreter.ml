@@ -204,6 +204,8 @@ type step_constants = {
   self : Contract.t;
   amount : Tez.t;
   chain_id : Chain_id.t;
+  balance : Tez.t;
+  now : Script_timestamp.t;
 }
 
 module type STEP_LOGGER = sig
@@ -1203,8 +1205,7 @@ let rec step_bounded :
             rest ),
           ctxt )
   | (Balance, rest) ->
-      Contract.get_balance_carbonated ctxt step_constants.self
-      >>=? fun (ctxt, balance) -> logged_return ((balance, rest), ctxt)
+    logged_return (Item (step_constants.balance, rest), ctxt)
   | (Level, rest) ->
       let level =
         (Level.current ctxt).level |> Raw_level.to_int32 |> Script_int.of_int32
@@ -1212,8 +1213,7 @@ let rec step_bounded :
       in
       logged_return ((level, rest), ctxt)
   | (Now, rest) ->
-      let now = Script_timestamp.now ctxt in
-      logged_return ((now, rest), ctxt)
+      logged_return (Item (step_constants.balance, rest), ctxt)
   | (Check_signature, (key, (signature, (message, rest)))) ->
       let res = Signature.check key signature message in
       logged_return ((res, rest), ctxt)

@@ -341,6 +341,13 @@ module Scripts = struct
 
   let register () =
     let open Services_registration in
+    let balance =
+      match Tez.of_mutez 4_000_000_000_000L with
+      | Some balance ->
+          balance
+      | None ->
+          assert false
+    in
     let originate_dummy_contract ctxt script balance =
       let ctxt = Contract.init_origination_nonce ctxt Operation_hash.zero in
       Lwt.return (Contract.fresh_contract_from_current_nonce ctxt)
@@ -393,7 +400,7 @@ module Scripts = struct
         let ctxt = Gas.set_limit ctxt gas in
         let step_constants =
           let open Script_interpreter in
-          {source; payer; self = dummy_contract; amount; chain_id}
+          {source; payer; self = dummy_contract; amount; chain_id; balance; now = Script_timestamp.now ctxt}
         in
         Script_interpreter.execute
           ctxt
@@ -445,7 +452,7 @@ module Scripts = struct
         let ctxt = Gas.set_limit ctxt gas in
         let step_constants =
           let open Script_interpreter in
-          {source; payer; self = dummy_contract; amount; chain_id}
+          {source; payer; self = dummy_contract; amount; chain_id; balance; now = Script_timestamp.now ctxt}
         in
         Traced_interpreter.execute
           ctxt
