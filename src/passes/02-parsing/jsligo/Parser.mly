@@ -284,16 +284,23 @@ binding_pattern:
 | object_binding_pattern  { $1 }
 | array_binding_pattern   { $1 }
 
+%inline type_annot_opt:
+  /* */         { None }
+| ":" type_expr { Some ($1, $2)}
+
+%inline type_annot:
+  ":" type_expr { $1, $2}
+  
 binding_initializer:
-  binding_pattern initializer_? {
-    let region = match $2 with
+  binding_pattern type_annot_opt initializer_? {
+    let region = match $3 with
     | Some (_, expr) -> cover (binding_pattern_to_region $1) (expr_to_region expr)
     | None -> binding_pattern_to_region $1
     in
     let value = {
       binders  = $1;
-      lhs_type = None; (* TODO *)
-      let_rhs  = match $2 with
+      lhs_type = $2;
+      let_rhs  = match $3 with
       | Some (eq, expr) -> Some { eq; expr }
       | None -> None
     } in
@@ -519,21 +526,36 @@ arrow_function_body:
   }
 | expr { ExpressionBody $1 }
 
+expr_annot_sequence:
+  expr type_annot "," expr_annot_sequence {
+    let region = cover (expr_to_region $1) $4.region in
+    {
+      value = Utils.nsepseq_cons $1 $3 $4.value;
+      region
+    }
+  }
+| expr type_annot {
+    {
+      value = ($1, []);
+      region = expr_to_region $1;
+    }
+}
+
 arrow_function:
-  "(" expr_sequence ":" type_expr ")" ":" type_expr "=>" arrow_function_body {
-    let region = cover $1 (arrow_function_body_to_region $9) in
+  "(" expr_annot_sequence ")" type_annot_opt "=>" arrow_function_body {
+    let region = cover $1 (arrow_function_body_to_region $6) in
     let value = {
       parameters = EPar {
-        region = cover $1 $5;
+        region = cover $1 $3;
         value = {
           lpar = $1;
           inside = ESeq $2;
-          rpar = $5;
+          rpar = $3;
         }
       };
-      lhs_type = Some ($6, $7);
-      arrow    = $8;
-      body     = $9;
+      lhs_type = $4;
+      arrow    = $5;
+      body     = $6;
     }
     in
     EFun {
@@ -584,9 +606,9 @@ bin_op(comp_expr_level, "<=", add_expr_level) {
     ELogic (CompExpr (Gt $1)) }
 | bin_op(comp_expr_level, ">=", add_expr_level) {
     ELogic (CompExpr (Geq $1)) }
-| bin_op(comp_expr_level, "===", add_expr_level) {
+| bin_op(comp_expr_level, "==", add_expr_level) {
     ELogic (CompExpr (Equal $1)) }
-| bin_op(comp_expr_level, "!==", add_expr_level) {
+| bin_op(comp_expr_level, "!=", add_expr_level) {
     ELogic (CompExpr (Neq $1)) }
 | add_expr_level { $1 }
 
@@ -714,6 +736,7 @@ object_literal:
 
 member_expr:
   "<ident>"                  {                      EVar $1 }
+| "<constr>"                 {                      EVar $1 }
 | "<int>"                    {              EArith (Int $1) }
 | "<bytes>"                  {                    EBytes $1 }
 // | unit

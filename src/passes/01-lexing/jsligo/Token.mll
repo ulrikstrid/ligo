@@ -68,8 +68,8 @@ module T =
     | SHIFT_R  of Region.t  (* ">>>"  *)
 
     | EQ       of Region.t  (* "="    *)
-    | EQ3      of Region.t  (* "==="  *)
-    | NE2      of Region.t  (* "!=="  *)
+    | EQ2      of Region.t  (* "=="  *)
+    | NE       of Region.t  (* "!="  *)
 
     | LT       of Region.t  (* "<"    *)
     | GT       of Region.t  (* ">"    *)
@@ -187,8 +187,8 @@ module T =
     | "SHIFT_R"  -> ">>>"
 
     | "EQ"       -> "="
-    | "EQ3"      -> "==="
-    | "NE2"      -> "!=="
+    | "EQ2"      -> "=="
+    | "NE"       -> "!="
 
     | "LT"       -> "<"
     | "GT"       -> ">"
@@ -317,8 +317,8 @@ module T =
     | SHIFT_R  region -> region, "SHIFT_R"
 
     | EQ       region -> region, "EQ"
-    | EQ3      region -> region, "EQ3"
-    | NE2      region -> region, "NE2"
+    | EQ2      region -> region, "EQ2"
+    | NE       region -> region, "NE"
 
     | LT       region -> region, "LT"
     | GT       region -> region, "GT"
@@ -424,8 +424,8 @@ module T =
     | SHIFT_R  _ -> ">>>"
 
     | EQ       _ -> "="
-    | EQ3      _ -> "==="
-    | NE2      _ -> "!=="
+    | EQ2      _ -> "=="
+    | NE       _ -> "!="
 
     | LT       _ -> "<"
     | GT       _ -> ">"
@@ -691,8 +691,8 @@ and scan_constr region lexicon = parse
     | "<<<" -> Ok (SHIFT_L  region)
     | ">>>" -> Ok (SHIFT_R  region)
 
-    | "===" -> Ok (EQ3      region)
-    | "!==" -> Ok (NE2      region)
+    | "==" -> Ok (EQ2      region)
+    | "!=" -> Ok (NE       region)
 
     | "+="  -> Ok (PLUS_EQ  region)
     | "-="  -> Ok (MINUS_EQ region)
@@ -785,8 +785,8 @@ and scan_constr region lexicon = parse
     | SHIFT_R  _ (* ">>>"  *)
 
     | EQ       _ (* "="    *)
-    | EQ3      _ (* "==="  *)
-    | NE2      _ (* "!=="  *)
+    | EQ2      _ (* "=="  *)
+    | NE       _ (* "!="  *)
 
     | LT       _ (* "<"    *)
     | GT       _ (* ">"    *)
