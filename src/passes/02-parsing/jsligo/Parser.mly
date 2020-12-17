@@ -134,9 +134,6 @@ list__(item):
 
 (* Main *)
 
-// variable_statement:
-//   "<ident>" {  SVar $1 }
-
 block_statement:
   "{" statements "}" {
     let region = cover $1 $3 in
@@ -739,6 +736,7 @@ member_expr:
 | "<constr>"                 {                      EVar $1 }
 | "<int>"                    {              EArith (Int $1) }
 | "<bytes>"                  {                    EBytes $1 }
+| "<string>"                 {          EString (String $1) }
 // | unit
 | "false"                    { ELogic (BoolExpr (False $1)) }
 | "true"                     {  ELogic (BoolExpr (True $1)) }

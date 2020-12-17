@@ -9,7 +9,7 @@ let y : list <int> = [3, 4, 5];
 let z : list <int> = [2, ...y];
 
 let main = ([action, s] : [parameter, storage]) : returnx => {
-  if (action === []) {
+  if (action == []) {
     return [[] as list<operation>, s]
   }
   else {

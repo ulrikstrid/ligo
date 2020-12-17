@@ -760,10 +760,10 @@ and pp_expr state = function
     (match selection with 
       FieldName {value = {value; _}; region} -> 
         pp_loc_node (state#pad 1 0) "<fieldname>" region;
-        pp_ident state value
+        pp_ident (state#pad 2 0) value
     | Component {value = {inside; _}; region} -> 
         pp_loc_node (state#pad 1 0) "<component>" region;
-        pp_expr state inside)
+        pp_expr (state#pad 2 0) inside)
 | EAnnot {value; region} ->
     pp_loc_node state "EAnnot" region;
     pp_annotated state value
