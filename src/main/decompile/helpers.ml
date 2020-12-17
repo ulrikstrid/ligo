@@ -8,6 +8,7 @@ type v_syntax =
   | PascaLIGO of Tree_abstraction.Pascaligo.Decompiler.dialect option
   | CameLIGO
   | ReasonLIGO
+  | JsLIGO
 
 let dialect_to_variant dialect =
   match dialect with
@@ -27,12 +28,14 @@ let syntax_to_variant ?dialect (Syntax_name syntax) source =
                     ok (PascaLIGO dialect)
        | ".mligo"           -> ok CameLIGO
        | ".religo"          -> ok ReasonLIGO
+       | ".JSligo"          -> ok JsLIGO
        | ext                -> fail (syntax_auto_detection ext))
   | ("pascaligo" | "PascaLIGO"),   _ ->
      let%bind dialect = dialect_to_variant dialect in
      ok (PascaLIGO dialect)
   | ("cameligo" | "CameLIGO"),     _ -> ok CameLIGO
   | ("reasonligo" | "ReasonLIGO"), _ -> ok ReasonLIGO
+  | ("jsligo" | "JsLIGO"),         _ -> ok JsLIGO
   | _ -> fail (invalid_syntax syntax)
 
 let specialise_and_print_pascaligo dialect program =
@@ -77,18 +80,26 @@ let specialise_and_print_expression_reasonligo expression =
     ok (Parsing.Reasonligo.pretty_print_expression cst)
   in ok source
 
+let specialise_and_print_jsligo _program =
+  failwith "Not implemented: specialise_and_print_reasonligo"
+
+let specialise_and_print_expression_jsligo _expression =
+  failwith "Not implemented: specialise_and_print_expression_reasonligo"
+
 
 let specialise_and_print syntax source : (Buffer.t, _) Trace.result =
   let specialise_and_print =
     match syntax with
       PascaLIGO dialect -> specialise_and_print_pascaligo dialect
     | CameLIGO   -> specialise_and_print_cameligo
-    | ReasonLIGO -> specialise_and_print_reasonligo in
+    | ReasonLIGO -> specialise_and_print_reasonligo
+    | JsLIGO     -> specialise_and_print_jsligo in
   specialise_and_print source
 
 let specialise_and_print_expression syntax source =
   let specialise_and_print = match syntax with
     PascaLIGO dialect -> specialise_and_print_expression_pascaligo dialect
   | CameLIGO   -> specialise_and_print_expression_cameligo
-  | ReasonLIGO -> specialise_and_print_expression_reasonligo in
+  | ReasonLIGO -> specialise_and_print_expression_reasonligo
+  | JsLIGO     -> specialise_and_print_expression_jsligo in
   specialise_and_print source

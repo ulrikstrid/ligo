@@ -49,6 +49,11 @@ chevrons(X):
     and value  = {lchevron=$1; inside=$2; rchevron=$3}
     in {region; value} }
 
+brackets(X):
+  "[" X "]" {
+    let region = cover $1 $3
+    and value  = {lbracket=$1; inside=$2; rbracket=$3}
+    in {region; value} }
 
 (* Sequences
 
@@ -330,15 +335,15 @@ type_expr:
 
 fun_type:
   cartesian { $1 }
-| cartesian "=>" fun_type {
-    let start  = type_expr_to_region $1
-    and stop   = type_expr_to_region $3 in
+| "(" cartesian "=>" fun_type ")" {
+    let start  = type_expr_to_region $2
+    and stop   = type_expr_to_region $4 in
     let region = cover start stop in
-    TFun {region; value=$1,$2,$3} }
+    TFun {region; value=$2,$3,$4} }
 
 cartesian:
   core_type { $1 }
-| par(tuple (cartesian)) { TProd $1 }
+| brackets(tuple (cartesian)) { TProd $1 }
 
 type_args:
   tuple(fun_type) { $1 }
@@ -515,20 +520,20 @@ arrow_function_body:
 | expr { ExpressionBody $1 }
 
 arrow_function:
-  "(" expr_sequence ")" "=>" arrow_function_body {
-    let region = cover $1 (arrow_function_body_to_region $5) in
+  "(" expr_sequence ":" type_expr ")" ":" type_expr "=>" arrow_function_body {
+    let region = cover $1 (arrow_function_body_to_region $9) in
     let value = {
       parameters = EPar {
-        region = cover $1 $3;
+        region = cover $1 $5;
         value = {
           lpar = $1;
           inside = ESeq $2;
-          rpar = $3;
+          rpar = $5;
         }
       };
-      lhs_type = None;
-      arrow    = $4;
-      body     = $5;
+      lhs_type = Some ($6, $7);
+      arrow    = $8;
+      body     = $9;
     }
     in
     EFun {
@@ -789,7 +794,7 @@ new_expr:
   member_expr    { $1 }
 | "new" new_expr {
     let region = cover $1 (expr_to_region $2) in
-    let value = $2 in
+    let value = $1,$2 in
     ENew {region; value}
 }
 

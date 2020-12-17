@@ -2,7 +2,7 @@ open Trace
 open Main_errors
 
 type s_syntax = Syntax_name of string
-type v_syntax = PascaLIGO | CameLIGO | ReasonLIGO
+type v_syntax = PascaLIGO | CameLIGO | ReasonLIGO | JsLIGO
 
 type meta = {
   syntax : v_syntax;
@@ -24,6 +24,7 @@ let file_extension_to_variant sf =
   | ".ligo" | ".pligo" -> Some PascaLIGO
   | ".mligo"           -> Some CameLIGO
   | ".religo"          -> Some ReasonLIGO
+  | ".jsligo"          -> Some JsLIGO
   | _                  -> None
 
 let syntax_to_variant (Syntax_name syntax) source =
@@ -35,6 +36,7 @@ let syntax_to_variant (Syntax_name syntax) source =
   | ("pascaligo" | "PascaLIGO"),   _ -> ok PascaLIGO
   | ("cameligo" | "CameLIGO"),     _ -> ok CameLIGO
   | ("reasonligo" | "ReasonLIGO"), _ -> ok ReasonLIGO
+  | ("jsligo" | "JsLIGO"),         _ -> ok JsLIGO
   | _ -> fail (invalid_syntax syntax)
 
 let typer_switch_to_variant t =
@@ -55,6 +57,7 @@ let preprocess_file ~(options:options) ~meta file_path
       PascaLIGO  -> Pascaligo.preprocess_file
     | CameLIGO   -> Cameligo.preprocess_file
     | ReasonLIGO -> Reasonligo.preprocess_file
+    | JsLIGO     -> Jsligo.preprocess_file
   in trace preproc_tracer @@
      preprocess_file options.libs file_path
 
@@ -65,6 +68,7 @@ let preprocess_string ~(options:options) ~meta file_path =
       PascaLIGO  -> Pascaligo.preprocess_string
     | CameLIGO   -> Cameligo.preprocess_string
     | ReasonLIGO -> Reasonligo.preprocess_string
+    | JsLIGO     -> Jsligo.preprocess_string
   in trace preproc_tracer @@
      preprocess_string options.libs file_path
 
@@ -152,13 +156,40 @@ let parse_and_abstract_expression_reasonligo buffer =
     Tree_abstraction.Reasonligo.compile_expression applied
   in ok imperative
 
+let parse_and_abstract_jsligo buffer file_path =
+  let%bind _raw =
+    trace parser_tracer @@
+    Parsing.Jsligo.parse_file buffer file_path in
+  failwith "TODO : abstraction."
+  (* let%bind applied =
+    trace self_cst_jsligo_tracer @@
+    Self_cst.Jsligo.all_program raw in
+  let%bind imperative =
+    trace cit_jsligo_tracer @@
+    Tree_abstraction.Jsligo.compile_program applied
+  in ok imperative *)
+
+let parse_and_abstract_expression_jsligo buffer =
+  let%bind _raw =
+    trace parser_tracer @@
+    Parsing.Jsligo.parse_expression buffer in
+  failwith "TODO : abstraction"
+  (* let%bind applied =
+    trace self_cst_jsligo_tracer @@
+    Self_cst.Jsligo.all_expression raw in
+  let%bind imperative =
+    trace cit_jsligo_tracer @@
+    Tree_abstraction.Jsligo.compile_expression applied
+  in ok imperative *)
+
 let parse_and_abstract ~meta buffer file_path
     : (Ast_imperative.program, _) Trace.result =
   let%bind parse_and_abstract =
     match meta.syntax with
       PascaLIGO  -> ok parse_and_abstract_pascaligo
     | CameLIGO   -> ok parse_and_abstract_cameligo
-    | ReasonLIGO -> ok parse_and_abstract_reasonligo in
+    | ReasonLIGO -> ok parse_and_abstract_reasonligo
+    | JsLIGO -> ok parse_and_abstract_jsligo in
   let%bind abstracted =
     parse_and_abstract buffer file_path in
   let%bind applied =
@@ -174,7 +205,10 @@ let parse_and_abstract_expression ~meta buffer =
     | CameLIGO ->
         ok parse_and_abstract_expression_cameligo
     | ReasonLIGO ->
-        ok parse_and_abstract_expression_reasonligo in
+        ok parse_and_abstract_expression_reasonligo 
+    | JsLIGO ->
+        ok parse_and_abstract_expression_jsligo 
+      in
   let%bind abstracted =
     parse_and_abstract buffer in
   let%bind applied =
@@ -207,6 +241,16 @@ let parse_and_abstract_string_cameligo buffer =
     Tree_abstraction.Cameligo.compile_program raw
   in ok imperative
 
+let parse_and_abstract_string_jsligo buffer =
+  let%bind _raw =
+    trace parser_tracer @@
+    Parsing.Jsligo.parse_string buffer in
+  failwith "TODO : abstraction"
+  (*let%bind imperative =
+    trace cit_jsligo_tracer @@
+    Tree_abstraction.Jsligo.compile_program raw
+  in ok imperative *)
+
 let parse_and_abstract_string syntax buffer =
   let%bind parse_and_abstract =
     match syntax with
@@ -215,7 +259,9 @@ let parse_and_abstract_string syntax buffer =
     | CameLIGO ->
         ok parse_and_abstract_string_cameligo
     | ReasonLIGO ->
-        ok parse_and_abstract_string_reasonligo in
+        ok parse_and_abstract_string_reasonligo
+    | JsLIGO ->
+      ok parse_and_abstract_string_jsligo in
   let%bind abstracted =
     parse_and_abstract buffer in
   let%bind applied =
@@ -232,12 +278,16 @@ let pretty_print_cameligo_cst =
 let pretty_print_reasonligo_cst =
   Parsing.Reasonligo.pretty_print_cst
 
+let pretty_print_jsligo_cst =
+  Parsing.Jsligo.pretty_print_cst
+
 let pretty_print_cst ~meta buffer file_path=
   let print =
     match meta.syntax with
       PascaLIGO  -> pretty_print_pascaligo_cst
     | CameLIGO   -> pretty_print_cameligo_cst
     | ReasonLIGO -> pretty_print_reasonligo_cst
+    | JsLIGO     -> pretty_print_jsligo_cst
   in trace parser_tracer @@ print buffer file_path
 
 let pretty_print_pascaligo =
@@ -249,10 +299,14 @@ let pretty_print_cameligo =
 let pretty_print_reasonligo =
   Parsing.Reasonligo.pretty_print_file
 
+let pretty_print_jsligo =
+  Parsing.Jsligo.pretty_print_file
+
 let pretty_print ~meta buffer file_path =
   let print =
     match meta.syntax with
       PascaLIGO  -> pretty_print_pascaligo
     | CameLIGO   -> pretty_print_cameligo
     | ReasonLIGO -> pretty_print_reasonligo
+    | JsLIGO     -> pretty_print_jsligo
   in trace parser_tracer @@ print buffer file_path
