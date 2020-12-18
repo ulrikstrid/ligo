@@ -69,12 +69,25 @@ let print_token state region lexeme =
     sprintf "%s: %s\n" (compact state region) lexeme
   in Buffer.add_string state#buffer line
 
+let print_constr state {region; value} =
+  let line =
+    sprintf "%s: Constr %s\n"
+            (compact state region)value
+  in Buffer.add_string state#buffer line
+
 let print_var state {region; value} =
   let line =
     sprintf "%s: Ident %s\n"
             (compact state region)value
   in Buffer.add_string state#buffer line
+  
 
+let print_pconstr state {region; value} =
+  let line =
+    sprintf "%s: PConstr %s\n"
+            (compact state region) value
+  in Buffer.add_string state#buffer line
+  
 let print_pvar state {region; value} =
   let line =
     sprintf "%s: PVar %s\n"
@@ -306,6 +319,7 @@ and print_binding_pattern state = function
   PRest e ->     print_rest_pattern     state e
 | PAssign e ->   print_assign_pattern   state e
 | PVar v ->      print_pvar             state v
+| PConstr v ->   print_pconstr          state v
 | PDestruct d -> print_destruct_pattern state d
 | PObject o ->   print_object_pattern   state o
 | PWild ->       print_token            state Region.ghost "<wild>"
@@ -331,6 +345,7 @@ and print_expr state = function
 | EPar e        -> print_expr_par    state e
 | ESeq seq      -> print_sequence    state seq
 | EVar v        -> print_var         state v
+| EConstr c     -> print_constr      state c
 | ELogic e      -> print_logic_expr  state e
 | EArith e      -> print_arith_expr  state e
 | ECall e       -> print_fun_call    state e
@@ -681,6 +696,9 @@ and pp_binding_pattern state = function
 | PVar v ->
     pp_node state "<variable>";
     pp_ident (state#pad 1 0) v
+| PConstr v ->
+    pp_node state "<constr>";
+    pp_ident (state#pad 1 0) v
 | PDestruct {value = {property; target; _}; region} ->
     pp_loc_node state "<destruct>" region;
     pp_ident (state#pad 1 0) property;
@@ -736,6 +754,9 @@ and pp_expr state = function
 | EVar v ->
     pp_node  state "EVar";
     pp_ident (state#pad 1 0) v
+| EConstr c ->
+  pp_node  state "EConstr";
+  pp_ident (state#pad 1 0) c
 | ELogic e_logic ->
     pp_node state "ELogic";
     pp_e_logic (state#pad 1 0) e_logic

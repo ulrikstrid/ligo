@@ -242,6 +242,7 @@ and binding_pattern =
   PRest     of rest_pattern reg
 | PAssign   of assign_pattern reg
 | PVar      of variable
+| PConstr   of variable
 | PDestruct of destruct reg
 | PObject   of (binding_pattern, comma) nsepseq braced reg
 | PWild
@@ -310,6 +311,7 @@ and expr =
 | EPar     of expr par reg
 | ESeq     of (expr, comma) nsepseq reg
 | EVar     of variable
+| EConstr  of variable
 | ELogic   of logic_expr
 | EArith   of arith_expr
 | ECall    of (expr * arguments) reg
@@ -476,7 +478,7 @@ let type_expr_to_region = function
 
 let binding_pattern_to_region = function
   PRest {region;_ }   | PAssign {region ;_ }
-| PVar {region ;_ }    | PDestruct {region ;_ }
+| PVar {region ;_ }    | PConstr {region; _ } | PDestruct {region ;_ }
 | PObject {region ;_ } | PArray {region; _} -> region
 | PWild -> Region.ghost
 
@@ -511,7 +513,7 @@ let expr_to_region = function
 | ECall {region;_}   | EVar {region; _}    | EProj {region; _}
 | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
 | ESeq {region; _}   | EObject {region; _} | EArray { region; _}
-| ENew {region; _}
+| ENew {region; _}   | EConstr {region; _}
 | ECodeInj {region; _} -> region
 
 let statement_to_region = function

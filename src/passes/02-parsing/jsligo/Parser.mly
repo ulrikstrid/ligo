@@ -193,7 +193,8 @@ initializer_:
   }
 
 rest:
-  "..." "<ident>" {
+  "..." "<constr>"
+| "..." "<ident>" {
     let region = cover $1 $2.region in
     let value = {
       ellipsis = $1;
@@ -206,7 +207,8 @@ rest:
   }
 
 object_binding_property:
-  "<ident>" initializer_?  {
+  "<constr>" initializer_?
+| "<ident>" initializer_?  {
     match $2 with
     | Some (eq, expr) ->
       let region = cover $1.region (expr_to_region expr) in
@@ -222,7 +224,8 @@ object_binding_property:
     | None ->
       PVar $1
   }
-| "<ident>" ":" binding_initializer   {
+| "<constr>" ":" binding_initializer
+| "<ident>" ":" binding_initializer {
     let region = cover $1.region $3.region in
     let value = {
       property = $1;
@@ -258,6 +261,7 @@ object_binding_pattern:
 array_binding_pattern_item:
   /* empty  */          { PWild }
 | rest                  { $1 }
+| "<constr>"            { PConstr $1 }
 | "<ident>"             { PVar $1 }
 | array_binding_pattern { $1 }
 
@@ -277,7 +281,8 @@ array_binding_pattern:
   }
 
 binding_pattern:
-  "<ident>"               { PVar $1 }
+  "<constr>"              { PConstr $1 }
+| "<ident>"               { PVar $1 }
 | object_binding_pattern  { $1 }
 | array_binding_pattern   { $1 }
 
@@ -338,7 +343,8 @@ type_expr:
   fun_type | sum_type | record_type { $1 }
 
 fun_type_arg:
-  "<ident>" ":" core_type { 
+  "<constr>" ":" core_type
+| "<ident>" ":" core_type { 
     {name      = $1;
      colon     = $2;
      type_expr = $3; }
@@ -406,6 +412,10 @@ variant:
 | "<ident>" {
     {region = $1.region; value = VVar $1}
 }
+| "<constr>" {
+    {region = $1.region; value = VVar $1}
+}
+
 
 record_type:
   "{" sep_or_term_list(field_decl,",") "}" {
@@ -582,6 +592,7 @@ arrow_function:
       value;
     }
  }
+| "<constr>" "=>" arrow_function_body
 | "<ident>" "=>" arrow_function_body {
     let region = cover $1.region (arrow_function_body_to_region $3) in
     let value = {
@@ -705,14 +716,23 @@ array_literal:
   }
 
 property_name:
-  "<int>"    { EArith (Int $1) }
-| "<ident>"  {         EVar $1 }
-| "<string>" {      EString (String $1) }
+  "<int>"    {       EArith (Int $1) }
+| "<ident>"  {               EVar $1 }
+| "<constr>" {            EConstr $1 }
+| "<string>" {   EString (String $1) }
 
 property:
   "<ident>" {
     let region = $1.region in
     let value = EVar $1 in
+    Punned_property {
+      region;
+      value
+    }
+  }
+| "<constr>" {
+    let region = $1.region in
+    let value = EConstr $1 in
     Punned_property {
       region;
       value
@@ -762,7 +782,7 @@ object_literal:
 
 member_expr:
   "<ident>"                  {                         EVar $1 }
-| "<constr>"                 {                         EVar $1 }
+| "<constr>"                 {                      EConstr $1 }
 | "_"                        {  EVar {value = "_"; region = $1}}
 | "<int>"                    {                 EArith (Int $1) }
 | "<bytes>"                  {                       EBytes $1 }
@@ -788,6 +808,7 @@ member_expr:
     value
   }
 }
+| member_expr "." "<constr>"
 | member_expr "." "<ident>"  {
   let region = cover (expr_to_region $1) $3.region in
   let value = {
