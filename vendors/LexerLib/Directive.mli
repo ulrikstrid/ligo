@@ -22,7 +22,7 @@ type flag       = Push | Pop
 type linemarker = linenum * file_path * flag option
 
 type t =
-  LineMarker of linemarker Region.reg
+  Linemarker of linemarker Region.reg
 
 type directive = t
 

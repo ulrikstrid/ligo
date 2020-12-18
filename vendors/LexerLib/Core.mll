@@ -181,14 +181,20 @@ type 'token lex_unit =
 | Directive of Directive.t
 
 type 'token state = <
-  config      : 'token config;
-  window      : 'token window option;
-  pos         : Pos.t;
-  set_pos     : Pos.t -> 'token state;
-  slide_token : 'token -> 'token state;
-  sync        : Lexing.lexbuf -> 'token sync;
-  decoder     : Uutf.decoder;
-  supply      : Bytes.t -> int -> int -> unit
+  config       : 'token config;
+  window       : 'token window option;
+  pos          : Pos.t;
+  set_pos      : Pos.t -> 'token state;
+  slide_window : 'token -> 'token state;
+  sync         : Lexing.lexbuf -> 'token sync;
+  decoder      : Uutf.decoder;
+  supply       : Bytes.t -> int -> int -> unit;
+  mk_newline   : Lexing.lexbuf -> 'token lex_unit * 'token state;
+  mk_line      : thread -> 'token lex_unit * 'token state;
+  mk_block     : thread -> 'token lex_unit * 'token state;
+  mk_space     : Lexing.lexbuf -> 'token lex_unit * 'token state;
+  mk_tabs      : Lexing.lexbuf -> 'token lex_unit * 'token state;
+  mk_bom       : Lexing.lexbuf -> 'token lex_unit * 'token state
 >
 
 and 'token sync = {
@@ -202,10 +208,10 @@ type message = string Region.reg
 type 'token scanner =
   'token state ->
   Lexing.lexbuf ->
-  ('token * 'token state, message) Stdlib.result
+  ('token lex_unit * 'token state, message) Stdlib.result
 
 type 'token cut =
-  thread * 'token state -> 'token * 'token state
+  thread * 'token state -> 'token lex_unit * 'token state
 
 (* The type [client] gathers the arguments to the lexer in this
     module. *)
@@ -217,7 +223,7 @@ type 'token client = <
 >
 
 type 'token internal_scanner =
-  'token state -> Lexing.lexbuf -> 'token * 'token state
+  'token state -> Lexing.lexbuf -> 'token lex_unit * 'token state
 
 type 'token internal_client = <
   mk_string : 'token cut;
@@ -237,7 +243,7 @@ let mk_state ~config ~window ~pos ~decoder ~supply : 'token state =
 
     method set_pos pos = {< pos = pos >}
 
-    method slide_token new_token =
+    method slide_window new_token =
       let new_window =
         match self#window with
           None ->
@@ -347,11 +353,12 @@ type input =
 | Buffer  of Lexing.lexbuf
 
 type 'token instance = {
-  input    : input;
-  read     : Lexing.lexbuf -> ('token lex_unit, message) result;
-  lexbuf   : Lexing.lexbuf;
-  close    : unit -> unit;
-  get_win  : unit -> 'token window option
+  input      : input;
+  read_token : Lexing.lexbuf -> ('token, message) result;
+  read_unit  : Lexing.lexbuf -> ('token lex_unit, message) result;
+  lexbuf     : Lexing.lexbuf;
+  close      : unit -> unit;
+  window     : unit -> 'token window option
 }
 
 let lexbuf_from_input config = function
@@ -397,47 +404,43 @@ let drop scanner lexbuf =
 
 (* The main function *)
 
-let open_unit_stream config ~scan input =
+let open_stream config ~scan input =
   let scan state = drop (scan state) in
   let file_path  = match config#input with
                      Some path -> path
                    | _ -> "" in
-  let        pos = Pos.min ~file:file_path in
+  let        pos = Pos.min ~file:file_path
   and    decoder = Uutf.decoder ~encoding:`UTF_8 `Manual in
   let     supply = Uutf.Manual.src decoder in
   let      state = ref (mk_state
                           ~config
                           ~window:None
                           ~pos
-                          ~markup:[]
                           ~decoder
                           ~supply) in
-  let get_pos () = !state#pos
-  and get_win () = !state#window
+  let window () = !state#window in
 
-  let rec read scan ~log lexbuf =
-    state := scan !state lexbuf;
-    match state#unit with
-      None ->
-    | Some (Token token as unit) ->
-       let region = config#to_region token in
-       begin
-         log unit;
-         state := ((!state#set_unit unit)
-                          #set_last region)
-                          #slide_token token;
-         unit
-       end
-    | Some Markup m ->
-    | Some Directive d ->
+  let read_unit scan ~log lexbuf =
+    let unit, state' = scan !state lexbuf in
+    let () = state := state' in
+    let () = log unit in
+    let () =
+      match unit with
+        Token token -> state := !state#slide_window token
+      | Markup _ | Directive _ -> ()
+    in unit in
 
-  in
+  let rec read_token scan ~log lexbuf =
+    match read_unit scan ~log lexbuf with
+      Token token -> token
+    | Markup _ | Directive _ -> read_token scan ~log lexbuf in
 
   match lexbuf_from_input config input with
     Stdlib.Ok (lexbuf, close) ->
       let log  = output_unit config stdout in
-      let read = lift (read scan ~log) in
-      Ok {read; input; lexbuf; close; get_win}
+      let read_unit  = lift (read_unit scan ~log)
+      and read_token = lift (read_token scan ~log) in
+      Ok {read_unit; read_token; input; lexbuf; close; window}
   | Error _ as e -> e
 
 (* LEXING COMMENTS AND STRINGS *)
@@ -513,11 +516,10 @@ let scan_utf8_wrap scan_utf8 callback thread state lexbuf =
    processed). *)
 
 let line_preproc scan_flag ~line ~file state lexbuf =
-  let {state; _}  = state#sync lexbuf in
-  let flag, state = scan_flag state lexbuf in
-  let ()          = ignore flag
-  and line        = int_of_string line in
-  state#set_pos (state#pos#set ~file ~line ~offset:0)
+  let flag, state = scan_flag state lexbuf
+  and linenum     = int_of_string line in
+  let pos         = state#pos#set ~file ~line:linenum ~offset:0
+  in flag, state#set_pos pos
 
 (* END HEADER *)
 }
@@ -591,9 +593,9 @@ rule scan client state = parse
 
   (* Strings *)
 
-| '"'  { let {region; state; _} = state#sync lexbuf in
-         let thread             = mk_thread region
-         in scan_string thread state lexbuf |> client#mk_string }
+| '"' { let {region; state; _} = state#sync lexbuf in
+        let thread             = mk_thread region
+        in scan_string thread state lexbuf |> client#mk_string }
 
   (* Comment *)
 
@@ -622,8 +624,11 @@ rule scan client state = parse
   (* Linemarkers preprocessing directives (from #include) *)
 
 | '#' blank* (natural as line) blank+ '"' (string as file) '"' {
-    let state = line_preproc scan_flag ~line ~file state lexbuf
-    in LineMarker (line, file, None), state }
+    let {state; region; _} = state#sync lexbuf in
+    let flag, state = line_preproc scan_flag ~line ~file state lexbuf in
+    let value       = state#pos#line, file, flag in
+    let directive   = Directive.Linemarker Region.{value; region}
+    in Directive directive, state }
 
   (* Other tokens *)
 
@@ -733,8 +738,11 @@ and scan_string thread state = parse
 and scan_flag state = parse
   blank+          { let {state; _} = state#sync lexbuf
                     in scan_flag state lexbuf              }
-| natural as flag { let {state; _} = state#sync lexbuf
-                    in Some (int_of_string flag), state    }
+| natural as flag { let {state; _} = state#sync lexbuf in
+                    match flag with
+                      "1" -> Some Push, state
+                    | "0" -> Some Pop, state
+                    | _   -> None, state                   }
 | nl              { None, state#set_pos (state#pos#add_nl) }
 | eof             { None, (state#sync lexbuf).state        }
 

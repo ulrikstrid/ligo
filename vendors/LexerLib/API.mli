@@ -21,6 +21,7 @@ module type S =
        return token instances (see type [Core.instance]). *)
 
     type token
+
     type file_path = string
     type message   = string Region.reg
 
@@ -48,15 +49,15 @@ module type S =
         val from_file    : (file_path,     token list) lexer
       end
 
-    module Units :
+    module LexUnits :
       sig
-        type t = token Core.lex_unit
+        type nonrec 'src lexer = ('src, token Core.lex_unit list) lexer
 
-        val from_lexbuf  : (Lexing.lexbuf, t list) lexer
-        val from_channel : (in_channel,    t list) lexer
-        val from_string  : (string,        t list) lexer
-        val from_buffer  : (Buffer.t,      t list) lexer
-        val from_file    : (file_path,     t list) lexer
+        val from_lexbuf  : Lexing.lexbuf lexer
+        val from_channel : in_channel    lexer
+        val from_string  : string        lexer
+        val from_buffer  : Buffer.t      lexer
+        val from_file    : file_path     lexer
       end
   end
 

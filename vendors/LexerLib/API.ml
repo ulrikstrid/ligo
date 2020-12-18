@@ -39,21 +39,22 @@ module type S =
         val from_file    : (file_path,     token list) lexer
       end
 
-    module Units :
+    module LexUnits :
       sig
-        type t = token Core.lex_unit
+        type nonrec 'src lexer = ('src, token Core.lex_unit list) lexer
 
-        val from_lexbuf  : (Lexing.lexbuf, t list) lexer
-        val from_channel : (in_channel,    t list) lexer
-        val from_string  : (string,        t list) lexer
-        val from_buffer  : (Buffer.t,      t list) lexer
-        val from_file    : (file_path,     t list) lexer
+        val from_lexbuf  : Lexing.lexbuf lexer
+        val from_channel : in_channel    lexer
+        val from_string  : string        lexer
+        val from_buffer  : Buffer.t      lexer
+        val from_file    : file_path     lexer
       end
   end
 
 module Make (Lexer: LEXER) =
   struct
     type token = Lexer.token
+
     type file_path = string
     type message   = string Region.reg
 
@@ -66,7 +67,7 @@ module Make (Lexer: LEXER) =
 
     let generic lexbuf_of config source =
       let buffer = Core.Buffer (lexbuf_of source) in
-      Core.open_token_stream config ~scan:Lexer.scan buffer
+      Core.open_stream config ~scan:Lexer.scan buffer
 
     (* Lexing the input to recognise one token *)
 
@@ -78,7 +79,7 @@ module Make (Lexer: LEXER) =
       from_string config @@ Buffer.contents buffer
 
     let from_file config path =
-      Core.open_token_stream config ~scan:Lexer.scan (Core.File path)
+      Core.open_stream config ~scan:Lexer.scan (Core.File path)
 
     (* Lexing the entire input *)
 
@@ -86,10 +87,10 @@ module Make (Lexer: LEXER) =
       struct
         let scan_all_tokens (config: 'token Core.config) = function
           Stdlib.Error _ as err -> flush_all (); err
-        | Ok Core.{read; lexbuf; close; _} ->
+        | Ok Core.{read_token; lexbuf; close; _} ->
             let close_all () = flush_all (); close () in
             let rec read_tokens tokens =
-              match read lexbuf with
+              match read_token lexbuf with
                 Stdlib.Ok token ->
                   if   config#is_eof token
                   then Stdlib.Ok (List.rev tokens)
@@ -114,28 +115,38 @@ module Make (Lexer: LEXER) =
           from_file config src |> scan_all_tokens config
       end
 
-    module Units =
+    module LexUnits =
       struct
-        type t = token Core.lex_unit
+        let scan_all_units (config: 'token Core.config) = function
+          Stdlib.Error _ as err -> flush_all (); err
+        | Ok Core.{read_unit; lexbuf; close; _} ->
+            let close_all () = flush_all (); close () in
+            let rec read_units units =
+              match read_unit lexbuf with
+                Stdlib.Ok (Core.Token token as unit) ->
+                  if   config#is_eof token
+                  then Stdlib.Ok (List.rev units)
+                  else read_units (unit::units)
+              | Ok unit -> read_units (unit::units)
+              | Error _ as err -> err in
+            let result = read_units []
+            in close_all (); result
+
+        type nonrec 'src lexer = ('src, token Core.lex_unit list) lexer
 
         let from_lexbuf config lexbuf =
-          let () = ignore config and () = ignore lexbuf
-          in failwith "API.Units.from_lexbuf"
+          from_lexbuf config lexbuf |> scan_all_units config
 
         let from_channel config chan =
-          let () = ignore config and () = ignore chan
-          in failwith "API.Units.from_channel"
+          from_channel config chan |> scan_all_units config
 
-        let from_string config string =
-          let () = ignore config and () = ignore string
-          in failwith "API.Units.from_string"
+        let from_string config str =
+          from_string config str |> scan_all_units config
 
         let from_buffer config buf =
-          let () = ignore config and () = ignore buf
-          in failwith "API.Units.from_buffer"
+          from_buffer config buf |> scan_all_units config
 
         let from_file config src =
-          let () = ignore config and () = ignore src
-          in failwith "API.Units.from_file"
+          from_file config src |> scan_all_units config
       end
   end

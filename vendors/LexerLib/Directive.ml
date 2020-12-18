@@ -12,7 +12,7 @@ type flag       = Push | Pop
 type linemarker = linenum * file_path * flag option
 
 type t =
-  LineMarker of linemarker Region.reg
+  Linemarker of linemarker Region.reg
 
 type directive = t
 
@@ -23,7 +23,7 @@ type lexeme = string
 let sprintf = Printf.sprintf
 
 let to_lexeme = function
-  LineMarker Region.{value; _} ->
+  Linemarker Region.{value; _} ->
     let linenum, file_path, flag = value in
     let flag_lex =
       match flag with
@@ -33,7 +33,7 @@ let to_lexeme = function
     in sprintf "#%d %S%s" linenum file_path flag_lex
 
 let to_string ~offsets mode = function
-  LineMarker Region.{value; region} ->
+  Linemarker Region.{value; region} ->
     let linenum, file_path, flag = value in
     let flag_str =
       match flag with
