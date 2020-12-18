@@ -175,11 +175,21 @@ and print_sum_type state {value; _} =
   print_token_opt  state lead_vbar "|";
   print_nsepseq    state "|" print_variant variants
 
+and print_fun_type_arg state {name; colon; type_expr} =
+  print_var       state name;
+  print_token     state colon ":";
+  print_type_expr state type_expr
+
+and print_fun_type_args state {lpar; inside; rpar} =
+  print_token   state lpar "(";
+  print_nsepseq state "," print_fun_type_arg inside;
+  print_token   state rpar ")";
+
 and print_fun_type state {value; _} =
-  let domain, arrow, range = value in
-  print_type_expr state domain;
-  print_token     state arrow "->";
-  print_type_expr state range
+  let args, arrow, range = value in
+  print_fun_type_args state args;
+  print_token         state arrow "=>";
+  print_type_expr     state range
 
 and print_type_app state {value; _} =
   let type_constr, type_tuple = value in
@@ -968,8 +978,9 @@ and pp_type_expr state = function
     pp_loc_node state "TFun" region;
     let apply len rank =
       pp_type_expr (state#pad len rank) in
-    let domain, _, range = value in
-    List.iteri (apply 2) [domain; range]
+    let args, _, range = value in
+    pp_fun_type_args state args;
+    List.iteri (apply 2) [range]
 | TPar {value={inside;_}; region} ->
     pp_loc_node  state "TPar" region;
     pp_type_expr (state#pad 1 0) inside
@@ -982,6 +993,15 @@ and pp_type_expr state = function
 | TString s ->
     pp_node   state "TString";
     pp_string (state#pad 1 0) s
+
+and pp_fun_type_arg state {name; type_expr; _} = 
+  pp_ident     state name;
+  pp_type_expr state type_expr
+
+and pp_fun_type_args state {inside; _} =
+  let fun_type_args = Utils.nsepseq_to_list inside in
+  let apply len rank = pp_fun_type_arg (state#pad len rank) in
+  List.iteri (List.length fun_type_args |> apply) fun_type_args
 
 and pp_sum_type state {variants; attributes; _} =
   let variants = Utils.nsepseq_to_list variants in

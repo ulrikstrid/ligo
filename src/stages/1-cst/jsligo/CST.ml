@@ -179,12 +179,20 @@ and type_decl = {
   type_expr  : type_expr
 }
 
+and fun_type_arg = {
+  name      : variable;
+  colon     : colon;
+  type_expr : type_expr
+}
+
+and fun_type_args = (fun_type_arg, comma) nsepseq par
+
 and type_expr =
   TProd   of cartesian
 | TSum    of sum_type reg
 | TObject of field_decl reg ne_injection reg
 | TApp    of (type_constr * type_tuple) reg
-| TFun    of (type_expr * arrow * type_expr) reg
+| TFun    of (fun_type_args * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
 | TWild   of wild

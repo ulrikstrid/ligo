@@ -337,13 +337,25 @@ declaration:
 type_expr:
   fun_type | sum_type | record_type { $1 }
 
+fun_type_arg:
+  "<ident>" ":" core_type { 
+    {name      = $1;
+     colon     = $2;
+     type_expr = $3; }
+  }
+
 fun_type:
   cartesian { $1 }
-| "(" cartesian "=>" fun_type ")" {
-    let start  = type_expr_to_region $2
-    and stop   = type_expr_to_region $4 in
+| "(" nsepseq(fun_type_arg, ",") ")" "=>" fun_type {
+    let start = $1
+    and stop   = type_expr_to_region $5 in
     let region = cover start stop in
-    TFun {region; value=$2,$3,$4} }
+    let args = {
+      lpar = $1;
+      inside = $2;
+      rpar = $3;
+    } in
+    TFun {region; value=args,$4,$5} }
 
 cartesian:
   core_type { $1 }
