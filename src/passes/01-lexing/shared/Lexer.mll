@@ -262,7 +262,7 @@ and scan_verbatim thread state = parse
              and state = state#set_pos (state#pos#new_line nl) in
              scan_verbatim (thread#push_string nl) state lexbuf }
 | '#' blank* (natural as line) blank+ '"' (string as file) '"' {
-             let {state; _} = state#sync lexbuf in
+             let Core.{state; _} = state#sync lexbuf in
              let _flag, state = Core.line_preproc ~line ~file state lexbuf
              in scan_verbatim thread state lexbuf }
 | eof      { fail thread#opening Unterminated_verbatim }
