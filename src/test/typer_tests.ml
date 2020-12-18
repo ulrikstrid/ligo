@@ -60,12 +60,12 @@ module TestExpressions = struct
 
   let constructor () : (unit, _) result =
     let variant_foo_bar = Ast_typed.t_sum_ez [
-        ("foo", Typed.t_int () );
-        ("bar", Typed.t_string () ); ]
+        ("Foo", Typed.t_int () );
+        ("Bar", Typed.t_string () ); ]
     in
     test_expression
       ~env:(E.add_type (Var.of_name "test_t") variant_foo_bar E.empty)
-      I.(e_constructor "foo" (e_int (Z.of_int 32)))
+      I.(e_constructor "Foo" (e_int (Z.of_int 32)))
       variant_foo_bar
 
   let record () : (unit, _) result =
@@ -86,11 +86,11 @@ let main = test_suite "Typer (from core AST)"
     test y "int" int ;
     test y "unit"        TestExpressions.unit ;
     test y "int2"        TestExpressions.int ;
-    test no "bool"        TestExpressions.bool ; (* needs variants *)
+    test y "bool"        TestExpressions.bool ; (* needs variants *)
     test y "string"      TestExpressions.string ;
     test y "bytes"       TestExpressions.bytes ;    
     test no "tuple"       TestExpressions.tuple ;
-    test no "constructor" TestExpressions.constructor ;
+    test y "constructor" TestExpressions.constructor ;
     test no "record"      TestExpressions.record ;
     test no(*y*) "lambda"      TestExpressions.lambda ;
   ]

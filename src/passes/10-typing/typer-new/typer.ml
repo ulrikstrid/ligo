@@ -345,8 +345,7 @@ and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_sta
       Environment.get_constructor constructor e in
     let%bind (e,state, element) = type_expression e state element in
     (* Check that the element in the variant as the proper type *)
-    (* TODO: infer the variant or the type of the element *)
-    let%bind _assert = assert_type_expression_eq (element.type_expression, c_tv) in
+    (* TODO: infer the variant or the type of the element ?*)
     let wrapped = Wrap.constructor element.type_expression c_tv sum_tv in
     return_wrapped (E_constructor {constructor; element}) e state wrapped
 
