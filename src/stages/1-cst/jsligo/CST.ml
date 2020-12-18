@@ -45,7 +45,8 @@ type kwd_switch  = Region.t
 type kwd_case    = Region.t
 type kwd_default = Region.t
 type kwd_unit    = Region.t
-type kwd_new    = Region.t
+type kwd_new     = Region.t
+type kwd_as      = Region.t
 
 (* Data constructors *)
 
@@ -330,7 +331,7 @@ and arguments =
   Multiple of (expr,comma) nsepseq par reg
 | Unit     of the_unit reg
 
-and annot_expr = expr * colon * type_expr
+and annot_expr = expr * kwd_as * type_expr
 
 and 'a injection = {
   compound   : compound option;

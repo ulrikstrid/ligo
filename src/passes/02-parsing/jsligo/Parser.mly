@@ -134,9 +134,6 @@ list__(item):
 
 (* Main *)
 
-// variable_statement:
-//   "<ident>" {  SVar $1 }
-
 block_statement:
   "{" statements "}" {
     let region = cover $1 $3 in
@@ -289,7 +286,7 @@ binding_pattern:
 | ":" type_expr { Some ($1, $2)}
 
 %inline type_annot:
-  ":" type_expr { $1, $2}
+  ":" type_expr { $1, $2 }
   
 binding_initializer:
   binding_pattern type_annot_opt initializer_? {
@@ -643,7 +640,14 @@ unary_expr_level:
 call_expr_level:
   call_expr { $1 }
 | new_expr  { $1 }
-| call_expr_level "as" type_expr { $1 }
+| call_expr_level "as" type_expr { 
+    let region = cover (expr_to_region $1) (type_expr_to_region $3) in
+    let value = $1, $2, $3 in
+    EAnnot {
+      region;
+      value
+    }
+  }
 
 array_item:
   /* */                 { Empty_entry }
@@ -739,6 +743,7 @@ member_expr:
 | "<constr>"                 {                      EVar $1 }
 | "<int>"                    {              EArith (Int $1) }
 | "<bytes>"                  {                    EBytes $1 }
+| "<string>"                 {          EString (String $1) }
 // | unit
 | "false"                    { ELogic (BoolExpr (False $1)) }
 | "true"                     {  ELogic (BoolExpr (True $1)) }

@@ -26,7 +26,7 @@ let patch_empty = (m : foobar) : foobar =>
 /* Third dummy test, see above */
 
 let patch_deep = (m : [foobar, nat]) : [foobar, nat] =>
-  [Map.literal([[0, 0], [1, 9], [2, 2]]), (10 as nat)]
+  [Map.literal([[0, 0], [1, 9], [2, 2]]), (10 as nat)];
 
 let size_ = (m : foobar) : nat => Map.size (m);
 
