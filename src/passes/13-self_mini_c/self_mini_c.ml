@@ -37,6 +37,7 @@ let is_pure_constant : constant' -> bool =
   | C_ADDRESS
   | C_SET_MEM | C_SET_ADD | C_SET_REMOVE | C_SLICE
   | C_SHA256 | C_SHA512 | C_BLAKE2b | C_CHECK_SIGNATURE
+  | C_SHA3 | C_KECCAK
   | C_HASH_KEY | C_BYTES_PACK | C_CONCAT
   | C_FOLD_CONTINUE | C_FOLD_STOP
   | C_LOOP_CONTINUE | C_LOOP_STOP
@@ -47,14 +48,23 @@ let is_pure_constant : constant' -> bool =
   | C_LIST_EMPTY | C_LIST_LITERAL
   | C_MAP_EMPTY | C_MAP_LITERAL
   | C_MAP_GET | C_MAP_REMOVE | C_MAP_MEM
+  | C_MAP_GET_AND_UPDATE | C_BIG_MAP_GET_AND_UPDATE
   | C_LIST_HEAD_OPT
   | C_LIST_TAIL_OPT
   | C_CONVERT_TO_LEFT_COMB | C_CONVERT_TO_RIGHT_COMB
   | C_CONVERT_FROM_LEFT_COMB | C_CONVERT_FROM_RIGHT_COMB
+  | C_TICKET
+  | C_READ_TICKET
+  | C_SPLIT_TICKET
+  | C_JOIN_TICKET
+  | C_PAIRING_CHECK
+  | C_SAPLING_EMPTY_STATE
+  | C_SAPLING_VERIFY_UPDATE
     -> true
   (* unfortunately impure: *)
   | C_BALANCE | C_AMOUNT | C_NOW | C_SOURCE | C_SENDER | C_CHAIN_ID
   | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR
+  | C_LEVEL | C_VOTING_POWER | C_TOTAL_VOTING_POWER
   (* impure: *)
   | C_ASSERTION
   | C_ASSERT_SOME
@@ -116,7 +126,9 @@ let rec is_pure : expression -> bool = fun e ->
   | E_if_left (cond, (_, bt), (_, bf))
     -> List.for_all is_pure [ cond ; bt ; bf ]
 
-  | E_let_in (_, _, e1, e2)
+  | E_let_in (e1, _, (_, e2))
+    -> List.for_all is_pure [ e1 ; e2 ]
+  | E_let_pair (e1, (_, e2))
     -> List.for_all is_pure [ e1 ; e2 ]
 
   | E_constant (c)
@@ -169,7 +181,7 @@ let should_inline : expression_variable -> expression -> expression -> bool =
 let inline_let : bool ref -> expression -> expression =
   fun changed e ->
   match e.content with
-  | E_let_in ((x, _a), should_inline_here, e1, e2) ->
+  | E_let_in (e1, should_inline_here, ((x, _a), e2)) ->
     if is_pure e1 && (should_inline_here || should_inline x e1 e2)
     then
       let e2' = Subst.subst_expression ~body:e2 ~x:x ~expr:e1 in
@@ -201,7 +213,7 @@ let beta : bool ref -> expression -> expression =
   match e.content with
   | E_application ({ content = E_closure { binder = x ; body = e1 } ; type_expression = {type_content = T_function (xtv, tv);_ }}, e2) ->
     (changed := true ;
-     Expression.make (E_let_in ((x, xtv), false, e2, e1)) tv)
+     Expression.make (E_let_in (e2, false,((x, xtv), e1))) tv)
 
   (* also do CAR (PAIR x y) ↦ x, or CDR (PAIR x y) ↦ y, only if x and y are pure *)
   | E_constant {cons_name = C_CAR| C_CDR as const; arguments = [ { content = E_constant {cons_name = C_PAIR; arguments = [ e1 ; e2 ]} ; type_expression = _ } ]} ->

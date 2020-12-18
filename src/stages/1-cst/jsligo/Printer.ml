@@ -69,10 +69,23 @@ let print_token state region lexeme =
     sprintf "%s: %s\n" (compact state region) lexeme
   in Buffer.add_string state#buffer line
 
+let print_constr state {region; value} =
+  let line =
+    sprintf "%s: Constr %s\n"
+            (compact state region)value
+  in Buffer.add_string state#buffer line
+
 let print_var state {region; value} =
   let line =
     sprintf "%s: Ident %s\n"
             (compact state region)value
+  in Buffer.add_string state#buffer line
+
+
+let print_pconstr state {region; value} =
+  let line =
+    sprintf "%s: PConstr %s\n"
+            (compact state region) value
   in Buffer.add_string state#buffer line
 
 let print_pvar state {region; value} =
@@ -175,11 +188,21 @@ and print_sum_type state {value; _} =
   print_token_opt  state lead_vbar "|";
   print_nsepseq    state "|" print_variant variants
 
+and print_fun_type_arg state {name; colon; type_expr} =
+  print_var       state name;
+  print_token     state colon ":";
+  print_type_expr state type_expr
+
+and print_fun_type_args state {lpar; inside; rpar} =
+  print_token   state lpar "(";
+  print_nsepseq state "," print_fun_type_arg inside;
+  print_token   state rpar ")";
+
 and print_fun_type state {value; _} =
-  let domain, arrow, range = value in
-  print_type_expr state domain;
-  print_token     state arrow "->";
-  print_type_expr state range
+  let args, arrow, range = value in
+  print_fun_type_args state args;
+  print_token         state arrow "=>";
+  print_type_expr     state range
 
 and print_type_app state {value; _} =
   let type_constr, type_tuple = value in
@@ -296,6 +319,7 @@ and print_binding_pattern state = function
   PRest e ->     print_rest_pattern     state e
 | PAssign e ->   print_assign_pattern   state e
 | PVar v ->      print_pvar             state v
+| PConstr v ->   print_pconstr          state v
 | PDestruct d -> print_destruct_pattern state d
 | PObject o ->   print_object_pattern   state o
 | PWild ->       print_token            state Region.ghost "<wild>"
@@ -316,23 +340,30 @@ and print_object state {value={lbrace; inside; rbrace}; _} =
   print_nsepseq state "," (fun state property -> print_property state property) inside;
   print_token state rbrace "}"
 
+and print_assignment state (lhs, equals, rhs) =
+  print_expr state lhs;
+  print_token state equals "=";
+  print_expr state rhs;
+
 and print_expr state = function
-  EFun e        -> print_fun_expr    state e
-| EPar e        -> print_expr_par    state e
-| ESeq seq      -> print_sequence    state seq
-| EVar v        -> print_var         state v
-| ELogic e      -> print_logic_expr  state e
-| EArith e      -> print_arith_expr  state e
-| ECall e       -> print_fun_call    state e
-| ENew e        -> print_new_expr    state e
-| EBytes e      -> print_bytes       state e
-| EArray e      -> print_array       state e
-| EObject e     -> print_object      state e
-| EString e     -> print_string_expr state e
-| EProj e       -> print_projection  state e
-| EAnnot e      -> print_annot_expr  state e
-| EUnit e       -> print_unit        state e
-| ECodeInj e    -> print_code_inj    state e
+  EFun e                 -> print_fun_expr    state e
+| EPar e                 -> print_expr_par    state e
+| ESeq seq               -> print_sequence    state seq
+| EVar v                 -> print_var         state v
+| EAssign (lhs, eq, rhs) -> print_assignment  state (lhs, eq, rhs)
+| EConstr c              -> print_constr      state c
+| ELogic e               -> print_logic_expr  state e
+| EArith e               -> print_arith_expr  state e
+| ECall e                -> print_fun_call    state e
+| ENew e                 -> print_new_expr    state e
+| EBytes e               -> print_bytes       state e
+| EArray e               -> print_array       state e
+| EObject e              -> print_object      state e
+| EString e              -> print_string_expr state e
+| EProj e                -> print_projection  state e
+| EAnnot e               -> print_annot_expr  state e
+| EUnit e                -> print_unit        state e
+| ECodeInj e             -> print_code_inj    state e
 
 and print_new_expr state {value = (kwd_new, expr); _} =
   print_token state kwd_new "new";
@@ -671,6 +702,9 @@ and pp_binding_pattern state = function
 | PVar v ->
     pp_node state "<variable>";
     pp_ident (state#pad 1 0) v
+| PConstr v ->
+    pp_node state "<constr>";
+    pp_ident (state#pad 1 0) v
 | PDestruct {value = {property; target; _}; region} ->
     pp_loc_node state "<destruct>" region;
     pp_ident (state#pad 1 0) property;
@@ -723,9 +757,16 @@ and pp_expr state = function
     let exprs = Utils.nsepseq_to_list value in
     let apply len rank = pp_expr (state#pad len rank) in
     List.iteri (List.length exprs |> apply) exprs
+| EAssign (lhs, _, rhs) ->
+    pp_node state "EAssign";
+    pp_expr (state#pad 1 0) lhs;
+    pp_expr (state#pad 1 0) rhs
 | EVar v ->
     pp_node  state "EVar";
     pp_ident (state#pad 1 0) v
+| EConstr c ->
+  pp_node  state "EConstr";
+  pp_ident (state#pad 1 0) c
 | ELogic e_logic ->
     pp_node state "ELogic";
     pp_e_logic (state#pad 1 0) e_logic
@@ -968,8 +1009,9 @@ and pp_type_expr state = function
     pp_loc_node state "TFun" region;
     let apply len rank =
       pp_type_expr (state#pad len rank) in
-    let domain, _, range = value in
-    List.iteri (apply 2) [domain; range]
+    let args, _, range = value in
+    pp_fun_type_args state args;
+    List.iteri (apply 2) [range]
 | TPar {value={inside;_}; region} ->
     pp_loc_node  state "TPar" region;
     pp_type_expr (state#pad 1 0) inside
@@ -982,6 +1024,15 @@ and pp_type_expr state = function
 | TString s ->
     pp_node   state "TString";
     pp_string (state#pad 1 0) s
+
+and pp_fun_type_arg state {name; type_expr; _} =
+  pp_ident     state name;
+  pp_type_expr state type_expr
+
+and pp_fun_type_args state {inside; _} =
+  let fun_type_args = Utils.nsepseq_to_list inside in
+  let apply len rank = pp_fun_type_arg (state#pad len rank) in
+  List.iteri (List.length fun_type_args |> apply) fun_type_args
 
 and pp_sum_type state {variants; attributes; _} =
   let variants = Utils.nsepseq_to_list variants in

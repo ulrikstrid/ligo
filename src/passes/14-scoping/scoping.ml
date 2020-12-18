@@ -46,12 +46,14 @@ let rec translate_type : I.type_expression -> (meta, string) node =
   | I.T_base I.TB_timestamp -> Prim (nil, "timestamp", [], [])
   | I.T_base I.TB_baker_hash -> Prim (nil, "baker_hash", [], [])
   | I.T_base I.TB_pvss_key -> Prim (nil, "pvss_key", [], [])
-  | I.T_base I.TB_sapling_transaction -> Prim (nil, "sapling_transaction", [], [])
-  | I.T_base I.TB_sapling_state -> Prim (nil, "sapling_state", [], [])
   | I.T_base I.TB_baker_operation -> Prim (nil, "baker_operation", [], [])
   | I.T_base I.TB_bls12_381_g1 -> Prim (nil, "bls12_381_g1", [], [])
   | I.T_base I.TB_bls12_381_g2 -> Prim (nil, "bls12_381_g2", [], [])
   | I.T_base I.TB_bls12_381_fr -> Prim (nil, "bls12_381_fr", [], [])
+  | I.T_base I.TB_never -> Prim (nil, "never", [], [])
+  | I.T_ticket x -> Prim (nil, "ticket", [translate_type x], [])
+  | I.T_sapling_transaction memo_size -> Prim (nil, "sapling_transaction", [Int (nil, memo_size)], [])
+  | I.T_sapling_state memo_size -> Prim (nil, "sapling_state", [Int (nil, memo_size)], [])
   | I.T_map (a1, a2) ->
     Prim (nil, "map", [translate_type a1; translate_type a2], [])
   | I.T_big_map (a1, a2) ->
@@ -164,12 +166,16 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
     let (inner, inner_us) = union us2 us3 in
     let (outer, outer_us) = union us1 inner_us in
     (E_if_left (meta, Cond (outer, e1, inner, e2, e3)), outer_us)
-  | E_let_in (binder, _inline, e1, e2) ->
-    let e2 = (binder, e2) in
+  | E_let_in (e1, _inline, e2) ->
     let (e1, us1) = translate_expression e1 env in
     let (e2, us2) = translate_binder e2 env in
     let (ss, us) = union us1 us2 in
     (E_let_in (meta, ss, e1, e2), us)
+  | E_let_pair (e1, e2) ->
+    let (e1, us1) = translate_expression e1 env in
+    let (e2, us2) = translate_binder2 e2 env in
+    let (ss, us) = union us1 us2 in
+    (E_let_pair (meta, ss, e1, e2), us)
   | E_raw_michelson code ->
     (* maybe should move type into syntax? *)
     let (a, b) = match Mini_c.get_t_function ty with
@@ -183,14 +189,13 @@ and translate_binder (binder, body) env =
   let (_, binder_type) = binder in
   (O.Binds ([List.hd usages], [translate_type binder_type], body), List.tl usages)
 
-(* TODO is this right? *)
 and translate_binder2 ((binder1, binder2), body) env =
   let env' = I.Environment.add binder1 (I.Environment.add binder2 env) in
   let (body, usages) = translate_expression body env' in
   let (_, binder1_type) = binder1 in
   let (_, binder2_type) = binder2 in
   (O.Binds ([List.hd usages; List.hd (List.tl usages)],
-            [translate_type binder2_type; translate_type binder1_type],
+            [translate_type binder1_type; translate_type binder2_type],
             body),
    List.tl (List.tl usages))
 
@@ -284,6 +289,9 @@ and translate_constant (expr : I.constant) (ty : I.type_expression) env :
          let body = translate_closed_function body input_ty in
          return (O.Script_arg (O.Script (translate_type p, translate_type s, body)), arguments)
        | _ -> None)
+    | C_SAPLING_EMPTY_STATE ->
+      let%bind memo_size = Mini_c.get_t_sapling_state ty in
+      return (Type_args (None, [Int (nil, memo_size)]), expr.arguments)
     | _ -> None in
   (* Either we got static args, or none: *)
   let static_args = match special with

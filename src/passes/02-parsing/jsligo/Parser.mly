@@ -193,7 +193,8 @@ initializer_:
   }
 
 rest:
-  "..." "<ident>" {
+  "..." "<constr>"
+| "..." "<ident>" {
     let region = cover $1 $2.region in
     let value = {
       ellipsis = $1;
@@ -206,7 +207,8 @@ rest:
   }
 
 object_binding_property:
-  "<ident>" initializer_?  {
+  "<constr>" initializer_?
+| "<ident>" initializer_?  {
     match $2 with
     | Some (eq, expr) ->
       let region = cover $1.region (expr_to_region expr) in
@@ -222,7 +224,8 @@ object_binding_property:
     | None ->
       PVar $1
   }
-| "<ident>" ":" binding_initializer   {
+| "<constr>" ":" binding_initializer
+| "<ident>" ":" binding_initializer {
     let region = cover $1.region $3.region in
     let value = {
       property = $1;
@@ -258,6 +261,7 @@ object_binding_pattern:
 array_binding_pattern_item:
   /* empty  */          { PWild }
 | rest                  { $1 }
+| "<constr>"            { PConstr $1 }
 | "<ident>"             { PVar $1 }
 | array_binding_pattern { $1 }
 
@@ -277,7 +281,8 @@ array_binding_pattern:
   }
 
 binding_pattern:
-  "<ident>"               { PVar $1 }
+  "<constr>"              { PConstr $1 }
+| "<ident>"               { PVar $1 }
 | object_binding_pattern  { $1 }
 | array_binding_pattern   { $1 }
 
@@ -337,27 +342,40 @@ declaration:
 type_expr:
   fun_type | sum_type | record_type { $1 }
 
+fun_type_arg:
+  "<constr>" ":" core_type
+| "<ident>" ":" core_type { 
+    {name      = $1;
+     colon     = $2;
+     type_expr = $3; }
+  }
+
 fun_type:
   cartesian { $1 }
-| "(" cartesian "=>" fun_type ")" {
-    let start  = type_expr_to_region $2
-    and stop   = type_expr_to_region $4 in
+| "(" nsepseq(fun_type_arg, ",") ")" "=>" fun_type {
+    let start = $1
+    and stop   = type_expr_to_region $5 in
     let region = cover start stop in
-    TFun {region; value=$2,$3,$4} }
+    let args = {
+      lpar = $1;
+      inside = $2;
+      rpar = $3;
+    } in
+    TFun {region; value=args,$4,$5} }
 
 cartesian:
   core_type { $1 }
-| brackets(tuple (cartesian)) { TProd $1 }
+| brackets(nsepseq(type_expr, ",")) {  TProd $1 }
 
 type_args:
   tuple(fun_type) { $1 }
 | fun_type        { $1, [] }
 
 core_type:
-  type_name           {    TVar $1 }
-| "_"                 {   TWild $1 }
-| par(type_expr)      {    TPar $1 }
-| "<string>"          { TString $1 }
+  type_name           {       TVar $1 }
+| "_"                 {      TWild $1 }
+| par(type_expr)      {       TPar $1 }
+| "<string>"          {    TString $1 }
 | module_name "." type_name {
     let module_name = $1.value in
     let type_name   = $3.value in
@@ -394,6 +412,10 @@ variant:
 | "<ident>" {
     {region = $1.region; value = VVar $1}
 }
+| "<constr>" {
+    {region = $1.region; value = VVar $1}
+}
+
 
 record_type:
   "{" sep_or_term_list(field_decl,",") "}" {
@@ -526,20 +548,44 @@ arrow_function_body:
 expr_annot_sequence:
   expr type_annot "," expr_annot_sequence {
     let region = cover (expr_to_region $1) $4.region in
+    let annot = EAnnot {
+      region = cover (expr_to_region $1) (type_expr_to_region (snd $2));
+      value = $1, fst $2, snd $2
+    } 
+    in
     {
-      value = Utils.nsepseq_cons $1 $3 $4.value;
+      value = Utils.nsepseq_cons annot $3 $4.value;
       region
     }
   }
 | expr type_annot {
+    let annot = EAnnot {
+      region = cover (expr_to_region $1) (type_expr_to_region (snd $2));
+      value = $1, fst $2, snd $2
+    } 
+    in
     {
-      value = ($1, []);
+      value = (annot, []);
       region = expr_to_region $1;
     }
 }
 
 arrow_function:
-  "(" expr_annot_sequence ")" type_annot_opt "=>" arrow_function_body {
+  "(" ")" type_annot_opt "=>" arrow_function_body {
+    let region = cover $1 (arrow_function_body_to_region $5) in
+    let value = {
+      parameters = EUnit {value = ($1,$2); region = cover $1 $2};
+      lhs_type = $3;
+      arrow    = $4;
+      body     = $5;
+    }
+    in
+    EFun {
+      region;
+      value;
+    }
+  }
+| "(" expr_annot_sequence ")" type_annot_opt "=>" arrow_function_body {
     let region = cover $1 (arrow_function_body_to_region $6) in
     let value = {
       parameters = EPar {
@@ -560,6 +606,7 @@ arrow_function:
       value;
     }
  }
+| "<constr>" "=>" arrow_function_body
 | "<ident>" "=>" arrow_function_body {
     let region = cover $1.region (arrow_function_body_to_region $3) in
     let value = {
@@ -683,14 +730,23 @@ array_literal:
   }
 
 property_name:
-  "<int>"    { EArith (Int $1) }
-| "<ident>"  {         EVar $1 }
-| "<string>" {      EString (String $1) }
+  "<int>"    {       EArith (Int $1) }
+| "<ident>"  {               EVar $1 }
+| "<constr>" {            EConstr $1 }
+| "<string>" {   EString (String $1) }
 
 property:
   "<ident>" {
     let region = $1.region in
     let value = EVar $1 in
+    Punned_property {
+      region;
+      value
+    }
+  }
+| "<constr>" {
+    let region = $1.region in
+    let value = EConstr $1 in
     Punned_property {
       region;
       value
@@ -739,14 +795,15 @@ object_literal:
   }
 
 member_expr:
-  "<ident>"                  {                      EVar $1 }
-| "<constr>"                 {                      EVar $1 }
-| "<int>"                    {              EArith (Int $1) }
-| "<bytes>"                  {                    EBytes $1 }
-| "<string>"                 {          EString (String $1) }
+  "<ident>"                  {                         EVar $1 }
+| "<constr>"                 {                      EConstr $1 }
+| "_"                        {  EVar {value = "_"; region = $1}}
+| "<int>"                    {                 EArith (Int $1) }
+| "<bytes>"                  {                       EBytes $1 }
+| "<string>"                 {             EString (String $1) }
 // | unit
-| "false"                    { ELogic (BoolExpr (False $1)) }
-| "true"                     {  ELogic (BoolExpr (True $1)) }
+| "false"                    {    ELogic (BoolExpr (False $1)) }
+| "true"                     {     ELogic (BoolExpr (True $1)) }
 | member_expr "[" expr "]"   {
   let region = cover (expr_to_region $1) $4 in
   let value = {
@@ -765,6 +822,7 @@ member_expr:
     value
   }
 }
+| member_expr "." "<constr>"
 | member_expr "." "<ident>"  {
   let region = cover (expr_to_region $1) $3.region in
   let value = {
@@ -829,6 +887,8 @@ new_expr:
 expr_statement:
   arrow_function                        { $1 }
 | disj_expr_level                       { $1 }
+| "<ident>" "=" assignment_expr         { EAssign (EVar   $1, $2, $3) }
+| "<constr>" "=" assignment_expr        { EAssign (EConstr $1, $2, $3) }
 
 assignment_expr:
   expr_statement                        { $1 }

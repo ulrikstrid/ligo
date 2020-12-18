@@ -156,6 +156,10 @@ let get_t_operation t = match t.type_content with
   | T_base TB_operation -> Some t
   | _ -> None
 
+let get_t_sapling_state t = match t.type_content with
+  | T_sapling_state memo_size -> Some memo_size
+  | _ -> None
+
 let get_operation (v:value) = match v with
   | D_operation x -> Some x
   | _ -> None
@@ -173,7 +177,7 @@ let e_int  ?loc expr    : expression = Expression.make_tpl ?loc (expr, t_int ())
 let e_unit ?loc ()      : expression = Expression.make_tpl ?loc (E_constant { cons_name = C_UNIT ; arguments = [] }, t_unit ())
 let e_var_int ?loc name : expression = e_int ?loc (E_variable name)
 let e_let_in ?loc v tv inline expr body : expression = Expression.(make_tpl ?loc(
-    E_let_in ((v , tv) , inline, expr , body) ,
+    E_let_in (expr, inline, ((v , tv) , body)) ,
     get_type body
   ))
 let e_application ?loc f t arg: expression = Expression.(make_tpl ?loc(

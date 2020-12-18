@@ -179,12 +179,20 @@ and type_decl = {
   type_expr  : type_expr
 }
 
+and fun_type_arg = {
+  name      : variable;
+  colon     : colon;
+  type_expr : type_expr
+}
+
+and fun_type_args = (fun_type_arg, comma) nsepseq par
+
 and type_expr =
   TProd   of cartesian
 | TSum    of sum_type reg
 | TObject of field_decl reg ne_injection reg
 | TApp    of (type_constr * type_tuple) reg
-| TFun    of (type_expr * arrow * type_expr) reg
+| TFun    of (fun_type_args * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
 | TWild   of wild
@@ -234,6 +242,7 @@ and binding_pattern =
   PRest     of rest_pattern reg
 | PAssign   of assign_pattern reg
 | PVar      of variable
+| PConstr   of variable
 | PDestruct of destruct reg
 | PObject   of (binding_pattern, comma) nsepseq braced reg
 | PWild
@@ -302,6 +311,7 @@ and expr =
 | EPar     of expr par reg
 | ESeq     of (expr, comma) nsepseq reg
 | EVar     of variable
+| EConstr  of variable
 | ELogic   of logic_expr
 | EArith   of arith_expr
 | ECall    of (expr * arguments) reg
@@ -311,6 +321,7 @@ and expr =
 | EObject  of (property, comma) nsepseq braced reg
 | EString  of string_expr
 | EProj    of projection reg
+| EAssign  of expr * equal * expr
 
 | EAnnot   of annot_expr reg
 | EUnit    of the_unit reg
@@ -468,7 +479,7 @@ let type_expr_to_region = function
 
 let binding_pattern_to_region = function
   PRest {region;_ }   | PAssign {region ;_ }
-| PVar {region ;_ }    | PDestruct {region ;_ }
+| PVar {region ;_ }    | PConstr {region; _ } | PDestruct {region ;_ }
 | PObject {region ;_ } | PArray {region; _} -> region
 | PWild -> Region.ghost
 
@@ -495,15 +506,16 @@ let arith_expr_to_region = function
 let string_expr_to_region = function
   Verbatim {region;_} | String {region;_} -> region
 
-let expr_to_region = function
+let rec expr_to_region = function
   ELogic e -> logic_expr_to_region e
 | EArith e -> arith_expr_to_region e
 | EString e -> string_expr_to_region e
+| EAssign (f, _, e) -> Region.cover (expr_to_region f) (expr_to_region e)
 | EAnnot {region;_ } | EFun {region;_}
 | ECall {region;_}   | EVar {region; _}    | EProj {region; _}
 | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
 | ESeq {region; _}   | EObject {region; _} | EArray { region; _}
-| ENew {region; _}
+| ENew {region; _}   | EConstr {region; _}
 | ECodeInj {region; _} -> region
 
 let statement_to_region = function
