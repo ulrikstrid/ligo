@@ -91,6 +91,6 @@ let main = test_suite "Typer (from core AST)"
     test y "bytes"       TestExpressions.bytes ;    
     test no "tuple"       TestExpressions.tuple ;
     test y "constructor" TestExpressions.constructor ;
-    test no "record"      TestExpressions.record ;
+    test y "record"      TestExpressions.record ;
     test no(*y*) "lambda"      TestExpressions.lambda ;
   ]
