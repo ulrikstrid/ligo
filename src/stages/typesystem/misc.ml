@@ -179,13 +179,11 @@ module Substitution = struct
         let%bind element = s_expression ~substs element in
         ok @@ T.E_constructor {constructor;element}
       | T.E_record          aemap ->
-        let _TODO = aemap in
-        failwith "TODO: subst in record"
-        (* let%bind aemap = TSMap.bind_map_Map (fun ~k:key ~v:val_ ->
-         *     let key = s_type_variable ~v ~expr key in
-         *     let val_ = s_expression ~v ~expr val_ in
-         *     ok @@ (key , val_)) aemap in
-         * ok @@ T.E_record aemap *)
+        let%bind aemap = bind_map_list (fun (key,val_) ->
+          let%bind val_ = s_expression ~substs val_ in
+          ok @@ (key , val_)) @@ T.LMap.to_kv_list aemap in
+        let aemap = T.LMap.of_list aemap in
+        ok @@ T.E_record aemap
       | T.E_record_accessor {record=e;path} ->
         let%bind record = s_expression ~substs e in
         let%bind path = s_label ~substs path in
