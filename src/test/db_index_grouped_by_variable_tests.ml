@@ -191,7 +191,7 @@ let ctor_add_and_merge () =
   (* Add contraint sc_a *)
   let state' = add_constraint (fun a -> a) state sc_a in
 
-  (* Test one constaint *)
+  (* Test one; state is { a -> [sc_a]} *)
   let test = "Test 1:" in
   let gbv = bindings state' in
   let%bind () = tst_assert (msg^test^"state' = { a -> ... }") (List.length gbv = 1) in
@@ -212,7 +212,7 @@ let ctor_add_and_merge () =
   
   (* Add constraint sc_b *)
   let state'' = add_constraint (fun a -> a) state' sc_b in
-  (* Test two constaint *)
+  (* Test two; state is { a -> [sc_a]; b -> [sc_b]} *)
   let test = "Test 2:" in
   let gbv = bindings state'' in
   let%bind () = tst_assert (msg^test^"state'' = { a -> ... ; b -> ... }") (List.length gbv = 2) in
@@ -244,7 +244,7 @@ let ctor_add_and_merge () =
     }
   in
   let state''' = merge_aliases merge_tvb_in_tva state'' in
-  (* Test one constaint *)
+  (* Test three; state is { a -> [sc_a;sc_b]} *)
   let test = "Test 3:" in
   let gbv = bindings state''' in
   let%bind () = tst_assert (msg^test^"state''' = { a -> ... }") (List.length gbv = 1) in
@@ -265,7 +265,7 @@ let ctor_add_and_merge () =
 
   (* Add constraint sc_c *)
   let state'''' = add_constraint repr state''' sc_c in
-  (* Test two constaint *)
+  (* Test four; state is { a -> [sc_a;sc_b]; c -> [sc_c]} *)
   let test = "Test 4:" in
   let gbv = bindings state'''' in
   let%bind () = tst_assert (msg ^ test ^ "state'''' = { a -> ... ; c -> ... }") (List.length gbv = 2) in
@@ -299,7 +299,7 @@ let ctor_add_and_remove () =
   (* Add contraint sc_a *)
   let state' = add_constraint (fun a -> a) state sc_a in
 
-  (* Test one constaint *)
+  (* Test one; state is { a -> [sc_a]} *)
   let test = "Test 1:" in
   let gbv = bindings state' in
   let%bind () = tst_assert (msg^test^"state' = { a -> ... }") (List.length gbv = 1) in
@@ -320,7 +320,7 @@ let ctor_add_and_remove () =
   
   (* Add constraint sc_b *)
   let state'' = add_constraint (fun a -> a) state' sc_b in
-  (* Test two constaint *)
+  (* Test two; state is { a -> [sc_a]; b -> [sc_b]} *)
   let test = "Test 2:" in
   let gbv = bindings state'' in
   let%bind () = tst_assert (msg^test^"state'' = { a -> ... ; b -> ... }") (List.length gbv = 2) in
@@ -342,9 +342,9 @@ let ctor_add_and_remove () =
     bind_iter_list aux gbv
   in
 
-  (* Remove constaint sc_a sc_b *)
+  (* Remove constaint sc_b *)
   let%bind state''' = trace Main_errors.typer_tracer @@ remove_constraint (fun a -> a) state'' sc_b in
-  (* Test one constaint *)
+  (* Test three; state is { a -> [sc_a]} *)
   let test = "Test 3:" in
   let gbv = bindings state''' in
   let%bind () = tst_assert (msg^test^"state''' = { a -> ... }") (List.length gbv = 1) in
@@ -365,7 +365,7 @@ let ctor_add_and_remove () =
 
   (* Add constraint sc_c *)
   let state'''' = add_constraint (fun a -> a) state''' sc_c in
-  (* Test two constaint *)
+  (* Test four; state is { a -> [sc_a]; c -> [sc_b]} *)
   let test = "Test 4:" in
   let gbv = bindings state'''' in
   let%bind () = tst_assert (msg ^ test ^ "state'''' = { a -> ... ; c -> ... }") (List.length gbv = 2) in
@@ -408,7 +408,7 @@ let row_add_and_merge () =
   (* Add contraint sc_a *)
   let state' = add_constraint (fun a -> a) state sc_a in
 
-  (* Test one constaint *)
+  (* Test 1 : state is { a -> [sc_a]}*)
   let test = "Test 1:" in
   let gbv = bindings state' in
   let%bind () = tst_assert (msg^test^"state' = { a -> ... }") (List.length gbv = 1) in
@@ -429,7 +429,7 @@ let row_add_and_merge () =
   
   (* Add constraint sc_b *)
   let state'' = add_constraint (fun a -> a) state' sc_b in
-  (* Test two constaint *)
+  (* Test 2 : state is { a -> [sc_a]; b -> [sc_b]}*)
   let test = "Test 2:" in
   let gbv = bindings state'' in
   let%bind () = tst_assert (msg^test^"state'' = { a -> ... ; b -> ... }") (List.length gbv = 2) in
@@ -461,7 +461,7 @@ let row_add_and_merge () =
     }
   in
   let state''' = merge_aliases merge_tvb_in_tva state'' in
-  (* Test one constaint *)
+  (* Test 3 : state is { a -> [sc_a;sc_b]}*)
   let test = "Test 3:" in
   let gbv = bindings state''' in
   let%bind () = tst_assert (msg^test^"state''' = { a -> ... }") (List.length gbv = 1) in
@@ -482,7 +482,7 @@ let row_add_and_merge () =
 
   (* Add constraint sc_c *)
   let state'''' = add_constraint repr state''' sc_c in
-  (* Test two constaint *)
+  (* Test 4 : state is { a -> [sc_a;sc_b]; c -> [sc_c]}*)
   let test = "Test 4:" in
   let gbv = bindings state'''' in
   let%bind () = tst_assert (msg ^ test ^ "state'''' = { a -> ... ; c -> ... }") (List.length gbv = 2) in
@@ -516,7 +516,7 @@ let row_add_and_remove () =
   (* Add contraint sc_a *)
   let state' = add_constraint (fun a -> a) state sc_a in
 
-  (* Test one constaint *)
+  (* Test 1 : state is { a -> [sc_a]}*)
   let test = "Test 1:" in
   let gbv = bindings state' in
   let%bind () = tst_assert (msg^test^"state' = { a -> ... }") (List.length gbv = 1) in
@@ -537,7 +537,7 @@ let row_add_and_remove () =
   
   (* Add constraint sc_b *)
   let state'' = add_constraint (fun a -> a) state' sc_b in
-  (* Test two constaint *)
+  (* Test 2 : state is { a -> [sc_a]; b -> [sc_b]} *)
   let test = "Test 2:" in
   let gbv = bindings state'' in
   let%bind () = tst_assert (msg^test^"state'' = { a -> ... ; b -> ... }") (List.length gbv = 2) in
@@ -561,7 +561,7 @@ let row_add_and_remove () =
 
   (* Remove constaint sc_a sc_b *)
   let%bind state''' = trace Main_errors.typer_tracer @@ remove_constraint (fun a -> a) state'' sc_b in
-  (* Test one constaint *)
+  (* Test 3 : state is { a -> [sc_a]} *)
   let test = "Test 3:" in
   let gbv = bindings state''' in
   let%bind () = tst_assert (msg^test^"state''' = { a -> ... }") (List.length gbv = 1) in
@@ -582,7 +582,7 @@ let row_add_and_remove () =
 
   (* Add constraint sc_c *)
   let state'''' = add_constraint (fun a -> a) state''' sc_c in
-  (* Test two constaint *)
+  (* Test 4 : state is { a -> [sc_a]; c -> [sc_c]} *)
   let test = "Test 4:" in
   let gbv = bindings state'''' in
   let%bind () = tst_assert (msg ^ test ^ "state'''' = { a -> ... ; c -> ... }") (List.length gbv = 2) in
@@ -636,7 +636,7 @@ let poly_add_and_merge () =
   (* Add contraint sc_a *)
   let state' = add_constraint (fun a -> a) state sc_a in
 
-  (* Test one constaint *)
+  (* Test 1 : state is { a -> [sc_a]} *)
   let test = "Test 1:" in
   let gbv = bindings state' in
   let%bind () = tst_assert (msg^test^"state' = { a -> ... }") (List.length gbv = 1) in
@@ -657,7 +657,7 @@ let poly_add_and_merge () =
   
   (* Add constraint sc_b *)
   let state'' = add_constraint (fun a -> a) state' sc_b in
-  (* Test two constaint *)
+  (* Test 2 : state is { a -> [sc_a]; b -> [sc_b]} *)
   let test = "Test 2:" in
   let gbv = bindings state'' in
   let%bind () = tst_assert (msg^test^"state'' = { a -> ... ; b -> ... }") (List.length gbv = 2) in
@@ -689,7 +689,7 @@ let poly_add_and_merge () =
     }
   in
   let state''' = merge_aliases merge_tvb_in_tva state'' in
-  (* Test one constaint *)
+  (* Test 3: state is { a -> [sc_a;sc_b]} *)
   let test = "Test 3:" in
   let gbv = bindings state''' in
   let%bind () = tst_assert (msg^test^"state''' = { a -> ... }") (List.length gbv = 1) in
@@ -710,7 +710,7 @@ let poly_add_and_merge () =
 
   (* Add constraint sc_c *)
   let state'''' = add_constraint repr state''' sc_c in
-  (* Test two constaint *)
+  (* Test 4: state is { a -> [sc_a;sc_b]; c -> [sc_c]} *)
   let test = "Test 4:" in
   let gbv = bindings state'''' in
   let%bind () = tst_assert (msg ^ test ^ "state'''' = { a -> ... ; c -> ... }") (List.length gbv = 2) in
@@ -744,7 +744,7 @@ let poly_add_and_remove () =
   (* Add contraint sc_a *)
   let state' = add_constraint (fun a -> a) state sc_a in
 
-  (* Test one constaint *)
+  (* Test 1: state is { a -> [sc_a]} *)
   let test = "Test 1:" in
   let gbv = bindings state' in
   let%bind () = tst_assert (msg^test^"state' = { a -> ... }") (List.length gbv = 1) in
@@ -765,7 +765,7 @@ let poly_add_and_remove () =
   
   (* Add constraint sc_b *)
   let state'' = add_constraint (fun a -> a) state' sc_b in
-  (* Test two constaint *)
+  (* Test 2: state is { a -> [sc_a]; b -> [sc_b]} *)
   let test = "Test 2:" in
   let gbv = bindings state'' in
   let%bind () = tst_assert (msg^test^"state'' = { a -> ... ; b -> ... }") (List.length gbv = 2) in
@@ -787,9 +787,9 @@ let poly_add_and_remove () =
     bind_iter_list aux gbv
   in
 
-  (* Remove constaint sc_a sc_b *)
+  (* Remove constaint sc_b *)
   let%bind state''' = trace Main_errors.typer_tracer @@ remove_constraint (fun a -> a) state'' sc_b in
-  (* Test one constaint *)
+  (* Test 3: state is { a -> [sc_a]} *)
   let test = "Test 3:" in
   let gbv = bindings state''' in
   let%bind () = tst_assert (msg^test^"state''' = { a -> ... }") (List.length gbv = 1) in
@@ -810,7 +810,7 @@ let poly_add_and_remove () =
 
   (* Add constraint sc_c *)
   let state'''' = add_constraint (fun a -> a) state''' sc_c in
-  (* Test two constaint *)
+  (* Test 4: state is { a -> [sc_a]; c -> [sc_c]} *)
   let test = "Test 4:" in
   let gbv = bindings state'''' in
   let%bind () = tst_assert (msg ^ test ^ "state'''' = { a -> ... ; c -> ... }") (List.length gbv = 2) in
@@ -851,7 +851,7 @@ let mixte () =
   let sc_a : type_constraint_simpl = constructor tva C_unit [] in
   let state' = add_constraint (fun a -> a) state sc_a in
 
-  (* Test one constaint *)
+  (* Test 1: state is { a -> [sc_a]} *)
   let test = "Test 1:" in
   let gbv = bindings state' in
   let%bind () = tst_assert (msg^test^"state' = { a -> ... }") (List.length gbv = 1) in
@@ -873,7 +873,7 @@ let mixte () =
   (* Add row *)
   let sc_b : type_constraint_simpl = row tvb in
   let state'' = add_constraint (fun a -> a) state' sc_b in
-  (* Test two constaint *)
+  (* Test 2: state is { a -> [sc_a]; b -> [sc_b]} *)
   let test = "Test 2:" in
   let gbv = bindings state'' in
   let%bind () = tst_assert (msg^test^"state'' = { a -> ... ; b -> ... }") (List.length gbv = 2) in
@@ -898,7 +898,7 @@ let mixte () =
   (* Add poly*)
   let sc_c : type_constraint_simpl = poly tvc p_forall in
   let state''' = add_constraint (fun a -> a) state'' sc_c in
-  (* Test one constaint *)
+  (* Test 3: state is { a -> [sc_a]; b -> [sc_b]; c -> [sc_c]} *)
   let test = "Test 3:" in
   let gbv = bindings state''' in
   let%bind () = tst_assert (msg^test^"state''' = { a -> ... ; b -> ... ; c -> ... }") (List.length gbv = 3) in
@@ -926,7 +926,7 @@ let mixte () =
   (* Add constraint sc_c2 *)
   let sc_c2 = constructor tvc C_unit [] in
   let state'''' = add_constraint (fun a -> a) state''' sc_c2 in
-  (* Test two constaint *)
+  (* Test 4: state is { a -> [sc_a]; b -> [sc_b]; c -> [sc_c;sc_c2]} *)
   let test = "Test 4:" in
   let gbv = bindings state'''' in
   let%bind () = tst_assert (msg ^ test ^ "state'''' = { a -> ... ; b -> ... ; c -> ... }") (List.length gbv = 3) in
@@ -961,7 +961,7 @@ let mixte () =
     }
   in
   let state''''' = merge_aliases merge_tvb_in_tva state'''' in
-  (* Test one constaint *)
+  (* Test 5: state is { a -> [sc_a;sc_b]; c -> [sc_c;sc_c2]} *)
   let test = "Test 5:" in
   let gbv = bindings state''''' in
   let%bind () = tst_assert (msg^test^"state''' = { a -> ... ; c -> ... }") (List.length gbv = 2) in
@@ -985,6 +985,7 @@ let mixte () =
 
   let sc_b2 = row tvb in
   let state'''''' = add_constraint repr state''''' sc_b2 in
+  (* Test 6: state is { a -> [sc_a;sc_b;sc_b2]; c -> [sc_c;sc_c2]} *)
   let test = "Test 6:" in
   let gbv = bindings state'''''' in
   let%bind () = tst_assert (msg^test^"state''' = { a -> ... ; c -> ... }") (List.length gbv = 2) in
