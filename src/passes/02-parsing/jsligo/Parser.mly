@@ -359,17 +359,17 @@ fun_type:
 
 cartesian:
   core_type { $1 }
-| brackets(tuple (cartesian)) { TProd $1 }
+| brackets(nsepseq(type_expr, ",")) {  TProd $1 }
 
 type_args:
   tuple(fun_type) { $1 }
 | fun_type        { $1, [] }
 
 core_type:
-  type_name           {    TVar $1 }
-| "_"                 {   TWild $1 }
-| par(type_expr)      {    TPar $1 }
-| "<string>"          { TString $1 }
+  type_name           {       TVar $1 }
+| "_"                 {      TWild $1 }
+| par(type_expr)      {       TPar $1 }
+| "<string>"          {    TString $1 }
 | module_name "." type_name {
     let module_name = $1.value in
     let type_name   = $3.value in
@@ -538,14 +538,24 @@ arrow_function_body:
 expr_annot_sequence:
   expr type_annot "," expr_annot_sequence {
     let region = cover (expr_to_region $1) $4.region in
+    let annot = EAnnot {
+      region = cover (expr_to_region $1) (type_expr_to_region (snd $2));
+      value = $1, fst $2, snd $2
+    } 
+    in
     {
-      value = Utils.nsepseq_cons $1 $3 $4.value;
+      value = Utils.nsepseq_cons annot $3 $4.value;
       region
     }
   }
 | expr type_annot {
+    let annot = EAnnot {
+      region = cover (expr_to_region $1) (type_expr_to_region (snd $2));
+      value = $1, fst $2, snd $2
+    } 
+    in
     {
-      value = ($1, []);
+      value = (annot, []);
       region = expr_to_region $1;
     }
 }
@@ -751,14 +761,15 @@ object_literal:
   }
 
 member_expr:
-  "<ident>"                  {                      EVar $1 }
-| "<constr>"                 {                      EVar $1 }
-| "<int>"                    {              EArith (Int $1) }
-| "<bytes>"                  {                    EBytes $1 }
-| "<string>"                 {          EString (String $1) }
+  "<ident>"                  {                         EVar $1 }
+| "<constr>"                 {                         EVar $1 }
+| "_"                        {  EVar {value = "_"; region = $1}}
+| "<int>"                    {                 EArith (Int $1) }
+| "<bytes>"                  {                       EBytes $1 }
+| "<string>"                 {             EString (String $1) }
 // | unit
-| "false"                    { ELogic (BoolExpr (False $1)) }
-| "true"                     {  ELogic (BoolExpr (True $1)) }
+| "false"                    {    ELogic (BoolExpr (False $1)) }
+| "true"                     {     ELogic (BoolExpr (True $1)) }
 | member_expr "[" expr "]"   {
   let region = cover (expr_to_region $1) $4 in
   let value = {
