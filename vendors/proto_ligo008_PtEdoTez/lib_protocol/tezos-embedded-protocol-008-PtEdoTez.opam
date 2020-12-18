@@ -9,7 +9,7 @@ depends: [
   "tezos-tooling" { with-test }
   "dune" { >= "2.0" }
   "tezos-base"
-  "tezos-protocol-008-PtEdoTez"
+  "tezos-protocol-ligo008-PtEdoTez"
   "tezos-protocol-compiler"
   "tezos-protocol-updater"
 ]

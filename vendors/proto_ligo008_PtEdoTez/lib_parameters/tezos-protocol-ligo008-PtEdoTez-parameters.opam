@@ -10,10 +10,9 @@ depends: [
   "dune" { >= "2.0" }
   "tezos-base"
   "tezos-protocol-environment"
-  "tezos-protocol-008-PtEdoTez"
+  "tezos-protocol-ligo008-PtEdoTez"
 ]
 build: [
   ["dune" "build" "-p" name "-j" jobs]
-  ["dune" "runtest" "-p" name "-j" jobs] {with-test}
 ]
 synopsis: "Tezos/Protocol: parameters"

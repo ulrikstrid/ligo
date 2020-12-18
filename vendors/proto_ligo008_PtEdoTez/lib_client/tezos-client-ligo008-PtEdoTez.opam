@@ -10,16 +10,14 @@ depends: [
   "dune" { >= "2.0" }
   "tezos-base"
   "tezos-protocol-environment"
-  "tezos-protocol-008-PtEdoTez"
+  "tezos-protocol-ligo008-PtEdoTez"
   "tezos-shell-services"
   "tezos-client-base-unix"
   "tezos-mockup-registration"
   "tezos-signer-backends"
-  "tezos-protocol-008-PtEdoTez-parameters"
-  "alcotest-lwt" { with-test & >= "1.1.0" }
+  "tezos-protocol-ligo008-PtEdoTez-parameters"
 ]
 build: [
   ["dune" "build" "-p" name "-j" jobs]
-  ["dune" "runtest" "-p" name "-j" jobs] {with-test}
 ]
 synopsis: "Tezos/Protocol: protocol specific library for `tezos-client`"

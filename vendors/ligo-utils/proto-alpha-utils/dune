@@ -4,12 +4,9 @@
   (libraries
     tezos-error-monad
     tezos-stdlib-unix
-    tezos-protocol-ligo006-PsCARTHA
-    tezos-protocol-ligo006-PsCARTHA-parameters
-    tezos-client-ligo006-PsCARTHA
-    tezos-protocol-ligo007-PsDELPH1
-    tezos-protocol-ligo007-PsDELPH1-parameters
-    tezos-client-ligo007-PsDELPH1
+    tezos-protocol-ligo008-PtEdoTez
+    tezos-protocol-ligo008-PtEdoTez-parameters
+    tezos-client-ligo008-PtEdoTez
     tezos-memory-proto-alpha
     data-encoding
     simple-utils

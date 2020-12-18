@@ -1,10 +1,10 @@
 (library
- (name tezos_protocol_008_PtEdoTez_parameters)
- (public_name tezos-protocol-008-PtEdoTez-parameters)
+ (name tezos_protocol_ligo008_PtEdoTez_parameters)
+ (public_name tezos-protocol-ligo008-PtEdoTez-parameters)
  (modules :standard \ gen)
  (libraries tezos-base
             tezos-protocol-environment
-            tezos-protocol-008-PtEdoTez)
+            tezos-protocol-ligo008-PtEdoTez)
  (flags (:standard -open Tezos_base__TzPervasives
                    -open Tezos_protocol_008_PtEdoTez
                    -linkall))
@@ -13,7 +13,7 @@
 (executable
  (name gen)
  (libraries tezos-base
-            tezos-protocol-008-PtEdoTez-parameters)
+            tezos-protocol-ligo008-PtEdoTez-parameters)
  (modules gen)
  (flags (:standard -open Tezos_base__TzPervasives
                    -open Tezos_protocol_008_PtEdoTez_parameters

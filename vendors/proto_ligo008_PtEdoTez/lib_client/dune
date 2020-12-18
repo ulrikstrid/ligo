@@ -1,14 +1,14 @@
 (library
- (name tezos_client_008_PtEdoTez)
- (public_name tezos-client-008-PtEdoTez)
+ (name tezos_client_ligo008_PtEdoTez)
+ (public_name tezos-client-ligo008-PtEdoTez)
  (libraries tezos-base
-            tezos-protocol-008-PtEdoTez
+            tezos-protocol-ligo008-PtEdoTez
             tezos-shell-services
             tezos-client-base
             tezos-mockup-registration
             tezos-rpc
             tezos-signer-backends
-            tezos-protocol-008-PtEdoTez-parameters)
+            tezos-protocol-ligo008-PtEdoTez-parameters)
  (library_flags (:standard -linkall))
  (flags (:standard -open Tezos_base__TzPervasives
                    -open Tezos_shell_services
