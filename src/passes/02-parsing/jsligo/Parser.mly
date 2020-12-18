@@ -571,7 +571,21 @@ expr_annot_sequence:
 }
 
 arrow_function:
-  "(" expr_annot_sequence ")" type_annot_opt "=>" arrow_function_body {
+  "(" ")" type_annot_opt "=>" arrow_function_body {
+    let region = cover $1 (arrow_function_body_to_region $5) in
+    let value = {
+      parameters = EUnit {value = ($1,$2); region = cover $1 $2};
+      lhs_type = $3;
+      arrow    = $4;
+      body     = $5;
+    }
+    in
+    EFun {
+      region;
+      value;
+    }
+  }
+| "(" expr_annot_sequence ")" type_annot_opt "=>" arrow_function_body {
     let region = cover $1 (arrow_function_body_to_region $6) in
     let value = {
       parameters = EPar {
