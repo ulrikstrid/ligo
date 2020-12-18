@@ -179,17 +179,17 @@ module Make (Token : TOKEN) =
       let region = Region.make ~start ~stop in
       let lexeme = thread#to_string in
       let token  = Token.mk_string lexeme region
-      in state#enqueue token
+      in Core.Token token, state
 
     let mk_bytes bytes state buffer =
       let Core.{region; state; _} = state#sync buffer in
       let token = Token.mk_bytes bytes region
-      in state#enqueue token
+      in Core.Token token, state
 
     let mk_int state buffer =
       let Core.{region; lexeme; state} = state#sync buffer in
       match Token.mk_int lexeme region with
-        Ok token -> state#enqueue token
+        Ok token -> Core.Token token, state
       | Error Token.Non_canonical_zero ->
           fail region Non_canonical_zero
 
@@ -201,7 +201,7 @@ module Make (Token : TOKEN) =
       and start = state#pos in
       let Core.{region; lexeme; state} = state#sync buffer in
       match Token.mk_ident lexeme region with
-        Ok token -> state#enqueue token
+        Ok token -> Core.Token token, state
       | Error Token.Valid_prefix (index, tree) ->
           let region = mk_region index start in
           fail region (Valid_prefix tree)
@@ -221,19 +221,19 @@ module Make (Token : TOKEN) =
     let mk_annot state buffer =
       let Core.{region; lexeme; state} = state#sync buffer
       in match Token.mk_annot lexeme region with
-           Ok token -> state#enqueue token
+           Ok token -> Core.Token token, state
          | Error Token.Annotation_length max ->
              fail region (Annotation_length max)
 
     let mk_sym state buffer =
       let Core.{region; lexeme; state} = state#sync buffer in
       let token = Token.mk_sym lexeme region
-      in state#enqueue token
+      in Core.Token token, state
 
     let mk_eof state buffer =
       let Core.{region; state; _} = state#sync buffer in
       let token = Token.eof region
-      in state#enqueue token
+      in Core.Token token, state
 
 (* END HEADER *)
 }
