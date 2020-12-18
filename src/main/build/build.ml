@@ -128,7 +128,7 @@ let aggregate_contract order_deps asts_typed =
     contract header_list in
   ok @@ Ast_typed.Program_Fully_Typed contract
 
-let type_file_with_dep ~options  asts_typed (file_name, (meta,form,c_unit,deps)) =
+let type_file_with_dep ~(options:Compiler_options.t)  asts_typed (file_name, (meta,form,c_unit,deps)) =
   let%bind ast_core = Compile.Utils.to_core ~options ~meta c_unit file_name in
   let aux (file_name,module_name) =
     let%bind ast_typed =
