@@ -66,7 +66,7 @@ module Make (Token : Token.S) =
       let region = Region.make ~start ~stop in
       let lexeme = thread#to_string in
       let token  = Token.mk_string lexeme region
-      in state#enqueue token
+      in Core.Token token, state
 
     let mk_verbatim (thread, state) =
       let start  = thread#opening#start in
@@ -74,46 +74,46 @@ module Make (Token : Token.S) =
       let region = Region.make ~start ~stop in
       let lexeme = thread#to_string in
       let token  = Token.mk_verbatim lexeme region
-      in state#enqueue token
+      in Core.Token token, state
 
     let mk_bytes bytes state buffer =
       let Core.{region; state; _} = state#sync buffer in
       let token = Token.mk_bytes bytes region
-      in state#enqueue token
+      in Core.Token token, state
 
     let mk_int state buffer =
-      let open Core in
-      let {region; lexeme; state} = state#sync buffer in
+      let Core.{region; lexeme; state} = state#sync buffer in
       match Token.mk_int lexeme region with
-        Ok token -> state#enqueue token
+        Ok token ->
+          Core.Token token, state
       | Error Token.Non_canonical_zero ->
           fail region Non_canonical_zero
 
     let mk_nat state buffer =
-      let open Core in
-      let {region; lexeme; state} = state#sync buffer in
+      let Core.{region; lexeme; state} = state#sync buffer in
       match Token.mk_nat lexeme region with
-        Ok token -> state#enqueue token
+        Ok token ->
+          Core.Token token, state
       | Error Token.Non_canonical_zero_nat ->
           fail region Non_canonical_zero
       | Error Token.Invalid_natural ->
           fail region Invalid_natural
 
     let mk_mutez state buffer =
-      let open Core in
-      let {region; lexeme; state} = state#sync buffer in
+      let Core.{region; lexeme; state} = state#sync buffer in
       match Token.mk_mutez lexeme region with
-        Ok token -> state#enqueue token
+        Ok token ->
+          Core.Token token, state
       | Error Token.Non_canonical_zero ->
           fail region Non_canonical_zero
 
     let mk_tez state buffer =
-      let open Core in
-      let {region; lexeme; state} = state#sync buffer in
+      let Core.{region; lexeme; state} = state#sync buffer in
       let lexeme = Str.string_before lexeme (String.index lexeme 't') in
       let lexeme = Z.mul (Z.of_int 1_000_000) (Z.of_string lexeme) in
       match Token.mk_mutez (Z.to_string lexeme ^ "mutez") region with
-        Ok token -> state#enqueue token
+        Ok token ->
+          Core.Token token, state
       | Error Token.Non_canonical_zero ->
           fail region Non_canonical_zero
 
@@ -132,59 +132,57 @@ module Make (Token : Token.S) =
       | exception Not_found -> assert false
 
     let mk_tez_decimal state buffer =
-      let open Core in
-      let {region; lexeme; state} = state#sync buffer in
+      let Core.{region; lexeme; state} = state#sync buffer in
       let lexeme = Str.(global_replace (regexp "_") "" lexeme) in
       let lexeme = Str.string_before lexeme (String.index lexeme 't') in
       match format_tez lexeme with
         None -> assert false
       | Some tz ->
           match Token.mk_mutez (Z.to_string tz ^ "mutez") region with
-            Ok token -> state#enqueue token
+            Ok token ->
+              Core.Token token, state
           | Error Token.Non_canonical_zero ->
               fail region Non_canonical_zero
 
     let mk_ident state buffer =
-      let open Core in
-      let {region; lexeme; state} = state#sync buffer in
+      let Core.{region; lexeme; state} = state#sync buffer in
       match Token.mk_ident lexeme region with
-        Ok token -> state#enqueue token
+        Ok token ->
+          Core.Token token, state
       | Error Token.Reserved_name ->
           fail region (Reserved_name lexeme)
 
     let mk_attr attr state buffer =
       let Core.{region; state; _} = state#sync buffer in
       let token = Token.mk_attr attr region
-      in state#enqueue token
+      in Core.Token token, state
 
     let mk_constr state buffer =
-      let open Core in
-      let {region; lexeme; state} = state#sync buffer in
+      let Core.{region; lexeme; state} = state#sync buffer in
       let token = Token.mk_constr lexeme region
-      in state#enqueue token
+      in Core.Token token, state
 
     let mk_lang lang state buffer =
-      let Core.{region; state; _}
-                             = state#sync buffer in
+      let Core.{region; state; _} = state#sync buffer in
       let start              = region#start#shift_bytes 1 in
       let stop               = region#stop in
       let lang_reg           = Region.make ~start ~stop in
       let lang               = Region.{value=lang; region=lang_reg} in
       let token              = Token.mk_lang lang region
-      in state#enqueue token
+      in Core.Token token, state
 
     let mk_sym state buffer =
-      let open Core in
-      let {region; lexeme; state} = state#sync buffer in
+      let Core.{region; lexeme; state} = state#sync buffer in
       match Token.mk_sym lexeme region with
-        Ok token -> state#enqueue token
-      | Error Token.Invalid_symbol -> fail region Invalid_symbol
+        Ok token ->
+          Core.Token token, state
+      | Error Token.Invalid_symbol ->
+          fail region Invalid_symbol
 
     let mk_eof state buffer =
-      let open Core in
-      let {region; state; _} = state#sync buffer in
+      let Core.{region; state; _} = state#sync buffer in
       let token = Token.eof region
-      in state#enqueue token
+      in Core.Token token, state
 
 (* END HEADER *)
 }
@@ -213,15 +211,15 @@ let directive  = '#' (blank* as space) (small+ as id) (* For #include *)
 
 (* Symbols *)
 
-let common_sym     =   ';' | ',' | '(' | ')'  | '[' | ']'  | '{' | '}'
-                     | '=' | ':' | '|' | '.' | '_'  | '^'
-                     | '+' | '-' | '*' | '/'  | '<' | "<=" | '>' | ">="
+let common_sym     = ';' | ',' | '(' | ')'  | '[' | ']'  | '{' | '}'
+                   | '=' | ':' | '|' | '.' | '_'  | '^'
+                   | '+' | '-' | '*' | '/'  | '<' | "<=" | '>' | ">="
 let pascaligo_sym  = "->" | "=/=" | '#' | ":="
 let cameligo_sym   = "->" | "<>" | "::" | "||" | "&&"
 let reasonligo_sym = '!' | "=>" | "!=" | "==" | "++" | "..." | "||" | "&&"
 let jsligo_sym     = "++" | "--" | "..." | '?' | '&' | '!' | '~'
-                     | "<<<" | ">>>" | "==" | "!=" | "+=" | "-=" | "*="
-                     | "%=" | "<<<=" | ">>>=" | "&=" | "|=" | "^=" | "=>"
+                   | "<<<" | ">>>" | "==" | "!=" | "+=" | "-=" | "*="
+                   | "%=" | "<<<=" | ">>>=" | "&=" | "|=" | "^=" | "=>"
 
 let symbol =
   common_sym

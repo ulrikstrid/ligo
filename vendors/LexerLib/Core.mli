@@ -112,10 +112,6 @@ val mk_thread : Region.t -> thread
    recognised by the scanner: that length is used as a positive offset
    to the current column. *)
 
-type 'token lex_unit =
-  Token  of 'token
-| Markup of Markup.t
-
 type 'token window = <
   last_token    : 'token option;
   current_token : 'token           (* Including EOF *)
@@ -138,6 +134,11 @@ type 'token config = <
   to_lexeme : 'token -> string;
   to_string : offsets:bool -> [`Byte | `Point] -> 'token -> string
 >
+
+type 'token lex_unit =
+  Token     of 'token
+| Markup    of Markup.t
+| Directive of Directive.t
 
 type 'token state = <
   config       : 'token config;
@@ -257,3 +258,11 @@ val open_token_stream :
   scan:('token scanner) ->
   input ->
   ('token instance, message) Stdlib.result
+
+(*
+val open_unit_stream :
+  'token config ->
+  scan:('token lex_unit scanner) ->
+  input ->
+  ('token lex_unit instance, message) Stdlib.result
+ *)

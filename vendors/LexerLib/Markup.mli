@@ -31,7 +31,7 @@ type markup = t
    terminal. *)
 
 val to_lexeme : t -> lexeme
-val to_string : ?offsets:bool -> [`Byte | `Point] -> t -> string
+val to_string : offsets:bool -> [`Byte | `Point] -> t -> string
 
 (* Comments *)
 
@@ -41,6 +41,7 @@ type basic_comment =
   Line  of lexeme Region.reg
 | Block of lexeme Region.reg
 
+(*
 (* Contextual comments are a subset of basic comments. In the
    following, whitespace is allowed except if stated otherwise.
 
@@ -60,3 +61,4 @@ type contextual_comment =
   Title   of basic_comment
 | Header  of basic_comment
 | Trailer of basic_comment
+*)

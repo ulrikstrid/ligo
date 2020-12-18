@@ -11,7 +11,7 @@
      parsing_pascaligo
      parsing_cameligo
      parsing_reasonligo
-     ;;     parsing_jsligo
+     parsing_jsligo
      )
   (modules
      Parsing Errors Pascaligo Cameligo Reasonligo Jsligo)
