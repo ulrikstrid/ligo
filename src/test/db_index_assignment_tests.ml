@@ -9,9 +9,9 @@ open Database_plugins.All_plugins
 open Db_index_tests_common
 
 module Assignments_tests = struct
-  open Test_vars
+  include Test_vars
   module Plugin_under_test = Assignments
-  open Plugin_under_test
+  include Plugin_under_test
   let repr : type_variable -> type_variable = fun tv ->
     match tv with
     | tv when Var.equal tv tva -> tva
@@ -29,6 +29,8 @@ module Assignments_tests = struct
       )
       (List.combine sa sb)
 end
+
+open Assignments_tests
 
 (* Test independant add + remove + merge pour chaque type de contraintes:
    test add ctor constraint + add other ctor constraint + merge ctor constraint + add third ctor constraint
@@ -85,7 +87,6 @@ let ctor_add_and_merge () =
   in 
   ok ()
 
-<<<<<<< HEAD
 (*
    test add ctor constraint + add other ctor constraint + remove ctor constraint + add third ctor constraint
 
@@ -192,16 +193,3 @@ let assignments () =
   let%bind () = row_add_and_merge () in
   let%bind () = invariant () in
   ok ()
-=======
-
-(* Test independant add + remove + merge pour chaque type de contraintes:
-   test add ctor constraint + add other ctor constraint + merge ctor constraint + add third ctor constraint
-   test add ctor constraint + add other ctor constraint + remove ctor constraint + add third ctor constraint
-   
-   test add row constraint + add other row constraint + merge row constraint + add third row constraint
-   test add row constraint + add other row constraint + remove row constraint + add third row constraint
-   
-   test mixed
-
-   *)
->>>>>>> 64cb4d541... Tests for the invariant that the moment at which a merge is done should not have an impact on the resulting index
