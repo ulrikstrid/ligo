@@ -321,6 +321,7 @@ and expr =
 | EObject  of (property, comma) nsepseq braced reg
 | EString  of string_expr
 | EProj    of projection reg
+| EAssign  of expr * equal * expr
 
 | EAnnot   of annot_expr reg
 | EUnit    of the_unit reg
@@ -505,10 +506,11 @@ let arith_expr_to_region = function
 let string_expr_to_region = function
   Verbatim {region;_} | String {region;_} -> region
 
-let expr_to_region = function
+let rec expr_to_region = function
   ELogic e -> logic_expr_to_region e
 | EArith e -> arith_expr_to_region e
 | EString e -> string_expr_to_region e
+| EAssign (f, _, e) -> Region.cover (expr_to_region f) (expr_to_region e)
 | EAnnot {region;_ } | EFun {region;_}
 | ECall {region;_}   | EVar {region; _}    | EProj {region; _}
 | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}

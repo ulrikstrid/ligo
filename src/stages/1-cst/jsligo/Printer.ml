@@ -340,24 +340,30 @@ and print_object state {value={lbrace; inside; rbrace}; _} =
   print_nsepseq state "," (fun state property -> print_property state property) inside;
   print_token state rbrace "}"
 
+and print_assignment state (lhs, equals, rhs) =
+  print_expr state lhs;
+  print_token state equals "=";
+  print_expr state rhs;
+
 and print_expr state = function
-  EFun e        -> print_fun_expr    state e
-| EPar e        -> print_expr_par    state e
-| ESeq seq      -> print_sequence    state seq
-| EVar v        -> print_var         state v
-| EConstr c     -> print_constr      state c
-| ELogic e      -> print_logic_expr  state e
-| EArith e      -> print_arith_expr  state e
-| ECall e       -> print_fun_call    state e
-| ENew e        -> print_new_expr    state e
-| EBytes e      -> print_bytes       state e
-| EArray e      -> print_array       state e
-| EObject e     -> print_object      state e
-| EString e     -> print_string_expr state e 
-| EProj e       -> print_projection  state e
-| EAnnot e      -> print_annot_expr  state e
-| EUnit e       -> print_unit        state e
-| ECodeInj e    -> print_code_inj    state e
+  EFun e                 -> print_fun_expr    state e
+| EPar e                 -> print_expr_par    state e
+| ESeq seq               -> print_sequence    state seq
+| EVar v                 -> print_var         state v
+| EAssign (lhs, eq, rhs) -> print_assignment  state (lhs, eq, rhs)
+| EConstr c              -> print_constr      state c
+| ELogic e               -> print_logic_expr  state e
+| EArith e               -> print_arith_expr  state e
+| ECall e                -> print_fun_call    state e
+| ENew e                 -> print_new_expr    state e
+| EBytes e               -> print_bytes       state e
+| EArray e               -> print_array       state e
+| EObject e              -> print_object      state e
+| EString e              -> print_string_expr state e 
+| EProj e                -> print_projection  state e
+| EAnnot e               -> print_annot_expr  state e
+| EUnit e                -> print_unit        state e
+| ECodeInj e             -> print_code_inj    state e
 
 and print_new_expr state {value = (kwd_new, expr); _} =
   print_token state kwd_new "new";
@@ -751,6 +757,10 @@ and pp_expr state = function
     let exprs = Utils.nsepseq_to_list value in
     let apply len rank = pp_expr (state#pad len rank) in
     List.iteri (List.length exprs |> apply) exprs
+| EAssign (lhs, _, rhs) ->
+    pp_node state "EAssign";
+    pp_expr (state#pad 1 0) lhs;
+    pp_expr (state#pad 1 0) rhs
 | EVar v ->
     pp_node  state "EVar";
     pp_ident (state#pad 1 0) v
