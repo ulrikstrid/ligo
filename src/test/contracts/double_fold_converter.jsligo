@@ -18,9 +18,9 @@ type transferAuxiliary = {
 type transferMichelson = michelson_pair_right_comb<transferAuxiliary>;
 type transferParameter = list<transferMichelson>;
 type Transfer = {
-  kind: 'Transfer',
+  kind: "Transfer",
   value: transferParameter
-}
+};
 type parameter = 
 | Transfer;
 type storage = big_map<[tokenId, tokenOwner]>;
@@ -57,7 +57,7 @@ let allowOnlyOwnTransfer = (from: tokenOwner): unit => {
   } else { 
     return unit; 
   }
-}
+};
 let transferIterator = ([storage, transferMichelson]: [storage, transferMichelson]): storage => {
   let transferAuxiliary2: transferAuxiliary = Layout.convert_from_right_comb(transferMichelson);
   let from_: tokenOwner = transferAuxiliary2.from_;
