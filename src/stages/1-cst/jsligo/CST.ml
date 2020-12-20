@@ -195,6 +195,7 @@ and type_expr =
 | TFun    of (fun_type_args * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
+| TConstr of variable
 | TWild   of wild
 | TString of lexeme reg
 
@@ -202,7 +203,7 @@ and cartesian = (type_expr, comma) nsepseq brackets reg
 
 and sum_type = {
   lead_vbar  : vbar option;
-  variants   : (variant reg, vbar) nsepseq;
+  variants   : (variant, vbar) nsepseq;
   attributes : attributes
 }
 
@@ -211,6 +212,7 @@ and pattern
 and variant =
 | VString of string reg
 | VVar    of variable
+| VConstr of constr
 
 and field_decl = {
   field_name : field_name;
@@ -474,6 +476,7 @@ let type_expr_to_region = function
 | TPar    {region; _}
 | TString {region; _}
 | TVar    {region; _}
+| TConstr {region; _}
 | TWild    region
  -> region
 
@@ -536,3 +539,6 @@ let selection_to_region = function
 let arrow_function_body_to_region = function
   FunctionBody {region; _} -> region
 | ExpressionBody s -> expr_to_region s
+
+and variant_to_region = function
+  VString {region; _} | VVar {region; _} | VConstr {region; _} -> region

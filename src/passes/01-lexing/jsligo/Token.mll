@@ -60,7 +60,6 @@ module T =
     | BOOL_AND of Region.t  (* "&&"   *)
     | BOOL_NOT of Region.t  (* "!"    *)
 
-    | BIT_OR   of Region.t  (* "|"    *)
     | BIT_AND  of Region.t  (* "&"    *)
     | BIT_NOT  of Region.t  (* "~"    *)
     | BIT_XOR  of Region.t  (* "^"    *)
@@ -174,7 +173,6 @@ module T =
     | "BOOL_AND" -> "&&"
     | "BOOL_NOT" -> "!"
 
-    | "BIT_OR"   -> "|"
     | "BIT_AND"  -> "&"
     | "BIT_NOT"  -> "~"
     | "BIT_XOR"  -> "^"
@@ -299,7 +297,6 @@ module T =
     | BOOL_AND region -> region, "BOOL_AND"
     | BOOL_NOT region -> region, "BOOL_NOT"
 
-    | BIT_OR   region -> region, "BIT_OR"
     | BIT_AND  region -> region, "BIT_AND"
     | BIT_NOT  region -> region, "BIT_NOT"
     | BIT_XOR  region -> region, "BIT_XOR"
@@ -402,7 +399,6 @@ module T =
     | BOOL_AND _ -> "&&"
     | BOOL_NOT _ -> "!"
 
-    | BIT_OR   _ -> "|"
     | BIT_AND  _ -> "&"
     | BIT_NOT  _ -> "~"
     | BIT_XOR  _ -> "^"
@@ -711,6 +707,7 @@ and scan_constr region lexicon = parse
     let mk_lang lang region = Lang Region.{value=lang; region}
 
     (* Predicates *)
+
     let is_eof = function EOF _ -> true | _ -> false
   end
 
