@@ -80,6 +80,12 @@ let print_var state {region; value} =
     sprintf "%s: Ident %s\n"
             (compact state region)value
   in Buffer.add_string state#buffer line
+
+let print_tconstr state {region; value} =
+  let line =
+    sprintf "%s: TConstr %s\n"
+            (compact state region)value
+  in Buffer.add_string state#buffer line
   
 
 let print_pconstr state {region; value} =
@@ -178,6 +184,7 @@ and print_type_expr state = function
 | TApp app        -> print_type_app state app
 | TPar par        -> print_type_par state par
 | TVar var        -> print_var state var
+| TConstr var     -> print_tconstr state var
 | TFun t          -> print_fun_type state t
 | TWild wild      -> print_token state wild " "
 | TString s       -> print_string state s
@@ -238,10 +245,11 @@ and print_cartesian state Region.{value;_} =
   print_nsepseq state "," print_type_expr inside;
   print_token state rbracket "]"
 
-and print_variant state {value; _} =
+and print_variant state value =
   match value with 
     VString v -> print_string state v
   | VVar v -> print_var state v
+  | VConstr c -> print_constr state c
 
 and print_object_type state =
   print_ne_injection state print_field_decl
@@ -1018,6 +1026,9 @@ and pp_type_expr state = function
 | TVar v ->
     pp_node  state "TVar";
     pp_ident (state#pad 1 0) v
+| TConstr v ->
+    pp_node  state "TConstr";
+    pp_ident (state#pad 1 0) v
 | TWild wild ->
     pp_node  state "TWild";
     pp_loc_node state "TWild" wild
@@ -1040,7 +1051,7 @@ and pp_sum_type state {variants; attributes; _} =
   let arity    = if attributes = [] then arity else arity+1 in
   let apply arity rank variant =
     let state = state#pad arity rank in
-    pp_variant state variant.value in
+    pp_variant state variant in
   let () = List.iteri (apply arity) variants in
   if attributes <> [] then
     let state = state#pad arity (arity-1)
@@ -1077,4 +1088,7 @@ and pp_variant state = function
     pp_string state v
 | VVar v -> 
     pp_node state "<variable>";
+    pp_ident      state v
+| VConstr v -> 
+    pp_node state "<constr>";
     pp_ident      state v

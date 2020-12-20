@@ -343,8 +343,8 @@ type_expr:
   fun_type | sum_type | record_type { $1 }
 
 fun_type_arg:
-  "<constr>" ":" core_type
-| "<ident>" ":" core_type { 
+  "<constr>" ":" type_expr
+| "<ident>" ":" type_expr { 
     {name      = $1;
      colon     = $2;
      type_expr = $3; }
@@ -372,10 +372,8 @@ type_args:
 | fun_type        { $1, [] }
 
 core_type:
-  type_name           {       TVar $1 }
-| "_"                 {      TWild $1 }
-| par(type_expr)      {       TPar $1 }
-| "<string>"          {    TString $1 }
+  "_"                  {      TWild $1 }
+| par(type_expr)       {       TPar $1 }
 | module_name "." type_name {
     let module_name = $1.value in
     let type_name   = $3.value in
@@ -388,33 +386,29 @@ core_type:
    in TApp {region; value = $1,$2} }
 
 sum_type:
-  variant "|" nsepseq(variant,"|") {
-    let variants = Utils.nsepseq_cons $1 $2 $3 in
-    let region = nsepseq_to_region (fun x -> x.region) variants in
-    let value  = {variants=variants; attributes=[]; lead_vbar=None}
-    in TSum {region; value}
+  ioption("|") nsepseq(variant,"|") {
+    match $1, $2 with 
+      None, (VString s, []) -> TString s
+    | None, (VConstr s, []) -> TConstr s
+    | None, (VVar s, [])    -> TVar s
+    | fst, rest -> (
+      TSum {
+        region = (match fst with 
+          Some s -> cover s (nsepseq_to_region variant_to_region rest)
+        | None -> nsepseq_to_region variant_to_region rest);
+        value = {
+          lead_vbar  = fst;
+          variants   = rest;
+          attributes = []
+        }
+      }
+    )
   }
-| "|" variant {
-  TSum {
-    region = cover $1 $2.region;
-    value = {
-      variants   = ($2, []);
-      attributes = [];
-      lead_vbar  = Some $1;
-    }
-  }
-}
 
 variant:
-  "<string>" {
-    {region = $1.region; value = VString $1}
-  }
-| "<ident>" {
-    {region = $1.region; value = VVar $1}
-}
-| "<constr>" {
-    {region = $1.region; value = VVar $1}
-}
+  "<string>"  { VString $1 }
+| "<ident>"   {    VVar $1 }
+| "<constr>"  { VConstr $1 }
 
 
 record_type:

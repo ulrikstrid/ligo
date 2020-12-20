@@ -45,7 +45,6 @@ module Token = Lexing_jsligo.Token
 %token <Region.t> BOOL_AND "&&"
 %token <Region.t> BOOL_NOT "!"
 
-%token <Region.t> BIT_OR   "|"
 %token <Region.t> BIT_AND  "&"
 %token <Region.t> BIT_NOT  "~"
 %token <Region.t> BIT_XOR  "^"
@@ -73,7 +72,7 @@ module Token = Lexing_jsligo.Token
 %token <Region.t> XOR_EQ   "^="
 
 
-%token <Region.t> VBAR   "VBAR"
+%token <Region.t> VBAR   "|"
 %token <Region.t> ARROW  "=>"
 %token <Region.t> WILD   "_"
 
