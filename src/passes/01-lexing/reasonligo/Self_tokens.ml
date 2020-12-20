@@ -14,8 +14,17 @@ module type S =
     type token
     type lex_unit = token Core.lex_unit
 
-    val filter : lex_unit list -> token list
+    type message = string Region.reg
+
+    val filter :
+      (lex_unit list, message) result -> (token list, message) result
   end
+
+(* Filters *)
+
+let ok x = Stdlib.Ok x
+
+type message = string Region.reg
 
 type token = Token.t
 type lex_unit = token Core.lex_unit
@@ -61,29 +70,29 @@ let insert_es6fun_token tokens =
       (* let x : (int => int) *)
     | (LPAR _ as hd)::rest
          when unclosed_parentheses = 0 ->
-         List.rev_append (hd :: es6fun :: result) rest
+         List.rev_append (hd::es6fun::result) rest
 
       (* Balancing parentheses *)
     | (LPAR _ as hd)::rest ->
-        inner (hd :: result) (unclosed_parentheses - 1) rest
+        inner (hd::result) (unclosed_parentheses - 1) rest
 
       (* When the arrow '=>' is not part of a function: *)
     | (RBRACKET _ as hd) :: rest
-    | (C_Some _ as hd)   :: rest
-    | (C_None _ as hd)   :: rest
-    | (Constr _ as hd)   :: rest ->
+    | (C_Some _   as hd) :: rest
+    | (C_None _   as hd) :: rest
+    | (Constr _   as hd) :: rest ->
          List.rev_append (hd :: result) rest
 
       (* let foo : int => int = (i: int) => ...  *)
     | (COLON _ as hd)::(Ident _ as i)::(Let _ as l)::rest
          when unclosed_parentheses = 0 ->
-         List.rev_append (l :: i :: hd :: es6fun :: result) rest
+         List.rev_append (l::i::hd::es6fun::result) rest
 
     | (EQ _ as hd)::rest ->
-        List.rev_append (hd :: es6fun :: result) rest
+        List.rev_append (hd::es6fun::result) rest
 
     | hd::rest ->
-        inner (hd :: result) unclosed_parentheses rest
+        inner (hd::result) unclosed_parentheses rest
     | [] ->
         List.rev result
   in inner [] 0 tokens
@@ -91,19 +100,25 @@ let insert_es6fun_token tokens =
 let insert_es6fun tokens =
   let open Token in
   let rec inner result = function
-    (ARROW _ as a) :: rest ->
-      inner (insert_es6fun_token (a :: result)) rest
-  | hd :: rest ->
-      inner (hd :: result) rest
+    (ARROW _ as a)::rest ->
+      inner (insert_es6fun_token (a::result)) rest
+  | hd::rest ->
+      inner (hd::result) rest
   | [] ->
       List.rev result
   in inner [] tokens
 
-let filter lex_units =
-  let open Core in
-  let apply tokens = function
-    Token token -> token::tokens
-  | Markup _ | Directive _ -> tokens
-  in List.fold_left apply [] lex_units |> List.rev
+let insert_es6fun = function
+  Stdlib.Ok tokens -> insert_es6fun tokens |> ok
+| Error _ as err -> err
 
-let filter = Utils.(insert_es6fun <@ filter)
+let tokens_of = function
+  Stdlib.Ok lex_units ->
+    let open Core in
+    let apply tokens = function
+      Token token -> token::tokens
+    | Markup _ | Directive _ -> tokens
+    in List.fold_left apply [] lex_units |> List.rev |> ok
+| Error _ as err -> err
+
+let filter = Utils.(insert_es6fun <@ tokens_of <@ Style.check)

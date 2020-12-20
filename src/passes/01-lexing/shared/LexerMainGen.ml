@@ -21,12 +21,13 @@ module Make (File        : FILE)
   struct
     (* All exits *)
 
-    let print_in_red msg = Printf.eprintf "\027[31m%s\027[0m%!" msg
-
-    let red_exit msg = print_in_red msg; exit 1
+    let print_in_red Region.{value=msg; region} =
+      let header = region#to_string ~file:true ~offsets:true `Point
+      in Printf.eprintf "\027[31mError %s:\n%s\027[0m\n%!" header msg
 
     let cli_error msg =
-      red_exit (Printf.sprintf "Command-line error: %s\n" msg)
+      let msg = Printf.sprintf "Command-line error: %s\n" msg
+      in Printf.eprintf "\027[31m%s\027[0m%!" msg
 
     let print_and_quit msg = print_string msg; flush stdout; exit 0
 
@@ -149,12 +150,13 @@ module Make (File        : FILE)
             | [] -> Token.eof Region.ghost
           in Stdlib.Ok token
         else
-          match Scan.LexUnits.from_lexbuf config lexbuf with
-            Stdlib.Ok lex_units ->
-              store  := Self_tokens.filter lex_units;
-              called := true;
-              scan lexbuf
-          | Error _ as err -> err
+          let lex_units = Scan.LexUnits.from_lexbuf config lexbuf
+          in match Self_tokens.filter lex_units with
+               Stdlib.Ok tokens ->
+                 store  := tokens;
+                 called := true;
+                 scan lexbuf
+             | Error _ as err -> err
 
     (* Scanning all tokens with or without a preprocessor *)
 
@@ -173,12 +175,14 @@ module Make (File        : FILE)
             let lexbuf = Lexing.from_string string
             in Scan.Tokens.from_lexbuf config lexbuf
       else
-        match config#input with
-          Some path -> Scan.Tokens.from_file config path
-        |      None -> Scan.Tokens.from_channel config stdin
+        let lex_units =
+          match config#input with
+            Some path -> Scan.LexUnits.from_file config path
+          |      None -> Scan.LexUnits.from_channel config stdin
+        in Self_tokens.filter lex_units
 
     let scan_all () : unit =
       match scan_all () with
         Stdlib.Ok _ -> ()
-      | Error msg -> print_in_red msg.Region.value
+      | Error msg -> print_in_red msg
   end
