@@ -247,7 +247,7 @@ and binding_pattern =
 | PConstr   of variable
 | PDestruct of destruct reg
 | PObject   of (binding_pattern, comma) nsepseq braced reg
-| PWild
+| PWild     of Region.t
 | PArray    of (binding_pattern, comma) nsepseq brackets reg
 
 and string_expr =
@@ -483,8 +483,8 @@ let type_expr_to_region = function
 let binding_pattern_to_region = function
   PRest {region;_ }   | PAssign {region ;_ }
 | PVar {region ;_ }    | PConstr {region; _ } | PDestruct {region ;_ }
-| PObject {region ;_ } | PArray {region; _} -> region
-| PWild -> Region.ghost
+| PObject {region ;_ } | PArray {region; _} | PWild region -> region
+
 
 let bool_expr_to_region = function
   Or {region;_} | And {region;_}

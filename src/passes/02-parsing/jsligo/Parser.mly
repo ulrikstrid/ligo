@@ -259,7 +259,7 @@ object_binding_pattern:
   }
 
 array_binding_pattern_item:
-  /* empty  */          { PWild }
+  /* empty  */          { PWild Region.ghost }
 | rest                  { $1 }
 | "<constr>"            { PConstr $1 }
 | "<ident>"             { PVar $1 }
@@ -285,6 +285,7 @@ binding_pattern:
 | "<ident>"               { PVar $1 }
 | object_binding_pattern  { $1 }
 | array_binding_pattern   { $1 }
+| "_"                     { PWild $1 }
 
 %inline type_annot_opt:
   /* */         { None }
@@ -790,7 +791,6 @@ object_literal:
 member_expr:
   "<ident>"                  {                         EVar $1 }
 | "<constr>"                 {                      EConstr $1 }
-| "_"                        {  EVar {value = "_"; region = $1}}
 | "<int>"                    {                 EArith (Int $1) }
 | "<bytes>"                  {                       EBytes $1 }
 | "<string>"                 {             EString (String $1) }

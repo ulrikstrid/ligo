@@ -329,7 +329,7 @@ and print_binding_pattern state = function
 | PConstr v ->   print_pconstr          state v
 | PDestruct d -> print_destruct_pattern state d
 | PObject o ->   print_object_pattern   state o
-| PWild ->       print_token            state Region.ghost "<wild>"
+| PWild w ->     print_token            state w "<wild>"
 | PArray a ->    print_array_pattern    state a
 
 and print_property state = function
@@ -721,8 +721,8 @@ and pp_binding_pattern state = function
     let properties = Utils.nsepseq_to_list inside in
     let apply len rank = pp_binding_pattern (state#pad len rank) in
     List.iteri (List.length properties |> apply) properties
-| PWild ->
-    pp_node state "<wild>"
+| PWild r ->
+    pp_loc_node state "<wild>" r;
 | PArray {value = {inside; _}; region} ->
     pp_loc_node state "<array>" region;
     let items = Utils.nsepseq_to_list inside in
