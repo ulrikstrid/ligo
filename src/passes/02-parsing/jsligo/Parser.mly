@@ -185,7 +185,6 @@ if_else_statement:
 
 initializer_expr:
   expr             { $1 }
-| object_literal   { $1 }
 
 initializer_:
   "=" initializer_expr {
@@ -263,6 +262,7 @@ array_binding_pattern_item:
 | rest                  { $1 }
 | "<constr>"            { PConstr $1 }
 | "<ident>"             { PVar $1 }
+| "_"                   { PWild $1 }
 | array_binding_pattern { $1 }
 
 array_binding_pattern_items:
@@ -441,7 +441,8 @@ field_decl:
   }
 
 type_decl:
-  "type" type_name "=" type_expr {
+  "type" "<constr>" "=" type_expr
+| "type" type_name "=" type_expr {
     let region = cover $1 (type_expr_to_region $4) in
     let value  = {kwd_type  = $1;
                   name      = $2;
@@ -508,14 +509,14 @@ contract:
 (* Expressions *)
 
 expr_sequence:
-  expr "," expr_sequence {
+  expr_statement "," expr_sequence {
     let region = cover (expr_to_region $1) $3.region in
     {
       value = Utils.nsepseq_cons $1 $2 $3.value;
       region
     }
   }
-| expr {
+| expr_statement {
     {
       value = ($1, []);
       region = expr_to_region $1;
@@ -534,7 +535,7 @@ arrow_function_body:
       }
     }
   }
-| expr { ExpressionBody $1 }
+| expr_statement { ExpressionBody $1 }
 
 expr_annot_sequence:
   expr type_annot "," expr_annot_sequence {
@@ -854,8 +855,8 @@ member_expr:
   }
 
 call_expr:
-  member_expr par(nsepseq(assignment_expr, ","))
-| call_expr par(nsepseq(assignment_expr, ",")) {
+  member_expr par(nsepseq(expr, ","))
+| call_expr par(nsepseq(expr, ",")) {
     let start  = expr_to_region $1 in
     let stop   = $2 in
     let region = cover start stop.region in
@@ -888,6 +889,7 @@ assignment_expr:
 
 expr:
   assignment_expr                       { $1 }
+| object_literal                        { $1 }
 
 interactive_expr:
-  EOF { failwith "a2" }
+  expr EOF                              { $1 }
