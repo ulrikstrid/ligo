@@ -367,10 +367,6 @@ cartesian:
   core_type { $1 }
 | brackets(nsepseq(type_expr, ",")) {  TProd $1 }
 
-type_args:
-  tuple(fun_type) { $1 }
-| fun_type        { $1, [] }
-
 core_type:
   "_"                  {      TWild $1 }
 | par(type_expr)       {       TPar $1 }
@@ -381,7 +377,7 @@ core_type:
     let region      = cover $1.region $3.region
     in TVar {region; value}
   }
-| type_name chevrons(type_args) {
+| type_name chevrons(nsepseq(type_expr, ",")) {
    let region = cover $1.region $2.region
    in TApp {region; value = $1,$2} }
 
