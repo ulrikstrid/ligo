@@ -892,4 +892,4 @@ expr:
 | object_literal                        { $1 }
 
 interactive_expr:
-  EOF { failwith "a2" }
+  expr EOF                              { $1 }
