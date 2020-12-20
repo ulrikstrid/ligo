@@ -43,7 +43,7 @@ par(X):
     and value  = {lpar=$1; inside=$2; rpar=$3}
     in {region; value} }
 
-chevrons(X):
+%inline chevrons(X):
   "<" X ">" {
     let region = cover $1 $3
     and value  = {lchevron=$1; inside=$2; rchevron=$3}
@@ -634,11 +634,9 @@ conj_expr_level:
 | comp_expr_level { $1 }
 
 comp_expr_level:
-// TODO: fix shift reduce error
-//   bin_op(comp_expr_level, "<", add_expr_level) {
-//     ELogic (CompExpr (Lt $1)) }
-// |
-bin_op(comp_expr_level, "<=", add_expr_level) {
+  bin_op(comp_expr_level, "<", add_expr_level) {
+    ELogic (CompExpr (Lt $1)) }
+| bin_op(comp_expr_level, "<=", add_expr_level) {
     ELogic (CompExpr (Leq $1)) }
 | bin_op(comp_expr_level, ">", add_expr_level) {
     ELogic (CompExpr (Gt $1)) }
@@ -681,12 +679,17 @@ unary_expr_level:
 call_expr_level:
   call_expr { $1 }
 | new_expr  { $1 }
-| call_expr_level "as" type_expr { 
-    let region = cover (expr_to_region $1) (type_expr_to_region $3) in
-    let value = $1, $2, $3 in
-    EAnnot {
-      region;
-      value
+| "(" call_expr_level "as" type_expr ")" { 
+    EPar {
+      region = cover $1 $5;
+      value = {
+        lpar = $1;
+        inside = EAnnot {
+          region = cover (expr_to_region $2) (type_expr_to_region $4);
+          value = $2, $3, $4
+        };
+        rpar = $5;
+      }
     }
   }
 
