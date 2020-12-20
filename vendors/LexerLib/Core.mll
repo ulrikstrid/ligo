@@ -236,8 +236,8 @@ let mk_state ~config ~window ~pos ~decoder ~supply : 'token state =
     method config  = config
     val window     = window
     method window  = window
-    method pos     = pos
     val pos        = pos
+    method pos     = pos
     method decoder = decoder
     method supply  = supply
 
