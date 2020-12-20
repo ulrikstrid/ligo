@@ -140,9 +140,9 @@ type 'token state = <
   sync         : Lexing.lexbuf -> 'token sync;
   decoder      : Uutf.decoder;
   supply       : Bytes.t -> int -> int -> unit;
+  mk_line      : thread        -> 'token lex_unit * 'token state;
+  mk_block     : thread        -> 'token lex_unit * 'token state;
   mk_newline   : Lexing.lexbuf -> 'token lex_unit * 'token state;
-  mk_line      : thread -> 'token lex_unit * 'token state;
-  mk_block     : thread -> 'token lex_unit * 'token state;
   mk_space     : Lexing.lexbuf -> 'token lex_unit * 'token state;
   mk_tabs      : Lexing.lexbuf -> 'token lex_unit * 'token state;
   mk_bom       : Lexing.lexbuf -> 'token lex_unit * 'token state
@@ -158,10 +158,8 @@ type message = string Region.reg
 
 (* LEXING COMMENTS AND STRINGS *)
 
-(* Updating the state after scanning a line preprocessing directive.
-
-   Note: The flags that may appear and which may be scanned, are
-   dropped. *)
+(* Updating the state after scanning a line preprocessing
+   directive. *)
 
 val line_preproc :
   line:string ->
@@ -188,21 +186,16 @@ val mk_scan : 'token client -> 'token scanner
 
 (* LEXER INSTANCE *)
 
-(* The function [open_token_stream] returns a lexer instance made of
+(* The function [open_stream] returns a lexer instance made of
      * the input [input] of type [input];
-     * a function [read] that extracts a token from a lexing
+     * a function [read_token] that extracts a token from a lexing
        buffer;
+     * a function [read_unit] that extracts a lexical unit (that is, a
+       token or whitespace) from a lexing buffer;
      * a lexing buffer [lexbuf] to read tokens from;
      * a function [close] that closes that buffer;
      * a function [window] that returns a window of zero, one or
-       two tokens;
-     * a function [get_pos] that returns the current position;
-     * a function [get_last] that returns the region of the last
-       recognised token.
-     * a function [get_file] that returns the name of the file
-       being scanned (empty string if [stdin]);
-     * a function [get_comments] that returns all the comments
-       recognised so far.
+       two tokens.
 
      Note that a module [Token] is exported too, because the
    signature of the exported functions depend on it.
