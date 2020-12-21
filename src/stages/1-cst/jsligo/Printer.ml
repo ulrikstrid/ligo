@@ -193,7 +193,7 @@ and print_sum_type state {value; _} =
   let {variants; attributes; lead_vbar} = value in
   print_attributes state attributes;
   print_token_opt  state lead_vbar "|";
-  print_nsepseq    state "|" print_variant variants
+  print_nsepseq    state "|" print_type_expr variants
 
 and print_fun_type_arg state {name; colon; type_expr} =
   print_var       state name;
@@ -244,12 +244,6 @@ and print_cartesian state Region.{value;_} =
   print_token state lbracket "[";
   print_nsepseq state "," print_type_expr inside;
   print_token state rbracket "]"
-
-and print_variant state value =
-  match value with 
-    VString v -> print_string state v
-  | VVar v -> print_var state v
-  | VConstr c -> print_constr state c
 
 and print_object_type state =
   print_ne_injection state print_field_decl
@@ -1051,7 +1045,7 @@ and pp_sum_type state {variants; attributes; _} =
   let arity    = if attributes = [] then arity else arity+1 in
   let apply arity rank variant =
     let state = state#pad arity rank in
-    pp_variant state variant in
+    pp_type_expr state variant in
   let () = List.iteri (apply arity) variants in
   if attributes <> [] then
     let state = state#pad arity (arity-1)
@@ -1081,14 +1075,3 @@ and pp_cartesian state {inside;_} =
   let apply len rank = pp_type_expr (state#pad len rank)
   in
   List.iteri (apply arity) t_exprs;
-  
-and pp_variant state = function
-  VString v -> 
-    pp_node state "<string>";
-    pp_string state v
-| VVar v -> 
-    pp_node state "<variable>";
-    pp_ident      state v
-| VConstr v -> 
-    pp_node state "<constr>";
-    pp_ident      state v
