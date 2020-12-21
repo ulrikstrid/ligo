@@ -527,7 +527,7 @@ rule scan state = parse
           let state' = {state with mode=Copy; trace=[]} in
           let state' = scan (push_dir incl_dir state') incl_buf in
           let state  = {state with env=state'.env; chans=state'.chans} in
-          let path   = if path = "" then base
+          let path   = if path = "" || path = "." then base
                        else path ^ Filename.dir_sep ^ base in
           let ()     = print state (sprintf "\n# %i %S 2" (line+1) path)
           in scan state lexbuf
