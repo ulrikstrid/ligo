@@ -417,6 +417,7 @@ type error =
 | Broken_string
 | Invalid_character_in_string
 | Undefined_escape_sequence
+| Invalid_linemarker_argument
 
 let sprintf = Printf.sprintf
 
@@ -439,6 +440,9 @@ let error_to_string = function
 | Invalid_character_in_string ->
     "Invalid character in string.\n\
      Hint: Remove or replace the character."
+| Invalid_linemarker_argument ->
+    "Unexpected or invalid linemarker argument.\n\
+     Hint: The optional argument is either 1 or 2."
 
 let fail region error =
   let value = error_to_string error in
@@ -478,11 +482,19 @@ let scan_utf8_wrap scan_utf8 callback thread state lexbuf =
    and the return from a file (after its inclusion has been
    processed). *)
 
-let line_preproc scan_flag ~line ~file state lexbuf =
-  let flag, state = scan_flag state lexbuf
-  and linenum     = int_of_string line in
-  let pos         = state#pos#set ~file ~line:linenum ~offset:0
-  in flag, state#set_pos pos
+let linemarker region_prefix ~line ~file ?flag state lexbuf =
+  let {state; region; _} = state#sync lexbuf in
+  let flag      = match flag with
+                    Some '1' -> Some Directive.Push
+                  | Some '2' -> Some Directive.Pop
+                  | _        -> None in
+  let linenum   = int_of_string line in
+  let value     = linenum, file, flag in
+  let region    = Region.cover region_prefix region in
+  let directive = Directive.Linemarker Region.{value; region} in
+  let pos       = region#start#add_nl in
+  let pos       = (pos#set_file file)#set_line linenum
+  in Directive directive, state#set_pos pos
 
 (* END HEADER *)
 }
@@ -586,12 +598,10 @@ rule scan client state = parse
 
   (* Linemarkers preprocessing directives (from #include) *)
 
-| '#' blank* (natural as line) blank+ '"' (string as file) '"' {
-    let {state; region; _} = state#sync lexbuf in
-    let flag, state = line_preproc scan_flag ~line ~file state lexbuf in
-    let value       = state#pos#line, file, flag in
-    let directive   = Directive.Linemarker Region.{value; region}
-    in Directive directive, state }
+| '#' blank* (natural as line) blank+ '"' (string as file) '"'
+  (blank+ (('1' | '2') as flag))? blank* {
+    let {state; region; _} = state#sync lexbuf
+    in eol region line file flag state lexbuf }
 
   (* Other tokens *)
 
@@ -599,6 +609,13 @@ rule scan client state = parse
 
 | _ { rollback lexbuf;
       client#callback state lexbuf (* May raise exceptions *) }
+
+(* Finishing a linemarker *)
+
+and eol region_prefix line file flag state = parse
+  nl | eof { linemarker region_prefix ~line ~file ?flag state lexbuf }
+| _        { let {region; _} = state#sync lexbuf
+             in fail region Invalid_linemarker_argument }
 
 (* Block comments
 
@@ -696,20 +713,7 @@ and scan_string thread state = parse
 | _ as c { let {state; _} = state#sync lexbuf in
            scan_string (thread#push_char c) state lexbuf }
 
-(* Scanning one flag of the line preprocessing directives *)
-
-and scan_flag state = parse
-  blank+          { let {state; _} = state#sync lexbuf
-                    in scan_flag state lexbuf              }
-| natural as flag { let {state; _} = state#sync lexbuf in
-                    match flag with
-                      "1" -> Some Push, state
-                    | "0" -> Some Pop, state
-                    | _   -> None, state                   }
-| nl              { None, state#set_pos (state#pos#add_nl) }
-| eof             { None, (state#sync lexbuf).state        }
-
-(* Scanner called first *)
+  (* Scanner called first *)
 
 and init client state = parse
   utf8_bom { state#mk_bom lexbuf                       }
@@ -733,9 +737,6 @@ let mk_scan (client: 'token client) =
     let scanner =
       if !first_call then (first_call := false; init) else scan
     in lift (scanner internal_client state)
-
-let line_preproc ~line ~file state lexbuf =
-  line_preproc scan_flag ~line ~file state lexbuf
 
 (* END TRAILER *)
 }

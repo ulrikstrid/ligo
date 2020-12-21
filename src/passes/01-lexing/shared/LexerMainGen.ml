@@ -163,26 +163,23 @@ module Make (File        : FILE)
     module Preproc =
       Preprocessor.PreprocMainGen.Make (CLI.Preprocessor_CLI)
 
-    let scan_all () : (token list, message) Stdlib.result =
+    let scan_all () : unit =
       if CLI.preprocess then
         match Preproc.preprocess () with
-          Stdlib.Error (_buffer, msg) ->
-            (* The preprocessed buffer so far is dropped. *)
-            Stdlib.Error msg
+          Stdlib.Error _ -> () (* Already printed *)
         | Ok (buffer, _deps) ->
             (* Module dependencies are dropped. *)
             let string = Buffer.contents buffer in
-            let lexbuf = Lexing.from_string string
-            in Scan.Tokens.from_lexbuf config lexbuf
+            let lexbuf = Lexing.from_string string in
+            match Scan.Tokens.from_lexbuf config lexbuf with
+              Stdlib.Error msg -> print_in_red msg
+            | Ok _ -> ()
       else
         let lex_units =
           match config#input with
             Some path -> Scan.LexUnits.from_file config path
           |      None -> Scan.LexUnits.from_channel config stdin
-        in Self_tokens.filter lex_units
-
-    let scan_all () : unit =
-      match scan_all () with
-        Stdlib.Ok _ -> ()
-      | Error msg -> print_in_red msg
+        in match Self_tokens.filter lex_units with
+              Stdlib.Error msg -> print_in_red msg
+            | Ok _ -> ()
   end

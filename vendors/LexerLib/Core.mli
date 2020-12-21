@@ -161,12 +161,14 @@ type message = string Region.reg
 (* Updating the state after scanning a line preprocessing
    directive. *)
 
-val line_preproc :
+val linemarker :
+  Region.t ->
   line:string ->
   file:string ->
+  ?flag:char ->
   'token state ->
   Lexing.lexbuf ->
-  Directive.flag option * 'token state
+  'token lex_unit * 'token state
 
 type 'token scanner =
   'token state ->

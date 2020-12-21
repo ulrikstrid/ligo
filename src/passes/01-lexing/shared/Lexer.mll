@@ -27,6 +27,7 @@ module Make (Token : Token.S) =
     | Invalid_symbol
     | Invalid_natural
     | Unterminated_verbatim
+    | Invalid_linemarker_argument
 
     let sprintf = Printf.sprintf
 
@@ -47,6 +48,9 @@ module Make (Token : Token.S) =
     | Unterminated_verbatim ->
        "Unterminated verbatim.\n\
         Hint: Close with \"|}\"."
+    | Invalid_linemarker_argument ->
+       "Unexpected or invalid linemarker argument.\n\
+        Hint: The optional argument is either 1 or 2."
 
     type message = string Region.reg
 
@@ -257,18 +261,29 @@ rule scan state = parse
 | _ as c { let Core.{region; _} = state#sync lexbuf
            in fail region (Unexpected_character c) }
 
+(* Scanning verbatim strings *)
+
 and scan_verbatim thread state = parse
-  nl as nl { let ()    = Lexing.new_line lexbuf
+  (* Inclusion of Michelson code *)
+  '#' blank* (natural as line) blank+ '"' (string as file) '"'
+  (blank+ (('1' | '2') as flag))? blank* {
+    let Core.{state; region; _} = state#sync lexbuf
+    in eol region line file flag thread state lexbuf
+  }
+| nl as nl { let ()    = Lexing.new_line lexbuf
              and state = state#set_pos (state#pos#new_line nl) in
              scan_verbatim (thread#push_string nl) state lexbuf }
-| '#' blank* (natural as line) blank+ '"' (string as file) '"' {
-             let Core.{state; _} = state#sync lexbuf in
-             let _flag, state = Core.line_preproc ~line ~file state lexbuf
-             in scan_verbatim thread state lexbuf }
 | eof      { fail thread#opening Unterminated_verbatim }
 | "|}"     { Core.(thread, (state#sync lexbuf).state) }
 | _ as c   { let Core.{state; _} = state#sync lexbuf in
              scan_verbatim (thread#push_char c) state lexbuf }
+
+and eol region_prefix line file flag thread state = parse
+  nl | eof { let _, state =
+               Core.linemarker region_prefix ~line ~file ?flag state lexbuf
+             in scan_verbatim thread state lexbuf }
+| _        { let Core.{region; _} = state#sync lexbuf
+             in fail region Invalid_linemarker_argument }
 
 (* END LEXER DEFINITION *)
 
@@ -295,6 +310,5 @@ and scan_verbatim thread state = parse
     let scan = Core.mk_scan client
 
   end (* of functor [Make] in HEADER *)
-
 (* END TRAILER *)
 }
