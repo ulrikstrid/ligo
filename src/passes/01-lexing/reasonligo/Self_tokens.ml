@@ -1,4 +1,4 @@
-(* This module implements a filter on the lexical units of PascaLIGO
+(* This module implements a filter on the lexical units of ReasonLIGO
    and produces tokens to be consumed by the parser. *)
 
 (* Vendor dependencies *)
