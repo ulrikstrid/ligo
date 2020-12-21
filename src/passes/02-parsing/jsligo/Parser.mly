@@ -881,8 +881,7 @@ new_expr:
 expr_statement:
   arrow_function                        { $1 }
 | disj_expr_level                       { $1 }
-| "<ident>" "=" assignment_expr         { EAssign (EVar   $1, $2, $3) }
-| "<constr>" "=" assignment_expr        { EAssign (EConstr $1, $2, $3) }
+| disj_expr_level "=" assignment_expr   { EAssign ($1, $2, $3) }
 
 assignment_expr:
   expr_statement                        { $1 }
