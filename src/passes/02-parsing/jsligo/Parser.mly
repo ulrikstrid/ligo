@@ -295,17 +295,14 @@ binding_pattern:
   ":" type_expr { $1, $2 }
   
 binding_initializer:
-  binding_pattern type_annot_opt initializer_? {
-    let region = match $3 with
-    | Some (_, expr) -> cover (binding_pattern_to_region $1) (expr_to_region expr)
-    | None -> binding_pattern_to_region $1
+  binding_pattern type_annot_opt initializer_ {
+    let region = cover (binding_pattern_to_region $1) (expr_to_region (snd $3))
     in
     let value = {
       binders  = $1;
       lhs_type = $2;
-      let_rhs  = match $3 with
-      | Some (eq, expr) -> Some { eq; expr }
-      | None -> None
+      eq       = fst $3;
+      expr     = snd $3;
     } in
     {
       region; value
@@ -369,7 +366,10 @@ cartesian:
 | brackets(nsepseq(type_expr, ",")) {  TProd $1 }
 
 core_type:
-  "_"                  {      TWild $1 }
+  "<ident>"            {       TVar $1 }
+| "<constr>"           {    TConstr $1 }
+| "<string>"           {    TString $1 }
+|  "_"                 {      TWild $1 }
 | par(type_expr)       {       TPar $1 }
 | module_name "." type_name {
     let module_name = $1.value in
@@ -380,33 +380,19 @@ core_type:
   }
 | type_name chevrons(nsepseq(type_expr, ",")) {
    let region = cover $1.region $2.region
-   in TApp {region; value = $1,$2} }
+   in TApp {region; value = $1,$2} }   
 
 sum_type:
-  ioption("|") nsepseq(variant,"|") {
-    match $1, $2 with 
-      None, (VString s, []) -> TString s
-    | None, (VConstr s, []) -> TConstr s
-    | None, (VVar s, [])    -> TVar s
-    | fst, rest -> (
-      TSum {
-        region = (match fst with 
-          Some s -> cover s (nsepseq_to_region variant_to_region rest)
-        | None -> nsepseq_to_region variant_to_region rest);
-        value = {
-          lead_vbar  = fst;
-          variants   = rest;
-          attributes = []
-        }
+  "|" nsepseq(cartesian,"|") {
+    TSum {
+      region = cover $1 (nsepseq_to_region type_expr_to_region $2);
+      value = {
+        lead_vbar  = $1;
+        variants   = $2;
+        attributes = []
       }
-    )
+    }
   }
-
-variant:
-  "<string>"  { VString $1 }
-| "<ident>"   {    VVar $1 }
-| "<constr>"  { VConstr $1 }
-
 
 record_type:
   "{" sep_or_term_list(field_decl,",") "}" {

@@ -159,15 +159,11 @@ and attributes = attribute list
 
 (* Non-recursive values *)
 
-and let_rhs = {
-  eq       : equal;
-  expr     : expr
-}
-
 and let_binding = {
   binders  : binding_pattern;
   lhs_type : (colon * type_expr) option;
-  let_rhs  : let_rhs option;
+  eq       : equal;
+  expr     : expr
 }
 
 (* Type declarations *)
@@ -202,17 +198,12 @@ and type_expr =
 and cartesian = (type_expr, comma) nsepseq brackets reg
 
 and sum_type = {
-  lead_vbar  : vbar option;
-  variants   : (variant, vbar) nsepseq;
+  lead_vbar  : vbar;
+  variants   : (type_expr, vbar) nsepseq;
   attributes : attributes
 }
 
 and pattern 
-
-and variant =
-| VString of string reg
-| VVar    of variable
-| VConstr of constr
 
 and field_decl = {
   field_name : field_name;
@@ -539,6 +530,3 @@ let selection_to_region = function
 let arrow_function_body_to_region = function
   FunctionBody {region; _} -> region
 | ExpressionBody s -> expr_to_region s
-
-and variant_to_region = function
-  VString {region; _} | VVar {region; _} | VConstr {region; _} -> region
