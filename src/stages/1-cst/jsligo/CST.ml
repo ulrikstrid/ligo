@@ -159,15 +159,11 @@ and attributes = attribute list
 
 (* Non-recursive values *)
 
-and let_rhs = {
-  eq       : equal;
-  expr     : expr
-}
-
 and let_binding = {
   binders  : binding_pattern;
   lhs_type : (colon * type_expr) option;
-  let_rhs  : let_rhs option;
+  eq       : equal;
+  expr     : expr
 }
 
 (* Type declarations *)
@@ -202,7 +198,7 @@ and type_expr =
 and cartesian = (type_expr, comma) nsepseq brackets reg
 
 and sum_type = {
-  lead_vbar  : vbar option;
+  lead_vbar  : vbar;
   variants   : (type_expr, vbar) nsepseq;
   attributes : attributes
 }

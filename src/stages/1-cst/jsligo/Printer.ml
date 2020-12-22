@@ -120,10 +120,6 @@ let print_bytes state {region; value} =
             (Hex.show abstract)
   in Buffer.add_string state#buffer line
 
-let print_token_opt state = function
-         None -> fun _ -> ()
-| Some region -> print_token state region
-
 let rec print_tokens state {statements;eof} =
   print_nsepseq state ";" print_statement statements;
   print_token state eof "EOF"
@@ -192,7 +188,7 @@ and print_type_expr state = function
 and print_sum_type state {value; _} =
   let {variants; attributes; lead_vbar} = value in
   print_attributes state attributes;
-  print_token_opt  state lead_vbar "|";
+  print_token      state lead_vbar "|";
   print_nsepseq    state "|" print_type_expr variants
 
 and print_fun_type_arg state {name; colon; type_expr} =
@@ -279,19 +275,14 @@ and print_terminator state = function
   Some semi -> print_token state semi ";"
 | None -> ()
 
-and print_let_rhs state {eq; expr }=
-  print_token state  eq "=";
-  print_expr  state expr
-
-and print_let_binding state {value = {binders; lhs_type; let_rhs}; _} =
+and print_let_binding state {value = {binders; lhs_type; eq; expr}; _} =
   print_binding_pattern state binders;
   print_option state (fun state (colon, type_expr) -> 
     print_token state colon ":";
     print_type_expr state type_expr
   ) lhs_type;
-  print_option state (fun state let_rhs -> 
-    print_let_rhs state let_rhs
-  ) let_rhs
+  print_token state  eq "=";
+  print_expr  state expr
 
 and print_rest_pattern state { value = {ellipsis; rest}; _ } =
   print_token state ellipsis "...";
@@ -633,8 +624,13 @@ and pp_statement state = function
 | SLet {value = {bindings; attributes; _}; region} ->
     let let_bindings = Utils.nsepseq_to_list bindings in
     pp_loc_node state "SLet" region;
-    let apply len rank = pp_let_binding (state#pad len rank) in
-    List.iteri (List.length let_bindings |> apply) let_bindings;
+    let len = List.length let_bindings in
+    let state = state#pad 1 0 in
+    pp_node  state "<binders>";
+    let apply rank = 
+      print_endline ("test:" ^ (string_of_int len) ^ "/" ^ (string_of_int rank));
+      pp_let_binding (state#pad len rank) in
+    List.iteri apply let_bindings;
     if attributes <> [] then
       pp_attributes state attributes
 | SConst {value = {bindings; attributes; _}; region} -> 
@@ -679,19 +675,15 @@ and pp_case state = function
       List.iteri (List.length statements |> apply) statements
     | None -> ())
 
-and pp_let_binding state {value = {binders; lhs_type; let_rhs}; _} =
-  pp_node            state "<binders>";
+and pp_let_binding state {value = {binders; lhs_type; expr; _}; _} =
   pp_binding_pattern (state#pad 1 0) binders;
   (match lhs_type with 
   | Some (_, type_expr) ->
     pp_node state "<lhs type>";
     pp_type_expr (state#pad 1 0) type_expr;
   | None -> ());
-  (match let_rhs with 
-  | Some {expr; _} ->
-      pp_node state "<rhs>";
-      pp_expr (state#pad 1 0) expr
-  | None -> ())
+  pp_expr (state#pad 1 0) expr
+
 
 and pp_binding_pattern state = function 
   PRest { value = {rest; _}; region} ->

@@ -295,17 +295,14 @@ binding_pattern:
   ":" type_expr { $1, $2 }
   
 binding_initializer:
-  binding_pattern type_annot_opt initializer_? {
-    let region = match $3 with
-    | Some (_, expr) -> cover (binding_pattern_to_region $1) (expr_to_region expr)
-    | None -> binding_pattern_to_region $1
+  binding_pattern type_annot_opt initializer_ {
+    let region = cover (binding_pattern_to_region $1) (expr_to_region (snd $3))
     in
     let value = {
       binders  = $1;
       lhs_type = $2;
-      let_rhs  = match $3 with
-      | Some (eq, expr) -> Some { eq; expr }
-      | None -> None
+      eq       = fst $3;
+      expr     = snd $3;
     } in
     {
       region; value
@@ -388,9 +385,9 @@ core_type:
 sum_type:
   "|" nsepseq(cartesian,"|") {
     TSum {
-      region = Region.ghost;
+      region = cover $1 (nsepseq_to_region type_expr_to_region $2);
       value = {
-        lead_vbar  = None;
+        lead_vbar  = $1;
         variants   = $2;
         attributes = []
       }
