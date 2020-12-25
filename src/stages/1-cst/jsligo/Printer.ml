@@ -609,25 +609,21 @@ and pp_statement state = function
     pp_ident (state#pad 1 0) v
 | SExpr e ->
     pp_node  state "SExpr";
-    pp_expr state e
+    pp_expr (state#pad 1 0) e
 | SCond {value; region} ->
     pp_loc_node state "SCond" region;
     pp_cond_statement state value
 | SReturn {value = {expr; _}; region} -> (
     pp_loc_node state "SReturn" region;
-    pp_node     state "<return>";
     match expr with
-    | Some e -> pp_expr state e
+    | Some e -> pp_expr (state#pad 1 0) e
     | None -> ()
-)
+  )
 | SLet {value = {bindings; attributes; _}; region} ->
     let let_bindings = Utils.nsepseq_to_list bindings in
     pp_loc_node state "SLet" region;
     let len = List.length let_bindings in
-    let state = state#pad 1 0 in
-    pp_node  state "<binders>";
     let apply rank =
-      print_endline ("test:" ^ (string_of_int len) ^ "/" ^ (string_of_int rank));
       pp_let_binding (state#pad len rank) in
     List.iteri apply let_bindings;
     if attributes <> [] then
@@ -675,12 +671,20 @@ and pp_case state = function
     | None -> ())
 
 and pp_let_binding state {value = {binders; lhs_type; expr; _}; _} =
-  pp_binding_pattern (state#pad 1 0) binders;
-  (match lhs_type with
+  let fields = if lhs_type = None then 2 else 3 in
+  let arity = 0 in
+  pp_node state "<binding>";
+  pp_binding_pattern (state#pad fields arity) binders;
+  let arity = match lhs_type with
   | Some (_, type_expr) ->
+    let state = state#pad fields (arity + 1) in
     pp_node state "<lhs type>";
     pp_type_expr (state#pad 1 0) type_expr;
-  | None -> ());
+    arity + 1
+  | None -> arity
+  in
+  let state = state#pad fields (arity + 1) in
+  pp_node state "<expr>";
   pp_expr (state#pad 1 0) expr
 
 and pp_binding_pattern state = function
@@ -727,7 +731,9 @@ and pp_ne_injection :
     and apply len rank = printer (state#pad len rank)
     in List.iteri (apply arity) ne_elements;
        let state = state#pad arity (arity-1)
-       in pp_attributes state inj.attributes
+       in
+       if inj.attributes <> [] then
+        pp_attributes state inj.attributes
 
 and pp_bytes state {value=lexeme,hex; region} =
   pp_loc_node (state#pad 2 0) lexeme region;
@@ -789,14 +795,17 @@ and pp_expr state = function
     pp_string_expr (state#pad 1 0) e_string
 | EProj {value = {expr; selection}; region} ->
     pp_loc_node state "EProj" region;
-    pp_expr (state#pad 1 0) expr;
+    (* let state = state#pad 2 0 in *)
+    pp_expr (state#pad 2 0) expr;
     (match selection with
       FieldName {value = {value; _}; region} ->
-        pp_loc_node (state#pad 1 0) "<fieldname>" region;
-        pp_ident (state#pad 2 0) value
+        let state = state#pad 2 1 in
+        pp_loc_node state "<fieldname>" region;
+        pp_ident (state#pad 1 0) value
     | Component {value = {inside; _}; region} ->
-        pp_loc_node (state#pad 1 0) "<component>" region;
-        pp_expr (state#pad 2 0) inside)
+        let state = state#pad 2 1 in
+        pp_loc_node state "<component>" region;
+        pp_expr (state#pad 1 0) inside)
 | EAnnot {value; region} ->
     pp_loc_node state "EAnnot" region;
     pp_annotated state value
@@ -821,8 +830,8 @@ and pp_property state = function
     pp_expr state value
 | Property { value = {name; value; _}; region } ->
     pp_loc_node state "<property>" region;
-    pp_expr state name;
-    pp_expr state value
+    pp_expr (state#pad 2 0) name;
+    pp_expr (state#pad 2 1) value
 | Property_rest {value = {expr; _}; region} ->
     pp_loc_node state "<property rest>" region;
     pp_expr state expr
@@ -833,7 +842,7 @@ and pp_fun_expr state node =
   let () =
     let state = state#pad fields 0 in
     pp_node state "<parameters>";
-    pp_expr state parameters in
+    pp_expr (state#pad 1 0) parameters in
   let () =
     match lhs_type with
       None -> ()
@@ -843,11 +852,11 @@ and pp_fun_expr state node =
        pp_type_expr (state#pad 1 0) type_expr in
   let () =
     let state = state#pad fields (fields - 1) in
-    pp_node state "<body>";
     (match body with
       FunctionBody {value = {inside;_}; region} ->
         let statements = Utils.nsepseq_to_list inside in
         let apply len rank = pp_statement (state#pad len rank) in
+
         pp_loc_node state "<function_body>" region;
         List.iteri (List.length statements |> apply) statements
     | ExpressionBody e_body ->
@@ -875,10 +884,8 @@ and pp_tuple_expr state {value; _} =
 
 and pp_arguments state = function
   | Multiple x ->
-     let {lpar;inside;rpar} = x.value in
-     print_token state lpar "(";
+     let {inside; _} = x.value in
      pp_tuple_expr state {value=inside; region = x.region};
-     print_token state rpar ")"
   | Unit x ->
      print_unit state x
 
