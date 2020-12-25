@@ -482,7 +482,7 @@ let scan_utf8_wrap scan_utf8 callback thread state lexbuf =
    and the return from a file (after its inclusion has been
    processed). *)
 
-let linemarker region_prefix ~line ~file ?flag state lexbuf =
+let linemarker prefix ~line ~file ?flag state lexbuf =
   let {state; region; _} = state#sync lexbuf in
   let flag      = match flag with
                     Some '1' -> Some Directive.Push
@@ -490,7 +490,7 @@ let linemarker region_prefix ~line ~file ?flag state lexbuf =
                   | _        -> None in
   let linenum   = int_of_string line in
   let value     = linenum, file, flag in
-  let region    = Region.cover region_prefix region in
+  let region    = Region.cover prefix region in
   let directive = Directive.Linemarker Region.{value; region} in
   let pos       = region#start#add_nl in
   let pos       = (pos#set_file file)#set_line linenum
@@ -612,8 +612,8 @@ rule scan client state = parse
 
 (* Finishing a linemarker *)
 
-and eol region_prefix line file flag state = parse
-  nl | eof { linemarker region_prefix ~line ~file ?flag state lexbuf }
+and eol region line file flag state = parse
+  nl | eof { linemarker region ~line ~file ?flag state lexbuf }
 | _        { let {region; _} = state#sync lexbuf
              in fail region Invalid_linemarker_argument }
 

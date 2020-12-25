@@ -112,13 +112,17 @@ let insert_es6fun = function
   Stdlib.Ok tokens -> insert_es6fun tokens |> ok
 | Error _ as err -> err
 
+(* Filtering out the markup *)
+
 let tokens_of = function
   Stdlib.Ok lex_units ->
-    let open Core in
     let apply tokens = function
-      Token token -> token::tokens
-    | Markup _ | Directive _ -> tokens
+      Core.Token token -> token::tokens
+    | Core.Markup _ -> tokens
+    | Core.Directive d -> Token.Directive d :: tokens
     in List.fold_left apply [] lex_units |> List.rev |> ok
 | Error _ as err -> err
+
+(* Exported *)
 
 let filter = Utils.(insert_es6fun <@ tokens_of <@ Style.check)

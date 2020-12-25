@@ -4,13 +4,14 @@
 
 (* Vendor dependencies *)
 
-module Region = Simple_utils.Region
-module Markup = LexerLib.Markup
+module Region    = Simple_utils.Region
+module Markup    = LexerLib.Markup
+module Directive = LexerLib.Directive
 
 (* Utility modules *)
 
-module SMap   = Map.Make (String)
-module SSet   = Set.Make (String)
+module SMap = Map.Make (String)
+module SSet = Set.Make (String)
 
 (* TOKENS *)
 
@@ -19,9 +20,13 @@ type lexeme = string
 module T =
   struct
     type t =
+      (* Preprocessing directives *)
+
+      Directive of Directive.t
+
       (* Literals *)
 
-      String   of lexeme Region.reg
+    | String   of lexeme Region.reg
     | Verbatim of lexeme Region.reg
     | Bytes    of (lexeme * Hex.t) Region.reg
     | Int      of (lexeme * Z.t) Region.reg
@@ -194,9 +199,14 @@ module T =
     type token = t
 
     let proj_token = function
+        (* Preprocessing directives *)
+
+      Directive d ->
+        Directive.project d
+
       (* Literals *)
 
-      String Region.{region; value} ->
+    | String Region.{region; value} ->
         region, sprintf "String %S" value
     | Verbatim Region.{region; value} ->
         region, sprintf "Verbatim %S" value
@@ -265,9 +275,13 @@ module T =
     | ES6FUN   region -> region, "ES6FUN"
 
     let to_lexeme = function
+      (* Directives *)
+
+      Directive d -> Directive.to_lexeme d
+
       (* Literals *)
 
-      String s   -> sprintf "%S" (String.escaped s.Region.value)
+    | String s   -> sprintf "%S" (String.escaped s.Region.value)
     | Verbatim v -> String.escaped v.Region.value
     | Bytes b    -> fst b.Region.value
     | Int i

@@ -32,3 +32,5 @@ type lexeme = string
 
 val to_lexeme : t -> lexeme
 val to_string : offsets:bool -> [`Byte | `Point] -> t -> string
+val project   : t -> Region.t * string
+val to_region : t -> Region.t

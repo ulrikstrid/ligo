@@ -7,6 +7,7 @@ open CST
 module Region = Simple_utils.Region
 open! Region
 open! PPrint
+module Directive = LexerLib.Directive
 
 let pp_par : ('a -> document) -> 'a par reg -> document =
   fun printer {value; _} ->
@@ -31,6 +32,19 @@ and pp_declaration = function
   TypeDecl  d -> pp_type_decl  d
 | ConstDecl d -> pp_const_decl d
 | FunDecl   d -> pp_fun_decl   d
+| Directive d -> pp_dir_decl   d
+
+and pp_dir_decl = function
+  Directive.Linemarker {value; _} ->
+    let open Directive in
+    let linenum, file_path, flag_opt = value in
+    let flag =
+      match flag_opt with
+        Some Push -> " 1"
+      | Some Pop  -> " 2"
+      | None      -> "" in
+    let lexeme = Printf.sprintf "# %d %S%s" linenum file_path flag
+    in string lexeme
 
 and pp_const_decl {value; _} =
   let {name; const_type; init; attributes; _} = value in

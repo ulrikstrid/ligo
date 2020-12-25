@@ -5,8 +5,9 @@
 
 (* Vendor dependencies *)
 
-module Region = Simple_utils.Region
-module Markup = LexerLib.Markup
+module Region    = Simple_utils.Region
+module Markup    = LexerLib.Markup
+module Directive = LexerLib.Directive
 
 (* Utility modules *)
 
@@ -20,9 +21,13 @@ type lexeme = string
 module T =
   struct
     type t =
+      (* Preprocessing directives *)
+
+      Directive of Directive.t
+
       (* Literals *)
 
-      String   of lexeme Region.reg
+    | String   of lexeme Region.reg
     | Verbatim of lexeme Region.reg
     | Bytes    of (lexeme * Hex.t) Region.reg
     | Int      of (lexeme * Z.t) Region.reg
@@ -117,8 +122,7 @@ module T =
 
     let gen_sym prefix =
       let count = ref 0 in
-      fun () -> incr count;
-             prefix ^ string_of_int !count
+      fun () -> incr count; prefix ^ string_of_int !count
 
     let id_sym   = gen_sym "id"
     and ctor_sym = gen_sym "C"
@@ -227,9 +231,14 @@ module T =
     type token = t
 
     let proj_token = function
-        (* Literals *)
+        (* Preprocessing directives *)
 
-      String Region.{region; value} ->
+      Directive d ->
+        Directive.project d
+
+      (* Literals *)
+
+    | String Region.{region; value} ->
         region, sprintf "String %S" value
     | Verbatim Region.{region; value} ->
         region, sprintf "Verbatim %S" value
@@ -332,9 +341,13 @@ module T =
 
 
     let to_lexeme = function
+      (* Directives *)
+
+      Directive d -> Directive.to_lexeme d
+
       (* Literals *)
 
-      String s   -> sprintf "%S" (String.escaped s.Region.value)
+    | String s   -> sprintf "%S" (String.escaped s.Region.value)
     | Verbatim v -> String.escaped v.Region.value
     | Bytes b    -> fst b.Region.value
     | Int i

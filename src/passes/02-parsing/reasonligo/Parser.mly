@@ -44,6 +44,8 @@ let first_region = function
 %on_error_reduce nsepseq(fun_arg,COMMA)
 %on_error_reduce fun_type
 %on_error_reduce core_type
+%on_error_reduce module_var_e
+%on_error_reduce module_var_t
 
 (* See [ParToken.mly] for the definition of tokens. *)
 
@@ -144,15 +146,12 @@ list__(item):
 (* Main *)
 
 contract:
-  declarations EOF { {decl=$1; eof=$2} }
-
-declarations:
-  declaration              { $1,[] : CST.declaration Utils.nseq }
-| declaration declarations { Utils.nseq_cons $1 $2              }
+  nseq(declaration) EOF { {decl=$1; eof=$2} }
 
 declaration:
-  type_decl ";"?           { TypeDecl  $1 }
-| let_declaration ";"?     { ConstDecl $1 }
+  type_decl ";"?        { TypeDecl  $1 }
+| let_declaration ";"?  { ConstDecl $1 }
+| "<directive>"         { Directive $1 }
 
 (* Type declarations *)
 

@@ -9,7 +9,7 @@
 
 open Simple_utils.Region
 module CST = Cst.Pascaligo
-open CST
+open! CST
 
 (* Utilities *)
 
@@ -61,8 +61,6 @@ let mk_arith f arg1 op arg2 =
 %on_error_reduce nsepseq(core_pattern,COMMA)
 %on_error_reduce constr_pattern
 %on_error_reduce core_expr
-%on_error_reduce module_var_e
-%on_error_reduce module_var_t
 %on_error_reduce nsepseq(param_decl,SEMI)
 %on_error_reduce nsepseq(selection,DOT)
 %on_error_reduce nsepseq(field_path_assignment,SEMI)
@@ -92,11 +90,11 @@ let mk_arith f arg1 op arg2 =
 %on_error_reduce option(SEMI)
 %on_error_reduce option(VBAR)
 %on_error_reduce projection
-%on_error_reduce module_access_e
-%on_error_reduce module_access_t
 %on_error_reduce option(arguments)
 %on_error_reduce path
 %on_error_reduce nseq(Attr)
+%on_error_reduce module_var_e
+%on_error_reduce module_var_t
 
 %%
 
@@ -193,9 +191,10 @@ contract:
   nseq(declaration) EOF { {decl=$1; eof=$2} }
 
 declaration:
-  type_decl  {  TypeDecl $1 }
-| const_decl { ConstDecl $1 }
-| fun_decl   {   FunDecl $1 }
+  type_decl     {  TypeDecl $1 }
+| const_decl    { ConstDecl $1 }
+| fun_decl      {   FunDecl $1 }
+| "<directive>" { Directive $1 }
 
 (* Type declarations *)
 
@@ -243,7 +242,7 @@ core_type:
 | "_"             { TWild   $1 }
 | "<string>"      { TString $1 }
 | "<int>"         { TInt    $1 }
-| module_access_t {   TModA $1 }
+| module_access_t { TModA   $1 }
 | par(type_expr)  { TPar    $1 }
 | type_name type_tuple {
     let region = cover $1.region $2.region

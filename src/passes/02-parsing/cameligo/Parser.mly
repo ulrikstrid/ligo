@@ -31,8 +31,6 @@ let first_region = function
 %on_error_reduce bin_op(disj_expr_level,BOOL_OR,conj_expr_level)
 %on_error_reduce base_expr(expr)
 %on_error_reduce base_expr(base_cond)
-%on_error_reduce module_var_e
-%on_error_reduce module_var_t
 %on_error_reduce core_expr
 %on_error_reduce match_expr(base_cond)
 %on_error_reduce constr_expr
@@ -51,6 +49,8 @@ let first_region = function
 %on_error_reduce fun_type
 %on_error_reduce cartesian
 %on_error_reduce sub_irrefutable
+%on_error_reduce module_var_e
+%on_error_reduce module_var_t
 
 (* See [ParToken.mly] for the definition of tokens. *)
 
@@ -148,15 +148,12 @@ list__(item):
 (* Main *)
 
 contract:
-  declarations EOF { {decl=$1; eof=$2} }
-
-declarations:
-  declaration              { $1,[] : CST.declaration Utils.nseq }
-| declaration declarations { Utils.nseq_cons $1 $2              }
+  nseq(declaration) EOF { {decl=$1; eof=$2} }
 
 declaration:
-  type_decl       { TypeDecl $1 }
-| let_declaration {      Let $1 }
+  type_decl       {  TypeDecl $1 }
+| let_declaration {       Let $1 }
+| "<directive>"   { Directive $1 }
 
 (* Type declarations *)
 
@@ -271,8 +268,8 @@ module_access_t :
     in {region; value} }
 
 module_var_t:
-  module_access_t   { TModA $1 }
-| field_name        { TVar  $1 }
+  module_access_t  { TModA $1 }
+| field_name       { TVar  $1 }
 
 field_decl:
   seq("[@attr]") field_name ":" type_expr {
