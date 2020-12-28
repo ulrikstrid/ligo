@@ -294,8 +294,8 @@ let%expect_test _ =
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               the syntax is guessed from the extension (.ligo, .mligo, .religo,
+               .jsligo respectively).
 
            --typer=TYPER_SWITCH (absent=old)
                TYPER_SWITCH is the typer to be used ('new' or 'old')
@@ -367,8 +367,8 @@ let%expect_test _ =
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               the syntax is guessed from the extension (.ligo, .mligo, .religo,
+               .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -449,8 +449,8 @@ let%expect_test _ =
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               the syntax is guessed from the extension (.ligo, .mligo, .religo,
+               .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -523,8 +523,8 @@ let%expect_test _ =
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               the syntax is guessed from the extension (.ligo, .mligo, .religo,
+               .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -594,8 +594,8 @@ let%expect_test _ =
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               the syntax is guessed from the extension (.ligo, .mligo, .religo,
+               .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -660,8 +660,8 @@ let%expect_test _ =
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               the syntax is guessed from the extension (.ligo, .mligo, .religo,
+               .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -692,8 +692,8 @@ let%expect_test _ =
            SYNTAX (required)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               the syntax is guessed from the extension (.ligo, .mligo, .religo,
+               .jsligo respectively).
 
     OPTIONS
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
