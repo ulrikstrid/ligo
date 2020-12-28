@@ -4,6 +4,7 @@
   (libraries
     ;; Ligo
     simple-utils
+    LexerLib
     ;; Third party
     hex
     zarith)
