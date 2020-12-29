@@ -160,7 +160,7 @@ and attributes = attribute list
 (* Non-recursive values *)
 
 and let_binding = {
-  binders  : binding_pattern;
+  binders  : pattern;
   lhs_type : (colon * type_expr) option;
   eq       : equal;
   expr     : expr
@@ -203,8 +203,6 @@ and sum_type = {
   attributes : attributes
 }
 
-and pattern 
-
 and field_decl = {
   field_name : field_name;
   colon      : colon;
@@ -231,15 +229,15 @@ and destruct = {
   target    : let_binding reg;
 }
 
-and binding_pattern =
+and pattern =
   PRest     of rest_pattern reg
 | PAssign   of assign_pattern reg
 | PVar      of variable
 | PConstr   of variable
 | PDestruct of destruct reg
-| PObject   of (binding_pattern, comma) nsepseq braced reg
+| PObject   of (pattern, comma) nsepseq braced reg
 | PWild     of Region.t
-| PArray    of (binding_pattern, comma) nsepseq brackets reg
+| PArray    of (pattern, comma) nsepseq brackets reg
 
 and string_expr =
   String   of string reg
@@ -471,7 +469,7 @@ let type_expr_to_region = function
 | TWild    region
  -> region
 
-let binding_pattern_to_region = function
+let pattern_to_region = function
   PRest {region;_ }   | PAssign {region ;_ }
 | PVar {region ;_ }    | PConstr {region; _ } | PDestruct {region ;_ }
 | PObject {region ;_ } | PArray {region; _} | PWild region -> region

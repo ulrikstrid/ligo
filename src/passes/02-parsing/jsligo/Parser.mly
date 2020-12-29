@@ -296,7 +296,7 @@ binding_pattern:
   
 binding_initializer:
   binding_pattern type_annot_opt initializer_ {
-    let region = cover (binding_pattern_to_region $1) (expr_to_region (snd $3))
+    let region = cover (pattern_to_region $1) (expr_to_region (snd $3))
     in
     let value = {
       binders  = $1;
