@@ -306,7 +306,7 @@ type 'a interpret_res =
 let failure_interpret
     ?(options = default_options)
     (instr:('b, 'a) descr)
-    (bef:'b ty) : 'a interpret_res tzresult Lwt.t =
+    (bef:'b) : 'a interpret_res tzresult Lwt.t =
   let {
     tezos_context ;
     source ;
@@ -318,7 +318,7 @@ let failure_interpret
     now = _ ;
   } = options in
   let step_constants = { source ; self ; payer ; amount ; chain_id } in
-  Script_interpreter.step (module No_trace : STEP_LOGGER) tezos_context step_constants instr (Ex_ty bef) >>= fun x ->
+  Script_interpreter.step (module No_trace : STEP_LOGGER) tezos_context step_constants instr bef >>= fun x ->
   match x with
   | Ok (s , _ctxt) -> return @@ Succeed s
   | Error ((Reject (_, expr, _))::_t) -> return @@ Fail expr (* This catches failwith errors *)
