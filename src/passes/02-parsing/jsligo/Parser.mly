@@ -678,9 +678,9 @@ call_expr_level:
   }
 
 array_item:
-  /* */                 { Empty_entry }
-| assignment_expr       { Expr_entry $1 }
-| "..." assignment_expr {
+  /* */      { Empty_entry }
+| expr       { Expr_entry $1 }
+| "..." expr {
   let region = cover $1 (expr_to_region $2) in
   let value: array_item_rest = {
     ellipsis = $1;
@@ -733,7 +733,7 @@ property:
       value
     }
   }
-| property_name ":" assignment_expr {
+| property_name ":" expr {
   let region = cover (expr_to_region $1) (expr_to_region $3) in
   let value = {
     name  = $1;

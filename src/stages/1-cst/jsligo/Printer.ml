@@ -426,12 +426,6 @@ and print_arith_expr state = function
 | Int {region; value=lex,z} ->
     let line = sprintf "Int %s (%s)" lex (Z.to_string z)
     in print_token state region line
-| Mutez {region; value=lex,z} ->
-    let line = sprintf "Mutez %s (%s)" lex (Z.to_string z)
-    in print_token state region line
-| Nat {region; value=lex,z} ->
-    let line = sprintf "Nat %s (%s)" lex (Z.to_string z)
-    in print_token state region line
 
 and print_string_expr state = function
   String s ->
@@ -923,12 +917,6 @@ and pp_arith_expr state = function
 | Int i ->
     pp_node state "Int";
     pp_int  state i
-| Nat n ->
-    pp_node state "Nat";
-    pp_int  state n
-| Mutez m ->
-    pp_node state "Mutez";
-    pp_int  state m
 
 and pp_e_logic state = function
   BoolExpr e ->

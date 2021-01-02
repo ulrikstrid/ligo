@@ -319,7 +319,7 @@ and expr =
 | ECodeInj of code_inj reg
 
 and statement =
-| SBlock      of (statement, semi) nsepseq braced reg
+  SBlock      of (statement, semi) nsepseq braced reg
 | SVar        of variable
 | SExpr       of expr
 | SCond       of cond_statement reg
@@ -360,8 +360,6 @@ and arith_expr =
 | Mod   of modulo bin_op reg
 | Neg   of minus un_op reg
 | Int   of (string * Z.t) reg
-| Nat   of (string * Z.t) reg
-| Mutez of (string * Z.t) reg
 
 and logic_expr =
   BoolExpr of bool_expr
@@ -492,8 +490,7 @@ let logic_expr_to_region = function
 let arith_expr_to_region = function
   Add {region;_} | Sub {region;_} | Mult {region;_}
 | Div {region;_} | Mod {region;_} | Neg {region;_}
-| Int {region;_} | Mutez {region; _}
-| Nat {region; _} -> region
+| Int {region;_} -> region
 
 let string_expr_to_region = function
   Verbatim {region;_} | String {region;_} -> region
