@@ -683,7 +683,7 @@ fun cases ->
   | (PPar { value = { inside = PRecord record; _} ;_}, expr), [] ->
     let (inj, _loc) = r_split record in
     let aux : CST.field_pattern CST.reg -> (label * ty_expr binder,_) result = fun field ->
-      let { field_name ; eq=_ ; pattern } : CST.field_pattern = field.value in 
+      let { field_name ; eq=_ ; pattern } : CST.field_pattern = field.value in
       match pattern with
       | CST.PVar var ->
         let (name, loc) = r_split var in
@@ -834,14 +834,21 @@ let compile_declaration : CST.declaration -> _ = fun decl ->
   let return_1 reg decl = return reg [decl] in
   match decl with
     TypeDecl {value={name; type_expr; _};region} ->
-    let (name,_) = r_split name in
-    let%bind type_expr = compile_type_expression type_expr in
-    return_1 region @@ AST.Declaration_type  {type_binder=Var.of_name name; type_expr}
+      let (name,_) = r_split name in
+      let%bind type_expr = compile_type_expression type_expr in
+      let type_binder = Var.of_name name in
+      let ast = AST.Declaration_type {type_binder; type_expr}
+      in return_1 region ast
+
   | Let {value = (_kwd_let, kwd_rec, let_binding, attributes); region} ->
     let%bind lst = compile_let_binding ?kwd_rec attributes let_binding in
-    let aux (binder,attr, expr) =  AST.Declaration_constant {binder; attr; expr} in
-    return region @@ List.map aux lst
+    let aux (binder,attr, expr) =
+      AST.Declaration_constant {binder; attr; expr}
+    in return region @@ List.map aux lst
+
+  | Directive _ -> ok []
 
 let compile_program : CST.ast -> _ result = fun t ->
-    let%bind lst = bind_map_list compile_declaration @@ nseq_to_list t.decl in
-    ok @@ List.flatten lst
+  let%bind list =
+    bind_map_list compile_declaration @@ nseq_to_list t.decl
+  in ok @@ List.flatten list

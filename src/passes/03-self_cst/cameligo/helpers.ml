@@ -215,12 +215,13 @@ and fold_declaration : ('a, 'err) folder -> 'a -> declaration -> ('a, 'err) resu
     let%bind res = self_expr init let_rhs in
     (match lhs_type with
       Some (_, ty) -> self_type res ty
-    | None ->    ok @@ res
+    | None ->    ok res
     )
   | TypeDecl {value;region=_} ->
     let {kwd_type=_;name=_;eq=_;type_expr} = value in
     let%bind res = self_type init type_expr in
-    ok @@ res
+    ok res
+  | Directive _ -> ok init
 
 and fold_program : ('a, 'err) folder -> 'a -> t -> ('a, 'err) result =
   fun f init {decl;eof=_} ->
@@ -495,6 +496,7 @@ and map_declaration : ('err) mapper -> declaration -> (declaration, 'err) result
     let%bind type_expr = self_type type_expr in
     let value = {value with type_expr} in
     return @@ TypeDecl {value;region}
+  | Directive _ as d -> return d
 
 and map_program : ('err) mapper -> t -> (t, 'err) result =
   fun f {decl;eof} ->

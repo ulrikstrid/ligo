@@ -5,7 +5,6 @@
     ;; Vendors
     LexerLib
     simple-utils
-    LexerLib
     ;; Third party
     hex
     zarith)

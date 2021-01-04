@@ -940,15 +940,18 @@ and compile_fun_decl : CST.fun_decl -> (expression_variable * type_expression op
   let attr = compile_attributes attributes in
   return (fun_binder, fun_type, attr, func)
 
-let compile_declaration : CST.declaration -> _ =
+let compile_declaration : CST.declaration -> _ result =
   fun decl ->
   let return reg decl =
-    ok @@ Location.wrap ~loc:(Location.lift reg) decl in
+    ok @@ Some (Location.wrap ~loc:(Location.lift reg) decl) in
   match decl with
     TypeDecl {value={name; type_expr; _}; region} ->
       let name, _ = r_split name in
       let%bind type_expr = compile_type_expression type_expr in
-      return region @@ AST.Declaration_type {type_binder=Var.of_name name; type_expr}
+      let type_binder = Var.of_name name in
+      let ast = AST.Declaration_type {type_binder; type_expr}
+      in return region ast
+
   | ConstDecl {value={name; const_type; init; attributes; _}; region} ->
       let attr = compile_attributes attributes in
       let name, loc = r_split name in
@@ -956,12 +959,20 @@ let compile_declaration : CST.declaration -> _ =
       let%bind ascr =
         bind_map_option (compile_type_expression <@ snd) const_type in
       let%bind expr = compile_expression init in
-      let binder = {var;ascr} in
-      return region @@ AST.Declaration_constant {binder;attr;expr}
+      let binder = {var; ascr} in
+      let ast = AST.Declaration_constant {binder; attr; expr}
+      in return region ast
+
   | FunDecl {value;region} ->
-      let%bind (var,ascr,attr,expr) = compile_fun_decl value in
-      let binder = {var;ascr} in
-      return region @@ AST.Declaration_constant {binder;attr;expr}
+      let%bind (var, ascr, attr, expr) = compile_fun_decl value in
+      let binder = {var; ascr} in
+      let ast = AST.Declaration_constant {binder; attr; expr}
+      in return region ast
+
+  | Directive _ -> ok None
 
 let compile_program : CST.ast -> _ result =
-  fun t -> bind_map_list compile_declaration @@ nseq_to_list t.decl
+  fun t ->
+  let%bind list =
+    bind_map_list compile_declaration (nseq_to_list t.decl)
+  in ok @@ List.filter_map (fun x -> x) list
