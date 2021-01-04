@@ -149,7 +149,7 @@ and attributes = attribute list
 (* Non-recursive values *)
 
 and let_binding = {
-  binders  : binding_pattern;
+  binders  : pattern;
   lhs_type : (colon * type_expr) option;
   eq       : equal;
   expr     : expr
@@ -192,8 +192,6 @@ and sum_type = {
   attributes : attributes
 }
 
-and pattern
-
 and field_decl = {
   field_name : field_name;
   colon      : colon;
@@ -220,15 +218,15 @@ and destruct = {
   target    : let_binding reg;
 }
 
-and binding_pattern =
+and pattern =
   PRest     of rest_pattern reg
 | PAssign   of assign_pattern reg
 | PVar      of variable
 | PConstr   of variable
 | PDestruct of destruct reg
-| PObject   of (binding_pattern, comma) nsepseq braced reg
+| PObject   of (pattern, comma) nsepseq braced reg
 | PWild     of Region.t
-| PArray    of (binding_pattern, comma) nsepseq brackets reg
+| PArray    of (pattern, comma) nsepseq brackets reg
 
 and string_expr =
   String   of string reg
@@ -310,7 +308,7 @@ and expr =
 | ECodeInj of code_inj reg
 
 and statement =
-| SBlock      of (statement, semi) nsepseq braced reg
+  SBlock      of (statement, semi) nsepseq braced reg
 | SVar        of variable
 | SExpr       of expr
 | SCond       of cond_statement reg
@@ -352,8 +350,6 @@ and arith_expr =
 | Mod   of modulo bin_op reg
 | Neg   of minus un_op reg
 | Int   of (string * Z.t) reg
-| Nat   of (string * Z.t) reg
-| Mutez of (string * Z.t) reg
 
 and logic_expr =
   BoolExpr of bool_expr
@@ -461,7 +457,7 @@ let type_expr_to_region = function
 | TWild    region
  -> region
 
-let binding_pattern_to_region = function
+let pattern_to_region = function
   PRest {region;_ }   | PAssign {region ;_ }
 | PVar {region ;_ }    | PConstr {region; _ } | PDestruct {region ;_ }
 | PObject {region ;_ } | PArray {region; _} | PWild region -> region
@@ -484,8 +480,7 @@ let logic_expr_to_region = function
 let arith_expr_to_region = function
   Add {region;_} | Sub {region;_} | Mult {region;_}
 | Div {region;_} | Mod {region;_} | Neg {region;_}
-| Int {region;_} | Mutez {region; _}
-| Nat {region; _} -> region
+| Int {region;_} -> region
 
 let string_expr_to_region = function
   Verbatim {region;_} | String {region;_} -> region

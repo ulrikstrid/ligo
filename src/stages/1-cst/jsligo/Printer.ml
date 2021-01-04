@@ -283,7 +283,7 @@ and print_terminator state = function
 | None -> ()
 
 and print_let_binding state {value = {binders; lhs_type; eq; expr}; _} =
-  print_binding_pattern state binders;
+  print_pattern state binders;
   print_option state (fun state (colon, type_expr) ->
     print_token state colon ":";
     print_type_expr state type_expr
@@ -307,15 +307,15 @@ and print_destruct_pattern state { value = {property; colon; target}; _ } =
 
 and print_object_pattern state {value = {lbrace; inside; rbrace}; _} =
   print_token state lbrace "{";
-  print_nsepseq state "," (fun state binding_pattern -> print_binding_pattern state binding_pattern) inside;
+  print_nsepseq state "," (fun state pattern -> print_pattern state pattern) inside;
   print_token state rbrace "}"
 
 and print_array_pattern state {value = {lbracket; inside; rbracket}; _} =
   print_token state lbracket "[";
-  print_nsepseq state "," (fun state binding_pattern -> print_binding_pattern state binding_pattern) inside;
+  print_nsepseq state "," (fun state pattern -> print_pattern state pattern) inside;
   print_token state rbracket "]"
 
-and print_binding_pattern state = function
+and print_pattern state = function
   PRest e ->     print_rest_pattern     state e
 | PAssign e ->   print_assign_pattern   state e
 | PVar v ->      print_pvar             state v
@@ -432,12 +432,6 @@ and print_arith_expr state = function
     print_expr  state arg
 | Int {region; value=lex,z} ->
     let line = sprintf "Int %s (%s)" lex (Z.to_string z)
-    in print_token state region line
-| Mutez {region; value=lex,z} ->
-    let line = sprintf "Mutez %s (%s)" lex (Z.to_string z)
-    in print_token state region line
-| Nat {region; value=lex,z} ->
-    let line = sprintf "Nat %s (%s)" lex (Z.to_string z)
     in print_token state region line
 
 and print_string_expr state = function
@@ -686,7 +680,7 @@ and pp_let_binding state {value = {binders; lhs_type; expr; _}; _} =
   let fields = if lhs_type = None then 2 else 3 in
   let arity = 0 in
   pp_node state "<binding>";
-  pp_binding_pattern (state#pad fields arity) binders;
+  pp_pattern (state#pad fields arity) binders;
   let arity = match lhs_type with
   | Some (_, type_expr) ->
     let state = state#pad fields (arity + 1) in
@@ -699,7 +693,7 @@ and pp_let_binding state {value = {binders; lhs_type; expr; _}; _} =
   pp_node state "<expr>";
   pp_expr (state#pad 1 0) expr
 
-and pp_binding_pattern state = function
+and pp_pattern state = function
   PRest { value = {rest; _}; region} ->
     pp_loc_node state "<rest>" region;
     pp_ident (state#pad 1 0) rest
@@ -720,14 +714,14 @@ and pp_binding_pattern state = function
 | PObject {value = {inside; _}; region} ->
     pp_loc_node state "<object>" region;
     let properties = Utils.nsepseq_to_list inside in
-    let apply len rank = pp_binding_pattern (state#pad len rank) in
+    let apply len rank = pp_pattern (state#pad len rank) in
     List.iteri (List.length properties |> apply) properties
 | PWild r ->
     pp_loc_node state "<wild>" r;
 | PArray {value = {inside; _}; region} ->
     pp_loc_node state "<array>" region;
     let items = Utils.nsepseq_to_list inside in
-    let apply len rank = pp_binding_pattern (state#pad len rank) in
+    let apply len rank = pp_pattern (state#pad len rank) in
     List.iteri (List.length items |> apply) items
 
 and pp_type_decl state decl =
@@ -933,12 +927,6 @@ and pp_arith_expr state = function
 | Int i ->
     pp_node state "Int";
     pp_int  state i
-| Nat n ->
-    pp_node state "Nat";
-    pp_int  state n
-| Mutez m ->
-    pp_node state "Mutez";
-    pp_int  state m
 
 and pp_e_logic state = function
   BoolExpr e ->
