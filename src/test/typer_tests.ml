@@ -89,7 +89,7 @@ let main = test_suite "Typer (from core AST)"
     test y "bool"        TestExpressions.bool ; (* needs variants *)
     test y "string"      TestExpressions.string ;
     test y "bytes"       TestExpressions.bytes ;    
-    test no "tuple"       TestExpressions.tuple ;
+    test y "tuple"       TestExpressions.tuple ;
     test y "constructor" TestExpressions.constructor ;
     test y "record"      TestExpressions.record ;
     test no(*y*) "lambda"      TestExpressions.lambda ;
