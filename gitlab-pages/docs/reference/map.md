@@ -372,7 +372,7 @@ let updated_map : register =
 
 ```jsligo group=maps
 let updated_map : register =
-  Map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves)
+  Map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves);
 ```
 
 </Syntax>
