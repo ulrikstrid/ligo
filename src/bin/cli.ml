@@ -382,6 +382,85 @@ let measure_contract =
   let doc = "Subcommand: Measure a contract's compiled size in bytes." in
   (Term.ret term , Term.info ~doc cmdname)
 
+(* https://rosettacode.org/wiki/Read_entire_file#OCaml *)
+let load_file f =
+  let ic = open_in f in
+  let n = in_channel_length ic in
+  let s = Bytes.create n in
+  really_input ic s 0 n;
+  close_in ic;
+  Bytes.unsafe_to_string s
+
+let storage_file n =
+  let open Arg in
+  let info =
+    let docv = "STORAGE_FILE" in
+    let doc = "$(docv) is the path to the smart contract storage file." in
+    info ~docv ~doc [] in
+  required @@ pos n (some string) None info
+
+let measure_tz =
+  let f source_file storage_file display_format =
+    let value =
+      let code = load_file source_file in
+      let storage = load_file storage_file in
+      let open Tezos_client_006_PsCARTHA.Michelson_v1_parser in
+      let%bind contract =
+        Proto_alpha_utils.Trace.trace_tzresult
+          (fun errs ->
+             Tezos_client_006_PsCARTHA.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:false
+               Format.err_formatter (List.map (fun (`Tezos_alpha_error err) -> err) errs);
+             failwith "TODO") @@
+        Tezos_micheline.Micheline_parser.no_parsing_error @@
+        parse_toplevel ~check:false code
+      in
+      let%bind storage =
+        Proto_alpha_utils.Trace.trace_tzresult (fun _ -> failwith "TODO") @@
+        Tezos_micheline.Micheline_parser.no_parsing_error @@
+        parse_expression ~check:false storage
+      in
+      let dummy_context = Proto_alpha_utils.Memory_proto_alpha.dummy_environment.tezos_context in
+      let script : Tezos_raw_protocol_006_PsCARTHA.Alpha_context.Script.t = {
+        code = Tezos_raw_protocol_006_PsCARTHA.Script_repr.lazy_expr contract.expanded ;
+        storage = Tezos_raw_protocol_006_PsCARTHA.Script_repr.lazy_expr storage.expanded ;
+      } in
+      let%bind (_, new_context) =
+        Proto_alpha_utils.Trace.trace_alpha_tzresult_lwt
+          (fun errs ->
+             Tezos_client_006_PsCARTHA.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:false
+               Format.err_formatter (List.map (fun (`Tezos_alpha_error err) -> err) errs);
+             failwith "TODO") @@
+        Tezos_raw_protocol_006_PsCARTHA.Script_ir_translator.parse_script
+          dummy_context
+          ~legacy:false
+          script in
+      let gas = Tezos_raw_protocol_006_PsCARTHA.Alpha_context.Gas.consumed ~since:dummy_context ~until:new_context in
+      let strs =
+        Tezos_micheline.Micheline.root
+          (Tezos_raw_protocol_006_PsCARTHA.Michelson_v1_primitives.strings_of_prims contract.expanded) in
+      let size = Proto_alpha_utils.Error_monad.force_lwt ~msg:"TODO" (Proto_alpha_utils.Measure.measure strs) in
+      ok @@ (Z.to_int gas, size) in
+    let format =
+      let open Display in
+      let gas_and_bytes_ppformat ~display_format ppf (gas, bytes) =
+        match display_format with
+        | Human_readable | Dev ->
+          Format.fprintf ppf "%d gas, %d bytes" gas bytes in
+      let gas_and_bytes_jsonformat (gas, bytes) =
+        `Tuple [`Int gas; `Int bytes] in
+      {
+        pp = gas_and_bytes_ppformat;
+        to_json = gas_and_bytes_jsonformat;
+      } in
+    let format = Display.bind_format format Main.Formatter.error_format in
+    toplevel ~display_format (Display.Displayable { value ; format }) value
+  in
+  let term =
+    Term.(const f $ source_file 0 $ storage_file 1 $ display_format) in
+  let cmdname = "measure-tz" in
+  let doc = "Subcommand: Measure a compiled .tz contract's typechecking cost." in
+  (Term.ret term , Term.info ~doc cmdname)
+
 let compile_parameter =
   let f source_file entry_point expression syntax typer_switch protocol_version amount balance sender source now display_format michelson_format output_file =
     return_result ~output_file ~display_format (Formatter.Michelson_formatter.michelson_format michelson_format) @@
@@ -674,6 +753,7 @@ let run ?argv () =
     test ;
     compile_file ;
     measure_contract ;
+    measure_tz ;
     compile_parameter ;
     compile_storage ;
     compile_expression ;
