@@ -253,6 +253,7 @@ release:
       - ligo
       - ligo.deb
   script:
+    - go version
     - release-cli create --name "Release $CI_COMMIT_TAG" --description "$(cat release-notes.md)" --assets-links-name "Static Linux binary" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo" --assets-links-name "deb package" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo.deb"
 
 .website:
