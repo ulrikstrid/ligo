@@ -586,6 +586,11 @@ let print_env_state_node (node_printer : Format.formatter -> 'a -> unit) ((env,s
       (Yojson.Safe.to_string (Solver.json_typer_state state))
       node_printer node
 
+let get_alias variable aliases =
+  trace_option (corner_case (Format.asprintf "can't find alias root of variable %a" Var.pp variable)) @@
+  (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
+  try Some (Solver.UF.repr variable aliases) with Not_found -> None
+
 let type_and_subst
       (in_printer : Format.formatter -> 'a -> unit)
       (out_printer : Format.formatter -> 'b -> unit)
@@ -602,24 +607,25 @@ let type_and_subst
     let assignments = state.plugin_states#assignments in
     let substs : variable: O.type_variable -> _ = fun ~variable ->
       to_option @@
-      let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s%!" @@ Format.asprintf "Looking up var  %a\n%!" Var.pp variable) in
-      let%bind root =
-        trace_option (corner_case (Format.asprintf "can't find alias root of variable %a%!" Var.pp variable)) @@
-          (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
-          try Some (Solver.UF.repr variable aliases) with Not_found -> None in
-      let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s%!" @@ Format.asprintf "Looking up var  %a (its root is %a)\n%!" Var.pp variable Var.pp root) in
+      let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "Looking up var  %a\n" Var.pp variable) in
+      let%bind root = get_alias variable aliases in
+      let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s" @@ Format.asprintf "Looking up var  %a (its root is %a)\n" Var.pp variable Var.pp root) in
       let%bind assignment =
         trace_option (corner_case (Format.asprintf "can't find assignment for root %a%!" Var.pp root)) @@
           (Database_plugins.All_plugins.Assignments.find_opt root assignments) in
       match assignment with
       | `Constructor { tv ; c_tag ; tv_list } ->
-        let () = Format.printf "\ncstr : %a %a\n%!" Ast_typed.PP.type_variable tv Ast_typed.PP.type_variable variable in
+        let%bind tv_root = get_alias variable aliases in
+        let () = Format.printf "\ncstr : %a(was %a) %a(was %a)\n" Ast_typed.PP.type_variable tv_root Ast_typed.PP.type_variable tv Ast_typed.PP.type_variable root Ast_typed.PP.type_variable variable in
+        let () = assert (Var.equal tv_root root) in
         let%bind (expr : O.type_content) = trace_option (corner_case "wrong constant tag") @@
         Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map O.t_variable tv_list)) in
         let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s%!" @@ Format.asprintf "Substituing var %a (%a is %a)\n%!" Var.pp variable Var.pp root Ast_typed.PP.type_content expr) in
         ok @@ expr
       | `Row { tv ; r_tag ; tv_map ; reason_row_simpl=_; is_mandatory_constraint=_ } ->
-        let () = Format.printf "\ncstr : %a %a\n%!" Ast_typed.PP.type_variable tv Ast_typed.PP.type_variable variable in
+        let%bind tv_root = get_alias variable aliases in
+        let () = Format.printf "\ncstr : %a(was %a) %a(was %a)\n" Ast_typed.PP.type_variable tv_root Ast_typed.PP.type_variable tv Ast_typed.PP.type_variable root Ast_typed.PP.type_variable variable in
+        let () = assert (Var.equal tv_root root) in
         let (expr : O.type_content) = Typesystem.Core.type_expression'_of_simple_c_row (r_tag , (O.LMap.map O.t_variable tv_map)) in
         let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s%!" @@ Format.asprintf "Substituing var %a (%a is %a)\n%!" Var.pp variable Var.pp root Ast_typed.PP.type_content expr) in
         ok @@ expr
