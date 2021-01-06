@@ -1,4 +1,4 @@
-/* Test loops in ReasonLIGO */
+/* Test loops in JsLIGO */
 
 let aux_simple = (i : int) : int => {
   if (i < 100) { return aux_simple (i + 1); } else { return i; };

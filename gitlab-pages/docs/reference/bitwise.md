@@ -17,6 +17,9 @@ val and : 'a -> nat -> nat
 <SyntaxTitle syntax="reasonligo">
 let and: ('a, nat) => nat
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let and: ('a, nat) => nat
+</SyntaxTitle>
 
 `'a` can either be an `int` or `nat`.
 
@@ -43,6 +46,13 @@ let zero: nat = Bitwise.and(2n, 1n);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let zero: nat = Bitwise.and((2 as nat), (1 as nat));
+```
+
+</Syntax>
 
 
 <SyntaxTitle syntax="pascaligo">
@@ -52,6 +62,9 @@ function or : nat -> nat -> nat
 val or :  nat -> nat -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
+let or: (nat, nat) => nat
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
 let or: (nat, nat) => nat
 </SyntaxTitle>
 
@@ -78,6 +91,13 @@ let three: nat = Bitwise.or(2n, 1n);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let three: nat = Bitwise.or((2 as nat), (1 as nat));
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function xor : nat -> nat -> nat
@@ -86,6 +106,9 @@ function xor : nat -> nat -> nat
 val xor :  nat -> nat -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
+let xor: (nat, nat) => nat
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
 let xor: (nat, nat) => nat
 </SyntaxTitle>
 
@@ -112,6 +135,13 @@ let three: nat = Bitwise.xor(2n, 1n);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let three: nat = Bitwise.xor((2 as nat), (1 as nat));
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function shift_left : nat -> nat -> nat
@@ -120,6 +150,9 @@ function shift_left : nat -> nat -> nat
 val shift_left :  nat -> nat -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
+let shift_left: (nat, nat) => nat
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
 let shift_left: (nat, nat) => nat
 </SyntaxTitle>
 
@@ -146,6 +179,13 @@ let four: nat = Bitwise.shift_left(2n, 1n);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let four: nat = Bitwise.shift_left((2 as nat), (1 as nat));
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function shift_right : nat -> nat -> nat
@@ -154,6 +194,9 @@ function shift_right : nat -> nat -> nat
 val shift_right :  nat -> nat -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
+let shift_right: (nat, nat) => nat
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
 let shift_right: (nat, nat) => nat
 </SyntaxTitle>
 
@@ -177,6 +220,13 @@ let one: nat = Bitwise.shift_right 2n 1n
 
 ```reasonligo
 let one: nat = Bitwise.shift_right(2n, 1n);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let one: nat = Bitwise.shift_right((2 as nat), (1 as nat));
 ```
 
 </Syntax>

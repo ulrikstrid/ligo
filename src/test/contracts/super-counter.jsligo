@@ -1,15 +1,6 @@
-type Increment = {
-  kind: 'Increment',
-  value: int
-}
-type Decrement = {
-  kind: 'Decrement',
-  value: int
-}
-
 type parameter =
-  Increment
-| Decrement;
+| ["Increment", int]
+| ["Decrement", int];
 
 type storage = int;
 
@@ -20,5 +11,5 @@ let main = ([action, store]: [parameter, storage]) : return_ => {
     Increment: (n: nat) => store + n,
     Decrement: (n: nat) => store - n
   });
-  return [[] as list <operation>, storage];
+  return [([] as list <operation>), storage];
 };

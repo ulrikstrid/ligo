@@ -1,17 +1,8 @@
 type storage = int;
 
-type Add = {
-  kind: 'Add',
-  value: int
-}
-type Sub = {
-  kind: 'Sub',
-  value: int
-}
-
 type parameter =
-| Add
-| Sub;
+| ["Add", int]
+| ["Sub", int];
 
 type return_ = [list <operation>, storage];
 

@@ -34,6 +34,14 @@ let michelson_add = (n : (nat, nat)) : nat =>
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let michelson_add = (n : (nat, nat)) : nat =>
+  (michelson` { UNPAIR;ADD } ` as ((nat, nat) => nat))(n);
+```
+
+</Syntax>
 
 Note that the type annotation is required, because the embedded Michelson code
 is not type checked by LIGO. This assumes that the given type is correct. 

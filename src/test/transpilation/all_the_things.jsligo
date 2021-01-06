@@ -199,7 +199,7 @@ let bar = (b : int) : int => {
 };
 /**
 
-This test makes sure that the balance is accessible in ReasonLIGO.
+This test makes sure that the balance is accessible in JsLIGO.
 It's there to detect a regression of: https://gitlab.com/ligolang/ligo/issues/61
 
 Which results in this error when you attempt to compile this contract:
@@ -236,13 +236,13 @@ let mutimaps = (m: foo, n: foo): foo => {
   let bar : foo = Big_map.update (42, Some (0), m);
   return Big_map.update (42, get (bar), n);
 };
-/* Test ReasonLigo bitwise operators */
+/* Test JsLIGO bitwise operators */
 
 let or_op  = (n : nat) : nat => Bitwise.or (n, (4 as nat));
 let and_op = (n : nat) : nat => Bitwise.and (n, (7 as nat));
 let xor_op = (n : nat) : nat => Bitwise.xor (n, (7 as nat));
 let lsl_op = (n : nat) : nat => Bitwise.shift_left (n, (7 as nat));
-let lsr_op = (n : nat) : nat => Bitwise.shift_right (n, (7 as nat));// Test ReasonLIGO boolean operators
+let lsr_op = (n : nat) : nat => Bitwise.shift_right (n, (7 as nat));// Test JsLIGO boolean operators
 
 let or_true   = (b : bool) : bool => b || true;
 let or_false  = (b : bool) : bool => b || false;
@@ -285,7 +285,7 @@ let main = (i: int) => {
     return result;
   };
 };
-/* Test conditional in ReasonLIGO */
+/* Test conditional in JsLIGO */
 
 let main = (i : int) => { if (i == 2) { return 42; } else { return 0; }; };
 type storage = int;
@@ -389,7 +389,7 @@ let main = (f : fooBarBaz) : int =>
   match(f, {
     Bar: (i: int) => i,
     Baz: () => -1
-  });/* Test boolean comparison in ReasonLIGO */
+  });/* Test boolean comparison in JsLIGO */
 
 let main = ([a, b] : [bool, bool]) => {
   if (a == b) { return 999; } else { return 1; }
@@ -399,7 +399,7 @@ type storage = unit;
 let main = (p: [unit, storage]) => {
   if (true) { failwith("This contract always fails"); };
 };
-/* Test use of multiple subroutines in a ReasonLIGO function */
+/* Test use of multiple subroutines in a JsLIGO function */
 
 let foo    = (i : int) : int => i + 20;
 let bar    = (i : int) : int => i + 50;
@@ -450,10 +450,10 @@ let foobar5 = (i : int) : int => {
 };
 let main = (kh : key_hash) : contract <unit> =>
   Tezos.implicit_account (kh);
-// Demonstrate ReasonLIGO inclusion statements, see includer.religo
+// Demonstrate JsLIGO inclusion statements, see includer.religo
 
 let foo : int = 144;
-// Demonstrate ReasonLIGO inclusion statements, see included.religo
+// Demonstrate JsLIGO inclusion statements, see included.religo
 
 let bar : int = foo;
 let main = (i : int): option <nat> => is_nat (i);
@@ -526,7 +526,7 @@ let iter_op = (s : list <int>) : unit => {
   let do_nothing = (useless : int) => unit;
   List.iter (do_nothing, s);
 };
-/* Test loops in ReasonLIGO */
+/* Test loops in JsLIGO */
 
 let aux_simple = (i : int) : int => {
   if (i < 100) { return aux_simple (i + 1); } else { return i; };
@@ -794,7 +794,7 @@ let main = (p: key_hash) : list <operation> => {
   let unused : operation = (Tezos.set_delegate (Some (p)));
   return ([] as list <operation>);
 } ;
-/* Test that the string concatenation syntax in ReasonLIGO works */
+/* Test that the string concatenation syntax in JsLIGO works */
 
 let size_op = (s: string) : nat => String.length (s);
 let slice_op = (s: string) : string => String.sub ((1 as nat), (2 as nat), s);
@@ -838,7 +838,7 @@ type big_tuple = [int, int, int, int, int];
 let br: big_tuple = [23, 23, 23, 23, 23];type z = list<[int, int]>;
 
 let o: z = [[2,4], [4, 6]];/*
-  The difference between tuples and arguments is subtle in ReasonLIGO.
+  The difference between tuples and arguments is subtle in JsLIGO.
 
    `f(a, b);`
    f is called with two arguments

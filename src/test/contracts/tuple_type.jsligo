@@ -1,5 +1,5 @@
 /*
-  The difference between tuples and arguments is subtle in ReasonLIGO.
+  The difference between tuples and arguments is subtle in JsLIGO.
 
    `f(a, b);`
    f is called with two arguments

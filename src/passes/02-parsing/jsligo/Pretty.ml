@@ -16,7 +16,7 @@ and pp_braced :
   fun sep printer {value; _}  ->
     let ({inside; _}: _ Utils.nsepseq braced) = value in
     let elements = pp_nsepseq sep printer inside in    
-    string "{" ^^ elements ^^ string "}"
+    nest 2 (string "{" ^^ hardline ^^ elements ^^ string "}")
 
 and pp_brackets : 
   'a. string -> ('a -> document) -> ('a, t) Utils.nsepseq brackets reg -> document =
@@ -100,9 +100,9 @@ and pp_case = function
 
 and pp_type {value; _} =
   let ({name; type_expr; _}: type_decl) = value
-  in string "type "
-     ^^ prefix 2 1 (pp_ident name ^^ string " =")
-                   (pp_type_expr type_expr)
+  in 
+  string "type " ^^ string name.value ^^ string " = "
+  ^^ group (pp_type_expr type_expr)
 
 and pp_ident {value; _} = string value
 
@@ -240,7 +240,7 @@ and pp_fun {value; _} =
         group (break 0 ^^ string ": " ^^ nest 2 (pp_type_expr e))
   in
   match body with
-  | FunctionBody fb -> nest 1 parameters ^^ annot ^^ string " => " ^^ pp_braced ";" pp_statement fb
+  | FunctionBody fb -> nest 1 parameters ^^ annot ^^ string " => " ^^ group (pp_braced ";" pp_statement fb)
   | ExpressionBody e -> (prefix 2 0 (nest 1 parameters ^^ annot ^^ string " => ") (pp_expr e))
 
 and pp_seq {value; _} =

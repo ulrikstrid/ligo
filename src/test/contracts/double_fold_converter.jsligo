@@ -17,12 +17,8 @@ type transferAuxiliary = {
 };
 type transferMichelson = michelson_pair_right_comb<transferAuxiliary>;
 type transferParameter = list<transferMichelson>;
-type Transfer = {
-  kind: "Transfer",
-  value: transferParameter
-};
 type parameter = 
-| Transfer;
+| ["Transfer", transferParameter];
 type storage = big_map<[tokenId, tokenOwner]>;
 type entrypointParameter = [parameter, storage];
 type entrypointReturn = [list<operation>, storage];
@@ -76,4 +72,4 @@ let transfer = ([transferParameter, storage]: [transferParameter, storage]): ent
 let main = ([parameter, storage]: entrypointParameter): entrypointReturn =>
   match(parameter, {
     Transfer: (transferParameter: transferParameter) => transfer([transferParameter, storage])
-  })
+  });

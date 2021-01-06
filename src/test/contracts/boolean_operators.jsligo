@@ -1,4 +1,4 @@
-// Test ReasonLIGO boolean operators
+// Test JsLIGO boolean operators
 
 let or_true   = (b : bool) : bool => b || true;
 let or_false  = (b : bool) : bool => b || false;

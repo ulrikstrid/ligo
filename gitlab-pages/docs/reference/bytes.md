@@ -17,6 +17,10 @@ val concat : bytes -> bytes -> bytes
 <SyntaxTitle syntax="reasonligo">
 let concat: (bytes, bytes) => bytes
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let concat: (bytes, bytes) => bytes
+</SyntaxTitle>
+
 
 Concatenate together two `bytes` arguments and return the result.
 
@@ -44,6 +48,13 @@ let concat_op = (s: bytes): bytes => Bytes.concat(s, 0x7070);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let concat_op = (s: bytes): bytes => Bytes.concat(s, 0x7070);
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function sub : nat -> nat -> bytes -> bytes
@@ -52,6 +63,9 @@ function sub : nat -> nat -> bytes -> bytes
 val sub : nat -> nat -> bytes -> bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
+let sub : (nat, nat, bytes) => bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
 let sub : (nat, nat, bytes) => bytes
 </SyntaxTitle>
 
@@ -85,6 +99,13 @@ let slice_op = (s: bytes): bytes => Bytes.sub(1n, 2n, s);
 > Note that `Bytes.slice` is *deprecated*.
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```
+let slice_op = (s: bytes): bytes => Bytes.sub((1 as nat), (2 as nat), s);
+```
+
+</Syntax>
 
 It would return "7a7a".
 
@@ -95,6 +116,9 @@ function pack : 'a -> bytes
 val pack : 'a -> bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
+let pack : 'a => bytes
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
 let pack : 'a => bytes
 </SyntaxTitle>
 
@@ -132,6 +156,16 @@ let id_string = (p: string) : option(string) => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let id_string = (p: string) : option<string> => {
+  let packed : bytes = Bytes.pack(p);
+  return (Bytes.unpack(packed) as option<string>);
+};
+```
+
+</Syntax>
 
 
 <SyntaxTitle syntax="pascaligo">
@@ -142,6 +176,9 @@ val unpack : bytes -> 'a option
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let unpack: bytes => option('a)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let unpack: bytes => option<'a>
 </SyntaxTitle>
 
 Reverses the result of using `pack` on data. 
@@ -180,6 +217,16 @@ let id_string = (p: string) : option(string) => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let id_string = (p: string) : option<string> => {
+  let packed : bytes = Bytes.pack(p);
+  return (Bytes.unpack(packed) as option<string>);
+};
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function length : bytes -> nat
@@ -188,5 +235,8 @@ function length : bytes -> nat
 val length : bytes -> nat
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
+let length: bytes => nat
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
 let length: bytes => nat
 </SyntaxTitle>

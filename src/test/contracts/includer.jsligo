@@ -1,4 +1,4 @@
-// Demonstrate ReasonLIGO inclusion statements, see included.religo
+// Demonstrate JsLIGO inclusion statements, see included.religo
 /// <reference path="included.jsligo" />
 #include "included.jsligo"
 
