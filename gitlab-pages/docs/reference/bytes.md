@@ -18,7 +18,7 @@ val concat : bytes -> bytes -> bytes
 let concat: (bytes, bytes) => bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let concat: (bytes, bytes) => bytes
+let concat: (a: bytes, b: bytes) => bytes
 </SyntaxTitle>
 
 
@@ -66,7 +66,7 @@ val sub : nat -> nat -> bytes -> bytes
 let sub : (nat, nat, bytes) => bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let sub : (nat, nat, bytes) => bytes
+let sub : (start: nat, length: nat, input: bytes) => bytes
 </SyntaxTitle>
 
 Extract bytes from `start` to `length`. For example if you gave the 
@@ -119,7 +119,7 @@ val pack : 'a -> bytes
 let pack : 'a => bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let pack : 'a => bytes
+let pack : (data: 'a) => bytes
 </SyntaxTitle>
 
 Converts Michelson data structures to a binary format for serialization.
@@ -178,7 +178,7 @@ val unpack : bytes -> 'a option
 let unpack: bytes => option('a)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let unpack: bytes => option<'a>
+let unpack: (serialized_data: bytes) => option<'a>
 </SyntaxTitle>
 
 Reverses the result of using `pack` on data. 
@@ -238,5 +238,5 @@ val length : bytes -> nat
 let length: bytes => nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let length: bytes => nat
+let length: (b: bytes) => nat
 </SyntaxTitle>

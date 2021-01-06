@@ -18,7 +18,7 @@ val and : 'a -> nat -> nat
 let and: ('a, nat) => nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let and: ('a, nat) => nat
+let and: (a: 'a, b: nat) => nat
 </SyntaxTitle>
 
 `'a` can either be an `int` or `nat`.
@@ -65,7 +65,7 @@ val or :  nat -> nat -> nat
 let or: (nat, nat) => nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let or: (nat, nat) => nat
+let or: (a: nat, b: nat) => nat
 </SyntaxTitle>
 
 A bitwise `or` operation.
@@ -109,7 +109,7 @@ val xor :  nat -> nat -> nat
 let xor: (nat, nat) => nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let xor: (nat, nat) => nat
+let xor: (a: nat, b: nat) => nat
 </SyntaxTitle>
 
 A bitwise `xor` operation.
@@ -153,7 +153,7 @@ val shift_left :  nat -> nat -> nat
 let shift_left: (nat, nat) => nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let shift_left: (nat, nat) => nat
+let shift_left: (a: nat, b: nat) => nat
 </SyntaxTitle>
 
 A bitwise shift left operation.
@@ -197,7 +197,7 @@ val shift_right :  nat -> nat -> nat
 let shift_right: (nat, nat) => nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let shift_right: (nat, nat) => nat
+let shift_right: (a: nat, b: nat) => nat
 </SyntaxTitle>
 
 A bitwise shift right operation.
