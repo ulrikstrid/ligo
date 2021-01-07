@@ -72,7 +72,7 @@ let alias_selector : type_variable -> type_variable -> _ flds -> selector_output
        [{ a_k_var = old_ctors_hd ; a_k'_var' = new_ctors_hd }])
 
 let propagator : (output_break_ctor, typer_error) propagator =
-  fun selected ->
+  fun selected repr ->
   let a = selected.a_k_var in
   let b = selected.a_k'_var' in
   let get_tv : constructor_or_row -> type_variable = fun cr ->
@@ -81,8 +81,8 @@ let propagator : (output_break_ctor, typer_error) propagator =
     | `Constructor c -> c.tv
   in
   (* The selector is expected to provice two constraints with the shape x = k(var …) and x = k'(var' …) *)
-  let a_tv = get_tv a in
-  let b_tv = get_tv b in
+  let a_tv = repr @@ get_tv a in
+  let b_tv = repr @@ get_tv b in
   assert (Var.equal a_tv b_tv);
   (* produce constraints: *)
   (* a.tv = b.tv *)

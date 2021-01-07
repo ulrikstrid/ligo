@@ -37,7 +37,8 @@ let merge_aliases : 'old 'new_ . ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
 
 let pp type_variable ppf state =
   let open PP_helpers in
-  list_sep_d (pair type_variable Ast_typed.PP.constructor_or_row) ppf (ReprMap.bindings state)
+  Format.fprintf ppf "(%a)"
+  (list_sep_d (pair type_variable Ast_typed.PP.constructor_or_row)) (ReprMap.bindings state)
 
 
 let find_opt : 'type_variable -> 'type_variable t -> constructor_or_row option = ReprMap.find_opt

@@ -114,3 +114,5 @@ val iter : ('key -> 'value -> unit) -> ('key, 'value) t -> unit
    [v_n] are the associated values. *)
 
 val fold_inc : ('key -> 'value -> acc:'a -> 'a) -> ('key, 'value) t -> init:'a -> 'a
+
+val pp : (Format.formatter -> 'a -> unit) -> (Format.formatter -> 'b -> unit) -> Format.formatter -> ('a,'b) t -> unit

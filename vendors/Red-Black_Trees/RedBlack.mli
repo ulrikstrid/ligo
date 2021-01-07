@@ -73,3 +73,5 @@ val fold_inc: (elt:'a -> acc:'b -> 'b) -> init:'b -> 'a t -> 'b
    [init]. *)
 
 val fold_dec: (elt:'a -> acc:'b -> 'b) -> init:'b -> 'a t -> 'b
+
+val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit

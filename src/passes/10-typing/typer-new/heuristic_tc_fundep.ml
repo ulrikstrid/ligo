@@ -239,7 +239,7 @@ let deduce_and_clean : c_typeclass_simpl -> (deduce_and_clean_result, _) result 
   ok { deduced ; cleaned }
 
 let propagator : (output_tc_fundep, typer_error) propagator =
-  fun selected ->
+  fun selected _repr ->
   (* The selector is expected to provide constraints with the shape (α
      = κ(β, …)) and to update the private storage to keep track of the
      refined typeclass *)

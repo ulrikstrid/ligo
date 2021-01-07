@@ -76,3 +76,5 @@ val partitions : 'item partition -> 'item list list
         belong to [p], the value of [is_equiv i j p] is [false]. See
         [mem] above. *)
 (* val is_equiv : 'item -> 'item -> 'item partition -> bool *)
+
+val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit

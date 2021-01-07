@@ -45,3 +45,7 @@ let get_compare set = set.cmp
 let iter f set = RB.iter f set.tree
 
 let fold_inc f set = RB.fold_inc (fun ~elt -> f elt) set.tree
+
+let pp f ppf (map : 'elt t) =
+  Format.fprintf ppf "@[(%a)@]"
+  (Format.pp_print_list ~pp_sep:(fun ppf () -> Format.fprintf ppf " ,@ ") (fun ppf a -> Format.fprintf ppf "%a" f a)) (elements map)

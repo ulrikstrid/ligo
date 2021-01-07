@@ -65,3 +65,7 @@ let bindings map =
 let iter f map = RB.iter (fun (k,v) -> f k v) map.tree
 
 let fold_inc f map = RB.fold_inc (fun ~elt:(k,v) -> f k v) map.tree
+
+let pp f g ppf (map : ('a,'b) t) =
+  Format.fprintf ppf "@[(%a)@]"
+  (Format.pp_print_list ~pp_sep:(fun ppf () -> Format.fprintf ppf " ,@ ") (fun ppf (a,b) -> Format.fprintf ppf "(%a,%a)" f a g b)) (bindings map)
