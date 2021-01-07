@@ -118,12 +118,16 @@ Here is how to compute the greatest common divisors of two natural
 numbers by means of Euclid's algorithm:
 
 ```jsligo group=a
-let rec iter = ([x,y] :[nat, nat]) : nat =>
+let iter = ([x,y] :[nat, nat]) : nat => {
   if (y == (0 as nat)) { return x; } else { return iter ([y, x % y]); };
+};
 
 let gcd = ([x,y] : [nat, nat]) : nat => {
-  let (x,y) = if (x < y) { return [y,x]; } else { return [x,y]; };
-  return iter ([x, y])
+  if (x < y) { 
+    return iter ([y, x]);
+  } else {
+    return iter ([x, y]);
+  }
 };
 ```
 
