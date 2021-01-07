@@ -181,6 +181,40 @@ let myFun = ((x, y) : (int, int)) : int => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+Functions in JsLIGO are defined using the `let` keyword, like
+other values. The difference is that a tuple of parameters is provided
+after the value name, with its type, then followed by the return type.
+
+Here is how you define a basic function that sums two integers:
+```jsligo group=b
+let add = ([a, b]: [int, int]) : int => a + b;
+```
+
+You can call the function `add` defined above using the LIGO compiler
+like this:
+```shell
+ligo run-function gitlab-pages/docs/language-basics/src/functions/blockless.jsligo add '(1,2)'
+# Outputs: 3
+```
+
+
+
+As in CameLIGO and with blockless functions in PascaLIGO, the function
+body is a single expression, whose value is returned.
+
+If the body contains more than a single expression, you use block
+between braces:
+```jsligo group=b
+let myFun = ([x, y] : [int, int]) : int => {
+  let doubleX = x + x;
+  let doubleY = y + y;
+  return doubleX + doubleY;
+};
+```
+
+</Syntax>
 
 
 ## Anonymous functions (a.k.a. lambdas)
@@ -234,6 +268,21 @@ You can check the value of `a` defined above using the LIGO compiler
 like this:
 ```shell
 ligo evaluate-value gitlab-pages/docs/language-basics/src/functions/anon.religo a
+# Outputs: 2
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=c
+let increment = (b : int) : int => ((a : int) : int => a + 1) (b);
+let a : int = increment (1); // a == 2
+```
+
+You can check the value of `a` defined above using the LIGO compiler
+like this:
+```shell
+ligo evaluate-value gitlab-pages/docs/language-basics/src/functions/anon.jsligo a
 # Outputs: 2
 ```
 
@@ -298,6 +347,22 @@ gitlab-pages/docs/language-basics/src/functions/incr_map.religo incr_map
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=c
+let incr_map = (l : list <int>) : list <int> =>
+  List.map ((i : int) => i + 1, l);
+```
+You can call the function `incr_map` defined above using the LIGO compiler
+like so:
+```shell
+ligo run-function
+gitlab-pages/docs/language-basics/src/functions/incr_map.jsligo incr_map
+"list [1;2;3]"
+# Outputs: [ 2 ; 3 ; 4 ]
+```
+
+</Syntax>
 
 
 ## Nested functions (also known as closures)
@@ -329,6 +394,16 @@ let closure_example (i : int) : int =
 let closure_example = (i : int) : int => {
   let closure = (j: int): int => i + j;
   closure(i);
+};
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let closure_example = (i : int) : int => {
+  let closure = (j: int): int => i + j;
+  return closure(i);
 };
 ```
 
