@@ -50,7 +50,7 @@ val head_opt : 'a list -> 'a option
 let head_opt : list('a) => option('a)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let head_opt : (list: list<'a>) => option<'a>
+let head_opt : (list: list&lt;'a&gt;) => option&lt;'a&gt;
 </SyntaxTitle>
 
 Get the head of a list
@@ -65,7 +65,7 @@ val tail_opt : 'a list -> 'a list option
 let tail_opt : list('a) => option(list('a))
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let tail_opt : (list: list<'a>) => option<list<'a>>
+let tail_opt : (list: list&lt;'a&gt;) => option&lt;list&lt;'a&gt;&gt;
 </SyntaxTitle>
 
 Get the tail of a list
@@ -80,7 +80,7 @@ val iter : ('a -> unit) -> 'a list -> unit
 let iter: (('a => unit), list('a)) => unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let iter: (iterator: ((item: 'a) => unit), list: list<'a>) => unit
+let iter: (iterator: ((item: 'a) => unit), list: list&lt;'a&gt;) => unit
 </SyntaxTitle>
 
 Iterate over items in a list.
@@ -141,7 +141,7 @@ val map : ('a -> 'b) -> 'a list -> 'b list
 let map: (('a => 'b), list('a)) => list('b)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let map: (mapper: ((item: 'a) => 'b), list: list<'a>) => list<'b>
+let map: (mapper: ((item: 'a) => 'b), list: list&lt;'a&gt;) => list&lt;'b&gt;
 </SyntaxTitle>
 
 Apply a function to items of a list to create a new list.

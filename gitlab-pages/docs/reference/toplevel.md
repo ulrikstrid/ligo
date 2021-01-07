@@ -35,7 +35,7 @@ type ('key, 'value) big_map
 type big_map ('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-type big_map <'key, 'value>
+type big_map &lt;'key, 'value&gt;
 </SyntaxTitle>
 
 <Syntax syntax="pascaligo">
@@ -121,7 +121,7 @@ type 'parameter contract
 type contract('parameter)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-type contract<'parameter>
+type contract&lt;'parameter&gt;
 </SyntaxTitle>
 
 A typed contract. 
@@ -200,7 +200,7 @@ type 't list
 type list('t)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-type list<'t>
+type list&lt;'t&gt;
 </SyntaxTitle>
 
 A sequence of elements of the same type.
@@ -215,7 +215,7 @@ type ('key, 'value) map
 type map ('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-type map <'key, 'value>
+type map &lt;'key, 'value&gt;
 </SyntaxTitle>
 
 <Syntax syntax="pascaligo">
@@ -306,7 +306,7 @@ type 'value set
 type set('value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-type set<'value>
+type set&lt;'value&gt;
 </SyntaxTitle>
 
 <SyntaxTitle syntax="pascaligo">

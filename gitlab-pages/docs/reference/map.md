@@ -18,7 +18,7 @@ val empty : ('key, 'value) map
 let empty: map('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let empty: map<'key, 'value>
+let empty: map&lt;'key, 'value&gt;
 </SyntaxTitle>
 
 Create an empty map.
@@ -81,7 +81,7 @@ val literal : ('key * 'value) list -> ('key, 'value) map
 let literal: list(('key, 'value)) => map('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let literal: (input: list<['key, 'value]>) => map('key, 'value)
+let literal: (input: list&lt;['key, 'value]&gt;) => map&lt;'key, 'value&gt;
 </SyntaxTitle>
 
 Create a non-empty map.
@@ -147,7 +147,7 @@ val find_opt : 'key -> ('key, 'value) map -> 'value option
 let find_opt : ('key, map ('key, 'value)) => option ('value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let find_opt : (key: 'key, map: map <'key, 'value>) => option <'value>
+let find_opt : (key: 'key, map: map &lt;'key, 'value&gt;) => option &lt;'value&gt;
 </SyntaxTitle>
 
 Retrieve a (option) value from a map with the given key. Returns `None` if the 
@@ -205,7 +205,7 @@ val update: 'key -> 'value option -> ('key, 'value) map -> ('key, 'value) map
 let update: ('key, option('value), map('key, 'value)) => map ('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let update: (key: 'key, new_value: option<'value>, map: map<'key, 'value>) => map <'key, 'value>
+let update: (key: 'key, new_value: option&lt;'value&gt;, map: map&lt;'key, 'value&gt;) => map &lt;'key, 'value&gt;
 </SyntaxTitle>
 
 Note: when `None` is used as a value, the key and associated value is removed 
@@ -281,7 +281,7 @@ val add : 'key -> 'value -> ('key, 'value) map  -> ('key, 'value) map
 let add: ('key, 'value, map('key, 'value)) => map('key, 'value) 
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let add: (key: 'key, value: 'value, map: map<'key, 'value>) => map<'key, 'value>
+let add: (key: 'key, value: 'value, map: map&lt;'key, 'value&gt;) => map&lt;'key, 'value&gt;
 </SyntaxTitle>
 <Syntax syntax="pascaligo">
 
@@ -329,7 +329,7 @@ val remove : 'key -> ('key, 'value) map -> ('key, 'value) map
 let remove: (key, map('key, 'value)) => map('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let remove: (key: key, map: map<'key, 'value>) => map<'key, 'value>
+let remove: (key: key, map: map&lt;'key, 'value&gt;) => map&lt;'key, 'value&gt;
 </SyntaxTitle>
 
 <Syntax syntax="pascaligo">
@@ -388,7 +388,7 @@ val iter : (('key * 'value) -> unit) -> ('key, 'value) map -> unit
 let iter: ((('key, 'value)) => unit, map('key, 'value)) => unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let iter: (iter: (['key, 'value]) => unit, map: map<'key, 'value>) => unit
+let iter: (iter: (['key, 'value]) => unit, map: map&lt;'key, 'value&gt;) => unit
 </SyntaxTitle>
 
 
@@ -445,7 +445,7 @@ val map : (('key * 'value) -> ('mapped_key * 'mapped_item)) -> (key, value) map 
 let map: ((('key, 'value)) => ('mapped_key, 'mapped_item), map(key, value)) => map(mapped_key, mapped_value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let map: (mapper: (item: ['key, 'value]) => ['mapped_key, 'mapped_item], map: map<key, value>) => map<mapped_key, mapped_value>
+let map: (mapper: (item: ['key, 'value]) => ['mapped_key, 'mapped_item], map: map&lt;key, value&gt;) => map&lt;mapped_key, mapped_value&gt;
 </SyntaxTitle>
 
 
@@ -493,7 +493,7 @@ val fold : ('accumulator -> ('key * 'value) -> 'accumulator) -> ('key, 'value) m
 let fold: ((('accumulator, ('key, 'value)) => 'accumulator), map('key, 'value), 'accumulator) => 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let fold: (iter: ((accumulator: 'accumulator, item: ['key, 'value]) => 'accumulator), map: map<'key, 'value>, accumulator: 'accumulator) => 'accumulator
+let fold: (iter: ((accumulator: 'accumulator, item: ['key, 'value]) => 'accumulator), map: map&lt;'key, 'value&gt;, accumulator: 'accumulator) => 'accumulator
 </SyntaxTitle>
 
 
@@ -550,7 +550,7 @@ val size : ('key, 'value) map -> nat
 let size: map('key, 'value) => nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let size: (map: map<'key, 'value>) => nat
+let size: (map: map&lt;'key, 'value&gt;) => nat
 </SyntaxTitle>
 
 Returns the number of items in the map.
@@ -566,7 +566,7 @@ val mem : 'key -> ('key, 'value) map => bool
 let mem : ('key, map('key, 'value)) => bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let mem : (key: 'key, map: map<'key, 'value>) => bool
+let mem : (key: 'key, map: map&lt;'key, 'value&gt;) => bool
 </SyntaxTitle>
 
 Checks if a key exists in the map.

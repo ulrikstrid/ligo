@@ -347,7 +347,7 @@ val address : 'a contract -> address
 let address: contract('a) => address
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let address: (contract: contract<'a>) => address
+let address: (contract: contract&lt;'a&gt;) => address
 </SyntaxTitle>
 
 Get the address associated with a value of type `contract`.
@@ -463,7 +463,7 @@ val self : string -> 'a contract
 let self: string => contract('a)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let self: (entrypoint: string) => contract<'a>
+let self: (entrypoint: string) => contract&lt;'a&gt;
 </SyntaxTitle>
 
 Typecast the currently running contract with an entrypoint annotation.
@@ -514,7 +514,7 @@ val implicit_account : key_hash -> 'a contract
 let implicit_account: key_hash => contract('a)
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let implicit_account: (hash: key_hash) => contract<'a>
+let implicit_account: (hash: key_hash) => contract&lt;'a&gt;
 </SyntaxTitle>
 
 Get the default contract associated with an on-chain key-pair. This
@@ -744,7 +744,7 @@ val transaction : 'parameter -> mutez -> 'parameter contract -> operation
 let transaction: ('parameter, mutez , contract('parameter)) => operation
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let transaction: (action: 'parameter, amount: mutez, contract: contract<'parameter>) => operation
+let transaction: (action: 'parameter, amount: mutez, contract: contract&lt;'parameter&gt;) => operation
 </SyntaxTitle>
 
 Transfer `tez` to an account, or run code of another smart contract.
@@ -770,8 +770,8 @@ val set_delegate : key_hash option -> operation
 <SyntaxTitle syntax="reasonligo">
 let set_delegate: option(key_hash) => operation
 </SyntaxTitle>
-<SyntaxTitle syntax="reasonligo">
-let set_delegate: (delegate: option<key_hash>) => operation
+<SyntaxTitle syntax="jsligo">
+let set_delegate: (delegate: option&lt;key_hash&gt;) => operation
 </SyntaxTitle>
 
 
@@ -807,7 +807,7 @@ val get_contract_opt : address -> 'parameter contract option
 let get_contract_opt : address => option(contract('parameter))
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let get_contract_opt : (a: address) => option<contract<'parameter>>
+let get_contract_opt : (a: address) => option&lt;contract&lt;'parameter&gt;&gt;
 </SyntaxTitle>
 
 Get a contract from an address.
@@ -838,7 +838,7 @@ val get_entrypoint_opt : string -> address -> 'parameter contract option
 let get_entrypoint_opt: (string, address) => option(contract('parameter))
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let get_entrypoint_opt: (entrypoint: string, a: address) => option(contract('parameter))
+let get_entrypoint_opt: (entrypoint: string, a: address) => option&lt;contract&lt;'parameter&gt;&gt;
 </SyntaxTitle>
 
 Get a contract from an address and entrypoint. 

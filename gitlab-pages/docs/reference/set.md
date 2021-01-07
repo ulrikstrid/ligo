@@ -20,7 +20,7 @@ val empty : 'value set
 let empty: set('value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let empty: set<'value>
+let empty: set&lt;'value&gt;
 </SyntaxTitle>
 
 Create an empty set.
@@ -70,7 +70,7 @@ val literal : 'value list -> 'value set
 let literal: list('value) => set('value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let literal: (input: list<'value>) => set<'value>
+let literal: (input: list&lt;'value&gt;) => set&lt;'value&gt;
 </SyntaxTitle>
 
 Create a non-empty set.
@@ -123,7 +123,7 @@ val mem : 'value -> 'value set -> bool
 let mem: ('value, set('value)) => bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let mem: (v: 'value, set: set<'value>) => bool
+let mem: (v: 'value, set: set&lt;'value&gt;) => bool
 </SyntaxTitle>
 
 Checks if a value exists in the set.
@@ -173,7 +173,7 @@ val cardinal : 'value set -> nat
 let cardinal: set('value) => nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let cardinal: (set: set<'value>) => nat
+let cardinal: (set: set&lt;'value&gt;) => nat
 </SyntaxTitle>
 
 Number of elements in a set.
@@ -219,7 +219,7 @@ val add : 'value -> 'value set -> 'value set
 let add: ('value, set('value)) => set('value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let add: (value: 'value, set: set<'value>) => set<'value>
+let add: (value: 'value, set: set&lt;'value&gt;) => set&lt;'value&gt;
 </SyntaxTitle>
 
 Add a value to a set.
@@ -234,7 +234,7 @@ val remove : 'value -> 'value set -> 'value set
 let remove: ('value, set('value)) => set('value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let remove: (value: 'value, set: set<'value>) => set<'value>
+let remove: (value: 'value, set: set&lt;'value&gt;) => set&lt;'value&gt;
 </SyntaxTitle>
 
 Remove a value from a set.
@@ -249,7 +249,7 @@ val iter : ('a -> unit) -> 'a set -> unit
 let iter: (('a => unit), set('a)) => unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let iter: (iterator: ((item: 'a) => unit), set: set<'a>) => unit
+let iter: (iterator: ((item: 'a) => unit), set: set&lt;'a&gt;) => unit
 </SyntaxTitle>
 
 Iterate over values in a set.
@@ -308,7 +308,7 @@ val fold : ('accumulator -> 'item -> 'accumulator) -> 'set list -> 'accumulator 
 let fold: ((('accumulator, 'item) => 'accumulator), set('item), 'accumulator) => 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let fold: (iterator: ((accumulator: 'accumulator, item: 'item) => 'accumulator), set: set<'item>, accumulator: 'accumulator) => 'accumulator
+let fold: (iterator: ((accumulator: 'accumulator, item: 'item) => 'accumulator), set: set&lt;'item&gt;, accumulator: 'accumulator) => 'accumulator
 </SyntaxTitle>
 
 [Fold over values in a set](../language-basics/sets-lists-tuples.md#folded-operation)

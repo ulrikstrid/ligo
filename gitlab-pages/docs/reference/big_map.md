@@ -29,7 +29,7 @@ val empty : ('key, 'value) big_map
 let empty: big_map('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let empty: big_map<'key, 'value>
+let empty: big_map&lt;'key, 'value&gt;
 </SyntaxTitle>
 
 Create an empty big_map.
@@ -92,7 +92,7 @@ val literal : ('key * 'value) list -> ('key, 'value) big_map
 let literal: list(('key, 'value)) => big_map('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let literal: (items: list<['key, 'value]>) => big_map<'key, 'value>
+let literal: (items: list&lt;['key, 'value]&gt;) => big_map&lt;'key, 'value&gt;
 </SyntaxTitle>
 
 Create a non-empty big_map.
@@ -157,7 +157,7 @@ val find_opt : 'key -> ('key, 'value) big_map -> 'value option
 let find_opt: ('key, big_map ('key, 'value)) => option ('value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let find_opt: (key: 'key, big_map: big_map <'key, 'value>) => option <'value>
+let find_opt: (key: 'key, big_map: big_map &lt;'key, 'value&gt;) => option &lt;'value&gt;
 </SyntaxTitle>
 
 Retrieve a value from a big map with the given key. 
@@ -217,7 +217,7 @@ val mem : 'key -> ('key, 'value) big_map -> bool
 let mem: ('key, big_map ('key, 'value)) => bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let mem: (key: 'key, big_map: big_map <'key, 'value>) => bool
+let mem: (key: 'key, big_map: big_map &lt;'key, 'value&gt;) => bool
 </SyntaxTitle>
 
 Test whether a given key exists within a big map. 
@@ -265,7 +265,7 @@ val update: 'key -> 'value option -> ('key, 'value) big_map -> ('key, 'value) bi
 let update: ('key, option('value), big_map('key, 'value)) => big_map('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let update: (key: 'key, value: option<'value>, big_map: big_map<'key, 'value>) => big_map<'key, 'value>
+let update: (key: 'key, value: option&lt;'value&gt;, big_map: big_map&lt;'key, 'value&gt;) => big_map&lt;'key, 'value&gt;
 </SyntaxTitle>
 
 Note: when `None` is used as a value, the value is removed from the big_map.
@@ -342,7 +342,7 @@ val add : 'key -> 'value -> ('key, 'value) big_map  -> ('key, 'value) big_map
 let add: ('key, 'value, big_map('key, 'value)) => big_map('key, 'value) 
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let add: (key: 'key, value: 'value, big_map: big_map<'key, 'value>) => big_map<'key, 'value> 
+let add: (key: 'key, value: 'value, big_map: big_map&lt;'key, 'value&gt;) => big_map&lt;'key, 'value&gt;
 </SyntaxTitle>
 <Syntax syntax="pascaligo">
 
@@ -390,7 +390,7 @@ val remove: 'key -> ('key, 'value) big_map -> ('key, 'value) big_map
 let remove: ('key, big_map('key, 'value)) => big_map('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let remove: (key: 'key, big_map: big_map<'key, 'value>) => big_map<'key, 'value>
+let remove: (key: 'key, big_map: big_map&lt;'key, 'value&gt;) => big_map&lt;'key, 'value&gt;
 </SyntaxTitle>
 
 <Syntax syntax="pascaligo">

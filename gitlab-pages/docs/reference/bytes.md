@@ -178,7 +178,7 @@ val unpack : bytes -> 'a option
 let unpack: bytes => option('a)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let unpack: (serialized_data: bytes) => option<'a>
+let unpack: (serialized_data: bytes) => option&lt;'a&gt;
 </SyntaxTitle>
 
 Reverses the result of using `pack` on data. 
