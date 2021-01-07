@@ -62,7 +62,7 @@ let alias_selector : type_variable -> type_variable -> _ flds -> selector_output
     (a_polys @ b_polys)
 
 let propagator : (output_specialize1 , typer_error) propagator =
-  fun selected ->
+  fun selected _repr ->
   let a = selected.poly in
   let b = selected.a_k_var in
 

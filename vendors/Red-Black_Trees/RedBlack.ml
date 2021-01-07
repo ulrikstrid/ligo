@@ -116,3 +116,12 @@ let rec fold_dec f ~init = function
                          Ext -> init
 | Int (_, left, root, right) ->
     fold_dec f ~init:(f ~elt:root ~acc:(fold_dec f ~init right)) left
+
+let rec pp f ppf = function
+  Ext -> Format.fprintf ppf "Ext"
+| Int (c, l, root, r) ->
+    Format.fprintf ppf "Int (%s,%a,%a,%a)"
+    (match c with Red -> "Red" | Black -> "Black")
+    (pp f) l
+    f root
+    (pp f) r

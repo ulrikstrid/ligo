@@ -94,3 +94,5 @@ val iter : ('elt -> unit) -> 'elt t -> unit
    initial value [init]. *)
 
 val fold_inc : ('elt -> acc:'a -> 'a) -> 'elt t -> init:'a -> 'a
+
+val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit

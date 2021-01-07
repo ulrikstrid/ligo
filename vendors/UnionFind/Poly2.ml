@@ -167,3 +167,7 @@ let partitions : 'item . 'item partition -> 'item list list =
  *         p.to_string i hi p.to_string j hj
  *     in ()
  *   in map_iter print p.map *)
+
+let pp f ppf ({to_string=_;compare=_;map} : 'a t) =
+  Format.fprintf ppf "@[(%a)@]"
+  (Format.pp_print_list ~pp_sep:(fun ppf () -> Format.fprintf ppf " ,@ ") (fun ppf a -> Format.fprintf ppf "%a" f a)) (map_sorted_keys map)

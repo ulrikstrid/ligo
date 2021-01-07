@@ -23,6 +23,8 @@ open Proof_trace_checker
 module Make_solver(Plugins : Plugins) : sig
   type plugin_states = Plugins.Indexers.PluginFields(PerPluginState).flds
   type nonrec typer_state = (typer_error, plugin_states) Typesystem.Solver_types.typer_state
+  val pp_typer_state  : Format.formatter -> typer_state -> unit
+  val get_alias : Ast_typed.type_variable -> type_variable poly_unionfind -> (type_variable, typer_error) Trace.result
   val main : typer_state -> type_constraint list -> typer_state result
   val initial_state : typer_state
   val placeholder_for_state_of_new_typer : unit -> typer_state
@@ -37,6 +39,15 @@ end = struct
 
   let mk_repr state x = UnionFind.Poly2.repr x state.aliases
 
+  let pp_typer_state = fun ppf ({ all_constraints; plugin_states; aliases ; already_selected_and_propagators } : typer_state) ->
+    let open Typesystem.Solver_types in
+    let open Format in
+    let open PP_helpers in
+    Format.fprintf ppf "@[{ all_constaints = %a;@ plugin_states = %a ;@ aliases = %a ;@ already_selected_and_propagators = %a }@]"
+      (RedBlackTrees.PolySet.pp Ast_typed.PP.type_constraint_simpl) all_constraints
+      (Plugin_states.pp_print) plugin_states
+      (UnionFind.Poly2.pp Ast_typed.PP.type_variable) aliases
+      (list_sep pp_ex_propagator_state (fun ppf () -> fprintf ppf " ;@ ")) already_selected_and_propagators
 
   let add_alias : typer_state -> type_constraint_simpl -> (typer_state option, typer_error) Simple_utils.Trace.result =
     fun { all_constraints ; added_constraints ; plugin_states ; aliases ; already_selected_and_propagators } new_constraint ->
@@ -54,6 +65,11 @@ end = struct
     | _ ->
       ok @@ None
 
+  let get_alias variable aliases =
+    trace_option (corner_case (Format.asprintf "can't find alias root of variable %a" Var.pp variable)) @@
+    (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
+    try Some (UF.repr variable aliases) with Not_found -> None
+
   let aux_remove state to_remove =
     let module MapRemoveConstraint = Plugins.Indexers.MapPlugins(RemoveConstraint) in
     let%bind plugin_states = MapRemoveConstraint.f (mk_repr state, to_remove) state.plugin_states in
@@ -68,7 +84,7 @@ end = struct
     (* TODO: before applying a propagator, check if it does
        not depend on constraints which were removed by the
        previous propagator *)
-    let%bind updates = heuristic.plugin.propagator selector_output in
+    let%bind updates = heuristic.plugin.propagator selector_output (mk_repr state) in
     let%bind (state, new_constraints) = bind_fold_map_list aux_update state updates in
     ok (state, List.flatten new_constraints)
 
@@ -170,14 +186,6 @@ include Make_solver(Plugins)
 type nonrec _ typer_state = typer_state
 
 (*  ………………………………………………………………………………………………… Plugin-based solver above ………………………………………………………………………………………………… *)
-
-let pp_typer_state = fun ppf ({ all_constraints=_ ; plugin_states=_ ; aliases=_ ; already_selected_and_propagators } : _ typer_state) ->
-  let open Typesystem.Solver_types in
-  let open Format in
-  let open PP_helpers in
-  Format.fprintf ppf "{ structured_dbs = TODO ; already_selected_and_propagators = [ %a ] }"
-    (* Ast_typed.PP.structured_dbs structured_dbs *)
-    (list_sep pp_ex_propagator_state (fun ppf () -> fprintf ppf " ;@ ")) already_selected_and_propagators
 
 let json_typer_state = fun ({ all_constraints=_ ; plugin_states=_ ; aliases=_ ; already_selected_and_propagators } : _ typer_state) : Yojson.Safe.t ->
   let open Typesystem.Solver_types in

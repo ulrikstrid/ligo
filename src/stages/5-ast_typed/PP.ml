@@ -261,9 +261,9 @@ and c_access_label ppf {c_access_label_tval; accessor; c_access_label_tvar} =
 
 
 and type_constraint_ ppf = function
-  C_equation     eq -> fprintf ppf "%a" c_equation eq
-| C_typeclass    tc -> fprintf ppf "%a" c_typeclass tc
-| C_access_label al -> fprintf ppf "%a" c_access_label al
+  C_equation     eq -> fprintf ppf "C_equation (%a)" c_equation eq
+| C_typeclass    tc -> fprintf ppf "C_typeclass (%a)" c_typeclass tc
+| C_access_label al -> fprintf ppf "C_access_label (%a)" c_access_label al
 
 and type_constraint_short_ ppf = function
   C_equation     eq -> fprintf ppf "%a" c_equation_short eq
@@ -515,3 +515,48 @@ let update ppf {remove_constraints;add_constraints;proof_trace=x} =
     proof_trace x
 
 let updates_list ppf = fprintf ppf "%a" (list (list update))
+
+let environment_element_definition ppf = function
+  | ED_binder -> fprintf ppf "Binder"
+  | ED_declaration {expression=e;free_variables=fv} ->
+    fprintf ppf "Declaration : {expression : %a ;@ free_variables : %a}" expression e (list expression_variable) fv
+let rec environment_element ppf ({type_value;source_environment;definition} : environment_element) =
+  fprintf ppf "{@,@[<hv 2>
+              type_value : %a ;@
+              source_environment : %a ;@
+              definition : %a
+              @]@,}"
+    type_expression type_value
+    environment source_environment
+    environment_element_definition definition
+
+
+and environment_binding ppf ({expr_var;env_elt} : environment_binding) =
+  fprintf ppf "{@,@[<hv 2>
+              expr_var : %a ;@
+              env_elt : %a
+              @]@,}"
+    expression_variable expr_var
+    environment_element env_elt
+
+and type_environment_binding ppf ({type_variable=tv;type_} : type_environment_binding) =
+  fprintf ppf "{@,@[<hv 2>
+              type_variable : %a ;@
+              type_ : %a
+              @]@,}"
+    type_variable tv
+    type_expression type_
+
+and module_environment_binding ppf ({module_name;module_} : module_environment_binding) =
+  fprintf ppf "{@,@[<hv 2>
+              module_name : %s ;@
+              module_ : %a
+              @]@,}"
+    module_name
+    environment module_
+
+and environment ppf ({expression_environment;type_environment=_;module_environment=_} : environment) =
+  fprintf ppf "{@,@[<hv 2>
+              expression_environment : %a
+              @]@,}"
+    (list environment_binding) expression_environment

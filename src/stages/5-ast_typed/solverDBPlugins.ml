@@ -89,15 +89,16 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
        …
   *)
   (* type PerPluginType = 🞰→(🞰→🞰)→🞰 *)
-  module type PerPluginTypeArg = sig type 'typeVariable t end (* just the part of Plugin we care about *)
+  module type PerPluginTypeArg = sig type 'typeVariable t val pp : (Format.formatter -> 'type_variable -> unit) -> Format.formatter -> 'type_variable t -> unit end (* just the part of Plugin we care about *)
   module type PerPluginType = functor (Plugin : PerPluginTypeArg) -> sig
     type t
+    val pp : Format.formatter -> t -> unit
   end
 
   (* These are two useful PerPlugin type-level functions. The first
      gives a `unit' type for each plugin, the second *)
-  module PerPluginUnit = functor (Plugin : PerPluginTypeArg) -> struct type t = unit end
-  module PerPluginState = functor (Plugin : PerPluginTypeArg) -> struct type t = type_variable Plugin.t end
+  module PerPluginUnit = functor (Plugin : PerPluginTypeArg) -> struct type t = unit let pp ppf () = Format.fprintf ppf "()" end
+  module PerPluginState = functor (Plugin : PerPluginTypeArg) -> struct type t = type_variable Plugin.t let pp ppf t = Format.fprintf ppf "%a" (Plugin.pp PP.type_variable) t end
 
   module type Monad = sig
     type 'a t
@@ -133,8 +134,10 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
       type 'typeVariable t
       val find_opt : 'type_variable -> 'type_variable t -> constructor_or_row option
       val bindings : 'type_variable t -> ('type_variable * constructor_or_row) list
+      val pp : (Format.formatter -> 'typeVariable -> unit) -> Format.formatter -> 'typeVariable t -> unit
     end
     val assignments : flds -> < assignments : Ppt(Assignments).t >
+    val pp_print : Format.formatter -> flds -> unit
   end
   module type IndexerPlugins = sig
     module PluginFields : Indexer_plugin_fields
