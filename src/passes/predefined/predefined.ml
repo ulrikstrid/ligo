@@ -699,6 +699,8 @@ module Tree_abstraction = struct
       | Const x -> constant'_to_string x
 
   end
+
+  module Jsligo = Reasonligo
 end
 
 module Stacking = struct
