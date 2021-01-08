@@ -1,11 +1,13 @@
 (library
-  (name tree_abstraction)
-  (public_name ligo.tree_abstraction)
+  (name jsligo)
+  (public_name ligo.jsligo)
   (libraries
-    cameligo
-    pascaligo
-    reasonligo
-    jsligo)
+    simple-utils
+    tezos-utils
+    cst
+    ast_imperative
+    predefined
+    parsing)
   (preprocess
     (pps
       ppx_let

@@ -1,13 +1,9 @@
 (library
-  (name self_cst)
-  (public_name ligo.self_cst)
+  (name self_cst_jsligo)
+  (public_name ligo.self_cst.jsligo)
   (libraries
     simple-utils
     cst
-    self_cst_cameligo
-    self_cst_pascaligo
-    self_cst_reasonligo
-    self_cst_jsligo
     tezos-crypto
     tezos-base
   )
