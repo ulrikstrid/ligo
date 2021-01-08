@@ -266,12 +266,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     let constr = wrap constr in
     let%bind element = decompile_expression element in
     return_expr_with_par @@ CST.EConstr (EConstrApp (wrap (constr, Some element)))
-  | E_matching {matchee; cases} ->
-    let%bind expr  = decompile_expression matchee in
-    let%bind cases = decompile_matching_cases cases in
-    let expr = CST.EPar (wrap @@ par @@ expr) in
-    let cases : _ CST.case = {kwd_switch=ghost;expr;lbrace=ghost;cases;rbrace=ghost} in
-    return_expr @@ CST.ECase (wrap cases)
+  | E_matching {matchee; cases} -> ignore (matchee,cases) ; failwith "REMITODO"
   | E_record record  ->
     let record = AST.LMap.to_kv_list record in
     let aux (AST.Label str, expr) =
@@ -470,55 +465,6 @@ and decompile_lambda : (AST.expr, AST.ty_expr) AST.lambda -> _ =
     let%bind return = decompile_expression result in
     ok @@ (param,ret_type,return)
 
-and decompile_matching_cases : AST.matching_expr -> ((CST.expr CST.case_clause Region.reg, Region.t) Simple_utils.Utils.nsepseq Region.reg,_) result =
-fun m ->
-  let%bind cases = match m with
-    Match_variable (var, expr) ->
-    let%bind pattern = pattern_type var in
-    let%bind rhs = decompile_expression expr in
-    let case : _ CST.case_clause = {pattern; arrow=ghost; rhs; terminator=None}in
-    ok @@ [wrap case]
-  | Match_tuple (lst, expr) ->
-    let%bind tuple = bind list_to_nsepseq @@ bind_map_list pattern_type lst in
-    let pattern : CST.pattern = PTuple (wrap @@ tuple) in
-    let%bind rhs = decompile_expression expr in
-    let case : _ CST.case_clause = {pattern; arrow=ghost; rhs; terminator=None}in
-    ok @@ [wrap case]
-  | Match_record _ -> failwith "match_record not availiable yet"
-  | Match_option {match_none;match_some}->
-    let%bind rhs = decompile_expression match_none in
-    let none_case : _ CST.case_clause = {pattern=PConstr (PNone ghost);arrow=ghost; rhs; terminator=None} in
-    let%bind rhs = decompile_expression @@ snd match_some in
-    let var = CST.PVar (decompile_variable @@ (fst match_some).wrap_content)in
-    let some_case : _ CST.case_clause =
-      {pattern=PConstr (PSomeApp (wrap (ghost,var)));arrow=ghost; rhs; terminator=None} in
-    ok @@ [wrap some_case;wrap none_case]
-  | Match_list {match_nil; match_cons} ->
-    let (hd,tl,expr) = match_cons in
-    let lpattern = CST.PVar (decompile_variable hd.wrap_content) in
-    let rpattern = CST.PVar (decompile_variable tl.wrap_content) in
-    let cons = CST.{lbracket=ghost;lpattern;comma=ghost;ellipsis=ghost;rpattern;rbracket=ghost} in
-    let%bind rhs = decompile_expression @@ expr in
-    let cons_case : _ CST.case_clause =
-      {pattern=PList (PCons (wrap cons));arrow=ghost; rhs; terminator=None} in
-    let%bind rhs = decompile_expression @@ match_nil in
-    let nil_case : _ CST.case_clause =
-      {pattern=PList (PListComp (wrap @@ inject brackets None));arrow=ghost; rhs; terminator=None} in
-    ok @@ [wrap cons_case; wrap nil_case]
-  | Match_variant lst ->
-    let aux ((c,(v:AST.expression_variable)),e) =
-      let AST.Label c = c in
-      let constr = wrap @@ c in
-      let var : CST.pattern = PVar (decompile_variable v.wrap_content) in
-      let tuple = var in
-      let pattern : CST.pattern = PConstr (PConstrApp (wrap (constr, Some tuple))) in
-      let%bind rhs = decompile_expression e in
-      let case : _ CST.case_clause = {pattern;arrow=ghost;rhs; terminator=None} in
-      ok @@ wrap case
-    in
-    bind_map_list aux lst
-  in
-  map wrap @@ list_to_nsepseq cases
 and decompile_declaration : AST.declaration Location.wrap -> (CST.declaration, _) result = fun decl ->
   let decl = Location.unwrap decl in
   let wrap value = ({value;region=Region.ghost} : _ Region.reg) in

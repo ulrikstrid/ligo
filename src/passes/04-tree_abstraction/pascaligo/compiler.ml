@@ -509,105 +509,92 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let%bind next = self be.expr in
     compile_block ~next be.block
 
-
-and compile_matching_expr : type a.(a -> _ result) -> a CST.case_clause CST.reg List.Ne.t -> _ =
-fun compiler cases ->
-  let return = ok in
-  let compile_pattern pattern = return pattern in
-  let compile_simple_pattern (pattern : CST.pattern) =
-    match pattern with
-      PVar var ->
-        let (var, _) = r_split var in
-        return @@ Var.of_name var
-    | _ -> fail @@ unsupported_pattern_type pattern
+and conv : CST.pattern -> (AST.ty_expr AST.pattern,_) result =
+  fun p ->
+  let make_fresh_var ?(loc = Location.generated) () =
+    let var = Location.wrap ~loc @@ Var.fresh () in
+    { var ; ascr = None }
   in
-  let compile_list_pattern (cases : (CST.pattern * _) list) =
-    match cases with
-      [(PList PNil _, match_nil);(PList PCons cons, econs)]
-    | [(PList PCons cons, econs);(PList PNil _, match_nil)] ->
-      let (cons,_) = r_split cons in
-      let%bind (hd,tl) = match snd @@ List.split (snd cons) with
-        tl::[] -> return (fst cons,tl)
-      | _ -> fail @@ unsupported_deep_list_patterns @@ fst cons
-      in
-      let hd_loc = Location.lift @@ Raw.pattern_to_region hd in
-      let tl_loc = Location.lift @@ Raw.pattern_to_region hd in
-      let%bind (hd,tl) = bind_map_pair compile_simple_pattern (hd,tl) in
-      let hd = Location.wrap ~loc:hd_loc hd in
-      let tl = Location.wrap ~loc:tl_loc tl in
-      let match_cons = (hd,tl,econs) in
-        return (match_nil,match_cons)
-    | _ -> fail @@ unsupported_deep_list_patterns @@ fst @@ List.hd cases
-  in
-  let compile_simple_tuple_pattern (tuple : CST.tuple_pattern) =
-    let (lst, _) = r_split tuple in
-    match lst.inside with
-      hd,[] -> compile_simple_pattern hd
-    | _ -> fail @@ unsupported_deep_tuple_patterns tuple
-  in
-  let compile_constr_pattern (constr : CST.pattern) =
-    match constr with
-      PConstr c ->
-      ( match c with
-        PUnit _ ->
-         fail @@ unsupported_pattern_type constr
-      | PFalse _ -> return (Label "false", Location.wrap @@ Var.of_name "_")
-      | PTrue  _ -> return (Label "true", Location.wrap @@ Var.of_name "_")
-      | PNone  _ -> return (Label "None", Location.wrap @@ Var.of_name "_")
-      | PSomeApp some ->
-        let (some,_) = r_split some in
-        let (_, pattern) = some in
-        let (pattern,loc) = r_split pattern in
-        let%bind pattern = compile_simple_pattern pattern.inside in
-        return (Label "Some", Location.wrap ~loc pattern)
-      | PConstrApp constr ->
-        let (constr, _) = r_split constr in
-        let (constr, patterns) = constr in
-        let (constr, _) = r_split constr in
-        let pattern_loc = match patterns with
-          | Some (v:CST.tuple_pattern) -> Location.lift v.region
-          | None -> Location.generated in
-        let%bind pattern = bind_map_option compile_simple_tuple_pattern patterns in
-        let pattern = Location.wrap ~loc:pattern_loc @@ Option.unopt ~default:(Var.of_name "_") pattern in
-        return (Label constr, pattern)
-    )
-    | _ -> fail @@ unsupported_pattern_type constr
-  in
-  let aux (case : a CST.case_clause CST.reg) =
-    let (case, _loc) = r_split case in
-    let%bind pattern = compile_pattern case.pattern in
-    let%bind expr    = compiler case.rhs in
-    return (pattern, expr)
-  in
-  let%bind cases = bind_map_ne_list aux cases in
-  match cases with
-  | (PVar var, expr), [] ->
-    let (var, loc) = r_split var in
-    let var = Location.wrap ~loc @@ Var.of_name var in
-    let binder = {var;ascr=None} in
-    return @@ AST.Match_variable (binder, expr)
-  | (PTuple tuple , expr), [] ->
-    let aux : CST.pattern -> (ty_expr binder,_) result = fun var ->
-      match var with
-      | CST.PVar var ->
-        let (name, loc) = r_split var in
-        let var = Location.wrap ~loc @@ Var.of_name name in
-        ok @@ { var ; ascr=None }
-      | x ->
-        (* TODO : patterns in match not supported see !909 *)
-        fail @@ unsupported_deep_pattern_matching (Raw.pattern_to_region x)
+  match p with
+  | CST.PWild reg ->
+    let loc = Location.lift reg in
+    let b = make_fresh_var ~loc () in
+    ok @@ P_var b
+  | CST.PVar var ->
+    let (var,loc) = r_split var in
+    let b =
+      let var = Location.wrap ~loc @@ Var.of_name var in
+      { var ; ascr = None }
     in
-    let%bind lst = bind_map_ne_list aux @@ npseq_to_ne_list tuple.value.inside in
-    let lst : ty_expr binder list = List.Ne.to_list lst in
-    return @@ AST.Match_tuple (lst, expr)
-  | (PList _, _), _ ->
-    let%bind (match_nil,match_cons) = compile_list_pattern @@ List.Ne.to_list cases in
-    return @@ AST.Match_list {match_nil;match_cons}
-  | (PConstr _,_), _ ->
-    let (pattern, lst) = List.split @@ List.Ne.to_list cases in
-    let%bind constrs = bind_map_list compile_constr_pattern pattern in
-    return @@ AST.Match_variant (List.combine constrs lst)
-  | (p, _), _ -> fail @@ unsupported_pattern_type p
+    ok @@ P_var b
+  | CST.PTuple tuple ->
+    let (tuple, _loc) = r_split tuple in
+    let lst = npseq_to_ne_list tuple.inside in
+    let patterns = List.Ne.to_list lst in
+    let%bind nested = bind_map_list conv patterns in
+    ok @@ P_tuple nested
+  | CST.PConstr constr_pattern -> (
+    match constr_pattern with
+    | PUnit _ -> ok @@ P_unit
+    | PFalse _ -> ok @@ P_variant (Label "false" , None)
+    | PTrue _ -> ok @@ P_variant (Label "true" , None)
+    | PNone _ -> ok @@ P_variant (Label "None" , None)
+    | PSomeApp some ->
+      let ((_,p), _loc) = r_split some in
+      let (p,_loc) = r_split p in
+      let%bind pattern' = conv p.inside in
+      ok @@ P_variant (Label "Some", Some pattern')
+    | PConstrApp constr_app ->
+      let ((constr,p_opt), _loc) = r_split constr_app in
+      let (l , _loc) = r_split constr in
+      let aux : CST.tuple_pattern -> (AST.ty_expr AST.pattern , _) result =
+        fun p -> conv (CST.PTuple p)
+      in
+      let%bind pv_opt = bind_map_option aux p_opt in
+      ok @@ P_variant (Label l, pv_opt)
+  )
+  | CST.PList list_pattern -> (
+    let%bind repr = match list_pattern with
+    | PListComp p_inj -> (
+      match p_inj.value.elements with
+      | None ->
+        ok @@ P_list (List [])
+      | Some l ->
+        let patterns  = Utils.nsepseq_to_list @@ l in
+        let%bind nested = bind_map_list conv patterns in
+        ok @@ P_list (List nested)
+    )
+    | PParCons p ->
+      let (hd, _, tl) = p.value.inside in
+      let%bind hd = conv hd in
+      let%bind tl = conv tl in
+      ok @@ P_list (Cons (hd,tl))
+    | PCons l ->
+      let patterns  = Utils.nsepseq_to_list l.value in
+      let%bind nested = bind_map_list conv patterns in
+      ok @@ P_list (List nested)
+    | PNil _ ->
+      ok @@ P_list (List [])
+    in
+    ok @@ repr
+  )
+  | _ -> fail @@ unsupported_pattern_type p
+
+and compile_matching_expr : type a . (a-> (AST.expression,_) result) -> a CST.case_clause CST.reg List.Ne.t -> ((AST.expression, AST.ty_expr) AST.match_case list, _ ) result =
+  fun compiler cases ->
+    let aux (case : a CST.case_clause CST.reg) =
+      let (case, _loc) = r_split case in
+      let%bind expr    = compiler case.rhs in
+      ok (case.pattern, expr)
+    in
+    let%bind cases = bind_map_ne_list aux cases in
+    let cases : (CST.pattern * AST.expression) list = List.Ne.to_list cases in
+    let aux : (CST.pattern * AST.expression) -> ((AST.expression , AST.ty_expr) match_case, _) result =
+      fun (raw_pattern, body) ->
+        let%bind pattern = conv raw_pattern in
+        ok @@ { pattern ; body }
+    in
+    bind_map_list aux cases
 
 and compile_parameters (params : CST.parameters) =
   let compile_param_decl (param : CST.param_decl) =

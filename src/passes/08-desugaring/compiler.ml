@@ -138,8 +138,24 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       let%bind const = constructor self const in
       return @@ O.E_constructor const
     | I.E_matching {matchee; cases} ->
-      let%bind matchee = self matchee in
-      compile_matching sugar matchee cases
+      let%bind matchee = compile_expression matchee in
+      let%bind cases =
+        bind_map_list
+          (fun ({pattern ; body} : (I.expression, I.type_expression) I.match_case) -> 
+            let%bind pattern = Stage_common.Helpers.map_pattern_t (binder compile_type_expression) pattern in
+            let%bind body = compile_expression body in
+            ok ({pattern ; body} : (O.expression, O.type_expression) I.match_case)
+          )
+          cases
+      in
+      (* REMITODO : prepend some *)
+      let matcheevar = ignore matchee ; Location.wrap (Var.fresh ()) in
+      let aux : (O.expression, O.type_expression) I.match_case -> (O.type_expression O.pattern list * O.expression) =
+        fun {pattern ; body} -> ([pattern], body)
+      in
+      let eqs = List.map aux cases in
+      let%bind c = Pattern_matching.compile_matching matcheevar eqs in
+      ok @@ O.make_e c
     | I.E_record recd ->
       let%bind recd = record self recd in
       return @@ O.E_record recd
@@ -247,48 +263,7 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       let m = O.LMap.of_list lst in
       return @@ O.E_record m
 
-and compile_matching : I.expression -> O.expression -> I.matching_expr -> (O.expression, desugaring_error) result =
-  fun sugar e m ->
-  let loc = sugar.location in
-  match m with
-    | I.Match_list {match_nil;match_cons} ->
-      let%bind match_nil = compile_expression match_nil in
-      let (hd,tl,expr) = match_cons in
-      let hd = cast_var hd in
-      let tl = cast_var tl in
-      let%bind body = compile_expression expr in
-      ok @@ O.e_matching ~loc ~sugar e @@ O.Match_list {match_nil; match_cons={hd;tl;body}}
-    | I.Match_option {match_none;match_some} ->
-      let%bind match_none = compile_expression match_none in
-      let (opt,body) = match_some in
-      let opt = cast_var opt in
-      let%bind body = compile_expression body in
-      ok @@ O.e_matching ~loc ~sugar e @@ O.Match_option {match_none; match_some={opt;body}}
-    | I.Match_variant lst ->
-      let%bind lst = bind_map_list (
-        fun ((c,proj),expr) ->
-          let%bind body = compile_expression expr in
-          ok @@ ({constructor=c;proj=cast_var proj;body} : O.match_variant)
-      ) lst
-      in
-      ok @@ O.e_matching ~loc ~sugar e @@ O.Match_variant lst
-    | I.Match_record (fields, expr) ->
-      let fields = O.LMap.of_list @@ fields in
-      let%bind fields = Stage_common.Helpers.bind_map_lmap compile_binder fields in
-      let%bind body = compile_expression expr in
-      ok @@ O.e_matching ~loc ~sugar e @@ O.Match_record { fields ; body }
-    | I.Match_tuple (fields, expr) ->
-      let fields' = O.LMap.of_list @@ List.mapi (fun i binder -> (O.Label (string_of_int i), binder)) fields in
-      let%bind fields = Stage_common.Helpers.bind_map_lmap compile_binder fields' in
-      let%bind body = compile_expression expr in
-      ok @@ O.e_matching ~loc ~sugar e @@ O.Match_record { fields ; body }
-    | I.Match_variable (a, expr) ->
-      let%bind a = compile_binder a in
-      let%bind expr = compile_expression expr in
-      ok @@ O.e_let_in ~sugar a false e expr
-
 and compile_declaration : I.declaration -> (O.declaration , desugaring_error) result =
-
   fun declaration ->
   let return (decl: O.declaration) = ok @@ decl in
   match declaration with

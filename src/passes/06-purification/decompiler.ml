@@ -75,10 +75,7 @@ let rec decompile_expression : O.expression -> (I.expression, Errors.purificatio
   | O.E_constructor {constructor;element} ->
     let%bind element = self element in
     return @@ I.E_constructor {constructor;element}
-  | O.E_matching {matchee; cases} ->
-    let%bind matchee = self matchee in
-    let%bind cases   = decompile_matching cases in
-    return @@ I.E_matching {matchee;cases}
+  | O.E_matching {matchee; cases} -> ignore (matchee,cases) ; failwith "REMITODO"
   | O.E_record recd ->
     let%bind recd = record self recd in
     return @@ I.E_record recd
@@ -122,43 +119,6 @@ let rec decompile_expression : O.expression -> (I.expression, Errors.purificatio
   | O.E_set set ->
     let%bind set = bind_map_list self set in
     return @@ I.E_set set
-
-and decompile_matching : O.matching_expr -> (I.matching_expr, Errors.purification_error) result =
-  fun m ->
-  match m with
-    | O.Match_list {match_nil;match_cons} ->
-      let%bind match_nil = decompile_expression match_nil in
-      let (hd,tl,expr) = match_cons in
-      let%bind expr = decompile_expression expr in
-      ok @@ I.Match_list {match_nil; match_cons=(hd,tl,expr)}
-    | O.Match_option {match_none;match_some} ->
-      let%bind match_none = decompile_expression match_none in
-      let (n,expr) = match_some in
-      let%bind expr = decompile_expression expr in
-      ok @@ I.Match_option {match_none; match_some=(n,expr)}
-    | O.Match_variant lst ->
-      let%bind lst = bind_map_list (
-        fun ((c,n),expr) ->
-          let%bind expr = decompile_expression expr in
-          ok @@ ((c,n),expr)
-      ) lst
-      in
-      ok @@ I.Match_variant lst
-    | O.Match_record (lst,expr) ->
-      let%bind expr = decompile_expression expr in
-      let aux (a,b) =
-        let%bind b = binder decompile_type_expression b in
-        ok @@ (a,b) in
-      let%bind lst = bind_map_list aux lst in
-      ok @@ I.Match_record (lst,expr)
-    | O.Match_tuple (lst,expr) ->
-      let%bind expr = decompile_expression expr in
-      let%bind lst = bind_map_list (binder decompile_type_expression) lst in
-      ok @@ I.Match_tuple (lst,expr)
-    | O.Match_variable (b,expr) ->
-      let%bind expr = decompile_expression expr in
-      let%bind binder = binder decompile_type_expression b in
-      ok @@ I.Match_variable (binder,expr)
 
 let decompile_declaration : O.declaration Location.wrap -> _ result = fun {wrap_content=declaration;location} ->
   let return decl = ok @@ Location.wrap ~loc:location decl in
