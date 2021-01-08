@@ -727,7 +727,7 @@ let main = ([ignore, storage]: [unit, storage]) => {
   if (storage != packed) {
     (failwith("wrong chain") as [list<operation>, storage]);
   } else {
-    return [([] as list<operation>), packed];
+    return [(List() as list<operation>), packed];
   }
 };
 ```

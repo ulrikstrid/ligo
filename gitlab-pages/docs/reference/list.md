@@ -187,7 +187,7 @@ let plus_one : list (int) = List.map (increment, larger_list);
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let larger_list: list<int> = [1, 2, 3];
+let larger_list: list<int> = List(1, 2, 3);
 
 let increment = (i : int) : int => i + 1;
 
@@ -250,7 +250,7 @@ let sum_of_elements : int = List.fold (sum, my_list, 0);
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let my_list : list<int> = [1, 2, 3];
+let my_list : list<int> = List(1, 2, 3);
 
 let sum = ([result, i]: [int, int]): int => result + i;
 

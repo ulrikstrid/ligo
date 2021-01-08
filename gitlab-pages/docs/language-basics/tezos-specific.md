@@ -265,7 +265,7 @@ let origination : (operation, address) = Tezos.create_contract (
 
 ```jsligo group=e
 let origination : [operation, address] = Tezos.create_contract (
-  ([p, s]: [nat,string]) : [list<operation>, string] => [([] as list(operation)), s],
+  ([p, s]: [nat,string]) : [list<operation>, string] => [(List() as list(operation)), s],
   (None as option<key_hash>),
   (3 as tez),
   "initial_storage")

@@ -95,11 +95,10 @@ let tail : coin = Tail;
 
 </Syntax>
 <Syntax syntax="jsligo">
-<!-- TODO SSPI: REVIEW THIS EXAMPLE. -->
 ```jsligo group=b
 type coin = | ["Head"] | ["Tail"];
-let head : coin = "Head";
-let tail : coin = "Tail";
+let head : coin = ["Head"];
+let tail : coin = ["Tail"];
 ```
 
 </Syntax>
@@ -162,7 +161,6 @@ let g : user = Guest;
 
 </Syntax>
 <Syntax syntax="jsligo">
-<!-- TODO SSPI: REVIEW THIS EXAMPLE. -->
 ```jsligo group=c
 type id = nat;
 
@@ -171,8 +169,8 @@ type user =
 | ["Manager", id]
 | ["Guest"];
 
-let u : user = Admin (1000n);
-let g : user = Guest;
+let u : user = ["Admin", (1000 as nat)];
+let g : user = ["Guest"];
 ```
 
 </Syntax>
@@ -300,12 +298,11 @@ flip Head
 
 </Syntax>
 <Syntax syntax="jsligo">
-<!-- TODO SSPI: REVIEW THIS EXAMPLE. -->
 
 ```jsligo group=e
 type coin = | ["Head"] | ["Tail"];
-let Tail = "Tail";
-let Head = "Head";
+let Tail = ["Tail"];
+let Head = ["Head"];
 let flip = (c : coin) : coin =>
   match (c, {
   Head: () => Tail,

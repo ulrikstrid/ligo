@@ -58,7 +58,7 @@ let main = (p : (nat, nat), s : (nat, nat)) : (list(operation), (nat, nat)) =>
 let fst = (p: [nat, nat]) : nat => p[0];
 
 let main = (p : [nat, nat], s : [nat, nat]) : [list<operation>, [nat, nat]] =>
-    [([] as list<operation>), [fst([p[0], p[1]]), fst([s[1], s[0]])]];
+    [(List() as list<operation>), [fst([p[0], p[1]]), fst([s[1], s[0]])]];
 ```
 
 </Syntax>
