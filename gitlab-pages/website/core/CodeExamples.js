@@ -110,7 +110,7 @@ let sub = ([store, delta] : [storage, int]) : storage => store - delta;
 
 let main = ([action, store] : [parameter, storage]) : return_ => {
  return [
-   ([] as list <operation>),    // No operations
+   (List() as list <operation>),    // No operations
    (match (action) ({
     "Increment": (n: int) => add ([store, n]),
     "Decrement": (n: int) => sub ([store, n]),
