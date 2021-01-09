@@ -74,7 +74,7 @@ let transfer = ([p,s] : [transfer, storage]) : [list <operation>, storage] => {
 	    None: () => (0 as nat)
 	  });
 	  let new_tokens2 = Big_map.update (p.address_to, (Some (receiver_balance + p.value)), new_tokens);
-	  return [([] as list <operation>), { ...s,tokens:new_tokens2, allowances:new_allowances}];
+	  return [(List() as list <operation>), { ...s,tokens:new_tokens2, allowances:new_allowances}];
   };
 };
 
@@ -89,7 +89,7 @@ let approve = ([p,s] : [approve, storage]) : [list <operation>, storage] => {
   }
   else {
     let new_allowances = Big_map.update ([p.spender, Tezos.sender], (Some (p.value)), s.allowances);
-    return [([] as list <operation>), { ...s, allowances : new_allowances}];
+    return [(List() as list <operation>), { ...s, allowances : new_allowances}];
   };
 };
 

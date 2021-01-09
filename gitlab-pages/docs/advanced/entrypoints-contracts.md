@@ -113,7 +113,7 @@ type storage = nat;
 type return_ = [list <operation>, storage];
 
 let main = ([action, store]: [parameter, storage]) : return_ =>
-  [([] as list <operation>), store];
+  [(List() as list <operation>), store];
 ```
 
 </Syntax>
@@ -241,10 +241,10 @@ type storage = {
 type return = [list <operation>, storage];
 
 let entry_A = ([n, store]: [nat, storage]) : return =>
-  [([] as list <operation>), {...store, counter : n}];
+  [(List() as list <operation>), {...store, counter : n}];
 
 let entry_B = ([s, store]: [string, storage]) : return =>
-  [([] as list <operation>), {...store, name : s}];
+  [(List() as list <operation>), {...store, name : s}];
 
 let main = ([action, store]: [parameter, storage]) : return =>
   match(action, {
@@ -346,7 +346,7 @@ type return = [list <operation>, storage];
 let deny = ([action, store]: [parameter, storage]) : return => {
   if (Tezos.amount > (0 as tez)) {
     (failwith("This contract does not accept tokens.") as return); }
-  else { return [([] as list <operation>), store]; };
+  else { return [(List() as list <operation>), store]; };
 };
 ```
 
@@ -407,7 +407,7 @@ let owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address);
 
 let main = ([action, store] : [parameter, storage]) : return => {
   if (Tezos.source != owner) { (failwith ("Access denied.") as return); }
-  else { [([] as list <operation>), store]; };
+  else { [(List() as list <operation>), store]; };
 };
 ```
 

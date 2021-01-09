@@ -133,7 +133,7 @@ let add = ([n, store] : [int, storage]) : storage => store + n;
 let sub = ([n, store] : [int, storage]) : storage => store - n;
 
 let main = ([action, store] : [parameter, storage]) : return_ =>
-  (([] as list <operation>),
+  ((List() as list <operation>),
     (match (action, {
      Increment: (n: int) => add ([n, store]),
      Decrement: (n: int) => sub ([n, store])

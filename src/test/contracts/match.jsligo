@@ -11,5 +11,5 @@ let main = ([action, store]: [parameter, storage]) => {
     Add: (n: nat) => n,
     Sub: (n: nat) => -n
   });  
-  return [([] as list <operation>), store2];
+  return [(List() as list <operation>), store2];
 }

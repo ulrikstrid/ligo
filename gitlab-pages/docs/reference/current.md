@@ -56,7 +56,7 @@ let main = ((p,s) : (unit, tez)) =>
 
 ```jsligo
 let main = ([p, s] : [unit, tez]) =>
-  [([] as list (operation)), Tezos.balance];
+  [(List() as list (operation)), Tezos.balance];
 ```
 
 </Syntax>

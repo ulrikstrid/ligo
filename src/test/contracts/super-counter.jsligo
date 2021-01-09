@@ -11,5 +11,5 @@ let main = ([action, store]: [parameter, storage]) : return_ => {
     Increment: (n: nat) => store + n,
     Decrement: (n: nat) => store - n
   });
-  return [([] as list <operation>), storage];
+  return [(List() as list <operation>), storage];
 };

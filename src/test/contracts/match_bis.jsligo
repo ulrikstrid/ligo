@@ -12,6 +12,6 @@ let main = ([action, store] : [parameter, storage]) => {
     Increment: (value: int) => add (store, value),
     Decrement: (value: int) => sub (store, value),
   });
-  return [([] as list <operation>), store2];
+  return [(List() as list <operation>), store2];
 };
 
