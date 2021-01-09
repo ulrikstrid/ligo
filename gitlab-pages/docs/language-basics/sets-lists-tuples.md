@@ -280,7 +280,7 @@ not symmetric: on the left lies the element to cons, and, on the
 right, a list on which to cons.
 
 ```jsligo group=lists
-let larger_list : list <int> = [5, ...my_list]; // [5,1,2,2]
+let larger_list : list <int> = List(5, ...my_list); // [5,1,2,2]
 ```
 
 </Syntax>
