@@ -15,7 +15,7 @@ let empty = Ext
 let is_empty m = (m = empty)
 
 let blacken = function
-                         Ext -> Ext
+  Ext -> Ext
 | Int (_, left, root, right) -> Int (Black, left, root, right)
 
 let balance colour left root right =
@@ -25,7 +25,8 @@ let balance colour left root right =
   | Black, a, x, Int (Red, Int (Red, b, y, c), z, d)
   | Black, a, x, Int (Red, b, y, Int (Red, c, z, d)) ->
       Int (Red, Int (Black, a, x, b), y, Int (Black, c, z, d))
-  | _ -> Int (colour, left, root, right)
+  | _ ->
+      Int (colour, left, root, right)
 
 type choice = Old | New
 
@@ -44,33 +45,48 @@ let add ~cmp choice elt tree =
         let root' = choose ~new':elt ~old:root choice
         in if root == root' then raise Physical_equality
            else Int (colour, left, root', right)
-      else if diff < 0 then
-             balance colour (insert left) root right
-           else balance colour left root (insert right)
+      else if diff < 0 then 
+        balance colour (insert left) root right
+      else 
+        balance colour left root (insert right)
   in try blacken (insert tree) with
        Physical_equality -> tree
 
 let remove : type a b . cmp:(a -> b -> int) -> a -> b t -> b t = fun ~cmp elt tree ->
   (* TODO: this leaves the tree not properly balanced. *)
-  let rec bst_shift_up : b t -> b t = function
+  let rec bst_remove : b t -> b t = function
     | Ext -> failwith "unknown error"
-    | Int (colour, left, root, right) ->
-       (
-         ignore root; (* we delete the root *)
-         match left, right with
+    | Int (colour,left, root, right) -> (
+         ignore root; (* Deletion *)
+         match left, right with 
+         (* Get the next value, then put it at the place of the element you are removing and remove this element *)
+         | _, Int _ ->
+            let new_root, new_right = bst_remove_leftmost right in
+            Int (colour,left,new_root,new_right)
+         (* If this is the highr value, there is only one child, so move the tree up*)
+         | Int (_lcolor, lleft, lroot, lright), Ext ->
+            Int (colour, lleft, lroot, lright)
+          (* No child, just delete *)
          | Ext, Ext -> Ext
-         | Ext, Int (_rcolour, _rleft, rroot, _rright) ->
-            let new_right = bst_shift_up right in
-            Int (colour, Ext, rroot, new_right)
-         | Int (_lcolour, _lleft, lroot, _lright), _ ->
-            let new_left = bst_shift_up left in
-            Int (colour, new_left, lroot, right)
-       ) in
+    )
+  and bst_remove_leftmost : b t -> b * b t = function
+    | Ext -> failwith "unknow error"
+    | Int  (colour, left, root, right) ->
+      match left,right with
+      | Int _, _ -> 
+        (* Continue searching*) 
+        bst_remove_leftmost left
+      | Ext,Ext ->
+        (* found with no children*)
+        root,Ext  
+      | Ext, Int (_rcolour, rleft,rroot,rright) ->
+        root, Int (colour, rleft,rroot, rright)
+  in
   let rec bst_delete : a -> b t -> b t = fun elt -> function
     | Ext -> raise Not_found
     | Int (colour, left, root, right) as current ->
        let c = cmp elt root in
-       if      c = 0 then bst_shift_up current
+       if      c = 0 then bst_remove current
        else if c < 0 then Int (colour, bst_delete elt left, root, right)
        else               Int (colour, left, root, bst_delete elt right)
   in
@@ -78,12 +94,14 @@ let remove : type a b . cmp:(a -> b -> int) -> a -> b t -> b t = fun ~cmp elt tr
   with Not_found -> tree
 
 let rec find ~cmp elt = function
-  Ext -> raise Not_found
+  Ext -> (
+    raise Not_found)
 | Int (_, left, root, right) ->
     let diff = cmp elt root in
-    if diff = 0 then root
-    else if diff < 0 then find ~cmp elt left
-         else find ~cmp elt right
+    if diff = 0 then (root)
+    else if diff < 0 
+      then (find ~cmp elt left)
+      else (find ~cmp elt right)
 
 let find_opt ~cmp elt tree =
   try Some (find ~cmp elt tree) with Not_found -> None

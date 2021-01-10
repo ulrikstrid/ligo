@@ -49,3 +49,5 @@ let find_default k default m =
 let has_key k m = PolyMap.has_key k m.map
 
 let bindings m = PolyMap.bindings m.map
+
+let pp f g ppf m = PolyMap.pp f g ppf m.map
