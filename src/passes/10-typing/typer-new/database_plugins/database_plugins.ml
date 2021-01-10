@@ -27,7 +27,7 @@ module PluginFields = functor (Ppt : PerPluginType) -> struct
     let module BCI = Ppt(ByConstraintIdentifier) in
     let module RTC = Ppt(RefinedTypeclasses) in
     let module TcC = Ppt(TypeclassesConstraining) in
-    Format.fprintf ppf "@[<assignments = %a;@ grouped_by_variable = %a;@ cycle_detection_topological_sort = %a;@ by_constraint_identifier = %a;@ refined_typeclasses = %a;@ typeclasses_constraining = %a@]"
+    Format.fprintf ppf "@[ <@ assignments =@ @[<hv 2> %a @] ;@ grouped_by_variable =@ @[<hv 2> %a@] ;@ cycle_detection_topological_sort =@ @[<hv 2> %a@] ;@ by_constraint_identifier =@ @[<hv 2> %a@] ;@ refined_typeclasses =@ @[<hv 2> %a@] ;@ typeclasses_constraining =@ @[<hv 2> %a@] ;@]@ >"
       A.pp flds#assignments
       GbV.pp flds#grouped_by_variable
       CDTS.pp flds#cycle_detection_topological_sort

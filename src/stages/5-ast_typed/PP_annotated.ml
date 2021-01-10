@@ -332,13 +332,13 @@ and type_value ppf t =
 
 and typeclass ppf tc = fprintf ppf "%a" (list_sep_d (list_sep_d type_value)) tc
 let c_constructor_simpl ppf ({is_mandatory_constraint;reason_constr_simpl;tv;c_tag;tv_list} : c_constructor_simpl) =
-  fprintf ppf "{@,@[<hv 2>
+  fprintf ppf "{@[<hv>
               is_mandatory_constraint : %b ;@
               reason_constr_simpl : %s ;@
               tv : %a ;@
               c_tag : %a ;@
-              tv_list : %a
-              @]@,}"
+              tv_list : %a;@
+              @]}"
     is_mandatory_constraint
     reason_constr_simpl
     type_variable tv

@@ -212,3 +212,26 @@ let annotation : T.type_expression -> T.type_expression -> (constraints * T.type
     c_equation e' annot' "wrap: annotation: expr type must eq annot" ;
     c_equation e' (T.Reasons.wrap (Todo "wrap: annotation: whole") @@ T.P_variable whole_expr) "wrap: annotation: whole" ;
   ] , whole_expr
+
+let const_decl : T.type_expression -> T.type_expression option -> constraints =
+  fun rhs rhs_tv_opt ->
+  let rhs'        = type_expression_to_type_value rhs in
+  let rhs_tv_opt' = match rhs_tv_opt with
+      None -> []
+    | Some annot -> [c_equation rhs' (type_expression_to_type_value annot) "wrap: let_in: rhs"] in
+  rhs_tv_opt'
+
+let type_decl : unit -> constraints =
+  fun () ->
+  [
+  ]
+
+let mod_decl : unit -> constraints =
+  fun () ->
+  [
+  ]
+
+let mod_al : unit -> constraints =
+  fun () ->
+  [
+  ]

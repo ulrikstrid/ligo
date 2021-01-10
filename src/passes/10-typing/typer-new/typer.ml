@@ -117,31 +117,35 @@ end
 (*
   Extract pairs of (name,type) in the declaration and add it to the environment
 *)
-let rec type_declaration env state : I.declaration Location.wrap -> (environment * _ O'.typer_state * O.declaration Location.wrap, typer_error) result =
-fun d ->
-let return ?(loc = d.location) e s (d: O.declaration) = ok @@ (e,s,Location.wrap ~loc d) in
-match Location.unwrap d with
+let rec type_declaration env state : I.declaration Location.wrap -> (environment * _ O'.typer_state * O.declaration Location.wrap, typer_error) result = fun d ->
+  let return : _ -> _ -> _ O'.typer_state -> _ (* return of type_expression *) = fun expr e state constraints ->
+  Format.printf "Solving expression : %a\n%!" O.PP.declaration expr ;
+    let%bind new_state = Solver.main state constraints in
+    Format.printf "Leaving type declaration\n%!";
+    ok @@ (e,new_state, Location.wrap ~loc:d.location expr ) in
+  match Location.unwrap d with
   | Declaration_type {type_binder; type_expr} ->
     let type_binder = Var.todo_cast type_binder in
     let%bind type_expr = evaluate_type env type_expr in
     let env' = Environment.add_type (type_binder) type_expr env in
-    return env' state @@ Declaration_type {type_binder; type_expr}
+    let c = Wrap.type_decl () in
+    return (O.Declaration_type {type_binder; type_expr}) env' state c
   | Declaration_constant {name; binder; attr; expr} -> (
     (*
       Determine the type of the expression and add it to the environment
     *)
     let%bind tv_opt = bind_map_option (evaluate_type env) binder.ascr in
-    let%bind e, state', expr =
+    let%bind (e, state', expr),constraints =
       trace (constant_declaration_tracer binder.var expr tv_opt) @@
-      type_expression env state ?tv_opt expr in
+      type_expression' env state ?tv_opt expr in
     let binder = Location.map Var.todo_cast binder.var in
     let post_env = Environment.add_ez_declaration binder expr e in
-    return post_env state' @@ Declaration_constant { name ; binder ; expr ; inline=attr.inline}
+    return (Declaration_constant { name; binder ; expr ; inline=attr.inline}) post_env state' constraints
     )
   | Declaration_module {module_binder;module_} -> (
-    let%bind (e,module_,_) = type_module ~init_env:env module_ in
+    let%bind (e,module_,state) = type_module ~init_env:env module_ in
     let post_env = Environment.add_module module_binder e env in
-    return post_env (Solver.placeholder_for_state_of_new_typer ()) @@ Declaration_module { module_binder; module_}
+    return (Declaration_module { module_binder; module_}) post_env state @@ Wrap.mod_decl ()
   )
   | Module_alias {alias;binders} -> (
     let aux env binder =
@@ -149,7 +153,7 @@ match Location.unwrap d with
       @@ Environment.get_module_opt binder env in
     let%bind e = bind_fold_ne_list aux env binders in
     let post_env = Environment.add_module alias e env in
-    return post_env (Solver.placeholder_for_state_of_new_typer ()) @@ Module_alias { alias; binders}
+    return (Module_alias { alias; binders}) post_env state @@ Wrap.mod_al ()
   )
 
 (*
@@ -632,7 +636,7 @@ and type_and_subst : 'a 'b.
   let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%!\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env_state_node here.\n\n%!") in
   let () = (if Ast_typed.Debug.debug_new_typer && Ast_typed.Debug.json_new_typer then print_env_state_node in_printer env_state_node) in
   let%bind (env, state, node) = types_and_returns_env env_state_node in
-  let subst_all =
+  let subst_all,env =
     let aliases = state.aliases in
     let assignments = state.plugin_states#assignments in
     let substs : variable: O.type_variable -> _ = fun ~variable ->
@@ -660,9 +664,10 @@ and type_and_subst : 'a 'b.
         let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s%!" @@ Format.asprintf "Substituing var %a (%a is %a)\n%!" Var.pp variable Var.pp root Ast_typed.PP.type_content expr) in
         ok @@ expr
     in
-    apply_substs ~substs node
+    (apply_substs ~substs node, Typesystem.Misc.Substitution.Pattern.s_environment ~substs env)
   in
   let%bind node = subst_all in
+  let%bind env  = env in
   let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env,state,node here again.\n\n") in
   let () = (if Ast_typed.Debug.debug_new_typer || Ast_typed.Debug.json_new_typer then print_env_state_node out_printer (env, state, node)) in
   ok (node, state, env)
