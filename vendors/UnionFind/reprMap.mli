@@ -17,3 +17,4 @@ val find_opt : 'key -> ('key, 'value) t -> 'value option
 val find_default : 'key -> (unit -> 'value) -> ('key, 'value) t -> 'value * ('key, 'value) t
 val has_key : 'key -> ('key, 'value) t -> bool
 val bindings : ('key, 'value) t -> ('key * 'value) list
+val pp : (Format.formatter -> 'key -> unit) -> (Format.formatter -> 'value -> unit) -> Format.formatter -> ('key, 'value) t -> unit
