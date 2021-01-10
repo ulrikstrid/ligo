@@ -2438,7 +2438,7 @@ let y = true
 let main = test_suite "Integration (End to End)"
     @@ (fun lst -> List.map snd @@ match typer_switch () with Ast_typed.New -> List.filter fst lst | _ -> lst) @@ [
 
-    test no "chain id" chain_id ;                         (* record *)
+    test y "chain id" chain_id ;                         (* record *)
     test no "bytes unpack" bytes_unpack ;                 (* record *)
     test no "bytes unpack (mligo)" bytes_unpack_mligo ;   (* record *)
     test no "bytes unpack (religo)" bytes_unpack_religo ; (* record *)
@@ -2451,7 +2451,7 @@ let main = test_suite "Integration (End to End)"
 
     test y "type alias" type_alias ;
 
-    test no "function" function_ ;                        (* tests don't typecheck the test case's application *)
+    test y "function" function_ ;                        (* tests don't typecheck the test case's application *)
 
     test no "blockless function" blockless;
     (* test "procedure"  procedure ; *)

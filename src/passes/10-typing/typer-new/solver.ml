@@ -43,8 +43,8 @@ end = struct
     let open Typesystem.Solver_types in
     let open Format in
     let open PP_helpers in
-    Format.fprintf ppf "@[{ all_constaints = %a;@ plugin_states = %a ;@ aliases = %a ;@ already_selected_and_propagators = %a }@]"
-      (RedBlackTrees.PolySet.pp Ast_typed.PP.type_constraint_simpl) all_constraints
+    Format.fprintf ppf "{@[<hv 2> @ all_constaints = %a;@ plugin_states = %a ;@ aliases = %a ;@ already_selected_and_propagators = %a @]@ }"
+      (RedBlackTrees.PolySet.pp PP.type_constraint) all_constraints
       (Plugin_states.pp_print) plugin_states
       (UnionFind.Poly2.pp Ast_typed.PP.type_variable) aliases
       (list_sep pp_ex_propagator_state (fun ppf () -> fprintf ppf " ;@ ")) already_selected_and_propagators
