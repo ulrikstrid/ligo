@@ -5,7 +5,7 @@
     cameligo
     pascaligo
     reasonligo
-    ; jsligo
+    jsligo
     )
   (preprocess
     (pps
