@@ -1,18 +1,8 @@
 type storage = int;
 
-type Increment = {
-  kind: 'Increment', 
-  value: int
-}
-
-type Decrement = {
-  kind: 'Decrement',
-  value: int
-}
-
 type parameter =
-  Increment
-| Decrement;
+| ["Increment", int]
+| ["Decrement", int];
 
 let add = (a: int, b: int) => a + b;
 let sub = (a: int, b: int) => a - b;
@@ -22,6 +12,6 @@ let main = ([action, store] : [parameter, storage]) => {
     Increment: (value: int) => add (store, value),
     Decrement: (value: int) => sub (store, value),
   });
-  return [([] as list <operation>), store2];
+  return [(List() as list <operation>), store2];
 };
 

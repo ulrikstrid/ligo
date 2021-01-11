@@ -58,6 +58,20 @@ ligo evaluate-value gitlab-pages/docs/language-basics/src/variables-and-constant
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=a
+let age : int = 25;
+```
+
+You can evaluate the constant definition above using the following CLI
+command:
+```shell
+ligo evaluate-value gitlab-pages/docs/language-basics/src/variables-and-constants/const.jsligo age
+# Outputs: 25
+```
+
+</Syntax>
 
 
 ## Variables
@@ -135,6 +149,26 @@ You can run the `add` function defined above using the LIGO compiler
 like this:
 ```shell
 ligo run-function gitlab-pages/docs/language-basics/src/variables-and-constants/add.religo add '(1,1)'
+# Outputs: 2
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+<!-- TODO SSPI: REVIEW THIS EXAMPLE. -->
+
+```jsligo group=c
+let add = ([a, b]: [int, int]): int => {
+  const c : int = a + b;
+  let d = 2;
+  d = 5;
+  c;
+};
+```
+
+You can run the `add` function defined above using the LIGO compiler
+like this:
+```shell
+ligo run-function gitlab-pages/docs/language-basics/src/variables-and-constants/add.jsligo add '[1,1]'
 # Outputs: 2
 ```
 

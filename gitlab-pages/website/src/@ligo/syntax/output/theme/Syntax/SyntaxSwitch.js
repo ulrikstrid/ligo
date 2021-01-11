@@ -12,7 +12,9 @@ function SyntaxSwitch(props) {
     value: "cameligo"
   }, "CameLIGO"), /*#__PURE__*/React.createElement("option", {
     value: "reasonligo"
-  }, "ReasonLIGO"));
+  }, "ReasonLIGO"), /*#__PURE__*/React.createElement("option", {
+    value: "jsligo"
+  }, "JsLIGO"));
 }
 
 export default SyntaxSwitch;

@@ -84,6 +84,16 @@ type animal =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=orig
+type animal = 
+| ["Elephant"]
+| ["Dog"]
+| ["Cat"];
+```
+
+</Syntax>
 
 will translate to:
 
@@ -145,6 +155,17 @@ type animal =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+type animal =
+// [@layout:comb] 
+| ["Elephant"]
+| ["Dog"]
+| ["Cat"];
+```
+
+</Syntax>
 
 The `layout:comb` attribute can also be used on record types:
 
@@ -185,6 +206,20 @@ type artist =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```reasonligo
+type artist =  
+// [@layout:comb]
+{
+  genre: string,
+  since: timestamp,
+  name: string
+};
+```
+
+</Syntax>
+
 
 
 ## Different Michelson annotations
@@ -221,6 +256,17 @@ type animal =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=annot
+type animal = 
+| /* [@annot:memory] */ ["Elephant"]
+| /* [@annot:face] */ ["Dog"]
+| /* [@annot:fish] */ ["Cat"]
+```
+
+</Syntax>
+
 
 will result into:
 
@@ -265,6 +311,17 @@ type artist = {
   [@annot:style] genre: string,
   [@annot:from] since: timestamp,
   [@annot:performer] name: string
+}
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=annot
+type artist = {
+  /* [@annot:style] */ genre: string,
+  /* [@annot:from] */ since: timestamp,
+  /* [@annot:performer] */ name: string
 }
 ```
 
@@ -326,6 +383,16 @@ type z_or = michelson_or(unit, "z", y_or, "other")
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+type w_and_v = michelson_pair<int, "w", nat, "v">;
+type x_and = michelson_pair<string, "x", w_and_v, "other">;
+type y_or = michelson_or<unit, "y", x_and, "other">;
+type z_or = michelson_or<unit, "z", y_or, "other">;
+```
+
+</Syntax>
 
 If you don't want to have an annotation, you need to provide an empty string.
 
@@ -377,6 +444,20 @@ let y: z_or = (M_right (y_1) : z_or)
 let x_pair: x_and = ("foo", (2, 3n))
 let x_1: y_or = (M_right (x_pair): y_or)
 let x: z_or = (M_right (y_1) : z_or)
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let z: z_or = (M_left <unit> as z_or);
+
+let y_1: y_or = (M_left <unit> as y_or);
+let y: z_or = (M_right <y_1> as z_or);
+
+let x_pair: x_and = ["foo", (2, (3 as nat))];
+let x_1: y_or = (M_right <x_pair> as y_or);
+let x: z_or = (M_right <y_1> as z_or);
 ```
 
 </Syntax>
@@ -439,6 +520,18 @@ type l_record = {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+type l_record = {
+  s: string,
+  w: int,
+  v: nat
+};
+```
+
+</Syntax>
+
 
 If we want to convert from the Michelson type to our record type and vice 
 versa, we can use the following code:
@@ -495,6 +588,25 @@ let to_michelson = (f: l_record) : michelson => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+type michelson = michelson_pair_left_comb<l_record>;
+
+let of_michelson = (f: michelson) : l_record => { 
+  let p: l_record = Layout.convert_from_left_comb(f);
+  return p
+};
+
+let to_michelson = (f: l_record) : michelson => {
+  let p = Layout.convert_to_left_comb((f as l_record));
+  return p
+};
+
+```
+
+</Syntax>
+
 
 In the case of a left combed Michelson `or` data structure, that you want to 
 translate to a variant, you can use the `michelson_or_left_comb` type.
@@ -534,6 +646,18 @@ type vari =
 | Other(bool)
 
 type r = michelson_or_left_comb(vari)
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+type vari = 
+| ["Foo", int]
+| ["Bar", nat]
+| ["Other", bool];
+
+type r = michelson_or_left_comb<vari>;
 ```
 
 </Syntax>
@@ -583,6 +707,22 @@ let to_michelson_or = (f: vari) : r => {
   let p = Layout.convert_to_left_comb(f: vari);
   p
 }
+
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let of_michelson_or = (f: r) : vari => { 
+  let p: vari = Layout.convert_from_left_comb(f);
+  return p;
+};
+
+let to_michelson_or = (f: vari) : r => {
+  let p = Layout.convert_to_left_comb((f as vari));
+  return p;
+};
 
 ```
 
@@ -810,6 +950,7 @@ let make_abstract_record = (z: string, y: int, x: string, w: bool, v: int) : tes
 ```
 
 </Syntax>
+
 
 ## Entrypoints and annotations
 It's possible for a contract to have multiple entrypoints, which translates in 

@@ -18,7 +18,7 @@ let get_groups md_file =
   bind_fold_list
     (fun (grp_map: _ SnippetsGroup.t) (el:Md.block) ->
       match el.header  with
-      | Some ("pascaligo" as s) | Some ("cameligo" as s) | Some ("reasonligo" as s) -> (
+      | Some ("pascaligo" as s) | Some ("cameligo" as s) | Some ("reasonligo" as s) | Some ("jsligo" as s) -> (
         let%bind () = bind_iter_list
           (fun arg -> match arg with
           | Md.Field "" | Md.Field "skip" | Md.NameValue ("group",_) -> ok ()

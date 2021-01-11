@@ -17,12 +17,8 @@ type transferAuxiliary = {
 };
 type transferMichelson = michelson_pair_right_comb<transferAuxiliary>;
 type transferParameter = list<transferMichelson>;
-type Transfer = {
-  kind: "Transfer",
-  value: transferParameter
-};
 type parameter = 
-| Transfer;
+| ["Transfer", transferParameter];
 type storage = big_map<[tokenId, tokenOwner]>;
 type entrypointParameter = [parameter, storage];
 type entrypointReturn = [list<operation>, storage];
@@ -65,15 +61,15 @@ let transferIterator = ([storage, transferMichelson]: [storage, transferMichelso
   let [storage2, _] = List.fold(
     transferContentsIterator, 
     transferAuxiliary2.txs,
-    [storage, from_]
+    List(storage, from_)
   );
   return storage2
 };
 let transfer = ([transferParameter, storage]: [transferParameter, storage]): entrypointReturn => {
   let storage2 = List.fold(transferIterator, transferParameter, storage);
-  return [([] as list<operation>), storage2];
+  return [(List() as list<operation>), storage2];
 };
 let main = ([parameter, storage]: entrypointParameter): entrypointReturn =>
   match(parameter, {
     Transfer: (transferParameter: transferParameter) => transfer([transferParameter, storage])
-  })
+  });

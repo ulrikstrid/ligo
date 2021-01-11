@@ -52,6 +52,17 @@ type user = {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=records1
+type user = {
+  id       : nat,
+  is_admin : bool,
+  name     : string
+};
+```
+
+</Syntax>
 
 And here is how a record value is defined:
 
@@ -89,6 +100,17 @@ let alice : user = {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=records1
+let alice : user = {
+  id       : (1 as nat),
+  is_admin : true,
+  name     : "Alice"
+};
+```
+
+</Syntax>
 
 
 ### Accessing Record Fields
@@ -114,6 +136,13 @@ let alice_admin : bool = alice.is_admin
 <Syntax syntax="reasonligo">
 
 ```reasonligo group=records1
+let alice_admin : bool = alice.is_admin;
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=records1
 let alice_admin : bool = alice.is_admin;
 ```
 
@@ -208,6 +237,21 @@ let origin : point = {x : 0, y : 0, z : 0};
 
 let xy_translate = ((p, vec) : (point, vector)) : point =>
   {...p, x : p.x + vec.dx, y : p.y + vec.dy};
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+The syntax for the functional updates of record in JsLIGO:
+
+```jsligo group=records2
+type point = {x : int, y : int, z : int};
+type vector = {dx : int, dy : int};
+
+let origin : point = {x : 0, y : 0, z : 0};
+
+let xy_translate = ([p, vec] : [point, vector]) : point =>
+  ({...p, x : p.x + vec.dx, y : p.y + vec.dy});
 ```
 
 </Syntax>
@@ -459,6 +503,14 @@ type register = map (address, move);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=maps
+type move = [int, int];
+type register = map <address, move>;
+```
+
+</Syntax>
 
 
 ### Creating an Empty Map
@@ -485,6 +537,13 @@ let empty : register = Map.empty
 
 ```reasonligo group=maps
 let empty : register = Map.empty
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=maps
+let empty : register = Map.empty;
 ```
 
 </Syntax>
@@ -540,6 +599,21 @@ separate individual map entries.  `("<string value>": address)` means
 that we type-cast a string into an address. -->
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=maps
+let moves : register =
+  Map.literal ([
+    [("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address), [1,2]],
+    [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [0,3]]]);
+```
+
+The `Map.literal` predefined function builds a map from a list of
+key-value pair tuples, `(<key>, <value>)`.  Note also the `;` to
+separate individual map entries.  `("<string value>": address)` means
+that we type-cast a string into an address. -->
+
+</Syntax>
 
 
 ### Accessing Map Bindings
@@ -570,6 +644,14 @@ let my_balance : move option =
 ```reasonligo group=maps
 let my_balance : option (move) =
   Map.find_opt (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address), moves);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=maps
+let my_balance : option <move> =
+  Map.find_opt (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves);
 ```
 
 </Syntax>
@@ -614,7 +696,18 @@ let force_access = ((key, moves) : (address, register)) : move => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
 
+```jsligo group=maps
+let force_access = ([key, moves] : [address, register]) : move => {
+  match (Map.find_opt (key, moves),
+   Some: (move: register) => return move,
+   None: () => (failwith ("No move.") : move)
+  }
+};
+```
+
+</Syntax>
 
 
 ### Updating a Map
@@ -700,6 +793,29 @@ let add = (m : register) : register =>
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+We can update a binding in a map in JsLIGO by means of the
+`Map.update` built-in function:
+
+```jsligo group=maps
+let assign = (m : register) : register =>
+  Map.update
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), Some ([4, 9]), m);
+```
+
+Notice the optional value `Some ([4,9])` instead of `[4, 9]`. If we used
+`None` instead that would have meant that the binding is removed.
+
+As a particular case, we can only add a key and its associated value.
+
+```jsligo group=maps
+let add = (m : register) : register =>
+  Map.add
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [4, 9], m);
+```
+
+</Syntax>
 
 To remove a binding from a map, we need its key.
 
@@ -733,6 +849,16 @@ In ReasonLIGO, we use the predefined function `Map.remove` as follows:
 
 ```reasonligo group=maps
 let delete = ((key, moves) : (address, register)) : register =>
+  Map.remove (key, moves);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+In JsLIGO, we use the predefined function `Map.remove` as follows:
+
+```jsligo group=maps
+let delete = ([key, moves] : [address, register]) : register =>
   Map.remove (key, moves);
 ```
 
@@ -797,6 +923,16 @@ let iter_op = (m : register) : unit => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=maps
+let iter_op = (m : register) : unit => {
+  let predicate = ([i,j] : [address, move]) => assert (j[0] > 3);
+  Map.iter (predicate, m);
+};
+```
+
+</Syntax>
 
 
 #### Map Operations over Maps
@@ -838,6 +974,16 @@ let map_op (m : register) : register =
 let map_op = (m : register) : register => {
   let increment = ((i,j): (address, move)) => (j[0], j[1] + 1);
   Map.map (increment, m);
+};
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=maps
+let map_op = (m : register) : register => {
+  let increment = ([i,j]: [address, move]) => (j[0], j[1] + 1);
+  return Map.map (increment, m);
 };
 ```
 
@@ -889,6 +1035,16 @@ let fold_op = (m : register) : int => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=maps
+let fold_op = (m : register) : int => {
+  let folded = ([i,j]: [int, [address, move]]) => i + j[1][1];
+  return Map.fold (folded, m, 5);
+};
+```
+
+</Syntax>
 
 
 ## Big Maps
@@ -931,6 +1087,14 @@ type register = big_map (address, move);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=big_maps
+type move = [int, int];
+type register = big_map <address, move>;
+```
+
+</Syntax>
 
 
 ### Creating an Empty Big Map
@@ -961,7 +1125,13 @@ let empty : register = Big_map.empty
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
 
+```jsligo group=big_maps
+let empty : register = Big_map.empty;
+```
+
+</Syntax>
 
 ### Creating a Non-empty Map
 
@@ -1013,6 +1183,21 @@ separating individual map entries.  The annotated value `("<string>
 value>" : address)` means that we cast a string into an address.
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=big_maps
+let moves : register =
+  Big_map.literal ([
+    [("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address), [1,2]],
+    [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [0,3]]]);
+```
+
+The predefined function `Big_map.literal` constructs a big map from a
+list of key-value pairs `[<key>, <value>]`. Note also the semicolon
+separating individual map entries.  The annotated value `("<string>
+value>" as address)` means that we cast a string into an address.
+
+</Syntax>
 
 
 ### Accessing Values
@@ -1045,6 +1230,14 @@ let my_balance : move option =
 ```reasonligo group=big_maps
 let my_balance : option (move) =
   Big_map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" : address, moves);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=big_maps
+let my_balance : option <move> =
+  Big_map.find_opt (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves);
 ```
 
 </Syntax>
@@ -1104,6 +1297,18 @@ let updated_map : register =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+We can update a big map in JsLIGO using the `Big_map.update`
+built-in:
+
+```jsligo group=big_maps
+let updated_map : register =
+  Big_map.update
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), Some ([4,9]), moves);
+```
+
+</Syntax>
 
 
 ### Removing Bindings
@@ -1147,6 +1352,17 @@ is called `Map.remove` and is used as follows:
 ```reasonligo group=big_maps
 let updated_map : register =
   Map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+In JsLIGO, the predefined function which removes a binding in a map
+is called `Map.remove` and is used as follows:
+
+```jsligo group=big_maps
+let updated_map : register =
+  Map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves);
 ```
 
 </Syntax>

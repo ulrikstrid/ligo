@@ -1,17 +1,8 @@
 type storage = int;
 
-type Add = {
-  kind: 'Add',
-  value: int
-}
-type Sub = {
-  kind: 'Sub',
-  value: int
-}
-
 type parameter =
-| Add
-| Sub;
+| ["Add", int]
+| ["Sub", int];
 
 type return_ = [list <operation>, storage];
 
@@ -20,5 +11,5 @@ let main = ([action, store]: [parameter, storage]) => {
     Add: (n: nat) => n,
     Sub: (n: nat) => -n
   });  
-  return [([] as list <operation>), store2];
+  return [(List() as list <operation>), store2];
 }

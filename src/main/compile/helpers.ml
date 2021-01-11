@@ -160,27 +160,25 @@ let parse_and_abstract_jsligo buffer file_path =
   let%bind _raw =
     trace parser_tracer @@
     Parsing.Jsligo.parse_file buffer file_path in
-  failwith "TODO : abstraction."
-  (* let%bind applied =
+  let%bind applied =
     trace self_cst_jsligo_tracer @@
     Self_cst.Jsligo.all_program raw in
   let%bind imperative =
     trace cit_jsligo_tracer @@
     Tree_abstraction.Jsligo.compile_program applied
-  in ok imperative *)
+  in ok imperative
 
 let parse_and_abstract_expression_jsligo buffer =
   let%bind _raw =
     trace parser_tracer @@
     Parsing.Jsligo.parse_expression buffer in
-  failwith "TODO : abstraction"
-  (* let%bind applied =
+  let%bind applied =
     trace self_cst_jsligo_tracer @@
     Self_cst.Jsligo.all_expression raw in
   let%bind imperative =
     trace cit_jsligo_tracer @@
     Tree_abstraction.Jsligo.compile_expression applied
-  in ok imperative *)
+  in ok imperative 
 
 let parse_and_abstract ~meta buffer file_path
     : (Ast_imperative.program, _) Trace.result =

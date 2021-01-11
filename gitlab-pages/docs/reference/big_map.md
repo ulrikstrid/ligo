@@ -28,6 +28,9 @@ val empty : ('key, 'value) big_map
 <SyntaxTitle syntax="reasonligo">
 let empty: big_map('key, 'value)
 </SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let empty: big_map&lt;'key, 'value&gt;
+</SyntaxTitle>
 
 Create an empty big_map.
 
@@ -67,6 +70,16 @@ let empty: register = Big_map.empty
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=big_map
+type move = [int, int];
+type register = big_map<address, move>;
+
+let empty: register = Big_map.empty;
+```
+
+</Syntax>
 
 
 <SyntaxTitle syntax="pascaligo">
@@ -77,6 +90,9 @@ val literal : ('key * 'value) list -> ('key, 'value) big_map
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let literal: list(('key, 'value)) => big_map('key, 'value)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let literal: (items: list&lt;['key, 'value]&gt;) => big_map&lt;'key, 'value&gt;
 </SyntaxTitle>
 
 Create a non-empty big_map.
@@ -120,6 +136,16 @@ let moves: register =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=big_map
+let moves: register =
+  Big_map.literal ([
+    [("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address), [1, 2]],
+    [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [0, 3]]]);
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function find_opt : 'key -> big_map ('key, 'value) -> option 'value
@@ -129,6 +155,9 @@ val find_opt : 'key -> ('key, 'value) big_map -> 'value option
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let find_opt: ('key, big_map ('key, 'value)) => option ('value)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let find_opt: (key: 'key, big_map: big_map &lt;'key, 'value&gt;) => option &lt;'value&gt;
 </SyntaxTitle>
 
 Retrieve a value from a big map with the given key. 
@@ -168,6 +197,15 @@ let my_balance: option (move) =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=big_map
+let my_balance: option <move> =
+  Big_map.find_opt(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves);
+```
+
+</Syntax>
+
 
 <SyntaxTitle syntax="pascaligo">
 function mem : 'key -> big_map ('key, 'value) -> bool
@@ -177,6 +215,9 @@ val mem : 'key -> ('key, 'value) big_map -> bool
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let mem: ('key, big_map ('key, 'value)) => bool
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let mem: (key: 'key, big_map: big_map &lt;'key, 'value&gt;) => bool
 </SyntaxTitle>
 
 Test whether a given key exists within a big map. 
@@ -205,6 +246,14 @@ let has_balance: bool =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=big_map
+let has_balance: bool =
+  Big_map.mem(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves);
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function update : 'key -> option 'value -> big_map ('key, 'value) -> big_map ('key, 'value)
@@ -214,6 +263,9 @@ val update: 'key -> 'value option -> ('key, 'value) big_map -> ('key, 'value) bi
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let update: ('key, option('value), big_map('key, 'value)) => big_map('key, 'value)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let update: (key: 'key, value: option&lt;'value&gt;, big_map: big_map&lt;'key, 'value&gt;) => big_map&lt;'key, 'value&gt;
 </SyntaxTitle>
 
 Note: when `None` is used as a value, the value is removed from the big_map.
@@ -270,6 +322,15 @@ let updated_map: register =
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=big_map
+let updated_map: register =
+  Big_map.update
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), Some([4,9]), moves);
+```
+
+</Syntax>
 
 <SyntaxTitle syntax="pascaligo">
 function add : 'key -> 'value -> big_map ('key, 'value) -> big_map ('key, 'value)
@@ -279,6 +340,9 @@ val add : 'key -> 'value -> ('key, 'value) big_map  -> ('key, 'value) big_map
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let add: ('key, 'value, big_map('key, 'value)) => big_map('key, 'value) 
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let add: (key: 'key, value: 'value, big_map: big_map&lt;'key, 'value&gt;) => big_map&lt;'key, 'value&gt;
 </SyntaxTitle>
 <Syntax syntax="pascaligo">
 
@@ -305,6 +369,15 @@ let add = (m: register): register =>
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=big_map
+let add = (m: register): register =>
+  Big_map.add
+    (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [4,9], m);
+```
+
+</Syntax>
 
 
 <SyntaxTitle syntax="pascaligo">
@@ -315,6 +388,9 @@ val remove: 'key -> ('key, 'value) big_map -> ('key, 'value) big_map
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
 let remove: ('key, big_map('key, 'value)) => big_map('key, 'value)
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let remove: (key: 'key, big_map: big_map&lt;'key, 'value&gt;) => big_map&lt;'key, 'value&gt;
 </SyntaxTitle>
 
 <Syntax syntax="pascaligo">
@@ -351,6 +427,14 @@ let updated_map : register =
 ```reasonligo group=big_map
 let updated_map: register =
   Big_map.remove(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=big_map
+let updated_map: register =
+  Big_map.remove(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves); 
 ```
 
 </Syntax>

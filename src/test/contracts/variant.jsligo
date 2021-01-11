@@ -1,23 +1,8 @@
-type Foo = {
-  kind: 'Foo',
-  value: int
-}
-
-type Bar = {
-  kind: 'Bar',
-  value: bool
-}
-
-type Kee = {
-  kind: 'Kee',
-  value: nat
-}
-
 type foobar =
-  Foo
-| Bar
-| Kee
+| ["Foo", int]
+| ["Bar", bool]
+| ["Kee", nat];
 
 let foo: foobar = { kind: 'Foo', value: 42 };
 let bar: foobar = { kind: 'Bar', value: true };
-let kee: foobar = { kind: 'Kee', value: 23 as nat };
+let kee: foobar = { kind: 'Kee', value: (23 as nat) };

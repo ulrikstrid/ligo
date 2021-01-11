@@ -3,20 +3,9 @@
 type storage = int;
 
 /* variant defining pseudo multi-entrypoint actions */
-
-type Increment = {
-  kind: 'increment',
-  value: int
-}
-
-type Decrement = {
-  kind: 'decrement',
-  value: int
-}
-
 type parameter =
-| Increment
-| Decrement;
+| ["Increment", int]
+| ["Decrement", int];
 
 let add = ([a,b]: [int, int]): int => a + b;
 let sub = ([a,b]: [int, int]): int => a - b;
@@ -25,10 +14,10 @@ let sub = ([a,b]: [int, int]): int => a - b;
 
 let main = ([p,storage]: [parameter, storage]) => {
   let storage2 = match(p, {
-    increment: (n: int) => add ([storage, n]),
-    decrement: (n: int) => sub ([storage, n]) 
+    Increment: (n: int) => add ([storage, n]),
+    Decrement: (n: int) => sub ([storage, n]) 
   });
-  return [[] as list <operation>, storage2];
+  return [(List() as list <operation>), storage2];
 };
 
 /* IF YOU CHANGE THIS, CHANGE THE EXAMPLE ON THE FRONT PAGE OF THE WEBSITE */

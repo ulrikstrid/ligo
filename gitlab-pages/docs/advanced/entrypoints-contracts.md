@@ -49,6 +49,14 @@ type return = (list (operation), storage);
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo skip
+type storage = ...;  // Any name, any type
+type return = [list <operation>, storage];
+```
+
+</Syntax>
 
 
 
@@ -97,6 +105,19 @@ let main = ((action, store): (parameter, storage)) : return =>
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=a
+type parameter = nat;
+type storage = nat;
+type return_ = [list <operation>, storage];
+
+let main = ([action, store]: [parameter, storage]) : return_ =>
+  [(List() as list <operation>), store];
+```
+
+</Syntax>
+
 
 
 ## Entrypoints
@@ -205,7 +226,34 @@ let main = ((action, store): (parameter, storage)) : return =>
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
 
+```jsligo group=b
+type parameter =
+| ["Action_A", nat]
+| ["Action_B", string];
+
+type storage = {
+  counter : nat,
+  name    : string
+};
+
+type return = [list <operation>, storage];
+
+let entry_A = ([n, store]: [nat, storage]) : return =>
+  [(List() as list <operation>), {...store, counter : n}];
+
+let entry_B = ([s, store]: [string, storage]) : return =>
+  [(List() as list <operation>), {...store, name : s}];
+
+let main = ([action, store]: [parameter, storage]) : return =>
+  match(action, {
+    Action_A: (n) => entry_A ([n, store]),
+    Action_B: (s) => entry_B ([s, store])
+  });
+```
+
+</Syntax>
 
 
 ## Tezos-specific Built-ins
@@ -271,6 +319,39 @@ let deny = ((action, store): (parameter, storage)) : return => {
 > Note that `amount` is *deprecated*. Please use `Tezos.amount`.
 
 </Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=c
+type parameter = unit;
+type storage = unit;
+type return = (list (operation), storage);
+
+let deny = ((action, store): (parameter, storage)) : return => {
+  if (Tezos.amount > 0tez) {
+    (failwith("This contract does not accept tokens."): return); }
+  else { (([] : list (operation)), store); };
+};
+```
+
+> Note that `amount` is *deprecated*. Please use `Tezos.amount`.
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=c
+type parameter = unit;
+type storage = unit;
+type return = [list <operation>, storage];
+
+let deny = ([action, store]: [parameter, storage]) : return => {
+  if (Tezos.amount > (0 as tez)) {
+    (failwith("This contract does not accept tokens.") as return); }
+  else { return [(List() as list <operation>), store]; };
+};
+```
+
+</Syntax>
+
 
 
 ### Access Control
@@ -313,6 +394,20 @@ let owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx": address);
 let main = ((action, store) : (parameter, storage)) : return => {
   if (Tezos.source != owner) { (failwith ("Access denied.") : return); }
   else { (([] : list (operation)), store); };
+};
+```
+
+> Note that `source` is *deprecated*. Please use `Tezos.source`.
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=c
+let owner : address = ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address);
+
+let main = ([action, store] : [parameter, storage]) : return => {
+  if (Tezos.source != owner) { (failwith ("Access denied.") as return); }
+  else { [(List() as list <operation>), store]; };
 };
 ```
 
@@ -471,6 +566,50 @@ let proxy = ((action, store): (parameter, storage)) : return => {
   let mock_param : parameter = Increment (5n);
   let op : operation = Tezos.transaction (action, 0tez, counter);
   ([op], store)
+};
+```
+
+> Note that `Operation.get_contract` and `Operation.transaction` are
+> *deprecated*.
+
+</Syntax>
+<Syntax syntax="jsligo">
+```jsligo skip
+// counter.jsligo
+
+type parameter =
+| ["Increment", nat]
+| ["Decrement", nat]
+| ["Reset"];
+
+// ...
+```
+
+```jsligo group=d
+// proxy.jsligo
+
+type parameter =
+| ["Increment", nat]
+| ["Decrement", nat]
+| ["Reset"];
+
+type storage = unit;
+
+type return = [list <operation>, storage];
+
+let dest : address = ("KT19wgxcuXG9VH4Af5Tpm1vqEKdaMFpznXT3" as address);
+
+let proxy = ([action, store]: [parameter, storage]) : return => {
+  let counter : contract <parameter> =
+    match ((Tezos.get_contract_opt (dest) as option <contract <parameter>>), {
+    "Some": (contract) => contract,
+    "None": () => (failwith ("Contract not found.") : contract (parameter))
+    });
+  /* Reuse the parameter in the subsequent
+     transaction or use another one, `mock_param`. */
+  let mock_param : parameter = Increment ((5 as nat));
+  let op : operation = Tezos.transaction (action, (0 as tez), counter);
+  return ([op], store);
 };
 ```
 

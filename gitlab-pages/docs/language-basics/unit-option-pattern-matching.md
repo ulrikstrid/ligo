@@ -46,6 +46,14 @@ let n : unit = ();
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+In JsLIGO, the unique value of the `unit` type is `unit`.
+```jsligo group=a
+let n : unit = unit;
+```
+
+</Syntax>
 
 
 ## Variant types
@@ -83,6 +91,14 @@ let tail : coin = Tail
 type coin = Head | Tail;
 let head : coin = Head;
 let tail : coin = Tail;
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+```jsligo group=b
+type coin = | ["Head"] | ["Tail"];
+let head : coin = ["Head"];
+let tail : coin = ["Tail"];
 ```
 
 </Syntax>
@@ -144,6 +160,20 @@ let g : user = Guest;
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+```jsligo group=c
+type id = nat;
+
+type user =
+| ["Admin", id]
+| ["Manager", id]
+| ["Guest"];
+
+let u : user = ["Admin", (1000 as nat)];
+let g : user = ["Guest"];
+```
+
+</Syntax>
 
 
 In LIGO, a constant constructor is equivalent to the same constructor
@@ -182,6 +212,15 @@ let div (a, b : nat * nat) : nat option =
 ```reasonligo group=d
 let div = ((a, b) : (nat, nat)) : option (nat) =>
   if (b == 0n) { (None: option (nat)); } else { Some (a/b); };
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=d
+let div = ([a, b] : [nat, nat]) : option <nat> => {
+  if (b == (0 as nat)) { return (None as option <nat>); } else { return (Some (a/b)); };
+};
 ```
 
 </Syntax>
@@ -258,4 +297,25 @@ flip Head
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
 
+```jsligo group=e
+type coin = | ["Head"] | ["Tail"];
+let Tail = ["Tail"];
+let Head = ["Head"];
+let flip = (c : coin) : coin =>
+  match (c, {
+  Head: () => Tail,
+  Tail: () => Head  
+  });
+```
+
+You can call the function `flip` by using the LIGO compiler like so:
+```shell
+ligo run-function
+gitlab-pages/docs/language-basics/src/unit-option-pattern-matching/flip.religo
+flip Head
+# Outputs: Tail(Unit)
+```
+
+</Syntax>

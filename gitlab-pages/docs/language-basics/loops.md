@@ -109,6 +109,32 @@ let gcd = ((x,y) : (nat, nat)) : nat => {
 > *deprecated*.
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+JsLIGO currently only supports loop through the use of tail recursive 
+functions. At a later point we will also add support for loops.
+
+Here is how to compute the greatest common divisors of two natural
+numbers by means of Euclid's algorithm:
+
+```jsligo group=a
+let iter = ([x,y] :[nat, nat]) : nat => {
+  if (y == (0 as nat)) { return x; } else { return iter ([y, x % y]); };
+};
+
+let gcd = ([x,y] : [nat, nat]) : nat => {
+  if (x < y) { 
+    return iter ([y, x]);
+  } else {
+    return iter ([x, y]);
+  }
+};
+```
+
+> Note that `fold_while`, `stop` and `continue` (now `Loop.resume`) are
+> *deprecated*.
+
+</Syntax>
 
 <Syntax syntax="pascaligo">
 

@@ -1,6 +1,6 @@
 /**
 
-This test makes sure that the balance is accessible in ReasonLIGO.
+This test makes sure that the balance is accessible in JsLIGO.
 It's there to detect a regression of: https://gitlab.com/ligolang/ligo/issues/61
 
 Which results in this error when you attempt to compile this contract:
@@ -13,6 +13,6 @@ generated. unrecognized constant: {"constant":"BALANCE","location":"generated"}
 type storage = tez;
 
 let main3 = ([p, s] : [unit, storage]) =>
-  [[] as list<operation>, Tezos.balance];
+  [(List() as list<operation>), Tezos.balance];
 
 let main4 = (x : [unit, storage]) => main3 ([x[0], x[1]]);

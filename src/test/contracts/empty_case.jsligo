@@ -1,18 +1,9 @@
-type Bar = {
-  kind: 'Bar',
-  value: int
-};
-
-type Baz = {
-  kind: 'Baz'
-}
-
 type fooBarBaz =
-| Bar
-| Baz;
+| ["Bar", int]
+| ["Baz"];
 
 let main = (f : fooBarBaz) : int =>
   match(f, {
     Bar: (i: int) => i,
     Baz: () => -1
-  })
+  });
