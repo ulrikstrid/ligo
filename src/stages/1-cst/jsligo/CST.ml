@@ -136,11 +136,15 @@ type the_unit = lpar * rpar
 (* The Abstract Syntax Tree *)
 
 type t = {
-  statements : statements;
-  eof  : eof
+  statements : toplevel_statements;
+  eof        : eof
 }
 
-and statements = (statement, semi) nsepseq
+and toplevel_statements = (toplevel_statement, semi) nsepseq
+
+and toplevel_statement =
+  TopLevel  of statement
+| Directive of Directive.t
 
 and ast = t
 
@@ -317,7 +321,8 @@ and statement =
 | SConst      of const_ reg
 | SType       of type_decl reg
 | SSwitch     of switch reg
-| Directive   of Directive.t
+
+and statements = (statement, semi) nsepseq
 
 and arguments =
   Multiple of (expr,comma) nsepseq par reg
@@ -507,7 +512,6 @@ let statement_to_region = function
 | SConst {region; _}
 | SSwitch {region; _}
 | SType {region; _} -> region
-| Directive d -> Directive.to_region d
 
 let selection_to_region = function
   FieldName f -> f.region

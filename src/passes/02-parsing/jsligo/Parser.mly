@@ -28,8 +28,8 @@ let first_region = function
 (* Entry points *)
 
 %start contract interactive_expr
-%type <Cst.Jsligo.t> contract
-%type <Cst.Jsligo.expr> interactive_expr
+%type <CST.t> contract
+%type <CST.expr> interactive_expr
 
 %%
 
@@ -335,7 +335,6 @@ declaration:
     SConst { region; value }
   }
 | type_decl { $1 }
-| "<directive>" { Directive $1 }
 
 
 type_expr:
@@ -491,7 +490,14 @@ statements:
 | statement { $1, [] }
 
 contract:
-  statements EOF { {statements=$1; eof=$2} }
+  toplevel_statements EOF { {statements=$1; eof=$2} : CST.t }
+
+toplevel_statements:
+  nsepseq (toplevel_statement, ";") { $1 }
+
+toplevel_statement:
+  statement     { (TopLevel  $1 : CST.toplevel_statement) }
+| "<directive>" { (Directive $1 : CST.toplevel_statement) }
 
 (* Expressions *)
 

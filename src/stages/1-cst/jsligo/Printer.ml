@@ -63,7 +63,7 @@ let print_option : state -> (state -> 'a -> unit ) -> 'a option -> unit =
     None -> ()
   | Some opt -> print state opt
 
-let print_csv state print {value; _} =
+let print_csv state print Region.{value; _} =
   print_nsepseq state "," print value
 
 let print_token state region lexeme =
@@ -121,9 +121,18 @@ let print_bytes state {region; value} =
             (Hex.show abstract)
   in Buffer.add_string state#buffer line
 
-let rec print_tokens state {statements;eof} =
-  print_nsepseq state ";" print_statement statements;
+let rec print_tokens state {statements; eof} =
+  print_nsepseq state ";" print_toplevel_statement statements;
   print_token state eof "EOF"
+
+and print_toplevel_statement state = function
+  TopLevel statement -> print_statement state statement
+| Directive dir -> print_directive state dir
+
+and print_directive state dir =
+  let s =
+    Directive.to_string ~offsets:state#offsets state#mode dir
+  in Buffer.add_string state#buffer s
 
 and print_attributes state attributes =
   let apply {value = attribute; region} =
@@ -173,12 +182,6 @@ and print_statement state = function
     print_token state lbrace    "{";
     print_cases state cases;
     print_token state rbrace    "}"
-| Directive dir -> print_directive state dir
-
-and print_directive state dir =
-  let s =
-    Directive.to_string ~offsets:state#offsets state#mode dir
-  in Buffer.add_string state#buffer s
 
 and print_type_expr state = function
   TProd prod      -> print_cartesian state prod
@@ -596,9 +599,16 @@ let pp_loc_node state name region =
 
 let rec pp_cst state {statements; _} =
   let statements = Utils.nsepseq_to_list statements in
-  let apply len rank = pp_statement (state#pad len rank) in
+  let apply len rank = pp_toplevel_statement (state#pad len rank) in
   pp_node state "<ast>";
   List.iteri (List.length statements |> apply) statements
+
+and pp_toplevel_statement state = function
+  TopLevel statement -> pp_statement state statement
+| Directive dir ->
+    let region, string = Directive.project dir in
+    pp_loc_node state "Directive" region;
+    pp_node state string
 
 and pp_statement state = function
   SBlock {value = {inside;_}; region} ->
@@ -643,10 +653,6 @@ and pp_statement state = function
 | SSwitch {value; region} ->
     pp_loc_node state "SSwitch" region;
     pp_switch_statement state value
-| Directive dir ->
-    let region, string = Directive.project dir in
-    pp_loc_node state "Directive" region;
-    pp_node state string
 
 and pp_switch_statement state node =
   let {expr; cases; _} = node in
