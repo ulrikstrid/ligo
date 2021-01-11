@@ -95,7 +95,7 @@ let transfer = ([p, s] : [transfer, storage])
     Big_map.update(p.address_to,
        (Some(receiver_balance + p.value)),
        new_tokens);
-    return [([]  as list<operation>),
+    return [(List()  as list<operation>),
     {
       ...s,
       tokens:new_tokens2,
@@ -120,7 +120,7 @@ let approve = ([p, s] : [approve, storage])
       Tezos.sender],
        (Some(p.value)),
        s.allowances);
-    return [([]  as list<operation>),
+    return [(List()  as list<operation>),
     {
       ...s,
       allowances:new_allowances}]}};
@@ -204,7 +204,7 @@ let ediv_op = (n : int): option<[int, int]> => ediv(n, 2);
 
 let main = ([p, s] : [bool, unit]) => {
   let u:unit = assert(p);
-  return (([]  as list<operation>),
+  return ((List()  as list<operation>),
    s)};
 
 let some = (o : option<unit>) => {
@@ -225,7 +225,7 @@ let bar = (b : int): int => {
 type storage = tez;
 
 let main3 = ([p, s] : [unit, storage]) => 
-  [([]  as list<operation>),
+  [(List()  as list<operation>),
   Tezos.balance];
 
 let main4 = (x : [unit, storage]) => main3([x[0], x[1]]);
@@ -328,7 +328,7 @@ type storage = int;
 let main9 = ([p, s] : [int, storage])
 : [list<operation>,
   storage] => 
-  [([]  as list<operation>),
+  [(List()  as list<operation>),
   p + s];
 
 let hasherman512 = (s : bytes) => Crypto.sha512(s);
@@ -441,7 +441,7 @@ let transfer = ([transferParameter,
    storage]): entrypointReturn => {
   let storage2 = 
   List.fold(transferIterator, transferParameter, storage);
-  return [([]  as list<operation>),
+  return [(List()  as list<operation>),
   storage2]};
 
 let main = ([parameter, storage] : entrypointParameter)
@@ -592,11 +592,11 @@ let z:list<int> = [2, ...y];
 
 let main = ([action, s] : [parameter, storage]): returnx => {
   if(action == []){
-    return [([]  as list<operation>),
+    return [(List()  as list<operation>),
     s]}else{
     let [hd,
     ...tl] = action;
-    return [([]  as list<operation>),
+    return [(List()  as list<operation>),
     [s[0] + hd,
     tl]]}};
 
@@ -741,7 +741,7 @@ let main = ([action, store] : [parameter, storage]) => {
      {
       Add:(n : nat) => n,
       Sub:(n : nat) => -n});
-  return [([]  as list<operation>),
+  return [(List()  as list<operation>),
   store2]};
 
 type storage = int;
@@ -762,7 +762,7 @@ let main = ([action, store] : [parameter, storage]) => {
      {
       Increment:(value : int) => add(store, value),
       Decrement:(value : int) => sub(store, value)});
-  return [([]  as list<operation>),
+  return [(List()  as list<operation>),
   store2]};
 
 type inner_storage = michelson_pair
@@ -783,7 +783,7 @@ let main = ([action, store] : [unit, storage]): return_ => {
   let foo = [3,
   [1,
   (2  as nat)]];
-  return [([]  as list<operation>),
+  return [(List()  as list<operation>),
   (foo  as storage)]};
 
 let abcde_curried = (a : int,
@@ -882,7 +882,7 @@ let size_op = (s : set<string>): nat => Set.cardinal(s);
 
 let main = (p : key_hash): list<operation> => {
   let unused:operation = (Tezos.set_delegate(Some(p)));
-  return ([]  as list<operation>)};
+  return (List()  as list<operation>)};
 
 let size_op = (s : string): nat => String.length(s);
 
@@ -907,7 +907,7 @@ let main = ([action, store] : [parameter, storage]): return_ => {
      {
       Increment:(n : nat) => store + n,
       Decrement:(n : nat) => store - n});
-  return [([]  as list<operation>),
+  return [(List()  as list<operation>),
   storage]};
 
 type abc = [int, int, int];
@@ -967,7 +967,7 @@ type storage = [int, string, nat, bool];
 type parameter = int;
 
 let main = ([p, storage] : [parameter, storage]) => {
-  return (([]  as list<operation>),
+  return ((List()  as list<operation>),
    [2,
    "2",
    (2  as nat),
@@ -1049,5 +1049,5 @@ let main = ([p, storage] : [parameter, storage]) => {
      {
       increment:(n : int) => add([storage, n]),
       decrement:(n : int) => sub([storage, n])});
-  return [([]  as list<operation>),
+  return [(List()  as list<operation>),
   storage2]};

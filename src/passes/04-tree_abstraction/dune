@@ -5,7 +5,8 @@
     cameligo
     pascaligo
     reasonligo
-    jsligo)
+    ; jsligo
+    )
   (preprocess
     (pps
       ppx_let
