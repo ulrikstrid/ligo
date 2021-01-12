@@ -155,8 +155,7 @@ let remove : type a b . ?debug:(Format.formatter -> b -> unit) -> cmp:(a -> b ->
          (* The inorder value is the right child*)
         | _, Int (_,Ext,_,_) ->
           let new_current = bst_remove_leftmost ~left:(false) parent colour r in
-          let new_current = insert_left ~left:true l new_current in
-          insert_left ~left new_current parent
+          insert_left ~left:true l new_current
          (* Get the next value, then put it at the place of the element you are removing and remove this element *)
         | _, Int (_rcolor,rleft,_rroot,_rright) ->
           let new_root, new_right = bst_find_leftmost r rleft in
