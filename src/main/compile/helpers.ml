@@ -157,7 +157,7 @@ let parse_and_abstract_expression_reasonligo buffer =
   in ok imperative
 
 let parse_and_abstract_jsligo buffer file_path =
-  let%bind _raw =
+  let%bind raw =
     trace parser_tracer @@
     Parsing.Jsligo.parse_file buffer file_path in
   let%bind applied =
@@ -169,7 +169,7 @@ let parse_and_abstract_jsligo buffer file_path =
   in ok imperative
 
 let parse_and_abstract_expression_jsligo buffer =
-  let%bind _raw =
+  let%bind raw =
     trace parser_tracer @@
     Parsing.Jsligo.parse_expression buffer in
   let%bind applied =
@@ -178,7 +178,7 @@ let parse_and_abstract_expression_jsligo buffer =
   let%bind imperative =
     trace cit_jsligo_tracer @@
     Tree_abstraction.Jsligo.compile_expression applied
-  in ok imperative 
+  in ok imperative
 
 let parse_and_abstract ~meta buffer file_path
     : (Ast_imperative.program, _) Trace.result =

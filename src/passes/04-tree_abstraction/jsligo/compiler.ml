@@ -1,3 +1,4 @@
+[@@@warning "-27"]
 open Errors
 open Trace
 open Function
@@ -298,6 +299,9 @@ let get_t_string_singleton_opt = function
 | CST.TInt i -> Some i.value
 | _ -> None *)
 
+type statement_result =
+| Context of (AST.expression -> AST.expression)
+| Return of AST.expression
 
 let rec compile_tuple_expression ?loc tuple_expr =
   let%bind lst = bind_map_list compile_expression @@ nseq_to_list tuple_expr in
@@ -606,13 +610,9 @@ and compile_previous_statement_to_expression_context :
 fun _statement ->
   failwith "TODO"
 
-type statement_result =
-| Context of (AST.expression -> AST.expression)
-| Return of AST.expression
-
 and compile_statement : CST.statement -> statement_result result = fun statement ->
   match statement with
-  | SVar v -> failwith "TODO: var statement" 
+  (* | SVar v -> failwith "TODO: var statement" 
   | SExpr e -> (
     let e' = compile_expression e in
     ok @@ Context (
@@ -625,13 +625,13 @@ and compile_statement : CST.statement -> statement_result result = fun statement
   )
   | SLet l -> (
 
-  )
+  ) *)
   | _ -> failwith "TODO"
     
 and compile_statements_to_expression : CST.statements -> AST.expression result = fun statements ->
   failwith "TODO"
 
-let compile_statement_to_declaration : CST.statement -> AST.declaration result = fun statement ->
+let rec compile_statement_to_declaration : CST.statement -> AST.declaration result = fun statement ->
   match statement with
   | SLet let_ -> (
     let binding_lst = npseq_to_list let_.value.bindings in
@@ -658,3 +658,6 @@ and compile_statements_to_program : CST.ast -> AST.program result = fun ast ->
   in
   let%bind lst = bind_map_list aux @@ npseq_to_list ast.statements in
   ok @@ lst
+
+let compile_program : CST.ast -> _ result =
+  fun t -> failwith "TODO"
