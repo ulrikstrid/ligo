@@ -15,13 +15,13 @@ let empty map = {tree = RB.empty; cmp=map.cmp}
 
 let is_empty map = RB.is_empty map.tree
 
-let add key value map =
+let add ?debug key value map =
   let cmp (k1,_) (k2,_) = map.cmp k1 k2 in
-  {map with tree = RB.add ~cmp RB.New (key, value) map.tree}
+  {map with tree = RB.add ?debug ~cmp RB.New (key, value) map.tree}
 
-let remove key map =
+let remove ?debug key map =
   let cmp k1 (k2,_) = map.cmp k1 k2 in
-  {map with tree = RB.remove ~cmp key map.tree}
+  {map with tree = RB.remove ?debug ~cmp key map.tree}
 
 let find key map =
   let cmp k1 (k2,_) = map.cmp k1 k2 in

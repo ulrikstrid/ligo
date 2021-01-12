@@ -10,6 +10,17 @@ type 'a t =
   Ext
 | Int of colour * 'a t * 'a * 'a t
 
+let rec pp f ppf = function
+  Ext -> Format.fprintf ppf "Ext (Black)"
+| Int (c, l, root, r) ->
+    Format.fprintf ppf "Int (%s,%a,%a,%a)"
+    (match c with Red -> "Red" | Black -> "Black")
+    (pp f) l
+    f root
+    (pp f) r
+
+
+exception Not_a_node
 let empty = Ext
 
 let is_empty m = (m = empty)
@@ -18,6 +29,36 @@ let blacken = function
   Ext -> Ext
 | Int (_, left, root, right) -> Int (Black, left, root, right)
 
+let paint red = function
+  Ext -> raise Not_a_node
+| Int (_, left, root, right) -> Int (red, left, root, right)
+
+
+(* Standard Balance function *)
+let balance colour left root right =
+  match colour, left, root, right with
+  (* Case 3: P is red and U is red *)
+    Black, Int (Red, Int (Red, a, x, b), y, c), z, (Int (Red,_,_,_) as d) ->
+      Int (Red, Int (Black, Int (Red, a, x, b), y, c), z, blacken d)
+  | Black, Int (Red, a, x, Int (Red, b, y, c)), z, (Int (Red,_,_,_) as d) ->
+      Int (Red, Int (Black, a, x, Int (Red, b, y, c)), z, blacken d)
+  | Black, (Int (Red,_,_,_) as a), x, Int (Red, Int (Red, b, y, c), z, d) ->
+      Int (Red, blacken a, x, Int (Black, Int (Red, b, y, c), z, d))
+  | Black, (Int (Red,_,_,_) as a), x, Int (Red, b, y, Int (Red, c, z, d)) ->
+      Int (Red, blacken a, x, Int (Black, b, y, Int (Red, c, z, d)))
+  (* Case 4: P is red and U is black*)
+  | Black, Int (Red, Int (Red, a, x, b), y, c), z, (Int (Black,_,_,_) | Ext as d) ->
+      Int (Black, Int (Red, a, x, b), y, Int (Red,c, z, d))
+  | Black, Int (Red, a, x, Int (Red, b, y, c)), z, (Int (Black,_,_,_) | Ext as d) ->
+      Int (Black, Int (Red, a, x, b), y, Int (Red,c, z, d))
+  | Black, (Int (Black,_,_,_) | Ext as a), x, Int (Red, Int (Red, b, y, c), z, d) ->
+      Int (Black, Int (Red, a, x, b), y, Int (Red,c, z, d))
+  | Black, (Int (Black,_,_,_) | Ext as a), x, Int (Red, b, y, Int (Red, c, z, d)) ->
+      Int (Black, Int (Red, a, x, b), y, Int (Red,c, z, d))
+  | _ ->
+      Int (colour, left, root, right)
+
+(* Alternative blance function 
 let balance colour left root right =
   match colour, left, root, right with
     Black, Int (Red, Int (Red, a, x, b), y, c), z, d
@@ -27,6 +68,7 @@ let balance colour left root right =
       Int (Red, Int (Black, a, x, b), y, Int (Black, c, z, d))
   | _ ->
       Int (colour, left, root, right)
+*)
 
 type choice = Old | New
 
@@ -36,7 +78,7 @@ let choose ~old ~new' = function
 
 exception Physical_equality
 
-let add ~cmp choice elt tree =
+let add ?debug ~cmp choice elt tree =
   let rec insert = function
     Ext -> Int (Red, Ext, elt, Ext)  (* A leaf *)
   | Int (colour, left, root, right) ->
@@ -49,49 +91,193 @@ let add ~cmp choice elt tree =
         balance colour (insert left) root right
       else 
         balance colour left root (insert right)
-  in try blacken (insert tree) with
+  in 
+  (match debug with Some (debug) -> Format.printf "Adding to tree:%a\n%!" (pp debug) tree | None -> ());
+  let tree = try blacken (insert tree) with
        Physical_equality -> tree
+  in (match debug with Some (debug) -> Format.printf "New tree:%a\n%!" (pp debug) tree | None -> ()); tree
 
-let remove : type a b . cmp:(a -> b -> int) -> a -> b t -> b t = fun ~cmp elt tree ->
-  (* TODO: this leaves the tree not properly balanced. *)
-  let rec bst_remove : b t -> b t = function
+let remove : type a b . ?debug:(Format.formatter -> b -> unit) -> cmp:(a -> b -> int) -> a -> b t -> b t = fun ?debug ~cmp elt tree ->
+  (* The removal in a reb black tree is similar to the removal in a binary tree :
+     In order to delet a node, it value is replace by the inorder sucessor in the tree, 
+     which is the left most value of it's right substree. Then this node is remove 
+     from the tree and replace by its right subtree. 
+     Following this operation, the color property has to restore in this subtree
+     *)
+  (* TODO: restoring the color property. *)
+  (* Search for the inorder successor *)  
+  let insert_left ~left node parent =
+    match parent with
+      Ext -> node
+    | Int (colour,l,root,r) ->
+      if left then
+        Int (colour,node,root,r)
+      else
+        Int (colour,l,root,node)
+      in
+
+  let insert_right ~right parent node =
+    match parent with
+      Ext -> node
+    | Int (colour,l,root,r) ->
+      if right then
+        Int (colour,l,root,node)
+      else
+        Int (colour,node,root,r)
+      in
+
+    let get_colour n = match n with Ext -> Black
+                      | Int (colour,_,_,_) -> colour in
+    let get_left n = match n with Ext -> failwith "Get_left not a node"
+                      | Int (_,left,_,_) -> left in
+    let get_right n = match n with Ext -> failwith "Get_right not a node"
+                      | Int (_,_,_,right) -> right in
+    let get_child ~right = 
+      if right then get_right else get_left in
+
+  (* return the updated parent or current if current is root*)
+  let rec bst_remove : bool -> b t -> b t -> b t = fun left parent -> function
     | Ext -> failwith "unknown error"
-    | Int (colour,left, root, right) -> (
-         ignore root; (* Deletion *)
-         match left, right with 
+    | Int (colour,l, root, r) as current -> (
+       (match debug with Some (debug) -> Format.printf "Foud node to remove %a\n%!" (pp debug) current | None -> ());
+        ignore root; (* Deletion *)
+        match l, r with 
+        (* No child, just delete *)
+        | Ext, Ext -> (
+            let res = bst_remove_leftmost ~left parent colour Ext in
+            (match debug with Some (debug) -> Format.printf "Returns with parent :%a\n%!" (pp debug) res | None -> ()); 
+            res
+          )
+         (* If this is the highr value, there is only one child, so move the tree up,
+          then restore color property *)
+        | Int (_lcolor, _lleft, _lroot, _lright), Ext ->
+          bst_remove_leftmost ~left:(false) parent colour l
+         (* The inorder value is the right child*)
+        | _, Int (_,Ext,_,_) ->
+          let new_current = bst_remove_leftmost ~left:(false) parent colour r in
+          let new_current = insert_left ~left:true l new_current in
+          insert_left ~left new_current parent
          (* Get the next value, then put it at the place of the element you are removing and remove this element *)
-         | _, Int _ ->
-            let new_root, new_right = bst_remove_leftmost right in
-            Int (colour,left,new_root,new_right)
-         (* If this is the highr value, there is only one child, so move the tree up*)
-         | Int (_lcolor, lleft, lroot, lright), Ext ->
-            Int (colour, lleft, lroot, lright)
-          (* No child, just delete *)
-         | Ext, Ext -> Ext
+        | _, Int (_rcolor,rleft,_rroot,_rright) ->
+          let new_root, new_right = bst_find_leftmost r rleft in
+          let new_current = Int (colour,l,new_root,new_right) in
+          insert_left ~left new_current parent
     )
-  and bst_remove_leftmost : b t -> b * b t = function
+  
+  (* remove the node and restore the color property *)
+  (* return the parent of the node *)
+  and bst_find_leftmost : b t -> b t -> b * b t = fun parent -> function
     | Ext -> failwith "unknow error"
-    | Int  (colour, left, root, right) ->
-      match left,right with
-      | Int _, _ -> 
+    | Int  (colour, left, root, right) as current ->
+      match left with
+      | Int _ -> 
         (* Continue searching*) 
-        bst_remove_leftmost left
-      | Ext,Ext ->
-        (* found with no children*)
-        root,Ext  
-      | Ext, Int (_rcolour, rleft,rroot,rright) ->
-        root, Int (colour, rleft,rroot, rright)
+        let root, new_current =  bst_find_leftmost current left in
+        root, insert_left ~left:true new_current @@ parent
+      | Ext ->
+        let parent = bst_remove_leftmost ~left:true parent colour right in
+        root, parent
+
+  (* this function return the parent of the node modified except if this is the root *)
+  and bst_remove_leftmost ~left parent old_colour new_node (* N *) =
+    let right = left in
+    match old_colour,get_colour new_node with
+    | Red, Red -> 
+        failwith "Bad tree : a red node has to be followed by two black node"
+    (* If the old one is red an the new is Black, move it up *)
+    | Red, Black -> (
+      (match debug with Some (debug) -> Format.printf "Parent is : %a\n" (pp debug) parent | None -> ());
+      let res = insert_left ~left new_node parent in
+      (match debug with Some (debug) ->  Format.printf "Returns with parent :%a\n%!" (pp debug) res | None -> ());
+      res)
+    (* If the old node is black and the new is red, repaint the node *)
+    | Black, Red -> 
+      insert_left ~left (blacken @@ new_node) parent
+    (* if both nodes are black, things get complicated *)
+    | Black, Black -> 
+      match parent (* P *) with
+        (* Case 1 : N is the new root *)
+        Ext -> 
+          blacken new_node
+        (* other casese*)
+      | _ ->
+      let s  = get_child ~right parent in (* This is the sibling of N *)
+      let ss = get_child ~right:(not right) s in (* This is the child of S on the same side of N to P  (if N is left Ss is left)*)
+      let sc = get_child ~right s in (* This is the child of S on the conter side of N to P (if N is left Sc is right) *)
+      match get_colour parent,get_colour s,get_colour ss, get_colour sc with
+        (* Case 2 : pright is red, parent has to be black *)
+      | Black, Red, Black, Black->
+        let parent = paint Red @@ insert_left ~left new_node (insert_right ~right parent ss) in (
+          (match debug with Some (debug) -> Format.printf "Parent :\n %a\n%!" (pp debug) parent | None -> ());
+
+          (* Proceed with case 4, 5 or 6, the 1,2,3 are not possible as the parent is now red*)
+          let new_parent = bst_remove_leftmost ~left parent old_colour new_node in
+
+          (match debug with Some (debug) -> Format.printf "New Parent :\n %a\n%!" (pp debug) new_parent | None -> ());
+          blacken @@ insert_left ~left new_parent (insert_right ~right s sc)
+        )
+
+        (* Case 3 : pright is black and its children are black*)
+      | Black, Black, Black, Black ->
+          paint Black @@ insert_left ~left new_node @@ insert_right ~right parent @@ paint Red s
+
+        (* Case 4 : prigt children's are black but parent is red*)
+      | Red, Black, Black, Black ->
+          blacken @@ insert_left ~left new_node @@ insert_right ~right parent @@ paint Red s
+
+        (* Case 5 : pright is black, prl is red but prr is black *)
+      | colour, Black, Red, Black ->
+          (* since ss is red it as two children sss and ssc*)
+          let ssc,sss = get_child ~right ss, get_child ~right:(not left) ss in
+
+          (* Rotate right at s and change color to make new sc red*)
+          (* Int (colour,new_node,get_root parent, blacken @@ insert_left ~left sss @@ insert_right ~right ss @@ paint Red @@insert_left ~left ssc @@ insert_right ~right s sc ) *)
+
+          (*then apply case 6*)
+          paint colour 
+            @@ insert_left ~left (paint Black @@ insert_left ~left new_node @@ insert_right ~right parent sss) 
+            @@ insert_right ~right ss
+            @@ paint Black @@ insert_left ~left ssc @@ insert_right ~right s sc
+
+        (* Case 6 : pright is black, prr is red*)
+      | colour, Black, _, Red ->
+
+          paint colour
+            @@ insert_left ~left(paint Black @@ insert_left ~left new_node @@ insert_right ~right parent ss)
+            @@ insert_right ~right s
+            @@ paint Black @@ sc
+      
+        (* Wrong trees *)
+      | Red, Red, _, _  ->
+        failwith "Bad tree : a red node has to be followed by two black node"
+      | Black, Red, Black, Red ->
+        failwith "Bad tree : a red node has to be followed by two black node"
+      | Black, Red, Red, _ ->
+        failwith "Bad tree : a red node has to be followed by two black node"
+      
+      
   in
-  let rec bst_delete : a -> b t -> b t = fun elt -> function
+  (* Search the node to remove *)
+  let rec bst_delete : bool -> a -> b t -> b t -> b t = fun l elt parent -> function
     | Ext -> raise Not_found
-    | Int (colour, left, root, right) as current ->
-       let c = cmp elt root in
-       if      c = 0 then bst_remove current
-       else if c < 0 then Int (colour, bst_delete elt left, root, right)
-       else               Int (colour, left, root, bst_delete elt right)
+    | Int (_, left, root, right) as current ->
+      let c = cmp elt root in
+      if      c = 0 then bst_remove l parent current
+      else if c < 0 then (
+        (match debug with Some (debug) -> Format.printf "Going to the left in subtree :\n %a\n%!" (pp debug) left | None -> ());
+        insert_left ~left:l (bst_delete true elt current left) parent
+      )
+      else (
+        (match debug with Some (debug) -> Format.printf "Going to the right in subtree :\n %a\n%!" (pp debug) right | None -> ());
+        insert_right ~right:(not l) parent @@ bst_delete false elt current right
+      )
   in
-  try bst_delete elt tree
+  (match debug with Some (debug) -> Format.printf "Tree to remove from : %a\n%!" (pp debug) tree | None -> ());
+  let tree = try bst_delete true elt Ext tree
   with Not_found -> tree
+  in (
+  (match debug with Some (debug) -> Format.printf "Tree after remove : %a\n%!" (pp debug) tree | None -> ());
+  tree)
 
 let rec find ~cmp elt = function
   Ext -> (
@@ -118,7 +304,6 @@ let rec inorder acc = function
 
 let elements t = inorder [] t
 
-
 let union ~cmp choice (tree_a : 'a t) tree_b =
   List.fold_left
     (fun acc elt -> add ~cmp choice elt acc)
@@ -134,12 +319,3 @@ let rec fold_dec f ~init = function
                          Ext -> init
 | Int (_, left, root, right) ->
     fold_dec f ~init:(f ~elt:root ~acc:(fold_dec f ~init right)) left
-
-let rec pp f ppf = function
-  Ext -> Format.fprintf ppf "Ext"
-| Int (c, l, root, r) ->
-    Format.fprintf ppf "Int (%s,%a,%a,%a)"
-    (match c with Red -> "Red" | Black -> "Black")
-    (pp f) l
-    f root
-    (pp f) r

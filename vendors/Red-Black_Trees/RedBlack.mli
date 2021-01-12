@@ -24,7 +24,7 @@ val is_empty: 'a t -> bool
 
 type choice = Old | New
 
-val add: cmp:('a -> 'a -> int) -> choice -> 'a -> 'a t -> 'a t
+val add: ?debug:(Format.formatter -> 'a -> unit) -> cmp:('a -> 'a -> int) -> choice -> 'a -> 'a t -> 'a t
 
 val union: cmp:('a -> 'a -> int) -> choice -> 'a t -> 'a t -> 'a t
 
@@ -35,7 +35,7 @@ val union: cmp:('a -> 'a -> int) -> choice -> 'a t -> 'a t -> 'a t
    implement a map, x would be a [key], whereas the elements of the tree
    would be [key, value] pairs. *)
 
-val remove: cmp:('a -> 'b -> int) -> 'a -> 'b t -> 'b t
+val remove: ?debug:(Format.formatter -> 'b -> unit) -> cmp:('a -> 'b -> int) -> 'a -> 'b t -> 'b t
 
 (* The value of the call [find ~cmp x t] is the element [y] belonging
    to a node of the tree [t], such that [cmp x y = true]. If none, the

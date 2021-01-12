@@ -3,14 +3,14 @@ type ('key, 'value) t = {
   map : ('key, 'value) PolyMap.t;
 }
 
-val alias : demoted_repr:'key -> new_repr:'key -> ('key, 'value) t -> ('key, 'value) t
+val alias : ?debug:(Format.formatter -> 'key * 'value -> unit) -> demoted_repr:'key -> new_repr:'key -> ('key, 'value) t -> ('key, 'value) t
 
 val create : cmp:('key -> 'key -> int) -> merge:('value -> 'value -> 'value) -> ('key, 'value) t
 (* We don't export empty, since elements can be removed via
    List.fold add (empty s) (List.filter … @@ elements s) *)
 (* val empty : ('key, 'value) t -> ('key, 'value) t *)
 val is_empty : ('key, 'value) t -> bool
-val add : 'key -> 'value -> ('key, 'value) t -> ('key, 'value) t
+val add : ?debug:(Format.formatter -> 'key * 'value -> unit) -> 'key -> 'value -> ('key, 'value) t -> ('key, 'value) t
 val add_opt : 'key -> 'value -> ('key, 'value) t -> ('key, 'value) t option
 val monotonic_update : 'key -> ('value option -> 'value) -> ('key, 'value) t -> ('key, 'value) t
 val find_opt : 'key -> ('key, 'value) t -> 'value option

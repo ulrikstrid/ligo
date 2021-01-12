@@ -7,6 +7,7 @@
 type 'item partition
 type 'item t = 'item partition
 type 'item repr
+type 'item node
 
 (** {1 Creation} *)
 
@@ -18,7 +19,7 @@ val empty : (Format.formatter -> 'a -> unit) -> ('a -> 'a -> int) -> 'a partitio
         already known to be equivalent, then [equiv i j p == p]. *)
 type 'item changed_reprs = { demoted_repr : 'item; new_repr : 'item }
 type 'item equiv_result = { partition : 'item partition; changed_reprs : 'item changed_reprs list }
-val equiv : 'item -> 'item -> 'item partition -> 'item equiv_result
+val equiv : ?debug:(Format.formatter -> 'item * 'item node -> unit) -> 'item -> 'item -> 'item partition -> 'item equiv_result
 
 (** The value of [alias i j p] is the partition [p] extended with
         the fact that item [i] is an alias of item [j]. This is the
@@ -39,7 +40,7 @@ val repr : 'item -> 'item partition -> 'item
         in [p], then the value is [i, p'], where p' is the partition [p]
         extended with the fact that item [i] is a singleton partition. *)
 
-val get_or_set : 'item -> 'item t -> 'item * 'item t
+val get_or_set : ?debug:(Format.formatter -> 'item * 'item node -> unit) -> 'item -> 'item t -> 'item * 'item t
 
 (** The value of the call [mem i p] is [Some j] if the item [i] is
         in the partition [p] and its representative is [j]. If [i] is
