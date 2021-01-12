@@ -31,14 +31,14 @@ val is_empty : 'elt t -> bool
    comparison function of the set [set] (see [create]), then [y] is
    replaced by [elt]. *)
 
-val add : 'elt -> 'elt t -> 'elt t
+val add : ?debug:(Format.formatter -> 'elt -> unit) -> 'elt -> 'elt t -> 'elt t
 
 val union : 'elt t -> 'elt t -> 'elt t
 
 (* The value of the call [remove elt set] is a set containing all the
    elements of the set [set] without the element [elt]. *)
 
-val remove : 'elt -> 'elt t -> 'elt t
+val remove : ?debug:(Format.formatter -> 'elt -> unit)  -> 'elt -> 'elt t -> 'elt t
 
 (* The value of the call [find elt set] is the element [y] of set
    [set] such that [cmp y elt = true], where [cmp] is the comparison

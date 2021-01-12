@@ -38,12 +38,12 @@ val is_empty : ('key, 'value) t -> bool
    [value]. If there is a binding for [key] in [map], its value is
    lost (and replaced by [value]). *)
 
-val add : 'key -> 'value -> ('key, 'value) t -> ('key, 'value) t
+val add : ?debug:(Format.formatter -> 'key * 'value -> unit) -> 'key -> 'value -> ('key, 'value) t -> ('key, 'value) t
 
 (* The value of the call [remove key map] is a map containing all
    the bindings of the map [map], except for the binding of [key]. *)
 
-val remove : 'key -> ('key, 'value) t -> ('key, 'value) t
+val remove : ?debug:(Format.formatter -> 'key * 'value -> unit) -> 'key -> ('key, 'value) t -> ('key, 'value) t
 
 (* The value of the call [find key map] is the value associated to the
    [key] in the map [map]. If [key] is not bound in [map], the

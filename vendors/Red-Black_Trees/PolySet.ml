@@ -15,11 +15,11 @@ let empty set = {tree = RB.empty; cmp=set.cmp}
 
 let is_empty set = RB.is_empty set.tree
 
-let add elt set = {set with tree = RB.add ~cmp:set.cmp RB.New elt set.tree}
+let add ?debug elt set = {set with tree = RB.add ?debug ~cmp:set.cmp RB.New elt set.tree}
 
 let union set_a set_b = {set_a with tree = RB.union ~cmp:set_a.cmp RB.New set_a.tree set_b.tree}
 
-let remove elt set = {set with tree = RB.remove ~cmp:set.cmp elt set.tree}
+let remove ?debug elt set = {set with tree = RB.remove ?debug ~cmp:set.cmp elt set.tree}
 
 let find elt set =
   try RB.find ~cmp:set.cmp elt set.tree with
