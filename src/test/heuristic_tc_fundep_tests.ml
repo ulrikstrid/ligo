@@ -33,9 +33,9 @@ let test''
   test name @@ fun () ->
   let%bind e =
     trace typer_tracer @@
-    let info = `Constructor { reason_constr_simpl = "unit test" ; is_mandatory_constraint = true; tv ; c_tag ; tv_list } in
-    let tc =  { reason_typeclass_simpl = "unit test"; original_id = None; is_mandatory_constraint = false; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
-    let expected =  { reason_typeclass_simpl = "unit test" ; original_id = None; is_mandatory_constraint = false; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
+    let info = `Constructor { reason_constr_simpl = "unit test" ; tv ; c_tag ; tv_list } in
+    let tc =  { reason_typeclass_simpl = "unit test"; original_id = None; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
+    let expected =  { reason_typeclass_simpl = "unit test" ; original_id = None; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
     (* TODO: use an error not an assert *)
     (* Format.printf "\n\nActual: %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl (restrict info tc);
      * Format.printf "\n\nExpected %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl expected; *)
@@ -87,10 +87,10 @@ let test'
     expected_args (_in : string) expected_tc =
   test name @@ fun () ->
     trace typer_tracer @@
-      let input_tc =  { reason_typeclass_simpl = "unit test" ; original_id = None; is_mandatory_constraint = false ; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
-      let expected_tc =  { reason_typeclass_simpl = "unit test" ; original_id = None; is_mandatory_constraint = false ; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
+      let input_tc =  { reason_typeclass_simpl = "unit test" ; original_id = None; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
+      let expected_tc =  { reason_typeclass_simpl = "unit test" ; original_id = None; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
       let expected_inferred = List.map
-          (fun (tv , c_tag , tv_list) -> {reason_constr_simpl = "unit test" ; is_mandatory_constraint = false ; tv ; c_tag ; tv_list})
+          (fun (tv , c_tag , tv_list) -> {reason_constr_simpl = "unit test" ; tv ; c_tag ; tv_list})
           expected_inferred in
       let%bind actual = deduce_and_clean input_tc in
       Heuristic_tc_fundep_tests_compare_cleaned.compare_and_check_vars_deduce_and_clean_result { deduced = expected_inferred ; cleaned = expected_tc } actual

@@ -89,7 +89,7 @@ let propagator : (output_specialize1 , typer_error) propagator =
        Ast_typed.PP.type_value apply
        Ast_typed.PP.c_constructor_simpl b
        Ast_typed.PP.type_value reduced
-       (PP_helpers.list_sep Ast_typed.PP.type_constraint (fun ppf () -> Format.fprintf ppf " ;\n")) new_constraints);
+       (PP_helpers.list_sep Ast_typed.PP.type_constraint_short (fun ppf () -> Format.fprintf ppf " ;\n")) new_constraints);
   
   let eq1 = c_equation (wrap (Todo "solver: propagator: specialize1 eq1") @@ P_variable b.tv) reduced "propagator: specialize1" in
   let eqs = eq1 :: new_constraints in
@@ -105,4 +105,4 @@ let printer = Ast_typed.PP.output_specialize1
 let printer_json = Ast_typed.Yojson.output_specialize1
 let comparator = Solver_should_be_generated.compare_output_specialize1
 
-let heuristic = Heuristic_plugin { selector; alias_selector; propagator; printer; printer_json; comparator }
+let heuristic = Heuristic_plugin { heuristic_name = "specialize1"; selector; alias_selector; propagator; printer; printer_json; comparator }

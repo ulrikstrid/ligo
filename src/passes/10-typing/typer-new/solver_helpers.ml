@@ -15,7 +15,7 @@ module MergeAliases = struct
   module MakeOutType = PerPluginState
   module Monad = NoMonad
   module F(Plugin : Plugin) = struct
-    let f UnionFind.Poly2.{ demoted_repr ; new_repr } state =
+    let f _ UnionFind.Poly2.{ demoted_repr ; new_repr } state =
       let merge_keys = {
         map = (fun m -> ReprMap.alias ~demoted_repr ~new_repr m);
         set = (fun s -> ReprSet.alias ~demoted_repr ~new_repr s);
@@ -32,7 +32,8 @@ module AddConstraint = struct
   module MakeOutType = PerPluginState
   module Monad = NoMonad
   module F(Plugin : Plugin) = struct
-    let f (repr, constraint_) state =
+    let f _ (repr, constraint_) state =
+      (* Format.printf "In AddConstraint for %s and constraint %a\n%!" name PP.type_constraint_ constraint_; *)
       Plugin.add_constraint repr state constraint_
   end
 end
@@ -51,7 +52,8 @@ module RemoveConstraint = struct
   module MakeOutType = PerPluginState
   module Monad = Typer_error_trace_monad
   module F(Plugin : Plugin) = struct
-    let f (repr, to_remove) state =
+    let f _ (repr, to_remove) state =
+      (* Format.printf "In Remove Constraint in %s for %a\n%!" name PP.type_constraint_ to_remove; *)
       Plugin.remove_constraint repr state to_remove
   end
 end
@@ -63,7 +65,7 @@ module CreateState = struct
   module MakeOutType = PerPluginState
   module Monad = NoMonad
   module F(Plugin : Plugin) = struct
-    let f () (() as _state) = Plugin.create_state ~cmp:Ast_typed.Compare.type_variable
+    let f _ () (() as _state) = Plugin.create_state ~cmp:Ast_typed.Compare.type_variable
   end
 end
 

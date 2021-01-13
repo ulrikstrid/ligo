@@ -331,56 +331,48 @@ and type_value ppf t =
     type_value_ t.wrap_content
 
 and typeclass ppf tc = fprintf ppf "%a" (list_sep_d (list_sep_d type_value)) tc
-let c_constructor_simpl ppf ({is_mandatory_constraint;reason_constr_simpl;tv;c_tag;tv_list} : c_constructor_simpl) =
+let c_constructor_simpl ppf ({reason_constr_simpl;tv;c_tag;tv_list} : c_constructor_simpl) =
   fprintf ppf "{@[<hv>
-              is_mandatory_constraint : %b ;@
               reason_constr_simpl : %s ;@
               tv : %a ;@
               c_tag : %a ;@
               tv_list : %a;@
               @]}"
-    is_mandatory_constraint
     reason_constr_simpl
     type_variable tv
     constant_tag c_tag
     (list_sep_d type_variable) tv_list
 
-let c_alias ppf ({is_mandatory_constraint;reason_alias_simpl;a;b}: c_alias) =
+let c_alias ppf ({reason_alias_simpl;a;b}: c_alias) =
   fprintf ppf "{@,@[<hv 2>
-            is_mandatory_constraint : %b ; @
               reason_alias_simpl : %s; @
               a : %a ;@
               b : %a
               @]@,}"
-    is_mandatory_constraint
     reason_alias_simpl
     type_variable a
     type_variable b
 
-let c_poly_simpl ppf ({is_mandatory_constraint;reason_poly_simpl; tv; forall}) =
+let c_poly_simpl ppf ({reason_poly_simpl; tv; forall}) =
   fprintf ppf "{@,@[<hv 2>
-is_mandatory_constraint : %b ; @
               reason_poly_simpl : %s; @
               tv : %a ;@
               forall : %a
               @]@,}"
-    is_mandatory_constraint
     reason_poly_simpl
     type_variable tv
     p_forall forall
 
-let c_typeclass_simpl ppf ({is_mandatory_constraint;id_typeclass_simpl = ConstraintIdentifier ci; reason_typeclass_simpl; original_id; tc; args}) =
+let c_typeclass_simpl ppf ({id_typeclass_simpl = ConstraintIdentifier ci; reason_typeclass_simpl; original_id; tc; args}) =
   fprintf ppf "{@,@[<hv 2>
-                is_mandatory_constraint : %b; @
               id_typeclass_simpl : %Li; @
               original_id : %s; @
               reason_typeclass_simpl : %s; @
               tc : %a ;@
               args : %a
               @]@,}"
-    is_mandatory_constraint
     ci
-                      (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null")
+    (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null")
     reason_typeclass_simpl
     typeclass tc
     (list_sep_d type_variable) args
@@ -393,15 +385,13 @@ let constraint_identifierMap = fun f ppf tvmap   ->
         fprintf ppf "(%a, %a)" constraint_identifier k f v in
       fprintf ppf "typeVariableMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
 
-let c_row_simpl ppf ({is_mandatory_constraint;reason_row_simpl; tv; r_tag; tv_map}) =
+let c_row_simpl ppf ({reason_row_simpl; tv; r_tag; tv_map}) =
   fprintf ppf "{@,@[<hv 2>
-             is_mandatory_constraint : %b ; @
               reason_row_simpl : %s; @
               tv : %a ;@
               r_tag : %a ;@
               tv_map : %a
               @]@,}"
-    is_mandatory_constraint
     reason_row_simpl
     type_variable tv
     row_tag r_tag

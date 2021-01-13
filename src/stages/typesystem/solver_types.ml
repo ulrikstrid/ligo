@@ -13,6 +13,7 @@ type ('selector_output, -'flds) heuristic_plugin = {
   (* Finds in the databases tuples of constraints which are
      interesting for this plugin and include the given
      type_constraint_simpl. *)
+  heuristic_name : string ;
   selector     : ('selector_output, 'flds) selector ;
   (* Select in the databases tuples of constraints which are
      interesting and involve the given two type_viables, knowing that

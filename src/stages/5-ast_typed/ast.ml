@@ -473,8 +473,6 @@ and type_variable_list = type_variable list
 and type_variable_lmap = type_variable label_map
 and c_constructor_simpl = {
   reason_constr_simpl : string ;
-  (* If false, the constraint can be deleted without compromising the correctness of the typechecker: it might be a constraint used for bookkeeping which helps with inference, but its removal does not risk causing an ill-typed module to be accepted. If true, this constraint might (or might not) be necessary for correctness. It is always safe to use "true" for correctness. Use "false" only when being sure it is safe to remove that constraint. *)
-  is_mandatory_constraint : bool ;
   tv : type_variable;
   c_tag : constant_tag;
   (* Types wih no arguments like int, string etc. have an empty tv_list *)
@@ -483,7 +481,6 @@ and c_constructor_simpl = {
 and c_row_simpl = {
   reason_row_simpl : string ;
   (* see description above in c_constructor_simpl *)
-  is_mandatory_constraint : bool ;
   tv : type_variable;
   r_tag : row_tag;
   tv_map : type_variable_lmap;
@@ -499,7 +496,6 @@ and c_equation_e = {
 and c_typeclass_simpl = {
   reason_typeclass_simpl : string ;
   (* see description above in c_constructor_simpl *)
-  is_mandatory_constraint : bool ;
   id_typeclass_simpl     : constraint_identifier ;
   original_id : constraint_identifier option ; (* Pointer to the original typeclass, if this one is a refinement of it *)
   tc   : typeclass          ;
@@ -508,7 +504,6 @@ and c_typeclass_simpl = {
 and c_poly_simpl = {
   reason_poly_simpl : string ;
   (* see description above in c_constructor_simpl *)
-  is_mandatory_constraint : bool ;
   tv     : type_variable ;
   forall : p_forall      ;
 }
@@ -527,7 +522,6 @@ and deduce_and_clean_result = {
 and c_alias = {
     reason_alias_simpl : string ;
     (* see description above in c_constructor_simpl *)
-    is_mandatory_constraint : bool ;
     a : type_variable ;
     b : type_variable ;
   }

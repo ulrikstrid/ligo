@@ -120,7 +120,7 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
     module MakeOutType : PerPluginType
     module Monad : Monad
     module F(Plugin : Plugin) : sig
-      val f : extra_args -> MakeInType(Plugin).t -> MakeOutType(Plugin).t Monad.t
+      val f : string -> extra_args -> MakeInType(Plugin).t -> MakeOutType(Plugin).t Monad.t
     end
   end
 

@@ -351,7 +351,6 @@ let get_record_field_type (t : type_expression) (label : label) : type_expressio
 let make_c_constructor_simpl ?(reason_constr_simpl="") tv c_tag tv_list =
   {
     reason_constr_simpl ;
-    is_mandatory_constraint = true ;
     tv ;
     c_tag;
     tv_list
@@ -359,7 +358,6 @@ let make_c_constructor_simpl ?(reason_constr_simpl="") tv c_tag tv_list =
 
 let make_c_row_simpl ?(reason_row_simpl="") tv r_tag tv_map_as_lst : c_row_simpl = { 
   reason_row_simpl ;
-  is_mandatory_constraint = true ;
   tv;
   r_tag;
   tv_map = LMap.of_list tv_map_as_lst ;
@@ -369,7 +367,6 @@ let make_c_row_simpl ?(reason_row_simpl="") tv r_tag tv_map_as_lst : c_row_simpl
 let make_c_typeclass_simpl ?(reason_typeclass_simpl="") id_typeclass_simpl original_id args tc : c_typeclass_simpl =
   {
     reason_typeclass_simpl ;
-    is_mandatory_constraint = true ;
     id_typeclass_simpl = ConstraintIdentifier (Int64.of_int id_typeclass_simpl) ;
     original_id = (match original_id with None -> None | Some i -> Some (ConstraintIdentifier (Int64.of_int i))) ;
     tc ;
@@ -384,7 +381,6 @@ let make_row_or ?(reason_row_simpl = "") tv r_tag tv_map_as_lst : constructor_or
 
 let make_alias ?(reason_alias_simpl="") a b :  type_constraint_simpl = SC_Alias {
   reason_alias_simpl ;
-  is_mandatory_constraint = true ;
   a ;
   b ;
 }
@@ -392,7 +388,6 @@ let make_alias ?(reason_alias_simpl="") a b :  type_constraint_simpl = SC_Alias 
 let make_sc_alias ?(reason_alias_simpl="") a b : type_constraint_simpl =
   SC_Alias {
     reason_alias_simpl ;
-    is_mandatory_constraint = true ;
     a ;
     b ;
   }
@@ -403,7 +398,6 @@ let make_sc_row ?(reason_row_simpl="") tv r_tag tv_map_as_lst : type_constraint_
 let make_sc_typeclass ?(reason_typeclass_simpl="") (tc : typeclass) (args : type_variable_list) =
   SC_Typeclass {
     reason_typeclass_simpl ;
-    is_mandatory_constraint = true ;
     id_typeclass_simpl = ConstraintIdentifier 1L ;
     original_id = None ;
     tc ;
@@ -412,7 +406,6 @@ let make_sc_typeclass ?(reason_typeclass_simpl="") (tc : typeclass) (args : type
 let make_sc_poly ?(reason_poly_simpl="") (tv:type_variable) (forall:p_forall) =
   SC_Poly {
     reason_poly_simpl ;
-    is_mandatory_constraint = true ;
     tv ;
     forall ;
   }

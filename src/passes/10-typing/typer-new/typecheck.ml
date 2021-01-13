@@ -365,6 +365,7 @@ let check_forall ~(db_access:db_access) (p : c_poly_simpl) : unit result =
 
 let check : type_constraint_simpl list -> type_variable list -> (type_variable -> type_variable) -> (type_variable -> constructor_or_row option) -> unit result =
   fun all_constraints all_vars repr find_assignment ->
+    (* Format.printf "Typechecking"; *)
     let%bind hashconsed_assignments = hashcons all_vars repr find_assignment in
     let db_access : db_access = { repr ; find_assignment ; hashconsed_assignments } in
     let aux : type_constraint_simpl -> unit result = fun c ->
