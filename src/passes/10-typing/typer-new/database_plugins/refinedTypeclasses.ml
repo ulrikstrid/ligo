@@ -40,7 +40,6 @@ let add_constraint _repr state new_constraint =
      *    None ->
      *    (\* let copied = {
      *     *   c with
-     *     *   is_mandatory_constraint = false;
      *     *   id_typeclass_simpl = ConstraintIdentifier (!global_next_constraint_id);
      *     * } in *\)
      *    let metadata = make_refined_typeclass copied in

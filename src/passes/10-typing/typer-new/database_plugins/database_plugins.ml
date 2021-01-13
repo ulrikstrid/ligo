@@ -47,12 +47,12 @@ module MapPlugins = functor (F : MappedFunction) -> struct
     PluginFields(F.MakeOutType).flds F.Monad.t
     = fun extra_args fieldsIn ->
       let module Let_syntax = F.Monad in
-      let%bind assignments                      = (let module F = F.F(Assignments)                   in F.f extra_args fieldsIn#assignments)                      in
-      let%bind grouped_by_variable              = (let module F = F.F(GroupedByVariable)             in F.f extra_args fieldsIn#grouped_by_variable)              in
-      let%bind cycle_detection_topological_sort = (let module F = F.F(CycleDetectionTopologicalSort) in F.f extra_args fieldsIn#cycle_detection_topological_sort) in
-      let%bind by_constraint_identifier         = (let module F = F.F(ByConstraintIdentifier)        in F.f extra_args fieldsIn#by_constraint_identifier)         in
-      let%bind refined_typeclasses              = (let module F = F.F(RefinedTypeclasses)            in F.f extra_args fieldsIn#refined_typeclasses)              in
-      let%bind typeclasses_constraining         = (let module F = F.F(TypeclassesConstraining)       in F.f extra_args fieldsIn#typeclasses_constraining) ;       in
+      let%bind assignments                      = (let module F = F.F(Assignments)                   in F.f "assign" extra_args fieldsIn#assignments)                      in
+      let%bind grouped_by_variable              = (let module F = F.F(GroupedByVariable)             in F.f "g by v" extra_args fieldsIn#grouped_by_variable)              in
+      let%bind cycle_detection_topological_sort = (let module F = F.F(CycleDetectionTopologicalSort) in F.f "c topo" extra_args fieldsIn#cycle_detection_topological_sort) in
+      let%bind by_constraint_identifier         = (let module F = F.F(ByConstraintIdentifier)        in F.f "by  id" extra_args fieldsIn#by_constraint_identifier)         in
+      let%bind refined_typeclasses              = (let module F = F.F(RefinedTypeclasses)            in F.f "ref tc" extra_args fieldsIn#refined_typeclasses)              in
+      let%bind typeclasses_constraining         = (let module F = F.F(TypeclassesConstraining)       in F.f "tc con" extra_args fieldsIn#typeclasses_constraining) ;       in
       F.Monad.return (object
         method assignments                      = assignments
         method grouped_by_variable              = grouped_by_variable

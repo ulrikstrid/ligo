@@ -139,7 +139,7 @@ let restrict (constructor_or_row : constructor_or_row) (tcs : c_typeclass_simpl)
      variables passed to the type constructor *)
   let args = splice (fun _arg -> tv_list) index tcs.args in
   let id_typeclass_simpl = tcs.id_typeclass_simpl in
-  { reason_typeclass_simpl = tcs.reason_typeclass_simpl; original_id = tcs.original_id; is_mandatory_constraint = tcs.is_mandatory_constraint; id_typeclass_simpl ; tc ; args }
+  { reason_typeclass_simpl = tcs.reason_typeclass_simpl; original_id = tcs.original_id; id_typeclass_simpl ; tc ; args }
 
 (* input:
      x ? [ map3( nat , unit , float ) ; map3( bytes , mutez , float ) ]
@@ -172,7 +172,6 @@ let replace_var_and_possibilities_1 ((x : type_variable) , (possibilities_for_x 
       let fresh_vars = List.map (fun _arg -> Var.fresh_like x) arguments_of_first_constructor in
       let deduced : c_constructor_simpl = {
         reason_constr_simpl = "inferred because it is the only remaining possibility at this point according to the typeclass [TODO:link to the typeclass here]" ;
-        is_mandatory_constraint = false;
         tv = x;
         c_tag ;
         tv_list = fresh_vars
@@ -183,7 +182,6 @@ let replace_var_and_possibilities_1 ((x : type_variable) , (possibilities_for_x 
             "sub-part of a typeclass: expansion of the possible \
              arguments for the constructor associated with %a"
             Ast_typed.PP.type_variable x;
-        is_mandatory_constraint = false;
         original_id = None;     (* TODO this and the is_mandatory_constraint are not actually used, should use a different type without these fields. *)
         id_typeclass_simpl = ConstraintIdentifier (-1L) ; (* TODO: this and the reason_typeclass_simpl should simply not be used here *)
         args = fresh_vars ;
@@ -235,7 +233,7 @@ let deduce_and_clean : c_typeclass_simpl -> (deduce_and_clean_result, _) result 
          deduced:
          [ x         = map3  ( fresh_x_1 , fresh_x_2 , fresh_x_3 ) ;
            fresh_x_3 = float (                                   ) ; ] *)
-  let%bind cleaned = transpose_back (tcs.reason_typeclass_simpl, tcs.original_id, tcs.is_mandatory_constraint) tcs.id_typeclass_simpl vars_and_possibilities in
+  let%bind cleaned = transpose_back (tcs.reason_typeclass_simpl, tcs.original_id) tcs.id_typeclass_simpl vars_and_possibilities in
   ok { deduced ; cleaned }
 
 let propagator : (output_tc_fundep, typer_error) propagator =
@@ -295,4 +293,4 @@ let printer = Ast_typed.PP.output_tc_fundep
 let printer_json = Ast_typed.Yojson.output_tc_fundep
 let comparator = Solver_should_be_generated.compare_output_tc_fundep
 
-let heuristic = Heuristic_plugin { selector; alias_selector; propagator; printer; printer_json; comparator }
+let heuristic = Heuristic_plugin { heuristic_name = "tc_fundep"; selector; alias_selector; propagator; printer; printer_json; comparator }

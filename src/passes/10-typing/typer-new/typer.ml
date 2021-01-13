@@ -632,7 +632,7 @@ let type_and_subst
         Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map O.t_variable tv_list)) in
         let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s%!" @@ Format.asprintf "Substituing var %a (%a is %a)\n%!" Var.pp variable Var.pp root Ast_typed.PP.type_content expr) in
         ok @@ expr
-      | `Row { tv ; r_tag ; tv_map ; reason_row_simpl=_; is_mandatory_constraint=_ } ->
+      | `Row { tv ; r_tag ; tv_map ; reason_row_simpl=_ } ->
         let%bind tv_root = Solver.get_alias variable aliases in
         let () = Format.printf "\ncstr : %a(was %a) %a(was %a)\n" Ast_typed.PP.type_variable tv_root Ast_typed.PP.type_variable tv Ast_typed.PP.type_variable root Ast_typed.PP.type_variable variable in
         let () = assert (Var.equal tv_root root) in
@@ -645,7 +645,7 @@ let type_and_subst
   let%bind node = subst_all in
   let%bind env  = env in
   let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env,state,node here again.\n\n") in
-  let () = (if Ast_typed.Debug.debug_new_typer || Ast_typed.Debug.json_new_typer then print_env_state_node out_printer (env, state, node)) in
+  let () = (if Ast_typed.Debug.debug_new_typer && Ast_typed.Debug.json_new_typer then print_env_state_node out_printer (env, state, node)) in
   ok (node, state, env)
 
 let type_program ~init_env (p : I.program) : (environment * O.program_fully_typed * _ O'.typer_state, typer_error) result =

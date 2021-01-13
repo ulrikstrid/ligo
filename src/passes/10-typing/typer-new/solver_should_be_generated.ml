@@ -205,10 +205,9 @@ let compare_row_tag a b =
   | C_variant , C_record -> +1
 
 let compare_c_row_simpl
-  { reason_row_simpl=a1 ; is_mandatory_constraint=a2 ; tv=a3 ; r_tag=a4 ; tv_map=a5 }
-  { reason_row_simpl=b1 ; is_mandatory_constraint=b2 ; tv=b3 ; r_tag=b4 ; tv_map=b5 } =
+  { reason_row_simpl=a1 ; tv=a3 ; r_tag=a4 ; tv_map=a5 }
+  { reason_row_simpl=b1 ; tv=b3 ; r_tag=b4 ; tv_map=b5 } =
     String.compare a1 b1 <? fun () ->
-    Bool.compare a2 b2 <? fun () ->
     compare_type_variable a3 b3 <? fun () ->
     compare_row_tag a4 b4 <? fun () ->
       let aux = fun (a1,a2) (b1,b2) -> compare_label a1 b1 <? fun () -> compare_type_variable a2 b2 in
