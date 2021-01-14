@@ -139,11 +139,12 @@ let remove : type a b . ?debug:(Format.formatter -> b -> unit) -> cmp:(a -> b ->
   let rec bst_remove : bool -> b t -> b t -> b t = fun left parent -> function
     | Ext -> failwith "unknown error"
     | Int (colour,l, root, r) as current -> (
-       (match debug with Some (debug) -> Format.printf "Foud node to remove %a\n%!" (pp debug) current | None -> ());
+       (match debug with Some (debug) -> Format.printf "Foud node to remove %a\nwith parent: %a\n%!" (pp debug) current (pp debug) parent | None -> ());
         ignore root; (* Deletion *)
         match l, r with 
         (* No child, just delete *)
         | Ext, Ext -> (
+            (match debug with Some (_debug) -> Format.printf "Removing the leaf\n" | None -> ());
             let res = bst_remove_leftmost ~left parent colour Ext in
             (match debug with Some (debug) -> Format.printf "Returns with parent :%a\n%!" (pp debug) res | None -> ()); 
             res
@@ -151,13 +152,20 @@ let remove : type a b . ?debug:(Format.formatter -> b -> unit) -> cmp:(a -> b ->
          (* If this is the highr value, there is only one child, so move the tree up,
           then restore color property *)
         | Int (_lcolor, _lleft, _lroot, _lright), Ext ->
+          (match debug with Some (_debug) -> Format.printf "No inorder successor\n" | None -> ());
           bst_remove_leftmost ~left:(false) parent colour l
          (* The inorder value is the right child*)
         | _, Int (_,Ext,_,_) ->
+          (match debug with Some (_debug) -> Format.printf "Inorder succesor is right child\n" | None -> ());
+          (match debug with Some (debug) -> Format.printf "Left child %a\n" (pp debug) l | None -> ());
           let new_current = bst_remove_leftmost ~left:(false) parent colour r in
-          insert_left ~left:true l new_current
+          (match debug with Some (debug) -> Format.printf "New_current %a\n" (pp debug) new_current | None -> ());
+          let new_current = match parent with Ext -> new_current | _ -> get_left new_current in
+          let new_current = insert_left ~left:(true) l new_current in
+          insert_right ~right:true parent new_current
          (* Get the next value, then put it at the place of the element you are removing and remove this element *)
         | _, Int (_rcolor,rleft,_rroot,_rright) ->
+          (match debug with Some (_debug) -> Format.printf "Search for inorder successor\n" | None -> ());
           let new_root, new_right = bst_find_leftmost r rleft in
           let new_current = Int (colour,l,new_root,new_right) in
           insert_left ~left new_current parent
@@ -182,21 +190,28 @@ let remove : type a b . ?debug:(Format.formatter -> b -> unit) -> cmp:(a -> b ->
     let right = left in
     match old_colour,get_colour new_node with
     | Red, Red -> 
-        failwith "Bad tree : a red node has to be followed by two black node"
+      failwith "Bad tree : a red node has to be followed by two black node"
     (* If the old one is red an the new is Black, move it up *)
     | Red, Black -> (
+      (match debug with Some (debug) -> Format.printf "Old is red and New is %a\n" (pp debug) new_node | None -> ());
       (match debug with Some (debug) -> Format.printf "Parent is : %a\n" (pp debug) parent | None -> ());
       let res = insert_left ~left new_node parent in
       (match debug with Some (debug) ->  Format.printf "Returns with parent :%a\n%!" (pp debug) res | None -> ());
       res)
     (* If the old node is black and the new is red, repaint the node *)
     | Black, Red -> 
-      insert_left ~left (blacken @@ new_node) parent
+      (match debug with Some (debug) -> Format.printf "Old is black and New is %a\n" (pp debug) new_node | None -> ());
+      (match debug with Some (debug) -> Format.printf "Parent is : %a\n" (pp debug) parent | None -> ());
+      let new_parent = insert_left ~left (blacken @@ new_node) parent in
+      (match debug with Some (debug) ->  Format.printf "Returns with parent :%a\n%!" (pp debug) new_parent | None -> ());
+      new_parent
     (* if both nodes are black, things get complicated *)
     | Black, Black -> 
+      (match debug with Some (debug) -> Format.printf "Old is black and New is %a\n" (pp debug) new_node | None -> ());
       match parent (* P *) with
         (* Case 1 : N is the new root *)
         Ext -> 
+          (match debug with Some (_debug) -> Format.printf "Case 1\n" | None -> ());
           blacken new_node
         (* other casese*)
       | _ ->
@@ -206,6 +221,7 @@ let remove : type a b . ?debug:(Format.formatter -> b -> unit) -> cmp:(a -> b ->
       match get_colour parent,get_colour s,get_colour ss, get_colour sc with
         (* Case 2 : pright is red, parent has to be black *)
       | Black, Red, Black, Black->
+          (match debug with Some (_debug) -> Format.printf "Case 2\n" | None -> ());
         let parent = paint Red @@ insert_left ~left new_node (insert_right ~right parent ss) in (
           (match debug with Some (debug) -> Format.printf "Parent :\n %a\n%!" (pp debug) parent | None -> ());
 
@@ -218,15 +234,18 @@ let remove : type a b . ?debug:(Format.formatter -> b -> unit) -> cmp:(a -> b ->
 
         (* Case 3 : pright is black and its children are black*)
       | Black, Black, Black, Black ->
+          (match debug with Some (_debug) -> Format.printf "Case 3\n" | None -> ());
           paint Black @@ insert_left ~left new_node @@ insert_right ~right parent @@ paint Red s
 
         (* Case 4 : prigt children's are black but parent is red*)
       | Red, Black, Black, Black ->
+          (match debug with Some (_debug) -> Format.printf "Case 4\n" | None -> ());
           blacken @@ insert_left ~left new_node @@ insert_right ~right parent @@ paint Red s
 
         (* Case 5 : pright is black, prl is red but prr is black *)
       | colour, Black, Red, Black ->
           (* since ss is red it as two children sss and ssc*)
+          (match debug with Some (_debug) -> Format.printf "Case 5\n" | None -> ());
           let ssc,sss = get_child ~right ss, get_child ~right:(not left) ss in
 
           (* Rotate right at s and change color to make new sc red*)
@@ -240,6 +259,7 @@ let remove : type a b . ?debug:(Format.formatter -> b -> unit) -> cmp:(a -> b ->
 
         (* Case 6 : pright is black, prr is red*)
       | colour, Black, _, Red ->
+          (match debug with Some (_debug) -> Format.printf "Case 6\n" | None -> ());
 
           paint colour
             @@ insert_left ~left(paint Black @@ insert_left ~left new_node @@ insert_right ~right parent ss)
@@ -263,15 +283,19 @@ let remove : type a b . ?debug:(Format.formatter -> b -> unit) -> cmp:(a -> b ->
       let c = cmp elt root in
       if      c = 0 then bst_remove l parent current
       else if c < 0 then (
-        (match debug with Some (debug) -> Format.printf "Going to the left in subtree :\n %a\n%!" (pp debug) left | None -> ());
-        insert_left ~left:l (bst_delete true elt current left) parent
+        (match debug with Some (debug) -> Format.printf "Going to the left in subtree :\n %a\nnew parent: %a\n%!" (pp debug) left (pp debug) current | None -> ());
+        let new_parent = insert_left ~left:l (bst_delete true elt current left) parent in
+        (match debug with Some (debug) -> Format.printf "Returning with tree: %a\n%!" (pp debug) new_parent | None -> ());
+        new_parent
       )
       else (
-        (match debug with Some (debug) -> Format.printf "Going to the right in subtree :\n %a\n%!" (pp debug) right | None -> ());
-        insert_right ~right:(not l) parent @@ bst_delete false elt current right
+        (match debug with Some (debug) -> Format.printf "Going to the right in subtree :\n %a\nnew parent: %a\n%!" (pp debug) right (pp debug) current | None -> ());
+        let new_parent = insert_right ~right:(not l) parent @@ bst_delete false elt current right in
+        (match debug with Some (debug) -> Format.printf "Returning with tree: %a\n%!" (pp debug) new_parent | None -> ());
+        new_parent
       )
   in
-  (match debug with Some (debug) -> Format.printf "Tree to remove from : %a\n%!" (pp debug) tree | None -> ());
+  (match debug with Some (debug) -> Format.printf "\nTree to remove from : %a\n%!" (pp debug) tree | None -> ());
   let tree = try bst_delete true elt Ext tree
   with Not_found -> tree
   in (
