@@ -24,6 +24,8 @@ module MergeAliases = struct
       in Plugin.merge_aliases merge_keys state
   end
 end
+(* check module matches signature without hiding its contents *)
+let _ = (module MergeAliases : Ast_typed.Types.MappedFunction)
 
 (* Function which adds a constraint to single indexer plugin's state *)
 module AddConstraint = struct
@@ -37,6 +39,8 @@ module AddConstraint = struct
       Plugin.add_constraint repr state constraint_
   end
 end
+(* check module matches signature without hiding its contents *)
+let _ = (module AddConstraint : Ast_typed.Types.MappedFunction)
 
 module Typer_error_trace_monad = struct
   type 'a t = ('a, typer_error) Trace.result
@@ -57,6 +61,8 @@ module RemoveConstraint = struct
       Plugin.remove_constraint repr state to_remove
   end
 end
+(* check module matches signature without hiding its contents *)
+let _ = (module RemoveConstraint : Ast_typed.Types.MappedFunction)
 
 (* Function which creates a plugin's initial state *)
 module CreateState = struct
@@ -68,6 +74,8 @@ module CreateState = struct
     let f _ () (() as _state) = Plugin.create_state ~cmp:Ast_typed.Compare.type_variable
   end
 end
+(* check module matches signature without hiding its contents *)
+let _ = (module CreateState : Ast_typed.Types.MappedFunction)
 
 (* Function which calls the plugin's pretty-printer and appends it to an accumulator string *)
 module PPPlugin = struct
@@ -80,6 +88,8 @@ module PPPlugin = struct
       Format.fprintf ppf "%s =@ @[<hv 2> %a @] ;@" Plugin.name (Plugin.pp Var.pp) state
   end
 end
+(* check module matches signature without hiding its contents *)
+let _ = (module PPPlugin : Ast_typed.Types.MappedFunction)
 
 type nonrec 'a result = ('a, typer_error) Simple_utils.Trace.result
 
