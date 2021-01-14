@@ -3,7 +3,6 @@ open Db_index_assignment_tests
 open Db_index_grouped_by_variable_tests
 open Db_index_cycle_detection_topological_sort_tests
 open Db_index_by_constraint_identifier_tests
-open Db_index_refined_typeclasses_tests
 open Db_index_typeclasses_constraining_tests
 
 (* TODO: move this to another file *)
@@ -48,7 +47,6 @@ module Invariant_assignments                      = X(Assignments_tests)
 (* module Invariant_grouped_by_variable              = X(Grouped_by_variable_tests) <-- TODO *)
 module Invariant_cycle_detection_topological_sort = X(Cycle_detection_topological_sort_tests)
 module Invariant_by_constraint_identifier         = X(By_constraint_identifier_tests)
-module Invariant_refined_typeclasses              = X(Refined_typeclasses_tests)
 module Invariant_typeclasses_constraining         = X(Typeclasses_constraining_tests)
 (* End todo move *)
 
@@ -59,12 +57,10 @@ let main =
       test "grouped by variable" grouped_by_variable ;
       test "cycle detection topological sort" cycle_detection_topological_sort ;
       test "by constraint identifier" by_constraint_identifier ;
-      test "refined typeclasses" refined_typeclasses ;
       test "typeclasses constraining" typeclasses_constraining ;
       test "invariant assignments" Invariant_assignments.invariant ;
       (* test "grouped_by_variable assignments" Invariant_grouped_by_variable.invariant ; <--TODO *)
       test "invariant cycle detection topological sort" Invariant_cycle_detection_topological_sort.invariant ;
       test "invariant by constraint identifier" Invariant_by_constraint_identifier.invariant ;
-      test "invariant refined typeclasses" Invariant_refined_typeclasses.invariant ;
       test "invariant typeclasses constraining" Invariant_typeclasses_constraining.invariant ;
     ]

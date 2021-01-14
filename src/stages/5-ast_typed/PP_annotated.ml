@@ -417,11 +417,6 @@ let constraints ppf ({constructor; poly; (* tc; *) row}: constraints) =
     (list_sep_d c_row_simpl) row
 let constraint_identifier ppf (ConstraintIdentifier ci) =
   fprintf ppf "ConstraintIdentifier %Li" ci
-let refined_typeclass ppf ({ refined; original; vars } : refined_typeclass) =
-  fprintf ppf "{@,@[<hv 2> refined : %a ; original : %Li ;@ vars : %a @]@,}"
-    c_typeclass_simpl refined
-    (match original with ConstraintIdentifier a -> a)
-    typeVariableSet vars
 
 
 (* let structured_dbs ppf ({refined_typeclasses;refined_typeclasses_back;typeclasses_constrained_by;by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort} : structured_dbs) =
@@ -460,11 +455,9 @@ let output_specialize1 ppf ({poly;a_k_var}) =
 let output_tc_fundep ppf (t : output_tc_fundep) =
   let lst = t.tc in
   let a = t.c in
-  fprintf ppf "{tc:{refined:%a original:%Li vars:%a}; c:%a}"
+  fprintf ppf "{tc:%a; c:%a}"
     c_typeclass_simpl
-    lst.refined
-    (match lst.original with ConstraintIdentifier a -> a) (list_sep_d (fun x _ ->fprintf x "," ) )
-    ( (fun x ->( List.map (fun y-> Format.asprintf "%a" Var.pp y) @@ ( RedBlackTrees.PolySet.elements x))) lst.vars) 
+    lst
     constructor_or_row a
 
 let deduce_and_clean_result ppf {deduced;cleaned} =
