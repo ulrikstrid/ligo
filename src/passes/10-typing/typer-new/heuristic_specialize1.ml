@@ -95,7 +95,7 @@ let propagator : (output_specialize1 , typer_error) propagator =
   let eqs = eq1 :: new_constraints in
     ok [
         {
-          remove_constraints = [];
+          remove_constraints = [ SC_Poly a ];
           add_constraints = eqs;
           proof_trace = Axiom Axioms.specialize
         }
