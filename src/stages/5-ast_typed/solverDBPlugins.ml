@@ -73,6 +73,7 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
     val merge_aliases : ('old, 'new_) merge_keys -> 'old t -> 'new_ t
     (* The pretty-printer is used for debugging *)
     val pp : (Format.formatter -> 'typeVariable -> unit) -> Format.formatter -> 'typeVariable t -> unit
+    val name : string
   end
 
   (* The kind PerPluginType describes type-level functions which take
@@ -137,7 +138,6 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
       val pp : (Format.formatter -> 'typeVariable -> unit) -> Format.formatter -> 'typeVariable t -> unit
     end
     val assignments : flds -> < assignments : Ppt(Assignments).t >
-    val pp_print : Format.formatter -> flds -> unit
   end
   module type IndexerPlugins = sig
     module PluginFields : Indexer_plugin_fields

@@ -20,22 +20,8 @@ module PluginFields = functor (Ppt : PerPluginType) -> struct
 
   module Assignments = Assignments
   let assignments flds = (flds :> <assignments:_>)
-  let pp_print ppf (flds : flds) =
-    let module A = Ppt(Assignments) in
-    let module GbV = Ppt(GroupedByVariable) in
-    let module CDTS = Ppt(CycleDetectionTopologicalSort) in
-    let module BCI = Ppt(ByConstraintIdentifier) in
-    let module RTC = Ppt(RefinedTypeclasses) in
-    let module TcC = Ppt(TypeclassesConstraining) in
-    Format.fprintf ppf "@[ <@ assignments =@ @[<hv 2> %a @] ;@ grouped_by_variable =@ @[<hv 2> %a@] ;@ cycle_detection_topological_sort =@ @[<hv 2> %a@] ;@ by_constraint_identifier =@ @[<hv 2> %a@] ;@ refined_typeclasses =@ @[<hv 2> %a@] ;@ typeclasses_constraining =@ @[<hv 2> %a@] ;@]@ >"
-      A.pp flds#assignments
-      GbV.pp flds#grouped_by_variable
-      CDTS.pp flds#cycle_detection_topological_sort
-      BCI.pp flds#by_constraint_identifier
-      RTC.pp flds#refined_typeclasses
-      TcC.pp flds#typeclasses_constraining
-
 end
+
 (* TODO: try removing this _ workaround *)
 module PluginFields_ = PluginFields
 

@@ -43,9 +43,13 @@ end = struct
     let open Typesystem.Solver_types in
     let open Format in
     let open PP_helpers in
+    let module MapPP = Plugins.Indexers.MapPlugins(PPPlugin) in
+    let pp_indexers ppf states =
+      Format.fprintf ppf "@[ <@ %a ]@ >" (fun ppf states -> let _ : plugin_units = MapPP.f ppf states in ()) states
+    in
     Format.fprintf ppf "{@[<hv 2> @ all_constaints = %a;@ plugin_states = %a ;@ aliases = %a ;@ already_selected_and_propagators = %a @]@ }"
       (RedBlackTrees.PolySet.pp PP.type_constraint_) all_constraints
-      (Plugin_states.pp_print) plugin_states
+      pp_indexers plugin_states
       (UnionFind.Poly2.pp Ast_typed.PP.type_variable) aliases
       (list_sep pp_ex_propagator_state (fun ppf () -> fprintf ppf " ;@ ")) already_selected_and_propagators
 

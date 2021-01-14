@@ -57,6 +57,8 @@ let pp type_variable ppf state =
     ppf
     (ReprMap.bindings state)
 
+let name = "typeclasses_constraining"
+
 let get_state_for_tests state = state
 
 

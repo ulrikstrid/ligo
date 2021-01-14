@@ -17,7 +17,6 @@ module PluginFields_ (Ppt : PerPluginType) : sig
     val pp : (Format.formatter -> 'typeVariable -> unit) -> Format.formatter -> 'typeVariable t -> unit
   end
   val assignments : flds -> < assignments : Ppt(Assignments).t >
-  val pp_print : Format.formatter -> flds -> unit
 end
 
 include Ast_typed.Types.IndexerPlugins

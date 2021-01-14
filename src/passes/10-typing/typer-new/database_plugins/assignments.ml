@@ -39,6 +39,7 @@ let pp type_variable ppf state =
   Format.fprintf ppf "(%a)"
   (ReprMap.pp type_variable Ast_typed.PP.constructor_or_row) state
 
+let name = "assingnments"
 
 let find_opt : 'type_variable -> 'type_variable t -> constructor_or_row option = ReprMap.find_opt
 
