@@ -69,6 +69,18 @@ module CreateState = struct
   end
 end
 
+(* Function which calls the plugin's pretty-printer and appends it to an accumulator string *)
+module PPPlugin = struct
+  type extra_args = Format.formatter
+  module MakeInType = PerPluginState
+  module MakeOutType = PerPluginUnit
+  module Monad = NoMonad
+  module F(Plugin : Plugin) = struct
+    let f _ ppf state =
+      Format.fprintf ppf "%s =@ @[<hv 2> %a @] ;@" Plugin.name (Plugin.pp Var.pp) state
+  end
+end
+
 type nonrec 'a result = ('a, typer_error) Simple_utils.Trace.result
 
 let simplify_constraint : type_constraint -> type_constraint_simpl list =

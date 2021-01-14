@@ -110,6 +110,7 @@ let pp type_variable ppf state =
   let open PP_helpers in
   list_sep_d (pair type_variable Ast_typed.PP.constraints) ppf (ReprMap.bindings state)
 
+let name = "grouped_by_variable"
 
 let get_constraints_by_lhs : 'type_variable -> 'type_variable t -> constraints =
   fun variable state ->

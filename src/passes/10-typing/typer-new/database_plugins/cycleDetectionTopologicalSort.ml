@@ -10,5 +10,6 @@ let merge_aliases : 'old 'new_ . ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
 
 let pp _type_variable ppf () = Format.fprintf ppf "()"
 
+let name = "cycle_detection_topological_sort"
 
 let get_state_for_tests state = state
