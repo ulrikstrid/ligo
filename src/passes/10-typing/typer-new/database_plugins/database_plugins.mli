@@ -6,7 +6,6 @@ module PluginFields_ (Ppt : PerPluginType) : sig
     grouped_by_variable              : Ppt(GroupedByVariable).t ;
     cycle_detection_topological_sort : Ppt(CycleDetectionTopologicalSort).t ;
     by_constraint_identifier         : Ppt(ByConstraintIdentifier).t ;
-    refined_typeclasses              : Ppt(RefinedTypeclasses).t ;
     typeclasses_constraining         : Ppt(TypeclassesConstraining).t ;
   >
 

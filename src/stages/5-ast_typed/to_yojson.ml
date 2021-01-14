@@ -588,12 +588,6 @@ let type_variable_set s =
     `String (Format.asprintf "%a" Var.pp v) in
   let lst' = List.map aux lst in
   `Assoc ["typeVariableSet",  `List lst']
-let refined_typeclass ({ original=ConstraintIdentifier x; refined; vars } : refined_typeclass) : json =
-  `Assoc [
-    "original", `String (Format.asprintf "%Li" x);
-    "refined", c_typeclass_simpl refined;
-    "vars", type_variable_set vars
-  ]
 
 let constraint_identifier (ConstraintIdentifier ci : constraint_identifier) : json =
   `Assoc [
@@ -638,8 +632,5 @@ let output_tc_fundep (t : output_tc_fundep) =
   let lst = t.tc in
   let a = t.c in `Assoc
     [
-      ("tc",`Assoc[
-          ("refined",c_typeclass_simpl lst.refined);
-          ("original",`String(Format.asprintf "%Li" (match lst.original with ConstraintIdentifier x -> x)));
-          ("vars",list Var.to_yojson ( RedBlackTrees.PolySet.elements lst.vars))])
+      ("tc",c_typeclass_simpl lst)
       ;("a",constructor_or_row a)]

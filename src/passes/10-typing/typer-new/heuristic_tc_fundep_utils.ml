@@ -11,15 +11,12 @@ open Database_plugins.All_plugins
 type 'a indexes = <
     assignments              : type_variable Assignments.t ;
     grouped_by_variable      : type_variable GroupedByVariable.t ;
-    refined_typeclasses      : type_variable RefinedTypeclasses.t ;
     typeclasses_constraining : type_variable TypeclassesConstraining.t ;
     by_constraint_identifier : type_variable ByConstraintIdentifier.t ;
     ..                          (* TODO: remove this it breaks type safety below *)
 > as 'a
 
 let set_of_vars l = (Set.add_list l (Set.create ~cmp:Var.compare)).set
-
-let make_refined_typeclass refined ~original : refined_typeclass = { refined; original ; vars = set_of_vars refined.args }
 
 let constraint_identifier_to_tc (dbs : _ indexes) (ci : constraint_identifier) =
   (* TODO: this can fail: catch the exception and throw an error *)

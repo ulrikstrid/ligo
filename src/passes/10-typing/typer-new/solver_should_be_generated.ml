@@ -233,13 +233,8 @@ let compare_c_typeclass_simpl
     { reason_typeclass_simpl = _ ; tc = b1 ; args = b2 } =
   compare_typeclass a1 b1 <? fun () -> compare_c_typeclass_simpl_args a2 b2
 
-let compare_refined_typeclass { original=ConstraintIdentifier a1; refined=r1; vars=a2 } { original=ConstraintIdentifier b1; refined=r2; vars=b2 } =
-  Int64.compare a1 b1 <? fun () ->
-  compare_c_typeclass_simpl r1 r2 <? fun () ->
-    List.compare ~compare:compare_type_variable (PolySet.elements a2) (PolySet.elements b2)
-
 let compare_output_tc_fundep { tc=a1; c=a2 } { tc=b1; c=b2 } =
-  compare_refined_typeclass a1 b1 <? fun () -> compare_constructor_or_row a2 b2
+  compare_c_typeclass_simpl a1 b1 <? fun () -> compare_constructor_or_row a2 b2
 
 (* Using a pretty-printer from the PP.ml module creates a dependency
    loop, so the one that we need temporarily for debugging purposes

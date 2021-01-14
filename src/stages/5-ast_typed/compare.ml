@@ -498,9 +498,3 @@ let deduce_and_clean_result {deduced=da;cleaned=ca} {deduced=db;cleaned=cb} =
   cmp2
     (List.compare ~compare:c_constructor_simpl) da db
     c_typeclass_simpl ca cb
-
-let refined_typeclass { refined = a; original = b; vars = c } { refined = d; original = e; vars = f } =
-  cmp3
-    c_typeclass_simpl a d
-    constraint_identifier b e
-    (List.compare ~compare:type_variable) (PolySet.elements c) (PolySet.elements f)

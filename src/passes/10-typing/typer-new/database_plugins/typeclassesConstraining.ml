@@ -3,6 +3,7 @@ open UnionFind
 open Trace
 
 type 'typeVariable t = ('typeVariable, c_typeclass_simpl PolySet.t) ReprMap.t
+type ('type_variable, 'a) state = < typeclasses_constraining : 'type_variable t ; .. > as 'a
 
 let create_state ~cmp =
   let merge = PolySet.union in
@@ -62,14 +63,9 @@ let name = "typeclasses_constraining"
 let get_state_for_tests state = state
 
 
-let get_typeclasses_constraining tv (state : 'typeVariable t) =
+let get_typeclasses_constraining tv (state : ('type_variable, _) state) =
   Option.unopt ~default:(PolySet.create ~cmp:Ast_typed.Compare.c_typeclass_simpl)
-  @@ ReprMap.find_opt tv state
+  @@ ReprMap.find_opt tv state#typeclasses_constraining
 
-let get_typeclasses_constraining_list tv (state : 'typeVariable t) =
+let get_typeclasses_constraining_list tv (state : ('type_variable, _) state) =
   PolySet.elements @@ get_typeclasses_constraining tv state
-
-let get_refined_typeclasses_constraining_list tv (indexes : < typeclasses_constraining : 'type_variable t ; refined_typeclasses : 'type_variable RefinedTypeclasses.t ; .. > ) =
-  List.map
-    (fun tc -> RefinedTypeclasses.find tc indexes#refined_typeclasses)
-    (get_typeclasses_constraining_list tv indexes#typeclasses_constraining)

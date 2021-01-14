@@ -416,14 +416,7 @@ let unionfind_of_yojson _ = Error ("can't parse unionfind")
 
 type 'v constraint_identifierMap = (constraint_identifier, 'v) RedBlackTrees.PolyMap.t
 
-type refined_typeclass = {
-  refined : c_typeclass_simpl ;
-  original : constraint_identifier ; (* TODO: remove this field, it's duplicated in refined.original_id *)
-  vars : type_variable_set ;
-}
-
 and type_variable_set = type_variable poly_set
-and refined_typeclass_constraint_identifierMap = refined_typeclass constraint_identifierMap
 
 and constraint_identifier_set = constraint_identifier RedBlackTrees.PolySet.t
 and constraint_identifier_set_map = constraint_identifier_set typeVariableMap
@@ -526,7 +519,7 @@ type output_specialize1 = { (* TODO : this type must be local heuristic_... *)
 
 
 type output_tc_fundep = { (* TODO : this type must be local heuristic_tc_fundep.. *)
-    tc : refined_typeclass ;
+    tc : c_typeclass_simpl ;
     c :  constructor_or_row ;
   }
 
