@@ -1,12 +1,13 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import 'bootstrap/dist/css/bootstrap.min.css'
 
 import { AppState } from '../redux/app';
 import { ChangeDirtyAction, EditorState } from '../redux/editor';
-import { ChangeSelectedAction, ExamplesState } from '../redux/examples';
+import { ChangeSelectedAction, ExamplesState, SetDefaultList } from '../redux/examples';
 import { getExample } from '../services/api';
+import { ExamplesAction } from '../redux/actions/examples'
 
 const Container = styled.div`
   flex: 0.5;  
@@ -42,11 +43,16 @@ const MenuItem = styled.span`
 `;
 
 export const Examples = () => {
+
+  useEffect(() => {
+      // dispatch({ ...new ExamplesAction.getAction() });
+  });
+
   const examples = useSelector<AppState, ExamplesState['list']>(
-    (state: AppState) => state.examples.list
+    (state: AppState) => state.Examples.list
   );
   const editorDirty = useSelector<AppState, EditorState['dirty']>(
-    (state: AppState) => state.editor.dirty
+    (state: AppState) => state.Editor.dirty
   );
 
   const dispatch = useDispatch();
@@ -55,7 +61,7 @@ export const Examples = () => {
     <Container>
       <Header>Contract Examples</Header>
       <MenuContainer>
-        {examples.map(example => {
+        {examples && examples.map(example => {
           return (
             <MenuItem
               id={example.id}

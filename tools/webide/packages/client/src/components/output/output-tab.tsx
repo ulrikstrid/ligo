@@ -5,7 +5,7 @@ import styled, { css } from 'styled-components';
 import { AppState } from '../../redux/app';
 import { LoadingState } from '../../redux/loading';
 import { ResultState } from '../../redux/result';
-import { Command } from '../../redux/types';
+import { CommandType } from '../../redux/types';
 import { Statusbar } from '../statusBar';
 import { CompileOutputPane } from './compile-output-pane';
 import { DeployOutputPane } from './deploy-output-pane';
@@ -47,13 +47,13 @@ export const OutputTab = (props: {
 }) => {
   let visible = props.selected;
   const command = useSelector<AppState, ResultState['command']>(
-    state => state.result.command
+    state => state && state.result && state.result.command
   );
   const loading = useSelector<AppState, LoadingState['loading']>(
-    state => state.loading.loading
+    state => state && state.Loading && state.Loading.loading
   );
   const output = useSelector<AppState, ResultState['output']>(
-    state => state.result.output
+    state => state && state.result && state.result.output
   );
 
   if( loading || output ) {
@@ -61,7 +61,7 @@ export const OutputTab = (props: {
   }
 
   const error = useSelector<AppState, ResultState['error']>(
-    state => state.result.error
+    state => state && state.result && state.result.error
   );
   
   const renderResult = () => {
@@ -69,11 +69,11 @@ export const OutputTab = (props: {
       return <><Statusbar error={false} /><Loading onCancel={props.onCancel}></Loading></>;
     } else if (!output) {
       return <></>;
-    } else if (command === Command.Compile) {
+    } else if (command === CommandType.Compile) {
       return <CompileOutputPane></CompileOutputPane>;
-    } else if (command === Command.Deploy) {
+    } else if (command === CommandType.Deploy) {
       return <><Statusbar error={error} /><DeployOutputPane></DeployOutputPane></>;
-    } else if (command === Command.GenerateDeployScript) {
+    } else if (command === CommandType.GenerateDeployScript) {
       return <GenerateDeployScriptOutputPane></GenerateDeployScriptOutputPane>;
     }
 
