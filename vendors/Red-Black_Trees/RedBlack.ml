@@ -160,7 +160,7 @@ let remove : type a b . ?debug:(Format.formatter -> b -> unit) -> cmp:(a -> b ->
           (match debug with Some (debug) -> Format.printf "Left child %a\n" (pp debug) l | None -> ());
           let new_current = bst_remove_leftmost ~left:(false) parent colour r in
           (match debug with Some (debug) -> Format.printf "New_current %a\n" (pp debug) new_current | None -> ());
-          let new_current = match parent with Ext -> new_current | _ -> get_left new_current in
+          let new_current = match parent with Ext -> new_current | _ -> get_right new_current in
           let new_current = insert_left ~left:(true) l new_current in
           insert_right ~right:true parent new_current
          (* Get the next value, then put it at the place of the element you are removing and remove this element *)
