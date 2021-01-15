@@ -31,8 +31,8 @@ let add ?debug k v m = { m with map = PolyMap.add ?debug k v m.map }
 
 let add_opt k v m = match PolyMap.find_opt k m.map with Some _ -> None | None -> Some (add k v m)
 
-let monotonic_update k f m = {
-  m with map = PolyMap.update k (function None -> Some (f None) | Some v -> Some (f (Some v))) m.map }
+let monotonic_update k f m =
+  { m with map = PolyMap.update k (function None -> Some (f None) | Some v -> Some (f (Some v))) m.map }
 
 (* No removal, should be monotonic aside from merges due to aliasing *)
 (* let remove k m = { m with map = PolyMap.remove k m.map } *)

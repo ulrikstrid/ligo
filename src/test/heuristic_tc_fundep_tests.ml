@@ -33,7 +33,7 @@ let test''
   test name @@ fun () ->
   let%bind e =
     trace typer_tracer @@
-    let info = `Constructor { reason_constr_simpl = "unit test" ; tv ; c_tag ; tv_list } in
+    let info = `Constructor { reason_constr_simpl = "unit test" ; original_id = None; id_constructor_simpl = ConstraintIdentifier 42L ; tv ; c_tag ; tv_list } in
     let tc =  { reason_typeclass_simpl = "unit test"; original_id = None; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
     let expected =  { reason_typeclass_simpl = "unit test" ; original_id = None; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
     (* TODO: use an error not an assert *)
@@ -90,7 +90,7 @@ let test'
       let input_tc =  { reason_typeclass_simpl = "unit test" ; original_id = None; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
       let expected_tc =  { reason_typeclass_simpl = "unit test" ; original_id = None; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
       let expected_inferred = List.map
-          (fun (tv , c_tag , tv_list) -> {reason_constr_simpl = "unit test" ; tv ; c_tag ; tv_list})
+          (fun (tv , c_tag , tv_list) -> {reason_constr_simpl = "unit test" ; original_id = None; id_constructor_simpl = ConstraintIdentifier 42L ; tv ; c_tag ; tv_list})
           expected_inferred in
       let%bind actual = deduce_and_clean input_tc in
       Heuristic_tc_fundep_tests_compare_cleaned.compare_and_check_vars_deduce_and_clean_result { deduced = expected_inferred ; cleaned = expected_tc } actual

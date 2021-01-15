@@ -466,6 +466,8 @@ and type_variable_list = type_variable list
 and type_variable_lmap = type_variable label_map
 and c_constructor_simpl = {
   reason_constr_simpl : string ;
+  id_constructor_simpl : constraint_identifier ;
+  original_id  : constraint_identifier option ;
   tv : type_variable;
   c_tag : constant_tag;
   (* Types wih no arguments like int, string etc. have an empty tv_list *)
@@ -474,6 +476,8 @@ and c_constructor_simpl = {
 and c_row_simpl = {
   reason_row_simpl : string ;
   (* see description above in c_constructor_simpl *)
+  id_row_simpl : constraint_identifier ;
+  original_id  : constraint_identifier option ;
   tv : type_variable;
   r_tag : row_tag;
   tv_map : type_variable_lmap;
@@ -489,14 +493,16 @@ and c_equation_e = {
 and c_typeclass_simpl = {
   reason_typeclass_simpl : string ;
   (* see description above in c_constructor_simpl *)
-  id_typeclass_simpl     : constraint_identifier ;
-  original_id : constraint_identifier option ; (* Pointer to the original typeclass, if this one is a refinement of it *)
+  id_typeclass_simpl : constraint_identifier ;
+  original_id        : constraint_identifier option ; (* Pointer to the original typeclass, if this one is a refinement of it *)
   tc   : typeclass          ;
   args : type_variable_list ;
 }
 and c_poly_simpl = {
   reason_poly_simpl : string ;
   (* see description above in c_constructor_simpl *)
+  id_poly_simpl : constraint_identifier ;
+  original_id   : constraint_identifier option ;
   tv     : type_variable ;
   forall : p_forall      ;
 }

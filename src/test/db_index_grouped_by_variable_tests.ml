@@ -85,9 +85,9 @@ let assert_const_equal ~(expected:type_constraint_simpl list) ~(actual:constrain
   bind_iter_list aux expected
 
 let previous_test () =
-  let sc_a : type_constraint_simpl = constructor tva C_unit [] in
-  let sc_b : type_constraint_simpl = constructor tvb C_unit [] in
-  let sc_c : type_constraint_simpl = constructor tvc C_unit [] in
+  let sc_a : type_constraint_simpl = constructor 1 None tva C_unit [] in
+  let sc_b : type_constraint_simpl = constructor 2 None tvb C_unit [] in
+  let sc_c : type_constraint_simpl = constructor 3 None tvc C_unit [] in
   let constraints_nb (l:constraints) (expected:int) =
     List.(
       length l.constructor = expected &&
@@ -166,9 +166,9 @@ let constraints_nb (l:constraints) (expected:int) =
     length l.poly = 0 &&
     length l.row = 0
   )
-let sc_a : type_constraint_simpl = constructor tva C_unit []
-let sc_b : type_constraint_simpl = constructor tvb C_unit []
-let sc_c : type_constraint_simpl = constructor tvc C_unit []
+let sc_a : type_constraint_simpl = constructor 4 None tva C_unit []
+let sc_b : type_constraint_simpl = constructor 5 None tvb C_unit []
+let sc_c : type_constraint_simpl = constructor 6 None tvc C_unit []
 (* Test independant add + remove + merge pour chaque type de contraintes:
    test add ctor constraint + add other ctor constraint + merge ctor constraint + add third ctor constraint
    *)
@@ -385,9 +385,9 @@ let constraints_nb (l:constraints) (expected:int) =
     length l.poly = 0 &&
     length l.row = expected
   )
-let sc_a : type_constraint_simpl = row tva
-let sc_b : type_constraint_simpl = row tvb
-let sc_c : type_constraint_simpl = row tvc
+let sc_a : type_constraint_simpl = row 7 tva
+let sc_b : type_constraint_simpl = row 8 tvb
+let sc_c : type_constraint_simpl = row 9 tvc
 
 let row_add_and_merge () =
   let msg = "row_add_and_merge:" in
@@ -837,7 +837,7 @@ let mixte () =
 
 
   (* add ctor *)
-  let sc_a : type_constraint_simpl = constructor tva C_unit [] in
+  let sc_a : type_constraint_simpl = constructor 10 None tva C_unit [] in
   let state' = add_constraint (fun a -> a) state sc_a in
 
   (* Test 1: state is { a -> [sc_a]} *)
@@ -860,7 +860,7 @@ let mixte () =
   in
   
   (* Add row *)
-  let sc_b : type_constraint_simpl = row tvb in
+  let sc_b : type_constraint_simpl = row 11 tvb in
   let state'' = add_constraint (fun a -> a) state' sc_b in
   (* Test 2: state is { a -> [sc_a]; b -> [sc_b]} *)
   let test = "Test 2:" in
@@ -913,7 +913,7 @@ let mixte () =
   in
 
   (* Add constraint sc_c2 *)
-  let sc_c2 = constructor tvc C_unit [] in
+  let sc_c2 = constructor 12 None tvc C_unit [] in
   let state'''' = add_constraint (fun a -> a) state''' sc_c2 in
   (* Test 4: state is { a -> [sc_a]; b -> [sc_b]; c -> [sc_c;sc_c2]} *)
   let test = "Test 4:" in
@@ -972,7 +972,7 @@ let mixte () =
     bind_iter_list aux gbv
   in
 
-  let sc_b2 = row tvb in
+  let sc_b2 = row 13 tvb in
   let state'''''' = add_constraint repr state''''' sc_b2 in
   (* Test 6: state is { a -> [sc_a;sc_b;sc_b2]; c -> [sc_c;sc_c2]} *)
   let test = "Test 6:" in

@@ -58,7 +58,7 @@ let by_constraint_identifier () =
   let%bind () = same_state2 state [] in
 
   (* add `tva = unit()' to the state *)
-  let ctor_a = make_c_constructor_simpl tva C_unit [] in
+  let ctor_a = make_c_constructor_simpl 1 None tva C_unit [] in
   let state' = add_constraint repr state (SC_Constructor ctor_a) in                                           
   (* assert state' = {} because only typeclass constraints have an ID for now. *)
   let%bind () = same_state2 state' [] in
@@ -69,11 +69,11 @@ let by_constraint_identifier () =
     [ tval_unit ; tval_int ] ;
     [ tval_map_int_unit; tval_map_int_unit ] ;
   ] in
-  let tc_bc = make_c_typeclass_simpl 1 None [tvb;tvc] tc_allowed_bc in
+  let tc_bc = make_c_typeclass_simpl 2 None [tvb;tvc] tc_allowed_bc in
   let state'' = add_constraint repr state' (SC_Typeclass tc_bc) in
   (* assert state'' = … *)
   let%bind () = same_state2 state'' [
-      (ConstraintIdentifier 1L, tc_bc)
+      (ConstraintIdentifier 2L, tc_bc)
     ]
   in
 
@@ -83,12 +83,12 @@ let by_constraint_identifier () =
     [ tval_int ] ;
     [ tval_unit ] ;
   ] in
-  let tc_b = make_c_typeclass_simpl 2 (Some 1) [tvb;tvc] tc_allowed_b in
+  let tc_b = make_c_typeclass_simpl 3 (Some 2) [tvb;tvc] tc_allowed_b in
   let state''' = add_constraint repr state'' (SC_Typeclass tc_b) in
   (* assert state''' = … *)
   let%bind () = same_state2 state''' [
-      (ConstraintIdentifier 1L, tc_bc) ;
-      (ConstraintIdentifier 2L, tc_b)
+      (ConstraintIdentifier 2L, tc_bc) ;
+      (ConstraintIdentifier 3L, tc_b)
     ]
   in
 

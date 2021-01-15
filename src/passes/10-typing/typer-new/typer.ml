@@ -119,7 +119,7 @@ end
 *)
 let rec type_declaration env state : I.declaration Location.wrap -> (environment * _ O'.typer_state * O.declaration Location.wrap, typer_error) result = fun d ->
   let return : _ -> _ -> _ O'.typer_state -> _ (* return of type_expression *) = fun expr e state constraints ->
-  Format.printf "Solving expression : %a\n%!" O.PP.declaration expr ;
+    Format.printf "Solving expression : %a\n%!" O.PP.declaration expr ;
     let%bind new_state = Solver.main state constraints in
     Format.printf "Leaving type declaration\n%!";
     ok @@ (e,new_state, Location.wrap ~loc:d.location expr ) in
@@ -619,7 +619,7 @@ fun node_printer (env,state,node) ->
       (Yojson.Safe.to_string (Solver.json_typer_state state))
       node_printer node
 
-and get_alias variable aliases =
+and _get_alias variable aliases =
   trace_option (corner_case (Format.asprintf "can't find alias root of variable %a" Var.pp variable)) @@
   (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
   try Some (Solver.UF.repr variable aliases) with Not_found -> None

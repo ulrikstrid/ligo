@@ -86,6 +86,7 @@ module Operators_types = struct
   let t_set_iter      = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 (a --> unit) (set a) --> unit
   (* TODO: check that the implementation has this type *)
   let t_set_fold      = forall2_tc "a" "b" @@ fun a b -> [tc_comparable b] => tuple3 (pair a b --> a) (set b) a --> a
+  let t_list_empty    = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple0 --> list a
   let t_list_iter     = forall "a" @@ fun a -> tuple2 (a --> unit) (list a) --> unit
   let t_list_map      = forall2 "a" "b" @@ fun a b -> tuple2 (a --> b) (list a) --> (list b)
   (* TODO: check that the implementation has this type *)
@@ -149,6 +150,7 @@ module Operators_types = struct
     | C_SET_MEM             -> ok @@ t_set_mem ;
 
     (* LIST *)
+    | C_LIST_EMPTY          -> ok @@ t_list_empty ;
     | C_LIST_ITER           -> ok @@ t_list_iter ;
     | C_LIST_MAP            -> ok @@ t_list_map ;
     | C_LIST_FOLD           -> ok @@ t_list_fold ;
