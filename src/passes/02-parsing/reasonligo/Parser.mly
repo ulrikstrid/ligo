@@ -155,6 +155,9 @@ declaration:
 | module_alias ";"?     { ModuleAlias $1 }
 | "<directive>"         { Directive   $1 }
 
+module_:
+  nseq(declaration) { {decl=$1; eof=Region.ghost} }
+
 (* Type declarations *)
 
 type_decl:

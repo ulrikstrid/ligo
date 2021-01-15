@@ -948,7 +948,7 @@ and compile_fun_decl : CST.fun_decl -> (expression_variable * type_expression op
 and compile_declaration : CST.declaration -> _ result =
   fun decl ->
   let return reg decl =
-    ok @@ Some (Location.wrap ~loc:(Location.lift reg) decl) in
+    ok @@ [Location.wrap ~loc:(Location.lift reg) decl] in
   match decl with
     TypeDecl {value={name; type_expr; _}; region} ->
       let name, _ = r_split name in
@@ -956,6 +956,7 @@ and compile_declaration : CST.declaration -> _ result =
       let type_binder = Var.of_name name in
       let ast = AST.Declaration_type {type_binder; type_expr}
       in return region ast
+
   | ConstDecl {value={name; const_type; init; attributes; _}; region} ->
       let attr = compile_attributes attributes in
       let name, loc = r_split name in
@@ -966,6 +967,7 @@ and compile_declaration : CST.declaration -> _ result =
       let binder = {var; ascr} in
       let ast = AST.Declaration_constant {binder; attr; expr}
       in return region ast
+
   | FunDecl {value;region} ->
       let%bind (var, ascr, attr, expr) = compile_fun_decl value in
       let binder = {var; ascr} in
@@ -985,7 +987,9 @@ and compile_declaration : CST.declaration -> _ result =
      let ast = AST.Module_alias {alias; binders}
      in return region ast
 
-  | Directive _ -> ok None
+  | Directive _ -> ok []
 
 and compile_module : CST.ast -> _ result =
-  fun t -> bind_map_list compile_declaration @@ nseq_to_list t.decl
+  fun t ->
+    let%bind lst = bind_map_list compile_declaration @@ nseq_to_list t.decl
+    in ok @@ List.flatten lst

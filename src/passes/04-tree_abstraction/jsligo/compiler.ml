@@ -656,8 +656,14 @@ and compile_statements_to_program : CST.ast -> AST.module_ result = fun ast ->
     let loc = Location.lift @@ CST.statement_to_region statement in
     ok (Location.wrap ~loc declaration)
   in
-  let%bind lst = bind_map_list aux @@ npseq_to_list ast.statements in
-  ok @@ lst
+  let stmt = npseq_to_list ast.statements in
+  let apply toplevel acc =
+    match toplevel with
+      CST.TopLevel stmt -> stmt::acc
+    | Directive _ -> acc in
+  let stmt = List.fold_right apply stmt [] in
+  let%bind lst = bind_map_list aux @@ stmt in
+  ok lst
 
 let compile_module : CST.ast -> _ result =
   fun t -> failwith "TODO"

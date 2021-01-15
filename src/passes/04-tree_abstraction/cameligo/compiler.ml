@@ -875,6 +875,7 @@ and compile_declaration : CST.declaration -> _ = fun decl ->
 
   | Directive _ -> ok []
 
-and compile_module : CST.ast -> _ result = fun t ->
+and compile_module : CST.ast -> _ result =
+  fun t ->
     let%bind lst = bind_map_list compile_declaration @@ nseq_to_list t.decl in
     ok @@ List.flatten lst
