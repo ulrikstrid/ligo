@@ -29,7 +29,7 @@ module X (M : sig module Plugin_under_test : Plugin val same_state : type_variab
     let aux : _ t -> test_seq -> _ t = fun state seq ->
       match seq with
       | Add_cstr tv ->
-        let tc = SC_Constructor (make_c_constructor_simpl tv C_unit []) in
+        let tc = SC_Constructor (make_c_constructor_simpl 1 None tv C_unit []) in
         add_constraint repr state tc
       | Merge merge_keys -> merge_aliases merge_keys state
     in

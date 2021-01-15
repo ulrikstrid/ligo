@@ -22,7 +22,7 @@ let cast_var (orig: 'a Var.t Location.wrap) = { orig with wrap_content = Var.tod
 *)
 let rec type_declaration env state : I.declaration -> (environment * _ O'.typer_state * O.declaration, typer_error) result = 
   let return : _ -> _ -> _ O'.typer_state -> _ (* return of type_expression *) = fun expr e state constraints ->
-  Format.printf "Solving expression : %a\n%!" O.PP.declaration expr ;
+    Format.printf "Solving expression : %a\n%!" O.PP.declaration expr ;
     let%bind new_state = Solver.main state constraints in
     Format.printf "Leaving type declaration\n%!";
     ok @@ (e,new_state, expr) in

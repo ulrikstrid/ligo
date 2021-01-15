@@ -169,6 +169,8 @@ let replace_var_and_possibilities_1 ((x : type_variable) , (possibilities_for_x 
     | (arguments_of_first_constructor :: _) as arguments_of_constructors ->
       let fresh_vars = List.map (fun _arg -> Var.fresh_like x) arguments_of_first_constructor in
       let deduced : c_constructor_simpl = {
+        id_constructor_simpl = ConstraintIdentifier 0L;
+        original_id = None;
         reason_constr_simpl = "inferred because it is the only remaining possibility at this point according to the typeclass [TODO:link to the typeclass here]" ;
         tv = x;
         c_tag ;
