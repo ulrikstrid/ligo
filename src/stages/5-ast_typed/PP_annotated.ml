@@ -318,13 +318,17 @@ and type_value ppf t =
     type_value_ t.wrap_content
 
 and typeclass ppf tc = fprintf ppf "%a" (list_sep_d (list_sep_d type_value)) tc
-let c_constructor_simpl ppf ({reason_constr_simpl;tv;c_tag;tv_list} : c_constructor_simpl) =
+let c_constructor_simpl ppf ({id_constructor_simpl = ConstraintIdentifier ci; reason_constr_simpl; original_id; tv;c_tag;tv_list} : c_constructor_simpl) =
   fprintf ppf "{@[<hv>
+              id_constructor_simpl : %Li; @
+              original_id : %s; @
               reason_constr_simpl : %s ;@
               tv : %a ;@
               c_tag : %a ;@
               tv_list : %a;@
               @]}"
+    ci
+    (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null")
     reason_constr_simpl
     type_variable tv
     constant_tag c_tag
@@ -340,12 +344,16 @@ let c_alias ppf ({reason_alias_simpl;a;b}: c_alias) =
     type_variable a
     type_variable b
 
-let c_poly_simpl ppf ({reason_poly_simpl; tv; forall}) =
+let c_poly_simpl ppf ({id_poly_simpl = ConstraintIdentifier ci; reason_poly_simpl; original_id; tv; forall}) =
   fprintf ppf "{@,@[<hv 2>
+              id_poly_simpl : %Li; @
+              original_id : %s; @
               reason_poly_simpl : %s; @
               tv : %a ;@
               forall : %a
               @]@,}"
+    ci
+    (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null")
     reason_poly_simpl
     type_variable tv
     p_forall forall
@@ -372,13 +380,17 @@ let constraint_identifierMap = fun f ppf tvmap   ->
         fprintf ppf "(%a, %a)" constraint_identifier k f v in
       fprintf ppf "typeVariableMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
 
-let c_row_simpl ppf ({reason_row_simpl; tv; r_tag; tv_map}) =
+let c_row_simpl ppf ({id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; original_id; tv; r_tag; tv_map}) =
   fprintf ppf "{@,@[<hv 2>
+              id_row_simpl : %Li; @
+              original_id : %s; @
               reason_row_simpl : %s; @
               tv : %a ;@
               r_tag : %a ;@
               tv_map : %a
               @]@,}"
+    ci
+    (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null")
     reason_row_simpl
     type_variable tv
     row_tag r_tag

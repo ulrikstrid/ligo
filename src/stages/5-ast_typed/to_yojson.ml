@@ -503,8 +503,10 @@ and p_row {p_row_tag;p_row_args} =
     ("p_row_args", label_map type_value p_row_args);
   ]
 
-let c_constructor_simpl {reason_constr_simpl;tv;c_tag;tv_list} =
+let c_constructor_simpl {id_constructor_simpl = ConstraintIdentifier ci;reason_constr_simpl;original_id;tv;c_tag;tv_list} =
   `Assoc [
+    ("id_row_simpl", `String (Format.sprintf "%Li" ci));
+    ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
     ("reason_constr_simpl", `String reason_constr_simpl);
     ("tv", type_variable_to_yojson tv);
     ("c_tag", constant_tag c_tag);
@@ -518,24 +520,28 @@ let c_alias {reason_alias_simpl; a; b} =
     ("b", type_variable_to_yojson b);
   ]
 
-let c_poly_simpl {reason_poly_simpl; tv; forall} =
+let c_poly_simpl {id_poly_simpl = ConstraintIdentifier ci; reason_poly_simpl; original_id; tv; forall} =
   `Assoc [
+    ("id_row_simpl", `String (Format.sprintf "%Li" ci));
+    ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
     ("reason_poly_simpl", `String reason_poly_simpl);
     ("tv", type_variable_to_yojson tv);
     ("forall", p_forall forall)
   ]
 
-let c_typeclass_simpl {id_typeclass_simpl=ConstraintIdentifier ci;reason_typeclass_simpl;original_id;tc;args} =
+let c_typeclass_simpl {id_typeclass_simpl = ConstraintIdentifier ci;reason_typeclass_simpl;original_id;tc;args} =
   `Assoc [
     ("id_typeclass_simpl", `String (Format.sprintf "%Li" ci));
-                  ("reason_typeclass_simpl", `String reason_typeclass_simpl);
-                  ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
+    ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
+    ("reason_typeclass_simpl", `String reason_typeclass_simpl);
     ("tc", typeclass tc);
     ("args", list type_variable_to_yojson args)
   ]
 
-let c_row_simpl {reason_row_simpl; tv;r_tag;tv_map} =
+let c_row_simpl {id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; original_id; tv;r_tag;tv_map} =
   `Assoc [
+    ("id_row_simpl", `String (Format.sprintf "%Li" ci));
+    ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
     ("reason_row_simpl", `String reason_row_simpl);
     ("tv", type_variable_to_yojson tv);
     ("r_tag", row_tag r_tag);

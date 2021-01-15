@@ -127,7 +127,7 @@ end = struct
   let select_and_propagate_all : typer_state -> type_constraint list -> typer_state result =
     fun state initial_constraints ->
     (* To change the order in which the constraints are processed, modify this loop. *)
-    (* Format.printf "In select and propagate all\n%!"; *)
+    Format.printf "In select and propagate all\n%!";
     until
       (* repeat until the worklist is empty *)
       (function (_, []) -> true | _ -> false)
@@ -143,20 +143,20 @@ end = struct
               (* let () = Format.printf "\nTOTO ADD: %a\n" Ast_typed.PP.type_constraint_short el in *)
               PolySet.add el set, el::lst
         in
-        (* Format.printf "Start iteration with constraint : %a\n%!" Ast_typed.PP.(list_sep_d type_constraint_short) constraints; *)
+        Format.printf "Start iteration with constraint : %a\n%!" Ast_typed.PP.(list_sep_d type_constraint_short) constraints;
         let added_constraints, constraints' = List.fold_left aux (state.added_constraints,[]) constraints in
-        (* Format.printf "Constraint left : %a\n%!" Ast_typed.PP.(list_sep_d type_constraint_short) constraints'; *)
+        Format.printf "Constraint left : %a\n%!" Ast_typed.PP.(list_sep_d type_constraint_short) constraints';
         let state = { state with added_constraints } in 
         (* Simplify constraints *)
-        (* Format.printf "Simplify constraints\n%!"; *)
+        Format.printf "Simplify constraints\n%!";
         let constraints'' = List.flatten @@ List.map simplify_constraint constraints' in
         (* Extract aliases and apply them *)
-        (* Format.printf "Constraint left : %a\n%!" Ast_typed.PP.(list_sep_d PP.type_constraint_) constraints'';
-        Format.printf "Extract aliases and apply them\n%!"; *)
+        Format.printf "Constraint left : %a\n%!" Ast_typed.PP.(list_sep_d PP.type_constraint_) constraints'';
+        Format.printf "Extract aliases and apply them\n%!";
         let%bind (state, constraints) = bind_fold_map_list (fun state c -> match%bind (add_alias state c) with Some state -> ok (state, []) | None -> ok (state, [c])) state constraints'' in
         let constraints = List.flatten constraints in
 
-        (* Format.printf "Constraints :%a\n%!" (Ast_typed.PP.list_sep_d PP.type_constraint_) constraints; *)
+        Format.printf "Constraints :%a\n%!" (Ast_typed.PP.list_sep_d PP.type_constraint_) constraints;
         let%bind (state, new_constraints) = bind_fold_map_list add_constraint_and_apply_heuristics state constraints in
         ok (state, List.flatten new_constraints))
       (state, initial_constraints)
@@ -166,10 +166,10 @@ end = struct
   module All_vars = Typecheck_utils.All_vars(Plugins)
   let main : typer_state -> type_constraint list -> typer_state result =
     fun state initial_constraints ->
-    (* Format.printf "In solver main\n%!"; *)
+    Format.printf "In solver main\n%!";
     let%bind (state : typer_state) = select_and_propagate_all state initial_constraints in
-    (* Format.printf "With assignments : %a\n%!"
-      (Plugin_states.Assignments.pp Ast_typed.PP.type_variable) (Plugin_states.assignments state.plugin_states)#assignments; *)
+    Format.printf "With assignments : %a\n%!"
+      (Plugin_states.Assignments.pp Ast_typed.PP.type_variable) (Plugin_states.assignments state.plugin_states)#assignments;
     let%bind () = Typecheck.check (PolySet.elements state.all_constraints)
       (All_vars.all_vars state)
       (fun v -> UnionFind.Poly2.repr v state.aliases)

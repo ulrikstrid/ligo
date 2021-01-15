@@ -91,26 +91,8 @@ module Substitution = struct
           let%bind element = s_type_expression ~substs element in
           ok @@ T.T_module_accessor { module_name; element }
 
-
-    and s_abstr_type_content : (Ast_core.type_content,_) w = fun ~substs -> function
-      | Ast_core.T_sum _ -> failwith "TODO: subst: unimplemented case s_type_expression sum"
-      | Ast_core.T_record _ -> failwith "TODO: subst: unimplemented case s_type_expression record"
-      | Ast_core.T_arrow _ -> failwith "TODO: subst: unimplemented case s_type_expression arrow"
-      | Ast_core.T_variable _ -> failwith "TODO: subst: unimplemented case s_type_expression variable"
-      | Ast_core.T_module_accessor _ -> failwith "TODO: subst: unimplemented case s_type_expression module_accessor"
-      | Ast_core.T_app {type_operator;arguments} ->
-        let%bind arguments = bind_map_list
-          (s_abstr_type_expression ~substs)
-          arguments in
-        (* TODO: when we have generalized operators, we might need to subst the operator name itself? *)
-        ok @@ Ast_core.T_app {type_operator ; arguments}
-    and s_abstr_type_expression : (Ast_core.type_expression,_) w = fun ~substs {type_content;sugar;location} ->
-      let%bind type_content = s_abstr_type_content ~substs type_content in
-      ok @@ (Ast_core.{type_content;sugar;location} : Ast_core.type_expression)
-
     and s_type_expression : (T.type_expression,_) w = fun ~substs { type_content; location; type_meta } ->
       let%bind type_content = s_type_content ~substs type_content in
-      let%bind type_meta = bind_map_option (s_abstr_type_expression ~substs) type_meta in
       ok @@ T.{ type_content; location; type_meta ; orig_var = None}
     and s_literal : (T.literal,_) w = fun ~substs -> function
       | T.Literal_unit ->
