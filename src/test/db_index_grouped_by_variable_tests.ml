@@ -84,6 +84,32 @@ let assert_const_equal ~(expected:type_constraint_simpl list) ~(actual:constrain
   in
   bind_iter_list aux expected
 
+module Grouped_by_variable_tests = struct
+  include Test_vars
+  module Plugin_under_test = GroupedByVariable
+  include Plugin_under_test
+  let repr : type_variable -> type_variable = fun tv ->
+    match tv with
+    | tv when Var.equal tv tva -> tva
+    | tv when Var.equal tv tvb -> tva
+    | _ -> tv
+  let same_state sa sb =
+    let sa = bindings sa in
+    let sb = bindings sb in
+    let%bind () = tst_assert "Length sa = Length sb" (List.length sa = List.length sb) in
+    bind_list_iter
+      (fun ((tva,constraintsa) , (tvb,constraintsb)) ->
+         let%bind () = tst_assert "" (Ast_typed.Compare.type_variable tva tvb = 0) in
+         let { constructor = ca ; poly = pa; row = ra } = constraintsa in
+         let { constructor = cb ; poly = pb; row = rb } = constraintsb in
+         let%bind () = tst_assert "" (List.compare ~compare:Ast_typed.Compare.c_constructor_simpl ca cb = 0) in
+         let%bind () = tst_assert "" (List.compare ~compare:Ast_typed.Compare.c_poly_simpl pa pb = 0) in
+         let%bind () = tst_assert "" (List.compare ~compare:Ast_typed.Compare.c_row_simpl ra rb = 0) in
+         ok ()
+      )
+      (List.combine sa sb)
+end
+
 let previous_test () =
   let sc_a : type_constraint_simpl = constructor tva C_unit [] in
   let sc_b : type_constraint_simpl = constructor tvb C_unit [] in

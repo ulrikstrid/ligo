@@ -59,7 +59,7 @@ let main =
       test "by constraint identifier" by_constraint_identifier ;
       test "typeclasses constraining" typeclasses_constraining ;
       test "invariant assignments" Invariant_assignments.invariant ;
-      test "grouped_by_variable assignments" Invariant_grouped_by_variable.invariant ;
+      test "invariant grouped_by_variable" Invariant_grouped_by_variable.invariant ;
       test "invariant cycle detection topological sort" Invariant_cycle_detection_topological_sort.invariant ;
       test "invariant by constraint identifier" Invariant_by_constraint_identifier.invariant ;
       test "invariant typeclasses constraining" Invariant_typeclasses_constraining.invariant ;
