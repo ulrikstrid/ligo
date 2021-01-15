@@ -81,6 +81,7 @@ module T =
     | Switch of Region.t  (* switch *)
     | True   of Region.t  (* true   *)
     | Type   of Region.t  (* type   *)
+    | Module of Region.t  (* module *)
 
     (* Data constructors *)
 
@@ -178,6 +179,7 @@ module T =
     | "Switch"  -> "switch"
     | "True"    -> "true"
     | "Type"    -> "type"
+    | "Module"  -> "module"
 
     (* Data constructors *)
 
@@ -273,6 +275,7 @@ module T =
     | C_Some   region -> region, "C_Some"
     | EOF      region -> region, "EOF"
     | ES6FUN   region -> region, "ES6FUN"
+    | Module   region -> region, "Module"
 
     let to_lexeme = function
       (* Directives *)
@@ -336,6 +339,7 @@ module T =
     | Switch  _ -> "switch"
     | True    _ -> "true"
     | Type    _ -> "type"
+    | Module  _ -> "module"
 
     (* Data constructors *)
 
@@ -368,7 +372,8 @@ module T =
       (fun reg -> Mod    reg);
       (fun reg -> Or     reg);
       (fun reg -> True   reg);
-      (fun reg -> Type   reg)
+      (fun reg -> Type   reg);
+      (fun reg -> Module reg)
     ]
 
     let reserved =
@@ -395,7 +400,6 @@ module T =
       |> add "lsr"
       |> add "match"
       |> add "method"
-      |> add "module"
       |> add "mutable"
       |> add "new"
       |> add "nonrec"

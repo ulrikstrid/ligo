@@ -149,9 +149,11 @@ contract:
   nseq(declaration) EOF { {decl=$1; eof=$2} }
 
 declaration:
-  type_decl ";"?        { TypeDecl  $1 }
-| let_declaration ";"?  { ConstDecl $1 }
-| "<directive>"         { Directive $1 }
+  type_decl ";"?        { TypeDecl    $1 }
+| let_declaration ";"?  { ConstDecl   $1 }
+| module_decl ";"?      { ModuleDecl  $1 }
+| module_alias ";"?     { ModuleAlias $1 }
+| "<directive>"         { Directive   $1 }
 
 (* Type declarations *)
 
@@ -162,6 +164,27 @@ type_decl:
                   name      = $2;
                   eq        = $3;
                   type_expr = $4}
+    in {region; value} }
+
+module_decl:
+  "module" module_name "=" "{" module_ "}" {
+    let region = cover $1 $6 in
+    let value  = {kwd_module = $1;
+                  name       = $2;
+                  eq         = $3;
+                  lbrace     = $4;
+                  module_    = $5;
+                  rbrace     = $6}
+    in {region; value} }
+
+module_alias:
+  "module" module_name "=" nsepseq (module_name,".") {
+    let stop   = nsepseq_to_region (fun x -> x.region) $4 in
+    let region = cover $1 stop in
+    let value  = {kwd_module = $1;
+                  alias      = $2;
+                  eq         = $3;
+                  binders    = $4}
     in {region; value} }
 
 type_expr:
@@ -435,6 +458,8 @@ base_expr(right_expr):
   let_expr(right_expr)
 | fun_expr(right_expr)
 | local_type_decl(right_expr)
+| local_module_decl(right_expr)
+| local_module_alias(right_expr)
 | disj_expr_level { $1 }
 
 conditional(right_expr):
@@ -460,7 +485,7 @@ if_then(right_expr):
     in ECond {region; value} }
 
 base_if_then_else__open(x):
-  base_expr(x) | if_then_else(x) { $1 }
+  base_expr(x) | conditional(x) { $1 }
 
 base_if_then_else:
   base_if_then_else__open(base_if_then_else) { $1 }
@@ -527,6 +552,26 @@ local_type_decl(right_expr):
     let region    = cover $1.region stop
     and value     = {type_decl; semi; body}
     in ETypeIn {region; value} }
+
+local_module_decl(right_expr):
+  module_decl ";" right_expr {
+    let mod_decl  = $1.value in
+    let semi      = $2 in
+    let body      = $3 in
+    let stop      = expr_to_region $3 in
+    let region    = cover $1.region stop
+    and value     = {mod_decl; semi; body}
+    in EModIn {region; value} }
+
+local_module_alias(right_expr):
+  module_alias ";" right_expr {
+    let mod_alias = $1.value in
+    let semi      = $2 in
+    let body      = $3 in
+    let stop      = expr_to_region $3 in
+    let region    = cover $1.region stop
+    and value     = {mod_alias; semi; body}
+    in EModAlias {region; value} }
 
 fun_arg:
   sub_irrefutable type_annotation? {
@@ -874,7 +919,7 @@ let_in_sequence:
     in ELetIn {region; value} }
 
 seq_expr:
-  disj_expr_level | if_then_else (closed_if) { $1 }
+  disj_expr_level | conditional (closed_if) { $1 }
 
 field_assignment_punning:
   (* This can only happen with multiple fields -

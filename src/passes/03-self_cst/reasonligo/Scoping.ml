@@ -196,10 +196,16 @@ let peephole_expression : unit -> expr -> (unit,'err) result = fun () e ->
     ok ()
   | ETypeIn   {value;region=_}   ->
     let%bind () = check_reserved_name value.type_decl.name in
-    ok ()
-  | EFun     {value=_;region=_} -> ok ()
-  | ESeq     {value=_;region=_} -> ok ()
-  | ECodeInj {value=_;region=_} -> ok ()
+    ok @@ ()
+  | EModIn   {value;region=_}   ->
+    let%bind () = check_reserved_name value.mod_decl.name in
+    ok @@ ()
+  | EModAlias {value;region=_}   ->
+    let%bind () = check_reserved_name value.mod_alias.alias in
+    ok @@ ()
+  | EFun     {value=_;region=_} -> ok @@ ()
+  | ESeq     {value=_;region=_} -> ok @@ ()
+  | ECodeInj {value=_;region=_} -> ok @@ ()
 
 let peephole_declaration : unit -> declaration -> (unit, 'err) result =
   fun _ d ->
@@ -210,7 +216,13 @@ let peephole_declaration : unit -> declaration -> (unit, 'err) result =
     ok ()
   | TypeDecl {value;region=_} ->
     let%bind () = check_reserved_name value.name in
-    ok ()
+    ok @@ ()
+  | ModuleDecl {value;region=_} ->
+    let%bind () = check_reserved_name value.name in
+    ok @@ ()
+  | ModuleAlias {value;region=_} ->
+    let%bind () = check_reserved_name value.alias in
+    ok @@ ()
   | Directive _ -> ok ()
 
 let peephole : (unit,'err) Helpers.folder = {

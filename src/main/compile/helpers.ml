@@ -90,10 +90,10 @@ let parse_and_abstract_pascaligo buffer file_path =
     Parsing.Pascaligo.parse_file buffer file_path in
   let%bind applied =
     trace self_cst_pascaligo_tracer @@
-    Self_cst.Pascaligo.all_program raw in
+    Self_cst.Pascaligo.all_module raw in
   let%bind imperative =
     trace cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.compile_program applied
+    Tree_abstraction.Pascaligo.compile_module applied
   in ok imperative
 
 let parse_and_abstract_expression_pascaligo buffer =
@@ -114,10 +114,10 @@ let parse_and_abstract_cameligo buffer file_path =
     Parsing.Cameligo.parse_file buffer file_path in
   let%bind applied =
     trace self_cst_cameligo_tracer @@
-    Self_cst.Cameligo.all_program raw in
+    Self_cst.Cameligo.all_module raw in
   let%bind imperative =
     trace cit_cameligo_tracer @@
-    Tree_abstraction.Cameligo.compile_program applied
+    Tree_abstraction.Cameligo.compile_module applied
   in ok imperative
 
 let parse_and_abstract_expression_cameligo buffer =
@@ -138,10 +138,10 @@ let parse_and_abstract_reasonligo buffer file_path =
     Parsing.Reasonligo.parse_file buffer file_path in
   let%bind applied =
     trace self_cst_reasonligo_tracer @@
-    Self_cst.Reasonligo.all_program raw in
+    Self_cst.Reasonligo.all_module raw in
   let%bind imperative =
     trace cit_reasonligo_tracer @@
-    Tree_abstraction.Reasonligo.compile_program applied
+    Tree_abstraction.Reasonligo.compile_module applied
   in ok imperative
 
 let parse_and_abstract_expression_reasonligo buffer =
@@ -162,10 +162,10 @@ let parse_and_abstract_jsligo buffer file_path =
     Parsing.Jsligo.parse_file buffer file_path in
   let%bind applied =
     trace self_cst_jsligo_tracer @@
-    Self_cst.Jsligo.all_program raw in
+    Self_cst.Jsligo.all_module raw in
   let%bind imperative =
     trace cit_jsligo_tracer @@
-    Tree_abstraction.Jsligo.compile_program applied
+    Tree_abstraction.Jsligo.compile_module applied
   in ok imperative
 
 let parse_and_abstract_expression_jsligo buffer =
@@ -181,18 +181,18 @@ let parse_and_abstract_expression_jsligo buffer =
   in ok imperative
 
 let parse_and_abstract ~meta buffer file_path
-    : (Ast_imperative.program, _) Trace.result =
+    : (Ast_imperative.module_, _) Trace.result =
   let%bind parse_and_abstract =
     match meta.syntax with
       PascaLIGO  -> ok parse_and_abstract_pascaligo
     | CameLIGO   -> ok parse_and_abstract_cameligo
     | ReasonLIGO -> ok parse_and_abstract_reasonligo
-    | JsLIGO -> ok parse_and_abstract_jsligo in
+    | JsLIGO     -> ok parse_and_abstract_jsligo in
   let%bind abstracted =
     parse_and_abstract buffer file_path in
   let%bind applied =
     trace self_ast_imperative_tracer @@
-    Self_ast_imperative.all_program abstracted in
+    Self_ast_imperative.all_module abstracted in
   ok applied
 
 let parse_and_abstract_expression ~meta buffer =
@@ -203,9 +203,9 @@ let parse_and_abstract_expression ~meta buffer =
     | CameLIGO ->
         ok parse_and_abstract_expression_cameligo
     | ReasonLIGO ->
-        ok parse_and_abstract_expression_reasonligo 
+        ok parse_and_abstract_expression_reasonligo
     | JsLIGO ->
-        ok parse_and_abstract_expression_jsligo 
+        ok parse_and_abstract_expression_jsligo
       in
   let%bind abstracted =
     parse_and_abstract buffer in
@@ -218,7 +218,7 @@ let parse_and_abstract_string_reasonligo buffer =
   let%bind raw = trace parser_tracer @@
     Parsing.Reasonligo.parse_string buffer in
   let%bind imperative = trace cit_reasonligo_tracer @@
-    Tree_abstraction.Reasonligo.compile_program raw
+    Tree_abstraction.Reasonligo.compile_module raw
   in ok imperative
 
 let parse_and_abstract_string_pascaligo buffer =
@@ -227,7 +227,7 @@ let parse_and_abstract_string_pascaligo buffer =
     Parsing.Pascaligo.parse_string buffer in
   let%bind imperative =
     trace cit_pascaligo_tracer @@
-    Tree_abstraction.Pascaligo.compile_program raw
+    Tree_abstraction.Pascaligo.compile_module raw
   in ok imperative
 
 let parse_and_abstract_string_cameligo buffer =
@@ -236,7 +236,7 @@ let parse_and_abstract_string_cameligo buffer =
     Parsing.Cameligo.parse_string buffer in
   let%bind imperative =
     trace cit_cameligo_tracer @@
-    Tree_abstraction.Cameligo.compile_program raw
+    Tree_abstraction.Cameligo.compile_module raw
   in ok imperative
 
 let parse_and_abstract_string_jsligo buffer =
@@ -246,7 +246,7 @@ let parse_and_abstract_string_jsligo buffer =
   failwith "TODO : abstraction"
   (*let%bind imperative =
     trace cit_jsligo_tracer @@
-    Tree_abstraction.Jsligo.compile_program raw
+    Tree_abstraction.Jsligo.compile_module raw
   in ok imperative *)
 
 let parse_and_abstract_string syntax buffer =
@@ -264,7 +264,7 @@ let parse_and_abstract_string syntax buffer =
     parse_and_abstract buffer in
   let%bind applied =
     trace self_ast_imperative_tracer @@
-    Self_ast_imperative.all_program abstracted
+    Self_ast_imperative.all_module abstracted
   in ok applied
 
 let pretty_print_pascaligo_cst =

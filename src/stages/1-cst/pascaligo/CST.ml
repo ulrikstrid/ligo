@@ -56,6 +56,7 @@ type kwd_type       = Region.t
 type kwd_var        = Region.t
 type kwd_while      = Region.t
 type kwd_with       = Region.t
+type kwd_module    = Region.t
 
 (* Data constructors *)
 
@@ -147,10 +148,12 @@ and ast = t
 and attributes = attribute list
 
 and declaration =
-  TypeDecl  of type_decl  reg
-| ConstDecl of const_decl reg
-| FunDecl   of fun_decl   reg
-| Directive of Directive.t
+  TypeDecl    of type_decl    reg
+| ConstDecl   of const_decl   reg
+| FunDecl     of fun_decl     reg
+| ModuleDecl  of module_decl  reg
+| ModuleAlias of module_alias reg
+| Directive   of Directive.t
 
 and const_decl = {
   kwd_const  : kwd_const;
@@ -170,6 +173,23 @@ and type_decl = {
   kwd_is     : kwd_is;
   type_expr  : type_expr;
   terminator : semi option
+}
+
+and module_decl = {
+  kwd_module : kwd_module;
+  name       : module_name;
+  kwd_is     : kwd_is;
+  enclosing  : module_enclosing;
+  module_    : t;
+  terminator : semi option;
+}
+
+and module_alias = {
+  kwd_module : kwd_module;
+  alias      : module_name;
+  kwd_is     : kwd_is;
+  binders    : (module_name, dot) nsepseq;
+  terminator : semi option;
 }
 
 and type_expr =
@@ -264,17 +284,23 @@ and block_enclosing =
   Block    of kwd_block * lbrace * rbrace
 | BeginEnd of kwd_begin * kwd_end
 
+and module_enclosing =
+  Brace    of lbrace * rbrace
+| BeginEnd of kwd_begin * kwd_end
+
 and statements = (statement, semi) nsepseq
 
 and statement =
   Instr of instruction
 | Data  of data_decl
-| Type  of type_decl reg
 
 and data_decl =
-  LocalConst of const_decl reg
-| LocalVar   of var_decl   reg
-| LocalFun   of fun_decl   reg
+  LocalConst       of const_decl   reg
+| LocalVar         of var_decl     reg
+| LocalFun         of fun_decl     reg
+| LocalType        of type_decl    reg
+| LocalModule      of module_decl  reg
+| LocalModuleAlias of module_alias reg
 
 and var_decl = {
   kwd_var    : kwd_var;
@@ -821,9 +847,11 @@ let pattern_to_region = function
 | PTuple      {region; _} -> region
 
 let declaration_to_region = function
-  TypeDecl {region;_}
-| ConstDecl {region;_}
-| FunDecl {region;_} -> region
+  TypeDecl    {region;_}
+| ConstDecl   {region;_}
+| FunDecl     {region;_}
+| ModuleDecl  {region;_}
+| ModuleAlias {region;_} -> region
 | Directive d -> Directive.to_region d
 
 let lhs_to_region : lhs -> Region.t = function

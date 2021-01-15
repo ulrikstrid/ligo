@@ -17,9 +17,11 @@ let rec print ast =
   in separate_map (hardline ^^ hardline) group decl
 
 and pp_declaration = function
-  Let       decl -> Some (pp_let_decl  decl)
-| TypeDecl  decl -> Some (pp_type_decl decl)
-| Directive _    -> None
+  Let         decl -> Some (pp_let_decl     decl)
+| TypeDecl    decl -> Some (pp_type_decl    decl)
+| ModuleDecl  decl -> Some (pp_module_decl  decl)
+| ModuleAlias decl -> Some (pp_module_alias decl)
+| Directive      _ -> None
 
 (*
 and pp_dir_decl = function
@@ -146,8 +148,19 @@ and pp_ptyped {value; _} =
 and pp_type_decl decl =
   let {name; type_expr; _} = decl.value in
   let padding = match type_expr with TSum _ -> 0 | _ -> 2 in
-  string "type " ^^ string name.value ^^ string " ="
+  string "type " ^^ pp_ident name ^^ string " ="
   ^^ group (nest padding (break 1 ^^ pp_type_expr type_expr))
+
+and pp_module_decl decl =
+  let {name; module_; _} = decl.value in
+  string "module " ^^ pp_ident name ^^ string " =" ^^ string " struct"
+  ^^ group (nest 0 (break 1 ^^ print module_))
+  ^^ string " end"
+
+and pp_module_alias decl =
+  let {alias; binders; _} = decl.value in
+  string "module " ^^ pp_ident alias ^^ string " ="
+  ^^ group (nest 0 (break 1 ^^ pp_nsepseq "." pp_ident binders))
 
 and pp_expr = function
   ECase       e -> pp_case_expr e
@@ -170,6 +183,8 @@ and pp_expr = function
 | EPar        e -> pp_par_expr e
 | ELetIn      e -> pp_let_in e
 | ETypeIn     e -> pp_type_in e
+| EModIn      e -> pp_mod_in e
+| EModAlias   e -> pp_mod_alias e
 | EFun        e -> pp_fun e
 | ESeq        e -> pp_seq e
 | ECodeInj    e -> pp_code_inj e
@@ -392,6 +407,24 @@ and pp_type_in {value; _} =
   in string "type "
      ^^ prefix 2 1 (pp_ident name ^^ string " =")
                    (pp_type_expr type_expr)
+     ^^ string " in" ^^ hardline ^^ group (pp_expr body)
+
+and pp_mod_in {value; _} =
+  let {mod_decl; body; _} = value in
+  let {name; module_; _} = mod_decl
+  in string "module"
+     ^^ prefix 2 1 (pp_ident name ^^ string " = struct")
+                   (print module_)
+     ^^ string " end"
+     ^^ string " in" ^^ hardline ^^ group (pp_expr body)
+
+and pp_mod_alias {value; _} =
+  let {mod_alias; body; _} = value in
+  let {alias; binders; _} = mod_alias
+  in string "module"
+     ^^ prefix 2 1 (pp_ident alias ^^ string " =")
+                   (pp_nsepseq "." pp_ident binders)
+     ^^ string " end"
      ^^ string " in" ^^ hardline ^^ group (pp_expr body)
 
 and pp_fun {value; _} =

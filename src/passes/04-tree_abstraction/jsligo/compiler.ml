@@ -62,7 +62,7 @@ module Compile_type = struct
   | CST.TString s -> Some s.value
   | _ -> None
 
-  (* 
+  (*
     `type_compiler_opt` represents an abstractor for a single pattern.
     For instance, you could have a `type_compiler_opt` that is supposed to compile
     only `List(42)`.
@@ -77,7 +77,7 @@ module Compile_type = struct
   *)
 
   type type_compiler_opt = CST.type_expr -> AST.type_expression option result
-  
+
   (*
     This chains the application of multiple `type_compiler_opt`. If the first returns `None`, use
     the next one, etc.
@@ -90,7 +90,7 @@ module Compile_type = struct
     | Some x -> ok (Some x)
     | None -> type_compiler_opt_list tl te
   )
-  
+
   (*
     `try_type_compilers compilers type_expression other` will try to run the `compilers` on
     `type_expression`. If they all return `None`, it will run `other` instead.
@@ -103,7 +103,7 @@ module Compile_type = struct
   match%bind type_compiler_opt_list compilers te with
   | Some x -> ok x
   | None -> other ()
-  
+
   let rec compile_type_function_args : CST.fun_type_args -> type_expression result = fun args ->
     let unpar = args.inside in
     let (hd , tl_sep) = unpar in
@@ -595,7 +595,7 @@ and compile_function_body_to_expression : CST.fun_expr_body -> AST.expression re
 
 and compile_let_to_declaration ?(const = false) : CST.let_binding -> AST.declaration result = fun _let_ ->
   failwith "TODO"
-      
+
 
 (*
   JsLIGO has statements. There are two cases when compiling a statement:
@@ -612,7 +612,7 @@ fun _statement ->
 
 and compile_statement : CST.statement -> statement_result result = fun statement ->
   match statement with
-  (* | SVar v -> failwith "TODO: var statement" 
+  (* | SVar v -> failwith "TODO: var statement"
   | SExpr e -> (
     let e' = compile_expression e in
     ok @@ Context (
@@ -627,7 +627,7 @@ and compile_statement : CST.statement -> statement_result result = fun statement
 
   ) *)
   | _ -> failwith "TODO"
-    
+
 and compile_statements_to_expression : CST.statements -> AST.expression result = fun statements ->
   failwith "TODO"
 
@@ -650,7 +650,7 @@ let rec compile_statement_to_declaration : CST.statement -> AST.declaration resu
   | _ ->
     failwith "expected a let or a const"
 
-and compile_statements_to_program : CST.ast -> AST.program result = fun ast ->
+and compile_statements_to_program : CST.ast -> AST.module_ result = fun ast ->
   let aux : CST.statement -> declaration location_wrap result = fun statement ->
     let%bind declaration = compile_statement_to_declaration statement in
     let loc = Location.lift @@ CST.statement_to_region statement in
@@ -659,5 +659,5 @@ and compile_statements_to_program : CST.ast -> AST.program result = fun ast ->
   let%bind lst = bind_map_list aux @@ npseq_to_list ast.statements in
   ok @@ lst
 
-let compile_program : CST.ast -> _ result =
+let compile_module : CST.ast -> _ result =
   fun t -> failwith "TODO"

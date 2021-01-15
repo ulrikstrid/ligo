@@ -57,6 +57,11 @@ let insert_es6fun_token tokens =
          when unclosed_parentheses = 1 ->
          List.rev_append (a::es6fun::hd::result) rest
 
+    | (DOT _ as dot) :: (Constr _ as hd) :: rest ->
+      inner (hd :: dot :: result) unclosed_parentheses rest
+    | (_ as hd) :: (Constr _ as c) :: rest ->
+      List.rev_append (c :: hd :: result) rest
+
       (* let foo = (a: int) => (b: int) => a + b *)
     | (_ as hd)::(ARROW _ as a)::rest
          when unclosed_parentheses = 0 ->
@@ -78,10 +83,9 @@ let insert_es6fun_token tokens =
 
       (* When the arrow '=>' is not part of a function: *)
     | (RBRACKET _ as hd) :: rest
-    | (C_Some _   as hd) :: rest
-    | (C_None _   as hd) :: rest
-    | (Constr _   as hd) :: rest ->
-         List.rev_append (hd :: result) rest
+    | (C_Some _ as hd) :: rest
+    | (C_None _ as hd) :: rest ->
+        List.rev_append (hd :: result) rest
 
       (* let foo : int => int = (i: int) => ...  *)
     | (COLON _ as hd)::(Ident _ as i)::(Let _ as l)::rest
