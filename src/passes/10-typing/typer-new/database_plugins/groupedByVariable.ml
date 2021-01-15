@@ -10,98 +10,74 @@ open Ast_typed.Types
 open UnionFind
 open Trace
 
+let merge : constraints -> constraints -> constraints = fun cs1 cs2 ->
+  {
+    constructor = cs1.constructor @ cs2.constructor ;
+    poly        = cs1.poly        @ cs2.poly        ;
+    row         = cs1.row         @ cs2.row         ;
+  }
+
 (* map from (unionfind) variables to constraints containing them *)
 type 'typeVariable t = ('typeVariable, constraints) ReprMap.t
 let create_state ~cmp =
-  let merge : constraints -> constraints -> constraints = fun cs1 cs2 ->
-    {
-      constructor = cs1.constructor @ cs2.constructor ;
-      poly        = cs1.poly        @ cs2.poly        ;
-      row         = cs1.row         @ cs2.row         ;
-    }
-  in
   ReprMap.create ~cmp ~merge
 
-let add_constraints_related_to : _ -> type_variable -> constraints -> _ t -> _ t =
+let add_constraints_which_are_constraining_variable : _ -> type_variable -> constraints -> _ t -> _ t =
   fun repr variable c state ->
-  ReprMap.monotonic_update (repr variable) (function
-        None -> c
-      | Some (x : constraints) -> {
-          constructor = c.constructor @ x.constructor ;
-          poly        = c.poly        @ x.poly        ;
-          (* tc          = c.tc          @ x.tc          ; *)
-          row         = c.row         @ x.row         ;
-        })
-    state
+  ReprMap.monotonic_update (repr variable) (function None -> c | Some x -> merge c x) state
 
 let add_constraint repr state new_constraint =
-  let store_constraint tvars constraints =
-    let aux dbs (tvar : type_variable) =
-      add_constraints_related_to repr tvar constraints dbs
-    in List.fold_left aux state tvars
-  in
   match new_constraint with
-    SC_Constructor c -> store_constraint [c.tv] {constructor = [c] ; poly = []  ; (* tc = [] ; *) row = []}
-  | SC_Row         c -> store_constraint [c.tv] {constructor = []  ; poly = []  ; (* tc = [] ; *) row = [c]}
-  | SC_Typeclass   _c -> state (* store_constraint c.args {constructor = []  ; poly = []  ; (\* tc = [c]; *\) row = []} *)
-  | SC_Poly        c -> store_constraint [c.tv] {constructor = []  ; poly = [c] ; (* tc = [] ; *) row = []}
-  | SC_Alias _ -> failwith "TODO: impossible: tc_alias handled in main solver loop"
+    SC_Constructor c -> add_constraints_which_are_constraining_variable repr c.tv {constructor = [c] ; poly = []  ; (* tc = [] ; *) row = []} state
+  | SC_Row         c -> add_constraints_which_are_constraining_variable repr c.tv {constructor = []  ; poly = []  ; (* tc = [] ; *) row = [c]} state
+  | SC_Poly        c -> add_constraints_which_are_constraining_variable repr c.tv {constructor = []  ; poly = [c] ; (* tc = [] ; *) row = []} state
+  | SC_Typeclass   _ -> state (* Handled by a different indexer (typeclasses_constraining *)
+  | SC_Alias       _ -> failwith "TODO: impossible: tc_alias handled in main solver loop"
 
-exception CouldNotRemove
-(* exception NestedFailure of string *)
+(* Exception: Could not remove c because the database index entry is missing for the lhs of this constraint (e.g. a = b(c,d) : there is no entry for constraints which are constraining a) *)
+exception CouldNotRemove of type_constraint_simpl
 
-let rm_constraints_related_to : _ -> type_variable -> constraints -> _ t -> (_ t, _) result =
+let update_for_remove : type_constraint_simpl -> constraints -> constraints = fun c_to_remove cs ->
+  match c_to_remove with
+    SC_Constructor c_rm -> { cs with constructor = List.remove_element ~compare:Ast_typed.Compare.c_constructor_simpl c_rm cs.constructor }
+  | SC_Row         c_rm -> { cs with row         = List.remove_element ~compare:Ast_typed.Compare.c_row_simpl         c_rm cs.row         }
+  | SC_Poly        c_rm -> { cs with poly        = List.remove_element ~compare:Ast_typed.Compare.c_poly_simpl        c_rm cs.poly        }
+  | SC_Typeclass   _ -> cs (* Handled by a different indexer (typeclasses_constraining *)
+  | SC_Alias       _ -> failwith "TODO: impossible: tc_alias handled in main solver loop"
+
+let rm_constraint_which_is_constraining_variable : _ -> type_variable -> type_constraint_simpl -> _ t -> (_ t, _) result =
   fun repr variable c state ->
-    (* TODO: remove the empty set if a variable is not associated with
-       any constraint after this removal. *)
-    (* let rm_typeclass_simpl : c_typeclass_simpl list -> c_typeclass_simpl list -> c_typeclass_simpl list =
-     *   fun x c ->
-     *     (\* TODO: use a set, not a list. *\)
-     *     List.fold_left (fun x' ci ->
-     *         try
-     *           List.remove_element
-     *             ~compare:(fun a b ->
-     *                 try
-     *                   Ast_typed.Compare.constraint_identifier a.id_typeclass_simpl b.id_typeclass_simpl
-     *                 with
-     *                   Failure msg -> raise (NestedFailure msg))
-     *             ci
-     *             x'
-     *         with
-     *           Failure _msg -> raise CouldNotRemove
-     *         | NestedFailure msg -> raise (Failure msg))
-     *       x
-     *       c in *)
-    match
+  (* TODO: remove the empty set if a variable is not associated with any constraint after this removal. *)
+  match
+    (* This update is "monotonic" as required by ReprMap + the solver.
+       The `add` function of this indexer is only called once per
+       constraint, and constraints are indexed by their lhs variable.
+       Therefore, in any sequence of
+
+       add c (* adds repr(v) → c in the multimap *)
+       merge v other_v (* one or more merges + unrelated operations *)
+       remove c (* removes new_repr(v) → c from the multimap *)
+
+       the order of operations does not matter: the remove is always
+       after the add, any merges before or after the add don't cause
+       any problem. Indeed, the constraint appears only once in the
+       multimap, and the removal will find it using the correct repr()
+       at the time of removal. *)
       ReprMap.monotonic_update (repr variable) (function
-            None -> raise CouldNotRemove (* Some c *)
-          | Some (x : constraints) -> {
-              (* TODO: the test for removal in
-                 src/test/db_index_tests.ml is commented out because
-                 the feature is not implemented yet. *)
-              constructor = (assert (List.length c.constructor = 0) (* Only removal of typeclass_simpl implemented for now (the others don't have constraint ids yet) *); x.constructor) ;
-              poly        = (assert (List.length c.poly        = 0) (* Only removal of typeclass_simpl implemented for now (the others don't have constraint ids yet) *); x.poly       ) ;
-              (* tc          = rm_typeclass_simpl x.tc c.tc         ; *)
-              row         = (assert (List.length c.row         = 0) (* Only removal of typeclass_simpl implemented for now (the others don't have constraint ids yet) *); x.row        ) ;
-            })
+            None -> raise (CouldNotRemove c)
+          | Some (x : constraints) -> update_for_remove c x)
         state
     with
-    exception CouldNotRemove -> fail Typer_common.Errors.could_not_remove
+    exception CouldNotRemove c -> fail (Typer_common.Errors.could_not_remove c)
     | result -> ok result
 
 let remove_constraint repr state constraint_to_rm =
-  let rm_constraint tvars constraints =
-    let aux state (tvar : type_variable) =
-      rm_constraints_related_to repr tvar constraints state
-    in bind_fold_list aux state tvars
-  in
   match constraint_to_rm with
-      SC_Constructor ({tv ; c_tag = _ ; tv_list} as c) -> rm_constraint (tv :: tv_list)             {constructor = [c] ; poly = []  ; (* tc = [] ; *) row = []}
-    | SC_Row         ({tv ; r_tag = _ ; tv_map } as c) -> rm_constraint (tv :: LMap.to_list tv_map) {constructor = []  ; poly = []  ; (* tc = [] ; *) row = [c]}
-    | SC_Typeclass   _ -> ok state (* ({tc = _ ; args}            as c) -> rm_constraint args                        {constructor = []  ; poly = []  ; (\* tc = [c]; *\) row = []} *)
-    | SC_Poly        ({tv; forall = _}           as c) -> rm_constraint [tv]                        {constructor = []  ; poly = [c] ; (* tc = [] ; *) row = []}
-    | SC_Alias { a; b } -> ignore (a,b); fail (Typer_common.Errors.internal_error __LOC__ "can't remove aliasing constraints")
-      (* Constraint_databases.merge_constraints a b dbs *)
+      SC_Constructor c -> rm_constraint_which_is_constraining_variable repr c.tv constraint_to_rm state
+    | SC_Row         c -> rm_constraint_which_is_constraining_variable repr c.tv constraint_to_rm state
+    | SC_Typeclass   _ -> ok state
+    | SC_Poly        c -> rm_constraint_which_is_constraining_variable repr c.tv constraint_to_rm state
+    | SC_Alias       _ -> failwith "TODO: impossible: tc_alias handled in main solver loop and aliasing constraints cannot be removed"
 
 let merge_aliases =
   fun updater state -> updater.map state
