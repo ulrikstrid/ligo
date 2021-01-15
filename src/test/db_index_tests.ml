@@ -44,7 +44,7 @@ module X (M : sig module Plugin_under_test : Plugin val same_state : type_variab
 end
 
 module Invariant_assignments                      = X(Assignments_tests)
-(* module Invariant_grouped_by_variable              = X(Grouped_by_variable_tests) <-- TODO *)
+module Invariant_grouped_by_variable              = X(Grouped_by_variable_tests)
 module Invariant_cycle_detection_topological_sort = X(Cycle_detection_topological_sort_tests)
 module Invariant_by_constraint_identifier         = X(By_constraint_identifier_tests)
 module Invariant_typeclasses_constraining         = X(Typeclasses_constraining_tests)
@@ -59,7 +59,7 @@ let main =
       test "by constraint identifier" by_constraint_identifier ;
       test "typeclasses constraining" typeclasses_constraining ;
       test "invariant assignments" Invariant_assignments.invariant ;
-      (* test "grouped_by_variable assignments" Invariant_grouped_by_variable.invariant ; <--TODO *)
+      test "grouped_by_variable assignments" Invariant_grouped_by_variable.invariant ;
       test "invariant cycle detection topological sort" Invariant_cycle_detection_topological_sort.invariant ;
       test "invariant by constraint identifier" Invariant_by_constraint_identifier.invariant ;
       test "invariant typeclasses constraining" Invariant_typeclasses_constraining.invariant ;
