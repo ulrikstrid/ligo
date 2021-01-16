@@ -24,26 +24,25 @@ let selector_ : type_constraint_simpl -> type_variable GroupedByVariable.t -> se
       (* finding other constraints related to the same type variable and
       with the same sort of constraint (constructor vs. constructor)
       is symmetric *)
-      let constraints_lhs = GroupedByVariable.get_constraints_by_lhs c.tv grouped_by_variable_map in
-      let () = ( match constraints_lhs.row with
-        | hd::_ -> failwith (Format.asprintf "TODO: type error with %a ; %a" Ast_typed.PP.c_constructor_simpl c Ast_typed.PP.c_row_simpl hd)
-        | _ -> () )
+      let other_rows_lhs = GroupedByVariable.get_rows_by_lhs c.tv grouped_by_variable_map in
+      let other_constructors_lhs = GroupedByVariable.get_constructors_by_lhs c.tv grouped_by_variable_map in
+      let () = ( if PolySet.is_empty other_rows_lhs
+                 then ()
+                 else failwith (Format.asprintf "TODO: type error with %a ; %a" Ast_typed.PP.c_constructor_simpl c (PolySet.pp Ast_typed.PP.c_row_simpl) other_rows_lhs))
       in    
-      let other_cs = constraints_lhs.constructor in
-      let cs_pairs = List.map (fun x -> { a_k_var = `Constructor c ; a_k'_var' = `Constructor x }) other_cs in
+      let cs_pairs = List.map (fun x -> { a_k_var = `Constructor c ; a_k'_var' = `Constructor x }) (PolySet.elements other_constructors_lhs) in
       cs_pairs
     )
     | SC_Alias       _                -> [] (* TODO: ??? (beware: symmetry) *)
     | SC_Typeclass   _                -> []
     | SC_Poly        _                -> [] (* TODO: ??? (beware: symmetry) *)
     | SC_Row         r                -> (
-      let constraints_lhs = GroupedByVariable.get_constraints_by_lhs r.tv grouped_by_variable_map in
-      let () = ( match constraints_lhs.constructor with
-      | hd::_ -> failwith (Format.asprintf "TODO: type error with %a ; %a" Ast_typed.PP.c_constructor_simpl hd Ast_typed.PP.c_row_simpl r)
-      | _ -> () )
-      in    
-      let other_cs = constraints_lhs.row in
-      let cs_pairs = List.map (fun x -> { a_k_var = `Row r ; a_k'_var' = `Row x }) other_cs in
+      let other_rows_lhs = GroupedByVariable.get_rows_by_lhs r.tv grouped_by_variable_map in
+      let constructors_lhs = GroupedByVariable.get_constructors_by_lhs r.tv grouped_by_variable_map in
+      let () = ( if PolySet.is_empty constructors_lhs
+                 then ()
+                 else failwith (Format.asprintf "TODO: type error with %a ; %a" Ast_typed.PP.c_row_simpl r (PolySet.pp Ast_typed.PP.c_constructor_simpl) constructors_lhs)) in
+      let cs_pairs = List.map (fun x -> { a_k_var = `Row r ; a_k'_var' = `Row x }) (PolySet.elements other_rows_lhs) in
       cs_pairs
     )
 
@@ -57,12 +56,14 @@ let selector : type_constraint_simpl -> _ flds -> selector_output list =
 
 let alias_selector : type_variable -> type_variable -> _ flds -> selector_output list =
   fun a b indexes ->
-  let a = GroupedByVariable.get_constraints_by_lhs a indexes#grouped_by_variable in
-  let b = GroupedByVariable.get_constraints_by_lhs b indexes#grouped_by_variable in
-  let a_ctor = List.map (fun a -> `Constructor a) a.constructor in
-  let b_ctor = List.map (fun a -> `Constructor a) b.constructor in
-  let a_row = List.map (fun a -> `Row a) a.row in
-  let b_row = List.map (fun a -> `Row a) b.row in
+  let a_constructors = GroupedByVariable.get_constructors_by_lhs a indexes#grouped_by_variable in
+  let b_constructors = GroupedByVariable.get_constructors_by_lhs b indexes#grouped_by_variable in
+  let a_rows = GroupedByVariable.get_rows_by_lhs a indexes#grouped_by_variable in
+  let b_rows = GroupedByVariable.get_rows_by_lhs b indexes#grouped_by_variable in
+  let a_ctor = PolySet.map_elements (fun a -> `Constructor a) a_constructors in
+  let b_ctor = PolySet.map_elements (fun a -> `Constructor a) b_constructors in
+  let a_row = List.map (fun a -> `Row a) (PolySet.elements a_rows) in
+  let b_row = List.map (fun a -> `Row a) (PolySet.elements b_rows) in
   match a_ctor @ a_row with
   | [] -> []
   | old_ctors_hd :: _ ->

@@ -11,78 +11,30 @@ let repr : type_variable -> type_variable = fun tv ->
   | tv when Var.equal tv tvb -> tva
   | _ -> tv
 
-let assert_ctor_equal ~(expected:type_constraint_simpl list) ~(actual:constraints) =
-  (*order of lists do not matter*)
-  let aux : type_constraint_simpl -> (unit,_) result =
-    fun expected ->
-      match expected with
-      | SC_Constructor expected' -> (
-        let opt = List.find_opt (fun a -> Ast_typed.Compare.c_constructor_simpl a expected' = 0) actual.constructor in
-        match opt with
-        | Some _ -> ok ()
-        | None -> fail (test_err "ctor must be equal")
-      ) 
-      | _ -> fail (test_err "expecting constructors only")
-  in
-  bind_iter_list aux expected
 
-let assert_row_equal ~(expected:type_constraint_simpl list) ~(actual:constraints) =
-  (*order of lists do not matter*)
-  let aux : type_constraint_simpl -> (unit,_) result =
-    fun expected ->
-      match expected with
-      | SC_Row expected' -> (
-        let opt = List.find_opt (fun a -> Ast_typed.Compare.c_row_simpl a expected' = 0) actual.row in
-        match opt with
-        | Some _ -> ok ()
-        | None -> fail (test_err "rows must be equal")
-      ) 
-      | _ -> fail (test_err "expecting rows only")
-  in
-  bind_iter_list aux expected
+let merge_in_state ~demoted_repr ~new_repr state =
+  let updater = {
+    map = (fun m -> UnionFind.ReprMap.alias ~demoted_repr ~new_repr m);
+    set = (fun s -> UnionFind.ReprSet.alias ~demoted_repr ~new_repr s);
+  } in
+  merge_aliases updater state
 
+let merge_in_repr ~demoted_repr ~new_repr repr_function =
+  fun tv -> match repr_function tv with
+      tv when Var.equal tv demoted_repr -> new_repr
+    | other -> other
 
-let assert_poly_equal ~(expected:type_constraint_simpl list) ~(actual:constraints) =
-  (*order of lists do not matter*)
-  let aux : type_constraint_simpl -> (unit,_) result =
-    fun expected ->
-      match expected with
-      | SC_Poly expected' -> (
-        let opt = List.find_opt (fun a -> Ast_typed.Compare.c_poly_simpl a expected' = 0) actual.poly in
-        match opt with
-        | Some _ -> ok ()
-        | None -> fail (test_err "polys must be equal")
-      ) 
-      | _ -> fail (test_err "expecting polys only")
-  in
-  bind_iter_list aux expected
+let merge ~demoted_repr ~new_repr repr_function state =
+  ((merge_in_repr ~demoted_repr ~new_repr repr_function),
+   (merge_in_state ~demoted_repr ~new_repr state))
 
-let assert_const_equal ~(expected:type_constraint_simpl list) ~(actual:constraints) =
-  (*order of lists do not matter*)
-  let aux : type_constraint_simpl -> (unit,_) result =
-    fun expected ->
-      match expected with
-      | SC_Constructor expected' -> (
-        let opt = List.find_opt (fun a -> Ast_typed.Compare.c_constructor_simpl a expected' = 0) actual.constructor in
-        match opt with
-        | Some _ -> ok ()
-        | None -> fail (test_err "ctor must be equal")
-      ) 
-      | SC_Row expected' -> (
-        let opt = List.find_opt (fun a -> Ast_typed.Compare.c_row_simpl a expected' = 0) actual.row in
-        match opt with
-        | Some _ -> ok ()
-        | None -> fail (test_err "rows must be equal")
-      ) 
-      | SC_Poly expected' -> (
-        let opt = List.find_opt (fun a -> Ast_typed.Compare.c_poly_simpl a expected' = 0) actual.poly in
-        match opt with
-        | Some _ -> ok ()
-        | None -> fail (test_err "polys must be equal")
-      ) 
-      | _ -> fail (test_err "expecting ctors, rows or polys")
-  in
-  bind_iter_list aux expected
+(* can't be defined easily in PolySet.ml because it doesn't have access to List.compare ~cmp  *)
+let polyset_compare a b =
+  let ab = List.compare ~compare:(PolySet.get_compare a) (PolySet.elements a) (PolySet.elements b) in
+  let ba = List.compare ~compare:(PolySet.get_compare b) (PolySet.elements a) (PolySet.elements b) in
+  if ab != ba
+  then failwith "Internal error: sets being compared have different comparison functions!"
+  else ab
 
 module Grouped_by_variable_tests = struct
   include Test_vars
@@ -93,100 +45,170 @@ module Grouped_by_variable_tests = struct
     | tv when Var.equal tv tva -> tva
     | tv when Var.equal tv tvb -> tva
     | _ -> tv
-  let same_state sa sb =
-    let sa = bindings sa in
-    let sb = bindings sb in
-    let%bind () = tst_assert "Length sa = Length sb" (List.length sa = List.length sb) in
-    bind_list_iter
-      (fun ((tva,constraintsa) , (tvb,constraintsb)) ->
-         let%bind () = tst_assert "" (Ast_typed.Compare.type_variable tva tvb = 0) in
-         let { constructor = ca ; poly = pa; row = ra } = constraintsa in
-         let { constructor = cb ; poly = pb; row = rb } = constraintsb in
-         let%bind () = tst_assert "" (List.compare ~compare:Ast_typed.Compare.c_constructor_simpl ca cb = 0) in
-         let%bind () = tst_assert "" (List.compare ~compare:Ast_typed.Compare.c_poly_simpl pa pb = 0) in
-         let%bind () = tst_assert "" (List.compare ~compare:Ast_typed.Compare.c_row_simpl ra rb = 0) in
-         ok ()
-      )
-      (List.combine sa sb)
+
+  let cmp x y =
+    List.compare ~compare:(Pair.compare Var.compare polyset_compare)
+      (List.filter (fun (_,s) -> not (PolySet.is_empty s)) x)
+      (List.filter (fun (_,s) -> not (PolySet.is_empty s)) y)
+  let same_state (expected : _ t_for_tests) (actual : _ t_for_tests) =
+    let%bind () = tst_assert "lists of ctors must be equal" (cmp expected.constructor actual.constructor = 0) in
+    let%bind () = tst_assert "lists of rows must be equal"  (cmp expected.row actual.row = 0) in
+    let%bind () = tst_assert "lists of polys must be equal" (cmp expected.poly actual.poly = 0) in
+    ok ()
 end
 
-let previous_test () =
+open Grouped_by_variable_tests
+
+type nonrec t_for_tests = type_variable GroupedByVariable.t_for_tests
+
+let empty_ctors = PolySet.create ~cmp:Ast_typed.Compare.c_constructor_simpl
+let empty_rows  = PolySet.create ~cmp:Ast_typed.Compare.c_row_simpl
+let empty_polys = PolySet.create ~cmp:Ast_typed.Compare.c_poly_simpl
+let only_ctors  = List.map (function Ast_typed.Types.SC_Constructor c -> c | _ -> failwith "bad expeted in test: should be a constructor")
+let only_rows   = List.map (function Ast_typed.Types.SC_Row         c -> c | _ -> failwith "bad expeted in test: should be a constructor")
+let only_polys  = List.map (function Ast_typed.Types.SC_Poly        c -> c | _ -> failwith "bad expeted in test: should be a constructor")
+let to_ctor_sets = List.map (fun (v,cs) -> (v, (PolySet.add_list (only_ctors cs) empty_ctors).set))
+let to_row_sets  = List.map (fun (v,cs) -> (v, (PolySet.add_list (only_rows  cs) empty_rows).set))
+let to_poly_sets = List.map (fun (v,cs) -> (v, (PolySet.add_list (only_polys cs) empty_polys).set))
+
+(* Uncomment these if necessary *)
+(* let assert_ctor_equal ~(expected:(type_variable * c_constructor_simpl list) list) ~(actual:t_for_tests) =
+ *   same_state { constructor = to_ctor_sets expected ; row = [] ; poly = [] } actual
+ * 
+ * let assert_row_equal ~(expected:(type_variable * c_row_simpl list) list) ~(actual:t_for_tests) =
+ *   same_state { constructor = [] ; row = to_row_sets expected ; poly = [] } actual
+ * 
+ * let assert_row_equal ~(expected:(type_variable * c_poly_simpl list) list) ~(actual:t_for_tests) =
+ *   same_state { constructor = [] ; row = [] ; poly = to_poly_sets expected } actual *)
+
+let assert_states_equal
+    ~(expected_ctors:(type_variable * type_constraint_simpl list) list)
+    ~(expected_rows:(type_variable * type_constraint_simpl list) list)
+    ~(expected_polys:(type_variable * type_constraint_simpl list) list)
+    ~(actual:type_variable t) =
+  same_state
+    {
+      constructor = to_ctor_sets expected_ctors ;
+      row         = to_row_sets  expected_rows  ;
+      poly        = to_poly_sets expected_polys ;
+    }
+    (GroupedByVariable.bindings actual)
+
+let first_test () =
+  (* create constraints and add them to the state *)
   let sc_a : type_constraint_simpl = constructor 1 None tva C_unit [] in
   let sc_b : type_constraint_simpl = constructor 2 None tvb C_unit [] in
   let sc_c : type_constraint_simpl = constructor 3 None tvc C_unit [] in
-  let constraints_nb (l:constraints) (expected:int) =
-    List.(
-      length l.constructor = expected &&
-      length l.poly = 0 &&
-      length l.row = 0
-    ) in
-
   let state = create_state ~cmp:Ast_typed.Compare.type_variable in
-  let clist = [ sc_a ; sc_b ; sc_c ] in
-  let state = List.fold_left (fun acc el -> add_constraint repr acc el) state clist in
+  let state = add_constraint repr state sc_a in
+  let state = add_constraint repr state sc_b in
+  let state = add_constraint repr state sc_c in
   (* 
     check that :
     - a is associated with sc_a and sc_b
     - c is associated wit sc_c
-    - b has no associated constraint (repr(b) = a)
+    - b has no associated constraint (because repr(b) = a)
   *)
-  let gbv = bindings state in
-  let%bind () = tst_assert "state' = { a -> ... ; c -> ... }" (List.length gbv = 2) in
-  let%bind () =
-    let aux : (type_variable * constraints) -> (unit,_) result =
-      fun (tv, cs) ->
-        match tv with
-        | a when Var.equal a tva ->
-          let%bind () = tst_assert "two constraints related to tva" (constraints_nb cs 2) in
-          let%bind () = assert_ctor_equal ~expected:[sc_a;sc_b] ~actual:cs in
-          ok ()
-        | c when Var.equal c tvc ->
-          let%bind () = tst_assert "one constraint related to tvc" (constraints_nb cs 1) in
-          let%bind () = assert_ctor_equal ~expected:[sc_c] ~actual:cs in
-          ok ()
-        | b when Var.equal b tvb -> fail (test_err "b should not be in the state")
-        | _ -> fail @@ test_err "new variable discovered (impossible)"
-    in
-    bind_iter_list aux gbv
-  in
+  assert_states_equal
+    ~expected_ctors:[(tva, [sc_a ; sc_b]) ; (tvc, [sc_c])]
+    ~expected_rows:[]
+    ~expected_polys:[]
+    ~actual:state
+
+let second_test () =
+  (* create constraints and add them to the state *)
+  let sc_a : type_constraint_simpl = constructor 1 None tva C_unit [] in
+  let sc_b : type_constraint_simpl = constructor 2 None tvb C_unit [] in
+  let sc_c : type_constraint_simpl = constructor 3 None tvc C_unit [] in
+  let state = create_state ~cmp:Ast_typed.Compare.type_variable in
+  let state = add_constraint repr state sc_a in
+  let state = add_constraint repr state sc_b in
+  let state = add_constraint repr state sc_c in
+  (* 
+    check that :
+    - a is associated with sc_a and sc_b
+    - c is associated wit sc_c
+    - b has no associated constraint (because repr(b) = a)
+  *)
+  let%bind () = assert_states_equal
+      ~expected_ctors:[(tva, [sc_a ; sc_b]) ; (tvc, [sc_c])]
+      ~expected_rows:[]
+      ~expected_polys:[]
+      ~actual:state in
+
+  (* remove sc_a from state *)
+  let%bind state = trace Main_errors.typer_tracer @@ remove_constraint repr state sc_a in
+  (* same check as above except sc_a should be deleted from tva's constraints *)
+  let%bind () = assert_states_equal
+      ~expected_ctors:[(tva, [sc_b]) ; (tvc, [sc_c])]
+      ~expected_rows:[]
+      ~expected_polys:[]
+      ~actual:state in
+
+  (* merge variable c into a *)
+  let repr, state = merge ~demoted_repr:tva ~new_repr:tvc repr state in
+  (* same check as above except sc_c should now be in a's constraints *)
+  let%bind () = assert_states_equal
+      ~expected_ctors:[(tva, [sc_b; sc_c])]
+      ~expected_rows:[]
+      ~expected_polys:[]
+      ~actual:state in
+
+  (* create constraint and add it to the state *)
+  let sc_d : type_constraint_simpl = constructor 4 None tvd C_unit [] in
+  let state = add_constraint repr state sc_d in
+  (* same check as above except sc_d should be added to d's constraints (was empty / absent before) *)
+  let%bind () = assert_states_equal
+      ~expected_ctors:[(tva, [sc_b; sc_c]) ; (tvd, [sc_d])]
+      ~expected_rows:[]
+      ~expected_polys:[]
+      ~actual:state in
+
+  (* create constraint and add it to the state *)
+  let sc_a2 : type_constraint_simpl = constructor 5 None tva C_unit [] in
+  let state = add_constraint repr state sc_a2 in
+  (* same check as above except sc_d should be added to a's constraints *)
+  let%bind () = assert_states_equal
+      ~expected_ctors:[(tva, [sc_a2; sc_b; sc_c]) ; (tvd, [sc_d])]
+      ~expected_rows:[]
+      ~expected_polys:[]
+      ~actual:state in
+
+  (* create constraint and add it to the state *)
+  let sc_b2 : type_constraint_simpl = constructor 6 None tvb C_unit [] in
+  let state = add_constraint repr state sc_b2 in
+  (* same check as above except sc_d should be added to a's constraints *)
+  let%bind () = assert_states_equal
+      ~expected_ctors:[(tva, [sc_a2; sc_b; sc_b2; sc_c]) ; (tvd, [sc_d])]
+      ~expected_rows:[]
+      ~expected_polys:[]
+      ~actual:state in
+
+  ok ()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let _ =
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    "
+
   (* =============================================================================================
      TODO: THIS TEST IS DISABLED BECAUSE REMOVAL IS NOT IMPLEMENTED FOR CONSTRUCTOR CONSTRAINTS IN
      grouped_by_variable
      ============================================================================================= *)
-  let%bind () = if false then
-      (* remove sc_a from state *)
-      let%bind state = trace Main_errors.typer_tracer @@ remove_constraint repr state sc_a in
-      (* same check as above except sc_a should be deleted from tva's constraints *)
-      let gbv = bindings state in
-      let%bind () = tst_assert "state' = { a -> ... ; c -> ... }" (List.length gbv = 2) in
-      let%bind () =
-        let aux : (type_variable * constraints) -> (unit,_) result =
-          fun (tv, cs) ->
-            match tv with
-            | a when Var.equal a tva ->
-              let%bind () = tst_assert "two constraints related to tva" (constraints_nb cs 1) in
-              let%bind () = assert_ctor_equal ~expected:[sc_b] ~actual:cs in
-              ok ()
-            | c when Var.equal c tvc ->
-              let%bind () = tst_assert "one constraint related to tvc" (constraints_nb cs 1) in
-              let%bind () = assert_ctor_equal ~expected:[sc_c] ~actual:cs in
-              ok ()
-            | b when Var.equal b tvb -> fail (test_err "b should not be in the state")
-            | _ -> fail @@ test_err "new variable discovered (impossible)"
-        in
-        bind_iter_list aux gbv
-      in
-      ok ()
-    else
-      ok ()
-  in
-  (*
-  let d = merge_aliases (*??*) in
-  let e = get_constraints_by_lhs tv a in
-  ignore (a,b,c,d,e) ; *)
-  ok ()
 
-let constraints_nb (l:constraints) (expected:int) =
+let constraints_nb (l:t_for_tests) (expected:int) =
   List.(
     length l.constructor = expected &&
     length l.poly = 0 &&

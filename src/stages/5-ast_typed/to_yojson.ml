@@ -600,14 +600,6 @@ let constraint_identifier (ConstraintIdentifier ci : constraint_identifier) : js
     "ConstraintIdentifier", `String (Format.asprintf "%Li" ci);
   ]
 
-let constraints {constructor; poly; (* tc; *) row} =
-  `Assoc [
-    ("constructor", list c_constructor_simpl constructor);
-    ("poly", list c_poly_simpl poly);
-    (* ("tc", list c_typeclass_simpl tc); *)
-    ("row", list c_row_simpl row);
-  ]
-
 (* let structured_dbs {refined_typeclasses;refined_typeclasses_back;typeclasses_constrained_by;by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort=_} =
  *   `Assoc [
  *     ("refined_typeclasses", jmap constraint_identifier refined_typeclass refined_typeclasses);
