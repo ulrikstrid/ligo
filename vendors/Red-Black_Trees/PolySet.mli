@@ -76,6 +76,9 @@ val add_list : 'a list -> 'a t -> 'a added
    function used to create the set). *)
 val elements : 'elt t -> 'elt list
 
+(* map_elements f s is a shorthand for List.map f (elements s) *)
+val map_elements : ('elt -> 'b) -> 'elt t -> 'b list
+
 (* The value of the call [get_compare set] is the comparison function
    used by the given set *)
 val get_compare : 'elt t -> ('elt -> 'elt -> int)

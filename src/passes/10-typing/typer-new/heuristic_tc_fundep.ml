@@ -88,12 +88,14 @@ let alias_selector : type_variable -> type_variable -> _ indexes -> selector_out
   fun a b indexes ->
   let a_tcs = (TypeclassesConstraining.get_typeclasses_constraining_list a indexes) in
   let b_tcs = (TypeclassesConstraining.get_typeclasses_constraining_list b indexes) in
-  let a_lhs_constr = GroupedByVariable.get_constraints_by_lhs a indexes#grouped_by_variable in
-  let b_lhs_constr = GroupedByVariable.get_constraints_by_lhs b indexes#grouped_by_variable in
-  let a_ctors = List.map (fun a -> `Constructor a) a_lhs_constr.constructor in
-  let a_rows = List.map (fun a -> `Row a) a_lhs_constr.row in
-  let b_ctors = List.map (fun a -> `Constructor a) b_lhs_constr.constructor in
-  let b_rows = List.map (fun a -> `Row a) b_lhs_constr.row in
+  let a_lhs_constructors = GroupedByVariable.get_constructors_by_lhs a indexes#grouped_by_variable in
+  let b_lhs_constructors = GroupedByVariable.get_constructors_by_lhs b indexes#grouped_by_variable in
+  let a_lhs_rows = GroupedByVariable.get_rows_by_lhs a indexes#grouped_by_variable in
+  let b_lhs_rows = GroupedByVariable.get_rows_by_lhs b indexes#grouped_by_variable in
+  let a_ctors = PolySet.map_elements (fun a -> `Constructor a) a_lhs_constructors in
+  let a_rows = PolySet.map_elements (fun a -> `Row a) a_lhs_rows in
+  let b_ctors = PolySet.map_elements (fun a -> `Constructor a) b_lhs_constructors in
+  let b_rows = PolySet.map_elements (fun a -> `Row a) b_lhs_rows in
   List.flatten @@
   List.map
     (fun tc ->

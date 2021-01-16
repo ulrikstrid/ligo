@@ -40,6 +40,8 @@ let add_list elts set =
 
 let elements set = RB.elements set.tree
 
+let map_elements f set = List.map f (elements set)
+
 let get_compare set = set.cmp
 
 let iter f set = RB.iter f set.tree

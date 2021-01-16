@@ -31,12 +31,12 @@ type selector_output = output_specialize1
   match type_constraint_simpl with
   | SC_Constructor c                ->
     (* vice versa *)
-    let other_cs = (GroupedByVariable.get_constraints_by_lhs c.tv indexes#grouped_by_variable).poly in
+    let other_cs = PolySet.elements @@ GroupedByVariable.get_polys_by_lhs c.tv indexes#grouped_by_variable in
     let cs_pairs = List.map (fun x -> { poly = x ; a_k_var = c }) other_cs in
     cs_pairs
   | SC_Alias       _                -> failwith "alias should not be visible here"
   | SC_Poly        p                ->
-    let other_cs = (GroupedByVariable.get_constraints_by_lhs p.tv indexes#grouped_by_variable).constructor in
+    let other_cs = PolySet.elements @@ GroupedByVariable.get_constructors_by_lhs p.tv indexes#grouped_by_variable in
     let cs_pairs = List.map (fun x -> { poly = p ; a_k_var = x }) other_cs in
     cs_pairs
   | SC_Typeclass   _                -> []
@@ -48,10 +48,10 @@ type selector_output = output_specialize1
 
 let alias_selector : type_variable -> type_variable -> _ flds -> selector_output list =
   fun a b indexes ->
-  let a_polys = (GroupedByVariable.get_constraints_by_lhs a indexes#grouped_by_variable).poly in
-  let a_ctors = (GroupedByVariable.get_constraints_by_lhs a indexes#grouped_by_variable).constructor in
-  let b_polys = (GroupedByVariable.get_constraints_by_lhs b indexes#grouped_by_variable).poly in
-  let b_ctors = (GroupedByVariable.get_constraints_by_lhs b indexes#grouped_by_variable).constructor in
+  let a_polys = PolySet.elements @@ GroupedByVariable.get_polys_by_lhs a indexes#grouped_by_variable in
+  let a_ctors = PolySet.elements @@ GroupedByVariable.get_constructors_by_lhs a indexes#grouped_by_variable in
+  let b_polys = PolySet.elements @@ GroupedByVariable.get_polys_by_lhs b indexes#grouped_by_variable in
+  let b_ctors = PolySet.elements @@ GroupedByVariable.get_constructors_by_lhs b indexes#grouped_by_variable in
   List.flatten @@
   List.map
     (fun poly ->
