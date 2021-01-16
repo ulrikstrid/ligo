@@ -446,7 +446,6 @@ and constraint_identifier_set = constraint_identifier RedBlackTrees.PolySet.t
 and constraint_identifier_set_map = constraint_identifier_set typeVariableMap
 
 and c_constructor_simpl_typeVariableMap = c_constructor_simpl typeVariableMap
-and constraints_typeVariableMap = constraints typeVariableMap
 and c_typeclass_simpl_constraint_identifierMap = c_typeclass_simpl constraint_identifierMap
 and constraint_identifier_constraint_identifierMap = (constraint_identifier, constraint_identifier) RedBlackTrees.PolyMap.t
 and type_constraint_simpl_list = type_constraint_simpl list
@@ -455,13 +454,6 @@ and c_constructor_simpl_list = c_constructor_simpl list
 and c_poly_simpl_list        = c_poly_simpl        list
 and c_typeclass_simpl_list   = c_typeclass_simpl   list
 and c_row_simpl_list         = c_row_simpl         list
-and constraints = {
-  (* If implemented in a language with decent sets, these should be sets not lists. *)
-  constructor : c_constructor_simpl_list ; (* List of ('a = constructor(args…)) constraints *)
-  poly        : c_poly_simpl_list        ; (* List of ('a = forall 'b, some_type) constraints *)
-  (* tc          : c_typeclass_simpl_list   ; (\* List of (typeclass(args…)) constraints *\) *)
-  row         : c_row_simpl_list         ; (* List of ('a = row (args..)) constraints *)
-}
 and type_variable_list = type_variable list
 and type_variable_lmap = type_variable label_map
 and c_constructor_simpl = {

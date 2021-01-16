@@ -419,12 +419,6 @@ let type_constraint_simpl ppf (tc: type_constraint_simpl) = match tc with
   | SC_Typeclass   t -> fprintf ppf "SC_Typeclass (%a)" c_typeclass_simpl t
   | SC_Row         r -> fprintf ppf "SC_Row (%a)" c_row_simpl r
 
-let constraints ppf ({constructor; poly; (* tc; *) row}: constraints) =
-  fprintf ppf "{@[<hv 2> @ constructor : (%a);@ poly : (%a);@ row : (%a);@]@ }"
-    (list_sep_d c_constructor_simpl_short) constructor
-    (list_sep_d c_poly_simpl) poly
-    (* (list_sep_d c_typeclass_simpl) tc *)
-    (list_sep_d c_row_simpl) row
 let constraint_identifier ppf (ConstraintIdentifier ci) =
   fprintf ppf "ConstraintIdentifier %Li" ci
 
