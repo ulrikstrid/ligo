@@ -19,13 +19,19 @@ let merge_in_state ~demoted_repr ~new_repr state =
   } in
   merge_aliases updater state
 
-let merge_in_repr ~demoted_repr ~new_repr repr_function =
-  fun tv -> match repr_function tv with
+let merge_in_repr ~demoted_repr ~new_repr repr =
+  fun tv -> match repr tv with
       tv when Var.equal tv demoted_repr -> new_repr
     | other -> other
 
-let merge ~demoted_repr ~new_repr repr_function state =
-  ((merge_in_repr ~demoted_repr ~new_repr repr_function),
+let merge ~demoted_repr ~new_repr repr state =
+  if (not (Var.equal (repr demoted_repr) demoted_repr)) or
+     (not (Var.equal (repr new_repr) demoted_repr))
+  then failwith "Internal error: bad test: the demoted_repr and \
+                 new_repr should already be representants when merge \
+                 is called."
+  else ();
+  ((merge_in_repr ~demoted_repr ~new_repr repr),
    (merge_in_state ~demoted_repr ~new_repr state))
 
 (* can't be defined easily in PolySet.ml because it doesn't have access to List.compare ~cmp  *)
@@ -33,7 +39,7 @@ let polyset_compare a b =
   let ab = List.compare ~compare:(PolySet.get_compare a) (PolySet.elements a) (PolySet.elements b) in
   let ba = List.compare ~compare:(PolySet.get_compare b) (PolySet.elements a) (PolySet.elements b) in
   if ab != ba
-  then failwith "Internal error: sets being compared have different comparison functions!"
+  then failwith "Internal error: bad test: sets being compared have different comparison functions!"
   else ab
 
 module Grouped_by_variable_tests = struct
