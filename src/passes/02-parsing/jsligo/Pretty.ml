@@ -16,14 +16,14 @@ and pp_braced :
   fun sep printer {value; _}  ->
     let ({inside; _}: _ Utils.nsepseq braced) = value in
     let elements = pp_nsepseq sep printer inside in    
-    nest 2 (string "{" ^^ hardline ^^ elements ^^ string "}")
+    nest 2 (string "{" ^^ hardline ^^ elements) ^^ hardline ^^ string "}"
 
 and pp_brackets : 
   'a. string -> ('a -> document) -> ('a, t) Utils.nsepseq brackets reg -> document =
   fun sep printer {value; _} ->
     let ({inside; _}: _ Utils.nsepseq brackets) = value in
     let elements = pp_nsepseq sep printer inside in    
-    string "[" ^^ elements ^^ string "]"
+    string "[" ^^ break 0 ^^ group elements ^^ string "]"
   
 
 and pp_nsepseq :
@@ -34,7 +34,7 @@ and pp_nsepseq :
     in separate_map sep printer elems
 
 and pp_statement = function
-  SBlock      s -> pp_braced ";" pp_statement s
+  SBlock      s -> group (pp_braced ";" pp_statement s)
 | SVar        s -> pp_ident s
 | SExpr       s -> pp_expr s
 | SCond       s -> group (pp_cond_expr s)
@@ -46,10 +46,10 @@ and pp_statement = function
 
 and pp_cond_expr {value; _} =
   let {test; ifso; ifnot; _} = value in
-  let if_then = string "if" ^^ pp_par_expr test ^^ pp_statement ifso in
+  let if_then = string "if" ^^ pp_par_expr test ^^ string " " ^^ pp_statement ifso in
   match ifnot with
     None -> if_then
-  | Some (_,statement) -> if_then ^^ string "else" ^^ pp_statement statement
+  | Some (_,statement) -> if_then ^^ string " else " ^^ pp_statement statement
 
 and pp_return {value = {expr; _}; _} =
   match expr with 
@@ -64,12 +64,12 @@ and pp_const {value = {bindings; _}; _} =
 
 and pp_let_binding {value = {binders; lhs_type; expr; _}; _} =
   (match lhs_type with 
-    Some (_, type_expr) -> pp_pattern binders ^^ string ":" ^^ pp_type_expr type_expr
+    Some (_, type_expr) -> pp_pattern binders ^^ string ": " ^^ pp_type_expr type_expr
   | None -> pp_pattern binders)
   ^^
   string " = "
   ^^
-  pp_expr expr
+  (pp_expr expr)
 
 and pp_switch {value = {expr; cases; _}; _} =
   string "switch(" ^^
@@ -124,8 +124,8 @@ and pp_expr = function
 | ECall    e -> pp_call_expr e
 | ENew     e -> pp_new_expr e
 | EBytes   e -> pp_bytes e
-| EArray   e -> pp_brackets "," pp_array_item e
-| EObject  e -> pp_object_expr e
+| EArray   e -> group(pp_brackets "," pp_array_item e)
+| EObject  e -> group(pp_object_expr e)
 | EString  e -> pp_string_expr e
 | EProj    e -> pp_projection e
 | EAssign  (a,b,c) -> pp_assign (a,b,c)
@@ -139,8 +139,8 @@ and pp_call_expr {value; _} =
     match arguments with
     | Unit _ -> []
     | Multiple xs -> Utils.nsepseq_to_list xs.value.inside in
-  let arguments = string "(" ^^ group (separate_map (string "," ^^ break 0 ^^ string " ") pp_expr arguments) ^^ string ")" in
-  group (break 0 ^^ pp_expr lambda ^^ nest 2 arguments)
+  let arguments = string "(" ^^ group (separate_map (string ", ") pp_expr arguments) ^^ string ")" in
+  pp_expr lambda ^^ arguments
 
 and pp_new_expr {value =(_, e);_} = 
   string "new " ^^ pp_expr e
@@ -153,7 +153,7 @@ and pp_array_item = function
   
 and pp_object_property = function
   Punned_property {value; _} -> pp_expr value
-| Property {value = {name; value; _}; _} -> pp_expr name ^^ string ":" ^^ pp_expr value
+| Property {value = {name; value; _}; _} -> pp_expr name ^^ string ": " ^^ pp_expr value
 | Property_rest {value = {expr; _}; _} -> string "..." ^^ pp_expr expr
 
 and pp_object_expr oe =
@@ -175,7 +175,7 @@ and pp_assign (a, _, b) =
 
 and pp_annot_expr {value; _} =
   let expr, _, type_expr = value in
-    group (nest 1 (pp_expr expr ^/^ string " as "
+    group (nest 1 (pp_expr expr ^/^ string "as "
     ^^ pp_type_expr type_expr))
 
 and pp_logic_expr = function
@@ -223,10 +223,10 @@ and pp_par_expr value =
 and pp_expr_fun = function
 | EPar     {value; _} -> 
     string "(" ^^ nest 1 (pp_expr_fun value.inside ^^ string ")")
-| ESeq {value; _} -> pp_nsepseq "," pp_expr_fun value
+| ESeq {value; _} -> group(pp_nsepseq "," pp_expr_fun value)
 | EAnnot   {value; _} -> 
     let expr, _, type_expr = value in
-      group (nest 1 (pp_expr_fun expr ^/^ string ": "
+      group (nest 1 (pp_expr_fun expr ^^ string ": "
       ^^ pp_type_expr type_expr))
 | _ as c -> pp_expr c
 
@@ -237,10 +237,10 @@ and pp_fun {value; _} =
     match lhs_type with
       None -> empty
     | Some (_,e) ->
-        group (break 0 ^^ string ": " ^^ nest 2 (pp_type_expr e))
+       string ": " ^^ nest 2 (pp_type_expr e)
   in
   match body with
-  | FunctionBody fb -> nest 1 parameters ^^ annot ^^ string " => " ^^ group (pp_braced ";" pp_statement fb)
+  | FunctionBody fb -> parameters ^^ annot ^^ string " => " ^^ group (pp_braced ";" pp_statement fb)
   | ExpressionBody e -> (prefix 2 0 (nest 1 parameters ^^ annot ^^ string " => ") (pp_expr e))
 
 and pp_seq {value; _} =
@@ -259,7 +259,7 @@ and pp_type_expr: type_expr -> document = function
 | TString s -> pp_string s
 
 and pp_cartesian v = 
-  pp_brackets "," pp_type_expr v
+  group(pp_brackets "," pp_type_expr v)
 
 and pp_sum_type {value; _} =
   let {variants; attributes; _} = value in
@@ -299,7 +299,7 @@ and pp_ne_injection :
         None -> elements
       | Some (opening, closing) ->
           string opening ^^ nest 2 (break 0 ^^ elements)
-          ^^ break 1 ^^ string closing in
+          ^^ break 0 ^^ string closing in
     let inj = if attributes = [] then inj
               else break 0 ^^ pp_attributes attributes ^/^ inj
     in inj
@@ -311,7 +311,7 @@ and pp_compound = function
 
 and pp_type_app {value; _} =
   let ctor, tuple = value in
-  prefix 2 0 (pp_ident ctor) (string "<" ^^ nest 1 (pp_type_tuple tuple) ^^ string ">")
+  (pp_ident ctor) ^^ (string "<" ^^ nest 1 (pp_type_tuple tuple) ^^ string ">")
 
 and pp_type_tuple {value; _} =
   let head, tail = value.inside in
@@ -345,7 +345,7 @@ and pp_pattern = function
 | PDestruct p -> pp_destruct p
 | PObject   p -> pp_braced "," pp_pattern p
 | PWild     _ -> string "_"
-| PArray    p -> pp_brackets "," pp_pattern p
+| PArray    p -> group(pp_brackets "," pp_pattern p)
 
 and pp_rest_pattern {value = {rest; _}; _} = 
   string "..." ^^ pp_ident rest
