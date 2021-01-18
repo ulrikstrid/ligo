@@ -64,7 +64,7 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
     (* Create the indexer's initial state *)
     val create_state : cmp:('typeVariable -> 'typeVariable -> int) -> 'typeVariable t
     (* Update the state when a constraint is added *)
-    val add_constraint : (type_variable -> 'type_variable) -> 'type_variable t -> type_constraint_simpl -> 'type_variable t
+    val add_constraint : ?debug:(Format.formatter -> 'type_variable -> unit) -> (type_variable -> 'type_variable) -> 'type_variable t -> type_constraint_simpl -> 'type_variable t
     (* Update the state when a constraint is removed *)
     (* TODO: check this API to see if we're giving too much flexibility to the plugin *)
     val remove_constraint : (type_variable -> 'type_variable) -> 'type_variable t -> type_constraint_simpl -> ('type_variable t, Typer_errors.typer_error) Trace.result

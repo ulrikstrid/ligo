@@ -11,7 +11,7 @@ val create : cmp:('key -> 'key -> int) -> merge:('value -> 'value -> 'value) -> 
 (* val empty : ('key, 'value) t -> ('key, 'value) t *)
 val is_empty : ('key, 'value) t -> bool
 val add : ?debug:(Format.formatter -> 'key * 'value -> unit) -> 'key -> 'value -> ('key, 'value) t -> ('key, 'value) t
-val add_opt : 'key -> 'value -> ('key, 'value) t -> ('key, 'value) t option
+val add_opt : ?debug:(Format.formatter -> 'key * 'value -> unit) -> 'key -> 'value -> ('key, 'value) t -> ('key, 'value) t option
 val monotonic_update : 'key -> ('value option -> 'value) -> ('key, 'value) t -> ('key, 'value) t
 val find_opt : 'key -> ('key, 'value) t -> 'value option
 val find_default : 'key -> (unit -> 'value) -> ('key, 'value) t -> 'value * ('key, 'value) t

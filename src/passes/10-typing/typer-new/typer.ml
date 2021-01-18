@@ -23,9 +23,9 @@ let cast_var (orig: 'a Var.t Location.wrap) = { orig with wrap_content = Var.tod
 let rec type_declaration env state : I.declaration -> (environment * _ O'.typer_state * O.declaration, typer_error) result = 
   let return : _ -> _ -> _ O'.typer_state -> _ (* return of type_expression *) = fun expr e state constraints ->
     Format.printf "Solving expression : %a\n%!" O.PP.declaration expr ;
-    let%bind new_state = Solver.main state constraints in
+    let%bind state = Solver.main state constraints in
     Format.printf "Leaving type declaration\n%!";
-    ok @@ (e,new_state, expr) in
+    ok @@ (e,state, expr) in
   function
   | Declaration_type {type_binder; type_expr} ->
     let type_binder = Var.todo_cast type_binder in
@@ -577,22 +577,6 @@ end = struct
 end
 
 (* Apply type_declaration on every node of the AST_core from the root p *)
-let type_program_returns_env ((env, state, p) : environment * _ O'.typer_state * I.program) : (environment * _ O'.typer_state * O.program_with_unification_vars, Typer_common.Errors.typer_error) result =
-  let aux ((e : environment), (s : _ O'.typer_state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
-    let%bind (e , s' , d') = type_declaration e s (Location.unwrap d) in
-    (* TODO: Move this filter to the spiller *)
-    let ds' = match d' with
-      | O.Declaration_type _ -> ds
-      | _ -> Location.wrap ~loc:(Location.get_location d) d' :: ds
-    in
-    ok (e , s' , ds')
-  in
-  let%bind (env' , state , declarations) =
-    trace (program_error_tracer p) @@
-    bind_fold_list aux (env , state , []) p in
-  let declarations = List.rev declarations in (* Common hack to have O(1) append: prepend and then reverse *)
-  ok (env', state, O.Program_With_Unification_Vars declarations)
-
 let print_env_state_node (node_printer : Format.formatter -> 'a -> unit) ((env,state,node) : environment * _ O'.typer_state * 'a) =
   ignore node; (* TODO *)
   Printf.printf "%s" @@
@@ -647,6 +631,31 @@ let type_and_subst
   let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env,state,node here again.\n\n") in
   let () = (if Ast_typed.Debug.debug_new_typer && Ast_typed.Debug.json_new_typer then print_env_state_node out_printer (env, state, node)) in
   ok (node, state, env)
+
+let type_declaration_subst env state decl = 
+  let%bind (d, state, e) = type_and_subst
+      (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.expression\"")
+      (fun ppf p -> Format.fprintf ppf "%s" (Yojson.Safe.to_string (Ast_typed.Yojson.declaration p)))
+      (env , state , decl)
+      Typesystem.Misc.Substitution.Pattern.s_declaration
+      (fun (a,b,c) -> type_declaration a b c) in
+  ok @@ (e, state, d)
+
+let type_program_returns_env ((env, state, p) : environment * _ O'.typer_state * I.program) : (environment * _ O'.typer_state * O.program_with_unification_vars, Typer_common.Errors.typer_error) result =
+  let aux ((e : environment), (s : _ O'.typer_state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
+    let%bind (e , s' , d') = type_declaration_subst e s (Location.unwrap d) in
+    (* TODO: Move this filter to the spiller *)
+    let ds' = match d' with
+      | O.Declaration_type _ -> ds
+      | _ -> Location.wrap ~loc:(Location.get_location d) d' :: ds
+    in
+    ok (e , s' , ds')
+  in
+  let%bind (env' , state , declarations) =
+    trace (program_error_tracer p) @@
+    bind_fold_list aux (env , state , []) p in
+  let declarations = List.rev declarations in (* Common hack to have O(1) append: prepend and then reverse *)
+  ok (env', state, O.Program_With_Unification_Vars declarations)
 
 let type_program ~init_env (p : I.program) : (environment * O.program_fully_typed * _ O'.typer_state, typer_error) result =
   let empty_state = Solver.initial_state in

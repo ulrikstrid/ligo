@@ -18,12 +18,15 @@ let create_state ~cmp =
     (all assignments should use compatible types).
 
     Subsequent ('a = ctor('b2, …)) with the same 'a are ignored. *)
-let add_constraint repr state new_constraint =
+let add_constraint ?debug repr state new_constraint =
+  let debug = match debug with
+    Some (debug) -> Some (fun ppf (a,_) -> debug ppf a)
+  | None -> None in
   match new_constraint with
   | SC_Constructor c ->
-    Option.unopt ~default:state @@ ReprMap.add_opt (repr c.tv) (`Constructor c) state
+    Option.unopt ~default:state @@ ReprMap.add_opt ?debug (repr c.tv) (`Constructor c) state
   | SC_Row r ->
-    Option.unopt ~default:state @@ ReprMap.add_opt (repr r.tv) (`Row r) state
+    Option.unopt ~default:state @@ ReprMap.add_opt ?debug (repr r.tv) (`Row r) state
   | _ -> state
 
 let remove_constraint _repr state _constraint_to_remove =

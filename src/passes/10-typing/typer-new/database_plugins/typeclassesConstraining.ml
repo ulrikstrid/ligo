@@ -25,7 +25,8 @@ let register_typeclasses_constraining : _ -> c_typeclass_simpl -> _ t -> _ t =
     state
     (List.rev c.args)
 
-let add_constraint repr state new_constraint =
+let add_constraint ?debug repr state new_constraint =
+  let _ = debug in
   match new_constraint with
   | SC_Typeclass c -> register_typeclasses_constraining repr c state
   | _ -> state

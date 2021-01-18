@@ -17,7 +17,7 @@ module MergeAliases = struct
   module F(Plugin : Plugin) = struct
     let f _ UnionFind.Poly2.{ demoted_repr ; new_repr } state =
       let merge_keys = {
-        map = (fun m -> ReprMap.alias ~demoted_repr ~new_repr m);
+        map = (fun m -> ReprMap.alias ~debug:(fun ppf (a,_) -> Ast_typed.PP.type_variable ppf a) ~demoted_repr ~new_repr m);
         set = (fun s -> ReprSet.alias ~demoted_repr ~new_repr s);
         (* var = (fun a -> if Var.compare a demoted_repr = 0 then new_repr else a) *)
       }
