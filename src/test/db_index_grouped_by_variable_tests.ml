@@ -50,15 +50,24 @@ module Grouped_by_variable_tests = struct
       (List.filter (fun (_,s) -> not (PolySet.is_empty s)) x)
       (List.filter (fun (_,s) -> not (PolySet.is_empty s)) y)
   let same_state' loc (expected : _ t_for_tests) (actual : _ t_for_tests) =
-    let a msg pp expected actual =
+    let expected_actual_str =
       let open PP_helpers in
-      let pp' x = (list_sep_d (pair Var.pp (PolySet.pp pp))) x in
-      tst_assert (Format.asprintf "%s\n%s\nexpected=\n%a\nactual=\n%a\n" msg loc pp' expected pp' actual)
+      let pp' pp x = (list_sep_d (pair Var.pp (PolySet.pp pp))) x in
+      Format.asprintf "expected=\n{ctors=\n%a;\nrows=\n%a;\npolys=\n%a}\nactual=\n{ctors=\n%a;\nrows=\n%a;\npolys=\n%a}"
+        (pp' Ast_typed.PP.c_constructor_simpl) expected.constructor
+        (pp' Ast_typed.PP.c_row_simpl        ) expected.row
+        (pp' Ast_typed.PP.c_poly_simpl       ) expected.poly
+        (pp' Ast_typed.PP.c_constructor_simpl) actual.constructor
+        (pp' Ast_typed.PP.c_row_simpl        ) actual.row
+        (pp' Ast_typed.PP.c_poly_simpl       ) actual.poly
+    in
+    let a msg expected actual =
+      tst_assert (Format.asprintf "%s\n%s\n%s\n" msg loc expected_actual_str)
         (cmp expected actual = 0)
     in
-    let%bind () = a "lists of ctors must be equal" Ast_typed.PP.c_constructor_simpl expected.constructor actual.constructor in
-    let%bind () = a "lists of rows must be equal"  Ast_typed.PP.c_row_simpl         expected.row actual.row in
-    let%bind () = a "lists of polys must be equal" Ast_typed.PP.c_poly_simpl        expected.poly actual.poly in
+    let%bind () = a "lists of ctors must be equal" expected.constructor actual.constructor in
+    let%bind () = a "lists of rows must be equal"  expected.row actual.row in
+    let%bind () = a "lists of polys must be equal" expected.poly actual.poly in
     ok ()
 
   let same_state (expected : _ t) (actual : _ t) =
@@ -351,7 +360,7 @@ let mixed () =
       state in
 
   (* Add constraint sc_c2 *)
-  let sc_c2 = constructor 12 None tvc C_unit [] in
+  let sc_c2 = constructor 12 None tvc C_int [] in
   let state = add_constraint repr state sc_c2 in
   (* Test 4; state is ctors = {a -> [sc_a]; c -> [sc_c2]} rows = {b -> [sc_b]} polys = {c -> [sc_c]} *)
   let%bind () = assert_states_equal __LOC__
@@ -371,7 +380,7 @@ let mixed () =
       state in
 
   (* Add constraint sc_b2 *)
-  let sc_b2 = row 13 tvb in
+  let sc_b2 = row ~row:[(Label "foo", tva)] 13 tvb in
   let state = add_constraint repr state sc_b2 in
 
   (* Test 6; state is ctors = {a -> [sc_a]; c -> [sc_c2]} rows = {a -> [sc_b; sc_b2]} polys = {c -> [sc_c]} *)
