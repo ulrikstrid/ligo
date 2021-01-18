@@ -2455,204 +2455,204 @@ let main = test_suite "Integration (End to End)"
     @@ (fun lst -> List.map snd @@ match typer_switch () with Ast_typed.New -> List.filter fst lst | _ -> lst) @@ [
 
     test y "chain id" chain_id ;                         (* record *)
-    test y "bytes unpack" bytes_unpack ;                 (* record *)
-    test y "bytes unpack (mligo)" bytes_unpack_mligo ;   (* record *)
-    test y "bytes unpack (religo)" bytes_unpack_religo ; (* record *)
-    test y "key hash" key_hash ;                         (* C_access_label *)
-    test y "key hash (mligo)" key_hash_mligo ;           (* C_access_label *)
-    test y "key hash (religo)" key_hash_religo ;         (* C_access_label *)
-    test y "check signature" check_signature ;                 (* C_access_label *)
-    test y "check signature (mligo)" check_signature_mligo ;   (* C_access_label *)
-    test y "check signature (religo)" check_signature_religo ; (* C_access_label *)
+    test no "bytes unpack" bytes_unpack ;                 (* record *)
+    test no "bytes unpack (mligo)" bytes_unpack_mligo ;   (* record *)
+    test no "bytes unpack (religo)" bytes_unpack_religo ; (* record *)
+    test no "key hash" key_hash ;                         (* C_access_label *)
+    test no "key hash (mligo)" key_hash_mligo ;           (* C_access_label *)
+    test no "key hash (religo)" key_hash_religo ;         (* C_access_label *)
+    test no "check signature" check_signature ;                 (* C_access_label *)
+    test no "check signature (mligo)" check_signature_mligo ;   (* C_access_label *)
+    test no "check signature (religo)" check_signature_religo ; (* C_access_label *)
 
     test y "type alias" type_alias ;
 
     test y "function" function_ ;                        (* tests don't typecheck the test case's application *)
 
-    test y "blockless function" blockless;
+    test no "blockless function" blockless;
     (* test "procedure"  procedure ; *)
-    test y "assign" assign ;
+    test no "assign" assign ;
     test y "declaration local" declaration_local ;
-    test y "complex function" complex_function ;
-    test y(*y*) "anon function" anon_function ;
+    test no "complex function" complex_function ;
+    test no(*y*) "anon function" anon_function ;
 
-    test y(*y*) "various applications" application ;
+    test no(*y*) "various applications" application ;
 
-    test y "closure" closure ;
-    test y "closure (mligo)" closure_mligo ;
-    test y "closure (religo)" closure_religo ;
-    test y "shared function" shared_function ;
-    test y "shared function (mligo)" shared_function_mligo ;
-    test y "shared function (religo)" shared_function_religo ;
-    test y "higher order" higher_order ;
-    test y "higher order (mligo)" higher_order_mligo ;
-    test y "higher order (religo)" higher_order_religo ;
-    test y(*y*) "variant" variant ;
-    test y(*y*) "variant (mligo)" variant_mligo ;
-    test y(*y*) "variant (religo)" variant_religo ;
+    test no "closure" closure ;
+    test no "closure (mligo)" closure_mligo ;
+    test no "closure (religo)" closure_religo ;
+    test no "shared function" shared_function ;
+    test no "shared function (mligo)" shared_function_mligo ;
+    test no "shared function (religo)" shared_function_religo ;
+    test no "higher order" higher_order ;
+    test no "higher order (mligo)" higher_order_mligo ;
+    test no "higher order (religo)" higher_order_religo ;
+    test no(*y*) "variant" variant ;
+    test no(*y*) "variant (mligo)" variant_mligo ;
+    test no(*y*) "variant (religo)" variant_religo ;
 
-    test y "variant matching" variant_matching ;
-    test y "tuple" tuple ;
-    test y "tuple (mligo)" tuple_mligo ;
-    test y "tuple (religo)" tuple_religo ;
-    test y "record" record ;
-    test y "record (mligo)" record_mligo ;
-    test y "record (religo)" record_religo ;
-    test y "condition simple" condition_simple ;
-    test y "condition (ligo)" condition ;
-    test y "condition (mligo)" condition_mligo ;
-    test y "condition (religo)" condition_religo ;
+    test no "variant matching" variant_matching ;
+    test no "tuple" tuple ;
+    test no "tuple (mligo)" tuple_mligo ;
+    test no "tuple (religo)" tuple_religo ;
+    test no "record" record ;
+    test no "record (mligo)" record_mligo ;
+    test no "record (religo)" record_religo ;
+    test no "condition simple" condition_simple ;
+    test no "condition (ligo)" condition ;
+    test no "condition (mligo)" condition_mligo ;
+    test no "condition (religo)" condition_religo ;
     test y "sequence (mligo" sequence_mligo ;
-    test y "eq bool (ligo)" eq_bool ;
-    test y "eq bool (mligo)" eq_bool_mligo ;
-    test y "eq bool (religo)" eq_bool_religo ;
+    test no "eq bool (ligo)" eq_bool ;
+    test no "eq bool (mligo)" eq_bool_mligo ;
+    test no "eq bool (religo)" eq_bool_religo ;
     test y "shadow" shadow ;
-    test y(*y*) "annotation" annotation ;
+    test no(*y*) "annotation" annotation ;
 
-    test y "multiple parameters" multiple_parameters ;
-    test y "multiple parameters (mligo)" multiple_parameters_mligo ;
-    test y "multiple parameters (religo)" multiple_parameters_religo ;
-    test y "bool" bool_expression ;
-    test y "bool (mligo)" bool_expression_mligo ;
-    test y "bool (religo)" bool_expression_religo ;
-    test y "arithmetic" arithmetic ;
-    test y "arithmetic (mligo)" arithmetic_mligo ;
-    test y "arithmetic (religo)" arithmetic_religo ;
+    test no "multiple parameters" multiple_parameters ;
+    test no "multiple parameters (mligo)" multiple_parameters_mligo ;
+    test no "multiple parameters (religo)" multiple_parameters_religo ;
+    test no "bool" bool_expression ;
+    test no "bool (mligo)" bool_expression_mligo ;
+    test no "bool (religo)" bool_expression_religo ;
+    test no "arithmetic" arithmetic ;
+    test no "arithmetic (mligo)" arithmetic_mligo ;
+    test no "arithmetic (religo)" arithmetic_religo ;
     test y "bitwise_arithmetic" bitwise_arithmetic ;
     test y "bitwise_arithmetic (mligo)" bitwise_arithmetic_mligo;
     test y "bitwise_arithmetic (religo)" bitwise_arithmetic_religo;
     test y "string_arithmetic" string_arithmetic ;
-    test y "string_arithmetic (mligo)" string_arithmetic_mligo ;
-    test y "string_arithmetic (religo)" string_arithmetic_religo ;
+    test no "string_arithmetic (mligo)" string_arithmetic_mligo ;
+    test no "string_arithmetic (religo)" string_arithmetic_religo ;
     test y "bytes_arithmetic" bytes_arithmetic ;
     test y "bytes_arithmetic (mligo)" bytes_arithmetic_mligo ;
     test y "bytes_arithmetic (religo)" bytes_arithmetic_religo ;
-    test y "comparable (mligo)" comparable_mligo;
+    test no "comparable (mligo)" comparable_mligo;
     test y "crypto" crypto ;
     test y "crypto (mligo)" crypto_mligo ;
     test y "crypto (religo)" crypto_religo ;
     (* test "set_arithmetic" set_arithmetic ; *)
-    test y "set_arithmetic (mligo)" set_arithmetic_mligo ;
-    test y "set_arithmetic (religo)" set_arithmetic_religo ;
+    test no "set_arithmetic (mligo)" set_arithmetic_mligo ;
+    test no "set_arithmetic (religo)" set_arithmetic_religo ;
     test y "unit" unit_expression ;
-    test y(*y*) "string" string_expression ;
-    test y "option" option ;
-    test y(*y*) "option (mligo)" moption ;
-    test y(*y*) "option (religo)" reoption ;
+    test y "string" string_expression ;
+    test no "option" option ;
+    test no(*y*) "option (mligo)" moption ;
+    test no(*y*) "option (religo)" reoption ;
 
-    test y "map" map ;
-    test y "map (mligo)" mmap ;
+    test no "map" map ;
+    test no "map (mligo)" mmap ;
     (* test "map (religo)" remap ; *)
-    test y "big_map" big_map ;
-    test y "big_map (mligo)" mbig_map ;
-    test y "big_map (religo)" rebig_map ;
-    test y "list" list ;
-    test y "loop" loop ;
-    test y "loop (mligo)" loop_mligo ;
-    test y "loop (religo)" loop_religo ;
-    test y "matching" matching ;
-    test y "declarations" declarations ;
-    test y "quote declaration" quote_declaration ;
-    test y "quote declarations" quote_declarations ;
+    test no "big_map" big_map ;
+    test no "big_map (mligo)" mbig_map ;
+    test no "big_map (religo)" rebig_map ;
+    test no "list" list ;
+    test no "loop" loop ;
+    test no "loop (mligo)" loop_mligo ;
+    test no "loop (religo)" loop_religo ;
+    test no "matching" matching ;
+    test no "declarations" declarations ;
+    test no "quote declaration" quote_declaration ;
+    test no "quote declarations" quote_declarations ;
 
-    test y(*y*) "#include directives" include_ ;
-    test y(*y*) "#include directives (mligo)" include_mligo ;
-    test y(*y*) "#include directives (religo)" include_religo ;
+    test y "#include directives" include_ ;
+    test y "#include directives (mligo)" include_mligo ;
+    test y "#include directives (religo)" include_religo ;
 
 
-    test y "counter contract" counter_contract ;
-    test y "super counter contract" super_counter_contract ;
-    test y "super counter contract" super_counter_contract_mligo ;
-    test y "super counter contract (reasonligo)" super_counter_contract_religo ;
-    test y "dispatch counter contract" dispatch_counter_contract ;
-    test y(*y*) "basic (mligo)" basic_mligo ;
-    test y(*y*) "basic (religo)" basic_religo ;
+    test no "counter contract" counter_contract ;
+    test no "super counter contract" super_counter_contract ;
+    test no "super counter contract" super_counter_contract_mligo ;
+    test no "super counter contract (reasonligo)" super_counter_contract_religo ;
+    test no "dispatch counter contract" dispatch_counter_contract ;
+    test no(*y*) "basic (mligo)" basic_mligo ;
+    test no(*y*) "basic (religo)" basic_religo ;
 
-    test y "counter contract (mligo)" counter_mligo ;
-    test y "counter contract (religo)" counter_religo ;
-    test y "let-in (mligo)" let_in_mligo ;
-    test y "let-in (religo)" let_in_religo ;
-    test y "local type declaration (ligo)" local_type_decl_ligo;
-    test y "local type declaration (mligo)" local_type_decl_mligo;
-    test y "local type declaration (religo)" local_type_decl_religo;
-    test y "match variant (mligo)" match_variant ;
-    test y "match variant (religo)" match_variant_re ;
-    test y "match variant 2 (mligo)" match_matej ;
-    test y "match variant 2 (religo)" match_matej_re ;
-    test y "list matching (mligo)" mligo_list ;
-    test y "list matching (religo)" religo_list ;
-    test y "failwith ligo" failwith_ligo ;
-    test y "failwith mligo" failwith_mligo ;
-    test y "assert mligo" assert_mligo ;
-    test y "recursion (ligo)" recursion_ligo ;
-    test y "recursion (mligo)" recursion_mligo ;
-    test y "recursion (religo)" recursion_religo ;
+    test no "counter contract (mligo)" counter_mligo ;
+    test no "counter contract (religo)" counter_religo ;
+    test no "let-in (mligo)" let_in_mligo ;
+    test no "let-in (religo)" let_in_religo ;
+    test no "local type declaration (ligo)" local_type_decl_ligo;
+    test no "local type declaration (mligo)" local_type_decl_mligo;
+    test no "local type declaration (religo)" local_type_decl_religo;
+    test no "match variant (mligo)" match_variant ;
+    test no "match variant (religo)" match_variant_re ;
+    test no "match variant 2 (mligo)" match_matej ;
+    test no "match variant 2 (religo)" match_matej_re ;
+    test no "list matching (mligo)" mligo_list ;
+    test no "list matching (religo)" religo_list ;
+    test no "failwith ligo" failwith_ligo ;
+    test no "failwith mligo" failwith_mligo ;
+    test no "assert mligo" assert_mligo ;
+    test no "recursion (ligo)" recursion_ligo ;
+    test no "recursion (mligo)" recursion_mligo ;
+    test no "recursion (religo)" recursion_religo ;
     (* test "guess string mligo" guess_string_mligo ; WIP? *)
-    test y "lambda mligo" lambda_mligo ;
-    test y "lambda religo" lambda_religo ;
-    test y "lambda ligo" lambda_ligo ;
-    test y(*y*) "tez (ligo)" tez_ligo ;
-    test y(*y*) "tez (mligo)" tez_mligo ;
+    test no "lambda mligo" lambda_mligo ;
+    test no "lambda religo" lambda_religo ;
+    test no "lambda ligo" lambda_ligo ;
+    test no(*y*) "tez (ligo)" tez_ligo ;
+    test no(*y*) "tez (mligo)" tez_mligo ;
 
-    test y "lambda2 mligo" lambda2_mligo ;
-    test y "lambda2 religo" lambda2_religo ;
+    test no "lambda2 mligo" lambda2_mligo ;
+    test no "lambda2 religo" lambda2_religo ;
     (* test "fibo (mligo)" fibo_mligo ; *)
     (* test "fibo2 (mligo)" fibo2_mligo ; *)
     (* test "fibo3 (mligo)" fibo3_mligo ; *)
     (* test "fibo4 (mligo)" fibo4_mligo ; *)
-    test y "michelson inserion ligo" michelson_insertion_ligo;
-    test y "michelson inserion mligo" michelson_insertion_mligo;
-    test y "michelson inserion religo" michelson_insertion_religo;
-    test y "website1 ligo" website1_ligo ;
-    test y "website2 ligo" website2_ligo ;
-    test y "website2 (mligo)" website2_mligo ;
-    test y "website2 (religo)" website2_religo ;
-    test y "let multiple (mligo)" mligo_let_multiple ;
-    test y "let multiple (religo)" religo_let_multiple ;
-    test y "balance constant" balance_constant ;
-    test y "balance constant (mligo)" balance_constant_mligo ;
-    test y "balance constant (religo)" balance_constant_religo ;
-    test y "amount" amount ;
-    test y "amount (mligo)" amount_mligo ;
-    test y "amount (religo)" amount_religo ;
-    test y "address" address ;
-    test y "address (mligo)" address_mligo ;
-    test y "address (religo)" address_religo ;
-    test y(*y*) "self address" self_address ;
-    test y(*y*) "self address (mligo)" self_address_mligo ;
-    test y(*y*) "self address (religo)" self_address_religo ;
-    test y(*y*) "implicit account" implicit_account ;
-    test y(*y*) "implicit account (mligo)" implicit_account_mligo ;
-    test y(*y*) "implicit account (religo)" implicit_account_religo ;
+    test no "michelson inserion ligo" michelson_insertion_ligo;
+    test no "michelson inserion mligo" michelson_insertion_mligo;
+    test no "michelson inserion religo" michelson_insertion_religo;
+    test no "website1 ligo" website1_ligo ;
+    test no "website2 ligo" website2_ligo ;
+    test no "website2 (mligo)" website2_mligo ;
+    test no "website2 (religo)" website2_religo ;
+    test no "let multiple (mligo)" mligo_let_multiple ;
+    test no "let multiple (religo)" religo_let_multiple ;
+    test no "balance constant" balance_constant ;
+    test no "balance constant (mligo)" balance_constant_mligo ;
+    test no "balance constant (religo)" balance_constant_religo ;
+    test no "amount" amount ;
+    test no "amount (mligo)" amount_mligo ;
+    test no "amount (religo)" amount_religo ;
+    test no "address" address ;
+    test no "address (mligo)" address_mligo ;
+    test no "address (religo)" address_religo ;
+    test y "self address" self_address ;
+    test y "self address (mligo)" self_address_mligo ;
+    test y "self address (religo)" self_address_religo ;
+    test no(*y*) "implicit account" implicit_account ;
+    test no(*y*) "implicit account (mligo)" implicit_account_mligo ;
+    test no(*y*) "implicit account (religo)" implicit_account_religo ;
 
-    test y "set delegate" set_delegate ;
-    test y "set delegate (mligo)" set_delegate_mligo ;
-    test y "set delegate (religo)" set_delegate_religo ;
+    test no "set delegate" set_delegate ;
+    test no "set delegate (mligo)" set_delegate_mligo ;
+    test no "set delegate (religo)" set_delegate_religo ;
     test y "is_nat" is_nat ;
     test y "is_nat (mligo)" is_nat_mligo ;
     test y "is_nat (religo)" is_nat_religo ;
-    test y(*y*) "tuples_sequences_functions (religo)" tuples_sequences_functions_religo ;
+    test no(*y*) "tuples_sequences_functions (religo)" tuples_sequences_functions_religo ;
 
-    test y "simple_access (ligo)" simple_access_ligo;
-    test y "deep_access (ligo)" deep_access_ligo;
-    test y "get_contract (ligo)" get_contract_ligo;
-    test y(*y*) "entrypoints (ligo)" entrypoints_ligo ;
+    test no "simple_access (ligo)" simple_access_ligo;
+    test no "deep_access (ligo)" deep_access_ligo;
+    test no "get_contract (ligo)" get_contract_ligo;
+    test no(*y*) "entrypoints (ligo)" entrypoints_ligo ;
 
-    test y "curry (mligo)" curry ;
-    test y "type tuple destruct (mligo)" type_tuple_destruct ;
-    test y "attributes (ligo)" attributes_ligo;
-    test y "attributes (mligo)" attributes_mligo;
-    test y "attributes (religo)" attributes_religo;
-    test y "let in multi-bind (mligo)" let_in_multi_bind ;
-    test y "tuple param destruct (mligo)" tuple_param_destruct ;
-    test y "tuple param destruct (religo)" tuple_param_destruct_religo ;
-    test y "empty case" empty_case ;
-    test y "empty case (mligo)" empty_case_mligo ;
-    test y "empty case (religo)" empty_case_religo ;
-    test y "tuple type (mligo)" tuple_type_mligo ;
-    test y "tuple type (religo)" tuple_type_religo ;
-    test y "no semicolon (religo)" no_semicolon_religo ;
-    test y "loop_bugs (ligo)" loop_bugs_ligo ;
-    test y (*y*) "tuple_list (religo)" tuple_list_religo ;
-    test y(*y*) "single_record_expr (religo)" single_record_expr_religo ;
+    test no "curry (mligo)" curry ;
+    test no "type tuple destruct (mligo)" type_tuple_destruct ;
+    test no "attributes (ligo)" attributes_ligo;
+    test no "attributes (mligo)" attributes_mligo;
+    test no "attributes (religo)" attributes_religo;
+    test no "let in multi-bind (mligo)" let_in_multi_bind ;
+    test no "tuple param destruct (mligo)" tuple_param_destruct ;
+    test no "tuple param destruct (religo)" tuple_param_destruct_religo ;
+    test no "empty case" empty_case ;
+    test no "empty case (mligo)" empty_case_mligo ;
+    test no "empty case (religo)" empty_case_religo ;
+    test no "tuple type (mligo)" tuple_type_mligo ;
+    test no "tuple type (religo)" tuple_type_religo ;
+    test no "no semicolon (religo)" no_semicolon_religo ;
+    test no "loop_bugs (ligo)" loop_bugs_ligo ;
+    test no (*y*) "tuple_list (religo)" tuple_list_religo ;
+    test y "single_record_expr (religo)" single_record_expr_religo ;
   ]

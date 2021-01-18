@@ -43,7 +43,7 @@ let ctor_add_and_merge () =
 
   (* add (tva, SC_Constructor ctor_a) to the state *)
   let ctor_a = make_c_constructor_simpl 1 None tva C_unit [] in
-  let state' = add_constraint repr state (SC_Constructor ctor_a) in                                           
+  let state' = add_constraint ~debug:Ast_typed.PP.type_variable repr state (SC_Constructor ctor_a) in                                           
   (* assert state = [ (tva , `Constructor ctor_a) ] *)
   let%bind () =
     match bindings state' with
@@ -56,13 +56,13 @@ let ctor_add_and_merge () =
 
   (* add (tvb, SC_Constructor ctor_b) to the state (tvb being an alias of tva, see repr) *)
   let ctor_b = make_c_constructor_simpl 2 None tvb C_unit [] in
-  let state'' = add_constraint repr state' (SC_Constructor ctor_b) in
+  let state'' = add_constraint ~debug:Ast_typed.PP.type_variable repr state' (SC_Constructor ctor_b) in
   (* assert that state did not update because a and b are aliases*)
   let%bind () = tst_assert "state'' = state'" @@ (List.length (bindings state'') = 1) in
 
   (* add (tvc, SC_Constructor ctor_c) *)
   let ctor_c = make_c_constructor_simpl 3 None tvc C_unit [] in
-  let state''' = add_constraint repr state'' (SC_Constructor ctor_c) in
+  let state''' = add_constraint ~debug:Ast_typed.PP.type_variable repr state'' (SC_Constructor ctor_c) in
   (* assert that state''' now has two elements *)
   let%bind () = tst_assert "length (state''') = 2" (List.length (bindings state''') = 2) in
 
@@ -71,7 +71,7 @@ let ctor_add_and_merge () =
     let demoted_repr = tvc in
     let new_repr = tva in
     {
-      map = (fun m -> UnionFind.ReprMap.alias ~demoted_repr ~new_repr m);
+      map = (fun m -> UnionFind.ReprMap.alias  ~debug:(fun ppf (a,_) -> Ast_typed.PP.type_variable ppf a) ~demoted_repr ~new_repr m);
       set = (fun s -> UnionFind.ReprSet.alias ~demoted_repr ~new_repr s);
     }
   in
@@ -165,7 +165,7 @@ let invariant () =
   let repr : type_variable -> type_variable = fun tv -> tv in
   let merge_keys demoted_repr new_repr  : (type_variable, type_variable) merge_keys =
     {
-      map = (fun m -> UnionFind.ReprMap.alias ~demoted_repr ~new_repr m);
+      map = (fun m -> UnionFind.ReprMap.alias ~debug:(fun ppf (a,_) -> Ast_typed.PP.type_variable ppf a) ~demoted_repr ~new_repr m);
       set = (fun s -> UnionFind.ReprSet.alias ~demoted_repr ~new_repr s);
     }
   in
@@ -176,7 +176,7 @@ let invariant () =
     match seq with
     | Add_cstr tv ->
       let tc = SC_Constructor (make_c_constructor_simpl 7 None tv C_unit []) in
-      add_constraint repr state tc
+      add_constraint ~debug:Ast_typed.PP.type_variable repr state tc
     | Merge merge_keys -> merge_aliases merge_keys state
   in
   let state_a = List.fold_left aux istate

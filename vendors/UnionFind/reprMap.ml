@@ -29,7 +29,7 @@ let is_empty m = PolyMap.is_empty m.map
 
 let add ?debug k v m = { m with map = PolyMap.add ?debug k v m.map }
 
-let add_opt k v m = match PolyMap.find_opt k m.map with Some _ -> None | None -> Some (add k v m)
+let add_opt ?debug k v m = match PolyMap.find_opt k m.map with Some _ -> None | None -> Some (add ?debug k v m)
 
 let monotonic_update k f m =
   { m with map = PolyMap.update k (function None -> Some (f None) | Some v -> Some (f (Some v))) m.map }

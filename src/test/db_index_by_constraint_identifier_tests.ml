@@ -59,7 +59,7 @@ let by_constraint_identifier () =
 
   (* add `tva = unit()' to the state *)
   let ctor_a = make_c_constructor_simpl 1 None tva C_unit [] in
-  let state' = add_constraint repr state (SC_Constructor ctor_a) in                                           
+  let state' = add_constraint ~debug:Ast_typed.PP.type_variable repr state (SC_Constructor ctor_a) in                                           
   (* assert state' = {} because only typeclass constraints have an ID for now. *)
   let%bind () = same_state2 state' [] in
 
@@ -84,7 +84,7 @@ let by_constraint_identifier () =
     [ tval_unit ] ;
   ] in
   let tc_b = make_c_typeclass_simpl 3 (Some 2) [tvb;tvc] tc_allowed_b in
-  let state''' = add_constraint repr state'' (SC_Typeclass tc_b) in
+  let state''' = add_constraint ~debug:(Ast_typed.PP.type_variable) repr state'' (SC_Typeclass tc_b) in
   (* assert state''' = … *)
   let%bind () = same_state2 state''' [
       (ConstraintIdentifier 2L, tc_bc) ;
@@ -97,7 +97,7 @@ let by_constraint_identifier () =
     let demoted_repr = tvc in
     let new_repr = tva in
     {
-      map = (fun m -> UnionFind.ReprMap.alias ~demoted_repr ~new_repr m);
+      map = (fun m -> UnionFind.ReprMap.alias ~debug:(fun ppf (a,_) -> Ast_typed.PP.type_variable ppf a) ~demoted_repr ~new_repr m);
       set = (fun s -> UnionFind.ReprSet.alias ~demoted_repr ~new_repr s);
     }
   in
@@ -105,8 +105,8 @@ let by_constraint_identifier () =
   (* assert that c has been merged to a in state'''' *)
   (* state'''' = same as above, because this indexer does not store any type variable. *)
   let%bind () = same_state2 state'''' [
-      (ConstraintIdentifier 1L, tc_bc) ;
-      (ConstraintIdentifier 2L, tc_b)
+      (ConstraintIdentifier 2L, tc_bc) ;
+      (ConstraintIdentifier 3L, tc_b)
     ]
   in
   ok ()

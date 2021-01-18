@@ -27,7 +27,8 @@ let update_add_to_constraint_set ~cmp c = function
     None -> PolySet.add c (PolySet.create ~cmp)
   | Some s -> PolySet.add c s
 
-let add_constraint repr (state : _ t) new_constraint =
+let add_constraint ?debug repr (state : _ t) new_constraint =
+  let _ = debug in
   match new_constraint with
     SC_Constructor c -> { state with constructor = ReprMap.monotonic_update (repr c.tv) (update_add_to_constraint_set ~cmp:Ast_typed.Compare.c_constructor_simpl c) state.constructor }
   | SC_Row         c -> { state with row         = ReprMap.monotonic_update (repr c.tv) (update_add_to_constraint_set ~cmp:Ast_typed.Compare.c_row_simpl         c) state.row         }

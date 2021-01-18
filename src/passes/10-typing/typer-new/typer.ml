@@ -120,9 +120,9 @@ end
 let rec type_declaration env state : I.declaration Location.wrap -> (environment * _ O'.typer_state * O.declaration Location.wrap, typer_error) result = fun d ->
   let return : _ -> _ -> _ O'.typer_state -> _ (* return of type_expression *) = fun expr e state constraints ->
     Format.printf "Solving expression : %a\n%!" O.PP.declaration expr ;
-    let%bind new_state = Solver.main state constraints in
+    let%bind state = Solver.main state constraints in
     Format.printf "Leaving type declaration\n%!";
-    ok @@ (e,new_state, Location.wrap ~loc:d.location expr ) in
+    ok @@ (e,state, Location.wrap ~loc:d.location expr ) in
   match Location.unwrap d with
   | Declaration_type {type_binder; type_expr} ->
     let type_binder = Var.todo_cast type_binder in
@@ -610,8 +610,8 @@ and type_module_returns_env ((env, state, p) : environment * _ O'.typer_state * 
   let declarations = List.rev declarations in (* Common hack to have O(1) append: prepend and then reverse *)
   ok (env', state, O.Module_With_Unification_Vars declarations)
 
-and print_env_state_node : 'a. (Format.formatter -> 'a -> unit) -> ( environment * _ O'.typer_state * 'a) -> _ =
-fun node_printer (env,state,node) ->
+and print_env_state_node : type a. (Format.formatter -> a -> unit) -> (environment * _ O'.typer_state * a) -> unit =
+  fun node_printer (env,state,node) ->
   ignore node; (* TODO *)
   Printf.printf "%s" @@
     Format.asprintf "{ \"ENV\": %s,\n\"STATE\": %s,\n\"NODE\": %a\n},\n"
@@ -624,13 +624,13 @@ and _get_alias variable aliases =
   (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
   try Some (Solver.UF.repr variable aliases) with Not_found -> None
 
-and type_and_subst : 'a 'b.
-      (Format.formatter -> 'a -> unit) ->
-      (Format.formatter -> 'b -> unit) ->
-      (environment * _ O'.typer_state * 'a) ->
-      (('b , Typer_common.Errors.typer_error) Typesystem.Misc.Substitution.Pattern.w) ->
-      ((environment * _ O'.typer_state * 'a) -> (environment * _ O'.typer_state * 'b , typer_error) Trace.result) ->
-      ('b * _ O'.typer_state * environment , typer_error) result =
+and type_and_subst : type a b.
+      (Format.formatter -> a -> unit) ->
+      (Format.formatter -> b -> unit) ->
+      (environment * _ O'.typer_state * a) ->
+      ((b , Typer_common.Errors.typer_error) Typesystem.Misc.Substitution.Pattern.w) ->
+      ((environment * _ O'.typer_state * a) -> (environment * _ O'.typer_state * b , typer_error) Trace.result) ->
+      (b * _ O'.typer_state * environment , typer_error) result =
   fun in_printer out_printer env_state_node apply_substs types_and_returns_env ->
   let () = (if Ast_typed.Debug.json_new_typer then Printf.printf "%!\n###############################START_OF_JSON\n[%!") in
   let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%!\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env_state_node here.\n\n%!") in
@@ -671,6 +671,18 @@ and type_and_subst : 'a 'b.
   let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env,state,node here again.\n\n") in
   let () = (if Ast_typed.Debug.debug_new_typer && Ast_typed.Debug.json_new_typer then print_env_state_node out_printer (env, state, node)) in
   ok (node, state, env)
+
+and type_declaration_subst env state decl = 
+  let subst = fun ~substs (d:O.declaration Location.wrap) -> 
+    bind_map_location (Typesystem.Misc.Substitution.Pattern.s_declaration ~substs) d
+  in
+  let%bind (d, state, e) = type_and_subst
+      (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.declaration\"")
+      (fun ppf p -> Format.fprintf ppf "%s" (Yojson.Safe.to_string (Ast_typed.Yojson.declaration @@ Location.unwrap p)))
+      (env , state , decl)
+      subst
+      (fun (a,b,c) -> type_declaration a b c) in
+  ok @@ (e, state, d)
 
 and type_module ~init_env (p : I.module_) : (environment * O.module_fully_typed * _ O'.typer_state, typer_error) result =
   let empty_state = Solver.initial_state in

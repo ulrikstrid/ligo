@@ -5,7 +5,7 @@ type 'typeVariable t = (constraint_identifier, c_typeclass_simpl) PolyMap.t
 let create_state ~cmp:_ =
   PolyMap.create ~cmp:Ast_typed.Compare.constraint_identifier
 
-let add_constraint _repr state new_constraint =
+let add_constraint ?debug:_ _repr state new_constraint =
   match new_constraint with
   | SC_Typeclass c -> PolyMap.add c.id_typeclass_simpl c state
   | _ -> state

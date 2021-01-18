@@ -33,6 +33,9 @@ let paint red = function
   Ext -> raise Not_a_node
 | Int (_, left, root, right) -> Int (red, left, root, right)
 
+let set_value value = function
+  Ext -> raise Not_a_node
+| Int (colour, left, _, right) -> Int (colour, left, value, right)
 
 (* Standard Balance function *)
 let balance colour left root right =
@@ -149,21 +152,25 @@ let remove : type a b . ?debug:(Format.formatter -> b -> unit) -> cmp:(a -> b ->
             (match debug with Some (debug) -> Format.printf "Returns with parent :%a\n%!" (pp debug) res | None -> ()); 
             res
           )
-         (* If this is the highr value, there is only one child, so move the tree up,
+        (* If this is the highr value, there is only one child, so move the tree up,
           then restore color property *)
-        | Int (_lcolor, _lleft, _lroot, _lright), Ext ->
+        | Int (_lcolor, _lleft, value, _lright), Ext ->
           (match debug with Some (_debug) -> Format.printf "No inorder successor\n" | None -> ());
-          bst_remove_leftmost ~left:(false) parent colour l
-         (* The inorder value is the right child*)
-        | _, Int (_,Ext,_,_) ->
+          let new_current = Int (colour,Ext,value,r) in
+          insert_left ~left new_current parent
+          
+        (* The inorder value is the right child and it'sthe root *)
+        | _, Int (rcolour,Ext,value,Ext) ->
           (match debug with Some (_debug) -> Format.printf "Inorder succesor is right child\n" | None -> ());
-          (match debug with Some (debug) -> Format.printf "Left child %a\n" (pp debug) l | None -> ());
-          let new_current = bst_remove_leftmost ~left:(false) parent colour r in
-          (match debug with Some (debug) -> Format.printf "New_current %a\n" (pp debug) new_current | None -> ());
-          let new_current = match parent with Ext -> new_current | _ -> get_right new_current in
-          let new_current = insert_left ~left:(true) l new_current in
-          insert_right ~right:true parent new_current
-         (* Get the next value, then put it at the place of the element you are removing and remove this element *)
+          let new_current = bst_remove_leftmost ~left:false (set_value value current) rcolour Ext in
+          insert_left ~left new_current parent
+
+        (* The inorder value is the right child and ir's not the root *)
+        | _, Int (_rcolour,Ext,value,child) ->
+          (match debug with Some (_debug) -> Format.printf "Inorder succesor is right child\n" | None -> ());
+          let new_current = Int(colour,l,value,child) in
+          insert_left ~left new_current parent
+        (* Get the next value, then put it at the place of the element you are removing and remove this element *)
         | _, Int (_rcolor,rleft,_rroot,_rright) ->
           (match debug with Some (_debug) -> Format.printf "Search for inorder successor\n" | None -> ());
           let new_root, new_right = bst_find_leftmost r rleft in
