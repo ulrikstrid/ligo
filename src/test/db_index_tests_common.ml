@@ -9,8 +9,8 @@ let test_err s = Main_errors.test_internal s
 let tst_assert s p = Assert.assert_true (test_err s) p
 
 let alias a b = make_sc_alias a b
-let constructor tv tag args = make_sc_constructor tv tag args
-let row tv = make_sc_row tv C_record []
+let constructor _id _original_id tv tag args = make_sc_constructor tv tag args
+let row _id tv = make_sc_row tv C_record []
 let tc tc args = make_sc_typeclass tc args
 let poly tv forall = make_sc_poly tv forall
 
