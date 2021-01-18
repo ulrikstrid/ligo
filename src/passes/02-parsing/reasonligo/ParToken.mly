@@ -43,7 +43,7 @@ module Token = Lexing_reasonligo.Token
 %token <Region.t> WILD "_"
 
 %token <Region.t> EQ    "="
-%token <Region.t> EQEQ  "=="
+%token <Region.t> EQ2   "=="
 %token <Region.t> NE    "!="
 %token <Region.t> LT    "<"
 %token <Region.t> GT    ">"
