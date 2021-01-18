@@ -53,7 +53,7 @@ module Grouped_by_variable_tests = struct
     let expected_actual_str =
       let open PP_helpers in
       let pp' pp x = (list_sep_d (pair Var.pp (PolySet.pp pp))) x in
-      Format.asprintf "expected=\n{ctors=\n%a;rows=\n%a;polys=\n%a}\nactual=\n{ctors=\n%a;rows=\n%a;polys=\n%a}"
+      Format.asprintf "expected=\n{ctors=\n%a;\nrows=\n%a;\npolys=\n%a}\nactual=\n{ctors=\n%a;\nrows=\n%a;\npolys=\n%a}"
         (pp' Ast_typed.PP.c_constructor_simpl) expected.constructor
         (pp' Ast_typed.PP.c_row_simpl        ) expected.row
         (pp' Ast_typed.PP.c_poly_simpl       ) expected.poly
@@ -360,7 +360,7 @@ let mixed () =
       state in
 
   (* Add constraint sc_c2 *)
-  let sc_c2 = constructor 12 None tvc C_unit [] in
+  let sc_c2 = constructor 12 None tvc C_int [] in
   let state = add_constraint repr state sc_c2 in
   (* Test 4; state is ctors = {a -> [sc_a]; c -> [sc_c2]} rows = {b -> [sc_b]} polys = {c -> [sc_c]} *)
   let%bind () = assert_states_equal __LOC__
@@ -380,7 +380,7 @@ let mixed () =
       state in
 
   (* Add constraint sc_b2 *)
-  let sc_b2 = row 13 tvb in
+  let sc_b2 = row ~row:[(Label "foo", tva)] 13 tvb in
   let state = add_constraint repr state sc_b2 in
 
   (* Test 6; state is ctors = {a -> [sc_a]; c -> [sc_c2]} rows = {a -> [sc_b; sc_b2]} polys = {c -> [sc_c]} *)
