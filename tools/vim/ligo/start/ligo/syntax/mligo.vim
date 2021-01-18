@@ -4,10 +4,11 @@ endif
 
 " Keywords
 syntax keyword ligoKeyword begin end
-syntax keyword ligoKeyword is
+syntax keyword ligoKeyword in of
 syntax keyword ligoKeyword fun let rec type
 syntax keyword ligoConditional if then else match with
 syntax match ligoOperator "\v[-+*/=]"
+syntax match ligoOperator "->"
 syntax match ligoParens "("
 syntax match ligoParens ")"
 
@@ -28,6 +29,7 @@ highlight link ligoString String
 
 " Comments
 syntax region ligoComment start=/\v\(\*/ end=/\v\*\)/ contains=ligoComment
+syntax match ligoComment "\v//.*$"
 highlight link ligoComment Comment
 
 " Types
@@ -43,6 +45,10 @@ syntax region ligoTypeAnnotation
             \ contains=ligoParenTypeExpr
 highlight link ligoTypeAnnotation Type
 highlight link ligoParenTypeExpr Type
+
+" We need to match :: after type annotations so that it has
+" a higher precedence
+syntax match ligoOperator "::"
 
 let b:current_syntax = "mligo"
 

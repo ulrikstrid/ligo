@@ -30,6 +30,7 @@ highlight link ligoString String
 
 " Comments
 syntax region ligoComment start=/\v\(\*/ end=/\v\*\)/ contains=ligoComment
+syntax match ligoComment "\v//.*$"
 highlight link ligoComment Comment
 
 " Types
