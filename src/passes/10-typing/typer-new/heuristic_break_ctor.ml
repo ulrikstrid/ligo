@@ -26,11 +26,11 @@ let selector_ : type_constraint_simpl -> type_variable GroupedByVariable.t -> se
       is symmetric *)
       let other_rows_lhs = GroupedByVariable.get_rows_by_lhs c.tv grouped_by_variable_map in
       let other_constructors_lhs = GroupedByVariable.get_constructors_by_lhs c.tv grouped_by_variable_map in
-      let () = ( if PolySet.is_empty other_rows_lhs
+      let () = ( if MultiSet.is_empty other_rows_lhs
                  then ()
-                 else failwith (Format.asprintf "TODO: type error with %a ; %a" Ast_typed.PP.c_constructor_simpl c (PolySet.pp Ast_typed.PP.c_row_simpl) other_rows_lhs))
+                 else failwith (Format.asprintf "TODO: type error with %a ; %a" Ast_typed.PP.c_constructor_simpl c (MultiSet.pp Ast_typed.PP.c_row_simpl) other_rows_lhs))
       in    
-      let cs_pairs = List.map (fun x -> { a_k_var = `Constructor c ; a_k'_var' = `Constructor x }) (PolySet.elements other_constructors_lhs) in
+      let cs_pairs = List.map (fun x -> { a_k_var = `Constructor c ; a_k'_var' = `Constructor x }) (MultiSet.elements other_constructors_lhs) in
       cs_pairs
     )
     | SC_Alias       _                -> [] (* TODO: ??? (beware: symmetry) *)
@@ -39,10 +39,10 @@ let selector_ : type_constraint_simpl -> type_variable GroupedByVariable.t -> se
     | SC_Row         r                -> (
       let other_rows_lhs = GroupedByVariable.get_rows_by_lhs r.tv grouped_by_variable_map in
       let constructors_lhs = GroupedByVariable.get_constructors_by_lhs r.tv grouped_by_variable_map in
-      let () = ( if PolySet.is_empty constructors_lhs
+      let () = ( if MultiSet.is_empty constructors_lhs
                  then ()
-                 else failwith (Format.asprintf "TODO: type error with %a ; %a" Ast_typed.PP.c_row_simpl r (PolySet.pp Ast_typed.PP.c_constructor_simpl) constructors_lhs)) in
-      let cs_pairs = List.map (fun x -> { a_k_var = `Row r ; a_k'_var' = `Row x }) (PolySet.elements other_rows_lhs) in
+                 else failwith (Format.asprintf "TODO: type error with %a ; %a" Ast_typed.PP.c_row_simpl r (MultiSet.pp Ast_typed.PP.c_constructor_simpl) constructors_lhs)) in
+      let cs_pairs = List.map (fun x -> { a_k_var = `Row r ; a_k'_var' = `Row x }) (MultiSet.elements other_rows_lhs) in
       cs_pairs
     )
 
@@ -60,10 +60,10 @@ let alias_selector : type_variable -> type_variable -> _ flds -> selector_output
   let b_constructors = GroupedByVariable.get_constructors_by_lhs b indexes#grouped_by_variable in
   let a_rows = GroupedByVariable.get_rows_by_lhs a indexes#grouped_by_variable in
   let b_rows = GroupedByVariable.get_rows_by_lhs b indexes#grouped_by_variable in
-  let a_ctor = PolySet.map_elements (fun a -> `Constructor a) a_constructors in
-  let b_ctor = PolySet.map_elements (fun a -> `Constructor a) b_constructors in
-  let a_row = List.map (fun a -> `Row a) (PolySet.elements a_rows) in
-  let b_row = List.map (fun a -> `Row a) (PolySet.elements b_rows) in
+  let a_ctor = MultiSet.map_elements (fun a -> `Constructor a) a_constructors in
+  let b_ctor = MultiSet.map_elements (fun a -> `Constructor a) b_constructors in
+  let a_row = List.map (fun a -> `Row a) (MultiSet.elements a_rows) in
+  let b_row = List.map (fun a -> `Row a) (MultiSet.elements b_rows) in
   match a_ctor @ a_row with
   | [] -> []
   | old_ctors_hd :: _ ->

@@ -27,10 +27,10 @@ let merge ~demoted_repr ~new_repr repr state =
     ((merge_in_repr ~demoted_repr ~new_repr repr),
      (merge_in_state ~demoted_repr ~new_repr state))
 
-(* can't be defined easily in PolySet.ml because it doesn't have access to List.compare ~cmp  *)
-let polyset_compare a b =
-  let ab = List.compare ~compare:(PolySet.get_compare a) (PolySet.elements a) (PolySet.elements b) in
-  let ba = List.compare ~compare:(PolySet.get_compare b) (PolySet.elements a) (PolySet.elements b) in
+(* can't be defined easily in MultiSet.ml because it doesn't have access to List.compare ~cmp  *)
+let multiset_compare a b =
+  let ab = List.compare ~compare:(MultiSet.get_compare a) (MultiSet.elements a) (MultiSet.elements b) in
+  let ba = List.compare ~compare:(MultiSet.get_compare b) (MultiSet.elements a) (MultiSet.elements b) in
   if ab != ba
   then failwith "Internal error: bad test: sets being compared have different comparison functions!"
   else ab
@@ -46,13 +46,13 @@ module Grouped_by_variable_tests = struct
     | _ -> tv
 
   let cmp x y =
-    List.compare ~compare:(Pair.compare Var.compare polyset_compare)
-      (List.filter (fun (_,s) -> not (PolySet.is_empty s)) x)
-      (List.filter (fun (_,s) -> not (PolySet.is_empty s)) y)
+    List.compare ~compare:(Pair.compare Var.compare multiset_compare)
+      (List.filter (fun (_,s) -> not (MultiSet.is_empty s)) x)
+      (List.filter (fun (_,s) -> not (MultiSet.is_empty s)) y)
   let same_state' loc (expected : _ t_for_tests) (actual : _ t_for_tests) =
     let expected_actual_str =
       let open PP_helpers in
-      let pp' pp x = (list_sep_d (pair Var.pp (PolySet.pp pp))) x in
+      let pp' pp x = (list_sep_d (pair Var.pp (MultiSet.pp pp))) x in
       Format.asprintf "expected=\n{ctors=\n%a;\nrows=\n%a;\npolys=\n%a}\nactual=\n{ctors=\n%a;\nrows=\n%a;\npolys=\n%a}"
         (pp' Ast_typed.PP.c_constructor_simpl) expected.constructor
         (pp' Ast_typed.PP.c_row_simpl        ) expected.row
@@ -78,15 +78,12 @@ open Grouped_by_variable_tests
 
 type nonrec t_for_tests = type_variable GroupedByVariable.t_for_tests
 
-let empty_ctors = PolySet.create ~cmp:Ast_typed.Compare.c_constructor_simpl
-let empty_rows  = PolySet.create ~cmp:Ast_typed.Compare.c_row_simpl
-let empty_polys = PolySet.create ~cmp:Ast_typed.Compare.c_poly_simpl
 let filter_only_ctors  = List.filter_map (function Ast_typed.Types.SC_Constructor c -> Some c | _ -> None)
 let filter_only_rows   = List.filter_map (function Ast_typed.Types.SC_Row         c -> Some c | _ -> None)
 let filter_only_polys  = List.filter_map (function Ast_typed.Types.SC_Poly        c -> Some c | _ -> None)
-let to_ctor_sets = List.map (fun (v,cs) -> (v, (PolySet.add_list (filter_only_ctors cs) empty_ctors).set))
-let to_row_sets  = List.map (fun (v,cs) -> (v, (PolySet.add_list (filter_only_rows  cs) empty_rows ).set))
-let to_poly_sets = List.map (fun (v,cs) -> (v, (PolySet.add_list (filter_only_polys cs) empty_polys).set))
+let to_ctor_sets = List.map (fun (v,cs) -> (v, (MultiSet.of_list ~cmp:Ast_typed.Compare.c_constructor_simpl (filter_only_ctors cs))))
+let to_row_sets  = List.map (fun (v,cs) -> (v, (MultiSet.of_list ~cmp:Ast_typed.Compare.c_row_simpl         (filter_only_rows  cs))))
+let to_poly_sets = List.map (fun (v,cs) -> (v, (MultiSet.of_list ~cmp:Ast_typed.Compare.c_poly_simpl        (filter_only_polys cs))))
 
 let assert_states_equal
     loc
@@ -397,6 +394,27 @@ let mixed () =
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
       ~expected_rows:[(tva, [sc_b2])]
+      ~expected_polys:[(tvc, [sc_c])]
+      state in
+
+  (* Add constraint sc_b3 *)
+  let sc_b3 = row ~row:[(Label "foo", tva)] 13 tvb in
+  let state = add_constraint repr state sc_b3 in
+
+  (* Test 8; state is ctors = {a -> [sc_a]; c -> [sc_c2]} rows = {a -> [sc_b2; sc_b3]} polys = {c -> [sc_c]} *)
+  let%bind () = assert_states_equal __LOC__
+      ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
+      ~expected_rows:[(tva, [sc_b2; sc_b3])]
+      ~expected_polys:[(tvc, [sc_c])]
+      state in
+
+  (* Remove constaint sc_b2 *)
+  let%bind state = remove_constraint repr state sc_b2 in
+
+  (* Test 9; state is ctors = {a -> [sc_a]; c -> [sc_c2]} rows = {a -> [sc_b3]} polys = {c -> [sc_c]} *)
+  let%bind () = assert_states_equal __LOC__
+      ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
+      ~expected_rows:[(tva, [sc_b3])]
       ~expected_polys:[(tvc, [sc_c])]
       state in
 

@@ -13,19 +13,19 @@ open Trace
 (* the state is 3 maps from (unionfind) variables to constraints containing them *)
 
 type 'typeVariable t = {
-  constructor : ('typeVariable, c_constructor_simpl PolySet.t) ReprMap.t ;
-  poly        : ('typeVariable, c_poly_simpl PolySet.t) ReprMap.t ;
-  row         : ('typeVariable, c_row_simpl PolySet.t) ReprMap.t ;
+  constructor : ('typeVariable, c_constructor_simpl MultiSet.t) ReprMap.t ;
+  poly        : ('typeVariable, c_poly_simpl MultiSet.t) ReprMap.t ;
+  row         : ('typeVariable, c_row_simpl MultiSet.t) ReprMap.t ;
 }
 
 let create_state ~cmp =
-  { constructor = ReprMap.create ~cmp ~merge:PolySet.union ;
-    poly        = ReprMap.create ~cmp ~merge:PolySet.union ;
-    row         = ReprMap.create ~cmp ~merge:PolySet.union ;}
+  { constructor = ReprMap.create ~cmp ~merge:MultiSet.union ;
+    poly        = ReprMap.create ~cmp ~merge:MultiSet.union ;
+    row         = ReprMap.create ~cmp ~merge:MultiSet.union ;}
 
 let update_add_to_constraint_set ~cmp c = function
-    None -> PolySet.add c (PolySet.create ~cmp)
-  | Some s -> PolySet.add c s
+    None -> MultiSet.add c (MultiSet.create ~cmp)
+  | Some s -> MultiSet.add c s
 
 let add_constraint ?debug repr (state : _ t) new_constraint =
   let _ = debug in
@@ -41,7 +41,7 @@ exception CouldNotRemove of type_constraint_simpl
 
 let update_remove_constraint_from_set tcs c = function
     None -> raise (CouldNotRemove tcs)
-  | Some s -> PolySet.remove c s
+  | Some s -> MultiSet.remove c s
 
 
 let remove_constraint repr (state : _ t) constraint_to_rm =
@@ -82,39 +82,39 @@ let merge_aliases =
 let pp type_variable ppf (state : _ t) =
   let open PP_helpers in
   Format.fprintf ppf "{ constructor = %a ; row = %a ; poly = %a }"
-  (list_sep_d (pair type_variable (PolySet.pp Ast_typed.PP.c_constructor_simpl))) (ReprMap.bindings state.constructor)
-  (list_sep_d (pair type_variable (PolySet.pp Ast_typed.PP.c_row_simpl))) (ReprMap.bindings state.row)
-  (list_sep_d (pair type_variable (PolySet.pp Ast_typed.PP.c_poly_simpl))) (ReprMap.bindings state.poly)
+  (list_sep_d (pair type_variable (MultiSet.pp Ast_typed.PP.c_constructor_simpl))) (ReprMap.bindings state.constructor)
+  (list_sep_d (pair type_variable (MultiSet.pp Ast_typed.PP.c_row_simpl))) (ReprMap.bindings state.row)
+  (list_sep_d (pair type_variable (MultiSet.pp Ast_typed.PP.c_poly_simpl))) (ReprMap.bindings state.poly)
 
 let name = "grouped_by_variable"
 
-let get_constructors_by_lhs : 'type_variable -> 'type_variable t -> c_constructor_simpl PolySet.t =
+let get_constructors_by_lhs : 'type_variable -> 'type_variable t -> c_constructor_simpl MultiSet.t =
   fun variable state ->
   match ReprMap.find_opt variable state.constructor with
     Some s -> s
-  | None -> PolySet.create ~cmp:Ast_typed.Compare.c_constructor_simpl
+  | None -> MultiSet.create ~cmp:Ast_typed.Compare.c_constructor_simpl
 
-let get_rows_by_lhs : 'type_variable -> 'type_variable t -> c_row_simpl PolySet.t =
+let get_rows_by_lhs : 'type_variable -> 'type_variable t -> c_row_simpl MultiSet.t =
   fun variable state ->
   match ReprMap.find_opt variable state.row with
     Some s -> s
-  | None -> PolySet.create ~cmp:Ast_typed.Compare.c_row_simpl
+  | None -> MultiSet.create ~cmp:Ast_typed.Compare.c_row_simpl
 
-let get_polys_by_lhs : 'type_variable -> 'type_variable t -> c_poly_simpl PolySet.t =
+let get_polys_by_lhs : 'type_variable -> 'type_variable t -> c_poly_simpl MultiSet.t =
   fun variable state ->
   match ReprMap.find_opt variable state.poly with
     Some s -> s 
-  | None -> PolySet.create ~cmp:Ast_typed.Compare.c_poly_simpl
+  | None -> MultiSet.create ~cmp:Ast_typed.Compare.c_poly_simpl
 
 
 type 'typeVariable t_for_tests = {
-  constructor : ('typeVariable * c_constructor_simpl PolySet.t) list ;
-  poly        : ('typeVariable * c_poly_simpl PolySet.t) list ;
-  row         : ('typeVariable * c_row_simpl PolySet.t) list ;
+  constructor : ('typeVariable * c_constructor_simpl MultiSet.t) list ;
+  poly        : ('typeVariable * c_poly_simpl MultiSet.t) list ;
+  row         : ('typeVariable * c_row_simpl MultiSet.t) list ;
 }
 
-let constructor_bindings : 'type_variable t -> ('type_variable * c_constructor_simpl PolySet.t) list = fun state -> ReprMap.bindings state.constructor
-let row_bindings : 'type_variable t -> ('type_variable * c_row_simpl PolySet.t) list = fun state -> ReprMap.bindings state.row
-let poly_bindings : 'type_variable t -> ('type_variable * c_poly_simpl PolySet.t) list = fun state -> ReprMap.bindings state.poly
+let constructor_bindings : 'type_variable t -> ('type_variable * c_constructor_simpl MultiSet.t) list = fun state -> ReprMap.bindings state.constructor
+let row_bindings : 'type_variable t -> ('type_variable * c_row_simpl MultiSet.t) list = fun state -> ReprMap.bindings state.row
+let poly_bindings : 'type_variable t -> ('type_variable * c_poly_simpl MultiSet.t) list = fun state -> ReprMap.bindings state.poly
 
 let bindings (state : _ t) : _ t_for_tests  = { constructor = constructor_bindings state ; row = row_bindings state ; poly = poly_bindings state }

@@ -100,6 +100,10 @@ val add_list : ('key * 'value) list -> ('key, 'value) t -> ('key, 'value) added
 
 val bindings : ('key, 'value) t -> ('key * 'value) list
 
+(* The value of the call [get_compare map] is the comparison function
+   used by the given map *)
+val get_compare : ('key, 'value) t -> ('key -> 'key -> int)
+
 (* The side-effect of evaluating the call [iter f map] is the
    successive side-effects of the calls [f key value], for all
    bindings [(key, value)] belonging to the map [map], sorted in
