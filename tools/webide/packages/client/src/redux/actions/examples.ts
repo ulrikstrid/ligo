@@ -1,22 +1,22 @@
-import { Dispatch, ActionCreator } from 'redux';
-import {ThunkAction} from 'redux-thunk';
-import { getExampleList } from '../../services/api';
-import { AppState } from '../app';
-import { CancellableAction } from './cancellable';
-import { SetDefaultList } from '../examples'
+import { getExampleList, getExample } from '../../services/api';
+import { SetDefaultList, ChangeSelectedAction } from '../examples';
 
-export class ExamplesAction extends CancellableAction {
-  getAction() {
-    return async (dispatch: Dispatch, getState: () => AppState) => {
-     const List = new Promise(resolve => {
-      getExampleList()
-        .then(list => {
-          resolve(list);
-          return dispatch({...new SetDefaultList(list) })
-        });
-    })
-    return List
-  }
-}
+export const ExampleListAction = () => {
+  return (dispatch) =>
+    new Promise((resolve) => {
+      getExampleList().then((response) => {
+        dispatch({ type: SetDefaultList, value: response });
+        resolve(response);
+      });
+    });
+};
 
-}
+export const ExampleAction = (exampleId) => {
+  return (dispatch) =>
+    new Promise((resolve) => {
+      getExample(exampleId).then((response) => {
+        dispatch({ type: ChangeSelectedAction, value: response });
+        resolve(response);
+      });
+    });
+};

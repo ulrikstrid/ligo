@@ -1,13 +1,13 @@
-import React, {useEffect} from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, {useEffect, useState} from 'react';
+import { useDispatch, useSelector, connect } from 'react-redux';
 import styled from 'styled-components';
 import 'bootstrap/dist/css/bootstrap.min.css'
 
 import { AppState } from '../redux/app';
 import { ChangeDirtyAction, EditorState } from '../redux/editor';
-import { ChangeSelectedAction, ExamplesState, SetDefaultList } from '../redux/examples';
+import { ChangeSelectedAction, ExampleItem } from '../redux/examples';
 import { getExample } from '../services/api';
-import { ExamplesAction } from '../redux/actions/examples'
+import { ExampleAction, ExampleListAction } from '../redux/actions/examples'
 
 const Container = styled.div`
   flex: 0.5;  
@@ -42,26 +42,35 @@ const MenuItem = styled.span`
   }
 `;
 
-export const Examples = () => {
+const Examples = (props) => {
+  
+  const [exampleList, setExampleList] = useState<ExampleItem[]>([]);
+  const [example, setExample] = useState<ExampleItem[]>([]);
+  const dispatch = useDispatch();
 
-  useEffect(() => {
-      // dispatch({ ...new ExamplesAction.getAction() });
-  });
-
-  const examples = useSelector<AppState, ExamplesState['list']>(
-    (state: AppState) => state.Examples.list
-  );
   const editorDirty = useSelector<AppState, EditorState['dirty']>(
     (state: AppState) => state.Editor.dirty
   );
 
-  const dispatch = useDispatch();
+  useEffect(() => {
+    props.defaultExampleList().then((list) => {
+      setExampleList(list)
+      if (example.length === 0){
+        props.getExample(list[0].id).then((data) => {
+          setExample(data)
+          dispatch({ ...new ChangeSelectedAction(data) });
+          dispatch({ ...new ChangeDirtyAction(false) });
+        })
+      }
+    })
+  }, [dispatch, example.length, props]);
+
 
   return (
     <Container>
       <Header>Contract Examples</Header>
       <MenuContainer>
-        {examples && examples.map(example => {
+        {exampleList && exampleList.map(example => {
           return (
             <MenuItem
               id={example.id}
@@ -73,7 +82,7 @@ export const Examples = () => {
                   window.confirm(
                     'Are you sure you want to navigate away? Data you have entered will be lost.\n\nPress OK to continue or Cancel to stay on the current page.\n\n'
                   )
-                ) {
+                 ) {
                   dispatch({ ...new ChangeSelectedAction(response) });
                   dispatch({ ...new ChangeDirtyAction(false) });
                 }
@@ -87,3 +96,12 @@ export const Examples = () => {
     </Container>
   );
 };
+
+const mapDispatchToProps = dispatch => {
+  return({
+    defaultExampleList: ()  => dispatch(ExampleListAction()),
+    getExample: (id)  => dispatch(ExampleAction(id))
+  })
+}
+
+export default connect(null, mapDispatchToProps)(Examples)

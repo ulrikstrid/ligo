@@ -3,7 +3,7 @@ import { ExampleState } from './example';
 export enum ActionType {
   ChangeSelected = 'examples-change-selected',
   ClearSelected = 'examples-clear-selected',
-  SetDefaultList = 'set-default-examples'
+  SetDefaultList = 'set-default-examples',
 }
 
 export interface ExampleItem {
@@ -30,7 +30,7 @@ export class ClearSelectedAction {
   public readonly type = ActionType.ClearSelected;
 }
 
-type Action = ChangeSelectedAction | ClearSelectedAction;
+type Action = ChangeSelectedAction | ClearSelectedAction | SetDefaultList;
 
 const DEFAULT_STATE = {
   selected: null,
@@ -82,6 +82,8 @@ const Examples = (state = DEFAULT_STATE, action: Action): ExamplesState => {
         ...state,
         selected: null
       };
+    case ActionType.SetDefaultList:
+      return { ...state}
     default:
       return {
         ...state
