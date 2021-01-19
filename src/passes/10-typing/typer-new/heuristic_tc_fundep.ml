@@ -92,10 +92,10 @@ let alias_selector : type_variable -> type_variable -> _ indexes -> selector_out
   let b_lhs_constructors = GroupedByVariable.get_constructors_by_lhs b indexes#grouped_by_variable in
   let a_lhs_rows = GroupedByVariable.get_rows_by_lhs a indexes#grouped_by_variable in
   let b_lhs_rows = GroupedByVariable.get_rows_by_lhs b indexes#grouped_by_variable in
-  let a_ctors = PolySet.map_elements (fun a -> `Constructor a) a_lhs_constructors in
-  let a_rows = PolySet.map_elements (fun a -> `Row a) a_lhs_rows in
-  let b_ctors = PolySet.map_elements (fun a -> `Constructor a) b_lhs_constructors in
-  let b_rows = PolySet.map_elements (fun a -> `Row a) b_lhs_rows in
+  let a_ctors = MultiSet.map_elements (fun a -> `Constructor a) a_lhs_constructors in
+  let a_rows  = MultiSet.map_elements (fun a -> `Row a        ) a_lhs_rows         in
+  let b_ctors = MultiSet.map_elements (fun a -> `Constructor a) b_lhs_constructors in
+  let b_rows  = MultiSet.map_elements (fun a -> `Row a        ) b_lhs_rows         in
   List.flatten @@
   List.map
     (fun tc ->
