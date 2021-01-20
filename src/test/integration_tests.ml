@@ -2147,6 +2147,22 @@ let entrypoints_ligo () : (unit, _) result =
   (* hmm... *)
   ok ()
 
+let simple1 () : (unit,_) result =
+  let%bind program = type_file "./contracts/simple1.ligo" in
+  expect_eq_evaluate program "i" (e_int 42)
+
+let simple2 () : (unit,_) result =
+  let%bind program = type_file "./contracts/simple2.ligo" in
+  expect_eq_evaluate program "i" (e_int 42)
+
+let simple3 () : (unit,_) result =
+  let%bind program = type_file "./contracts/simple3.ligo" in
+  expect_eq_evaluate program "my_address" (e_address "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx")
+
+let simple4 () : (unit,_) result =
+  let%bind program = type_file "./contracts/simple4.ligo" in
+  expect_eq_evaluate program "my_string_option" (e_string "hello")
+
 let chain_id () : (unit, _) result =
   let%bind program = type_file "./contracts/chain_id.ligo" in
   let pouet = Tezos_crypto.Base58.simple_encode
@@ -2438,6 +2454,10 @@ let y = true
 let main = test_suite "Integration (End to End)"
     @@ (fun lst -> List.map snd @@ match typer_switch () with Ast_typed.New -> List.filter fst lst | _ -> lst) @@ [
 
+    test y "simple1" simple1 ;
+    test y "simple2" simple2 ;
+    test y "simple3" simple3 ;
+    test no "simple4" simple4 ;
     test y "chain id" chain_id ;                         (* record *)
     test no "bytes unpack" bytes_unpack ;                 (* record *)
     test no "bytes unpack (mligo)" bytes_unpack_mligo ;   (* record *)
@@ -2460,7 +2480,7 @@ let main = test_suite "Integration (End to End)"
     test no "complex function" complex_function ;
     test no(*y*) "anon function" anon_function ;
 
-    test no(*y*) "various applications" application ;
+    test no (*y*) "various applications" application ;
 
     test no "closure" closure ;
     test no "closure (mligo)" closure_mligo ;
@@ -2549,8 +2569,8 @@ let main = test_suite "Integration (End to End)"
     test no "super counter contract" super_counter_contract_mligo ;
     test no "super counter contract (reasonligo)" super_counter_contract_religo ;
     test no "dispatch counter contract" dispatch_counter_contract ;
-    test no(*y*) "basic (mligo)" basic_mligo ;
-    test no(*y*) "basic (religo)" basic_religo ;
+    test y "basic (mligo)" basic_mligo ;
+    test y "basic (religo)" basic_religo ;
 
     test no "counter contract (mligo)" counter_mligo ;
     test no "counter contract (religo)" counter_religo ;
@@ -2575,8 +2595,8 @@ let main = test_suite "Integration (End to End)"
     test no "lambda mligo" lambda_mligo ;
     test no "lambda religo" lambda_religo ;
     test no "lambda ligo" lambda_ligo ;
-    test no(*y*) "tez (ligo)" tez_ligo ;
-    test no(*y*) "tez (mligo)" tez_mligo ;
+    test y "tez (ligo)" tez_ligo ;
+    test y "tez (mligo)" tez_mligo ;
 
     test no "lambda2 mligo" lambda2_mligo ;
     test no "lambda2 religo" lambda2_religo ;
@@ -2637,6 +2657,6 @@ let main = test_suite "Integration (End to End)"
     test no "tuple type (religo)" tuple_type_religo ;
     test no "no semicolon (religo)" no_semicolon_religo ;
     test no "loop_bugs (ligo)" loop_bugs_ligo ;
-    test no (*y*) "tuple_list (religo)" tuple_list_religo ;
+    test y "tuple_list (religo)" tuple_list_religo ;
     test y "single_record_expr (religo)" single_record_expr_religo ;
   ]

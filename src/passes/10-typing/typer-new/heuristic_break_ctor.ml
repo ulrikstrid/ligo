@@ -117,15 +117,15 @@ let propagator : (output_break_ctor, typer_error) propagator =
         let%bind () = Trace.Assert.assert_true (corner_case "TODO: different labels la lb") (Ast_typed.Compare.label la lb = 0) in
         ok @@ c_equation
           (wrap (Propagator_break_ctor "a") @@ P_variable aa)
-          (wrap (Propagator_break_ctor "a") @@ P_variable bb)
-          "propagator: break_ctor"
+          (wrap (Propagator_break_ctor "b") @@ P_variable bb)
+          "propagator: break_ctor: row"
       in
       let%bind bindings =  List.map2 (fun x y -> (x,y)) (LMap.bindings a.tv_map) (LMap.bindings b.tv_map)
         ~ok ~fail:(fun _ _-> fail @@ (corner_case "TODO: different number of labels (List.length a.tv_map) (List.length b.tv_map)"))
       in
       bind_map_list aux bindings
     | `Constructor a , `Constructor b -> (
-      let aux = fun aa bb -> c_equation (wrap (Propagator_break_ctor "a") @@ P_variable aa) (wrap (Propagator_break_ctor "a") @@ P_variable bb) "propagator: break_ctor" in
+      let aux = fun aa bb -> c_equation (wrap (Propagator_break_ctor "a") @@ P_variable aa) (wrap (Propagator_break_ctor "a") @@ P_variable bb) "propagator: break_ctor: ctor" in
       List.map2 aux a.tv_list b.tv_list
         ~ok ~fail:(fun _ _ -> fail @@ different_constant_tag_number_of_arguments __LOC__ a.c_tag b.c_tag (List.length a.tv_list) (List.length b.tv_list))
     )
