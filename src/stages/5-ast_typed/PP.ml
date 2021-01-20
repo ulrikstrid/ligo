@@ -65,21 +65,24 @@ let rec constraint_identifier_unicode (ci : Int64.t) =
     let ( / ) = Int64.div in
     let ( * ) = Int64.mul in
     match (ci - ((ci / 10L) * 10L)) with
-      0L -> "₀"
-    | 1L -> "₁"
-    | 2L -> "₂"
-    | 3L -> "₃"
-    | 4L -> "₄"
-    | 5L -> "₅"
-    | 6L -> "₆"
-    | 7L -> "₇"
-    | 8L -> "₈"
-    | 9L -> "₉"
-    | _ -> failwith (Format.asprintf "internal error: couldn't pretty-print int64: %Li" ci)
+      a when Int64.equal a 0L -> "₀"
+    | a when Int64.equal a 1L -> "₁"
+    | a when Int64.equal a 2L -> "₂"
+    | a when Int64.equal a 3L -> "₃"
+    | a when Int64.equal a 4L -> "₄"
+    | a when Int64.equal a 5L -> "₅"
+    | a when Int64.equal a 6L -> "₆"
+    | a when Int64.equal a 7L -> "₇"
+    | a when Int64.equal a 8L -> "₈"
+    | a when Int64.equal a 9L -> "₉"
+    | _ -> failwith (Format.asprintf "internal error: couldn't pretty-print int64: %Li (is it a negative number?)" ci)
   in
-  if ci = 0L then digit else (constraint_identifier_unicode (Int64.div ci 10L)) ^ digit
+  if ci = 0L then "" else (constraint_identifier_unicode (Int64.div ci 10L)) ^ digit
 
-let constraint_identifier_short ppf x = Format.fprintf ppf "%s" (constraint_identifier_unicode x)
+let constraint_identifier_short ppf x =
+  if Int64.equal x 0L
+  then Format.fprintf ppf "₀"
+  else Format.fprintf ppf "%s" (constraint_identifier_unicode x)
 
 let list_sep_d_par f ppf lst =
   match lst with
@@ -419,7 +422,11 @@ let c_constructor_simpl_short ppf ({id_constructor_simpl = ConstraintIdentifier 
       constraint_identifier_short ci
       type_variable a
       type_variable b
-  | tag, [] -> fprintf ppf "%a = %a" type_variable tv constant_tag_short tag
+  | tag, [] ->
+    fprintf ppf "%a ~%a %a"
+      type_variable tv
+      constraint_identifier_short ci
+      constant_tag_short tag
   | tag, args ->
     fprintf ppf "%a ~%a %a(%a)"
       type_variable tv
