@@ -10,6 +10,7 @@ let () =
   Printexc.record_backtrace true ;
     run_test @@ test_suite "LIGO"
     @@ (fun lst -> List.map snd @@ match typer_switch () with Ast_typed.New -> List.filter fst lst | _ -> lst) @@ [
+    y Vendors.main ;
     y Heuristic_tc_fundep_tests.main ;
     y Heuristic_break_ctor_tests.main ;
     y Typechecker_tests.main ;
@@ -32,6 +33,5 @@ let () =
     no Pledge_tests.main ;
     no Tzip12_tests.main ;
     no Positive_contract_tests.main ;
-    y Vendors.main ;
   ] ;
   ()

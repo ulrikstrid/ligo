@@ -26,14 +26,16 @@ let redblack () =
   (*Add test*)
   let tree = List.fold_left (
     fun tree e ->
-      Format.printf "Add %i\n" e;
-      RedBlack.add ~debug:(fun ppf i -> Format.fprintf ppf "%i" i) ~cmp:(-) RedBlack.New e tree
+      let tree = RedBlack.add ~debug:(fun ppf i -> Format.fprintf ppf "%i" i) ~cmp:(-) RedBlack.New e tree in
+      if not @@ RedBlack.is_legal tree then failwith "Unbalanced tree";
+      tree
   ) tree lst in
   (* Removal test *)
   let _ = List.fold_left (
     fun tree e ->
-      Format.printf "Remove %i\n" e;
-      RedBlack.remove ~debug:(fun ppf i -> Format.fprintf ppf "%i" i) ~cmp:(-) e tree
+      let tree = RedBlack.remove ~debug:(fun ppf i -> Format.fprintf ppf "%i" i) ~cmp:(-) e tree in
+      if not @@ RedBlack.is_legal tree then failwith "Unbalanced tree";
+      tree
   ) tree lst in
   ok ()
 
