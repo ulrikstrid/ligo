@@ -172,49 +172,49 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
     let%bind (tv' : Environment.element) =
       trace_option (unbound_variable e name ae.location)
       @@ Environment.get_opt name e in
-    let (constraints , expr_type) = Wrap.variable tv'.type_value in
+    let (constraints , expr_type) = Wrap.variable name tv'.type_value in
     let expr' = e_variable name in
     return expr' e state constraints expr_type
   )
 
   | E_literal (Literal_string s) -> (
-      return_wrapped (e_string s) e state [] @@ Wrap.literal (t_string ())
+      return_wrapped (e_string s) e state [] @@ Wrap.literal "string" (t_string ())
     )
   | E_literal (Literal_signature s) -> (
-      return_wrapped (e_signature s) e state [] @@ Wrap.literal (t_signature ())
+      return_wrapped (e_signature s) e state [] @@ Wrap.literal "signature" (t_signature ())
     )
   | E_literal (Literal_key s) -> (
-      return_wrapped (e_key s) e state [] @@ Wrap.literal (t_key ())
+      return_wrapped (e_key s) e state [] @@ Wrap.literal "key" (t_key ())
     )
   | E_literal (Literal_key_hash s) -> (
-      return_wrapped (e_key_hash s) e state [] @@ Wrap.literal (t_key_hash ())
+      return_wrapped (e_key_hash s) e state [] @@ Wrap.literal "key_hash" (t_key_hash ())
     )
   | E_literal (Literal_chain_id s) -> (
-      return_wrapped (e_chain_id s) e state [] @@ Wrap.literal (t_chain_id ())
+      return_wrapped (e_chain_id s) e state [] @@ Wrap.literal "key_hash" (t_chain_id ())
     )
   | E_literal (Literal_bytes b) -> (
-      return_wrapped (e_bytes b) e state [] @@ Wrap.literal (t_bytes ())
+      return_wrapped (e_bytes b) e state [] @@ Wrap.literal "bytes" (t_bytes ())
     )
   | E_literal (Literal_int i) -> (
-      return_wrapped (e_int i) e state [] @@ Wrap.literal (t_int ())
+      return_wrapped (e_int i) e state [] @@ Wrap.literal "int" (t_int ())
     )
   | E_literal (Literal_nat n) -> (
-      return_wrapped (e_nat n) e state [] @@ Wrap.literal (t_nat ())
+      return_wrapped (e_nat n) e state [] @@ Wrap.literal "nat" (t_nat ())
     )
   | E_literal (Literal_mutez t) -> (
-      return_wrapped (e_mutez t) e state [] @@ Wrap.literal (t_mutez ())
+      return_wrapped (e_mutez t) e state [] @@ Wrap.literal "mutez" (t_mutez ())
     )
   | E_literal (Literal_address a) -> (
-      return_wrapped (e_address a) e state [] @@ Wrap.literal (t_address ())
+      return_wrapped (e_address a) e state [] @@ Wrap.literal "address" (t_address ())
     )
   | E_literal (Literal_timestamp t) -> (
-      return_wrapped (e_timestamp t) e state [] @@ Wrap.literal (t_timestamp ())
+      return_wrapped (e_timestamp t) e state [] @@ Wrap.literal "timestamp" (t_timestamp ())
     )
   | E_literal (Literal_operation o) -> (
-      return_wrapped (e_operation o) e state [] @@ Wrap.literal (t_operation ())
+      return_wrapped (e_operation o) e state [] @@ Wrap.literal "operation" (t_operation ())
     )
   | E_literal (Literal_unit) -> (
-      return_wrapped (e_unit ()) e state [] @@ Wrap.literal (t_unit ())
+      return_wrapped (e_unit ()) e state [] @@ Wrap.literal "unit" (t_unit ())
     )
 
   | E_constant {cons_name; arguments=lst} ->
@@ -226,7 +226,7 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
       ) (e,state,[]) lst
     in
     let lst_annot = List.map get_type_expression lst in
-    let wrapped = Wrap.constant t lst_annot in
+    let wrapped = Wrap.constant cons_name t lst_annot in
     return_wrapped (E_constant {cons_name;arguments=lst}) e state constraints wrapped
 
   | E_lambda lambda ->
@@ -234,10 +234,10 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
     return_wrapped (E_lambda lambda) e state constraints wrapped
 
   | E_application {lamb;args} ->
-    let%bind (e,state,lamb),c1 = self e state lamb in
+    let%bind (e,state,lamb'),c1 = self e state lamb in
     let%bind (e,state,args),c2 = self e state args in
-    let wrapped = Wrap.application lamb.type_expression args.type_expression in
-    return_wrapped (E_application {lamb;args}) e state (c1@c2) wrapped
+    let wrapped = Wrap.application lamb lamb'.type_expression args.type_expression in
+    return_wrapped (E_application {lamb=lamb';args}) e state (c1@c2) wrapped
 
   (* Sum *)
   | E_constructor {constructor;element} ->
