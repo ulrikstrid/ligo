@@ -74,11 +74,11 @@ let lmap_of_tuple lst =
 (* TODO: change working of constant in ligo *)
 let constant : I.constant' -> O.type_value -> T.type_expression list -> (constraints * T.type_variable) =
   fun name f args ->
-  let whole_expr = Core.fresh_type_variable ~name:(Format.asprintf "%a" I.PP.constant' name) () in
+  let whole_expr = Core.fresh_type_variable ~name:(Format.asprintf "capp_%a" I.PP.constant' name) () in
   let args'      = lmap_of_tuple @@ List.map type_expression_to_type_value args in
   let args_tuple = p_row C_record args' in
   [
-      c_equation f (p_constant C_arrow ([args_tuple ; (T.Reasons.wrap (Todo "wrap: lambda: whole") (T.P_variable whole_expr))])) "wrap: constant: as declared for built-in"
+      c_equation f (p_constant C_arrow ([args_tuple ; (T.Reasons.wrap (Todo "wrap: constant: whole") (T.P_variable whole_expr))])) "wrap: constant: as declared for built-in"
   ] , whole_expr
 
 (* TODO : change type of lambda *)

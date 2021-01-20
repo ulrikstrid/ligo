@@ -337,7 +337,7 @@ and p_forall ppf {binder;constraints;body} =
     type_value body
 
 and p_forall_short ppf {binder;constraints;body} =
-  fprintf ppf "∀ %a, %a => %a"
+  fprintf ppf "(∀ %a, %a => %a)"
     type_variable binder
     p_constraints_short constraints
     type_value_short body
