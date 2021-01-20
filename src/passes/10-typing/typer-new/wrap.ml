@@ -54,15 +54,15 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
     p_constant csttag @@ List.map type_expression_to_type_value args
   )
 
-let variable : T.type_expression -> (constraints * T.type_variable) = fun expr ->
+let variable : I.expression_variable -> T.type_expression -> (constraints * T.type_variable) = fun name expr ->
   let pattern = type_expression_to_type_value expr in
-  let type_name = Core.fresh_type_variable () in
+  let type_name = Core.fresh_type_variable ~name:(Var.to_name name.wrap_content) () in
   let aval = T.Reasons.(wrap (Todo "wrap: variable: whole") (T.P_variable type_name)) in
   [{ c = C_equation { aval ; bval = pattern } ; reason = "wrap: variable" }] , type_name
 
-let literal : T.type_expression -> (constraints * T.type_variable) = fun t ->
+let literal : string -> T.type_expression -> (constraints * T.type_variable) = fun name t ->
   let pattern = type_expression_to_type_value t in
-  let type_name = Core.fresh_type_variable () in
+  let type_name = Core.fresh_type_variable ~name:("literal_" ^ name) () in
   let aval = T.Reasons.(wrap (Todo "wrap: literal: whole") (T.P_variable type_name)) in
   [{ c = C_equation { aval ; bval = pattern } ; reason = "wrap: literal" }] , type_name
 
@@ -73,9 +73,9 @@ let lmap_of_tuple lst =
 
 (* This is pretty much a wrapper for an n-ary function. *)
 (* TODO: change working of constant in ligo *)
-let constant : O.type_value -> T.type_expression list -> (constraints * T.type_variable) =
-  fun f args ->
-  let whole_expr = Core.fresh_type_variable () in
+let constant : I.constant' -> O.type_value -> T.type_expression list -> (constraints * T.type_variable) =
+  fun name f args ->
+  let whole_expr = Core.fresh_type_variable ~name:(Format.asprintf "%a" I.PP.constant' name) () in
   let args'      = lmap_of_tuple @@ List.map type_expression_to_type_value args in
   let args_tuple = p_row C_record args' in
   [
@@ -90,7 +90,7 @@ let lambda
       T.type_expression ->
       (constraints * T.type_variable) =
   fun fresh arg output result ->
-  let whole_expr = Core.fresh_type_variable () in
+  let whole_expr = Core.fresh_type_variable ~name:"lambda" () in
   let unification_arg = T.( Reasons.wrap (Todo "wrap: lambda: arg") @@ P_variable (Core.fresh_type_variable ()) ) in
   let unification_output = T.( Reasons.wrap  (Todo "wrap: lambda: whole") @@ P_variable (Core.fresh_type_variable ()) ) in
   let result' = type_expression_to_type_value result in
@@ -109,9 +109,14 @@ let lambda
                  "wrap: lambda: arrow (whole)"
     ] @ arg' @ output' , whole_expr
 
-let application : T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
-  fun f arg ->
-  let whole_expr = Core.fresh_type_variable () in
+let application : I.expr -> T.type_expression -> T.type_expression -> (constraints * T.type_variable) =
+  fun name f arg ->
+  let pretty =
+    match name.content with
+      I.E_constant c -> Format.asprintf "app_%a" I.PP.constant' c.cons_name
+    | _ -> "app"
+  in
+  let whole_expr = Core.fresh_type_variable ~name:pretty () in
   let f'   = type_expression_to_type_value f in
   let arg' = type_expression_to_type_value arg in
   [
