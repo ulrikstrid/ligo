@@ -7,7 +7,7 @@
 
 open Simple_utils.Region
 module CST = Cst.Jsligo
-open CST
+open! CST
 
 (* Utilities *)
 
@@ -754,7 +754,7 @@ property:
  }
 | "..." assignment_expr             {
   let region = cover $1 (expr_to_region $2) in
-  let value = {
+  let value : CST.property_rest = {
     ellipsis = $1;
     expr     = $2;
   } in

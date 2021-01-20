@@ -206,8 +206,9 @@ interactive_expr: Begin Constr With
 ## Constr
 ##
 
-Ill-formed selection of an expression in a module.
-At this point, the selection operator '.' is expected.
+Ill-formed selection of a value from a module.
+At this point, the selection operator '.' is expected, followed by the
+qualified name of a value.
 
 interactive_expr: Begin For Ident ARROW Ident In With
 ##
@@ -1842,10 +1843,8 @@ interactive_expr: Constr DOT With
 ## Constr DOT
 ##
 
-Ill-formed selection of an expression in a module.
-At this point, one of the following is expected:
-   * the name of an expression defined in the module,
-   * a selection in a record expression defined in the module.
+Ill-formed selection of a value from a module.
+At this point, the qualified name of a value is expected.
 
 interactive_expr: Function LPAR Const Ident RPAR COLON Ident With
 ##
@@ -3576,9 +3575,7 @@ contract: Type Ident Is Constr DOT With
 ##
 
 Ill-formed selection of a type in a module.
-At this point, one of the following is expected:
-  * the name of a type defined in the module;
-  * a selection in a record type defined in the module.
+At this point, the qualified name of a type is expected.
 
 contract: Type Ident Is Constr Of With
 ##
@@ -3636,7 +3633,8 @@ contract: Type Ident Is WILD TIMES Constr With
 ##
 
 Ill-formed selection of a type in a module.
-At this point, the selection operator '.' is expected.
+At this point, the selection operator '.' is expected, followed by the
+qualified name of a type.
 
 contract: Type Ident Is With
 ##
@@ -4364,13 +4362,12 @@ At this point, the type of the expression is expected.
 
 contract: Type Ident Is Constr With
 ##
-## Ends in an error in state: 378.
+## Ends in an error in state: 628.
 ##
-## nseq(declaration) -> declaration . [ RBRACE End EOF ]
-## nseq(declaration) -> declaration . nseq(declaration) [ RBRACE End EOF ]
+## contract -> module_ . EOF [ # ]
 ##
 ## The known suffix of the stack is as follows:
-## declaration
+## module_
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -4384,10 +4381,14 @@ contract: Type Ident Is Constr With
 ## In state 341, spurious reduction of production option(SEMI) ->
 ## In state 343, spurious reduction of production type_decl -> open_type_decl option(SEMI)
 ## In state 340, spurious reduction of production declaration -> type_decl
+## In state 378, spurious reduction of production nseq(declaration) -> declaration
+## In state 352, spurious reduction of production module_ -> nseq(declaration)
 ##
 
-Ill-formed declaration.
-At this point, if the declaration is complete, another is possible.
+Ill-formed contract.
+At this point, one the following is expected:
+  * another declaration;
+  * the end of the file.
 
 interactive_expr: Begin Var Ident COLON WILD ASS With
 ##
@@ -4428,7 +4429,9 @@ contract: Module Constr Is Begin Type Ident Is Constr RBRACE
 ## In state 352, spurious reduction of production module_ -> nseq(declaration)
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed module declaration.
+At this point, if the module declarations are complete, the keyword
+'end' is expected.
 
 contract: Module Constr Is Begin With
 ##
@@ -4439,8 +4442,21 @@ contract: Module Constr Is Begin With
 ## The known suffix of the stack is as follows:
 ## Module Constr Is Begin
 ##
+contract: Module Constr Is LBRACE With
+##
+## Ends in an error in state: 321.
+##
+## open_module_decl -> Module Constr Is LBRACE . module_ RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+##
+## The known suffix of the stack is as follows:
+## Module Constr Is LBRACE
+##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed module declaration.
+At this point, one of the following is expected:
+  * a type declaration starting with the keyword 'type';
+  * a value declaration starting with the keyword 'const' or 'var';
+  * a (sub)module declaration starting with the keyword 'module'.
 
 contract: Module Constr Is LBRACE Type Ident Is Constr End
 ##
@@ -4467,19 +4483,9 @@ contract: Module Constr Is LBRACE Type Ident Is Constr End
 ## In state 352, spurious reduction of production module_ -> nseq(declaration)
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Module Constr Is LBRACE With
-##
-## Ends in an error in state: 321.
-##
-## open_module_decl -> Module Constr Is LBRACE . module_ RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-##
-## The known suffix of the stack is as follows:
-## Module Constr Is LBRACE
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed module declaration.
+At this point, if the module declarations are complete, a closing
+brace '}' is expected to end the module declaration.
 
 contract: Module Constr Is With
 ##
@@ -4493,7 +4499,11 @@ contract: Module Constr Is With
 ## Module Constr Is
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed module declaration.
+At this point, one of the following is expected:
+  * the qualified name of a module being renamed;
+  * a module structure, either starting with an opening brace '{' or
+    the keyword 'begin'.
 
 contract: Module Constr With
 ##
@@ -4507,7 +4517,9 @@ contract: Module Constr With
 ## Module Constr
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed module declaration.
+At this point, the keyword 'is' is expected to introduce either the
+qualified name of a module being renamed, or a module structure.
 
 contract: Module With
 ##
@@ -4521,33 +4533,9 @@ contract: Module With
 ## Module
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Type Ident Is Constr RBRACE
-##
-## Ends in an error in state: 628.
-##
-## contract -> nseq(declaration) . EOF [ # ]
-##
-## The known suffix of the stack is as follows:
-## nseq(declaration)
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 23, spurious reduction of production variant -> Constr
-## In state 33, spurious reduction of production nsepseq(variant,VBAR) -> variant
-## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
-## In state 53, spurious reduction of production type_expr -> sum_type
-## In state 90, spurious reduction of production open_type_decl -> Type Ident Is type_expr
-## In state 341, spurious reduction of production option(SEMI) ->
-## In state 343, spurious reduction of production type_decl -> open_type_decl option(SEMI)
-## In state 340, spurious reduction of production declaration -> type_decl
-## In state 378, spurious reduction of production nseq(declaration) -> declaration
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed module declaration.
+At this point, the name of the module being declared or renamed is
+expected.
 
 contract: Module Constr Is Constr DOT With
 ##
@@ -4559,17 +4547,5 @@ contract: Module Constr Is Constr DOT With
 ## Constr DOT
 ##
 
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Module Constr Is Constr With
-##
-## Ends in an error in state: 381.
-##
-## nsepseq(module_name,DOT) -> Constr . [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## nsepseq(module_name,DOT) -> Constr . DOT nsepseq(module_name,DOT) [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-##
-## The known suffix of the stack is as follows:
-## Constr
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
+Ill-formed module qualification.
+At this point, a qualified module name is expected.

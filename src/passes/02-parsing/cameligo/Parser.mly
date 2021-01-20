@@ -31,6 +31,9 @@ let first_region = function
 %on_error_reduce bin_op(disj_expr_level,BOOL_OR,conj_expr_level)
 %on_error_reduce base_expr(expr)
 %on_error_reduce base_expr(base_cond)
+%on_error_reduce module_var_e
+%on_error_reduce module_var_t
+%on_error_reduce nsepseq(module_name,DOT)
 %on_error_reduce core_expr
 %on_error_reduce match_expr(base_cond)
 %on_error_reduce constr_expr
@@ -49,8 +52,6 @@ let first_region = function
 %on_error_reduce fun_type
 %on_error_reduce cartesian
 %on_error_reduce sub_irrefutable
-%on_error_reduce module_var_e
-%on_error_reduce module_var_t
 
 (* See [ParToken.mly] for the definition of tokens. *)
 
@@ -148,7 +149,10 @@ list__(item):
 (* Main *)
 
 contract:
-  nseq(declaration) EOF { {decl=$1; eof=$2} }
+  module_ EOF { {$1 with eof=$2} }
+
+module_:
+  nseq(declaration) { {decl=$1; eof=Region.ghost} }
 
 declaration:
   type_decl       {    TypeDecl $1 }
@@ -156,9 +160,6 @@ declaration:
 | module_decl     {  ModuleDecl $1 }
 | module_alias    { ModuleAlias $1 }
 | "<directive>"   {   Directive $1 }
-
-module_:
-  nseq(declaration) { {decl=$1; eof=Region.ghost} }
 
 (* Type declarations *)
 
@@ -721,7 +722,7 @@ core_expr:
 | par(annot_expr)                     {                     EAnnot $1 }
 
 code_inj:
-  "<lang>" expr "]" {
+  "[%lang" expr "]" {
     let region = cover $1.region $3
     and value  = {language=$1; code=$2; rbracket=$3}
     in {region; value} }

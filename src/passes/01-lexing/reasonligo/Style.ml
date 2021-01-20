@@ -71,7 +71,7 @@ let is_sym =
   | ARROW _
   | WILD _
   | EQ _
-  | EQEQ _
+  | EQ2 _
   | NE _
   | LT _
   | GT _

@@ -59,7 +59,7 @@ module T =
     | ARROW    of Region.t (* "=>"  *)
     | WILD     of Region.t (* "_"   *)
     | EQ       of Region.t (* "="   *)
-    | EQEQ     of Region.t (* "=="  *)
+    | EQ2      of Region.t (* "=="  *)
     | NE       of Region.t (* "!="  *)
     | LT       of Region.t (* "<"   *)
     | GT       of Region.t (* ">"   *)
@@ -154,7 +154,7 @@ module T =
     (* Comparisons *)
 
     | "EQ"   -> "="
-    | "EQEQ" -> "=="
+    | "EQ2"  -> "=="
     | "NE"   -> "!="
     | "LT"   -> "<"
     | "GT"   -> ">"
@@ -251,7 +251,7 @@ module T =
     | ELLIPSIS region -> region, "ELLIPSIS"
     | WILD     region -> region, "WILD"
     | EQ       region -> region, "EQ"
-    | EQEQ     region -> region, "EQEQ"
+    | EQ2      region -> region, "EQ2"
     | NE       region -> region, "NE"
     | LT       region -> region, "LT"
     | GT       region -> region, "GT"
@@ -316,7 +316,7 @@ module T =
     | ELLIPSIS _ -> "..."
     | WILD     _ -> "_"
     | EQ       _ -> "="
-    | EQEQ     _ -> "=="
+    | EQ2      _ -> "=="
     | NE       _ -> "!="
     | LT       _ -> "<"
     | GT       _ -> ">"
@@ -573,7 +573,7 @@ and scan_constr region lexicon = parse
       | "&&"   -> Ok (BOOL_AND region)
       | "..." ->  Ok (ELLIPSIS region)
       | "=>"  ->  Ok (ARROW    region)
-      | "=="  ->  Ok (EQEQ     region)
+      | "=="  ->  Ok (EQ2      region)
       | "!"   ->  Ok (NOT      region)
       | "++"  ->  Ok (PLUS2    region)
 

@@ -90,6 +90,10 @@ let mk_arith f arg1 op arg2 =
 %on_error_reduce option(SEMI)
 %on_error_reduce option(VBAR)
 %on_error_reduce projection
+%on_error_reduce module_access_e
+%on_error_reduce module_access_t
+%on_error_reduce nsepseq(module_name,DOT)
+%on_error_reduce nseq(declaration)
 %on_error_reduce option(arguments)
 %on_error_reduce path
 %on_error_reduce nseq(Attr)
@@ -188,7 +192,7 @@ sepseq(X,Sep):
 (* Main *)
 
 contract:
-  nseq(declaration) EOF { {decl=$1; eof=$2} }
+  module_ EOF { {$1 with eof=$2} }
 
 module_:
   nseq(declaration) { {decl=$1; eof=Region.ghost} }
@@ -1013,7 +1017,7 @@ projection:
     in {region; value}
   }
 
-module_access_e :
+module_access_e:
   module_name "." module_var_e {
     let start       = $1.region in
     let stop        = expr_to_region $3 in
@@ -1021,7 +1025,7 @@ module_access_e :
     let value       = {module_name=$1; selector=$2; field=$3}
     in {region; value} }
 
-module_var_e :
+module_var_e:
   module_access_e { EModA $1                         }
 | field_name      { EVar $1                          }
 | "map"           { EVar {value="map";    region=$1} }
@@ -1058,7 +1062,7 @@ field_path_assignment:
     in {region; value} }
 
 code_inj:
-  "<lang>" expr "]" {
+  "[%lang" expr "]" {
     let region   = cover $1.region $3
     and value    = {language=$1; code=$2; rbracket=$3}
     in {region; value} }

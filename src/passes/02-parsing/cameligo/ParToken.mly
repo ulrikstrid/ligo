@@ -15,8 +15,8 @@ module Token = Lexing_cameligo.Token
 %token          <(string * Z.t) Region.reg> Mutez     "<mutez>"
 %token                  <string Region.reg> Ident     "<ident>"
 %token                  <string Region.reg> Constr    "<constr>"
-%token                   <string Region.reg> Attr     "[@attr]"
-%token <Token.lexeme Region.reg Region.reg> Lang      "<lang>"
+%token                  <string Region.reg> Attr      "[@attr]"
+%token <Token.lexeme Region.reg Region.reg> Lang      "[%lang"
 
   (* Symbols *)
 

@@ -7,16 +7,16 @@ module Token = Lexing_reasonligo.Token
   (* Literals *)
 
 %token               <LexerLib.Directive.t> Directive "<directive>"
-%token                   <string Region.reg> String   "<string>"
-%token                   <string Region.reg> Verbatim "<verbatim>"
-%token   <(Token.lexeme * Hex.t) Region.reg> Bytes    "<bytes>"
-%token           <(string * Z.t) Region.reg> Int      "<int>"
-%token           <(string * Z.t) Region.reg> Nat      "<nat>"
-%token           <(string * Z.t) Region.reg> Mutez    "<mutez>"
-%token                   <string Region.reg> Ident    "<ident>"
-%token                   <string Region.reg> Constr   "<constr>"
-%token                   <string Region.reg> Attr     "[@attr]"
-%token  <Token.lexeme Region.reg Region.reg> Lang     "<lang>"
+%token                  <string Region.reg> String    "<string>"
+%token                  <string Region.reg> Verbatim  "<verbatim>"
+%token  <(Token.lexeme * Hex.t) Region.reg> Bytes     "<bytes>"
+%token          <(string * Z.t) Region.reg> Int       "<int>"
+%token          <(string * Z.t) Region.reg> Nat       "<nat>"
+%token          <(string * Z.t) Region.reg> Mutez     "<mutez>"
+%token                  <string Region.reg> Ident     "<ident>"
+%token                  <string Region.reg> Constr    "<constr>"
+%token                  <string Region.reg> Attr      "[@attr]"
+%token <Token.lexeme Region.reg Region.reg> Lang      "[%lang"
 
   (* Symbols *)
 
@@ -44,7 +44,7 @@ module Token = Lexing_reasonligo.Token
 %token <Region.t> WILD "_"
 
 %token <Region.t> EQ    "="
-%token <Region.t> EQEQ  "=="
+%token <Region.t> EQ2   "=="
 %token <Region.t> NE    "!="
 %token <Region.t> LT    "<"
 %token <Region.t> GT    ">"
