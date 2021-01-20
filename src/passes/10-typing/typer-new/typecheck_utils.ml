@@ -63,7 +63,7 @@ let other_check all_constraints assignments =
           else 
             ok (PolySet.add repr_unification_var already_seen,
                 Compare_renaming.List [ Compare_renaming.List tree ; Leaf repr_unification_var ])
-        | None -> fail (corner_case "TODO ERROR 456789: unassigned variable")
+        | None -> fail (corner_case (Format.asprintf "TODO ERROR in typecheck_utils: unassigned variable %a" Var.pp repr_unification_var))
       )
 
   let toposort :
