@@ -60,6 +60,28 @@ let module_variable ppf (m : module_variable) : unit = pp_print_string ppf m
 
 open Format
 
+let rec constraint_identifier_unicode (ci : Int64.t) =
+  let digit =
+    let ( - ) = Int64.sub in
+    let ( / ) = Int64.div in
+    let ( * ) = Int64.mul in
+    match (ci - ((ci / 10L) * 10L)) with
+      0L -> "₀"
+    | 1L -> "₁"
+    | 2L -> "₂"
+    | 3L -> "₃"
+    | 4L -> "₄"
+    | 5L -> "₅"
+    | 6L -> "₆"
+    | 7L -> "₇"
+    | 8L -> "₈"
+    | 9L -> "₉"
+    | _ -> failwith (Format.asprintf "internal error: couldn't pretty-print int64: %Li" ci)
+  in
+  if ci = 0L then digit else (constraint_identifier_unicode (Int64.div ci 10L)) ^ digit
+
+let constraint_identifier_short ppf x = Format.fprintf ppf "%s" (constraint_identifier_unicode x)
+
 let list_sep_d_par f ppf lst =
   match lst with
   | [] -> ()
@@ -409,16 +431,16 @@ let c_constructor_simpl ppf ({id_constructor_simpl = ConstraintIdentifier ci; re
 let c_constructor_simpl_short ppf ({id_constructor_simpl = ConstraintIdentifier ci; reason_constr_simpl=_; original_id=_; tv;c_tag;tv_list} : c_constructor_simpl) =
   match c_tag, tv_list with
     Ast_typed__.Ast.C_arrow, [a;b] ->
-    fprintf ppf "%a ~%Li %a -> %a"
+    fprintf ppf "%a ~%a %a -> %a"
       type_variable tv
-      ci
+      constraint_identifier_short ci
       type_variable a
       type_variable b
   | tag, [] -> fprintf ppf "%a = %a" type_variable tv constant_tag_short tag
   | tag, args ->
-    fprintf ppf "%a ~%Li %a(%a)"
+    fprintf ppf "%a ~%a %a(%a)"
       type_variable tv
-      ci
+      constraint_identifier_short ci
       constant_tag_short tag
       (list_sep_d_short type_variable) args
 
@@ -442,9 +464,9 @@ let c_poly_simpl ppf ({id_poly_simpl = ConstraintIdentifier ci; reason_poly_simp
     p_forall forall
 
 let c_poly_simpl_short ppf ({id_poly_simpl = ConstraintIdentifier ci; reason_poly_simpl=_; original_id=_; tv; forall}) =
-  fprintf ppf "%a ~%Li %a"
+  fprintf ppf "%a ~%a %a"
     type_variable tv
-    ci
+    constraint_identifier_short ci
     p_forall_short forall
 
 let c_typeclass_simpl ppf ({id_typeclass_simpl = ConstraintIdentifier ci; reason_typeclass_simpl; original_id; tc; args}) =
@@ -456,9 +478,9 @@ let c_typeclass_simpl ppf ({id_typeclass_simpl = ConstraintIdentifier ci; reason
     (list_sep_d type_variable) args
 
 let c_typeclass_simpl_short ppf ({id_typeclass_simpl = ConstraintIdentifier ci; reason_typeclass_simpl=_; original_id=_; tc; args}) =
-  fprintf ppf "(%a) ∈%Li %a"
+  fprintf ppf "(%a) ∈%a %a"
     (list_sep_d_short type_variable) args
-    ci
+    constraint_identifier_short ci
     typeclass_short tc
 
 let constraint_identifier ppf (ConstraintIdentifier ci) =
@@ -482,14 +504,14 @@ let c_row_simpl ppf ({id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; 
 let c_row_simpl_short ppf ({id_row_simpl = ConstraintIdentifier ci; reason_row_simpl=_; original_id=_; tv; r_tag; tv_map}) =
   match r_tag with
     C_record ->
-    fprintf ppf "%a ~%Li { %a }"
+    fprintf ppf "%a ~%a { %a }"
       type_variable tv
-      ci
+      constraint_identifier_short ci
       (lmap_sep_short type_variable ~sep:" ; " ~assoc:" : ") @@ LMap.to_kv_list tv_map
   | C_variant ->
-    fprintf ppf "%a ~%Li %a"
+    fprintf ppf "%a ~%a %a"
       type_variable tv
-      ci
+      constraint_identifier_short ci
       (lmap_sep_short type_variable ~sep:" | " ~assoc:" of ") @@ LMap.to_kv_list tv_map
 
 let type_constraint_simpl ppf (tc: type_constraint_simpl) = match tc with
