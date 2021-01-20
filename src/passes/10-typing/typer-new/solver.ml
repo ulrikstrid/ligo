@@ -75,6 +75,7 @@ end = struct
     try Some (UF.repr variable aliases) with Not_found -> None
 
   let aux_remove state to_remove =
+    let () = Format.printf "Remove constraint :\n  %a\n\n%!" Ast_typed.PP.type_constraint_simpl_short to_remove in
     let module MapRemoveConstraint = Plugins.Indexers.MapPlugins(RemoveConstraint) in
     let%bind plugin_states = MapRemoveConstraint.f (mk_repr state, to_remove) state.plugin_states in
     ok {state with plugin_states}

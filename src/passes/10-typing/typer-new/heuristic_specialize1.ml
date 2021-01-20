@@ -93,6 +93,11 @@ let propagator : (output_specialize1 , typer_error) propagator =
   
   let eq1 = c_equation (wrap (Todo "solver: propagator: specialize1 eq1") @@ P_variable b.tv) reduced "propagator: specialize1" in
   let eqs = eq1 :: new_constraints in
+  let pp_indented_constraint_list =
+    let open PP_helpers in
+    let open Ast_typed.PP in
+    (list_sep type_constraint_short (tag "\n  ")) in
+  let () = Format.printf "specialize1: rm %a, add:\n  %a\n\n%!" Ast_typed.PP.type_constraint_simpl_short (SC_Poly a) pp_indented_constraint_list eqs in
     ok [
         {
           remove_constraints = [ SC_Poly a ];
