@@ -4,15 +4,23 @@
    Setting. J. Funct. Program. 9(4): 471-477 (1999)
 *)
 
-type colour = Red | Black
+type colour = NegBlack | Red | Black | DoubleBlack
 
 type 'a t = private
-  Ext
-| Int of colour * 'a t * 'a * 'a t
+  L | BBL
+| T of colour * 'a t * 'a * 'a t
 
 val empty: 'a t
 
 val is_empty: 'a t -> bool
+
+val count : 'a t -> int
+
+val blackDepth : 'a t -> int
+
+val checkDepth_opt : 'a t -> int option
+
+val is_legal : 'a t -> bool
 
 (* The value of the call [add ~cmp choice x t] is a red-black tree
    augmenting the tree [t] with a node containing the element [x],
