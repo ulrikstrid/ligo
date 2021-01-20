@@ -38,9 +38,16 @@ let remove_constraint _repr state _constraint_to_remove =
 let merge_aliases : 'old 'new_ . ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
   fun merge_keys state -> merge_keys.map state
 
-let pp type_variable ppf state =
-  Format.fprintf ppf "(%a)"
-  (ReprMap.pp type_variable Ast_typed.PP.constructor_or_row) state
+let pp _type_variable ppf state =
+  let open PP_helpers in
+  Format.fprintf ppf "%a"
+    (list_sep
+       (fun ppf (_,v) ->
+          Format.fprintf ppf "%a" Ast_typed.PP.constructor_or_row_short v)
+       (tag "\n  "))
+    (ReprMap.bindings state)
+
+                                                                                                                             
 
 let name = "assingnments"
 
