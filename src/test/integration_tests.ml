@@ -2527,7 +2527,7 @@ let main = test_suite "Integration (End to End)"
     test no "eq bool (mligo)" eq_bool_mligo ;
     test no "eq bool (religo)" eq_bool_religo ;
     test y "shadow" shadow ;
-    test y(*y*) "annotation" annotation ;
+    test no(*y*) "annotation" annotation ;
 
     test no "multiple parameters" multiple_parameters ;
     test no "multiple parameters (mligo)" multiple_parameters_mligo ;
@@ -2590,8 +2590,8 @@ let main = test_suite "Integration (End to End)"
 
     test no "counter contract (mligo)" counter_mligo ;
     test no "counter contract (religo)" counter_religo ;
-    test y "let-in (mligo)" let_in_mligo ;
-    test y "let-in (religo)" let_in_religo ;
+    test no "let-in (mligo)" let_in_mligo ;
+    test no "let-in (religo)" let_in_religo ;
     test no "local type declaration (ligo)" local_type_decl_ligo;
     test no "local type declaration (mligo)" local_type_decl_mligo;
     test no "local type declaration (religo)" local_type_decl_religo;
