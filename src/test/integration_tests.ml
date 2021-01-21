@@ -2459,9 +2459,9 @@ let main = test_suite "Integration (End to End)"
     test y "simple3" simple3 ;
     test no "simple4" simple4 ;
     test y "chain id" chain_id ;                         (* record *)
-    test y "bytes unpack" bytes_unpack ;                 (* record *)
-    test y "bytes unpack (mligo)" bytes_unpack_mligo ;   (* record *)
-    test y "bytes unpack (religo)" bytes_unpack_religo ; (* record *)
+    test no "bytes unpack" bytes_unpack ;                 (* record *)
+    test no "bytes unpack (mligo)" bytes_unpack_mligo ;   (* record *)
+    test no "bytes unpack (religo)" bytes_unpack_religo ; (* record *)
     test no "key hash" key_hash ;                         (* C_access_label *)
     test no "key hash (mligo)" key_hash_mligo ;           (* C_access_label *)
     test no "key hash (religo)" key_hash_religo ;         (* C_access_label *)
