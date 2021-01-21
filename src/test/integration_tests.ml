@@ -2569,8 +2569,8 @@ let main = test_suite "Integration (End to End)"
     test no "super counter contract" super_counter_contract_mligo ;
     test no "super counter contract (reasonligo)" super_counter_contract_religo ;
     test no "dispatch counter contract" dispatch_counter_contract ;
-    test y "basic (mligo)" basic_mligo ;
-    test y "basic (religo)" basic_religo ;
+    test no(*y*) "basic (mligo)" basic_mligo ;
+    test no(*y*) "basic (religo)" basic_religo ;
 
     test no "counter contract (mligo)" counter_mligo ;
     test no "counter contract (religo)" counter_religo ;
@@ -2595,8 +2595,8 @@ let main = test_suite "Integration (End to End)"
     test no "lambda mligo" lambda_mligo ;
     test no "lambda religo" lambda_religo ;
     test no "lambda ligo" lambda_ligo ;
-    test y "tez (ligo)" tez_ligo ;
-    test y "tez (mligo)" tez_mligo ;
+    test no(*y*) "tez (ligo)" tez_ligo ;
+    test no(*y*) "tez (mligo)" tez_mligo ;
 
     test no "lambda2 mligo" lambda2_mligo ;
     test no "lambda2 religo" lambda2_religo ;
@@ -2657,6 +2657,6 @@ let main = test_suite "Integration (End to End)"
     test no "tuple type (religo)" tuple_type_religo ;
     test no "no semicolon (religo)" no_semicolon_religo ;
     test no "loop_bugs (ligo)" loop_bugs_ligo ;
-    test y "tuple_list (religo)" tuple_list_religo ;
+    test no(*y*) "tuple_list (religo)" tuple_list_religo ;
     test y "single_record_expr (religo)" single_record_expr_religo ;
   ]
