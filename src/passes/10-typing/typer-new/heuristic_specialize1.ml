@@ -98,6 +98,7 @@ let propagator : (output_specialize1 , typer_error) propagator =
     let open Ast_typed.PP in
     (list_sep type_constraint_short (tag "\n  ")) in
   let () = Format.printf "specialize1: rm %a, add:\n  %a\n\n%!" Ast_typed.PP.type_constraint_simpl_short (SC_Poly a) pp_indented_constraint_list eqs in
+  Format.printf "Specialize : returning with new constraint %a\n%!" (PP_helpers.list_sep_d Ast_typed.PP.type_constraint_short) @@ eqs ;
     ok [
         {
           remove_constraints = [ SC_Poly a ];

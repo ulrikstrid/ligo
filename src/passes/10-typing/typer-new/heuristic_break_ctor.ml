@@ -25,24 +25,28 @@ let selector_ : type_constraint_simpl -> type_variable GroupedByVariable.t -> se
       with the same sort of constraint (constructor vs. constructor)
       is symmetric *)
       let other_rows_lhs = GroupedByVariable.get_rows_by_lhs c.tv grouped_by_variable_map in
-      let other_constructors_lhs = GroupedByVariable.get_constructors_by_lhs c.tv grouped_by_variable_map in
+      let other_constructors_lhs = 
+        List.filter (fun x -> not @@  (Ast_typed.Compare.c_constructor_simpl c x = 0)) @@ MultiSet.elements @@
+        GroupedByVariable.get_constructors_by_lhs c.tv grouped_by_variable_map in
       let () = ( if MultiSet.is_empty other_rows_lhs
                  then ()
                  else failwith (Format.asprintf "TODO: type error with %a ; %a" Ast_typed.PP.c_constructor_simpl c (MultiSet.pp Ast_typed.PP.c_row_simpl) other_rows_lhs))
       in    
-      let cs_pairs = List.map (fun x -> { a_k_var = `Constructor c ; a_k'_var' = `Constructor x }) (MultiSet.elements other_constructors_lhs) in
+      let cs_pairs = List.map (fun x -> { a_k_var = `Constructor c ; a_k'_var' = `Constructor x }) other_constructors_lhs in
       cs_pairs
     )
     | SC_Alias       _                -> [] (* TODO: ??? (beware: symmetry) *)
     | SC_Typeclass   _                -> []
     | SC_Poly        _                -> [] (* TODO: ??? (beware: symmetry) *)
     | SC_Row         r                -> (
-      let other_rows_lhs = GroupedByVariable.get_rows_by_lhs r.tv grouped_by_variable_map in
+      let other_rows_lhs = 
+        List.filter (fun x -> not @@  (Ast_typed.Compare.c_row_simpl r x = 0)) @@ MultiSet.elements @@
+        GroupedByVariable.get_rows_by_lhs r.tv grouped_by_variable_map in
       let constructors_lhs = GroupedByVariable.get_constructors_by_lhs r.tv grouped_by_variable_map in
       let () = ( if MultiSet.is_empty constructors_lhs
                  then ()
                  else failwith (Format.asprintf "TODO: type error with %a ; %a" Ast_typed.PP.c_row_simpl r (MultiSet.pp Ast_typed.PP.c_constructor_simpl) constructors_lhs)) in
-      let cs_pairs = List.map (fun x -> { a_k_var = `Row r ; a_k'_var' = `Row x }) (MultiSet.elements other_rows_lhs) in
+      let cs_pairs = List.map (fun x -> { a_k_var = `Row r ; a_k'_var' = `Row x }) other_rows_lhs in
       cs_pairs
     )
 
@@ -86,8 +90,8 @@ let propagator : (output_break_ctor, typer_error) propagator =
   let b_tv = repr @@ get_tv b in
   assert (Var.equal a_tv b_tv);
   (* produce constraints: *)
-  (* a.tv = b.tv *)
-  let eq1 = c_equation (wrap (Propagator_break_ctor "a") @@ P_variable a_tv) (wrap (Propagator_break_ctor "b") @@ P_variable b_tv) "propagator: break_ctor" in
+  (* a.tv = b.tv *) (* nope, already the same *)
+  (* let eq1 = c_equation (wrap (Propagator_break_ctor "a") @@ P_variable a_tv) (wrap (Propagator_break_ctor "b") @@ P_variable b_tv) "propagator: break_ctor" in *)
   (* let () = if Ast_typed.Debug.debug_new_typer then
       let p = Ast_typed.PP.c_constructor_simpl in
       Printf.fprintf stderr "%s" @@ Format.asprintf "\npropagator_break_ctor\na = %a\nb = %a\n%!" p a p b in *)
@@ -125,13 +129,14 @@ let propagator : (output_break_ctor, typer_error) propagator =
       in
       bind_map_list aux bindings
     | `Constructor a , `Constructor b -> (
-      let aux = fun aa bb -> c_equation (wrap (Propagator_break_ctor "a") @@ P_variable aa) (wrap (Propagator_break_ctor "a") @@ P_variable bb) "propagator: break_ctor: ctor" in
+      let aux = fun aa bb -> c_equation (wrap (Propagator_break_ctor "a") @@ P_variable aa) (wrap (Propagator_break_ctor "b") @@ P_variable bb) "propagator: break_ctor: ctor" in
       List.map2 aux a.tv_list b.tv_list
         ~ok ~fail:(fun _ _ -> fail @@ different_constant_tag_number_of_arguments __LOC__ a.c_tag b.c_tag (List.length a.tv_list) (List.length b.tv_list))
     )
     | _ -> failwith "type error"
   in
-  let eqs = eq1 :: eqs3 in
+  let eqs = eqs3 in
+  Format.printf "Break_ctor : returning with new constraint %a\n%!" (PP_helpers.list_sep_d Ast_typed.PP.type_constraint_short) @@ eqs ;
   ok [
     {
       remove_constraints = [];
