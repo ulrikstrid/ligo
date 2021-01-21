@@ -111,12 +111,30 @@ module Substitution = struct
       | (T.Literal_chain_id _ as x)
       | (T.Literal_operation _ as x) ->
         ok @@ x
-    and s_matching_expr : (T.matching_expr,_) w = fun ~substs _ ->
-      let _TODO = substs in
-      failwith "TODO: subst: unimplemented case s_matching"
-    and s_accessor  : (T.record_accessor,_) w = fun ~substs _ ->
-      let _TODO = substs in
-      failwith "TODO: subst: unimplemented case s_access_path"
+    and s_matching_expr : (T.matching_expr,_) w = fun ~(substs : substs) -> function
+      | Match_list {match_nil;match_cons={hd;tl;body;tv}} ->
+        let%bind match_nil = s_expression ~substs match_nil in
+        let%bind body      = s_expression ~substs body in
+        let%bind tv        = s_type_expression ~substs tv in
+        ok @@ T.Match_list {match_nil;match_cons={hd;tl;body;tv}}
+      | Match_option {match_none;match_some={opt;body;tv}} ->
+        let%bind match_none = s_expression ~substs match_none in
+        let%bind body      = s_expression ~substs body in
+        let%bind tv        = s_type_expression ~substs tv in
+        ok @@ T.Match_option {match_none;match_some={opt;body;tv}}
+      | Match_variant {cases;tv} ->
+        let%bind cases = bind_map_list (
+          fun ({constructor;pattern;body} : T.matching_content_case) ->
+            let%bind body = s_expression ~substs body in
+            ok @@ ({constructor;pattern;body} : T.matching_content_case)
+        ) cases in
+        let%bind tv = s_type_expression ~substs tv in
+        ok @@ T.Match_variant {cases;tv}
+
+    and s_accessor  : (T.record_accessor,_) w = fun ~substs {record;path} ->
+      let%bind record = s_expression ~substs record in
+      ok @@ ({record;path} : T.record_accessor)
+
 
     and s_expression_content : (T.expression_content,_) w = fun ~(substs : substs) -> function
       | T.E_literal         x ->
