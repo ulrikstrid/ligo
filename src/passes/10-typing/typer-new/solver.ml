@@ -137,12 +137,8 @@ end = struct
           if PolySet.mem el set then 
             set,lst
           else
-            match (el.c : type_constraint_) with
-            (* TODO: this should be done by the simplifier? *)
-            | C_equation { aval = {wrap_content=P_variable a} ; bval = {wrap_content=P_variable b} } when Var.equal a b -> set , lst
-            | _ ->
-              (* let () = Format.printf "\nTOTO ADD: %a\n" Ast_typed.PP.type_constraint_short el in *)
-              PolySet.add el set, el::lst
+            (* let () = Format.printf "\nTOTO ADD: %a\n" Ast_typed.PP.type_constraint_short el in *)
+            PolySet.add el set, el::lst
         in
         let pp_indented_constraint_list =
           let open PP_helpers in
@@ -154,7 +150,7 @@ end = struct
           (list_sep type_constraint_simpl_short (tag "\n  ")) in
         Format.printf "Start iteration with constraints :\n  %a\n\n%!" pp_indented_constraint_list constraints;
         let added_constraints, constraints' = List.fold_left aux (state.added_constraints,[]) constraints in
-        Format.printf "Constraint left :\n  %a\n%!" pp_indented_constraint_list constraints';
+        List.iter2 (fun a b -> assert (a = b)) constraints @@ List.rev constraints';
         let state = { state with added_constraints } in 
         (* Simplify constraints *)
         Format.printf "Simplify constraints\n%!";

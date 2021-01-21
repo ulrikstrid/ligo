@@ -276,6 +276,7 @@ let propagator : (output_tc_fundep, typer_error) propagator =
     }
   in
   let deduced : type_constraint list = List.map aux deduced in
+  Format.printf "Fundep : returning with new constraint %a\n%!" (PP_helpers.list_sep_d Ast_typed.PP.type_constraint_short) @@ cleaned::deduced ;
   ok [
       {
         remove_constraints = [SC_Typeclass selected.tc];
