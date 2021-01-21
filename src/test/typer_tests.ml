@@ -48,6 +48,13 @@ module TestExpressions = struct
     let b = I.e_bytes_hex "0b" in
     test_expression b  O.(t_bytes ())
 
+  let option () : (unit,_) result = test_expression I.(e_some @@ e_int Z.zero) O.(t_option @@ t_int ())
+
+  let application () : (unit, _) result =
+    test_expression
+      I.(e_application (e_lambda_ez (Location.wrap @@ Var.of_name "x") ~ascr:(t_int ()) (Some (t_int ())) (e_var "x")) @@ e_int Z.one)
+      O.(t_int ())
+
   let lambda () : (unit, _) result =
     test_expression
       I.(e_lambda_ez (Location.wrap @@ Var.of_name "x") ~ascr:(t_int ()) (Some (t_int ())) (e_var "x"))
@@ -104,6 +111,11 @@ module TestExpressions = struct
     test_expression
       I.(e_record @@ LMap.of_list [(Label "0",e_int (Z.of_int 32)); (Label "1", e_string (Standard "foo"))])
       O.(make_t_ez_record [("0",t_int ()); ("1",t_string ())])
+  
+  let ascription () : (unit, _) result =
+    test_expression
+      I.(e_annotation (e_int Z.one) (t_int ()))
+      O.(t_int ())
 
 
 end
@@ -121,6 +133,8 @@ let main = test_suite "Typer (from core AST)"
     test y "bool"            TestExpressions.bool ; (* needs variants *)
     test y "string"          TestExpressions.string ;
     test y "bytes"           TestExpressions.bytes ;    
+    test y "option"          TestExpressions.option ;    
+    test y "application"     TestExpressions.application ;
     test y "lambda"          TestExpressions.lambda ;
     test y "let_in"          TestExpressions.let_in ;
     test y "let_in_ascr"     TestExpressions.let_in_ascr ;
@@ -130,4 +144,5 @@ let main = test_suite "Typer (from core AST)"
     test no "record_accessor" TestExpressions.record_accessor ;
     test no "record_update"   TestExpressions.record_update ;
     test y "tuple"           TestExpressions.tuple ;
+    test y "ascription"      TestExpressions.ascription ;
   ]
