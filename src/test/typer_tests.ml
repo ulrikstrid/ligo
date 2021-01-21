@@ -53,10 +53,15 @@ module TestExpressions = struct
       I.(e_lambda_ez (Location.wrap @@ Var.of_name "x") ~ascr:(t_int ()) (Some (t_int ())) (e_var "x"))
       O.(t_function (t_int ()) (t_int ()) ())
 
-  let tuple () : (unit, _) result =
-    test_expression
-      I.(e_record @@ LMap.of_list [(Label "0",e_int (Z.of_int 32)); (Label "1", e_string (Standard "foo"))])
-      O.(make_t_ez_record [("0",t_int ()); ("1",t_string ())])
+  let let_in () : (unit, _) result =
+    test_expression 
+      I.(e_let_in_ez (Location.wrap @@ Var.of_name "x") false (e_int Z.zero) @@ e_var "x")
+      O.(t_int ())
+
+  let let_in_ascr () : (unit, _) result =
+    test_expression 
+      I.(e_let_in_ez (Location.wrap @@ Var.of_name "x") ~ascr:(t_int ()) false (e_int Z.zero) @@ e_var "x")
+      O.(t_int ())
 
   let constructor () : (unit, _) result =
     let variant_foo_bar = Ast_typed.t_sum_ez [
@@ -68,10 +73,37 @@ module TestExpressions = struct
       I.(e_constructor "Foo" (e_int (Z.of_int 32)))
       variant_foo_bar
 
+  let matching () : (unit, _) result =
+    let variant_foo_bar = Ast_typed.t_sum_ez [
+        ("Foo", Typed.t_int () );
+        ("Bar", Typed.t_string () ); ]
+    in
+    test_expression
+      ~env:(E.add_type (Var.of_name "test_t") variant_foo_bar E.empty)
+      I.(e_matching (e_constructor "Foo" (e_int (Z.of_int 32)))
+      @@ Match_variant [{constructor=Label "Foo"; proj=Location.wrap @@ Var.of_name "x"; body=e_var "x"};
+                        {constructor=Label "Bar"; proj=Location.wrap @@ Var.of_name "_"; body=e_int Z.zero}]
+      ) O.(t_int ())
+
   let record () : (unit, _) result =
     test_expression
       I.(e_record @@ LMap.of_list [(Label "foo", e_int (Z.of_int 32)); (Label "bar", e_string (Standard "foo"))])
       O.(make_t_ez_record [("foo", t_int ()); ("bar", t_string ())])
+
+  let record_accessor () : (unit, _) result =
+    test_expression
+      I.(e_record_accessor (e_record @@ LMap.of_list [(Label "foo", e_int Z.zero)]) @@ Label "foo")
+      O.(t_int ())
+
+  let record_update () : (unit, _) result =
+    test_expression
+      I.(e_record_update (e_record @@ LMap.of_list [(Label "foo", e_int Z.zero); (Label "bar", e_string (Standard "foo"))]) (Label "foo") @@ e_int Z.one)
+      O.(make_t_ez_record [("foo", t_int ()); ("bar", t_string ())])
+
+  let tuple () : (unit, _) result =
+    test_expression
+      I.(e_record @@ LMap.of_list [(Label "0",e_int (Z.of_int 32)); (Label "1", e_string (Standard "foo"))])
+      O.(make_t_ez_record [("0",t_int ()); ("1",t_string ())])
 
 
 end
@@ -84,13 +116,18 @@ let y = true
 let main = test_suite "Typer (from core AST)"
     @@ (fun lst -> List.map snd @@ match typer_switch () with Ast_typed.New -> List.filter fst lst | _ -> lst) @@ [
     test y "int" int ;
-    test y "unit"        TestExpressions.unit ;
-    test y "int2"        TestExpressions.int ;
-    test y "bool"        TestExpressions.bool ; (* needs variants *)
-    test y "string"      TestExpressions.string ;
-    test y "bytes"       TestExpressions.bytes ;    
-    test y "tuple"       TestExpressions.tuple ;
-    test y "constructor" TestExpressions.constructor ;
-    test y "record"      TestExpressions.record ;
-    test y "lambda"      TestExpressions.lambda ;
+    test y "unit"            TestExpressions.unit ;
+    test y "int2"            TestExpressions.int ;
+    test y "bool"            TestExpressions.bool ; (* needs variants *)
+    test y "string"          TestExpressions.string ;
+    test y "bytes"           TestExpressions.bytes ;    
+    test y "lambda"          TestExpressions.lambda ;
+    test y "let_in"          TestExpressions.let_in ;
+    test y "let_in_ascr"     TestExpressions.let_in_ascr ;
+    test y "constructor"     TestExpressions.constructor ;
+    test y "matching"        TestExpressions.matching ;
+    test y "record"          TestExpressions.record ;
+    test no "record_accessor" TestExpressions.record_accessor ;
+    test no "record_update"   TestExpressions.record_update ;
+    test y "tuple"           TestExpressions.tuple ;
   ]
