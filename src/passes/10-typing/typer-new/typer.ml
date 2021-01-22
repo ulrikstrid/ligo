@@ -25,6 +25,7 @@ let rec type_declaration env state : I.declaration -> (environment * _ O'.typer_
     Format.printf "Solving expression : %a\n%!" O.PP.declaration expr ;
     let%bind state = Solver.main state constraints in
     Format.printf "Leaving type declaration\n%!";
+    let () = Pretty_print_variables.flush_pending_print state in
     ok @@ (e,state, expr) in
   function
   | Declaration_type {type_binder; type_expr} ->
@@ -143,6 +144,7 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
 and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (environment * _ O'.typer_state * O.expression, typer_error) result = fun ?tv_opt e state ae ->
   let return : _ -> _ -> _ O'.typer_state -> _ (* return of type_expression *) = fun expr e state constraints ->
     let%bind new_state = Solver.main state constraints in
+    let () = Pretty_print_variables.flush_pending_print state in
     ok @@ (e,new_state, expr) in
   let%bind ((e,state,expr),constraints) = type_expression' ?tv_opt e state ae in
   return expr e state constraints
@@ -666,6 +668,7 @@ let type_program ~init_env (p : I.program) : (environment * O.program_fully_type
     Typesystem.Misc.Substitution.Pattern.s_program type_program_returns_env in
   let%bind p = Check.check_has_no_unification_vars p in
   let () = (if Ast_typed.Debug.json_new_typer then Printf.printf "%!\"end of JSON\"],\n###############################END_OF_JSON\n%!") in
+  let () = Pretty_print_variables.flush_pending_print state in
   ok (env, p, state)
 
 let type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.expression * _ O'.typer_state , typer_error) result =
@@ -678,6 +681,7 @@ let type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_op
       (fun (a,b,c) -> type_expression a b c) in
   let%bind () = Check.check_expression_has_no_unification_vars expr in
   let () = (if Ast_typed.Debug.json_new_typer then Printf.printf "%!\"end of JSON\"],\n###############################END_OF_JSON\n%!") in
+  let () = Pretty_print_variables.flush_pending_print state in
   ok (expr, state)
 
 let untype_expression       = Untyper.untype_expression
