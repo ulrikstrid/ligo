@@ -3,8 +3,8 @@ open Typer_common.Errors
 open Ast_typed.Types
 open Solver_helpers
 
+open Pretty_print_variables
 open Typesystem.Solver_types
-
 
 module All_vars(Plugins : Plugins) = struct
   module Plugin_states = Plugins.Indexers.PluginFields(PerPluginState)
@@ -63,7 +63,10 @@ let other_check all_constraints assignments =
           else 
             ok (PolySet.add repr_unification_var already_seen,
                 Compare_renaming.List [ Compare_renaming.List tree ; Leaf repr_unification_var ])
-        | None -> fail (corner_case (Format.asprintf "TODO ERROR in typecheck_utils: unassigned variable %a" Var.pp repr_unification_var))
+        | None ->
+          let msg () = (Format.asprintf "TODO ERROR in typecheck_utils: unassigned variable %a" Var.pp repr_unification_var) in
+          let () = queue_print (fun () -> Format.printf "%s" (msg())) in
+          fail (corner_case (msg ()))
       )
 
   let toposort :
@@ -91,7 +94,7 @@ let other_check all_constraints assignments =
         intermediate "canon" at the end = { int()↦α bool()↦β map(α,β)↦δ }
         intermediate "first" at the end { α↦α α↦χ β↦β δ↦δ γ↦γ }
         
-        loop for the example point γ just after the ".":
+        loop for the example point γ just after the "." in [ α β χ δ . γ ]:
           intermediate "canon" = { int()↦α bool()↦β map(α,β)↦δ }
           intermediate "first" { α↦α α↦χ β↦β δ↦δ }
           1) find_assignment(solver_repr(γ)) gives map(χ,β)                     else error "unassigned variable"
