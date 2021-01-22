@@ -114,7 +114,6 @@ end = struct
 
   (* apply all the selectors and propagators *)
   let add_constraint_and_apply_heuristics state constraint_ =
-    (*TODO : state.all_constraints should really be a set :)*)
     (* let () = queue_print (fun () -> Format.printf "Add constraint and apply heuristics for constraint: %a\n%!" Ast_typed.PP.type_constraint_simpl constraint_) in *)
     if PolySet.mem constraint_ state.all_constraints then ok (state, [])
     else
@@ -179,10 +178,12 @@ end = struct
     let%bind (state : typer_state) = select_and_propagate_all state initial_constraints in
     let () = queue_print (fun () -> Formatt.printf "With assignments :\n  %a\n%!"
       (Plugin_states.Assignments.pp Ast_typed.PP.type_variable) (Plugin_states.assignments state.plugin_states)#assignments) in
-    let%bind () = Typecheck.check (PolySet.elements state.all_constraints)
+    let failure = Typecheck.check (PolySet.elements state.all_constraints)
       (All_vars.all_vars state)
       (fun v -> UnionFind.Poly2.repr v state.aliases)
       (fun v -> Plugin_states.Assignments.find_opt v (Plugin_states.assignments state.plugin_states)#assignments) in
+    let () = if not @@ Trace.to_bool failure then Pretty_print_variables.flush_pending_print state in
+    let%bind () = failure in
     ok state
   
   (* This function is called when a program is fully compiled, and the

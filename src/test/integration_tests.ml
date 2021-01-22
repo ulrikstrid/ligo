@@ -2473,7 +2473,7 @@ let main = test_suite "Integration (End to End)"
     test y "simple1" simple1 ;
     test y "simple2" simple2 ;
     test y "simple3" simple3 ;
-    test y "simple4" simple4 ;
+    test no "simple4" simple4 ;
     test y "chain id" chain_id ;                         (* record *)
     test no "bytes unpack" bytes_unpack ;                 (* record *)
     test no "bytes unpack (mligo)" bytes_unpack_mligo ;   (* record *)

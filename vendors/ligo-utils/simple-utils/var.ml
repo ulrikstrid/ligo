@@ -40,12 +40,34 @@ let with_names_for_print : names_for_print -> (unit -> unit) -> unit = fun names
   let () = global_mutable_names_for_print := old in
   ()
 
+let rec int_to_unicode (x : Int.t) =
+  let digit =
+    let ( - ) = Int.sub in
+    let ( / ) = Int.div in
+    let ( * ) = Int.mul in
+    match (x - ((x / 10) * 10)) with
+      a when Int.equal a 0 -> "₀"
+    | a when Int.equal a 1 -> "₁"
+    | a when Int.equal a 2 -> "₂"
+    | a when Int.equal a 3 -> "₃"
+    | a when Int.equal a 4 -> "₄"
+    | a when Int.equal a 5 -> "₅"
+    | a when Int.equal a 6 -> "₆"
+    | a when Int.equal a 7 -> "₇"
+    | a when Int.equal a 8 -> "₈"
+    | a when Int.equal a 9 -> "₉"
+    | _ -> failwith (Format.asprintf "internal error: couldn't pretty-print int64: %d (is it a negative number?)" x)
+  in
+  if x = 0 then "" else (int_to_unicode (Int.div x 10)) ^ digit
+
 let pp ppf v =
   match v.name, v.counter with
   | "", None -> Format.fprintf ppf "%s" v.name
   | "", Some i ->
     let new_name = ((!global_mutable_names_for_print).get_name_for_print v) in
-    if new_name != "" then Format.fprintf ppf "%s#%d" new_name i else Format.fprintf ppf "#%d" i
+    if String.equal new_name ""
+    then Format.fprintf ppf "#%d" i
+    else Format.fprintf ppf "'%s%s" new_name (int_to_unicode i)
   | _, None -> Format.fprintf ppf "%s" v.name
   | _, Some i -> Format.fprintf ppf "%s#%d" v.name i
 
