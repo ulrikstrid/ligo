@@ -61,19 +61,20 @@ module Substitution = struct
       let () = ignore @@ substs in
       ok c
 
+    and s_rows : (T.rows,_) w = fun ~substs rows ->
+      let aux T.{ associated_type; michelson_annotation ; decl_pos } =
+        let%bind associated_type = s_type_expression ~substs associated_type in
+        ok @@ T.{ associated_type; michelson_annotation; decl_pos } in
+      let%bind content = Ast_typed.Helpers.bind_map_lmap aux rows.content in
+      ok @@ { rows with content }
+
     and s_type_content : (T.type_content,_) w = fun ~substs -> function
         | T.T_sum rows ->
-           let aux T.{ associated_type; michelson_annotation ; decl_pos } =
-             let%bind associated_type = s_type_expression ~substs associated_type in
-             ok @@ T.{ associated_type; michelson_annotation; decl_pos } in
-           let%bind content = Ast_typed.Helpers.bind_map_lmap aux rows.content in
-           ok @@ T.T_sum {content ; layout = rows.layout }
+          let%bind rows = s_rows ~substs rows in
+          ok @@ T.T_sum rows
         | T.T_record rows ->
-           let aux T.{ associated_type; michelson_annotation ; decl_pos } =
-             let%bind associated_type = s_type_expression ~substs associated_type in
-             ok @@ T.{ associated_type; michelson_annotation; decl_pos } in
-           let%bind content = Ast_typed.Helpers.bind_map_lmap aux rows.content in
-           ok @@ T.T_record {content ; layout = rows.layout }
+          let%bind rows = s_rows ~substs rows in
+          ok @@ T.T_sum rows
         | T.T_variable variable ->
            begin
              match substs ~variable with
@@ -131,6 +132,11 @@ module Substitution = struct
         ) cases in
         let%bind tv = s_type_expression ~substs tv in
         ok @@ T.Match_variant {cases;tv}
+      | Match_record {fields; body; record_type}  ->
+        let%bind fields = T.Helpers.bind_map_lmap (fun (a,b) -> let%bind b = s_type_expression ~substs b in ok (a,b)) fields in
+        let%bind body   = s_expression ~substs body in
+        let%bind record_type = s_rows ~substs record_type in
+        ok @@ T.Match_record {fields; body; record_type}
 
     and s_accessor  : (T.record_accessor,_) w = fun ~substs {record;path} ->
       let%bind record = s_expression ~substs record in

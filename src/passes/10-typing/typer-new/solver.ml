@@ -9,6 +9,9 @@ open Typesystem.Solver_types
 open Solver_helpers
 open Proof_trace_checker
 
+open Pretty_print_variables
+module Formatt = Format
+
 (*  ………………………………………………………………………………………………… Plugin-based solver below ………………………………………………………………………………………………… *)
 
 (* Later on, we'll ensure that all the heuristics register the
@@ -41,17 +44,16 @@ end = struct
 
   let pp_typer_state = fun ppf ({ all_constraints; plugin_states; aliases ; already_selected_and_propagators } : typer_state) ->
     let open Typesystem.Solver_types in
-    let open Format in
     let open PP_helpers in
     let module MapPP = Plugins.Indexers.MapPlugins(PPPlugin) in
     let pp_indexers ppf states =
-      Format.fprintf ppf "@[ <@ %a ]@ >" (fun ppf states -> let _ : plugin_units = MapPP.f ppf states in ()) states
+      queue_print (fun () -> Formatt.fprintf ppf "@[ <@ %a ]@ >" (fun ppf states -> let _ : plugin_units = MapPP.f ppf states in ()) states)
     in
-    Format.fprintf ppf "{@[<hv 2> @ all_constaints = %a;@ plugin_states = %a ;@ aliases = %a ;@ already_selected_and_propagators = %a @]@ }"
+    queue_print (fun () -> Formatt.fprintf ppf "{@[<hv 2> @ all_constaints = %a;@ plugin_states = %a ;@ aliases = %a ;@ already_selected_and_propagators = %a @]@ }"
       (RedBlackTrees.PolySet.pp PP.type_constraint_) all_constraints
       pp_indexers plugin_states
       (UnionFind.Poly2.pp Ast_typed.PP.type_variable) aliases
-      (list_sep pp_ex_propagator_state (fun ppf () -> fprintf ppf " ;@ ")) already_selected_and_propagators
+      (list_sep pp_ex_propagator_state (fun ppf () -> Formatt.fprintf ppf " ;@ ")) already_selected_and_propagators)
 
   let add_alias : typer_state -> type_constraint_simpl -> (typer_state option, typer_error) Simple_utils.Trace.result =
     fun { all_constraints ; added_constraints ; plugin_states ; aliases ; already_selected_and_propagators } new_constraint ->
@@ -77,7 +79,7 @@ end = struct
     try Some (UF.repr variable aliases) with Not_found -> None
 
   let aux_remove state to_remove =
-    let () = Format.printf "Remove constraint :\n  %a\n\n%!" Ast_typed.PP.type_constraint_simpl_short to_remove in
+    let () = queue_print (fun () -> Formatt.printf "Remove constraint :\n  %a\n\n%!" Ast_typed.PP.type_constraint_simpl_short to_remove) in
     let module MapRemoveConstraint = Plugins.Indexers.MapPlugins(RemoveConstraint) in
     let%bind plugin_states = MapRemoveConstraint.f (mk_repr state, to_remove) state.plugin_states in
     ok {state with plugin_states}
@@ -96,9 +98,9 @@ end = struct
     ok (state, List.flatten new_constraints)
 
   let aux_heuristic constraint_ state (Heuristic_state heuristic) =
-    (* Format.printf "Apply heuristic %s for constraint : %a\n%!" 
+    (* let () = queue_print (fun () -> Formatt.printf "Apply heuristic %s for constraint : %a\n%!" 
       heuristic.plugin.heuristic_name
-      PP.type_constraint_ constraint_; *)
+      PP.type_constraint_ constraint_ in *)
     let selector_outputs = heuristic.plugin.selector constraint_ state.plugin_states in
     let aux = fun (l,already_selected) el ->
       if PolySet.mem el already_selected then (l,already_selected)
@@ -107,13 +109,13 @@ end = struct
     let selector_outputs,already_selected = List.fold_left aux ([], heuristic.already_selected) selector_outputs in
     let heuristic = { heuristic with already_selected } in
     let%bind (state, new_constraints) = bind_fold_map_list (aux_propagator heuristic) state selector_outputs in
-    (* Format.printf "Return with new constraints: (%a)\n%!" Ast_typed.PP.(list_sep_d (list_sep_d type_constraint_short)) new_constraints; *)
+    (* let () = queue_print (fun () -> Format.printf "Return with new constraints: (%a)\n%!" Ast_typed.PP.(list_sep_d (list_sep_d type_constraint_short)) new_constraints) in *)
     ok (state, (Heuristic_state heuristic, List.flatten new_constraints))
 
   (* apply all the selectors and propagators *)
   let add_constraint_and_apply_heuristics state constraint_ =
     (*TODO : state.all_constraints should really be a set :)*)
-    (* Format.printf "Add constraint and apply heuristics for constraint: %a\n%!" Ast_typed.PP.type_constraint_simpl constraint_; *)
+    (* let () = queue_print (fun () -> Format.printf "Add constraint and apply heuristics for constraint: %a\n%!" Ast_typed.PP.type_constraint_simpl constraint_) in *)
     if PolySet.mem constraint_ state.all_constraints then ok (state, [])
     else
       let state =
@@ -130,7 +132,7 @@ end = struct
   let select_and_propagate_all : typer_state -> type_constraint list -> typer_state result =
     fun state initial_constraints ->
     (* To change the order in which the constraints are processed, modify this loop. *)
-    Format.printf "In select and propagate all\n%!";
+    let () = queue_print (fun () -> Formatt.printf "In select and propagate all\n%!") in
     until
       (* repeat until the worklist is empty *)
       (function (_, []) -> true | _ -> false)
@@ -139,7 +141,7 @@ end = struct
           if PolySet.mem el set then 
             set,lst
           else
-            (* let () = Format.printf "\nTOTO ADD: %a\n" Ast_typed.PP.type_constraint_short el in *)
+            (* let () = queue_print (fun () -> Format.printf "\nTOTO ADD: %a\n" Ast_typed.PP.type_constraint_short el) in *)
             PolySet.add el set, el::lst
         in
         let pp_indented_constraint_list =
@@ -150,20 +152,20 @@ end = struct
           let open PP_helpers in
           let open Ast_typed.PP in
           (list_sep type_constraint_simpl_short (tag "\n  ")) in
-        Format.printf "Start iteration with constraints :\n  %a\n\n%!" pp_indented_constraint_list constraints;
+        let () = queue_print (fun () -> Formatt.printf "Start iteration with constraints :\n  %a\n\n%!" pp_indented_constraint_list constraints) in
         let added_constraints, constraints' = List.fold_left aux (state.added_constraints,[]) constraints in
         List.iter2 (fun a b -> assert (a = b)) constraints @@ List.rev constraints';
         let state = { state with added_constraints } in 
         (* Simplify constraints *)
-        Format.printf "Simplify constraints\n%!";
+        let () = queue_print (fun () -> Formatt.printf "Simplify constraints\n%!") in
         let constraints'' = List.flatten @@ List.map simplify_constraint constraints' in
         (* Extract aliases and apply them *)
-        Format.printf "Constraint left : %a\n%!" pp_indented_constraint_simpl_list constraints'';
-        Format.printf "Extract aliases and apply them\n%!";
+        let () = queue_print (fun () -> Formatt.printf "Constraint left : %a\n%!" pp_indented_constraint_simpl_list constraints'') in
+        let () = queue_print (fun () -> Formatt.printf "Extract aliases and apply them\n%!") in
         let%bind (state, constraints) = bind_fold_map_list (fun state c -> match%bind (add_alias state c) with Some state -> ok (state, []) | None -> ok (state, [c])) state constraints'' in
         let constraints = List.flatten constraints in
 
-        Format.printf "Constraints :%a\n%!" pp_indented_constraint_simpl_list constraints;
+        let () = queue_print (fun () -> Formatt.printf "Constraints :%a\n%!" pp_indented_constraint_simpl_list constraints) in
         let%bind (state, new_constraints) = bind_fold_map_list add_constraint_and_apply_heuristics state constraints in
         ok (state, List.flatten new_constraints))
       (state, initial_constraints)
@@ -173,10 +175,10 @@ end = struct
   module All_vars = Typecheck_utils.All_vars(Plugins)
   let main : typer_state -> type_constraint list -> typer_state result =
     fun state initial_constraints ->
-    Format.printf "In solver main\n%!";
+    let () = queue_print (fun () -> Formatt.printf "In solver main\n%!") in
     let%bind (state : typer_state) = select_and_propagate_all state initial_constraints in
-    Format.printf "With assignments :\n  %a\n%!"
-      (Plugin_states.Assignments.pp Ast_typed.PP.type_variable) (Plugin_states.assignments state.plugin_states)#assignments;
+    let () = queue_print (fun () -> Formatt.printf "With assignments :\n  %a\n%!"
+      (Plugin_states.Assignments.pp Ast_typed.PP.type_variable) (Plugin_states.assignments state.plugin_states)#assignments) in
     let%bind () = Typecheck.check (PolySet.elements state.all_constraints)
       (All_vars.all_vars state)
       (fun v -> UnionFind.Poly2.repr v state.aliases)

@@ -29,12 +29,25 @@ let of_yojson = fun t ->
   | _ ->
      Utils.error_yojson_format "{name: string; counter: int option}"
 
-(* A synonym *)
+type names_for_print = { get_name_for_print : 'a . 'a t -> string }
+let global_mutable_names_for_print : names_for_print ref =
+  ref { get_name_for_print =  (fun _ -> "") }
+
+let with_names_for_print : names_for_print -> (unit -> unit) -> unit = fun names_for_print thunk ->
+  let old = !global_mutable_names_for_print in
+  let () = global_mutable_names_for_print := names_for_print in
+  let () = thunk () in
+  let () = global_mutable_names_for_print := old in
+  ()
 
 let pp ppf v =
-  match v.counter with
-  | None -> Format.fprintf ppf "%s" v.name
-  | Some i -> Format.fprintf ppf "%s#%d" v.name i
+  match v.name, v.counter with
+  | "", None -> Format.fprintf ppf "%s" v.name
+  | "", Some i ->
+    let new_name = ((!global_mutable_names_for_print).get_name_for_print v) in
+    if new_name != "" then Format.fprintf ppf "%s#%d" new_name i else Format.fprintf ppf "#%d" i
+  | _, None -> Format.fprintf ppf "%s" v.name
+  | _, Some i -> Format.fprintf ppf "%s#%d" v.name i
 
 module Int = X_int
 module Option = X_option
@@ -82,5 +95,7 @@ let is_generated var =
   match var.counter with
   | None -> false
   | Some _ -> true
+
+let internal_get_name_and_counter var = (var.name, var.counter)
 
 let todo_cast : 'a 'b . 'a t -> 'b t = fun { name ; counter } -> { name ; counter }
