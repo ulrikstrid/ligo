@@ -21,6 +21,7 @@ let selector_ : type_constraint_simpl -> type_variable GroupedByVariable.t -> se
   fun type_constraint_simpl grouped_by_variable_map ->
     match type_constraint_simpl with
     | SC_Constructor c -> (
+    Format.printf "In break_ctor.selector_ for %a\n%!" Ast_typed.PP.type_constraint_simpl_short type_constraint_simpl;
       (* finding other constraints related to the same type variable and
       with the same sort of constraint (constructor vs. constructor)
       is symmetric *)
@@ -28,6 +29,7 @@ let selector_ : type_constraint_simpl -> type_variable GroupedByVariable.t -> se
       let other_constructors_lhs = 
         List.filter (fun x -> not @@  (Ast_typed.Compare.c_constructor_simpl c x = 0)) @@ MultiSet.elements @@
         GroupedByVariable.get_constructors_by_lhs c.tv grouped_by_variable_map in
+      Format.printf "Other constructor : (%a)\n%!" Ast_typed.PP.(list_sep_d c_constructor_simpl_short) other_constructors_lhs;
       let () = ( if MultiSet.is_empty other_rows_lhs
                  then ()
                  else failwith (Format.asprintf "TODO: type error with %a ; %a" Ast_typed.PP.c_constructor_simpl c (MultiSet.pp Ast_typed.PP.c_row_simpl) other_rows_lhs))
@@ -39,6 +41,7 @@ let selector_ : type_constraint_simpl -> type_variable GroupedByVariable.t -> se
     | SC_Typeclass   _                -> []
     | SC_Poly        _                -> [] (* TODO: ??? (beware: symmetry) *)
     | SC_Row         r                -> (
+    Format.printf "In break_ctor.selector_ for %a\n%!" Ast_typed.PP.type_constraint_simpl_short type_constraint_simpl;
       let other_rows_lhs = 
         List.filter (fun x -> not @@  (Ast_typed.Compare.c_row_simpl r x = 0)) @@ MultiSet.elements @@
         GroupedByVariable.get_rows_by_lhs r.tv grouped_by_variable_map in
@@ -60,6 +63,7 @@ let selector : type_constraint_simpl -> _ flds -> selector_output list =
 
 let alias_selector : type_variable -> type_variable -> _ flds -> selector_output list =
   fun a b indexes ->
+  Format.printf "Break_ctor.alias_selector %a %a\n%!" Ast_typed.PP.type_variable a Ast_typed.PP.type_variable b ;
   let a_constructors = GroupedByVariable.get_constructors_by_lhs a indexes#grouped_by_variable in
   let b_constructors = GroupedByVariable.get_constructors_by_lhs b indexes#grouped_by_variable in
   let a_rows = GroupedByVariable.get_rows_by_lhs a indexes#grouped_by_variable in
