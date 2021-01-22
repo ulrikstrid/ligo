@@ -49,6 +49,8 @@ module TestExpressions = struct
     test_expression b  O.(t_bytes ())
 
   let option () : (unit,_) result = test_expression I.(e_some @@ e_int Z.zero) O.(t_option @@ t_int ())
+  let bytes_pack () : (unit,_) result = test_expression I.(e_constant C_BYTES_PACK [e_string @@ Standard "pack"]) O.(t_bytes ())
+  let bytes_unpack () : (unit,_) result = test_expression I.(e_annotation (e_constant C_BYTES_UNPACK [e_bytes_string @@ "unpack"]) (t_option @@ t_bytes ())) O.(t_option @@ t_bytes ())
 
   let application () : (unit, _) result =
     test_expression
@@ -134,6 +136,8 @@ let main = test_suite "Typer (from core AST)"
     test y "string"          TestExpressions.string ;
     test y "bytes"           TestExpressions.bytes ;    
     test y "option"          TestExpressions.option ;    
+    test y "bytes_pack"      TestExpressions.bytes_pack ;    
+    test y "bytes_unpack"    TestExpressions.bytes_unpack ;    
     test y "application"     TestExpressions.application ;
     test y "lambda"          TestExpressions.lambda ;
     test y "let_in"          TestExpressions.let_in ;

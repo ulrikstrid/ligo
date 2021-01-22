@@ -57,9 +57,11 @@ end = struct
     fun { all_constraints ; added_constraints ; plugin_states ; aliases ; already_selected_and_propagators } new_constraint ->
     match new_constraint with
     | Ast_typed.Types.SC_Alias { reason_alias_simpl=_; a; b } ->
+      Format.printf "Add_alias %a=%a\n%!" Ast_typed.PP.type_variable a Ast_typed.PP.type_variable b;
       let all_constraints = PolySet.add new_constraint all_constraints in
       let UnionFind.Poly2.{ partition = aliases; changed_reprs } =
         UnionFind.Poly2.equiv a b aliases in
+      Format.printf "changed_reprs :(%a)\n%!" (PP_helpers.list_sep_d Ast_typed.PP.(fun ppf ({demoted_repr=a;new_repr=b}: _ UnionFind.Poly2.changed_reprs) -> Format.fprintf ppf "%a -> %a" type_variable a type_variable b)) changed_reprs ;
       let plugin_states = List.fold_left
           (fun state changed_reprs ->
              let module MapMergeAliases = Plugins.Indexers.MapPlugins(MergeAliases) in
