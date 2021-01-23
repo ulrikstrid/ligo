@@ -612,7 +612,7 @@ fun _statement ->
 
 and compile_statement : CST.statement -> statement_result result = fun statement ->
   match statement with
-  (* | SVar v -> failwith "TODO: var statement"
+  (* 
   | SExpr e -> (
     let e' = compile_expression e in
     ok @@ Context (

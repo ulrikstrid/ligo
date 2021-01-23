@@ -135,7 +135,6 @@ and print_statement state = function
     print_token   state lbrace "{";
     print_nsepseq state ";" print_statement inside;
     print_token   state rbrace "}";
-| SVar var ->   print_var state var
 | SExpr expr -> print_expr state expr
 | SCond cond -> print_conditional state cond
 | SReturn {value = {kwd_return; expr}; _} ->
@@ -599,9 +598,6 @@ and pp_statement state = function
     let statements = Utils.nsepseq_to_list inside in
     let apply len rank = pp_statement (state#pad len rank) in
     List.iteri (List.length statements |> apply) statements
-| SVar v ->
-    pp_node  state "SVar";
-    pp_ident (state#pad 1 0) v
 | SExpr e ->
     pp_node  state "SExpr";
     pp_expr (state#pad 1 0) e

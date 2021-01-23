@@ -320,7 +320,6 @@ and expr =
 
 and statement =
   SBlock      of (statement, semi) nsepseq braced reg
-| SVar        of variable
 | SExpr       of expr
 | SCond       of cond_statement reg
 | SReturn     of return reg
@@ -510,7 +509,6 @@ let rec expr_to_region = function
 let statement_to_region = function
   SExpr e -> expr_to_region e
 | SBlock {region; _ }
-| SVar {region; _}
 | SCond {region; _}
 | SReturn {region; _}
 | SLet  {region; _}
