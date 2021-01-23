@@ -137,7 +137,7 @@ let main = test_suite "Typer (from core AST)"
     test y "bytes"           TestExpressions.bytes ;    
     test y "option"          TestExpressions.option ;    
     test y "bytes_pack"      TestExpressions.bytes_pack ;    
-    test y "bytes_unpack"    TestExpressions.bytes_unpack ;    
+    test no "bytes_unpack"    TestExpressions.bytes_unpack ;    
     test y "application"     TestExpressions.application ;
     test y "lambda"          TestExpressions.lambda ;
     test y "let_in"          TestExpressions.let_in ;
