@@ -4,10 +4,10 @@
    Setting. J. Funct. Program. 9(4): 471-477 (1999)
 *)
 
-type colour = NegBlack | Red | Black | DoubleBlack
+type colour = Red | Black
 
 type 'a t = private
-  L | BBL
+  L
 | T of colour * 'a t * 'a * 'a t
 
 val empty: 'a t
