@@ -55,29 +55,6 @@ end = struct
       (UnionFind.Poly2.pp Ast_typed.PP.type_variable) aliases
       (list_sep pp_ex_propagator_state (fun ppf () -> Formatt.fprintf ppf " ;@ ")) already_selected_and_propagators)
 
-  let add_alias : typer_state -> type_constraint_simpl -> (typer_state option, typer_error) Simple_utils.Trace.result =
-    fun { all_constraints ; added_constraints ; plugin_states ; aliases ; already_selected_and_propagators } new_constraint ->
-    match new_constraint with
-    | Ast_typed.Types.SC_Alias { reason_alias_simpl=_; a; b } ->
-      Format.printf "Add_alias %a=%a\n%!" Ast_typed.PP.type_variable a Ast_typed.PP.type_variable b;
-      let all_constraints = PolySet.add new_constraint all_constraints in
-      let UnionFind.Poly2.{ partition = aliases; changed_reprs } =
-        UnionFind.Poly2.equiv a b aliases in
-      Format.printf "changed_reprs :(%a)\n%!" (PP_helpers.list_sep_d Ast_typed.PP.(fun ppf ({demoted_repr=a;new_repr=b}: _ UnionFind.Poly2.changed_reprs) -> Format.fprintf ppf "%a -> %a" type_variable a type_variable b)) changed_reprs ;
-      let plugin_states = List.fold_left
-          (fun state changed_reprs ->
-             let module MapMergeAliases = Plugins.Indexers.MapPlugins(MergeAliases) in
-             MapMergeAliases.f changed_reprs state)
-          plugin_states changed_reprs in
-      ok @@ Some { all_constraints ; added_constraints ; plugin_states ; aliases ; already_selected_and_propagators }
-    | _ ->
-      ok @@ None
-
-  let get_alias variable aliases =
-    trace_option (corner_case (Format.asprintf "can't find alias root of variable %a" Var.pp variable)) @@
-    (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
-    try Some (UF.repr variable aliases) with Not_found -> None
-
   let aux_remove state to_remove =
     let () = queue_print (fun () -> Formatt.printf "Remove constraint :\n  %a\n\n%!" Ast_typed.PP.type_constraint_simpl_short to_remove) in
     let module MapRemoveConstraint = Plugins.Indexers.MapPlugins(RemoveConstraint) in
@@ -96,6 +73,67 @@ end = struct
     let%bind updates = heuristic.plugin.propagator selector_output (mk_repr state) in
     let%bind (state, new_constraints) = bind_fold_map_list aux_update state updates in
     ok (state, List.flatten new_constraints)
+
+  let aux_heuristic_alias demoted_repr new_repr state (Heuristic_state heuristic) =
+    let selector_outputs = heuristic.plugin.alias_selector demoted_repr new_repr state.plugin_states in
+    let aux = fun (l,already_selected) el ->
+      if PolySet.mem el already_selected then (l,already_selected)
+      else (el::l, PolySet.add el already_selected)
+    in
+    let selector_outputs,already_selected = List.fold_left aux ([], heuristic.already_selected) selector_outputs in
+    let heuristic = { heuristic with already_selected } in
+    let%bind (state, new_constraints) = bind_fold_map_list (aux_propagator heuristic) state selector_outputs in
+    (* let () = queue_print (fun () -> Format.printf "Return with new constraints: (%a)\n%!" Ast_typed.PP.(list_sep_d (list_sep_d type_constraint_short)) new_constraints) in *)
+    ok (state, (Heuristic_state heuristic, List.flatten new_constraints))
+
+  let add_alias : typer_state -> type_constraint_simpl -> ((typer_state * type_constraint_list) option, typer_error) Simple_utils.Trace.result =
+    fun state new_constraint ->
+    match new_constraint with
+    | Ast_typed.Types.SC_Alias { reason_alias_simpl=_; a; b } ->
+      let () = queue_print (fun () -> Format.printf "Add_alias %a=%a\n%!" Ast_typed.PP.type_variable a Ast_typed.PP.type_variable b) in
+
+      (* get the changed reprs due to that alias constraint *)
+      let UnionFind.Poly2.{ partition = aliases; changed_reprs } =
+        UnionFind.Poly2.equiv a b state.aliases in
+      let () = queue_print (fun () -> Format.printf "changed_reprs :(%a)\n%!" Ast_typed.PP.(fun ppf ({demoted_repr=a;new_repr=b}: _ UnionFind.Poly2.changed_reprs) -> Format.fprintf ppf "%a -> %a" type_variable a type_variable b) changed_reprs) in
+      let state = { state with aliases } in
+
+      (* apply all the alias_selectors and propagators given the new alias *)
+      let%bind (state, new_constraints) = (
+        let () = Format.printf "aux_heuristic_alias is disabled temporarily, because enabling it made some other tests fail (it should be enabled, but it makes these tests go through some code paths which are bogus, the tests worked before because they managed to infer without these heuristics, but enabling them is needed)" in
+        if false then
+          (* TODO: possible bug: here, should be use the demoted_repr
+             and new_repr, or the ones as given by the alias? We should
+             maintain as much as possible the illusion that aliased
+             variables have always been aliased from the start,
+             therefore if the alias constraint contains outdated
+             references, it makes sense to update them before calling
+             the .alias_selector functions. *)
+          let%bind (state, hc) = bind_fold_map_list (aux_heuristic_alias UnionFind.Poly2.(changed_reprs.demoted_repr) UnionFind.Poly2.(changed_reprs.new_repr)) state state.already_selected_and_propagators in
+          let (already_selected_and_propagators, new_constraints) = List.split hc in
+          let state = { state with already_selected_and_propagators } in
+          ok (state, List.flatten new_constraints)
+        else
+          ok (state, [])
+      ) in
+
+      let { all_constraints ; added_constraints ; plugin_states ; aliases ; already_selected_and_propagators } = state in
+      
+      (* Add alias constraint to the set of all constraints *)
+      let all_constraints = PolySet.add new_constraint all_constraints in
+
+      let plugin_states =
+        let module MapMergeAliases = Plugins.Indexers.MapPlugins(MergeAliases) in
+        MapMergeAliases.f changed_reprs plugin_states in
+
+      ok @@ Some ({ all_constraints ; added_constraints ; plugin_states ; aliases ; already_selected_and_propagators }, new_constraints)
+    | _ ->
+      ok @@ None
+
+  let get_alias variable aliases =
+    trace_option (corner_case (Format.asprintf "can't find alias root of variable %a" Var.pp variable)) @@
+    (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
+    try Some (UF.repr variable aliases) with Not_found -> None
 
   let aux_heuristic constraint_ state (Heuristic_state heuristic) =
     (* let () = queue_print (fun () -> Formatt.printf "Apply heuristic %s for constraint : %a\n%!" 
@@ -161,12 +199,18 @@ end = struct
         (* Extract aliases and apply them *)
         let () = queue_print (fun () -> Formatt.printf "Constraint left : %a\n%!" pp_indented_constraint_simpl_list constraints'') in
         let () = queue_print (fun () -> Formatt.printf "Extract aliases and apply them\n%!") in
-        let%bind (state, constraints) = bind_fold_map_list (fun state c -> match%bind (add_alias state c) with Some state -> ok (state, []) | None -> ok (state, [c])) state constraints'' in
+        let%bind (state, new_constraints_from_aliases), constraints = bind_fold_map_list
+            (fun (state, nc) c ->
+               match%bind (add_alias state c) with
+                 Some (state, new_constraints) -> ok ((state, new_constraints @ nc), [])
+               | None -> ok ((state, nc), [c]))
+            (state, [])
+            constraints'' in
         let constraints = List.flatten constraints in
 
         let () = queue_print (fun () -> Formatt.printf "Constraints :%a\n%!" pp_indented_constraint_simpl_list constraints) in
         let%bind (state, new_constraints) = bind_fold_map_list add_constraint_and_apply_heuristics state constraints in
-        ok (state, List.flatten new_constraints))
+        ok (state, new_constraints_from_aliases @ List.flatten new_constraints))
       (state, initial_constraints)
     >>|? fst
   (* already_selected_and_propagators ; all_constraints ; plugin_states ; aliases *)

@@ -18,7 +18,7 @@ val empty : (Format.formatter -> 'a -> unit) -> ('a -> 'a -> int) -> 'a partitio
         the equivalence of items [i] and [j]. If both [i] and [j] are
         already known to be equivalent, then [equiv i j p == p]. *)
 type 'item changed_reprs = { demoted_repr : 'item; new_repr : 'item }
-type 'item equiv_result = { partition : 'item partition; changed_reprs : 'item changed_reprs list }
+type 'item equiv_result = { partition : 'item partition; changed_reprs : 'item changed_reprs }
 val equiv : ?debug:(Format.formatter -> 'item * 'item node -> unit) -> 'item -> 'item -> 'item partition -> 'item equiv_result
 
 (** The value of [alias i j p] is the partition [p] extended with

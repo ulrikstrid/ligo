@@ -121,13 +121,19 @@ let restrict_one (cr : constructor_or_row) (allowed : type_value) =
   | _, (P_forall _ | P_variable _ | P_apply _ | P_row _ | P_constant _) -> None (* TODO: does this mean that we can't satisfy these constraints? *)
 
 (* Restricts a typeclass to the possible cases given v = k(a, …) in c *)
-let restrict (constructor_or_row : constructor_or_row) (tcs : c_typeclass_simpl) =
+let restrict repr (constructor_or_row : constructor_or_row) (tcs : c_typeclass_simpl) =
   let (tv_list, tv) = match constructor_or_row with
     | `Row r -> LMap.to_list r.tv_map , r.tv
     | `Constructor c -> c.tv_list , c.tv
   in
   (* TODO: this is bogus if there is shadowing *)
-  let index = List.find_index (Var.equal tv) tcs.args in
+  let index =
+    let repr_tv = (repr tv) in
+    try List.find_index (fun x -> Var.equal repr_tv (repr x)) tcs.args
+    with Failure _ ->
+      failwith (Format.asprintf "problem: couldn't find tv = %a in tcs.args = %a"
+                  Var.pp tv (Ast_typed.PP.list_sep_d Var.pp) tcs.args);
+  in
   (* Eliminate the impossible cases and splice in the type arguments
      for the possible cases: *)
   let aux allowed_tuple =
@@ -237,11 +243,12 @@ let deduce_and_clean : c_typeclass_simpl -> (deduce_and_clean_result, _) result 
   ok { deduced ; cleaned }
 
 let propagator : (output_tc_fundep, typer_error) propagator =
-  fun selected _repr ->
+  fun selected repr ->
   (* The selector is expected to provide constraints with the shape (α
      = κ(β, …)) and to update the private storage to keep track of the
      refined typeclass *)
-  let restricted = restrict selected.c selected.tc in
+  let () = Format.printf "heuristic_tc_fundep propagator: %a\n" Ast_typed.PP.output_tc_fundep selected in
+  let restricted = restrict repr selected.c selected.tc in
   let%bind {deduced ; cleaned} = deduce_and_clean restricted in
   (* TODO: this is because we cannot return a simplified constraint,
      and instead need to retun a constraint as it would appear if it
@@ -277,13 +284,15 @@ let propagator : (output_tc_fundep, typer_error) propagator =
   in
   let deduced : type_constraint list = List.map aux deduced in
   Format.printf "Fundep : returning with new constraint %a\n%!" (PP_helpers.list_sep_d Ast_typed.PP.type_constraint_short) @@ cleaned::deduced ;
-  ok [
+  let ret = [
       {
         remove_constraints = [SC_Typeclass selected.tc];
         add_constraints = cleaned :: deduced;
         proof_trace = Axiom (HandWaved "cut with the following (cleaned => removed_typeclass) to show that the removal does not lose info, (removed_typeclass => selected.c => cleaned) to show that the cleaned vesion does not introduce unwanted constraints.")
       }
     ]
+  in let () = Format.printf "Returning from heuristic tc_fundep"
+  in ok ret
 
 (* ***********************************************************************
  * Heuristic
