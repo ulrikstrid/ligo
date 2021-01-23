@@ -4,11 +4,10 @@
    Setting. J. Funct. Program. 9(4): 471-477 (1999)
 *)
 
-type colour = NegBlack | Red | Black | DoubleBlack
+type colour = Red | Black
 
 type 'a t =
   L
-| BBL (*Double black leaf*)
 | T of colour * 'a t * 'a * 'a t
 
 let empty = L
@@ -17,48 +16,20 @@ let is_empty m = (m = empty)
 
 let blacken = function
   L   -> L
-| BBL -> L
 | T (_, left, root, right) -> T (Black, left, root, right)
 
 let redden = function
-  L | BBL -> failwith "Can't redden a leaf"
+  L -> failwith "Can't redden a leaf"
 | T (_, left, root, right) -> T (Red, left, root, right)
 
 let rec pp f ppf = function
   L   -> Format.fprintf ppf "L (Black)"
-| BBL -> Format.fprintf ppf "BBL (Black-Black)"
 | T (c, l, root, r) ->
     Format.fprintf ppf "Int (%s,%a,%a,%a)"
-    (match c with NegBlack -> "-Black" | Red -> "Red" | Black -> "Black" | DoubleBlack -> "Black-Black")
+    (match c with  Red -> "Red" | Black -> "Black")
     (pp f) l
     f root
     (pp f) r
-
-let blackInc = function
-  NegBlack -> Red
-| Red      -> Black
-| Black    -> DoubleBlack
-| DoubleBlack -> failwith "can't increase doubleBlack"
-
-let blackIncNode = function
-  T (c,l,v,r) -> T (blackInc c,l,v,r)
-| L   -> BBL
-| BBL -> failwith "can't increase a black-black leaft"
-
-let blackDec = function
-  DoubleBlack -> Black
-| Black       -> Red
-| Red         -> NegBlack
-| NegBlack    -> failwith "can't decrease -Black"
-
-let blackDecNode = function
-  T (c,l,v,r) -> T (blackDec c,l,v,r)
-| L -> failwith "can't decrease a black leaft"
-| BBL -> L
-
-let is_double_black = function
-  BBL | T (DoubleBlack, _,_,_) -> true
-| _ -> false
 
 let is_legal tree =
   let rec max_black_height = function
@@ -66,13 +37,11 @@ let is_legal tree =
       let max = max (max_black_height l) (max_black_height r) in
       if c == Black then max + 1 else max
   | L -> 1
-  | BBL -> failwith "Tree malformed"
   and min_black_height = function
     T (c, l, _, r) -> 
       let min = min (min_black_height l) (min_black_height r) in
       if c == Black then min + 1 else min
   | L -> 1
-  | BBL -> failwith "Tree malformed"
   and is_balanced tree = 
     let max = max_black_height tree in
     let min = min_black_height tree in
@@ -90,10 +59,10 @@ let is_legal tree =
   true
 
 let max = function
-  | L | BBL -> None
+  | L -> None
   | T (_,_,x,l) ->
   let rec max x = function
-    | L | BBL -> Some x
+    | L -> Some x
     | T (_,_,x,l) -> max x l
   in max x l
 
@@ -101,39 +70,33 @@ let count tree =
   let count = 0 in
   let rec aux count = function
     | L -> count
-    | BBL -> failwith "impossible"
     | T (_, l,_,r) -> aux (aux (count + 1) l) r
   in aux count tree
 
 let blackDepth tree =
   let rec aux count = function
     | L -> count + 1
-    | BBL -> failwith "impossible"
-    | T (NegBlack   , l, _, _) -> aux (count - 1) l
     | T (Red        , l, _, _) -> aux count l
     | T (Black      , l, _, _) -> aux (count + 1) l
-    | T (DoubleBlack, l, _, _) -> aux (count + 2) l
   in aux 0 tree
 
 exception Not_equal
 let rec checkDepth = function 
   | L -> 1
-  | BBL -> 2
   | T (colour, l, _, r) ->
       let lcount = checkDepth l in
       let rcount = checkDepth r in
       if lcount <> rcount then raise Not_equal
       else match colour with
-        NegBlack    -> lcount - 1
-      | Red         -> lcount
+        Red         -> lcount
       | Black       -> lcount + 1
-      | DoubleBlack -> lcount + 2
 
 let checkDepth_opt tree =
   try Some (checkDepth tree) with 
     Not_equal -> None
 
 
+(*
 let rec balance_node = function (* n -> n *)
   | T (Black | DoubleBlack as k, T (Red, T (Red, a, x, b), y, c), z ,d)
   | T (Black | DoubleBlack as k, T (Red, a, x, T (Red, b, y, c)), z, d)
@@ -150,8 +113,10 @@ let rec balance_node = function (* n -> n *)
 
 and balance c l v r =
   balance_node @@ T (c, l, v, r)
+*)
 
-(* Okasaki's balance function
+
+(* Okasaki's balance function *)
 let balance colour left(*n*) root right(*n*) =
   match colour, left, root, right with
     Black, T (Red, T (Red, a, x, b), y, c), z, d
@@ -161,7 +126,7 @@ let balance colour left(*n*) root right(*n*) =
       T (Red, T (Black, a, x, b), y, T (Black, c, z, d)) (*n+1*)
   | _ ->
       T (colour, left, root, right) (*n+1 if color black*)
-*)
+
 
 type choice = Old | New
 
@@ -174,7 +139,6 @@ exception Physical_equality
 let add ?debug:_ ~cmp choice elt tree =
   let rec insert = function
     L -> T (Red, L, elt, L)  (* A leaf *)
-  | BBL -> failwith "impossible"
   | T (colour, left, root, right) ->
       let diff = cmp elt root in
       if diff = 0 then
@@ -195,49 +159,65 @@ let add ?debug:_ ~cmp choice elt tree =
 let delete : type a b . ?debug:(Format.formatter -> b -> unit) -> cmp:(a -> b -> int) -> a -> b t -> b t = 
 fun ?debug:_ ~cmp x tree ->
   let rec del = function
-    | L | BBL -> raise Not_found 
+    | L -> raise Not_found 
     | T (k, l, y ,r) as nod -> 
         let c = cmp x y in
-        if c < 0 then bubble k (del l) y r
-        else if c > 0 then bubble k l y (del r)
-        else remove nod (*n-1 if c = B, n if c = R*)
-  and remove = function (* n -> n *)
+        if c < 0 then rebalance k (del l) y (r,false)
+        else if c > 0 then rebalance k (l,false) y (del r)
+        else remove nod
+
+  and remove = function
   (* Remove a leaf *)
-  | T (Red  , L, _, L) -> L
-  | T (Black, L, _, L) -> BBL
+  | T (Red  , L, _, L) -> L, false
+  | T (Black, L, _, L) -> L, true
   (* Only one child the parent or child is red *)
   | T (Red  , child, _, L)
-  | T (Red  , L, _, child) -> child
+  | T (Red  , L, _, child) -> child, false
   | T (Black, T (Red, l, v, r), _, L)
-  | T (Black, L, _, T (Red, l, v, r)) -> T (Black, l, v, r)
+  | T (Black, L, _, T (Red, l, v, r)) -> T (Black, l, v, r), false
   (* Only one black child*)
   | T (Black, (T(Black,_,_,_) as child), _, L)
-  | T (Black, L, _, (T (Black,_,_,_) as child)) -> blackIncNode child
+  | T (Black, L, _, (T (Black,_,_,_) as child)) -> child, true
   (* Two sub-trees*)
   | T (c, l, _, r) ->
     let v = Option.get @@ max l in
     let l' = remove_max l in
-    bubble c l' v r
-  | L | BBL -> failwith "impossible"
+    rebalance c l' v (r,false)
+  | L -> failwith "impossible"
   
-  and bubble c l v r =
-    if is_double_black l || is_double_black r
-      then balance (blackInc c) (blackDecNode l) v (blackDecNode r)
-    else T (c, l, v, r)
+  and rebalance c (l,l_inc) v (r,r_inc) =
+    (match c, (l,l_inc), v, (r,r_inc) with
+      k, (l,false), v, (r,false) -> T (k, l, v, r),false
+    | k, (T (Black, T (Red, a, x, b), y, c),false), z ,(d,true)
+    | k, (T (Black, a, x, T (Red, b, y, c)),false), z, (d,true)
+    | k, (a,true), x, (T (Black, T (Red, b, y, c), z, d),false)
+    | k, (a,true), x, (T (Black, b, y, T (Red, c, z, d)),false)
+      -> T (k, T (Black, a, x, b), y, T (Black, c, z, d)),false
+    
+    (* Double black / NegBlack*)
+    | Black, (a,true), x, (T (Red, T (Black, b, y, c), z, (T (Black, _, _, _) | L as d)),false)
+      -> T (Black, T (Black, a, x, b), y, balance Black c z (redden d)),false
+    | Black, (T (Red, (T (Black, _, _, _) | L as a), x, T (Black, b, y, c)),false), z, (d,true)
+      -> T (Black, balance Black (redden a) x b, y, T (Black, c, z, d)),false
+    (*t -> t*)
+    | k, (T (Black, _,_,_) | L as x,true), y, (T (Black, c, z, d),false)
+      -> T (Black, x, y, T (Red, c, z, d)),k=Black
+    | k, (T (Black, a, x, b),false), y, ((T (Black, _,_,_) | L as z),true)
+      -> T (Black, T (Red, a, x, b), y, z),k=Black
+    | _ -> failwith "Impossible cases"
+    )
   and remove_max = 
   function
     T (_,_,_,L) as n -> remove n
-  | T (c,l,v,r) -> bubble c l v @@ remove_max r
-  | L | BBL -> failwith "impossible"
-  in blacken @@ del tree
+  | T (c,l,v,r) -> rebalance c (l,false) v @@ remove_max r
+  | L -> failwith "impossible"
+  in blacken @@ fst @@ del tree
 
 let delete_opt ?debug ~cmp elt tree =
   try Some (delete ?debug ~cmp elt tree) with Not_found -> None
 
 let rec find ~cmp elt = function
-  L -> (
-    raise Not_found)
-| BBL -> failwith "impossible"
+  L -> raise Not_found
 | T (_, left, root, right) ->
     let diff = cmp elt root in
     if diff = 0 then (root)
@@ -251,11 +231,11 @@ let find_opt ~cmp elt tree =
 (* Inorder iterators *)
 
 let rec iter f = function
-  L | BBL -> ()
+  L -> ()
 | T (_, left, root, right) -> iter f left; f root; iter f right
 
 let rec inorder acc = function
-  L | BBL -> acc
+  L -> acc
 | T (_, left, root, right) -> inorder (root :: inorder acc right) left
 
 let elements t = inorder [] t
@@ -267,11 +247,11 @@ let union ~cmp choice (tree_a : 'a t) tree_b =
     (elements tree_a)
     
 let rec fold_inc f ~init = function
-  L | BBL -> init
+  L -> init
 | T (_, left, root, right) ->
     fold_inc f ~init:(f ~elt:root ~acc:(fold_inc f ~init left)) right
 
 let rec fold_dec f ~init = function
-  L | BBL -> init
+  L -> init
 | T (_, left, root, right) ->
     fold_dec f ~init:(f ~elt:root ~acc:(fold_dec f ~init right)) left
