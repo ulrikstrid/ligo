@@ -11,6 +11,7 @@ open Proof_trace_checker
 
 open Pretty_print_variables
 module Formatt = Format
+module SRope = Rope.SimpleRope
 
 (*  ………………………………………………………………………………………………… Plugin-based solver below ………………………………………………………………………………………………… *)
 
@@ -40,6 +41,33 @@ end = struct
   type plugin_units = Plugins.Indexers.PluginFields(PerPluginUnit).flds
   let plugin_fields_unit : plugin_units = Plugins.Indexers.plugin_fields_unit
 
+  (* TODO: replace this with a more efficient SRope.t (needs a "pop" function) *)
+  module Pending = struct
+    type 'a t = { l : 'a list }
+    let empty : 'a t = { l = [] }
+    let add : 'a -> 'a t -> 'a t = fun x { l } -> { l = x :: l }
+    let union : 'a t -> 'a t -> 'a t = fun { l = l1 } { l = l2 } -> { l = l1 @ l2 }
+    let of_list : 'a list -> 'a t = fun l -> { l }
+    let to_list : 'a t -> 'a list = fun { l } -> l
+    let pop : 'a t -> ('a * 'a t) option  = function
+        { l = [] } -> None
+      | { l = hd :: tl } -> Some (hd, { l = tl })
+    let is_empty : 'a t -> bool = function { l = [] } -> true | _ -> false
+    let _ = pop, union, add     (* unused warning *)
+  end
+  type worklist = {
+    pending_type_constraint_simpl    : type_constraint_simpl Pending.t;
+    pending_type_constraint          : type_constraint       Pending.t;
+    pending_c_alias                  : c_alias               Pending.t;
+  }
+  
+  let initial_worklist initial_constraints = {
+    (* TODO: these should be ropes *)
+    pending_type_constraint          = Pending.of_list initial_constraints ;
+    pending_type_constraint_simpl    = Pending.empty ;
+    pending_c_alias                  = Pending.empty ;
+  }
+  
   let mk_repr state x = UnionFind.Poly2.repr x state.aliases
 
   let pp_typer_state = fun ppf ({ all_constraints; plugin_states; aliases ; already_selected_and_propagators } : typer_state) ->
@@ -163,36 +191,43 @@ end = struct
       let (already_selected_and_propagators, new_constraints) = List.split hc in
       let state = { state with already_selected_and_propagators } in
       ok (state, List.flatten new_constraints)
+
+  let worklist_is_empty
+      { pending_type_constraint_simpl;
+        pending_type_constraint;
+        pending_c_alias } =
+    Pending.is_empty pending_type_constraint_simpl &&
+    Pending.is_empty pending_type_constraint       &&
+    Pending.is_empty pending_c_alias
+
+  let pp_indented_constraint_list =
+    let open PP_helpers in
+    let open Ast_typed.PP in
+    (list_sep type_constraint_short (tag "\n  "))
+
+  let pp_indented_constraint_simpl_list =
+    let open PP_helpers in
+    let open Ast_typed.PP in
+    (list_sep type_constraint_simpl_short (tag "\n  "))
   
    (* Takes a list of constraints, applies all selector+propagator pairs
      to each in turn. *)
-  let select_and_propagate_all : typer_state -> type_constraint list -> typer_state result =
+  let select_and_propagate_all : typer_state -> worklist -> typer_state result =
     fun state initial_constraints ->
     (* To change the order in which the constraints are processed, modify this loop. *)
     let () = queue_print (fun () -> Formatt.printf "In select and propagate all\n%!") in
     until
       (* repeat until the worklist is empty *)
-      (function (_, []) -> true | _ -> false)
-      (fun (state, constraints) ->
-        let aux (set, lst) (el: type_constraint) =
-          if PolySet.mem el set then 
-            set,lst
-          else
-            (* let () = queue_print (fun () -> Format.printf "\nTOTO ADD: %a\n" Ast_typed.PP.type_constraint_short el) in *)
-            PolySet.add el set, el::lst
-        in
-        let pp_indented_constraint_list =
-          let open PP_helpers in
-          let open Ast_typed.PP in
-          (list_sep type_constraint_short (tag "\n  ")) in
-        let pp_indented_constraint_simpl_list =
-          let open PP_helpers in
-          let open Ast_typed.PP in
-          (list_sep type_constraint_simpl_short (tag "\n  ")) in
-        let () = queue_print (fun () -> Formatt.printf "Start iteration with constraints :\n  %a\n\n%!" pp_indented_constraint_list constraints) in
-        let added_constraints, constraints' = List.fold_left aux (state.added_constraints,[]) constraints in
-        List.iter2 (fun a b -> assert (a = b)) constraints @@ List.rev constraints';
+      (fun (_, (worklist : worklist)) -> worklist_is_empty worklist)
+      (fun (state, worklist) ->
+        let () = queue_print (fun () -> Formatt.printf "Start iteration with constraints :\n  %a\n\n%!" pp_indented_constraint_list (Pending.to_list worklist.pending_type_constraint)) in
+
+        let { PolySet.set = added_constraints; added = constraints'; duplicates = _ } =
+          PolySet.add_list (Pending.to_list worklist.pending_type_constraint) state.added_constraints in
+        
+        (* Pretty sure this asser is bogus, commenting it out: List.iter2 (fun a b -> assert (a = b)) (Pending.to_list worklist.pending_type_constraint) @@ List.rev constraints'; *)
         let state = { state with added_constraints } in 
+
         (* Simplify constraints *)
         let () = queue_print (fun () -> Formatt.printf "Simplify constraints\n%!") in
         let constraints'' = List.flatten @@ List.map simplify_constraint constraints' in
@@ -210,7 +245,15 @@ end = struct
 
         let () = queue_print (fun () -> Formatt.printf "Constraints :%a\n%!" pp_indented_constraint_simpl_list constraints) in
         let%bind (state, new_constraints) = bind_fold_map_list add_constraint_and_apply_heuristics state constraints in
-        ok (state, new_constraints_from_aliases @ List.flatten new_constraints))
+
+        let updated_worklist : worklist = {
+          
+          pending_type_constraint_simpl    = worklist.pending_type_constraint_simpl;
+          pending_type_constraint          = Pending.of_list (new_constraints_from_aliases @ List.flatten new_constraints);
+          pending_c_alias                  = worklist.pending_c_alias;
+        } in
+        ok (state, updated_worklist)
+      )
       (state, initial_constraints)
     >>|? fst
   (* already_selected_and_propagators ; all_constraints ; plugin_states ; aliases *)
@@ -219,7 +262,7 @@ end = struct
   let main : typer_state -> type_constraint list -> typer_state result =
     fun state initial_constraints ->
     let () = queue_print (fun () -> Formatt.printf "In solver main\n%!") in
-    let%bind (state : typer_state) = select_and_propagate_all state initial_constraints in
+    let%bind (state : typer_state) = select_and_propagate_all state (initial_worklist initial_constraints) in
     let () = queue_print (fun () -> Formatt.printf "With assignments :\n  %a\n%!"
       (Plugin_states.Assignments.pp Ast_typed.PP.type_variable) (Plugin_states.assignments state.plugin_states)#assignments) in
     let failure = Typecheck.check (PolySet.elements state.all_constraints)
@@ -246,9 +289,11 @@ end = struct
       all_constraints                  = PolySet.create ~cmp:Ast_typed.Compare.type_constraint_simpl ;
       added_constraints                = PolySet.create ~cmp:Ast_typed.Compare.type_constraint ;
       aliases                          = UnionFind.Poly2.empty Var.pp Var.compare ;
-      plugin_states                     = plugin_states ;
+      plugin_states                    = plugin_states ;
       already_selected_and_propagators = List.map init_propagator_heuristic Plugins.heuristics ;
     }
+
+
 
   let placeholder_for_state_of_new_typer () = initial_state
 end
