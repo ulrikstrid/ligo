@@ -89,16 +89,16 @@ let get_or_set ?debug (i: 'item) (p: 'item partition) =
 let repr i p = try repr i p with Not_found -> i
 
 type 'item changed_reprs = { demoted_repr : 'item; new_repr : 'item }
-type 'item equiv_result = { partition : 'item partition; changed_reprs : 'item changed_reprs list }
+type 'item equiv_result = { partition : 'item partition; changed_reprs : 'item changed_reprs }
 
 let equiv ?debug (i: 'item) (j: 'item) (p: 'item partition) : 'item equiv_result =
   let (ri,hi as ni), p = get_or_set_h ?debug i p in
   let (rj,hj as nj), p = get_or_set_h ?debug j p in
   if   equal p.compare ri rj
-  then { partition = p; changed_reprs = [ { demoted_repr = ri; new_repr = rj } ] }
+  then { partition = p; changed_reprs = { demoted_repr = ri; new_repr = rj } }
   else if   hi > hj
-       then { partition = link ?debug nj ri p; changed_reprs = [ { demoted_repr = rj; new_repr = ri } ] }
-       else { partition = link ?debug ni rj (if hi < hj then p else root ?debug (rj, hj+1) p); changed_reprs = [ { demoted_repr = ri; new_repr = rj } ] }
+       then { partition = link ?debug nj ri p; changed_reprs = { demoted_repr = rj; new_repr = ri } }
+       else { partition = link ?debug ni rj (if hi < hj then p else root ?debug (rj, hj+1) p); changed_reprs = { demoted_repr = ri; new_repr = rj } }
 
 (** The call [alias i j p] results in the same partition as [equiv
     i j p], except that [i] is not the representative of its class
