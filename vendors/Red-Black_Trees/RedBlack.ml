@@ -162,8 +162,8 @@ fun ?debug:_ ~cmp x tree ->
     | L -> raise Not_found 
     | T (k, l, y ,r) as nod -> 
         let c = cmp x y in
-        if c < 0 then rebalance k (del l) y (r,false)
-        else if c > 0 then rebalance k (l,false) y (del r)
+        if c < 0 then rebalance_left k (del l) y r
+        else if c > 0 then rebalance_right k l y (del r)
         else remove nod
 
   and remove = function
@@ -182,36 +182,54 @@ fun ?debug:_ ~cmp x tree ->
   | T (c, l, _, r) ->
     let v = Option.get @@ max l in
     let l' = remove_max l in
-    rebalance c l' v (r,false)
+      rebalance_left c l' v r
   | L -> failwith "impossible"
   
-  and rebalance c (l,l_inc) v (r,r_inc) =
-    (match c, (l,l_inc), v, (r,r_inc) with
-      k, (l,false), v, (r,false) -> T (k, l, v, r),false
-    | k, (T (Black, T (Red, a, x, b), y, c),false), z ,(d,true)
-    | k, (T (Black, a, x, T (Red, b, y, c)),false), z, (d,true)
-    | k, (a,true), x, (T (Black, T (Red, b, y, c), z, d),false)
-    | k, (a,true), x, (T (Black, b, y, T (Red, c, z, d)),false)
-      -> T (k, T (Black, a, x, b), y, T (Black, c, z, d)),false
-    
-    (* Double black / NegBlack*)
-    | Black, (a,true), x, (T (Red, T (Black, b, y, c), z, (T (Black, _, _, _) | L as d)),false)
-      -> T (Black, T (Black, a, x, b), y, balance Black c z (redden d)),false
-    | Black, (T (Red, (T (Black, _, _, _) | L as a), x, T (Black, b, y, c)),false), z, (d,true)
-      -> T (Black, balance Black (redden a) x b, y, T (Black, c, z, d)),false
-    (*t -> t*)
-    | k, (T (Black, _,_,_) | L as x,true), y, (T (Black, c, z, d),false)
-      -> T (Black, x, y, T (Red, c, z, d)),k=Black
-    | k, (T (Black, a, x, b),false), y, ((T (Black, _,_,_) | L as z),true)
-      -> T (Black, T (Red, a, x, b), y, z),k=Black
-    | _ -> failwith "Impossible cases"
-    )
+  and rebalance_left colour (left, is_shorter) value right =
+    if is_shorter then 
+      match colour, left, value, right with
+      (* case 1 : The sibling is red so the parent is black. 
+      fix : Perform a rotation. d needs to be turn red which may violate 1.
+      but balance restore porperty 1. *)
+      | Black, a, x, T (Red, T (Black, b, y, c), z, d)
+        -> T (Black, T (Black, a, x, b), y, balance Black c z (redden d)),false
+      (* case 2: The sibling is black and has at least a red child. Then he has at least three black children. 
+        fix : simple rotation, repaint in black.  *)
+      | k, a, x, T (Black, T (Red, b, y, c), z, d)
+      | k, a, x, T (Black, b, y, T (Red, c, z, d))
+        -> T (k, T (Black, a, x, b), y, T (Black, c, z, d)),false
+      (* case 3: The sibling is black with two black child. 
+        case 3.i the parent is red, turn the root black and the siblign red
+        case 3.ii the parent is black, turn the siblign red and propagate that
+        the subtree starting with the parent is shorter by one *)
+      | k, x, y, T (Black, c, z, d)
+        -> T (Black, x, y, T (Red, c, z, d)),k=Black
+      | _ -> failwith "Impossible cases"
+    else
+      T(colour, left, value, right),false
+
+  and rebalance_right colour left value (right,is_shorter) =
+    (* complemaentary as the above *)
+    if is_shorter then
+      match colour, left, value, right with
+      | Black, T (Red, a, x, T (Black, b, y, c)), z, d
+        -> T (Black, balance Black (redden a) x b, y, T (Black, c, z, d)),false
+      | k, T (Black, T (Red, a, x, b), y, c), z, d
+      | k, T (Black, a, x, T (Red, b, y, c)), z, d
+        -> T (k, T (Black, a, x, b), y, T (Black, c, z, d)),false
+      | k, T (Black, a, x, b), y, z
+        -> T (Black, T (Red, a, x, b), y, z),k=Black
+      | _ -> failwith "Impossible cases"
+    else
+      T(colour, left, value, right),false
+
   and remove_max = 
   function
     T (_,_,_,L) as n -> remove n
-  | T (c,l,v,r) -> rebalance c (l,false) v @@ remove_max r
+  | T (c,l,v,r) -> rebalance_right c l v @@ remove_max r
   | L -> failwith "impossible"
-  in blacken @@ fst @@ del tree
+
+    in fst @@ del tree
 
 let delete_opt ?debug ~cmp elt tree =
   try Some (delete ?debug ~cmp elt tree) with Not_found -> None
