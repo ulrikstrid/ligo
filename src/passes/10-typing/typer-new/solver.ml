@@ -100,7 +100,7 @@ end = struct
 
       (* apply all the alias_selectors and propagators given the new alias *)
       let%bind (state, new_constraints) = (
-        let () = Format.printf "aux_heuristic_alias is disabled temporarily, because enabling it made some other tests fail (it should be enabled, but it makes these tests go through some code paths which are bogus, the tests worked before because they managed to infer without these heuristics, but enabling them is needed)" in
+        let () = Format.printf "aux_heuristic_alias is disabled temporarily, because enabling it made some other tests fail (it should be enabled, but it makes these tests go through some code paths which are bogus, the tests worked before because they managed to infer without these heuristics, but enabling them is needed)\n%!" in
         if false then
           (* TODO: possible bug: here, should be use the demoted_repr
              and new_repr, or the ones as given by the alias? We should

@@ -192,7 +192,7 @@ let add ?debug:_ ~cmp choice elt tree =
   tree
 
 
-let remove : type a b . ?debug:(Format.formatter -> b -> unit) -> cmp:(a -> b -> int) -> a -> b t -> b t = 
+let delete : type a b . ?debug:(Format.formatter -> b -> unit) -> cmp:(a -> b -> int) -> a -> b t -> b t = 
 fun ?debug:_ ~cmp x tree ->
   let rec del = function
     | L | BBL -> raise Not_found 
@@ -231,6 +231,8 @@ fun ?debug:_ ~cmp x tree ->
   | L | BBL -> failwith "impossible"
   in blacken @@ del tree
 
+let delete_opt ?debug ~cmp elt tree =
+  try Some (delete ?debug ~cmp elt tree) with Not_found -> None
 
 let rec find ~cmp elt = function
   L -> (

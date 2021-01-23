@@ -43,7 +43,9 @@ val union: cmp:('a -> 'a -> int) -> choice -> 'a t -> 'a t -> 'a t
    implement a map, x would be a [key], whereas the elements of the tree
    would be [key, value] pairs. *)
 
-val remove: ?debug:(Format.formatter -> 'b -> unit) -> cmp:('a -> 'b -> int) -> 'a -> 'b t -> 'b t
+val delete: ?debug:(Format.formatter -> 'b -> unit) -> cmp:('a -> 'b -> int) -> 'a -> 'b t -> 'b t
+
+val delete_opt: ?debug:(Format.formatter -> 'b -> unit) -> cmp:('a -> 'b -> int) -> 'a -> 'b t -> 'b t option
 
 (* The value of the call [find ~cmp x t] is the element [y] belonging
    to a node of the tree [t], such that [cmp x y = true]. If none, the
