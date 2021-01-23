@@ -247,7 +247,7 @@ let propagator : (output_tc_fundep, typer_error) propagator =
   (* The selector is expected to provide constraints with the shape (α
      = κ(β, …)) and to update the private storage to keep track of the
      refined typeclass *)
-  let () = Format.printf "heuristic_tc_fundep propagator: %a\n" Ast_typed.PP.output_tc_fundep selected in
+  let () = Format.printf "heuristic_tc_fundep propagator: %a\n%!" Ast_typed.PP.output_tc_fundep selected in
   let restricted = restrict repr selected.c selected.tc in
   let%bind {deduced ; cleaned} = deduce_and_clean restricted in
   (* TODO: this is because we cannot return a simplified constraint,
@@ -291,7 +291,7 @@ let propagator : (output_tc_fundep, typer_error) propagator =
         proof_trace = Axiom (HandWaved "cut with the following (cleaned => removed_typeclass) to show that the removal does not lose info, (removed_typeclass => selected.c => cleaned) to show that the cleaned vesion does not introduce unwanted constraints.")
       }
     ]
-  in let () = Format.printf "Returning from heuristic tc_fundep"
+  in let () = Format.printf "Returning from heuristic tc_fundep\n%!"
   in ok ret
 
 (* ***********************************************************************

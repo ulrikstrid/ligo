@@ -33,7 +33,7 @@ let redblack () =
   (* Removal test *)
   let _ = List.fold_left (
     fun tree e ->
-      let tree = RedBlack.remove ~debug:(fun ppf i -> Format.fprintf ppf "%i" i) ~cmp:(-) e tree in
+      let tree = RedBlack.delete ~debug:(fun ppf i -> Format.fprintf ppf "%i" i) ~cmp:(-) e tree in
       if not @@ RedBlack.is_legal tree then failwith "Unbalanced tree";
       tree
   ) tree lst in
