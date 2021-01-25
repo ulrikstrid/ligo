@@ -14,7 +14,7 @@ let redblack () =
   let open RedBlackTrees in
   Random.self_init ();
   let tree = RedBlack.empty in
-  let bound = 1000 in
+  let bound = 10000 in
   let rec aux lst e = 
     if e > bound then
       lst

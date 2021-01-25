@@ -170,14 +170,9 @@ fun ?debug:_ ~cmp x tree ->
   (* Remove a leaf *)
   | T (Red  , L, _, L) -> L, false
   | T (Black, L, _, L) -> L, true
-  (* Only one child the parent or child is red *)
-  | T (Red  , child, _, L)
-  | T (Red  , L, _, child) -> child, false
+  (* Only one child implies the child is red and the parent is black *)
   | T (Black, T (Red, l, v, r), _, L)
   | T (Black, L, _, T (Red, l, v, r)) -> T (Black, l, v, r), false
-  (* Only one black child*)
-  | T (Black, (T(Black,_,_,_) as child), _, L)
-  | T (Black, L, _, (T (Black,_,_,_) as child)) -> child, true
   (* Two sub-trees*)
   | T (c, l, _, r) ->
     let v = Option.get @@ max l in
