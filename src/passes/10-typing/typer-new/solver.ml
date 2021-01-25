@@ -17,11 +17,6 @@ open Worklist_and_pending
 
 let logfile = stderr (* open_out "/tmp/typer_log" *)
 
-
-
-
-
-
 (*  ………………………………………………………………………………………………… Plugin-based solver below ………………………………………………………………………………………………… *)
 
 (* Later on, we'll ensure that all the heuristics register the
@@ -99,10 +94,8 @@ end = struct
     (* let () = queue_print (fun () -> Format.printf "Return with new constraints: (%a)\n%!" Ast_typed.PP.(list_sep_d (list_sep_d type_constraint_short)) new_constraints) in *)
     ok (state, (Heuristic_state heuristic, List.flatten new_constraints))
 
-  let add_alias : typer_state -> type_constraint_simpl -> ((typer_state * type_constraint_list) option, typer_error) Simple_utils.Trace.result =
-    fun state new_constraint ->
-    match new_constraint with
-    | Ast_typed.Types.SC_Alias { reason_alias_simpl=_; a; b } ->
+  let add_alias : (typer_state * c_alias) -> (typer_state * Worklist.t) result =
+    fun (state , ({ reason_alias_simpl=_; a; b } as new_constraint)) ->
       let () = queue_print (fun () -> Format.printf "Add_alias %a=%a\n%!" Ast_typed.PP.type_variable a Ast_typed.PP.type_variable b) in
 
       (* get the changed reprs due to that alias constraint *)
@@ -133,15 +126,14 @@ end = struct
       let { all_constraints ; added_constraints ; plugin_states ; aliases ; already_selected_and_propagators } = state in
       
       (* Add alias constraint to the set of all constraints *)
-      let all_constraints = PolySet.add new_constraint all_constraints in
+      let all_constraints = PolySet.add (SC_Alias new_constraint) all_constraints in
 
       let plugin_states =
         let module MapMergeAliases = Plugins.Indexers.MapPlugins(MergeAliases) in
         MapMergeAliases.f changed_reprs plugin_states in
 
-      ok @@ Some ({ all_constraints ; added_constraints ; plugin_states ; aliases ; already_selected_and_propagators }, new_constraints)
-    | _ ->
-      ok @@ None
+      ok @@ ({ all_constraints ; added_constraints ; plugin_states ; aliases ; already_selected_and_propagators },
+             { Worklist.empty with pending_type_constraint = Pending.of_list new_constraints})
 
   let get_alias variable aliases =
     trace_option (corner_case (Format.asprintf "can't find alias root of variable %a" Var.pp variable)) @@
@@ -164,9 +156,9 @@ end = struct
     ok (state, (Heuristic_state heuristic, List.flatten new_constraints))
 
   (* apply all the selectors and propagators *)
-  let add_constraint_and_apply_heuristics state constraint_ =
+  let add_constraint_and_apply_heuristics (state , constraint_) =
     (* let () = queue_print (fun () -> Format.printf "Add constraint and apply heuristics for constraint: %a\n%!" Ast_typed.PP.type_constraint_simpl constraint_) in *)
-    if PolySet.mem constraint_ state.all_constraints then ok (state, [])
+    if PolySet.mem constraint_ state.all_constraints then ok (state, Worklist.empty)
     else
       let state =
         let module MapAddConstraint = Plugins.Indexers.MapPlugins(AddConstraint) in
@@ -175,7 +167,7 @@ end = struct
       let%bind (state, hc) = bind_fold_map_list (aux_heuristic constraint_) state state.already_selected_and_propagators in
       let (already_selected_and_propagators, new_constraints) = List.split hc in
       let state = { state with already_selected_and_propagators } in
-      ok (state, List.flatten new_constraints)
+      ok (state, { Worklist.empty with pending_type_constraint = Pending.of_list @@ List.flatten new_constraints })
 
   let pp_indented_constraint_list =
     let open PP_helpers in
@@ -186,6 +178,7 @@ end = struct
     let open PP_helpers in
     let open Ast_typed.PP in
     (list_sep type_constraint_simpl_short (tag "\n  "))
+  let _ = pp_indented_constraint_list, pp_indented_constraint_simpl_list (* unused warning *)
 
    (* Takes a list of constraints, applies all selector+propagator pairs
      to each in turn. *)
@@ -214,32 +207,28 @@ end = struct
             simplify_constraint
         in
 
-        let () = Printf.fprintf logfile "fff: bug: should empty the worklist otherwise it will never be empty of course" in
-        let pendingggg_type_constraint_simpl = Pending.to_list worklist.pending_type_constraint_simpl in
-        let worklist = { worklist with pending_type_constraint_simpl = Pending.empty } in
-
-        (* Extract aliases and apply them *)
-        let () = queue_print (fun () -> Formatt.printf "Constraint left : %a\n" pp_indented_constraint_simpl_list pendingggg_type_constraint_simpl) in
-        let () = queue_print (fun () -> Formatt.printf "Extract aliases and apply them\n") in
-        let%bind (state, new_constraints_from_aliases), constraints = bind_fold_map_list
-            (fun (state, nc) c ->
-               match%bind (add_alias state c) with
-                 Some (state, new_constraints) -> ok ((state, new_constraints @ nc), [])
-               | None -> ok ((state, nc), [c]))
-            (state, [])
-            pendingggg_type_constraint_simpl in
-
-        let () = Printf.fprintf logfile "ggg" in
-        let constraints = List.flatten constraints in
-
-        let () = queue_print (fun () -> Formatt.printf "Constraints :%a\n%!" pp_indented_constraint_simpl_list constraints) in
-        let%bind (state, new_constraints) = bind_fold_map_list add_constraint_and_apply_heuristics state constraints in
-
-        let worklist : Worklist.t = {
-          worklist with 
-          pending_type_constraint = Pending.of_list (new_constraints_from_aliases @ List.flatten new_constraints);
-        }
+        let%bind (state, worklist) =
+          Worklist.process_all ~time_to_live
+            pending_type_constraint_simpl
+            (state, worklist)
+            split_aliases
         in
+
+        let%bind (state, worklist) =
+          Worklist.process_all ~time_to_live
+            pending_c_alias
+            (state, worklist)
+            add_alias
+        in
+
+        (* let () = queue_print (fun () -> Formatt.printf "Constraints :%a\n%!" pp_indented_constraint_simpl_list constraints) in *)
+        let%bind (state, worklist) =
+          Worklist.process_all ~time_to_live
+            pending_non_alias
+            (state, worklist)
+            add_constraint_and_apply_heuristics
+        in
+        
         ok (state, worklist)
       )
 
