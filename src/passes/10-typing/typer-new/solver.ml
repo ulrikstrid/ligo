@@ -13,6 +13,8 @@ open Pretty_print_variables
 module Formatt = Format
 module SRope = Rope.SimpleRope
 
+let logfile = stderr (* open_out "/tmp/typer_log" *)
+
 (*  ………………………………………………………………………………………………… Plugin-based solver below ………………………………………………………………………………………………… *)
 
 (* Later on, we'll ensure that all the heuristics register the
@@ -46,6 +48,7 @@ end = struct
     type 'a t = { l : 'a list }
     let empty : 'a t = { l = [] }
     let add : 'a -> 'a t -> 'a t = fun x { l } -> { l = x :: l }
+    let add_list : 'a list -> 'a t -> 'a t = fun l1 { l } -> { l = l1 @ l }
     let union : 'a t -> 'a t -> 'a t = fun { l = l1 } { l = l2 } -> { l = l1 @ l2 }
     let of_list : 'a list -> 'a t = fun l -> { l }
     let to_list : 'a t -> 'a list = fun { l } -> l
@@ -55,19 +58,77 @@ end = struct
     let is_empty : 'a t -> bool = function { l = [] } -> true | _ -> false
     let _ = pop, union, add     (* unused warning *)
   end
-  type worklist = {
-    pending_type_constraint_simpl    : type_constraint_simpl Pending.t;
-    pending_type_constraint          : type_constraint       Pending.t;
-    pending_c_alias                  : c_alias               Pending.t;
+
+  type worklist_ = {
+    (* I don't know how to "open" the module to get only the fields for { w with … = … } or w.…, so I'm declaring this outside of the module. *)
+    pending_type_constraint                        : type_constraint       Pending.t;
+    pending_filtered_not_already_added_constraints : type_constraint       Pending.t;
+    pending_type_constraint_simpl                  : type_constraint_simpl Pending.t;
+    pending_c_alias                                : c_alias               Pending.t;
   }
+
+  type ('part, 'whole) mini_lens = { get : 'whole -> 'part Pending.t; set : 'whole -> 'part Pending.t -> 'whole; }   
+
+  module Worklist = struct
+    type t = worklist_
+
+    let decrement_and_check_still_time_to_live time_to_live = 
+      let () = time_to_live := !time_to_live - 1 in
+      if (!time_to_live) = 0
+      then (Format.printf "timeout 78909765.\n"; false)
+      else true
   
-  let initial_worklist initial_constraints = {
-    (* TODO: these should be ropes *)
-    pending_type_constraint          = Pending.of_list initial_constraints ;
-    pending_type_constraint_simpl    = Pending.empty ;
-    pending_c_alias                  = Pending.empty ;
-  }
-  
+    let is_empty ~time_to_live
+        (_state,
+         { pending_type_constraint;
+           pending_filtered_not_already_added_constraints;
+           pending_type_constraint_simpl;
+           pending_c_alias }) =
+      let () = Printf.fprintf logfile "size(worklist)=(%d | %d | %d | %d)\n"
+          (List.length @@ Pending.to_list pending_type_constraint                       )
+          (List.length @@ Pending.to_list pending_filtered_not_already_added_constraints)
+          (List.length @@ Pending.to_list pending_type_constraint_simpl                 )
+          (List.length @@ Pending.to_list pending_c_alias                               )
+      in
+      decrement_and_check_still_time_to_live time_to_live &&
+      Pending.is_empty pending_type_constraint                        &&
+      Pending.is_empty pending_filtered_not_already_added_constraints &&
+      Pending.is_empty pending_type_constraint_simpl                  &&
+      Pending.is_empty pending_c_alias
+
+    let process lens (state, worklist) f =
+      match (Pending.pop (lens.get worklist)) with
+        None -> ok (state, worklist)
+      | Some (element, rest) ->
+        (* set this field of the worklist to the rest of this Pending.t *)
+        let worklist = lens.set worklist rest in
+        (* Process the element *)
+        let%bind (state, new_worklist) = f (state, element) in
+        (* While processing, f can queue new tasks in a fresh worklist, we're merging the worklists here *)
+        let merged_worklists = {
+          pending_type_constraint                        = Pending.union new_worklist.pending_type_constraint                        worklist.pending_type_constraint                        ;
+          pending_filtered_not_already_added_constraints = Pending.union new_worklist.pending_filtered_not_already_added_constraints worklist.pending_filtered_not_already_added_constraints ;
+          pending_type_constraint_simpl                  = Pending.union new_worklist.pending_type_constraint_simpl                  worklist.pending_type_constraint_simpl                  ;
+          pending_c_alias                                = Pending.union new_worklist.pending_c_alias                                worklist.pending_c_alias                                ;
+        }
+        (* return the state updated by f, and the updated worklist (without the processed element, with the new tasks) *)
+        in ok (state, merged_worklists)
+
+    let empty = {
+      (* TODO: these should be ropes *)
+      pending_type_constraint                        = Pending.empty ;
+      pending_filtered_not_already_added_constraints = Pending.empty ;
+      pending_type_constraint_simpl                  = Pending.empty ;
+      pending_c_alias                                = Pending.empty ;
+    }
+  end
+
+  let pending_type_constraint                        = { get = (fun { pending_type_constraint                        = x ; _ } -> x); set = (fun w x -> { w with pending_type_constraint                        = x }) }
+  let pending_filtered_not_already_added_constraints = { get = (fun { pending_filtered_not_already_added_constraints = x ; _ } -> x); set = (fun w x -> { w with pending_filtered_not_already_added_constraints = x }) }
+  let pending_type_constraint_simpl                  = { get = (fun { pending_type_constraint_simpl                  = x ; _ } -> x); set = (fun w x -> { w with pending_type_constraint_simpl                  = x }) }
+  let pending_c_alias                                = { get = (fun { pending_c_alias                                = x ; _ } -> x); set = (fun w x -> { w with pending_c_alias                                = x }) }
+  let _ = pending_type_constraint, pending_filtered_not_already_added_constraints, pending_type_constraint_simpl, pending_c_alias (* unused warning *)
+
   let mk_repr state x = UnionFind.Poly2.repr x state.aliases
 
   let pp_typer_state = fun ppf ({ all_constraints; plugin_states; aliases ; already_selected_and_propagators } : typer_state) ->
@@ -192,14 +253,6 @@ end = struct
       let state = { state with already_selected_and_propagators } in
       ok (state, List.flatten new_constraints)
 
-  let worklist_is_empty
-      { pending_type_constraint_simpl;
-        pending_type_constraint;
-        pending_c_alias } =
-    Pending.is_empty pending_type_constraint_simpl &&
-    Pending.is_empty pending_type_constraint       &&
-    Pending.is_empty pending_c_alias
-
   let pp_indented_constraint_list =
     let open PP_helpers in
     let open Ast_typed.PP in
@@ -209,51 +262,71 @@ end = struct
     let open PP_helpers in
     let open Ast_typed.PP in
     (list_sep type_constraint_simpl_short (tag "\n  "))
-  
+
    (* Takes a list of constraints, applies all selector+propagator pairs
      to each in turn. *)
-  let select_and_propagate_all : typer_state -> worklist -> typer_state result =
+  let select_and_propagate_all : typer_state -> Worklist.t -> typer_state result =
     fun state initial_constraints ->
     (* To change the order in which the constraints are processed, modify this loop. *)
-    let () = queue_print (fun () -> Formatt.printf "In select and propagate all\n%!") in
+    let () = queue_print (fun () -> Formatt.printf "In select and propagate all\n") in
+    let time_to_live = ref 1000 in
     until
       (* repeat until the worklist is empty *)
-      (fun (_, (worklist : worklist)) -> worklist_is_empty worklist)
+      (Worklist.is_empty ~time_to_live)
       (fun (state, worklist) ->
-        let () = queue_print (fun () -> Formatt.printf "Start iteration with constraints :\n  %a\n\n%!" pp_indented_constraint_list (Pending.to_list worklist.pending_type_constraint)) in
+        let () = queue_print (fun () -> Formatt.printf "Start iteration with constraints :\n  %a\n\n" pp_indented_constraint_list (Pending.to_list worklist.pending_type_constraint)) in
 
+        let () = Printf.fprintf logfile "aaa" in
         let { PolySet.set = added_constraints; added = constraints'; duplicates = _ } =
           PolySet.add_list (Pending.to_list worklist.pending_type_constraint) state.added_constraints in
-        
-        (* Pretty sure this asser is bogus, commenting it out: List.iter2 (fun a b -> assert (a = b)) (Pending.to_list worklist.pending_type_constraint) @@ List.rev constraints'; *)
-        let state = { state with added_constraints } in 
 
-        (* Simplify constraints *)
-        let () = queue_print (fun () -> Formatt.printf "Simplify constraints\n%!") in
-        let constraints'' = List.flatten @@ List.map simplify_constraint constraints' in
+        let worklist = { worklist with pending_type_constraint = Pending.empty } in
+        let worklist = { worklist with pending_filtered_not_already_added_constraints = Pending.add_list constraints' worklist.pending_filtered_not_already_added_constraints } in
+
+        (* Pretty sure this assert is bogus, commenting it out: *)
+        (* let () = List.iter2 (fun a b -> assert (a = b)) (Pending.to_list worklist.pending_type_constraint) @@ List.rev constraints' in *)
+        let state = { state with added_constraints } in
+
+        let () = Printf.fprintf logfile "ddd" in
+        let%bind (state, worklist) =
+          until (fun (_state, worklist) -> Worklist.decrement_and_check_still_time_to_live time_to_live && Pending.is_empty worklist.pending_filtered_not_already_added_constraints)
+            (fun (state, worklist) ->
+               let () = Printf.fprintf logfile "eee" in
+               Worklist.process pending_filtered_not_already_added_constraints (state, worklist)
+                 (fun (state, type_constraint) -> ok (state, { Worklist.empty with pending_type_constraint_simpl = Pending.of_list (simplify_constraint type_constraint) }))
+            )
+            (state, worklist)
+        in
+
+        let () = Printf.fprintf logfile "fff: bug: should empty the worklist otherwise it will never be empty of course" in
+        let pendingggg_type_constraint_simpl = Pending.to_list worklist.pending_type_constraint_simpl in
+        let worklist = { worklist with pending_type_constraint_simpl = Pending.empty } in
+
         (* Extract aliases and apply them *)
-        let () = queue_print (fun () -> Formatt.printf "Constraint left : %a\n%!" pp_indented_constraint_simpl_list constraints'') in
-        let () = queue_print (fun () -> Formatt.printf "Extract aliases and apply them\n%!") in
+        let () = queue_print (fun () -> Formatt.printf "Constraint left : %a\n" pp_indented_constraint_simpl_list pendingggg_type_constraint_simpl) in
+        let () = queue_print (fun () -> Formatt.printf "Extract aliases and apply them\n") in
         let%bind (state, new_constraints_from_aliases), constraints = bind_fold_map_list
             (fun (state, nc) c ->
                match%bind (add_alias state c) with
                  Some (state, new_constraints) -> ok ((state, new_constraints @ nc), [])
                | None -> ok ((state, nc), [c]))
             (state, [])
-            constraints'' in
+            pendingggg_type_constraint_simpl in
+
+        let () = Printf.fprintf logfile "ggg" in
         let constraints = List.flatten constraints in
 
         let () = queue_print (fun () -> Formatt.printf "Constraints :%a\n%!" pp_indented_constraint_simpl_list constraints) in
         let%bind (state, new_constraints) = bind_fold_map_list add_constraint_and_apply_heuristics state constraints in
 
-        let updated_worklist : worklist = {
-          
-          pending_type_constraint_simpl    = worklist.pending_type_constraint_simpl;
-          pending_type_constraint          = Pending.of_list (new_constraints_from_aliases @ List.flatten new_constraints);
-          pending_c_alias                  = worklist.pending_c_alias;
-        } in
-        ok (state, updated_worklist)
+        let worklist : Worklist.t = {
+          worklist with 
+          pending_type_constraint = Pending.of_list (new_constraints_from_aliases @ List.flatten new_constraints);
+        }
+        in
+        ok (state, worklist)
       )
+
       (state, initial_constraints)
     >>|? fst
   (* already_selected_and_propagators ; all_constraints ; plugin_states ; aliases *)
@@ -262,7 +335,7 @@ end = struct
   let main : typer_state -> type_constraint list -> typer_state result =
     fun state initial_constraints ->
     let () = queue_print (fun () -> Formatt.printf "In solver main\n%!") in
-    let%bind (state : typer_state) = select_and_propagate_all state (initial_worklist initial_constraints) in
+    let%bind (state : typer_state) = select_and_propagate_all state {Worklist.empty with pending_type_constraint = Pending.of_list initial_constraints} in
     let () = queue_print (fun () -> Formatt.printf "With assignments :\n  %a\n%!"
       (Plugin_states.Assignments.pp Ast_typed.PP.type_variable) (Plugin_states.assignments state.plugin_states)#assignments) in
     let failure = Typecheck.check (PolySet.elements state.all_constraints)
