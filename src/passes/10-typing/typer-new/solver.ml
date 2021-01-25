@@ -72,11 +72,11 @@ end = struct
   module Worklist = struct
     type t = worklist_
 
-    let decrement_and_check_still_time_to_live time_to_live = 
+    let decrement_has_timeout_expired time_to_live = 
       let () = time_to_live := !time_to_live - 1 in
       if (!time_to_live) = 0
-      then (Format.printf "timeout 78909765.\n"; false)
-      else true
+      then (Format.printf "timeout 78909765.\n"; true)
+      else false
   
     let is_empty ~time_to_live
         (_state,
@@ -90,11 +90,11 @@ end = struct
           (List.length @@ Pending.to_list pending_type_constraint_simpl                 )
           (List.length @@ Pending.to_list pending_c_alias                               )
       in
-      decrement_and_check_still_time_to_live time_to_live &&
-      Pending.is_empty pending_type_constraint                        &&
-      Pending.is_empty pending_filtered_not_already_added_constraints &&
-      Pending.is_empty pending_type_constraint_simpl                  &&
-      Pending.is_empty pending_c_alias
+      decrement_has_timeout_expired time_to_live
+      || (Pending.is_empty pending_type_constraint                        &&
+          Pending.is_empty pending_filtered_not_already_added_constraints &&
+          Pending.is_empty pending_type_constraint_simpl                  &&
+          Pending.is_empty pending_c_alias                                 )
 
     let process lens (state, worklist) f =
       match (Pending.pop (lens.get worklist)) with
@@ -113,6 +113,11 @@ end = struct
         }
         (* return the state updated by f, and the updated worklist (without the processed element, with the new tasks) *)
         in ok (state, merged_worklists)
+
+    let process_all ~time_to_live lens (state, worklist) f =
+      until (fun (_state, worklist) -> decrement_has_timeout_expired time_to_live || Pending.is_empty (lens.get worklist))
+        (fun (state, worklist) -> process lens (state, worklist) f)
+        (state, worklist)
 
     let empty = {
       (* TODO: these should be ropes *)
@@ -289,13 +294,8 @@ end = struct
 
         let () = Printf.fprintf logfile "ddd" in
         let%bind (state, worklist) =
-          until (fun (_state, worklist) -> Worklist.decrement_and_check_still_time_to_live time_to_live && Pending.is_empty worklist.pending_filtered_not_already_added_constraints)
-            (fun (state, worklist) ->
-               let () = Printf.fprintf logfile "eee" in
-               Worklist.process pending_filtered_not_already_added_constraints (state, worklist)
-                 (fun (state, type_constraint) -> ok (state, { Worklist.empty with pending_type_constraint_simpl = Pending.of_list (simplify_constraint type_constraint) }))
-            )
-            (state, worklist)
+          Worklist.process_all ~time_to_live pending_filtered_not_already_added_constraints (state, worklist)
+            (fun (state, type_constraint) -> ok (state, { Worklist.empty with pending_type_constraint_simpl = Pending.of_list (simplify_constraint type_constraint) }))
         in
 
         let () = Printf.fprintf logfile "fff: bug: should empty the worklist otherwise it will never be empty of course" in
