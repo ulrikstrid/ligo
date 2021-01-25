@@ -21,8 +21,7 @@ let add ?debug key value map =
 
 let remove ?debug key map =
   let cmp k1 (k2,_) = map.cmp k1 k2 in
-  match RB.delete_opt ?debug ~cmp key map.tree with 
-    Some (tree) -> {map with tree} | None -> map
+  {map with tree = RB.delete ?debug ~cmp key map.tree}
 
 let find key map =
   let cmp k1 (k2,_) = map.cmp k1 k2 in
