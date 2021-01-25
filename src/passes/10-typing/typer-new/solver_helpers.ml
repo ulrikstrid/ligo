@@ -1,4 +1,3 @@
-open Trace
 open Typer_common.Errors
 module Core = Typesystem.Core
 module Map = RedBlackTrees.PolyMap
@@ -92,21 +91,6 @@ end
 let _ = (module PPPlugin : Ast_typed.Types.MappedFunction)
 
 type nonrec 'a result = ('a, typer_error) Simple_utils.Trace.result
-
-let simplify_constraint : type_constraint -> type_constraint_simpl list =
-  fun new_constraint ->
-  Simplifier.type_constraint_simpl new_constraint
-
-let rec until predicate f state = if predicate state then ok state else let%bind state = f state in until predicate f state
-
-(* library function *)
-let rec worklist : ('state -> 'element -> ('state * 'element list) result) -> 'state -> 'element list -> 'state result =
-  fun f state elements ->
-  match elements with
-    [] -> ok state
-  | element :: rest ->
-    let%bind new_state, new_elements = f state element in
-    worklist f new_state (new_elements @ rest)
 
 let init_propagator_heuristic (Heuristic_plugin plugin) =
   Heuristic_state { plugin; already_selected = Set.create ~cmp:plugin.comparator }
