@@ -40,7 +40,6 @@ and pp_nsepseq :
 
 and pp_statement = function
   SBlock      s -> group (pp_braced ";" pp_statement s)
-| SVar        s -> pp_ident s
 | SExpr       s -> pp_expr s
 | SCond       s -> group (pp_cond_expr s)
 | SReturn     s -> pp_return s
@@ -68,12 +67,13 @@ and pp_const {value = {bindings; _}; _} =
   string "const " ^^ pp_nsepseq "," pp_let_binding bindings
 
 and pp_let_binding {value = {binders; lhs_type; expr; _}; _} =
-  (match lhs_type with
+  prefix 2 0 ((match lhs_type with
     Some (_, type_expr) -> pp_pattern binders ^^ string ": " ^^ pp_type_expr type_expr
   | None -> pp_pattern binders)
   ^^
   string " = "
-  ^^
+  )
+
   (pp_expr expr)
 
 and pp_switch {value = {expr; cases; _}; _} =
@@ -109,7 +109,7 @@ and pp_type {value; _} =
   string "type " ^^ string name.value ^^ string " = "
   ^^ group (pp_type_expr type_expr)
 
-and pp_ident {value; _} = string value
+and pp_ident Region.{value; _} = string value
 
 and pp_string s = string "\"" ^^ pp_ident s ^^ string "\""
 
@@ -201,7 +201,7 @@ and pp_bin_op op {value; _} =
   pp_expr arg1 ^^ string " " ^^ string (op ^ " ") ^^ nest length (pp_expr arg2)
 
 and pp_un_op op {value; _} =
-  string (op ^ " ") ^^ pp_expr value.arg
+  string op ^^ pp_expr value.arg
 
 and pp_comp_expr = function
   Lt    e -> pp_bin_op "<"  e
@@ -247,7 +247,7 @@ and pp_fun {value; _} =
        string ": " ^^ nest 2 (pp_type_expr e)
   in
   match body with
-  | FunctionBody fb -> parameters ^^ annot ^^ string " => " ^^ group (pp_braced ";" pp_statement fb)
+  | FunctionBody fb -> parameters ^^ annot ^^ string " => " ^^ (pp_braced ";" pp_statement fb)
   | ExpressionBody e -> (prefix 2 0 (nest 1 parameters ^^ annot ^^ string " => ") (pp_expr e))
 
 and pp_seq {value; _} =

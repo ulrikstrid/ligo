@@ -1636,7 +1636,19 @@ contract: True PLUS XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: True RBRACE
+contract: True REM XOR_EQ
+##
+## Ends in an error in state: 136.
+##
+## bin_op(mult_expr_level,REM,unary_expr_level) -> mult_expr_level REM . unary_expr_level [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LE GT GE Else EQ2 EQ EOF Default Case COMMA COLON BOOL_OR BOOL_AND ]
+##
+## The known suffix of the stack is as follows:
+## mult_expr_level REM
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: True RPAR
 ##
 ## Ends in an error in state: 324.
 ##
@@ -1661,18 +1673,6 @@ contract: True RBRACE
 ## In state 119, spurious reduction of production expr_statement -> disj_expr_level
 ## In state 243, spurious reduction of production statement -> expr_statement
 ## In state 326, spurious reduction of production toplevel_statement -> statement
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: True REM XOR_EQ
-##
-## Ends in an error in state: 136.
-##
-## bin_op(mult_expr_level,REM,unary_expr_level) -> mult_expr_level REM . unary_expr_level [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LE GT GE Else EQ2 EQ EOF Default Case COMMA COLON BOOL_OR BOOL_AND ]
-##
-## The known suffix of the stack is as follows:
-## mult_expr_level REM
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
