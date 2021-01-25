@@ -19,9 +19,7 @@ let add ?debug elt set = {set with tree = RB.add ?debug ~cmp:set.cmp RB.New elt 
 
 let union set_a set_b = {set_a with tree = RB.union ~cmp:set_a.cmp RB.New set_a.tree set_b.tree}
 
-let remove ?debug elt set = 
-  match RB.delete_opt ?debug ~cmp:set.cmp elt set.tree with
-    Some (tree) -> {set with tree} | None -> set
+let remove ?debug elt set = {set with tree = RB.delete ?debug ~cmp:set.cmp elt set.tree}
 
 let find elt set =
   try RB.find ~cmp:set.cmp elt set.tree with

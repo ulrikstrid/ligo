@@ -44,7 +44,7 @@ let update_remove_constraint_from_set tcs c = function
   | Some s -> MultiSet.remove c s
 
 
-let remove_constraint repr (state : _ t) constraint_to_rm =
+let remove_constraint _ repr (state : _ t) constraint_to_rm =
   (* This update is "monotonic" as required by ReprMap + the solver.
      The `add` function of this indexer is only called once per
      constraint, and constraints are indexed by their lhs variable.
@@ -59,6 +59,7 @@ let remove_constraint repr (state : _ t) constraint_to_rm =
      any problem. Indeed, the constraint appears only once in the
      multimap, and the removal will find it using the correct repr()
      at the time of removal. *)
+  Format.printf "in remove_constrant for groupedByVariable...%!";
   match
     (
       match constraint_to_rm with
@@ -70,10 +71,12 @@ let remove_constraint repr (state : _ t) constraint_to_rm =
     )
   with
   exception CouldNotRemove c -> fail (Typer_common.Errors.could_not_remove c)
-  | result -> ok result
+  | result -> 
+    Format.printf "  ok\n%!";
+    ok result
 
 let merge_aliases =
-  fun updater { constructor ; poly ; row } -> {
+  fun ?debug:_ updater { constructor ; poly ; row } -> {
       constructor = updater.map constructor ;
       poly       = updater.map poly ;
       row        = updater.map row ;
@@ -82,9 +85,9 @@ let merge_aliases =
 let pp type_variable ppf (state : _ t) =
   let open PP_helpers in
   Format.fprintf ppf "{ constructor = %a ; row = %a ; poly = %a }"
-  (list_sep_d (pair type_variable (MultiSet.pp Ast_typed.PP.c_constructor_simpl))) (ReprMap.bindings state.constructor)
-  (list_sep_d (pair type_variable (MultiSet.pp Ast_typed.PP.c_row_simpl))) (ReprMap.bindings state.row)
-  (list_sep_d (pair type_variable (MultiSet.pp Ast_typed.PP.c_poly_simpl))) (ReprMap.bindings state.poly)
+  (list_sep_d (pair type_variable (MultiSet.pp Ast_typed.PP.c_constructor_simpl_short))) (ReprMap.bindings state.constructor)
+  (list_sep_d (pair type_variable (MultiSet.pp Ast_typed.PP.c_row_simpl_short))) (ReprMap.bindings state.row)
+  (list_sep_d (pair type_variable (MultiSet.pp Ast_typed.PP.c_poly_simpl_short))) (ReprMap.bindings state.poly)
 
 let name = "grouped_by_variable"
 

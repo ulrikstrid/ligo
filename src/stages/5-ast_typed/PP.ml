@@ -563,13 +563,13 @@ let constructor_or_row_short ppf (t : constructor_or_row ) =
 
 let output_break_ctor ppf ({a_k_var;a_k'_var'}) =
   fprintf ppf "{@[<hv 2> @ a_k_var : %a;@ a_k'_var' : %a;@]@ }"
-    constructor_or_row a_k_var
-    constructor_or_row a_k'_var'
+    constructor_or_row_short a_k_var
+    constructor_or_row_short a_k'_var'
 
 let output_specialize1 ppf ({poly;a_k_var}) =
   fprintf ppf "{@[<hv 2> @ poly : %a ;@ a_k_var : %a;@]@ }"
-    c_poly_simpl poly
-    c_constructor_simpl a_k_var
+    c_poly_simpl_short poly
+    c_constructor_simpl_short a_k_var
 
 let output_tc_fundep ppd (t : output_tc_fundep) =
   let lst = t.tc in
@@ -590,8 +590,8 @@ let proof_trace ppf = function
 
 let update ppf {remove_constraints;add_constraints;proof_trace=x} =
   fprintf ppf "{@[<hv 2> @ remove_constraints : %a;@ add_constraints : %a;@ proof_trace : %a;@]@ }"
-    (list type_constraint_simpl) remove_constraints
-    (list type_constraint) add_constraints
+    (list type_constraint_simpl_short) remove_constraints
+    (list type_constraint_short) add_constraints
     proof_trace x
 
 let updates_list ppf = fprintf ppf "%a" (list (list update))

@@ -20,7 +20,7 @@ module MergeAliases = struct
         set = (fun s -> ReprSet.alias ~demoted_repr ~new_repr s);
         (* var = (fun a -> if Var.compare a demoted_repr = 0 then new_repr else a) *)
       }
-      in Plugin.merge_aliases merge_keys state
+      in Plugin.merge_aliases ~debug:(Plugin.pp Ast_typed.PP.type_variable) merge_keys state
   end
 end
 (* check module matches signature without hiding its contents *)
@@ -57,7 +57,7 @@ module RemoveConstraint = struct
   module F(Plugin : Plugin) = struct
     let f _ (repr, to_remove) state =
       (* Format.printf "In Remove Constraint in %s for %a\n%!" name PP.type_constraint_ to_remove; *)
-      Plugin.remove_constraint repr state to_remove
+      Plugin.remove_constraint Ast_typed.PP.type_variable repr state to_remove
   end
 end
 (* check module matches signature without hiding its contents *)
@@ -84,7 +84,7 @@ module PPPlugin = struct
   module Monad = NoMonad
   module F(Plugin : Plugin) = struct
     let f _ ppf state =
-      Format.fprintf ppf "%s =@ @[<hv 2> %a @] ;@" Plugin.name (Plugin.pp Var.pp) state
+      Format.fprintf ppf "%s =@ @[<hv 2> %a @] ;@ " Plugin.name (Plugin.pp Var.pp) state
   end
 end
 (* check module matches signature without hiding its contents *)

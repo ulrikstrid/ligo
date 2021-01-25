@@ -102,7 +102,7 @@ let assert_states_equal
 
 let remove_constraint repr state constraint_to_rm =
   trace Main_errors.typer_tracer @@
-  remove_constraint repr state constraint_to_rm
+  remove_constraint Ast_typed.PP.type_variable repr state constraint_to_rm
 
 let first_test () =
   let repr : type_variable -> type_variable = fun tv -> tv in

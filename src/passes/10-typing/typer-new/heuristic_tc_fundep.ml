@@ -248,7 +248,9 @@ let propagator : (output_tc_fundep, typer_error) propagator =
      = κ(β, …)) and to update the private storage to keep track of the
      refined typeclass *)
   let () = Format.printf "heuristic_tc_fundep propagator: %a\n%!" Ast_typed.PP.output_tc_fundep selected in
+  let () = Format.printf "and tv: %a and repr tv :%a \n%!" (PP_helpers.list_sep_d Ast_typed.PP.type_variable) selected.tc.args (PP_helpers.list_sep_d Ast_typed.PP.type_variable) @@ List.map repr selected.tc.args in
   let restricted = restrict repr selected.c selected.tc in
+  let () = Format.printf "restricted: %a\n!" Ast_typed.PP.c_typeclass_simpl_short restricted in
   let%bind {deduced ; cleaned} = deduce_and_clean restricted in
   (* TODO: this is because we cannot return a simplified constraint,
      and instead need to retun a constraint as it would appear if it
@@ -283,16 +285,16 @@ let propagator : (output_tc_fundep, typer_error) propagator =
     }
   in
   let deduced : type_constraint list = List.map aux deduced in
-  Format.printf "Fundep : returning with new constraint %a\n%!" (PP_helpers.list_sep_d Ast_typed.PP.type_constraint_short) @@ cleaned::deduced ;
   let ret = [
       {
         remove_constraints = [SC_Typeclass selected.tc];
         add_constraints = cleaned :: deduced;
         proof_trace = Axiom (HandWaved "cut with the following (cleaned => removed_typeclass) to show that the removal does not lose info, (removed_typeclass => selected.c => cleaned) to show that the cleaned vesion does not introduce unwanted constraints.")
       }
-    ]
-  in let () = Format.printf "Returning from heuristic tc_fundep\n%!"
-  in ok ret
+    ] in
+  Format.printf "Fundep : returning with new constraint %a\n%!" (PP_helpers.list_sep_d Ast_typed.PP.type_constraint_short) @@ cleaned::deduced ;
+  Format.printf "and remove_constraints %a\n%!" Ast_typed.PP.type_constraint_simpl_short @@ SC_Typeclass selected.tc;
+  ok ret
 
 (* ***********************************************************************
  * Heuristic

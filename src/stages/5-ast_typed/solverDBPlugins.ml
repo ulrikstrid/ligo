@@ -67,10 +67,10 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
     val add_constraint : ?debug:(Format.formatter -> 'type_variable -> unit) -> (type_variable -> 'type_variable) -> 'type_variable t -> type_constraint_simpl -> 'type_variable t
     (* Update the state when a constraint is removed *)
     (* TODO: check this API to see if we're giving too much flexibility to the plugin *)
-    val remove_constraint : (type_variable -> 'type_variable) -> 'type_variable t -> type_constraint_simpl -> ('type_variable t, Typer_errors.typer_error) Trace.result
+    val remove_constraint :(Format.formatter -> 'type_variable -> unit) -> (type_variable -> 'type_variable) -> 'type_variable t -> type_constraint_simpl -> ('type_variable t, Typer_errors.typer_error) Trace.result
     (* Update the state to merge entries of maps and sets of type
        variables.  *)
-    val merge_aliases : ('old, 'new_) merge_keys -> 'old t -> 'new_ t
+    val merge_aliases : ?debug:(Format.formatter -> 'new_ t -> unit) -> ('old, 'new_) merge_keys -> 'old t -> 'new_ t
     (* The pretty-printer is used for debugging *)
     val pp : (Format.formatter -> 'typeVariable -> unit) -> Format.formatter -> 'typeVariable t -> unit
     val name : string

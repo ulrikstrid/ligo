@@ -29,27 +29,26 @@ let add_constraint ?debug repr state new_constraint =
     Option.unopt ~default:state @@ ReprMap.add_opt ?debug (repr r.tv) (`Row r) state
   | _ -> state
 
-let remove_constraint _repr state _constraint_to_remove =
+let remove_constraint _ _repr state _constraint_to_remove =
   (* assignments cannot be remove (they are similar to instanciations
      of existential variables in Coq, and happen globally regardless
      of the constraints available in the database). *)
   ok state
 
-let merge_aliases : 'old 'new_ . ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
-  fun merge_keys state -> merge_keys.map state
+let merge_aliases : 'old 'new_ . ?debug:(Format.formatter -> 'new_ t -> unit) -> ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
+  fun ?debug:_ merge_keys state -> merge_keys.map state
 
 let pp _type_variable ppf state =
   let open PP_helpers in
-  Format.fprintf ppf "%a"
-    (list_sep
+  Format.fprintf ppf "@[ %a @]"
+    (list_sep_d
        (fun ppf (_,v) ->
-          Format.fprintf ppf "%a" Ast_typed.PP.constructor_or_row_short v)
-       (tag "\n  "))
+          Format.fprintf ppf "%a" Ast_typed.PP.constructor_or_row_short v))
     (ReprMap.bindings state)
 
                                                                                                                              
 
-let name = "assingnments"
+let name = "assingments"
 
 let find_opt : 'type_variable -> 'type_variable t -> constructor_or_row option = ReprMap.find_opt
 

@@ -168,6 +168,13 @@ let partitions : 'item . 'item partition -> 'item list list =
  *     in ()
  *   in map_iter print p.map *)
 
-let pp f ppf ({to_string=_;compare=_;map} : 'a t) =
+let bindings ({map;_} : 'a t) = RedBlackTrees.PolyMap.bindings map
+
+let pp_node f ppf = function
+  Root h -> Format.fprintf ppf "Root (%i)" h
+| Link (a,h) -> Format.fprintf ppf "Link (%a,%i)" f a h
+
+let pp f ppf (uf : 'a t) =
+  let pp_sep = (fun ppf () -> Format.fprintf ppf " ,@ ") in
   Format.fprintf ppf "@[(%a)@]"
-  (Format.pp_print_list ~pp_sep:(fun ppf () -> Format.fprintf ppf " ,@ ") (fun ppf a -> Format.fprintf ppf "%a" f a)) (map_sorted_keys map)
+  (Format.pp_print_list ~pp_sep (fun ppf (a,b) -> Format.fprintf ppf "(%a,%a)" f a (pp_node f) b)) (bindings uf)
