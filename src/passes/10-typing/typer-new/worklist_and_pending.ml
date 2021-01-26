@@ -1,4 +1,5 @@
 open Trace
+open Typer_common.Errors
 open Ast_typed.Types
 
 module SRope = Rope.SimpleRope
@@ -34,6 +35,9 @@ type ('part, 'whole) mini_lens = { get : 'whole -> 'part Pending.t; set : 'whole
 
 module Worklist = struct
   type t = worklist_
+  type monad =
+      Some_processing_done of t
+    | Unchanged of t
 
   let decrement_has_timeout_expired time_to_live = 
     let () = time_to_live := !time_to_live - 1 in
@@ -69,9 +73,9 @@ module Worklist = struct
         Pending.is_empty pending_c_alias                                &&
         Pending.is_empty pending_non_alias                               )
 
-  let process lens (state, worklist) f =
+  let process lens f (state, worklist) =
     match (Pending.pop (lens.get worklist)) with
-      None -> ok (state, worklist)
+      None -> ok (state, Unchanged worklist)
     | Some (element, rest) ->
       (* set this field of the worklist to the rest of this Pending.t *)
       let worklist = lens.set worklist rest in
@@ -86,12 +90,24 @@ module Worklist = struct
         pending_non_alias                              = Pending.union new_worklist.pending_non_alias                                worklist.pending_non_alias                                ;
       }
       (* return the state updated by f, and the updated worklist (without the processed element, with the new tasks) *)
-      in ok (state, merged_worklists)
+      in ok (state, Some_processing_done merged_worklists)
 
-  let process_all ~time_to_live lens (state, worklist) f =
-    until (fun (_state, worklist) -> decrement_has_timeout_expired time_to_live || Pending.is_empty (lens.get worklist))
-      (fun (state, worklist) -> process lens (state, worklist) f)
-      (state, worklist)
+  
+  let rec process_all ~time_to_live lens f (state, worklist) =
+    if decrement_has_timeout_expired time_to_live
+    then ok (state, Unchanged worklist)
+    else
+      let%bind (state, worklist) = process lens f (state, worklist) in
+      match worklist with
+        Some_processing_done worklist ->
+        let%bind (state, worklist) = process_all ~time_to_live lens f (state, worklist) in
+        (match worklist with
+           Some_processing_done worklist ->
+           ok (state, Some_processing_done worklist)
+         | Unchanged worklist ->
+           ok (state, Some_processing_done worklist))
+      | Unchanged worklist ->
+        ok (state, Unchanged worklist)
 
   let empty = {
     (* TODO: these should be ropes *)
@@ -108,3 +124,34 @@ let pending_filtered_not_already_added_constraints = { get = (fun { pending_filt
 let pending_type_constraint_simpl                  = { get = (fun { pending_type_constraint_simpl                  = x ; _ } -> x); set = (fun w x -> { w with pending_type_constraint_simpl                  = x }) }
 let pending_c_alias                                = { get = (fun { pending_c_alias                                = x ; _ } -> x); set = (fun w x -> { w with pending_c_alias                                = x }) }
 let pending_non_alias                              = { get = (fun { pending_non_alias                              = x ; _ } -> x); set = (fun w x -> { w with pending_non_alias                              = x }) }
+
+
+let rec until' :
+  (* predicate      *) ('state * Worklist.t -> bool) ->
+  (* f              *) ('state * Worklist.t -> ('state * Worklist.monad, typer_error) result) ->
+  (* state,worklist *) 'state * Worklist.t ->
+  (* returns:       *) ('state * Worklist.t, typer_error) result
+  = fun predicate f ((state : 'state), (worklist : Worklist.t)) ->
+    if predicate (state, worklist) then
+      ok (state, worklist)
+    else
+      let%bind (state, worklist_monad) = f (state, worklist) in
+      match worklist_monad with
+        Worklist.Unchanged w ->
+        (if predicate (state, w) then
+           ok (state, w)
+         else fail (solver_made_no_progress "inside 'until': no worklist worker was triggered"))
+      | Worklist.Some_processing_done w ->
+        until' predicate f (state, w)
+
+module Worklist_monad = struct
+
+  module Let_syntax = struct
+    let bind some_result ~f =
+      let%bind (state, (worklist_monad : Worklist.monad)) = some_result in
+      match worklist_monad with
+        Worklist.Some_processing_done w -> ok (state, Worklist.Some_processing_done w)
+      | Worklist.Unchanged w -> f (state, w)
+
+  end
+end

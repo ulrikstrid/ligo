@@ -184,56 +184,64 @@ end = struct
     (list_sep type_constraint_simpl_short (tag "\n  "))
   let _ = pp_indented_constraint_list, pp_indented_constraint_simpl_list (* unused warning *)
 
-   (* Takes a list of constraints, applies all selector+propagator pairs
+  (* Takes a list of constraints, applies all selector+propagator pairs
      to each in turn. *)
   let select_and_propagate_all : typer_state -> Worklist.t -> typer_state result =
     fun state initial_constraints ->
     (* To change the order in which the constraints are processed, modify this loop. *)
+    let () = queue_print (fun () -> Formatt.printf "In select and propagate all\n") in
     let () = Formatt.printf "In select and propagate all\n" in
-    let time_to_live = ref 1000 in
-    until
+    let time_to_live = ref 10000 in
+    until'
       (* repeat until the worklist is empty *)
       (Worklist.is_empty ~time_to_live)
       (fun (state, worklist) ->
-        let () = Formatt.printf "\nStart iteration with constraints :\n  %a\n and state : %a\n" pp_indented_constraint_list (Pending.to_list worklist.pending_type_constraint) pp_typer_state state in
+         let () = Formatt.printf "\nStart iteration with constraints :\n  %a\n and state : %a\n" pp_indented_constraint_list (Pending.to_list worklist.pending_type_constraint) pp_typer_state state in
 
-        let%bind (state, worklist) =
-          Worklist.process_all ~time_to_live
-            pending_type_constraint
-            (state, worklist)
-            filter_already_added
-        in
+         (* let () = queue_print (fun () -> Formatt.printf "Start iteration with constraints :\n  %a\n\n" pp_indented_constraint_list (Pending.to_list worklist.pending_type_constraint)) in *)
 
-        let%bind (state, worklist) =
-          Worklist.process_all ~time_to_live
-            pending_filtered_not_already_added_constraints
-            (state, worklist)
-            simplify_constraint
-        in
+         (* The worklist monad changes let%bind so that it executes
+            the "in" part only if the bound expression left the
+            worklist unchanged. In other words, processing stops at
+            the first handler which does some work. *)
+         let open Worklist_monad in
 
-        let%bind (state, worklist) =
-          Worklist.process_all ~time_to_live
-            pending_type_constraint_simpl
-            (state, worklist)
-            split_aliases
-        in
+         let%bind (state, worklist) =
+           Worklist.process_all ~time_to_live
+             pending_type_constraint
+             filter_already_added
+             (state, worklist)
+         in
 
-        let%bind (state, worklist) =
-          Worklist.process_all ~time_to_live
-            pending_c_alias
-            (state, worklist)
-            add_alias
-        in
+         let%bind (state, worklist) =
+           Worklist.process_all ~time_to_live
+             pending_filtered_not_already_added_constraints
+             simplify_constraint
+             (state, worklist)
+         in
 
-        (* let () = queue_print (fun () -> Formatt.printf "Constraints :%a\n%!" pp_indented_constraint_simpl_list constraints) in *)
-        let%bind (state, worklist) =
-          Worklist.process_all ~time_to_live
-            pending_non_alias
-            (state, worklist)
-            add_constraint_and_apply_heuristics
-        in
-        
-        ok (state, worklist)
+         let%bind (state, worklist) =
+           Worklist.process_all ~time_to_live
+             pending_type_constraint_simpl
+             split_aliases
+             (state, worklist)
+         in
+
+         let%bind (state, worklist) =
+           Worklist.process_all ~time_to_live
+             pending_c_alias
+             add_alias
+             (state, worklist)
+         in
+
+         let%bind (state, worklist) =
+           Worklist.process_all ~time_to_live
+             pending_non_alias
+             add_constraint_and_apply_heuristics
+             (state, worklist)
+         in
+
+         ok (state, Worklist.Unchanged worklist)
       )
 
       (state, initial_constraints)
