@@ -129,24 +129,24 @@ let no = false
 let y = true
 let main = test_suite "Typer (from core AST)"
     @@ (fun lst -> List.map snd @@ match typer_switch () with Ast_typed.New -> List.filter fst lst | _ -> lst) @@ [
-    test y "int" int ;
-    test y "unit"            TestExpressions.unit ;
-    test y "int2"            TestExpressions.int ;
-    test y "bool"            TestExpressions.bool ; (* needs variants *)
-    test y "string"          TestExpressions.string ;
-    test y "bytes"           TestExpressions.bytes ;    
-    test y "option"          TestExpressions.option ;    
-    test y "bytes_pack"      TestExpressions.bytes_pack ;    
-    test y "bytes_unpack"    TestExpressions.bytes_unpack ;    
-    test y "application"     TestExpressions.application ;
-    test y "lambda"          TestExpressions.lambda ;
-    test y "let_in"          TestExpressions.let_in ;
-    test y "let_in_ascr"     TestExpressions.let_in_ascr ;
-    test y "constructor"     TestExpressions.constructor ;
-    test y "matching"        TestExpressions.matching ;
-    test y "record"          TestExpressions.record ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "int" int ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "unit"            TestExpressions.unit ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "int2"            TestExpressions.int ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bool"            TestExpressions.bool ; (* needs variants *)
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "string"          TestExpressions.string ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes"           TestExpressions.bytes ;    
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "option"          TestExpressions.option ;    
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes_pack"      TestExpressions.bytes_pack ;    
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes_unpack"    TestExpressions.bytes_unpack ;    
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "application"     TestExpressions.application ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "lambda"          TestExpressions.lambda ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "let_in"          TestExpressions.let_in ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "let_in_ascr"     TestExpressions.let_in_ascr ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "constructor"     TestExpressions.constructor ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "matching"        TestExpressions.matching ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "record"          TestExpressions.record ;
     test no "record_accessor" TestExpressions.record_accessor ;
     test no "record_update"   TestExpressions.record_update ;
-    test y "tuple"           TestExpressions.tuple ;
-    test y "ascription"      TestExpressions.ascription ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "tuple"           TestExpressions.tuple ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "ascription"      TestExpressions.ascription ;
   ]
