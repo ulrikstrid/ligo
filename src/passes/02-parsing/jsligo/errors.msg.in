@@ -1,6 +1,6 @@
 interactive_expr: LBRACE Constr XOR_EQ
 ##
-## Ends in an error in state: 177.
+## Ends in an error in state: 256.
 ##
 ## property -> Constr . [ RBRACE COMMA ]
 ## property_name -> Constr . [ COLON ]
@@ -13,7 +13,7 @@ interactive_expr: LBRACE Constr XOR_EQ
 
 interactive_expr: LBRACE ELLIPSIS True SEMI
 ##
-## Ends in an error in state: 181.
+## Ends in an error in state: 260.
 ##
 ## properties -> property . COMMA properties [ RBRACE ]
 ## properties -> property . [ RBRACE ]
@@ -35,14 +35,14 @@ interactive_expr: LBRACE ELLIPSIS True SEMI
 ## In state 121, spurious reduction of production disj_expr_level -> conj_expr_level 
 ## In state 119, spurious reduction of production expr_statement -> disj_expr_level 
 ## In state 115, spurious reduction of production assignment_expr -> expr_statement 
-## In state 176, spurious reduction of production property -> ELLIPSIS assignment_expr 
+## In state 255, spurious reduction of production property -> ELLIPSIS assignment_expr 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 interactive_expr: LBRACE ELLIPSIS XOR_EQ
 ##
-## Ends in an error in state: 92.
+## Ends in an error in state: 87.
 ##
 ## property -> ELLIPSIS . assignment_expr [ RBRACE COMMA ]
 ##
@@ -54,7 +54,7 @@ interactive_expr: LBRACE ELLIPSIS XOR_EQ
 
 interactive_expr: LBRACE Ident COMMA XOR_EQ
 ##
-## Ends in an error in state: 182.
+## Ends in an error in state: 261.
 ##
 ## properties -> property COMMA . properties [ RBRACE ]
 ##
@@ -66,7 +66,7 @@ interactive_expr: LBRACE Ident COMMA XOR_EQ
 
 interactive_expr: LBRACE Ident XOR_EQ
 ##
-## Ends in an error in state: 91.
+## Ends in an error in state: 86.
 ##
 ## property -> Ident . [ RBRACE COMMA ]
 ## property_name -> Ident . [ COLON ]
@@ -79,9 +79,9 @@ interactive_expr: LBRACE Ident XOR_EQ
 
 interactive_expr: LBRACE String COLON XOR_EQ
 ##
-## Ends in an error in state: 179.
+## Ends in an error in state: 258.
 ##
-## property -> property_name COLON . assignment_expr [ RBRACE COMMA ]
+## property -> property_name COLON . expr [ RBRACE COMMA ]
 ##
 ## The known suffix of the stack is as follows:
 ## property_name COLON
@@ -91,9 +91,9 @@ interactive_expr: LBRACE String COLON XOR_EQ
 
 interactive_expr: LBRACE String XOR_EQ
 ##
-## Ends in an error in state: 178.
+## Ends in an error in state: 257.
 ##
-## property -> property_name . COLON assignment_expr [ RBRACE COMMA ]
+## property -> property_name . COLON expr [ RBRACE COMMA ]
 ##
 ## The known suffix of the stack is as follows:
 ## property_name
@@ -103,7 +103,7 @@ interactive_expr: LBRACE String XOR_EQ
 
 interactive_expr: LBRACE XOR_EQ
 ##
-## Ends in an error in state: 88.
+## Ends in an error in state: 83.
 ##
 ## object_literal -> LBRACE . properties RBRACE [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -115,7 +115,7 @@ interactive_expr: LBRACE XOR_EQ
 
 interactive_expr: True SEMI
 ##
-## Ends in an error in state: 326.
+## Ends in an error in state: 330.
 ##
 ## interactive_expr -> expr . EOF [ # ]
 ##
@@ -143,7 +143,7 @@ interactive_expr: True SEMI
 
 interactive_expr: XOR_EQ
 ##
-## Ends in an error in state: 324.
+## Ends in an error in state: 328.
 ##
 ## interactive_expr' -> . interactive_expr [ # ]
 ##
@@ -167,7 +167,7 @@ contract: BOOL_NOT XOR_EQ
 
 contract: Const XOR_EQ
 ##
-## Ends in an error in state: 244.
+## Ends in an error in state: 234.
 ##
 ## declaration -> Const . binding_list [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -202,37 +202,9 @@ contract: Constr XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Ident ARROW LBRACE True EOF
-##
-## Ends in an error in state: 262.
-##
-## arrow_function_body -> LBRACE statements . RBRACE [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
-##
-## The known suffix of the stack is as follows:
-## LBRACE statements
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 101, spurious reduction of production new_expr -> member_expr 
-## In state 100, spurious reduction of production call_expr_level -> new_expr 
-## In state 111, spurious reduction of production unary_expr_level -> call_expr_level 
-## In state 104, spurious reduction of production mult_expr_level -> unary_expr_level 
-## In state 108, spurious reduction of production add_expr_level -> mult_expr_level 
-## In state 156, spurious reduction of production comp_expr_level -> add_expr_level 
-## In state 157, spurious reduction of production conj_expr_level -> comp_expr_level 
-## In state 121, spurious reduction of production disj_expr_level -> conj_expr_level 
-## In state 119, spurious reduction of production expr_statement -> disj_expr_level 
-## In state 253, spurious reduction of production statement -> expr_statement 
-## In state 258, spurious reduction of production statements -> statement 
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 contract: Ident ARROW LBRACE XOR_EQ
 ##
-## Ends in an error in state: 86.
+## Ends in an error in state: 91.
 ##
 ## arrow_function_body -> LBRACE . statements RBRACE [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -244,7 +216,7 @@ contract: Ident ARROW LBRACE XOR_EQ
 
 contract: Ident ARROW XOR_EQ
 ##
-## Ends in an error in state: 85.
+## Ends in an error in state: 90.
 ##
 ## arrow_function -> Ident ARROW . arrow_function_body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
@@ -256,7 +228,7 @@ contract: Ident ARROW XOR_EQ
 
 contract: Ident XOR_EQ
 ##
-## Ends in an error in state: 84.
+## Ends in an error in state: 89.
 ##
 ## arrow_function -> Ident . ARROW arrow_function_body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ## member_expr -> Ident . [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
@@ -269,7 +241,7 @@ contract: Ident XOR_EQ
 
 contract: If LPAR True RPAR True Else XOR_EQ
 ##
-## Ends in an error in state: 249.
+## Ends in an error in state: 239.
 ##
 ## if_else_statement -> If par(expr) statement Else . statement [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -281,7 +253,7 @@ contract: If LPAR True RPAR True Else XOR_EQ
 
 contract: If LPAR True RPAR True RPAR
 ##
-## Ends in an error in state: 248.
+## Ends in an error in state: 238.
 ##
 ## if_else_statement -> If par(expr) statement . Else statement [ SEMI RBRACE Else EOF Default Case ]
 ## if_else_statement -> If par(expr) statement . [ SEMI RBRACE Else EOF Default Case ]
@@ -302,14 +274,14 @@ contract: If LPAR True RPAR True RPAR
 ## In state 157, spurious reduction of production conj_expr_level -> comp_expr_level 
 ## In state 121, spurious reduction of production disj_expr_level -> conj_expr_level 
 ## In state 119, spurious reduction of production expr_statement -> disj_expr_level 
-## In state 253, spurious reduction of production statement -> expr_statement 
+## In state 243, spurious reduction of production statement -> expr_statement 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: If LPAR True RPAR XOR_EQ
 ##
-## Ends in an error in state: 243.
+## Ends in an error in state: 233.
 ##
 ## if_else_statement -> If par(expr) . statement Else statement [ SEMI RBRACE Else EOF Default Case ]
 ## if_else_statement -> If par(expr) . statement [ SEMI RBRACE Else EOF Default Case ]
@@ -322,7 +294,7 @@ contract: If LPAR True RPAR XOR_EQ
 
 contract: If LPAR True SEMI
 ##
-## Ends in an error in state: 241.
+## Ends in an error in state: 231.
 ##
 ## par(expr) -> LPAR expr . RPAR [ Type True Switch String Return New MINUS Let LPAR LBRACKET LBRACE Int If Ident False Constr Const Bytes BOOL_NOT ]
 ##
@@ -350,7 +322,7 @@ contract: If LPAR True SEMI
 
 contract: If LPAR XOR_EQ
 ##
-## Ends in an error in state: 240.
+## Ends in an error in state: 230.
 ##
 ## par(expr) -> LPAR . expr RPAR [ Type True Switch String Return New MINUS Let LPAR LBRACKET LBRACE Int If Ident False Constr Const Bytes BOOL_NOT ]
 ##
@@ -362,7 +334,7 @@ contract: If LPAR XOR_EQ
 
 contract: If XOR_EQ
 ##
-## Ends in an error in state: 239.
+## Ends in an error in state: 229.
 ##
 ## if_else_statement -> If . par(expr) statement Else statement [ SEMI RBRACE Else EOF Default Case ]
 ## if_else_statement -> If . par(expr) statement [ SEMI RBRACE Else EOF Default Case ]
@@ -375,12 +347,13 @@ contract: If XOR_EQ
 
 contract: LBRACE True EOF
 ##
-## Ends in an error in state: 256.
+## Ends in an error in state: 248.
 ##
-## block_statement -> LBRACE statements . RBRACE [ SEMI RBRACE Else EOF Default Case ]
+## statements -> statement . SEMI option(statements) [ RBRACE Default Case ]
+## statements -> statement . [ RBRACE Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## LBRACE statements
+## statement
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -395,15 +368,14 @@ contract: LBRACE True EOF
 ## In state 157, spurious reduction of production conj_expr_level -> comp_expr_level 
 ## In state 121, spurious reduction of production disj_expr_level -> conj_expr_level 
 ## In state 119, spurious reduction of production expr_statement -> disj_expr_level 
-## In state 253, spurious reduction of production statement -> expr_statement 
-## In state 258, spurious reduction of production statements -> statement 
+## In state 243, spurious reduction of production statement -> expr_statement 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: LBRACE XOR_EQ
 ##
-## Ends in an error in state: 238.
+## Ends in an error in state: 228.
 ##
 ## block_statement -> LBRACE . statements RBRACE [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -429,7 +401,7 @@ contract: LBRACKET ELLIPSIS XOR_EQ
 ##
 ## Ends in an error in state: 265.
 ##
-## array_item -> ELLIPSIS . assignment_expr [ RBRACKET COMMA ]
+## array_item -> ELLIPSIS . expr [ RBRACKET COMMA ]
 ##
 ## The known suffix of the stack is as follows:
 ## ELLIPSIS
@@ -461,7 +433,8 @@ contract: LBRACKET True COLON
 ## In state 121, spurious reduction of production disj_expr_level -> conj_expr_level 
 ## In state 119, spurious reduction of production expr_statement -> disj_expr_level 
 ## In state 115, spurious reduction of production assignment_expr -> expr_statement 
-## In state 267, spurious reduction of production array_item -> assignment_expr 
+## In state 164, spurious reduction of production expr -> assignment_expr 
+## In state 267, spurious reduction of production array_item -> expr 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -784,7 +757,7 @@ contract: LPAR XOR_EQ
 
 contract: Let LBRACE Constr COLON XOR_EQ
 ##
-## Ends in an error in state: 223.
+## Ends in an error in state: 213.
 ##
 ## object_binding_property -> Constr COLON . binding_initializer [ RBRACE COMMA ]
 ##
@@ -796,7 +769,7 @@ contract: Let LBRACE Constr COLON XOR_EQ
 
 contract: Let LBRACE Constr XOR_EQ
 ##
-## Ends in an error in state: 222.
+## Ends in an error in state: 212.
 ##
 ## object_binding_property -> Constr . option(initializer_) [ RBRACE COMMA ]
 ## object_binding_property -> Constr . COLON binding_initializer [ RBRACE COMMA ]
@@ -809,7 +782,7 @@ contract: Let LBRACE Constr XOR_EQ
 
 contract: Let LBRACE ELLIPSIS Constr XOR_EQ
 ##
-## Ends in an error in state: 231.
+## Ends in an error in state: 221.
 ##
 ## object_binding_pattern -> LBRACE object_binding_pattern_items . RBRACE [ EQ COLON ]
 ##
@@ -821,7 +794,7 @@ contract: Let LBRACE ELLIPSIS Constr XOR_EQ
 
 contract: Let LBRACE Ident COLON XOR_EQ
 ##
-## Ends in an error in state: 209.
+## Ends in an error in state: 199.
 ##
 ## object_binding_property -> Ident COLON . binding_initializer [ RBRACE COMMA ]
 ##
@@ -833,7 +806,7 @@ contract: Let LBRACE Ident COLON XOR_EQ
 
 contract: Let LBRACE Ident COMMA XOR_EQ
 ##
-## Ends in an error in state: 228.
+## Ends in an error in state: 218.
 ##
 ## object_binding_pattern_items -> object_binding_property COMMA . option(object_binding_pattern_items) [ RBRACE ]
 ##
@@ -845,7 +818,7 @@ contract: Let LBRACE Ident COMMA XOR_EQ
 
 contract: Let LBRACE Ident EQ True SEMI
 ##
-## Ends in an error in state: 227.
+## Ends in an error in state: 217.
 ##
 ## object_binding_pattern_items -> object_binding_property . COMMA option(object_binding_pattern_items) [ RBRACE ]
 ## object_binding_pattern_items -> object_binding_property . [ RBRACE ]
@@ -868,17 +841,17 @@ contract: Let LBRACE Ident EQ True SEMI
 ## In state 119, spurious reduction of production expr_statement -> disj_expr_level 
 ## In state 115, spurious reduction of production assignment_expr -> expr_statement 
 ## In state 164, spurious reduction of production expr -> assignment_expr 
-## In state 208, spurious reduction of production initializer_expr -> expr 
-## In state 207, spurious reduction of production initializer_ -> EQ initializer_expr 
-## In state 221, spurious reduction of production option(initializer_) -> initializer_ 
-## In state 220, spurious reduction of production object_binding_property -> Ident option(initializer_) 
+## In state 198, spurious reduction of production initializer_expr -> expr 
+## In state 197, spurious reduction of production initializer_ -> EQ initializer_expr 
+## In state 211, spurious reduction of production option(initializer_) -> initializer_ 
+## In state 210, spurious reduction of production object_binding_property -> Ident option(initializer_) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Let LBRACE Ident XOR_EQ
 ##
-## Ends in an error in state: 205.
+## Ends in an error in state: 195.
 ##
 ## object_binding_property -> Ident . option(initializer_) [ RBRACE COMMA ]
 ## object_binding_property -> Ident . COLON binding_initializer [ RBRACE COMMA ]
@@ -891,7 +864,7 @@ contract: Let LBRACE Ident XOR_EQ
 
 contract: Let LBRACE XOR_EQ
 ##
-## Ends in an error in state: 204.
+## Ends in an error in state: 194.
 ##
 ## object_binding_pattern -> LBRACE . object_binding_pattern_items RBRACE [ EQ COLON ]
 ##
@@ -903,7 +876,7 @@ contract: Let LBRACE XOR_EQ
 
 contract: Let LBRACKET COMMA XOR_EQ
 ##
-## Ends in an error in state: 201.
+## Ends in an error in state: 191.
 ##
 ## array_binding_pattern_items -> array_binding_pattern_item COMMA . array_binding_pattern_items [ RBRACKET ]
 ##
@@ -915,7 +888,7 @@ contract: Let LBRACKET COMMA XOR_EQ
 
 contract: Let LBRACKET ELLIPSIS XOR_EQ
 ##
-## Ends in an error in state: 193.
+## Ends in an error in state: 183.
 ##
 ## rest -> ELLIPSIS . Constr [ RBRACKET RBRACE COMMA ]
 ## rest -> ELLIPSIS . Ident [ RBRACKET RBRACE COMMA ]
@@ -928,7 +901,7 @@ contract: Let LBRACKET ELLIPSIS XOR_EQ
 
 contract: Let LBRACKET WILD COLON
 ##
-## Ends in an error in state: 200.
+## Ends in an error in state: 190.
 ##
 ## array_binding_pattern_items -> array_binding_pattern_item . COMMA array_binding_pattern_items [ RBRACKET ]
 ## array_binding_pattern_items -> array_binding_pattern_item . [ RBRACKET ]
@@ -941,7 +914,7 @@ contract: Let LBRACKET WILD COLON
 
 contract: Let LBRACKET XOR_EQ
 ##
-## Ends in an error in state: 190.
+## Ends in an error in state: 180.
 ##
 ## array_binding_pattern -> LBRACKET . array_binding_pattern_items RBRACKET [ RBRACKET EQ COMMA COLON ]
 ##
@@ -953,7 +926,7 @@ contract: Let LBRACKET XOR_EQ
 
 contract: Let WILD COLON WILD XOR_EQ
 ##
-## Ends in an error in state: 215.
+## Ends in an error in state: 205.
 ##
 ## binding_initializer -> binding_pattern COLON type_expr . initializer_ [ SEMI RBRACE Else EOF Default Case COMMA ]
 ##
@@ -965,7 +938,7 @@ contract: Let WILD COLON WILD XOR_EQ
 
 contract: Let WILD COLON XOR_EQ
 ##
-## Ends in an error in state: 214.
+## Ends in an error in state: 204.
 ##
 ## binding_initializer -> binding_pattern COLON . type_expr initializer_ [ SEMI RBRACE Else EOF Default Case COMMA ]
 ##
@@ -977,7 +950,7 @@ contract: Let WILD COLON XOR_EQ
 
 contract: Let WILD EQ Bytes COMMA XOR_EQ
 ##
-## Ends in an error in state: 236.
+## Ends in an error in state: 226.
 ##
 ## nsepseq(binding_initializer,COMMA) -> binding_initializer COMMA . nsepseq(binding_initializer,COMMA) [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -989,7 +962,7 @@ contract: Let WILD EQ Bytes COMMA XOR_EQ
 
 contract: Let WILD EQ Bytes RPAR
 ##
-## Ends in an error in state: 235.
+## Ends in an error in state: 225.
 ##
 ## nsepseq(binding_initializer,COMMA) -> binding_initializer . [ SEMI RBRACE Else EOF Default Case ]
 ## nsepseq(binding_initializer,COMMA) -> binding_initializer . COMMA nsepseq(binding_initializer,COMMA) [ SEMI RBRACE Else EOF Default Case ]
@@ -1012,16 +985,16 @@ contract: Let WILD EQ Bytes RPAR
 ## In state 119, spurious reduction of production expr_statement -> disj_expr_level 
 ## In state 115, spurious reduction of production assignment_expr -> expr_statement 
 ## In state 164, spurious reduction of production expr -> assignment_expr 
-## In state 208, spurious reduction of production initializer_expr -> expr 
-## In state 207, spurious reduction of production initializer_ -> EQ initializer_expr 
-## In state 217, spurious reduction of production binding_initializer -> binding_pattern initializer_ 
+## In state 198, spurious reduction of production initializer_expr -> expr 
+## In state 197, spurious reduction of production initializer_ -> EQ initializer_expr 
+## In state 207, spurious reduction of production binding_initializer -> binding_pattern initializer_ 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: Let WILD EQ XOR_EQ
 ##
-## Ends in an error in state: 206.
+## Ends in an error in state: 196.
 ##
 ## initializer_ -> EQ . initializer_expr [ SEMI RBRACE Else EOF Default Case COMMA ]
 ##
@@ -1033,7 +1006,7 @@ contract: Let WILD EQ XOR_EQ
 
 contract: Let WILD XOR_EQ
 ##
-## Ends in an error in state: 213.
+## Ends in an error in state: 203.
 ##
 ## binding_initializer -> binding_pattern . initializer_ [ SEMI RBRACE Else EOF Default Case COMMA ]
 ## binding_initializer -> binding_pattern . COLON type_expr initializer_ [ SEMI RBRACE Else EOF Default Case COMMA ]
@@ -1046,7 +1019,7 @@ contract: Let WILD XOR_EQ
 
 contract: Let XOR_EQ
 ##
-## Ends in an error in state: 188.
+## Ends in an error in state: 178.
 ##
 ## declaration -> Let . binding_list [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -1163,7 +1136,7 @@ contract: New XOR_EQ
 
 contract: Return XOR_EQ
 ##
-## Ends in an error in state: 87.
+## Ends in an error in state: 92.
 ##
 ## return_statement -> Return . option(expr) [ SEMI RBRACE Else EOF Default Case ]
 ##
@@ -1221,66 +1194,6 @@ contract: Switch LPAR True RPAR LBRACE Case XOR_EQ
 ##
 ## The known suffix of the stack is as follows:
 ## Case
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Switch LPAR True RPAR LBRACE Default COLON Bytes EOF
-##
-## Ends in an error in state: 317.
-##
-## nseq(case_block) -> case_block . seq(case_block) [ RBRACE ]
-##
-## The known suffix of the stack is as follows:
-## case_block
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 101, spurious reduction of production new_expr -> member_expr 
-## In state 100, spurious reduction of production call_expr_level -> new_expr 
-## In state 111, spurious reduction of production unary_expr_level -> call_expr_level 
-## In state 104, spurious reduction of production mult_expr_level -> unary_expr_level 
-## In state 108, spurious reduction of production add_expr_level -> mult_expr_level 
-## In state 156, spurious reduction of production comp_expr_level -> add_expr_level 
-## In state 157, spurious reduction of production conj_expr_level -> comp_expr_level 
-## In state 121, spurious reduction of production disj_expr_level -> conj_expr_level 
-## In state 119, spurious reduction of production expr_statement -> disj_expr_level 
-## In state 253, spurious reduction of production statement -> expr_statement 
-## In state 258, spurious reduction of production statements -> statement 
-## In state 260, spurious reduction of production option(statements) -> statements 
-## In state 310, spurious reduction of production case_block -> Default COLON option(statements) 
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-contract: Switch LPAR True RPAR LBRACE Default COLON Default COLON Bytes EOF
-##
-## Ends in an error in state: 319.
-##
-## seq(case_block) -> case_block . seq(case_block) [ RBRACE ]
-##
-## The known suffix of the stack is as follows:
-## case_block
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 101, spurious reduction of production new_expr -> member_expr 
-## In state 100, spurious reduction of production call_expr_level -> new_expr 
-## In state 111, spurious reduction of production unary_expr_level -> call_expr_level 
-## In state 104, spurious reduction of production mult_expr_level -> unary_expr_level 
-## In state 108, spurious reduction of production add_expr_level -> mult_expr_level 
-## In state 156, spurious reduction of production comp_expr_level -> add_expr_level 
-## In state 157, spurious reduction of production conj_expr_level -> comp_expr_level 
-## In state 121, spurious reduction of production disj_expr_level -> conj_expr_level 
-## In state 119, spurious reduction of production expr_statement -> disj_expr_level 
-## In state 253, spurious reduction of production statement -> expr_statement 
-## In state 258, spurious reduction of production statements -> statement 
-## In state 260, spurious reduction of production option(statements) -> statements 
-## In state 310, spurious reduction of production case_block -> Default COLON option(statements) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -1723,34 +1636,6 @@ contract: True PLUS XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: True RBRACE
-##
-## Ends in an error in state: 321.
-##
-## contract -> statements . EOF [ # ]
-##
-## The known suffix of the stack is as follows:
-## statements
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 101, spurious reduction of production new_expr -> member_expr 
-## In state 100, spurious reduction of production call_expr_level -> new_expr 
-## In state 111, spurious reduction of production unary_expr_level -> call_expr_level 
-## In state 104, spurious reduction of production mult_expr_level -> unary_expr_level 
-## In state 108, spurious reduction of production add_expr_level -> mult_expr_level 
-## In state 156, spurious reduction of production comp_expr_level -> add_expr_level 
-## In state 157, spurious reduction of production conj_expr_level -> comp_expr_level 
-## In state 121, spurious reduction of production disj_expr_level -> conj_expr_level 
-## In state 119, spurious reduction of production expr_statement -> disj_expr_level 
-## In state 253, spurious reduction of production statement -> expr_statement 
-## In state 258, spurious reduction of production statements -> statement 
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 contract: True REM XOR_EQ
 ##
 ## Ends in an error in state: 136.
@@ -1765,10 +1650,10 @@ contract: True REM XOR_EQ
 
 contract: True RPAR
 ##
-## Ends in an error in state: 258.
+## Ends in an error in state: 323.
 ##
-## statements -> statement . SEMI option(statements) [ RBRACE EOF Default Case ]
-## statements -> statement . [ RBRACE EOF Default Case ]
+## toplevel_statements -> statement . SEMI toplevel_statements [ EOF ]
+## toplevel_statements -> statement . option(SEMI) [ EOF ]
 ##
 ## The known suffix of the stack is as follows:
 ## statement
@@ -1786,16 +1671,17 @@ contract: True RPAR
 ## In state 157, spurious reduction of production conj_expr_level -> comp_expr_level 
 ## In state 121, spurious reduction of production disj_expr_level -> conj_expr_level 
 ## In state 119, spurious reduction of production expr_statement -> disj_expr_level 
-## In state 253, spurious reduction of production statement -> expr_statement 
+## In state 243, spurious reduction of production statement -> expr_statement 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: True SEMI XOR_EQ
 ##
-## Ends in an error in state: 259.
+## Ends in an error in state: 324.
 ##
-## statements -> statement SEMI . option(statements) [ RBRACE EOF Default Case ]
+## option(SEMI) -> SEMI . [ EOF ]
+## toplevel_statements -> statement SEMI . toplevel_statements [ EOF ]
 ##
 ## The known suffix of the stack is as follows:
 ## statement SEMI
@@ -2330,3 +2216,70 @@ contract: XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
+contract: LBRACE True Default
+##
+## Ends in an error in state: 246.
+##
+## block_statement -> LBRACE statements . RBRACE [ SEMI RBRACE Else EOF Default Case ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE statements
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 101, spurious reduction of production new_expr -> member_expr 
+## In state 100, spurious reduction of production call_expr_level -> new_expr 
+## In state 111, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 104, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 108, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 156, spurious reduction of production comp_expr_level -> add_expr_level 
+## In state 157, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 121, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 119, spurious reduction of production expr_statement -> disj_expr_level 
+## In state 243, spurious reduction of production statement -> expr_statement 
+## In state 248, spurious reduction of production statements -> statement 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: LBRACE True SEMI XOR_EQ
+##
+## Ends in an error in state: 249.
+##
+## statements -> statement SEMI . option(statements) [ RBRACE Default Case ]
+##
+## The known suffix of the stack is as follows:
+## statement SEMI
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Ident ARROW LBRACE True Default
+##
+## Ends in an error in state: 252.
+##
+## arrow_function_body -> LBRACE statements . RBRACE [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
+##
+## The known suffix of the stack is as follows:
+## LBRACE statements
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 101, spurious reduction of production new_expr -> member_expr 
+## In state 100, spurious reduction of production call_expr_level -> new_expr 
+## In state 111, spurious reduction of production unary_expr_level -> call_expr_level 
+## In state 104, spurious reduction of production mult_expr_level -> unary_expr_level 
+## In state 108, spurious reduction of production add_expr_level -> mult_expr_level 
+## In state 156, spurious reduction of production comp_expr_level -> add_expr_level 
+## In state 157, spurious reduction of production conj_expr_level -> comp_expr_level 
+## In state 121, spurious reduction of production disj_expr_level -> conj_expr_level 
+## In state 119, spurious reduction of production expr_statement -> disj_expr_level 
+## In state 243, spurious reduction of production statement -> expr_statement 
+## In state 248, spurious reduction of production statements -> statement 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>

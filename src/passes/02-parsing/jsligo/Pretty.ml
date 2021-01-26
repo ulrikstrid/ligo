@@ -8,23 +8,24 @@ open! PPrint
 module Option = Simple_utils.Option
 
 let rec print ast =
-  let app s = group (pp_statement s ^^ string ";") in
-  separate_map (hardline ^^ hardline) app (Utils.nsepseq_to_list ast.statements)
+  let app (s, _) = group (pp_statement s ^^ string ";")
+  and stmt  = Utils.nseq_to_list ast.statements
+  in separate_map (hardline ^^ hardline) app stmt
 
-and pp_braced : 
+and pp_braced :
   'a. string -> ('a -> document) -> ('a, t) Utils.nsepseq braced reg -> document =
   fun sep printer {value; _}  ->
     let ({inside; _}: _ Utils.nsepseq braced) = value in
-    let elements = pp_nsepseq sep printer inside in    
+    let elements = pp_nsepseq sep printer inside in
     nest 2 (string "{" ^^ hardline ^^ elements) ^^ hardline ^^ string "}"
 
-and pp_brackets : 
+and pp_brackets :
   'a. string -> ('a -> document) -> ('a, t) Utils.nsepseq brackets reg -> document =
   fun sep printer {value; _} ->
     let ({inside; _}: _ Utils.nsepseq brackets) = value in
-    let elements = pp_nsepseq sep printer inside in    
+    let elements = pp_nsepseq sep printer inside in
     string "[" ^^ break 0 ^^ group elements ^^ string "]"
-  
+
 
 and pp_nsepseq :
   'a. string -> ('a -> document) -> ('a, t) Utils.nsepseq -> document =
@@ -51,7 +52,7 @@ and pp_cond_expr {value; _} =
   | Some (_,statement) -> if_then ^^ string " else " ^^ pp_statement statement
 
 and pp_return {value = {expr; _}; _} =
-  match expr with 
+  match expr with
     Some s -> string "return " ^^ pp_expr s
   | None -> string "return"
 
@@ -62,13 +63,13 @@ and pp_const {value = {bindings; _}; _} =
   string "const " ^^ pp_nsepseq "," pp_let_binding bindings
 
 and pp_let_binding {value = {binders; lhs_type; expr; _}; _} =
-  prefix 2 0 ((match lhs_type with 
+  prefix 2 0 ((match lhs_type with
     Some (_, type_expr) -> pp_pattern binders ^^ string ": " ^^ pp_type_expr type_expr
   | None -> pp_pattern binders)
   ^^
   string " = "
   )
-  
+
   (pp_expr expr)
 
 and pp_switch {value = {expr; cases; _}; _} =
@@ -78,21 +79,21 @@ and pp_switch {value = {expr; cases; _}; _} =
   pp_cases cases ^^
   string "}"
 
-and pp_cases cases = 
+and pp_cases cases =
   Utils.nseq_foldl (fun a i -> a ^^ pp_case i) empty cases
 
 and pp_case = function
   Switch_case {expr; statements; _} ->
-    string "case " ^^ pp_expr expr ^^ string ":" ^^ 
-      (match statements with 
-         Some s -> 
+    string "case " ^^ pp_expr expr ^^ string ":" ^^
+      (match statements with
+         Some s ->
           let app s = group (pp_statement s) in
           separate_map (hardline ^^ hardline) app (Utils.nsepseq_to_list s)
        | None -> empty )
 | Switch_default_case {statements; _} ->
-    string "default: " ^^  
-    (match statements with 
-      Some s -> 
+    string "default: " ^^
+    (match statements with
+      Some s ->
       let app s = group (pp_statement s) in
       separate_map (hardline ^^ hardline) app (Utils.nsepseq_to_list s)
     | None -> empty)
@@ -100,7 +101,7 @@ and pp_case = function
 
 and pp_type {value; _} =
   let ({name; type_expr; _}: type_decl) = value
-  in 
+  in
   string "type " ^^ string name.value ^^ string " = "
   ^^ group (pp_type_expr type_expr)
 
@@ -142,7 +143,7 @@ and pp_call_expr {value; _} =
   let arguments = string "(" ^^ group (separate_map (string ", ") pp_expr arguments) ^^ string ")" in
   pp_expr lambda ^^ arguments
 
-and pp_new_expr {value =(_, e);_} = 
+and pp_new_expr {value =(_, e);_} =
   string "new " ^^ pp_expr e
 
 and pp_array_item = function
@@ -150,7 +151,7 @@ and pp_array_item = function
 | Expr_entry e -> pp_expr e
 | Rest_entry {value = {expr; _}; _} -> string "..." ^^ pp_expr expr
 
-  
+
 and pp_object_property = function
   Punned_property {value; _} -> pp_expr value
 | Property {value = {name; value; _}; _} -> pp_expr name ^^ string ": " ^^ pp_expr value
@@ -168,7 +169,7 @@ and pp_selection = function
 | Component {value = {inside; _}; _} -> string "[" ^^ pp_expr inside ^^ string "]"
 
 and pp_projection {value = {expr; selection}; _} =
-  pp_expr expr ^^ pp_selection selection 
+  pp_expr expr ^^ pp_selection selection
 
 and pp_assign (a, _, b) =
   pp_expr a ^^ string " = " ^^ pp_expr b
@@ -221,10 +222,10 @@ and pp_par_expr value =
   string "(" ^^ nest 1 (pp_expr value.inside ^^ string ")")
 
 and pp_expr_fun = function
-| EPar     {value; _} -> 
+| EPar     {value; _} ->
     string "(" ^^ nest 1 (pp_expr_fun value.inside ^^ string ")")
 | ESeq {value; _} -> group(pp_nsepseq "," pp_expr_fun value)
-| EAnnot   {value; _} -> 
+| EAnnot   {value; _} ->
     let expr, _, type_expr = value in
       group (nest 1 (pp_expr_fun expr ^^ string ": "
       ^^ pp_type_expr type_expr))
@@ -245,8 +246,8 @@ and pp_fun {value; _} =
 
 and pp_seq {value; _} =
   pp_nsepseq "," pp_expr value
-   
-and pp_type_expr: type_expr -> document = function 
+
+and pp_type_expr: type_expr -> document = function
   TProd   t -> pp_cartesian t
 | TSum    t -> break 0 ^^ pp_sum_type t
 | TObject t -> pp_object_type t
@@ -258,7 +259,7 @@ and pp_type_expr: type_expr -> document = function
 | TWild   _ -> string "_"
 | TString s -> pp_string s
 
-and pp_cartesian v = 
+and pp_cartesian v =
   group(pp_brackets "," pp_type_expr v)
 
 and pp_sum_type {value; _} =
@@ -307,7 +308,7 @@ and pp_ne_injection :
 and pp_compound = function
 | Braces   (_, _) -> ("{","}")
 | Brackets (_, _) -> ("[","]")
-    
+
 
 and pp_type_app {value; _} =
   let ctor, tuple = value in
@@ -332,12 +333,12 @@ and pp_fun_type_arg {name; type_expr; _} =
 
 and pp_fun_type {value; _} =
   let lhs, _, rhs = value in
-  group ( nest 1 (string "(" ^^ pp_nsepseq "," pp_fun_type_arg lhs.inside ^^ string ")") ^^ string " =>" ^/^ pp_type_expr rhs)                 
+  group ( nest 1 (string "(" ^^ pp_nsepseq "," pp_fun_type_arg lhs.inside ^^ string ")") ^^ string " =>" ^/^ pp_type_expr rhs)
 
 and pp_type_par {value; _} =
   string "(" ^^ nest 1 (pp_type_expr value.inside ^^ string ")")
 
-and pp_pattern = function 
+and pp_pattern = function
   PRest     p -> pp_rest_pattern p
 | PAssign   p -> pp_assign_pattern p
 | PVar      v -> pp_ident v
@@ -347,13 +348,13 @@ and pp_pattern = function
 | PWild     _ -> string "_"
 | PArray    p -> group(pp_brackets "," pp_pattern p)
 
-and pp_rest_pattern {value = {rest; _}; _} = 
+and pp_rest_pattern {value = {rest; _}; _} =
   string "..." ^^ pp_ident rest
 
 and pp_assign_pattern {value = {property; value; _}; _} =
-  pp_ident property ^^ string "=" ^^ pp_expr value 
+  pp_ident property ^^ string "=" ^^ pp_expr value
 
-and pp_destruct {value = {property; target; _}; _} = 
+and pp_destruct {value = {property; target; _}; _} =
   pp_ident property ^^ string ":" ^^ pp_let_binding target
 
 let print_type_expr = pp_type_expr

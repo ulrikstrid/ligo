@@ -147,9 +147,13 @@ type the_unit = lpar * rpar
 (* The Abstract Syntax Tree *)
 
 type t = {
-  statements : statements;
+  statements : toplevel_statements;
   eof  : eof
 }
+
+and toplevel_statements = toplevel_statement_semi nseq
+
+and toplevel_statement_semi = statement * semi option
 
 and statements = (statement, semi) nsepseq
 

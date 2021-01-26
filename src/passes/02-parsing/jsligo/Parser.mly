@@ -293,7 +293,7 @@ binding_pattern:
 
 %inline type_annot:
   ":" type_expr { $1, $2 }
-  
+
 binding_initializer:
   binding_pattern type_annot_opt initializer_ {
     let region = cover (pattern_to_region $1) (expr_to_region (snd $3))
@@ -342,7 +342,7 @@ type_expr:
 
 fun_type_arg:
   "<constr>" ":" type_expr
-| "<ident>" ":" type_expr { 
+| "<ident>" ":" type_expr {
     {name      = $1;
      colon     = $2;
      type_expr = $3; }
@@ -380,7 +380,7 @@ core_type:
   }
 | type_name chevrons(nsepseq(type_expr, ",")) {
    let region = cover $1.region $2.region
-   in TApp {region; value = $1,$2} }   
+   in TApp {region; value = $1,$2} }
 
 sum_type:
   "|" nsepseq(cartesian,"|") {
@@ -481,6 +481,17 @@ statement:
 | declaration
   { $1 }
 
+toplevel_statements:
+  statement ";" toplevel_statements {
+    Utils.nseq_cons ($1, Some $2) $3
+  }
+| statement ";"? { ($1,$2), [] }
+(*
+| "<directive>" toplevel_statements {
+    Utils.nseq_cons ($1, None) $2
+  }
+*)
+
 statements:
   statement ";" statements? {
     match $3 with
@@ -490,7 +501,7 @@ statements:
 | statement { $1, [] }
 
 contract:
-  statements EOF { {statements=$1; eof=$2} }
+  toplevel_statements EOF { {statements=$1; eof=$2} }
 
 (* Expressions *)
 
@@ -529,7 +540,7 @@ expr_annot_sequence:
     let annot = EAnnot {
       region = cover (expr_to_region $1) (type_expr_to_region (snd $2));
       value = $1, fst $2, snd $2
-    } 
+    }
     in
     {
       value = Utils.nsepseq_cons annot $3 $4.value;
@@ -540,7 +551,7 @@ expr_annot_sequence:
     let annot = EAnnot {
       region = cover (expr_to_region $1) (type_expr_to_region (snd $2));
       value = $1, fst $2, snd $2
-    } 
+    }
     in
     {
       value = (annot, []);
@@ -663,7 +674,7 @@ unary_expr_level:
 call_expr_level:
   call_expr { $1 }
 | new_expr  { $1 }
-| "(" call_expr_level "as" type_expr ")" { 
+| "(" call_expr_level "as" type_expr ")" {
     EPar {
       region = cover $1 $5;
       value = {

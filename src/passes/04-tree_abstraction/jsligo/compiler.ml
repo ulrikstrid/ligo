@@ -612,7 +612,7 @@ fun _statement ->
 
 and compile_statement : CST.statement -> statement_result result = fun statement ->
   match statement with
-  (* 
+  (*
   | SExpr e -> (
     let e' = compile_expression e in
     ok @@ Context (
@@ -654,10 +654,11 @@ and compile_statements_to_program : CST.ast -> AST.module_ result = fun ast ->
   let aux : CST.statement -> declaration location_wrap result = fun statement ->
     let%bind declaration = compile_statement_to_declaration statement in
     let loc = Location.lift @@ CST.statement_to_region statement in
-    ok (Location.wrap ~loc declaration)
-  in
-  let%bind lst = bind_map_list aux @@ npseq_to_list ast.statements in
-  ok @@ lst
+    ok (Location.wrap ~loc declaration) in
+  let statements = nseq_to_list ast.statements in
+  let statements = List.map fst statements in
+  let%bind lst = bind_map_list aux statements
+  in ok lst
 
 let compile_module : CST.ast -> _ result =
   fun t -> failwith "TODO"
