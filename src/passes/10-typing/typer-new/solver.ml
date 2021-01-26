@@ -9,7 +9,7 @@ open Typesystem.Solver_types
 open Solver_helpers
 open Proof_trace_checker
 
-open Pretty_print_variables
+(* open Pretty_print_variables *)
 module Formatt = Format
 module SRope = Rope.SimpleRope
 
@@ -65,7 +65,7 @@ end = struct
 
   let aux_remove state to_remove =
     Format.printf "In aux_remove for %a with state : %a\n%!" Ast_typed.PP.type_constraint_simpl_short to_remove pp_typer_state state;
-    let () = queue_print (fun () -> Formatt.printf "Remove constraint :\n  %a\n\n%!" Ast_typed.PP.type_constraint_simpl_short to_remove) in
+    let () = Formatt.printf "Remove constraint :\n  %a\n\n%!" Ast_typed.PP.type_constraint_simpl_short to_remove in
     let module MapRemoveConstraint = Plugins.Indexers.MapPlugins(RemoveConstraint) in
     let%bind plugin_states = MapRemoveConstraint.f (mk_repr state, to_remove) state.plugin_states in
     ok {state with plugin_states}
@@ -84,7 +84,7 @@ end = struct
     let%bind (state, new_constraints) = bind_fold_map_list aux_update state updates in
     ok (state, List.flatten new_constraints)
 
-  let aux_heuristic_alias demoted_repr new_repr state (Heuristic_state heuristic) =
+  let aux_selector_alias demoted_repr new_repr state (Heuristic_state heuristic) =
     let selector_outputs = heuristic.plugin.alias_selector demoted_repr new_repr state.plugin_states in
     let aux = fun (l,already_selected) el ->
       if PolySet.mem el already_selected then (l,already_selected)
@@ -92,6 +92,9 @@ end = struct
     in
     let selector_outputs,already_selected = List.fold_left aux ([], heuristic.already_selected) selector_outputs in
     let heuristic = { heuristic with already_selected } in
+    Heuristic_selector (heuristic, selector_outputs)
+
+  let aux_propagator_alias state (Heuristic_selector (heuristic, selector_outputs)) =
     let%bind (state, new_constraints) = bind_fold_map_list (aux_propagator heuristic) state selector_outputs in
     (* let () = queue_print (fun () -> Format.printf "Return with new constraints: (%a)\n%!" Ast_typed.PP.(list_sep_d (list_sep_d type_constraint_short)) new_constraints) in *)
     ok (state, (Heuristic_state heuristic, List.flatten new_constraints))
@@ -106,8 +109,11 @@ end = struct
       (* get the changed reprs due to that alias constraint *)
       let UnionFind.Poly2.{ partition = aliases; changed_reprs } =
         UnionFind.Poly2.equiv a b aliases in
-      let () = Format.printf "changed_reprs :(%a)\n%!" Ast_typed.PP.(fun ppf ({demoted_repr=a;new_repr=b}: _ UnionFind.Poly2.changed_reprs) -> Format.fprintf ppf "%a -> %a" type_variable a type_variable b) changed_reprs in
-      let () = Format.printf "New_aliases :%a\n%!" (UnionFind.Poly2.pp Ast_typed.PP.type_variable) aliases in
+      (* let () = Format.printf "changed_reprs :(%a)\n%!" Ast_typed.PP.(fun ppf ({demoted_repr=a;new_repr=b}: _ UnionFind.Poly2.changed_reprs) -> Format.fprintf ppf "%a -> %a" type_variable a type_variable b) changed_reprs in *)
+      (* let () = Format.printf "New_aliases :%a\n%!" (UnionFind.Poly2.pp Ast_typed.PP.type_variable) aliases in *)
+
+      (*apply heuristics' selector*)
+      let selected = List.map (aux_selector_alias UnionFind.Poly2.(changed_reprs.demoted_repr) UnionFind.Poly2.(changed_reprs.new_repr) state) already_selected_and_propagators in
 
       (* Add alias constraint to the set of all constraints *)
       let all_constraints = PolySet.add (SC_Alias new_constraint) all_constraints in
@@ -128,7 +134,7 @@ end = struct
              therefore if the alias constraint contains outdated
              references, it makes sense to update them before calling
              the .alias_selector functions. *)
-          let%bind (state, hc) = bind_fold_map_list (aux_heuristic_alias UnionFind.Poly2.(changed_reprs.demoted_repr) UnionFind.Poly2.(changed_reprs.new_repr)) state state.already_selected_and_propagators in
+          let%bind (state, hc) = bind_fold_map_list (aux_propagator_alias) state selected in
           let (already_selected_and_propagators, new_constraints) = List.split hc in
           let state = { state with already_selected_and_propagators } in
           ok (state, List.flatten new_constraints)

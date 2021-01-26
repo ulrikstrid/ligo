@@ -39,6 +39,9 @@ type -'flds ex_heuristic_plugin =
 type -'flds ex_heuristic_state =
     Heuristic_state : ('selector_output, 'flds) heuristic_state -> 'flds ex_heuristic_state
 
+type -'flds ex_heuristic_selector =
+    Heuristic_selector: ('selector_output, 'flds) heuristic_state * 'selector_output selector_outputs -> 'flds ex_heuristic_selector
+
 type 'flds heuristic_plugins = 'flds ex_heuristic_plugin list
 
 type 'flds heuristic_states = 'flds ex_heuristic_state list
