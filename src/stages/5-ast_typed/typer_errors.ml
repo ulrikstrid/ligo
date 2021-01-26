@@ -85,6 +85,7 @@ type typer_error = [
   | `Trace_debug of string * typer_error
   | `Typer_pattern_do_not_match of Location.t
   | `Typer_label_do_not_match of Ast_typed_self_reference.label * Ast_typed_self_reference.label * Location.t
+  | `Typer_solver_no_progress of string
 ]
 
 let label_do_not_match la lb loc = `Typer_label_do_not_match (la , lb , loc )
@@ -176,6 +177,7 @@ let typeclass_not_a_rectangular_matrix = `Typer_typeclass_not_a_rectangular_matr
 let internal_error (loc : string) (msg : string) : typer_error = `Typer_internal_error (loc, msg)
 let could_not_remove : Ast_typed_self_reference.type_constraint_simpl -> typer_error = fun constraints -> `Typer_could_not_remove constraints
 let trace_debug (msg : string) (err : typer_error) : typer_error = `Trace_debug (msg,err)
+let solver_made_no_progress (msg : string) : typer_error = `Typer_solver_no_progress msg
 
 let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> typer_error -> unit =
@@ -568,6 +570,8 @@ The following forms of subtractions are possible:
       Format.fprintf f "@[<hv>internal error: typeclass is not represented as a rectangular matrix with one column per argument@]"
     | `Typer_internal_error (loc, msg) -> Format.fprintf f "internal error at %s: %s" loc msg
     | `Typer_could_not_remove constraint_ -> Format.fprintf f "Heuristic requested removal of a constraint that cannot be removed: %a" Ast_typed_self_reference.PP.type_constraint_simpl constraint_
+    | `Typer_solver_no_progress msg ->
+      Format.fprintf f "Solver made no progress %s" msg
   )
 
 let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
@@ -1309,4 +1313,10 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     let content = `Assoc [
       ("message", message);
     ] in
+    json_error ~stage ~content
+  | `Typer_solver_no_progress msg ->
+    let message = `String (Format.asprintf "Solver made no progress %s" msg) in
+    let content = `Assoc [
+        ("message", message);
+      ] in
     json_error ~stage ~content
