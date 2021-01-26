@@ -195,7 +195,6 @@ end = struct
   let select_and_propagate_all : typer_state -> Worklist.t -> typer_state result =
     fun state initial_constraints ->
     (* To change the order in which the constraints are processed, modify this loop. *)
-    let () = queue_print (fun () -> Formatt.printf "In select and propagate all\n") in
     let () = Formatt.printf "In select and propagate all\n" in
     let time_to_live = ref 10000 in
     until'

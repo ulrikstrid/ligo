@@ -254,7 +254,6 @@ let rec check_type_variable_and_type_value : db_access:db_access -> bound_var_as
 (* Compares a and b using the given bound_var_assignments for bound variables *)
 let rec compare_type_values_using_bound_vars : db_access:db_access -> bound_var_assignments:(type_variable, type_variable) PolyMap.t -> type_value -> type_value -> unit result
   = fun ~db_access ~bound_var_assignments (a : type_value) (b : type_value) ->
-    let compare_384 ~db_access m a b  = (* TODO *) ignore (db_access,m,a,b); ok () in
     match a.wrap_content , b.wrap_content with
     | P_constant ka , P_constant kb ->
       let%bind () = Assert.assert_true (err_TODO __LOC__) (Ast_typed.Compare.constant_tag ka.p_ctor_tag kb.p_ctor_tag = 0) in
@@ -274,11 +273,11 @@ let rec compare_type_values_using_bound_vars : db_access:db_access -> bound_var_
     | (P_variable tv , _other)  ->
       (match PolyMap.find_opt tv bound_var_assignments with
        | None -> failwith "unassigned type variable"
-       | Some assignment -> compare_384 ~db_access bound_var_assignments assignment b)
+       | Some assignment -> check_type_variable_and_type_value ~db_access ~bound_var_assignments assignment b)
     | (_other, P_variable tv)  ->
       (match PolyMap.find_opt tv bound_var_assignments with
        | None -> failwith "unassigned type variable"
-       | Some assignment -> compare_384 ~db_access bound_var_assignments assignment a)
+       | Some assignment -> check_type_variable_and_type_value ~db_access ~bound_var_assignments assignment a)
     | P_apply _ ,_        ->
       failwith "p_apply is not currently used, this case should not happen. When it gets used, implement this case."
     | _ -> fail (corner_case "incompatible types: a b")
