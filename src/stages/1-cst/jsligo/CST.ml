@@ -148,7 +148,7 @@ type the_unit = lpar * rpar
 
 type t = {
   statements : toplevel_statements;
-  eof  : eof
+  eof        : eof
 }
 
 and toplevel_statements = toplevel_statement_semi nseq

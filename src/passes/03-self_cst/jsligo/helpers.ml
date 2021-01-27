@@ -5,9 +5,14 @@ open Trace
 
 let npseq_to_ne_list (hd, tl) = hd, (List.map snd tl)
 
-let bind_map_npseq f (hd,tl) =
+let bind_map_npseq f (hd, tl) =
   let%bind hd = f hd in
   let%bind tl = bind_map_list (fun (a,b) -> let%bind b = f b in ok (a,b)) tl
+  in ok (hd,tl)
+
+let bind_map_nseq f (hd, tl) =
+  let%bind hd = f hd in
+  let%bind tl = bind_map_list (fun a -> let%bind a = f a in ok a) tl
   in ok (hd,tl)
 
 let bind_fold_npseq f init (hd,tl) =
@@ -548,11 +553,16 @@ and map_statement : ('err) mapper -> statement -> (statement, 'err) result =
     let%bind cases = bind_map_ne_list map_case value.cases in
     return @@ SSwitch { value = {value with expr; cases}; region}
 
+and map_toplevel_statement =
+  fun f (statement, semi_opt) ->
+  let stmt = map_statement f statement
+  in Trace.map (fun stmt -> (stmt, semi_opt)) stmt
+
 and map_module : ('err) mapper -> t -> (t, 'err) result =
-  fun f {statements;eof} ->
-  let self = map_statement f in
-  map (fun statements -> {statements;eof})
-  @@ bind_map_npseq self statements
+  fun f {statements; eof} ->
+    let self = map_toplevel_statement f in
+    map (fun statements -> {statements; eof})
+    @@ bind_map_nseq self statements
 
 (* TODO this is stupid *)
 let fold_to_map : unit -> (unit, 'err) folder -> ('err) mapper =
