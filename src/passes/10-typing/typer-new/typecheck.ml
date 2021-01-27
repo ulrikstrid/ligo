@@ -290,8 +290,7 @@ let check_access_label : _ = fun ~db_access ~bound_var_assignments accessor c_ac
             (Format.asprintf "Type error: field %a is not in record %a"
                Ast_typed.PP.label accessor
                (fun ppf lm -> Ast_typed.PP.(lmap_sep_d type_value) ppf @@ LMap.to_kv_list lm) p_row_args)) @@ LMap.find_opt accessor p_row_args in
-     let _ = check_type_variable_and_type_value ~db_access ~bound_var_assignments c_access_label_tvar field_type in
-     failwith "TODO c_access_label"
+     check_type_variable_and_type_value ~db_access ~bound_var_assignments c_access_label_tvar field_type
    | Ast_typed.Types.C_variant -> failwith "Type error: cannot access field in variant")
 
 let check_access_label_simpl : db_access:db_access -> bound_var_assignments:(type_variable, type_variable) PolyMap.t -> Stage_common.Types.label -> Ast_typed.Types.type_variable -> Ast_typed.Types.c_row_simpl -> unit result
