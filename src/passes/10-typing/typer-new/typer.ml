@@ -598,7 +598,7 @@ and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.match
 (* Apply type_declaration on every node of the AST_core from the root p *)
 and type_module_returns_env ((env, state, p) : environment * _ O'.typer_state * I.module_) : (environment * _ O'.typer_state * O.module_with_unification_vars, Typer_common.Errors.typer_error) result =
   let aux ((e : environment), (s : _ O'.typer_state) , (ds : O.declaration Location.wrap list)) (d:I.declaration Location.wrap) =
-    let%bind (e , s' , d') = type_declaration e s d in
+    let%bind (e , s' , d') = type_declaration_subst e s d in
     (* TODO: Move this filter to the spiller *)
     let ds' = match Location.unwrap d' with
       | O.Declaration_type _ -> ds
@@ -675,14 +675,11 @@ and type_and_subst : type a b.
   ok (node, state, env)
 
 and type_declaration_subst env state decl = 
-  let subst = fun ~substs (d:O.declaration Location.wrap) -> 
-    bind_map_location (Typesystem.Misc.Substitution.Pattern.s_declaration ~substs) d
-  in
   let%bind (d, state, e) = type_and_subst
       (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.declaration\"")
       (fun ppf p -> Format.fprintf ppf "%s" (Yojson.Safe.to_string (Ast_typed.Yojson.declaration @@ Location.unwrap p)))
       (env , state , decl)
-      subst
+      Typesystem.Misc.Substitution.Pattern.s_declaration_wrap
       (fun (a,b,c) -> type_declaration a b c) in
   ok @@ (e, state, d)
 

@@ -9,7 +9,7 @@ open Typesystem.Solver_types
 open Solver_helpers
 open Proof_trace_checker
 
-open Pretty_print_variables
+(* open Pretty_print_variables *)
 module Formatt = Format
 module SRope = Rope.SimpleRope
 

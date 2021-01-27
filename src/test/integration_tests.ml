@@ -2473,7 +2473,7 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "simple1" simple1 ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "simple2" simple2 ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "simple3" simple3 ;
-    test no "simple4" simple4 ;
+    (* test no "simple4" simple4 ; *)
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "chain id" chain_id ;                         (* record *)
     test no "bytes unpack" bytes_unpack ;                 (* record *)
     test no "bytes unpack (mligo)" bytes_unpack_mligo ;   (* record *)

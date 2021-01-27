@@ -140,11 +140,13 @@ and declaration_module = {
     module_       : module_fully_typed ;
   }
 
-and declaration =
+and declaration' =
   | Declaration_constant of declaration_constant
   | Declaration_type of declaration_type
   | Declaration_module of declaration_module
   | Module_alias       of module_alias
+
+and declaration = declaration'
 
 and expression = {
     expression_content: expression_content ;
