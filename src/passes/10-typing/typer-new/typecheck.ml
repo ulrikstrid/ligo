@@ -71,7 +71,6 @@ let check_alias : db_access:db_access -> c_alias -> unit result =
   fun ~db_access al ->
     fast_assert_types_are_equal ~db_access (err_TODO __LOC__) al.a al.b
 
-  (* LGTM *)
 let check_typeclass : db_access:db_access -> c_typeclass_simpl -> unit result =
   fun ~db_access tc ->
     (* (α, …) ∈ [ (type_value…) ; … ] *)
@@ -415,6 +414,15 @@ let check_forall ~(db_access:db_access) (p : c_poly_simpl) : unit result =
     let%bind () =  check_forall_constraints_are_satisfied ~db_access ~bound_var_assignments binder_intantiations in
     ok ()
 
+let check_access_label_simpl' : db_access:db_access -> c_access_label_simpl -> unit result =
+  fun ~db_access { reason_access_label_simpl = _; id_access_label_simpl = _; record_type; label; tv } ->
+  match db_access.find_assignment (db_access.repr record_type) with
+    None -> fail (err_TODO __LOC__)(* unassigned unification variable *)
+  | Some (`Constructor _) -> failwith "Type error: cannot access field on non-record"
+  | Some (`Row { r_tag = C_variant }) -> failwith "Type error: cannot access field on variant"
+  | Some (`Row r) ->
+    check_access_label_simpl ~db_access ~bound_var_assignments:(PolyMap.create ~cmp:Ast_typed.Compare.type_variable) label tv r
+
 let check : type_constraint_simpl list -> type_variable list -> (type_variable -> type_variable) -> (type_variable -> constructor_or_row option) -> unit result =
   fun all_constraints all_vars repr find_assignment ->
     (* Format.printf "Typechecking"; *)
@@ -425,6 +433,7 @@ let check : type_constraint_simpl list -> type_variable list -> (type_variable -
       | SC_Constructor c  -> check_constructor ~db_access c
       | SC_Alias       al -> check_alias ~db_access al
       | SC_Typeclass   tc -> check_typeclass ~db_access tc
+      | SC_Access_label l -> check_access_label_simpl' ~db_access l
       | SC_Row         r  -> check_row ~db_access r
       | SC_Poly        p  -> check_forall ~db_access p
     in

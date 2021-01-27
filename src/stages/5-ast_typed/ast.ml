@@ -492,6 +492,13 @@ and c_typeclass_simpl = {
   tc   : typeclass          ;
   args : type_variable_list ;
 }
+and c_access_label_simpl = {
+  reason_access_label_simpl : string ;
+  id_access_label_simpl : constraint_identifier ;
+  record_type : type_variable ;
+  label : label ;
+  tv : type_variable ;          (* result of the access label, e.g. α in the constraint α = β.ℓ *)
+}
 and c_poly_simpl = {
   reason_poly_simpl : string ;
   (* see description above in c_constructor_simpl *)
@@ -505,6 +512,7 @@ and type_constraint_simpl =
   | SC_Alias       of c_alias                         (* α = β *)
   | SC_Poly        of c_poly_simpl                    (* α = forall β, δ where δ can be a more complex type *)
   | SC_Typeclass   of c_typeclass_simpl               (* TC(α, …) *)
+  | SC_Access_label of c_access_label_simpl           (* α = β.ℓ *)
   | SC_Row         of c_row_simpl                     (* α = row(l -> β, …) *)
 
 and deduce_and_clean_result = {

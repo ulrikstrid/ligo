@@ -441,6 +441,15 @@ let c_typeclass_simpl {id_typeclass_simpl = ConstraintIdentifier ci;reason_typec
     ("args", list type_variable_to_yojson args)
   ]
 
+let c_access_label_simpl { id_access_label_simpl = ConstraintIdentifier ci ; reason_access_label_simpl ; record_type ; label = l ; tv } =
+  `Assoc [
+    ("id_access_label_simpl", `String (Format.sprintf "%Li" ci));
+    ("reason_access_label_simpl", `String reason_access_label_simpl);
+    ("record_type", type_variable_to_yojson record_type);
+    ("label", label_to_yojson l);
+    ("tv", type_variable_to_yojson tv)
+  ]
+
 let c_row_simpl {id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; original_id; tv;r_tag;tv_map} =
   `Assoc [
     ("id_row_simpl", `String (Format.sprintf "%Li" ci));
@@ -455,6 +464,7 @@ let type_constraint_simpl = function
   | SC_Alias       c -> `List [`String "SC_alias"; c_alias c]
   | SC_Poly        c -> `List [`String "SC_Poly"; c_poly_simpl c]
   | SC_Typeclass   c -> `List [`String "SC_Typclass"; c_typeclass_simpl c]
+  | SC_Access_label c -> `List [`String "SC_Access_label"; c_access_label_simpl c]
   | SC_Row         c -> `List [`String "SC_Row"; c_row_simpl c]
 
 let poly_unionfind f p =

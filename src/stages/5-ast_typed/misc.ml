@@ -281,6 +281,7 @@ let reason_simpl_ : type_constraint_simpl -> string = function
   | SC_Row { reason_row_simpl=reason; _ }
   | SC_Alias { reason_alias_simpl=reason; _ }
   | SC_Poly { reason_poly_simpl=reason; _ }
+  | SC_Access_label { reason_access_label_simpl=reason; _ }
   | SC_Typeclass { reason_typeclass_simpl=reason; _ }
   -> reason
 

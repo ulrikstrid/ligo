@@ -65,8 +65,9 @@ let selector : type_constraint_simpl -> _ indexes -> selector_output list =
   match type_constraint_simpl with
     SC_Constructor c  -> selector_by_ctor indexes c
   | SC_Row r          -> selector_by_row indexes r
-  | SC_Alias       _  -> [] (* TODO: this case should go away since aliases are handled by the solver structure *)
-  | SC_Poly        _  -> []
+  | SC_Alias        _  -> [] (* TODO: this case should go away since aliases are handled by the solver structure *)
+  | SC_Poly         _  -> []
+  | SC_Access_label _  -> []
   | SC_Typeclass   tc -> selector_by_tc indexes tc
 
 (* When (αᵢ, …) ∈ { (τ, …) , … } and β = κ(δ …) are in the db,

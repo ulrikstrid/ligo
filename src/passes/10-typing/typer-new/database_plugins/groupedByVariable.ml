@@ -16,12 +16,14 @@ type 'typeVariable t = {
   constructor : ('typeVariable, c_constructor_simpl MultiSet.t) ReprMap.t ;
   poly        : ('typeVariable, c_poly_simpl MultiSet.t) ReprMap.t ;
   row         : ('typeVariable, c_row_simpl MultiSet.t) ReprMap.t ;
+  access_label : ('typeVariable, c_access_label_simpl MultiSet.t) ReprMap.t ;
 }
 
 let create_state ~cmp =
   { constructor = ReprMap.create ~cmp ~merge:MultiSet.union ;
     poly        = ReprMap.create ~cmp ~merge:MultiSet.union ;
-    row         = ReprMap.create ~cmp ~merge:MultiSet.union ;}
+    row         = ReprMap.create ~cmp ~merge:MultiSet.union ;
+    access_label = ReprMap.create ~cmp ~merge:MultiSet.union ;}
 
 let update_add_to_constraint_set ~cmp c = function
     None -> MultiSet.add c (MultiSet.create ~cmp)
@@ -33,6 +35,7 @@ let add_constraint ?debug repr (state : _ t) new_constraint =
     SC_Constructor c -> { state with constructor = ReprMap.monotonic_update (repr c.tv) (update_add_to_constraint_set ~cmp:Ast_typed.Compare.c_constructor_simpl c) state.constructor }
   | SC_Row         c -> { state with row         = ReprMap.monotonic_update (repr c.tv) (update_add_to_constraint_set ~cmp:Ast_typed.Compare.c_row_simpl         c) state.row         }
   | SC_Poly        c -> { state with poly        = ReprMap.monotonic_update (repr c.tv) (update_add_to_constraint_set ~cmp:Ast_typed.Compare.c_poly_simpl        c) state.poly        }
+  | SC_Access_label c -> { state with access_label = ReprMap.monotonic_update (repr c.tv) (update_add_to_constraint_set ~cmp:Ast_typed.Compare.c_access_label_simpl c) state.access_label        }
   | SC_Typeclass   _ -> state (* Handled by a different indexer (typeclasses_constraining *)
   | SC_Alias       _ -> failwith "TODO: impossible: tc_alias handled in main solver loop"
 
@@ -66,6 +69,7 @@ let remove_constraint _ repr (state : _ t) constraint_to_rm =
         SC_Constructor c -> { state with constructor = ReprMap.monotonic_update (repr c.tv) (update_remove_constraint_from_set constraint_to_rm c) state.constructor }
       | SC_Row         c -> { state with row         = ReprMap.monotonic_update (repr c.tv) (update_remove_constraint_from_set constraint_to_rm c) state.row         }
       | SC_Poly        c -> { state with poly        = ReprMap.monotonic_update (repr c.tv) (update_remove_constraint_from_set constraint_to_rm c) state.poly        }
+      | SC_Access_label c -> { state with access_label = ReprMap.monotonic_update (repr c.tv) (update_remove_constraint_from_set constraint_to_rm c) state.access_label }
       | SC_Typeclass   _ -> state
       | SC_Alias       _ -> failwith "TODO: impossible: tc_alias handled in main solver loop and aliasing constraints cannot be removed"
     )
@@ -76,10 +80,11 @@ let remove_constraint _ repr (state : _ t) constraint_to_rm =
     ok result
 
 let merge_aliases =
-  fun ?debug:_ updater { constructor ; poly ; row } -> {
+  fun ?debug:_ updater { constructor ; poly ; row ; access_label } -> {
       constructor = updater.map constructor ;
       poly       = updater.map poly ;
       row        = updater.map row ;
+      access_label = updater.map access_label ;
     }
 
 let pp type_variable ppf (state : _ t) =

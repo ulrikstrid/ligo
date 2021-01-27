@@ -385,6 +385,20 @@ let c_typeclass_simpl ppf ({id_typeclass_simpl = ConstraintIdentifier ci; reason
     typeclass tc
     (list_sep_d type_variable) args
 
+let c_access_label_simpl ppf { id_access_label_simpl = ConstraintIdentifier ci ; reason_access_label_simpl ; record_type ; label = l ; tv } =
+  fprintf ppf "{@,@[<hv 2>
+              id_access_label_simpl : %Li; @
+              reason_access_label_simpl : %s; @
+              record_type : %a ;@
+              label : %a
+              tv : %a
+              @]@,}"
+    ci
+    reason_access_label_simpl
+    type_variable record_type
+    label l
+    type_variable tv
+
 let constraint_identifier ppf (ConstraintIdentifier ci) =
   fprintf ppf "ConstraintIdentifier %Li" ci
 let constraint_identifierMap = fun f ppf tvmap   ->
@@ -414,6 +428,7 @@ let type_constraint_simpl ppf (tc: type_constraint_simpl) = match tc with
   | SC_Alias       a -> fprintf ppf "SC_Alias (%a)" c_alias a
   | SC_Poly        p -> fprintf ppf "SC_Poly (%a)" c_poly_simpl p
   | SC_Typeclass   t -> fprintf ppf "SC_Typeclass (%a)" c_typeclass_simpl t
+  | SC_Access_label l -> fprintf ppf "SC_Access_label (%a)" c_access_label_simpl l
   | SC_Row         r -> fprintf ppf "SC_Row (%a)" c_row_simpl r
 
 let constraint_identifier ppf (ConstraintIdentifier ci) =

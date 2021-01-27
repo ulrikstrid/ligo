@@ -39,6 +39,7 @@ let selector_ : type_constraint_simpl -> type_variable GroupedByVariable.t -> se
     )
     | SC_Alias       _                -> [] (* TODO: ??? (beware: symmetry) *)
     | SC_Typeclass   _                -> []
+    | SC_Access_label _               -> []
     | SC_Poly        _                -> [] (* TODO: ??? (beware: symmetry) *)
     | SC_Row         r                -> (
     Format.printf "In break_ctor.selector_ for %a\n%!" Ast_typed.PP.type_constraint_simpl_short type_constraint_simpl;

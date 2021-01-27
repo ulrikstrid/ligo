@@ -40,6 +40,7 @@ type selector_output = output_specialize1
     let cs_pairs = List.map (fun x -> { poly = p ; a_k_var = x }) other_cs in
     cs_pairs
   | SC_Typeclass   _                -> []
+  | SC_Access_label _               -> []
   | SC_Row _                        -> []
 
 (* when α = ∀ δ, γ and β = κ(ε, …) are in the db, aliasing α and β

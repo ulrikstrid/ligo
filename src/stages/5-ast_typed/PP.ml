@@ -521,11 +521,33 @@ let c_row_simpl_short ppf ({id_row_simpl = ConstraintIdentifier ci; reason_row_s
       constraint_identifier_short ci
       (lmap_sep_short type_variable ~sep:" | " ~assoc:" of ") @@ LMap.to_kv_list tv_map
 
+let c_access_label_simpl ppf { id_access_label_simpl = ConstraintIdentifier ci ; reason_access_label_simpl ; record_type ; label = l ; tv } =
+  fprintf ppf "{@,@[<hv 2>
+              id_access_label_simpl : %Li; @
+              reason_access_label_simpl : %s; @
+              record_type : %a ;@
+              label : %a
+              tv : %a
+              @]@,}"
+    ci
+    reason_access_label_simpl
+    type_variable record_type
+    label l
+    type_variable tv
+
+
+let c_access_label_simpl_short ppf { id_access_label_simpl = _ ; reason_access_label_simpl = _ ; record_type ; label = l ; tv } =
+  fprintf ppf "%a = %a.%a"
+    type_variable tv
+    type_variable record_type
+    label l
+
 let type_constraint_simpl ppf (tc: type_constraint_simpl) = match tc with
   | SC_Constructor c -> fprintf ppf "SC_Constructor (%a)" c_constructor_simpl c
   | SC_Alias       a -> fprintf ppf "SC_Alias (%a)" c_alias a
   | SC_Poly        p -> fprintf ppf "SC_Poly (%a)" c_poly_simpl p
   | SC_Typeclass   t -> fprintf ppf "SC_Typeclass (%a)" c_typeclass_simpl t
+  | SC_Access_label l -> fprintf ppf "SC_Access_label (%a)" c_access_label_simpl l
   | SC_Row         r -> fprintf ppf "SC_Row (%a)" c_row_simpl r
 
 let type_constraint_simpl_short ppf (tc: type_constraint_simpl) = match tc with
@@ -533,6 +555,7 @@ let type_constraint_simpl_short ppf (tc: type_constraint_simpl) = match tc with
   | SC_Alias       a -> fprintf ppf "%a" c_alias_short a
   | SC_Poly        p -> fprintf ppf "%a" c_poly_simpl_short p
   | SC_Typeclass   t -> fprintf ppf "%a" c_typeclass_simpl_short t
+  | SC_Access_label l -> fprintf ppf "%a" c_access_label_simpl_short l
   | SC_Row         r -> fprintf ppf "%a" c_row_simpl_short r
 
 let constraint_identifier ppf (ConstraintIdentifier ci) =

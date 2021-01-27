@@ -28,6 +28,7 @@ module All_vars(Plugins : Plugins) = struct
       (* the allowed types are not actually part of the program,
           so only the args are returned *)
     | SC_Typeclass   tc -> tc.args                            (* TC(α, …) *)
+    | SC_Access_label l  -> [l.tv; l.record_type]                   (* TC(α, …) *)
     | SC_Row         r  -> r.tv :: LMap.to_list r.tv_map      (* α = row(l -> β, …) *)
     in
     let from_constraints = List.flatten @@ List.map aux @@ PolySet.elements state.all_constraints in

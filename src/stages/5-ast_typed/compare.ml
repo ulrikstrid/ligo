@@ -501,6 +501,9 @@ let c_poly_simpl {id_poly_simpl = ConstraintIdentifier ca;_} {id_poly_simpl = Co
 let c_typeclass_simpl a b =
   constraint_identifier a.id_typeclass_simpl b.id_typeclass_simpl
 
+let c_access_label_simpl a b =
+  constraint_identifier a.id_access_label_simpl b.id_access_label_simpl
+
 let c_row_simpl {id_row_simpl = ConstraintIdentifier ca;_} {id_row_simpl = ConstraintIdentifier cb;_} =
   Int64.compare ca cb
 
@@ -518,6 +521,7 @@ let type_constraint_simpl_tag = function
   | SC_Alias       _ -> 2
   | SC_Poly        _ -> 3
   | SC_Typeclass   _ -> 4
+  | SC_Access_label   _ -> 6
   | SC_Row         _ -> 5
 
 let type_constraint_simpl a b =
@@ -526,6 +530,7 @@ let type_constraint_simpl a b =
 | SC_Alias       aa, SC_Alias       ab -> c_alias aa ab
 | SC_Poly        pa, SC_Poly        pb -> c_poly_simpl pa pb
 | SC_Typeclass   ta, SC_Typeclass   tb -> c_typeclass_simpl ta tb
+| SC_Access_label la, SC_Access_label lb -> c_access_label_simpl la lb
 | SC_Row         ra, SC_Row         rb -> c_row_simpl ra rb
 | a, b -> Int.compare (type_constraint_simpl_tag a) (type_constraint_simpl_tag b)
 
