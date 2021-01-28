@@ -106,6 +106,12 @@ let alias_selector : type_variable -> type_variable -> _ indexes -> selector_out
          (a_ctors @ b_ctors @ a_rows @ b_rows ))
     (a_tcs @ b_tcs)
 
+let get_referenced_constraints ({ tc; c } : selector_output) : type_constraint_simpl list =
+  [
+    SC_Typeclass tc;
+    (match c with `Constructor c -> SC_Constructor c | `Row r -> SC_Row r);
+  ]
+
 (* ***********************************************************************
  * Propagator
  * *********************************************************************** *)

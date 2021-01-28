@@ -68,7 +68,7 @@ end = struct
     let () = Formatt.printf "Remove constraint :\n  %a\n\n%!" Ast_typed.PP.type_constraint_simpl_short to_remove in
     let module MapRemoveConstraint = Plugins.Indexers.MapPlugins(RemoveConstraint) in
     let%bind plugin_states = MapRemoveConstraint.f (mk_repr state, to_remove) state.plugin_states in
-    ok {state with plugin_states}
+    ok {state with plugin_states ; deleted_constraints = PolySet.add to_remove state.deleted_constraints}
 
   let aux_update state { remove_constraints; add_constraints; proof_trace } =
     let%bind () = check_proof_trace proof_trace in
@@ -80,9 +80,14 @@ end = struct
     (* TODO: before applying a propagator, check if it does
        not depend on constraints which were removed by the
        previous propagator *)
-    let%bind updates = heuristic.plugin.propagator selector_output (mk_repr state) in
-    let%bind (state, new_constraints) = bind_fold_map_list aux_update state updates in
-    ok (state, List.flatten new_constraints)
+    let%bind referenced_constraints = heuristic.plugin.get_referenced_constraints selector_output in
+    let uses_deleted_constraints = List.exists (fun c -> (PolySet.mem state.deleted_constraints c)) referenced_constraints in
+    if uses_deleted_constraints then
+      ok (state, [])
+    else
+      let%bind updates = heuristic.plugin.propagator selector_output (mk_repr state) in
+      let%bind (state, new_constraints) = bind_fold_map_list aux_update state updates in
+      ok (state, List.flatten new_constraints)
 
   let aux_selector_alias demoted_repr new_repr state (Heuristic_state heuristic) =
     let selector_outputs = heuristic.plugin.alias_selector demoted_repr new_repr state.plugin_states in
@@ -127,7 +132,7 @@ end = struct
       (* apply all the alias_selectors and propagators given the new alias *)
       let%bind (state, new_constraints) = (
         if true then
-          (* TODO: possible bug: here, should be use the demoted_repr
+          (* TODO: possible bug: here, should we use the demoted_repr
              and new_repr, or the ones as given by the alias? We should
              maintain as much as possible the illusion that aliased
              variables have always been aliased from the start,
@@ -209,44 +214,44 @@ end = struct
             the "in" part only if the bound expression left the
             worklist unchanged. In other words, processing stops at
             the first handler which does some work. *)
-         let open Worklist_monad in
 
-         let%bind (state, worklist) =
-           Worklist.process_all ~time_to_live
-             pending_type_constraint
-             filter_already_added
-             (state, worklist)
-         in
+         choose_processor [
+           (fun (state, worklist) ->
+              Worklist.process_all ~time_to_live
+                pending_type_constraint
+                filter_already_added
+                (state, worklist)
+           );
 
-         let%bind (state, worklist) =
-           Worklist.process_all ~time_to_live
-             pending_filtered_not_already_added_constraints
-             simplify_constraint
-             (state, worklist)
-         in
+           (fun (state, worklist) ->
+              Worklist.process_all ~time_to_live
+                pending_filtered_not_already_added_constraints
+                simplify_constraint
+                (state, worklist)
+           );
 
-         let%bind (state, worklist) =
-           Worklist.process_all ~time_to_live
-             pending_type_constraint_simpl
-             split_aliases
-             (state, worklist)
-         in
+           (fun (state, worklist) ->
+              Worklist.process_all ~time_to_live
+                pending_type_constraint_simpl
+                split_aliases
+                (state, worklist)
+           );
 
-         let%bind (state, worklist) =
-           Worklist.process_all ~time_to_live
-             pending_c_alias
-             add_alias
-             (state, worklist)
-         in
+           (fun (state, worklist) ->
+              Worklist.process_all ~time_to_live
+                pending_c_alias
+                add_alias
+                (state, worklist)
+           );
 
-         let%bind (state, worklist) =
-           Worklist.process_all ~time_to_live
-             pending_non_alias
-             add_constraint_and_apply_heuristics
-             (state, worklist)
-         in
-
-         ok (state, Worklist.Unchanged worklist)
+           (fun (state, worklist) ->
+              Worklist.process_all ~time_to_live
+                pending_non_alias
+                add_constraint_and_apply_heuristics
+                (state, worklist)
+           );
+         ]
+           (state, worklist)
       )
 
       (state, initial_constraints)
@@ -283,6 +288,7 @@ end = struct
     {
       all_constraints                  = PolySet.create ~cmp:Ast_typed.Compare.type_constraint_simpl ;
       added_constraints                = PolySet.create ~cmp:Ast_typed.Compare.type_constraint ;
+      deleted_constraints              = PolySet.create ~cmp:Ast_typed.Compare.type_constraint ;
       aliases                          = UnionFind.Poly2.empty Var.pp Var.compare ;
       plugin_states                    = plugin_states ;
       already_selected_and_propagators = List.map init_propagator_heuristic Plugins.heuristics ;

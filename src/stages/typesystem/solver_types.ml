@@ -21,6 +21,7 @@ type ('selector_output, -'flds) heuristic_plugin = {
      database's merge_aliases functions are called (i.e. the database
      does not reflect the effects of the merge yet). *)
   alias_selector : type_variable -> type_variable -> 'flds -> 'selector_output list ;
+  get_referenced_constraints : 'selector_output -> type_constraint_simpl list ;
   propagator   : ('selector_output , Ast_typed.Typer_errors.typer_error) propagator ;
   (* called when two 'data are associated with the same type_constraint *)
   printer      : Format.formatter -> 'selector_output -> unit ;
@@ -54,6 +55,7 @@ end
 type ('errors, 'plugin_states) typer_state = {
   all_constraints                  : type_constraint_simpl PolySet.t ;
   added_constraints                : type_constraint PolySet.t ;
+  deleted_constraints              : type_constraint PolySet.t ;
   aliases                          : type_variable UnionFind.Poly2.t ;
   plugin_states                    : 'plugin_states ;
   already_selected_and_propagators : 'plugin_states ex_heuristic_state list ;

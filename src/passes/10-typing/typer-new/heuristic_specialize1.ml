@@ -62,6 +62,12 @@ let alias_selector : type_variable -> type_variable -> _ flds -> selector_output
          (a_ctors @ b_ctors))
     (a_polys @ b_polys)
 
+let get_referenced_constraints ({ poly; a_k_var } : selector_output) : type_constraint_simpl list =
+  [
+    SC_Poly poly;
+    SC_Constructor a_k_var;
+  ]
+
 let propagator : (output_specialize1 , typer_error) propagator =
   fun selected _repr ->
   let a = selected.poly in

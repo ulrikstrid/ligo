@@ -114,6 +114,11 @@ let get_polys_by_lhs : 'type_variable -> 'type_variable t -> c_poly_simpl MultiS
     Some s -> s 
   | None -> MultiSet.create ~cmp:Ast_typed.Compare.c_poly_simpl
 
+let get_access_labels_by_lhs : 'type_variable -> 'type_variable t -> c_access_label_simpl MultiSet.t =
+  fun variable state ->
+  match ReprMap.find_opt variable state.access_label with
+    Some s -> s
+  | None -> MultiSet.create ~cmp:Ast_typed.Compare.c_access_label_simpl
 
 type 'typeVariable t_for_tests = {
   constructor : ('typeVariable * c_constructor_simpl MultiSet.t) list ;

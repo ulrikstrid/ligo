@@ -14,53 +14,42 @@ type 'a flds = <
   ..
 > as 'a
 
-type selector_output = output_break_ctor
-
-let selector_ : type_constraint_simpl -> type_variable GroupedByVariable.t -> selector_output list =
-  (* find two rules with the shape x = k(var …) and x = k'(var' …) *)
-  fun type_constraint_simpl grouped_by_variable_map ->
-    match type_constraint_simpl with
-    | SC_Constructor c -> (
-    Format.printf "In break_ctor.selector_ for %a\n%!" Ast_typed.PP.type_constraint_simpl_short type_constraint_simpl;
-      (* finding other constraints related to the same type variable and
-      with the same sort of constraint (constructor vs. constructor)
-      is symmetric *)
-      let other_rows_lhs = GroupedByVariable.get_rows_by_lhs c.tv grouped_by_variable_map in
-      let other_constructors_lhs = 
-        List.filter (fun x -> not @@  (Ast_typed.Compare.c_constructor_simpl c x = 0)) @@ MultiSet.elements @@
-        GroupedByVariable.get_constructors_by_lhs c.tv grouped_by_variable_map in
-      Format.printf "Other constructor : (%a)\n%!" Ast_typed.PP.(list_sep_d c_constructor_simpl_short) other_constructors_lhs;
-      let () = ( if MultiSet.is_empty other_rows_lhs
-                 then ()
-                 else failwith (Format.asprintf "TODO: type error with %a ; %a" Ast_typed.PP.c_constructor_simpl c (MultiSet.pp Ast_typed.PP.c_row_simpl) other_rows_lhs))
-      in    
-      let cs_pairs = List.map (fun x -> { a_k_var = `Constructor c ; a_k'_var' = `Constructor x }) other_constructors_lhs in
-      cs_pairs
-    )
-    | SC_Alias       _                -> []
-    | SC_Typeclass   _                -> []
-    | SC_Access_label _               -> []
-    | SC_Poly        _                -> []
-    | SC_Row         r                -> (
-    Format.printf "In break_ctor.selector_ for %a\n%!" Ast_typed.PP.type_constraint_simpl_short type_constraint_simpl;
-      let other_rows_lhs = 
-        List.filter (fun x -> not @@  (Ast_typed.Compare.c_row_simpl r x = 0)) @@ MultiSet.elements @@
-        GroupedByVariable.get_rows_by_lhs r.tv grouped_by_variable_map in
-      let constructors_lhs = GroupedByVariable.get_constructors_by_lhs r.tv grouped_by_variable_map in
-      let () = ( if MultiSet.is_empty constructors_lhs
-                 then ()
-                 else failwith (Format.asprintf "TODO: type error with %a ; %a" Ast_typed.PP.c_row_simpl r (MultiSet.pp Ast_typed.PP.c_constructor_simpl) constructors_lhs)) in
-      let cs_pairs = List.map (fun x -> { a_k_var = `Row r ; a_k'_var' = `Row x }) other_rows_lhs in
-      cs_pairs
-    )
+type selector_output = {
+  a_k_var : c_row_simpl ;
+  a_var_l : c_access_label_simpl ;
+}
 
 let selector : type_constraint_simpl -> _ flds -> selector_output list =
-  fun type_constraint_simpl indexes -> selector_ type_constraint_simpl indexes#grouped_by_variable
-(* when a = k(…) and b = k'(…) are in the db, aliasing a and b should
-   check if they're non-empty (and in that case produce a
-   selector_output for all pairs / more efficiently any single pair
-   since the break_ctor creates equivalence classes for the
-   constructor arguments) *)
+  (* find two rules with the shape x = k(var …) and x = k'(var' …) *)
+  fun type_constraint_simpl indexes ->
+  match type_constraint_simpl with
+  | SC_Constructor c -> (
+      let other_access_labels_lhs = GroupedByVariable.get_access_labels_by_lhs c.tv indexes#grouped_by_variable in
+      if MultiSet.is_empty other_access_labels_lhs then
+        []
+      else
+        failwith (Format.asprintf "TODO: type error with %a ; %a" Ast_typed.PP.c_constructor_simpl c (MultiSet.pp Ast_typed.PP.c_access_label_simpl) other_access_labels_lhs)
+    )
+  | SC_Alias       _                -> []
+  | SC_Typeclass   _                -> []
+  | SC_Access_label l               -> (
+      let other_rows_lhs = GroupedByVariable.get_rows_by_lhs l.tv indexes#grouped_by_variable in
+      let other_constructors_lhs = GroupedByVariable.get_constructors_by_lhs l.tv indexes#grouped_by_variable in
+      let other_records_lhs, other_variants_lhs = List.partition (function { r_tag = C_record; _ } -> true | { r_tag = C_variant; _ } -> false) other_rows_lhs in
+      if List.length other_variants_lhs != 0 then
+        failwith (Format.asprintf "TODO: type error with %a (needs a record, but) %a (are variants)" Ast_typed.PP.c_access_label_simpl l (Ast_typed.PP.list_sep_d Ast_typed.PP.c_row_simpl) other_variants_lhs)
+      else if not (MultiSet.is_empty other_constructors_lhs) then
+        failwith (Format.asprintf "TODO: type error with %a (needs a record, but) %a (are constructors)" Ast_typed.PP.c_access_label_simpl l (MultiSet.pp Ast_typed.PP.c_constructor_simpl) other_constructors_lhs)
+      else
+      let cs_pairs = List.map (fun x -> { a_k_var = x ; a_var_l = l }) other_records_lhs in
+      cs_pairs
+    )
+  | SC_Poly        _                -> []
+  | SC_Row         r                -> (
+      let other_access_labels_lhs = GroupedByVariable.get_access_labels_by_lhs r.tv indexes#grouped_by_variable in
+      let cs_pairs = MultiSet.map_elements (fun x -> { a_k_var = r ; a_var_l = x }) other_access_labels_lhs in
+      cs_pairs
+    )
 
 let alias_selector : type_variable -> type_variable -> _ flds -> selector_output list =
   fun a b indexes ->
@@ -81,10 +70,10 @@ let alias_selector : type_variable -> type_variable -> _ flds -> selector_output
      | new_ctors_hd :: _ ->
        [{ a_k_var = old_ctors_hd ; a_k'_var' = new_ctors_hd }])
 
-let get_referenced_constraints ({ a_k_var; a_k'_var' } : selector_output) : type_constraint_simpl list =
+let get_referenced_constraints ({ a_k_var; a_var_l } : selector_output) : type_constraint_simpl list =
   [
-    (match a_k_var with `Constructor c -> SC_Constructor c | `Row r -> SC_Row r);
-    (match a_k'_var' with `Constructor c -> SC_Constructor c | `Row r -> SC_Row r);
+    SC_Row a_k_var;
+    SC_Access_label a_var_l;
   ]
 
 let propagator : (output_break_ctor, typer_error) propagator =
