@@ -2474,10 +2474,10 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "simple2" simple2 ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "simple3" simple3 ;
     (* test no "simple4" simple4 ; *)
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "chain id" chain_id ;                         (* record *)
-    test no "bytes unpack" bytes_unpack ;                 (* record *)
-    test no "bytes unpack (mligo)" bytes_unpack_mligo ;   (* record *)
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes unpack (religo)" bytes_unpack_religo ; (* record *)
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "chain id" chain_id ;
+    test y (* enabled AND PASSES as of 02021-01-28 15478d068 *) "bytes unpack" bytes_unpack ;
+    test y (* enabled AND PASSES as of 02021-01-28 15478d068 *) "bytes unpack (mligo)" bytes_unpack_mligo ;
+    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes unpack (religo)" bytes_unpack_religo ; 
     test no "key hash" key_hash ;                         (* C_access_label *)
     test no "key hash (mligo)" key_hash_mligo ;           (* C_access_label *)
     test no "key hash (religo)" key_hash_religo ;         (* C_access_label *)
@@ -2489,11 +2489,11 @@ let main = test_suite "Integration (End to End)"
 
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "function" function_ ;                        (* tests don't typecheck the test case's application *)
 
-    test no "blockless function" blockless;
+    test y (* enabled AND PASSES as of 02021-01-28 15478d068 *) "blockless function" blockless;
     (* test "procedure"  procedure ; *)
-    test no "assign" assign ;
+    test y (* enabled AND PASSES as of 02021-01-28 15478d068 *) "assign" assign ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "declaration local" declaration_local ;
-    test no "complex function" complex_function ;
+    test y (* enabled AND PASSES as of 02021-01-28 15478d068 *) "complex function" complex_function ;
     test no(*y*) "anon function" anon_function ;
 
     test no (*y*) "various applications" application ;
