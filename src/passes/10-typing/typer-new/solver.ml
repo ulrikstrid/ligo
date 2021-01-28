@@ -64,7 +64,6 @@ end = struct
       (list_sep pp_ex_propagator_state (fun ppf () -> Formatt.fprintf ppf " ;@ ")) already_selected_and_propagators
 
   let aux_remove state to_remove =
-    Format.printf "In aux_remove for %a with state : %a\n%!" Ast_typed.PP.type_constraint_simpl_short to_remove pp_typer_state state;
     let () = Formatt.printf "Remove constraint :\n  %a\n\n%!" Ast_typed.PP.type_constraint_simpl_short to_remove in
     let module MapRemoveConstraint = Plugins.Indexers.MapPlugins(RemoveConstraint) in
     let%bind plugin_states = MapRemoveConstraint.f (mk_repr state, to_remove) state.plugin_states in
@@ -80,8 +79,8 @@ end = struct
     (* TODO: before applying a propagator, check if it does
        not depend on constraints which were removed by the
        previous propagator *)
-    let%bind referenced_constraints = heuristic.plugin.get_referenced_constraints selector_output in
-    let uses_deleted_constraints = List.exists (fun c -> (PolySet.mem state.deleted_constraints c)) referenced_constraints in
+    let referenced_constraints = heuristic.plugin.get_referenced_constraints selector_output in
+    let uses_deleted_constraints = List.exists (fun c -> (PolySet.mem c state.deleted_constraints)) referenced_constraints in
     if uses_deleted_constraints then
       ok (state, [])
     else
@@ -109,7 +108,7 @@ end = struct
       let () = Format.printf "Add_alias %a=%a\n%!" Ast_typed.PP.type_variable a Ast_typed.PP.type_variable b in
 
 
-      let { all_constraints ; added_constraints ; plugin_states ; aliases ; already_selected_and_propagators } = state in
+      let { all_constraints ; added_constraints ; deleted_constraints; plugin_states ; aliases ; already_selected_and_propagators } = state in
       
       (* get the changed reprs due to that alias constraint *)
       let UnionFind.Poly2.{ partition = aliases; changed_reprs } =
@@ -127,7 +126,7 @@ end = struct
         let module MapMergeAliases = Plugins.Indexers.MapPlugins(MergeAliases) in
         MapMergeAliases.f changed_reprs plugin_states in
 
-      let state = { all_constraints ; added_constraints ; plugin_states ; aliases ; already_selected_and_propagators } in
+      let state = { all_constraints ; added_constraints ; deleted_constraints; plugin_states ; aliases ; already_selected_and_propagators } in
 
       (* apply all the alias_selectors and propagators given the new alias *)
       let%bind (state, new_constraints) = (
@@ -146,7 +145,7 @@ end = struct
         else
           ok (state, [])
       ) in
-
+      let () = Format.printf "End of add alias\n" in
       ok (state,{ Worklist.empty with pending_type_constraint = Pending.of_list new_constraints})
     
 
@@ -206,7 +205,7 @@ end = struct
       (* repeat until the worklist is empty *)
       (Worklist.is_empty ~time_to_live)
       (fun (state, worklist) ->
-         let () = Formatt.printf "\nStart iteration with constraints :\n  %a\n and state : %a\n" pp_indented_constraint_list (Pending.to_list worklist.pending_type_constraint) pp_typer_state state in
+         let () = Formatt.printf "\nStart iteration with new constraints :\n  %a\n and state : %a\n" pp_indented_constraint_list (Pending.to_list worklist.pending_type_constraint) pp_typer_state state in
 
          (* let () = queue_print (fun () -> Formatt.printf "Start iteration with constraints :\n  %a\n\n" pp_indented_constraint_list (Pending.to_list worklist.pending_type_constraint)) in *)
 
@@ -288,7 +287,7 @@ end = struct
     {
       all_constraints                  = PolySet.create ~cmp:Ast_typed.Compare.type_constraint_simpl ;
       added_constraints                = PolySet.create ~cmp:Ast_typed.Compare.type_constraint ;
-      deleted_constraints              = PolySet.create ~cmp:Ast_typed.Compare.type_constraint ;
+      deleted_constraints              = PolySet.create ~cmp:Ast_typed.Compare.type_constraint_simpl ;
       aliases                          = UnionFind.Poly2.empty Var.pp Var.compare ;
       plugin_states                    = plugin_states ;
       already_selected_and_propagators = List.map init_propagator_heuristic Plugins.heuristics ;

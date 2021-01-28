@@ -58,7 +58,7 @@ let merge_aliases : 'old 'new_ . ?debug:(Format.formatter -> 'new_ t -> unit) ->
   fun ?debug merge_keys state -> 
     Format.printf "In merge alias for typeclassesConstraining\n%!";
     let state = merge_keys.map state in
-    (match debug with Some (debug) -> Format.printf "Return with new state %a\n" debug state | _ -> ());
+    (match debug with Some (debug) -> Format.printf "Return from typeclassesConnstraining with new state %a\n" debug state | _ -> ());
     state
 
 let pp type_variable ppf state =

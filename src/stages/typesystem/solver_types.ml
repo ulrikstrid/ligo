@@ -55,7 +55,7 @@ end
 type ('errors, 'plugin_states) typer_state = {
   all_constraints                  : type_constraint_simpl PolySet.t ;
   added_constraints                : type_constraint PolySet.t ;
-  deleted_constraints              : type_constraint PolySet.t ;
+  deleted_constraints              : type_constraint_simpl PolySet.t ;
   aliases                          : type_variable UnionFind.Poly2.t ;
   plugin_states                    : 'plugin_states ;
   already_selected_and_propagators : 'plugin_states ex_heuristic_state list ;

@@ -585,18 +585,18 @@ let constructor_or_row_short ppf (t : constructor_or_row ) =
   | `Constructor c -> c_constructor_simpl_short ppf c
 
 let output_break_ctor ppf ({a_k_var;a_k'_var'}) =
-  fprintf ppf "{@[<hv 2> @ a_k_var : %a;@ a_k'_var' : %a;@]@ }"
+  fprintf ppf "%a = %a"
     constructor_or_row_short a_k_var
     constructor_or_row_short a_k'_var'
 
 let output_specialize1 ppf ({poly;a_k_var}) =
-  fprintf ppf "{@[<hv 2> @ poly : %a ;@ a_k_var : %a;@]@ }"
+  fprintf ppf "%a = %a"
     c_poly_simpl_short poly
     c_constructor_simpl_short a_k_var
 
 let output_tc_fundep ppd (t : output_tc_fundep) =
   let lst = t.tc in
-  let a = t.c in fprintf ppd "{ tc:%a ; a:%a }" c_typeclass_simpl_short lst constructor_or_row_short a
+  let a = t.c in fprintf ppd "%a and %a" c_typeclass_simpl_short lst constructor_or_row_short a
 
 let deduce_and_clean_result ppf {deduced;cleaned} =
   fprintf ppf "{@[<hv 2>@

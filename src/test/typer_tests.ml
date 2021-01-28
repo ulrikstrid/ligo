@@ -52,6 +52,8 @@ module TestExpressions = struct
   let bytes_pack () : (unit,_) result = test_expression I.(e_constant C_BYTES_PACK [e_string @@ Standard "pack"]) O.(t_bytes ())
   let bytes_unpack () : (unit,_) result = test_expression I.(e_annotation (e_constant C_BYTES_UNPACK [e_bytes_string @@ "unpack"]) (t_option @@ t_bytes ())) O.(t_option @@ t_bytes ())
 
+  let add () : (unit,_) result = test_expression I.(e_constant C_ADD [e_int Z.zero; e_int Z.one]) O.(t_int ())
+
   let application () : (unit, _) result =
     test_expression
       I.(e_application (e_lambda_ez (Location.wrap @@ Var.of_name "x") ~ascr:(t_int ()) (Some (t_int ())) (e_var "x")) @@ e_int Z.one)
@@ -138,6 +140,7 @@ let main = test_suite "Typer (from core AST)"
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "option"          TestExpressions.option ;    
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes_pack"      TestExpressions.bytes_pack ;    
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes_unpack"    TestExpressions.bytes_unpack ;    
+    test y "add" TestExpressions.add;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "application"     TestExpressions.application ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "lambda"          TestExpressions.lambda ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "let_in"          TestExpressions.let_in ;

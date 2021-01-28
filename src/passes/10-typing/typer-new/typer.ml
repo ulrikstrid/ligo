@@ -674,11 +674,12 @@ and type_and_subst : type a b.
   let () = (if Ast_typed.Debug.debug_new_typer && Ast_typed.Debug.json_new_typer then print_env_state_node out_printer (env, state, node)) in
   ok (node, state, env)
 
-and type_declaration_subst env state decl = 
+and type_declaration_subst env _state decl = 
+  let empty_state = Solver.initial_state in
   let%bind (d, state, e) = type_and_subst
       (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.declaration\"")
       (fun ppf p -> Format.fprintf ppf "%s" (Yojson.Safe.to_string (Ast_typed.Yojson.declaration @@ Location.unwrap p)))
-      (env , state , decl)
+      (env , empty_state , decl)
       Typesystem.Misc.Substitution.Pattern.s_declaration_wrap
       (fun (a,b,c) -> type_declaration a b c) in
   ok @@ (e, state, d)
