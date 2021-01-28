@@ -198,12 +198,12 @@ module_:
   nseq(declaration) { {decl=$1; eof=Region.ghost} }
 
 declaration:
-  type_decl    {    TypeDecl $1 }
-| const_decl   {   ConstDecl $1 }
-| fun_decl     {     FunDecl $1 }
-| module_decl  {  ModuleDecl $1 }
-| module_alias { ModuleAlias $1 }
-| "<directive>" { Directive $1 }
+  type_decl     {    TypeDecl $1 }
+| const_decl    {   ConstDecl $1 }
+| fun_decl      {     FunDecl $1 }
+| module_decl   {  ModuleDecl $1 }
+| module_alias  { ModuleAlias $1 }
+| "<directive>" {   Directive $1 }
 
 (* Type declarations *)
 

@@ -493,11 +493,13 @@ contract:
   toplevel_statements EOF { {statements=$1; eof=$2} : CST.t }
 
 toplevel_statements:
-  nsepseq (toplevel_statement, ";") { $1 }
-
-toplevel_statement:
-  statement     { (TopLevel  $1 : CST.toplevel_statement) }
-| "<directive>" { (Directive $1 : CST.toplevel_statement) }
+  statement ";" toplevel_statements {
+    Utils.nseq_cons (TopLevel ($1, Some $2)) $3
+  }
+| "<directive>" toplevel_statements {
+    Utils.nseq_cons (Directive $1) $2
+  }
+| statement ";"? { TopLevel ($1, $2), [] }
 
 (* Expressions *)
 

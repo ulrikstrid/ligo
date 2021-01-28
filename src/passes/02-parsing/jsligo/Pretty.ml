@@ -8,13 +8,13 @@ open! PPrint
 module Option = Simple_utils.Option
 
 let rec print ast =
-  let stmt = Utils.nsepseq_to_list ast.statements in
-  let stmt = List.filter_map pp_toplevel_statement stmt in
-  let app s = group (s ^^ string ";")
+  let stmt     = Utils.nseq_to_list ast.statements in
+  let stmt     = List.filter_map pp_toplevel_statement stmt in
+  let app stmt = group (stmt ^^ string ";")
   in separate_map (hardline ^^ hardline) app stmt
 
 and pp_toplevel_statement = function
-  TopLevel stmt -> Some (pp_statement stmt)
+  TopLevel (stmt, _) -> Some (pp_statement stmt)
 | Directive _   -> None
 
 and pp_braced :

@@ -1650,13 +1650,13 @@ contract: True REM XOR_EQ
 
 contract: True RPAR
 ##
-## Ends in an error in state: 324.
+## Ends in an error in state: 323.
 ##
-## nsepseq(toplevel_statement,SEMI) -> toplevel_statement . [ EOF ]
-## nsepseq(toplevel_statement,SEMI) -> toplevel_statement . SEMI nsepseq(toplevel_statement,SEMI) [ EOF ]
+## toplevel_statements -> statement . SEMI toplevel_statements [ EOF ]
+## toplevel_statements -> statement . option(SEMI) [ EOF ]
 ##
 ## The known suffix of the stack is as follows:
-## toplevel_statement
+## statement
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -1672,19 +1672,19 @@ contract: True RPAR
 ## In state 121, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 119, spurious reduction of production expr_statement -> disj_expr_level
 ## In state 243, spurious reduction of production statement -> expr_statement
-## In state 326, spurious reduction of production toplevel_statement -> statement
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
 contract: True SEMI XOR_EQ
 ##
-## Ends in an error in state: 325.
+## Ends in an error in state: 324.
 ##
-## nsepseq(toplevel_statement,SEMI) -> toplevel_statement SEMI . nsepseq(toplevel_statement,SEMI) [ EOF ]
+## option(SEMI) -> SEMI . [ EOF ]
+## toplevel_statements -> statement SEMI . toplevel_statements [ EOF ]
 ##
 ## The known suffix of the stack is as follows:
-## toplevel_statement SEMI
+## statement SEMI
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -2280,6 +2280,18 @@ contract: Ident ARROW LBRACE True Default
 ## In state 119, spurious reduction of production expr_statement -> disj_expr_level
 ## In state 243, spurious reduction of production statement -> expr_statement
 ## In state 248, spurious reduction of production statements -> statement
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+contract: Directive XOR_EQ
+##
+## Ends in an error in state: 321.
+##
+## toplevel_statements -> Directive . toplevel_statements [ EOF ]
+##
+## The known suffix of the stack is as follows:
+## Directive
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>

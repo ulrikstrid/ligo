@@ -122,11 +122,13 @@ let print_bytes state {region; value} =
   in Buffer.add_string state#buffer line
 
 let rec print_tokens state {statements; eof} =
-  print_nsepseq state ";" print_toplevel_statement statements;
+  Utils.nseq_iter (print_toplevel_statement state) statements;
   print_token state eof "EOF"
 
 and print_toplevel_statement state = function
-  TopLevel statement -> print_statement state statement
+  TopLevel (statement, terminator) ->
+    print_statement  state statement;
+    print_terminator state terminator
 | Directive dir -> print_directive state dir
 
 and print_directive state dir =
@@ -597,13 +599,13 @@ let pp_loc_node state name region =
   pp_ident state {value=name; region}
 
 let rec pp_cst state {statements; _} =
-  let statements = Utils.nsepseq_to_list statements in
-  let apply len rank = pp_toplevel_statement (state#pad len rank) in
-  pp_node state "<ast>";
-  List.iteri (List.length statements |> apply) statements
+  let statements = Utils.nseq_to_list statements in
+  let apply len rank = pp_toplevel_statement (state#pad len rank)
+  in pp_node state "<ast>";
+     List.iteri (List.length statements |> apply) statements
 
 and pp_toplevel_statement state = function
-  TopLevel statement -> pp_statement state statement
+  TopLevel (stmt, _) -> pp_statement state stmt
 | Directive dir ->
     let region, string = Directive.project dir in
     pp_loc_node state "Directive" region;
@@ -689,8 +691,7 @@ and pp_let_binding state {value = {binders; lhs_type; expr; _}; _} =
     pp_node state "<lhs type>";
     pp_type_expr (state#pad 1 0) type_expr;
     arity + 1
-  | None -> arity
-  in
+  | None -> arity in
   let state = state#pad fields (arity + 1) in
   pp_node state "<expr>";
   pp_expr (state#pad 1 0) expr
@@ -1072,5 +1073,4 @@ and pp_cartesian state {inside;_} =
   let t_exprs        = Utils.nsepseq_to_list inside in
   let arity          = List.length t_exprs in
   let apply len rank = pp_type_expr (state#pad len rank)
-  in
-  List.iteri (apply arity) t_exprs;
+  in List.iteri (apply arity) t_exprs;

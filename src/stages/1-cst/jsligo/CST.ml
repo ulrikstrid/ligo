@@ -140,10 +140,10 @@ type t = {
   eof        : eof
 }
 
-and toplevel_statements = (toplevel_statement, semi) nsepseq
+and toplevel_statements = toplevel_statement nseq
 
 and toplevel_statement =
-  TopLevel  of statement
+  TopLevel  of statement * semi option
 | Directive of Directive.t
 
 and ast = t

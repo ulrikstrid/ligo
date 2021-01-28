@@ -612,7 +612,7 @@ fun _statement ->
 
 and compile_statement : CST.statement -> statement_result result = fun statement ->
   match statement with
-  (* 
+  (*
   | SExpr e -> (
     let e' = compile_expression e in
     ok @@ Context (
@@ -650,20 +650,21 @@ let rec compile_statement_to_declaration : CST.statement -> AST.declaration resu
   | _ ->
     failwith "expected a let or a const"
 
-and compile_statements_to_program : CST.ast -> AST.module_ result = fun ast ->
-  let aux : CST.statement -> declaration location_wrap result = fun statement ->
-    let%bind declaration = compile_statement_to_declaration statement in
-    let loc = Location.lift @@ CST.statement_to_region statement in
-    ok (Location.wrap ~loc declaration)
-  in
-  let stmt = npseq_to_list ast.statements in
-  let apply toplevel acc =
-    match toplevel with
-      CST.TopLevel stmt -> stmt::acc
-    | Directive _ -> acc in
-  let stmt = List.fold_right apply stmt [] in
-  let%bind lst = bind_map_list aux @@ stmt in
-  ok lst
+and compile_statements_to_program : CST.ast -> AST.module_ result =
+  fun ast ->
+    let aux : CST.statement -> declaration location_wrap result =
+      fun stmt ->
+        let%bind declaration = compile_statement_to_declaration stmt in
+        let loc = Location.lift @@ CST.statement_to_region stmt
+        in ok (Location.wrap ~loc declaration) in
+    let stmts = nseq_to_list ast.statements in
+    let apply toplevel acc =
+      match toplevel with
+        CST.TopLevel (stmt,_) -> stmt::acc
+      | Directive _ -> acc in
+    let stmts = List.fold_right apply stmts [] in
+    let%bind lst = bind_map_list aux stmts
+    in ok lst
 
 let compile_module : CST.ast -> _ result =
   fun t -> failwith "TODO"

@@ -841,8 +841,9 @@ and compile_data_declaration : next:AST.expression -> CST.data_decl -> _ =
       let p = Location.wrap ~loc:ploc @@ Var.of_name name
       and attr = const_decl.value.attributes in
       let attr = compile_attributes attr in
-      let%bind type_ = bind_map_option (compile_type_expression <@ snd) cd.const_type in
-      return loc p type_ attr init
+      let%bind type_ =
+        bind_map_option (compile_type_expression <@ snd) cd.const_type
+      in return loc p type_ attr init
 
   | LocalVar var_decl ->
       let vd, loc = r_split var_decl in
@@ -854,8 +855,9 @@ and compile_data_declaration : next:AST.expression -> CST.data_decl -> _ =
 
   | LocalFun fun_decl ->
       let fun_decl, loc = r_split fun_decl in
-      let%bind fun_name,fun_type,attr,lambda = compile_fun_decl fun_decl in
-      return loc fun_name fun_type attr lambda
+      let%bind _fun_name, fun_var, fun_type, attr, lambda =
+        compile_fun_decl fun_decl in
+      return loc fun_var fun_type attr lambda
 
   | LocalType type_decl ->
     let td,loc = r_split type_decl in
@@ -902,7 +904,7 @@ and compile_block : ?next:AST.expression -> CST.block CST.reg -> _ result =
     Some block -> return block
   | None -> fail @@ block_start_with_attribute block
 
-and compile_fun_decl : CST.fun_decl -> (expression_variable * type_expression option * AST.attributes * expression , _) Trace.result =
+and compile_fun_decl : CST.fun_decl -> (string * expression_variable * type_expression option * AST.attributes * expression , _) Trace.result =
   fun ({kwd_recursive; fun_name; param; ret_type; return=r; attributes}: CST.fun_decl) ->
   let return = ok in
   let (fun_name, loc) = r_split fun_name in
@@ -943,7 +945,7 @@ and compile_fun_decl : CST.fun_decl -> (expression_variable * type_expression op
       return @@ make_e ~loc @@ E_lambda lambda
   in
   let attr = compile_attributes attributes in
-  return (fun_binder, fun_type, attr, func)
+  return (fun_name, fun_binder, fun_type, attr, func)
 
 and compile_declaration : CST.declaration -> _ result =
   fun decl ->
@@ -958,21 +960,20 @@ and compile_declaration : CST.declaration -> _ result =
       in return region ast
 
   | ConstDecl {value={name; const_type; init; attributes; _}; region} ->
-      let attr = compile_attributes attributes in
-      let name, loc = r_split name in
-      let var = Location.wrap ~loc @@ Var.of_name name in
-      let%bind ascr =
-        bind_map_option (compile_type_expression <@ snd) const_type in
-      let%bind expr = compile_expression init in
-      let binder = {var; ascr} in
-      let ast = AST.Declaration_constant {binder; attr; expr}
-      in return region ast
-
+    let attr = compile_attributes attributes in
+    let name, loc = r_split name in
+    let var = Location.wrap ~loc @@ Var.of_name name in
+    let%bind ascr =
+      bind_map_option (compile_type_expression <@ snd) const_type in
+    let%bind expr = compile_expression init in
+    let binder = {var;ascr} in
+    let ast = AST.Declaration_constant {name = Some name; binder;attr;expr}
+    in return region ast
   | FunDecl {value;region} ->
-      let%bind (var, ascr, attr, expr) = compile_fun_decl value in
-      let binder = {var; ascr} in
-      let ast = AST.Declaration_constant {binder; attr; expr}
-      in return region ast
+    let%bind (name,var,ascr,attr,expr) = compile_fun_decl value in
+    let binder = {var;ascr} in
+    let ast = AST.Declaration_constant {name = Some name; binder;attr;expr}
+    in return region ast
 
   | ModuleDecl {value={name; module_; _};region} ->
       let (name,_) = r_split name in
