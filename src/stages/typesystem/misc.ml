@@ -74,7 +74,7 @@ module Substitution = struct
           ok @@ T.T_sum rows
         | T.T_record rows ->
           let%bind rows = s_rows ~substs rows in
-          ok @@ T.T_sum rows
+          ok @@ T.T_record rows
         | T.T_variable variable ->
            begin
              match substs ~variable with
