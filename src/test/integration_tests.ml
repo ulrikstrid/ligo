@@ -2496,22 +2496,22 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02021-01-28 15478d068 *) "complex function" complex_function ;
     test y (* enabled AND PASSES as of 02021-01-28 92040f207 *) "anon function" anon_function ;
 
-    test no (*y*) "various applications" application ;
+    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "various applications" application ;
 
-    test no "closure" closure ;
-    test no "closure (mligo)" closure_mligo ;
-    test no "closure (religo)" closure_religo ;
+    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure" closure ;
+    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure (mligo)" closure_mligo ;
+    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure (religo)" closure_religo ;
     test no "shared function" shared_function ;
     test no "shared function (mligo)" shared_function_mligo ;
     test no "shared function (religo)" shared_function_religo ;
     test no "higher order" higher_order ;
     test no "higher order (mligo)" higher_order_mligo ;
     test no "higher order (religo)" higher_order_religo ;
-    test y(*y*) "variant" variant ;
-    test y(*y*) "variant (mligo)" variant_mligo ;
-    test y(*y*) "variant (religo)" variant_religo ;
+    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant" variant ;
+    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant (mligo)" variant_mligo ;
+    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant (religo)" variant_religo ;
 
-    test no "variant matching" variant_matching ;
+    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant matching" variant_matching ;
     test no "tuple" tuple ;
     test no "tuple (mligo)" tuple_mligo ;
     test no "tuple (religo)" tuple_religo ;
@@ -2527,7 +2527,7 @@ let main = test_suite "Integration (End to End)"
     test no "eq bool (mligo)" eq_bool_mligo ;
     test no "eq bool (religo)" eq_bool_religo ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "shadow" shadow ;
-    test no(*y*) "annotation" annotation ;
+    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "annotation" annotation ;
 
     test no "multiple parameters" multiple_parameters ;
     test no "multiple parameters (mligo)" multiple_parameters_mligo ;
@@ -2541,7 +2541,7 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bitwise_arithmetic" bitwise_arithmetic ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bitwise_arithmetic (mligo)" bitwise_arithmetic_mligo;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bitwise_arithmetic (religo)" bitwise_arithmetic_religo;
-    test no "string_arithmetic" string_arithmetic ;
+    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "string_arithmetic" string_arithmetic ;
     test no "string_arithmetic (mligo)" string_arithmetic_mligo ;
     test no "string_arithmetic (religo)" string_arithmetic_religo ;
     test no "bytes_arithmetic" bytes_arithmetic ;
@@ -2585,8 +2585,8 @@ let main = test_suite "Integration (End to End)"
     test no "super counter contract" super_counter_contract_mligo ;
     test no "super counter contract (reasonligo)" super_counter_contract_religo ;
     test no "dispatch counter contract" dispatch_counter_contract ;
-    test no(*y*) "basic (mligo)" basic_mligo ;
-    test no(*y*) "basic (religo)" basic_religo ;
+    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "basic (mligo)" basic_mligo ;
+    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "basic (religo)" basic_religo ;
 
     test no "counter contract (mligo)" counter_mligo ;
     test no "counter contract (religo)" counter_religo ;
