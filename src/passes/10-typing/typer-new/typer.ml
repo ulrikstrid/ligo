@@ -119,11 +119,12 @@ end
 *)
 let rec type_declaration env state : I.declaration Location.wrap -> (environment * _ O'.typer_state * O.declaration Location.wrap, typer_error) result = fun d ->
   let return : _ -> _ -> _ O'.typer_state -> _ (* return of type_expression *) = fun expr e state constraints ->
-    Format.printf "Solving expression : %a\n%!" O.PP.declaration expr ;
+    Format.printf "Solving expression : %a\n%!" O.PP_annotated.declaration expr ;
     let%bind state = Solver.main state constraints in
-    Format.printf "Leaving type declaration\n%!";
+    Format.printf "Leaving type declaration\n\n%!";
     let () = Pretty_print_variables.flush_pending_print state in
     ok @@ (e,state, Location.wrap ~loc:d.location expr ) in
+  Format.printf "Type_declaration : %a\n%!" I.PP.declaration (Location.unwrap d);
   match Location.unwrap d with
   | Declaration_type {type_binder; type_expr} ->
     let type_binder = Var.todo_cast type_binder in
@@ -136,12 +137,14 @@ let rec type_declaration env state : I.declaration Location.wrap -> (environment
       Determine the type of the expression and add it to the environment
     *)
     let%bind tv_opt = bind_map_option (evaluate_type env) binder.ascr in
+    Format.printf "const_decl: tv_opt : %a\n%!" (PP_helpers.option O.PP.type_expression) tv_opt ;
     let%bind (e, state', expr),constraints =
       trace (constant_declaration_tracer binder.var expr tv_opt) @@
-      type_expression' env state ?tv_opt expr in
+      type_expression' env state expr in
     let binder = Location.map Var.todo_cast binder.var in
     let post_env = Environment.add_ez_declaration binder expr e in
-    return (Declaration_constant { name; binder ; expr ; inline=attr.inline}) post_env state' constraints
+    let c = Wrap.const_decl expr.type_expression tv_opt in
+    return (Declaration_constant { name; binder ; expr ; inline=attr.inline}) post_env state' (constraints@c)
     )
   | Declaration_module {module_binder;module_} -> (
     let%bind (e,module_,state) = type_module ~init_env:env module_ in
@@ -164,10 +167,6 @@ let rec type_declaration env state : I.declaration Location.wrap -> (environment
 and evaluate_type : environment -> I.type_expression -> (O.type_expression, typer_error) result = fun e t ->
   let return tv' = ok (make_t ~loc:t.location tv' (Some t)) in
   match t.type_content with
-  | T_arrow {type1;type2} ->
-    let%bind type1 = evaluate_type e type1 in
-    let%bind type2 = evaluate_type e type2 in
-    return (T_arrow {type1;type2})
   | T_sum {fields ; layout} ->
     let aux v =
       let {associated_type ; michelson_annotation ; decl_pos} : _ I.row_element_mini_c = v in
@@ -195,6 +194,10 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
     let name : O.type_variable = Var.todo_cast variable in
     trace_option (unbound_type_variable e name t.location)
       @@ Environment.get_type_opt (name) e
+  | T_arrow {type1;type2} ->
+    let%bind type1 = evaluate_type e type1 in
+    let%bind type2 = evaluate_type e type2 in
+    return (T_arrow {type1;type2})
   | T_app {type_operator;arguments} -> (
     let name : O.type_variable = Var.todo_cast type_operator in
     let%bind v = trace_option (unbound_type_variable e name t.location) @@
@@ -662,7 +665,7 @@ and type_and_subst : type a b.
         let%bind tv_root = Solver.get_alias variable aliases in
         let () = Format.printf "\ncstr : %a(was %a) %a(was %a)\n" Ast_typed.PP.type_variable tv_root Ast_typed.PP.type_variable tv Ast_typed.PP.type_variable root Ast_typed.PP.type_variable variable in
         let () = assert (Var.equal tv_root root) in
-        let (expr : O.type_content) = Typesystem.Core.type_expression'_of_simple_c_row (r_tag , (O.LMap.map O.t_variable tv_map)) in
+        let (expr : O.type_content) = Typesystem.Core.type_expression'_of_simple_c_row (r_tag , tv_map) in
         let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s%!" @@ Format.asprintf "Substituing var %a (%a is %a)\n%!" Var.pp variable Var.pp root Ast_typed.PP.type_content expr) in
         ok @@ expr
     in

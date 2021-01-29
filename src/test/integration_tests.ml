@@ -2494,7 +2494,7 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02021-01-28 15478d068 *) "assign" assign ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "declaration local" declaration_local ;
     test y (* enabled AND PASSES as of 02021-01-28 15478d068 *) "complex function" complex_function ;
-    test no(*y*) "anon function" anon_function ;
+    test y (* enabled AND PASSES as of 02021-01-28 92040f207 *) "anon function" anon_function ;
 
     test no (*y*) "various applications" application ;
 
@@ -2507,9 +2507,9 @@ let main = test_suite "Integration (End to End)"
     test no "higher order" higher_order ;
     test no "higher order (mligo)" higher_order_mligo ;
     test no "higher order (religo)" higher_order_religo ;
-    test no(*y*) "variant" variant ;
-    test no(*y*) "variant (mligo)" variant_mligo ;
-    test no(*y*) "variant (religo)" variant_religo ;
+    test y(*y*) "variant" variant ;
+    test y(*y*) "variant (mligo)" variant_mligo ;
+    test y(*y*) "variant (religo)" variant_religo ;
 
     test no "variant matching" variant_matching ;
     test no "tuple" tuple ;

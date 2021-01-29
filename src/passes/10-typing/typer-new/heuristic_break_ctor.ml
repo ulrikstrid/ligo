@@ -128,7 +128,7 @@ let propagator : (output_break_ctor, typer_error) propagator =
   let%bind eqs3 =
     match a , b with
     | `Row a , `Row b ->
-      let aux = fun ((la,aa),(lb,bb)) ->
+      let aux = fun ((la,{associated_variable=aa;_}),(lb,{associated_variable=bb;})) ->
         let%bind () = Trace.Assert.assert_true (corner_case "TODO: different labels la lb") (Ast_typed.Compare.label la lb = 0) in
         ok @@ c_equation
           (wrap (Propagator_break_ctor "a") @@ P_variable aa)

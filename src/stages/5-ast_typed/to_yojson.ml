@@ -403,8 +403,16 @@ and p_apply {tf;targ} =
 and p_row {p_row_tag;p_row_args} =
   `Assoc [
     ("p_row_tag", row_tag p_row_tag);
-    ("p_row_args", label_map type_value p_row_args);
+    ("p_row_args", label_map row_value p_row_args);
   ]
+
+and row_value {associated_value; michelson_annotation; decl_pos} =
+  `Assoc [
+    ("associated_value", type_value associated_value);
+    ("michelson_annotation", option (fun s -> `String s) michelson_annotation);
+    ("decl_pos", `Int decl_pos);
+  ]
+
 
 let c_constructor_simpl {id_constructor_simpl = ConstraintIdentifier ci;reason_constr_simpl;original_id;tv;c_tag;tv_list} =
   `Assoc [
@@ -450,6 +458,13 @@ let c_access_label_simpl { id_access_label_simpl = ConstraintIdentifier ci ; rea
     ("tv", type_variable_to_yojson tv)
   ]
 
+let row_variable {associated_variable; michelson_annotation; decl_pos} =
+  `Assoc [
+    ("associated_variable", type_variable_to_yojson associated_variable);
+    ("michelson_annotation", option (fun s -> `String s) michelson_annotation);
+    ("decl_pos", `Int decl_pos);
+  ]
+
 let c_row_simpl {id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; original_id; tv;r_tag;tv_map} =
   `Assoc [
     ("id_row_simpl", `String (Format.sprintf "%Li" ci));
@@ -457,7 +472,7 @@ let c_row_simpl {id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; origi
     ("reason_row_simpl", `String reason_row_simpl);
     ("tv", type_variable_to_yojson tv);
     ("r_tag", row_tag r_tag);
-    ("tv_map", label_map type_variable_to_yojson tv_map)
+    ("tv_map", label_map row_variable tv_map)
   ]
 let type_constraint_simpl = function
   | SC_Constructor c -> `List [`String "SC_constructor"; c_constructor_simpl c]

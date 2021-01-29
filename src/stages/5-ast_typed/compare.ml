@@ -39,8 +39,8 @@ let layout_tag = function
 
 let layout a b = Int.compare (layout_tag a) (layout_tag b)
 
-let type_expression_tag ty_expr =
-  match ty_expr.type_content with
+let type_expression_tag ty_cont =
+  match ty_cont with
     T_variable        _ -> 1
   | T_constant        _ -> 2
   | T_sum             _ -> 3
@@ -73,7 +73,10 @@ let rec constant_tag (ct : constant_tag) =
   | C_chain_id  ->  0
 
 and type_expression a b =
-  match a.type_content,b.type_content with
+  type_content a.type_content b.type_content
+
+and type_content a b =
+  match a, b with
     T_variable a, T_variable b -> type_variable a b
   | T_constant a, T_constant b -> injection a b
   | T_sum      a, T_sum      b -> rows a b
@@ -93,7 +96,7 @@ and injection {language=la ; injection=ia ; parameters=pa} {language=lb ; inject
 
 and rows {content=ca; layout=la} {content=cb; layout=lb} =
   cmp2
-    (label_map ~compare:row) ca cb
+    (label_map ~compare:row_element) ca cb
     layout la lb
 
 and constraint_identifier (ConstraintIdentifier a) (ConstraintIdentifier b) =
@@ -104,7 +107,7 @@ and constraint_identifier (ConstraintIdentifier a) (ConstraintIdentifier b) =
 and constraint_identifier_set (a : constraint_identifier PolySet.t) (b : constraint_identifier PolySet.t) : int =
   List.compare ~compare:constraint_identifier (PolySet.elements a)  (PolySet.elements b)
 
-and row {associated_type=aa;michelson_annotation=ma;decl_pos=da} {associated_type=ab;michelson_annotation=mb;decl_pos=db} =
+and row_element {associated_type=aa;michelson_annotation=ma;decl_pos=da} {associated_type=ab;michelson_annotation=mb;decl_pos=db} =
   cmp3
     type_expression aa ab
     (Option.compare String.compare) ma mb
@@ -440,7 +443,13 @@ and p_apply {tf=ta;targ=la} {tf=tb;targ=lb} =
 and p_row {p_row_tag=ra;p_row_args=la} {p_row_tag=rb;p_row_args=lb} =
   cmp2
     row_tag ra rb
-    (label_map ~compare:type_value) la lb
+    (label_map ~compare:row_value) la lb
+
+and row_value {associated_value=aa;michelson_annotation=ma;decl_pos=da} {associated_value=ab;michelson_annotation=mb;decl_pos=db} =
+  cmp3
+    type_value aa ab
+    (Option.compare String.compare) ma mb
+    Int.compare     da db
 
 and type_constraint {reason=ra;c=ca} {reason=rb;c=cb} =
   cmp2

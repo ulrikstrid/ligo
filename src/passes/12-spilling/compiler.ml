@@ -168,7 +168,7 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
   let return tc = ok @@ Expression.make_t ~loc:t.location @@ tc in
   match t.type_content with
   | T_variable (name) -> fail @@ no_type_variable @@ name
-  | t when (compare t (t_bool ()).type_content) = 0-> return (T_base TB_bool)
+  | t when (AST.Compare.type_content t (t_bool ()).type_content) = 0-> return (T_base TB_bool)
   | T_constant {language ; injection ; parameters} -> (
     let open Stage_common.Constant in
     let%bind () = Assert.assert_true (corner_case ~loc:__LOC__ "unsupported language") @@ String.equal language Stage_common.Backends.michelson in

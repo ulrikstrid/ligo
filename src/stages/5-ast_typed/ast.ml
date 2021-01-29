@@ -360,10 +360,16 @@ and p_constant = {
     p_ctor_args : p_ctor_args ;
   }
 
-and tv_lmap = type_value label_map
+and row_value = {
+  associated_value : type_value;
+  michelson_annotation : string option;
+  decl_pos : int;
+}
+
+and row_lmap = row_value label_map
 and p_row = {
     p_row_tag  : row_tag ;
-    p_row_args : tv_lmap ;
+    p_row_args : row_lmap ;
   }
 
 and p_constraints = type_constraint list
@@ -474,7 +480,13 @@ and c_row_simpl = {
   original_id  : constraint_identifier option ;
   tv : type_variable;
   r_tag : row_tag;
-  tv_map : type_variable_lmap;
+  tv_map : row_variable label_map;
+}
+
+and row_variable = {
+  associated_variable : type_variable;
+  michelson_annotation : string option;
+  decl_pos : int;
 }
 and c_const_e = {
     c_const_e_tv : type_variable ;

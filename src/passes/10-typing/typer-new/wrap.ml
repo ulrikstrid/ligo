@@ -14,12 +14,14 @@ let rec type_expression_to_type_value : T.type_expression -> O.type_value = fun 
   match te.type_content with
   | T_variable tv -> T.Reasons.wrap (Todo "wrap: from source code maybe?") @@ T.P_variable tv
   | T_singleton _ -> failwith "what about singleton ?"
-  | T_sum {content=kvmap ; layout=_} ->
-    let tmap = T.LMap.map (fun ({associated_type;_}:T.row_element) -> associated_type) kvmap in
-    p_row C_variant @@ T.LMap.map type_expression_to_type_value tmap
-  | T_record {content=kvmap;layout=_} ->
-    let tmap = T.LMap.map (fun ({associated_type;_}:T.row_element) -> associated_type) kvmap in
-    p_row C_record @@ T.LMap.map type_expression_to_type_value tmap
+  | T_sum {content ; layout=_} ->
+    let aux ({associated_type;michelson_annotation;decl_pos}:T.row_element) : T.row_value =
+       {associated_value = type_expression_to_type_value associated_type;michelson_annotation;decl_pos} in
+    p_row C_variant @@ T.LMap.map aux content
+  | T_record {content ; layout=_} ->
+    let aux ({associated_type;michelson_annotation;decl_pos}:T.row_element) : T.row_value =
+       {associated_value = type_expression_to_type_value associated_type;michelson_annotation;decl_pos} in
+    p_row C_record @@ T.LMap.map aux content
   | T_arrow {type1;type2} ->
     p_constant C_arrow @@ List.map type_expression_to_type_value [ type1 ; type2 ]
   | T_module_accessor {module_name=_; element} ->
@@ -80,7 +82,7 @@ let constant : I.constant' -> O.type_value -> T.type_expression list -> (constra
     [] -> Location.wrap @@ T.P_variable (Var.fresh ~name:"unit" ())
   | arg::[] -> type_expression_to_type_value arg
   | args ->
-    let args'      = lmap_of_tuple @@ List.map type_expression_to_type_value args in
+    let args'      = lmap_of_tuple @@ List.mapi (fun i arg -> ({associated_value = type_expression_to_type_value arg ; michelson_annotation = None; decl_pos = i}: T.row_value)) args in
     p_row C_record args' 
   in
   [

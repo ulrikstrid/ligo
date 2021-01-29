@@ -266,7 +266,7 @@ module Substitution = struct
           T.Reasons.(wrap (Todo "2") @@ T.P_apply { tf = self tf ; targ = self targ})
         )
       | P_row {p_row_tag; p_row_args} ->
-        let p_row_args = T.LMap.map self p_row_args in
+        let p_row_args = T.LMap.map (fun ({associated_value;michelson_annotation;decl_pos}: T.row_value ) -> ({associated_value=self associated_value;michelson_annotation;decl_pos} : T.row_value)) p_row_args in
         wrap (Todo "3") @@ T.P_row {p_row_tag ; p_row_args}
       | P_forall p -> (
           let aux c = constraint_ ~c ~substs in

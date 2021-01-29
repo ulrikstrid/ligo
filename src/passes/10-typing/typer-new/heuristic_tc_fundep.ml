@@ -130,7 +130,7 @@ let restrict_one (cr : constructor_or_row) (allowed : type_value) =
 (* Restricts a typeclass to the possible cases given v = k(a, …) in c *)
 let restrict repr (constructor_or_row : constructor_or_row) (tcs : c_typeclass_simpl) =
   let (tv_list, tv) = match constructor_or_row with
-    | `Row r -> LMap.to_list r.tv_map , r.tv
+    | `Row r -> List.map (fun {associated_variable} -> associated_variable) @@ LMap.to_list r.tv_map , r.tv
     | `Constructor c -> c.tv_list , c.tv
   in
   (* TODO: this is bogus if there is shadowing *)

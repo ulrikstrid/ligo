@@ -35,16 +35,16 @@ let rec type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
     SC_Constructor {id_constructor_simpl;original_id=None;tv=a;c_tag;tv_list=fresh_vars;reason_constr_simpl=Format.asprintf "simplifier: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.constant_tag c_tag (PP_helpers.list_sep Ast_typed.PP.type_value (fun ppf () -> Format.fprintf ppf ", ")) args} :: List.flatten recur in
   let split_row a r_tag args =
-    let aux const _ v =
+    let aux const _ {associated_value = v;michelson_annotation;decl_pos} =
       let var = Core.fresh_type_variable () in
       let v   = c_equation (wrap (Todo "solver: simplifier: split_row") @@ P_variable var) v "simplifier: split_row" in
-      (v::const, var)
+      (v::const, {associated_variable=var;michelson_annotation;decl_pos})
     in
     let fresh_eqns, fresh_vars = LMap.fold_map aux [] args in
     let recur = List.map type_constraint_simpl fresh_eqns in
     let id_row_simpl = ConstraintIdentifier (!global_next_constraint_id) in
     global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
-    [SC_Row {id_row_simpl;original_id=None;tv=a;r_tag;tv_map=fresh_vars;reason_row_simpl=Format.asprintf "simplifier: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.row_tag r_tag (Ast_typed.PP.record_sep Ast_typed.PP.type_value (fun ppf () -> Format.fprintf ppf ", ")) args}] @ List.flatten recur in
+    [SC_Row {id_row_simpl;original_id=None;tv=a;r_tag;tv_map=fresh_vars;reason_row_simpl=Format.asprintf "simplifier: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.row_tag r_tag (Ast_typed.PP.record_sep Ast_typed.PP.row_value (fun ppf () -> Format.fprintf ppf ", ")) args}] @ List.flatten recur in
   let gather_forall a forall = 
     let id_poly_simpl = ConstraintIdentifier (!global_next_constraint_id) in
     global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
