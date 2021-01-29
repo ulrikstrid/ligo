@@ -120,6 +120,12 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/p/*"
+  to = "https://api.ligo-ide.tez.ie/p/:splat"
+  status = 200
+  force = true
+
 #[[headers]]
 #  # Define which paths this specific [[headers]] block will cover.
 #  for = "/*"
