@@ -215,11 +215,22 @@ let compare_row_variable : row_variable -> row_variable -> int =
 let compare_c_row_simpl
   { reason_row_simpl=a1 ; tv=a3 ; r_tag=a4 ; tv_map=a5 }
   { reason_row_simpl=b1 ; tv=b3 ; r_tag=b4 ; tv_map=b5 } =
+    (* TODO: BUG: THIS SHOULD COMPARE USING id_access_label_simpl
+       same for other c_xxx_simpl *)
     String.compare a1 b1 <? fun () ->
     compare_type_variable a3 b3 <? fun () ->
     compare_row_tag a4 b4 <? fun () ->
       let aux = fun (a1,a2) (b1,b2) -> compare_label a1 b1 <? fun () -> compare_row_variable a2 b2 in
       List.compare ~compare:aux (LMap.bindings a5) (LMap.bindings b5)
+
+let compare_c_access_label_simpl
+  { reason_access_label_simpl=a1; id_access_label_simpl=_a2; record_type=a3; label=a4; tv=a5 }
+  { reason_access_label_simpl=b1; id_access_label_simpl=_b2; record_type=b3; label=b4; tv=b5 } =
+  String.compare a1 b1 <? fun () ->
+    (* TODO: BUG: THIS SHOULD COMPARE USING id_access_label_simpl *)
+    compare_type_variable a3 b3 <? fun () ->
+    compare_label a4 b4 <? fun () ->
+    compare_type_variable a5 b5
 
 let compare_constructor_or_row
     (a : constructor_or_row)

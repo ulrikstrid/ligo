@@ -24,18 +24,18 @@ let selector : type_constraint_simpl -> _ flds -> selector_output list =
   fun type_constraint_simpl indexes ->
   match type_constraint_simpl with
   | SC_Constructor c -> (
-      let other_access_labels_lhs = GroupedByVariable.get_access_labels_by_lhs c.tv indexes#grouped_by_variable in
-      if MultiSet.is_empty other_access_labels_lhs then
+      let other_access_labels_record_types = GroupedByVariable.get_access_labels_by_record_type c.tv indexes#grouped_by_variable in
+      if MultiSet.is_empty other_access_labels_record_types then
         []
       else
-        failwith (Format.asprintf "TODO: type error with %a ; %a" Ast_typed.PP.c_constructor_simpl c (MultiSet.pp Ast_typed.PP.c_access_label_simpl) other_access_labels_lhs)
+        failwith (Format.asprintf "TODO: type error with %a ; %a" Ast_typed.PP.c_constructor_simpl c (MultiSet.pp Ast_typed.PP.c_access_label_simpl) other_access_labels_record_types)
     )
   | SC_Alias       _                -> []
   | SC_Typeclass   _                -> []
   | SC_Access_label l               -> (
-      let other_rows_lhs = GroupedByVariable.get_rows_by_lhs l.tv indexes#grouped_by_variable in
-      let other_constructors_lhs = GroupedByVariable.get_constructors_by_lhs l.tv indexes#grouped_by_variable in
-      let other_records_lhs, other_variants_lhs = List.partition (function { r_tag = C_record; _ } -> true | { r_tag = C_variant; _ } -> false) other_rows_lhs in
+      let other_rows_lhs = GroupedByVariable.get_rows_by_lhs l.record_type indexes#grouped_by_variable in
+      let other_constructors_lhs = GroupedByVariable.get_constructors_by_lhs l.record_type indexes#grouped_by_variable in
+      let other_records_lhs, other_variants_lhs = List.partition (function { r_tag = C_record; _ } -> true | { r_tag = C_variant; _ } -> false) (MultiSet.elements other_rows_lhs) in
       if List.length other_variants_lhs != 0 then
         failwith (Format.asprintf "TODO: type error with %a (needs a record, but) %a (are variants)" Ast_typed.PP.c_access_label_simpl l (Ast_typed.PP.list_sep_d Ast_typed.PP.c_row_simpl) other_variants_lhs)
       else if not (MultiSet.is_empty other_constructors_lhs) then
@@ -46,7 +46,7 @@ let selector : type_constraint_simpl -> _ flds -> selector_output list =
     )
   | SC_Poly        _                -> []
   | SC_Row         r                -> (
-      let other_access_labels_lhs = GroupedByVariable.get_access_labels_by_lhs r.tv indexes#grouped_by_variable in
+      let other_access_labels_lhs = GroupedByVariable.get_access_labels_by_record_type r.tv indexes#grouped_by_variable in
       let cs_pairs = MultiSet.map_elements (fun x -> { a_k_var = r ; a_var_l = x }) other_access_labels_lhs in
       cs_pairs
     )
@@ -54,21 +54,19 @@ let selector : type_constraint_simpl -> _ flds -> selector_output list =
 let alias_selector : type_variable -> type_variable -> _ flds -> selector_output list =
   fun a b indexes ->
   Format.printf "Break_ctor.alias_selector %a %a\n%!" Ast_typed.PP.type_variable a Ast_typed.PP.type_variable b ;
-  let a_constructors = GroupedByVariable.get_constructors_by_lhs a indexes#grouped_by_variable in
-  let b_constructors = GroupedByVariable.get_constructors_by_lhs b indexes#grouped_by_variable in
+  let a_access_labels = GroupedByVariable.get_access_labels_by_record_type a indexes#grouped_by_variable in
+  let b_access_labels = GroupedByVariable.get_access_labels_by_record_type b indexes#grouped_by_variable in
   let a_rows = GroupedByVariable.get_rows_by_lhs a indexes#grouped_by_variable in
   let b_rows = GroupedByVariable.get_rows_by_lhs b indexes#grouped_by_variable in
-  let a_ctor = MultiSet.map_elements (fun a -> `Constructor a) a_constructors in
-  let b_ctor = MultiSet.map_elements (fun a -> `Constructor a) b_constructors in
-  let a_row = List.map (fun a -> `Row a) (MultiSet.elements a_rows) in
-  let b_row = List.map (fun a -> `Row a) (MultiSet.elements b_rows) in
-  match a_ctor @ a_row with
+  (* let a_ctor = MultiSet.map_elements (fun a -> `Constructor a) a_constructors in
+   * let b_ctor = MultiSet.map_elements (fun a -> `Constructor a) b_constructors in *)
+  (* TODO: have a separate group of plug-ins which detect errors *)
+  let a_records = List.filter_map (function { r_tag = C_record; _ } as x -> Some x | { r_tag = C_variant; _ } -> None) (MultiSet.elements a_rows) in
+  let b_records = List.filter_map (function { r_tag = C_record; _ } as x -> Some x | { r_tag = C_variant; _ } -> None) (MultiSet.elements b_rows) in
+  match a_records @ b_records with
   | [] -> []
-  | old_ctors_hd :: _ ->
-    (match b_ctor @ b_row with
-       [] -> []
-     | new_ctors_hd :: _ ->
-       [{ a_k_var = old_ctors_hd ; a_k'_var' = new_ctors_hd }])
+  | old_records_hd :: _ ->
+    List.map (fun al -> {a_k_var = old_records_hd; a_var_l = al}) (MultiSet.elements a_access_labels @ MultiSet.elements b_access_labels)
 
 let get_referenced_constraints ({ a_k_var; a_var_l } : selector_output) : type_constraint_simpl list =
   [
@@ -76,77 +74,55 @@ let get_referenced_constraints ({ a_k_var; a_var_l } : selector_output) : type_c
     SC_Access_label a_var_l;
   ]
 
-let propagator : (output_break_ctor, typer_error) propagator =
+let propagator : (selector_output, typer_error) propagator =
   fun selected repr ->
-  let a = selected.a_k_var in
-  let b = selected.a_k'_var' in
-  let get_tv : constructor_or_row -> type_variable = fun cr ->
-    match cr with
-    | `Row r -> r.tv
-    | `Constructor c -> c.tv
-  in
+  let a_k_var = selected.a_k_var in
+  let a_var_l = selected.a_var_l in
   (* The selector is expected to provice two constraints with the shape x = k(var …) and x = k'(var' …) *)
-  let a_tv = repr @@ get_tv a in
-  let b_tv = repr @@ get_tv b in
-  assert (Var.equal a_tv b_tv);
+  let row_tv = repr @@ a_k_var.tv in
+  let record_type = repr @@ a_var_l.record_type in
+  let access_result = repr @@ a_var_l.tv in
+  assert (Var.equal row_tv record_type);
   (* produce constraints: *)
-  (* a.tv = b.tv *) (* nope, already the same *)
-  (* let eq1 = c_equation (wrap (Propagator_break_ctor "a") @@ P_variable a_tv) (wrap (Propagator_break_ctor "b") @@ P_variable b_tv) "propagator: break_ctor" in *)
-  (* let () = if Ast_typed.Debug.debug_new_typer then
-      let p = Ast_typed.PP.c_constructor_simpl in
-      Printf.fprintf stderr "%s" @@ Format.asprintf "\npropagator_break_ctor\na = %a\nb = %a\n%!" p a p b in *)
-  (* a.c_tag = b.c_tag *)
-  ( match a , b with
-    | `Row a , `Row b ->
-      if (Solver_should_be_generated.compare_simple_c_row a.r_tag b.r_tag) <> 0 then
-        (* TODO : use error monad *)
-        failwith (Format.asprintf "type error: incompatible types, not same ctor %a vs. %a (compare returns %d)"
-                    Solver_should_be_generated.debug_pp_c_row_simpl a
-                    Solver_should_be_generated.debug_pp_c_row_simpl b
-                    (Solver_should_be_generated.compare_simple_c_row a.r_tag b.r_tag))
-    | `Constructor a , `Constructor b ->
-      if (Solver_should_be_generated.compare_simple_c_constant a.c_tag b.c_tag) <> 0 then
-        (* TODO : use error monad *)
-        failwith (Format.asprintf "type error: incompatible types, not same ctor %a vs. %a (compare returns %d)"
-                    Solver_should_be_generated.debug_pp_c_constructor_simpl a
-                    Solver_should_be_generated.debug_pp_c_constructor_simpl b
-                    (Solver_should_be_generated.compare_simple_c_constant a.c_tag b.c_tag))
-    | _ -> failwith "type error"
-  );
-  (* Produce constraint a.tv_list = b.tv_list *)
-  let%bind eqs3 =
-    match a , b with
-    | `Row a , `Row b ->
-      let aux = fun ((la,aa),(lb,bb)) ->
-        let%bind () = Trace.Assert.assert_true (corner_case "TODO: different labels la lb") (Ast_typed.Compare.label la lb = 0) in
-        ok @@ c_equation
-          (wrap (Propagator_break_ctor "a") @@ P_variable aa)
-          (wrap (Propagator_break_ctor "b") @@ P_variable bb)
-          "propagator: break_ctor: row"
-      in
-      let%bind bindings =  List.map2 (fun x y -> (x,y)) (LMap.bindings a.tv_map) (LMap.bindings b.tv_map)
-        ~ok ~fail:(fun _ _-> fail @@ (corner_case "TODO: different number of labels (List.length a.tv_map) (List.length b.tv_map)"))
-      in
-      bind_map_list aux bindings
-    | `Constructor a , `Constructor b -> (
-      let aux = fun aa bb -> c_equation (wrap (Propagator_break_ctor "a") @@ P_variable aa) (wrap (Propagator_break_ctor "b") @@ P_variable bb) "propagator: break_ctor: ctor" in
-      List.map2 aux a.tv_list b.tv_list
-        ~ok ~fail:(fun _ _ -> fail @@ different_constant_tag_number_of_arguments __LOC__ a.c_tag b.c_tag (List.length a.tv_list) (List.length b.tv_list))
-    )
-    | _ -> failwith "type error"
+
+  let%bind () = match a_k_var.r_tag with
+    | C_record -> ok ()
+    | C_variant -> fail @@ corner_case "Type error: can't access field on variant"
   in
-  let eqs = eqs3 in
-  Format.printf "Break_ctor : returning with new constraint %a\n%!" (PP_helpers.list_sep_d Ast_typed.PP.type_constraint_short) @@ eqs ;
+
+  let%bind field_type =
+    match LMap.find_opt a_var_l.label a_k_var.tv_map with
+    | None -> fail @@ corner_case "Type error: label {a_var_l.label} does not exist in record {a_k_var.tv_map}"
+    | Some field_type -> ok @@ repr field_type.associated_variable
+      
+  in
+
+  (* Produce constraint a_k_var.tv_map[label] = a_var_l.tv *)
+  let eqs = [
+    c_equation
+      (wrap (Propagator_break_ctor "a") @@ P_variable access_result)
+      (wrap (Propagator_break_ctor "b") @@ P_variable field_type)
+      "propagator: break_ctor: row"
+  ] in
+  
   ok [
     {
       remove_constraints = [];
       add_constraints = eqs;
-      proof_trace = Axiom Axioms.f_equal
+      proof_trace = failwith "TODO: proof trace" (* Axiom Axioms.f_equal *)
     }
   ]
 
-let printer = Ast_typed.PP.output_break_ctor
-let printer_json = Ast_typed.Yojson.output_break_ctor
-let comparator = Solver_should_be_generated.compare_output_break_ctor
+let printer ppf {a_k_var;a_var_l} =
+  Format.fprintf ppf "{@[<hv 2> @ a_k_var : %a;@ a_var_l : %a;@]@ }"
+    Ast_typed.PP.c_row_simpl a_k_var
+    Ast_typed.PP.c_access_label_simpl a_var_l
+let printer_json {a_k_var;a_var_l} =
+  `Assoc [
+    ("a_k_var", Ast_typed.Yojson.c_row_simpl a_k_var);
+    ("a_var_l", Ast_typed.Yojson.c_access_label_simpl a_var_l)]
+let comparator { a_k_var=a1; a_var_l=a2 } { a_k_var=b1; a_var_l=b2 } =
+  let open Solver_should_be_generated in
+  compare_c_row_simpl a1 b1 <? fun () -> compare_c_access_label_simpl a2 b2
 
-let heuristic = Heuristic_plugin { heuristic_name = "break_ctor"; selector; alias_selector; propagator; printer; printer_json; comparator }
+let heuristic = Heuristic_plugin { heuristic_name = "break_ctor"; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }

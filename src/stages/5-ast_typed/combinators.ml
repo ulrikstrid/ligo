@@ -414,3 +414,11 @@ let make_sc_poly ?(reason_poly_simpl="") (tv:type_variable) (forall:p_forall) =
     tv ;
     forall ;
   }
+let make_sc_access_label ?(reason_access_label_simpl="") (tv:type_variable) ~(record_type:type_variable) (label:label) =
+  SC_Access_label {
+    reason_access_label_simpl ;
+    id_access_label_simpl = ConstraintIdentifier 1L ;
+    tv ;
+    record_type ;
+    label ;
+  }
