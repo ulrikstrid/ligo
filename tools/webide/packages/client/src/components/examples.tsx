@@ -49,7 +49,7 @@ const Examples = (props) => {
   const dispatch = useDispatch();
 
   const editorDirty = useSelector<AppState, EditorState['dirty']>(
-    (state: AppState) => state.Editor.dirty
+    (state: AppState) => {console.log('pp', state); return state.Editor.dirty}
   );
 
   useEffect(() => {
