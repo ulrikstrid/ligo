@@ -18,12 +18,12 @@ export interface ExamplesState {
 
 export class SetDefaultList {
   public readonly type = ActionType.SetDefaultList;
-  constructor(public payload: ExamplesState['list']) { }
+  constructor(public payload: ExamplesState['list']) {}
 }
 
 export class ChangeSelectedAction {
   public readonly type = ActionType.ChangeSelected;
-  constructor(public payload: ExamplesState['selected']) { }
+  constructor(public payload: ExamplesState['selected']) {}
 }
 
 export class ClearSelectedAction {
@@ -34,28 +34,28 @@ type Action = ChangeSelectedAction | ClearSelectedAction | SetDefaultList;
 
 const DEFAULT_STATE = {
   selected: null,
-  list: []
-}
+  list: [],
+};
 
-const Examples = (state = DEFAULT_STATE, action: Action): ExamplesState => {
+const examples = (state = DEFAULT_STATE, action: Action): ExamplesState => {
   switch (action.type) {
     case ActionType.ChangeSelected:
       return {
         ...state,
-        selected: action.payload
+        selected: action.payload,
       };
     case ActionType.ClearSelected:
       return {
         ...state,
-        selected: null
+        selected: null,
       };
     case ActionType.SetDefaultList:
-      return { ...state}
+      return { ...state };
     default:
       return {
-        ...state
-      }
+        ...state,
+      };
   }
 };
 
-export default Examples
+export default examples;

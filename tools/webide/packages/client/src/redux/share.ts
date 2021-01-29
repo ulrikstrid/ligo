@@ -69,7 +69,7 @@ const DEFAULT_STATE: ShareState = {
   link: ''
 };
 
-const Share = (state = DEFAULT_STATE, action: Action): ShareState => {
+const share = (state = DEFAULT_STATE, action: Action): ShareState => {
   switch (action.type) {
     case EditorActionType.ChangeTitle:
     case ExamplesActionType.ChangeSelected:
@@ -100,4 +100,4 @@ const Share = (state = DEFAULT_STATE, action: Action): ShareState => {
   }
 };
 
-export default Share
+export default share

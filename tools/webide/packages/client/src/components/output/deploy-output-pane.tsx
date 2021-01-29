@@ -62,10 +62,10 @@ const {contract, output} = props
 };
 
 function mapStateToProps(state) {
-  const { Result } = state
+  const { result } = state
   return { 
-    output: Result.output,
-    contract: Result.contract
+    output: result.output,
+    contract: result.contract
    }
 }
 
