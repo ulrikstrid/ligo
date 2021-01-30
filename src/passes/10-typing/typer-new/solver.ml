@@ -105,7 +105,7 @@ end = struct
 
   let add_alias : (typer_state * c_alias) -> (typer_state * Worklist.t) result =
     fun (state , ({ reason_alias_simpl=_; a; b } as new_constraint)) ->
-      let () = Format.printf "Add_alias %a=%a\n%!" Ast_typed.PP.type_variable a Ast_typed.PP.type_variable b in
+      (* let () = Format.printf "Add_alias %a=%a\n%!" Ast_typed.PP.type_variable a Ast_typed.PP.type_variable b in *)
 
 
       let { all_constraints ; added_constraints ; deleted_constraints; plugin_states ; aliases ; already_selected_and_propagators } = state in
@@ -145,7 +145,7 @@ end = struct
         else
           ok (state, [])
       ) in
-      let () = Format.printf "End of add alias\n" in
+      (* let () = Format.printf "End of add alias\n" in *)
       ok (state,{ Worklist.empty with pending_type_constraint = Pending.of_list new_constraints})
     
 
@@ -206,7 +206,7 @@ end = struct
       (* repeat until the worklist is empty *)
       (Worklist.is_empty ~time_to_live)
       (fun (state, worklist) ->
-         let () = Formatt.printf "\nStart iteration with new constraints :\n  %a\n and state : %a\n" pp_indented_constraint_list (Pending.to_list worklist.pending_type_constraint) pp_typer_state state in
+         let () = Formatt.printf "\nStart iteration with new constraints :\n  %a\n" pp_indented_constraint_list (Pending.to_list worklist.pending_type_constraint) in
 
          (* let () = queue_print (fun () -> Formatt.printf "Start iteration with constraints :\n  %a\n\n" pp_indented_constraint_list (Pending.to_list worklist.pending_type_constraint)) in *)
 
@@ -263,8 +263,8 @@ end = struct
     fun state initial_constraints ->
     let () = Formatt.printf "In solver main\n%!" in
     let%bind (state : typer_state) = select_and_propagate_all state {Worklist.empty with pending_type_constraint = Pending.of_list initial_constraints} in
-    let () = Formatt.printf "With assignments :\n  %a\n%!"
-      (Plugin_states.Assignments.pp Ast_typed.PP.type_variable) (Plugin_states.assignments state.plugin_states)#assignments in
+    let () = Formatt.printf "Starting typechecking with assignment :\n  %a\n%!"
+      pp_typer_state state in
     let failure = Typecheck.check (PolySet.elements state.all_constraints)
       (All_vars.all_vars state)
       (fun v -> UnionFind.Poly2.repr v state.aliases)

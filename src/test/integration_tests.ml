@@ -2478,9 +2478,9 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02021-01-28 15478d068 *) "bytes unpack" bytes_unpack ;
     test y (* enabled AND PASSES as of 02021-01-28 15478d068 *) "bytes unpack (mligo)" bytes_unpack_mligo ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes unpack (religo)" bytes_unpack_religo ; 
-    test no "key hash" key_hash ;                         (* C_access_label *)
-    test no "key hash (mligo)" key_hash_mligo ;           (* C_access_label *)
-    test no "key hash (religo)" key_hash_religo ;         (* C_access_label *)
+    test y (* enabled AND PASSES as of 02021-01-30 3aaa688f1 *) "key hash" key_hash ;                         (* C_access_label *)
+    test y (* enabled AND PASSES as of 02021-01-30 3aaa688f1 *) "key hash (mligo)" key_hash_mligo ;           (* C_access_label *)
+    test y (* enabled AND PASSES as of 02021-01-30 3aaa688f1 *) "key hash (religo)" key_hash_religo ;         (* C_access_label *)
     test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "check signature" check_signature ;                 (* C_access_label *)
     test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "check signature (mligo)" check_signature_mligo ;   (* C_access_label *)
     test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "check signature (religo)" check_signature_religo ; (* C_access_label *)
@@ -2504,9 +2504,9 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function" shared_function ;
     test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function (mligo)" shared_function_mligo ;
     test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function (religo)" shared_function_religo ;
-    test no "higher order" higher_order ;
-    test no "higher order (mligo)" higher_order_mligo ;
-    test no "higher order (religo)" higher_order_religo ;
+    test no (* infinite loop *) "higher order" higher_order ;
+    test no (* infinite loop *) "higher order (mligo)" higher_order_mligo ;
+    test no (* infinite loop *) "higher order (religo)" higher_order_religo ;
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant" variant ;
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant (mligo)" variant_mligo ;
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant (religo)" variant_religo ;
@@ -2518,7 +2518,7 @@ let main = test_suite "Integration (End to End)"
     test no "record" record ;
     test no "record (mligo)" record_mligo ;
     test no "record (religo)" record_religo ;
-    test no "condition simple" condition_simple ;
+    test no (*unasigned variable *) "condition simple" condition_simple ;
     test no "condition (ligo)" condition ;
     test no "condition (mligo)" condition_mligo ;
     test no "condition (religo)" condition_religo ;
@@ -2611,8 +2611,8 @@ let main = test_suite "Integration (End to End)"
     test no "lambda mligo" lambda_mligo ;
     test no "lambda religo" lambda_religo ;
     test no "lambda ligo" lambda_ligo ;
-    test no(*y*) "tez (ligo)" tez_ligo ;
-    test no(*y*) "tez (mligo)" tez_mligo ;
+    test y(*y*) "tez (ligo)" tez_ligo ;
+    test y(*y*) "tez (mligo)" tez_mligo ;
 
     test no "lambda2 mligo" lambda2_mligo ;
     test no "lambda2 religo" lambda2_religo ;

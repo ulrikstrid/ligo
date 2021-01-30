@@ -142,7 +142,7 @@ let main = test_suite "Typer (from core AST)"
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes_pack"      TestExpressions.bytes_pack ;    
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes_unpack"    TestExpressions.bytes_unpack ;    
     test y (* enabled AND PASSES as of 02021-01-29 5dc448c7f *) "add"             TestExpressions.add;
-    test y "keyhash"         TestExpressions.key_hash;
+    test y (* enabled AND PASSES as of 02021-01-30 3aaa688f1 *) "keyhash"         TestExpressions.key_hash;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "application"     TestExpressions.application ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "lambda"          TestExpressions.lambda ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "let_in"          TestExpressions.let_in ;

@@ -31,7 +31,7 @@ let add_constraint ?debug repr state new_constraint =
   | SC_Typeclass c -> register_typeclasses_constraining repr c state
   | _ -> state
 
-let remove_constraint printer repr state constraint_to_remove =
+let remove_constraint _printer repr state constraint_to_remove =
   Format.printf "remove_constraint for typeclassesConstraining.... \n%!";
     match constraint_to_remove with
   | Ast_typed.Types.SC_Typeclass constraint_to_remove ->
@@ -41,7 +41,7 @@ let remove_constraint printer repr state constraint_to_remove =
         Format.printf "No set linked to tv";
         PolySet.remove constraint_to_remove @@ PolySet.create ~cmp:Ast_typed.Compare.c_typeclass_simpl in
     let aux typeclasses_constrained_by tv =
-      Format.printf "In aux with tv : %a and repr tv : %a\n%!" Ast_typed.PP.type_variable tv printer @@ repr tv;
+      (* Format.printf "In aux with tv : %a and repr tv : %a\n%!" Ast_typed.PP.type_variable tv printer @@ repr tv; *)
       ReprMap.monotonic_update (repr tv) aux' typeclasses_constrained_by in
     let state =
       List.fold_left
@@ -55,10 +55,10 @@ let remove_constraint printer repr state constraint_to_remove =
     ok state
 
 let merge_aliases : 'old 'new_ . ?debug:(Format.formatter -> 'new_ t -> unit) -> ('old, 'new_) merge_keys -> 'old t -> 'new_ t =
-  fun ?debug merge_keys state -> 
-    Format.printf "In merge alias for typeclassesConstraining\n%!";
+  fun ?debug:_ merge_keys state -> 
+    (* Format.printf "In merge alias for typeclassesConstraining\n%!"; *)
     let state = merge_keys.map state in
-    (match debug with Some (debug) -> Format.printf "Return from typeclassesConnstraining with new state %a\n" debug state | _ -> ());
+    (* (match debug with Some (debug) -> Format.printf "Return from typeclassesConnstraining with new state %a\n" debug state | _ -> ()); *)
     state
 
 let pp type_variable ppf state =
