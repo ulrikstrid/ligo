@@ -148,8 +148,8 @@ let main = test_suite "Typer (from core AST)"
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "constructor"     TestExpressions.constructor ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "matching"        TestExpressions.matching ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "record"          TestExpressions.record ;
-    test no "record_accessor" TestExpressions.record_accessor ;
-    test no "record_update"   TestExpressions.record_update ;
+    test y "record_accessor" TestExpressions.record_accessor ;
+    test y "record_update"   TestExpressions.record_update ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "tuple"           TestExpressions.tuple ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "ascription"      TestExpressions.ascription ;
   ]

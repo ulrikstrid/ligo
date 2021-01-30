@@ -89,6 +89,7 @@ let get_referenced_constraints ({ a_k_var; a_k'_var' } : selector_output) : type
 
 let propagator : (output_break_ctor, typer_error) propagator =
   fun selected repr ->
+  Format.printf "In break_ctor.propagator for \n%!";
   let a = selected.a_k_var in
   let b = selected.a_k'_var' in
   let get_tv : constructor_or_row -> type_variable = fun cr ->

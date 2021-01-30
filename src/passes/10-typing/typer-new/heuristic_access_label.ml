@@ -19,9 +19,15 @@ type selector_output = {
   a_var_l : c_access_label_simpl ;
 }
 
+let printer ppf {a_k_var;a_var_l} =
+  Format.fprintf ppf "{@[<hv 2> @ a_k_var : %a;@ a_var_l : %a;@]@ }"
+    Ast_typed.PP.c_row_simpl a_k_var
+    Ast_typed.PP.c_access_label_simpl a_var_l
+
 let selector : type_constraint_simpl -> _ flds -> selector_output list =
   (* find two rules with the shape x = k(var …) and x = k'(var' …) *)
   fun type_constraint_simpl indexes ->
+  Format.printf "In access_label.selector for %a and indeces %a\n%!" Ast_typed.PP.type_constraint_simpl_short type_constraint_simpl (GroupedByVariable.pp Ast_typed.PP.type_variable) indexes#grouped_by_variable;
   match type_constraint_simpl with
   | SC_Constructor c -> (
       let other_access_labels_record_types = GroupedByVariable.get_access_labels_by_record_type c.tv indexes#grouped_by_variable in
@@ -42,18 +48,20 @@ let selector : type_constraint_simpl -> _ flds -> selector_output list =
         failwith (Format.asprintf "TODO: type error with %a (needs a record, but) %a (are constructors)" Ast_typed.PP.c_access_label_simpl l (MultiSet.pp Ast_typed.PP.c_constructor_simpl) other_constructors_lhs)
       else
       let cs_pairs = List.map (fun x -> { a_k_var = x ; a_var_l = l }) other_records_lhs in
+      Format.printf "cs_pairs (%a)\n%!" (PP_helpers.list_sep_d printer) cs_pairs;
       cs_pairs
     )
   | SC_Poly        _                -> []
   | SC_Row         r                -> (
       let other_access_labels_lhs = GroupedByVariable.get_access_labels_by_record_type r.tv indexes#grouped_by_variable in
       let cs_pairs = MultiSet.map_elements (fun x -> { a_k_var = r ; a_var_l = x }) other_access_labels_lhs in
+      Format.printf "cs_pairs (%a)\n%!" (PP_helpers.list_sep_d printer) cs_pairs;
       cs_pairs
     )
 
 let alias_selector : type_variable -> type_variable -> _ flds -> selector_output list =
   fun a b indexes ->
-  Format.printf "Break_ctor.alias_selector %a %a\n%!" Ast_typed.PP.type_variable a Ast_typed.PP.type_variable b ;
+  Format.printf "In access_label.alias_selector %a %a\n%!" Ast_typed.PP.type_variable a Ast_typed.PP.type_variable b ;
   let a_access_labels = GroupedByVariable.get_access_labels_by_record_type a indexes#grouped_by_variable in
   let b_access_labels = GroupedByVariable.get_access_labels_by_record_type b indexes#grouped_by_variable in
   let a_rows = GroupedByVariable.get_rows_by_lhs a indexes#grouped_by_variable in
@@ -76,8 +84,9 @@ let get_referenced_constraints ({ a_k_var; a_var_l } : selector_output) : type_c
 
 let propagator : (selector_output, typer_error) propagator =
   fun selected repr ->
-  let a_k_var = selected.a_k_var in
+  Format.printf "In access_label.propagator for \n%!";
   let a_var_l = selected.a_var_l in
+  let a_k_var = selected.a_k_var in
   (* The selector is expected to provice two constraints with the shape x = k(var …) and x = k'(var' …) *)
   let row_tv = repr @@ a_k_var.tv in
   let record_type = repr @@ a_var_l.record_type in
@@ -113,10 +122,6 @@ let propagator : (selector_output, typer_error) propagator =
     }
   ]
 
-let printer ppf {a_k_var;a_var_l} =
-  Format.fprintf ppf "{@[<hv 2> @ a_k_var : %a;@ a_var_l : %a;@]@ }"
-    Ast_typed.PP.c_row_simpl a_k_var
-    Ast_typed.PP.c_access_label_simpl a_var_l
 let printer_json {a_k_var;a_var_l} =
   `Assoc [
     ("a_k_var", Ast_typed.Yojson.c_row_simpl a_k_var);

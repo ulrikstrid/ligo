@@ -330,7 +330,7 @@ and c_access_label ppf {c_access_label_tval; accessor; c_access_label_tvar} =
 
 and c_access_label_short ppf {c_access_label_tval; accessor; c_access_label_tvar} =
   fprintf ppf "%a.%a = %a"
-    type_value c_access_label_tval
+    type_value_short_ c_access_label_tval.wrap_content
     label accessor
     type_variable c_access_label_tvar
 
@@ -393,18 +393,23 @@ and p_row_short ppf {p_row_tag; p_row_args} =
     fprintf ppf "{ }"
   | C_record, _ ->
     fprintf ppf "{ %a }"
-      (lmap_sep_short row_value ~sep:" ; " ~assoc:" : ") @@ LMap.to_kv_list p_row_args
+      (lmap_sep_short row_value_short ~sep:" ; " ~assoc:" : ") @@ LMap.to_kv_list p_row_args
   | C_variant, 0 ->
     fprintf ppf "(empty variant)"
   | C_variant, _ ->
     fprintf ppf "%a"
-      (lmap_sep_short row_value ~sep:" | " ~assoc:" of ") @@ LMap.to_kv_list p_row_args
+      (lmap_sep_short row_value_short ~sep:" | " ~assoc:" of ") @@ LMap.to_kv_list p_row_args
 
 and row_value : formatter -> row_value -> unit =
   fun ppf { associated_value ; michelson_annotation=_ ; decl_pos } ->
     fprintf ppf "{associated_value %a ; pos %i}"
       type_value associated_value
       decl_pos
+
+and row_value_short : formatter -> row_value -> unit =
+  fun ppf { associated_value ; michelson_annotation=_ ; decl_pos=_ } ->
+    fprintf ppf "%a"
+      type_value_short associated_value
 
 
 and type_value_ ppf = function
