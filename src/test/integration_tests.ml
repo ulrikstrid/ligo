@@ -2481,9 +2481,9 @@ let main = test_suite "Integration (End to End)"
     test no "key hash" key_hash ;                         (* C_access_label *)
     test no "key hash (mligo)" key_hash_mligo ;           (* C_access_label *)
     test no "key hash (religo)" key_hash_religo ;         (* C_access_label *)
-    test y "check signature" check_signature ;                 (* C_access_label *)
-    test y "check signature (mligo)" check_signature_mligo ;   (* C_access_label *)
-    test y "check signature (religo)" check_signature_religo ; (* C_access_label *)
+    test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "check signature" check_signature ;                 (* C_access_label *)
+    test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "check signature (mligo)" check_signature_mligo ;   (* C_access_label *)
+    test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "check signature (religo)" check_signature_religo ; (* C_access_label *)
 
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "type alias" type_alias ;
 
@@ -2501,9 +2501,9 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure" closure ;
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure (mligo)" closure_mligo ;
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure (religo)" closure_religo ;
-    test y "shared function" shared_function ;
-    test y "shared function (mligo)" shared_function_mligo ;
-    test y "shared function (religo)" shared_function_religo ;
+    test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function" shared_function ;
+    test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function (mligo)" shared_function_mligo ;
+    test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function (religo)" shared_function_religo ;
     test no "higher order" higher_order ;
     test no "higher order (mligo)" higher_order_mligo ;
     test no "higher order (religo)" higher_order_religo ;
