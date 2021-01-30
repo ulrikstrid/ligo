@@ -216,11 +216,11 @@ and matching_content_case {constructor; pattern; body} =
     ("body", expression body);
   ]
 
-and matching_content_record {fields; body; record_type} =
+and matching_content_record {fields; body; tv} =
   `Assoc [
     ("fields", label_map (pair expression_variable_to_yojson type_expression) fields);
     ("body", expression body);
-    ("record_type", rows record_type);
+    ("record_type", type_expression tv);
   ]
 
 and declaration_type {type_binder;type_expr} =

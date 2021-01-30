@@ -132,11 +132,11 @@ module Substitution = struct
         ) cases in
         let%bind tv = s_type_expression ~substs tv in
         ok @@ T.Match_variant {cases;tv}
-      | Match_record {fields; body; record_type}  ->
+      | Match_record {fields; body; tv}  ->
         let%bind fields = T.Helpers.bind_map_lmap (fun (a,b) -> let%bind b = s_type_expression ~substs b in ok (a,b)) fields in
         let%bind body   = s_expression ~substs body in
-        let%bind record_type = s_rows ~substs record_type in
-        ok @@ T.Match_record {fields; body; record_type}
+        let%bind tv     = s_type_expression ~substs tv in
+        ok @@ T.Match_record {fields; body; tv}
 
     and s_accessor  : (T.record_accessor,_) w = fun ~substs {record;path} ->
       let%bind record = s_expression ~substs record in

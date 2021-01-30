@@ -31,6 +31,11 @@ let fresh_type_variable : ?name:string -> unit -> type_variable = fun ?name () -
   let () = (if Ast_typed.Debug.debug_new_typer && false then Printf.fprintf stderr "Generated variable %s\n%!%s\n%!" (Var.debug fresh_name) (Printexc.get_backtrace ())) in
   fresh_name
 
+let fresh_for_expr_var: Ast_typed.expression_variable -> type_variable = fun v ->
+  let fresh_name = Var.fresh_like v.wrap_content in
+  let () = (if Ast_typed.Debug.debug_new_typer && false then Printf.fprintf stderr "Generated variable %s\n%!%s\n%!" (Var.debug fresh_name) (Printexc.get_backtrace ())) in
+  fresh_name
+
 let type_expression'_of_simple_c_constant : constant_tag * type_expression list -> Ast_typed.type_content option = fun (c, l) ->
   let return (x:type_expression) = Some x.type_content in
   match c, l with

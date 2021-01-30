@@ -294,12 +294,12 @@ and matching_content_variant {cases=ca;tv=ta} {cases=cb;tv=tb} =
     type_expression ta tb
 
 and matching_content_record
-    {fields = fields1; body = body1; record_type = t1}
-    {fields = fields2; body = body2; record_type = t2} =
+    {fields = fields1; body = body1; tv = t1}
+    {fields = fields2; body = body2; tv = t2} =
   cmp3
     (label_map ~compare:(cmp_pair expression_variable type_expression)) fields1 fields2
     expression body1 body2
-    rows t1 t2
+    type_expression t1 t2
 
 and declaration_constant {name=na;binder=ba;expr=ea;inline=ia} {name=nb;binder=bb;expr=eb;inline=ib} =
   cmp4

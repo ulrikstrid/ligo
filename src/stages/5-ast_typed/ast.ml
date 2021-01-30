@@ -101,7 +101,7 @@ and matching_content_variant = {
 and matching_content_record = {
   fields : (expression_variable * type_expression) label_map;
   body : expression;
-  record_type : rows;
+  tv : type_expression;
 }
 
 and matching_expr =

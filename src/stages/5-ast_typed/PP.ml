@@ -184,7 +184,7 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
       fprintf ppf "| Nil -> %a @.| %a :: %a -> %a" f match_nil expression_variable hd expression_variable tl f body
   | Match_option {match_none ; match_some = {opt; body; tv=_}} ->
       fprintf ppf "| None -> %a @.| Some %a -> %a" f match_none expression_variable opt f body
-  | Match_record {fields ; body ; record_type = _} ->
+  | Match_record {fields ; body ; tv = _} ->
       let with_annots f g ppf (a , b) = fprintf ppf "%a:%a" f a g b in
       (* let fields = LMap.map (fun (v,_) -> v) fields in *)
       fprintf ppf "| %a -> %a"

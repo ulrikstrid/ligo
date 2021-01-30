@@ -63,8 +63,9 @@ end = struct
        | O.Match_variant { cases; tv } ->
          let%bind () = bind_fold_list (fun () ({ constructor = _ ; pattern = _ ; body } : Ast_typed.matching_content_case) -> expression body) () cases in
          te where tv
-       | O.Match_record _ ->
-         failwith "TODO"
+       | O.Match_record { fields=_; body; tv } ->
+         let%bind () = expression body in
+         te where tv
       )
     | O.E_record          m -> bind_fold_list (fun () (_key, e) -> expression e) () @@ Ast_typed.LMap.bindings m
     | O.E_record_accessor { record; path=_ } -> expression record
@@ -142,6 +143,7 @@ let rec type_declaration env state : I.declaration Location.wrap -> (environment
       trace (constant_declaration_tracer binder.var expr tv_opt) @@
       type_expression' env state expr in
     let binder = Location.map Var.todo_cast binder.var in
+    Format.printf "Binder is %a\n%!" Ast_typed.PP.expression_variable binder ;
     let post_env = Environment.add_ez_declaration binder expr e in
     let c = Wrap.const_decl expr.type_expression tv_opt in
     return (Declaration_constant { name; binder ; expr ; inline=attr.inline}) post_env state' (constraints@c)
@@ -272,6 +274,7 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
     let expr' = make_e ~location expr tv in
     ok @@ ((e,state, expr'),constraints) in
   let return_wrapped expr e state constraints (c , expr_type) = return expr e state (c@constraints) expr_type in
+  Format.printf "Type_expression : %a\n%!" Ast_core.PP.expression ae ;
   trace (expression_tracer ae) @@
   match ae.content with
 
@@ -374,7 +377,7 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
           | Match_list { match_nil ; match_cons = { hd=_ ; tl=_ ; body ; tv=_} } -> [ match_nil ; body ]
           | Match_option { match_none ; match_some = {opt=_; body; tv=_} } -> [ match_none ; body ]
           | Match_variant { cases ; tv=_ } -> List.map (fun ({constructor=_; pattern=_; body} : O.matching_content_case) -> body) cases
-          | Match_record _ -> failwith "TODO" in
+          | Match_record { fields=_; body; tv=_ } -> [ body ] in
         List.map get_type_expression @@ aux m' in
       (* constraints:
          all the items of tvs should be equal to the first one
@@ -584,8 +587,17 @@ and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.match
         in
         bind_fold_map_list aux (e,state,[]) lst in
       return e state c @@ O.Match_variant {cases ; tv=variant }
-    | Match_record _ ->
-      failwith "TODO"
+  (* This one seems to be working *)
+  | Match_record {fields ; body } ->
+    let aux e _ ({var;ascr} : I.type_expression I.binder) =
+      let%bind ty_opt = bind_map_option (evaluate_type e)  ascr in
+      let ty = Option.unopt ~default:(O.t_variable @@ Var.fresh ()) ty_opt in
+      let e  = Environment.add_ez_binder var ty e in
+      ok @@ (e,(var,ty)) 
+    in
+    let%bind (e', fields) = Stage_common.Helpers.bind_fold_map_lmap aux e fields in
+    let%bind (e,state,body),c = self e' state body in
+    return e state c @@ O.Match_record {fields ; body ; tv = t}
 
 (* Apply type_declaration on every node of the AST_core from the root p *)
 and type_module_returns_env ((env, state, p) : environment * _ O'.typer_state * I.module_) : (environment * _ O'.typer_state * O.module_with_unification_vars, Typer_common.Errors.typer_error) result =
