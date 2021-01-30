@@ -15,7 +15,7 @@ let map (k,v) = mk C_map [k; v]
 let (m,n,o,p,x,y,z) = let v name : type_variable = Var.fresh ~name () in v "m", v "n", v "o", v "p", v "x", v "y", v "z"
 
 module Map = Database_plugins.All_plugins.GroupedByVariable
-let selector_test : (type_constraint_simpl -> type_variable Map.t -> output_break_ctor list) -> unit -> (unit,Main_errors.all) result =
+let selector_test : (_ -> type_constraint_simpl -> type_variable Map.t -> output_break_ctor list) -> unit -> (unit,Main_errors.all) result =
   fun _selector () ->
     (*create a state :) *)
   ok ()

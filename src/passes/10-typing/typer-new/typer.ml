@@ -411,20 +411,9 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
     let%bind (e,state,record),c1 = self e state record in
     let%bind (e,state,update),c2 = self e state update in
     let t_record = get_type_expression record in
-    let%bind (wrapped,tv) =
-      match t_record.type_content with
-      | T_record ({content;_} as record) -> (
-          let%bind {associated_type;_} = trace_option (bad_record_access path ae t_record update.location) @@
-            O.LMap.find_opt path content in
-          ok (record, associated_type)
-      )
-      (* TODO: write a real error *)
-      | _ -> failwith "Update an expression which is not a record"
-    in
-    (* Check that the expression type is compatible with the field type *)
-    let%bind () = assert_type_expression_eq (tv, get_type_expression update) in
     (* TODO: wrap.record_update *)
-    return_wrapped (E_record_update {record; path; update}) e state (c1@c2) (Wrap.record wrapped)
+    let wrapped = Wrap.record_update  ~base:t_record ~label:path @@ get_type_expression update in
+    return_wrapped (E_record_update {record; path; update}) e state (c1@c2) wrapped
 
   (* Advanced *)
   | E_let_in {let_binder ; rhs ; let_result; inline} ->

@@ -159,6 +159,17 @@ let access_label ~(base : T.type_expression) ~(label : O.accessor) : (constraint
   let expr_type = Core.fresh_type_variable () in
   [{ c = C_access_label { c_access_label_tval = base' ; accessor = label ; c_access_label_tvar = expr_type } ; reason = "wrap: access_label" }] , expr_type
 
+let record_update ~(base : T.type_expression) ~(label : O.accessor) (update : T.type_expression) : (constraints * T.type_variable) =
+  let base' = type_expression_to_type_value base in
+  let update = type_expression_to_type_value update in
+  let update_var = Core.fresh_type_variable () in
+  let whole_expr = Core.fresh_type_variable () in
+  [
+    { c = C_access_label { c_access_label_tval = base' ; accessor = label ; c_access_label_tvar = update_var } ; reason = "wrap: access_label" };
+    c_equation update (T.Reasons.wrap (Todo "wrap: record_update: update") @@ T.P_variable update_var) "wrap: record_update: update";
+    c_equation base' (T.Reasons.wrap (Todo "wrap: record_update: whole") @@ T.P_variable whole_expr) "wrap: record_update: record (whole)"
+  ] , whole_expr
+
 let module_access (expr : T.type_expression) : (constraints * T.type_variable) =
   let expr' = type_expression_to_type_value expr in
   let whole_expr = Core.fresh_type_variable () in

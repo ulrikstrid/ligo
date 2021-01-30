@@ -119,7 +119,7 @@ let propagator : (selector_output, typer_error) propagator =
     {
       remove_constraints = [];
       add_constraints = eqs;
-      proof_trace = failwith "TODO: proof trace" (* Axiom Axioms.f_equal *)
+      proof_trace = Axiom (HandWaved "TODO: proof trace") (* Axiom Axioms.f_equal *)
     }
   ]
 

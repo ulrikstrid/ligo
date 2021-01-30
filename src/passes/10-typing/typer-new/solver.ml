@@ -154,11 +154,11 @@ end = struct
     (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
     try Some (UF.repr variable aliases) with Not_found -> None
 
-  let aux_heuristic constraint_ state (Heuristic_state heuristic) =
+  let aux_heuristic repr constraint_ state (Heuristic_state heuristic) =
     (* let () = queue_print (fun () -> Formatt.printf "Apply heuristic %s for constraint : %a\n%!" 
       heuristic.plugin.heuristic_name
       PP.type_constraint_ constraint_ in *)
-    let selector_outputs = heuristic.plugin.selector constraint_ state.plugin_states in
+    let selector_outputs = heuristic.plugin.selector repr constraint_ state.plugin_states in
     let aux = fun (l,already_selected) el ->
       if PolySet.mem el already_selected then (l,already_selected)
       else (el::l, PolySet.add el already_selected)
@@ -174,11 +174,12 @@ end = struct
     (* let () = queue_print (fun () -> Format.printf "Add constraint and apply heuristics for constraint: %a\n%!" Ast_typed.PP.type_constraint_simpl constraint_) in *)
     if PolySet.mem constraint_ state.all_constraints then ok (state, Worklist.empty)
     else
+      let repr = mk_repr state in
       let state =
         let module MapAddConstraint = Plugins.Indexers.MapPlugins(AddConstraint) in
-        { state with plugin_states = MapAddConstraint.f (mk_repr state, constraint_) state.plugin_states }
+        { state with plugin_states = MapAddConstraint.f (repr, constraint_) state.plugin_states }
       in
-      let%bind (state, hc) = bind_fold_map_list (aux_heuristic constraint_) state state.already_selected_and_propagators in
+      let%bind (state, hc) = bind_fold_map_list (aux_heuristic repr constraint_) state state.already_selected_and_propagators in
       let (already_selected_and_propagators, new_constraints) = List.split hc in
       let state = { state with already_selected_and_propagators } in
       ok (state, { Worklist.empty with pending_type_constraint = Pending.of_list @@ List.flatten new_constraints })

@@ -60,8 +60,8 @@ let selector_by_tc : _ indexes -> c_typeclass_simpl -> (output_tc_fundep selecto
     | None   -> [] in
   List.flatten @@ List.map aux tc.args
 
-let selector : type_constraint_simpl -> _ indexes -> selector_output list =
-  fun type_constraint_simpl indexes ->
+let selector : (_ -> _) -> type_constraint_simpl -> _ indexes -> selector_output list =
+  fun _repr type_constraint_simpl indexes ->
   match type_constraint_simpl with
     SC_Constructor c  -> selector_by_ctor indexes c
   | SC_Row r          -> selector_by_row indexes r
