@@ -24,13 +24,13 @@ let printer ppf {a_k_var;a_var_l} =
     Ast_typed.PP.c_row_simpl a_k_var
     Ast_typed.PP.c_access_label_simpl a_var_l
 
-let selector : type_constraint_simpl -> _ flds -> selector_output list =
+let selector : (type_variable -> type_variable) -> type_constraint_simpl -> _ flds -> selector_output list =
   (* find two rules with the shape x = k(var …) and x = k'(var' …) *)
-  fun type_constraint_simpl indexes ->
+  fun repr type_constraint_simpl indexes ->
   Format.printf "In access_label.selector for %a and indeces %a\n%!" Ast_typed.PP.type_constraint_simpl_short type_constraint_simpl (GroupedByVariable.pp Ast_typed.PP.type_variable) indexes#grouped_by_variable;
   match type_constraint_simpl with
   | SC_Constructor c -> (
-      let other_access_labels_record_types = GroupedByVariable.get_access_labels_by_record_type c.tv indexes#grouped_by_variable in
+      let other_access_labels_record_types = GroupedByVariable.get_access_labels_by_record_type (repr c.tv) indexes#grouped_by_variable in
       if MultiSet.is_empty other_access_labels_record_types then
         []
       else
@@ -39,8 +39,8 @@ let selector : type_constraint_simpl -> _ flds -> selector_output list =
   | SC_Alias       _                -> []
   | SC_Typeclass   _                -> []
   | SC_Access_label l               -> (
-      let other_rows_lhs = GroupedByVariable.get_rows_by_lhs l.record_type indexes#grouped_by_variable in
-      let other_constructors_lhs = GroupedByVariable.get_constructors_by_lhs l.record_type indexes#grouped_by_variable in
+      let other_rows_lhs = GroupedByVariable.get_rows_by_lhs (repr l.record_type) indexes#grouped_by_variable in
+      let other_constructors_lhs = GroupedByVariable.get_constructors_by_lhs (repr l.record_type) indexes#grouped_by_variable in
       let other_records_lhs, other_variants_lhs = List.partition (function { r_tag = C_record; _ } -> true | { r_tag = C_variant; _ } -> false) (MultiSet.elements other_rows_lhs) in
       if List.length other_variants_lhs != 0 then
         failwith (Format.asprintf "TODO: type error with %a (needs a record, but) %a (are variants)" Ast_typed.PP.c_access_label_simpl l (Ast_typed.PP.list_sep_d Ast_typed.PP.c_row_simpl) other_variants_lhs)
@@ -52,12 +52,13 @@ let selector : type_constraint_simpl -> _ flds -> selector_output list =
       cs_pairs
     )
   | SC_Poly        _                -> []
-  | SC_Row         r                -> (
-      let other_access_labels_lhs = GroupedByVariable.get_access_labels_by_record_type r.tv indexes#grouped_by_variable in
+  | SC_Row         ({ r_tag = C_record ; _ } as r) -> (
+      let other_access_labels_lhs = GroupedByVariable.get_access_labels_by_record_type (repr r.tv) indexes#grouped_by_variable in
       let cs_pairs = MultiSet.map_elements (fun x -> { a_k_var = r ; a_var_l = x }) other_access_labels_lhs in
       Format.printf "cs_pairs (%a)\n%!" (PP_helpers.list_sep_d printer) cs_pairs;
       cs_pairs
     )
+  | SC_Row         _ -> []
 
 let alias_selector : type_variable -> type_variable -> _ flds -> selector_output list =
   fun a b indexes ->
@@ -88,9 +89,9 @@ let propagator : (selector_output, typer_error) propagator =
   let a_var_l = selected.a_var_l in
   let a_k_var = selected.a_k_var in
   (* The selector is expected to provice two constraints with the shape x = k(var …) and x = k'(var' …) *)
-  let row_tv = repr @@ a_k_var.tv in
-  let record_type = repr @@ a_var_l.record_type in
-  let access_result = repr @@ a_var_l.tv in
+  let row_tv = repr a_k_var.tv in
+  let record_type = repr a_var_l.record_type in
+  let access_result = repr a_var_l.tv in
   assert (Var.equal row_tv record_type);
   (* produce constraints: *)
 

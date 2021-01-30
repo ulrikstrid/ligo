@@ -7,7 +7,7 @@ type 'selector_output selector_outputs = 'selector_output list
 (* type ('old_contraint_type, 'selector_output) selector = 'old_constraint_type selector_input -> structured_dbs -> 'selector_output selector_outputs *)
 type ('selector_output , 'errors) propagator = 'selector_output -> (type_variable -> type_variable) -> (updates, 'errors) result
 
-type ('selector_output, -'flds) selector = type_constraint_simpl -> 'flds -> 'selector_output list
+type ('selector_output, -'flds) selector = (type_variable -> type_variable) -> type_constraint_simpl -> 'flds -> 'selector_output list
 
 type ('selector_output, -'flds) heuristic_plugin = {
   (* Finds in the databases tuples of constraints which are
