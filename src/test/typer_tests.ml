@@ -32,7 +32,6 @@ module TestExpressions = struct
     let open! Typed in
     let%bind (_ , post , new_state) = trace typer_tracer @@ type_expression_subst (typer_switch ()) env state pre in
     let () = Typer.Solver.discard_state new_state in
-    let () = Format.printf "RE.MILALA\n%a\n - \n%a\n" PP.type_expression post.type_expression PP.type_expression test_expected_ty in
     let%bind () = trace_option (test_internal __LOC__) @@ assert_type_expression_eq (post.type_expression, test_expected_ty) in
     ok ()
 
@@ -150,8 +149,8 @@ let main = test_suite "Typer (from core AST)"
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "constructor"     TestExpressions.constructor ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "matching"        TestExpressions.matching ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "record"          TestExpressions.record ;
-    test y "record_accessor" TestExpressions.record_accessor ;
-    test y "record_update"   TestExpressions.record_update ;
+    test y (* enabled AND PASSES as of 02021-01-30 c2e450161 *) "record_accessor" TestExpressions.record_accessor ;
+    test y (* enabled AND PASSES as of 02021-01-30 c2e450161 *) "record_update"   TestExpressions.record_update ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "tuple"           TestExpressions.tuple ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "ascription"      TestExpressions.ascription ;
   ]
