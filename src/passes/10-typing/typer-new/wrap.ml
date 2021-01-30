@@ -78,15 +78,10 @@ let lmap_of_tuple lst =
 let constant : I.constant' -> O.type_value -> T.type_expression list -> (constraints * T.type_variable) =
   fun name f args ->
   let whole_expr = Core.fresh_type_variable ~name:(Format.asprintf "capp_%a" I.PP.constant' name) () in
-  let args = match args with 
-    [] -> Location.wrap @@ T.P_variable (Var.fresh ~name:"unit" ())
-  | arg::[] -> type_expression_to_type_value arg
-  | args ->
     let args'      = lmap_of_tuple @@ List.mapi (fun i arg -> ({associated_value = type_expression_to_type_value arg ; michelson_annotation = None; decl_pos = i}: T.row_value)) args in
-    p_row C_record args' 
-  in
+  let args_tuple = p_row C_record args' in
   [
-      c_equation f (p_constant C_arrow ([args ; (T.Reasons.wrap (Todo "wrap: constant: whole") (T.P_variable whole_expr))])) "wrap: constant: as declared for built-in"
+      c_equation f (p_constant C_arrow ([args_tuple ; (T.Reasons.wrap (Todo "wrap: constant: whole") (T.P_variable whole_expr))])) "wrap: constant: as declared for built-in"
   ] , whole_expr
 
 (* TODO : change type of lambda *)

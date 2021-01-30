@@ -89,7 +89,7 @@ let get_referenced_constraints ({ a_k_var; a_k'_var' } : selector_output) : type
 
 let propagator : (output_break_ctor, typer_error) propagator =
   fun selected repr ->
-  Format.printf "In break_ctor.propagator for \n%!";
+  Format.printf "In break_ctor.propagator for %a\n%!" Ast_typed.PP.output_break_ctor selected;
   let a = selected.a_k_var in
   let b = selected.a_k'_var' in
   let get_tv : constructor_or_row -> type_variable = fun cr ->
@@ -145,7 +145,7 @@ let propagator : (output_break_ctor, typer_error) propagator =
       List.map2 aux a.tv_list b.tv_list
         ~ok ~fail:(fun _ _ -> fail @@ different_constant_tag_number_of_arguments __LOC__ a.c_tag b.c_tag (List.length a.tv_list) (List.length b.tv_list))
     )
-    | _ -> failwith "type error"
+    | _ -> failwith "type error in eqs3"
   in
   let eqs = eqs3 in
   Format.printf "Break_ctor : returning with new constraint %a\n%!" (PP_helpers.list_sep_d Ast_typed.PP.type_constraint_short) @@ eqs ;
