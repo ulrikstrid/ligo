@@ -46,8 +46,8 @@ module Operators_types = struct
                                                                 ]
   let tc_addargs  a b c = tc "arguments for (+)"        [a;b;c] [ [nat;nat;nat] ; 
                                                                   [int;int;int] ; 
-                                                                  [nat;int;int] ;
-                                                                  [int;nat;int] ;
+                                                                  (* [nat;int;int] ;
+                                                                  [int;nat;int] ; makes a bug in closure *)
                                                                   [timestamp;int;timestamp] ;
                                                                   [int;timestamp;int] ;
                                                                   [mutez;mutez;mutez]
