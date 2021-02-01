@@ -1,24 +1,24 @@
-interactive_expr: C_Some WILD
+interactive_expr: Ctor_Some WILD
 ##
 ## Ends in an error in state: 258.
 ##
-## constr_expr -> C_Some . argument [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## ctor_expr -> Ctor_Some . argument [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## C_Some
+## Ctor_Some
 ##
 
 Ill-formed application to the predefined data constructor 'Some'.
 At this point, its argument is expected as an expression.
 
-interactive_expr: Constr DOT WILD
+interactive_expr: UIdent DOT WILD
 ##
 ## Ends in an error in state: 209.
 ##
-## module_access_e -> Constr DOT . module_var_e [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## module_access_e -> UIdent DOT . module_var_e [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr DOT
+## UIdent DOT
 ##
 
 Ill-formed selection in a module.
@@ -62,7 +62,7 @@ interactive_expr: ES6FUN LPAR Verbatim
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: ES6FUN LPAR WILD COLON Constr WILD
+interactive_expr: ES6FUN LPAR WILD COLON UIdent WILD
 ##
 ## Ends in an error in state: 247.
 ##
@@ -75,7 +75,7 @@ interactive_expr: ES6FUN LPAR WILD COLON Constr WILD
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -99,7 +99,7 @@ interactive_expr: ES6FUN LPAR WILD COMMA Verbatim
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: ES6FUN LPAR WILD RPAR COLON Constr WILD
+interactive_expr: ES6FUN LPAR WILD RPAR COLON UIdent WILD
 ##
 ## Ends in an error in state: 249.
 ##
@@ -112,7 +112,7 @@ interactive_expr: ES6FUN LPAR WILD RPAR COLON Constr WILD
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -164,8 +164,8 @@ interactive_expr: Ident DOT WILD
 ##
 ## Ends in an error in state: 202.
 ##
-## selection -> DOT . Ident selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
-## selection -> DOT . Ident [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## selection -> DOT . Ident selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
+## selection -> DOT . Ident [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## DOT
@@ -177,8 +177,8 @@ interactive_expr: Ident LBRACKET Int WILD
 ##
 ## Ends in an error in state: 200.
 ##
-## selection -> LBRACKET Int . RBRACKET selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
-## selection -> LBRACKET Int . RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## selection -> LBRACKET Int . RBRACKET selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
+## selection -> LBRACKET Int . RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACKET Int
@@ -190,8 +190,8 @@ interactive_expr: Ident LBRACKET WILD
 ##
 ## Ends in an error in state: 199.
 ##
-## selection -> LBRACKET . Int RBRACKET selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
-## selection -> LBRACKET . Int RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## selection -> LBRACKET . Int RBRACKET selection [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
+## selection -> LBRACKET . Int RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACKET
@@ -264,7 +264,7 @@ interactive_expr: If LPAR Bytes RPAR LBRACE ES6FUN LPAR Verbatim
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: If LPAR Bytes RPAR LBRACE ES6FUN LPAR WILD COLON Constr WILD
+interactive_expr: If LPAR Bytes RPAR LBRACE ES6FUN LPAR WILD COLON UIdent WILD
 ##
 ## Ends in an error in state: 382.
 ##
@@ -277,7 +277,7 @@ interactive_expr: If LPAR Bytes RPAR LBRACE ES6FUN LPAR WILD COLON Constr WILD
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -289,7 +289,7 @@ interactive_expr: If LPAR Bytes RPAR LBRACE ES6FUN LPAR WILD COLON Constr WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: If LPAR Bytes RPAR LBRACE ES6FUN LPAR WILD RPAR COLON Constr WILD
+interactive_expr: If LPAR Bytes RPAR LBRACE ES6FUN LPAR WILD RPAR COLON UIdent WILD
 ##
 ## Ends in an error in state: 384.
 ##
@@ -302,7 +302,7 @@ interactive_expr: If LPAR Bytes RPAR LBRACE ES6FUN LPAR WILD RPAR COLON Constr W
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -507,7 +507,7 @@ interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARROW ES6FUN LPAR WILD COLON Constr WILD
+interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARROW ES6FUN LPAR WILD COLON UIdent WILD
 ##
 ## Ends in an error in state: 431.
 ##
@@ -520,7 +520,7 @@ interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -532,7 +532,7 @@ interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARROW ES6FUN LPAR WILD RPAR COLON Constr WILD
+interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARROW ES6FUN LPAR WILD RPAR COLON UIdent WILD
 ##
 ## Ends in an error in state: 433.
 ##
@@ -545,7 +545,7 @@ interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -793,7 +793,7 @@ interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARROW Type Ident EQ Constr WILD
+interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARROW Type Ident EQ UIdent WILD
 ##
 ## Ends in an error in state: 435.
 ##
@@ -806,7 +806,7 @@ interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -917,7 +917,7 @@ interactive_expr: If LPAR Bytes RPAR LBRACE Switch WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: If LPAR Bytes RPAR LBRACE Type Ident EQ Constr WILD
+interactive_expr: If LPAR Bytes RPAR LBRACE Type Ident EQ UIdent WILD
 ##
 ## Ends in an error in state: 386.
 ##
@@ -930,7 +930,7 @@ interactive_expr: If LPAR Bytes RPAR LBRACE Type Ident EQ Constr WILD
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -1108,7 +1108,7 @@ interactive_expr: LBRACE ELLIPSIS Ident COLON
 ##
 ## Ends in an error in state: 580.
 ##
-## update_record -> LBRACE ELLIPSIS path . COMMA sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## update_record -> LBRACE ELLIPSIS path . COMMA sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACE ELLIPSIS path
@@ -1232,7 +1232,7 @@ interactive_expr: LBRACE ELLIPSIS Ident COMMA WILD
 ##
 ## Ends in an error in state: 581.
 ##
-## update_record -> LBRACE ELLIPSIS path COMMA . sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## update_record -> LBRACE ELLIPSIS path COMMA . sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACE ELLIPSIS path COMMA
@@ -1257,7 +1257,7 @@ interactive_expr: LBRACE ELLIPSIS WILD
 ##
 ## Ends in an error in state: 577.
 ##
-## update_record -> LBRACE ELLIPSIS . path COMMA sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## update_record -> LBRACE ELLIPSIS . path COMMA sep_or_term_list(field_path_assignment,COMMA) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACE ELLIPSIS
@@ -1326,7 +1326,7 @@ interactive_expr: LBRACE ES6FUN LPAR Verbatim
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: LBRACE ES6FUN LPAR WILD COLON Constr WILD
+interactive_expr: LBRACE ES6FUN LPAR WILD COLON UIdent WILD
 ##
 ## Ends in an error in state: 508.
 ##
@@ -1339,7 +1339,7 @@ interactive_expr: LBRACE ES6FUN LPAR WILD COLON Constr WILD
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -1351,7 +1351,7 @@ interactive_expr: LBRACE ES6FUN LPAR WILD COLON Constr WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: LBRACE ES6FUN LPAR WILD RPAR COLON Constr WILD
+interactive_expr: LBRACE ES6FUN LPAR WILD RPAR COLON UIdent WILD
 ##
 ## Ends in an error in state: 510.
 ##
@@ -1364,7 +1364,7 @@ interactive_expr: LBRACE ES6FUN LPAR WILD RPAR COLON Constr WILD
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -1404,7 +1404,7 @@ interactive_expr: LBRACE Ident COLON Bytes WILD
 ##
 ## Ends in an error in state: 598.
 ##
-## record_expr -> LBRACE field_assignment . option(more_field_assignments) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## record_expr -> LBRACE field_assignment . option(more_field_assignments) RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACE field_assignment
@@ -1845,7 +1845,7 @@ interactive_expr: LBRACE Switch WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: LBRACE Type Ident EQ Constr WILD
+interactive_expr: LBRACE Type Ident EQ UIdent WILD
 ##
 ## Ends in an error in state: 512.
 ##
@@ -1858,7 +1858,7 @@ interactive_expr: LBRACE Type Ident EQ Constr WILD
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -1871,7 +1871,7 @@ interactive_expr: LBRACE Verbatim VBAR
 ##
 ## Ends in an error in state: 596.
 ##
-## sequence -> LBRACE series . RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## sequence -> LBRACE series . RBRACE [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACE series
@@ -1945,7 +1945,7 @@ interactive_expr: LBRACKET Verbatim COMMA ELLIPSIS Verbatim WILD
 ##
 ## Ends in an error in state: 610.
 ##
-## spread -> LBRACKET expr COMMA ELLIPSIS expr . RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## spread -> LBRACKET expr COMMA ELLIPSIS expr . RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACKET expr COMMA ELLIPSIS expr
@@ -2006,7 +2006,7 @@ interactive_expr: LBRACKET Verbatim WILD
 ## nsepseq(expr,COMMA) -> expr . [ RBRACKET ]
 ## nsepseq(expr,COMMA) -> expr . COMMA nsepseq(expr,COMMA) [ RBRACKET ]
 ## nseq(__anonymous_0(expr,COMMA)) -> expr . COMMA seq(__anonymous_0(expr,COMMA)) [ RBRACKET ]
-## spread -> LBRACKET expr . COMMA ELLIPSIS expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## spread -> LBRACKET expr . COMMA ELLIPSIS expr RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## LBRACKET expr
@@ -2030,11 +2030,11 @@ interactive_expr: LBRACKET Verbatim WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: LPAR Verbatim COLON Constr WILD
+interactive_expr: LPAR Verbatim COLON UIdent WILD
 ##
 ## Ends in an error in state: 620.
 ##
-## par(annot_expr) -> LPAR annot_expr . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## par(annot_expr) -> LPAR annot_expr . RPAR [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ## tuple(annot_expr) -> annot_expr . COMMA nsepseq(annot_expr,COMMA) [ RPAR ]
 ##
 ## The known suffix of the stack is as follows:
@@ -2044,7 +2044,7 @@ interactive_expr: LPAR Verbatim COLON Constr WILD
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -2087,7 +2087,7 @@ interactive_expr: Lang Verbatim WILD
 ##
 ## Ends in an error in state: 625.
 ##
-## code_inj -> Lang expr . RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## code_inj -> Lang expr . RBRACKET [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Lang expr
@@ -2198,7 +2198,7 @@ interactive_expr: MINUS WILD
 ##
 ## Ends in an error in state: 193.
 ##
-## unary_expr_level -> MINUS . call_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## unary_expr_level -> MINUS . call_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## MINUS
@@ -2210,7 +2210,7 @@ interactive_expr: NOT WILD
 ##
 ## Ends in an error in state: 191.
 ##
-## unary_expr_level -> NOT . call_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## unary_expr_level -> NOT . call_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## NOT
@@ -2218,14 +2218,14 @@ interactive_expr: NOT WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Switch Constr WILD
+interactive_expr: Switch UIdent WILD
 ##
 ## Ends in an error in state: 208.
 ##
-## module_access_e -> Constr . DOT module_var_e [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## module_access_e -> UIdent . DOT module_var_e [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE LBRACE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr
+## UIdent
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -2381,7 +2381,7 @@ interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW ES6FUN LPAR Verbatim
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW ES6FUN LPAR WILD COLON Constr WILD
+interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW ES6FUN LPAR WILD COLON UIdent WILD
 ##
 ## Ends in an error in state: 642.
 ##
@@ -2394,7 +2394,7 @@ interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW ES6FUN LPAR WILD COLON 
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -2406,7 +2406,7 @@ interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW ES6FUN LPAR WILD COLON 
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW ES6FUN LPAR WILD RPAR COLON Constr WILD
+interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW ES6FUN LPAR WILD RPAR COLON UIdent WILD
 ##
 ## Ends in an error in state: 644.
 ##
@@ -2419,7 +2419,7 @@ interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW ES6FUN LPAR WILD RPAR C
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -2655,7 +2655,7 @@ interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW Let WILD EQ Bytes WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW Type Ident EQ Constr WILD
+interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW Type Ident EQ UIdent WILD
 ##
 ## Ends in an error in state: 646.
 ##
@@ -2668,7 +2668,7 @@ interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW Type Ident EQ Constr WI
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -2830,7 +2830,7 @@ interactive_expr: Switch WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Type Ident EQ Constr WILD
+interactive_expr: Type Ident EQ UIdent WILD
 ##
 ## Ends in an error in state: 261.
 ##
@@ -2843,7 +2843,7 @@ interactive_expr: Type Ident EQ Constr WILD
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -2876,26 +2876,26 @@ interactive_expr: Verbatim BOOL_OR WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Verbatim CAT WILD
+interactive_expr: Verbatim PLUS2 WILD
 ##
 ## Ends in an error in state: 314.
 ##
-## bin_op(add_expr_level,CAT,cat_expr_level) -> add_expr_level CAT . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Module Let LT LE GT GE EQEQ EOF COMMA COLON BOOL_OR BOOL_AND Attr ]
+## bin_op(add_expr_level,PLUS2,cat_expr_level) -> add_expr_level PLUS2 . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Module Let LT LE GT GE EQ2 EOF COMMA COLON BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## add_expr_level CAT
+## add_expr_level PLUS2
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Verbatim EQEQ WILD
+interactive_expr: Verbatim EQ2 WILD
 ##
 ## Ends in an error in state: 324.
 ##
-## bin_op(comp_expr_level,EQEQ,cat_expr_level) -> comp_expr_level EQEQ . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Module Let LT LE GT GE EQEQ EOF COMMA COLON BOOL_OR BOOL_AND Attr ]
+## bin_op(comp_expr_level,EQ2,cat_expr_level) -> comp_expr_level EQ2 . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Module Let LT LE GT GE EQ2 EOF COMMA COLON BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## comp_expr_level EQEQ
+## comp_expr_level EQ2
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -2904,7 +2904,7 @@ interactive_expr: Verbatim GE WILD
 ##
 ## Ends in an error in state: 322.
 ##
-## bin_op(comp_expr_level,GE,cat_expr_level) -> comp_expr_level GE . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Module Let LT LE GT GE EQEQ EOF COMMA COLON BOOL_OR BOOL_AND Attr ]
+## bin_op(comp_expr_level,GE,cat_expr_level) -> comp_expr_level GE . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Module Let LT LE GT GE EQ2 EOF COMMA COLON BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## comp_expr_level GE
@@ -2916,7 +2916,7 @@ interactive_expr: Verbatim GT WILD
 ##
 ## Ends in an error in state: 320.
 ##
-## bin_op(comp_expr_level,GT,cat_expr_level) -> comp_expr_level GT . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Module Let LT LE GT GE EQEQ EOF COMMA COLON BOOL_OR BOOL_AND Attr ]
+## bin_op(comp_expr_level,GT,cat_expr_level) -> comp_expr_level GT . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Module Let LT LE GT GE EQ2 EOF COMMA COLON BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## comp_expr_level GT
@@ -2928,7 +2928,7 @@ interactive_expr: Verbatim LE WILD
 ##
 ## Ends in an error in state: 318.
 ##
-## bin_op(comp_expr_level,LE,cat_expr_level) -> comp_expr_level LE . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Module Let LT LE GT GE EQEQ EOF COMMA COLON BOOL_OR BOOL_AND Attr ]
+## bin_op(comp_expr_level,LE,cat_expr_level) -> comp_expr_level LE . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Module Let LT LE GT GE EQ2 EOF COMMA COLON BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## comp_expr_level LE
@@ -2936,7 +2936,7 @@ interactive_expr: Verbatim LE WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Verbatim LPAR Verbatim COLON Constr WILD
+interactive_expr: Verbatim LPAR Verbatim COLON UIdent WILD
 ##
 ## Ends in an error in state: 346.
 ##
@@ -2950,7 +2950,7 @@ interactive_expr: Verbatim LPAR Verbatim COLON Constr WILD
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -2965,7 +2965,7 @@ interactive_expr: Verbatim LT WILD
 ##
 ## Ends in an error in state: 316.
 ##
-## bin_op(comp_expr_level,LT,cat_expr_level) -> comp_expr_level LT . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Module Let LT LE GT GE EQEQ EOF COMMA COLON BOOL_OR BOOL_AND Attr ]
+## bin_op(comp_expr_level,LT,cat_expr_level) -> comp_expr_level LT . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Module Let LT LE GT GE EQ2 EOF COMMA COLON BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## comp_expr_level LT
@@ -2977,7 +2977,7 @@ interactive_expr: Verbatim MINUS WILD
 ##
 ## Ends in an error in state: 312.
 ##
-## bin_op(add_expr_level,MINUS,mult_expr_level) -> add_expr_level MINUS . mult_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE Module MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## bin_op(add_expr_level,MINUS,mult_expr_level) -> add_expr_level MINUS . mult_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE Module MINUS Let LT LE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## add_expr_level MINUS
@@ -2989,7 +2989,7 @@ interactive_expr: Verbatim Mod WILD
 ##
 ## Ends in an error in state: 310.
 ##
-## bin_op(mult_expr_level,Mod,unary_expr_level) -> mult_expr_level Mod . unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## bin_op(mult_expr_level,Mod,unary_expr_level) -> mult_expr_level Mod . unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## mult_expr_level Mod
@@ -3001,7 +3001,7 @@ interactive_expr: Verbatim NE WILD
 ##
 ## Ends in an error in state: 295.
 ##
-## bin_op(comp_expr_level,NE,cat_expr_level) -> comp_expr_level NE . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Module Let LT LE GT GE EQEQ EOF COMMA COLON BOOL_OR BOOL_AND Attr ]
+## bin_op(comp_expr_level,NE,cat_expr_level) -> comp_expr_level NE . cat_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE Or NE Module Let LT LE GT GE EQ2 EOF COMMA COLON BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## comp_expr_level NE
@@ -3025,7 +3025,7 @@ interactive_expr: Verbatim PLUS WILD
 ##
 ## Ends in an error in state: 306.
 ##
-## bin_op(add_expr_level,PLUS,mult_expr_level) -> add_expr_level PLUS . mult_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE Module MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## bin_op(add_expr_level,PLUS,mult_expr_level) -> add_expr_level PLUS . mult_expr_level [ VBAR Type SEMI RPAR RBRACKET RBRACE PLUS Or NE Module MINUS Let LT LE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## add_expr_level PLUS
@@ -3037,7 +3037,7 @@ interactive_expr: Verbatim SLASH WILD
 ##
 ## Ends in an error in state: 308.
 ##
-## bin_op(mult_expr_level,SLASH,unary_expr_level) -> mult_expr_level SLASH . unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## bin_op(mult_expr_level,SLASH,unary_expr_level) -> mult_expr_level SLASH . unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## mult_expr_level SLASH
@@ -3049,7 +3049,7 @@ interactive_expr: Verbatim TIMES WILD
 ##
 ## Ends in an error in state: 270.
 ##
-## bin_op(mult_expr_level,TIMES,unary_expr_level) -> mult_expr_level TIMES . unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## bin_op(mult_expr_level,TIMES,unary_expr_level) -> mult_expr_level TIMES . unary_expr_level [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## mult_expr_level TIMES
@@ -3194,19 +3194,19 @@ contract: Let LBRACE WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LPAR C_Some VBAR
+contract: Let LPAR Ctor_Some VBAR
 ##
 ## Ends in an error in state: 114.
 ##
-## constr_pattern -> C_Some . sub_pattern [ RPAR RBRACKET RBRACE COMMA ARROW ]
+## ctor_pattern -> Ctor_Some . sub_pattern [ RPAR RBRACKET RBRACE COMMA ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## C_Some
+## Ctor_Some
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LPAR Constr LBRACKET VBAR
+contract: Let LPAR UIdent LBRACKET VBAR
 ##
 ## Ends in an error in state: 109.
 ##
@@ -3218,7 +3218,7 @@ contract: Let LPAR Constr LBRACKET VBAR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LPAR Constr LBRACKET WILD COMMA VBAR
+contract: Let LPAR UIdent LBRACKET WILD COMMA VBAR
 ##
 ## Ends in an error in state: 127.
 ##
@@ -3231,7 +3231,7 @@ contract: Let LPAR Constr LBRACKET WILD COMMA VBAR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LPAR Constr LBRACKET WILD COMMA WILD COMMA VBAR
+contract: Let LPAR UIdent LBRACKET WILD COMMA WILD COMMA VBAR
 ##
 ## Ends in an error in state: 129.
 ##
@@ -3244,7 +3244,7 @@ contract: Let LPAR Constr LBRACKET WILD COMMA WILD COMMA VBAR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LPAR Constr LBRACKET WILD COMMA WILD WILD
+contract: Let LPAR UIdent LBRACKET WILD COMMA WILD WILD
 ##
 ## Ends in an error in state: 128.
 ##
@@ -3258,7 +3258,7 @@ contract: Let LPAR Constr LBRACKET WILD COMMA WILD WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LPAR Constr LBRACKET WILD WILD
+contract: Let LPAR UIdent LBRACKET WILD WILD
 ##
 ## Ends in an error in state: 126.
 ##
@@ -3272,7 +3272,7 @@ contract: Let LPAR Constr LBRACKET WILD WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LPAR Constr LPAR VBAR
+contract: Let LPAR UIdent LPAR VBAR
 ##
 ## Ends in an error in state: 108.
 ##
@@ -3286,7 +3286,7 @@ contract: Let LPAR Constr LPAR VBAR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LPAR Constr LPAR WILD COMMA Bytes ARROW
+contract: Let LPAR UIdent LPAR WILD COMMA Bytes ARROW
 ##
 ## Ends in an error in state: 145.
 ##
@@ -3306,7 +3306,7 @@ contract: Let LPAR Constr LPAR WILD COMMA Bytes ARROW
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LPAR Constr LPAR WILD WILD
+contract: Let LPAR UIdent LPAR WILD WILD
 ##
 ## Ends in an error in state: 139.
 ##
@@ -3367,7 +3367,7 @@ contract: Let Rec Verbatim
 ##
 ## Ends in an error in state: 97.
 ##
-## let_declaration -> seq(Attr) Let Rec . let_binding [ Type SEMI RBRACE Module Let EOF Attr ]
+## let_decl -> seq(Attr) Let Rec . let_binding [ Type SEMI RBRACE Module Let EOF Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr) Let Rec
@@ -3379,8 +3379,8 @@ contract: Let Verbatim
 ##
 ## Ends in an error in state: 95.
 ##
-## let_declaration -> seq(Attr) Let . let_binding [ Type SEMI RBRACE Module Let EOF Attr ]
-## let_declaration -> seq(Attr) Let . Rec let_binding [ Type SEMI RBRACE Module Let EOF Attr ]
+## let_decl -> seq(Attr) Let . let_binding [ Type SEMI RBRACE Module Let EOF Attr ]
+## let_decl -> seq(Attr) Let . Rec let_binding [ Type SEMI RBRACE Module Let EOF Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr) Let
@@ -3428,10 +3428,10 @@ contract: Let WILD EQ Bytes WILD
 ##
 ## Ends in an error in state: 704.
 ##
-## declaration -> let_declaration . option(SEMI) [ Type RBRACE Module Let EOF Attr ]
+## declaration -> let_decl . option(SEMI) [ Type RBRACE Module Let EOF Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## let_declaration
+## let_decl
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -3449,7 +3449,7 @@ contract: Let WILD EQ Bytes WILD
 ## In state 341, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
 ## In state 342, spurious reduction of production expr -> base_cond__open(expr)
 ## In state 696, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
-## In state 697, spurious reduction of production let_declaration -> seq(Attr) Let let_binding
+## In state 697, spurious reduction of production let_decl -> seq(Attr) Let let_binding
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3472,67 +3472,67 @@ contract: Let WILD WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ Attr Constr LPAR Verbatim
+contract: Type Ident EQ Attr UIdent LPAR Verbatim
 ##
 ## Ends in an error in state: 49.
 ##
-## variant -> nseq(Attr) Constr LPAR . fun_type RPAR [ VBAR Type SEMI RPAR RBRACE Module Let EQ EOF COMMA Attr ARROW ]
+## variant -> nseq(Attr) UIdent LPAR . fun_type RPAR [ VBAR Type SEMI RPAR RBRACE Module Let EQ EOF COMMA Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## nseq(Attr) Constr LPAR
+## nseq(Attr) UIdent LPAR
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ Attr Constr LPAR WILD WILD
+contract: Type Ident EQ Attr UIdent LPAR WILD WILD
 ##
 ## Ends in an error in state: 50.
 ##
-## variant -> nseq(Attr) Constr LPAR fun_type . RPAR [ VBAR Type SEMI RPAR RBRACE Module Let EQ EOF COMMA Attr ARROW ]
+## variant -> nseq(Attr) UIdent LPAR fun_type . RPAR [ VBAR Type SEMI RPAR RBRACE Module Let EQ EOF COMMA Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## nseq(Attr) Constr LPAR fun_type
+## nseq(Attr) UIdent LPAR fun_type
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ Constr DOT WILD
+contract: Type Ident EQ UIdent DOT WILD
 ##
 ## Ends in an error in state: 12.
 ##
-## module_access_t -> Constr DOT . module_var_t [ Type SEMI RPAR RBRACE Module Let EQ EOF COMMA Attr ARROW ]
+## module_access_t -> UIdent DOT . module_var_t [ Type SEMI RPAR RBRACE Module Let EQ EOF COMMA Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr DOT
+## UIdent DOT
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ Constr LPAR Verbatim
+contract: Type Ident EQ UIdent LPAR Verbatim
 ##
 ## Ends in an error in state: 35.
 ##
-## variant -> Constr LPAR . fun_type RPAR [ VBAR Type SEMI RPAR RBRACE Module Let EQ EOF COMMA Attr ARROW ]
+## variant -> UIdent LPAR . fun_type RPAR [ VBAR Type SEMI RPAR RBRACE Module Let EQ EOF COMMA Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr LPAR
+## UIdent LPAR
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ Constr LPAR WILD WILD
+contract: Type Ident EQ UIdent LPAR WILD WILD
 ##
 ## Ends in an error in state: 36.
 ##
-## variant -> Constr LPAR fun_type . RPAR [ VBAR Type SEMI RPAR RBRACE Module Let EQ EOF COMMA Attr ARROW ]
+## variant -> UIdent LPAR fun_type . RPAR [ VBAR Type SEMI RPAR RBRACE Module Let EQ EOF COMMA Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr LPAR fun_type
+## UIdent LPAR fun_type
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ Constr VBAR WILD
+contract: Type Ident EQ UIdent VBAR WILD
 ##
 ## Ends in an error in state: 43.
 ##
@@ -3544,7 +3544,7 @@ contract: Type Ident EQ Constr VBAR WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ Constr WILD
+contract: Type Ident EQ UIdent WILD
 ##
 ## Ends in an error in state: 91.
 ##
@@ -3557,7 +3557,7 @@ contract: Type Ident EQ Constr WILD
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -3566,14 +3566,14 @@ contract: Type Ident EQ Constr WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ ES6FUN Constr WILD
+contract: Type Ident EQ ES6FUN UIdent WILD
 ##
 ## Ends in an error in state: 11.
 ##
-## module_access_t -> Constr . DOT module_var_t [ Type SEMI RPAR RBRACE Module Let EQ EOF COMMA Attr ARROW ]
+## module_access_t -> UIdent . DOT module_var_t [ Type SEMI RPAR RBRACE Module Let EQ EOF COMMA Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr
+## UIdent
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3676,7 +3676,7 @@ contract: Type Ident EQ Ident LPAR WILD WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LBRACE Ident COLON Constr WILD
+contract: Type Ident EQ LBRACE Ident COLON UIdent WILD
 ##
 ## Ends in an error in state: 73.
 ##
@@ -3691,7 +3691,7 @@ contract: Type Ident EQ LBRACE Ident COLON Constr WILD
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -3700,7 +3700,7 @@ contract: Type Ident EQ LBRACE Ident COLON Constr WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LBRACE Ident COMMA Ident COLON Constr WILD
+contract: Type Ident EQ LBRACE Ident COMMA Ident COLON UIdent WILD
 ##
 ## Ends in an error in state: 77.
 ##
@@ -3715,7 +3715,7 @@ contract: Type Ident EQ LBRACE Ident COMMA Ident COLON Constr WILD
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -3816,8 +3816,8 @@ contract: Type Ident EQ VBAR Attr WILD
 ##
 ## Ends in an error in state: 47.
 ##
-## variant -> nseq(Attr) . Constr [ VBAR Type SEMI RPAR RBRACE Module Let EQ EOF COMMA Attr ARROW ]
-## variant -> nseq(Attr) . Constr LPAR fun_type RPAR [ VBAR Type SEMI RPAR RBRACE Module Let EQ EOF COMMA Attr ARROW ]
+## variant -> nseq(Attr) . UIdent [ VBAR Type SEMI RPAR RBRACE Module Let EQ EOF COMMA Attr ARROW ]
+## variant -> nseq(Attr) . UIdent LPAR fun_type RPAR [ VBAR Type SEMI RPAR RBRACE Module Let EQ EOF COMMA Attr ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr)
@@ -3891,8 +3891,8 @@ contract: WILD
 ##
 ## Ends in an error in state: 94.
 ##
-## let_declaration -> seq(Attr) . Let let_binding [ Type SEMI RBRACE Module Let EOF Attr ]
-## let_declaration -> seq(Attr) . Let Rec let_binding [ Type SEMI RBRACE Module Let EOF Attr ]
+## let_decl -> seq(Attr) . Let let_binding [ Type SEMI RBRACE Module Let EOF Attr ]
+## let_decl -> seq(Attr) . Let Rec let_binding [ Type SEMI RBRACE Module Let EOF Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr)
@@ -3906,20 +3906,20 @@ contract: WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Module Constr EQ LBRACE Type Ident EQ Constr EOF
+contract: Module UIdent EQ LBRACE Type Ident EQ UIdent EOF
 ##
 ## Ends in an error in state: 702.
 ##
-## module_decl -> Module Constr EQ LBRACE module_ . RBRACE [ Type SEMI RBRACE Module Let EOF Attr ]
+## module_decl -> Module UIdent EQ LBRACE module_ . RBRACE [ Type SEMI RBRACE Module Let EOF Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## Module Constr EQ LBRACE module_
+## Module UIdent EQ LBRACE module_
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -3932,7 +3932,7 @@ contract: Module Constr EQ LBRACE Type Ident EQ Constr EOF
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Module Constr EQ LBRACE Type Ident EQ Constr RBRACE WILD
+contract: Module UIdent EQ LBRACE Type Ident EQ UIdent RBRACE WILD
 ##
 ## Ends in an error in state: 698.
 ##
@@ -3944,28 +3944,28 @@ contract: Module Constr EQ LBRACE Type Ident EQ Constr RBRACE WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Module Constr EQ WILD
+contract: Module UIdent EQ WILD
 ##
 ## Ends in an error in state: 89.
 ##
-## module_alias -> Module Constr EQ . nsepseq(module_name,DOT) [ Type SEMI RBRACE Module Let EOF Attr ]
-## module_decl -> Module Constr EQ . LBRACE module_ RBRACE [ Type SEMI RBRACE Module Let EOF Attr ]
+## module_alias -> Module UIdent EQ . nsepseq(module_name,DOT) [ Type SEMI RBRACE Module Let EOF Attr ]
+## module_decl -> Module UIdent EQ . LBRACE module_ RBRACE [ Type SEMI RBRACE Module Let EOF Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## Module Constr EQ
+## Module UIdent EQ
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Module Constr WILD
+contract: Module UIdent WILD
 ##
 ## Ends in an error in state: 88.
 ##
-## module_alias -> Module Constr . EQ nsepseq(module_name,DOT) [ Type SEMI RBRACE Module Let EOF Attr ]
-## module_decl -> Module Constr . EQ LBRACE module_ RBRACE [ Type SEMI RBRACE Module Let EOF Attr ]
+## module_alias -> Module UIdent . EQ nsepseq(module_name,DOT) [ Type SEMI RBRACE Module Let EOF Attr ]
+## module_decl -> Module UIdent . EQ LBRACE module_ RBRACE [ Type SEMI RBRACE Module Let EOF Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## Module Constr
+## Module UIdent
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -3974,8 +3974,8 @@ contract: Module WILD
 ##
 ## Ends in an error in state: 87.
 ##
-## module_alias -> Module . Constr EQ nsepseq(module_name,DOT) [ Type SEMI RBRACE Module Let EOF Attr ]
-## module_decl -> Module . Constr EQ LBRACE module_ RBRACE [ Type SEMI RBRACE Module Let EOF Attr ]
+## module_alias -> Module . UIdent EQ nsepseq(module_name,DOT) [ Type SEMI RBRACE Module Let EOF Attr ]
+## module_decl -> Module . UIdent EQ LBRACE module_ RBRACE [ Type SEMI RBRACE Module Let EOF Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Module
@@ -3983,7 +3983,7 @@ contract: Module WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ Constr RBRACE
+contract: Type Ident EQ UIdent RBRACE
 ##
 ## Ends in an error in state: 713.
 ##
@@ -3996,7 +3996,7 @@ contract: Type Ident EQ Constr RBRACE
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 34, spurious reduction of production variant -> Constr
+## In state 34, spurious reduction of production variant -> UIdent
 ## In state 42, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 57, spurious reduction of production type_expr -> sum_type
@@ -4008,7 +4008,7 @@ contract: Type Ident EQ Constr RBRACE
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Module Constr EQ LBRACE Type Ident EQ Constr RBRACE WILD
+interactive_expr: Module UIdent EQ LBRACE Type Ident EQ UIdent RBRACE WILD
 ##
 ## Ends in an error in state: 276.
 ##
@@ -4020,7 +4020,7 @@ interactive_expr: Module Constr EQ LBRACE Type Ident EQ Constr RBRACE WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW Module Constr EQ LBRACE Type Ident EQ Constr RBRACE WILD
+interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW Module UIdent EQ LBRACE Type Ident EQ UIdent RBRACE WILD
 ##
 ## Ends in an error in state: 653.
 ##
@@ -4032,7 +4032,7 @@ interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW Module Constr EQ LBRACE
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: If LPAR Bytes RPAR LBRACE Module Constr EQ LBRACE Type Ident EQ Constr RBRACE WILD
+interactive_expr: If LPAR Bytes RPAR LBRACE Module UIdent EQ LBRACE Type Ident EQ UIdent RBRACE WILD
 ##
 ## Ends in an error in state: 394.
 ##
@@ -4044,7 +4044,7 @@ interactive_expr: If LPAR Bytes RPAR LBRACE Module Constr EQ LBRACE Type Ident E
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARROW Module Constr EQ LBRACE Type Ident EQ Constr RBRACE WILD
+interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARROW Module UIdent EQ LBRACE Type Ident EQ UIdent RBRACE WILD
 ##
 ## Ends in an error in state: 442.
 ##
@@ -4056,7 +4056,7 @@ interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Module Constr EQ Constr Type
+interactive_expr: Module UIdent EQ UIdent Type
 ##
 ## Ends in an error in state: 278.
 ##
@@ -4069,13 +4069,13 @@ interactive_expr: Module Constr EQ Constr Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 709, spurious reduction of production nsepseq(module_name,DOT) -> Constr
-## In state 712, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
+## In state 709, spurious reduction of production nsepseq(module_name,DOT) -> UIdent
+## In state 712, spurious reduction of production module_alias -> Module UIdent EQ nsepseq(module_name,DOT)
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: If LPAR Bytes RPAR LBRACE Module Constr EQ Constr Type
+interactive_expr: If LPAR Bytes RPAR LBRACE Module UIdent EQ UIdent Type
 ##
 ## Ends in an error in state: 396.
 ##
@@ -4088,13 +4088,13 @@ interactive_expr: If LPAR Bytes RPAR LBRACE Module Constr EQ Constr Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 709, spurious reduction of production nsepseq(module_name,DOT) -> Constr
-## In state 712, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
+## In state 709, spurious reduction of production nsepseq(module_name,DOT) -> UIdent
+## In state 712, spurious reduction of production module_alias -> Module UIdent EQ nsepseq(module_name,DOT)
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARROW Module Constr EQ Constr Type
+interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARROW Module UIdent EQ UIdent Type
 ##
 ## Ends in an error in state: 444.
 ##
@@ -4107,13 +4107,13 @@ interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 709, spurious reduction of production nsepseq(module_name,DOT) -> Constr
-## In state 712, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
+## In state 709, spurious reduction of production nsepseq(module_name,DOT) -> UIdent
+## In state 712, spurious reduction of production module_alias -> Module UIdent EQ nsepseq(module_name,DOT)
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW Module Constr EQ Constr Type
+interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW Module UIdent EQ UIdent Type
 ##
 ## Ends in an error in state: 655.
 ##
@@ -4126,25 +4126,25 @@ interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW Module Constr EQ Constr
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 709, spurious reduction of production nsepseq(module_name,DOT) -> Constr
-## In state 712, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
+## In state 709, spurious reduction of production nsepseq(module_name,DOT) -> UIdent
+## In state 712, spurious reduction of production module_alias -> Module UIdent EQ nsepseq(module_name,DOT)
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Module Constr EQ Constr DOT WILD
+contract: Module UIdent EQ UIdent DOT WILD
 ##
 ## Ends in an error in state: 710.
 ##
-## nsepseq(module_name,DOT) -> Constr DOT . nsepseq(module_name,DOT) [ Type SEMI RBRACE Module Let EOF Attr ]
+## nsepseq(module_name,DOT) -> UIdent DOT . nsepseq(module_name,DOT) [ Type SEMI RBRACE Module Let EOF Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr DOT
+## UIdent DOT
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Module Constr EQ Constr WILD
+contract: Module UIdent EQ UIdent WILD
 ##
 ## Ends in an error in state: 700.
 ##
@@ -4157,35 +4157,35 @@ contract: Module Constr EQ Constr WILD
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 709, spurious reduction of production nsepseq(module_name,DOT) -> Constr
-## In state 712, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT)
+## In state 709, spurious reduction of production nsepseq(module_name,DOT) -> UIdent
+## In state 712, spurious reduction of production module_alias -> Module UIdent EQ nsepseq(module_name,DOT)
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Constr WILD
+interactive_expr: UIdent WILD
 ##
 ## Ends in an error in state: 251.
 ##
-## constant_constr -> Constr . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
-## constr_expr -> Constr . argument [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
-## module_access_e -> Constr . DOT module_var_e [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## const_ctor -> UIdent . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
+## ctor_expr -> UIdent . argument [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
+## module_access_e -> UIdent . DOT module_var_e [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr
+## UIdent
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Constr Constr WILD
+interactive_expr: UIdent UIdent WILD
 ##
 ## Ends in an error in state: 252.
 ##
-## constant_constr -> Constr . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
-## module_access_e -> Constr . DOT module_var_e [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
+## const_ctor -> UIdent . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
+## module_access_e -> UIdent . DOT module_var_e [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQ2 EOF COMMA COLON PLUS2 BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr
+## UIdent
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>

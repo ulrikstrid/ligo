@@ -13,8 +13,8 @@ module Token = Lexer_cameligo.Token
 %token          <(string * Z.t) Region.reg> Nat      "<nat>"
 %token          <(string * Z.t) Region.reg> Mutez    "<mutez>"
 %token                  <string Region.reg> Ident    "<ident>"
-%token                  <string Region.reg> Constr   "<constr>"
-%token                   <string Region.reg> Attr    "[@attr]"
+%token                  <string Region.reg> UIdent   "<uident>"
+%token                  <string Region.reg> Attr     "[@attr]"
 %token <Token.lexeme Region.reg Region.reg> Lang     "[%lang"
 
   (* Symbols *)
@@ -33,8 +33,7 @@ module Token = Lexer_cameligo.Token
 
 %token <Region.t> ARROW "->"
 %token <Region.t> CONS  "::"
-%token <Region.t> CAT   "^"
-(*%token <Region.t> APPEND "@" *)
+%token <Region.t> CARET "^"
 %token <Region.t> DOT   "."
 
 %token <Region.t> COMMA ","
@@ -42,7 +41,7 @@ module Token = Lexer_cameligo.Token
 %token <Region.t> COLON ":"
 %token <Region.t> VBAR  "|"
 
-%token <Region.t> WILD  "_"
+%token <Region.t> WILD "_"
 
 %token <Region.t> EQ "="
 %token <Region.t> NE "<>"
@@ -57,31 +56,28 @@ module Token = Lexer_cameligo.Token
  (* Keywords *)
 
 (*%token And*)
-%token <Region.t> Begin  "begin"
-%token <Region.t> Else   "else"
-%token <Region.t> End    "end"
-%token <Region.t> False  "false"
-%token <Region.t> Fun    "fun"
-%token <Region.t> Rec    "rec"
-%token <Region.t> If     "if"
-%token <Region.t> In     "in"
-%token <Region.t> Let    "let"
-%token <Region.t> Match  "match"
-%token <Region.t> Mod    "mod"
-%token <Region.t> Not    "not"
-%token <Region.t> Of     "of"
-%token <Region.t> Or     "or"
-%token <Region.t> Then   "then"
-%token <Region.t> True   "true"
-%token <Region.t> Type   "type"
-%token <Region.t> With   "with"
-%token <Region.t> Module "module"
-%token <Region.t> Struct "struct"
-
-  (* Data constructors *)
-
-%token <Region.t> C_None "None"
-%token <Region.t> C_Some "Some"
+%token <Region.t> Begin     "begin"
+%token <Region.t> Else      "else"
+%token <Region.t> End       "end"
+%token <Region.t> False     "false"
+%token <Region.t> Fun       "fun"
+%token <Region.t> If        "if"
+%token <Region.t> In        "in"
+%token <Region.t> Let       "let"
+%token <Region.t> Match     "match"
+%token <Region.t> Mod       "mod"
+%token <Region.t> Module    "module"
+%token <Region.t> Ctor_None "None"
+%token <Region.t> Not       "not"
+%token <Region.t> Of        "of"
+%token <Region.t> Or        "or"
+%token <Region.t> Rec       "rec"
+%token <Region.t> Ctor_Some "Some"
+%token <Region.t> Then      "then"
+%token <Region.t> True      "true"
+%token <Region.t> Type      "type"
+%token <Region.t> With      "with"
+%token <Region.t> Struct    "struct"
 
   (* Virtual tokens *)
 

@@ -1,4 +1,4 @@
-(* Abstract Syntax Tree (AST) for CameLIGO *)
+(* Concrete Syntax Tree (CST) for CameLIGO *)
 
 (* To disable warning about multiply-defined record labels. *)
 
@@ -11,7 +11,7 @@ open Utils
 
 (* Regions
 
-   The AST carries all the regions where tokens have been found by the
+   The CST carries all the regions where tokens have been found by the
    lexer, plus additional regions corresponding to whole subtrees
    (like entire expressions, patterns etc.). These regions are needed
    for error reporting and source-to-source transformations. To make
@@ -28,42 +28,37 @@ type 'a reg = 'a Region.reg
 
 type lexeme = string
 
-(* Keywords of OCaml *)
+(* Keywords of CameLIGO *)
 
-type keyword       = Region.t
-type kwd_and       = Region.t
-type kwd_begin     = Region.t
-type kwd_else      = Region.t
-type kwd_end       = Region.t
-type kwd_false     = Region.t
-type kwd_fun       = Region.t
-type kwd_rec       = Region.t
-type kwd_if        = Region.t
-type kwd_in        = Region.t
-type kwd_let       = Region.t
-type kwd_match     = Region.t
-type kwd_mod       = Region.t
-type kwd_not       = Region.t
-type kwd_of        = Region.t
-type kwd_or        = Region.t
-type kwd_then      = Region.t
-type kwd_true      = Region.t
-type kwd_type      = Region.t
-type kwd_with      = Region.t
-type kwd_let_entry = Region.t
-type kwd_module    = Region.t
-type kwd_struct    = Region.t
-
-(* Data constructors *)
-
-type c_None  = Region.t
-type c_Some  = Region.t
+type kwd_and    = Region.t
+type kwd_begin  = Region.t
+type kwd_else   = Region.t
+type kwd_end    = Region.t
+type kwd_false  = Region.t
+type kwd_fun    = Region.t
+type kwd_if     = Region.t
+type kwd_in     = Region.t
+type kwd_let    = Region.t
+type kwd_match  = Region.t
+type kwd_mod    = Region.t
+type kwd_module = Region.t
+type kwd_None   = Region.t
+type kwd_not    = Region.t
+type kwd_of     = Region.t
+type kwd_or     = Region.t
+type kwd_rec    = Region.t
+type kwd_Some   = Region.t
+type kwd_struct = Region.t
+type kwd_then   = Region.t
+type kwd_true   = Region.t
+type kwd_type   = Region.t
+type kwd_with   = Region.t
 
 (* Symbols *)
 
 type arrow    = Region.t  (* "->" *)
 type cons     = Region.t  (* "::" *)
-type cat      = Region.t  (* "^"  *)
+type caret    = Region.t  (* "^"  *)
 type append   = Region.t  (* "@"  *)
 type dot      = Region.t  (* "."  *)
 
@@ -118,9 +113,9 @@ type variable    = string reg
 type module_name = string reg
 type fun_name    = string reg
 type type_name   = string reg
+type type_ctor   = string reg
 type field_name  = string reg
-type type_constr = string reg
-type constr      = string reg
+type ctor        = string reg
 type attribute   = string reg
 
 (* Parentheses *)
@@ -176,7 +171,7 @@ and module_decl = {
   name       : module_name;
   eq         : equal;
   kwd_struct : kwd_struct;
-  module_    : t;
+  structure  : t;
   kwd_end    : kwd_end;
 }
 
@@ -184,14 +179,14 @@ and module_alias = {
   kwd_module : kwd_module;
   alias      : module_name;
   eq         : equal;
-  binders    : (module_name, dot) nsepseq;
+  mod_path   : (module_name, dot) nsepseq;
 }
 
 and type_expr =
   TProd   of cartesian
 | TSum    of sum_type reg
 | TRecord of field_decl reg ne_injection reg
-| TApp    of (type_constr * type_tuple) reg
+| TApp    of (type_ctor * type_tuple) reg
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
@@ -209,7 +204,7 @@ and sum_type = {
 }
 
 and variant = {
-  constr     : constr;
+  ctor       : ctor;
   arg        : (kwd_of * type_expr) option;
   attributes : attributes
 }
@@ -224,7 +219,7 @@ and field_decl = {
 and type_tuple = (type_expr, comma) nsepseq par reg
 
 and pattern =
-  PConstr   of constr_pattern
+  PCtor     of ctor_pattern
 | PUnit     of the_unit reg
 | PVar      of variable
 | PInt      of (lexeme * Z.t) reg
@@ -239,12 +234,12 @@ and pattern =
 | PRecord   of field_pattern reg ne_injection reg
 | PTyped    of typed_pattern reg
 
-and constr_pattern =
-  PNone      of c_None
-| PSomeApp   of (c_Some * pattern) reg
-| PFalse    of kwd_false
-| PTrue     of kwd_true
-| PConstrApp of (constr * pattern option) reg
+and ctor_pattern =
+  PFalse   of kwd_false
+| PTrue    of kwd_true
+| PNone    of kwd_None
+| PSomeApp of (kwd_Some * pattern) reg
+| PCtorApp of (ctor * pattern option) reg
 
 and list_pattern =
   PListComp of pattern injection reg
@@ -270,7 +265,7 @@ and expr =
 | EArith    of arith_expr
 | EString   of string_expr
 | EList     of list_expr
-| EConstr   of constr_expr
+| ECtor     of ctor_expr
 | ERecord   of record reg
 | EProj     of projection reg
 | EModA     of expr module_access reg
@@ -315,14 +310,14 @@ and list_expr =
   (*| Append of (expr * append * expr) reg*)
 
 and string_expr =
-  Cat      of cat bin_op reg
+  Cat      of caret bin_op reg
 | String   of string reg
 | Verbatim of string reg
 
-and constr_expr =
-  ENone      of c_None
-| ESomeApp   of (c_Some * expr) reg
-| EConstrApp of (constr * expr option) reg
+and ctor_expr =
+  ENone    of kwd_None
+| ESomeApp of (kwd_Some * expr) reg
+| ECtorApp of (ctor * expr option) reg
 
 and arith_expr =
   Add   of plus bin_op reg
@@ -474,7 +469,7 @@ and code_inj = {
   rbracket : rbracket;
 }
 
-(* Projecting regions from some nodes of the AST *)
+(* Projecting regions from some nodes of the CST *)
 
 let rec last to_region = function
     [] -> Region.ghost
@@ -502,14 +497,14 @@ let type_expr_to_region = function
 let list_pattern_to_region = function
   PListComp {region; _} | PCons {region; _} -> region
 
-let constr_pattern_to_region = function
+let ctor_pattern_to_region = function
   PNone region | PSomeApp {region;_}
 | PTrue region | PFalse region
-| PConstrApp {region;_} -> region
+| PCtorApp {region;_} -> region
 
 let pattern_to_region = function
 | PList p -> list_pattern_to_region p
-| PConstr c -> constr_pattern_to_region c
+| PCtor c -> ctor_pattern_to_region c
 | PUnit {region;_}
 | PTuple {region;_} | PVar {region;_}
 | PInt {region;_}
@@ -546,28 +541,28 @@ let list_expr_to_region = function
   ECons {region; _} | EListComp {region; _}
 (* | Append {region; _}*) -> region
 
-and constr_expr_to_region = function
+and ctor_expr_to_region = function
   ENone region
-| EConstrApp {region; _}
+| ECtorApp {region; _}
 | ESomeApp   {region; _} -> region
 
 let expr_to_region = function
-  ELogic e -> logic_expr_to_region e
-| EArith e -> arith_expr_to_region e
+  ELogic e  -> logic_expr_to_region e
+| EArith e  -> arith_expr_to_region e
 | EString e -> string_expr_to_region e
-| EList e -> list_expr_to_region e
-| EConstr e -> constr_expr_to_region e
-| EAnnot {region;_ } | ELetIn {region;_}   | EFun {region;_}
-| ETypeIn {region;_ }| EModIn {region;_}   | EModAlias {region;_}
-| ECond {region;_}   | ETuple {region;_}   | ECase {region;_}
-| ECall {region;_}   | EVar {region; _}    | EProj {region; _}
-| EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
-| ESeq {region; _}   | ERecord {region; _} | EUpdate {region; _}
-| EModA {region; _}
-| ECodeInj {region; _} -> region
+| EList e   -> list_expr_to_region e
+| ECtor e   -> ctor_expr_to_region e
+| EAnnot {region;_}  | ELetIn {region;_}  | EFun {region;_}
+| ETypeIn {region;_} | EModIn {region;_}  | EModAlias {region;_}
+| ECond {region;_}   | ETuple {region;_}  | ECase {region;_}
+| ECall {region;_}   | EVar {region;_}    | EProj {region;_}
+| EUnit {region;_}   | EPar {region;_}    | EBytes {region;_}
+| ESeq {region;_}    | ERecord {region;_} | EUpdate {region;_}
+| EModA {region;_}   | ECodeInj {region;_}
+  -> region
 
 let declaration_to_region = function
-| Let         {region;_}
+  Let         {region;_}
 | TypeDecl    {region;_}
 | ModuleDecl  {region;_}
 | ModuleAlias {region;_} -> region
@@ -577,5 +572,5 @@ let selection_to_region = function
 | Component c -> c.region
 
 let path_to_region = function
-  Name var -> var.region
-| Path {region; _} -> region
+  Name var  -> var.region
+| Path path -> path.region

@@ -73,7 +73,7 @@ module type S =
     val mk_string   : lexeme -> Region.t -> token
     val mk_verbatim : lexeme -> Region.t -> token
     val mk_bytes    : lexeme -> Region.t -> token
-    val mk_constr   : lexeme -> Region.t -> token
+    val mk_uident   : lexeme -> Region.t -> token
     val mk_attr     : lexeme -> Region.t -> token
     val mk_lang     : lexeme Region.reg -> Region.t -> token
     val eof         : Region.t -> token
@@ -87,7 +87,7 @@ module type S =
     val is_nat      : token -> bool
     val is_mutez    : token -> bool
     val is_ident    : token -> bool
-    val is_constr   : token -> bool
+    val is_uident   : token -> bool
     val is_lang     : token -> bool
     val is_minus    : token -> bool
     val is_eof      : token -> bool

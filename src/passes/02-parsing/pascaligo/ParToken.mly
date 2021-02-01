@@ -13,7 +13,7 @@ module Token = Lexer_pascaligo.Token
 %token    <(Token.lexeme * Z.t) Region.reg> Nat      "<nat>"
 %token    <(Token.lexeme * Z.t) Region.reg> Mutez    "<mutez>"
 %token            <Token.lexeme Region.reg> Ident    "<ident>"
-%token            <Token.lexeme Region.reg> Constr   "<constr>"
+%token            <Token.lexeme Region.reg> UIdent   "<uident>"
 %token                  <string Region.reg> Attr     "[@attr]"
 %token <Token.lexeme Region.reg Region.reg> Lang     "[%lang"
 
@@ -44,7 +44,7 @@ module Token = Lexer_pascaligo.Token
 %token <Region.t> TIMES       "*"
 %token <Region.t> DOT         "."
 %token <Region.t> WILD        "_"
-%token <Region.t> CAT         "^"
+%token <Region.t> CARET       "^"
 
   (* Keywords *)
 
@@ -60,7 +60,6 @@ module Token = Lexer_pascaligo.Token
 %token <Region.t> False       "False"
 %token <Region.t> For         "for"
 %token <Region.t> Function    "function"
-%token <Region.t> Recursive   "recursive"
 %token <Region.t> From        "from"
 %token <Region.t> If          "if"
 %token <Region.t> In          "in"
@@ -68,14 +67,18 @@ module Token = Lexer_pascaligo.Token
 %token <Region.t> List        "list"
 %token <Region.t> Map         "map"
 %token <Region.t> Mod         "mod"
+%token <Region.t> Module      "module"
 %token <Region.t> Nil         "nil"
+%token <Region.t> Ctor_None   "None"
 %token <Region.t> Not         "not"
 %token <Region.t> Of          "of"
 %token <Region.t> Or          "or"
 %token <Region.t> Patch       "patch"
 %token <Region.t> Record      "record"
+%token <Region.t> Recursive   "recursive"
 %token <Region.t> Remove      "remove"
 %token <Region.t> Set         "set"
+%token <Region.t> Ctor_Some   "Some"
 %token <Region.t> Skip        "skip"
 %token <Region.t> Step        "step"
 %token <Region.t> Then        "then"
@@ -86,12 +89,6 @@ module Token = Lexer_pascaligo.Token
 %token <Region.t> Var         "var"
 %token <Region.t> While       "while"
 %token <Region.t> With        "with"
-%token <Region.t> Module      "module"
-
-  (* Data constructors *)
-
-%token <Region.t> C_None      "None"
-%token <Region.t> C_Some      "Some"
 
   (* Virtual tokens *)
 

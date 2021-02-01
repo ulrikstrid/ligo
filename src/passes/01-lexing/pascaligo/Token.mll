@@ -29,7 +29,7 @@ module T =
     | Nat      of (lexeme * Z.t) Region.reg
     | Mutez    of (lexeme * Z.t) Region.reg
     | Ident    of lexeme Region.reg
-    | Constr   of lexeme Region.reg
+    | UIdent   of lexeme Region.reg
     | Lang     of lexeme Region.reg Region.reg
     | Attr     of string Region.reg
 
@@ -60,75 +60,70 @@ module T =
     | TIMES    of Region.t  (* "*"   *)
     | DOT      of Region.t  (* "."   *)
     | WILD     of Region.t  (* "_"   *)
-    | CAT      of Region.t  (* "^"   *)
+    | CARET    of Region.t  (* "^"   *)
 
     (* Keywords *)
 
-    | And        of Region.t  (* and        *)
-    | Begin      of Region.t  (* begin      *)
-    | BigMap     of Region.t  (* big_map    *)
-    | Block      of Region.t  (* block      *)
-    | Case       of Region.t  (* case       *)
-    | Const      of Region.t  (* const      *)
-    | Contains   of Region.t  (* contains   *)
-    | Else       of Region.t  (* else       *)
-    | End        of Region.t  (* end        *)
-    | False      of Region.t  (* False      *)
-    | For        of Region.t  (* for        *)
-    | From       of Region.t  (* from       *)
-    | Function   of Region.t  (* function   *)
-    | Recursive  of Region.t  (* recursive  *)
-    | If         of Region.t  (* if         *)
-    | In         of Region.t  (* in         *)
-    | Is         of Region.t  (* is         *)
-    | List       of Region.t  (* list       *)
-    | Map        of Region.t  (* map        *)
-    | Mod        of Region.t  (* mod        *)
-    | Nil        of Region.t  (* nil        *)
-    | Not        of Region.t  (* not        *)
-    | Of         of Region.t  (* of         *)
-    | Or         of Region.t  (* or         *)
-    | Patch      of Region.t  (* patch      *)
-    | Record     of Region.t  (* record     *)
-    | Remove     of Region.t  (* remove     *)
-    | Set        of Region.t  (* set        *)
-    | Skip       of Region.t  (* skip       *)
-    | Step       of Region.t  (* step       *)
-    | Then       of Region.t  (* then       *)
-    | To         of Region.t  (* to         *)
-    | True       of Region.t  (* True       *)
-    | Type       of Region.t  (* type       *)
-    | Unit       of Region.t  (* Unit       *)
-    | Var        of Region.t  (* var        *)
-    | While      of Region.t  (* while      *)
-    | With       of Region.t  (* with       *)
-    | Module     of Region.t  (* Module     *)
-
-    (* Data constructors *)
-
-    | C_None of Region.t  (* None *)
-    | C_Some of Region.t  (* Some *)
+    | And       of Region.t  (* and        *)
+    | Begin     of Region.t  (* begin      *)
+    | BigMap    of Region.t  (* big_map    *)
+    | Block     of Region.t  (* block      *)
+    | Case      of Region.t  (* case       *)
+    | Const     of Region.t  (* const      *)
+    | Contains  of Region.t  (* contains   *)
+    | Else      of Region.t  (* else       *)
+    | End       of Region.t  (* end        *)
+    | False     of Region.t  (* False      *)
+    | For       of Region.t  (* for        *)
+    | From      of Region.t  (* from       *)
+    | Function  of Region.t  (* function   *)
+    | If        of Region.t  (* if         *)
+    | In        of Region.t  (* in         *)
+    | Is        of Region.t  (* is         *)
+    | List      of Region.t  (* list       *)
+    | Map       of Region.t  (* map        *)
+    | Mod       of Region.t  (* mod        *)
+    | Module    of Region.t  (* module     *)
+    | Nil       of Region.t  (* nil        *)
+    | Ctor_None of Region.t  (* None       *)
+    | Not       of Region.t  (* not        *)
+    | Of        of Region.t  (* of         *)
+    | Or        of Region.t  (* or         *)
+    | Patch     of Region.t  (* patch      *)
+    | Record    of Region.t  (* record     *)
+    | Recursive of Region.t  (* recursive  *)
+    | Remove    of Region.t  (* remove     *)
+    | Set       of Region.t  (* set        *)
+    | Ctor_Some of Region.t  (* Some       *)
+    | Skip      of Region.t  (* skip       *)
+    | Step      of Region.t  (* step       *)
+    | Then      of Region.t  (* then       *)
+    | To        of Region.t  (* to         *)
+    | True      of Region.t  (* True       *)
+    | Type      of Region.t  (* type       *)
+    | Unit      of Region.t  (* Unit       *)
+    | Var       of Region.t  (* var        *)
+    | While     of Region.t  (* while      *)
+    | With      of Region.t  (* with       *)
 
     (* Virtual tokens *)
 
     | EOF of Region.t
 
-
     (* Unlexing the tokens *)
 
     let gen_sym prefix =
       let count = ref 0 in
-      fun () -> incr count;
-             prefix ^ string_of_int !count
+      fun () -> incr count; prefix ^ string_of_int !count
 
-    let id_sym   = gen_sym "id"
-    and ctor_sym = gen_sym "C"
+    let id_sym  = gen_sym "id"
+    and uid_sym = gen_sym "U"
 
     let concrete = function
       (* Literals *)
 
         "Ident"    -> id_sym ()
-      | "Constr"   -> ctor_sym ()
+      | "UIdent"   -> uid_sym ()
       | "Int"      -> "1"
       | "Nat"      -> "1n"
       | "Mutez"    -> "1mutez"
@@ -165,14 +160,14 @@ module T =
       | "TIMES"    -> "*"
       | "DOT"      -> "."
       | "WILD"     -> "_"
-      | "CAT"      -> "^"
+      | "CARET"    -> "^"
 
       (* Keywords *)
 
       | "And"       -> "and"
       | "Begin"     -> "begin"
       | "BigMap"    -> "big_map"
-      | "Block"     ->  "block"
+      | "Block"     -> "block"
       | "Case"      -> "case"
       | "Const"     -> "const"
       | "Contains"  -> "contains"
@@ -182,21 +177,24 @@ module T =
       | "For"       -> "for"
       | "From"      -> "from"
       | "Function"  -> "function"
-      | "Recursive" -> "recursive"
       | "If"        -> "if"
       | "In"        -> "in"
       | "Is"        -> "is"
       | "List"      -> "list"
       | "Map"       -> "map"
       | "Mod"       -> "mod"
+      | "Module"    -> "module"
       | "Nil"       -> "nil"
+      | "Ctor_None" -> "None"
       | "Not"       -> "not"
       | "Of"        -> "of"
       | "Or"        -> "or"
       | "Patch"     -> "patch"
       | "Record"    -> "record"
+      | "Recursive" -> "recursive"
       | "Remove"    -> "remove"
       | "Set"       -> "set"
+      | "Ctor_Some" -> "Some"
       | "Skip"      -> "skip"
       | "Step"      -> "step"
       | "Then"      -> "then"
@@ -207,12 +205,6 @@ module T =
       | "Var"       -> "var"
       | "While"     -> "while"
       | "With"      -> "with"
-      | "Module"    -> "module"
-
-      (* Data constructors *)
-
-      | "C_None"    -> "None"
-      | "C_Some"    -> "Some"
 
       (* Virtual tokens *)
 
@@ -246,8 +238,8 @@ module T =
         region, sprintf "Mutez (%S, %s)" s (Z.to_string n)
     | Ident Region.{region; value} ->
         region, sprintf "Ident %S" value
-    | Constr Region.{region; value} ->
-        region, sprintf "Constr %S" value
+    | UIdent Region.{region; value} ->
+        region, sprintf "UIdent %S" value
     | Attr Region.{region; value} ->
         region, sprintf "Attr %S" value
     | Lang Region.{region; value} ->
@@ -280,7 +272,7 @@ module T =
     | TIMES    region -> region, "TIMES"
     | DOT      region -> region, "DOT"
     | WILD     region -> region, "WILD"
-    | CAT      region -> region, "CAT"
+    | CARET    region -> region, "CARET"
 
     (* Keywords *)
 
@@ -304,7 +296,9 @@ module T =
     | List       region -> region, "List"
     | Map        region -> region, "Map"
     | Mod        region -> region, "Mod"
+    | Module     region -> region, "Module"
     | Nil        region -> region, "Nil"
+    | Ctor_None  region -> region, "Ctor_None"
     | Not        region -> region, "Not"
     | Of         region -> region, "Of"
     | Or         region -> region, "Or"
@@ -312,6 +306,7 @@ module T =
     | Record     region -> region, "Record"
     | Remove     region -> region, "Remove"
     | Set        region -> region, "Set"
+    | Ctor_Some  region -> region, "Ctor_Some"
     | Skip       region -> region, "Skip"
     | Step       region -> region, "Step"
     | Then       region -> region, "Then"
@@ -322,17 +317,12 @@ module T =
     | Var        region -> region, "Var"
     | While      region -> region, "While"
     | With       region -> region, "With"
-    | Module     region -> region, "Module"
-
-    (* Data *)
-
-    | C_None  region -> region, "C_None"
-    | C_Some  region -> region, "C_Some"
 
     (* Virtual tokens *)
 
     | EOF region -> region, "EOF"
 
+    (* From tokens to lexemes *)
 
     let to_lexeme = function
       (* Literals *)
@@ -344,7 +334,7 @@ module T =
     | Nat i
     | Mutez i    -> fst i.Region.value
     | Ident id
-    | Constr id  -> id.Region.value
+    | UIdent id  -> id.Region.value
     | Attr a     -> a.Region.value
     | Lang lang  -> Region.(lang.value.value)
 
@@ -375,7 +365,7 @@ module T =
     | TIMES    _ -> "*"
     | DOT      _ -> "."
     | WILD     _ -> "_"
-    | CAT      _ -> "^"
+    | CARET    _ -> "^"
 
     (* Keywords *)
 
@@ -392,21 +382,24 @@ module T =
     | For        _ -> "for"
     | From       _ -> "from"
     | Function   _ -> "function"
-    | Recursive  _ -> "recursive"
     | If         _ -> "if"
     | In         _ -> "in"
     | Is         _ -> "is"
     | List       _ -> "list"
     | Map        _ -> "map"
     | Mod        _ -> "mod"
+    | Module     _ -> "module"
     | Nil        _ -> "nil"
+    | Ctor_None  _ -> "None"
     | Not        _ -> "not"
     | Of         _ -> "of"
     | Or         _ -> "or"
     | Patch      _ -> "patch"
     | Record     _ -> "record"
+    | Recursive  _ -> "recursive"
     | Remove     _ -> "remove"
     | Set        _ -> "set"
+    | Ctor_Some  _ -> "Some"
     | Skip       _ -> "skip"
     | Step       _ -> "step"
     | Then       _ -> "then"
@@ -417,30 +410,26 @@ module T =
     | Var        _ -> "var"
     | While      _ -> "while"
     | With       _ -> "with"
-    | Module     _ -> "module"
-
-    (* Data constructors *)
-
-    | C_None  _ -> "None"
-    | C_Some  _ -> "Some"
 
     (* Virtual tokens *)
 
     | EOF _ -> ""
 
-    (* CONVERSIONS *)
+    (* Converting a token to a string *)
 
     let to_string ~offsets mode token =
       let region, val_str = proj_token token in
       let reg_str = region#compact ~offsets mode
       in sprintf "%s: %s" reg_str val_str
 
+    (* Extracting the source region of a token *)
+
     let to_region token = proj_token token |> fst
 
-    (* LEXIS *)
+    (* Keywords *)
 
     let keywords = [
-      (fun reg -> And        reg);
+      (fun reg -> And        reg); (* Boolean operator *)
       (fun reg -> Begin      reg);
       (fun reg -> BigMap     reg);
       (fun reg -> Block      reg);
@@ -452,45 +441,42 @@ module T =
       (fun reg -> For        reg);
       (fun reg -> From       reg);
       (fun reg -> Function   reg);
-      (fun reg -> False      reg);
+      (fun reg -> False      reg); (* Data constructor *)
       (fun reg -> If         reg);
       (fun reg -> In         reg);
       (fun reg -> Is         reg);
       (fun reg -> List       reg);
       (fun reg -> Map        reg);
-      (fun reg -> Mod        reg);
-      (fun reg -> Nil        reg);
-      (fun reg -> Not        reg);
-      (fun reg -> C_None     reg);
+      (fun reg -> Mod        reg); (* Boolean operator *)
+      (fun reg -> Module     reg);
+      (fun reg -> Nil        reg); (* Data constructor *)
+      (fun reg -> Not        reg); (* Boolean operator *)
+      (fun reg -> Ctor_None  reg); (* Data constructor *)
       (fun reg -> Of         reg);
-      (fun reg -> Or         reg);
+      (fun reg -> Or         reg); (* Boolean operator *)
       (fun reg -> Patch      reg);
       (fun reg -> Record     reg);
       (fun reg -> Recursive  reg);
       (fun reg -> Remove     reg);
       (fun reg -> Set        reg);
-      (fun reg -> Skip       reg);
+      (fun reg -> Skip       reg); (* Instruction *)
       (fun reg -> Step       reg);
       (fun reg -> Then       reg);
       (fun reg -> To         reg);
-      (fun reg -> True       reg);
+      (fun reg -> True       reg); (* Data constructor *)
       (fun reg -> Type       reg);
-      (fun reg -> Unit       reg);
+      (fun reg -> Unit       reg); (* Data constructor *)
+      (fun reg -> Ctor_Some  reg); (* Data constructor *)
       (fun reg -> Var        reg);
       (fun reg -> While      reg);
-      (fun reg -> With       reg);
-      (fun reg -> Module     reg);
+      (fun reg -> With       reg)
     ]
+
+    (* Reserved identifiers *)
 
     let reserved = SSet.empty
 
-    let constructors = [
-      (fun reg -> False  reg);
-      (fun reg -> True   reg);
-      (fun reg -> Unit   reg);
-      (fun reg -> C_None reg);
-      (fun reg -> C_Some reg)
-    ]
+    (* Making the lexicon up *)
 
     let add map (key, value) = SMap.add key value map
 
@@ -499,16 +485,13 @@ module T =
       in List.fold_left apply SMap.empty list
 
     type lexis = {
-      kwd  : (Region.t -> token) SMap.t;
-      cstr : (Region.t -> token) SMap.t;
-      res  : SSet.t
+      kwd : (Region.t -> token) SMap.t;
+      res : SSet.t
     }
 
     let lexicon : lexis =
       let build = mk_map (fun f -> to_lexeme (f Region.ghost))
-      in {kwd  = build keywords;
-          cstr = build constructors;
-          res  = reserved}
+      in {kwd = build keywords; res = reserved}
 
     (* Keywords *)
 
@@ -535,7 +518,7 @@ let capital = ['A'-'Z']
 let letter  = small | capital
 let digit   = ['0'-'9']
 let ident   = small (letter | '_' | digit)*
-let constr  = capital (letter | '_' | digit)*
+let uident  = capital (letter | '_' | digit)*
 
 (* Rules *)
 
@@ -544,14 +527,14 @@ rule scan_ident region lexicon = parse
     if   SSet.mem value lexicon.res
     then Error Reserved_name
     else Ok (match SMap.find_opt value lexicon.kwd with
-               Some mk_kwd -> mk_kwd region
+               Some mk_kwd -> mk_kwd region (* Ident which are keywords *)
              |        None -> Ident Region.{region; value}) }
 
-and scan_constr region lexicon = parse
-  (constr as value) eof {
-    match SMap.find_opt value lexicon.cstr with
-      Some mk_cstr -> mk_cstr region
-    |         None -> Constr Region.{region; value} }
+and scan_uident region lexicon = parse
+  (uident as value) eof {
+    match SMap.find_opt value lexicon.kwd with
+      Some mk_kwd -> mk_kwd region (* UIdent which are keywords *)
+    |        None -> UIdent Region.{region; value} }
 
 (* END LEXER DEFINITION *)
 
@@ -636,7 +619,7 @@ and scan_constr region lexicon = parse
 
       (* Lexemes specific to PascaLIGO *)
 
-      | "^"   -> Ok (CAT      region)
+      | "^"   -> Ok (CARET    region)
       | "->"  -> Ok (ARROW    region)
       | "=/=" -> Ok (NE       region)
       | "#"   -> Ok (CONS     region)
@@ -646,16 +629,15 @@ and scan_constr region lexicon = parse
 
       | _ -> Error Invalid_symbol
 
-
-    (* Identifiers *)
+    (* Identifiers (starting with a smallcase letter) *)
 
     let mk_ident lexeme region =
       Lexing.from_string lexeme |> scan_ident region lexicon
 
-    (* Constructors/Modules *)
+    (* UIdent (starting with an uppercase letter) *)
 
-    let mk_constr lexeme region =
-      Lexing.from_string lexeme |> scan_constr region lexicon
+    let mk_uident lexeme region =
+      Lexing.from_string lexeme |> scan_uident region lexicon
 
     (* Attributes *)
 
@@ -674,14 +656,14 @@ and scan_constr region lexicon = parse
     let is_nat      = function Nat _      -> true | _ -> false
     let is_mutez    = function Mutez _    -> true | _ -> false
     let is_ident    = function Ident _    -> true | _ -> false
-    let is_constr   = function Constr _   -> true | _ -> false
+    let is_uident   = function UIdent _   -> true | _ -> false
     let is_lang     = function Lang _     -> true | _ -> false
     let is_minus    = function MINUS _    -> true | _ -> false
     let is_eof      = function EOF _      -> true | _ -> false
 
     let is_hexa = function
-      Constr Region.{value="A"|"a"|"B"|"b"|"C"|"c"
-                     |"D"|"d"|"E"|"e"|"F"|"f"; _} -> true
+      UIdent Region.{value="A"|"B"|"C"|"D"|"E"|"F"
+                          |"a"|"b"|"c"|"d"|"e"|"f"; _} -> true
     | _ -> false
 
     let is_sym = function
@@ -710,7 +692,7 @@ and scan_constr region lexicon = parse
     | TIMES _
     | DOT _
     | WILD _
-    | CAT _ -> true
+    | CARET _ -> true
     | _ -> false
   end
 

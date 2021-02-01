@@ -5,4 +5,5 @@ module type S =
   end
 
 type token = Token.t
-let process (tokens: token list) = tokens
+
+let process (tokens : token list) = tokens

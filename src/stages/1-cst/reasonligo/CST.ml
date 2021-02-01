@@ -1,4 +1,4 @@
-(* Abstract Syntax Tree (AST) for ReasonLIGO *)
+(* Concrete Syntax Tree (CST) for ReasonLIGO *)
 
 (* To disable warning about multiply-defined record labels. *)
 
@@ -11,7 +11,7 @@ open Utils
 
 (* Regions
 
-   The AST carries all the regions where tokens have been found by the
+   The CST carries all the regions where tokens have been found by the
    lexer, plus additional regions corresponding to whole subtrees
    (like entire expressions, patterns etc.). These regions are needed
    for error reporting and source-to-source transformations. To make
@@ -34,38 +34,35 @@ type kwd_and    = Region.t
 type kwd_else   = Region.t
 type kwd_false  = Region.t
 type kwd_fun    = Region.t
-type kwd_rec    = Region.t
 type kwd_if     = Region.t
 type kwd_let    = Region.t
-type kwd_switch = Region.t
 type kwd_mod    = Region.t
+type kwd_module = Region.t
+type ctor_None  = Region.t
 type kwd_not    = Region.t
 type kwd_of     = Region.t
 type kwd_or     = Region.t
+type kwd_rec    = Region.t
+type ctor_Some  = Region.t
+type kwd_switch = Region.t
 type kwd_then   = Region.t
 type kwd_true   = Region.t
 type kwd_type   = Region.t
-type kwd_module    = Region.t
-
-(* Data constructors *)
-
-type c_None  = Region.t
-type c_Some  = Region.t
 
 (* Symbols *)
 
 type arrow    = Region.t  (* "=>"  *)
-type cat      = Region.t  (* "++"  *)
+type plus2    = Region.t  (* "++"  *)
 type dot      = Region.t  (* "."   *)
 type ellipsis = Region.t  (* "..." *)
 type equal    = Region.t  (* "="   *)
 
 (* Arithmetic operators *)
 
-type minus    = Region.t  (* "-" *)
-type plus     = Region.t  (* "+" *)
-type slash    = Region.t  (* "/" *)
-type times    = Region.t  (* "*" *)
+type minus = Region.t  (* "-" *)
+type plus  = Region.t  (* "+" *)
+type slash = Region.t  (* "/" *)
+type times = Region.t  (* "*" *)
 
 (* Boolean operators *)
 
@@ -74,12 +71,12 @@ type bool_and = Region.t  (* "&&" *)
 
 (* Comparisons *)
 
-type equal_cmp = Region.t  (* "=="  *)
-type neq       = Region.t  (* "!=" *)
-type lt        = Region.t  (* "<"  *)
-type gt        = Region.t  (* ">"  *)
-type leq       = Region.t  (* "<=" *)
-type geq       = Region.t  (* ">=" *)
+type eq2 = Region.t  (* "=="  *)
+type neq = Region.t  (* "!=" *)
+type lt  = Region.t  (* "<"  *)
+type gt  = Region.t  (* ">"  *)
+type leq = Region.t  (* "<=" *)
+type geq = Region.t  (* ">=" *)
 
 (* Compounds *)
 
@@ -111,9 +108,9 @@ type variable    = string reg
 type module_name = string reg
 type fun_name    = string reg
 type type_name   = string reg
+type type_ctor   = string reg
 type field_name  = string reg
-type type_constr = string reg
-type constr      = string reg
+type ctor        = string reg
 type attribute   = string reg
 
 (* Parentheses *)
@@ -164,10 +161,10 @@ and let_binding = {
 (* Type declarations *)
 
 and type_decl = {
-  kwd_type   : kwd_type;
-  name       : type_name;
-  eq         : equal;
-  type_expr  : type_expr
+  kwd_type  : kwd_type;
+  name      : type_name;
+  eq        : equal;
+  type_expr : type_expr
 }
 
 and module_decl = {
@@ -175,22 +172,22 @@ and module_decl = {
   name       : module_name;
   eq         : equal;
   lbrace     : lbrace;
-  module_    : t;
-  rbrace     : rbrace;
+  structure  : t;
+  rbrace     : rbrace
 }
 
 and module_alias = {
   kwd_module : kwd_module;
   alias      : module_name;
   eq         : equal;
-  binders    : (module_name, dot) nsepseq;
+  mod_path   : (module_name, dot) nsepseq;
 }
 
 and type_expr =
   TProd   of cartesian
 | TSum    of sum_type reg
 | TRecord of field_decl reg ne_injection reg
-| TApp    of (type_constr * type_tuple) reg
+| TApp    of (type_ctor * type_tuple) reg
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
@@ -208,7 +205,7 @@ and sum_type = {
 }
 
 and variant = {
-  constr     : constr;
+  ctor       : ctor;
   arg        : (kwd_of * type_expr) option;
   attributes : attributes
 }
@@ -223,7 +220,7 @@ and field_decl = {
 and type_tuple = (type_expr, comma) nsepseq par reg
 
 and pattern =
-  PConstr   of constr_pattern
+  PCtor     of ctor_pattern
 | PUnit     of the_unit reg
 | PVar      of variable
 | PInt      of (lexeme * Z.t) reg
@@ -238,25 +235,25 @@ and pattern =
 | PRecord   of field_pattern reg ne_injection reg
 | PTyped    of typed_pattern reg
 
-and constr_pattern =
-  PNone      of c_None
-| PSomeApp   of (c_Some * pattern) reg
-| PFalse    of kwd_false
-| PTrue     of kwd_true
-| PConstrApp of (constr * pattern option) reg
+and ctor_pattern =
+  PNone    of ctor_None
+| PSomeApp of (ctor_Some * pattern) reg
+| PFalse   of kwd_false
+| PTrue    of kwd_true
+| PCtorApp of (ctor * pattern option) reg
 
 and list_pattern =
   PListComp of pattern injection reg
 | PCons     of cons_pattern reg
 
-and cons_pattern =
-  { lbracket : lbracket;
-    lpattern : pattern;
-    comma    : comma;
-    ellipsis : ellipsis;
-    rpattern : pattern;
-    rbracket : rbracket;
-  }
+and cons_pattern = {
+  lbracket : lbracket;
+  lpattern : pattern;
+  comma    : comma;
+  ellipsis : ellipsis;
+  rpattern : pattern;
+  rbracket : rbracket;
+}
 
 and typed_pattern = {
   pattern   : pattern;
@@ -278,7 +275,7 @@ and expr =
 | EArith    of arith_expr
 | EString   of string_expr
 | EList     of list_expr
-| EConstr   of constr_expr
+| ECtor     of ctor_expr
 | ERecord   of record reg
 | EProj     of projection reg
 | EModA     of expr module_access reg
@@ -323,26 +320,25 @@ and compound =
 and list_expr =
   ECons     of cons_expr reg
 | EListComp of expr injection reg
-(*| Append of (expr * append * expr) reg*)
 
-and cons_expr =
-  { lbracket : lbracket;
-    lexpr    : expr;
-    comma    : comma;
-    ellipsis : ellipsis;
-    rexpr    : expr;
-    rbracket : rbracket;
-  }
+and cons_expr = {
+  lbracket : lbracket;
+  lexpr    : expr;
+  comma    : comma;
+  ellipsis : ellipsis;
+  rexpr    : expr;
+  rbracket : rbracket;
+}
 
 and string_expr =
-  Cat      of cat bin_op reg
+  Cat      of plus2 bin_op reg
 | String   of string reg
 | Verbatim of string reg
 
-and constr_expr =
-  ENone      of c_None
-| ESomeApp   of (c_Some * expr) reg
-| EConstrApp of (constr * expr option) reg
+and ctor_expr =
+  ENone    of ctor_None
+| ESomeApp of (ctor_Some * expr) reg
+| ECtorApp of (ctor * expr option) reg
 
 and arith_expr =
   Add   of plus bin_op reg
@@ -378,19 +374,19 @@ and 'a un_op = {
 }
 
 and comp_expr =
-  Lt    of lt        bin_op reg
-| Leq   of leq       bin_op reg
-| Gt    of gt        bin_op reg
-| Geq   of geq       bin_op reg
-| Equal of equal_cmp bin_op reg
-| Neq   of neq       bin_op reg
+  Lt    of lt  bin_op reg
+| Leq   of leq bin_op reg
+| Gt    of gt  bin_op reg
+| Geq   of geq bin_op reg
+| Equal of eq2 bin_op reg
+| Neq   of neq bin_op reg
 
 and record = field_assign reg ne_injection
 
 and 'a module_access = {
   module_name : module_name;
   selector    : dot;
-  field       : 'a;
+  field       : 'a
 }
 
 and projection = {
@@ -433,7 +429,7 @@ and 'a case = {
   expr      : expr;
   lbrace    : lbrace;
   cases     : ('a case_clause reg, vbar) nsepseq reg;
-  rbrace : rbrace
+  rbrace    : rbrace
 }
 
 and 'a case_clause = {
@@ -455,33 +451,33 @@ and let_in = {
 and type_in = {
   type_decl : type_decl;
   semi      : semi;
-  body      : expr;
+  body      : expr
 }
 
 and mod_in = {
   mod_decl : module_decl;
   semi     : semi;
-  body     : expr;
+  body     : expr
 }
 
 and mod_alias = {
   mod_alias : module_alias;
   semi      : semi;
-  body      : expr;
+  body      : expr
 }
 
 and fun_expr = {
   binders    : pattern;
   lhs_type   : (colon * type_expr) option;
   arrow      : arrow;
-  body       : expr;
+  body       : expr
 }
 
 and cond_expr = {
-  kwd_if   : kwd_if;
-  test     : expr;
-  ifso     : (expr * semi option) braced;
-  ifnot    : (kwd_else * (expr * semi option) braced) option;
+  kwd_if : kwd_if;
+  test   : expr;
+  ifso   : (expr * semi option) braced;
+  ifnot  : (kwd_else * (expr * semi option) braced) option
 }
 
 (* Code injection.  Note how the field [language] wraps a region in
@@ -491,7 +487,7 @@ and cond_expr = {
 and code_inj = {
   language : string reg reg;
   code     : expr;
-  rbracket : rbracket;
+  rbracket : rbracket
 }
 
 (* Projecting regions from some nodes of the AST *)
@@ -522,27 +518,23 @@ let type_expr_to_region = function
 let list_pattern_to_region = function
   PListComp {region; _} | PCons {region; _} -> region
 
-let constr_pattern_to_region = function
+let ctor_pattern_to_region = function
   PNone region | PSomeApp {region;_}
 | PTrue region | PFalse region
-| PConstrApp {region;_} -> region
+| PCtorApp {region;_} -> region
 
 let pattern_to_region = function
 | PList p -> list_pattern_to_region p
-| PConstr c -> constr_pattern_to_region c
-| PUnit {region;_}
-| PTuple {region;_} | PVar {region;_}
-| PInt {region;_}
-| PString {region;_} | PVerbatim {region;_}
-| PWild region | PPar {region;_}
-| PRecord {region; _} | PTyped {region; _}
-| PNat {region; _} | PBytes {region; _}
+| PCtor c -> ctor_pattern_to_region c
+| PUnit {region;_}  | PTuple {region;_}  | PVar {region;_}
+| PInt {region;_}   | PString {region;_} | PVerbatim {region;_}
+| PWild region      | PPar {region;_}    | PRecord {region;_}
+| PTyped {region;_} | PNat {region;_}    | PBytes {region;_}
   -> region
 
 let bool_expr_to_region = function
-  Or {region;_} | And {region;_}
-| True region | False region
-| Not {region;_} -> region
+  Or {region;_} | And {region;_} | Not {region;_}
+| True region | False region -> region
 
 let comp_expr_to_region = function
   Lt {region;_} | Leq {region;_}
@@ -556,35 +548,34 @@ let logic_expr_to_region = function
 let arith_expr_to_region = function
   Add {region;_} | Sub {region;_} | Mult {region;_}
 | Div {region;_} | Mod {region;_} | Neg {region;_}
-| Int {region;_} | Mutez {region; _}
-| Nat {region; _} -> region
+| Int {region;_} | Mutez {region;_}
+| Nat {region;_} -> region
 
 let string_expr_to_region = function
   Verbatim {region;_} | String {region;_} | Cat {region;_} -> region
 
 let list_expr_to_region = function
-  ECons {region; _} | EListComp {region; _}
-(* | Append {region; _}*) -> region
+  ECons {region; _} | EListComp {region; _} -> region
 
-and constr_expr_to_region = function
+and ctor_expr_to_region = function
   ENone region
-| EConstrApp {region; _}
-| ESomeApp   {region; _} -> region
+| ECtorApp {region; _}
+| ESomeApp {region; _} -> region
 
 let expr_to_region = function
-  ELogic e -> logic_expr_to_region e
-| EArith e -> arith_expr_to_region e
+  ELogic e  -> logic_expr_to_region e
+| EArith e  -> arith_expr_to_region e
 | EString e -> string_expr_to_region e
-| EList e -> list_expr_to_region e
-| EConstr e -> constr_expr_to_region e
-| EAnnot {region;_ } | ELetIn {region;_}   | EFun {region;_}
-| ETypeIn {region;_ }| EModIn {region;_}   | EModAlias {region;_}
-| ECond {region;_}   | ETuple {region;_}   | ECase {region;_}
-| ECall {region;_}   | EVar {region; _}    | EProj {region; _}
-| EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
-| ESeq {region; _}   | ERecord {region; _} | EUpdate {region; _}
-| EModA {region; _}
-| ECodeInj {region; _} -> region
+| EList e   -> list_expr_to_region e
+| ECtor e   -> ctor_expr_to_region e
+| EAnnot {region;_}  | ELetIn {region;_}  | EFun {region;_}
+| ETypeIn {region;_} | EModIn {region;_}  | EModAlias {region;_}
+| ECond {region;_}   | ETuple {region;_}  | ECase {region;_}
+| ECall {region;_}   | EVar {region;_}    | EProj {region;_}
+| EUnit {region;_}   | EPar {region;_}    | EBytes {region;_}
+| ESeq {region;_}    | ERecord {region;_} | EUpdate {region;_}
+| EModA {region;_}   | ECodeInj {region;_}
+  -> region
 
 let declaration_to_region = function
 | ConstDecl   {region;_}

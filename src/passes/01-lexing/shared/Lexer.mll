@@ -26,7 +26,6 @@ module Make (Token : Token.S) =
     | Reserved_name of string
     | Invalid_symbol
     | Invalid_natural
-    (*    | Invalid_attribute*)
     | Unterminated_verbatim
 
       (* Style errors *)
@@ -172,10 +171,10 @@ module Make (Token : Token.S) =
       let token = Token.mk_attr attr region
       in state#enqueue token
 
-    let mk_constr state buffer =
+    let mk_uident state buffer =
       let open Core in
       let {region; lexeme; state} = state#sync buffer in
-      let token = Token.mk_constr lexeme region
+      let token = Token.mk_uident lexeme region
       in state#enqueue token
 
     let mk_lang lang state buffer =
@@ -217,8 +216,9 @@ let small      = ['a'-'z']
 let capital    = ['A'-'Z']
 let letter     = small | capital
 let ident      = small (letter | '_' | digit)*
-let constr     = capital (letter | '_' | digit)*
+let uident     = capital (letter | '_' | digit)*
 let attr       = letter (letter | '_' | ':' | digit)*
+let lang       = attr
 let hexa_digit = digit | ['A'-'F' 'a'-'f']
 let byte       = hexa_digit hexa_digit
 let byte_seq   = byte | byte (byte | '_')* byte
@@ -243,7 +243,7 @@ let symbol = common_sym | pascaligo_sym | cameligo_sym | reasonligo_sym
 
 rule scan state = parse
   ident                  { mk_ident        state lexbuf }
-| constr                 { mk_constr       state lexbuf }
+| uident                 { mk_uident       state lexbuf }
 | bytes                  { mk_bytes seq    state lexbuf }
 | natural 'n'            { mk_nat          state lexbuf }
 | natural "mutez"        { mk_mutez        state lexbuf }
@@ -255,7 +255,7 @@ rule scan state = parse
 | symbol                 { mk_sym          state lexbuf }
 | eof                    { mk_eof          state lexbuf }
 | "[@"  (attr as a) "]"  { mk_attr       a state lexbuf }
-| "[%"  (attr as l)      { mk_lang       l state lexbuf }
+| "[%"  (lang as l)      { mk_lang       l state lexbuf }
 
 | "{|" {
     let Core.{region; state; _} = state#sync lexbuf in

@@ -7,8 +7,8 @@ open! Region
 open! PPrint
 module Option = Simple_utils.Option
 
-let pp_par printer {value; _} =
-  string "(" ^^ nest 1 (printer value.inside ^^ string ")")
+let pp_par print {value; _} =
+  string "(" ^^ nest 1 (print value.inside ^^ string ")")
 
 let rec print ast =
   let app decl = group (pp_declaration decl) in
@@ -56,7 +56,7 @@ and pp_let_binding (binding : let_binding) =
   in prefix 2 1 (lhs ^^ string " =") (pp_expr let_rhs)
 
 and pp_pattern = function
-  PConstr   p -> pp_pconstr p
+  PCtor   p -> pp_pctor p
 | PUnit     _ -> string "()"
 | PVar      v -> pp_ident v
 | PInt      i -> pp_int i
@@ -71,18 +71,18 @@ and pp_pattern = function
 | PRecord   r -> pp_precord r
 | PTyped    t -> pp_ptyped t
 
-and pp_pconstr = function
+and pp_pctor = function
   PNone      _ -> string "None"
 | PSomeApp   p -> pp_patt_some p
 | PFalse    _ -> string "false"
 | PTrue     _ -> string "true"
-| PConstrApp a -> pp_pconstr_app a
+| PCtorApp a -> pp_pctor_app a
 
-and pp_pconstr_app {value; _} =
+and pp_pctor_app {value; _} =
   match value with
-    constr, None -> pp_ident constr
-  | constr, Some pat ->
-      prefix 4 1 (pp_ident constr) (pp_pattern pat)
+    ctor, None -> pp_ident ctor
+  | ctor, Some pat ->
+      prefix 4 1 (pp_ident ctor) (pp_pattern pat)
 
 and pp_patt_some {value; _} =
   prefix 4 1 (string "Some") (pp_pattern (snd value))
@@ -136,15 +136,15 @@ and pp_type_decl decl =
   ^^ group (nest padding (break 1 ^^ pp_type_expr type_expr))
 
 and pp_module_decl decl =
-  let {name; module_; _} = decl.value in
+  let {name; structure; _} = decl.value in
   string "module " ^^ pp_ident name ^^ string " =" ^^ string " struct"
-  ^^ group (nest 0 (break 1 ^^ print module_))
+  ^^ group (nest 0 (break 1 ^^ print structure))
   ^^ string " end"
 
 and pp_module_alias decl =
-  let {alias; binders; _} = decl.value in
+  let {alias; mod_path; _} = decl.value in
   string "module " ^^ pp_ident alias ^^ string " ="
-  ^^ group (nest 0 (break 1 ^^ pp_nsepseq "." pp_ident binders))
+  ^^ group (nest 0 (break 1 ^^ pp_nsepseq "." pp_ident mod_path))
 
 and pp_expr = function
   ECase       e -> pp_case_expr e
@@ -154,7 +154,7 @@ and pp_expr = function
 | EArith      e -> group (pp_arith_expr e)
 | EString     e -> pp_string_expr e
 | EList       e -> group (pp_list_expr e)
-| EConstr     e -> pp_constr_expr e
+| ECtor       e -> pp_ctor_expr e
 | ERecord     e -> pp_record_expr e
 | EProj       e -> pp_projection e
 | EModA       e -> pp_module_access pp_expr e
@@ -193,18 +193,20 @@ and pp_clause {value; _} =
 and pp_cond_expr {value; _} =
   let {test; ifso; ifnot; _} = value in
   let test = string "if " ^^ group (nest 3 (pp_expr test))
-  and ifso = string "then" ^^ group (nest 2 (break 1 ^^ pp_expr ifso))
-  in match ifnot with
+  and ifso = string "then" ^^ group (nest 2 (break 1 ^^ pp_expr ifso)) in
+  match ifnot with
     Some (_,ifnot) ->
-    let ifnot = string "else" ^^ group (nest 2 (break 1 ^^ pp_expr ifnot)) in
-    test ^/^ ifso ^/^ ifnot
+      let ifnot =
+        string "else" ^^ group (nest 2 (break 1 ^^ pp_expr ifnot))
+      in test ^/^ ifso ^/^ ifnot
   | None ->
-    test ^/^ ifso
+      test ^/^ ifso
 
 and pp_annot_expr {value; _} =
   let expr, _, type_expr = value.inside in
-    group (string "(" ^^ nest 1 (pp_expr expr ^/^ string ": "
-    ^^ pp_type_expr type_expr ^^ string ")"))
+  group (string "("
+         ^^ nest 1 (pp_expr expr ^/^ string ": "
+                    ^^ pp_type_expr type_expr ^^ string ")"))
 
 and pp_logic_expr = function
   BoolExpr e -> pp_bool_expr e
@@ -258,11 +260,11 @@ and pp_list_expr = function
 
 and pp_injection :
   'a.('a -> document) -> 'a injection reg -> document =
-  fun printer {value; _} ->
+  fun print {value; _} ->
     let {compound; elements; _} = value in
-    let sep = string ";" ^^ break 1 in
+    let sep      = string ";" ^^ break 1 in
     let elements = Utils.sepseq_to_list elements in
-    let elements = separate_map sep printer elements in
+    let elements = separate_map sep print elements in
     match Option.map pp_compound compound with
       None -> elements
     | Some (opening, closing) ->
@@ -273,20 +275,20 @@ and pp_compound = function
 | Braces (_, _)   -> ("{","}")
 | Brackets (_, _) -> ("[","]")
 
-and pp_constr_expr = function
+and pp_ctor_expr = function
   ENone      _ -> string "None"
 | ESomeApp   a -> pp_some a
-| EConstrApp a -> pp_constr_app a
+| ECtorApp a -> pp_ctor_app a
 
 and pp_some {value=_, e; _} =
   prefix 4 1 (string "Some") (pp_expr e)
 
-and pp_constr_app {value; _} =
-  let constr, arg = value in
-  let constr = string constr.value in
+and pp_ctor_app {value; _} =
+  let ctor, arg = value in
+  let ctor = string ctor.value in
   match arg with
-      None -> constr
-  | Some e -> prefix 2 1 constr (pp_expr e)
+      None -> ctor
+  | Some e -> prefix 2 1 ctor (pp_expr e)
 
 and pp_record_expr ne_inj = group (pp_ne_injection pp_field_assign ne_inj)
 
@@ -296,27 +298,26 @@ and pp_field_assign {value; _} =
 
 and pp_ne_injection :
   'a.('a -> document) -> 'a ne_injection reg -> document =
-  fun printer {value; _} ->
+  fun print {value; _} ->
     let {compound; ne_elements; attributes; _} = value in
-    let elements = pp_nsepseq ";" printer ne_elements in
+    let elements = pp_nsepseq ";" print ne_elements in
     let inj =
       match Option.map pp_compound compound with
         None -> elements
       | Some (opening, closing) ->
-         string opening ^^ nest 1 elements ^^ string closing in
-    let inj = if attributes = [] then inj
-              else pp_attributes attributes ^/^ inj
-    in inj
+         string opening ^^ nest 1 elements ^^ string closing
+    in if attributes = [] then inj
+       else pp_attributes attributes ^/^ inj
 
 and pp_nsepseq :
   'a.string -> ('a -> document) -> ('a, t) Utils.nsepseq -> document =
-  fun sep printer elements ->
+  fun sep print elements ->
     let elems = Utils.nsepseq_to_list elements
     and sep   = string sep ^^ break 1
-    in separate_map sep printer elems
+    in separate_map sep print elems
 
 and pp_nseq : 'a.('a -> document) -> 'a Utils.nseq -> document =
-  fun printer (head, tail) -> separate_map (break 1) printer (head::tail)
+  fun print (head, tail) -> separate_map (break 1) print (head::tail)
 
 and pp_projection {value; _} =
   let {struct_name; field_path; _} = value in
@@ -325,10 +326,11 @@ and pp_projection {value; _} =
   let fields = separate_map sep pp_selection fields in
   group (pp_ident struct_name ^^ string "." ^^ break 0 ^^ fields)
 
-and pp_module_access : type a.(a -> document) -> a module_access reg -> document
-= fun f {value; _} ->
-  let {module_name; field; _} = value in
-  group (pp_ident module_name ^^ string "." ^^ break 0 ^^ f field)
+and pp_module_access :
+  type a.(a -> document) -> a module_access reg -> document =
+  fun print {value; _} ->
+    let {module_name; field; _} = value in
+    group (pp_ident module_name ^^ string "." ^^ break 0 ^^ print field)
 
 and pp_selection = function
   FieldName v   -> string v.value
@@ -395,19 +397,19 @@ and pp_type_in {value; _} =
 
 and pp_mod_in {value; _} =
   let {mod_decl; body; _} = value in
-  let {name; module_; _} = mod_decl
+  let {name; structure; _} = mod_decl
   in string "module"
      ^^ prefix 2 1 (pp_ident name ^^ string " = struct")
-                   (print module_)
+                   (print structure)
      ^^ string " end"
      ^^ string " in" ^^ hardline ^^ group (pp_expr body)
 
 and pp_mod_alias {value; _} =
   let {mod_alias; body; _} = value in
-  let {alias; binders; _} = mod_alias
+  let {alias; mod_path; _} = mod_alias
   in string "module"
      ^^ prefix 2 1 (pp_ident alias ^^ string " =")
-                   (pp_nsepseq "." pp_ident binders)
+                   (pp_nsepseq "." pp_ident mod_path)
      ^^ string " end"
      ^^ string " in" ^^ hardline ^^ group (pp_expr body)
 
@@ -476,9 +478,9 @@ and pp_sum_type {value; _} =
   else pp_attributes attributes ^/^ whole
 
 and pp_variant {value; _} =
-  let {constr; arg; attributes=attr} = value in
-  let pre = if attr = [] then pp_ident constr
-            else group (pp_attributes attr ^/^ pp_ident constr) in
+  let {ctor; arg; attributes=attr} = value in
+  let pre = if attr = [] then pp_ident ctor
+            else group (pp_attributes attr ^/^ pp_ident ctor) in
   match arg with
     None -> pre
   | Some (_,e) -> prefix 4 1 (pre ^^ string " of") (pp_type_expr e)
@@ -494,7 +496,7 @@ and pp_field_decl {value; _} =
   in prefix 2 1 (name ^^ string " :") t_expr
 
 and pp_type_app {value=ctor, tuple; _} =
-  pp_type_tuple tuple ^^ group (nest 2 (break 1 ^^ pp_type_constr ctor))
+  pp_type_tuple tuple ^^ group (nest 2 (break 1 ^^ pp_type_ctor ctor))
 
 and pp_type_tuple {value; _} =
   let head, tail = value.inside in
@@ -510,7 +512,7 @@ and pp_type_tuple {value; _} =
       pp_type_expr head ^^ string "," ^^ app (List.map snd tail)
     in string "(" ^^ nest 1 (components ^^ string ")")
 
-and pp_type_constr ctor = string ctor.value
+and pp_type_ctor ctor = string ctor.value
 
 and pp_fun_type {value; _} =
   let lhs, _, rhs = value in

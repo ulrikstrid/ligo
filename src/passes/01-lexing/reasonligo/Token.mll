@@ -28,13 +28,13 @@ module T =
     | Nat      of (lexeme * Z.t) Region.reg
     | Mutez    of (lexeme * Z.t) Region.reg
     | Ident    of lexeme Region.reg
-    | Constr   of lexeme Region.reg
+    | UIdent   of lexeme Region.reg
     | Lang     of lexeme Region.reg Region.reg
     | Attr     of string Region.reg
 
     (* Symbols *)
 
-    | CAT      of Region.t (* "++"  *)
+    | PLUS2    of Region.t (* "++"  *)
     | MINUS    of Region.t (* "-"   *)
     | PLUS     of Region.t (* "+"   *)
     | SLASH    of Region.t (* "/"   *)
@@ -54,7 +54,7 @@ module T =
     | ARROW    of Region.t (* "=>"  *)
     | WILD     of Region.t (* "_"   *)
     | EQ       of Region.t (* "="   *)
-    | EQEQ     of Region.t (* "=="  *)
+    | EQ2      of Region.t (* "=="  *)
     | NE       of Region.t (* "!="  *)
     | LT       of Region.t (* "<"   *)
     | GT       of Region.t (* ">"   *)
@@ -66,43 +66,39 @@ module T =
 
     (* Keywords *)
 
-    | Else   of Region.t  (* else   *)
-    | False  of Region.t  (* false  *)
-    | If     of Region.t  (* if     *)
-    | Let    of Region.t  (* let    *)
-    | Mod    of Region.t  (* mod    *)
-    | Or     of Region.t  (* or     *)
-    | Rec    of Region.t  (* rec    *)
-    | Switch of Region.t  (* switch *)
-    | True   of Region.t  (* true   *)
-    | Type   of Region.t  (* type   *)
-    | Module of Region.t  (* module *)
-
-    (* Data constructors *)
-
-    | C_None  of Region.t  (* None *)
-    | C_Some  of Region.t  (* Some *)
+    | Else      of Region.t  (* else   *)
+    | False     of Region.t  (* false  *)
+    | If        of Region.t  (* if     *)
+    | Let       of Region.t  (* let    *)
+    | Mod       of Region.t  (* mod    *)
+    | Module    of Region.t  (* module *)
+    | Ctor_None of Region.t  (* None   *)
+    | Or        of Region.t  (* or     *)
+    | Rec       of Region.t  (* rec    *)
+    | Ctor_Some of Region.t  (* Some   *)
+    | Switch    of Region.t  (* switch *)
+    | True      of Region.t  (* true   *)
+    | Type      of Region.t  (* type   *)
 
     (* Virtual tokens *)
 
-    | EOF of Region.t
+    | EOF    of Region.t
     | ES6FUN of Region.t
 
     (* Unlexing the tokens *)
 
     let gen_sym prefix =
       let count = ref 0 in
-      fun () -> incr count;
-             prefix ^ string_of_int !count
+      fun () -> incr count; prefix ^ string_of_int !count
 
     let id_sym   = gen_sym "id"
     and ctor_sym = gen_sym "C"
 
     let concrete = function
-        (* Identifiers, labels, numbers and strings *)
+      (* Identifiers, labels, numbers and strings *)
 
-      "Ident"   -> id_sym ()
-    | "Constr"  -> ctor_sym ()
+      "Ident"    -> id_sym ()
+    | "UIdent"   -> ctor_sym ()
     | "Int"      -> "1"
     | "Nat"      -> "1n"
     | "Mutez"    -> "1mutez"
@@ -114,7 +110,7 @@ module T =
 
     (* Symbols *)
 
-    | "CAT" -> "++"
+    | "PLUS2" -> "++"
 
     (* Arithmetics *)
 
@@ -144,17 +140,17 @@ module T =
 
     (* Wildcard *)
 
-    | "WILD" ->     "_"
+    | "WILD" -> "_"
 
     (* Comparisons *)
 
-    | "EQ"   -> "="
-    | "EQEQ" -> "=="
-    | "NE"   -> "!="
-    | "LT"   -> "<"
-    | "GT"   -> ">"
-    | "LE"   -> "<="
-    | "GE"   -> ">="
+    | "EQ"  -> "="
+    | "EQ2" -> "=="
+    | "NE"  -> "!="
+    | "LT"  -> "<"
+    | "GT"  -> ">"
+    | "LE"  -> "<="
+    | "GE"  -> ">="
 
     (* Logic *)
 
@@ -164,26 +160,24 @@ module T =
 
     (* Keywords *)
 
-    | "Else"    -> "else"
-    | "False"   -> "false"
-    | "If"      -> "if"
-    | "Let"     -> "let"
-    | "Mod"     -> "mod"
-    | "Or"      -> "or"
-    | "Rec"     -> "rec"
-    | "Switch"  -> "switch"
-    | "True"    -> "true"
-    | "Type"    -> "type"
-    | "Module"  -> "module"
-
-    (* Data constructors *)
-
-    | "C_None"  -> "None"
-    | "C_Some"  -> "Some"
+    | "Else"      -> "else"
+    | "False"     -> "false"
+    | "If"        -> "if"
+    | "Let"       -> "let"
+    | "Mod"       -> "mod"
+    | "Module"    -> "module"
+    | "Ctor_None" -> "None"
+    | "Or"        -> "or"
+    | "Rec"       -> "rec"
+    | "Ctor_Some" -> "Some"
+    | "Switch"    -> "switch"
+    | "True"      -> "true"
+    | "Type"      -> "type"
 
     (* Virtual tokens *)
 
-    | "EOF" -> ""
+    | "EOF"    -> ""
+    | "ES6FUN" -> ""
 
     (* This case should not happen! *)
 
@@ -213,8 +207,8 @@ module T =
         region, sprintf "Mutez (%S, %s)" s (Z.to_string n)
     | Ident Region.{region; value} ->
         region, sprintf "Ident %S" value
-    | Constr Region.{region; value} ->
-        region, sprintf "Constr %S" value
+    | UIdent Region.{region; value} ->
+        region, sprintf "UIdent %S" value
     | Lang Region.{region; value} ->
         region, sprintf "Lang %S" (value.Region.value)
     | Attr Region.{region; value} ->
@@ -222,50 +216,55 @@ module T =
 
     (* Symbols *)
 
-    | CAT      region -> region, "CAT"
-    | MINUS    region -> region, "MINUS"
-    | PLUS     region -> region, "PLUS"
-    | SLASH    region -> region, "SLASH"
-    | TIMES    region -> region, "TIMES"
-    | LPAR     region -> region, "LPAR"
-    | RPAR     region -> region, "RPAR"
-    | LBRACKET region -> region, "LBRACKET"
-    | RBRACKET region -> region, "RBRACKET"
-    | LBRACE   region -> region, "LBRACE"
-    | RBRACE   region -> region, "RBRACE"
-    | COMMA    region -> region, "COMMA"
-    | SEMI     region -> region, "SEMI"
-    | VBAR     region -> region, "VBAR"
-    | COLON    region -> region, "COLON"
-    | DOT      region -> region, "DOT"
-    | ELLIPSIS region -> region, "ELLIPSIS"
-    | WILD     region -> region, "WILD"
-    | EQ       region -> region, "EQ"
-    | EQEQ     region -> region, "EQEQ"
-    | NE       region -> region, "NE"
-    | LT       region -> region, "LT"
-    | GT       region -> region, "GT"
-    | LE       region -> region, "LE"
-    | GE       region -> region, "GE"
-    | ARROW    region -> region, "ARROW"
-    | NOT      region -> region, "NOT"
-    | BOOL_OR  region -> region, "BOOL_OR"
-    | BOOL_AND region -> region, "BOOL_AND"
-    | Else     region -> region, "Else"
-    | False    region -> region, "False"
-    | If       region -> region, "If"
-    | Let      region -> region, "Let"
-    | Rec      region -> region, "Rec"
-    | Switch   region -> region, "Switch"
-    | Mod      region -> region, "Mod"
-    | Or       region -> region, "Or"
-    | True     region -> region, "True"
-    | Type     region -> region, "Type"
-    | C_None   region -> region, "C_None"
-    | C_Some   region -> region, "C_Some"
-    | EOF      region -> region, "EOF"
-    | ES6FUN   region -> region, "ES6FUN"
-    | Module   region -> region, "Module"
+    | PLUS2     region -> region, "PLUS2"
+    | MINUS     region -> region, "MINUS"
+    | PLUS      region -> region, "PLUS"
+    | SLASH     region -> region, "SLASH"
+    | TIMES     region -> region, "TIMES"
+    | LPAR      region -> region, "LPAR"
+    | RPAR      region -> region, "RPAR"
+    | LBRACKET  region -> region, "LBRACKET"
+    | RBRACKET  region -> region, "RBRACKET"
+    | LBRACE    region -> region, "LBRACE"
+    | RBRACE    region -> region, "RBRACE"
+    | COMMA     region -> region, "COMMA"
+    | SEMI      region -> region, "SEMI"
+    | VBAR      region -> region, "VBAR"
+    | COLON     region -> region, "COLON"
+    | DOT       region -> region, "DOT"
+    | ELLIPSIS  region -> region, "ELLIPSIS"
+    | WILD      region -> region, "WILD"
+    | EQ        region -> region, "EQ"
+    | EQ2       region -> region, "EQ2"
+    | NE        region -> region, "NE"
+    | LT        region -> region, "LT"
+    | GT        region -> region, "GT"
+    | LE        region -> region, "LE"
+    | GE        region -> region, "GE"
+    | ARROW     region -> region, "ARROW"
+    | NOT       region -> region, "NOT"
+    | BOOL_OR   region -> region, "BOOL_OR"
+    | BOOL_AND  region -> region, "BOOL_AND"
+
+    (* Keywords *)
+
+    | Else      region -> region, "Else"
+    | False     region -> region, "False"
+    | If        region -> region, "If"
+    | Let       region -> region, "Let"
+    | Module    region -> region, "Module"
+    | Ctor_None region -> region, "Ctor_None"
+    | Rec       region -> region, "Rec"
+    | Switch    region -> region, "Switch"
+    | Mod       region -> region, "Mod"
+    | Or        region -> region, "Or"
+    | Ctor_Some region -> region, "Ctor_Some"
+    | True      region -> region, "True"
+    | Type      region -> region, "Type"
+    | EOF       region -> region, "EOF"
+    | ES6FUN    region -> region, "ES6FUN"
+
+    (* From tokens to lexemes *)
 
     let to_lexeme = function
       (* Literals *)
@@ -277,13 +276,13 @@ module T =
     | Nat i
     | Mutez i    -> fst i.Region.value
     | Ident id   -> id.Region.value
-    | Constr id  -> id.Region.value
+    | UIdent id  -> id.Region.value
     | Attr a     -> sprintf "[@%s]" a.Region.value
     | Lang lang  -> Region.(lang.value.value)
 
     (* Symbols *)
 
-    | CAT      _ -> "++"
+    | PLUS2    _ -> "++"
     | MINUS    _ -> "-"
     | PLUS     _ -> "+"
     | SLASH    _ -> "/"
@@ -302,7 +301,7 @@ module T =
     | ELLIPSIS _ -> "..."
     | WILD     _ -> "_"
     | EQ       _ -> "="
-    | EQEQ     _ -> "=="
+    | EQ2      _ -> "=="
     | NE       _ -> "!="
     | LT       _ -> "<"
     | GT       _ -> ">"
@@ -315,100 +314,59 @@ module T =
 
     (* Keywords *)
 
-    | Else    _ -> "else"
-    | False   _ -> "false"
-    | If      _ -> "if"
-    | Let     _ -> "let"
-    | Mod     _ -> "mod"
-    | Or      _ -> "or"
-    | Rec     _ -> "rec"
-    | Switch  _ -> "switch"
-    | True    _ -> "true"
-    | Type    _ -> "type"
-    | Module  _ -> "module"
-
-    (* Data constructors *)
-
-    | C_None  _ -> "None"
-    | C_Some  _ -> "Some"
+    | Else      _ -> "else"
+    | False     _ -> "false"
+    | If        _ -> "if"
+    | Let       _ -> "let"
+    | Mod       _ -> "mod"
+    | Ctor_None _ -> "None"
+    | Or        _ -> "or"
+    | Rec       _ -> "rec"
+    | Ctor_Some _ -> "Some"
+    | Switch    _ -> "switch"
+    | True      _ -> "true"
+    | Type      _ -> "type"
+    | Module    _ -> "module"
 
     (* Virtual tokens *)
 
-    | EOF _ -> ""
+    | EOF    _ -> ""
     | ES6FUN _ -> ""
 
-    (* CONVERSIONS *)
+    (* Converting a token to a string *)
 
     let to_string ~offsets mode token =
       let region, val_str = proj_token token in
       let reg_str = region#compact ~offsets mode
       in sprintf "%s: %s" reg_str val_str
 
+    (* Extracting the source region of a token *)
+
     let to_region token = proj_token token |> fst
 
-    (* LEXIS *)
+    (* Keywords *)
 
     let keywords = [
-      (fun reg -> Else   reg);
-      (fun reg -> False  reg);
-      (fun reg -> If     reg);
-      (fun reg -> Let    reg);
-      (fun reg -> Rec    reg);
-      (fun reg -> Switch reg);
-      (fun reg -> Mod    reg);
-      (fun reg -> Or     reg);
-      (fun reg -> True   reg);
-      (fun reg -> Type   reg);
-      (fun reg -> Module reg)
+      (fun reg -> Else      reg);
+      (fun reg -> False     reg); (* Data constructor *)
+      (fun reg -> If        reg);
+      (fun reg -> Let       reg);
+      (fun reg -> Mod       reg); (* Boolean operator *)
+      (fun reg -> Module    reg);
+      (fun reg -> Ctor_None reg); (* Data constructor *)
+      (fun reg -> Or        reg); (* Boolean operator *)
+      (fun reg -> Rec       reg);
+      (fun reg -> Ctor_Some reg); (* Data constructor *)
+      (fun reg -> Switch    reg);
+      (fun reg -> True      reg); (* Data constructor *)
+      (fun reg -> Type      reg)
     ]
 
-    let reserved =
-      let open SSet in
-      empty
-      |> add "as"
-      |> add "asr"
-      |> add "begin"
-      |> add "class"
-      |> add "constraint"
-      |> add "do"
-      |> add "done"
-      |> add "downto"
-      |> add "end"
-      |> add "exception"
-      |> add "external"
-      |> add "for"
-      |> add "function"
-      |> add "functor"
-      |> add "inherit"
-      |> add "initializer"
-      |> add "lazy"
-      |> add "lsl"
-      |> add "lsr"
-      |> add "match"
-      |> add "method"
-      |> add "mutable"
-      |> add "new"
-      |> add "nonrec"
-      |> add "object"
-      |> add "of"
-      |> add "open"
-      |> add "private"
-      |> add "sig"
-      |> add "struct"
-      |> add "then"
-      |> add "to"
-      |> add "try"
-      |> add "val"
-      |> add "virtual"
-      |> add "when"
-      |> add "while"
-      |> add "pri"
-      |> add "pub"
+    (* Reserved identifiers *)
 
-    let constructors = [
-      (fun reg -> C_None reg);
-      (fun reg -> C_Some reg)
-    ]
+    let reserved = SSet.empty
+
+    (* Making the lexicon up *)
 
     let add map (key, value) = SMap.add key value map
 
@@ -418,15 +376,12 @@ module T =
 
     type lexis = {
       kwd  : (Region.t -> token) SMap.t;
-      cstr : (Region.t -> token) SMap.t;
       res  : SSet.t
     }
 
     let lexicon : lexis =
       let build = mk_map (fun f -> to_lexeme (f Region.ghost))
-      in {kwd  = build keywords;
-          cstr = build constructors;
-          res  = reserved}
+      in {kwd = build keywords; res = reserved}
 
     (* Keywords *)
 
@@ -453,7 +408,7 @@ let capital = ['A'-'Z']
 let letter  = small | capital
 let digit   = ['0'-'9']
 let ident   = small (letter | '_' | digit)*
-let constr  = capital (letter | '_' | digit)*
+let uident  = capital (letter | '_' | digit)*
 
 (* Rules *)
 
@@ -465,11 +420,11 @@ rule scan_ident region lexicon = parse
                Some mk_kwd -> mk_kwd region
              |        None -> Ident Region.{region; value}) }
 
-and scan_constr region lexicon = parse
-  (constr as value) eof {
-    match SMap.find_opt value lexicon.cstr with
+and scan_uident region lexicon = parse
+  (uident as value) eof {
+    match SMap.find_opt value lexicon.kwd with
       Some mk_cstr -> mk_cstr region
-    |         None -> Constr Region.{region; value} }
+    |         None -> UIdent Region.{region; value} }
 
 (* END LEXER DEFINITION *)
 
@@ -559,24 +514,23 @@ and scan_constr region lexicon = parse
       | "&&"   -> Ok (BOOL_AND region)
       | "..." ->  Ok (ELLIPSIS region)
       | "=>"  ->  Ok (ARROW    region)
-      | "=="  ->  Ok (EQEQ     region)
+      | "=="  ->  Ok (EQ2      region)
       | "!"   ->  Ok (NOT      region)
-      | "++"  ->  Ok (CAT      region)
+      | "++"  ->  Ok (PLUS2    region)
 
       (* Invalid symbols *)
 
       | _ ->  Error Invalid_symbol
 
-
-    (* Identifiers *)
+    (* Identifiers (starting with a smallcase letter) *)
 
     let mk_ident lexeme region =
       Lexing.from_string lexeme |> scan_ident region lexicon
 
-    (* Constructors *)
+    (* UIdent (starting with an uppercase letter) *)
 
-    let mk_constr lexeme region =
-      Lexing.from_string lexeme |> scan_constr region lexicon
+    let mk_uident lexeme region =
+      Lexing.from_string lexeme |> scan_uident region lexicon
 
     (* Attributes *)
 
@@ -595,18 +549,18 @@ and scan_constr region lexicon = parse
     let is_nat      = function Nat _      -> true | _ -> false
     let is_mutez    = function Mutez _    -> true | _ -> false
     let is_ident    = function Ident _    -> true | _ -> false
-    let is_constr   = function Constr _   -> true | _ -> false
+    let is_uident   = function UIdent _   -> true | _ -> false
     let is_lang     = function Lang _     -> true | _ -> false
     let is_minus    = function MINUS _    -> true | _ -> false
     let is_eof      = function EOF _      -> true | _ -> false
 
     let is_hexa = function
-      Constr Region.{value="A"|"a"|"B"|"b"|"C"|"c"
-                     |"D"|"d"|"E"|"e"|"F"|"f"; _} -> true
+      UIdent Region.{value="A"|"B"|"C"|"D"|"E"|"F"
+                          |"a"|"b"|"c"|"d"|"e"|"f"; _} -> true
     | _ -> false
 
     let is_sym = function
-      CAT _
+      PLUS2 _
     | MINUS _
     | PLUS _
     | SLASH _
@@ -626,7 +580,7 @@ and scan_constr region lexicon = parse
     | ARROW _
     | WILD _
     | EQ _
-    | EQEQ _
+    | EQ2 _
     | NE _
     | LT _
     | GT _

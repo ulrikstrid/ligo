@@ -86,9 +86,9 @@ let print_var state {region; value} =
             (compact state region)value
   in Buffer.add_string state#buffer line
 
-let print_constr state {region; value} =
+let print_ctor state {region; value} =
   let line =
-    sprintf "%s: Constr \"%s\"\n"
+    sprintf "%s: Ctor \"%s\"\n"
             (compact state region) value
   in Buffer.add_string state#buffer line
 
@@ -155,18 +155,18 @@ and print_statement state = function
     print_var       state name;
     print_token     state eq "=";
     print_type_expr state type_expr
-| ModuleDecl {value={kwd_module; name; eq; kwd_struct; module_; kwd_end}; _} ->
+| ModuleDecl {value={kwd_module; name; eq; kwd_struct; structure; kwd_end}; _} ->
     print_token  state kwd_module "module";
     print_var    state name;
     print_token  state eq "=";
     print_token  state kwd_struct "struct";
-    print_tokens state module_;
+    print_tokens state structure;
     print_token  state kwd_end "end";
-| ModuleAlias {value={kwd_module; alias; eq; binders}; _} ->
+| ModuleAlias {value={kwd_module; alias; eq; mod_path}; _} ->
     print_token   state kwd_module "module";
     print_var     state alias;
     print_token   state eq "=";
-    print_nsepseq state "." print_var binders;
+    print_nsepseq state "." print_var mod_path;
 
 and print_type_expr state = function
   TProd prod      -> print_cartesian state prod
@@ -194,9 +194,9 @@ and print_fun_type state {value; _} =
   print_type_expr state range
 
 and print_type_app state {value; _} =
-  let type_constr, type_tuple = value in
+  let type_ctor, type_tuple = value in
   print_type_tuple state type_tuple;
-  print_var        state type_constr
+  print_var        state type_ctor
 
 and print_type_tuple state {value; _} =
   let {lpar; inside; rpar} = value in
@@ -243,9 +243,9 @@ and print_cartesian state Region.{value;_} =
   print_nsepseq state "*" print_type_expr value
 
 and print_variant state {value; _} =
-  let {constr; arg; attributes=attr} = value in
+  let {ctor; arg; attributes=attr} = value in
   print_attributes state attr;
-  print_constr state constr;
+  print_ctor state ctor;
   match arg with
     None -> ()
   | Some (kwd_of, t_expr) ->
@@ -327,8 +327,8 @@ and print_pattern state = function
     print_token   state lpar "(";
     print_pattern state p;
     print_token   state rpar ")"
-| PConstr p ->
-    print_constr_pattern state p
+| PCtor p ->
+    print_ctor_pattern state p
 | PRecord r ->
     print_record_pattern state r
 | PTyped t ->
@@ -359,12 +359,12 @@ and print_field_pattern state {value; _} =
   print_token   state eq "=";
   print_pattern state pattern
 
-and print_constr_pattern state = function
+and print_ctor_pattern state = function
   PNone p      -> print_none_pattern state p
 | PSomeApp p   -> print_some_app_pattern state p
 | PFalse kwd_false -> print_token state kwd_false "false"
 | PTrue kwd_true -> print_token state kwd_true "true"
-| PConstrApp p -> print_constr_app_pattern state p
+| PCtorApp p -> print_ctor_app_pattern state p
 
 and print_none_pattern state value =
   print_token state value "None"
@@ -374,9 +374,9 @@ and print_some_app_pattern state {value; _} =
   print_token   state c_Some "Some";
   print_pattern state argument
 
-and print_constr_app_pattern state node =
-  let {value=constr, p_opt; _} = node in
-  print_constr state constr;
+and print_ctor_app_pattern state node =
+  let {value=ctor, p_opt; _} = node in
+  print_ctor state ctor;
   match p_opt with
     None -> ()
   | Some pattern -> print_pattern state pattern
@@ -405,13 +405,13 @@ and print_expr state = function
 | EList e             -> print_list_expr   state e
 | ESeq seq            -> print_sequence    state seq
 | ERecord e           -> print_record_expr state e
-| EConstr e           -> print_constr_expr state e
+| ECtor e           -> print_ctor_expr state e
 | ECodeInj e          -> print_code_inj    state e
 
-and print_constr_expr state = function
+and print_ctor_expr state = function
   ENone e      -> print_none_expr       state e
 | ESomeApp e   -> print_some_app_expr   state e
-| EConstrApp e -> print_constr_app_expr state e
+| ECtorApp e -> print_ctor_app_expr state e
 
 and print_none_expr state value = print_token state value "None"
 
@@ -420,9 +420,9 @@ and print_some_app_expr state {value; _} =
   print_token state c_Some "Some";
   print_expr  state argument
 
-and print_constr_app_expr state {value; _} =
-  let constr, argument = value in
-  print_constr state constr;
+and print_ctor_app_expr state {value; _} =
+  let ctor, argument = value in
+  print_ctor state ctor;
   match argument with
     None -> ()
   | Some arg -> print_expr state arg
@@ -626,23 +626,23 @@ and print_type_in state {value; _} =
 
 and print_mod_in state {value; _} =
   let {mod_decl; kwd_in; body} = value in
-  let {kwd_module; name; eq; kwd_struct; module_; kwd_end} = mod_decl in
+  let {kwd_module; name; eq; kwd_struct; structure; kwd_end} = mod_decl in
   print_token        state kwd_module "module";
   print_var          state name;
   print_token        state eq     "eq";
   print_token        state kwd_struct "struct";
-  print_tokens       state module_;
+  print_tokens       state structure;
   print_token        state kwd_end "end";
   print_token        state kwd_in "in";
   print_expr         state body
 
 and print_mod_alias state {value; _} =
   let {mod_alias; kwd_in; body} = value in
-  let {kwd_module; alias; eq; binders} = mod_alias in
+  let {kwd_module; alias; eq; mod_path} = mod_alias in
   print_token        state kwd_module "module";
   print_var          state alias;
   print_token        state eq     "eq";
-  print_nsepseq      state "." print_var binders;
+  print_nsepseq      state "." print_var mod_path;
   print_token        state kwd_in "in";
   print_expr         state body
 
@@ -771,15 +771,15 @@ and pp_type_decl state decl =
   pp_type_expr (state#pad 2 1) decl.type_expr
 
 and pp_module_decl state decl =
-  pp_ident     (state#pad 2 0) decl.name;
-  pp_cst       (state#pad 2 1) decl.module_
+  pp_ident (state#pad 2 0) decl.name;
+  pp_cst   (state#pad 2 1) decl.structure
 
 and pp_module_alias state decl =
-  let binders     = Utils.nsepseq_to_list decl.binders in
-  let len            = List.length binders in
+  let mod_path       = Utils.nsepseq_to_list decl.mod_path in
+  let len            = List.length mod_path in
   let apply len rank = pp_ident (state#pad len rank) in
   pp_ident (state#pad (1+len) 0) decl.alias;
-  List.iteri (apply len) binders
+  List.iteri (apply len) mod_path
 
 and pp_binders state patterns =
   let patterns       = Utils.nseq_to_list patterns in
@@ -788,9 +788,9 @@ and pp_binders state patterns =
   in List.iteri (apply arity) patterns
 
 and pp_pattern state = function
-  PConstr p ->
-    pp_node state "PConstr";
-    pp_constr_pattern (state#pad 1 0) p
+  PCtor p ->
+    pp_node state "PCtor";
+    pp_ctor_pattern (state#pad 1 0) p
 | PVar v ->
     pp_node  state "PVar";
     pp_ident (state#pad 1 0) v
@@ -885,7 +885,7 @@ and pp_int state {value=lexeme,z; region} =
   pp_loc_node (state#pad 2 0) lexeme region;
   pp_node     (state#pad 2 1) (Z.to_string z)
 
-and pp_constr_pattern state = function
+and pp_ctor_pattern state = function
   PNone region ->
     pp_loc_node state "PNone" region
 | PSomeApp {value=_,param; region} ->
@@ -895,12 +895,12 @@ and pp_constr_pattern state = function
     pp_loc_node state "PFalse" region
 | PTrue region ->
     pp_loc_node state "PTrue" region
-| PConstrApp {value; region} ->
-    pp_loc_node state "PConstrApp" region;
-    pp_constr_app_pattern (state#pad 1 0) value
+| PCtorApp {value; region} ->
+    pp_loc_node state "PCtorApp" region;
+    pp_ctor_app_pattern (state#pad 1 0) value
 
-and pp_constr_app_pattern state (constr, pat_opt) =
-  pp_ident state constr;
+and pp_ctor_app_pattern state (ctor, pat_opt) =
+  pp_ident state ctor;
   match pat_opt with
     None -> ()
   | Some pat -> pp_pattern state pat
@@ -927,9 +927,9 @@ and pp_expr state = function
 | EList e_list ->
     pp_node state "EList";
     pp_list_expr (state#pad 1 0) e_list
-| EConstr e_constr ->
-    pp_node state "EConstr";
-    pp_constr_expr (state#pad 1 0) e_constr
+| ECtor e_ctor ->
+    pp_node state "ECtor";
+    pp_ctor_expr (state#pad 1 0) e_ctor
 | ERecord {value; region} ->
     pp_loc_node state "ERecord" region;
     pp_ne_injection pp_field_assign state value
@@ -1074,7 +1074,7 @@ and pp_type_in state node =
 
 and pp_mod_in state node =
   let {mod_decl; body; _} = node in
-  let {name; module_; _} = mod_decl in
+  let {name; structure; _} = mod_decl in
   let () =
     let state = state#pad 3 0 in
     pp_node state "<name>";
@@ -1082,7 +1082,7 @@ and pp_mod_in state node =
   let () =
     let state = state#pad 3 1 in
     pp_node state "<module>";
-    pp_cst (state#pad 1 0) module_ in
+    pp_cst (state#pad 1 0) structure in
   let () =
     let state = state#pad 3 2 in
     pp_node state "<body>";
@@ -1091,18 +1091,18 @@ and pp_mod_in state node =
 
 and pp_mod_alias state node =
   let {mod_alias; body; _} = node in
-  let {alias;binders; _} = mod_alias in
+  let {alias; mod_path; _} = mod_alias in
   let () =
     let state = state#pad 3 0 in
     pp_node  state "<alias>";
     pp_ident state alias in
   let () =
     let state = state#pad 3 1 in
-    let binders     = Utils.nsepseq_to_list binders in
-    let len            = List.length binders in
+    let mod_path     = Utils.nsepseq_to_list mod_path in
+    let len            = List.length mod_path in
     let apply len rank = pp_ident (state#pad len rank) in
     pp_node state "<module>";
-    List.iteri (apply len) binders in
+    List.iteri (apply len) mod_path in
   let () =
     let state = state#pad 3 2 in
     pp_node state "<body>";
@@ -1171,21 +1171,21 @@ and pp_field_path_assign state {value; _} =
   pp_path (state#pad 2 0) field_path;
   pp_expr (state#pad 2 1) field_expr
 
-and pp_constr_expr state = function
+and pp_ctor_expr state = function
   ENone region ->
     pp_loc_node state "ENone" region
 | ESomeApp {value=_,arg; region} ->
     pp_loc_node state "ESomeApp" region;
     pp_expr (state#pad 1 0) arg
-| EConstrApp {value; region} ->
-    pp_loc_node state "EConstrApp" region;
-    pp_constr_app_expr state value
+| ECtorApp {value; region} ->
+    pp_loc_node state "ECtorApp" region;
+    pp_ctor_app_expr state value
 
-and pp_constr_app_expr state (constr, expr_opt) =
+and pp_ctor_app_expr state (ctor, expr_opt) =
   match expr_opt with
-    None -> pp_ident (state#pad 1 0) constr
+    None -> pp_ident (state#pad 1 0) ctor
   | Some expr ->
-     pp_ident (state#pad 2 0) constr;
+     pp_ident (state#pad 2 0) ctor;
      pp_expr  (state#pad 2 1) expr
 
 and pp_list_expr state = function
@@ -1386,11 +1386,11 @@ and pp_cartesian state t_exprs =
   let apply len rank = pp_type_expr (state#pad len rank)
   in List.iteri (apply arity) t_exprs
 
-and pp_variant state {constr; arg; attributes=attr} =
+and pp_variant state {ctor; arg; attributes=attr} =
   let arity = if attr = [] then 0 else 1 in
   let arity = if arg = None then arity else arity + 1 in
   let rank  = 0 in
-  let () = pp_ident state constr in
+  let () = pp_ident state ctor in
   let rank =
     match arg with
       None -> rank
