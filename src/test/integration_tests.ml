@@ -2512,9 +2512,9 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant (religo)" variant_religo ;
 
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "variant matching" variant_matching ;
-    test no "tuple" tuple ;
-    test no "tuple (mligo)" tuple_mligo ;
-    test no "tuple (religo)" tuple_religo ;
+    test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tuple" tuple ;
+    test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tuple (mligo)" tuple_mligo ;
+    test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tuple (religo)" tuple_religo ;
     test no "record" record ;
     test no "record (mligo)" record_mligo ;
     test no "record (religo)" record_religo ;
@@ -2590,8 +2590,8 @@ let main = test_suite "Integration (End to End)"
 
     test no "counter contract (mligo)" counter_mligo ;
     test no "counter contract (religo)" counter_religo ;
-    test no "let-in (mligo)" let_in_mligo ;
-    test no "let-in (religo)" let_in_religo ;
+    test no(*no*) "let-in (mligo)" let_in_mligo ;
+    test no(*no*) "let-in (religo)" let_in_religo ;
     test no "local type declaration (ligo)" local_type_decl_ligo;
     test no "local type declaration (mligo)" local_type_decl_mligo;
     test no "local type declaration (religo)" local_type_decl_religo;
@@ -2611,8 +2611,8 @@ let main = test_suite "Integration (End to End)"
     test no "lambda mligo" lambda_mligo ;
     test no "lambda religo" lambda_religo ;
     test no "lambda ligo" lambda_ligo ;
-    test y(*y*) "tez (ligo)" tez_ligo ;
-    test y(*y*) "tez (mligo)" tez_mligo ;
+    test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tez (ligo)" tez_ligo ;
+    test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "tez (mligo)" tez_mligo ;
 
     test no "lambda2 mligo" lambda2_mligo ;
     test no "lambda2 religo" lambda2_religo ;
@@ -2648,9 +2648,9 @@ let main = test_suite "Integration (End to End)"
     test no "set delegate" set_delegate ;
     test no "set delegate (mligo)" set_delegate_mligo ;
     test no "set delegate (religo)" set_delegate_religo ;
-    test no "is_nat" is_nat ;
-    test no "is_nat (mligo)" is_nat_mligo ;
-    test no "is_nat (religo)" is_nat_religo ;
+    test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "is_nat" is_nat ;
+    test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "is_nat (mligo)" is_nat_mligo ;
+    test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *)  "is_nat (religo)" is_nat_religo ;
     test no(*y*) "tuples_sequences_functions (religo)" tuples_sequences_functions_religo ;
 
     test no "simple_access (ligo)" simple_access_ligo;
