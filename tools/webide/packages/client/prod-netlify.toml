@@ -10,6 +10,6 @@
 
 [[redirects]]
   from = "/p/*"
-  to = "https://api.ligo-ide.tez.ie/p/:splat"
+  to = "https://api.ligo-ide.tez.ie/index.html"
   status = 200
   force = true
