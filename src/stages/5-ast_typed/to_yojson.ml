@@ -270,10 +270,9 @@ let environment_element_definition = function
   | ED_binder  -> `List [ `String "ED_binder"; `Null]
   | ED_declaration ed -> `List [ `String "ED_declaration"; environment_element_definition_declaration ed]
 
-let rec environment_element {type_value;source_environment;definition} =
+let rec environment_element {type_value;definition} =
   `Assoc [
     ("type_value", type_expression type_value);
-    ("source_environment", environment source_environment);
     ("definition", environment_element_definition definition);
   ]
 

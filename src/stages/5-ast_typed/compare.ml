@@ -357,10 +357,9 @@ let environment_element_definition a b = match a,b with
   | ED_declaration _, ED_binder -> 1
   | ED_declaration a, ED_declaration b -> environment_element_definition_declaration a b
 
-let rec environment_element {type_value=ta;source_environment=sa;definition=da} {type_value=tb;source_environment=sb;definition=db} =
-  cmp3
+let rec environment_element {type_value=ta;definition=da} {type_value=tb;definition=db} =
+  cmp2
     type_expression ta tb
-    environment sa sb
     environment_element_definition da db
 
 and environment_binding {expr_var=eva;env_elt=eea} {expr_var=evb;env_elt=eeb} =

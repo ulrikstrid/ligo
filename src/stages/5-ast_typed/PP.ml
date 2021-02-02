@@ -643,10 +643,9 @@ let environment_element_definition ppf = function
   | ED_binder -> fprintf ppf "Binder"
   | ED_declaration {expression=e;free_variables=fv} ->
     fprintf ppf "Declaration : {expression : %a ;@ free_variables : %a}" expression e (list expression_variable) fv
-let rec environment_element ppf ({type_value;source_environment;definition} : environment_element) =
-  fprintf ppf "{@[<hv 2> @ type_value : %a;@ source_environment : %a;@ definition : %a;@]@ }"
+let rec environment_element ppf ({type_value;definition} : environment_element) =
+  fprintf ppf "{@[<hv 2> @ type_value : %a;@ definition : %a;@]@ }"
     type_expression type_value
-    environment source_environment
     environment_element_definition definition
 
 

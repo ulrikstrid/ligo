@@ -64,8 +64,8 @@ end = struct
       (list_sep pp_ex_propagator_state (fun ppf () -> Formatt.fprintf ppf " ;@ ")) already_selected_and_propagators
 
   let aux_remove state to_remove =
-    let () = Formatt.printf "Remove constraint :\n  %a\n\n%!" Ast_typed.PP.type_constraint_simpl_short to_remove in
-    let () = Formatt.printf "and state:%a\n" pp_typer_state state in
+    (* let () = Formatt.printf "Remove constraint :\n  %a\n\n%!" Ast_typed.PP.type_constraint_simpl_short to_remove in *)
+    (* let () = Formatt.printf "and state:%a\n" pp_typer_state state in *)
     let module MapRemoveConstraint = Plugins.Indexers.MapPlugins(RemoveConstraint) in
     let%bind plugin_states = MapRemoveConstraint.f (mk_repr state, to_remove) state.plugin_states in
     ok {state with plugin_states ; deleted_constraints = PolySet.add to_remove state.deleted_constraints}

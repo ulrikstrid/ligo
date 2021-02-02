@@ -642,7 +642,8 @@ and type_and_subst : type a b.
   let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%!\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env_state_node here.\n\n%!") in
   let () = (if Ast_typed.Debug.debug_new_typer && Ast_typed.Debug.json_new_typer then print_env_state_node in_printer env_state_node) in
   let%bind (env, state, node) = types_and_returns_env env_state_node in
-  let subst_all,env =
+  let%bind node,env =
+    Format.printf "Substitutions ongoing\n%!";
     let aliases = state.aliases in
     let assignments = state.plugin_states#assignments in
     let substs : variable: O.type_variable -> _ = fun ~variable ->
@@ -655,25 +656,28 @@ and type_and_subst : type a b.
           (Database_plugins.All_plugins.Assignments.find_opt root assignments) in
       match assignment with
       | `Constructor { tv ; c_tag ; tv_list } ->
-        let%bind tv_root = Solver.get_alias variable aliases in
-        let () = Format.printf "\ncstr : %a(was %a) %a(was %a)\n" Ast_typed.PP.type_variable tv_root Ast_typed.PP.type_variable tv Ast_typed.PP.type_variable root Ast_typed.PP.type_variable variable in
+        let%bind tv_root = Solver.get_alias tv aliases in
+        (* let () = Format.printf "\ncstr : %a(was %a) %a(was %a)\n" Ast_typed.PP.type_variable tv_root Ast_typed.PP.type_variable tv Ast_typed.PP.type_variable root Ast_typed.PP.type_variable variable in *)
         let () = assert (Var.equal tv_root root) in
         let%bind (expr : O.type_content) = trace_option (corner_case "wrong constant tag") @@
         Typesystem.Core.type_expression'_of_simple_c_constant (c_tag , (List.map O.t_variable tv_list)) in
         let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s%!" @@ Format.asprintf "Substituing var %a (%a is %a)\n%!" Var.pp variable Var.pp root Ast_typed.PP.type_content expr) in
         ok @@ expr
       | `Row { tv ; r_tag ; tv_map ; reason_row_simpl=_ } ->
-        let%bind tv_root = Solver.get_alias variable aliases in
-        let () = Format.printf "\ncstr : %a(was %a) %a(was %a)\n" Ast_typed.PP.type_variable tv_root Ast_typed.PP.type_variable tv Ast_typed.PP.type_variable root Ast_typed.PP.type_variable variable in
+        let%bind tv_root = Solver.get_alias tv aliases in
+        (* let () = Format.printf "\ncstr : %a(was %a) %a(was %a)\n" Ast_typed.PP.type_variable tv_root Ast_typed.PP.type_variable tv Ast_typed.PP.type_variable root Ast_typed.PP.type_variable variable in *)
         let () = assert (Var.equal tv_root root) in
         let (expr : O.type_content) = Typesystem.Core.type_expression'_of_simple_c_row (r_tag , tv_map) in
         let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "%s%!" @@ Format.asprintf "Substituing var %a (%a is %a)\n%!" Var.pp variable Var.pp root Ast_typed.PP.type_content expr) in
         ok @@ expr
     in
-    (apply_substs ~substs node, Typesystem.Misc.Substitution.Pattern.s_environment ~substs env)
+    Format.printf "substituting node\n%!";
+    let%bind node = apply_substs ~substs node in
+    Format.printf "substituting env %a\n%!" Ast_typed.PP.environment env;
+    let%bind env  = Typesystem.Misc.Substitution.Pattern.s_environment ~substs env in
+    ok (node,env)
   in
-  let%bind node = subst_all in
-  let%bind env  = env in
+  Format.printf "Substritutions done\n%!";
   let () = (if Ast_typed.Debug.debug_new_typer then Printf.fprintf stderr "\nTODO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA Print env,state,node here again.\n\n") in
   let () = (if Ast_typed.Debug.debug_new_typer && Ast_typed.Debug.json_new_typer then print_env_state_node out_printer (env, state, node)) in
   ok (node, state, env)
@@ -694,10 +698,13 @@ and type_module ~init_env (p : I.module_) : (environment * O.module_fully_typed 
     (fun ppf _v -> Format.fprintf ppf "\"no JSON yet for I.PP.module\"")
     (fun ppf p -> Format.fprintf ppf "%s" (Yojson.Safe.to_string (Ast_typed.Yojson.module_with_unification_vars p)))
     (init_env , empty_state , p)
-    Typesystem.Misc.Substitution.Pattern.s_module type_module_returns_env in
+    Typesystem.Misc.Substitution.Pattern.s_module
+    type_module_returns_env in
+  Format.printf "Charcking for uni_vars\n%!";
   let%bind p = Check.check_has_no_unification_vars p in
   let () = (if Ast_typed.Debug.json_new_typer then Printf.printf "%!\"end of JSON\"],\n###############################END_OF_JSON\n%!") in
   let () = Pretty_print_variables.flush_pending_print state in
+  Format.printf "module typed\n\n%!";
   ok (env, p, state)
 
 and type_expression_subst (env : environment) (state : _ O'.typer_state) ?(tv_opt : O.type_expression option) (e : I.expression) : (O.environment * O.expression * _ O'.typer_state , typer_error) result =

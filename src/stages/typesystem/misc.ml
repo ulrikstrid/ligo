@@ -22,11 +22,10 @@ module Substitution = struct
         let%bind free_variables = bind_map_list (s_variable ~substs) free_variables in
         ok @@ T.ED_declaration {expression ; free_variables}
     and s_expr_environment : (T.expression_environment,_) w = fun ~substs env ->
-      bind_map_list (fun T.{expr_var=variable ; env_elt={ type_value; source_environment; definition }} ->
+      bind_map_list (fun T.{expr_var=variable ; env_elt={ type_value; definition }} ->
           let%bind type_value = s_type_expression ~substs type_value in
-          let%bind source_environment = s_environment ~substs source_environment in
           let%bind definition = s_environment_element_definition ~substs definition in
-          ok @@ T.{expr_var=variable ; env_elt={ type_value; source_environment; definition }}) env
+          ok @@ T.{expr_var=variable ; env_elt={ type_value; definition }}) env
     and s_type_environment : (T.type_environment,_) w = fun ~substs tenv ->
       bind_map_list (fun T.{type_variable ; type_} ->
         let%bind type_ = s_type_expression ~substs type_ in

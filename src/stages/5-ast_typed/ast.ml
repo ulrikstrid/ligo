@@ -269,7 +269,6 @@ and free_variables = expression_variable list
 
 and environment_element = {
     type_value: type_expression ;
-    source_environment: environment ;
     definition: environment_element_definition ;
   }
 
