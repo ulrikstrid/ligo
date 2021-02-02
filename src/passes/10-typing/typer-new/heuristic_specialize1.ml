@@ -12,31 +12,44 @@ open Typer_common.Errors
 open Database_plugins.All_plugins
 open Ast_typed.Reasons
 
-type 'a flds = <
-  grouped_by_variable : type_variable GroupedByVariable.t ;
-  ..
-> as 'a
+let heuristic_name = "specialize1"
 
-type selector_output = output_specialize1
+(* type 'a flds = <
+ *   grouped_by_variable : type_variable GroupedByVariable.t ;
+ *   ..
+ * > as 'a *)
+
+module Required_flds = struct
+  module type S = sig
+    val grouped_by_variable : type_variable GroupedByVariable.t
+    val assignments         : type_variable Assignments.t (* fake, not needed *)
+  end
+end
+
 
 (* TODO: we need to detect if a ∀ constraint has already been specialized or not
    The same need was present for the heuristic_tc_fundep (detect if a TC has already
    been refined, and if so find the update) *)
- 
- let selector : (type_variable -> type_variable) -> type_constraint_simpl -> _ flds -> selector_output list =
+
+module M = functor (Indexes : Required_flds.S) -> struct
+
+  type selector_output = output_specialize1
+
+let selector : (type_variable -> type_variable) -> type_constraint_simpl -> (* (module Required_flds) ->  *)selector_output list =
   (* find two rules with the shape (x = forall b, d) and x = k'(var' …) or vice versa *)
   (* TODO: do the same for two rules with the shape (a = forall b, d) and tc(a…) *)
   (* TODO: do the appropriate thing for two rules with the shape (a = forall b, d) and (a = forall b', d') *)
-  fun repr type_constraint_simpl indexes ->
+  fun repr type_constraint_simpl (* indexes *) ->
+  (* let module Indexes = (val indexes) in *)
   match type_constraint_simpl with
   | SC_Constructor c                ->
     (* vice versa *)
-    let other_cs = MultiSet.elements @@ GroupedByVariable.get_polys_by_lhs (repr c.tv) indexes#grouped_by_variable in
+    let other_cs = MultiSet.elements @@ GroupedByVariable.get_polys_by_lhs (repr c.tv) Indexes.grouped_by_variable in
     let cs_pairs = List.map (fun x -> { poly = x ; a_k_var = c }) other_cs in
     cs_pairs
   | SC_Alias       _                -> failwith "alias should not be visible here"
   | SC_Poly        p                ->
-    let other_cs = MultiSet.elements @@ GroupedByVariable.get_constructors_by_lhs (repr p.tv) indexes#grouped_by_variable in
+    let other_cs = MultiSet.elements @@ GroupedByVariable.get_constructors_by_lhs (repr p.tv) Indexes.grouped_by_variable in
     let cs_pairs = List.map (fun x -> { poly = p ; a_k_var = x }) other_cs in
     cs_pairs
   | SC_Typeclass   _                -> []
@@ -47,12 +60,13 @@ type selector_output = output_specialize1
    should check they are non-empty (and in that case produce a
    selector_output for all pairs) *)
 
-let alias_selector : type_variable -> type_variable -> _ flds -> selector_output list =
-  fun a b indexes ->
-  let a_polys = MultiSet.elements @@ GroupedByVariable.get_polys_by_lhs a indexes#grouped_by_variable in
-  let a_ctors = MultiSet.elements @@ GroupedByVariable.get_constructors_by_lhs a indexes#grouped_by_variable in
-  let b_polys = MultiSet.elements @@ GroupedByVariable.get_polys_by_lhs b indexes#grouped_by_variable in
-  let b_ctors = MultiSet.elements @@ GroupedByVariable.get_constructors_by_lhs b indexes#grouped_by_variable in
+let alias_selector : type_variable -> type_variable -> (* (module Required_flds) ->  *)selector_output list =
+  fun a b (* indexes *) ->
+  (* let module Indexes = (val indexes) in *)
+  let a_polys = MultiSet.elements @@ GroupedByVariable.get_polys_by_lhs a Indexes.grouped_by_variable in
+  let a_ctors = MultiSet.elements @@ GroupedByVariable.get_constructors_by_lhs a Indexes.grouped_by_variable in
+  let b_polys = MultiSet.elements @@ GroupedByVariable.get_polys_by_lhs b Indexes.grouped_by_variable in
+  let b_ctors = MultiSet.elements @@ GroupedByVariable.get_constructors_by_lhs b Indexes.grouped_by_variable in
   List.flatten @@
   List.map
     (fun poly ->
@@ -118,4 +132,5 @@ let printer = Ast_typed.PP.output_specialize1
 let printer_json = Ast_typed.Yojson.output_specialize1
 let comparator = Solver_should_be_generated.compare_output_specialize1
 
-let heuristic = Heuristic_plugin { heuristic_name = "specialize1"; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }
+(* let heuristic = Heuristic_plugin { heuristic_name = "specialize1"; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator } *)
+end
