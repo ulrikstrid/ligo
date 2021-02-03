@@ -13,7 +13,7 @@ module Token = Lexer_reasonligo.Token
 %token          <(string * Z.t) Region.reg> Nat      "<nat>"
 %token          <(string * Z.t) Region.reg> Mutez    "<mutez>"
 %token                  <string Region.reg> Ident    "<ident>"
-%token                  <string Region.reg> Uident   "<uident>"
+%token                  <string Region.reg> UIdent   "<uident>"
 %token                  <string Region.reg> Attr     "[@attr]"
 %token <Token.lexeme Region.reg Region.reg> Lang     "[%lang"
 

@@ -54,7 +54,7 @@ let mk_arith f arg1 op arg2 =
 %on_error_reduce nsepseq(core_pattern,SEMI)
 %on_error_reduce pattern
 %on_error_reduce nsepseq(core_pattern,CONS)
-%on_error_reduce nsepseq(case_clause(if_clause),VBAR)
+%on_error_reduce nsepseq(case_clause(test_clause),VBAR)
 %on_error_reduce lhs
 %on_error_reduce map_lookup
 %on_error_reduce nsepseq(statement,SEMI)
@@ -680,9 +680,9 @@ proc_call:
 (* Conditionals instructions *)
 
 conditional:
-  "if" expr "then" if_clause ";"? "else" if_clause {
-    let region = cover $1 (if_clause_to_region $7) in
-    let value : CST.conditional = {
+  "if" expr "then" test_clause ";"? "else" test_clause {
+    let region = cover $1 (test_clause_to_region $7) in
+    let value : CST.cond_instr = {
       kwd_if     = $1;
       test       = $2;
       kwd_then   = $3;
@@ -692,7 +692,7 @@ conditional:
       ifnot      = $7}
     in {region; value} }
 
-if_clause:
+test_clause:
   instruction  { ClauseInstr $1 }
 | clause_block { ClauseBlock $1 }
 
@@ -707,7 +707,7 @@ clause_block:
 (* Case instructions and expressions *)
 
 case_instr:
-  case(if_clause) { $1 if_clause_to_region }
+  case(test_clause) { $1 test_clause_to_region }
 
 case(rhs):
   "case" expr "of" "|"? cases(rhs) "end" {

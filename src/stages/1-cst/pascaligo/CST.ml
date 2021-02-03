@@ -150,7 +150,7 @@ type t = {
   eof  : eof
 }
 
-and ast = t
+and cst = t
 
 and attributes = attribute list
 
@@ -186,7 +186,7 @@ and module_decl = {
   name       : module_name;
   kwd_is     : kwd_is;
   enclosing  : module_enclosing;
-  structure  : t;
+  structure  : t;   (* TODO: declaration nseq *)
   terminator : semi option;
 }
 
@@ -291,7 +291,7 @@ and block_enclosing =
 | BeginEnd of kwd_begin * kwd_end
 
 and module_enclosing =
-  Brace    of lbrace * rbrace
+  Brace    of lbrace * rbrace      (* TODO: optional keyword "block" *)
 | BeginEnd of kwd_begin * kwd_end
 
 and statements = (statement, semi) nsepseq
@@ -318,8 +318,8 @@ and var_decl = {
 }
 
 and instruction =
-  Cond        of conditional reg
-| CaseInstr   of if_clause case reg
+  Cond        of cond_instr reg
+| CaseInstr   of test_clause case reg
 | Assign      of assignment reg
 | Loop        of loop
 | ProcCall    of fun_call
@@ -373,27 +373,21 @@ and record_patch = {
   record_inj : record reg
 }
 
-and cond_expr = {
+and 'branch conditional = {
   kwd_if     : kwd_if;
   test       : expr;
   kwd_then   : kwd_then;
-  ifso       : expr;
+  ifso       : 'branch;
   terminator : semi option;
   kwd_else   : kwd_else;
-  ifnot      : expr
+  ifnot      : 'branch
 }
 
-and conditional = {
-  kwd_if     : kwd_if;
-  test       : expr;
-  kwd_then   : kwd_then;
-  ifso       : if_clause;
-  terminator : semi option;
-  kwd_else   : kwd_else;
-  ifnot      : if_clause
-}
+and cond_expr = expr conditional
 
-and if_clause =
+and cond_instr = test_clause conditional
+
+and test_clause =
   ClauseInstr of instruction
 | ClauseBlock of clause_block
 
@@ -593,7 +587,7 @@ and field_assignment = {
 
 and record = field_assignment reg ne_injection
 
-and 'a module_access = {
+and 'a module_access = { (* TODO: Left-associativity expected + expression *)
   module_name : module_name;
   selector    : dot;
   field       : 'a
@@ -721,16 +715,16 @@ let type_expr_to_region = function
 | TWild    region -> region
 
 let rec expr_to_region = function
-| ELogic  e -> logic_expr_to_region e
-| EArith  e -> arith_expr_to_region e
+| ELogic  e -> logic_expr_to_region  e
+| EArith  e -> arith_expr_to_region  e
 | EString e -> string_expr_to_region e
-| EAnnot  e -> annot_expr_to_region e
-| EList   e -> list_expr_to_region e
-| ESet    e -> set_expr_to_region e
-| ECtor   e -> ctor_expr_to_region e
+| EAnnot  e -> annot_expr_to_region  e
+| EList   e -> list_expr_to_region   e
+| ESet    e -> set_expr_to_region    e
+| ECtor   e -> ctor_expr_to_region   e
 | ERecord e -> record_expr_to_region e
-| EMap    e -> map_expr_to_region e
-| ETuple  e -> tuple_expr_to_region e
+| EMap    e -> map_expr_to_region    e
+| ETuple  e -> tuple_expr_to_region  e
 | EUpdate  {region; _}
 | EProj    {region; _}
 | EModA    {region; _}
@@ -828,7 +822,7 @@ let clause_block_to_region = function
   LongBlock {region; _}
 | ShortBlock {region; _} -> region
 
-let if_clause_to_region = function
+let test_clause_to_region = function
   ClauseInstr instr        -> instr_to_region instr
 | ClauseBlock clause_block -> clause_block_to_region clause_block
 

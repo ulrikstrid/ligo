@@ -128,14 +128,14 @@ type 'a par = {
 
 type the_unit = lpar * rpar
 
-(* The Abstract Syntax Tree *)
+(* The Concrete Syntax Tree *)
 
 type t = {
   decl : declaration nseq;
   eof  : eof
 }
 
-and ast = t
+and cst = t
 
 and attributes = attribute list
 
@@ -171,7 +171,7 @@ and module_decl = {
   name       : module_name;
   eq         : equal;
   kwd_struct : kwd_struct;
-  structure  : t;
+  structure  : t; (* TODO: declaration nseq *)
   kwd_end    : kwd_end;
 }
 
@@ -307,7 +307,6 @@ and compound =
 and list_expr =
   ECons     of cons bin_op reg
 | EListComp of expr injection reg
-  (*| Append of (expr * append * expr) reg*)
 
 and string_expr =
   Cat      of caret bin_op reg
@@ -362,7 +361,7 @@ and comp_expr =
 
 and record = field_assign reg ne_injection
 
-and 'a module_access = {
+and 'a module_access = { (* TODO: Left-associativity expected + expression *)
   module_name : module_name;
   selector    : dot;
   field       : 'a;
@@ -492,7 +491,7 @@ let type_expr_to_region = function
 | TVar    {region; _}
 | TWild    region
 | TModA   {region; _}
- -> region
+   -> region
 
 let list_pattern_to_region = function
   PListComp {region; _} | PCons {region; _} -> region

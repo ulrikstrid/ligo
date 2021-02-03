@@ -161,10 +161,10 @@ declaration:
 (* Module declarations *)
 
 module_decl:
-  "module" module_name "=" "{" module_ "}" {
+  "module" module_name "=" "{" structure "}" {
     let region = cover $1 $6 in
-    let value  =
-      {kwd_module=$1; name=$2; eq=$3; lbrace=$4; structure=$5; rbrace=$6}
+    let value  = {kwd_module=$1; name=$2; eq=$3; lbrace=$4;
+                  structure=$5; rbrace=$6}
     in {region; value} }
 
 module_alias:
@@ -186,12 +186,13 @@ type_expr:
   fun_type | sum_type | record_type { $1 }
 
 fun_type:
-  cartesian { $1 }
-| ES6FUN cartesian "=>" fun_type {
+  ES6FUN cartesian "=>" fun_type {
     let start  = type_expr_to_region $2
     and stop   = type_expr_to_region $4 in
     let region = cover start stop in
-    TFun {region; value=$2,$3,$4} }
+    TFun {region; value=$2,$3,$4}
+  }
+| cartesian { $1 }
 
 cartesian:
   core_type { $1 }
@@ -202,15 +203,16 @@ type_args:
 | fun_type        { $1, [] }
 
 core_type:
-  type_name       {    TVar $1 }
+  type_name par(type_args) {
+   let region = cover $1.region $2.region
+   in TApp {region; value = $1,$2}
+  }
+| type_name       {    TVar $1 }
 | "_"             {   TWild $1 }
 | par(type_expr)  {    TPar $1 }
 | "<string>"      { TString $1 }
 | "<int>"         { TInt    $1 }
 | module_access_t {   TModA $1 }
-| type_name par(type_args) {
-   let region = cover $1.region $2.region
-   in TApp {region; value = $1,$2} }
 
 sum_type:
   nsepseq(variant,"|") {
@@ -247,10 +249,9 @@ variant:
 record_type:
   seq("[@attr]") "{" sep_or_term_list(field_decl,",") "}" {
     let ne_elements, terminator = $3 in
-    let region =
-      match first_region $1 with
-        None -> cover $2 $4
-      | Some start -> cover start $4
+    let region   = match first_region $1 with
+                     None -> cover $2 $4
+                   | Some start -> cover start $4
     and compound = Some (Braces ($2,$4))
     and value    = {compound; ne_elements; terminator; attributes=$1}
     in TRecord {region; value} }
@@ -270,10 +271,10 @@ module_var_t:
 field_decl:
   seq("[@attr]") field_name {
     let value = {
-      field_name=$2;
-      colon=ghost;
+      field_name = $2;
+      colon      = ghost;
       field_type = TVar $2;
-      attributes=$1}
+      attributes = $1}
     in {$2 with value}
   }
 | seq("[@attr]") field_name ":" type_expr {
@@ -288,11 +289,11 @@ field_decl:
 
 let_decl:
   seq("[@attr]") "let" ioption("rec") let_binding {
-    let value      = $2, $3, $4, $1 in
-    let stop       = expr_to_region binding.let_rhs in
-    let region     = match first_region $1 with
-                       None -> cover $2 stop
-                     | Some start -> cover start stop
+    let value  = $2, $3, $4, $1 in
+    let stop   = expr_to_region binding.let_rhs in
+    let region = match first_region $1 with
+                   None -> cover $2 stop
+                 | Some start -> cover start stop
     in {region; value} }
 
 let_binding:
@@ -312,16 +313,16 @@ irrefutable:
 | sub_irrefutable { $1 }
 
 sub_irrefutable:
-  "<ident>"                                              {    PVar $1 }
-| "_"                                                    {   PWild $1 }
-| unit                                                   {   PUnit $1 }
-| record_pattern                                         { PRecord $1 }
-| par(closed_irrefutable)                                {    PPar $1 }
+  "<ident>"               {    PVar $1 }
+| "_"                     {   PWild $1 }
+| unit                    {   PUnit $1 }
+| record_pattern          { PRecord $1 }
+| par(closed_irrefutable) {    PPar $1 }
 
 closed_irrefutable:
-  irrefutable                                            {         $1 }
-| ctor_pattern                                           { PConstr $1 }
-| typed_pattern                                          {  PTyped $1 }
+  irrefutable   {         $1 }
+| ctor_pattern  {   PCtor $1 }
+| typed_pattern {  PTyped $1 }
 
 typed_pattern:
   irrefutable ":" type_expr  {
@@ -332,51 +333,44 @@ typed_pattern:
     in {region; value} }
 
 pattern:
-  core_pattern { $1 }
-| "[" sub_pattern "," "..." sub_pattern "]" {
+  "[" sub_pattern "," "..." sub_pattern "]" {
     let start  = pattern_to_region $2 in
     let stop   = pattern_to_region $5 in
     let region = cover start stop in
-    let value  =
-      { lbracket = $1;
-        lpattern = $2;
-        comma    = $3;
-        ellipsis = $4;
-        rpattern = $5;
-        rbracket = $6}
-    in PList (PCons {value;region})
+    let value  = {lbracket=$1; lpattern=$2; comma=$3;
+                  ellipsis=$4; rpattern=$5; rbracket=$6}
+    in PList (PCons {value; region})
   }
 | tuple(sub_pattern) {
     let region = nsepseq_to_region pattern_to_region $1
-    in PTuple {region; value=$1} }
+    in PTuple {region; value=$1}
+  }
+| core_pattern { $1 }
 
 sub_pattern:
   par(sub_pattern) { PPar $1 }
 | core_pattern     {      $1 }
 
 core_pattern:
-  "<ident>"                                    {              PVar $1 }
-| "_"                                          {             PWild $1 }
-| "<int>"                                      {              PInt $1 }
-| "<nat>"                                      {              PNat $1 }
-| "<bytes>"                                    {            PBytes $1 }
-| "<string>"                                   {           PString $1 }
-| "<verbatim>"                                 {         PVerbatim $1 }
-| unit                                         {             PUnit $1 }
-| par(ptuple)                                  {              PPar $1 }
-| list__(sub_pattern)                          { PList (PListComp $1) }
-| ctor_pattern                               {           PConstr $1 }
-| record_pattern                               {           PRecord $1 }
+  "<ident>"           {              PVar $1 }
+| "_"                 {             PWild $1 }
+| "<int>"             {              PInt $1 }
+| "<nat>"             {              PNat $1 }
+| "<bytes>"           {            PBytes $1 }
+| "<string>"          {           PString $1 }
+| "<verbatim>"        {         PVerbatim $1 }
+| unit                {             PUnit $1 }
+| par(ptuple)         {              PPar $1 }
+| list__(sub_pattern) { PList (PListComp $1) }
+| ctor_pattern        {             PCtor $1 }
+| record_pattern      {           PRecord $1 }
 
 record_pattern:
   "{" sep_or_term_list(field_pattern,",") "}" {
     let ne_elements, terminator = $2 in
-    let region = cover $1 $3 in
-    let value  = {
-      compound = Some (Braces ($1,$3));
-      ne_elements;
-      terminator;
-      attributes=[]}
+    let region   = cover $1 $3 in
+    let compound = Some (Braces ($1,$3)) in
+    let value    = {compound; ne_elements; terminator; attributes=[]}
     in {region; value} }
 
 field_pattern:
@@ -388,21 +382,22 @@ field_pattern:
     in {region; value} }
 
 ctor_pattern:
-  "None" { PNone $1 }
-| "Some" sub_pattern {
+  "Some" sub_pattern {
     let stop   = pattern_to_region $2 in
     let region = cover $1 stop
     and value  = $1,$2
     in PSomeApp {region; value}
   }
-| "false" { PFalse $1 }
-| "true"  {  PTrue $1 }
-| ctor {
-    PConstrApp {$1 with value=$1,None}
-  }
 | ctor sub_pattern {
     let region = cover $1.region (pattern_to_region $2)
-    in PConstrApp {region; value = $1, Some $2} }
+    in PCtorApp {region; value = ($1, Some $2)}
+  }
+| ctor {
+    PCtorApp {$1 with value=$1,None}
+  }
+| "None"  {  PNone $1 }
+| "false" { PFalse $1 }
+| "true"  {  PTrue $1 }
 
 ptuple:
   tuple(sub_pattern) {
@@ -410,7 +405,7 @@ ptuple:
     in PTuple {region; value=$1} }
 
 unit:
-  "(" ")" { {region = cover $1 $2; value = $1, $2} }
+  "(" ")" { {region = cover $1 $2; value = $1,$2} }
 
 (* Expressions *)
 
@@ -418,9 +413,7 @@ interactive_expr:
   expr EOF { $1 }
 
 base_cond_opt_semi:
-  base_cond ";"? {
-    $1
-  }
+  base_cond ";"? { $1 }
 
 expr:
   base_cond__open(expr) | switch_expr(base_cond_opt_semi) { $1 }
@@ -437,8 +430,7 @@ base_cond:
     let stop   = type_expr_to_region $3 in
     let region = cover start stop in
     let value  = {pattern=PVar $1; colon=$2; type_expr=$3}
-    in
-    PTyped {region; value}
+    in PTyped {region; value}
   }
 | "<ident>" { PVar $1 }
 
@@ -456,20 +448,17 @@ conditional(right_expr):
 if_then_else(right_expr):
   "if" parenthesized_expr "{" closed_if ";"?  "}"
   "else" "{" right_expr ";"? "}" {
-    let region = cover $1 $11 in
-    let value  = {kwd_if   = $1;
-                  test     = $2;
-                  ifso     = {lbrace=$3; inside=($4,$5); rbrace=$6};
-                  ifnot    = Some ($7,{lbrace=$8; inside=($9,$10); rbrace=$11})}
+    let region = cover $1 $11
+    and ifso   = {lbrace=$3; inside=($4,$5); rbrace=$6}
+    and ifnot  = Some ($7, {lbrace=$8; inside=($9,$10); rbrace=$11}) in
+    let value  = {kwd_if=$1; test=$2; ifso; ifnot; rbrace=$11}
     in ECond {region; value} }
 
 if_then(right_expr):
   "if" parenthesized_expr "{" closed_if ";"? "}" {
-    let region   = cover $1 $6 in
-    let value    = {kwd_if   = $1;
-                    test     = $2;
-                    ifso     = {lbrace=$3; inside=($4,$5); rbrace=$6};
-                    ifnot    = None}
+    let region = cover $1 $6
+    and ifso   = {lbrace=$3; inside=($4,$5); rbrace=$6} in
+    let value  = {kwd_if=$1; test=$2; ifso; ifnot=None}
     in ECond {region; value} }
 
 base_if_then_else__open(x):
@@ -477,7 +466,6 @@ base_if_then_else__open(x):
 
 base_if_then_else:
   base_if_then_else__open(base_if_then_else) { $1 }
-
 
 parenthesized_expr:
   "{" expr "}" | "(" expr ")" { $2 }
@@ -491,24 +479,16 @@ closed_if:
 
 switch_expr(right_expr):
   "switch" core_expr "{" cases(right_expr) "}" {
-    let start = $1
-    and stop = $5 in
-    let region = cover start stop
-    and cases = $4 in
-    let value = {
-      kwd_switch = $1;
-      expr      = $2;
-      lbrace    = $3;
-      cases;
-      rbrace  = $5 }
+    let region = cover $1 $5
+    let value = {kwd_switch=$1; expr=$2; lbrace=$3; cases=$4; rbrace=$5}
     in ECase {region; value} }
 
 cases(right_expr):
   nseq(case_clause(right_expr)) {
     let hd, tl = $1 in
-    let nseq = snd hd, tl in {
-      region = nsepseq_to_region (fun x -> x.region) nseq;
-      value  = nseq} }
+    let value = snd hd, tl
+    and region = nsepseq_to_region (fun x -> x.region) nseq
+    in {region; value} }
 
 case_clause(right_expr):
   "|" pattern "=>" right_expr {
@@ -516,7 +496,7 @@ case_clause(right_expr):
     and stop   = expr_to_region $4 in
     let region = cover start stop
     and value  = {pattern=$2; arrow=$3; rhs=$4; terminator=None }
-    in $1,{region; value} }
+    in $1, {region; value} }
 
 let_expr(right_expr):
   seq("[@attr]") "let" ioption("rec") let_binding ";" right_expr {
@@ -526,8 +506,8 @@ let_expr(right_expr):
     let binding = $4 in
     let semi    = $5 in
     let body    = $6 in
-    let stop    = expr_to_region $6 in
-    let region  = cover $2 stop
+    let stop    = expr_to_region body in
+    let region  = cover kwd_let stop
     and value   = {kwd_let; kwd_rec; binding; semi; body; attributes}
     in ELetIn {region; value} }
 
@@ -536,7 +516,7 @@ local_type_decl(right_expr):
     let type_decl = $1.value in
     let semi      = $2 in
     let body      = $3 in
-    let stop      = expr_to_region $3 in
+    let stop      = expr_to_region body in
     let region    = cover $1.region stop
     and value     = {type_decl; semi; body}
     in ETypeIn {region; value} }
@@ -546,7 +526,7 @@ local_module_decl(right_expr):
     let mod_decl  = $1.value in
     let semi      = $2 in
     let body      = $3 in
-    let stop      = expr_to_region $3 in
+    let stop      = expr_to_region body in
     let region    = cover $1.region stop
     and value     = {mod_decl; semi; body}
     in EModIn {region; value} }
@@ -556,7 +536,7 @@ local_module_alias(right_expr):
     let mod_alias = $1.value in
     let semi      = $2 in
     let body      = $3 in
-    let stop      = expr_to_region $3 in
+    let stop      = expr_to_region body in
     let region    = cover $1.region stop
     and value     = {mod_alias; semi; body}
     in EModAlias {region; value} }
@@ -564,23 +544,21 @@ local_module_alias(right_expr):
 fun_arg:
   sub_irrefutable type_annotation? {
     match $2 with
-    | Some (colon, type_expr) ->
-      let region = cover (pattern_to_region $1) (type_expr_to_region type_expr) in
-      PTyped { value = {pattern=$1; colon; type_expr}; region }
-    | None -> $1
-  }
+      Some (colon, type_expr) ->
+      let start  = pattern_to_region $1
+      and stop   = type_expr_to_region type_expr in
+      let region = cover start stop
+      and value  = {pattern=$1; colon; type_expr}
+      in PTyped {value; region}
+    | None -> $1 }
 
 fun_expr(right_expr):
   ES6FUN fun_args2 "=>" right_expr {
-    let region = cover (pattern_to_region $2) (expr_to_region $4) in
-    let value = {
-      binders = $2;
-      lhs_type = None;
-      arrow = $3;
-      body = $4
-    }
-    in
-    EFun {region; value}
+    let start  = pattern_to_region $2
+    and stop   = expr_to_region $4 in
+    let region = cover start stop
+    and value  = {binders=$2; lhs_type=None; arrow=$3; body=$4}
+    in EFun {region; value}
   }
 | ES6FUN "(" nsepseq(fun_arg, ",") ")" type_annotation? "=>" right_expr {
     let region = cover $1 (expr_to_region $7) in
@@ -588,27 +566,19 @@ fun_expr(right_expr):
     let value = {
       binders = PPar {
         region = cover $2 $4;
-        value = {
-          lpar = $2;
-          inside = PTuple {
-            value = $3;
-            region = ptuple_region;
-          };
-          rpar = $4;
-        }
-      };
+        value  = {lpar   = $2;
+                  inside = PTuple {value=$3; region=ptuple_region};
+                  rpar   = $4}};
       lhs_type = $5;
-      arrow = $6;
-      body = $7
-    }
-    in
-    EFun {region; value}
-}
+      arrow    = $6;
+      body     = $7}
+    in EFun {region; value} }
 
 disj_expr_level:
   bin_op(disj_expr_level, "||", conj_expr_level)
 | bin_op(disj_expr_level, "or", conj_expr_level) {
-    ELogic (BoolExpr (Or $1)) }
+    ELogic (BoolExpr (Or $1))
+  }
 | conj_expr_level { $1 }
 
 bin_op(arg1,op,arg2):
@@ -621,22 +591,29 @@ bin_op(arg1,op,arg2):
 
 conj_expr_level:
   bin_op(conj_expr_level, "&&", comp_expr_level) {
-    ELogic (BoolExpr (And $1)) }
+    ELogic (BoolExpr (And $1))
+  }
 | comp_expr_level { $1 }
 
 comp_expr_level:
   bin_op(comp_expr_level, "<", cat_expr_level) {
-    ELogic (CompExpr (Lt $1)) }
+    ELogic (CompExpr (Lt $1))
+  }
 | bin_op(comp_expr_level, "<=", cat_expr_level) {
-    ELogic (CompExpr (Leq $1)) }
+    ELogic (CompExpr (Leq $1))
+  }
 | bin_op(comp_expr_level, ">", cat_expr_level) {
-    ELogic (CompExpr (Gt $1)) }
+    ELogic (CompExpr (Gt $1))
+  }
 | bin_op(comp_expr_level, ">=", cat_expr_level) {
-    ELogic (CompExpr (Geq $1)) }
+    ELogic (CompExpr (Geq $1))
+  }
 | bin_op(comp_expr_level, "==", cat_expr_level) {
-    ELogic (CompExpr (Equal $1)) }
+    ELogic (CompExpr (Equal $1))
+  }
 | bin_op(comp_expr_level, "!=", cat_expr_level) {
-    ELogic (CompExpr (Neq $1)) }
+    ELogic (CompExpr (Neq $1))
+  }
 | cat_expr_level { $1 }
 
 cat_expr_level:
@@ -673,8 +650,8 @@ unary_expr_level:
 
 call_expr_level:
   call_expr
-| core_expr   { $1 }
-| ctor_expr { EConstr $1 }
+| core_expr { $1 }
+| ctor_expr { ECtor $1 }
 
 ctor_expr:
   "Some" argument {
@@ -683,17 +660,17 @@ ctor_expr:
   }
 | ctor argument {
     let region = cover $1.region (expr_to_region $2) in
-    EConstrApp {region; value = ($1, Some $2)}
+    ECtorApp {region; value = ($1, Some $2)}
   }
 | const_ctor { $1 }
 
 argument:
-  const_ctor { EConstr $1 }
-| core_expr       {         $1 }
+  const_ctor { ECtor $1 }
+| core_expr  {         $1 }
 
 const_ctor:
-  "None"     { ENone $1                             }
-| ctor { EConstrApp {$1 with value=($1,None)} }
+  "None" { ENone $1                           }
+| ctor   { ECtorApp {$1 with value=($1,None)} }
 
 call_expr:
   core_expr par(nsepseq(annot_expr, ",")) {
@@ -710,30 +687,31 @@ call_expr:
     in ECall {region; value} }
 
 core_expr:
-  "<int>"                             {               EArith (Int $1) }
-| "<mutez>"                           {             EArith (Mutez $1) }
-| "<nat>"                             {               EArith (Nat $1) }
-| "<bytes>"                           {                     EBytes $1 }
-| "<ident>"                           {                       EVar $1 }
-| projection                          {                      EProj $1 }
-| module_access_e                     {                        EModA $1 }
-| "<string>"                          {           EString (String $1) }
-| "<verbatim>"                        {         EString (Verbatim $1) }
-| unit                                {                      EUnit $1 }
-| "false"                             {  ELogic (BoolExpr (False $1)) }
-| "true"                              {  ELogic (BoolExpr (True  $1)) }
-| list__(expr)                        {          EList (EListComp $1) }
-| spread                              {                            $1 }
-| sequence                            {                       ESeq $1 }
-| record_expr                         {                    ERecord $1 }
-| update_record                       {                    EUpdate $1 }
-| code_inj                            {                     ECodeInj $1 }
-| par(annot_expr)                     {                         EPar $1 }
-| par(tuple(annot_expr))    {
-    let region  = $1.region in
-    let inside = ETuple {value = $1.value.inside; region} in
-    EPar {value = { $1.value with inside }; region = $1.region}
- }
+  par(tuple(annot_expr))    {
+    let region = $1.region
+    and inside = ETuple {value = $1.value.inside; region} in
+    let value  = {$1.value with inside}
+    in EPar {value; region=$1.region}
+  }
+| "<int>"         {               EArith (Int $1) }
+| "<mutez>"       {             EArith (Mutez $1) }
+| "<nat>"         {               EArith (Nat $1) }
+| "<bytes>"       {                     EBytes $1 }
+| "<ident>"       {                       EVar $1 }
+| projection      {                      EProj $1 }
+| module_access_e {                      EModA $1 }
+| "<string>"      {           EString (String $1) }
+| "<verbatim>"    {         EString (Verbatim $1) }
+| unit            {                      EUnit $1 }
+| "false"         {  ELogic (BoolExpr (False $1)) }
+| "true"          {  ELogic (BoolExpr (True  $1)) }
+| list__(expr)    {          EList (EListComp $1) }
+| spread          {                            $1 }
+| sequence        {                       ESeq $1 }
+| record_expr     {                    ERecord $1 }
+| update_record   {                    EUpdate $1 }
+| code_inj        {                   ECodeInj $1 }
+| par(annot_expr) {                       EPar $1 }
 
 code_inj:
   "[%lang" expr "]" {
@@ -742,32 +720,31 @@ code_inj:
     in {region; value} }
 
 spread:
-"[" expr "," "..." expr "]" {
+  "[" expr "," "..." expr "]" {
     let region = cover $1 $6
-    and value : cons_expr = {lbracket=$1; lexpr=$2; comma=$3; ellipsis=$4; rexpr=$5; rbracket=$6}
-    in EList (ECons {region; value})
-  }
-
+    and value : cons_expr = {lbracket=$1; lexpr=$2; comma=$3;
+                             ellipsis=$4; rexpr=$5; rbracket=$6}
+    in EList (ECons {region; value}) }
 
 annot_expr:
   expr type_annotation? {
     match $2 with
-    | Some (colon, annot) ->
-      let region = cover (expr_to_region $1) (type_expr_to_region annot) in
-      EAnnot { value = $1, colon, annot; region }
-    | None -> $1
-  }
+      Some (colon, annot) ->
+        let start  = expr_to_region $1
+        and stop   = type_expr_to_region annot in
+        let region = cover start stop
+        and value  = $1, colon, annot
+        in EAnnot {region; value}
+    | None -> $1 }
 
 projection:
   struct_name selection {
     let start  = $1.region in
-    let stop   = nsepseq_to_region selection_to_region (snd $2) in
+    let selector, field_path = $2 in
+    let stop   = nsepseq_to_region selection_to_region field_path in
     let region = cover start stop
-    and value  = {struct_name = $1;
-                  selector    = fst $2;
-                  field_path  = snd $2}
-    in {region; value}
-  }
+    and value  = {struct_name=$1; selector; field_path}
+    in {region; value} }
 
 selection:
   "[" "<int>" "]" selection {
@@ -794,47 +771,45 @@ module_access_e :
     in {region; value} }
 
 module_var_e:
-  module_access_e   { EModA $1 }
+  module_access_e   { EModA $1                     }
 | "or"              { EVar {value="or"; region=$1} }
-| field_name        { EVar  $1 }
-| projection        { EProj $1 }
+| field_name        { EVar  $1                     }
+| projection        { EProj $1                     }
 
 record_expr:
   "{" field_assignment more_field_assignments? "}" {
     let compound = Some (Braces ($1,$4)) in
     let region   = cover $1 $4 in
     match $3 with
-    | Some (comma, elts) ->
+      Some (comma, elts) ->
         let ne_elements = Utils.nsepseq_cons $2 comma elts in
-        let value = {compound;
-                     ne_elements;
-                     terminator=None;
-                     attributes=[]}
+        let value =
+          {compound; ne_elements; terminator=None; attributes=[]}
         in {value; region}
     | None ->
-       let value = {compound;
-                    ne_elements = ($2,[]);
-                    terminator=None;
-                    attributes=[]}
+       let value =
+         {compound; ne_elements=($2,[]); terminator=None; attributes=[]}
        in {value; region}
   }
 | "{" field_name more_field_assignments "}" {
-    let field_name = {field_name=$2; assignment=ghost; field_expr=(EVar $2)} in
-    let field_name = {$2 with value=field_name} in
+    let field_name =
+      {field_name=$2; assignment=ghost; field_expr=(EVar $2)} in
+    let field_name  = {$2 with value=field_name} in
     let comma, elts = $3 in
     let ne_elements = Utils.nsepseq_cons field_name comma elts in
-    let compound = Some (Braces ($1,$4)) in
-    let region   = cover $1 $4
-    and value    = {compound; ne_elements; terminator=None; attributes=[]}
+    let compound    = Some (Braces ($1,$4)) in
+    let region      = cover $1 $4
+    and value       = {compound; ne_elements; terminator=None;
+                       attributes=[]}
     in {value; region} }
-
 
 update_record:
   "{" "..." path "," sep_or_term_list(field_path_assignment,",") "}" {
     let region = cover $1 $6
     and ne_elements, terminator = $5
-    and updates = {compound=None; ne_elements; terminator; attributes=[]} in
-    let updates = {value = updates; region = cover $4 $6}
+    and updates = {compound=None; ne_elements; terminator;
+                   attributes=[]} in
+    let updates = {value = updates; region = cover $4 $6} in
     let value =
       {lbrace=$1; ellipsis=$2; record=$3; comma=$4; updates; rbrace=$6}
     in {region; value} }
@@ -859,10 +834,10 @@ sequence:
 series:
   seq_expr ";" series? {
     match $3 with
-    | Some s ->  Utils.nsepseq_cons $1 $2 s
+      Some s ->  Utils.nsepseq_cons $1 $2 s
     | None -> ($1, [])
   }
-| last_expr     { $1,[] }
+| last_expr { $1,[] }
 
 %inline last_expr_inner:
   fun_expr(last_expr_opt_semi)

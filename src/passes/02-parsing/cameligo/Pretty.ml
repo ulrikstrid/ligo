@@ -56,7 +56,7 @@ and pp_let_binding (binding : let_binding) =
   in prefix 2 1 (lhs ^^ string " =") (pp_expr let_rhs)
 
 and pp_pattern = function
-  PCtor   p -> pp_pctor p
+  PCtor     p -> pp_pctor p
 | PUnit     _ -> string "()"
 | PVar      v -> pp_ident v
 | PInt      i -> pp_int i
@@ -72,10 +72,10 @@ and pp_pattern = function
 | PTyped    t -> pp_ptyped t
 
 and pp_pctor = function
-  PNone      _ -> string "None"
-| PSomeApp   p -> pp_patt_some p
-| PFalse    _ -> string "false"
-| PTrue     _ -> string "true"
+  PNone    _ -> string "None"
+| PSomeApp p -> pp_patt_some p
+| PFalse   _ -> string "false"
+| PTrue    _ -> string "true"
 | PCtorApp a -> pp_pctor_app a
 
 and pp_pctor_app {value; _} =

@@ -129,14 +129,14 @@ type 'a par = {
 
 type the_unit = lpar * rpar
 
-(* The Abstract Syntax Tree *)
+(* The Concrete Syntax Tree *)
 
 type t = {
   decl : declaration nseq;
   eof  : eof
 }
 
-and ast = t
+and cst = t
 
 and attributes = attribute list
 

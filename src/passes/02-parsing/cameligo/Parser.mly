@@ -275,8 +275,8 @@ record_type:
       match first_region $1 with
         None -> cover $2 $4
       | Some start -> cover start $4
-    and compound = Some (Braces ($2,$4))
-    and value = {compound; ne_elements; terminator; attributes=$1}
+    and compound = Some (Braces ($2,$4)) in
+    let value    = {compound; ne_elements; terminator; attributes=$1}
     in TRecord {region; value} }
 
 module_access_t :

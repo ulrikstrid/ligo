@@ -2,17 +2,17 @@ interactive_expr: Begin Case Verbatim Of LBRACKET WILD ARROW Skip With
 ##
 ## Ends in an error in state: 505.
 ##
-## case(if_clause) -> Case expr Of LBRACKET option(VBAR) cases(if_clause) . RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
+## case(test_clause) -> Case expr Of LBRACKET option(VBAR) cases(test_clause) . RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
-## Case expr Of LBRACKET option(VBAR) cases(if_clause)
+## Case expr Of LBRACKET option(VBAR) cases(test_clause)
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 507, spurious reduction of production nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause)
-## In state 504, spurious reduction of production cases(if_clause) -> nsepseq(case_clause(if_clause),VBAR)
+## In state 507, spurious reduction of production nsepseq(case_clause(test_clause),VBAR) -> case_clause(test_clause)
+## In state 504, spurious reduction of production cases(test_clause) -> nsepseq(case_clause(test_clause),VBAR)
 ##
 
 Ill-formed case instruction.
@@ -27,7 +27,7 @@ interactive_expr: Begin Case Verbatim Of LBRACKET With
 ##
 ## Ends in an error in state: 420.
 ##
-## case(if_clause) -> Case expr Of LBRACKET option(VBAR) . cases(if_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
+## case(test_clause) -> Case expr Of LBRACKET option(VBAR) . cases(test_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## Case expr Of LBRACKET option(VBAR)
@@ -42,7 +42,7 @@ interactive_expr: Begin Case Verbatim Of With
 ##
 ## Ends in an error in state: 510.
 ##
-## case(if_clause) -> Case expr Of option(VBAR) . cases(if_clause) End [ VBAR SEMI RBRACKET RBRACE End Else ]
+## case(test_clause) -> Case expr Of option(VBAR) . cases(test_clause) End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## Case expr Of option(VBAR)
@@ -57,10 +57,10 @@ interactive_expr: Begin Case Verbatim Of WILD ARROW Skip VBAR With
 ##
 ## Ends in an error in state: 508.
 ##
-## nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause) VBAR . nsepseq(case_clause(if_clause),VBAR) [ RBRACKET End ]
+## nsepseq(case_clause(test_clause),VBAR) -> case_clause(test_clause) VBAR . nsepseq(case_clause(test_clause),VBAR) [ RBRACKET End ]
 ##
 ## The known suffix of the stack is as follows:
-## case_clause(if_clause) VBAR
+## case_clause(test_clause) VBAR
 ##
 
 Ill-formed case instruction.
@@ -71,17 +71,17 @@ interactive_expr: Begin Case Verbatim Of WILD ARROW Skip With
 ##
 ## Ends in an error in state: 511.
 ##
-## case(if_clause) -> Case expr Of option(VBAR) cases(if_clause) . End [ VBAR SEMI RBRACKET RBRACE End Else ]
+## case(test_clause) -> Case expr Of option(VBAR) cases(test_clause) . End [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
-## Case expr Of option(VBAR) cases(if_clause)
+## Case expr Of option(VBAR) cases(test_clause)
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 507, spurious reduction of production nsepseq(case_clause(if_clause),VBAR) -> case_clause(if_clause)
-## In state 504, spurious reduction of production cases(if_clause) -> nsepseq(case_clause(if_clause),VBAR)
+## In state 507, spurious reduction of production nsepseq(case_clause(test_clause),VBAR) -> case_clause(test_clause)
+## In state 504, spurious reduction of production cases(test_clause) -> nsepseq(case_clause(test_clause),VBAR)
 ##
 
 Ill-formed case instruction.
@@ -96,7 +96,7 @@ interactive_expr: Begin Case Verbatim Of WILD ARROW With
 ##
 ## Ends in an error in state: 478.
 ##
-## case_clause(if_clause) -> pattern ARROW . if_clause [ VBAR RBRACKET End ]
+## case_clause(test_clause) -> pattern ARROW . test_clause [ VBAR RBRACKET End ]
 ##
 ## The known suffix of the stack is as follows:
 ## pattern ARROW
@@ -114,7 +114,7 @@ interactive_expr: Begin Case Verbatim Of WILD With
 ##
 ## Ends in an error in state: 477.
 ##
-## case_clause(if_clause) -> pattern . ARROW if_clause [ VBAR RBRACKET End ]
+## case_clause(test_clause) -> pattern . ARROW test_clause [ VBAR RBRACKET End ]
 ##
 ## The known suffix of the stack is as follows:
 ## pattern
@@ -138,8 +138,8 @@ interactive_expr: Begin Case Verbatim With
 ##
 ## Ends in an error in state: 416.
 ##
-## case(if_clause) -> Case expr . Of option(VBAR) cases(if_clause) End [ VBAR SEMI RBRACKET RBRACE End Else ]
-## case(if_clause) -> Case expr . Of LBRACKET option(VBAR) cases(if_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
+## case(test_clause) -> Case expr . Of option(VBAR) cases(test_clause) End [ VBAR SEMI RBRACKET RBRACE End Else ]
+## case(test_clause) -> Case expr . Of LBRACKET option(VBAR) cases(test_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## Case expr
@@ -171,8 +171,8 @@ interactive_expr: Begin Case With
 ##
 ## Ends in an error in state: 415.
 ##
-## case(if_clause) -> Case . expr Of option(VBAR) cases(if_clause) End [ VBAR SEMI RBRACKET RBRACE End Else ]
-## case(if_clause) -> Case . expr Of LBRACKET option(VBAR) cases(if_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
+## case(test_clause) -> Case . expr Of option(VBAR) cases(test_clause) End [ VBAR SEMI RBRACKET RBRACE End Else ]
+## case(test_clause) -> Case . expr Of LBRACKET option(VBAR) cases(test_clause) RBRACKET [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## Case
@@ -595,10 +595,10 @@ interactive_expr: Begin If Verbatim Then Skip Else With
 ##
 ## Ends in an error in state: 531.
 ##
-## conditional -> If expr Then if_clause option(SEMI) Else . if_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
+## conditional -> If expr Then test_clause option(SEMI) Else . test_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
-## If expr Then if_clause option(SEMI) Else
+## If expr Then test_clause option(SEMI) Else
 ##
 
 Ill-formed conditional instruction.
@@ -612,10 +612,10 @@ interactive_expr: Begin If Verbatim Then Skip With
 ##
 ## Ends in an error in state: 530.
 ##
-## conditional -> If expr Then if_clause option(SEMI) . Else if_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
+## conditional -> If expr Then test_clause option(SEMI) . Else test_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
-## If expr Then if_clause option(SEMI)
+## If expr Then test_clause option(SEMI)
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -636,7 +636,7 @@ interactive_expr: Begin If Verbatim Then With
 ##
 ## Ends in an error in state: 389.
 ##
-## conditional -> If expr Then . if_clause option(SEMI) Else if_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
+## conditional -> If expr Then . test_clause option(SEMI) Else test_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## If expr Then
@@ -654,7 +654,7 @@ interactive_expr: Begin If Verbatim With
 ##
 ## Ends in an error in state: 388.
 ##
-## conditional -> If expr . Then if_clause option(SEMI) Else if_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
+## conditional -> If expr . Then test_clause option(SEMI) Else test_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## If expr
@@ -687,7 +687,7 @@ interactive_expr: Begin If With
 ##
 ## Ends in an error in state: 387.
 ##
-## conditional -> If . expr Then if_clause option(SEMI) Else if_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
+## conditional -> If . expr Then test_clause option(SEMI) Else test_clause [ VBAR SEMI RBRACKET RBRACE End Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## If

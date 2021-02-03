@@ -249,7 +249,7 @@ and pp_var_decl {value; _} =
   ^^ group (break 1 ^^ nest 2 (string ":= " ^^ pp_expr init))
 
 and pp_instruction = function
-  Cond        i -> group (pp_conditional i)
+  Cond        i -> group (pp_cond_instr i)
 | CaseInstr   i -> pp_case pp_if_clause i
 | Assign      i -> pp_assignment i
 | Loop        i -> pp_loop i
@@ -304,8 +304,8 @@ and pp_cond_expr {value; _} =
   and ifnot = string "else" ^^ group (nest 2 (break 1 ^^ pp_expr ifnot))
   in test ^/^ ifso ^/^ ifnot
 
-and pp_conditional {value; _} =
-  let {test; ifso; ifnot; _} : conditional = value in
+and pp_cond_instr {value; _} =
+  let {test; ifso; ifnot; _} : cond_instr = value in
   let test  = string "if "  ^^ group (nest 3 (pp_expr test))
   and ifso  = match ifso with
                 ClauseInstr _ | ClauseBlock LongBlock _ ->
