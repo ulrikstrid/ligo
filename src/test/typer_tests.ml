@@ -53,7 +53,7 @@ module TestExpressions = struct
 
   let add () : (unit,_) result = test_expression I.(e_constant C_ADD [e_int Z.zero; e_int Z.one]) O.(t_int ())
   let key_hash () : (unit,_) result = test_expression I.(e_constant C_HASH_KEY [e_key "toto"]) O.(t_key_hash ())
-
+  let failwith () : (unit,_) result = test_expression I.(e_annotation (e_constant C_FAILWITH [e_int Z.zero]) (t_int ())) O.(t_int ())
   let application () : (unit, _) result =
     test_expression
       I.(e_application (e_lambda_ez (Location.wrap @@ Var.of_name "x") ~ascr:(t_int ()) (Some (t_int ())) (e_var "x")) @@ e_int Z.one)
@@ -142,6 +142,7 @@ let main = test_suite "Typer (from core AST)"
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bytes_unpack"    TestExpressions.bytes_unpack ;    
     test y (* enabled AND PASSES as of 02021-01-29 5dc448c7f *) "add"             TestExpressions.add;
     test y (* enabled AND PASSES as of 02021-01-30 3aaa688f1 *) "keyhash"         TestExpressions.key_hash;
+    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "failwith" TestExpressions.failwith;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "application"     TestExpressions.application ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "lambda"          TestExpressions.lambda ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "let_in"          TestExpressions.let_in ;

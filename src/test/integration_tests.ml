@@ -2544,9 +2544,9 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "string_arithmetic" string_arithmetic ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "string_arithmetic (mligo)" string_arithmetic_mligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "string_arithmetic (religo)" string_arithmetic_religo ;
-    test no (* Failure not comparable types *) "bytes_arithmetic" bytes_arithmetic ;
-    test no "bytes_arithmetic (mligo)" bytes_arithmetic_mligo ;
-    test no "bytes_arithmetic (religo)" bytes_arithmetic_religo ;
+    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "bytes_arithmetic" bytes_arithmetic ;
+    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "bytes_arithmetic (mligo)" bytes_arithmetic_mligo ;
+    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "bytes_arithmetic (religo)" bytes_arithmetic_religo ;
     test no (* unassigned variable *) "comparable (mligo)" comparable_mligo;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto" crypto ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto (mligo)" crypto_mligo ;
@@ -2556,18 +2556,18 @@ let main = test_suite "Integration (End to End)"
     test no "set_arithmetic (religo)" set_arithmetic_religo ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "unit" unit_expression ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "string" string_expression ;
-    test no (* Incompatible types *) "option" option ;
-    test no (*y*) "option (mligo)" moption ;
-    test no (*y*) "option (religo)" reoption ;
+    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "option" option ;
+    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "option (mligo)" moption ;
+    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "option (religo)" reoption ;
 
-    test no (* Typer unimplemented for map_empty *) "map" map ;
+    test no (* empty tc *) "map" map ;
     test no "map (mligo)" mmap ;
     (* test "map (religo)" remap ; *)
     test no (* incompatible type MAP BIG_MAP *) "big_map" big_map ;
     test no "big_map (mligo)" mbig_map ;
     test no "big_map (religo)" rebig_map ;
     test no (* Failure : type error *) "list" list ;
-    test no  (* different number of labels *) "loop" loop ;
+    test no  (* unssaigned variable LT *) "loop" loop ;
     test no (* unassigned variable *) "loop (mligo)" loop_mligo ;
     test no "loop (religo)" loop_religo ;
     test no (* unassigned variable *) "matching" matching ;
@@ -2599,11 +2599,11 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02020-02-03 2e8d3689b *) "match variant (religo)" match_variant_re ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "match variant 2 (mligo)" match_matej ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "match variant 2 (religo)" match_matej_re ;
-    test no "list matching (mligo)" mligo_list ;
+    test no (* uncomplete typclass *) "list matching (mligo)" mligo_list ;
     test no "list matching (religo)" religo_list ;
     test no (* nassigned variable *) "failwith ligo" failwith_ligo ;
-    test no "failwith mligo" failwith_mligo ;
-    test no "assert mligo" assert_mligo ;
+    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "failwith mligo" failwith_mligo ;
+    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "assert mligo" assert_mligo ;
     test no "recursion (ligo)" recursion_ligo ;
     test no "recursion (mligo)" recursion_mligo ;
     test no "recursion (religo)" recursion_religo ;
@@ -2635,9 +2635,9 @@ let main = test_suite "Integration (End to End)"
     test no (* unassigned variable *) "amount" amount ;
     test no "amount (mligo)" amount_mligo ;
     test no "amount (religo)" amount_religo ;
-    test no "address" address ;
-    test no "address (mligo)" address_mligo ;
-    test no "address (religo)" address_religo ;
+    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "address" address ;
+    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "address (mligo)" address_mligo ;
+    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "address (religo)" address_religo ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "self address" self_address ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "self address (mligo)" self_address_mligo ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "self address (religo)" self_address_religo ;
@@ -2650,13 +2650,13 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "set delegate (religo)" set_delegate_religo ;
     test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "is_nat" is_nat ;
     test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "is_nat (mligo)" is_nat_mligo ;
-    test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *)  "is_nat (religo)" is_nat_religo ;
-    test y(*y*) "tuples_sequences_functions (religo)" tuples_sequences_functions_religo ;
+    test y (* enabled AND PASSES as of 02021-01-30 4b43aa63d *) "is_nat (religo)" is_nat_religo ;
+    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuples_sequences_functions (religo)" tuples_sequences_functions_religo ;
 
-    test no (* MAP_empty not implemented *) "simple_access (ligo)" simple_access_ligo;
-    test no "deep_access (ligo)" deep_access_ligo;
-    test no "get_contract (ligo)" get_contract_ligo;
-    test no(*y*) "entrypoints (ligo)" entrypoints_ligo ;
+    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "simple_access (ligo)" simple_access_ligo;
+    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "deep_access (ligo)" deep_access_ligo;
+    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "get_contract (ligo)" get_contract_ligo;
+    test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "entrypoints (ligo)" entrypoints_ligo ;
 
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "curry (mligo)" curry ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "type tuple destruct (mligo)" type_tuple_destruct ;
@@ -2672,7 +2672,7 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple type (mligo)" tuple_type_mligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple type (religo)" tuple_type_religo ;
     test no (* Unassigned variable *) "no semicolon (religo)" no_semicolon_religo ;
-    test no (* Label does not exist *) "loop_bugs (ligo)" loop_bugs_ligo ;
-    test no (*y*) (*Type class empty *) "tuple_list (religo)" tuple_list_religo ;
+    test no (* label doesn't not exist in record *) "loop_bugs (ligo)" loop_bugs_ligo ;
+    test no (*Type class empty *) "tuple_list (religo)" tuple_list_religo ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "single_record_expr (religo)" single_record_expr_religo ;
   ]
