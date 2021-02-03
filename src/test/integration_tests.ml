@@ -2595,8 +2595,8 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (ligo)" local_type_decl_ligo;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (mligo)" local_type_decl_mligo;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (religo)" local_type_decl_religo;
-    test no "match variant (mligo)" match_variant ;
-    test no "match variant (religo)" match_variant_re ;
+    test y (* enabled AND PASSES as of 02020-02-03 2e8d3689b *) "match variant (mligo)" match_variant ;
+    test y (* enabled AND PASSES as of 02020-02-03 2e8d3689b *) "match variant (religo)" match_variant_re ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "match variant 2 (mligo)" match_matej ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "match variant 2 (religo)" match_matej_re ;
     test no "list matching (mligo)" mligo_list ;
