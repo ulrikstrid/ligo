@@ -12,7 +12,7 @@ open Errors
 (* TODO : find a better name for fonction that are called "type_something".
 They are not typing per say, just add a type variable to all expression and make the appropriate constraints *)
 
-let assert_type_expression_eq ((tv',tv):O.type_expression * O.type_expression) : (unit,typer_error) result =
+let _assert_type_expression_eq ((tv',tv):O.type_expression * O.type_expression) : (unit,typer_error) result =
   Compare_types.assert_type_expression_eq (tv' , tv)
 
 let cast_var (orig: 'a Var.t Location.wrap) = { orig with wrap_content = Var.todo_cast orig.wrap_content}
@@ -509,54 +509,56 @@ and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.match
   let return e state c m = ok @@ ((e,state, m),c) in
   match i with
     | Match_option {match_none ; match_some} ->
-      let%bind tv =
-        trace_option (match_error ~expected:i ~actual:t loc)
-        @@ get_t_option t in
       let%bind (e,state, match_none),c1 = self e state match_none in
       let {opt; body}:I.match_some = match_some in
       let opt = cast_var opt in
       (* Add the binder just for typing the case *)
+      let tv = t_variable @@ Var.fresh ~name:"match_some" () in
       let e = Environment.add_ez_binder opt tv e in
+      let c = Wrap.match_opt tv t in
       let%bind (e,state, body),c2 = type_expression' e state body in
-      return e state (c1@c2) @@ O.Match_option {match_none ; match_some = { opt; body; tv}}
+      return e state (c@c1@c2) @@ O.Match_option {match_none ; match_some = { opt; body; tv}}
     | Match_list {match_nil ; match_cons} ->
-      let%bind t_elt =
-        trace_option (match_error ~expected:i ~actual:t loc)
-        @@ get_t_list t in
       let%bind (e,state,match_nil),c1 = self e state match_nil in
       let {hd; tl; body} : I.match_cons = match_cons in
       let hd = cast_var hd in
       let tl = cast_var tl in
       (* Add the binder just for typing the case *)
+      let t_elt = t_variable @@ Var.fresh ~name:"elt" () in
       let e = Environment.add_ez_binder hd t_elt e in
       let e = Environment.add_ez_binder tl t e in
       let%bind (e,state,body),c2 = self e state body in
-      return e state (c1@c2) @@ O.Match_list {match_nil ; match_cons = {hd; tl; body;tv=t}}
+      let c = Wrap.match_lst t_elt t in
+      return e state (c@c1@c2) @@ O.Match_list {match_nil ; match_cons = {hd; tl; body;tv=t_elt}}
+    | Match_record {fields ; body } ->
+      let aux e _ ({var;ascr} : I.type_expression I.binder) =
+        let%bind ty_opt = bind_map_option (evaluate_type e)  ascr in
+        let ty = Option.unopt ~default:(O.t_variable @@ Var.fresh ()) ty_opt in
+        let e  = Environment.add_ez_binder var ty e in
+        ok @@ (e,(var,ty)) 
+      in
+      let%bind (e', fields) = Stage_common.Helpers.bind_fold_map_lmap aux e fields in
+      let%bind (e,state,body),c = self e' state body in
+      return e state c @@ O.Match_record {fields ; body ; tv = t}
     | Match_variant lst ->
-      (* Compile the expression in the matching and check for type equality*)
-      let%bind variant_opt =
-        let aux acc ({constructor;_ }: I.match_variant) =
-          let%bind (_ , variant) =
+      let%bind (e, state, c), cases =
+        let aux (e,state,c) ({constructor; proj; body}: I.match_variant) =
+          let%bind (constructor_type , variant) =
             trace_option (unbound_constructor e constructor loc) @@
             Environment.get_constructor constructor e in
-          let%bind acc = match acc with
-            | None -> ok (Some variant)
-            | Some variant' ->
-                let%bind () =
-                  assert_type_expression_eq (variant , variant') in
-                ok (Some variant)
-            in
-          ok acc in
-        trace (in_match_variant_tracer i) @@
-        bind_fold_list aux None lst in
-      let variant =
-        (* TODO : Front-end should check that the list is not empty.
-        Rewrite the check without the option. *)
-        Option.unopt_exn @@ variant_opt in
+          let pattern = cast_var proj in
+          let e = Environment.add_ez_binder pattern constructor_type e in
+          let%bind (e,state,body),c1 = self e state body in
+          let c2 = Wrap.match_variant constructor variant t in
+          ok ((e, state,c1@c2@c) , ({constructor ; pattern ; body} : O.matching_content_case))
+        in
+        bind_fold_map_list aux (e,state,[]) lst in
+      (* TODO: check that the variant is complete *)
+      return e state c @@ O.Match_variant {cases ; tv= t }
+    (*
+    | Match_variant lst ->
       (* Check that the matching contains the same number of case as the number of constructors of the variants
         and that all the constructors belong to the variants. *)
-      (* TODO : check that all given constructors belongs to a variant. Throw an error If one constructor is not part of
-      the variant, a warning if the variant is not complete or multiple variant are infered *)
       let%bind () =
         let%bind variant_cases' =
           trace_option (match_error ~expected:i ~actual:t loc)
@@ -573,31 +575,7 @@ and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.match
           List.(length variant_cases = length match_cases) in
         ok ()
       in
-      (* Convert constructors *)
-      let%bind (e, state, c), cases =
-        let aux (e,state,c) ({constructor; proj; body}: I.match_variant) =
-          let%bind (constructor_type , _) =
-            trace_option (unbound_constructor e constructor loc) @@
-            Environment.get_constructor constructor e in
-          let pattern = cast_var proj in
-          let e = Environment.add_ez_binder pattern constructor_type e in
-          let%bind (e,state,body),constraints = self e state body in
-          let constructor = constructor in
-          ok ((e, state,constraints@c) , ({constructor ; pattern ; body} : O.matching_content_case))
-        in
-        bind_fold_map_list aux (e,state,[]) lst in
-      return e state c @@ O.Match_variant {cases ; tv=variant }
-  (* This one seems to be working *)
-  | Match_record {fields ; body } ->
-    let aux e _ ({var;ascr} : I.type_expression I.binder) =
-      let%bind ty_opt = bind_map_option (evaluate_type e)  ascr in
-      let ty = Option.unopt ~default:(O.t_variable @@ Var.fresh ()) ty_opt in
-      let e  = Environment.add_ez_binder var ty e in
-      ok @@ (e,(var,ty)) 
-    in
-    let%bind (e', fields) = Stage_common.Helpers.bind_fold_map_lmap aux e fields in
-    let%bind (e,state,body),c = self e' state body in
-    return e state c @@ O.Match_record {fields ; body ; tv = t}
+      *)
 
 (* Apply type_declaration on every node of the AST_core from the root p *)
 and type_module_returns_env ((env, state, p) : environment * _ O'.typer_state * I.module_) : (environment * _ O'.typer_state * O.module_with_unification_vars, Typer_common.Errors.typer_error) result =
