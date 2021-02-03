@@ -101,7 +101,7 @@ const editor = (state = DEFAULT_STATE, action: Action): EditorState => {
         cursorPosition: action.payload,
       };
     default:
-      return state;
+      return { ...state };
   }
 };
 

@@ -43,6 +43,7 @@ const MenuItem = styled.span`
 
 interface stateTypes {
   isEditorDirty?: boolean;
+  hasNoSharedFile?: boolean;
 }
 
 interface dispatchTypes {
@@ -52,19 +53,15 @@ interface dispatchTypes {
 
 const Examples:FC<stateTypes&dispatchTypes> = (props) => {
   
-  const { isEditorDirty } = props
+  const { isEditorDirty, hasNoSharedFile } = props
   const [exampleList, setExampleList] = useState<ExampleItem[]>([]);
   const [example, setExample] = useState<ExampleItem[]>([]);
   const dispatch = useDispatch();
 
-  // const editorDirty = useSelector<AppState, EditorState['dirty']>(
-  //   (state: AppState) => state.editor.dirty
-  // );
-
   useEffect(() => {
     props.defaultExampleList().then((list) => {
       setExampleList(list)
-      if (example.length === 0){
+      if (example.length === 0 && hasNoSharedFile){
         props.getExample(list[0].id).then((data) => {
           setExample(data)
           dispatch({ ...new ChangeSelectedAction(data) });
@@ -72,7 +69,7 @@ const Examples:FC<stateTypes&dispatchTypes> = (props) => {
         })
       }
     })
-  }, [dispatch, example.length, props]);
+  }, [dispatch, example.length, props, hasNoSharedFile]);
 
 
   return (
@@ -107,9 +104,11 @@ const Examples:FC<stateTypes&dispatchTypes> = (props) => {
 };
 
 const mapStateToProps = state => {
-  const { editor } = state
+  const { editor, share } = state
+  const hasNoSharedFile = share.file === ""
   return { 
     isEditorDirty: editor.dirty,
+    hasNoSharedFile: hasNoSharedFile
    }
 }
 

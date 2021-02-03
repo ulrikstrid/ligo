@@ -81,6 +81,11 @@ export async function dryRun(
   return response.data;
 }
 
+export async function getSharedFile(fileHash: string) {
+  const response = await axios.get(`/api/share/${fileHash}`);
+  return response.data;
+}
+
 export async function share({
   editor,
   compile,
