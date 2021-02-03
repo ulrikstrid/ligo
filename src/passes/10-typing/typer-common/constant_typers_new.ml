@@ -55,19 +55,23 @@ module Operators_types = struct
                                                                 ]
   let tc_comparable a   = tc "comparable"               [a]     [ [nat] ; [int] ; [mutez] ; [timestamp] ]
   let tc_concatable a   = tc "concatenable"             [a]     [ [string] ; [bytes] ]
+  let tc_slicable   a   = tc "slicable"                 [a]     [ [string] ; [bytes] ]
   let tc_storable a     = tc "storable"                 [a]     [ [string] ; [bytes] ; (*Humm .. TODO ?*) ]
+  let tc_failwith a     = tc "failwith"                 [a]     [ [string] ; [int] ]
 
-  let t_none         = forall "a" @@ fun a -> option a
+  let t_none         = forall "a" @@ fun a -> tuple0 --> option a
 
   let t_sub          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_subarg a b c] => tuple2 a b --> c (* TYPECLASS *)
   let t_some         = forall "a" @@ fun a -> tuple1 a --> option a
   let t_map_remove   = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> map src dst
+  let t_map_empty   =  forall2 "src" "dst" @@ fun src dst -> tuple0 --> map src dst
+  let t_big_map_empty   =  forall2 "src" "dst" @@ fun src dst -> tuple0 --> big_map src dst
   let t_map_add      = forall2 "src" "dst" @@ fun src dst -> tuple3 src dst (map src dst) --> map src dst
   let t_map_update   = forall2 "src" "dst" @@ fun src dst -> tuple3 src (option dst) (map src dst) --> map src dst
   let t_map_mem      = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> bool
   let t_map_find     = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> dst
   let t_map_find_opt = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> option dst
-  let t_map_fold     = forall3 "src" "dst" "acc" @@ fun src dst acc -> tuple3 ( ( (src * dst) * acc ) --> acc ) (map src dst) acc --> acc
+  let t_map_fold     = forall3 "src" "dst" "acc" @@ fun src dst acc -> tuple3 ( pair acc (pair src dst ) --> acc ) (map src dst) acc --> acc
   let t_map_map      = forall3 "k" "v" "result" @@ fun k v result -> tuple2 ((k * v) --> result) (map k v) --> map k result
   let t_map_get_and_update = forall2 "k" "v" @@ fun k v -> tuple3 k (option v) (map k v) --> tuple2 (option v) (map k v)
   let t_big_map_get_and_update = forall2 "k" "v" @@ fun k v -> tuple3 k (option v) (big_map k v) --> tuple2 (option v) (big_map k v)
@@ -76,8 +80,8 @@ module Operators_types = struct
   let t_map_map_fold = forall4 "k" "v" "acc" "dst" @@ fun k v acc dst -> tuple3 ( ((k * v) * acc) --> acc * dst ) (map k v) (k * v) --> (map k dst * acc)
   let t_map_iter     = forall2 "k" "v" @@ fun k v -> tuple2 ( (k * v) --> unit ) (map k v) --> unit
   let t_size         = forall_tc "c" @@ fun c -> [tc_sizearg c] => tuple1 c --> nat (* TYPECLASS *)
-  let t_slice        = tuple3 nat nat string --> string
-  let t_failwith     = tuple1 string --> unit
+  let t_slice        = forall_tc "s" @@ fun s -> [tc_slicable s] => tuple3 nat nat s --> s
+  let t_failwith     = forall2_tc "a" "b" @@ fun a b -> [tc_failwith b] => tuple1 b --> a
   let t_get_force    = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> dst
   let t_int          = tuple1 nat --> int
   let t_bytes_pack   = forall_tc "a" @@ fun a -> [tc_packable a] => tuple1 a --> bytes (* TYPECLASS *)
@@ -94,10 +98,13 @@ module Operators_types = struct
   let t_unit         = tuple0 --> unit
   let t_amount       = tuple0 --> mutez
   let t_balance      = tuple0 --> mutez
-  let t_address      = tuple0 --> address
+  let t_address      = forall "a" @@ fun a -> tuple1 a --> address
   let t_now          = tuple0 --> timestamp
   let t_transaction  = forall "a" @@ fun a -> tuple3 a mutez (contract a) --> operation
-  let t_get_contract = forall "a" @@ fun a -> tuple0 --> contract a
+  let t_get_contract = forall2 "a" "addr" @@ fun a addr -> tuple1 addr --> contract a
+  let t_get_contract_opt = forall2 "a" "addr" @@ fun a addr -> tuple1 addr --> option (contract a)
+  let t_get_entrypoint = forall3 "a" "entry" "addr" @@ fun a entry addr ->tuple2 entry addr --> contract a
+  let t_get_entrypoint_opt = forall3 "a" "entry" "addr" @@ fun a entry addr ->tuple2 entry addr --> option (contract a)
   let t_abs          = tuple1 int --> nat
   let t_cons         = forall "a" @@ fun a -> tuple2 a (list a) --> list a
   let t_assertion    = tuple1 bool --> unit
@@ -112,7 +119,7 @@ module Operators_types = struct
   let t_set_remove   = forall "a" @@ fun a -> tuple2 a (set a) --> set a
   let t_not          = tuple1 bool --> bool
 
-  let t_continuation  = forall "a" @@ fun a -> tuple2 bool a --> pair bool a
+  let t_continuation  = forall "a" @@ fun a -> tuple1 a --> pair bool a
   let t_fold_while    = forall "a" @@ fun a -> tuple2 (a --> pair bool a) a --> a
   let t_neg           = tuple1 int --> int
   let t_and           = tuple2 bool bool --> bool
@@ -122,6 +129,7 @@ module Operators_types = struct
   let t_lsr           = tuple2 nat nat --> nat
   let t_comp          = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 a a --> bool
   let t_concat        = forall_tc "a" @@ fun a -> [tc_concatable a] => tuple2 a a --> a
+
   let t_set_empty     = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple0 --> set a
   let t_set_iter      = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 (a --> unit) (set a) --> unit
   (* TODO: check that the implementation has this type *)
@@ -180,7 +188,6 @@ module Operators_types = struct
     | C_SLICE               -> ok @@ t_slice ;
     | C_BYTES_PACK          -> ok @@ t_bytes_pack ;
     | C_BYTES_UNPACK        -> ok @@ t_bytes_unpack ;
-    | C_CONS                -> ok @@ t_cons ;
     (* SET  *)
     | C_SET_EMPTY           -> ok @@ t_set_empty ;
     | C_SET_ADD             -> ok @@ t_set_add ;
@@ -190,6 +197,7 @@ module Operators_types = struct
     | C_SET_MEM             -> ok @@ t_set_mem ;
 
     (* LIST *)
+    | C_CONS                -> ok @@ t_cons ;
     | C_LIST_EMPTY          -> ok @@ t_list_empty ;
     | C_LIST_ITER           -> ok @@ t_list_iter ;
     | C_LIST_MAP            -> ok @@ t_list_map ;
@@ -198,6 +206,8 @@ module Operators_types = struct
     | C_LIST_TAIL_OPT       -> ok @@ t_list_tail_opt ;
 
     (* MAP *)
+    | C_MAP_EMPTY           -> ok @@ t_map_empty ;
+    | C_BIG_MAP_EMPTY       -> ok @@ t_big_map_empty ;
     | C_MAP_ADD             -> ok @@ t_map_add ;
     | C_MAP_REMOVE          -> ok @@ t_map_remove ;
     | C_MAP_UPDATE          -> ok @@ t_map_update ;
@@ -207,7 +217,9 @@ module Operators_types = struct
     | C_MAP_MEM             -> ok @@ t_map_mem ;
     | C_MAP_FIND            -> ok @@ t_map_find ;
     | C_MAP_FIND_OPT        -> ok @@ t_map_find_opt ;
+    | C_MAP_GET_AND_UPDATE  -> ok @@ t_map_get_and_update ;
     (* BIG MAP *)
+    | C_BIG_MAP_GET_AND_UPDATE -> ok @@ t_big_map_get_and_update ;
     (* CRYPTO *)
     | C_SHA256              -> ok @@ t_hash256 ;
     | C_SHA512              -> ok @@ t_hash512 ;
@@ -217,7 +229,9 @@ module Operators_types = struct
     | C_CHAIN_ID            -> ok @@ t_chain_id ;
     (*BLOCKCHAIN *)
     | C_CONTRACT            -> ok @@ t_get_contract ;
-    | C_CONTRACT_ENTRYPOINT -> ok @@ failwith "t_get_entrypoint" ;
+    | C_CONTRACT_OPT        -> ok @@ t_get_contract_opt ;
+    | C_CONTRACT_ENTRYPOINT -> ok @@ t_get_entrypoint ;
+    | C_CONTRACT_ENTRYPOINT_OPT -> ok @@ t_get_entrypoint_opt ;
     | C_AMOUNT              -> ok @@ t_amount ;
     | C_BALANCE             -> ok @@ t_balance ;
     | C_CALL                -> ok @@ t_transaction ;
