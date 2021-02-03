@@ -253,3 +253,31 @@ let mod_al : unit -> constraints =
   fun () ->
   [
   ]
+
+let match_opt :T.type_expression -> T.type_expression -> constraints =
+  fun tv tv_some ->
+    let tv_some = type_expression_to_type_value tv_some in
+    let tv = type_expression_to_type_value tv in
+    [
+      c_equation tv_some (T.Reasons.wrap (Todo "wrap: match_opt") @@ T.P_constant
+        {p_ctor_tag=C_option;p_ctor_args=[tv]} ) "wrap: match_opt"
+    ]
+
+let match_lst :T.type_expression -> T.type_expression -> constraints =
+  fun elt lst ->
+    let lst = type_expression_to_type_value lst in
+    let elt = type_expression_to_type_value elt in
+    [
+      c_equation lst (T.Reasons.wrap (Todo "wrap: match_lst") @@ T.P_constant
+        {p_ctor_tag=C_list;p_ctor_args=[elt]} ) "wrap: match_lst"
+    ]
+
+let match_variant : T.label -> T.type_expression -> T.type_expression -> constraints =
+  fun cons variant t ->
+    let t = type_expression_to_type_value t in
+    let variant = type_expression_to_type_value variant in
+    let t_var = Core.fresh_type_variable () in
+  [
+    c_equation variant (T.Reasons.wrap (Todo "wrap: match_variant") @@ T.P_variable t_var) "wrap: match_variant";
+    { c = C_access_label { c_access_label_tval = t ; accessor = cons ; c_access_label_tvar = t_var } ; reason = "wrap: match_variant" }
+  ]
