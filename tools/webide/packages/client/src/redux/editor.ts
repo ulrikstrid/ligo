@@ -66,7 +66,10 @@ const DEFAULT_STATE: EditorState = {
   cursorPosition: null,
 };
 
-const editor = (state = DEFAULT_STATE, action: Action): EditorState => {
+const editor = (state, action: Action): EditorState => {
+  if (!state) {
+    state = DEFAULT_STATE;
+  }
   switch (action.type) {
     case ExamplesActionType.ChangeSelected:
       return {

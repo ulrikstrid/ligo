@@ -6,6 +6,7 @@ export enum ActionType {
 export interface ShareState {
   link: string;
   file: string;
+  loaded: boolean;
 }
 
 export class ChangeShareLinkAction {
@@ -16,6 +17,7 @@ export class ChangeShareLinkAction {
 const DEFAULT_STATE: ShareState = {
   link: '',
   file: '',
+  loaded: false,
 };
 
 const share = (state, action: any): ShareState => {
@@ -32,6 +34,7 @@ const share = (state, action: any): ShareState => {
       return {
         ...state,
         file: action.value,
+        loaded: true,
       };
     default:
       return { ...state };

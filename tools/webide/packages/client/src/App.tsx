@@ -20,6 +20,7 @@ import { TooltipContainer } from './components/tooltip';
 import OutputTab from './components/output/output-tab';
 import configureStore from './configure-store';
 import ViewSharedFile from './components/view-shared-file'
+import ViewExampleFile from './components/view-example-file'
 
 const store = configureStore();
 
@@ -86,7 +87,7 @@ const App: React.FC = () => {
   return (
     <Provider store={store}>
       <Router>
-      <Wrapper>
+        <Wrapper>
         <HeaderComponent />
         <Container>
         <div className="col-sm-12 col-md-2 order-md-1"><Examples /></div>
@@ -111,8 +112,13 @@ const App: React.FC = () => {
         <TooltipContainer />
       </Wrapper>
       <Switch>
-          <Route path="/p/:id" children={<ViewSharedFile />} />
-        </Switch>
+      <Route path="/p/:id">
+        <ViewSharedFile />
+      </Route>
+      <Route path="/">
+        <ViewExampleFile />
+      </Route>
+      </Switch>
       </Router>
     </Provider>
   );
