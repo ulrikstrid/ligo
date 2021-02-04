@@ -13,7 +13,7 @@ module Operators_types = struct
                                                                   [timestamp;timestamp;int] ;
                                                                   [mutez;mutez;mutez] ;
                                                                 ]
-  let tc_sizearg  a     = tc "arguments for size"       [a]     [ [int] ]
+  let tc_sizearg  a     = tc "arguments for size"       [a]     [ [string] ; [bytes] ; let a = Location.wrap @@ P_variable (Var.fresh ()) in [list a] ]
   let tc_packable a     = tc "packable"                 [a]     [ [int] ; [string] ; [bool] ; [address] ; (*TODO…*) ]
   let tc_timargs  a b c = tc "arguments for ( * )"      [a;b;c] [ [nat;nat;nat] ; 
                                                                   [nat;int;int] ; 
@@ -53,11 +53,24 @@ module Operators_types = struct
                                                                   [mutez;mutez;mutez]
                                                                   (* bls stuff *)
                                                                 ]
-  let tc_comparable a   = tc "comparable"               [a]     [ [nat] ; [int] ; [mutez] ; [timestamp] ]
+  let tc_comparable a   = tc "comparable"               [a]     [ [int] ; 
+                                                                  [nat] ; 
+                                                                  [bool] ;
+                                                                  [mutez] ; 
+                                                                  [string] ;
+                                                                  [bytes] ;
+                                                                  [address] ;
+                                                                  [timestamp] ;
+                                                                  [key_hash] ;
+                                                                  (* pair of comparable *)
+                                                                ]
   let tc_concatable a   = tc "concatenable"             [a]     [ [string] ; [bytes] ]
   let tc_slicable   a   = tc "slicable"                 [a]     [ [string] ; [bytes] ]
   let tc_storable a     = tc "storable"                 [a]     [ [string] ; [bytes] ; (*Humm .. TODO ?*) ]
   let tc_failwith a     = tc "failwith"                 [a]     [ [string] ; [int] ]
+  let tc_bitwise a b c  = tc "bitwise"                  [a;b;c] [ [nat;nat;nat] ;
+                                                                  [bool;bool;bool] ;
+                                                                ]
 
   let t_none         = forall "a" @@ fun a -> tuple0 --> option a
 
@@ -90,7 +103,7 @@ module Operators_types = struct
   let t_hash512      = tuple1 bytes --> bytes
   let t_blake2b      = tuple1 bytes --> bytes
   let t_hash_key     = tuple1 key --> key_hash
-  let t_is_nat       = tuple1 int --> bool
+  let t_is_nat       = tuple1 int --> option nat
   let t_check_signature = tuple3 key signature bytes --> bool
   let t_chain_id     = tuple0 --> chain_id
   let t_sender       = tuple0 --> address
@@ -122,11 +135,11 @@ module Operators_types = struct
   let t_continuation  = forall "a" @@ fun a -> tuple1 a --> pair bool a
   let t_fold_while    = forall "a" @@ fun a -> tuple2 (a --> pair bool a) a --> a
   let t_neg           = tuple1 int --> int
-  let t_and           = tuple2 bool bool --> bool
-  let t_or            = tuple2 bool bool --> bool
-  let t_xor           = tuple2 bool bool --> bool
-  let t_lsl           = tuple2 nat nat --> nat
-  let t_lsr           = tuple2 nat nat --> nat
+  let t_and           = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_bitwise a b c] => tuple2 a b --> c
+  let t_or            = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_bitwise a b c] => tuple2 a b --> c
+  let t_xor           = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_bitwise a b c] => tuple2 a b --> c
+  let t_lsl           = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_bitwise a b c] => tuple2 a b --> c
+  let t_lsr           = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_bitwise a b c] => tuple2 a b --> c
   let t_comp          = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 a a --> bool
   let t_concat        = forall_tc "a" @@ fun a -> [tc_concatable a] => tuple2 a a --> a
 
@@ -139,8 +152,8 @@ module Operators_types = struct
   let t_list_map      = forall2 "a" "b" @@ fun a b -> tuple2 (a --> b) (list a) --> (list b)
   (* TODO: check that the implementation has this type *)
   let t_list_fold     = forall2 "a" "b" @@ fun a b -> tuple3 (pair a b --> a) (list b) a --> a
-  let t_list_head_opt = forall "a" @@ fun a -> (list a) --> (option a)
-  let t_list_tail_opt = forall "a" @@ fun a -> (list a) --> (option (list a))
+  let t_list_head_opt = forall "a" @@ fun a -> tuple1 (list a) --> option a
+  let t_list_tail_opt = forall "a" @@ fun a -> tuple1 (list a) --> option (list a)
   let t_self_address  = tuple0 --> address
   let t_implicit_account = forall_tc "a" @@ fun a -> [tc_storable a] => tuple1 key_hash --> contract a
   let t_set_delegate  = tuple1 (option key_hash) --> operation

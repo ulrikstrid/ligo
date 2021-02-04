@@ -136,7 +136,7 @@ let get_tag_and_args_of_constant (tv : type_value) =
   | P_forall _ ->
     (* In this case we would need to do specialization.
        For now we just leave as-is and don't deduce anything *)
-    failwith "TODO"
+    failwith "Unsuported"
   | P_variable _ ->
     (* In this case we  *)
     failwith "TODO"

@@ -268,12 +268,15 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
   let self = type_expression' in
   let () = ignore tv_opt in     (* For compatibility with the old typer's API, this argument can be removed once the new typer is used. *)
   let module L = Logger.Stateful() in
-  let return : _ -> _ -> _ O'.typer_state -> _ -> _ (* return of type_expression *) = fun expr e state constraints type_name ->
+  let return : _ -> _ -> _ O'.typer_state -> _ -> _ -> _ (* return of type_expression *) = fun expr e state new_constraints constraints type_name ->
     let tv = t_variable type_name in
     let location = ae.location in
     let expr' = make_e ~location expr tv in
-    ok @@ ((e,state, expr'),constraints) in
-  let return_wrapped expr e state constraints (c , expr_type) = return expr e state (c@constraints) expr_type in
+    Format.printf "Returning expr : %a \nwith new_constraints: %a\n"
+      Ast_typed.PP.expression expr'
+      Ast_typed.PP.(list_sep_d type_constraint_short) new_constraints;
+    ok @@ ((e,state, expr'),new_constraints@constraints) in
+  let return_wrapped expr e state constraints (c , expr_type) = return expr e state c constraints expr_type in
   Format.printf "Type_expression : %a\n%!" Ast_core.PP.expression ae ;
   trace (expression_tracer ae) @@
   match ae.content with
@@ -290,9 +293,9 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
     let%bind (tv' : Environment.element) =
       trace_option (unbound_variable e name ae.location)
       @@ Environment.get_opt name e in
-    let (constraints , expr_type) = Wrap.variable name tv'.type_value in
+    let wrapped = Wrap.variable name tv'.type_value in
     let expr' = e_variable name in
-    return expr' e state constraints expr_type
+    return_wrapped expr' e state [] wrapped
   )
 
   | E_literal (Literal_string s) -> (
@@ -459,15 +462,19 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
     let fun_name = cast_var fun_name in
     let%bind fun_type = evaluate_type e fun_type in
     let e = Environment.add_ez_binder fun_name fun_type e in
-    let%bind lambda,e,state,constraints,_ = type_lambda e state lambda in
-    let wrapped = Wrap.recursive fun_type in
-    return_wrapped (E_recursive {fun_name;fun_type;lambda}) e state constraints wrapped
+    let%bind lambda,e,state,c1,(c2,t_var) = type_lambda e state lambda in
+    let wrapped = Wrap.recursive t_var fun_type in
+    return_wrapped (E_recursive {fun_name;fun_type;lambda}) e state (c1@c2) wrapped
 
   | E_raw_code {language ; code} ->
     (* The code is a string with an annotation*)
+    let%bind (code,type_expression) = trace_option (expected_ascription code) @@
+      I.get_e_ascription code.content in
     let%bind (e,state,code),constraints = self e state code in
-    let c,tv = Wrap.raw_code code.type_expression in
-    return (E_raw_code {language; code}) e state (c@constraints) tv
+    let%bind type_expression = evaluate_type e type_expression in
+    let wrapped = Wrap.raw_code type_expression code.type_expression in
+    let code = {code with type_expression} in
+    return_wrapped (E_raw_code {language; code}) e state constraints wrapped
   | E_ascription {anno_expr;type_annotation} ->
     let%bind tv = evaluate_type e type_annotation in
     let%bind (e,state,expr'),constraints = self e state anno_expr in

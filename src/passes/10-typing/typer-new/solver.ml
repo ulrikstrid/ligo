@@ -208,6 +208,7 @@ end = struct
       (Worklist.is_empty ~time_to_live)
       (fun (state, worklist) ->
          let () = Formatt.printf "\nStart iteration with new constraints :\n  %a\n" pp_indented_constraint_list (Pending.to_list worklist.pending_type_constraint) in
+         (* let () = Formatt.printf "and state: %a\n" pp_typer_state state in *)
 
          (* let () = queue_print (fun () -> Formatt.printf "Start iteration with constraints :\n  %a\n\n" pp_indented_constraint_list (Pending.to_list worklist.pending_type_constraint)) in *)
 
