@@ -139,7 +139,7 @@ and decompile_lambda : _ O.lambda -> (_ I.lambda, desugaring_error) result =
     let%bind output_type = bind_map_option decompile_type_expression output_type in
     let%bind result = decompile_expression result in
     ok @@ I.{binder;output_type;result}
-and decompile_matching : O.matching_expr -> (I.matching, desugaring_error) result =
+and decompile_matching : _ -> (I.matching, desugaring_error) result =
   fun m -> ignore m ; failwith "REMITODO"
   (* match m with
     | O.Match_list {match_nil;match_cons = { hd ; tl ; body }} ->

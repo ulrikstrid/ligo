@@ -109,7 +109,7 @@ and fold_module : ('a,self_ast_typed_error) folder -> 'a -> module_fully_typed -
   ok @@ res
 
 type 'err mapper = expression -> (expression , 'err) result
-let rec map_expression : self_ast_typed_error mapper -> expression -> (expression , self_ast_typed_error) result = fun f e ->
+let rec map_expression : 'err mapper -> expression -> (expression , 'err) result = fun f e ->
   let self = map_expression f in
   let%bind e' = f e in
   let return expression_content = ok { e' with expression_content } in
@@ -178,7 +178,7 @@ let rec map_expression : self_ast_typed_error mapper -> expression -> (expressio
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> return e'
 
 
-and map_cases : self_ast_typed_error mapper -> matching_expr -> (matching_expr , self_ast_typed_error) result = fun f m ->
+and map_cases : 'err mapper -> matching_expr -> (matching_expr , 'err) result = fun f m ->
   match m with
   | Match_list { match_nil ; match_cons = {hd ; tl ; body ; tv} } -> (
       let%bind match_nil = map_expression f match_nil in
@@ -202,7 +202,7 @@ and map_cases : self_ast_typed_error mapper -> matching_expr -> (matching_expr ,
     let%bind body = map_expression f body in
     ok @@ Match_record {fields; body; tv}
 
-and map_module : self_ast_typed_error mapper -> module_fully_typed -> (module_fully_typed, self_ast_typed_error) result = fun m (Module_Fully_Typed p) ->
+and map_module : 'err mapper -> module_fully_typed -> (module_fully_typed, 'err) result = fun m (Module_Fully_Typed p) ->
   let aux = fun (x : declaration) ->
     let return (d : declaration) = ok @@ d in
     match x with

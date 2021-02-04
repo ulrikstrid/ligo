@@ -10,6 +10,7 @@
     typer_new
     predefined
     environment
+    self_ast_core
   )
   (preprocess
     (pps ppx_let)

@@ -148,14 +148,7 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
           )
           cases
       in
-      (* REMITODO : prepend some *)
-      let matcheevar = ignore matchee ; Location.wrap (Var.fresh ()) in
-      let aux : (O.expression, O.type_expression) I.match_case -> (O.type_expression O.pattern list * O.expression) =
-        fun {pattern ; body} -> ([pattern], body)
-      in
-      let eqs = List.map aux cases in
-      let%bind c = Pattern_matching.compile_matching matcheevar eqs in
-      ok @@ O.make_e c
+      return @@ O.E_matching {matchee ; cases}
     | I.E_record recd ->
       let%bind recd = record self recd in
       return @@ O.E_record recd
@@ -242,13 +235,13 @@ let rec compile_expression : I.expression -> (O.expression , desugaring_error) r
       let%bind matchee = self condition in
       let%bind match_true = self then_clause in
       let%bind match_false = self else_clause in
-      let muted = Location.wrap @@ Var.of_name "_" in
       return @@ O.E_matching {
-        matchee ;
-        cases = Match_variant ([
-          {constructor=Label "true"; proj=muted; body=match_true} ;
-          {constructor=Label "false"; proj=muted; body=match_false} ;
-        ])}
+          matchee ;
+          cases = [
+            { pattern = P_variant (Label "true" , None) ; body = match_true  } ;
+            { pattern = P_variant (Label "false", None) ; body = match_false } ;
+          ]
+        }
     | I.E_sequence {expr1; expr2} ->
       let%bind expr1 = self expr1 in
       let%bind expr2 = self expr2 in

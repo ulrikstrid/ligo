@@ -17,7 +17,7 @@ type typer_error = [
   | `Typer_michelson_or_no_annotation of Ast_core.label * Location.t
   | `Typer_module_tracer of Ast_core.module_ * typer_error
   | `Typer_constant_declaration_tracer of Ast_core.expression_variable * Ast_core.expression * (Ast_typed.type_expression option) * typer_error
-  | `Typer_match_error of Ast_core.matching_expr * Ast_typed.type_expression * Location.t
+  (* REMITODO | `Typer_match_error of Ast_core.matching_expr * Ast_typed.type_expression * Location.t *)
   | `Typer_needs_annotation of Ast_core.expression * string
   | `Typer_fvs_in_create_contract_lambda of Ast_core.expression * Ast_typed.expression_variable
   | `Typer_create_contract_lambda of Ast_core.constant' * Ast_core.expression
@@ -65,7 +65,7 @@ type typer_error = [
   | `Typer_uncomparable_types of Location.t * Ast_typed.type_expression * Ast_typed.type_expression
   | `Typer_comparator_composed of Location.t * Ast_typed.type_expression
   | `Typer_constant_decl_tracer of Ast_core.expression_variable * Ast_core.expression * Ast_typed.type_expression option * typer_error
-  | `Typer_match_variant_tracer of Ast_core.matching_expr * typer_error
+  (* REMITODO | `Typer_match_variant_tracers of Ast_core.matching_expr * typer_error *)
   | `Typer_unrecognized_type_constant of Ast_core.type_expression
   | `Typer_expected_ascription of Ast_core.expression
   | `Typer_different_types of Ast_typed.type_expression * Ast_typed.type_expression
@@ -100,8 +100,8 @@ let michelson_or (c:Ast_core.label) (loc:Location.t) = `Typer_michelson_or_no_an
 let module_error_tracer (p:Ast_core.module_) (err:typer_error) = `Typer_module_tracer (p,err)
 let constant_declaration_error_tracer (name:Ast_core.expression_variable) (ae:Ast_core.expression) (expected: Ast_typed.type_expression option) (err:typer_error) =
   `Typer_constant_declaration_tracer (name,ae,expected,err)
-let match_error ~(expected: Ast_core.matching_expr) ~(actual: Ast_typed.type_expression) (loc:Location.t) =
-  `Typer_match_error (expected,actual,loc)
+(* let match_error ~(expected: Ast_core.matching_expr) ~(actual: Ast_typed.type_expression) (loc:Location.t) =
+  `Typer_match_error (expected,actual,loc) *)
 let needs_annotation (e:Ast_core.expression) (case:string) = `Typer_needs_annotation (e,case)
 let fvs_in_create_contract_lambda (e:Ast_core.expression) (fvar:Ast_typed.expression_variable) = `Typer_fvs_in_create_contract_lambda (e,fvar)
 let create_contract_lambda (cst : Ast_core.constant') (e : Ast_core.expression) = `Typer_create_contract_lambda (cst,e)
@@ -162,8 +162,8 @@ let unrecognized_type_constant (e:Ast_core.type_expression) = `Typer_unrecognize
 (* new typer errors *)
 let constant_declaration_tracer (name: Ast_core.expression_variable) (ae:Ast_core.expression) (expected: Ast_typed.type_expression option) (err:typer_error) =
   `Typer_constant_decl_tracer (name,ae,expected,err)
-let in_match_variant_tracer (ae:Ast_core.matching_expr) (err:typer_error) =
-  `Typer_match_variant_tracer (ae,err)
+(* let in_match_variant_tracer (ae:Ast_core.matching_expr) (err:typer_error) =
+  `Typer_match_variant_tracer (ae,err) *)
 let different_types a b = `Typer_different_types (a,b)
 let different_constant_tag_number_of_arguments loc opa opb lena lenb = `Typer_constant_tag_number_of_arguments (loc, opa, opb, lena, lenb)
 let typeclass_not_a_rectangular_matrix = `Typer_typeclass_not_a_rectangular_matrix
@@ -290,12 +290,12 @@ let rec error_ppformat : display_format:string display_format ->
         (error_ppformat ~display_format) err
     | `Typer_constant_declaration_tracer (_,_,_,err) ->
       error_ppformat ~display_format f err
-    | `Typer_match_error (expected,actual,loc) ->
+    (* | `Typer_match_error (expected,actual,loc) ->
       Format.fprintf f
         "@[<hv>%a@.Pattern matching over an expression of an incorrect type.@.Type \"%a\" was expected, but got type \"%a\". @]"
         Snippet.pp loc
         Ast_core.PP.matching_type expected
-        Ast_typed.PP.type_expression actual
+        Ast_typed.PP.type_expression actual *)
     | `Typer_needs_annotation (exp,case) ->
       Format.fprintf f
         "@[<hv>%a@.Missing type annotation.@.'%s' needs to be annotated with a type.@]"
@@ -373,9 +373,9 @@ The following forms of subtractions are possible:
     | `Typer_constant_decl_tracer (_name,_ae,_expected,err) ->
       Format.fprintf f
         "%a" (error_ppformat ~display_format) err
-    | `Typer_match_variant_tracer (_ae,err) ->
+    (* | `Typer_match_variant_tracer (_ae,err) ->
       Format.fprintf f
-        "%a" (error_ppformat ~display_format) err
+        "%a" (error_ppformat ~display_format) err *)
     | `Typer_unrecognized_type_constant e ->
       Format.fprintf f
         "@[<hv>%a@.Unrecognized type constant %a. @]"
@@ -775,7 +775,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("children", error_jsonformat err);
     ] in
     json_error ~stage ~content
-  | `Typer_match_error (expected,actual,loc) ->
+  (* | `Typer_match_error (expected,actual,loc) ->
     let message = `String "Typing match" in
     let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let expected = `String (Format.asprintf "%a" Ast_core.PP.matching_type expected) in
@@ -786,7 +786,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("actual", actual);
       ("expected", expected);
     ] in
-    json_error ~stage ~content
+    json_error ~stage ~content *)
   | `Typer_needs_annotation (exp,case) ->
     let message = `String "This expression needs to be annotated with its type" in
     let loc = `String (Format.asprintf "%a" Location.pp exp.location) in
@@ -1217,7 +1217,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("children", error_jsonformat err) ;
     ] in
     json_error ~stage ~content
-  | `Typer_match_variant_tracer (m,err) ->
+  (* | `Typer_match_variant_tracer (m,err) ->
     let message = `String "typing matching expression" in
     let expected = `String (Format.asprintf "%a" Ast_core.PP.matching_type m) in
     let content = `Assoc [
@@ -1225,7 +1225,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("expected", expected) ;
       ("children", error_jsonformat err) ;
     ] in
-    json_error ~stage ~content
+    json_error ~stage ~content *)
   | `Typer_unrecognized_type_constant e ->
     let message = `String "unrecognized type constant" in
     let value = `String (Format.asprintf "%a" Ast_core.PP.type_expression e) in

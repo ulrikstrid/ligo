@@ -43,7 +43,7 @@ and expression_content = function
   | E_raw_code    e -> `List [ `String "E_raw_code";    raw_code  expression e ]
   (* Variant *)
   | E_constructor     e -> `List [ `String "E_constructor"; constructor expression e ]
-  | E_matching        e -> `List [ `String "E_matching"; matching e ]
+  | E_matching        e -> `List [ `String "E_matching"; match_exp expression type_expression e ]
   (* Record *)
   | E_record          e -> `List [ `String "E_record"; record expression e ]
   | E_record_accessor e -> `List [ `String "E_record_accessor"; record_accessor expression e ]
@@ -64,47 +64,6 @@ and mod_in {module_binder;rhs;let_result} =
     ("module_binder", module_variable_to_yojson module_binder );
     ("rhs", module_ rhs);
     ("let_result", expression let_result);
-  ]
-
-
-and matching {matchee; cases} =
-  `Assoc [
-    ("matchee", expression matchee);
-    ("cases", matching_expr cases);
-  ]
-
-and matching_expr = function
-  | Match_list    {match_nil;match_cons} -> `List [ `String "Match_list";
-    `Assoc [
-      ("match_nil", expression match_nil);
-      ("match_cons", matching_cons match_cons);
-    ]]
-  | Match_option  {match_none;match_some} -> `List [ `String "Match_option";
-    `Assoc [
-      ("match_none", expression match_none);
-      ("match_some", matching_some match_some);
-    ]]
-  | Match_variant m -> `List [ `String "Match_variant"; list matching_content_case m ]
-  | Match_record _ -> `Null (* merge MR about ppx_to_yojson first*)
-
-and matching_cons {hd; tl; body} =
-  `Assoc [
-    ("hd", expression_variable_to_yojson hd);
-    ("tl", expression_variable_to_yojson tl);
-    ("body", expression body);
-  ]
-
-and matching_some {opt; body} =
-  `Assoc [
-    ("opt", expression_variable_to_yojson opt);
-    ("body", expression body);
-  ]
-
-and matching_content_case {constructor; proj; body} =
-  `Assoc [
-    ("constructor", label_to_yojson constructor);
-    ("pattern", expression_variable_to_yojson proj);
-    ("body", expression body);
   ]
 
 and declaration_constant {name;binder=b;expr;attr} =

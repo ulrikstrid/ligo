@@ -121,38 +121,8 @@ and untype_lambda ty {binder; result} : (_ I.lambda, typer_error) result =
 (*
   Transform a Ast_typed matching into an ast_core matching
 *)
-and untype_matching : (O.expression -> (I.expression, typer_error) result) -> O.matching_expr -> (I.matching_expr, typer_error) result = fun f m ->
-  let open I in
-  match m with
-  | Match_option {match_none ; match_some = {opt; body;tv=_}} ->
-    let%bind match_none = f match_none in
-    let%bind body = f body in
-    let opt = Location.map Var.todo_cast opt in
-    let match_some = {opt; body} in
-    ok @@ Match_option {match_none ; match_some}
-  | Match_list {match_nil ; match_cons = {hd;tl;body;tv=_}} ->
-    let%bind match_nil = f match_nil in
-    let hd = Location.map Var.todo_cast hd in
-    let tl = Location.map Var.todo_cast tl in
-    let%bind body = f body in
-    let match_cons = {hd ; tl ; body} in
-    ok @@ Match_list {match_nil ; match_cons}
-  | Match_variant { cases ; tv=_ } ->
-    let aux ({constructor;pattern;body} : O.matching_content_case) =
-      let%bind body = f body in
-      let proj = Location.map Var.todo_cast pattern in
-      ok ({constructor;proj;body} : I.match_variant) in
-    let%bind lst' = bind_map_list aux cases in
-    ok @@ Match_variant lst'
-  | Match_record {fields; body; tv = _} ->
-    let%bind fields = bind_map_list
-        (fun (label, (var, ty)) ->
-           let%bind ty = untype_type_expression ty in
-           ok (label, {var; ascr = Some ty}))
-        (LMap.to_kv_list fields) in
-    let fields = LMap.of_list fields in
-    let%bind body = f body in
-    ok @@ Match_record {fields; body}
+and untype_matching : (O.expression -> (I.expression, typer_error) result) -> O.matching_expr -> (_, typer_error) result = fun f m ->
+  ignore (f,m) ; failwith "REMITODO"
 
 and untype_declaration : O.declaration -> (I.declaration, typer_error) result =
 let return (d: I.declaration) = ok @@ d in
