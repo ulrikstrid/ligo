@@ -89,7 +89,7 @@ let get_referenced_constraints ({ a_k_var; a_k'_var' } : selector_output) : type
 
 let propagator : (output_break_ctor, typer_error) propagator =
   fun selected repr ->
-  (* Format.printf "In break_ctor.propagator for %a\n%!" Ast_typed.PP.output_break_ctor selected; *)
+  Format.printf "In break_ctor.propagator for %a\n%!" Ast_typed.PP.output_break_ctor selected;
   let a = selected.a_k_var in
   let b = selected.a_k'_var' in
   let get_tv : constructor_or_row -> type_variable = fun cr ->
@@ -123,7 +123,7 @@ let propagator : (output_break_ctor, typer_error) propagator =
                     Solver_should_be_generated.debug_pp_c_constructor_simpl a
                     Solver_should_be_generated.debug_pp_c_constructor_simpl b
                     (Solver_should_be_generated.compare_simple_c_constant a.c_tag b.c_tag))
-    | _ -> failwith "type error"
+    | _ -> failwith "type error : break_ctor propagator"
   );
   (* Produce constraint a.tv_list = b.tv_list *)
   let%bind eqs3 =

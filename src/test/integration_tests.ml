@@ -2518,12 +2518,12 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "record" record ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "record (mligo)" record_mligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "record (religo)" record_religo ;
-    test no (*unasigned variable *) "condition simple" condition_simple ;
-    test no (* unasigned variable *) "condition (ligo)" condition ;
-    test no "condition (mligo)" condition_mligo ;
-    test no "condition (religo)" condition_religo ;
+    test y "condition simple" condition_simple ;
+    test y "condition (ligo)" condition ;
+    test y "condition (mligo)" condition_mligo ;
+    test y "condition (religo)" condition_religo ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "sequence (mligo" sequence_mligo ;
-    test no (* missing typeclass possibility *) "eq bool (ligo)" eq_bool ;
+    test no (* todo p_row specialize *) "eq bool (ligo)" eq_bool ;
     test no "eq bool (mligo)" eq_bool_mligo ;
     test no "eq bool (religo)" eq_bool_religo ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "shadow" shadow ;
@@ -2532,22 +2532,22 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "multiple parameters" multiple_parameters ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "multiple parameters (mligo)" multiple_parameters_mligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "multiple parameters (religo)" multiple_parameters_religo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "bool" bool_expression ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "bool (mligo)" bool_expression_mligo ;
-    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "bool (religo)" bool_expression_religo ;
+    test no (* todo p_row specialize *) "bool" bool_expression ;
+    test no "bool (mligo)" bool_expression_mligo ;
+    test no "bool (religo)" bool_expression_religo ;
     test no (* failure todo *) "arithmetic" arithmetic ;
     test no "arithmetic (mligo)" arithmetic_mligo ;
     test no "arithmetic (religo)" arithmetic_religo ;
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bitwise_arithmetic" bitwise_arithmetic ;
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bitwise_arithmetic (mligo)" bitwise_arithmetic_mligo;
-    test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "bitwise_arithmetic (religo)" bitwise_arithmetic_religo;
+    test no (* todo *) "bitwise_arithmetic" bitwise_arithmetic ;
+    test no "bitwise_arithmetic (mligo)" bitwise_arithmetic_mligo;
+    test no "bitwise_arithmetic (religo)" bitwise_arithmetic_religo;
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "string_arithmetic" string_arithmetic ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "string_arithmetic (mligo)" string_arithmetic_mligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "string_arithmetic (religo)" string_arithmetic_religo ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "bytes_arithmetic" bytes_arithmetic ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "bytes_arithmetic (mligo)" bytes_arithmetic_mligo ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "bytes_arithmetic (religo)" bytes_arithmetic_religo ;
-    test no (* unassigned variable *) "comparable (mligo)" comparable_mligo;
+    test no (* exist in typeclasse *) "comparable (mligo)" comparable_mligo;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto" crypto ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto (mligo)" crypto_mligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto (religo)" crypto_religo ;
@@ -2560,17 +2560,17 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "option (mligo)" moption ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "option (religo)" reoption ;
 
-    test no (* empty tc *) "map" map ;
+    test no (* exist for tc_size or t_map_size *) "map" map ;
     test no "map (mligo)" mmap ;
     (* test "map (religo)" remap ; *)
     test no (* incompatible type MAP BIG_MAP *) "big_map" big_map ;
     test no "big_map (mligo)" mbig_map ;
     test no "big_map (religo)" rebig_map ;
-    test no (* Failure : type error *) "list" list ;
-    test no  (* unssaigned variable LT *) "loop" loop ;
-    test no (* unassigned variable *) "loop (mligo)" loop_mligo ;
-    test no "loop (religo)" loop_religo ;
-    test no (* unassigned variable *) "matching" matching ;
+    test no (* rework typeclass *) "list" list ;
+    test y "loop" loop ;
+    test y "loop (mligo)" loop_mligo ;
+    test y "loop (religo)" loop_religo ;
+    test y "matching" matching ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "declarations" declarations ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "quote declaration" quote_declaration ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "quote declarations" quote_declarations ;
@@ -2601,12 +2601,12 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "match variant 2 (religo)" match_matej_re ;
     test no (* uncomplete typclass *) "list matching (mligo)" mligo_list ;
     test no "list matching (religo)" religo_list ;
-    test no (* nassigned variable *) "failwith ligo" failwith_ligo ;
+    test y "failwith ligo" failwith_ligo ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "failwith mligo" failwith_mligo ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "assert mligo" assert_mligo ;
-    test no "recursion (ligo)" recursion_ligo ;
-    test no "recursion (mligo)" recursion_mligo ;
-    test no "recursion (religo)" recursion_religo ;
+    test y "recursion (ligo)" recursion_ligo ;
+    test y "recursion (mligo)" recursion_mligo ;
+    test y "recursion (religo)" recursion_religo ;
     (* test "guess string mligo" guess_string_mligo ; WIP? *)
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "lambda mligo" lambda_mligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "lambda religo" lambda_religo ;
@@ -2620,9 +2620,9 @@ let main = test_suite "Integration (End to End)"
     (* test "fibo2 (mligo)" fibo2_mligo ; *)
     (* test "fibo3 (mligo)" fibo3_mligo ; *)
     (* test "fibo4 (mligo)" fibo4_mligo ; *)
-    test no (*uncompatible types *) "michelson inserion ligo" michelson_insertion_ligo;
-    test no "michelson inserion mligo" michelson_insertion_mligo;
-    test no "michelson inserion religo" michelson_insertion_religo;
+    test y "michelson inserion ligo" michelson_insertion_ligo;
+    test y "michelson inserion mligo" michelson_insertion_mligo;
+    test y "michelson inserion religo" michelson_insertion_religo;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website1 ligo" website1_ligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website2 ligo" website2_ligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website2 (mligo)" website2_mligo ;
@@ -2632,9 +2632,9 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "balance constant" balance_constant ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "balance constant (mligo)" balance_constant_mligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "balance constant (religo)" balance_constant_religo ;
-    test no (* unassigned variable *) "amount" amount ;
-    test no "amount (mligo)" amount_mligo ;
-    test no "amount (religo)" amount_religo ;
+    test y "amount" amount ;
+    test y "amount (mligo)" amount_mligo ;
+    test y "amount (religo)" amount_religo ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "address" address ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "address (mligo)" address_mligo ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "address (religo)" address_religo ;
@@ -2671,8 +2671,8 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "empty case (religo)" empty_case_religo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple type (mligo)" tuple_type_mligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple type (religo)" tuple_type_religo ;
-    test no (* Unassigned variable *) "no semicolon (religo)" no_semicolon_religo ;
-    test no (* label doesn't not exist in record *) "loop_bugs (ligo)" loop_bugs_ligo ;
-    test no (*Type class empty *) "tuple_list (religo)" tuple_list_religo ;
+    test y "no semicolon (religo)" no_semicolon_religo ;
+    test y "loop_bugs (ligo)" loop_bugs_ligo ;
+    test no (* new typeclass *) "tuple_list (religo)" tuple_list_religo ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "single_record_expr (religo)" single_record_expr_religo ;
   ]

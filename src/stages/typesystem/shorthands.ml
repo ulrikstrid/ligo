@@ -55,14 +55,14 @@ let forall2_tc a b f =
 let (=>) tc ty = (tc , ty)
 let (-->) arg ret = p_constant C_arrow     [arg; ret]
 let option t      = p_constant C_option    [t]
-let pair a b      = p_row_ez   C_record    [("left",a);("right",b)]
-let sum  a b      = p_row_ez   C_variant   [("left",a);("right",b)]
+let pair a b      = p_row_ez   C_record    [("0",a);("1",b)]
+let sum  a b      = p_row_ez   C_variant   [("0",a);("1",b)]
 let map  k v      = p_constant C_map       [k; v]
 let big_map k v = p_constant C_big_map [k; v]
 let unit          = p_constant C_unit      []
 let list   t      = p_constant C_list      [t]
 let set    t      = p_constant C_set       [t]
-let bool          = wrap Builtin_type @@ P_variable Stage_common.Constant.v_bool
+let bool          = p_row_ez C_variant    [("true",unit);("false",unit)]
 let string        = p_constant C_string    []
 let nat           = p_constant C_nat       []
 let mutez         = p_constant C_mutez     []
