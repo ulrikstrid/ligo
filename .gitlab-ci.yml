@@ -29,7 +29,7 @@ build-preview-ligo-webide-front-end:
     - export NETLIFY_DEPLOY_LOGS=$(jq -r .logs netlify.json)
     - echo "The URL for this deployment is $NETLIFY_DEPLOY_URL"
     - echo "Logs for this deployment can be found at $NETLIFY_DEPLOY_LOGS"
-    - 'CI_MERGE_REQUEST_IID=$(curl --request GET --header "Private-Token: $GITLAB_PERSONAL_API_PRIVATE_TOKEN" "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/merge_requests" --insecure | jq --raw-output ".[0].iid")'
+    - 'CI_MERGE_REQUEST_IID=$(curl --request GET --header "Private-Token: $GITLAB_PERSONAL_API_PRIVATE_TOKEN" "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/repository/commits/$CI_COMMIT_SHA/merge_requests?wip=no" --insecure | jq --raw-output ".[0].iid")'
     - '[ ! -z "$CI_MERGE_REQUEST_IID" ] && curl POST https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes -d "{\"body\": \"A new deploy preview is available on Netlify at $NETLIFY_DEPLOY_URL, you can view the logs at $NETLIFY_DEPLOY_LOGS\"}" --header "Content-Type: application/json" --header "Private-Token: $GITLAB_PERSONAL_API_PRIVATE_TOKEN"'
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
@@ -245,10 +245,14 @@ deploy-handoff:
   variables:
     IDE_DOCKER_IMAGE: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
     LIGO_COMMIT_REF_NAME: "${CI_COMMIT_SHORT_SHA}"
-  trigger: ligolang/ligo-webide-deploy
+  # trigger: ligolang/ligo-webide-deploy
+  trigger: 
+    project: ligolang/ligo-webide-deploy
+    branch: new-api-server-changes
   rules:
     # Only deploy handoff when from the dev branch AND on the canonical ligolang/ligo repository
-    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+    # - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_COMMIT_REF_NAME == "alternate-api-deployment" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
 
 static-binary:
