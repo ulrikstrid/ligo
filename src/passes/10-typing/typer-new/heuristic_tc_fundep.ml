@@ -88,14 +88,6 @@ let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds
    (typeclasses_constraining indexer). Add to this the logic for
    refined_typeclass vs. typeclass. *)
 
-   (*
-    1 , 2 , 3 , 4
-    -> (1,3) , (1,4)
-  
-    +5 -> 1 , 2 , 3 , 4 , 5
-
-   *)
-
 let alias_selector : type_variable -> type_variable -> flds -> selector_output list =
   fun a b (module Indexes) ->
   let a_tcs = (Typeclasses_constraining.get_typeclasses_constraining_list a Indexes.typeclasses_constraining) in
@@ -127,16 +119,113 @@ let get_referenced_constraints ({ tc; c } : selector_output) : type_constraint_s
  * Propagator
  * *********************************************************************** *)
 
+
+
+(* 
+
+type t = { m : int; n : unit }
+
+type lens_m = int  * { m : _;   n : unit }
+type lens_n = unit * { m : int; n : _ }
+
+lens_m (v:t) = t.m, fun new -> { m = new; n = v.n }
+lens_n (v:t) = t.n, fun new -> { m = v.m; n = new }
+
+val get_lenses : constructor_or_row -> type_value -> (type_value list * (type_variable list -> constructor_or_row)) option
+
+check shape
+list(_) != map(_)
+map(_,_,_) != map(_,_,_)
+list(_)             != record(f=_,g=_,h=_)
+record(f=_,g=_,h=_) != record(f=_,g=_,h=_)
+
+extract
+map(int,string,bool)            → [int,string,bool]
+record(f=int, g=string, h=bool) → [int,string,bool]
+
+replacement
+map(u,i,o)            → [a,b,c] → map(a, b, c)
+record(f=u, g=i, h=o) → [a,b,c] → record(f=a, g=b, h=c)
+-----------------------------------------------------------
+x = map(u,i,o)
+(x,y) ∈ [ [ map(int, string, eXist) ; int];
+        [ [ list(float)            ; bool] ]
+
+1) delete line list(float) because list(_) != map(_)
+
+x = ctor (inject fresh vars "pointwise")
+→ x = map(a, b, c)
+
+return constraint fresh var == arg pointwise
+→ return a = int, b = string, c = eXist
+
+simplified constraint
+(a,b,c,y) ∈ [ [ int ; string ; eXist ; int] ]
+-----------------------------------------------------------
+x = record(f=u,g=i,h=o)
+(x,y) ∈ [ [ record(f=int, g=string, h=eXist) ; int  ];
+        [ [ list(float)                      ; bool ] ]
+
+x = row_ctor (inject fresh vars "pointwise")
+→ x = record(f=a, g=b, h=c)
+
+return constraint fresh var == arg pointwise
+→ return a = int, b = string, c = bool
+
+simplified constraint
+(a,b,c,y) ∈ [ [ int ; string ; eXist ; int] ]
+
+
+
+
+
+ *)
+
+
+
+
+
+
+
+
+
+module Matrix = struct
+  let matrix (tc : c_typeclass_simpl) =
+    let { reason_typeclass_simpl; id_typeclass_simpl; original_id; tc; args } = tc in
+    ??
+end
+
+
+(* type tag = [ `Constructor of constant_tag | `Row of row_tag ]
+ * type 'a comparer = 'a -> 'a -> int *)
+
+(* let get_tag : constructor_or_row -> tag = function
+ *     `Constructor c -> `Constructor c.c_tag
+ *   | `Row r -> `Row r.r_tag
+ * let get_tag' = function P_constant { p_ctor_tag; p_ctor_args } -> ??
+ *                       | P_row { p_row_tag; p_row_args } -> ??
+ *                       (P_forall _ | P_variable _ | P_apply _ | P_row _ | P_constant _) -> None *)
+
+(* type arg
+ * let get_arg : constructor_or_row -> arg = ?? *)
+
+module Eq = struct include Ast_typed.Compare let (==) fa b = fa b = 0 end
+
 let restrict_one (cr : constructor_or_row) (allowed : type_value) =
   match cr, allowed.wrap_content with
   | `Constructor { reason_constr_simpl=_; tv=_; c_tag; tv_list }, P_constant { p_ctor_tag; p_ctor_args } ->
     if Compare.constant_tag c_tag p_ctor_tag = 0
     then if List.compare_lengths tv_list p_ctor_args = 0
-      then Some p_ctor_args
+      then Some (`Constructor p_ctor_args)
       else None (* case removed because type constructors are different *)
     else None   (* case removed because argument lists are of different lengths *)
-  | `Row _, P_row _ -> failwith "TODO: support P_row similarly to P_constant"
-  | _, (P_forall _ | P_variable _ | P_apply _ | P_row _ | P_constant _) -> None (* TODO: does this mean that we can't satisfy these constraints? *)
+  | `Row { reason_row_simpl=_; id_row_simpl=_; original_id=_; tv=_; r_tag; tv_map }, P_row { p_row_tag; p_row_args } ->
+    if Compare.row_tag r_tag p_row_tag = 0
+    then if List.compare ~compare:Compare.label (LMap.keys tv_map) (LMap.keys p_row_args) = 0
+      then Some (`Row p_row_args)
+      else None (* case removed because type constructors are different *)
+    else None   (* case removed because argument lists are of different lengths *)
+  | _, (P_forall _ | P_variable _ | P_apply _ | P_row _ | P_constant _) -> None
 
 (* Restricts a typeclass to the possible cases given v = k(a, …) in c *)
 let restrict repr (constructor_or_row : constructor_or_row) (tcs : c_typeclass_simpl) =
@@ -144,7 +233,6 @@ let restrict repr (constructor_or_row : constructor_or_row) (tcs : c_typeclass_s
     | `Row r -> List.map (fun {associated_variable} -> associated_variable) @@ LMap.to_list r.tv_map , (repr r.tv)
     | `Constructor c -> c.tv_list , (repr c.tv)
   in
-  (* TODO: this is bogus if there is shadowing *)
   let index =
     let repr_tv = (repr tv) in
     try List.find_index (fun x -> Compare.type_variable repr_tv (repr x) = 0) tcs.args
@@ -169,6 +257,13 @@ let restrict repr (constructor_or_row : constructor_or_row) (tcs : c_typeclass_s
      true,
      [ x = map( m , n , o ) ; o = float ( ) ],
      [ m ? [ nat  ; bytes ]
+       n ? [ unit ; mutez ] ]
+   input:
+     x ? [ record( a = nat , b = unit , c = float ) ; record( a = bytes , b = mutez , c = float ) ]
+   output:
+     true,
+     [ x = record( a=m , b=n , c=o ) ; o = float ( ) ],
+     [ m ? [ nat  ; bytes ]
        n ? [ unit ; mutez ] ] *)
 let replace_var_and_possibilities_1 (repr:type_variable -> type_variable) ((x : type_variable) , (possibilities_for_x : type_value list)) =
   let%bind tags_and_args = bind_map_list get_tag_and_args_of_constant possibilities_for_x in
@@ -183,7 +278,7 @@ let replace_var_and_possibilities_1 (repr:type_variable -> type_variable) ((x : 
        typeclass so far. *)
     (* fail @@ typeclass_error
      *   "original expected by typeclass"
-     *   "actual partially guessed so far (needs a recursive substitution)" *)
+     *   "<actual> partially guessed so far (needs a recursive substitution)" *)
     failwith "type error: the typeclass does not allow any type for \
               the variable %a:PP_variable:x at this point"
   | All_equal_to c_tag ->
