@@ -9,6 +9,6 @@
 
 [[redirects]]
   from = "/p/*"
-  to = "https://api.staging-ligo-ide.tez.ie/index.html"
+  to = "/index.html"
   status = 200
   force = true
