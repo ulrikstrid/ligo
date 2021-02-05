@@ -10,7 +10,6 @@ stages:
   - ide-deploy
   - versioning
 
-# #
 # This job builds the ligo-webide front-end from the tools/webide/ directory and deploys it as a Branch Deploy to Netlify using the netlify-cli tool. 
 # After the deployment is done a comment is posted to the MR with the draft site URL as well as the Netlify logs.
 build-preview-ligo-webide-front-end:
@@ -246,15 +245,10 @@ deploy-handoff:
   variables:
     IDE_DOCKER_IMAGE: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
     LIGO_COMMIT_REF_NAME: "${CI_COMMIT_SHORT_SHA}"
-  # trigger: ligolang/ligo-webide-deploy
-  trigger: 
-    project: ligolang/ligo-webide-deploy
-    branch: new-api-server-changes
+  trigger: ligolang/ligo-webide-deploy
   rules:
     # Only deploy handoff when from the dev branch AND on the canonical ligolang/ligo repository
-    # - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
-    #   when: always
-    - if: '$CI_COMMIT_REF_NAME == "refactor-state-for-netlify-preview-build" && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
 
 static-binary:
