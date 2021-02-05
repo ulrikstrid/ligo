@@ -10,6 +10,7 @@ stages:
   - ide-deploy
   - versioning
 
+#
 # This job builds the ligo-webide front-end from the tools/webide/ directory and deploys it as a Branch Deploy to Netlify using the netlify-cli tool. 
 # After the deployment is done a comment is posted to the MR with the draft site URL as well as the Netlify logs.
 build-preview-ligo-webide-front-end:
