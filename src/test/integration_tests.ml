@@ -2590,8 +2590,8 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "basic (mligo)" basic_mligo ;
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "basic (religo)" basic_religo ;
 
-    test no (* Unassigned variable *) "let-in (mligo)" let_in_mligo ;
-    test no "let-in (religo)" let_in_religo ;
+    test y "let-in (mligo)" let_in_mligo ;
+    test y "let-in (religo)" let_in_religo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (ligo)" local_type_decl_ligo;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (mligo)" local_type_decl_mligo;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (religo)" local_type_decl_religo;
@@ -2627,8 +2627,8 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website2 ligo" website2_ligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website2 (mligo)" website2_mligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website2 (religo)" website2_religo ;
-    test no "let multiple (mligo)" mligo_let_multiple ;
-    test no "let multiple (religo)" religo_let_multiple ;
+    test y "let multiple (mligo)" mligo_let_multiple ;
+    test y "let multiple (religo)" religo_let_multiple ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "balance constant" balance_constant ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "balance constant (mligo)" balance_constant_mligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "balance constant (religo)" balance_constant_religo ;
@@ -2663,7 +2663,7 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "attributes (ligo)" attributes_ligo;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "attributes (mligo)" attributes_mligo;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "attributes (religo)" attributes_religo;
-    test no (* unassigned variable *) "let in multi-bind (mligo)" let_in_multi_bind ;
+    test y "let in multi-bind (mligo)" let_in_multi_bind ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple param destruct (mligo)" tuple_param_destruct ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple param destruct (religo)" tuple_param_destruct_religo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "empty case" empty_case ;
