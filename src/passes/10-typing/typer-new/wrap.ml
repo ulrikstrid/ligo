@@ -285,3 +285,14 @@ let match_variant : T.label -> T.type_expression -> T.type_expression -> constra
     c_equation variant (T.Reasons.wrap (Todo "wrap: match_variant") @@ T.P_variable t_var) "wrap: match_variant";
     { c = C_access_label { c_access_label_tval = t ; accessor = cons ; c_access_label_tvar = t_var } ; reason = "wrap: match_variant" }
   ]
+
+let match_record : T.type_expression T.label_map -> T.type_expression -> constraints =
+  fun row t ->
+    let t = type_expression_to_type_value t in
+    let row = T.LMap.map (fun v ->
+      let v = type_expression_to_type_value v in
+      T.{associated_value=v;michelson_annotation=None;decl_pos=0}
+      ) row in
+  [
+    c_equation t (T.p_row T.C_record row) "wrap: match_record"
+  ]

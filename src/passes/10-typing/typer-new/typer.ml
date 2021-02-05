@@ -546,7 +546,8 @@ and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.match
       in
       let%bind (e', fields) = Stage_common.Helpers.bind_fold_map_lmap aux e fields in
       let%bind (e,state,body),c = self e' state body in
-      return e state c @@ O.Match_record {fields ; body ; tv = t}
+      let c2 = Wrap.match_record (O.LMap.map snd fields) t in
+      return e state (c@c2) @@ O.Match_record {fields ; body ; tv = t}
     | Match_variant lst ->
       let%bind (e, state, c), cases =
         let aux (e,state,c) ({constructor; proj; body}: I.match_variant) =
