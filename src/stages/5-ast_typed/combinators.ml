@@ -240,6 +240,8 @@ let ez_e_record (lst : (label * expression) list) : expression_content =
 let e_some s : expression_content = E_constant {cons_name=C_SOME;arguments=[s]}
 let e_none (): expression_content = E_constant {cons_name=C_NONE; arguments=[]}
 
+let e_failwith e : expression_content = E_constant {cons_name=C_FAILWITH ; arguments=[e]}
+
 let e_unit () : expression_content =     E_literal (Literal_unit)
 let e_int n : expression_content = E_literal (Literal_int n)
 let e_nat n : expression_content = E_literal (Literal_nat n)
