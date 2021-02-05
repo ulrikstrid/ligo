@@ -2,7 +2,7 @@
 
 (* To disable warning about multiply-defined record labels. *)
 
-[@@@warning "-30-40-42"]
+[@@@warning "-30"]
 
 (* Utilities *)
 
@@ -249,12 +249,14 @@ and fun_decl = {
   kwd_function  : kwd_function;
   fun_name      : variable;
   param         : parameters;
-  ret_type      : (colon * type_expr) option;
+  ret_type      : type_annot option;
   kwd_is        : kwd_is;
   return        : expr;
   terminator    : semi option;
   attributes    : attributes
 }
+
+and type_annot = colon * type_expr
 
 and block_with = {
   block    : block reg;
@@ -318,7 +320,7 @@ and var_decl = {
 }
 
 and instruction =
-  Cond        of cond_instr reg
+  Cond        of test_clause conditional reg
 | CaseInstr   of test_clause case reg
 | Assign      of assignment reg
 | Loop        of loop
@@ -382,10 +384,6 @@ and 'branch conditional = {
   kwd_else   : kwd_else;
   ifnot      : 'branch
 }
-
-and cond_expr = expr conditional
-
-and cond_instr = test_clause conditional
 
 and test_clause =
   ClauseInstr of instruction
@@ -480,7 +478,7 @@ and collection =
 
 and expr =
   ECase    of expr case reg
-| ECond    of cond_expr reg
+| ECond    of expr conditional reg
 | EAnnot   of annot_expr par reg
 | ELogic   of logic_expr
 | EArith   of arith_expr
@@ -503,7 +501,7 @@ and expr =
 | ECodeInj of code_inj reg
 | EBlock   of block_with reg
 
-and annot_expr = expr * colon * type_expr
+and annot_expr = expr * type_annot
 
 and set_expr =
   SetInj of expr injection reg
@@ -823,8 +821,8 @@ let clause_block_to_region = function
 | ShortBlock {region; _} -> region
 
 let test_clause_to_region = function
-  ClauseInstr instr        -> instr_to_region instr
-| ClauseBlock clause_block -> clause_block_to_region clause_block
+  ClauseInstr instr -> instr_to_region instr
+| ClauseBlock block -> clause_block_to_region block
 
 let pattern_to_region = function
   PVar            {region; _}

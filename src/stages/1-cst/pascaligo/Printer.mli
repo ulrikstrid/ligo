@@ -25,12 +25,16 @@ val print_statements  : state -> CST.statements -> unit
 
 val tokens_to_string :
   offsets:bool -> mode:[`Point|`Byte] -> CST.t -> string
+
 val path_to_string :
   offsets:bool -> mode:[`Point|`Byte] -> CST.path -> string
+
 val pattern_to_string :
   offsets:bool -> mode:[`Point|`Byte] -> CST.pattern -> string
+
 val instruction_to_string :
   offsets:bool -> mode:[`Point|`Byte] -> CST.instruction -> string
+
 val type_expr_to_string :
   offsets:bool -> mode:[`Point|`Byte] -> CST.type_expr -> string
 

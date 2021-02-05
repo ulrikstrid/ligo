@@ -298,14 +298,14 @@ and pp_record_patch {value; _} =
   ^^ group (nest 2 (break 1 ^^ inj))
 
 and pp_cond_expr {value; _} =
-  let {test; ifso; ifnot; _} : cond_expr = value in
+  let {test; ifso; ifnot; _} : expr conditional = value in
   let test  = string "if "  ^^ group (nest 3 (pp_expr test))
   and ifso  = string "then" ^^ group (nest 2 (break 1 ^^ pp_expr ifso))
   and ifnot = string "else" ^^ group (nest 2 (break 1 ^^ pp_expr ifnot))
   in test ^/^ ifso ^/^ ifnot
 
 and pp_cond_instr {value; _} =
-  let {test; ifso; ifnot; _} : cond_instr = value in
+  let {test; ifso; ifnot; _} : test_clause conditional = value in
   let test  = string "if "  ^^ group (nest 3 (pp_expr test))
   and ifso  = match ifso with
                 ClauseInstr _ | ClauseBlock LongBlock _ ->
@@ -442,7 +442,7 @@ and pp_block_with {value; _} =
          ^^ group (nest 4 (break 1 ^^ expr)))
 
 and pp_annot_expr {value; _} =
-  let expr, _, type_expr = value.inside in
+  let expr, (_, type_expr) = value.inside in
   group (string "("
          ^^ nest 1 (pp_expr expr ^/^ string ": "
                     ^^ pp_type_expr type_expr ^^ string ")"))

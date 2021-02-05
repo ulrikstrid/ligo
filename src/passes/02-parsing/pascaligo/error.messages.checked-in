@@ -4347,19 +4347,6 @@ following is expected:
   * a semicolon ';' followed by another field;
   * a closing bracket ']' if the record is complete.
 
-interactive_expr: LPAR Verbatim COLON With
-##
-## Ends in an error in state: 580.
-##
-## annot_expr -> disj_expr COLON . type_expr [ RPAR ]
-##
-## The known suffix of the stack is as follows:
-## disj_expr COLON
-##
-
-Ill-formed annotated expression.
-At this point, the type of the expression is expected.
-
 contract: Type Ident Is UIdent With
 ##
 ## Ends in an error in state: 627.

@@ -2,7 +2,7 @@
 
 (* To disable warning about multiply-defined record labels. *)
 
-[@@@warning "-30-40-42"]
+[@@@warning "-30"]
 
 (* Utilities *)
 
@@ -29,6 +29,8 @@ type 'a reg = 'a Region.reg
 type lexeme = string
 
 (* Keywords of CameLIGO *)
+
+type keyword    = Region.t
 
 type kwd_and    = Region.t
 type kwd_begin  = Region.t
@@ -359,7 +361,7 @@ and comp_expr =
 | Equal of equal bin_op reg
 | Neq   of neq   bin_op reg
 
-and record = field_assign reg ne_injection
+and record = field_assignment reg ne_injection
 
 and 'a module_access = { (* TODO: Left-associativity expected + expression *)
   module_name : module_name;
@@ -377,7 +379,7 @@ and selection =
   FieldName of variable
 | Component of (string * Z.t) reg
 
-and field_assign = {
+and field_assignment = {
   field_name : field_name;
   assignment : equal;
   field_expr : expr
@@ -543,7 +545,7 @@ let list_expr_to_region = function
 and ctor_expr_to_region = function
   ENone region
 | ECtorApp {region; _}
-| ESomeApp   {region; _} -> region
+| ESomeApp {region; _} -> region
 
 let expr_to_region = function
   ELogic e  -> logic_expr_to_region e

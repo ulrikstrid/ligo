@@ -682,7 +682,7 @@ proc_call:
 conditional:
   "if" expr "then" test_clause ";"? "else" test_clause {
     let region = cover $1 (test_clause_to_region $7) in
-    let value : CST.cond_instr = {
+    let value : test_clause conditional = {
       kwd_if     = $1;
       test       = $2;
       kwd_then   = $3;
@@ -839,7 +839,7 @@ block_with:
 cond_expr:
   "if" expr "then" expr ";"? "else" expr {
     let region = cover $1 (expr_to_region $7) in
-    let value : CST.cond_expr = {
+    let value : expr conditional = {
       kwd_if     = $1;
       test       = $2;
       kwd_then   = $3;
@@ -983,7 +983,7 @@ call_or_par_or_proj:
 | fun_call { ECall $1 }
 
 annot_expr:
-  disj_expr ":" type_expr { $1,$2,$3 }
+  disj_expr type_annot { $1,$2 }
 
 set_expr:
   injection("set",expr) { SetInj ($1 (fun region -> InjSet region)) }
