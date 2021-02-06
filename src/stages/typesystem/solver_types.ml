@@ -9,27 +9,29 @@ type ('selector_output , 'errors) propagator = 'selector_output -> (type_variabl
 
 type ('selector_output, -'flds) selector = (type_variable -> type_variable) -> type_constraint_simpl -> 'flds -> 'selector_output list
 
-module type Heuristic_plugin_instance = sig
-  type selector_output
-  val selector     : (* (selector_output, (module Required_flds)) selector *)
-    (type_variable -> type_variable) -> type_constraint_simpl -> (*flds ->*) selector_output list
-  (* Select in the databases tuples of constraints which are
-     interesting and involve the given two type_viables, knowing that
-     these are about to be merged. This function is called before the
-     database's merge_aliases functions are called (i.e. the database
-     does not reflect the effects of the merge yet). *)
-  val alias_selector : type_variable -> type_variable -> (*(module Required_flds) ->*) selector_output list
-  val get_referenced_constraints : selector_output -> type_constraint_simpl list
-  (* called when two 'data are associated with the same type_constraint *)
-  val propagator   : (selector_output , Ast_typed.Typer_errors.typer_error) propagator
-  val printer      : Format.formatter -> selector_output -> unit
-  val printer_json : selector_output -> Yojson.Safe.t
-  val comparator   : selector_output -> selector_output -> int
-end
-
+(* This is module hell. *)
 module Heuristic_plugin_M =
   functor (Required_flds : sig module type S end) -> struct
-    module type S = functor (Available_flds : Required_flds.S) -> Heuristic_plugin_instance
+    module type S = functor (Available_flds : Required_flds.S) -> sig
+      type selector_output
+      (* Finds in the databases tuples of constraints which are
+         interesting for this plugin and include the given
+         type_constraint_simpl. *)
+      val selector     : (* (selector_output, (module Required_flds)) selector *)
+        (type_variable -> type_variable) -> type_constraint_simpl -> (*flds ->*) selector_output list
+      (* Select in the databases tuples of constraints which are
+         interesting and involve the given two type_viables, knowing that
+         these are about to be merged. This function is called before the
+         database's merge_aliases functions are called (i.e. the database
+         does not reflect the effects of the merge yet). *)
+      val alias_selector : type_variable -> type_variable -> (*(module Required_flds) ->*) selector_output list
+      val get_referenced_constraints : selector_output -> type_constraint_simpl list
+      (* called when two 'data are associated with the same type_constraint *)
+      val propagator   : (selector_output , Ast_typed.Typer_errors.typer_error) propagator
+      val printer      : Format.formatter -> selector_output -> unit
+      val printer_json : selector_output -> Yojson.Safe.t
+      val comparator   : selector_output -> selector_output -> int
+    end
   end
 
 module type Heuristic_plugin = sig
@@ -37,21 +39,45 @@ module type Heuristic_plugin = sig
     module type S
   end
   val heuristic_name : string
-  (* Finds in the databases tuples of constraints which are
-     interesting for this plugin and include the given
-     type_constraint_simpl. *)
   module M : Heuristic_plugin_M(Required_flds).S
 end
 
-module type Ex_heuristic_state = sig
-  module Plugin : Heuristic_plugin_instance
-  (* module Required_flds : sig
-   *   module type S
-   * end
-   * module type S = functor (Available_flds : Required_flds.S) -> sig
-   *   module Plugin : Heuristic_plugin_M(Required_flds).S *)
-  val already_selected : Plugin.selector_output Set.t
-end
+(* This is module hell. *)
+module Ex_heuristic_state =
+  functor (Required_flds : sig module type S end) -> struct
+    module type S = functor (Available_flds : Required_flds.S) -> sig
+      type selector_output
+      (* Finds in the databases tuples of constraints which are
+         interesting for this plugin and include the given
+         type_constraint_simpl. *)
+      val selector     : (* (selector_output, (module Required_flds)) selector *)
+        (type_variable -> type_variable) -> type_constraint_simpl -> (*flds ->*) selector_output list
+      (* Select in the databases tuples of constraints which are
+         interesting and involve the given two type_viables, knowing that
+         these are about to be merged. This function is called before the
+         database's merge_aliases functions are called (i.e. the database
+         does not reflect the effects of the merge yet). *)
+      val alias_selector : type_variable -> type_variable -> (*(module Required_flds) ->*) selector_output list
+      val get_referenced_constraints : selector_output -> type_constraint_simpl list
+      (* called when two 'data are associated with the same type_constraint *)
+      val propagator   : (selector_output , Ast_typed.Typer_errors.typer_error) propagator
+      val printer      : Format.formatter -> selector_output -> unit
+      val printer_json : selector_output -> Yojson.Safe.t
+      val comparator   : selector_output -> selector_output -> int
+      val already_selected : selector_output
+    end
+  end
+
+(* module type Ex_heuristic_state = sig
+ *   module Plugin : Heuristic_plugin
+ *     
+ *   (\* module Required_flds : sig
+ *    *   module type S
+ *    * end
+ *    * module type S = functor (Available_flds : Required_flds.S) -> sig
+ *    *   module Plugin : Heuristic_plugin_M(Required_flds).S *\)
+ *   val already_selected : Plugin.M(Plugin.Required_flds).selector_output Set.t
+ * end *)
 
 (* module type Ex_heuristic_selector = sig
  *   module Plugin : Heuristic_plugin
@@ -127,14 +153,17 @@ module type Plugins = sig
    * val heuristics : (module Indexers.PluginFields(PerPluginState).Flds) heuristic_plugins *)
 end
 
-type ('errors, 'plugin_states) typer_state = {
-  all_constraints                  : type_constraint_simpl PolySet.t ;
-  added_constraints                : type_constraint PolySet.t ;
-  deleted_constraints              : type_constraint_simpl PolySet.t ;
-  aliases                          : type_variable UnionFind.Poly2.t ;
-  plugin_states                    : 'plugin_states ;
-  already_selected_and_propagators : (* 'plugin_states  *) (module Ex_heuristic_state) list ;
-}
+module Typer_state =
+  functor (* (Errors : sig type t end) *) (Indexer_plugin_states : sig module type S end) -> struct
+    module type S = sig
+      val all_constraints                  : type_constraint_simpl PolySet.t
+      val added_constraints                : type_constraint PolySet.t
+      val deleted_constraints              : type_constraint_simpl PolySet.t
+      val aliases                          : type_variable UnionFind.Poly2.t
+      val indexer_plugin_states            : (module Indexer_plugin_states.S)
+      val already_selected_and_propagators : (module Ex_heuristic_state(Indexer_plugin_states).S) list
+    end
+  end
 
 open Format
 open PP_helpers

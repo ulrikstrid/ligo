@@ -1,0 +1,59 @@
+type type_variable
+
+module Check(X : sig
+    type 'type_variable req
+    val f : 'type_variable req -> unit
+  end) = struct module type S = sig end end
+
+module type Hr = sig
+  module M : sig
+    type 'type_variable req
+    val f : type_variable req -> unit
+  end
+  module type N = Check(M).S
+end
+
+module H1 : Hr = struct
+  module M = struct
+    type 'tv req = < i1 : unit >
+    let f : type_variable req -> unit = fun _ -> ()
+  end
+  module type N = sig end (* Check(M).S *)
+end
+
+
+(* type i1 = < i1 : unit >
+ * type i2 = < i2 : unit >
+ * type i3 = < i3 : unit >
+ * 
+ * class type t_available_indexers = object method i1:unit method i2:unit method i3:unit end
+ * class available_indexers : t_available_indexers = object
+ *   method i1 = ()
+ *   method i2 = ()
+ *   method i3 = ()
+ * end
+ * 
+ * module H = functor (Req : sig class t : object end end) -> struct module type S = sig
+ *   val f : <Req.t;..> -> unit
+ * end end
+ * 
+ * module H1 = struct
+ *   type req = < i1; i2 >
+ *   let f : < req;..> -> unit = fun _ -> ()
+ * end
+ * 
+ * module R2 = struct class t = available_indexers end
+ * module H2 : H(R2).S = struct
+ *   type req = < i2; i3 >
+ *   let f : < req;..> -> unit = fun _ -> ()
+ * end
+ * 
+ * (\* module type HH = H with type +'self req := < available_indexers; .. > as 'self *\)
+ * module ZZ = struct type t = available_indexers end
+ * let hs : (module H(ZZ).S) list = [ (module H1); (module H2) ]
+ * 
+ * let _ = match hs with
+ *   | hd :: _ ->
+ *     let module Hd = (val hd) in
+ *     Hd.f available_indexers
+ *   | _ -> failwith "pvdegelgvdlkg" *)

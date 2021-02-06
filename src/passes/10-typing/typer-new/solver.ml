@@ -38,7 +38,7 @@ module Make_solver(Plugins : Plugins) : sig
   val placeholder_for_state_of_new_typer : unit -> typer_state
   val discard_state : typer_state -> unit
 end = struct
-  module Plugin_states = Plugins.Indexers.PluginFields(PerPluginState)
+  module Indexer_plugin_states = Plugins.Indexers.PluginFields(PerPluginState)
   type plugin_states = (module Plugins.Indexers.PluginFields(PerPluginState).Flds)
   type nonrec typer_state = (typer_error, plugin_states) Typesystem.Solver_types.typer_state
 
@@ -284,6 +284,18 @@ end = struct
      state any further. Suzanne *)
   let discard_state (_ : typer_state) = ()
 
+  module Azerty = struct module type S = Indexer_plugin_states.Flds end
+  let init_propagator_heuristic (heuristic_plugin : (module Typesystem.Solver_types.Heuristic_plugin_M(Azerty).S))
+    : (module Typesystem.Solver_types.Ex_heuristic_state(Azerty).S)=
+    let module Heuristic_plugin = (val heuristic_plugin) in
+    let module HP = Heuristic_plugin(Azerty) in
+    (module struct
+      type selector_output = Heuristic_plugin.selector_output
+      module Plugin = Heuristic_plugin
+      let already_selected = Set.create ~cmp:Heuristic_plugin.comparator
+    end)
+
+  
   let initial_state : typer_state =
     let module MapCreateState = Plugins.Indexers.MapPlugins(CreateState) in
     let plugin_states = MapCreateState.f () plugin_fields_unit in
@@ -293,7 +305,12 @@ end = struct
       deleted_constraints              = PolySet.create ~cmp:Ast_typed.Compare.type_constraint_simpl ;
       aliases                          = UnionFind.Poly2.empty Var.pp Var.compare ;
       plugin_states                    = plugin_states ;
-      already_selected_and_propagators = List.map init_propagator_heuristic Plugins.heuristics ;
+      already_selected_and_propagators =
+        match Plugins.heuristics with
+          hd::_ -> let _ = init_propagator_heuristic hd in
+          failwith "peojkgskgk"
+        | _ -> failwith "……………………………………"
+        (* List.map init_propagator_heuristic Plugins.heuristics  *);
     }
 
 
