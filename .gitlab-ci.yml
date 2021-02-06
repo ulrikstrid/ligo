@@ -21,7 +21,7 @@ build-preview-ligo-webide-front-end:
     - apt-get install -y --no-install-recommends jq
     - cd ./tools/webide/
     - mv ./packages/client/staging-netlify.toml ./packages/client/netlify.toml
-    - yarn install
+    - yarn install --frozen-lockfile
     - CI= yarn workspaces run build
     - cd ./packages/client
     - npx netlify deploy --site $NETLIFY_SITE_ID --auth $NETLIFY_AUTH_TOKEN --json --alias="$CI_COMMIT_SHORT_SHA" > netlify.json
