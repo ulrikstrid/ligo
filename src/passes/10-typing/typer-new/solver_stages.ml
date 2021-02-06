@@ -1,5 +1,4 @@
 open Trace
-open Typer_common.Errors
 open Worklist_and_pending
 
 module Core = Typesystem.Core
@@ -11,7 +10,7 @@ open Typesystem.Solver_types
 
 module M(Plugins : Plugins)(Solver : sig
     type plugin_states = Plugins.Indexers.PluginFields(PerPluginState).flds
-    type nonrec typer_state = (typer_error, plugin_states) Typesystem.Solver_types.typer_state
+    type nonrec typer_state = plugin_states Typesystem.Solver_types.typer_state
   end) = struct
 
   open Solver

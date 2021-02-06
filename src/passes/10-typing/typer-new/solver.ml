@@ -30,7 +30,7 @@ let logfile = stderr (* open_out "/tmp/typer_log" *)
 
 module Make_solver(Plugins : Plugins) : sig
   type plugin_states = Plugins.Indexers.PluginFields(PerPluginState).flds
-  type nonrec typer_state = (typer_error, plugin_states) Typesystem.Solver_types.typer_state
+  type nonrec typer_state = plugin_states Typesystem.Solver_types.typer_state
   val pp_typer_state  : Format.formatter -> typer_state -> unit
   val get_alias : Ast_typed.type_variable -> type_variable poly_unionfind -> (type_variable, typer_error) Trace.result
   val main : typer_state -> type_constraint list -> typer_state result
@@ -40,7 +40,7 @@ module Make_solver(Plugins : Plugins) : sig
 end = struct
   module Plugin_states = Plugins.Indexers.PluginFields(PerPluginState)
   type plugin_states = Plugins.Indexers.PluginFields(PerPluginState).flds
-  type nonrec typer_state = (typer_error, plugin_states) Typesystem.Solver_types.typer_state
+  type nonrec typer_state = plugin_states Typesystem.Solver_types.typer_state
 
   module Solver_stages' = Solver_stages.M(Plugins)(struct type nonrec typer_state = typer_state type nonrec plugin_states = plugin_states end)
   open Solver_stages'
