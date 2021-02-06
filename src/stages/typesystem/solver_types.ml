@@ -52,7 +52,7 @@ module type Plugins = sig
   val heuristics : Indexers.PluginFields(PerPluginState).flds heuristic_plugins
 end
 
-type ('errors, 'plugin_states) typer_state = {
+type ('plugin_states) typer_state = {
   all_constraints                  : type_constraint_simpl PolySet.t ;
   added_constraints                : type_constraint PolySet.t ;
   deleted_constraints              : type_constraint_simpl PolySet.t ;
