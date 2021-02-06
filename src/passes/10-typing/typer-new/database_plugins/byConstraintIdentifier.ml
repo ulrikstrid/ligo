@@ -2,6 +2,7 @@ open Ast_typed.Types
 open Trace
 
 type 'typeVariable t = (constraint_identifier, c_typeclass_simpl) PolyMap.t
+type 'type_variable inc = < by_constraint_identifier : 'type_variable t >
 let create_state ~cmp:_ =
   PolyMap.create ~cmp:Ast_typed.Compare.constraint_identifier
 

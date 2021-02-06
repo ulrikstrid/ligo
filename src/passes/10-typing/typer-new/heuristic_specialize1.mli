@@ -3,7 +3,7 @@ open Ast_typed.Types
 open Typesystem.Solver_types
 
 val heuristic : <
-  grouped_by_variable : type_variable GroupedByVariable.t ;
+  type_variable GroupedByVariable.inc ;
   ..
 > ex_heuristic_plugin
 

@@ -5,10 +5,10 @@ open Ast_typed.Types
 open Typesystem.Solver_types
 
 val heuristic : <
-    assignments              : type_variable Assignments.t ;
-    grouped_by_variable      : type_variable GroupedByVariable.t ;
-    typeclasses_constraining : type_variable TypeclassesConstraining.t ;
-    by_constraint_identifier : type_variable ByConstraintIdentifier.t ;
+    type_variable Assignments.inc ;
+    type_variable GroupedByVariable.inc ;
+    type_variable TypeclassesConstraining.inc ;
+    type_variable ByConstraintIdentifier.inc ;
   ..
 > ex_heuristic_plugin
 

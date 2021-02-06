@@ -1,5 +1,6 @@
 open Ast_typed.Types
 include Plugin
+type 'type_variable inc = < grouped_by_variable : 'type_variable t >
 val get_constructors_by_lhs : 'type_variable -> 'type_variable t -> c_constructor_simpl MultiSet.t
 val get_rows_by_lhs : 'type_variable -> 'type_variable t -> c_row_simpl MultiSet.t
 val get_polys_by_lhs : 'type_variable -> 'type_variable t -> c_poly_simpl MultiSet.t

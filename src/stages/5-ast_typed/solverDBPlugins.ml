@@ -60,9 +60,10 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
      }
   *)
   module type Plugin = sig
-    type 'typeVariable t
+    type 'type_variable t
+    type 'type_variable inc
     (* Create the indexer's initial state *)
-    val create_state : cmp:('typeVariable -> 'typeVariable -> int) -> 'typeVariable t
+    val create_state : cmp:('type_variable -> 'type_variable -> int) -> 'type_variable t
     (* Update the state when a constraint is added *)
     val add_constraint : ?debug:(Format.formatter -> 'type_variable -> unit) -> (type_variable -> 'type_variable) -> 'type_variable t -> type_constraint_simpl -> 'type_variable t
     (* Update the state when a constraint is removed *)
@@ -72,7 +73,7 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
        variables.  *)
     val merge_aliases : ?debug:(Format.formatter -> 'new_ t -> unit) -> ('old, 'new_) merge_keys -> 'old t -> 'new_ t
     (* The pretty-printer is used for debugging *)
-    val pp : (Format.formatter -> 'typeVariable -> unit) -> Format.formatter -> 'typeVariable t -> unit
+    val pp : (Format.formatter -> 'type_variable -> unit) -> Format.formatter -> 'type_variable t -> unit
     val name : string
   end
 

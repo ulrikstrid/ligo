@@ -19,6 +19,7 @@ type 'typeVariable t = {
   access_label_by_result_type : ('typeVariable, c_access_label_simpl MultiSet.t) ReprMap.t ;
   access_label_by_record_type : ('typeVariable, c_access_label_simpl MultiSet.t) ReprMap.t ;
 }
+type 'type_variable inc = < grouped_by_variable : 'type_variable t >
 
 let create_state ~cmp =
   { constructor = ReprMap.create ~cmp ~merge:MultiSet.union ;

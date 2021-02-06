@@ -9,6 +9,7 @@ open Trace
    c_constructor_simpl data Assignments :: Plugin "Assignments.t" *)
 
 type 'typeVariable t = ('typeVariable, constructor_or_row) ReprMap.t
+type 'type_variable inc = < assignments : 'type_variable t >
 let create_state ~cmp =
   (* we only keep one assigment becaucas they will all be equal *)
   let merge _c1 c2 = c2 in

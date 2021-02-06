@@ -2,6 +2,7 @@ open Trace
 open Ast_typed.Types
 
 type 'typeVariable t = unit
+type 'type_variable inc = < cycle_detection_topological_sort : 'type_variable t >
 let create_state ~cmp:_ = ()
 let add_constraint ?debug:_ _repr () _constraint = ()
 let remove_constraint _printer _repr () _constraint = ok ()
