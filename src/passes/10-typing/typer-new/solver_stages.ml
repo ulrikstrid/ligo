@@ -11,7 +11,7 @@ open Typesystem.Solver_types
 
 module M(Plugins : Plugins)(Solver : sig
     type plugin_states = (module Plugins.Indexers.PluginFields(PerPluginState).Flds)
-    type nonrec typer_state = (typer_error, plugin_states) Typesystem.Solver_types.typer_state
+    type nonrec typer_state = (module Typesystem.Solver_types.Typer_state (* (struct type t = typer_error end) *) (Plugins.Indexers.PluginFields(PerPluginState).Flds))
   end) = struct
 
   open Solver

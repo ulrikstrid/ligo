@@ -12,22 +12,23 @@ let rec number_to_letters_ : int -> string = fun n ->
 let number_to_letters : int -> string = fun n ->
   if n = 0 then "a" else number_to_letters_ n
 
-let flush_pending_print (state : (_,_) Typesystem.Solver_types.typer_state) =
-  let aux i vars =
-    let letters = number_to_letters i in
-    List.map (fun var -> (Var.internal_get_name_and_counter var, letters)) vars in
-  let cmp = Pair.compare (String.compare) (Option.compare Int.compare) in
-  let vars_to_letters =
-    Option.unopt_failwith "internal error: duplicate variables in union-find"
-    @@ PolyMap.from_list ~cmp
-    @@ List.flatten
-    @@ List.mapi aux
-    @@ UnionFind.Poly2.partitions state.aliases in
-  let get_name_for_print = fun v ->
-    fst @@ PolyMap.find_default (Var.internal_get_name_and_counter v) (fun () -> "") vars_to_letters in
-  let () = Var.with_names_for_print
-      Var.{ get_name_for_print }
-      (fun () ->
-         let apply thunk = thunk () in
-         List.iter apply (List.rev !global_mutable_pending_prints)) in
-  global_mutable_pending_prints := []
+let flush_pending_print _ = ()
+(* let flush_pending_print (state : (_,_) Typesystem.Solver_types.typer_state) =
+ *   let aux i vars =
+ *     let letters = number_to_letters i in
+ *     List.map (fun var -> (Var.internal_get_name_and_counter var, letters)) vars in
+ *   let cmp = Pair.compare (String.compare) (Option.compare Int.compare) in
+ *   let vars_to_letters =
+ *     Option.unopt_failwith "internal error: duplicate variables in union-find"
+ *     @@ PolyMap.from_list ~cmp
+ *     @@ List.flatten
+ *     @@ List.mapi aux
+ *     @@ UnionFind.Poly2.partitions state.aliases in
+ *   let get_name_for_print = fun v ->
+ *     fst @@ PolyMap.find_default (Var.internal_get_name_and_counter v) (fun () -> "") vars_to_letters in
+ *   let () = Var.with_names_for_print
+ *       Var.{ get_name_for_print }
+ *       (fun () ->
+ *          let apply thunk = thunk () in
+ *          List.iter apply (List.rev !global_mutable_pending_prints)) in
+ *   global_mutable_pending_prints := [] *)
