@@ -29,7 +29,7 @@ let logfile = stderr (* open_out "/tmp/typer_log" *)
    polymorphic type argument to instantiate the existential). *)
 
 module Make_solver(Plugins : Plugins) : sig
-  type plugin_states = Plugins.Indexers.PluginFields(PerPluginState).flds
+  type plugin_states = (module Plugins.Indexers.PluginFields(PerPluginState).Flds)
   type nonrec typer_state = (typer_error, plugin_states) Typesystem.Solver_types.typer_state
   val pp_typer_state  : Format.formatter -> typer_state -> unit
   val get_alias : Ast_typed.type_variable -> type_variable poly_unionfind -> (type_variable, typer_error) Trace.result
@@ -39,13 +39,13 @@ module Make_solver(Plugins : Plugins) : sig
   val discard_state : typer_state -> unit
 end = struct
   module Plugin_states = Plugins.Indexers.PluginFields(PerPluginState)
-  type plugin_states = Plugins.Indexers.PluginFields(PerPluginState).flds
+  type plugin_states = (module Plugins.Indexers.PluginFields(PerPluginState).Flds)
   type nonrec typer_state = (typer_error, plugin_states) Typesystem.Solver_types.typer_state
 
   module Solver_stages' = Solver_stages.M(Plugins)(struct type nonrec typer_state = typer_state type nonrec plugin_states = plugin_states end)
   open Solver_stages'
 
-  type plugin_units = Plugins.Indexers.PluginFields(PerPluginUnit).flds
+  type plugin_units = (module Plugins.Indexers.PluginFields(PerPluginUnit).Flds)
   let plugin_fields_unit : plugin_units = Plugins.Indexers.plugin_fields_unit
 
   let mk_repr state x = UnionFind.Poly2.repr x state.aliases
@@ -270,7 +270,7 @@ end = struct
     let failure = Typecheck.check (PolySet.elements state.all_constraints)
       (All_vars.all_vars state)
       (fun v -> UnionFind.Poly2.repr v state.aliases)
-      (fun v -> Plugin_states.Assignments.find_opt v (Plugin_states.assignments state.plugin_states)#assignments) in
+      (fun v -> Plugin_states.Assignments.find_opt v (let module Indexes = (val (Plugin_states.assignments state.plugin_states)) in Indexes.assignments)) in
     let () = if not @@ Trace.to_bool failure then Pretty_print_variables.flush_pending_print state in
     let%bind () = failure in
     ok state

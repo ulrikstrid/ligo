@@ -127,7 +127,7 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
 
   (* flds is an object containing one method per plug-in *)
   module type Indexer_plugin_fields = functor (Ppt : PerPluginType) -> sig
-    type flds
+    module type Flds
 
     (* The assignments plug-in must always be present. We force its
        inclusion by asking for a function extracting that field. *)
@@ -137,21 +137,22 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
       val bindings : 'type_variable t -> ('type_variable * constructor_or_row) list
       val pp : (Format.formatter -> 'typeVariable -> unit) -> Format.formatter -> 'typeVariable t -> unit
     end
-    val assignments : flds -> < assignments : Ppt(Assignments).t >
+    module type AssignmentsFlds = sig val assignments : Ppt(Assignments).t end
+    val assignments : (module Flds) -> (module AssignmentsFlds)
   end
   module type IndexerPlugins = sig
     module PluginFields : Indexer_plugin_fields
 
     (* A default value where the field for each plug-in has type unit *)
-    val plugin_fields_unit : PluginFields(PerPluginUnit).flds
+    val plugin_fields_unit : (module PluginFields(PerPluginUnit).Flds)
 
     (* A function which applies F to each field *)
     module MapPlugins : functor (F : MappedFunction) ->
     sig
       val f :
         F.extra_args ->
-        (PluginFields(F.MakeInType).flds) ->
-        (PluginFields(F.MakeOutType).flds F.Monad.t)
+        (module PluginFields(F.MakeInType).Flds) ->
+        (module PluginFields(F.MakeOutType).Flds) F.Monad.t
     end
   end
 end

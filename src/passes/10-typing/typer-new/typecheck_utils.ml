@@ -16,7 +16,8 @@ module All_vars(Plugins : Plugins) = struct
       | `Row r -> tv :: r.tv :: List.map (fun {associated_variable} -> associated_variable) (LMap.to_list r.tv_map) in
     let from_assignments = List.flatten @@ List.map
       aux1
-      (Plugin_states.Assignments.bindings (Plugin_states.assignments state.plugin_states)#assignments)
+      (let module Indexes = (val (Plugin_states.assignments state.plugin_states)) in
+       (Plugin_states.Assignments.bindings Indexes.assignments))
     in
     let aux = function
     | SC_Constructor k  -> k.tv :: k.tv_list                  (* α = ctor(β, …) *)

@@ -25,6 +25,19 @@ open Database_plugins.All_plugins
 
 open Heuristic_tc_fundep_utils
 
+let heuristic_name = "tc_fundep"
+
+module Required_flds = struct
+  module type S = sig
+    val assignments              : type_variable Assignments.t
+    val grouped_by_variable      : type_variable GroupedByVariable.t
+    val typeclasses_constraining : type_variable TypeclassesConstraining.t
+    val by_constraint_identifier : type_variable ByConstraintIdentifier.t
+  end
+end
+
+module M (* : Heuristic_plugin_M(Required_flds).S *) = functor (Indexes : Required_flds.S) -> struct
+
 type selector_output = output_tc_fundep
 
 (* ***********************************************************************
@@ -32,43 +45,43 @@ type selector_output = output_tc_fundep
  * *********************************************************************** *)
 
 (* Find typeclass constraints in the dbs which constrain c.tv *)
-let selector_by_ctor : (type_variable -> type_variable) -> _ indexes -> c_constructor_simpl -> (output_tc_fundep selector_outputs) =
-  fun repr indexes c ->
-  let typeclasses = (TypeclassesConstraining.get_typeclasses_constraining_list (repr c.tv) indexes) in
+let selector_by_ctor : (type_variable -> type_variable) -> c_constructor_simpl -> (output_tc_fundep selector_outputs) =
+  fun repr c ->
+  let typeclasses = (TypeclassesConstraining.get_typeclasses_constraining_list (repr c.tv) Indexes.typeclasses_constraining) in
   let cs_pairs_db = List.map (fun tc -> { tc ; c = `Constructor c }) typeclasses in
   cs_pairs_db
 
-let selector_by_row : (type_variable -> type_variable) -> _ indexes -> c_row_simpl -> (output_tc_fundep selector_outputs) =
-  fun repr indexes r ->
-  let typeclasses = (TypeclassesConstraining.get_typeclasses_constraining_list (repr r.tv) indexes) in
+let selector_by_row : (type_variable -> type_variable) -> c_row_simpl -> (output_tc_fundep selector_outputs) =
+  fun repr r ->
+  let typeclasses = (TypeclassesConstraining.get_typeclasses_constraining_list (repr r.tv) Indexes.typeclasses_constraining) in
   let cs_pairs_db = List.map (fun tc -> { tc ; c = `Row r }) typeclasses in
   cs_pairs_db
 
 (* Find constructor constraints α = κ(β …) where α is one of the
    variables constrained by the (refined version of the) typeclass
    constraint tcs. *)
-let selector_by_tc : (type_variable -> type_variable) -> _ indexes -> c_typeclass_simpl -> (output_tc_fundep selector_outputs) =
-  fun repr indexes tc ->
+let selector_by_tc : (type_variable -> type_variable) -> c_typeclass_simpl -> (output_tc_fundep selector_outputs) =
+  fun repr tc ->
   let aux tv =
     (* Find the constructor constraints which apply to tv. *)
     (* Since we are only refining the typeclass one type expression
        node at a time, we only need the top-level assignment for
        that variable, e.g. α = κ(βᵢ, …). We can therefore look
        directly in the assignments. *)
-    match Assignments.find_opt (repr tv) indexes#assignments with
+    match Assignments.find_opt (repr tv) Indexes.assignments with
     | Some cr -> [({ tc ; c = cr } : output_tc_fundep)]
     | None   -> [] in
   List.flatten @@ List.map aux tc.args
 
-let selector : (type_variable -> type_variable) -> type_constraint_simpl -> _ indexes -> selector_output list =
-  fun repr type_constraint_simpl indexes ->
+let selector : (type_variable -> type_variable) -> type_constraint_simpl -> selector_output list =
+  fun repr type_constraint_simpl ->
   match type_constraint_simpl with
-    SC_Constructor c  -> selector_by_ctor repr indexes c
-  | SC_Row r          -> selector_by_row repr indexes r
+    SC_Constructor c  -> selector_by_ctor repr c
+  | SC_Row r          -> selector_by_row repr r
   | SC_Alias        _  -> [] (* TODO: this case should go away since aliases are handled by the solver structure *)
   | SC_Poly         _  -> []
   | SC_Access_label _  -> []
-  | SC_Typeclass   tc -> selector_by_tc repr indexes tc
+  | SC_Typeclass   tc -> selector_by_tc repr tc
 
 (* When (αᵢ, …) ∈ { (τ, …) , … } and β = κ(δ …) are in the db,
    aliasing α and β should check if they are non-empty, and in that
@@ -85,14 +98,14 @@ let selector : (type_variable -> type_variable) -> type_constraint_simpl -> _ in
 
    *)
 
-let alias_selector : type_variable -> type_variable -> _ indexes -> selector_output list =
-  fun a b indexes ->
-  let a_tcs = (TypeclassesConstraining.get_typeclasses_constraining_list a indexes) in
-  let b_tcs = (TypeclassesConstraining.get_typeclasses_constraining_list b indexes) in
-  let a_lhs_constructors = GroupedByVariable.get_constructors_by_lhs a indexes#grouped_by_variable in
-  let b_lhs_constructors = GroupedByVariable.get_constructors_by_lhs b indexes#grouped_by_variable in
-  let a_lhs_rows = GroupedByVariable.get_rows_by_lhs a indexes#grouped_by_variable in
-  let b_lhs_rows = GroupedByVariable.get_rows_by_lhs b indexes#grouped_by_variable in
+let alias_selector : type_variable -> type_variable -> selector_output list =
+  fun a b ->
+  let a_tcs = (TypeclassesConstraining.get_typeclasses_constraining_list a Indexes.typeclasses_constraining) in
+  let b_tcs = (TypeclassesConstraining.get_typeclasses_constraining_list b Indexes.typeclasses_constraining) in
+  let a_lhs_constructors = GroupedByVariable.get_constructors_by_lhs a Indexes.grouped_by_variable in
+  let b_lhs_constructors = GroupedByVariable.get_constructors_by_lhs b Indexes.grouped_by_variable in
+  let a_lhs_rows = GroupedByVariable.get_rows_by_lhs a Indexes.grouped_by_variable in
+  let b_lhs_rows = GroupedByVariable.get_rows_by_lhs b Indexes.grouped_by_variable in
   let a_ctors = MultiSet.map_elements (fun a -> `Constructor a) a_lhs_constructors in
   let a_rows  = MultiSet.map_elements (fun a -> `Row a        ) a_lhs_rows         in
   let b_ctors = MultiSet.map_elements (fun a -> `Constructor a) b_lhs_constructors in
@@ -311,4 +324,4 @@ let printer = Ast_typed.PP.output_tc_fundep
 let printer_json = Ast_typed.Yojson.output_tc_fundep
 let comparator = Solver_should_be_generated.compare_output_tc_fundep
 
-let heuristic = Heuristic_plugin { heuristic_name = "tc_fundep"; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }
+end

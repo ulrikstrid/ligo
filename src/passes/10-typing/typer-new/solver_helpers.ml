@@ -92,5 +92,10 @@ let _ = (module PPPlugin : Ast_typed.Types.MappedFunction)
 
 type nonrec 'a result = ('a, typer_error) Simple_utils.Trace.result
 
-let init_propagator_heuristic (Heuristic_plugin plugin) =
-  Heuristic_state { plugin; already_selected = Set.create ~cmp:plugin.comparator }
+let init_propagator_heuristic (heuristic_plugin : (module Typesystem.Solver_types.Heuristic_plugin_instance))
+  : (module Typesystem.Solver_types.Ex_heuristic_state)=
+  let module Heuristic_plugin = (val heuristic_plugin) in
+  (module struct
+    module Plugin = Heuristic_plugin
+    let already_selected = Set.create ~cmp:Heuristic_plugin.comparator
+  end)

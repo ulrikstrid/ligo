@@ -22,7 +22,6 @@ let heuristic_name = "specialize1"
 module Required_flds = struct
   module type S = sig
     val grouped_by_variable : type_variable GroupedByVariable.t
-    val assignments         : type_variable Assignments.t (* fake, not needed *)
   end
 end
 

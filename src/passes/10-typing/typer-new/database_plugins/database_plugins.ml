@@ -9,16 +9,19 @@ open Ast_typed.Types
 
 (* TODO: this is probably hidden by its signature somewhere? *)
 module PluginFields = functor (Ppt : PerPluginType) -> struct
-  type flds = <
-    assignments                      : Ppt(Assignments).t ;
-    grouped_by_variable              : Ppt(GroupedByVariable).t ;
-    cycle_detection_topological_sort : Ppt(CycleDetectionTopologicalSort).t ;
-    by_constraint_identifier         : Ppt(ByConstraintIdentifier).t ;
-    typeclasses_constraining         : Ppt(TypeclassesConstraining).t ;
-  >
+  module type Flds = sig
+    val assignments                      : Ppt(Assignments).t
+    val grouped_by_variable              : Ppt(GroupedByVariable).t
+    val cycle_detection_topological_sort : Ppt(CycleDetectionTopologicalSort).t
+    val by_constraint_identifier         : Ppt(ByConstraintIdentifier).t
+    val typeclasses_constraining         : Ppt(TypeclassesConstraining).t
+  end
 
   module Assignments = Assignments
-  let assignments flds = (flds :> <assignments:_>)
+  module type AssignmentsFlds = sig val assignments : Ppt(Assignments).t end
+  let assignments (flds : (module Flds)) : (module AssignmentsFlds) =
+    let module Flds = (val flds) in
+    (module struct let assignments = Flds.assignments end)
 end
 
 (* TODO: try removing this _ workaround *)
@@ -28,34 +31,35 @@ module PluginFields_ = PluginFields
 module MapPlugins = functor (F : MappedFunction) -> struct
   let f :
     F.extra_args ->
-    PluginFields(F.MakeInType).flds ->
-    PluginFields(F.MakeOutType).flds F.Monad.t
+    (module PluginFields(F.MakeInType).Flds) ->
+    (module PluginFields(F.MakeOutType).Flds) F.Monad.t
     = fun extra_args fieldsIn ->
       let module Let_syntax = F.Monad in
-      let%bind assignments                      = (let module F = F.F(Assignments)                   in F.f "assign" extra_args fieldsIn#assignments)                      in
-      let%bind grouped_by_variable              = (let module F = F.F(GroupedByVariable)             in F.f "g by v" extra_args fieldsIn#grouped_by_variable)              in
-      let%bind cycle_detection_topological_sort = (let module F = F.F(CycleDetectionTopologicalSort) in F.f "c topo" extra_args fieldsIn#cycle_detection_topological_sort) in
-      let%bind by_constraint_identifier         = (let module F = F.F(ByConstraintIdentifier)        in F.f "by  id" extra_args fieldsIn#by_constraint_identifier)         in
-      let%bind typeclasses_constraining         = (let module F = F.F(TypeclassesConstraining)       in F.f "tc con" extra_args fieldsIn#typeclasses_constraining) ;       in
-      F.Monad.return (object
-        method assignments                      = assignments
-        method grouped_by_variable              = grouped_by_variable
-        method cycle_detection_topological_sort = cycle_detection_topological_sort
-        method by_constraint_identifier         = by_constraint_identifier
-        method typeclasses_constraining         = typeclasses_constraining
-      end)
+      let module FieldsIn = (val fieldsIn) in
+      let%bind assignments                      = (let module F = F.F(Assignments)                   in F.f "assign" extra_args FieldsIn.assignments)                      in
+      let%bind grouped_by_variable              = (let module F = F.F(GroupedByVariable)             in F.f "g by v" extra_args FieldsIn.grouped_by_variable)              in
+      let%bind cycle_detection_topological_sort = (let module F = F.F(CycleDetectionTopologicalSort) in F.f "c topo" extra_args FieldsIn.cycle_detection_topological_sort) in
+      let%bind by_constraint_identifier         = (let module F = F.F(ByConstraintIdentifier)        in F.f "by  id" extra_args FieldsIn.by_constraint_identifier)         in
+      let%bind typeclasses_constraining         = (let module F = F.F(TypeclassesConstraining)       in F.f "tc con" extra_args FieldsIn.typeclasses_constraining) ;       in
+      F.Monad.return (module struct
+        let assignments                      = assignments
+        let grouped_by_variable              = grouped_by_variable
+        let cycle_detection_topological_sort = cycle_detection_topological_sort
+        let by_constraint_identifier         = by_constraint_identifier
+        let typeclasses_constraining         = typeclasses_constraining
+      end : PluginFields(F.MakeOutType).Flds)
 end
 
 (* A value containing an empty (dummy) unit associated each plugin
    name This allows us to use `map' to discard this `unit' and
    e.g. initialize each plugin. *)
-type plugin_units = PluginFields(PerPluginUnit).flds
-let plugin_fields_unit : plugin_units = object
-  method assignments                      = () ;
-  method grouped_by_variable              = () ;
-  method cycle_detection_topological_sort = () ;
-  method by_constraint_identifier         = () ;
-  method typeclasses_constraining         = () ;
-end
+type plugin_units = (module PluginFields(PerPluginUnit).Flds)
+let plugin_fields_unit : plugin_units = (module struct
+  let assignments                      = ()
+  let grouped_by_variable              = ()
+  let cycle_detection_topological_sort = ()
+  let by_constraint_identifier         = ()
+  let typeclasses_constraining         = ()
+end)
 
 module All_plugins = All_plugins

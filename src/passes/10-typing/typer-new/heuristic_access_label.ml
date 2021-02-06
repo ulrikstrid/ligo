@@ -9,28 +9,32 @@ open Typer_common.Errors
 open Database_plugins.All_plugins
 open Ast_typed.Reasons
 
-type 'a flds = <
-  grouped_by_variable : type_variable GroupedByVariable.t ;
-  ..
-> as 'a
+let heuristic_name = "break_ctor"
 
-type selector_output = {
-  a_k_var : c_row_simpl ;
-  a_var_l : c_access_label_simpl ;
-}
+module Required_flds = struct
+  module type S = sig
+    val grouped_by_variable : type_variable GroupedByVariable.t
+  end
+end
+
+module M = functor (Indexes : Required_flds.S) -> struct
+  type selector_output = {
+    a_k_var : c_row_simpl ;
+    a_var_l : c_access_label_simpl ;
+  }
 
 let printer ppf {a_k_var;a_var_l} =
   Format.fprintf ppf "{@[<hv 2> @ a_k_var : %a;@ a_var_l : %a;@]@ }"
     Ast_typed.PP.c_row_simpl a_k_var
     Ast_typed.PP.c_access_label_simpl a_var_l
 
-let selector : (type_variable -> type_variable) -> type_constraint_simpl -> _ flds -> selector_output list =
+let selector : (type_variable -> type_variable) -> type_constraint_simpl -> selector_output list =
   (* find two rules with the shape x = k(var …) and x = k'(var' …) *)
-  fun repr type_constraint_simpl indexes ->
+  fun repr type_constraint_simpl ->
   (* Format.printf "In access_label.selector for %a and indeces %a\n%!" Ast_typed.PP.type_constraint_simpl_short type_constraint_simpl (GroupedByVariable.pp Ast_typed.PP.type_variable) indexes#grouped_by_variable; *)
   match type_constraint_simpl with
   | SC_Constructor c -> (
-      let other_access_labels_record_types = GroupedByVariable.get_access_labels_by_record_type (repr c.tv) indexes#grouped_by_variable in
+      let other_access_labels_record_types = GroupedByVariable.get_access_labels_by_record_type (repr c.tv) Indexes.grouped_by_variable in
       if MultiSet.is_empty other_access_labels_record_types then
         []
       else
@@ -39,8 +43,8 @@ let selector : (type_variable -> type_variable) -> type_constraint_simpl -> _ fl
   | SC_Alias       _                -> []
   | SC_Typeclass   _                -> []
   | SC_Access_label l               -> (
-      let other_rows_lhs = GroupedByVariable.get_rows_by_lhs (repr l.record_type) indexes#grouped_by_variable in
-      let other_constructors_lhs = GroupedByVariable.get_constructors_by_lhs (repr l.record_type) indexes#grouped_by_variable in
+      let other_rows_lhs = GroupedByVariable.get_rows_by_lhs (repr l.record_type) Indexes.grouped_by_variable in
+      let other_constructors_lhs = GroupedByVariable.get_constructors_by_lhs (repr l.record_type) Indexes.grouped_by_variable in
       let other_records_lhs, other_variants_lhs = List.partition (function { r_tag = C_record; _ } -> true | { r_tag = C_variant; _ } -> false) (MultiSet.elements other_rows_lhs) in
       if List.length other_variants_lhs != 0 then
         failwith (Format.asprintf "TODO: type error with %a (needs a record, but) %a (are variants)" Ast_typed.PP.c_access_label_simpl l (Ast_typed.PP.list_sep_d Ast_typed.PP.c_row_simpl) other_variants_lhs)
@@ -53,20 +57,20 @@ let selector : (type_variable -> type_variable) -> type_constraint_simpl -> _ fl
     )
   | SC_Poly        _                -> []
   | SC_Row         ({ r_tag = C_record ; _ } as r) -> (
-      let other_access_labels_lhs = GroupedByVariable.get_access_labels_by_record_type (repr r.tv) indexes#grouped_by_variable in
+      let other_access_labels_lhs = GroupedByVariable.get_access_labels_by_record_type (repr r.tv) Indexes.grouped_by_variable in
       let cs_pairs = MultiSet.map_elements (fun x -> { a_k_var = r ; a_var_l = x }) other_access_labels_lhs in
       (* Format.printf "cs_pairs (%a)\n%!" (PP_helpers.list_sep_d printer) cs_pairs; *)
       cs_pairs
     )
   | SC_Row         _ -> []
 
-let alias_selector : type_variable -> type_variable -> _ flds -> selector_output list =
-  fun a b indexes ->
+let alias_selector : type_variable -> type_variable -> selector_output list =
+  fun a b ->
   (* Format.printf "In access_label.alias_selector %a %a\n%!" Ast_typed.PP.type_variable a Ast_typed.PP.type_variable b ; *)
-  let a_access_labels = GroupedByVariable.get_access_labels_by_record_type a indexes#grouped_by_variable in
-  let b_access_labels = GroupedByVariable.get_access_labels_by_record_type b indexes#grouped_by_variable in
-  let a_rows = GroupedByVariable.get_rows_by_lhs a indexes#grouped_by_variable in
-  let b_rows = GroupedByVariable.get_rows_by_lhs b indexes#grouped_by_variable in
+  let a_access_labels = GroupedByVariable.get_access_labels_by_record_type a Indexes.grouped_by_variable in
+  let b_access_labels = GroupedByVariable.get_access_labels_by_record_type b Indexes.grouped_by_variable in
+  let a_rows = GroupedByVariable.get_rows_by_lhs a Indexes.grouped_by_variable in
+  let b_rows = GroupedByVariable.get_rows_by_lhs b Indexes.grouped_by_variable in
   (* let a_ctor = MultiSet.map_elements (fun a -> `Constructor a) a_constructors in
    * let b_ctor = MultiSet.map_elements (fun a -> `Constructor a) b_constructors in *)
   (* TODO: have a separate group of plug-ins which detect errors *)
@@ -130,5 +134,4 @@ let printer_json {a_k_var;a_var_l} =
 let comparator { a_k_var=a1; a_var_l=a2 } { a_k_var=b1; a_var_l=b2 } =
   let open Solver_should_be_generated in
   compare_c_row_simpl a1 b1 <? fun () -> compare_c_access_label_simpl a2 b2
-
-let heuristic = Heuristic_plugin { heuristic_name = "break_ctor"; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }
+end

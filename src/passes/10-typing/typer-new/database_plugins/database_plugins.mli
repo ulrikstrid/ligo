@@ -1,13 +1,13 @@
 open Ast_typed.Types
 
 module PluginFields_ (Ppt : PerPluginType) : sig
-  type flds = <
-    assignments                      : Ppt(Assignments).t ;
-    grouped_by_variable              : Ppt(GroupedByVariable).t ;
-    cycle_detection_topological_sort : Ppt(CycleDetectionTopologicalSort).t ;
-    by_constraint_identifier         : Ppt(ByConstraintIdentifier).t ;
-    typeclasses_constraining         : Ppt(TypeclassesConstraining).t ;
-  >
+  module type Flds = sig
+    val assignments                      : Ppt(Assignments).t
+    val grouped_by_variable              : Ppt(GroupedByVariable).t
+    val cycle_detection_topological_sort : Ppt(CycleDetectionTopologicalSort).t
+    val by_constraint_identifier         : Ppt(ByConstraintIdentifier).t
+    val typeclasses_constraining         : Ppt(TypeclassesConstraining).t
+  end
 
   module Assignments : sig
     type 'typeVariable t
@@ -15,7 +15,8 @@ module PluginFields_ (Ppt : PerPluginType) : sig
     val bindings : 'type_variable t -> ('type_variable * constructor_or_row) list
     val pp : (Format.formatter -> 'typeVariable -> unit) -> Format.formatter -> 'typeVariable t -> unit
   end
-  val assignments : flds -> < assignments : Ppt(Assignments).t >
+  module type AssignmentsFlds = sig val assignments : Ppt(Assignments).t end
+  val assignments : (module Flds) -> (module AssignmentsFlds)
 end
 
 include Ast_typed.Types.IndexerPlugins

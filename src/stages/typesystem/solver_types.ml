@@ -9,6 +9,29 @@ type ('selector_output , 'errors) propagator = 'selector_output -> (type_variabl
 
 type ('selector_output, -'flds) selector = (type_variable -> type_variable) -> type_constraint_simpl -> 'flds -> 'selector_output list
 
+module type Heuristic_plugin_instance = sig
+  type selector_output
+  val selector     : (* (selector_output, (module Required_flds)) selector *)
+    (type_variable -> type_variable) -> type_constraint_simpl -> (*flds ->*) selector_output list
+  (* Select in the databases tuples of constraints which are
+     interesting and involve the given two type_viables, knowing that
+     these are about to be merged. This function is called before the
+     database's merge_aliases functions are called (i.e. the database
+     does not reflect the effects of the merge yet). *)
+  val alias_selector : type_variable -> type_variable -> (*(module Required_flds) ->*) selector_output list
+  val get_referenced_constraints : selector_output -> type_constraint_simpl list
+  (* called when two 'data are associated with the same type_constraint *)
+  val propagator   : (selector_output , Ast_typed.Typer_errors.typer_error) propagator
+  val printer      : Format.formatter -> selector_output -> unit
+  val printer_json : selector_output -> Yojson.Safe.t
+  val comparator   : selector_output -> selector_output -> int
+end
+
+module Heuristic_plugin_M =
+  functor (Required_flds : sig module type S end) -> struct
+    module type S = functor (Available_flds : Required_flds.S) -> Heuristic_plugin_instance
+  end
+
 module type Heuristic_plugin = sig
   module Required_flds : sig
     module type S
@@ -17,31 +40,20 @@ module type Heuristic_plugin = sig
   (* Finds in the databases tuples of constraints which are
      interesting for this plugin and include the given
      type_constraint_simpl. *)
-  module M : functor (Available_flds : Required_flds.S) -> sig
-    type selector_output
-    val selector     : (* (selector_output, (module Required_flds)) selector *)
-      (type_variable -> type_variable) -> type_constraint_simpl -> (*flds ->*) selector_output list
-    (* Select in the databases tuples of constraints which are
-       interesting and involve the given two type_viables, knowing that
-       these are about to be merged. This function is called before the
-       database's merge_aliases functions are called (i.e. the database
-       does not reflect the effects of the merge yet). *)
-    val alias_selector : type_variable -> type_variable -> (*(module Required_flds) ->*) selector_output list
-    val get_referenced_constraints : selector_output -> type_constraint_simpl list
-    (* called when two 'data are associated with the same type_constraint *)
-    val propagator   : (selector_output , Ast_typed.Typer_errors.typer_error) propagator
-    val printer      : Format.formatter -> selector_output -> unit
-    val printer_json : selector_output -> Yojson.Safe.t
-    val comparator   : selector_output -> selector_output -> int
-  end
+  module M : Heuristic_plugin_M(Required_flds).S
 end
 
-(* module type Ex_Heuristic_state = sig
- *   module Plugin : Heuristic_plugin
- *   val already_selected : Plugin.selector_output Set.t
- * end
- * 
- * module type Ex_heuristic_selector = sig
+module type Ex_heuristic_state = sig
+  module Plugin : Heuristic_plugin_instance
+  (* module Required_flds : sig
+   *   module type S
+   * end
+   * module type S = functor (Available_flds : Required_flds.S) -> sig
+   *   module Plugin : Heuristic_plugin_M(Required_flds).S *)
+  val already_selected : Plugin.selector_output Set.t
+end
+
+(* module type Ex_heuristic_selector = sig
  *   module Plugin : Heuristic_plugin
  *   val selector_output : Plugin.selector_output List.t
  * end *)
@@ -60,52 +72,59 @@ end
  *   end
  * end *)
 
-type ('selector_output, -'flds) heuristic_plugin = {
-  heuristic_name : string ;
-  (* Finds in the databases tuples of constraints which are
-     interesting for this plugin and include the given
-     type_constraint_simpl. *)
-  selector     : ('selector_output, 'flds) selector ;
-  (* Select in the databases tuples of constraints which are
-     interesting and involve the given two type_viables, knowing that
-     these are about to be merged. This function is called before the
-     database's merge_aliases functions are called (i.e. the database
-     does not reflect the effects of the merge yet). *)
-  alias_selector : type_variable -> type_variable -> 'flds -> 'selector_output list ;
-  get_referenced_constraints : 'selector_output -> type_constraint_simpl list ;
-  (* called when two 'data are associated with the same type_constraint *)
-  propagator   : ('selector_output , Ast_typed.Typer_errors.typer_error) propagator ;
-  printer      : Format.formatter -> 'selector_output -> unit ;
-  printer_json : 'selector_output -> Yojson.Safe.t ;
-  comparator   : 'selector_output -> 'selector_output -> int ;
-}
+(* type ('selector_output, -'flds) heuristic_plugin = {
+ *   heuristic_name : string ;
+ *   (\* Finds in the databases tuples of constraints which are
+ *      interesting for this plugin and include the given
+ *      type_constraint_simpl. *\)
+ *   selector     : ('selector_output, 'flds) selector ;
+ *   (\* Select in the databases tuples of constraints which are
+ *      interesting and involve the given two type_viables, knowing that
+ *      these are about to be merged. This function is called before the
+ *      database's merge_aliases functions are called (i.e. the database
+ *      does not reflect the effects of the merge yet). *\)
+ *   alias_selector : type_variable -> type_variable -> 'flds -> 'selector_output list ;
+ *   get_referenced_constraints : 'selector_output -> type_constraint_simpl list ;
+ *   (\* called when two 'data are associated with the same type_constraint *\)
+ *   propagator   : ('selector_output , Ast_typed.Typer_errors.typer_error) propagator ;
+ *   printer      : Format.formatter -> 'selector_output -> unit ;
+ *   printer_json : 'selector_output -> Yojson.Safe.t ;
+ *   comparator   : 'selector_output -> 'selector_output -> int ;
+ * } *)
 
-type ('selector_output, -'flds) heuristic_state = {
-  plugin : ('selector_output, 'flds) heuristic_plugin ;
-  already_selected : 'selector_output Set.t ;
-}
-
-type -'flds ex_heuristic_plugin =
-    Heuristic_plugin : ('selector_output, 'flds) heuristic_plugin -> 'flds ex_heuristic_plugin
-
-type -'flds ex_heuristic_state =
-    Heuristic_state : ('selector_output, 'flds) heuristic_state -> 'flds ex_heuristic_state
-
-type -'flds ex_heuristic_selector =
-    Heuristic_selector: ('selector_output, 'flds) heuristic_state * 'selector_output selector_outputs -> 'flds ex_heuristic_selector
-
-module type Heuristic_selector = sig
-  type 'type_variable flds
-  type selector_output
-  val state : (selector_output, type_variable flds) heuristic_state
-  val outputs : selector_output selector_outputs
-end
-
-type 'flds heuristic_plugins = 'flds ex_heuristic_plugin list
+(* type ('selector_output, -'flds) heuristic_state = {
+ *   plugin : ('selector_output, 'flds) heuristic_plugin ;
+ *   already_selected : 'selector_output Set.t ;
+ * }
+ * 
+ * type -'flds ex_heuristic_plugin =
+ *     Heuristic_plugin : ('selector_output, 'flds) heuristic_plugin -> 'flds ex_heuristic_plugin
+ * 
+ * type -'flds ex_heuristic_state =
+ *     Heuristic_state : ('selector_output, 'flds) heuristic_state -> 'flds ex_heuristic_state
+ * 
+ * type -'flds ex_heuristic_selector =
+ *     Heuristic_selector: ('selector_output, 'flds) heuristic_state * 'selector_output selector_outputs -> 'flds ex_heuristic_selector
+ * 
+ * module type Heuristic_selector = sig
+ *   type 'type_variable flds
+ *   type selector_output
+ *   val state : (selector_output, type_variable flds) heuristic_state
+ *   val outputs : selector_output selector_outputs
+ * end
+ * 
+ * type 'flds heuristic_plugins = 'flds ex_heuristic_plugin list *)
 
 module type Plugins = sig
   module Indexers : IndexerPlugins
-  val heuristics : Indexers.PluginFields(PerPluginState).flds heuristic_plugins
+
+  module Available_flds : sig
+    module type S = Indexers.PluginFields(PerPluginState).Flds
+  end
+
+  val heuristics : (module Heuristic_plugin_M(Available_flds).S) list
+  (* module Indexers : IndexerPlugins
+   * val heuristics : (module Indexers.PluginFields(PerPluginState).Flds) heuristic_plugins *)
 end
 
 type ('errors, 'plugin_states) typer_state = {
@@ -114,7 +133,7 @@ type ('errors, 'plugin_states) typer_state = {
   deleted_constraints              : type_constraint_simpl PolySet.t ;
   aliases                          : type_variable UnionFind.Poly2.t ;
   plugin_states                    : 'plugin_states ;
-  already_selected_and_propagators : 'plugin_states ex_heuristic_state list ;
+  already_selected_and_propagators : (* 'plugin_states  *) (module Ex_heuristic_state) list ;
 }
 
 open Format
@@ -124,19 +143,19 @@ let pp_already_selected = fun printer ppf set ->
   let lst = (RedBlackTrees.PolySet.elements set) in
     Format.fprintf ppf "Set [@,@[<hv 2> %a @]@,]" (list_sep printer (fun ppf () -> fprintf ppf " ;@ ")) lst
 
-let pp_ex_propagator_state = fun ppf (Heuristic_state { plugin = { selector ; propagator ; printer ; printer_json=_ } ; already_selected }) ->
-  ignore ( selector, propagator );
-  Format.fprintf ppf "{ selector = (* OCaml function *); propagator = (* OCaml function *); already_selected = %a }"
-  (pp_already_selected printer) already_selected
+(* let pp_ex_propagator_state = fun ppf (Heuristic_state { plugin = { selector ; propagator ; printer ; printer_json=_ } ; already_selected }) ->
+ *   ignore ( selector, propagator );
+ *   Format.fprintf ppf "{ selector = (\* OCaml function *\); propagator = (\* OCaml function *\); already_selected = %a }"
+ *   (pp_already_selected printer) already_selected *)
 
 let json_already_selected = fun printer_json set : Yojson.Safe.t ->
   let lst = (RedBlackTrees.PolySet.elements set) in
 let list f lst = `List (List.map f lst) in
     `List [`String "Set"; (list printer_json lst)]
 
-let json_ex_propagator_state = fun (Heuristic_state { plugin = { selector; propagator; printer=_ ; printer_json } ; already_selected }) : Yojson.Safe.t ->
-  ignore (selector,propagator);
-  `Assoc[ ("selector", `String "OCaml function"); ("propagator", `String "OCaml function"); ("already_selected" ,          (json_already_selected printer_json) already_selected)]
+(* let json_ex_propagator_state = fun (Heuristic_state { plugin = { selector; propagator; printer=_ ; printer_json } ; already_selected }) : Yojson.Safe.t ->
+ *   ignore (selector,propagator);
+ *   `Assoc[ ("selector", `String "OCaml function"); ("propagator", `String "OCaml function"); ("already_selected" ,          (json_already_selected printer_json) already_selected)] *)
 
 (* TODO: remove lift_state_list_monad and lift: not needed after moving to plugin system *)
 (* state+list monad *)
