@@ -29,7 +29,7 @@ let logfile = stderr (* open_out "/tmp/typer_log" *)
    polymorphic type argument to instantiate the existential). *)
 
 module Make_solver(Plugins : Plugins) : sig
-  type plugin_states = Plugins.Indexers.PluginFields(PerPluginState).flds
+  type plugin_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState).flds
   type nonrec typer_state = plugin_states Typesystem.Solver_types.typer_state
   val pp_typer_state  : Format.formatter -> typer_state -> unit
   val get_alias : Ast_typed.type_variable -> type_variable poly_unionfind -> (type_variable, typer_error) Trace.result
@@ -38,24 +38,24 @@ module Make_solver(Plugins : Plugins) : sig
   val placeholder_for_state_of_new_typer : unit -> typer_state
   val discard_state : typer_state -> unit
 end = struct
-  module Plugin_states = Plugins.Indexers.PluginFields(PerPluginState)
-  type plugin_states = Plugins.Indexers.PluginFields(PerPluginState).flds
+  module Plugin_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState)
+  type plugin_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState).flds
   type nonrec typer_state = plugin_states Typesystem.Solver_types.typer_state
 
   module Solver_stages' = Solver_stages.M(Plugins)(struct type nonrec typer_state = typer_state type nonrec plugin_states = plugin_states end)
   open Solver_stages'
 
-  type plugin_units = Plugins.Indexers.PluginFields(PerPluginUnit).flds
-  let plugin_fields_unit : plugin_units = Plugins.Indexers.plugin_fields_unit
+  type indexers_plugins_fields_unit = Plugins.Indexers.Indexers_plugins_fields(PerPluginUnit).flds
+  let indexers_plugins_fields_unit : indexers_plugins_fields_unit = Plugins.Indexers.indexers_plugins_fields_unit
 
   let mk_repr state x = UnionFind.Poly2.repr x state.aliases
 
   let pp_typer_state = fun ppf ({ all_constraints; plugin_states; aliases ; already_selected_and_propagators } : typer_state) ->
     let open Typesystem.Solver_types in
     let open PP_helpers in
-    let module MapPP = Plugins.Indexers.MapPlugins(PPPlugin) in
+    let module MapPP = Plugins.Indexers.Map_indexer_plugins(PPPlugin) in
     let pp_indexers ppf states =
-      Formatt.fprintf ppf "@[ <@ %a @ > @]" (fun ppf states -> let _ : plugin_units = MapPP.f ppf states in ()) states
+      Formatt.fprintf ppf "@[ <@ %a @ > @]" (fun ppf states -> let _ : indexers_plugins_fields_unit = MapPP.f ppf states in ()) states
     in
     Formatt.fprintf ppf "{@[<hv 2> @ all_constaints = %a;@ plugin_states = %a ;@ aliases = %a ;@ already_selected_and_propagators = %a @]@ }"
       (RedBlackTrees.PolySet.pp Ast_typed.PP.type_constraint_simpl_short) all_constraints
@@ -66,7 +66,7 @@ end = struct
   let aux_remove state to_remove =
     (* let () = Formatt.printf "Remove constraint :\n  %a\n\n%!" Ast_typed.PP.type_constraint_simpl_short to_remove in *)
     (* let () = Formatt.printf "and state:%a\n" pp_typer_state state in *)
-    let module MapRemoveConstraint = Plugins.Indexers.MapPlugins(RemoveConstraint) in
+    let module MapRemoveConstraint = Plugins.Indexers.Map_indexer_plugins(RemoveConstraint) in
     let%bind plugin_states = MapRemoveConstraint.f (mk_repr state, to_remove) state.plugin_states in
     ok {state with plugin_states ; deleted_constraints = PolySet.add to_remove state.deleted_constraints}
 
@@ -124,7 +124,7 @@ end = struct
       let all_constraints = PolySet.add (SC_Alias new_constraint) all_constraints in
 
       let plugin_states =
-        let module MapMergeAliases = Plugins.Indexers.MapPlugins(MergeAliases) in
+        let module MapMergeAliases = Plugins.Indexers.Map_indexer_plugins(MergeAliases) in
         MapMergeAliases.f changed_reprs plugin_states in
 
       let state = { all_constraints ; added_constraints ; deleted_constraints; plugin_states ; aliases ; already_selected_and_propagators } in
@@ -177,7 +177,7 @@ end = struct
     else
       let repr = mk_repr state in
       let state =
-        let module MapAddConstraint = Plugins.Indexers.MapPlugins(AddConstraint) in
+        let module MapAddConstraint = Plugins.Indexers.Map_indexer_plugins(AddConstraint) in
         { state with plugin_states = MapAddConstraint.f (repr, constraint_) state.plugin_states }
       in
       let%bind (state, hc) = bind_fold_map_list (aux_heuristic repr constraint_) state state.already_selected_and_propagators in
@@ -285,8 +285,8 @@ end = struct
   let discard_state (_ : typer_state) = ()
 
   let initial_state : typer_state =
-    let module MapCreateState = Plugins.Indexers.MapPlugins(CreateState) in
-    let plugin_states = MapCreateState.f () plugin_fields_unit in
+    let module MapCreateState = Plugins.Indexers.Map_indexer_plugins(CreateState) in
+    let plugin_states = MapCreateState.f () indexers_plugins_fields_unit in
     {
       all_constraints                  = PolySet.create ~cmp:Ast_typed.Compare.type_constraint_simpl ;
       added_constraints                = PolySet.create ~cmp:Ast_typed.Compare.type_constraint ;

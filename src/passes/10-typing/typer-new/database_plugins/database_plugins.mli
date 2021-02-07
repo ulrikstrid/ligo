@@ -1,6 +1,6 @@
 open Ast_typed.Types
 
-module PluginFields_ (Ppt : PerPluginType) : sig
+module Indexers_plugins_fields_ (Ppt : PerPluginType) : sig
   type flds = <
     assignments                      : Ppt(Assignments).t ;
     grouped_by_variable              : Ppt(GroupedByVariable).t ;
@@ -20,7 +20,7 @@ end
 
 include Ast_typed.Types.IndexerPlugins
   (* TODO: do we need this & the definition above? *)
-  with module PluginFields = PluginFields_
+  with module Indexers_plugins_fields = Indexers_plugins_fields_
 
 
 (* OCaml/dune hide the contents of a folder unless they are

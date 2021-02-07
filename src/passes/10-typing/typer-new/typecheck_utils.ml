@@ -7,7 +7,7 @@ open Pretty_print_variables
 open Typesystem.Solver_types
 
 module All_vars(Plugins : Plugins) = struct
-  module Plugin_states = Plugins.Indexers.PluginFields(PerPluginState)
+  module Plugin_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState)
   let all_vars (state : 'plugin_states Typesystem.Solver_types.typer_state) =
     let from_aliases = List.flatten @@ UnionFind.Poly2.partitions state.aliases in
     let aux1 : type_variable * constructor_or_row  -> type_variable list = fun (tv, cor) ->
