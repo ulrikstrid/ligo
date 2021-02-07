@@ -27,6 +27,8 @@ open Heuristic_tc_fundep_utils
 
 type selector_output = output_tc_fundep
 
+let heuristic_name = "tc_fundep"
+
 (* ***********************************************************************
  * Selector
  * *********************************************************************** *)
@@ -311,4 +313,4 @@ let printer = Ast_typed.PP.output_tc_fundep
 let printer_json = Ast_typed.Yojson.output_tc_fundep
 let comparator = Solver_should_be_generated.compare_output_tc_fundep
 
-let heuristic = Heuristic_plugin { heuristic_name = "tc_fundep"; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }
+let heuristic = Heuristic_plugin { heuristic_name; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }

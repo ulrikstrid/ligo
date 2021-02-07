@@ -17,6 +17,8 @@ type 'a flds = <
   ..
 > as 'a
 
+let heuristic_name = "specialize1"
+
 type selector_output = output_specialize1
 
 (* TODO: we need to detect if a ∀ constraint has already been specialized or not
@@ -118,4 +120,4 @@ let printer = Ast_typed.PP.output_specialize1
 let printer_json = Ast_typed.Yojson.output_specialize1
 let comparator = Solver_should_be_generated.compare_output_specialize1
 
-let heuristic = Heuristic_plugin { heuristic_name = "specialize1"; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }
+let heuristic = Heuristic_plugin { heuristic_name; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }

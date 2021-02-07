@@ -16,6 +16,8 @@ type 'a flds = <
 
 type selector_output = output_break_ctor
 
+let heuristic_name = "break_ctor"
+
 let selector_ : (type_variable -> type_variable) -> type_constraint_simpl -> type_variable GroupedByVariable.t -> selector_output list =
   (* find two rules with the shape x = k(var …) and x = k'(var' …) *)
   fun repr type_constraint_simpl grouped_by_variable_map ->
@@ -161,4 +163,5 @@ let printer = Ast_typed.PP.output_break_ctor
 let printer_json = Ast_typed.Yojson.output_break_ctor
 let comparator = Solver_should_be_generated.compare_output_break_ctor
 
-let heuristic = Heuristic_plugin { heuristic_name = "break_ctor"; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }
+let heuristic = Heuristic_plugin { heuristic_name; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }
+
