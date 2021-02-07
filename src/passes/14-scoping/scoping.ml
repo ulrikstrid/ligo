@@ -85,6 +85,13 @@ let internal_error loc msg =
        "@[<v>Internal error, please report this as a bug@ %s@ %s@ @]"
        loc msg)
 
+let warn_unused_variable usage var =
+  match usage with
+  | Keep -> ()
+  | Drop -> Format.eprintf "Warning: unused variable %a at %a%!@."
+              Var.pp (Location.unwrap var)
+              Location.pp (Location.get_location var)
+
 (* The translation. Given an expression in an environment, returns a
    "co-de Bruijn" expression with an embedding (`list usage`) showing
    which things in the environment were used. *)
@@ -185,6 +192,7 @@ and translate_binder (binder, body) env =
   let env' = I.Environment.add binder env in
   let (body, usages) = translate_expression body env' in
   let (_, binder_type) = binder in
+  warn_unused_variable (List.hd usages) (fst (List.hd env'));
   (O.Binds ([List.hd usages], [translate_type binder_type], body), List.tl usages)
 
 and translate_binder2 ((binder1, binder2), body) env =
@@ -192,6 +200,8 @@ and translate_binder2 ((binder1, binder2), body) env =
   let (body, usages) = translate_expression body env' in
   let (_, binder1_type) = binder1 in
   let (_, binder2_type) = binder2 in
+  warn_unused_variable (List.hd usages) (fst (List.hd env'));
+  warn_unused_variable (List.hd (List.tl usages)) (fst (List.hd (List.tl env')));
   (O.Binds ([List.hd usages; List.hd (List.tl usages)],
             [translate_type binder1_type; translate_type binder2_type],
             body),
