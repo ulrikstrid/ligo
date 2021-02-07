@@ -18,11 +18,10 @@ module H : sig
   type selector_output
   val heuristic_name : string
   val selector : (type_variable -> type_variable) -> type_constraint_simpl ->
-    < grouped_by_variable : type_variable GroupedByVariable.t;
-      .. >
+    (module Indexes)
     -> selector_output list
   val alias_selector : type_variable -> type_variable ->
-    < grouped_by_variable : type_variable GroupedByVariable.t; .. >
+    (module Indexes)
     -> selector_output list
   val get_referenced_constraints : selector_output -> type_constraint_simpl list
   val propagator : (selector_output, typer_error) propagator

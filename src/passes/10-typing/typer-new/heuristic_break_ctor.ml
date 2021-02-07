@@ -172,9 +172,16 @@ end
 module H = struct
   type selector_output = output_break_ctor
   let heuristic_name = heuristic_name
-  (* let selector repr c indexes = let module Indexes = (val indexes : Indexes) in selector repr c (object method grouped_by_variable = Indexes.grouped_by_variable end) *)
-  let selector = selector
-  let alias_selector = alias_selector
+  let selector repr c indexes =
+    let module Indexes = (val indexes : Indexes) in
+    selector repr c (object
+      method grouped_by_variable = Indexes.grouped_by_variable
+    end)
+  let alias_selector a b indexes =
+    let module Indexes = (val indexes : Indexes) in
+    alias_selector a b (object
+      method grouped_by_variable = Indexes.grouped_by_variable
+    end)
   let get_referenced_constraints = get_referenced_constraints
   let propagator = propagator
   let printer = printer
