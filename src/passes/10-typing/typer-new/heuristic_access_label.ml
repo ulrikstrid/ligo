@@ -14,6 +14,8 @@ type 'a flds = <
   ..
 > as 'a
 
+let heuristic_name = "break_ctor"
+
 type selector_output = {
   a_k_var : c_row_simpl ;
   a_var_l : c_access_label_simpl ;
@@ -131,4 +133,4 @@ let comparator { a_k_var=a1; a_var_l=a2 } { a_k_var=b1; a_var_l=b2 } =
   let open Solver_should_be_generated in
   compare_c_row_simpl a1 b1 <? fun () -> compare_c_access_label_simpl a2 b2
 
-let heuristic = Heuristic_plugin { heuristic_name = "break_ctor"; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }
+let heuristic = Heuristic_plugin { heuristic_name; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }
