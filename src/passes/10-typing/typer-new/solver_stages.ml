@@ -9,7 +9,7 @@ open Ast_typed.Types
 open Typesystem.Solver_types
 
 module M(Plugins : Plugins)(Solver : sig
-    type plugin_states = Plugins.Indexers.PluginFields(PerPluginState).flds
+    type plugin_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState).flds
     type nonrec typer_state = plugin_states Typesystem.Solver_types.typer_state
   end) = struct
 

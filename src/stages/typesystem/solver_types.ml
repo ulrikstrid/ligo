@@ -49,7 +49,7 @@ type 'flds heuristic_states = 'flds ex_heuristic_state list
 
 module type Plugins = sig
   module Indexers : IndexerPlugins
-  val heuristics : Indexers.PluginFields(PerPluginState).flds heuristic_plugins
+  val heuristics : Indexers.Indexers_plugins_fields(PerPluginState).flds heuristic_plugins
 end
 
 type ('plugin_states) typer_state = {
