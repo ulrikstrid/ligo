@@ -165,3 +165,19 @@ let comparator = Solver_should_be_generated.compare_output_break_ctor
 
 let heuristic = Heuristic_plugin { heuristic_name; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }
 
+(* module type Indexes = sig
+ *   val grouped_by_variable : type_variable GroupedByVariable.t
+ * end *)
+
+(* module H = struct
+ *   type selector_output = output_break_ctor
+ *   let heuristic_name = heuristic_name
+ *   (\* let selector repr c indexes = let module Indexes = (val indexes : Indexes) in selector repr c (object method grouped_by_variable = Indexes.grouped_by_variable end) *\)
+ *   let selector = selector
+ *   let alias_selector = alias_selector
+ *   let get_referenced_constraints = get_referenced_constraints
+ *   let propagator = propagator
+ *   let printer = printer
+ *   let printer_json = printer_json
+ *   let comparator = comparator
+ * end *)
