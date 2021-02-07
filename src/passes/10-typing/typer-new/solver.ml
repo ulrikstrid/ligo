@@ -29,8 +29,8 @@ let logfile = stderr (* open_out "/tmp/typer_log" *)
    polymorphic type argument to instantiate the existential). *)
 
 module Make_solver(Plugins : Plugins) : sig
-  type plugin_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState).flds
-  type nonrec typer_state = plugin_states Typesystem.Solver_types.typer_state
+  type indexers_plugins_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState).flds
+  type nonrec typer_state = indexers_plugins_states Typesystem.Solver_types.typer_state
   val pp_typer_state  : Format.formatter -> typer_state -> unit
   val get_alias : Ast_typed.type_variable -> type_variable poly_unionfind -> (type_variable, typer_error) Trace.result
   val main : typer_state -> type_constraint list -> typer_state result
@@ -38,11 +38,11 @@ module Make_solver(Plugins : Plugins) : sig
   val placeholder_for_state_of_new_typer : unit -> typer_state
   val discard_state : typer_state -> unit
 end = struct
-  module Plugin_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState)
-  type plugin_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState).flds
-  type nonrec typer_state = plugin_states Typesystem.Solver_types.typer_state
+  module Indexers_plugins_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState)
+  type indexers_plugins_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState).flds
+  type nonrec typer_state = indexers_plugins_states Typesystem.Solver_types.typer_state
 
-  module Solver_stages' = Solver_stages.M(Plugins)(struct type nonrec typer_state = typer_state type nonrec plugin_states = plugin_states end)
+  module Solver_stages' = Solver_stages.M(Plugins)(struct type nonrec typer_state = typer_state type nonrec plugin_states = indexers_plugins_states end)
   open Solver_stages'
 
   type indexers_plugins_fields_unit = Plugins.Indexers.Indexers_plugins_fields(PerPluginUnit).flds
@@ -270,7 +270,7 @@ end = struct
     let failure = Typecheck.check (PolySet.elements state.all_constraints)
       (All_vars.all_vars state)
       (fun v -> UnionFind.Poly2.repr v state.aliases)
-      (fun v -> Plugin_states.Assignments.find_opt v (Plugin_states.assignments state.plugin_states)#assignments) in
+      (fun v -> Indexers_plugins_states.Assignments.find_opt v (Indexers_plugins_states.assignments state.plugin_states)#assignments) in
     let () = if not @@ Trace.to_bool failure then Pretty_print_variables.flush_pending_print state in
     let%bind () = failure in
     ok state
