@@ -154,17 +154,22 @@ and cst = t
 
 and attributes = attribute list
 
+(* Declarations *)
+
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
+
 and declaration =
-  TypeDecl    of type_decl    reg
-| ConstDecl   of const_decl   reg
-| FunDecl     of fun_decl     reg
-| ModuleDecl  of module_decl  reg
-| ModuleAlias of module_alias reg
+  D_Const    of const_decl   reg
+| D_Fun      of fun_decl     reg
+| D_Module   of module_decl  reg
+| D_ModAlias of module_alias reg
+| D_Type     of type_decl    reg
 
 and const_decl = {
   kwd_const  : kwd_const;
   name       : variable;
-  const_type : (colon * type_expr) option;
+  const_type : type_annot option;
   equal      : equal;
   init       : expr;
   terminator : semi option;
@@ -182,12 +187,12 @@ and type_decl = {
 }
 
 and module_decl = {
-  kwd_module : kwd_module;
-  name       : module_name;
-  kwd_is     : kwd_is;
-  enclosing  : module_enclosing;
-  structure  : t;   (* TODO: declaration nseq *)
-  terminator : semi option;
+  kwd_module   : kwd_module;
+  name         : module_name;
+  kwd_is       : kwd_is;
+  enclosing    : module_enclosing;
+  declarations : declaration nseq;
+  terminator   : semi option;
 }
 
 and module_alias = {
@@ -198,18 +203,23 @@ and module_alias = {
   terminator : semi option;
 }
 
+(* Type expressions *)
+
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
+
 and type_expr =
-  TProd   of cartesian
-| TSum    of sum_type reg
-| TRecord of field_decl reg ne_injection reg
-| TApp    of (type_ctor * type_tuple) reg
-| TFun    of (type_expr * arrow * type_expr) reg
-| TPar    of type_expr par reg
-| TVar    of variable
-| TWild   of wild
-| TString of lexeme reg
-| TInt    of (lexeme * Z.t) reg
-| TModA   of type_expr module_access reg
+  T_Ctor    of (type_ctor * type_tuple) reg
+| T_Fun     of (type_expr * arrow * type_expr) reg
+| T_Int     of (lexeme * Z.t) reg
+| T_ModPath of type_expr module_path reg
+| T_Par     of type_expr par reg
+| T_Prod    of cartesian
+| T_Record  of field_decl reg ne_injection reg
+| T_String  of lexeme reg
+| T_Sum     of sum_type reg
+| T_Var     of variable
+| T_Wild    of wild
 
 and sum_type = {
   lead_vbar  : vbar option;
@@ -239,7 +249,7 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 and fun_expr = {
   kwd_function : kwd_function;
   param        : parameters;
-  ret_type     : (colon * type_expr) option;
+  ret_type     : type_annot option;
   kwd_is       : kwd_is;
   return       : expr
 }
@@ -259,7 +269,7 @@ and fun_decl = {
 and type_annot = colon * type_expr
 
 and block_with = {
-  block    : block reg;
+  block    : block reg;   (* TODO: optional keyword "block" *)
   kwd_with : kwd_with;
   expr     : expr
 }
@@ -273,13 +283,13 @@ and param_decl =
 and param_const = {
   kwd_const  : kwd_const;
   var        : variable;
-  param_type : (colon * type_expr) option
+  param_type : type_annot option
 }
 
 and param_var = {
   kwd_var    : kwd_var;
   var        : variable;
-  param_type : (colon * type_expr) option
+  param_type : type_annot option
 }
 
 and block = {
@@ -288,49 +298,49 @@ and block = {
   terminator : semi option
 }
 
-and block_enclosing =
+and block_enclosing = (* TODO: Merge with module_enclosing *)
   Block    of kwd_block * lbrace * rbrace
 | BeginEnd of kwd_begin * kwd_end
 
 and module_enclosing =
-  Brace    of lbrace * rbrace      (* TODO: optional keyword "block" *)
+  Brace    of lbrace * rbrace
 | BeginEnd of kwd_begin * kwd_end
 
 and statements = (statement, semi) nsepseq
 
 and statement =
-  Instr of instruction
-| Data  of data_decl
-
-and data_decl =
-  LocalConst       of const_decl   reg
-| LocalVar         of var_decl     reg
-| LocalFun         of fun_decl     reg
-| LocalType        of type_decl    reg
-| LocalModule      of module_decl  reg
-| LocalModuleAlias of module_alias reg
+  S_Instr    of instruction
+| S_Decl     of declaration
+| S_VarDecl  of var_decl reg
 
 and var_decl = {
   kwd_var    : kwd_var;
   name       : variable;
-  var_type   : (colon * type_expr) option;
+  var_type   : type_annot option;
   assign     : assign;
   init       : expr;
   terminator : semi option;
 }
 
+(* Instructions *)
+
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
+
 and instruction =
-  Cond        of test_clause conditional reg
-| CaseInstr   of test_clause case reg
-| Assign      of assignment reg
-| Loop        of loop
-| ProcCall    of fun_call
-| Skip        of kwd_skip
-| RecordPatch of record_patch reg
-| MapPatch    of map_patch reg
-| SetPatch    of set_patch reg
-| MapRemove   of map_remove reg
-| SetRemove   of set_remove reg
+  I_Assign      of assignment reg
+| I_Call        of fun_call
+| I_Case        of test_clause case reg
+| I_Cond        of test_clause conditional reg
+| I_For         of for_int reg
+| I_Iter        of iter reg
+| I_MapPatch    of map_patch reg
+| I_MapRemove   of map_remove reg
+| I_RecordPatch of record_patch reg
+| I_Skip        of kwd_skip
+| I_SetPatch    of set_patch reg
+| I_SetRemove   of set_remove reg
+| I_While       of while_loop reg
 
 and set_remove = {
   kwd_remove : kwd_remove;
@@ -393,7 +403,7 @@ and clause_block =
   LongBlock  of block reg
 | ShortBlock of (statements * semi option) braces reg
 
-and set_membership = {
+and set_mem = {
   set          : expr;
   kwd_contains : kwd_contains;
   element      : expr
@@ -424,19 +434,11 @@ and lhs =
   Path    of path
 | MapPath of map_lookup reg
 
-and loop =
-  While of while_loop reg
-| For   of for_loop
-
 and while_loop = {
   kwd_while : kwd_while;
   cond      : expr;
   block     : block reg
 }
-
-and for_loop =
-  ForInt     of for_int reg
-| ForCollect of for_collect reg
 
 and for_int = {
   kwd_for : kwd_for;
@@ -449,7 +451,7 @@ and for_int = {
   block   : block reg
 }
 
-and for_collect = {
+and iter = {
   kwd_for    : kwd_for;
   var        : variable;
   bind_to    : (arrow * variable) option;
@@ -458,6 +460,12 @@ and for_collect = {
   expr       : expr;
   block      : block reg
 }
+
+and collection = [
+  `List of kwd_list
+| `Map  of kwd_map
+| `Set  of kwd_set
+]
 
 (* Code injection. Note how the field [language] wraps a region in
    another: the outermost region covers the header "[%<language>",
@@ -469,48 +477,64 @@ and code_inj = {
   rbracket : rbracket;
 }
 
-and collection =
-  Map  of kwd_map
-| Set  of kwd_set
-| List of kwd_list
-
 (* Expressions *)
 
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
+
 and expr =
-  ECase    of expr case reg
-| ECond    of expr conditional reg
-| EAnnot   of annot_expr par reg
-| ELogic   of logic_expr
-| EArith   of arith_expr
-| EString  of string_expr
-| EList    of list_expr
-| ESet     of set_expr
-| ECtor    of ctor_expr
-| ERecord  of record reg
-| EProj    of projection reg
-| EModA    of expr module_access reg
-| EUpdate  of update reg
-| EMap     of map_expr
-| EVar     of lexeme reg
-| ECall    of fun_call
-| EBytes   of (lexeme * Hex.t) reg
-| EUnit    of kwd_Unit
-| ETuple   of tuple_expr
-| EPar     of expr par reg
-| EFun     of fun_expr reg
-| ECodeInj of code_inj reg
-| EBlock   of block_with reg
+  E_Add       of plus bin_op reg               (* "+"   *)
+| E_And       of kwd_and bin_op reg            (* "and" *)
+| E_Annot     of annot_expr par reg
+| E_BigMap    of binding reg injection reg
+| E_Block     of block_with reg
+| E_Bytes     of (lexeme * Hex.t) reg
+| E_Call      of fun_call
+| E_Case      of expr case reg
+| E_Cat       of caret bin_op reg              (* "^"   *)
+| E_CodeInj   of code_inj reg
+| E_Equal     of equal bin_op reg              (* "="   *)
+| E_Cond      of expr conditional reg
+| E_Cons      of cons bin_op reg
+| E_Ctor      of (ctor * arguments option) reg
+| E_Div       of slash bin_op reg              (* "/"   *)
+| E_False     of kwd_False
+| E_Fun       of fun_expr reg
+| E_Geq       of geq bin_op reg                (* ">="  *)
+| E_Gt        of gt bin_op reg                 (* ">"   *)
+| E_Int       of (lexeme * Z.t) reg
+| E_Leq       of leq bin_op reg                (* "<="  *)
+| E_List      of expr injection reg
+| E_Lt        of lt bin_op reg                 (* "<"   *)
+| E_Map       of binding reg injection reg
+| E_MapLookUp of map_lookup reg
+| E_Mod       of kwd_mod bin_op reg            (* "mod" *)
+| E_ModPath   of expr module_path reg
+| E_Mult      of times bin_op reg              (* "*"   *)
+| E_Mutez     of (lexeme * Z.t) reg
+| E_Nat       of (lexeme * Z.t) reg
+| E_Neg       of minus un_op reg               (* "-"   *)
+| E_Nil       of kwd_nil
+| E_Neq       of neq bin_op reg                (* "=/=" *)
+| E_None      of kwd_None
+| E_Not       of kwd_not un_op  reg            (* "not" *)
+| E_Or        of kwd_or bin_op reg             (* "or"  *)
+| E_Par       of expr par reg
+| E_Proj      of projection reg
+| E_Record    of record reg
+| E_Set       of expr injection reg
+| E_SetMem    of set_mem reg
+| E_Some      of (kwd_Some * arguments) reg
+| E_String    of lexeme reg
+| E_Sub       of minus bin_op reg              (* "-"   *)
+| E_True      of kwd_True
+| E_Tuple     of tuple_expr
+| E_Unit      of kwd_Unit
+| E_Update    of update reg
+| E_Var       of lexeme reg
+| E_Verbatim  of lexeme reg
 
 and annot_expr = expr * type_annot
-
-and set_expr =
-  SetInj of expr injection reg
-| SetMem of set_membership reg
-
-and map_expr =
-  MapLookUp of map_lookup reg
-| MapInj    of binding reg injection reg
-| BigMapInj of binding reg injection reg
 
 and map_lookup = {
   path  : path;
@@ -520,17 +544,6 @@ and map_lookup = {
 and path =
   Name of variable
 | Path of projection reg
-
-and logic_expr =
-  BoolExpr of bool_expr
-| CompExpr of comp_expr
-
-and bool_expr =
-  Or    of kwd_or  bin_op reg
-| And   of kwd_and bin_op reg
-| Not   of kwd_not un_op  reg
-| False of kwd_False
-| True  of kwd_True
 
 and 'a bin_op = {
   op   : 'a;
@@ -543,40 +556,6 @@ and 'a un_op = {
   arg : expr
 }
 
-and comp_expr =
-  Lt    of lt    bin_op reg
-| Leq   of leq   bin_op reg
-| Gt    of gt    bin_op reg
-| Geq   of geq   bin_op reg
-| Equal of equal bin_op reg
-| Neq   of neq   bin_op reg
-
-and arith_expr =
-  Add   of plus    bin_op reg
-| Sub   of minus   bin_op reg
-| Mult  of times   bin_op reg
-| Div   of slash   bin_op reg
-| Mod   of kwd_mod bin_op reg
-| Neg   of minus    un_op reg
-| Int   of (lexeme * Z.t) reg
-| Nat   of (lexeme * Z.t) reg
-| Mutez of (lexeme * Z.t) reg
-
-and string_expr =
-  Cat      of caret bin_op reg
-| String   of lexeme reg
-| Verbatim of lexeme reg
-
-and list_expr =
-  ECons     of cons bin_op reg
-| EListComp of expr injection reg
-| ENil      of kwd_nil
-
-and ctor_expr =
-  SomeApp  of (kwd_Some * arguments) reg
-| NoneExpr of kwd_None
-| CtorApp  of (ctor * arguments option) reg
-
 and field_assignment = {
   field_name : field_name;
   assignment : equal;
@@ -585,7 +564,7 @@ and field_assignment = {
 
 and record = field_assignment reg ne_injection
 
-and 'a module_access = { (* TODO: Left-associativity expected + expression *)
+and 'a module_path = { (* TODO: Left-associativity expected + expression *)
   module_name : module_name;
   selector    : dot;
   field       : 'a
@@ -628,11 +607,12 @@ and 'a injection = {
   terminator : semi option
 }
 
-and injection_kwd =
-  InjSet    of keyword
-| InjMap    of keyword
-| InjBigMap of keyword
-| InjList   of keyword
+and injection_kwd = [
+  `BigMap of keyword
+| `List   of keyword
+| `Map    of keyword
+| `Set    of keyword
+]
 
 and enclosing =
   Brackets of lbracket * rbracket
@@ -646,40 +626,37 @@ and 'a ne_injection = {
   attributes  : attributes
 }
 
-and ne_injection_kwd =
-  NEInjSet    of keyword
-| NEInjMap    of keyword
-| NEInjRecord of keyword
+and ne_injection_kwd = [
+  `Set    of keyword
+| `Map    of keyword
+| `Record of keyword
+]
 
 (* Patterns *)
 
-and pattern =
-  PCtor   of ctor_pattern
-| PVar    of lexeme reg
-| PWild   of wild
-| PInt    of (lexeme * Z.t) reg
-| PNat    of (lexeme * Z.t) reg
-| PBytes  of (lexeme * Hex.t) reg
-| PString of lexeme reg
-| PList   of list_pattern
-| PTuple  of tuple_pattern
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
 
-and ctor_pattern =
-  PUnit    of kwd_Unit
-| PFalse   of kwd_False
-| PTrue    of kwd_True
-| PNone    of kwd_None
-| PSomeApp of (kwd_Some * pattern par reg) reg
-| PCtorApp of (ctor * tuple_pattern option) reg
+and pattern =
+  P_Bytes   of (lexeme * Hex.t) reg
+| P_Cons    of (pattern, cons) nsepseq reg
+| P_Ctor    of (ctor * tuple_pattern option) reg
+| P_False   of kwd_False
+| P_Int     of (lexeme * Z.t) reg
+| P_List    of pattern injection reg
+| P_Nat     of (lexeme * Z.t) reg
+| P_Nil     of kwd_nil
+| P_None    of kwd_None
+| P_ParCons of (pattern * cons * pattern) par reg
+| P_Some    of (kwd_Some * pattern par reg) reg
+| P_String  of lexeme reg
+| P_True    of kwd_True
+| P_Tuple   of tuple_pattern
+| P_Unit    of kwd_Unit
+| P_Var     of lexeme reg
+| P_Wild    of wild
 
 and tuple_pattern = (pattern, comma) nsepseq par reg
-
-and list_pattern =
-  PListComp of pattern injection reg
-| PNil      of kwd_nil
-| PParCons  of (pattern * cons * pattern) par reg
-| PCons     of (pattern, cons) nsepseq reg
-
 
 (* PROJECTING REGIONS *)
 
@@ -688,167 +665,163 @@ let rec last to_region = function
 |  [x] -> to_region x
 | _::t -> last to_region t
 
-let nseq_to_region to_region (hd,tl) =
+let nseq_to_region to_region (hd, tl) =
   Region.cover (to_region hd) (last to_region tl)
 
-let nsepseq_to_region to_region (hd,tl) =
-  let reg (_, item) = to_region item in
-  Region.cover (to_region hd) (last reg tl)
+let nsepseq_to_region to_region (hd, tl) =
+  Region.cover (to_region hd) (last (to_region <@ snd) tl)
 
 let sepseq_to_region to_region = function
       None -> Region.ghost
 | Some seq -> nsepseq_to_region to_region seq
 
+(* IMPORTANT: In the following function definition, the data
+   constructors are sorted alphabetically. If you add or modify some,
+   please make sure they remain in order. *)
+
 let type_expr_to_region = function
-  TProd   {region; _}
-| TSum    {region; _}
-| TRecord {region; _}
-| TApp    {region; _}
-| TFun    {region; _}
-| TPar    {region; _}
-| TString {region; _}
-| TInt    {region; _}
-| TVar    {region; _}
-| TModA   {region; _}
-| TWild    region -> region
+  T_Ctor    {region; _}
+| T_Fun     {region; _}
+| T_Int     {region; _}
+| T_ModPath {region; _}
+| T_Par     {region; _}
+| T_Prod    {region; _}
+| T_Record  {region; _}
+| T_String  {region; _}
+| T_Sum     {region; _}
+| T_Var     {region; _}
+| T_Wild     region -> region
 
-let rec expr_to_region = function
-| ELogic  e -> logic_expr_to_region  e
-| EArith  e -> arith_expr_to_region  e
-| EString e -> string_expr_to_region e
-| EAnnot  e -> annot_expr_to_region  e
-| EList   e -> list_expr_to_region   e
-| ESet    e -> set_expr_to_region    e
-| ECtor   e -> ctor_expr_to_region   e
-| ERecord e -> record_expr_to_region e
-| EMap    e -> map_expr_to_region    e
-| ETuple  e -> tuple_expr_to_region  e
-| EUpdate  {region; _}
-| EProj    {region; _}
-| EModA    {region; _}
-| EVar     {region; _}
-| ECall    {region; _}
-| EBytes   {region; _}
-| EUnit    region
-| ECase    {region;_}
-| ECond    {region; _}
-| EPar     {region; _}
-| EFun     {region; _}
-| ECodeInj {region; _}
-| EBlock   {region; _} -> region
+(* IMPORTANT: In the following function definition, the data
+   constructors are sorted alphabetically. If you add or modify some,
+   please make sure they remain in order. *)
 
-and tuple_expr_to_region {region; _} = region
+let expr_to_region = function
+  E_Add       {region; _}
+| E_And       {region; _}
+| E_Annot     {region; _}
+| E_BigMap    {region; _}
+| E_Block     {region; _}
+| E_Bytes     {region; _}
+| E_Call      {region; _}
+| E_Case      {region;_}
+| E_Cat       {region; _}
+| E_CodeInj   {region; _}
+| E_Equal     {region; _}
+| E_Cond      {region; _}
+| E_Cons      {region; _}
+| E_Ctor      {region; _}
+| E_Div       {region; _}
+| E_False      region
+| E_Fun       {region; _}
+| E_Geq       {region; _}
+| E_Gt        {region; _}
+| E_Int       {region; _}
+| E_Leq       {region; _}
+| E_List      {region; _}
+| E_Lt        {region; _}
+| E_Map       {region; _}
+| E_MapLookUp {region; _}
+| E_Mod       {region; _}
+| E_ModPath   {region; _}
+| E_Mult      {region; _}
+| E_Mutez     {region; _}
+| E_Nat       {region; _}
+| E_Neg       {region; _}
+| E_Nil        region
+| E_Neq       {region; _}
+| E_None       region
+| E_Not       {region; _}
+| E_Or        {region; _}
+| E_Par       {region; _}
+| E_Proj      {region; _}
+| E_Record    {region; _}
+| E_Set       {region; _}
+| E_SetMem    {region; _}
+| E_Some      {region; _}
+| E_String    {region; _}
+| E_Sub       {region; _}
+| E_True       region
+| E_Tuple     {region; _}
+| E_Unit       region
+| E_Update    {region; _}
+| E_Var       {region; _}
+| E_Verbatim  {region; _}
+  -> region
 
-and map_expr_to_region = function
-  MapLookUp {region; _}
-| MapInj    {region; _} -> region
-| BigMapInj {region; _} -> region
+and tuple_expr_to_region x = x.Region.region
 
-and set_expr_to_region = function
-  SetInj {region; _}
-| SetMem {region; _} -> region
+and annot_expr_to_region x = x.Region.region
 
-and logic_expr_to_region = function
-  BoolExpr e -> bool_expr_to_region e
-| CompExpr e -> comp_expr_to_region e
-
-and bool_expr_to_region = function
-  Or    {region; _}
-| And   {region; _}
-| Not   {region; _}
-| False  region
-| True   region -> region
-
-and comp_expr_to_region = function
-  Lt    {region; _}
-| Leq   {region; _}
-| Gt    {region; _}
-| Geq   {region; _}
-| Equal {region; _}
-| Neq   {region; _} -> region
-
-and arith_expr_to_region = function
-  Add   {region; _}
-| Sub   {region; _}
-| Mult  {region; _}
-| Div   {region; _}
-| Mod   {region; _}
-| Neg   {region; _}
-| Int   {region; _}
-| Nat   {region; _}
-| Mutez {region; _} -> region
-
-and string_expr_to_region = function
-  Cat      {region; _}
-| String   {region; _}
-| Verbatim {region; _} -> region
-
-and annot_expr_to_region {region; _} = region
-
-and list_expr_to_region = function
-  ECons {region; _}
-| EListComp {region; _}
-| ENil region -> region
-
-and ctor_expr_to_region = function
-  NoneExpr  region
-| CtorApp  {region; _}
-| SomeApp  {region; _} -> region
-
-and record_expr_to_region {region; _} = region
+and record_expr_to_region x = x.Region.region
 
 let path_to_region = function
   Name var -> var.region
-| Path {region; _} -> region
+| Path path -> path.region
+
+(* IMPORTANT: In the following function definition, the data
+   constructors are sorted alphabetically. If you add or modify some,
+   please make sure they remain in order. *)
 
 let instr_to_region = function
-  Cond                {region; _}
-| CaseInstr           {region; _}
-| Assign              {region; _}
-| Loop While          {region; _}
-| Loop For ForInt     {region; _}
-| Loop For ForCollect {region; _}
-| ProcCall            {region; _}
-| Skip                 region
-| RecordPatch         {region; _}
-| MapPatch            {region; _}
-| SetPatch            {region; _}
-| MapRemove           {region; _}
-| SetRemove           {region; _} -> region
+  I_Assign      {region; _}
+| I_Call        {region; _}
+| I_Case        {region; _}
+| I_Cond        {region; _}
+| I_For         {region; _}
+| I_Iter        {region; _}
+| I_MapPatch    {region; _}
+| I_MapRemove   {region; _}
+| I_RecordPatch {region; _}
+| I_Skip         region
+| I_SetPatch    {region; _}
+| I_SetRemove   {region; _}
+| I_While       {region; _}
+  -> region
 
 let clause_block_to_region = function
-  LongBlock {region; _}
+  LongBlock  {region; _}
 | ShortBlock {region; _} -> region
 
 let test_clause_to_region = function
   ClauseInstr instr -> instr_to_region instr
 | ClauseBlock block -> clause_block_to_region block
 
+(* IMPORTANT: In the following function definition, the data
+   constructors are sorted alphabetically. If you add or modify some,
+   please make sure they remain in order. *)
+
 let pattern_to_region = function
-  PVar            {region; _}
-| PWild            region
-| PInt            {region; _}
-| PNat            {region; _}
-| PBytes          {region; _}
-| PString         {region; _}
-| PCtor PUnit      region
-| PCtor PFalse     region
-| PCtor PTrue      region
-| PCtor PNone      region
-| PCtor PSomeApp  {region; _}
-| PCtor PCtorApp  {region; _}
-| PList PListComp {region; _}
-| PList PNil       region
-| PList PParCons  {region; _}
-| PList PCons     {region; _}
-| PTuple          {region; _} -> region
+  P_Bytes   {region; _}
+| P_Cons    {region; _}
+| P_Ctor    {region; _}
+| P_False    region
+| P_Int     {region; _}
+| P_List    {region; _}
+| P_Nat     {region; _}
+| P_Nil      region
+| P_None     region
+| P_ParCons {region; _}
+| P_Some    {region; _}
+| P_String  {region; _}
+| P_True     region
+| P_Tuple   {region; _}
+| P_Unit     region
+| P_Var     {region; _}
+| P_Wild     region
+  -> region
+
+(* IMPORTANT: In the following function definition, the data
+   constructors are sorted alphabetically. If you add or modify some,
+   please make sure they remain in order. *)
 
 let declaration_to_region = function
-  TypeDecl    {region; _}
-| ConstDecl   {region; _}
-| FunDecl     {region; _}
-| ModuleDecl  {region; _}
-| ModuleAlias {region; _} -> region
+  D_Const    {region; _}
+| D_Fun      {region; _}
+| D_Module   {region; _}
+| D_ModAlias {region; _}
+| D_Type     {region; _}
+  -> region
 
 let lhs_to_region : lhs -> Region.t = function
   Path    path -> path_to_region path

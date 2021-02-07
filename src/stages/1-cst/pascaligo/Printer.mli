@@ -1,4 +1,15 @@
-(* Printing the CST *)
+(* Printing the Concrete Syntax Tree (CST) *)
+
+(* This module exports two kinds of ways to prin the CST:
+
+     * printing a list of tokens as if they had been printed by the
+       lexer (this is useful to debug the parser).
+
+     * printing the CST itself with the most relevant information,
+       like the names of the data constructors, lexemes and regions. *)
+
+
+(* PRINTING THE TOKENS *)
 
 (* The type [state] captures the state that is threaded in the
     printing iterators in this module. *)
@@ -38,7 +49,7 @@ val instruction_to_string :
 val type_expr_to_string :
   offsets:bool -> mode:[`Point|`Byte] -> CST.type_expr -> string
 
-(* Pretty-printing of CST nodes *)
+(* PRINTING THE CST *)
 
 val pp_cst  : state -> CST.t -> unit
 val pp_expr : state -> CST.expr -> unit

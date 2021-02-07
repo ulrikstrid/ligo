@@ -3,9 +3,20 @@
 open CST
 
 module Region = Simple_utils.Region
+module Utils  = Simple_utils.Utils
 open! Region
 
 let sprintf = Printf.sprintf
+
+(* STATE *)
+
+(* Both the printing of the tokens and of the CST itself make use of
+   the same threaded data structure: the state. Some parts are used by
+   the former, other by the latter. For example, the fields for
+   padding ([pad_path] and [pad_node]) are only used when printing the
+   CST, not the tokens, which are simply a list. In both cases, the
+   printing is done to the field [buffer], which is a string buffer,
+   which is imperatively updated (see module [Stdlib.Buffer].) *)
 
 type state = <
   offsets  : bool;
@@ -29,8 +40,8 @@ let mk_state ~offsets ~mode ~buffer =
     (* The method [pad] updates the current padding, which is
        comprised of two components: the padding to reach the new node
        (space before reaching a subtree, then a vertical bar for it)
-       and the padding for the new node itself (Is it the last child
-       of its parent?).
+       and the padding for the new node itself. (Is it the last child
+       of its parent?)
      *)
     method pad arity rank =
       {< pad_path =
@@ -43,7 +54,19 @@ let mk_state ~offsets ~mode ~buffer =
 let compact state (region: Region.t) =
   region#compact ~offsets:state#offsets state#mode
 
-(* Printing the tokens with their source regions *)
+(* PRINTING THE TOKENS *)
+
+(* Note: The name of the printing functions is prefixed by
+   "print_". The rest of the name is either
+
+     * the name of the type whose value is printed, for example
+       [print_declaration],
+
+     * the name of a token, for example, [print_
+
+ *)
+
+(* Some higher-order printers for optional and special lists *)
 
 let print_option : state -> (state -> 'a -> unit) -> 'a option -> unit =
   fun state print -> function
@@ -71,7 +94,7 @@ let print_nseq : state -> (state -> 'a -> unit) -> 'a Utils.nseq -> unit =
 let strip : 'a.(state -> 'a -> unit) -> state -> 'a reg -> unit =
   fun print state node -> print state node.value
 
-(**)
+(* Printing tokens *)
 
 let print_token state lexeme region =
   let line =
@@ -81,39 +104,24 @@ let print_token state lexeme region =
 let print_token_opt state lexeme =
   print_option state (fun state -> print_token state lexeme)
 
-let print_variable state {region; value} =
+let print_String state {region; value} =
   let line =
-    sprintf "%s: Ident %S\n"
-            (compact state region) value
+    sprintf "%s: String %S\n" (compact state region) value
   in Buffer.add_string state#buffer line
 
-let print_ctor state {region; value} =
+let print_Verbatim state {region; value} =
   let line =
-    sprintf "%s: Ctor %S\n"
-            (compact state region) value
+    sprintf "%s: Verbatim %S\n" (compact state region) value
   in Buffer.add_string state#buffer line
 
-let print_string state {region; value} =
-  let line =
-    sprintf "%s: String %S\n"
-            (compact state region) value
-  in Buffer.add_string state#buffer line
-
-let print_verbatim state {region; value} =
-  let line =
-    sprintf "%s: Verbatim %S\n"
-            (compact state region) value
-  in Buffer.add_string state#buffer line
-
-let print_bytes state {region; value} =
+let print_Bytes state {region; value} =
   let lexeme, abstract = value in
-  let line =
-    sprintf "%s: Bytes (%S, \"0x%s\")\n"
-            (compact state region) lexeme
-            (Hex.show abstract)
+  let line = sprintf "%s: Bytes (%S, \"0x%s\")\n"
+                     (compact state region) lexeme
+                     (Hex.show abstract)
   in Buffer.add_string state#buffer line
 
-let print_int state {region; value} =
+let print_Int state {region; value} =
   let lexeme, abstract = value in
   let line =
     sprintf "%s: Int (%S, %s)\n"
@@ -121,7 +129,7 @@ let print_int state {region; value} =
             (Z.to_string abstract)
   in Buffer.add_string state#buffer line
 
-let print_nat state {region; value} =
+let print_Nat state {region; value} =
   let lexeme, abstract = value in
   let line =
     sprintf "%s: Nat (%S, %s)\n"
@@ -129,207 +137,227 @@ let print_nat state {region; value} =
             (Z.to_string abstract)
   in Buffer.add_string state#buffer line
 
-let print_mutez state {region; value=lex,z} =
+let print_Mutez state {region; value=lex,z} =
   let line =
     sprintf "Mutez %s (%s)" lex (Z.to_string z)
   in print_token state line region
+
+let print_Ident state {region; value} =
+  let line =
+    sprintf "%s: Ident %S\n" (compact state region) value
+  in Buffer.add_string state#buffer line
+
+let print_UIdent state {region; value} =
+  let line =
+    sprintf "%s: UIdent %S\n" (compact state region) value
+  in Buffer.add_string state#buffer line
+
+let print_Attr state {region; value} =
+  let line =
+    sprintf "%s: Attr %S\n" (compact state region) value
+  in Buffer.add_string state#buffer line
+
+let print_Lang state {region; value} =
+  let line =
+    sprintf "%s: Lang %S" (compact state region)
+            value.Region.value
+  in Buffer.add_string state#buffer line
+
+(* Printing the tokens from the CST *)
 
 let rec print_tokens state (node : cst) =
   print_nseq  state print_declaration node.decl;
   print_token state "EOF" node.eof
 
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
+
 and print_declaration state = function
-  TypeDecl    d -> print_type_decl    state d.value
-| ConstDecl   d -> print_const_decl   state d.value
-| FunDecl     d -> print_fun_decl     state d.value
-| ModuleDecl  d -> print_module_decl  state d.value
-| ModuleAlias d -> print_module_alias state d.value
+  D_Const    d -> print_const_decl   state d.value
+| D_Fun      d -> print_fun_decl     state d.value
+| D_Module   d -> print_module_decl  state d.value
+| D_ModAlias d -> print_module_alias state d.value
+| D_Type     d -> print_type_decl    state d.value
 
 and print_const_decl state (node : const_decl) =
   print_attributes state node.attributes;
-  print_token      state "const" node.kwd_const;
-  print_variable   state node.name;
+  print_token      state "Const" node.kwd_const;
+  print_Ident      state node.name;
   print_option     state print_type_annot node.const_type;
-  print_token      state "=" node.equal;
+  print_token      state "EQ" node.equal;
   print_expr       state node.init;
-  print_token_opt  state ";" node.terminator
+  print_token_opt  state "SEMI" node.terminator
 
 and print_type_decl state (node : type_decl) =
-  print_token     state "type" node.kwd_type;
-  print_variable  state node.name;
-  print_token     state "is" node.kwd_is;
+  print_token     state "Type" node.kwd_type;
+  print_Ident     state node.name;
+  print_token     state "Is" node.kwd_is;
   print_type_expr state node.type_expr;
-  print_token_opt state ";" node.terminator
+  print_token_opt state "SEMI" node.terminator
 
 and print_module_decl state (node : module_decl) =
   match node.enclosing with
     Brace (lbrace, rbrace) ->
-      print_token     state "module" node.kwd_module;
-      print_variable  state node.name;
-      print_token     state "is" node.kwd_is;
-      print_token     state "{" lbrace;
-      print_tokens    state node.structure;
-      print_token     state  "}" rbrace;
-      print_token_opt state ";" node.terminator
+      print_token     state "Module" node.kwd_module;
+      print_Ident     state node.name;
+      print_token     state "Is" node.kwd_is;
+      print_token     state "LBRACE" lbrace;
+      print_nseq      state print_declaration node.declarations;
+      print_token     state  "RBRACE" rbrace;
+      print_token_opt state "SEMI" node.terminator
   | BeginEnd (kwd_begin, kwd_end) ->
-      print_token     state "module" node.kwd_module;
-      print_variable  state node.name;
-      print_token     state "is" node.kwd_is;
-      print_token     state "begin" kwd_begin;
-      print_tokens    state node.structure;
-      print_token     state "end" kwd_end;
-      print_token_opt state ";" node.terminator
+      print_token     state "Module" node.kwd_module;
+      print_Ident     state node.name;
+      print_token     state "Is" node.kwd_is;
+      print_token     state "Begin" kwd_begin;
+      print_nseq      state print_declaration node.declarations;
+      print_token     state "End" kwd_end;
+      print_token_opt state "SEMI" node.terminator
 
 and print_module_alias state (node : module_alias) =
-  print_token     state "module" node.kwd_module;
-  print_variable  state node.alias;
-  print_token     state "is" node.kwd_is;
-  print_nsepseq   state print_variable "." node.mod_path;
-  print_token_opt state ";" node.terminator
+  print_token     state "Module" node.kwd_module;
+  print_Ident     state node.alias;
+  print_token     state "Is" node.kwd_is;
+  print_nsepseq   state print_Ident "DOT" node.mod_path;
+  print_token_opt state "SEMI" node.terminator
 
 and print_par : 'a.state -> (state -> 'a -> unit) -> 'a par -> unit =
   fun state print par ->
-    print_token state "(" par.lpar;
+    print_token state "LPAR" par.lpar;
     print       state par.inside;
-    print_token state ")" par.rpar
+    print_token state "RPAR" par.rpar
 
 and print_braces : 'a.state -> (state -> 'a -> unit) -> 'a braces -> unit =
   fun state print braces ->
-    print_token state "{" braces.lbrace;
+    print_token state "LBRACE" braces.lbrace;
     print       state braces.inside;
-    print_token state "}" braces.rbrace
+    print_token state "RBRACE" braces.rbrace
 
 and print_brackets : 'a.state -> (state -> 'a -> unit) -> 'a brackets -> unit =
   fun state print brackets ->
-    print_token state "[" brackets.lbracket;
+    print_token state "LBRACKET" brackets.lbracket;
     print       state brackets.inside;
-    print_token state "]" brackets.rbracket
+    print_token state "LBRACKET" brackets.rbracket
 
 and print_case : 'a.state -> (state -> 'a -> unit) -> 'a case -> unit =
   fun state print node ->
-    print_token state "case" node.kwd_case;
+    print_token state "Case" node.kwd_case;
     print_expr  state node.expr;
-    print_token state "of" node.kwd_of;
+    print_token state "Of" node.kwd_of;
     match node.enclosing with
       Brackets (lbracket, rbracket) ->
-        print_token     state "[" lbracket;
-        print_token_opt state "|" node.lead_vbar;
+        print_token     state "LBRACKET" lbracket;
+        print_token_opt state "VBAR" node.lead_vbar;
         print_cases     state print node.cases.value;
-        print_token     state "]" rbracket
+        print_token     state "RBRACKET" rbracket
     | End kwd_end ->
-        print_token_opt state "|" node.lead_vbar;
+        print_token_opt state "VBAR" node.lead_vbar;
         print_cases     state print node.cases.value;
-        print_token     state "end" kwd_end
+        print_token     state "End" kwd_end
 
 and print_cases :
   'a.state -> (state -> 'a -> unit) ->
   ('a case_clause reg, vbar) Utils.nsepseq -> unit =
     fun state print node ->
       let print state node = print_case_clause state print node.value
-      in print_nsepseq state print "|" node
+      in print_nsepseq state print "VBAR" node
 
 and print_case_clause :
   'a.state -> (state -> 'a -> unit) -> 'a case_clause -> unit =
   fun state print node ->
     print_pattern state node.pattern;
-    print_token   state "->" node.arrow;
+    print_token   state "ARROW" node.arrow;
     print         state node.rhs
 
-and print_type_expr state = function
-  TProd t   -> print_cartesian  state t
-| TSum t    -> print_sum_type   state t.value
-| TRecord t -> print_TRecord    state t.value
-| TApp t    -> print_TApp       state t.value
-| TFun t    -> print_TFun       state t.value
-| TPar t    -> print_TPar       state t.value
-| TVar t    -> print_variable   state t
-| TWild t   -> print_wild       state t
-| TString t -> print_string     state t
-| TInt t    -> print_int        state t
-| TModA t   -> print_module_access state print_type_expr t.value
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
 
-and print_wild state = print_token state "_"
+and print_type_expr state = function
+  T_Ctor    t -> print_T_Ctor      state t.value
+| T_Fun     t -> print_T_Fun       state t.value
+| T_Int     t -> print_Int         state t
+| T_ModPath t -> print_module_path state print_type_expr t.value
+| T_Par     t -> print_T_Par       state t.value
+| T_Prod    t -> print_cartesian   state t
+| T_Record  t -> print_T_Record    state t.value
+| T_String  t -> print_String      state t
+| T_Sum     t -> print_sum_type    state t.value
+| T_Var     t -> print_Ident       state t
+| T_Wild    t -> print_wild        state t
+
+and print_wild state = print_token state "WILD"
 
 and print_type_annot state (colon, type_expr) =
-  print_token     state ":" colon;
+  print_token     state "COLON" colon;
   print_type_expr state type_expr;
 
 and print_cartesian state (node : cartesian) =
-  print_nsepseq state print_type_expr "*" node.value
+  print_nsepseq state print_type_expr "TIMES" node.value
 
 and print_of_type_expr state (kwd_of, t_expr) =
-  print_token     state "of" kwd_of;
+  print_token     state "Of" kwd_of;
   print_type_expr state t_expr
 
 and print_variant state (node: variant) =
   print_attributes state node.attributes;
-  print_ctor       state node.ctor;
+  print_UIdent     state node.ctor;
   print_option     state print_of_type_expr node.arg
 
 and print_sum_type state (node : sum_type) =
   print_attributes state node.attributes;
-  print_token_opt  state "|" node.lead_vbar;
-  print_nsepseq    state (strip print_variant) "|" node.variants
+  print_token_opt  state "VBAR" node.lead_vbar;
+  print_nsepseq    state (strip print_variant) "VBAR" node.variants
 
-and print_TRecord state =
+and print_T_Record state =
   print_ne_injection state (strip print_field_decl)
 
-and print_TApp state (node : type_ctor * type_tuple) =
+and print_T_Ctor state (node : type_ctor * type_tuple) =
   let type_name, type_tuple = node in
-  print_variable        state type_name;
+  print_Ident      state type_name;
   print_type_tuple state type_tuple
 
-and print_TFun state (node : type_expr * arrow * type_expr) =
+and print_T_Fun state (node : type_expr * arrow * type_expr) =
   let type_expr_a, arrow, type_expr_b = node in
   print_type_expr state type_expr_a;
-  print_token     state "->" arrow;
+  print_token     state "ARROW" arrow;
   print_type_expr state type_expr_b
 
-and print_TPar state = print_par state print_type_expr
+and print_T_Par state = print_par state print_type_expr
 
 and print_field_decl state (node : field_decl) =
   print_attributes state node.attributes;
-  print_variable        state node.field_name;
-  print_token      state ":" node.colon;
+  print_Ident      state node.field_name;
+  print_token      state "COLON" node.colon;
   print_type_expr  state node.field_type
 
 and print_type_tuple state (node : type_tuple) =
-  let print state = print_nsepseq state print_type_expr ","
+  let print state = print_nsepseq state print_type_expr "COMMA"
   in print_par state print node.value
 
 and print_fun_decl state (node : fun_decl) =
   print_attributes state node.attributes;
-  print_token      state "function" node.kwd_function;
-  print_variable        state node.fun_name;
+  print_token      state "Function" node.kwd_function;
+  print_Ident      state node.fun_name;
   print_parameters state node.param;
   print_option     state print_type_annot node.ret_type;
-  print_token      state "is" node.kwd_is;
+  print_token      state "Is" node.kwd_is;
   print_expr       state node.return;
-  print_token_opt  state ";" node.terminator;
+  print_token_opt  state "SEMI" node.terminator;
 
 and print_fun_expr state (node : fun_expr) =
-  print_token      state "function" node.kwd_function;
+  print_token      state "Function" node.kwd_function;
   print_parameters state node.param;
   print_option     state print_type_annot node.ret_type;
-  print_token      state "is" node.kwd_is;
+  print_token      state "Is" node.kwd_is;
   print_expr       state node.return
-
-and print_code_inj state (node : code_inj) =
-  let {value; region} = node.language in
-  let header_stop = region#start#shift_bytes 1 in
-  let header_reg  = Region.make ~start:region#start ~stop:header_stop in
-  print_token  state "[%" header_reg;
-  print_string state value;
-  print_expr   state node.code;
-  print_token  state "]" node.rbracket
 
 and print_block_with state (node : block_with) =
   print_block state node.block;
-  print_token state "with" node.kwd_with;
+  print_token state "With" node.kwd_with;
   print_expr  state node.expr;
 
 and print_parameters state (node : parameters) =
-  let print state = print_nsepseq state print_param_decl ";"
+  let print state = print_nsepseq state print_param_decl "SEMI"
   in print_par state print node.value
 
 and print_param_decl state = function
@@ -337,88 +365,65 @@ and print_param_decl state = function
 | ParamVar   p -> print_param_var   state p
 
 and print_param_const state (node : param_const reg) =
-  print_token  state "const" node.value.kwd_const;
-  print_variable    state node.value.var;
+  print_token  state "Const" node.value.kwd_const;
+  print_Ident  state node.value.var;
   print_option state print_type_annot node.value.param_type
 
 and print_param_var state (node : param_var reg) =
-  print_token  state "var" node.value.kwd_var;
-  print_variable    state node.value.var;
+  print_token  state "Var" node.value.kwd_var;
+  print_Ident  state node.value.var;
   print_option state print_type_annot node.value.param_type
 
 and print_block state (node : block reg) =
   match node.value.enclosing with
     Block (kwd_block, lbrace, rbrace) ->
-      print_token      state "block" kwd_block;
-      print_token      state "{" lbrace;
+      print_token      state "Block" kwd_block;
+      print_token      state "LBRACE" lbrace;
       print_statements state node.value.statements;
-      print_token_opt  state ";" node.value.terminator;
-      print_token      state "}" rbrace
+      print_token_opt  state "SEMI" node.value.terminator;
+      print_token      state "RBRACE" rbrace
   | BeginEnd (kwd_begin, kwd_end) ->
-      print_token      state "begin" kwd_begin;
+      print_token      state "Begin" kwd_begin;
       print_statements state node.value.statements;
-      print_token_opt  state ";" node.value.terminator;
-      print_token      state "end" kwd_end
-
-and print_data_decl state = function
-  LocalConst       d -> print_const_decl   state d.value
-| LocalVar         d -> print_var_decl     state d
-| LocalFun         d -> print_fun_decl     state d.value
-| LocalType        d -> print_type_decl    state d.value
-| LocalModule      d -> print_module_decl  state d.value
-| LocalModuleAlias d -> print_module_alias state d.value
+      print_token_opt  state "SEMI" node.value.terminator;
+      print_token      state "End" kwd_end
 
 and print_var_decl state (node : var_decl reg) =
-  print_token     state "var" node.value.kwd_var;
-  print_variable       state node.value.name;
+  print_token     state "Var" node.value.kwd_var;
+  print_Ident     state node.value.name;
   print_option    state print_type_annot node.value.var_type;
-  print_token     state ":=" node.value.assign;
+  print_token     state "ASSIGN" node.value.assign;
   print_expr      state node.value.init;
-  print_token_opt state ";" node.value.terminator
+  print_token_opt state "SEMI" node.value.terminator
 
 and print_attributes state (node : attribute list) =
-  let apply {value; region} =
-    let attribute_formatted = sprintf "[@%s]" value in
-    print_token state attribute_formatted region
-  in List.iter apply node
+  List.iter (print_Attr state) node
 
 and print_statements state =
-  print_nsepseq state print_statement ";"
+  print_nsepseq state print_statement "SEMI"
 
 and print_statement state = function
-  Instr instr -> print_instruction state instr
-| Data  data  -> print_data_decl   state data
+  S_Instr   s -> print_instruction state s
+| S_Decl    s -> print_declaration state s
+| S_VarDecl s -> print_var_decl    state s
+
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
 
 and print_instruction state = function
-  Cond        i -> print_cond_instr   state i
-| CaseInstr   i -> print_case         state print_test_clause i.value
-| Assign      i -> print_assignment   state i
-| Loop        i -> print_loop         state i
-| ProcCall    i -> print_fun_call     state i
-| Skip        i -> print_token        state "skip" i
-| RecordPatch i -> print_record_patch state i.value
-| MapPatch    i -> print_map_patch    state i.value
-| SetPatch    i -> print_set_patch    state i.value
-| MapRemove   i -> print_map_remove   state i.value
-| SetRemove   i -> print_set_remove   state i.value
-
-and print_ECond state (node : expr conditional reg) =
-  print_token     state "if" node.value.kwd_if;
-  print_expr      state node.value.test;
-  print_token     state "then" node.value.kwd_then;
-  print_expr      state node.value.ifso;
-  print_token_opt state ";" node.value.terminator;
-  print_token     state "else" node.value.kwd_else;
-  print_expr      state node.value.ifnot
-
-and print_cond_instr state (node : test_clause conditional reg) =
-  print_token       state "if" node.value.kwd_if;
-  print_expr        state node.value.test;
-  print_token       state "then" node.value.kwd_then;
-  print_test_clause state node.value.ifso;
-  print_token_opt   state ";" node.value.terminator;
-  print_token       state "else" node.value.kwd_else;
-  print_test_clause state node.value.ifnot
+  I_Assign      i -> print_assignment   state i.value
+| I_Call        i -> print_fun_call     state i
+| I_Case        i -> print_case         state print_test_clause i.value
+| I_Cond        i -> print_conditional  state print_test_clause i.value
+| I_For         i -> print_for_int      state i
+| I_Iter        i -> print_iter         state i
+| I_MapPatch    i -> print_map_patch    state i.value
+| I_MapRemove   i -> print_map_remove   state i.value
+| I_RecordPatch i -> print_record_patch state i.value
+| I_Skip        i -> print_token        state "Skip" i
+| I_SetPatch    i -> print_set_patch    state i.value
+| I_SetRemove   i -> print_set_remove   state i.value
+| I_While       i -> print_while_loop   state i.value
 
 and print_test_clause state = function
   ClauseInstr instr -> print_instruction  state instr
@@ -430,109 +435,128 @@ and print_clause_block state = function
 | ShortBlock block ->
     let print state (stmts, terminator) =
       print_statements state stmts;
-      print_token_opt state ";" terminator
+      print_token_opt state "SEMI" terminator
     in print_braces state print block.value
 
-and print_assignment state (node: assignment reg) =
-  print_lhs   state node.value.lhs;
-  print_token state ":=" node.value.assign;
-  print_expr  state node.value.rhs
+and print_assignment state (node : assignment) =
+  print_lhs   state node.lhs;
+  print_token state "ASSIGN" node.assign;
+  print_expr  state node.rhs
 
 and print_lhs state = function
   Path    path -> print_path       state path
 | MapPath path -> print_map_lookup state path.value
 
-and print_loop state = function
-  While loop -> print_while_loop state loop
-| For   loop -> print_for_loop   state loop
-
-and print_while_loop state (node : while_loop reg) =
-  print_token state "while" node.value.kwd_while;
-  print_expr  state node.value.cond;
-  print_block state node.value.block
-
-and print_for_loop state = function
-  ForInt     loop -> print_for_int     state loop
-| ForCollect loop -> print_for_collect state loop
+and print_while_loop state (node : while_loop) =
+  print_token state "While" node.kwd_while;
+  print_expr  state node.cond;
+  print_block state node.block
 
 and print_step state (kwd_step, expr) =
-  print_token state "step" kwd_step;
+  print_token state "Step" kwd_step;
   print_expr  state expr
 
 and print_for_int state (node : for_int reg) =
-  print_token  state "for" node.value.kwd_for;
-  print_variable    state node.value.binder;
-  print_token  state ":=" node.value.assign;
+  print_token  state "For" node.value.kwd_for;
+  print_Ident  state node.value.binder;
+  print_token  state "ASSIGN" node.value.assign;
   print_expr   state node.value.init;
-  print_token  state "to" node.value.kwd_to;
+  print_token  state "To" node.value.kwd_to;
   print_expr   state node.value.bound;
   print_option state print_step node.value.step;
   print_block  state node.value.block
 
-and print_for_collect state (node : for_collect reg) =
-  print_token      state "for" node.value.kwd_for;
-  print_variable        state node.value.var;
+and print_iter state (node : iter reg) =
+  print_token      state "For" node.value.kwd_for;
+  print_Ident      state node.value.var;
   print_option     state print_bind_to node.value.bind_to;
-  print_token      state "in" node.value.kwd_in;
+  print_token      state "In" node.value.kwd_in;
   print_collection state node.value.collection;
   print_expr       state node.value.expr;
   print_block      state node.value.block
 
 and print_collection state = function
-  Map  kwd_map  -> print_token state "map"  kwd_map
-| Set  kwd_set  -> print_token state "set"  kwd_set
-| List kwd_list -> print_token state "list" kwd_list
+  `List kwd -> print_token state "List" kwd
+| `Map  kwd -> print_token state "Map"  kwd
+| `Set  kwd -> print_token state "Set"  kwd
 
 and print_bind_to state (arrow, variable) =
-  print_token state "->" arrow;
-  print_variable   state variable
+  print_token state "ARROW" arrow;
+  print_Ident state variable
+
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
 
 and print_expr state = function
-  ECase    e -> print_ECase       state e
-| ECond    e -> print_ECond       state e
-| EAnnot   e -> print_EAnnot      state e
-| ELogic   e -> print_logic_expr  state e
-| EArith   e -> print_arith_expr  state e
-| EString  e -> print_string_expr state e
-| EList    e -> print_list_expr   state e
-| ESet     e -> print_set_expr    state e
-| ECtor    e -> print_ctor_expr   state e
-| ERecord  e -> print_record      state e.value
-| EProj    e -> print_projection  state e.value
-| EModA    e -> print_module_access state print_expr e.value
-| EUpdate  e -> print_update_expr state e.value
-| EMap     e -> print_map_expr    state e
-| EVar     e -> print_variable    state e
-| ECall    e -> print_fun_call    state e
-| EBytes   e -> print_bytes       state e
-| EUnit    e -> print_token       state "Unit" e
-| ETuple   e -> print_tuple_expr  state e
-| EPar     e -> print_EPar        state e
-| EFun     e -> print_fun_expr    state e.value
-| ECodeInj e -> print_code_inj    state e.value
-| EBlock   e -> print_block_with  state e.value
+  E_Add       e -> print_bin_op      state "PLUS" e.value
+| E_And       e -> print_bin_op      state "And" e.value
+| E_Annot     e -> print_par         state print_annot_expr e.value
+| E_BigMap    e -> print_injection   state (strip print_binding) e.value
+| E_Block     e -> print_block_with  state e.value
+| E_Bytes     e -> print_Bytes       state e
+| E_Call      e -> print_fun_call    state e
+| E_Case      e -> print_case        state print_expr e.value
+| E_Cat       e -> print_bin_op      state "CARET" e.value
+| E_CodeInj   e -> print_Lang        state e.value.language
+| E_Equal     e -> print_bin_op      state "EQ" e.value
+| E_Cond      e -> print_conditional state print_expr e.value
+| E_Cons      e -> print_bin_op      state "SHARP" e.value
+| E_Ctor      e -> print_E_Ctor      state e
+| E_Div       e -> print_bin_op      state "SLASH" e.value
+| E_False     e -> print_token       state "False" e
+| E_Fun       e -> print_fun_expr    state e.value
+| E_Geq       e -> print_bin_op      state "Geq" e.value
+| E_Gt        e -> print_bin_op      state "Gt" e.value
+| E_Int       e -> print_Int         state e
+| E_Leq       e -> print_bin_op      state "Leq" e.value
+| E_List      e -> print_injection   state print_expr e.value
+| E_Lt        e -> print_bin_op      state "Lt" e.value
+| E_Map       e -> print_injection   state (strip print_binding) e.value
+| E_MapLookUp e -> print_map_lookup  state e.value
+| E_Mod       e -> print_bin_op      state "Mod" e.value
+| E_ModPath   e -> print_module_path state print_expr e.value
+| E_Mult      e -> print_bin_op      state "TIMES"   e.value
+| E_Mutez     e -> print_Mutez       state e
+| E_Nat       e -> print_Nat         state e
+| E_Neg       e -> print_un_op       state "MINUS" e.value
+| E_Nil       e -> print_token       state "Nil" e
+| E_Neq       e -> print_bin_op      state "NE" e.value
+| E_None      e -> print_token       state "Ctor_None" e
+| E_Not       e -> print_un_op       state "Not" e.value
+| E_Or        e -> print_bin_op      state "Or" e.value
+| E_Par       e -> print_par         state print_expr e.value
+| E_Proj      e -> print_projection  state e.value
+| E_Record    e -> print_record      state e.value
+| E_Set       e -> print_injection   state print_expr e.value
+| E_SetMem    e -> print_set_mem     state e.value
+| E_Some      e -> print_E_Some      state e
+| E_String    e -> print_String      state e
+| E_Sub       e -> print_bin_op      state "MINUS" e.value
+| E_True      e -> print_token       state "True" e
+| E_Tuple     e -> print_tuple_expr  state e
+| E_Unit      e -> print_token       state "Unit" e
+| E_Update    e -> print_update      state e.value
+| E_Var       e -> print_Ident       state e
+| E_Verbatim  e -> print_Verbatim    state e
 
-and print_ECase state (node : expr case reg) =
-  print_case state print_expr node.value
+and print_conditional :
+  'a.state -> (state -> 'a -> unit) -> 'a conditional -> unit =
+  fun state print node ->
+    print_token     state "If" node.kwd_if;
+    print_expr      state node.test;
+    print_token     state "Then" node.kwd_then;
+    print           state node.ifso;
+    print_token_opt state "SEMI" node.terminator;
+    print_token     state "Else" node.kwd_else;
+    print           state node.ifnot
 
-and print_EAnnot state (node : annot_expr par reg) =
-  let print state (expr, type_annot) =
-    print_expr state expr;
-    print_type_annot state type_annot
-  in print_par state print node.value
+and print_annot_expr state (expr, type_annot) =
+  print_expr state expr;
+  print_type_annot state type_annot
 
-and print_map_expr state = function
-  MapLookUp e -> print_map_lookup state e.value
-| MapInj    e -> print_injection  state (strip print_binding) e.value
-| BigMapInj e -> print_injection  state (strip print_binding) e.value
-
-and print_set_expr state = function
-  SetInj e -> print_injection state print_expr e.value
-| SetMem e -> print_set_membership state e.value
-
-and print_set_membership state (node : set_membership) =
+and print_set_mem state (node : set_mem) =
   print_expr  state node.set;
-  print_token state "contains" node.kwd_contains;
+  print_token state "Contains" node.kwd_contains;
   print_expr  state node.element
 
 and print_map_lookup state (node : map_lookup) =
@@ -540,12 +564,8 @@ and print_map_lookup state (node : map_lookup) =
   print_brackets state print_expr node.index.value
 
 and print_path state = function
-  Name var  -> print_variable   state var
+  Name var  -> print_Ident   state var
 | Path path -> print_projection state path.value
-
-and print_logic_expr state = function
-  BoolExpr e -> print_bool_expr state e
-| CompExpr e -> print_comp_expr state e
 
 and print_un_op state lexeme (node : keyword un_op) =
   print_token state lexeme node.op;
@@ -556,115 +576,72 @@ and print_bin_op state lexeme (node : keyword bin_op) =
   print_token state lexeme node.op;
   print_expr  state node.arg2
 
-and print_bool_expr state = function
-  Or    e -> print_bin_op state "||"    e.value
-| And   e -> print_bin_op state "&&"    e.value
-| Not   e -> print_un_op  state "not"   e.value
-| False e -> print_token  state "False" e
-| True  e -> print_token  state "True"  e
-
-and print_comp_expr state = function
-  Lt    e -> print_bin_op state "<"   e.value
-| Leq   e -> print_bin_op state "<="  e.value
-| Gt    e -> print_bin_op state ">"   e.value
-| Geq   e -> print_bin_op state ">="  e.value
-| Equal e -> print_bin_op state "="   e.value
-| Neq   e -> print_bin_op state "=/=" e.value
-
-and print_arith_expr state = function
-  Add   e -> print_bin_op state "+"   e.value
-| Sub   e -> print_bin_op state "-"   e.value
-| Mult  e -> print_bin_op state "*"   e.value
-| Div   e -> print_bin_op state "/"   e.value
-| Mod   e -> print_bin_op state "mod" e.value
-| Neg   e -> print_un_op  state "-"   e.value
-| Int   e -> print_int    state e
-| Nat   e -> print_nat    state e
-| Mutez e -> print_mutez  state e
-
-and print_string_expr state = function
-  Cat      e -> print_bin_op   state "^" e.value
-| String   e -> print_string   state e
-| Verbatim e -> print_verbatim state e
-
-and print_list_expr state = function
-  ECons     e -> print_bin_op    state "#" e.value
-| EListComp e -> print_injection state print_expr e.value
-| ENil      e -> print_nil       state e
-
-and print_ctor_expr state = function
-  SomeApp  e -> print_SomeApp  state e
-| NoneExpr e -> print_NoneExpr state e
-| CtorApp  e -> print_CtorApp  state e
-
 and print_record state =
   print_ne_injection state (strip print_field_assignment)
 
 and print_field_assignment state (node : field_assignment) =
-  print_variable   state node.field_name;
+  print_Ident state node.field_name;
   print_token state "=" node.assignment;
   print_expr  state node.field_expr
 
-and print_field_path_assignment state (node : field_path_assignment reg) =
-  print_path  state node.value.field_path;
-  print_token state "=" node.value.assignment;
-  print_expr  state node.value.field_expr
+and print_field_path_assignment state (node : field_path_assignment) =
+  print_path  state node.field_path;
+  print_token state "EQ" node.assignment;
+  print_expr  state node.field_expr
 
-and print_update_expr state (node : update) =
+and print_update state (node : update) =
   print_path         state node.record;
-  print_token        state "with" node.kwd_with;
-  print_ne_injection state print_field_path_assignment node.updates.value
+  print_token        state "With" node.kwd_with;
+  print_ne_injection state (strip print_field_path_assignment)
+                     node.updates.value
 
 and print_projection state (node : projection) =
-  print_variable   state node.struct_name;
-  print_token      state "." node.selector;
-  print_field_path state node.field_path
+  print_Ident   state node.struct_name;
+  print_token   state "DOT" node.selector;
+  print_nsepseq state print_selection "DOT" node.field_path
 
-and print_module_access :
-  'a.state -> (state -> 'a -> unit ) -> 'a module_access -> unit =
+and print_module_path :
+  'a.state -> (state -> 'a -> unit ) -> 'a module_path -> unit =
   fun state print node ->
-    print_variable   state node.module_name;
-    print_token state "." node.selector;
+    print_Ident state node.module_name;
+    print_token state "DOT" node.selector;
     print       state node.field
 
-and print_field_path state =
-  print_nsepseq state print_selection "."
-
 and print_selection state = function
-  FieldName name -> print_variable state name
-| Component int  -> print_int state int
+  FieldName name -> print_Ident state name
+| Component int  -> print_Int state int
 
 and print_record_patch state (node : record_patch) =
-  print_token        state "patch" node.kwd_patch;
+  print_token        state "Patch" node.kwd_patch;
   print_path         state node.path;
-  print_token        state "with" node.kwd_with;
+  print_token        state "With" node.kwd_with;
   print_ne_injection state (strip print_field_assignment)
                            node.record_inj.value
 
 and print_set_patch state (node : set_patch) =
-  print_token        state "patch" node.kwd_patch;
+  print_token        state "Patch" node.kwd_patch;
   print_path         state node.path;
-  print_token        state "with" node.kwd_with;
+  print_token        state "With" node.kwd_with;
   print_ne_injection state print_expr node.set_inj.value
 
 and print_map_patch state (node : map_patch) =
-  print_token        state "patch" node.kwd_patch;
+  print_token        state "Patch" node.kwd_patch;
   print_path         state node.path;
-  print_token        state "with" node.kwd_with;
+  print_token        state "With" node.kwd_with;
   print_ne_injection state (strip print_binding) node.map_inj.value
 
 and print_map_remove state (node : map_remove) =
-  print_token state "remove" node.kwd_remove;
+  print_token state "Remove" node.kwd_remove;
   print_expr  state node.key;
-  print_token state "from" node.kwd_from;
-  print_token state "map" node.kwd_map;
+  print_token state "From" node.kwd_from;
+  print_token state "Map" node.kwd_map;
   print_path  state node.map
 
 and print_set_remove state (node : set_remove) =
-  print_token state "remove" node.kwd_remove;
+  print_token state "Remove" node.kwd_remove;
   print_expr  state node.element;
-  print_token state "from" node.kwd_from;
-  print_token state "set" node.kwd_set;
+  print_token state "From" node.kwd_from;
+  print_token state "Set" node.kwd_set;
   print_path  state node.set
 
 and print_injection :
@@ -673,20 +650,20 @@ and print_injection :
     print_injection_kwd state node.kind;
     match node.enclosing with
       Brackets (lbracket, rbracket) ->
-        print_token     state "[" lbracket;
-        print_sepseq    state print ";" node.elements;
-        print_token_opt state ";" node.terminator;
-        print_token     state "]" rbracket
+        print_token     state "LBRACKET" lbracket;
+        print_sepseq    state print "SEMI" node.elements;
+        print_token_opt state "SEMI" node.terminator;
+        print_token     state "RBRACKET" rbracket
     | End kwd_end ->
-        print_sepseq    state print ";" node.elements;
-        print_token_opt state ";" node.terminator;
-        print_token     state "end" kwd_end
+        print_sepseq    state print "SEMI" node.elements;
+        print_token_opt state "SEMI" node.terminator;
+        print_token     state "End" kwd_end
 
 and print_injection_kwd state = function
-  InjSet    kwd_set     -> print_token state "set"     kwd_set
-| InjMap    kwd_map     -> print_token state "map"     kwd_map
-| InjBigMap kwd_big_map -> print_token state "big_map" kwd_big_map
-| InjList   kwd_list    -> print_token state "list"    kwd_list
+  `BigMap kwd -> print_token state "BigMap" kwd
+| `List   kwd -> print_token state "List"    kwd
+| `Map    kwd -> print_token state "Map"     kwd
+| `Set    kwd -> print_token state "Set"     kwd
 
 and print_ne_injection :
   'a.state -> (state -> 'a -> unit) -> 'a ne_injection -> unit =
@@ -695,101 +672,88 @@ and print_ne_injection :
     print_ne_injection_kwd state node.kind;
     match node.enclosing with
       Brackets (lbracket, rbracket) ->
-        print_token     state "[" lbracket;
-        print_nsepseq   state print ";" node.ne_elements;
-        print_token_opt state ";" node.terminator;
-        print_token     state "]" rbracket
+        print_token     state "LBRACKET" lbracket;
+        print_nsepseq   state print "SEMI" node.ne_elements;
+        print_token_opt state "SEMI" node.terminator;
+        print_token     state "RBRACKET" rbracket
     | End kwd_end ->
-        print_nsepseq   state print ";" node.ne_elements;
-        print_token_opt state ";" node.terminator;
-        print_token     state "end" kwd_end
+        print_nsepseq   state print "SEMI" node.ne_elements;
+        print_token_opt state "SEMI" node.terminator;
+        print_token     state "End" kwd_end
 
 and print_ne_injection_kwd state = function
-  NEInjSet    kwd_set    -> print_token state "set"    kwd_set
-| NEInjMap    kwd_map    -> print_token state "map"    kwd_map
-| NEInjRecord kwd_record -> print_token state "record" kwd_record
+  `Map    kwd -> print_token state "Map"    kwd
+| `Record kwd -> print_token state "Record" kwd
+| `Set    kwd -> print_token state "Set"    kwd
 
 and print_binding state (node : binding) =
   print_expr  state node.source;
-  print_token state "->" node.arrow;
+  print_token state "ARROW" node.arrow;
   print_expr  state node.image
 
 and print_tuple_expr state (node : tuple_expr) =
-  let print state = print_nsepseq state print_expr ","
+  let print state = print_nsepseq state print_expr "COMMA"
   in print_par state print node.value
-
-and print_nil state = print_token state "nil"
-
-and print_NoneExpr state = print_token state "None"
 
 and print_fun_call state (node : fun_call) =
   let expr, arguments = node.value in
   print_expr       state expr;
   print_tuple_expr state arguments
 
-and print_CtorApp state (node : (ctor * arguments option) reg) =
+and print_E_Ctor state (node : (ctor * arguments option) reg) =
   let ctor, arguments = node.value in
-  print_ctor   state ctor;
+  print_UIdent state ctor;
   print_option state print_tuple_expr arguments
 
-and print_SomeApp state (node : (kwd_Some * arguments) reg) =
+and print_E_Some state (node : (kwd_Some * arguments) reg) =
   let ctor_Some, arguments = node.value in
-  print_token      state "Some" ctor_Some;
+  print_token      state "Ctor_Some" ctor_Some;
   print_tuple_expr state arguments
 
-and print_EPar state (node : expr par reg) =
-  print_par state print_expr node.value
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
 
 and print_pattern state = function
-  PVar    p -> print_variable          state p
-| PWild   p -> print_token        state "_" p
-| PInt    p -> print_int          state p
-| PNat    p -> print_nat          state p
-| PBytes  p -> print_bytes        state p
-| PString p -> print_string       state p
-| PList   p -> print_list_pattern state p
-| PTuple  p -> print_ptuple       state p
-| PCtor   p -> print_ctor_pattern state p
+  P_Bytes    p -> print_Bytes         state p
+| P_Cons     p -> print_nsepseq       state print_pattern "SHARP" p.value
+| P_Ctor     p -> print_P_Ctor        state p
+| P_False    p -> print_token         state "False" p
+| P_Int      p -> print_Int           state p
+| P_List     p -> print_injection     state print_pattern p.value
+| P_Nat      p -> print_Nat           state p
+| P_Nil      p -> print_token         state "Nil" p
+| P_None     p -> print_token         state "Ctor_None"  p
+| P_ParCons  p -> print_P_ParCons     state p
+| P_Some     p -> print_P_Some        state p
+| P_String   p -> print_String        state p
+| P_True     p -> print_token         state "True"  p
+| P_Tuple    p -> print_tuple_pattern state p
+| P_Unit     p -> print_token         state "Unit"  p
+| P_Var      p -> print_Ident         state p
+| P_Wild     p -> print_token         state "WILD" p
 
-and print_ctor_pattern state = function
-  PUnit    p -> print_token     state "Unit"  p
-| PFalse   p -> print_token     state "False" p
-| PTrue    p -> print_token     state "True"  p
-| PNone    p -> print_token     state "None"  p
-| PSomeApp p -> print_psome_app state p
-| PCtorApp p -> print_pctor_app state p
-
-and print_pctor_app state (node : (ctor * tuple_pattern option) reg) =
+and print_P_Ctor state (node : (ctor * tuple_pattern option) reg) =
   let ctor, arg_opt = node.value in
-  print_ctor   state ctor;
-  print_option state print_ptuple arg_opt
+  print_UIdent state ctor;
+  print_option state print_tuple_pattern arg_opt
 
-and print_psome_app state (node : (kwd_Some * pattern par reg) reg) =
+and print_P_Some state (node : (kwd_Some * pattern par reg) reg) =
   let ctor_Some, patterns = node.value in
-  print_token    state "Some" ctor_Some;
-  print_patterns state patterns
+  print_token state "Ctor_Some" ctor_Some;
+  print_par   state print_pattern patterns.value
 
-and print_patterns state (node : pattern par reg) =
-  print_par state print_pattern node.value
-
-and print_list_pattern state = function
-  PListComp p -> print_injection state print_pattern p.value
-| PNil      p -> print_token     state "nil" p
-| PParCons  p -> print_par_cons  state p
-| PCons     p -> print_nsepseq   state print_pattern "#" p.value
-
-and print_par_cons state (node :  (pattern * cons * pattern) par reg) =
+and print_P_ParCons state (node : (pattern * cons * pattern) par reg) =
   let print state (head, cons, tail) =
     print_pattern state head;
-    print_token   state "#" cons;
+    print_token   state "SHARP" cons;
     print_pattern state tail;
   in print_par state print node.value
 
-and print_ptuple state (node : tuple_pattern) =
-  let print state = print_nsepseq state print_pattern ","
+and print_tuple_pattern state (node : tuple_pattern) =
+  let print state = print_nsepseq state print_pattern "COMMA"
   in print_par state print node.value
 
-(* Conversion to string *)
+(* CONVERSIONS TO STRING *)
 
 let to_string ~offsets ~mode print node =
   let buffer = Buffer.create 131 in
@@ -807,7 +771,7 @@ let instruction_to_string = to_string print_instruction
 
 let type_expr_to_string = to_string print_type_expr
 
-(* Pretty-printing the CST *)
+(* PRINTING THE CST *)
 
 let pp_ident state {value=name; region} =
   let reg  = compact state region in
@@ -839,21 +803,21 @@ let rec pp_cst state (node : cst) =
   List.iteri (List.length decls |> apply) decls
 
 and pp_declaration state = function
-  TypeDecl {value; region} ->
-    pp_loc_node  state "TypeDecl" region;
-    pp_type_decl state value
-| ConstDecl {value; region} ->
-    pp_loc_node   state "ConstDecl" region;
+  D_Const {value; region} ->
+    pp_loc_node   state "D_Const" region;
     pp_const_decl state value
-| FunDecl {value; region} ->
-    pp_loc_node state "FunDecl" region;
+| D_Fun {value; region} ->
+    pp_loc_node state "D_Fun" region;
     pp_fun_decl state value
-| ModuleDecl {value; region} ->
-    pp_loc_node state "ModuleDecl" region;
-    pp_mod_decl state value
-| ModuleAlias {value; region} ->
-    pp_loc_node  state "ModuleAlias" region;
-    pp_mod_alias state value
+| D_Module {value; region} ->
+    pp_loc_node    state "D_Module" region;
+    pp_module_decl state value
+| D_ModAlias {value; region} ->
+    pp_loc_node     state "D_ModAlias" region;
+    pp_module_alias state value
+| D_Type {value; region} ->
+    pp_loc_node  state "D_Type" region;
+    pp_type_decl state value
 
 and pp_type_decl state (decl : type_decl) =
   let () = pp_ident (state#pad 2 0) decl.name in
@@ -863,23 +827,23 @@ and pp_type_decl state (decl : type_decl) =
     pp_type_expr (state#pad 1 0) decl.type_expr
   in ()
 
-and pp_mod_decl state (decl : module_decl) =
+and pp_module_decl state (decl : module_decl) =
   let ()    = pp_ident (state#pad 2 0) decl.name in
   let state = state#pad 2 1 in
   let ()    = pp_node state "<structure>" in
   let apply len rank =
     pp_declaration (state#pad len rank) in
-  let decls = Utils.nseq_to_list decl.structure.decl in
+  let decls = Utils.nseq_to_list decl.declarations in
   List.iteri (List.length decls |> apply) decls
 
-and pp_mod_alias state (node : module_alias) =
+and pp_module_alias state (node : module_alias) =
   let () = pp_ident (state#pad 2 0) node.alias in
   let () =
     let state          = state#pad 2 1 in
     let mod_path       = Utils.nsepseq_to_list node.mod_path in
     let len            = List.length mod_path in
     let apply len rank = pp_ident (state#pad len rank) in
-    pp_node  state "<path>";
+    pp_node state "<path>";
     List.iteri (apply len) mod_path
   in ()
 
@@ -888,13 +852,11 @@ and pp_fun_decl state (node : fun_decl) =
   let arity = if node.ret_type = None then arity else arity+1 in
   let arity = if node.attributes = [] then arity else arity+1 in
   let arity = arity + 3
-  and rank = 0 in
-  let rank =
-    match node.kwd_recursive with
-        None -> rank
-    | Some _ -> let state = state#pad arity rank in
-                pp_node state "recursive";
-                rank+1 in
+  and rank  = 0 in
+  let rank  = if node.kwd_recursive = None then rank
+              else let state = state#pad arity rank in
+                   pp_node state "recursive";
+                   rank+1 in
   let rank =
     let state = state#pad arity rank in
     pp_ident state node.fun_name;
@@ -950,43 +912,47 @@ and pp_const_decl state (node : const_decl) =
   in ignore rank
 
 and pp_type_expr state = function
-  TProd cartesian ->
-    pp_loc_node  state "TProd" cartesian.region;
-    pp_cartesian state cartesian
-| TVar v ->
-    pp_node  state "TVar";
-    pp_ident (state#pad 1 0) v
-| TPar {value; region} ->
-    pp_loc_node  state "TPar" region;
-    pp_type_expr (state#pad 1 0) value.inside
-| TApp {value=name,tuple; region} ->
-    pp_loc_node   state "TApp" region;
-    pp_ident      (state#pad 1 0) name;
-    pp_type_tuple (state#pad 2 1) tuple
-| TFun {value; region} ->
-    pp_loc_node state "TFun" region;
-    let apply len rank =
-      pp_type_expr (state#pad len rank) in
-    let domain, _, range = value in
-    List.iteri (apply 2) [domain; range]
-| TSum {value; region} ->
-    pp_loc_node state "TSum" region;
-    pp_sum_type state value
-| TRecord {value; region} ->
-    pp_loc_node     state "TRecord" region;
-    pp_ne_injection state pp_field_decl value
-| TString s ->
-    pp_node   state "TString";
-    pp_string (state#pad 1 0) s
-| TInt s ->
-    pp_node state "TInt";
+  T_Ctor e -> pp_T_Ctor state e
+| T_Fun e -> pp_T_Fun state e
+| T_Int s ->
+    pp_node state "T_Int";
     pp_int  (state#pad 1 0) s
-| TWild wild ->
-    pp_node     state "TWild";
-    pp_loc_node state "TWild" wild
-| TModA {value; region} ->
-    pp_loc_node      state "TModA" region;
-    pp_module_access state pp_type_expr value
+| T_ModPath {value; region} ->
+    pp_loc_node    state "T_ModPath" region;
+    pp_module_path state pp_type_expr value
+| T_Par {value; region} ->
+    pp_loc_node  state "T_Par" region;
+    pp_type_expr (state#pad 1 0) value.inside
+| T_Prod cartesian ->
+    pp_loc_node  state "T_Prod" cartesian.region;
+    pp_cartesian state cartesian
+| T_Record {value; region} ->
+    pp_loc_node     state "T_Record" region;
+    pp_ne_injection state pp_field_decl value
+| T_String s ->
+    pp_node   state "T_String";
+    pp_string (state#pad 1 0) s
+| T_Sum {value; region} ->
+    pp_loc_node state "T_Sum" region;
+    pp_sum_type state value
+| T_Var v ->
+    pp_node  state "T_Var";
+    pp_ident (state#pad 1 0) v
+| T_Wild wild ->
+    pp_node     state "T_Wild";
+    pp_loc_node state "T_Wild" wild
+
+and pp_T_Ctor state (node : (type_ctor * type_tuple) reg) =
+  let {value=(name, tuple); region} = node in
+  pp_loc_node   state "T_Ctor" region;
+  pp_ident      (state#pad 1 0) name;
+  pp_type_tuple (state#pad 2 1) tuple
+
+and pp_T_Fun state (node : (type_expr * arrow * type_expr) reg) =
+  pp_loc_node state "T_Fun" node.region;
+  let apply len rank = pp_type_expr (state#pad len rank)
+  and domain, _, range = node.value in
+  List.iteri (apply 2) [domain; range]
 
 and pp_sum_type state (node : sum_type) =
   let variants = Utils.nsepseq_to_list node.variants in
@@ -1107,45 +1073,63 @@ and pp_statements state statements =
   in List.iteri (apply length) statements
 
 and pp_statement state = function
-  Instr instr ->
-    pp_node        state "Instr";
+  S_Instr instr ->
+    pp_node        state "S_Instr";
     pp_instruction (state#pad 1 0) instr
-| Data decl ->
-    pp_node state "Data";
-    pp_data_decl (state#pad 1 0) decl
+| S_Decl decl ->
+    pp_node state "S_Decl";
+    pp_declaration (state#pad 1 0) decl
+| S_VarDecl decl ->
+    pp_node state "S_VarDecl";
+    pp_var_decl (state#pad 1 0) decl.value
 
 and pp_instruction state = function
-  Cond {value; region} ->
-    pp_loc_node   state "Cond" region;
+  I_Cond {value; region} ->
+    pp_loc_node   state "I_Cond" region;
     pp_cond_instr state value
-| CaseInstr {value; region} ->
-    pp_loc_node state "CaseInstr" region;
+| I_Case {value; region} ->
+    pp_loc_node state "I_Case" region;
     pp_case     state pp_test_clause value
-| Assign {value; region} ->
-    pp_loc_node   state "Assign" region;
+| I_Assign {value; region} ->
+    pp_loc_node   state "I_Assign" region;
     pp_assignment state value
-| Loop loop ->
-    pp_node state "Loop";
-    pp_loop (state#pad 1 0) loop
-| ProcCall {value; region} ->
-    pp_loc_node state "ProcCall" region;
+| I_While {value; _} ->
+    pp_node state "<while>";
+    let () =
+      let state = state#pad 2 0 in
+      pp_node state "<condition>";
+      pp_expr (state#pad 1 0) value.cond in
+    let () =
+      let state = state#pad 2 1 in
+      let statements = value.block.value.statements in
+      pp_node state "<statements>";
+      pp_statements state statements
+    in ()
+| I_For {value; region} ->
+    pp_loc_node state "I_For" region;
+    pp_for_int state value
+| I_Iter {value; region} ->
+    pp_loc_node state "I_Iter" region;
+    pp_iter state value
+| I_Call {value; region} ->
+    pp_loc_node state "I_Call" region;
     pp_fun_call state value
-| Skip region ->
-    pp_loc_node state "Skip" region
-| RecordPatch {value; region} ->
-    pp_loc_node     state "RecordPatch" region;
+| I_Skip region ->
+    pp_loc_node state "I_Skip" region
+| I_RecordPatch {value; region} ->
+    pp_loc_node     state "I_RecordPatch" region;
     pp_record_patch state value
-| MapPatch {value; region} ->
-    pp_loc_node  state "MapPatch" region;
+| I_MapPatch {value; region} ->
+    pp_loc_node  state "I_MapPatch" region;
     pp_map_patch state value
-| SetPatch {value; region} ->
-    pp_loc_node  state "SetPatch" region;
+| I_SetPatch {value; region} ->
+    pp_loc_node  state "I_SetPatch" region;
     pp_set_patch state value
-| MapRemove {value; region} ->
-    pp_loc_node   state "MapRemove" region;
+| I_MapRemove {value; region} ->
+    pp_loc_node   state "I_MapRemove" region;
     pp_map_remove state value
-| SetRemove {value; region} ->
-    pp_loc_node   state "SetRemove" region;
+| I_SetRemove {value; region} ->
+    pp_loc_node   state "I_SetRemove" region;
     pp_set_remove state value
 
 and pp_cond_expr state (cond : expr conditional) =
@@ -1214,31 +1198,54 @@ and pp_case_clause :
     print (state#pad 2 1) clause.rhs
 
 and pp_pattern state = function
-  PWild region ->
-    pp_loc_node state "PWild" region
-| PCtor pattern ->
-    pp_node state "PCtor";
-    pp_ctor_pattern (state#pad 1 0) pattern
-| PVar v ->
-    pp_node state "PVar";
+  P_Wild region ->
+    pp_loc_node state "P_Wild" region
+| P_None region ->
+    pp_loc_node state "P_None" region
+| P_Some {value=_,{value=par; _}; region} ->
+    pp_loc_node state "P_Some" region;
+    pp_pattern (state#pad 1 0) par.inside
+| P_Unit region ->
+    pp_loc_node state "P_Unit" region
+| P_False region ->
+    pp_loc_node state "P_False" region
+| P_True region ->
+    pp_loc_node state "P_True" region
+| P_Ctor {value; region} ->
+    pp_loc_node state "P_Ctor" region;
+    pp_ctor_app_pattern (state#pad 1 0) value
+| P_Var v ->
+    pp_node state "P_Var";
     pp_ident (state#pad 1 0) v
-| PInt n ->
-    pp_node state "PInt";
+| P_Int n ->
+    pp_node state "P_Int";
     pp_int state n
-| PNat n ->
-    pp_node state "PNat";
+| P_Nat n ->
+    pp_node state "P_Nat";
     pp_int state n
-| PBytes b ->
-    pp_node state "PBytes";
+| P_Bytes b ->
+    pp_node state "P_Bytes";
     pp_bytes state b
-| PString s ->
-    pp_node state "PString";
+| P_String s ->
+    pp_node state "P_String";
     pp_ident (state#pad 1 0) s
-| PList plist ->
-    pp_node state "PList";
-    pp_list_pattern (state#pad 1 0) plist
-| PTuple {value; region} ->
-    pp_loc_node state "PTuple" region;
+| P_List {value; region} ->
+    pp_loc_node state "P_List" region;
+    pp_injection (state#pad 1 0) pp_pattern value
+| P_Nil region ->
+    pp_loc_node state "P_Nil" region
+| P_ParCons {value; region} ->
+    pp_loc_node state "P_ParCons" region;
+    pp_bin_cons (state#pad 1 0) value.inside
+| P_Cons {value; region} ->
+    let patterns = Utils.nsepseq_to_list value in
+    let length   = List.length patterns in
+    let apply len rank =
+      pp_pattern (state#pad len rank) in
+    pp_loc_node state "P_Cons" region;
+    List.iteri (apply length) patterns
+| P_Tuple {value; region} ->
+    pp_loc_node state "P_Tuple" region;
     pp_tuple_pattern (state#pad 1 0) value
 
 and pp_bytes state {value=lexeme,hex; region} =
@@ -1249,44 +1256,11 @@ and pp_int state {value=lexeme,z; region} =
   pp_loc_node (state#pad 2 0) lexeme region;
   pp_node     (state#pad 2 1) (Z.to_string z)
 
-and pp_ctor_pattern state = function
-  PNone region ->
-    pp_loc_node state "PNone" region
-| PSomeApp {value=_,{value=par; _}; region} ->
-    pp_loc_node state "PSomeApp" region;
-    pp_pattern (state#pad 1 0) par.inside
-| PUnit region ->
-    pp_loc_node state "PUnit" region
-| PFalse region ->
-    pp_loc_node state "PFalse" region
-| PTrue region ->
-    pp_loc_node state "PTrue" region
-| PCtorApp {value; region} ->
-    pp_loc_node state "PCtorApp" region;
-    pp_ctor_app_pattern (state#pad 1 0) value
-
 and pp_ctor_app_pattern state (ctor, pat_opt) =
   pp_ident state ctor;
   match pat_opt with
       None -> ()
   | Some p -> pp_tuple_pattern state p.value
-
-and pp_list_pattern state = function
-  PListComp {value; region} ->
-    pp_loc_node state "PListComp" region;
-    pp_injection (state#pad 1 0) pp_pattern value
-| PNil region ->
-    pp_loc_node state "PNil" region
-| PParCons {value; region} ->
-    pp_loc_node state "PParCons" region;
-    pp_bin_cons (state#pad 1 0) value.inside
-| PCons {value; region} ->
-    let patterns = Utils.nsepseq_to_list value in
-    let length   = List.length patterns in
-    let apply len rank =
-      pp_pattern (state#pad len rank) in
-    pp_loc_node state "PCons" region;
-    List.iteri (apply length) patterns
 
 and pp_bin_cons state (head, _, tail) =
   pp_pattern (state#pad 2 0) head;
@@ -1345,8 +1319,8 @@ and pp_projection state proj =
   pp_ident (state#pad (1+len) 0) proj.struct_name;
   List.iteri (apply len) selections
 
-and pp_module_access :
-  'a.state -> (state -> 'a -> unit ) -> 'a module_access -> unit =
+and pp_module_path :
+  'a.state -> (state -> 'a -> unit ) -> 'a module_path -> unit =
   fun state print node ->
     pp_ident (state#pad 2 0) node.module_name;
     print    (state#pad 2 1) node.field
@@ -1366,31 +1340,6 @@ and pp_selection state = function
 and pp_map_lookup state lookup =
   pp_path (state#pad 2 0) lookup.path;
   pp_expr (state#pad 2 1) lookup.index.value.inside
-
-and pp_loop state = function
-  While {value; _} ->
-    pp_node state "<while>";
-    let () =
-      let state = state#pad 2 0 in
-      pp_node state "<condition>";
-      pp_expr (state#pad 1 0) value.cond in
-    let () =
-      let state = state#pad 2 1 in
-      let statements = value.block.value.statements in
-      pp_node state "<statements>";
-      pp_statements state statements
-    in ()
-| For for_loop ->
-    pp_node state "<for>";
-    pp_for_loop (state#pad 1 0) for_loop
-
-and pp_for_loop state = function
-  ForInt {value; region} ->
-    pp_loc_node state "ForInt" region;
-    pp_for_int state value
-| ForCollect {value; region} ->
-    pp_loc_node state "ForCollect" region;
-    pp_for_collect state value
 
 and pp_for_int state (node : for_int) =
   let arity =
@@ -1419,7 +1368,7 @@ and pp_for_int state (node : for_int) =
     pp_statements state statements
   in ()
 
-and pp_for_collect state (node : for_collect) =
+and pp_iter state (node : iter) =
   let () =
     let state = state#pad 3 0 in
     match node.bind_to with
@@ -1440,9 +1389,9 @@ and pp_for_collect state (node : for_collect) =
   in ()
 
 and pp_collection state = function
-  Map  region -> pp_loc_node state "map"  region
-| Set  region -> pp_loc_node state "set"  region
-| List region -> pp_loc_node state "list" region
+  `Map  kwd -> pp_loc_node state "map"  kwd
+| `Set  kwd -> pp_loc_node state "set"  kwd
+| `List kwd -> pp_loc_node state "list" kwd
 
 and pp_var_binding state (source, image) =
   pp_node  state "<binding>";
@@ -1491,26 +1440,6 @@ and pp_set_remove state (node : set_remove) =
   pp_expr (state#pad 2 0) node.element;
   pp_path (state#pad 2 1) node.set
 
-and pp_data_decl state = function
-  LocalConst {value; region} ->
-    pp_loc_node state "LocalConst" region;
-    pp_const_decl state value
-| LocalVar {value; region} ->
-    pp_loc_node state "LocalVar" region;
-    pp_var_decl state value
-| LocalFun {value; region} ->
-    pp_loc_node state "LocalFun" region;
-    pp_fun_decl state value
-| LocalType type_decl ->
-    pp_node state "Type";
-    pp_type_decl (state#pad 1 0) type_decl.value
-| LocalModule module_decl ->
-    pp_node state "Module";
-    pp_mod_decl (state#pad 1 0) module_decl.value
-| LocalModuleAlias module_alias ->
-    pp_node state "Module";
-    pp_mod_alias (state#pad 1 0) module_alias.value
-
 and pp_var_decl state (node : var_decl) =
   let arity = if node.var_type = None then 2 else 3
   and rank  = 0 in
@@ -1519,117 +1448,118 @@ and pp_var_decl state (node : var_decl) =
   in pp_expr (state#pad arity rank) node.init
 
 and pp_expr state = function
-  ECase  e -> pp_expr_case state e
-| ECond  e -> pp_expr_conditional state e
-| EAnnot e -> pp_annot_expr state e
-| ELogic e -> pp_logic_expr state e
-| EArith e -> pp_arith_expr state e
-| EString e -> pp_string_expr state e
-| EList e -> pp_list_expr state e
-| ESet e -> pp_set_expr state e
-| ECtor e -> pp_ctor_expr state e
-| ERecord e -> pp_record state e
-| EProj e -> pp_proj_expr state e
-| EModA e -> let {value; region} = e in
-    pp_loc_node      state "EModA" region;
-    pp_module_access state pp_expr value
-| EUpdate {value; region} ->
-    pp_loc_node state "EUpdate" region;
+  E_Case  e -> pp_expr_case state e
+| E_Cond  e -> pp_expr_conditional state e
+| E_Annot e -> pp_annot_expr state e
+| E_Or    e -> pp_op2      state "E_Or"    e
+| E_And   e -> pp_op2      state "E_And"   e
+| E_Not   e -> pp_op1      state "E_Not"   e
+| E_Lt    e -> pp_op2 state "E_Lt"    e
+| E_Leq   e -> pp_op2 state "E_Leq"   e
+| E_Gt    e -> pp_op2 state "E_Gt"    e
+| E_Geq   e -> pp_op2 state "E_Geq"   e
+| E_Equal e -> pp_op2 state "E_Equal" e
+| E_Neq   e -> pp_op2 state "E_Neq"   e
+| E_Add e   -> pp_op2 state "E_Add" e
+| E_Sub e   -> pp_op2 state "E_Sub" e
+| E_Mult e  -> pp_op2 state "E_Mult" e
+| E_Div e   -> pp_op2 state "E_Div" e
+| E_Mod e   -> pp_op2 state "E_Mod" e
+| E_Neg e   -> pp_op1 state "E_Neg" e
+| E_Cat e      -> pp_op2 state "E_Cat" e
+| E_String e   -> pp_node   state "E_String";
+                 pp_string (state#pad 1 0) e
+| E_Verbatim e -> pp_node     state "E_Verbatim";
+                 pp_verbatim (state#pad 1 0) e
+| E_Cons     e -> pp_op2       state "E_Cons" e
+| E_List e -> pp_list_comp state e
+| E_Nil      e -> pp_loc_node  state "E_Nil" e
+| E_None e -> pp_loc_node state "E_None" e
+| E_Some e -> pp_some_app state e
+| E_Ctor e -> pp_ctor_app state e
+| E_Record e -> pp_record state e
+| E_Proj e -> pp_proj_expr state e
+| E_ModPath e -> let {value; region} = e in
+    pp_loc_node      state "E_ModPath" region;
+    pp_module_path state pp_expr value
+| E_Update {value; region} ->
+    pp_loc_node state "E_Update" region;
     pp_update   state value
-| EMap e_map ->
-    pp_node     state "EMap";
-    pp_map_expr (state#pad 1 0) e_map
-| EVar v ->
-    pp_node  state "EVar";
+| E_Set e -> pp_set_injection state e
+| E_SetMem e -> pp_set_mem state e
+| E_MapLookUp {value; region} ->
+    pp_loc_node   state "E_MapLookUp" region;
+    pp_map_lookup state value
+| E_Map {value; region} ->
+    pp_loc_node  state "E_Map" region;
+    pp_injection state pp_binding value
+| E_BigMap {value; region} ->
+    pp_loc_node  state "E_BigMap" region;
+    pp_injection state pp_binding value
+| E_Var v ->
+    pp_node  state "E_Var";
     pp_ident (state#pad 1 0) v
-| ECall {value; region} ->
-    pp_loc_node state "ECall" region;
+| E_Call {value; region} ->
+    pp_loc_node state "E_Call" region;
     pp_fun_call state value
-| EBytes b ->
-    pp_node state "EBytes";
+| E_Bytes b ->
+    pp_node state "E_Bytes";
     pp_bytes state b
-| EUnit region ->
-    pp_loc_node state "EUnit" region
-| ETuple e_tuple ->
-    pp_node       state "ETuple";
+| E_Unit region ->
+    pp_loc_node state "E_Unit" region
+| E_Tuple e_tuple ->
+    pp_node       state "E_Tuple";
     pp_tuple_expr state e_tuple
-| EPar {value; region} ->
-    pp_loc_node state "EPar" region;
+| E_Par {value; region} ->
+    pp_loc_node state "E_Par" region;
     pp_expr     (state#pad 1 0) value.inside
-| EFun {value; region} ->
-    pp_loc_node state "EFun" region;
+| E_Fun {value; region} ->
+    pp_loc_node state "E_Fun" region;
     pp_fun_expr state value;
-| ECodeInj {value; region} ->
-    pp_loc_node state "ECodeInj" region;
+| E_CodeInj {value; region} ->
+    pp_loc_node state "E_CodeInj" region;
     pp_code_inj state value;
-| EBlock {value; region} ->
-    pp_loc_node   state "EBlock" region;
+| E_Block {value; region} ->
+    pp_loc_node   state "E_Block" region;
     pp_block_with state value;
+| E_Int e   -> pp_node state "Int";
+            pp_int  state e
+| E_Nat e   -> pp_node state "Nat";
+            pp_int  state e
+| E_Mutez e -> pp_node state "Mutez";
+            pp_int  state e
+| E_False e -> pp_loc_node state "False" e
+| E_True  e -> pp_loc_node state "True"  e
 
 and pp_proj_expr state (node : projection reg) =
-  pp_loc_node   state "EProj" node.region;
+  pp_loc_node   state "E_Proj" node.region;
   pp_projection state node.value
 
 and pp_record state (node : record reg) =
-  pp_loc_node     state "ERecord" node.region;
+  pp_loc_node     state "E_Record" node.region;
   pp_ne_injection state pp_field_assignment node.value
 
 and pp_expr_case state (node : expr case reg) =
-  pp_loc_node state "ECase" node.region;
+  pp_loc_node state "E_Case" node.region;
   pp_case     state pp_expr node.value
 
 and pp_expr_conditional state (node : expr conditional reg) =
-  pp_loc_node  state "ECond" node.region;
+  pp_loc_node  state "E_Cond<" node.region;
   pp_cond_expr state node.value
 
 and pp_annot_expr state (node : annot_expr par reg) =
   let expr, (_, type_expr) = node.value.inside in
-  pp_loc_node  state "EAnnot" node.region;
+  pp_loc_node  state "E_Annot" node.region;
   pp_expr      (state#pad 2 0) expr;
   pp_type_expr (state#pad 2 1) type_expr
 
-and pp_logic_expr state (node : logic_expr) =
-  pp_node    state "ELogic";
-  pp_e_logic (state#pad 1 0) node
-
-and pp_arith_expr state (node : arith_expr)=
-  pp_node state "EArith";
-  match node with
-    Add e   -> pp_op2 state "Add" e
-  | Sub e   -> pp_op2 state "Sub" e
-  | Mult e  -> pp_op2 state "Mult" e
-  | Div e   -> pp_op2 state "Div" e
-  | Mod e   -> pp_op2 state "Mod" e
-  | Neg e   -> pp_op1 state "Neg" e
-  | Int e   -> pp_node state "Int";
-              pp_int  state e
-  | Nat e   -> pp_node state "Nat";
-              pp_int  state e
-  | Mutez e -> pp_node state "Mutez";
-              pp_int  state e
-
-and pp_list_expr state (node : list_expr) =
-  pp_node state "EList";
-  let state = state#pad 1 0 in
-  match node with
-    ECons     e -> pp_op2       state "ECons" e
-  | ENil      e -> pp_loc_node  state "ENil" e
-  | EListComp e -> pp_list_comp state e
-
 and pp_list_comp state (node : expr injection reg) =
-  pp_loc_node state "EListComp" node.region;
+  pp_loc_node state "E_List" node.region;
   if node.value.elements = None then
     pp_node (state#pad 1 0) "[]"
   else pp_injection state pp_expr node.value
 
-and pp_set_expr state (node : set_expr) =
-  pp_node  state "ESet";
-  let state = state#pad 1 0 in
-  match node with
-    SetInj e -> pp_set_injection state e
-  | SetMem e -> pp_set_membership state e
-
-and pp_set_membership state (node : set_membership reg) =
+and pp_set_mem state (node : set_mem reg) =
   pp_loc_node state "SetMem" node.region;
   pp_expr (state#pad 2 0) node.value.set;
   pp_expr (state#pad 2 1) node.value.element
@@ -1638,57 +1568,18 @@ and pp_set_injection state (node : expr injection reg) =
   pp_loc_node  state "SetInj" node.region;
   pp_injection state pp_expr node.value
 
-and pp_e_logic state = function
-  BoolExpr e ->
-    pp_node state "BoolExpr";
-    pp_bool_expr (state#pad 1 0) e
-| CompExpr e ->
-    pp_node state "CompExpr";
-    pp_comp_expr (state#pad 1 0) e
-
-and pp_bool_expr state = function
-  Or    e -> pp_op2      state "Or"    e
-| And   e -> pp_op2      state "And"   e
-| Not   e -> pp_op1      state "Not"   e
-| False e -> pp_loc_node state "False" e
-| True  e -> pp_loc_node state "True"  e
-
-and pp_comp_expr state = function
-  Lt    e -> pp_op2 state "Lt"    e
-| Leq   e -> pp_op2 state "Leq"   e
-| Gt    e -> pp_op2 state "Gt"    e
-| Geq   e -> pp_op2 state "Geq"   e
-| Equal e -> pp_op2 state "Equal" e
-| Neq   e -> pp_op2 state "Neq"   e
-
-and pp_ctor_expr state (node : ctor_expr) =
-  pp_node      state "ECtor";
-  let state = state#pad 1 0 in
-  match node with
-    NoneExpr e -> pp_loc_node state "NoneExpr" e
-  | SomeApp e -> pp_some_app state e
-  | CtorApp e -> pp_ctor_app state e
 
 and pp_some_app state (node : (kwd_Some * arguments) reg) =
   let _, args = node.value in
-  pp_loc_node   state "SomeApp" node.region;
+  pp_loc_node   state "E_Some" node.region;
   pp_tuple_expr state args
 
 and pp_ctor_app state (node :  (ctor * arguments option) reg) =
   let ctor, args_opt = node.value in
-  pp_loc_node state "CtorApp" node.region;
+  pp_loc_node state "E_Ctor" node.region;
   let state = state#pad 1 0 in
   pp_ident     state ctor;
   print_option state pp_tuple_expr args_opt
-
-and pp_map_expr state = function
-  MapLookUp {value; region} ->
-    pp_loc_node   state "MapLookUp" region;
-    pp_map_lookup state value
-| MapInj {value; region}
-| BigMapInj {value; region} ->
-    pp_loc_node  state "MapInj" region;
-    pp_injection state pp_binding value
 
 and pp_tuple_expr state (node : (expr, comma) Utils.nsepseq par reg) =
   let exprs          = Utils.nsepseq_to_list node.value.inside in
@@ -1696,15 +1587,6 @@ and pp_tuple_expr state (node : (expr, comma) Utils.nsepseq par reg) =
   let apply len rank = pp_expr (state#pad len rank)
   in List.iteri (apply length) exprs
 
-and pp_string_expr state (node : string_expr) =
-  pp_node state "EString";
-  let state = state#pad 1 0 in
-  match node with
-    Cat e      -> pp_op2 state "Cat" e
-  | String e   -> pp_node   state "String";
-                 pp_string (state#pad 1 0) e
-  | Verbatim e -> pp_node     state "Verbatim";
-                 pp_verbatim (state#pad 1 0) e
 
 and pp_op1 state node {value; region} =
   pp_loc_node state node region;

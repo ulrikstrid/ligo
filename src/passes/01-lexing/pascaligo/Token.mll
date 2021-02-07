@@ -43,10 +43,10 @@ module T =
     | RBRACE   of Region.t  (* "}"   *)
     | LBRACKET of Region.t  (* "["   *)
     | RBRACKET of Region.t  (* "]"   *)
-    | CONS     of Region.t  (* "#"   *)
+    | SHARP     of Region.t  (* "#"   *)
     | VBAR     of Region.t  (* "|"   *)
     | ARROW    of Region.t  (* "->"  *)
-    | ASS      of Region.t  (* ":="  *)
+    | ASSIGN      of Region.t  (* ":="  *)
     | EQ       of Region.t  (* "="   *)
     | COLON    of Region.t  (* ":"   *)
     | LT       of Region.t  (* "<"   *)
@@ -143,10 +143,10 @@ module T =
       | "RBRACE"   -> "}"
       | "LBRACKET" -> "["
       | "RBRACKET" -> "]"
-      | "CONS"     -> "#"
+      | "SHARP"     -> "#"
       | "VBAR"     -> "|"
       | "ARROW"    -> "->"
-      | "ASS"      -> ":="
+      | "ASSIGN"      -> ":="
       | "EQ"       -> "="
       | "COLON"    -> ":"
       | "LT"       -> "<"
@@ -243,7 +243,7 @@ module T =
     | Attr Region.{region; value} ->
         region, sprintf "Attr %S" value
     | Lang Region.{region; value} ->
-        region, sprintf "Lang %S" (value.Region.value)
+        region, sprintf "Lang %S" value.Region.value
 
     (* Symbols *)
 
@@ -255,10 +255,10 @@ module T =
     | RBRACE   region -> region, "RBRACE"
     | LBRACKET region -> region, "LBRACKET"
     | RBRACKET region -> region, "RBRACKET"
-    | CONS     region -> region, "CONS"
+    | SHARP     region -> region, "SHARP"
     | VBAR     region -> region, "VBAR"
     | ARROW    region -> region, "ARROW"
-    | ASS      region -> region, "ASS"
+    | ASSIGN      region -> region, "ASSIGN"
     | EQ       region -> region, "EQ"
     | COLON    region -> region, "COLON"
     | LT       region -> region, "LT"
@@ -348,10 +348,10 @@ module T =
     | RBRACE   _ -> "}"
     | LBRACKET _ -> "["
     | RBRACKET _ -> "]"
-    | CONS     _ -> "#"
+    | SHARP     _ -> "#"
     | VBAR     _ -> "|"
     | ARROW    _ -> "->"
-    | ASS      _ -> ":="
+    | ASSIGN      _ -> ":="
     | EQ       _ -> "="
     | COLON    _ -> ":"
     | LT       _ -> "<"
@@ -622,8 +622,8 @@ and scan_uident region lexicon = parse
       | "^"   -> Ok (CARET    region)
       | "->"  -> Ok (ARROW    region)
       | "=/=" -> Ok (NE       region)
-      | "#"   -> Ok (CONS     region)
-      | ":="  -> Ok (ASS      region)
+      | "#"   -> Ok (SHARP     region)
+      | ":="  -> Ok (ASSIGN      region)
 
       (* Invalid symbols *)
 
@@ -675,10 +675,10 @@ and scan_uident region lexicon = parse
     | RBRACE _
     | LBRACKET _
     | RBRACKET _
-    | CONS _
+    | SHARP _
     | VBAR _
     | ARROW _
-    | ASS _
+    | ASSIGN _
     | EQ _
     | COLON _
     | LT _

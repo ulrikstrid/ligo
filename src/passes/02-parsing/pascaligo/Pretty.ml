@@ -23,16 +23,19 @@ let pp_braces : ('a -> document) -> 'a braces reg -> document =
  *)
 
 let rec print ast =
+  pp_declarations ast.decl
+
+and pp_declarations decl =
   let app decl = group (pp_declaration decl) in
-  let decl = Utils.nseq_to_list ast.decl in
+  let decl = Utils.nseq_to_list decl in
   separate_map (hardline ^^ hardline) app decl
 
 and pp_declaration = function
-  TypeDecl    d -> pp_type_decl    d
-| ConstDecl   d -> pp_const_decl   d
-| FunDecl     d -> pp_fun_decl     d
-| ModuleDecl  d -> pp_module_decl  d
-| ModuleAlias d -> pp_module_alias d
+  D_Type    d -> pp_type_decl    d
+| D_Const   d -> pp_const_decl   d
+| D_Fun     d -> pp_fun_decl     d
+| D_Module  d -> pp_module_decl  d
+| D_ModAlias d -> pp_module_alias d
 
 and pp_const_decl {value; _} =
   let {name; const_type; init; attributes; _} = value in
@@ -55,9 +58,9 @@ and pp_type_decl decl =
   ^^ group (nest 2 (break 1 ^^ pp_type_expr type_expr))
 
 and pp_module_decl decl =
-  let {name; structure; enclosing; _} = decl.value in
+  let {name; declarations; enclosing; _} = decl.value in
   string "module " ^^ pp_ident name ^^ string " is {"
-  ^^ group (nest 2 (break 1 ^^ print structure))
+  ^^ group (nest 2 (break 1 ^^ pp_declarations declarations))
   ^^ string "}"
 
 and pp_module_alias decl =
@@ -66,17 +69,17 @@ and pp_module_alias decl =
   ^^ group (nest 2 (break 1 ^^ pp_nsepseq "." pp_ident mod_path))
 
 and pp_type_expr = function
-  TProd t   -> pp_cartesian t
-| TSum t    -> pp_sum_type t
-| TRecord t -> pp_record_type t
-| TApp t    -> pp_type_app t
-| TFun t    -> pp_fun_type t
-| TPar t    -> pp_type_par t
-| TVar t    -> pp_ident t
-| TWild   _ -> string "_"
-| TString s -> pp_string s
-| TInt    i -> pp_int i
-| TModA   t -> pp_module_access pp_type_expr t
+  T_Ctor    t -> pp_type_app t
+| T_Fun     t -> pp_fun_type t
+| T_Int     t -> pp_int t
+| T_ModPath t -> pp_module_path pp_type_expr t
+| T_Par     t -> pp_type_par t
+| T_Prod    t -> pp_cartesian t
+| T_Record  t -> pp_record_type t
+| T_String  t -> pp_string t
+| T_Sum     t -> pp_sum_type t
+| T_Var     t -> pp_ident t
+| T_Wild    _ -> string "_"
 
 and pp_sum_type {value; _} =
   let {variants; attributes; _} = value in
@@ -190,8 +193,8 @@ and pp_fun_decl {value; _} =
   and body =
     let expr = pp_expr return in
     match return with
-      EBlock _ -> group (break 1 ^^ expr)
-    | _ -> group (nest 2 (break 1 ^^ expr))
+      E_Block _ -> group (break 1 ^^ expr)
+    |         _ -> group (nest 2 (break 1 ^^ expr))
 in prefix 2 1 start parameters
    ^^ t_annot_is
    ^^ body
@@ -226,16 +229,9 @@ and pp_block {value; _} =
 and pp_statements s = pp_nsepseq ";" pp_statement s
 
 and pp_statement = function
-  Instr s -> pp_instruction s
-| Data  s -> pp_data_decl   s
-
-and pp_data_decl = function
-  LocalConst       d -> pp_const_decl   d
-| LocalVar         d -> pp_var_decl     d
-| LocalFun         d -> pp_fun_decl     d
-| LocalType        d -> pp_type_decl    d
-| LocalModule      d -> pp_module_decl  d
-| LocalModuleAlias d -> pp_module_alias d
+  S_Instr s -> pp_instruction s
+| S_Decl d -> pp_declaration d
+| S_VarDecl d -> pp_var_decl d
 
 and pp_var_decl {value; _} =
   let {name; var_type; init; _} = value in
@@ -249,17 +245,19 @@ and pp_var_decl {value; _} =
   ^^ group (break 1 ^^ nest 2 (string ":= " ^^ pp_expr init))
 
 and pp_instruction = function
-  Cond        i -> group (pp_cond_instr i)
-| CaseInstr   i -> pp_case pp_if_clause i
-| Assign      i -> pp_assignment i
-| Loop        i -> pp_loop i
-| ProcCall    i -> pp_fun_call i
-| Skip        _ -> string "skip"
-| RecordPatch i -> pp_record_patch i
-| MapPatch    i -> pp_map_patch i
-| SetPatch    i -> pp_set_patch i
-| MapRemove   i -> pp_map_remove i
-| SetRemove   i -> pp_set_remove i
+  I_Assign      i -> pp_assignment i
+| I_Call        i -> pp_fun_call i
+| I_Case        i -> pp_case pp_if_clause i
+| I_Cond        i -> group (pp_cond_instr i)
+| I_For         i -> pp_for_int i
+| I_Iter        i -> pp_for_collect i
+| I_MapPatch    i -> pp_map_patch i
+| I_MapRemove   i -> pp_map_remove i
+| I_RecordPatch i -> pp_record_patch i
+| I_Skip        _ -> string "skip"
+| I_SetPatch    i -> pp_set_patch i
+| I_SetRemove   i -> pp_set_remove i
+| I_While       i -> pp_while_loop i
 
 and pp_set_remove {value; _} =
   let {element; set; _} : set_remove = value in
@@ -333,8 +331,8 @@ and pp_clause_block = function
   LongBlock b  -> pp_block b
 | ShortBlock b -> Utils.(pp_statements <@ fst) b.value.inside
 
-and pp_set_membership {value; _} =
-  let {set; element; _} : set_membership = value in
+and pp_set_mem {value; _} =
+  let {set; element; _} : set_mem = value in
   group (pp_expr set ^/^ string "contains" ^/^ pp_expr element)
 
 and pp_case : 'a.('a -> document) -> 'a case Region.reg -> document =
@@ -370,17 +368,10 @@ and pp_lhs : lhs -> document = function
   Path p    -> pp_path p
 | MapPath p -> pp_map_lookup p
 
-and pp_loop = function
-  While l -> pp_while_loop l
-| For f   -> pp_for_loop f
 
 and pp_while_loop {value; _} =
   let {cond; block; _} = value in
   prefix 2 1 (string "while") (pp_expr cond) ^^ hardline ^^ pp_block block
-
-and pp_for_loop = function
-  ForInt l     -> pp_for_int l
-| ForCollect l -> pp_for_collect l
 
 and pp_for_int {value; _} =
   let {binder; init; bound; step; block; _} = value in
@@ -404,36 +395,63 @@ and pp_for_collect {value; _} =
   ^^ hardline ^^ pp_block block
 
 and pp_collection = function
-  Map  _ -> string "map"
-| Set  _ -> string "set"
-| List _ -> string "list"
+  `Map  _ -> string "map"
+| `Set  _ -> string "set"
+| `List _ -> string "list"
 
 (* Expressions *)
 
 and pp_expr = function
-  ECase    e -> pp_case pp_expr e
-| ECond    e -> group (pp_cond_expr e)
-| EAnnot   e -> pp_annot_expr e
-| ELogic   e -> group (pp_logic_expr e)
-| EArith   e -> group (pp_arith_expr e)
-| EString  e -> pp_string_expr e
-| EList    e -> group (pp_list_expr e)
-| ESet     e -> pp_set_expr e
-| ECtor    e -> pp_ctor_expr e
-| ERecord  e -> pp_record e
-| EProj    e -> pp_projection e
-| EModA    e -> pp_module_access pp_expr e
-| EUpdate  e -> pp_update e
-| EMap     e -> pp_map_expr e
-| EVar     e -> pp_ident e
-| ECall    e -> pp_fun_call e
-| EBytes   e -> pp_bytes e
-| EUnit    _ -> string "Unit"
-| ETuple   e -> pp_tuple_expr e
-| EPar     e -> pp_par pp_expr e
-| EFun     e -> pp_fun_expr e
-| ECodeInj e -> pp_code_inj e
-| EBlock   e -> pp_block_with e
+  E_Annot   e -> pp_annot_expr e
+| E_Int   e -> pp_int e
+| E_Nat   e -> pp_nat e
+| E_Mutez e -> pp_mutez e
+| E_Block   e -> pp_block_with e
+| E_Bytes   e -> pp_bytes e
+| E_Call    e -> pp_fun_call e
+| E_Case    e -> pp_case pp_expr e
+| E_CodeInj e -> pp_code_inj e
+| E_Cond    e -> group (pp_cond_expr e)
+| E_Cons    e -> pp_bin_op "#" e
+| E_Ctor    e -> pp_ctor_app e
+| E_Fun     e -> pp_fun_expr e
+| E_List    e -> group (pp_injection pp_expr e)
+| E_Or   e  -> pp_bin_op "or" e
+| E_And  e  -> pp_bin_op "and" e
+| E_Not  e  -> pp_un_op "not" e
+| E_True  _ -> string "True"
+| E_False _ -> string "False"
+| E_Lt    e -> pp_bin_op "<"  e
+| E_Leq   e -> pp_bin_op "<=" e
+| E_Gt    e -> pp_bin_op ">"  e
+| E_Geq   e -> pp_bin_op ">=" e
+| E_Equal e -> pp_bin_op "="  e
+| E_Neq   e -> pp_bin_op "=/=" e
+| E_Set inj -> pp_injection pp_expr inj
+| E_SetMem mem -> pp_set_mem mem
+| E_MapLookUp fetch -> pp_map_lookup fetch
+| E_Map inj      -> pp_injection pp_binding inj
+| E_BigMap inj   -> pp_injection pp_binding inj
+| E_ModPath e -> pp_module_path pp_expr e
+| E_Nil      _ -> string "nil"
+| E_None  _ -> string "None"
+| E_Par     e -> pp_par pp_expr e
+| E_Proj    e -> pp_projection e
+| E_Record  e -> pp_record e
+| E_Some   e -> pp_some_app e
+| E_Cat      e -> pp_bin_op "^" e
+| E_String   e -> pp_string e
+| E_Verbatim e -> pp_verbatim e
+| E_Tuple   e -> pp_tuple_expr e
+| E_Unit    _ -> string "Unit"
+| E_Update  e -> pp_update e
+| E_Var     e -> pp_ident e
+| E_Add   e -> pp_bin_op "+" e
+| E_Sub   e -> pp_bin_op "-" e
+| E_Mult  e -> pp_bin_op "*" e
+| E_Div   e -> pp_bin_op "/" e
+| E_Mod   e -> pp_bin_op "mod" e
+| E_Neg   e -> string "-" ^^ pp_expr e.value.arg
 
 and pp_block_with {value; _} =
   let {block; kwd_with; expr} = value in
@@ -447,15 +465,6 @@ and pp_annot_expr {value; _} =
          ^^ nest 1 (pp_expr expr ^/^ string ": "
                     ^^ pp_type_expr type_expr ^^ string ")"))
 
-and pp_set_expr = function
-  SetInj inj -> pp_injection pp_expr inj
-| SetMem mem -> pp_set_membership mem
-
-and pp_map_expr = function
-  MapLookUp fetch -> pp_map_lookup fetch
-| MapInj inj      -> pp_injection pp_binding inj
-| BigMapInj inj   -> pp_injection pp_binding inj
-
 and pp_map_lookup {value; _} =
   prefix 2 1 (pp_path value.path) (pp_brackets pp_expr value.index)
 
@@ -463,51 +472,19 @@ and pp_path = function
   Name v -> pp_ident v
 | Path p -> pp_projection p
 
-and pp_logic_expr = function
-  BoolExpr e -> pp_bool_expr e
-| CompExpr e -> pp_comp_expr e
-
-and pp_bool_expr = function
-  Or   e  -> pp_bin_op "or" e
-| And  e  -> pp_bin_op "and" e
-| Not  e  -> pp_un_op "not" e
-| True  _ -> string "True"
-| False _ -> string "False"
 
 and pp_bin_op op {value; _} =
   let {arg1; arg2; _} = value
   and length = String.length op + 1 in
-  pp_expr arg1 ^/^ string (op ^ " ") ^^ nest length (pp_expr arg2)
+  group (pp_expr arg1 ^/^ string (op ^ " ")
+         ^^ nest length (pp_expr arg2))
 
 and pp_un_op op {value; _} =
-  string (op ^ " ") ^^ pp_expr value.arg
+  group (string (op ^ " ") ^^ pp_expr value.arg)
 
-and pp_comp_expr = function
-  Lt    e -> pp_bin_op "<"  e
-| Leq   e -> pp_bin_op "<=" e
-| Gt    e -> pp_bin_op ">"  e
-| Geq   e -> pp_bin_op ">=" e
-| Equal e -> pp_bin_op "="  e
-| Neq   e -> pp_bin_op "=/=" e
-
-and pp_arith_expr = function
-  Add   e -> pp_bin_op "+" e
-| Sub   e -> pp_bin_op "-" e
-| Mult  e -> pp_bin_op "*" e
-| Div   e -> pp_bin_op "/" e
-| Mod   e -> pp_bin_op "mod" e
-| Neg   e -> string "-" ^^ pp_expr e.value.arg
-| Int   e -> pp_int e
-| Nat   e -> pp_nat e
-| Mutez e -> pp_mutez e
 
 and pp_mutez {value; _} =
   Z.to_string (snd value) ^ "mutez" |> string
-
-and pp_string_expr = function
-  Cat      e -> pp_bin_op "^" e
-| String   e -> pp_string e
-| Verbatim e -> pp_verbatim e
 
 and pp_ident {value; _} = string value
 
@@ -515,15 +492,6 @@ and pp_string s = string "\"" ^^ pp_ident s ^^ string "\""
 
 and pp_verbatim s = string "{|" ^^ pp_ident s ^^ string "|}"
 
-and pp_list_expr = function
-  ECons     e -> pp_bin_op "#" e
-| EListComp e -> pp_injection pp_expr e
-| ENil      _ -> string "nil"
-
-and pp_ctor_expr = function
-  SomeApp   a -> pp_some_app a
-| NoneExpr  _ -> string "None"
-| CtorApp a -> pp_ctor_app a
 
 and pp_some_app {value; _} =
   prefix 4 1 (string "Some") (pp_arguments (snd value))
@@ -548,8 +516,8 @@ and pp_projection {value; _} =
   let fields = separate_map sep pp_selection fields in
   group (pp_ident struct_name ^^ string "." ^^ break 0 ^^ fields)
 
-and pp_module_access :
-  type a.(a -> document) -> a module_access reg -> document =
+and pp_module_path :
+  'a.('a -> document) -> 'a module_path reg -> document =
   fun print {value; _} ->
     let {module_name; field; _} = value in
     group (pp_ident module_name ^^ string "." ^^ break 0 ^^ print field)
@@ -609,10 +577,10 @@ and pp_injection :
            ^^ nest 2 (break 0 ^^ elements) ^^ break 0 ^^ string "]")
 
 and pp_injection_kwd = function
-  InjSet    _ -> "set"
-| InjMap    _ -> "map"
-| InjBigMap _ -> "big_map"
-| InjList   _ -> "list"
+  `Set    _ -> "set"
+| `Map    _ -> "map"
+| `BigMap _ -> "big_map"
+| `List   _ -> "list"
 
 and pp_ne_injection :
   'a.('a -> document) -> 'a ne_injection reg -> document =
@@ -628,9 +596,9 @@ and pp_ne_injection :
     in inj
 
 and pp_ne_injection_kwd = function
-  NEInjSet    _ -> "set"
-| NEInjMap    _ -> "map"
-| NEInjRecord _ -> "record"
+  `Set    _ -> "set"
+| `Map    _ -> "map"
+| `Record _ -> "record"
 
 and pp_nsepseq :
   'a.string -> ('a -> document) -> ('a, t) Utils.nsepseq -> document =
@@ -642,15 +610,23 @@ and pp_nsepseq :
 (* Patterns *)
 
 and pp_pattern = function
-  PCtor p -> pp_ctor_pattern p
-| PVar    v -> pp_ident v
-| PWild   _ -> string "_"
-| PInt    i -> pp_int i
-| PNat    n -> pp_nat n
-| PBytes  b -> pp_bytes b
-| PString s -> pp_string s
-| PList   l -> pp_list_pattern l
-| PTuple  t -> pp_tuple_pattern t
+  P_Bytes   p -> pp_bytes p
+| P_Cons    p -> nest 4 (pp_nsepseq " #" pp_pattern p.value)
+| P_Ctor    p -> pp_pctor_app p
+| P_False   _ -> string "False"
+| P_Int     p -> pp_int p
+| P_List    p -> pp_injection pp_pattern p
+| P_Nat     p -> pp_nat p
+| P_Nil     _ -> string "nil"
+| P_None    _ -> string "None"
+| P_ParCons p -> pp_ppar_cons p
+| P_Some    p -> pp_psome p
+| P_String  p -> pp_string p
+| P_True    _ -> string "True"
+| P_Tuple   p -> pp_tuple_pattern p
+| P_Unit    _ -> string "Unit"
+| P_Var     p -> pp_ident p
+| P_Wild    _ -> string "_"
 
 and pp_int {value; _} =
   string (Z.to_string (snd value))
@@ -660,14 +636,6 @@ and pp_nat {value; _} =
 
 and pp_bytes {value; _} =
   string ("0x" ^ Hex.show (snd value))
-
-and pp_ctor_pattern = function
-  PUnit      _ -> string "Unit"
-| PFalse     _ -> string "False"
-| PTrue      _ -> string "True"
-| PNone      _ -> string "None"
-| PSomeApp   a -> pp_psome a
-| PCtorApp a -> pp_pctor_app a
 
 and pp_psome {value=_, p; _} =
   prefix 4 1 (string "Some") (pp_par pp_pattern p)
@@ -691,13 +659,7 @@ and pp_tuple_pattern {value; _} =
     else pp_pattern head ^^ string "," ^^ app (List.map snd tail)
   in string "(" ^^ nest 1 (components ^^ string ")")
 
-and pp_list_pattern = function
-  PListComp cmp -> pp_list_comp cmp
-| PNil _        -> string "nil"
-| PParCons p    -> pp_ppar_cons p
-| PCons p       -> nest 4 (pp_nsepseq " #" pp_pattern p.value)
 
-and pp_list_comp e = pp_injection pp_pattern e
 
 and pp_ppar_cons {value; _} =
   let patt1, _, patt2 = value.inside in
