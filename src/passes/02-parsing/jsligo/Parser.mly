@@ -299,10 +299,11 @@ binding_initializer:
     let region = cover (pattern_to_region $1) (expr_to_region (snd $3))
     in
     let value = {
-      binders  = $1;
-      lhs_type = $2;
-      eq       = fst $3;
-      expr     = snd $3;
+      binders    = $1;
+      lhs_type   = $2;
+      eq         = fst $3;
+      expr       = snd $3;
+      attributes = []
     } in
     {
       region; value
@@ -319,8 +320,7 @@ declaration:
     let region = cover $1 (nsepseq_to_region (fun e -> e.region) $2) in
     let value = {
       kwd_let    = $1;
-      bindings   = $2;
-      attributes = []
+      bindings   = $2
     } in
     SLet { region; value }
   }
@@ -328,8 +328,7 @@ declaration:
     let region = cover $1 (nsepseq_to_region (fun e -> e.region) $2) in
     let value = {
       kwd_const  = $1;
-      bindings   = $2;
-      attributes = []
+      bindings   = $2
     }
     in
     SConst { region; value }

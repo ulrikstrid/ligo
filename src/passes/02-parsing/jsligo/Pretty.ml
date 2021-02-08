@@ -43,6 +43,7 @@ and pp_statement = function
 | SConst      s -> pp_const s
 | SType       s -> pp_type s
 | SSwitch     s -> pp_switch s
+| SBreak      _ -> string "break" ^^ hardline
 
 and pp_cond_expr {value; _} =
   let {test; ifso; ifnot; _} = value in

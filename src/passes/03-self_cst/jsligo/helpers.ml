@@ -227,6 +227,7 @@ and fold_statement : ('a, 'err) folder -> 'a -> statement -> ('a, 'err) result =
         )
     in
     bind_fold_ne_list fold_case res cases
+  | SBreak _ -> ok init
 
 
 
@@ -552,6 +553,8 @@ and map_statement : ('err) mapper -> statement -> (statement, 'err) result =
     let%bind expr = self_expr value.expr in
     let%bind cases = bind_map_ne_list map_case value.cases in
     return @@ SSwitch { value = {value with expr; cases}; region}
+  | SBreak b ->
+    return @@ SBreak b
 
 and map_toplevel_statement =
   fun f (statement, semi_opt) ->

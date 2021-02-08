@@ -8,7 +8,7 @@ module AST = Ast_imperative
 
 open AST
 
-type nonrec 'a result = ('a , abs_error) result
+(* type nonrec 'a result = ('a , abs_error) result *)
 
 type nested_match_repr = (*TODO  , move that in AST. (see !909) *)
   | PatternVar of AST.ty_expr binder
@@ -40,11 +40,11 @@ let compile_attributes attributes : string list =
 
 module Compile_type = struct
 
-  let type_expression_to_variable : CST.type_expr -> CST.variable result = function
+  let type_expression_to_variable : CST.type_expr -> (CST.variable, _) result = function
     | TVar v -> ok v
     | _ -> failwith "Expected a variable in this variant"
 
-  let type_expression_to_constructor : CST.type_expr -> CST.constr result = function
+  let type_expression_to_constructor : CST.type_expr -> (CST.constr, _) result = function
     | TConstr v -> ok v
     | _ -> failwith "Expected a variable in this variant"
 
@@ -76,7 +76,7 @@ module Compile_type = struct
     `try_type_compilers`.
   *)
 
-  type type_compiler_opt = CST.type_expr -> AST.type_expression option result
+  type type_compiler_opt = CST.type_expr -> (AST.type_expression option, abs_error) result
 
   (*
     This chains the application of multiple `type_compiler_opt`. If the first returns `None`, use
@@ -97,18 +97,18 @@ module Compile_type = struct
   *)
   let try_type_compilers :
     type_compiler_opt list -> CST.type_expr ->
-    (unit -> AST.type_expression result) ->
-    AST.type_expression result =
+    (unit -> (AST.type_expression, _) result) ->
+    (AST.type_expression, _) result =
   fun compilers te other ->
   match%bind type_compiler_opt_list compilers te with
   | Some x -> ok x
   | None -> other ()
 
-  let rec compile_type_function_args : CST.fun_type_args -> type_expression result = fun args ->
+  let rec compile_type_function_args : CST.fun_type_args -> (type_expression, _) result = fun args ->
     let unpar = args.inside in
     let (hd , tl_sep) = unpar in
     let tl = List.map snd tl_sep in
-    let aux : CST.fun_type_arg -> type_expression result = fun x -> compile_type_expression x.type_expr in
+    let aux : CST.fun_type_arg -> (type_expression, _) result = fun x -> compile_type_expression x.type_expr in
     let%bind lst = Trace.bind_map_list aux (hd :: tl) in
     let tpl = t_tuple lst in
     ok tpl
@@ -188,7 +188,7 @@ module Compile_type = struct
     )
     | _ -> ok None
 
-and compile_type_expression : CST.type_expr -> type_expression result =
+and compile_type_expression : CST.type_expr -> (type_expression, _) result =
   fun te ->
   let self = compile_type_expression in
   let return te = ok @@ te in
@@ -204,7 +204,7 @@ and compile_type_expression : CST.type_expr -> type_expression result =
       let {variants; attributes; _} : CST.sum_type = sum_type in
       let lst = npseq_to_list variants in
       let attr = compile_attributes attributes in
-      let aux (v : CST.type_expr) : (string * type_expression * string list) result =
+      let aux (v : CST.type_expr) : (string * type_expression * string list, _) result =
         let%bind constructor = type_expression_to_constructor v in
         let type_expr = t_unit () in
         let variant_attr = [] in
@@ -253,22 +253,22 @@ end
 
 open Compile_type
 
-let expression_to_variable : CST.expr -> CST.variable result = function
+let expression_to_variable : CST.expr -> (CST.variable, _) result = function
   | EVar var -> ok var
   | _ -> failwith "expected a variable"
 
-let selection_to_variable : CST.selection -> CST.variable result = function
+let selection_to_variable : CST.selection -> (CST.variable, _) result = function
   | FieldName sfn -> (
       let (sfn , _) = r_split sfn in
       ok sfn.value
     )
   | _ -> failwith "expected a field name"
 
-let compile_expression_to_int : CST.expr -> z result = function
+let compile_expression_to_int : CST.expr -> (z, _) result = function
   | EArith (Int i) -> ok (snd (i.value))
   | _ -> failwith "expected an int in this expression"
 
-let compile_selection : CST.selection -> (_ access * location) result = fun selection ->
+let compile_selection : CST.selection -> (_ access * location, _) result = fun selection ->
   match selection with
     FieldName name ->
     let (name, loc) = r_split name in
@@ -278,16 +278,16 @@ let compile_selection : CST.selection -> (_ access * location) result = fun sele
     let%bind index = compile_expression_to_int index_expr.inside in
     ok (Access_tuple index, loc)
 
-let compile_expression_constructor : CST.expr -> AST.expr result = function
-  | _ -> failwith "TODO"
+let compile_expression_constructor : CST.expr -> (AST.expr, _) result = function
+  | _ -> failwith "TODO1"
 
-let compile_expression_match : CST.expr -> AST.expr result = function
-  | _ -> failwith "TODO"
+let compile_expression_match : CST.expr -> (AST.expr, _) result = function
+  | _ -> failwith "TODO2"
 
-let compile_expression_module_access : CST.expr -> AST.expr result = function
-  | _ -> failwith "TODO"
+let compile_expression_module_access : CST.expr -> (AST.expr, _) result = function
+  | _ -> failwith "TODO3"
 
-let array_item_to_expression : CST.array_item -> CST.expr result = function
+let array_item_to_expression : CST.array_item -> (CST.expr, _) result = function
   | Expr_entry expr -> ok expr
   | Empty_entry | Rest_entry _ -> failwith "Expected an expression here"
 
@@ -299,30 +299,59 @@ let get_t_string_singleton_opt = function
 | CST.TInt i -> Some i.value
 | _ -> None *)
 
-type statement_result =
+(* type statement_result =
 | Context of (AST.expression -> AST.expression)
+| Return of AST.expression *)
+
+type statement_result =
+  Binding of (AST.expression -> AST.expression)
+| Expr of AST.expression
+| Break of AST.expression
 | Return of AST.expression
 
-let rec compile_tuple_expression ?loc tuple_expr =
-  let%bind lst = bind_map_list compile_expression @@ nseq_to_list tuple_expr in
+type env = {
+  let_vars   : string list;
+  const_vars : string list;
+  types      : string list;
+  in_switch  : bool;
+  in_loop    : bool;
+}
+
+let env_l = {
+  let_vars    = [];
+  const_vars  = [];
+  types       = [];
+  in_switch   = false;
+  in_loop     = false;
+}
+
+let rec compile_tuple_expression ?loc tuple_expr env =
+  let%bind lst = bind_map_list (fun e -> compile_expression_in e env) @@ nseq_to_list tuple_expr in
   match lst with
     hd::[] -> ok hd
   | lst -> ok @@ e_tuple ?loc lst
 
-and compile_expression : CST.expr -> AST.expr result = fun e ->
-  let self = compile_expression in
+and compile_bin_op (op_type : AST.constant') (op : _ CST.bin_op CST.reg) env =
+  let self = compile_expression_in in
   let return e = ok @@ e in
-  let compile_bin_op (op_type : AST.constant') (op : _ CST.bin_op CST.reg) =
-    let (op, loc) = r_split op in
-    let%bind a = self op.arg1 in
-    let%bind b = self op.arg2 in
-    return @@ e_constant ~loc (Const op_type) [a; b]
-  in
-  let compile_un_op (op_type : AST.constant') (op : _ CST.un_op CST.reg) =
-    let (op, loc) = r_split op in
-    let%bind arg = self op.arg in
-    return @@ e_constant ~loc (Const op_type) [arg]
-  in
+  let (op, loc) = r_split op in
+  let%bind a = self op.arg1 env in
+  let%bind b = self op.arg2 env in
+  return @@ e_constant ~loc (Const op_type) [a; b]
+
+and compile_un_op (op_type : AST.constant') (op : _ CST.un_op CST.reg) env =
+  let self = compile_expression_in in
+  let return e = ok @@ e in
+  let (op, loc) = r_split op in
+  let%bind arg = self op.arg env in
+  return @@ e_constant ~loc (Const op_type) [arg]
+
+and compile_expression : CST.expr -> (AST.expr, _) result = fun e ->
+  compile_expression_in e env_l
+
+and compile_expression_in : CST.expr -> env -> (AST.expr, _) result = fun e env ->
+  let self: CST.expr -> env -> (AST.expr, _) result = compile_expression_in in
+  let return e = ok @@ e in
   match e with
     EVar var ->
     let (var, loc) = r_split var in
@@ -330,7 +359,7 @@ and compile_expression : CST.expr -> AST.expr result = fun e ->
       Some const -> return @@ e_constant ~loc const []
     | None -> return @@ e_variable_ez ~loc var
     )
-  | EPar par -> self par.value.inside
+  | EPar par -> self par.value.inside env
   | EUnit the_unit ->
     let loc = Location.lift the_unit.region in
     return @@ e_unit ~loc ()
@@ -349,12 +378,12 @@ and compile_expression : CST.expr -> AST.expr result = fun e ->
   )
   | EArith arth ->
     ( match arth with
-      Add plus   -> compile_bin_op C_ADD plus
-    | Sub minus  -> compile_bin_op C_SUB minus
-    | Mult times -> compile_bin_op C_MUL times
-    | Div slash  -> compile_bin_op C_DIV slash
-    | Mod mod_   -> compile_bin_op C_MOD mod_
-    | Neg minus  -> compile_un_op C_NEG minus
+      Add plus   -> compile_bin_op C_ADD plus env
+    | Sub minus  -> compile_bin_op C_SUB minus env
+    | Mult times -> compile_bin_op C_MUL times env
+    | Div slash  -> compile_bin_op C_DIV slash env
+    | Mod mod_   -> compile_bin_op C_MOD mod_ env 
+    | Neg minus  -> compile_un_op C_NEG minus env
     | Int i ->
       let ((_,i), loc) = r_split i in
       return @@ e_int_z ~loc i
@@ -363,20 +392,20 @@ and compile_expression : CST.expr -> AST.expr result = fun e ->
     match logic with
       BoolExpr be -> (
       match be with
-        Or or_   -> compile_bin_op C_OR  or_
-      | And and_ -> compile_bin_op C_AND and_
-      | Not not_ -> compile_un_op  C_NOT not_
+        Or or_   -> compile_bin_op C_OR  or_ env
+      | And and_ -> compile_bin_op C_AND and_ env
+      | Not not_ -> compile_un_op  C_NOT not_ env
       | True  reg -> let loc = Location.lift reg in return @@ e_true  ~loc ()
       | False reg -> let loc = Location.lift reg in return @@ e_false ~loc ()
     )
     | CompExpr ce -> (
       match ce with
-        Lt lt    -> compile_bin_op C_LT  lt
-      | Leq le   -> compile_bin_op C_LE  le
-      | Gt gt    -> compile_bin_op C_GT  gt
-      | Geq ge   -> compile_bin_op C_GE  ge
-      | Equal eq -> compile_bin_op C_EQ  eq
-      | Neq ne   -> compile_bin_op C_NEQ ne
+        Lt lt    -> compile_bin_op C_LT  lt env
+      | Leq le   -> compile_bin_op C_LE  le env
+      | Gt gt    -> compile_bin_op C_GT  gt env
+      | Geq ge   -> compile_bin_op C_GE  ge env
+      | Equal eq -> compile_bin_op C_EQ  eq env
+      | Neq ne   -> compile_bin_op C_NEQ ne env
     )
   )
   (* This case is due to a bad besign of our constant it as to change
@@ -391,11 +420,11 @@ and compile_expression : CST.expr -> AST.expr result = fun e ->
     let (var, loc_var) = r_split var in
     (match constants var with
       Some const ->
-      let%bind args = bind_map_list self @@ nseq_to_list args in
+      let%bind args = bind_map_list (fun e -> self e env) @@ nseq_to_list args in
       return @@ e_constant ~loc const args
     | None ->
       let func = e_variable_ez ~loc:loc_var var in
-      let%bind args = compile_tuple_expression args in
+      let%bind args = compile_tuple_expression args env in
       return @@ e_application ~loc func args
     )
   (* TODO: modules *)
@@ -428,18 +457,18 @@ and compile_expression : CST.expr -> AST.expr result = fun e ->
       | Multiple xs ->
          let hd,tl = xs.value.inside in
          hd,List.map snd tl in
-    let%bind func = self func in
-    let%bind args = compile_tuple_expression args in
+    let%bind func = self func env in
+    let%bind args = compile_tuple_expression args env in
     return @@ e_application ~loc func args
   | EArray items ->
     let (items, loc) = r_split items in
     let items = npseq_to_list items.inside in
     let%bind exprs = bind_map_list array_item_to_expression items in
-    let%bind exprs' = bind_map_list compile_expression exprs in
+    let%bind exprs' = bind_map_list (fun e -> compile_expression_in e env) exprs in
     return @@ e_tuple ~loc exprs'
   | EObject obj ->
     let (obj, loc) = r_split obj in
-    let aux : CST.property -> (string * expression) result = fun fa ->
+    let aux : CST.property -> (string * expression, _) result = fun fa ->
       match fa with
       | Punned_property prop -> (
           let (prop, loc) = r_split prop in
@@ -449,7 +478,7 @@ and compile_expression : CST.expr -> AST.expr result = fun e ->
       | Property prop2 -> (
           let (prop2 , _) = r_split prop2 in
           let%bind var = expression_to_variable prop2.name in
-          let%bind expr = compile_expression prop2.value in
+          let%bind expr = compile_expression_in prop2.value env in
           ok (var.value , expr)
         )
       | Property_rest _ -> (
@@ -461,7 +490,7 @@ and compile_expression : CST.expr -> AST.expr result = fun e ->
   | EProj proj ->
     let (proj, loc) = r_split proj in
     let%bind (selection , _) = compile_selection proj.selection in
-    let%bind selected = compile_expression proj.expr in
+    let%bind selected = compile_expression_in proj.expr env in
     return @@ e_accessor ~loc selected [ selection ]
   | EFun func ->
     (* todo : make it in common with let function *)
@@ -469,7 +498,7 @@ and compile_expression : CST.expr -> AST.expr result = fun e ->
     let ({parameters; lhs_type; body} : CST.fun_expr) = func in
     let%bind lhs_type = bind_map_option (compile_type_expression <@ snd) lhs_type in
     let%bind (binder,exprs) = compile_parameter parameters in
-    let%bind body = compile_function_body_to_expression body in
+    let%bind body = compile_function_body_to_expression body env in
     let aux (binder,attr,rhs) expr = e_let_in binder attr rhs expr in
     let expr = List.fold_right aux exprs body  in
     return @@ e_lambda ~loc binder lhs_type expr
@@ -479,18 +508,18 @@ and compile_expression : CST.expr -> AST.expr result = fun e ->
   | EAnnot annot ->
     let (annot, loc) = r_split annot in
     let (expr, _ , ty) = annot in
-    let%bind expr = self expr in
+    let%bind expr = self expr env in
     let%bind ty   = compile_type_expression ty in
     return @@ e_annotation ~loc expr ty
   | ECodeInj ci ->
     let (ci, loc) = r_split ci in
     let (language, _) = r_split ci.language in
     let (language, _) = r_split language in
-    let%bind code = self ci.code in
+    let%bind code = self ci.code env in
     return @@ e_raw_code ~loc language code
   | ESeq seq -> (
     let (seq, loc) = r_split seq in
-    let%bind seq = bind_map_list self @@ npseq_to_list seq in
+    let%bind seq = bind_map_list (fun e -> self e env) @@ npseq_to_list seq in
     match seq with
       [] -> return @@ e_unit ~loc ()
     | hd :: tl ->
@@ -500,8 +529,40 @@ and compile_expression : CST.expr -> AST.expr result = fun e ->
       in
       aux hd @@ tl
   )
-  | EAssign _ -> failwith "TODO"
+  | EAssign _ -> failwith "TODO4"
   | ENew _ -> failwith "new is not supported"
+
+and conv : CST.pattern -> (nested_match_repr,_) result =
+  fun p ->
+  match p with
+  | CST.PWild reg ->
+    let loc = Location.lift reg in
+    let var = Location.wrap ~loc @@ Var.fresh () in
+    ok (PatternVar { var ; ascr = None })
+  | CST.PVar var ->
+    let (var,loc) = r_split var in
+    let var = Location.wrap ~loc @@ Var.of_name var in
+    ok (PatternVar { var ; ascr = None })
+  (* | CST.PArray tuple ->
+    let (tuple, _loc) = r_split tuple in
+    let lst = npseq_to_ne_list tuple in
+    let patterns = List.Ne.to_list lst in
+    let%bind nested = bind_map_list conv patterns in
+    let var = Location.wrap @@ Var.fresh () in
+    ok (TupleVar ({var ; ascr = None} , nested)) *)
+  (* | CST.PObject record ->
+    let (inj, _loc) = r_split record in
+    let aux : CST.field_pattern CST.reg -> (label * nested_match_repr,_) result = fun field ->
+      let { field_name ; eq=_ ; pattern } : CST.field_pattern = field.value in
+      let%bind pattern = conv pattern in
+      ok (AST.Label field_name.value , pattern)
+    in
+    let%bind lst = bind_map_ne_list aux @@ npseq_to_ne_list inj.ne_elements in
+    let lst = List.Ne.to_list lst in
+    let (labels,nested) = List.split lst in
+    let var = Location.wrap @@ Var.fresh () in
+    ok (RecordVar ({var ; ascr = None}, labels , nested)) *)
+  | _ -> fail @@ unsupported_pattern_type p
 
 and get_binder : nested_match_repr -> AST.ty_expr binder =
   fun s ->
@@ -557,6 +618,34 @@ and nestrec : AST.expression -> (AST.expression -> AST.expression) -> nested_mat
       nestrec res f'' tl
     | [] -> f res
 
+and compile_array_let_destructuring : AST.expression -> (CST.pattern, Region.t) Utils.nsepseq CST.brackets Region.reg -> (AST.expression -> AST.expression, _) result =
+  fun matchee tuple ->
+    let (tuple, loc) = r_split tuple in
+    let lst = npseq_to_ne_list tuple.inside in
+    let patterns = List.Ne.to_list lst in
+    let%bind patterns = bind_map_list conv patterns in
+    let binders = List.map get_binder patterns in
+    let f = fun body -> e_matching ~loc matchee (Match_tuple (binders, body)) in
+    ok (fun let_result -> nestrec let_result f patterns)
+
+and compile_object_let_destructuring : AST.expression -> (CST.pattern, Region.t) Utils.nsepseq CST.braced CST.reg -> (AST.expression -> AST.expression, _) result =
+  fun matchee record ->
+    let (record, loc) = r_split record in
+    let aux : CST.pattern -> (label * CST.pattern, _) result = fun field ->
+      match field with 
+        PDestruct {value = {property; target; _}; _} -> 
+          ok @@ (AST.Label property.value, target.value.binders)
+      | _ -> 
+        fail @@ unsupported_pattern_type field
+    in
+    let%bind lst = bind_map_list aux @@ Utils.nsepseq_to_list record.inside in
+    let (labels,patterns) = List.split lst in
+    let%bind patterns = bind_map_list conv patterns in
+    let binders = List.map get_binder patterns in
+    let lbinders = List.combine labels binders in
+    let f = fun body -> e_matching ~loc matchee (Match_record (lbinders, body)) in
+    ok (fun let_result -> nestrec let_result f patterns)
+
 and compile_parameter : CST.expr -> _ result = fun expr ->
   let return ?ascr loc exprs var =
     ok ({var=Location.wrap ~loc var; ascr}, exprs) in
@@ -589,13 +678,39 @@ and compile_parameter : CST.expr -> _ result = fun expr ->
 (* and compile_let_to_expression : CST.let_ -> AST.expression result = fun _let_ ->
  *   failwith "TODO" *)
 
-and compile_function_body_to_expression : CST.fun_expr_body -> AST.expression result = function
-  | FunctionBody statements -> compile_statements_to_expression statements.value.inside
-  | ExpressionBody expr -> compile_expression expr
+and compile_function_body_to_expression : CST.fun_expr_body -> env -> (AST.expression, _) result = fun body env ->
+  match body with
+  | FunctionBody statements -> compile_statements_to_expression statements.value.inside env
+  | ExpressionBody expr -> compile_expression_in expr env
 
-and compile_let_to_declaration ?(const = false) : CST.let_binding -> AST.declaration result = fun _let_ ->
-  failwith "TODO"
+and compile_let_to_declaration ?(const = false) : CST.let_binding Region.reg -> env -> (AST.declaration, _) result = fun let_binding env ->
+  let ({binders; lhs_type; expr = let_rhs; attributes; _} : CST.let_binding) = let_binding.value in
+                 (* CST.attributes -> CST.expr -> CST.type_expr -> CST.expr -> Region.t -> env -> _ =  *)
+  let%bind lst = compile_let_binding attributes let_rhs lhs_type binders let_binding.region env in
+  match lst with 
+  (name, binder, attr, expr) :: tl -> ok @@ AST.Declaration_constant {name; binder; attr; expr}
+  | [] -> failwith "nope"
+(* 
+  let {
+    name; binder; attr; expr
+  } = lst in
+  ok @@ AST.Declaration_constant {name; binder; attr; expr} *)
 
+  (* failwith "222" *)
+  (* let aux (_name,binder,attr,rhs) expr = e_let_in ~loc: (Location.lift let_binding.region) binder attr rhs expr in
+  ok @@ List.fold_right aux lst *)
+(* 
+  let%bind x = compile_let_binding attributes let_rhs lhs_type binders let_binding.region env in
+  let aux (_name,binder,attr,rhs) expr = e_let_in ~loc: (Location.lift region) binder attr rhs expr in
+      ok @@ List.fold_right aux lst
+  [(name,binder,attr,expr)] *)
+
+  (* ok @@ AST.Declaration_constant {name;binder;attr; expr}  *)
+
+  (* failwith "333" *)
+  (* ok @@ AST.Declaration_constant {name;binder;attr} *)
+  (* ok @@ List.fold_right aux lst *)
+  (* failwith "todo" *)
 
 (*
   JsLIGO has statements. There are two cases when compiling a statement:
@@ -606,53 +721,257 @@ and compile_let_to_declaration ?(const = false) : CST.let_binding -> AST.declara
     function that takes `body` as a parameter and returns `let x = 42 in body`
 *)
 and compile_previous_statement_to_expression_context :
-  CST.statement -> AST.expression -> AST.expression result =
+  CST.statement -> AST.expression -> (AST.expression, _) result =
 fun _statement ->
-  failwith "TODO"
+  failwith "TODO3"
 
-and compile_statement : CST.statement -> statement_result result = fun statement ->
+and merge_statement_results : statement_result -> statement_result -> statement_result = fun f s ->
+  match f, s with 
+    Binding a, Binding b -> Binding (a <@ b)
+  | Binding a, Expr    b -> Expr (a b)
+  | Binding a, Break   b -> Break (a @@ e_unit ())
+  | Binding a, Return  b -> Return (a b)
+  | Expr    a, Binding b -> Binding (e_sequence a <@ b )
+  | Expr    a, Expr    b -> Expr (e_sequence a b)
+  | Expr    a, Break   b -> Break a
+  | Expr    a, Return  b -> Return (e_sequence a b)
+  | Break   a, _ ->         Break a
+  | Return  a, _ ->         Return a
+
+and compile_let_binding: CST.attributes -> CST.expr -> (Region.t * CST.type_expr) option -> CST.pattern -> Region.t -> env -> (('a * type_expression binder * Ast_imperative__.Types.attributes * expression) list, _) result = 
+  fun attributes let_rhs type_expr binders region env ->     
+  let attributes = compile_attributes attributes in
+  let aux = function
+  | CST.PVar name -> (*function or const *)
+    let%bind expr = compile_expression_in let_rhs env in
+    let fun_binder = compile_variable name in
+    let%bind lambda = trace_option (recursion_on_non_function expr.location) @@ get_e_lambda expr.expression_content in
+    let lhs_type = Option.map (Utils.uncurry t_function) @@ Option.bind_pair (lambda.binder.ascr, lambda.output_type) in
+    let%bind fun_type = trace_option (untyped_recursive_fun Region.ghost) @@ lhs_type in
+    let expr = e_recursive ~loc:(Location.lift region) fun_binder fun_type lambda in
+    ok @@ [(Some name.value, {var=fun_binder;ascr=lhs_type}, attributes, expr)]
+  | _ -> fail @@ unsupported_pattern_type @@ binders
+    (* ok (Some name.value, {var=fun_binder;ascr=lhs_type}, attributes, expr) *)
+  in 
+  aux binders
+
+and compile_statements : CST.statements -> env -> (statement_result * env, _) result = fun statements env ->
+  let rec aux env result = function
+    (_, hd) :: tl -> 
+      let%bind (a, env) = compile_statement hd env in
+      aux env (merge_statement_results result a) tl
+  | [] -> ok (result, env)
+  in
+  let hd  = fst statements in
+  let snd = snd statements in
+  let%bind (init, env) = compile_statement hd env in
+  aux env init snd
+
+and compile_statement : CST.statement -> env -> (statement_result * env, _) result = fun statement env  ->
+  let self = compile_statement in
+  let self_expr = compile_expression_in in
+  let self_statements = compile_statements in
+  let binding e env = ok @@ (Binding (fun f -> e f), env) in
+  let expr e env = ok @@ (Expr e, env) in
+  let return r env = ok @@ (Return r, env) in
+  let in_switch_or_loop = env.in_switch || env.in_loop in
+  let compile_initializer ({value = {binders; lhs_type; expr = let_rhs; attributes}; region} : CST.let_binding Region.reg) : (expression -> expression, _) result = 
+    match binders with 
+      PArray array ->
+      let%bind matchee = compile_expression_in let_rhs env in
+      compile_array_let_destructuring matchee array 
+    | PObject o ->
+      let%bind matchee = compile_expression_in let_rhs env in
+      compile_object_let_destructuring matchee o
+    | _ -> 
+      let%bind lst = compile_let_binding attributes let_rhs lhs_type binders region env in
+      let aux (_name,binder,attr,rhs) expr = e_let_in ~loc: (Location.lift region) binder attr rhs expr in
+      ok @@ List.fold_right aux lst
+  in
+  let rec initializers (result: expression -> expression) (rem: (Region.t * CST.let_binding Region.reg) list) : (expression -> expression, _) result =
+    match rem with
+    | (_, hd) :: tl -> 
+      let%bind init = compile_initializer hd in
+      let new_result = result <@ init in
+      initializers new_result tl
+    | [] -> ok result
+  in
   match statement with
-  (*
-  | SExpr e -> (
-    let e' = compile_expression e in
-    ok @@ Context (
-      fun next -> e_sequence e' (e_unit ())
+  | SExpr e -> 
+    let%bind e = self_expr e env in
+    expr e env
+  | SBlock {value = {inside; _}; region} -> 
+    (* is this a correct block? *)
+    let%bind statements = self_statements inside env in
+    ok statements
+  | SCond cond -> 
+    let (cond, loc) = r_split cond in
+    let%bind test         = self_expr cond.test.inside env in
+    let%bind (then_clause, env)  = self cond.ifso env in 
+    let%bind else_clause = bind_map_option (fun (_, s) -> self s env) cond.ifnot in
+    let compile_clause = function 
+      Binding e -> expr, (e @@ e_unit ())
+    | Expr e -> expr, (e_sequence e (e_unit ()))
+    | Break b -> return, (e_sequence b (e_unit ()))
+    | Return r -> return, r
+    in
+    let (m, then_clause) = compile_clause then_clause in
+    let (m, else_clause, env) = (match else_clause with 
+        Some (s, env) -> let a, b = compile_clause s in (a, b, env)
+      | None -> m, e_unit (), env
+    ) in
+    m (e_cond ~loc test then_clause else_clause) env
+  | SReturn {value = {expr; _}; region} -> (
+    match expr with 
+      Some v -> 
+        let%bind expr = compile_expression_in v env in
+        return expr env
+    | None -> 
+        return (e_unit ~loc:(Location.lift region) ()) env
     )
-  )
-  | SReturn r -> (
-    let r' = compile_expression r in
-    ok @@ Return r'
-  )
-  | SLet l -> (
+  | SLet li ->
+    (* TODO: ensure assignment can only happen to let values, not const values. *)
+    let (li, loc) = r_split li in
+    let {bindings; _} : CST.let_ = li in
+    
+    let hd = fst bindings in
+    let tl = snd bindings in
+    let%bind init = compile_initializer hd in
+    let%bind initializers' = initializers init tl in 
+    binding initializers' env
+  | SConst li ->
+    let (li, loc) = r_split li in
+    let {bindings; _} : CST.const_ = li in
+    let hd = fst bindings in
+    let tl = snd bindings in
+    let%bind init = compile_initializer hd in
+    let%bind initializers' = initializers init tl in 
+    binding initializers' env
+  | SSwitch switch -> 
+    let (s, loc) = r_split switch in
+    let ({expr = switch_expr; cases; _}: CST.switch) = s in
+    let rec compile_cases: CST.expr -> CST.switch_case list -> (statement_result * env, _) result = fun switch_expr -> function
+      CST.Switch_case {expr = arg2; statements; _} :: remaining ->
+        let eq = ({
+          value = {
+            op   = Region.ghost; 
+            arg1 = switch_expr;
+            arg2
+          }; 
+          region = Region.ghost
+        }: CST.equal_cmp CST.bin_op Region.reg) in
+        let%bind test = compile_bin_op C_EQ eq env in
+        let%bind (then_clause, env) = 
+          match statements with 
+          | Some statements -> compile_statements statements {env with in_switch = true}
+          | None -> expr (e_unit ()) env
+        in
+        let has_break_or_return = function
+          Break _
+        | Return _ -> true
+        | _ -> false
+        in
+        let to_expr = function
+          Break b   -> b
+        | Return r  -> r
+        | Binding b -> b @@ e_unit ()
+        | Expr e    -> e
+        in
+        let then_ = to_expr then_clause in
+        let%bind (else_, env) = compile_cases switch_expr remaining in
+        let else_ = to_expr else_ in
+        if has_break_or_return then_clause then (
+          expr (e_cond ~loc test then_ else_) env
+        )
+        else 
+          expr (e_sequence ~loc (e_cond ~loc test (to_expr then_clause) (e_unit ~loc ())) else_) env
+    | CST.Switch_default_case {statements; _} :: remaining ->
+      let eq = ({
+        value = {
+          op   = Region.ghost; 
+          arg1 = switch_expr;
+          arg2 = switch_expr
+        }; 
+        region = Region.ghost
+      }: CST.equal_cmp CST.bin_op Region.reg) in
+        let%bind test = compile_bin_op C_EQ eq env in
+        let%bind (then_clause, env) = 
+          match statements with 
+          | Some statements -> compile_statements statements {env with in_switch = true}
+          | None -> expr (e_unit ()) env
+        in
+        let has_break_or_return = function
+          Break _
+        | Return _ -> true
+        | _ -> false
+        in
+        let to_expr = function
+          Break b   -> b
+        | Return r  -> r
+        | Binding b -> b @@ e_unit ()
+        | Expr e    -> e
+        in
+        let then_ = to_expr then_clause in
+        let%bind (else_, env) = compile_cases switch_expr remaining in
+        let else_ = to_expr else_ in
+        if has_break_or_return then_clause then 
+          expr (e_cond ~loc test then_ else_) env
+        else 
+          expr (e_sequence ~loc then_ else_) env
+    | _ -> expr (e_unit ()) env
+    in
+    let cases' = Utils.nseq_to_list cases in
+    compile_cases switch_expr cases'
+  | SBreak b -> 
+    if not in_switch_or_loop then 
+      fail @@ not_in_switch_or_loop b 
+    else 
+      ok (Break (e_unit ()), env)
+  | SType ti -> 
+    let (ti, loc) = r_split ti in
+    let ({name;type_expr;_}: CST.type_decl) = ti in
+    let type_binder = Var.of_name name.value in
+    let%bind rhs = compile_type_expression type_expr in
+    (* let%bind body = compile_expression_in body in *)
+    binding (e_type_in ~loc type_binder rhs) env
 
-  ) *)
-  | _ -> failwith "TODO"
+and compile_statements_to_expression : CST.statements -> env -> (AST.expression, _) result = fun statements env ->
+  let%bind (statement_result, env) = compile_statements statements env in
+  ok @@ (match statement_result with 
+    Binding b -> b (e_unit ())
+  | Expr e -> e_sequence e (e_unit ())
+  | Break r 
+  | Return r -> r)
+  
+[@@@warning "-39"]
 
-and compile_statements_to_expression : CST.statements -> AST.expression result = fun statements ->
-  failwith "TODO"
-
-let rec compile_statement_to_declaration : CST.statement -> AST.declaration result = fun statement ->
+let rec compile_statement_to_declaration : CST.statement -> env -> (AST.declaration, _) result = fun statement env ->
   match statement with
-  | SLet let_ -> (
-    let binding_lst = npseq_to_list let_.value.bindings in
+  | SType {value; _} ->
+    let name = value.name.value in
+    let%bind type_expr = compile_type_expression value.type_expr in
+    ok @@ AST.Declaration_type {type_binder = Var.of_name name; type_expr}
+  | SLet {value = {bindings;_ }; _} -> (
+
+    let binding_lst = npseq_to_list bindings in
     match binding_lst with
-    | [ binding ] -> compile_let_to_declaration binding.value
+    | [ binding ] -> compile_let_to_declaration binding env
     (* todo: make `compile_statement_to_declaration` return a `AST.declaration list` instead *)
     | _ -> failwith "let does not support multiple bindings yet"
   )
   | SConst const_ -> (
     let binding_lst = npseq_to_list const_.value.bindings in
     match binding_lst with
-    | [ binding ] -> compile_let_to_declaration ~const:true binding.value
+    | [ binding ] -> compile_let_to_declaration ~const:true binding env
     (* todo *)
     | _ -> failwith "const does not support multiple bindings yet"
   )
   | _ ->
-    failwith "expected a let or a const"
+    fail @@ statement_not_supported_at_toplevel statement
 
-and compile_statements_to_program : CST.ast -> AST.module_ result = fun ast ->
-  let aux : CST.statement -> declaration location_wrap result = fun statement ->
-    let%bind declaration = compile_statement_to_declaration statement in
+and compile_statements_to_program : CST.ast -> env -> (AST.module_, _) result = fun ast env ->
+  let aux : CST.statement -> (declaration location_wrap, _) result = fun statement ->
+    let%bind declaration = compile_statement_to_declaration statement env in
     let loc = Location.lift @@ CST.statement_to_region statement in
     ok (Location.wrap ~loc declaration) in
   let statements = nseq_to_list ast.statements in
@@ -661,4 +980,5 @@ and compile_statements_to_program : CST.ast -> AST.module_ result = fun ast ->
   in ok lst
 
 let compile_module : CST.ast -> _ result =
-  fun t -> failwith "TODO"
+  fun t -> 
+    compile_statements_to_program t env_l
