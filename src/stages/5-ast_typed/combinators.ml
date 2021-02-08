@@ -74,6 +74,10 @@ let get_type_expression (x:expression) = x.type_expression
 let get_type' (x:type_expression) = x.type_content
 let get_expression (x:expression) = x.expression_content
 
+let get_variable e : expression_variable option = match e.expression_content with
+  | E_variable v -> Some v
+  | _ -> None
+
 let get_lambda e : lambda option = match e.expression_content with
   | E_lambda l -> Some l
   | _ -> None

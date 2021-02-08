@@ -21,6 +21,9 @@ type pattern = I.type_expression I.pattern * O.type_expression (* REMITODO : ren
 type equations = (pattern list * (I.expression * O.environment)) list
 type type_fun =
   O.environment -> ?tv_opt:O.type_expression -> I.expression -> (O.expression, typer_error) result
+type rest = O.expression_content
+  (* | Default of O.expression_content
+  | Folded of O.expression_content *)
 
 let is_var : _ I.pattern -> bool = fun p ->
   match p with
@@ -64,7 +67,11 @@ let assert_body_t : body_t:O.type_expression option -> Location.t -> O.type_expr
       ok ()
     | None -> ok ()
 
-(* REMITODO: move that to combinators.ml : get_sum_associated_type ; get_record_associated_type*)
+(* 
+  REMITODO: move that to combinators.ml : get_sum_associated_type ; get_record_associated_type returning options,
+  and being Trace_option (corner_case)'ed away because type_matchee is always called before those functions,
+OR maybe we can simply give the matchee_t to split_equations and co
+*)
 let extract_variant_type : O.label -> O.type_expression -> O.type_expression pm_result =
   fun label t ->
   match t.type_content with
@@ -99,7 +106,7 @@ e.g.
     - t0 = t1 = .. = tk 
     - conform p0 t0 && conform p1 t1 && conform pk tk
 *)
-let get_matchee_type : equations -> O.type_expression pm_result =
+let type_matchee : equations -> O.type_expression pm_result =
   fun eqs ->
     let pt1s = List.map (fun el -> List.hd @@ fst el) eqs in
     let conforms : pattern -> unit pm_result = fun (p,t) ->
@@ -208,20 +215,19 @@ let split_equations : equations -> equations O.label_map pm_result =
     in
     bind_fold_right_list aux O.LMap.empty eqs
 
-let rec match_ : type_f:type_fun -> body_t:O.type_expression option -> matchees -> equations -> O.expression_content -> O.expression pm_result =
+let rec match_ : type_f:type_fun -> body_t:O.type_expression option -> matchees -> equations -> rest -> O.expression pm_result =
   fun ~type_f ~body_t ms eqs def ->
   (* REMITODO, Invariant : for all eq in eqs : (List.length rules) = (List.length (fst eq)) *)
   (* let () = Format.printf "CALLING match_:\n matchees: %a\n eqs: %a\n-----\n" pp_matchees ms pp_eqs eqs in *)
   match ms , eqs with
   | [] , [([],(body,env))] ->
-    (* let () = Format.printf "Empty rule applies\n" in *)
-    let%bind body =
-      (* let s = Format.asprintf "%a \n " I.PP.expression body in *)
-      (* let s = s ^ (Format.asprintf "%a \n" O.PP.environment env) in *)
-      (* trace_strong (corner_case ("REMITODO: could not compile body: "^s)) @@  *)
-      type_f ?tv_opt:body_t env body in
-    ok body
-  | [] , eqs when List.for_all (fun (ps,_) -> List.length ps = 0) eqs -> failwith "Redundant pattern"
+      let%bind body =
+        (* let s = Format.asprintf "%a \n " I.PP.expression body in *)
+        (* let s = s ^ (Format.asprintf "%a \n" O.PP.environment env) in *)
+        (* trace_strong (corner_case ("REMITODO: could not compile body: "^s)) @@  *)
+        type_f ?tv_opt:body_t env body in
+      ok body
+  | [] , eqs when List.for_all (fun (ps,_) -> List.length ps = 0) eqs -> failwith "Redundant product patterns"
   | _ ->
     let leq = partition (fun (pl,_) -> is_var (fst @@ List.hd pl)) eqs in
     (* let () =
@@ -235,12 +241,13 @@ let rec match_ : type_f:type_fun -> body_t:O.type_expression option -> matchees 
         | None -> consvar ~type_f ~body_t ms part_eq def
         | Some prev -> consvar ~type_f ~body_t ms part_eq prev.expression_content
       in
+      (* let () = Format.printf "returning from mixture rule with : %a \n" O.PP.expression r in *)
       ok (Some r)
     in
     let%bind r = bind_fold_right_list aux None leq in
     ok @@ Option.unopt_exn r
 
-and consvar : type_f:type_fun -> body_t:O.type_expression option -> matchees -> equations -> O.expression_content -> O.expression pm_result =
+and consvar : type_f:type_fun -> body_t:O.type_expression option -> matchees -> equations -> rest -> O.expression pm_result =
   fun ~type_f ~body_t ms eqs def ->
   (* let () = Format.printf "CALLING CONSVAR WITH:\n matchees: %a\n eqs: %a\n-----\n" pp_matchees ms pp_eqs eqs in *)
   let p1s = List.map (fun el -> fst @@ List.hd @@ fst el) eqs in
@@ -250,7 +257,7 @@ and consvar : type_f:type_fun -> body_t:O.type_expression option -> matchees -> 
     else
       ctor_rule ~type_f ~body_t ms eqs def
 
-and var_rule : type_f:type_fun -> body_t:O.type_expression option -> bool -> matchees -> equations -> O.expression_content -> O.expression pm_result =
+and var_rule : type_f:type_fun -> body_t:O.type_expression option -> bool -> matchees -> equations -> rest -> O.expression pm_result =
   fun ~type_f ~body_t contain_product ms eqs def ->
   (* let () = Format.printf "\nVAR RULE applies\n" in *)
   match ms with
@@ -282,7 +289,7 @@ and var_rule : type_f:type_fun -> body_t:O.type_expression option -> bool -> mat
       match_ ~type_f ~body_t mtl eqs' def
   | [] -> failwith "corner case2"
 
-and ctor_rule : type_f:type_fun -> body_t:O.type_expression option -> matchees -> equations -> O.expression_content -> O.expression pm_result =
+and ctor_rule : type_f:type_fun -> body_t:O.type_expression option -> matchees -> equations -> rest -> O.expression pm_result =
   fun ~type_f ~body_t ms eqs def ->
   (* let () = Format.printf "\nCTOR RULE applies\n" in *)
   (* REMITODO Add a Const_list case which will be very similar to Constr but with a Match_list *)
@@ -301,7 +308,7 @@ and ctor_rule : type_f:type_fun -> body_t:O.type_expression option -> matchees -
         let body = O.make_e def t in
         { constructor ; pattern = proj ; body }
     in
-    let%bind matchee_t = get_matchee_type eqs in
+    let%bind matchee_t = type_matchee eqs in
     let%bind eq_map = split_equations eqs in
     let%bind rows = trace_option (expected_variant Location.generated matchee_t) (O.get_t_sum matchee_t) in
     let eq_opt_map = O.LMap.mapi (fun label _ -> O.LMap.find_opt label eq_map) rows.content in
@@ -326,12 +333,12 @@ and ctor_rule : type_f:type_fun -> body_t:O.type_expression option -> matchees -
     ok @@ O.make_e (O.E_matching { matchee ; cases }) body_t
   | [] -> failwith "corner case"
 
-and product_rule : type_f:type_fun -> body_t:O.type_expression option -> matchees -> equations -> O.expression_content -> O.expression pm_result =
+and product_rule : type_f:type_fun -> body_t:O.type_expression option -> matchees -> equations -> rest -> O.expression pm_result =
   fun ~type_f ~body_t ms eqs def ->
   (* let () = Format.printf "Product rule applies\n" in *)
   match ms with
   | mhd::_ -> (
-    let%bind matchee_t = get_matchee_type eqs in
+    let%bind matchee_t = type_matchee eqs in
     let product_shape =
       let eq_opt = List.find_opt (fun (pl,_) -> match pl with (p,_)::_ -> is_product p | _ -> false) eqs in
       match eq_opt with
@@ -430,7 +437,133 @@ and compile_matching ~type_f ~body_t matchee (eqs:equations) =
     (* let () = Format.printf "STARTING WITH:\n matchees: %a\n eqs: %a\n-----\n" pp_matchees [matchee] pp_eqs eqs in *)
     (*REMITODO failwith "impossible", to be optimized later ?*)
     let def =
-      let fs = O.make_e (O.E_literal (O.Literal_string (Ligo_string.verbatim "GENERATED"))) (O.t_string ()) in
+      let fs = O.make_e (O.E_literal (O.Literal_string (Ligo_string.verbatim "PARTIAL MATCH"))) (O.t_string ()) in
       O.e_failwith fs
     in
-    f [matchee] eqs def
+    let%bind res = f [matchee] eqs def in
+    let%bind res = top_level_simpl res in
+    (* let () = Format.printf "\n\n--SIMPL--\n%a\n----\n\n" O.PP.expression res_simpl in *)
+    ok res
+
+and is_generated_partial_match : O.expression -> bool =
+  fun exp ->
+    match exp.expression_content with
+    | O.E_constant {cons_name=C_FAILWITH ; arguments=[e]} -> (
+      match O.get_a_string e with
+      | Some fw -> String.equal fw "PARTIAL MATCH"
+      | None -> false
+    )
+    | _ -> false
+
+and merge_record_case : (O.expression_variable * O.matching_content_record) -> O.matching_content_record option pm_result =
+  fun (mvar, {fields=_ ; body ; record_type }) ->
+    let aux : (O.expression_variable * O.type_expression) O.label_map option -> O.expression ->
+      (bool * (O.expression_variable * O.type_expression) O.label_map option * O.expression,_) result =
+        fun prev exp ->
+          let continue = ok (true,prev,exp) in
+          let stop new_fields expression_content = ok (false,Some new_fields,{exp with expression_content}) in
+          match exp.expression_content with
+          | O.E_matching m -> (
+            match O.get_variable m.matchee with
+            | Some v when Var.equal v.wrap_content mvar.wrap_content && Var.is_generated v.wrap_content -> (
+              match m.cases with
+              | O.Match_record v -> stop v.fields v.body.expression_content
+              | _ -> continue
+            )
+            | _ -> continue
+          )
+          | _ -> continue
+    in
+    let%bind (new_fields_opt , body') = Self_ast_typed.fold_map_expression aux None body in
+    match new_fields_opt with
+    | Some fields ->
+      let new_case : O.matching_content_record = { fields ; record_type ; body=body' } in
+      ok (Some new_case)
+    | None -> ok None
+
+and merge_variant_case : (O.expression_variable * O.matching_content_case) -> O.matching_content_case option pm_result =
+  fun (mvar , {constructor;pattern=_;body}) ->
+    let aux : O.expression_variable option -> O.expression -> (bool * O.expression_variable option * O.expression,_) result =
+      fun prev exp ->
+        let continue = ok (true,prev,exp) in
+        let stop new_pattern expression_content = ok (false,Some new_pattern,{exp with expression_content}) in
+        match exp.expression_content with
+        | O.E_matching m -> (
+          match O.get_variable m.matchee with
+          | Some v when Var.equal v.wrap_content mvar.wrap_content && Var.is_generated v.wrap_content -> (
+            match m.cases with
+            | O.Match_variant v -> (
+              let (_fw,no_fw) = List.partition (fun (case:O.matching_content_case) -> is_generated_partial_match case.body) v.cases in
+              match no_fw with
+              | [] -> fail (corner_case "REMITODO: mmmmmhhhh ?")
+              | lst -> (
+                let x = List.find_opt (fun ({constructor=c;_}:O.matching_content_case) -> O.Compare.label c constructor = 0 ) lst in
+                match x with
+                | Some x ->
+                  let { pattern ; body ; _ } : O.matching_content_case = x in
+                  stop pattern body.expression_content
+                | None -> fail (corner_case "REMITODO: NON EXHAU ?")
+              )
+            )
+            | _ -> continue
+          )
+          | _ -> continue
+        )
+        | _ -> continue
+    in
+    let%bind (new_pattern_opt , body') = Self_ast_typed.fold_map_expression aux None body in
+    match new_pattern_opt with
+    | Some pattern ->
+      let new_case : O.matching_content_case = { constructor ; pattern ; body=body' } in
+      ok (Some new_case)
+    | None -> ok None
+
+and top_level_simpl : O.expression -> O.expression pm_result =
+  fun exp ->
+    let aux : bool -> O.expression -> (bool * bool * O.expression,_) result =
+      fun has_been_simpl exp ->
+        let continue = ok (true,has_been_simpl,exp) in
+        let ret continue has_been_simpl expression_content = ok (continue,has_been_simpl,{exp with expression_content}) in
+        match exp.expression_content with
+        | O.E_matching m -> (
+          match m.matchee.expression_content with
+          | O.E_variable x when Var.is_generated x.wrap_content -> (
+            match m.cases with
+            | O.Match_variant v -> (
+              let aux : (bool * O.matching_content_case list) -> O.matching_content_case -> (bool * O.matching_content_case list) pm_result =
+                fun (has_been_simpl,res) case ->
+                  let%bind new_case_opt = merge_variant_case (x,case) in
+                  match new_case_opt with
+                  | Some case -> ok (true,case::res)
+                  | None -> ok (has_been_simpl,case::res)
+              in
+              let%bind (has_been_simpl,cases) = bind_fold_list aux (false,[]) v.cases in
+              if has_been_simpl then 
+                ret false has_been_simpl (O.E_matching { m with cases = O.Match_variant { v with cases} })
+              else
+                continue
+            )
+            | O.Match_record r -> (
+              let%bind new_ = merge_record_case (x,r) in
+              match new_ with
+              | Some r -> ret false true (O.E_matching { m with cases = O.Match_record r })
+              | None -> continue
+            )
+            | _ -> continue
+          )
+          | _ -> continue
+        )
+        | _ -> continue
+    in
+    (* let%bind (_has_been_simpl, res) = Self_ast_typed.fold_map_expression aux false exp in *)
+    do_while (Self_ast_typed.fold_map_expression aux false) exp
+
+and do_while : (O.expression -> (bool * O.expression) pm_result) -> O.expression -> O.expression pm_result =
+  fun f exp ->
+    let%bind (has_been_simpl, exp) = f exp in
+    if has_been_simpl then
+      (* let () = Format.printf "Has been simpl\n" in *)
+      do_while f exp
+    else
+      (* let () = Format.printf "Has not been simpl\n" in *)
+      ok exp
