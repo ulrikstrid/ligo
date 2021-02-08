@@ -417,7 +417,7 @@ and type_constraint_ =
   (* | C_assignment of (type_variable * type_pattern) *)
   | C_equation of c_equation (* TVA = TVB *)
   | C_typeclass of c_typeclass (* TVL ∈ TVLs, for now in extension, later add intensional (rule-based system for inclusion in the typeclass) *)
-  | C_access_label of c_access_label (* poor man's type-level computation to ensure that TV.label is type_variable *)
+  | C_access_label of c_access_label (* simple substitute for a type-level computation to ensure that TV.label is type_variable *)
 (* | … *)
 
 (* is the first list in case on of the type of the type class as a kind *->*->* ? *)
@@ -549,11 +549,6 @@ type constructor_or_row = [ (* TODO : c_row_simpl and c_constructor_simpl must b
 (* selector / propagation rule for breaking down composite types *)
 (* For now: break pair(a, b) = pair(c, d) into a = c, b = d *)
 
-type output_break_ctor = { (* TODO : this type must be local heuristic_... *)
-    a_k_var : constructor_or_row ;
-    a_k'_var' : constructor_or_row ;
-  }
-
 type output_specialize1 = { (* TODO : this type must be local heuristic_... *) 
     poly : c_poly_simpl ;
     a_k_var : c_constructor_simpl ;
@@ -564,14 +559,6 @@ type output_tc_fundep = { (* TODO : this type must be local heuristic_tc_fundep.
     tc : c_typeclass_simpl ;
     c :  constructor_or_row ;
   }
-
-type m_break_ctor__already_selected = output_break_ctor poly_set
-type m_specialize1__already_selected = output_specialize1 poly_set
-
-type already_selected = {
-  break_ctor  : m_break_ctor__already_selected  ;
-  specialize1 : m_specialize1__already_selected ;
-}
 
 type type_constraint_list = type_constraint list
 

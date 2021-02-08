@@ -1,7 +1,7 @@
 open Ast
 open Stage_common.To_yojson
 type json = Yojson.Safe.t
-
+type 'a json_printer = 'a -> json
 
 let constant' = Stage_common.To_yojson.constant'
 
@@ -543,11 +543,6 @@ let constructor_or_row (t : constructor_or_row ) =
   match t with
   | `Row r -> `Assoc [ ("row" , c_row_simpl r) ]
   | `Constructor c -> `Assoc [ ("constructor" , c_constructor_simpl c) ]
-
-let output_break_ctor ({a_k_var;a_k'_var'}) =
-  `Assoc [
-    ("a_k_var", constructor_or_row a_k_var);
-    ("a_k'_var'", constructor_or_row a_k'_var')]
 
 let output_specialize1  ({poly;a_k_var}) =`Assoc [
     ("poly", c_poly_simpl poly);

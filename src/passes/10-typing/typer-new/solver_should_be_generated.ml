@@ -1,5 +1,8 @@
 (* The contents of this file should be auto-generated. *)
 
+type 'a comparator = 'a -> 'a -> int
+type 'a pretty_printer = Format.formatter -> 'a -> unit
+
 open Ast_typed.Types
 module T = Ast_typed.Types
 
@@ -240,9 +243,6 @@ let compare_constructor_or_row
   | `Constructor a , `Constructor b -> compare_c_constructor_simpl a b
   | `Constructor _ , `Row _ -> -1
   | `Row _ , `Constructor _ -> 1
-
-let compare_output_break_ctor { a_k_var=a1; a_k'_var'=a2 } { a_k_var=b1; a_k'_var'=b2 } =
-  compare_constructor_or_row a1 b1 <? fun () -> compare_constructor_or_row a2 b2
 
 let compare_c_typeclass_simpl_args =
   List.compare ~compare:Var.compare

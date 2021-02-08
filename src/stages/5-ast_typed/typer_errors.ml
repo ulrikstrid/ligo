@@ -172,7 +172,7 @@ let constant_declaration_tracer (name: Ast_core.expression_variable) (ae:Ast_cor
 let in_match_variant_tracer (ae:Ast_core.matching_expr) (err:typer_error) =
   `Typer_match_variant_tracer (ae,err)
 let different_types a b = `Typer_different_types (a,b)
-let different_constant_tag_number_of_arguments loc opa opb lena lenb : typer_error = `Typer_constant_tag_number_of_arguments (loc, opa, opb, lena, lenb)
+let different_constant_tag_number_of_arguments loc opa opb lena lenb = `Typer_constant_tag_number_of_arguments (loc, opa, opb, lena, lenb)
 let typeclass_not_a_rectangular_matrix = `Typer_typeclass_not_a_rectangular_matrix
 let internal_error (loc : string) (msg : string) : typer_error = `Typer_internal_error (loc, msg)
 let could_not_remove : Ast_typed_self_reference.type_constraint_simpl -> typer_error = fun constraints -> `Typer_could_not_remove constraints

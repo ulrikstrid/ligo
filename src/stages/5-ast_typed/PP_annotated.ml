@@ -471,14 +471,6 @@ let constraint_identifier ppf (ConstraintIdentifier ci) =
   | `Row r -> c_row_simpl ppf r
   | `Constructor c -> c_constructor_simpl ppf c
 
-let output_break_ctor ppf ({a_k_var;a_k'_var'}) =
-  fprintf ppf "{@,@[<hv 2>
-              a_k_var : %a ;@
-              a_k'_var' : %a
-              @]@,}"
-    constructor_or_row a_k_var
-    constructor_or_row a_k'_var'
-
 let output_specialize1 ppf ({poly;a_k_var}) =
   fprintf ppf "{@,@[<hv 2>
               poly : %a ;@
