@@ -10,6 +10,7 @@
     UnionFind
     environment
     typer_common
+    type_variable_abstraction
   )
   (preprocess
     (pps ppx_let)
