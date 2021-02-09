@@ -1,5 +1,6 @@
 open Trace
 open Ast_typed.Types
+open Solver_types
 open Database_plugins.All_plugins
 open Db_index_tests_common
 

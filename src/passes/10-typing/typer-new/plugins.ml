@@ -1,5 +1,4 @@
-open Typesystem.Solver_types
-open Ast_typed.Types
+open Solver_types
 
 module Indexers = Database_plugins
 let heuristics : Indexers.Indexers_plugins_fields(PerPluginState).flds heuristic_plugins = [

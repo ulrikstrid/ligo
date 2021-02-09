@@ -1,4 +1,4 @@
-open Ast_typed.Types
+open Solver_types
 
 (* data Indexers_plugins_fields (Ppt :: PerPluginType) = Indexers_plugins_fields {
      assignments       :: Ppt Assignments,
@@ -25,7 +25,7 @@ end
 module Indexers_plugins_fields_ = Indexers_plugins_fields
 
 (* mapPlugins :: (F : MappedFunction) → (Indexers_plugins_fields F.MakeIn) → (Indexers_plugins_fields F.MakeOut) *)
-module Map_indexer_plugins = functor (F : MappedFunction) -> struct
+module Map_indexer_plugins = functor (F : Mapped_function) -> struct
   let f :
     F.extra_args ->
     Indexers_plugins_fields(F.MakeInType).flds ->

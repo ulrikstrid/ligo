@@ -2,6 +2,7 @@ open Trace
 
 (* module Core = Typesystem.Core *)
 open Ast_typed.Types
+open Solver_types
 (* open Ast_typed.Reasons *)
 open Ast_typed.Combinators
 open Database_plugins.All_plugins

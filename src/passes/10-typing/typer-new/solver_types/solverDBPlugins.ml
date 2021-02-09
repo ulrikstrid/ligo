@@ -1,4 +1,4 @@
-open Ast
+open Ast_typed
 
 (* This plug-in system ensures the following:
 
@@ -19,6 +19,8 @@ open Ast
    the 'typeVariable type is always quantified/hidden in positions
    where it could be used to remove from a map/set or completely empty
    it. *)
+
+(* module TYPE_VARIABLE_ABSTRACTION = Type_variable_abstraction.TYPE_VARIABLE_ABSTRACTION *)
 
 (* This is (temporary?) in a functor to give access to
    Typer_errors.typer_error. Maybe this file should be moved to
@@ -59,7 +61,7 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
        merge_aliases :: forall old new . merge_keys old new → old → old → t old → t new
      }
   *)
-  module type Plugin = sig
+  module type INDEXER_PLUGIN (* (Type_variable_abstraction : sig end) *) = sig
     type 'typeVariable t
     (* Create the indexer's initial state *)
     val create_state : cmp:('typeVariable -> 'typeVariable -> int) -> 'typeVariable t
@@ -115,13 +117,13 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
 
   (* type MappedFunction (t :: 🞰) (Plugin :: 🞰→🞰) =
        Plugin t → MakeInType t → MakeOutType t *)
-  module type MappedFunction = sig
+  module type Mapped_function = sig
     type extra_args
     module MakeInType : PerPluginType
     module MakeOutType : PerPluginType
     module Monad : Monad
-    module F(Plugin : Plugin) : sig
-      val f : string -> extra_args -> MakeInType(Plugin).t -> MakeOutType(Plugin).t Monad.t
+    module F(Indexer_plugin : INDEXER_PLUGIN) : sig
+      val f : string -> extra_args -> MakeInType(Indexer_plugin).t -> MakeOutType(Indexer_plugin).t Monad.t
     end
   end
 
@@ -146,7 +148,7 @@ module Dep_cycle (Typer_errors : sig type typer_error end) = struct
     val indexers_plugins_fields_unit : Indexers_plugins_fields(PerPluginUnit).flds
 
     (* A function which applies F to each field *)
-    module Map_indexer_plugins : functor (F : MappedFunction) ->
+    module Map_indexer_plugins : functor (F : Mapped_function) ->
     sig
       val f :
         F.extra_args ->

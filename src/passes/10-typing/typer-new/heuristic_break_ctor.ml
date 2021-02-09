@@ -209,7 +209,7 @@ module MM = M(Type_variable)(Type_variable_abstraction.Opaque_type_variable)
 
 
 open Ast_typed.Types
-open Typesystem.Solver_types
+open Solver_types
 
 module Compat = struct
   open Database_plugins.All_plugins

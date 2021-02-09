@@ -5,7 +5,7 @@ module Map = RedBlackTrees.PolyMap
 module Set = RedBlackTrees.PolySet
 module UF = UnionFind.Poly2
 open Ast_typed.Types
-open Typesystem.Solver_types
+open Solver_types
 open Solver_helpers
 open Proof_trace_checker
 
@@ -30,7 +30,7 @@ let logfile = stderr (* open_out "/tmp/typer_log" *)
 
 module Make_solver(Plugins : Plugins) : sig
   type indexers_plugins_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState).flds
-  type nonrec typer_state = indexers_plugins_states Typesystem.Solver_types.typer_state
+  type nonrec typer_state = indexers_plugins_states typer_state
   val pp_typer_state  : Format.formatter -> typer_state -> unit
   val get_alias : Ast_typed.type_variable -> type_variable poly_unionfind -> (type_variable, typer_error) Trace.result
   val main : typer_state -> type_constraint list -> typer_state result
@@ -40,7 +40,7 @@ module Make_solver(Plugins : Plugins) : sig
 end = struct
   module Indexers_plugins_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState)
   type indexers_plugins_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState).flds
-  type nonrec typer_state = indexers_plugins_states Typesystem.Solver_types.typer_state
+  type nonrec typer_state = indexers_plugins_states Solver_types.typer_state
 
   module Solver_stages' = Solver_stages.M(Plugins)(struct type nonrec typer_state = typer_state type nonrec plugin_states = indexers_plugins_states end)
   open Solver_stages'
@@ -51,7 +51,7 @@ end = struct
   let mk_repr state x = UnionFind.Poly2.repr x state.aliases
 
   let pp_typer_state = fun ppf ({ all_constraints; plugin_states; aliases ; already_selected_and_propagators } : typer_state) ->
-    let open Typesystem.Solver_types in
+    let open Solver_types in
     let open PP_helpers in
     let module MapPP = Plugins.Indexers.Map_indexer_plugins(PPPlugin) in
     let pp_indexers ppf states =
@@ -309,7 +309,7 @@ type nonrec _ typer_state = typer_state
 (*  ………………………………………………………………………………………………… Plugin-based solver above ………………………………………………………………………………………………… *)
 
 let json_typer_state = fun ({ all_constraints=_ ; plugin_states=_ ; aliases=_ ; already_selected_and_propagators } : _ typer_state) : Yojson.Safe.t ->
-  let open Typesystem.Solver_types in
+  let open Solver_types in
   `Assoc[ ("all_constraints", `String "TODO");
           ("plugin_states", (* (Ast_typed.Yojson.structured_dbs structured_dbs) *) `String "TODO");
           ("aliases", `String "TODO");

@@ -2,7 +2,7 @@ open Trace
 open Typer_common.Errors
 open Database_plugins.All_plugins
 open Ast_typed.Types
-open Typesystem.Solver_types
+open Solver_types
 
 val heuristic : <
     assignments              : type_variable Assignments.t ;

@@ -1,6 +1,6 @@
 open Database_plugins.All_plugins
 open Ast_typed.Types
-open Typesystem.Solver_types
+open Solver_types
 
 type selector_output = {
   a_k_var : c_row_simpl ;

@@ -17,7 +17,7 @@
    form […;x;…;y;…] ∈ […] where x and y are identical or aliased. *)
 
 open Ast_typed.Types
-open Typesystem.Solver_types
+open Solver_types
 open Trace
 open Typer_common.Errors
 open Ast_typed.Reasons

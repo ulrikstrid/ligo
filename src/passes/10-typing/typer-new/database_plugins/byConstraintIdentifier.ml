@@ -1,4 +1,5 @@
 open Ast_typed.Types
+open Solver_types
 open Trace
 
 type 'typeVariable t = (constraint_identifier, c_typeclass_simpl) PolyMap.t

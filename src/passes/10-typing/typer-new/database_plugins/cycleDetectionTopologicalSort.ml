@@ -1,5 +1,5 @@
 open Trace
-open Ast_typed.Types
+open Solver_types
 
 type 'typeVariable t = unit
 let create_state ~cmp:_ = ()

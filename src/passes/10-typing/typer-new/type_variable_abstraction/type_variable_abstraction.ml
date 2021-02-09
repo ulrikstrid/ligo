@@ -247,7 +247,7 @@ module Opaque_type_variable = struct
   end
   module Yojson = Ast_typed.Yojson
   module Var = Var
-  module Solver_types = Typesystem.Solver_types
+  module Solver_types = Solver_types
   module Misc = Ast_typed.Misc
   module Reasons = Ast_typed.Reasons
   module Axioms = Axioms

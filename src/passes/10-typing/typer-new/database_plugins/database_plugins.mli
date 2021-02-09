@@ -1,4 +1,5 @@
 open Ast_typed.Types
+open Solver_types
 
 module Indexers_plugins_fields_ (Ppt : PerPluginType) : sig
   type flds = <
@@ -18,7 +19,7 @@ module Indexers_plugins_fields_ (Ppt : PerPluginType) : sig
   val assignments : flds -> < assignments : Ppt(Assignments).t >
 end
 
-include Ast_typed.Types.IndexerPlugins
+include Solver_types.IndexerPlugins
   (* TODO: do we need this & the definition above? *)
   with module Indexers_plugins_fields = Indexers_plugins_fields_
 

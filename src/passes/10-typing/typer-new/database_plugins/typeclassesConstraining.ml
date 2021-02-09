@@ -1,4 +1,5 @@
 open Ast_typed.Types
+open Solver_types
 open UnionFind
 open Trace
 

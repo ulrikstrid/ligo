@@ -5,12 +5,11 @@ module Core = Typesystem.Core
 module Map = RedBlackTrees.PolyMap
 module Set = RedBlackTrees.PolySet
 module UF = UnionFind.Poly2
-open Ast_typed.Types
-open Typesystem.Solver_types
+open Solver_types
 
 module M(Plugins : Plugins)(Solver : sig
     type plugin_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState).flds
-    type nonrec typer_state = plugin_states Typesystem.Solver_types.typer_state
+    type nonrec typer_state = plugin_states Solver_types.typer_state
   end) = struct
 
   open Solver

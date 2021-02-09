@@ -6,7 +6,7 @@
 module Core = Typesystem.Core
 open Ast_typed.Misc
 open Ast_typed.Types
-open Typesystem.Solver_types
+open Solver_types
 open Trace
 open Typer_common.Errors
 open Database_plugins.All_plugins
