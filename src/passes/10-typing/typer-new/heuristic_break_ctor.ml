@@ -204,7 +204,7 @@ end
 
 
 module Type_variable = struct type t = Ast_typed.Types.type_variable end
-module MM = M(Type_variable)(Type_variable_abstraction.Opaque_type_variable)
+module MM = M(Type_variable)(Type_variable_instance.Opaque_type_variable)
 
 
 

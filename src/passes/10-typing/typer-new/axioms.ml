@@ -1,1 +1,1 @@
-include Type_variable_abstraction.Axioms
+include Type_variable_instance.Axioms

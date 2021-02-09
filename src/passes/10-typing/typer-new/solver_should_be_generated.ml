@@ -1,1 +1,1 @@
-include Type_variable_abstraction.Solver_should_be_generated
+include Type_variable_instance.Solver_should_be_generated

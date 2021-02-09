@@ -1,6 +1,6 @@
 (library
-  (name type_variable_abstraction)
-  (public_name ligo.typer_new.type_variable_abstraction)
+  (name type_variable_instance)
+  (public_name ligo.typer_new.type_variable_instance)
   (libraries
     ;; Many of these are unused dependencies
     simple-utils
@@ -10,6 +10,8 @@
     predefined
     UnionFind
     environment
+    type_variable_abstraction
+    solver_types
   )
   (preprocess
     (pps ppx_let)

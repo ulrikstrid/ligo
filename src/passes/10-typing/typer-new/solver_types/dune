@@ -11,6 +11,7 @@
     UnionFind
     typer_common
     yojson
+    type_variable_abstraction
   )
   (preprocess
     (pps ppx_let)

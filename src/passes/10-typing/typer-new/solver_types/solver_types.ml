@@ -2,6 +2,8 @@ open Trace
 open Ast_typed.Types
 module Set = RedBlackTrees.PolySet
 
+module TYPE_VARIABLE_ABSTRACTION = Type_variable_abstraction.TYPE_VARIABLE_ABSTRACTION
+
 (* ************ indexer plug-in system ************ *)
 
 (* This plug-in system ensures the following:
@@ -23,8 +25,6 @@ module Set = RedBlackTrees.PolySet
    the 'typeVariable type is always quantified/hidden in positions
    where it could be used to remove from a map/set or completely empty
    it. *)
-
-(* module TYPE_VARIABLE_ABSTRACTION = Type_variable_abstraction.TYPE_VARIABLE_ABSTRACTION *)
 
 open UnionFind
 (* The types are given in an approximative haskell, because its
