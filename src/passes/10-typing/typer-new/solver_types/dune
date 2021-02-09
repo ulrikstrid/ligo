@@ -9,7 +9,8 @@
     ast_typed
     predefined
     UnionFind
-    environment
+    typer_common
+    yojson
   )
   (preprocess
     (pps ppx_let)
