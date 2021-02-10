@@ -544,8 +544,3 @@ let type_constraint_simpl a b =
 | SC_Access_label la, SC_Access_label lb -> c_access_label_simpl la lb
 | SC_Row         ra, SC_Row         rb -> c_row_simpl ra rb
 | a, b -> Int.compare (type_constraint_simpl_tag a) (type_constraint_simpl_tag b)
-
-let deduce_and_clean_result {deduced=da;cleaned=ca} {deduced=db;cleaned=cb} =
-  cmp2
-    (List.compare ~compare:c_constructor_simpl) da db
-    c_typeclass_simpl ca cb

@@ -76,9 +76,9 @@ let name = "typeclasses_constraining"
 let get_state_for_tests state = state
 
 
-let get_typeclasses_constraining tv (state : ('type_variable, _) state) =
+let get_typeclasses_constraining tv state =
   Option.unopt ~default:(PolySet.create ~cmp:Ast_typed.Compare.c_typeclass_simpl)
-  @@ ReprMap.find_opt tv state#typeclasses_constraining
+  @@ ReprMap.find_opt tv state
 
-let get_typeclasses_constraining_list tv (state : ('type_variable, _) state) =
+let get_typeclasses_constraining_list tv state =
   PolySet.elements @@ get_typeclasses_constraining tv state

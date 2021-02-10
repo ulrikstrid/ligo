@@ -82,7 +82,7 @@ let tests1 restrict = [
 
 let test'
     name
-    (deduce_and_clean : (type_variable -> type_variable) -> c_typeclass_simpl -> (deduce_and_clean_result, _) result)
+    (deduce_and_clean : (type_variable -> type_variable) -> c_typeclass_simpl -> (_, _) result)
     repr
     args (_in : string) tc
     (expected_inferred  : (type_variable * constant_tag * type_variable list) list)

@@ -544,13 +544,3 @@ let constructor_or_row (t : constructor_or_row ) =
   | `Row r -> `Assoc [ ("row" , c_row_simpl r) ]
   | `Constructor c -> `Assoc [ ("constructor" , c_constructor_simpl c) ]
 
-let output_specialize1  ({poly;a_k_var}) =`Assoc [
-    ("poly", c_poly_simpl poly);
-("a_k_var",     c_constructor_simpl a_k_var)]
-
-let output_tc_fundep (t : output_tc_fundep) =
-  let lst = t.tc in
-  let a = t.c in `Assoc
-    [
-      ("tc",c_typeclass_simpl lst)
-      ;("a",constructor_or_row a)]

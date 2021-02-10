@@ -526,11 +526,6 @@ and type_constraint_simpl =
   | SC_Access_label of c_access_label_simpl           (* α = β.ℓ *)
   | SC_Row         of c_row_simpl                     (* α = row(l -> β, …) *)
 
-and deduce_and_clean_result = {
-  deduced : c_constructor_simpl_list ;
-  cleaned : c_typeclass_simpl ;
-}
-
 and c_alias = {
     reason_alias_simpl : string ;
     (* see description above in c_constructor_simpl *)
@@ -549,16 +544,7 @@ type constructor_or_row = [ (* TODO : c_row_simpl and c_constructor_simpl must b
 (* selector / propagation rule for breaking down composite types *)
 (* For now: break pair(a, b) = pair(c, d) into a = c, b = d *)
 
-type output_specialize1 = { (* TODO : this type must be local heuristic_... *) 
-    poly : c_poly_simpl ;
-    a_k_var : c_constructor_simpl ;
-  }
 
-
-type output_tc_fundep = { (* TODO : this type must be local heuristic_tc_fundep.. *)
-    tc : c_typeclass_simpl ;
-    c :  constructor_or_row ;
-  }
 
 type type_constraint_list = type_constraint list
 

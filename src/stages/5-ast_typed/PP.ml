@@ -606,24 +606,6 @@ let constructor_or_row_short ppf (t : constructor_or_row ) =
   | `Row r -> c_row_simpl_short ppf r
   | `Constructor c -> c_constructor_simpl_short ppf c
 
-
-let output_specialize1 ppf ({poly;a_k_var}) =
-  fprintf ppf "%a = %a"
-    c_poly_simpl_short poly
-    c_constructor_simpl_short a_k_var
-
-let output_tc_fundep ppd (t : output_tc_fundep) =
-  let lst = t.tc in
-  let a = t.c in fprintf ppd "%a and %a" c_typeclass_simpl_short lst constructor_or_row_short a
-
-let deduce_and_clean_result ppf {deduced;cleaned} =
-  fprintf ppf "{@[<hv 2>@
-              deduced : %a;@
-              cleaned : %a;@
-              @]}"
-    (list c_constructor_simpl) deduced
-    c_typeclass_simpl cleaned
-
 let axiom ppf = function |HandWaved s -> fprintf ppf "HandWaved %s" s
 
 let proof_trace ppf = function
