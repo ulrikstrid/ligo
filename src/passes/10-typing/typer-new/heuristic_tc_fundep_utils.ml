@@ -1,36 +1,17 @@
 [@@@warning "-32"]
 module TYPE_VARIABLE_ABSTRACTION = Type_variable_abstraction.TYPE_VARIABLE_ABSTRACTION
 
-module INDEXES = functor (Type_variable : sig type t end) (Type_Variable_Abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
+module INDEXES = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
+  module All_plugins = Database_plugins.All_plugins.M(Type_variable)(Type_variable_abstraction)
+  open All_plugins
   module type S = sig
-    open Type_Variable_Abstraction.Types
-    module Grouped_by_variable : sig
-      type _ t
-      val get_constructors_by_lhs : type_variable -> type_variable t -> c_constructor_simpl MultiSet.t [@@warning "-32"]
-      val get_rows_by_lhs : type_variable -> type_variable t -> c_row_simpl MultiSet.t [@@warning "-32"]
-      val get_polys_by_lhs : type_variable -> type_variable t -> c_poly_simpl MultiSet.t [@@warning "-32"]
-      val get_access_labels_by_result_type : type_variable -> type_variable t -> c_access_label_simpl MultiSet.t [@@warning "-32"]
-      val get_access_labels_by_record_type : type_variable -> type_variable t -> c_access_label_simpl MultiSet.t [@@warning "-32"]
-    end
-    val grouped_by_variable : Type_variable.t Grouped_by_variable.t
-    module Assignments : sig
-      type _ t
-      val find_opt : 'type_variable -> 'type_variable t -> constructor_or_row option
-    end
+    val grouped_by_variable : Type_variable.t  Grouped_by_variable.t
     val assignments : Type_variable.t Assignments.t
-    module Typeclasses_constraining : sig
-      type _ t
-      type ('type_variable, 'a) state = < typeclasses_constraining : 'type_variable t ; .. > as 'a
-      val get_typeclasses_constraining_list : 'type_variable -> 'type_variable t -> c_typeclass_simpl list
-    end
     val typeclasses_constraining : Type_variable.t Typeclasses_constraining.t
-    module By_constraint_identifier : sig
-      type _ t
-      val find_opt : constraint_identifier -> 'type_variable t -> c_typeclass_simpl option
-    end
     val by_constraint_identifier : Type_variable.t By_constraint_identifier.t
   end
 end
+
 (* open Typesystem.Solver_types *)
 open Trace
 open Typer_common.Errors
@@ -38,17 +19,19 @@ module Map = RedBlackTrees.PolyMap
 module Set = RedBlackTrees.PolySet
 
 
-module Utils = functor (Type_variable : sig type t end) (Type_Variable_Abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
-  open Type_Variable_Abstraction
-  open Type_Variable_Abstraction.Types
+module Utils = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
+  open Type_variable_abstraction
+  open Type_variable_abstraction.Types
   type type_variable = Type_variable.t
 
   let set_of_vars l = (Set.add_list l (Set.create ~cmp:Compare.type_variable )).set
-  type flds = (module INDEXES(Type_variable)(Type_Variable_Abstraction).S)
+  type flds = (module INDEXES(Type_variable)(Type_variable_abstraction).S)
+  module All_plugins = Database_plugins.All_plugins.M(Type_variable)(Type_variable_abstraction)
+  open All_plugins
 
   let constraint_identifier_to_tc ((module Dbs) : flds) (ci : constraint_identifier) =
     (* TODO: this can fail: catch the exception and throw an error *)
-    match Dbs.By_constraint_identifier.find_opt ci Dbs.by_constraint_identifier with
+    match By_constraint_identifier.find_opt ci Dbs.by_constraint_identifier with
       Some x -> x
     | None -> failwith "TODO: internal error : do something"
 

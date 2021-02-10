@@ -1,8 +1,34 @@
 open Trace
-open Ast_typed.Types
 module Set = RedBlackTrees.PolySet
 
 module TYPE_VARIABLE_ABSTRACTION = Type_variable_abstraction.TYPE_VARIABLE_ABSTRACTION
+
+type 'old_constraint_type selector_input = 'old_constraint_type (* some info about the constraint just added, so that we know what to look for *)
+type 'selector_output selector_outputs = 'selector_output list
+(* type ('old_contraint_type, 'selector_output) selector = 'old_constraint_type selector_input -> structured_dbs -> 'selector_output selector_outputs *)
+type ('selector_output , 'errors) propagator = 'selector_output -> (Ast_typed.type_variable -> Ast_typed.type_variable) -> (Ast_typed.updates, 'errors) result
+
+(* TODO: move this with the AST, probably? *)
+module Axioms = Axioms
+module Typelang = Typelang
+
+module Type_variable = struct type t = Ast_typed.Types.type_variable end
+
+module Opaque_type_variable = struct
+  module Types        = Ast_typed.Types
+  module Compare      = Ast_typed.Compare
+  module PP           = Ast_typed.PP
+  module Yojson       = Ast_typed.Yojson
+  module Misc         = Ast_typed.Misc
+  module Reasons      = Ast_typed.Reasons
+  module Core         = Typesystem.Core
+  module Axioms       = Axioms
+  module Typelang     = Typelang
+  module Errors       = Typer_common.Errors
+  module Solver_types = struct type nonrec ('o, 'e) propagator = ('o, 'e) propagator end
+end
+module Check : Type_variable_abstraction.TYPE_VARIABLE_ABSTRACTION(Type_variable).S = Opaque_type_variable
+
 
 (* ************ indexer plug-in system ************ *)
 
@@ -22,7 +48,7 @@ module TYPE_VARIABLE_ABSTRACTION = Type_variable_abstraction.TYPE_VARIABLE_ABSTR
  * the ReprMap and ReprSet modules only allow monotonic updates
    (additions but no deletions), unless one has access to the
    comparison function (which we do not provide to other modules), and
-   the 'typeVariable type is always quantified/hidden in positions
+   the 'type_variable type is always quantified/hidden in positions
    where it could be used to remove from a map/set or completely empty
    it. *)
 
@@ -52,36 +78,51 @@ type ('state, 'a , 'b) normalizer = 'state -> 'a -> ('state * 'b PolySet.t)
 (* type normalizer_rm state a = state → a → MonadError typer_error state *)
 type ('state, 'a) normalizer_rm = 'state -> 'a -> ('state, Typer_common.Errors.typer_error) Trace.result
 
-(* t is the type of the state of the plugin
-   data Plugin (t :: 🞰→🞰) = Plugin {
-     create_state :: forall typeVariable . (typeVariable → typeVariable → int) → t typeVariable
-     add_constraint :: normalizer (t typeVariable) type_constraint_simpl type_constraint_simpl
-     remove_constraint :: normalizer_rm (t typeVariable) type_constraint_simpl
-     merge_aliases :: forall old new . merge_keys old new → old → old → t old → t new
-   }
-*)
-module INDEXER_PLUGIN = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
-  module type S = sig
-    type 'typeVariable t
-    (* Create the indexer's initial state *)
-    val create_state : cmp:('typeVariable -> 'typeVariable -> int) -> 'typeVariable t
-    (* Update the state when a constraint is added *)
-    val add_constraint : ?debug:(Format.formatter -> 'type_variable -> unit) -> (type_variable -> 'type_variable) -> 'type_variable t -> type_constraint_simpl -> 'type_variable t
-    (* Update the state when a constraint is removed *)
-    (* TODO: check this API to see if we're giving too much flexibility to the plugin *)
-    val remove_constraint :(Format.formatter -> 'type_variable -> unit) -> (type_variable -> 'type_variable) -> 'type_variable t -> type_constraint_simpl -> ('type_variable t, Typer_common.Errors.typer_error) Trace.result
-    (* Update the state to merge entries of maps and sets of type
-       variables.  *)
-    val merge_aliases : ?debug:(Format.formatter -> 'new_ t -> unit) -> ('old, 'new_) merge_keys -> 'old t -> 'new_ t
-    (* The pretty-printer is used for debugging *)
-    val pp : (Format.formatter -> 'typeVariable -> unit) -> Format.formatter -> 'typeVariable t -> unit
-    val name : string
+module INDEXER_PLUGIN_TYPE =
+  functor
+    (Type_variable : sig type t end)
+    (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) ->
+  struct
+    (* t is the type of the state of the plugin
+       data Plugin (t :: 🞰→🞰) = Plugin {
+         create_state :: forall typeVariable . (typeVariable → typeVariable → int) → t typeVariable
+         add_constraint :: normalizer (t typeVariable) type_constraint_simpl type_constraint_simpl
+         remove_constraint :: normalizer_rm (t typeVariable) type_constraint_simpl
+         merge_aliases :: forall old new . merge_keys old new → old → old → t old → t new
+       }
+    *)
+    module type S = sig
+      open Type_variable_abstraction.Types
+      type 'typeVariable t
+      (* Create the indexer's initial state *)
+      val create_state : cmp:('typeVariable -> 'typeVariable -> int) -> 'typeVariable t
+      (* Update the state when a constraint is added *)
+      val add_constraint : ?debug:(Format.formatter -> 'type_variable -> unit) -> (Type_variable.t -> 'type_variable) -> 'type_variable t -> type_constraint_simpl -> 'type_variable t
+      (* Update the state when a constraint is removed *)
+      (* TODO: check this API to see if we're giving too much flexibility to the plugin *)
+      val remove_constraint :
+        (Format.formatter -> 'type_variable -> unit) ->
+        (Type_variable.t -> 'type_variable) ->
+        'type_variable t ->
+        type_constraint_simpl ->
+        ('type_variable t, Type_variable_abstraction.Errors.typer_error) Trace.result
+      (* Update the state to merge entries of maps and sets of type
+         variables.  *)
+      val merge_aliases : ?debug:(Format.formatter -> 'new_ t -> unit) -> ('old, 'new_) merge_keys -> 'old t -> 'new_ t
+      (* The pretty-printer is used for debugging *)
+      val pp : (Format.formatter -> 'typeVariable -> unit) -> Format.formatter -> 'typeVariable t -> unit
+      val name : string
+    end
   end
+
+module type INDEXER_PLUGIN = sig
+  module M : functor
+    (Type_variable : sig type t end)
+    (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) ->
+    INDEXER_PLUGIN_TYPE(Type_variable)(Type_variable_abstraction).S
 end
 
-module type INDEXER_PLUGIN_ = sig
-  module M : functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> INDEXER_PLUGIN(Type_variable)(Type_variable_abstraction).S
-end
+open Ast_typed.Types            (* TODO: move this further down the file, after the big functors *)
 
 (* The kind PerPluginType describes type-level functions which take
    a type Plugin.t, and produce an arbitrary type which can depend
@@ -97,7 +138,10 @@ end
      …
 *)
 (* type PerPluginType = 🞰→(🞰→🞰)→🞰 *)
-module type PerPluginTypeArg = sig type 'typeVariable t val pp : (Format.formatter -> 'type_variable -> unit) -> Format.formatter -> 'type_variable t -> unit end (* just the part of Plugin we care about *)
+module type PerPluginTypeArg = sig
+  type 'type_variable t
+  val pp : (Format.formatter -> type_variable -> unit) -> Format.formatter -> type_variable t -> unit
+end (* just the part of Plugin we care about *)
 module type PerPluginType = functor (Plugin : PerPluginTypeArg) -> sig
   type t
   val pp : Format.formatter -> t -> unit
@@ -127,7 +171,7 @@ module type Mapped_function = sig
   module MakeInType : PerPluginType
   module MakeOutType : PerPluginType
   module Monad : Monad
-  module F(Indexer_plugin : INDEXER_PLUGIN(Type_variable)(Type_variable_abstraction).S) : sig
+  module F(Indexer_plugin : INDEXER_PLUGIN_TYPE(Type_variable)(Opaque_type_variable).S) : sig
     val f : string -> extra_args -> MakeInType(Indexer_plugin).t -> MakeOutType(Indexer_plugin).t Monad.t
   end
 end
@@ -139,10 +183,10 @@ module type Indexer_plugin_fields = functor (Ppt : PerPluginType) -> sig
   (* The assignments plug-in must always be present. We force its
      inclusion by asking for a function extracting that field. *)
   module Assignments : sig
-    type 'typeVariable t
+    type 'type_variable t
     val find_opt : 'type_variable -> 'type_variable t -> constructor_or_row option
     val bindings : 'type_variable t -> ('type_variable * constructor_or_row) list
-    val pp : (Format.formatter -> 'typeVariable -> unit) -> Format.formatter -> 'typeVariable t -> unit
+    val pp : (Format.formatter -> 'type_variable -> unit) -> Format.formatter -> 'type_variable t -> unit
   end
   val assignments : flds -> < assignments : Ppt(Assignments).t >
 end
@@ -163,11 +207,6 @@ module type IndexerPlugins = sig
 end
 
 (* ************ end indexer plug-in system ************  *)
-
-type 'old_constraint_type selector_input = 'old_constraint_type (* some info about the constraint just added, so that we know what to look for *)
-type 'selector_output selector_outputs = 'selector_output list
-(* type ('old_contraint_type, 'selector_output) selector = 'old_constraint_type selector_input -> structured_dbs -> 'selector_output selector_outputs *)
-type ('selector_output , 'errors) propagator = 'selector_output -> (type_variable -> type_variable) -> (updates, 'errors) result
 
 type ('selector_output, -'flds) selector = (type_variable -> type_variable) -> type_constraint_simpl -> 'flds -> 'selector_output list
 

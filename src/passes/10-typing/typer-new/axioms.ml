@@ -1,1 +1,1 @@
-include Type_variable_instance.Axioms
+include Solver_types.Axioms

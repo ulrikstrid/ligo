@@ -7,6 +7,12 @@ open Solver_types
    }
 *)
 
+module Assignments = Assignments.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+module GroupedByVariable = GroupedByVariable.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+module CycleDetectionTopologicalSort = CycleDetectionTopologicalSort.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+module ByConstraintIdentifier = ByConstraintIdentifier.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+module TypeclassesConstraining = TypeclassesConstraining.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+
 (* TODO: this is probably hidden by its signature somewhere? *)
 module Indexers_plugins_fields = functor (Ppt : PerPluginType) -> struct
   type flds = <

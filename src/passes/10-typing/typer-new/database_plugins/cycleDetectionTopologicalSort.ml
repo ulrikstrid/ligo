@@ -1,3 +1,10 @@
+open Solver_types
+
+module M = functor
+  (Type_variable : sig type t end)
+  (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) ->
+struct
+  (* open Type_variable_abstraction.Types *)
 open Trace
 open Solver_types
 
@@ -13,3 +20,4 @@ let pp _type_variable ppf () = Format.fprintf ppf "()"
 let name = "cycle_detection_topological_sort"
 
 let get_state_for_tests state = state
+end

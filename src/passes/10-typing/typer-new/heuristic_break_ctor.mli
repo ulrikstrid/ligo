@@ -3,7 +3,7 @@ open Ast_typed.Types
 open Solver_types
 
 val heuristic : <
-  grouped_by_variable : type_variable GroupedByVariable.t ;
+  grouped_by_variable : type_variable Grouped_by_variable.t ;
   ..
 > ex_heuristic_plugin
 
@@ -12,7 +12,7 @@ type selector_output = {
   a_k'_var' : constructor_or_row ;
 }
 
-val selector : ( type_variable -> type_variable ) -> type_constraint_simpl -> < grouped_by_variable : type_variable GroupedByVariable.t > -> selector_output list
+val selector : ( type_variable -> type_variable ) -> type_constraint_simpl -> < grouped_by_variable : type_variable Grouped_by_variable.t > -> selector_output list
 
 (* module Indexes : functor (Type_variable : sig type t end) -> sig
  *   module type S = sig

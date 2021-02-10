@@ -3,46 +3,16 @@
 
 module TYPE_VARIABLE_ABSTRACTION = Type_variable_abstraction.TYPE_VARIABLE_ABSTRACTION
 
-module GROUPED_BY_VARIABLE(Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) = struct
-  module type S = sig
-    type 'tv t = 'tv Database_plugins.All_plugins.GroupedByVariable.t
-    open Type_variable_abstraction.Types
-    val get_constructors_by_lhs : Type_variable.t -> Type_variable.t t -> c_constructor_simpl MultiSet.t [@@warning "-32"]
-    val get_rows_by_lhs : Type_variable.t -> Type_variable.t t -> c_row_simpl MultiSet.t [@@warning "-32"]
-    val get_polys_by_lhs : Type_variable.t -> Type_variable.t t -> c_poly_simpl MultiSet.t [@@warning "-32"]
-    val get_access_labels_by_result_type : Type_variable.t -> Type_variable.t t -> c_access_label_simpl MultiSet.t [@@warning "-32"]
-    val get_access_labels_by_record_type : Type_variable.t -> Type_variable.t t -> c_access_label_simpl MultiSet.t [@@warning "-32"]
-  end
-end
-
 module INDEXES = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
+  module All_plugins = Database_plugins.All_plugins.M(Type_variable)(Type_variable_abstraction)
+  open All_plugins
   module type S = sig
-    val grouped_by_variable : Type_variable.t Database_plugins.All_plugins.GroupedByVariable.t (* Grouped_by_variable.t *)
+    val grouped_by_variable : Type_variable.t Grouped_by_variable.t
   end
 end
 
-module III_Grouped_by_variable(Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) = struct
-  type 'a t = 'a Database_plugins.All_plugins.GroupedByVariable.t
-  open Type_variable_abstraction.Types
-  let get_constructors_by_lhs          : Type_variable.t -> Type_variable.t t -> c_constructor_simpl MultiSet.t  = fun _ _ -> failwith "todo"
-  let get_rows_by_lhs                  : Type_variable.t -> Type_variable.t t -> c_row_simpl MultiSet.t          = fun _ _ -> failwith "todo"
-  let get_polys_by_lhs                 : Type_variable.t -> Type_variable.t t -> c_poly_simpl MultiSet.t         = fun _ _ -> failwith "todo"
-  let get_access_labels_by_result_type : Type_variable.t -> Type_variable.t t -> c_access_label_simpl MultiSet.t = fun _ _ -> failwith "todo"
-  let get_access_labels_by_record_type : Type_variable.t -> Type_variable.t t -> c_access_label_simpl MultiSet.t = fun _ _ -> failwith "todo"
-end
-
-
-
-
-(* open Typesystem.Solver_types *)
 open Trace
 open Typer_common.Errors
-(* open Database_plugins.All_plugins *)
-
-(* type ('type_variable, 'a) flds = <
- *   grouped_by_variable : 'type_variable GroupedByVariable.t ;
- *   ..
- * > as 'a *)
 
 module M = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
   open Type_variable_abstraction.Types
@@ -56,10 +26,10 @@ module M = functor (Type_variable : sig type t end) (Type_variable_abstraction :
   }
 
   type flds = (module INDEXES(Type_variable)(Type_variable_abstraction).S)
+  module All_plugins = Database_plugins.All_plugins.M(Type_variable)(Type_variable_abstraction)
+  open All_plugins
 
   let heuristic_name = "break_ctor"
-
-  module III_Grouped_by_variable : GROUPED_BY_VARIABLE(Type_variable)(Type_variable_abstraction).S = III_Grouped_by_variable(Type_variable)(Type_variable_abstraction)
 
 let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds -> selector_output list =
   (* find two rules with the shape x = k(var …) and x = k'(var' …) *)
@@ -70,8 +40,8 @@ let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds
       (* finding other constraints related to the same type variable and
       with the same sort of constraint (constructor vs. constructor)
       is symmetric *)
-      let other_rows_lhs = III_Grouped_by_variable.get_rows_by_lhs (repr c.tv) Indexes.grouped_by_variable in
-      let tmp = III_Grouped_by_variable.get_constructors_by_lhs (repr c.tv) Indexes.grouped_by_variable in
+      let other_rows_lhs = Grouped_by_variable.get_rows_by_lhs (repr c.tv) Indexes.grouped_by_variable in
+      let tmp = Grouped_by_variable.get_constructors_by_lhs (repr c.tv) Indexes.grouped_by_variable in
       let other_constructors_lhs = 
         List.filter (fun x -> not @@  (Type_variable_abstraction.Compare.c_constructor_simpl c x = 0)) @@ MultiSet.elements @@
         tmp in
@@ -91,8 +61,8 @@ let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds
       (* Format.printf "In break_ctor.selector_ for %a\n%!" Type_variable_abstraction.PP.type_constraint_simpl_short type_constraint_simpl; *)
       let other_rows_lhs = 
         List.filter (fun x -> not @@  (Type_variable_abstraction.Compare.c_row_simpl r x = 0)) @@ MultiSet.elements @@
-        III_Grouped_by_variable.get_rows_by_lhs (repr r.tv) Indexes.grouped_by_variable in
-      let constructors_lhs = III_Grouped_by_variable.get_constructors_by_lhs (repr r.tv) Indexes.grouped_by_variable in
+        Grouped_by_variable.get_rows_by_lhs (repr r.tv) Indexes.grouped_by_variable in
+      let constructors_lhs = Grouped_by_variable.get_constructors_by_lhs (repr r.tv) Indexes.grouped_by_variable in
       let () = ( if MultiSet.is_empty constructors_lhs
                  then ()
                  else failwith (Format.asprintf "TODO: type error with %a ; %a" Type_variable_abstraction.PP.c_row_simpl r (MultiSet.pp Type_variable_abstraction.PP.c_constructor_simpl) constructors_lhs)) in
@@ -109,10 +79,10 @@ let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds
 let alias_selector : type_variable -> type_variable -> flds -> selector_output list =
   fun a b (module Indexes) ->
   (* Format.printf "Break_ctor.alias_selector %a %a\n%!" Type_variable_abstraction.PP.type_variable a Type_variable_abstraction.PP.type_variable b ; *)
-  let a_constructors = III_Grouped_by_variable.get_constructors_by_lhs a Indexes.grouped_by_variable in
-  let b_constructors = III_Grouped_by_variable.get_constructors_by_lhs b Indexes.grouped_by_variable in
-  let a_rows = III_Grouped_by_variable.get_rows_by_lhs a Indexes.grouped_by_variable in
-  let b_rows = III_Grouped_by_variable.get_rows_by_lhs b Indexes.grouped_by_variable in
+  let a_constructors = Grouped_by_variable.get_constructors_by_lhs a Indexes.grouped_by_variable in
+  let b_constructors = Grouped_by_variable.get_constructors_by_lhs b Indexes.grouped_by_variable in
+  let a_rows = Grouped_by_variable.get_rows_by_lhs a Indexes.grouped_by_variable in
+  let b_rows = Grouped_by_variable.get_rows_by_lhs b Indexes.grouped_by_variable in
   let a_ctor = MultiSet.map_elements (fun a -> `Constructor a) a_constructors in
   let b_ctor = MultiSet.map_elements (fun a -> `Constructor a) b_constructors in
   let a_row = List.map (fun a -> `Row a) (MultiSet.elements a_rows) in
@@ -143,7 +113,7 @@ let printer_json ({a_k_var;a_k'_var'}) =
     ("a_k_var", constructor_or_row a_k_var);
     ("a_k'_var'", constructor_or_row a_k'_var')]
 let comparator { a_k_var=a1; a_k'_var'=a2 } { a_k_var=b1; a_k'_var'=b2 } =
-  let open Type_Variable_Abstraction.Compare in
+  let open Type_variable_abstraction.Compare in
   constructor_or_row a1 b1 <? fun () -> constructor_or_row a2 b2
 
 let propagator : (selector_output, _) Type_variable_abstraction.Solver_types.propagator =
@@ -159,7 +129,7 @@ let propagator : (selector_output, _) Type_variable_abstraction.Solver_types.pro
   (* The selector is expected to provice two constraints with the shape x = k(var …) and x = k'(var' …) *)
   let a_tv = repr @@ get_tv a in
   let b_tv = repr @@ get_tv b in
-  assert (Type_Variable_Abstraction.Compare.type_variable a_tv b_tv = 0);
+  assert (Type_variable_abstraction.Compare.type_variable a_tv b_tv = 0);
   (* produce constraints: *)
   (* a.tv = b.tv *) (* nope, already the same *)
   (* let eq1 = c_equation (wrap (Propagator_break_ctor "a") @@ P_variable a_tv) (wrap (Propagator_break_ctor "b") @@ P_variable b_tv) "propagator: break_ctor" in *)
@@ -169,19 +139,19 @@ let propagator : (selector_output, _) Type_variable_abstraction.Solver_types.pro
   (* a.c_tag = b.c_tag *)
   ( match a , b with
     | `Row a , `Row b ->
-      if (Type_Variable_Abstraction.Compare.row_tag a.r_tag b.r_tag) <> 0 then
+      if (Type_variable_abstraction.Compare.row_tag a.r_tag b.r_tag) <> 0 then
         (* TODO : use error monad *)
         failwith (Format.asprintf "type error: incompatible types, not same ctor %a vs. %a (compare returns %d)"
-                    Type_Variable_Abstraction.PP.c_row_simpl a
-                    Type_Variable_Abstraction.PP.c_row_simpl b
-                    (Type_Variable_Abstraction.Compare.row_tag a.r_tag b.r_tag))
+                    Type_variable_abstraction.PP.c_row_simpl a
+                    Type_variable_abstraction.PP.c_row_simpl b
+                    (Type_variable_abstraction.Compare.row_tag a.r_tag b.r_tag))
     | `Constructor a , `Constructor b ->
-      if (Type_Variable_Abstraction.Compare.constant_tag a.c_tag b.c_tag) <> 0 then
+      if (Type_variable_abstraction.Compare.constant_tag a.c_tag b.c_tag) <> 0 then
         (* TODO : use error monad *)
         failwith (Format.asprintf "type error: incompatible types, not same ctor %a vs. %a (compare returns %d)"
-                    Type_Variable_Abstraction.PP.c_constructor_simpl a
-                    Type_Variable_Abstraction.PP.c_constructor_simpl b
-                    (Type_Variable_Abstraction.Compare.constant_tag a.c_tag b.c_tag))
+                    Type_variable_abstraction.PP.c_constructor_simpl a
+                    Type_variable_abstraction.PP.c_constructor_simpl b
+                    (Type_variable_abstraction.Compare.constant_tag a.c_tag b.c_tag))
     | _ -> failwith "type error : break_ctor propagator"
   );
   (* Produce constraint a.tv_list = b.tv_list *)
@@ -217,9 +187,7 @@ let propagator : (selector_output, _) Type_variable_abstraction.Solver_types.pro
   ]
 end
 
-
-module Type_variable = struct type t = Ast_typed.Types.type_variable end
-module MM = M(Type_variable)(Type_variable_instance.Opaque_type_variable)
+module MM = M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
 
 
 
@@ -227,18 +195,17 @@ open Ast_typed.Types
 open Solver_types
 
 module Compat = struct
-  open Database_plugins.All_plugins
+  module All_plugins = Database_plugins.All_plugins.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+  open All_plugins
   let heuristic_name = MM.heuristic_name
-  let selector repr c (flds : < grouped_by_variable : type_variable GroupedByVariable.t ; .. >) =
+  let selector repr c (flds : < grouped_by_variable : type_variable Grouped_by_variable.t ; .. >) =
     let module Flds = struct
-      module Grouped_by_variable = GroupedByVariable
       let grouped_by_variable : type_variable Grouped_by_variable.t = flds#grouped_by_variable
     end
     in
     MM.selector repr c (module Flds)
-  let alias_selector a b (flds : < grouped_by_variable : type_variable GroupedByVariable.t ; .. >) =
+  let alias_selector a b (flds : < grouped_by_variable : type_variable Grouped_by_variable.t ; .. >) =
     let module Flds = struct
-      module Grouped_by_variable = GroupedByVariable
       let grouped_by_variable : type_variable Grouped_by_variable.t = flds#grouped_by_variable
     end
     in

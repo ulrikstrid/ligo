@@ -22,12 +22,14 @@ open Simple_utils
 
 module TYPE_VARIABLE_ABSTRACTION = Type_variable_abstraction.TYPE_VARIABLE_ABSTRACTION
 
-module M = functor (Type_variable : sig type t end) (Type_Variable_Abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
-  open Type_Variable_Abstraction
-  open Type_Variable_Abstraction.Types
-  open Type_Variable_Abstraction.Reasons
+module M = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
+  open Type_variable_abstraction
+  open Type_variable_abstraction.Types
+  open Type_variable_abstraction.Reasons
 
-  open Heuristic_tc_fundep_utils.Utils(Type_variable)(Type_Variable_Abstraction)
+  module Utils = Heuristic_tc_fundep_utils.Utils(Type_variable)(Type_variable_abstraction)
+  open Utils
+  open Utils.All_plugins
 
   type selector_output = {
     tc : c_typeclass_simpl ;
@@ -43,13 +45,13 @@ module M = functor (Type_variable : sig type t end) (Type_Variable_Abstraction :
 (* Find typeclass constraints in the dbs which constrain c.tv *)
 let selector_by_ctor : (type_variable -> type_variable) -> flds -> c_constructor_simpl -> selector_output list =
   fun repr (module Indexes) c ->
-  let typeclasses = (Indexes.Typeclasses_constraining.get_typeclasses_constraining_list (repr c.tv) Indexes.typeclasses_constraining) in
+  let typeclasses = (Typeclasses_constraining.get_typeclasses_constraining_list (repr c.tv) Indexes.typeclasses_constraining) in
   let cs_pairs_db = List.map (fun tc -> { tc ; c = `Constructor c }) typeclasses in
   cs_pairs_db
 
 let selector_by_row : (type_variable -> type_variable) -> flds -> c_row_simpl -> selector_output list =
   fun repr (module Indexes) r ->
-  let typeclasses = (Indexes.Typeclasses_constraining.get_typeclasses_constraining_list (repr r.tv) Indexes.typeclasses_constraining) in
+  let typeclasses = (Typeclasses_constraining.get_typeclasses_constraining_list (repr r.tv) Indexes.typeclasses_constraining) in
   let cs_pairs_db = List.map (fun tc -> { tc ; c = `Row r }) typeclasses in
   cs_pairs_db
 
@@ -64,7 +66,7 @@ let selector_by_tc : (type_variable -> type_variable) -> flds -> c_typeclass_sim
        node at a time, we only need the top-level assignment for
        that variable, e.g. α = κ(βᵢ, …). We can therefore look
        directly in the assignments. *)
-    match Indexes.Assignments.find_opt (repr tv) Indexes.assignments with
+    match Assignments.find_opt (repr tv) Indexes.assignments with
     | Some cr -> [({ tc ; c = cr } : selector_output)]
     | None   -> [] in
   List.flatten @@ List.map aux tc.args
@@ -96,12 +98,12 @@ let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds
 
 let alias_selector : type_variable -> type_variable -> flds -> selector_output list =
   fun a b (module Indexes) ->
-  let a_tcs = (Indexes.Typeclasses_constraining.get_typeclasses_constraining_list a Indexes.typeclasses_constraining) in
-  let b_tcs = (Indexes.Typeclasses_constraining.get_typeclasses_constraining_list b Indexes.typeclasses_constraining) in
-  let a_lhs_constructors = Indexes.Grouped_by_variable.get_constructors_by_lhs a Indexes.grouped_by_variable in
-  let b_lhs_constructors = Indexes.Grouped_by_variable.get_constructors_by_lhs b Indexes.grouped_by_variable in
-  let a_lhs_rows = Indexes.Grouped_by_variable.get_rows_by_lhs a Indexes.grouped_by_variable in
-  let b_lhs_rows = Indexes.Grouped_by_variable.get_rows_by_lhs b Indexes.grouped_by_variable in
+  let a_tcs = (Typeclasses_constraining.get_typeclasses_constraining_list a Indexes.typeclasses_constraining) in
+  let b_tcs = (Typeclasses_constraining.get_typeclasses_constraining_list b Indexes.typeclasses_constraining) in
+  let a_lhs_constructors = Grouped_by_variable.get_constructors_by_lhs a Indexes.grouped_by_variable in
+  let b_lhs_constructors = Grouped_by_variable.get_constructors_by_lhs b Indexes.grouped_by_variable in
+  let a_lhs_rows = Grouped_by_variable.get_rows_by_lhs a Indexes.grouped_by_variable in
+  let b_lhs_rows = Grouped_by_variable.get_rows_by_lhs b Indexes.grouped_by_variable in
   let a_ctors = MultiSet.map_elements (fun a -> `Constructor a) a_lhs_constructors in
   let a_rows  = MultiSet.map_elements (fun a -> `Row a        ) a_lhs_rows         in
   let b_ctors = MultiSet.map_elements (fun a -> `Constructor a) b_lhs_constructors in
@@ -264,7 +266,7 @@ let deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result
   let%bind cleaned = transpose_back (tcs.reason_typeclass_simpl, tcs.original_id) tcs.id_typeclass_simpl vars_and_possibilities in
   ok { deduced ; cleaned }
 
-let propagator : (selector_output, typer_error) Type_Variable_Abstraction.Solver_types.propagator =
+let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
   fun selected repr ->
   (* The selector is expected to provide constraints with the shape (α
      = κ(β, …)) and to update the private storage to keep track of the
@@ -321,13 +323,13 @@ let propagator : (selector_output, typer_error) Type_Variable_Abstraction.Solver
 
 let printer ppd (t : selector_output) =
   let open Format in
-  let open Type_Variable_Abstraction.PP in
+  let open Type_variable_abstraction.PP in
   let lst = t.tc in
   let a = t.c in fprintf ppd "%a and %a" c_typeclass_simpl_short lst constructor_or_row_short a
 
 let pp_deduce_and_clean_result ppf {deduced;cleaned} =
   let open Format in
-  let open Type_Variable_Abstraction.PP in
+  let open Type_variable_abstraction.PP in
   fprintf ppf "{@[<hv 2>@
               deduced : %a;@
               cleaned : %a;@
@@ -336,19 +338,18 @@ let pp_deduce_and_clean_result ppf {deduced;cleaned} =
     c_typeclass_simpl cleaned
 
 let printer_json (t : selector_output) =
-  let open Type_Variable_Abstraction.Yojson in
+  let open Type_variable_abstraction.Yojson in
   let lst = t.tc in
   let a = t.c in 
   `Assoc [
     ("tc",c_typeclass_simpl lst)
     ;("a",constructor_or_row a)]
 let comparator { tc=a1; c=a2 } { tc=b1; c=b2 } =
-  let open Type_Variable_Abstraction.Compare in
+  let open Type_variable_abstraction.Compare in
   c_typeclass_simpl a1 b1 <? fun () -> constructor_or_row a2 b2
 end
 
-module Type_variable = struct type t = Ast_typed.Types.type_variable end
-module MM = M(Type_variable)(Type_variable_instance.Opaque_type_variable)
+module MM = M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
 
 
 
@@ -356,30 +357,23 @@ open Ast_typed.Types
 open Solver_types
 
 module Compat = struct
-  open Database_plugins.All_plugins
+  module All_plugins = Database_plugins.All_plugins.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+  open All_plugins
   let heuristic_name = MM.heuristic_name
-  let selector repr c (flds : < grouped_by_variable : type_variable GroupedByVariable.t ; .. >) =
+  let selector repr c flds =
     let module Flds = struct
-      module Grouped_by_variable = GroupedByVariable
       let grouped_by_variable : type_variable Grouped_by_variable.t = flds#grouped_by_variable
-      module Assignments = Assignments
       let assignments : type_variable Assignments.t = flds#assignments
-      module Typeclasses_constraining = TypeclassesConstraining
       let typeclasses_constraining : type_variable Typeclasses_constraining.t = flds#typeclasses_constraining
-      module By_constraint_identifier = ByConstraintIdentifier
       let by_constraint_identifier : type_variable By_constraint_identifier.t = flds#by_constraint_identifier
     end
     in
     MM.selector repr c (module Flds)
-  let alias_selector a b (flds : < grouped_by_variable : type_variable GroupedByVariable.t ; .. >) =
+  let alias_selector a b flds =
     let module Flds = struct
-      module Grouped_by_variable = GroupedByVariable
       let grouped_by_variable : type_variable Grouped_by_variable.t = flds#grouped_by_variable
-      module Assignments = Assignments
       let assignments : type_variable Assignments.t = flds#assignments
-      module Typeclasses_constraining = TypeclassesConstraining
       let typeclasses_constraining : type_variable Typeclasses_constraining.t = flds#typeclasses_constraining
-      module By_constraint_identifier = ByConstraintIdentifier
       let by_constraint_identifier : type_variable By_constraint_identifier.t = flds#by_constraint_identifier
     end
     in

@@ -13,7 +13,7 @@ module MergeAliases = struct
   module MakeInType = PerPluginState
   module MakeOutType = PerPluginState
   module Monad = NoMonad
-  module F(Indexer_plugin : INDEXER_PLUGIN) = struct
+  module F(Indexer_plugin : INDEXER_PLUGIN_TYPE(Solver_types.Type_variable)(Solver_types.Opaque_type_variable).S) = struct
     let f _ UnionFind.Poly2.{ demoted_repr ; new_repr } state =
       let merge_keys = {
         map = (fun m -> ReprMap.alias ~debug:(fun ppf (a,_) -> Ast_typed.PP.type_variable ppf a) ~demoted_repr ~new_repr m);
@@ -32,7 +32,7 @@ module AddConstraint = struct
   module MakeInType = PerPluginState
   module MakeOutType = PerPluginState
   module Monad = NoMonad
-  module F(Indexer_plugin : INDEXER_PLUGIN) = struct
+  module F(Indexer_plugin : INDEXER_PLUGIN_TYPE(Solver_types.Type_variable)(Solver_types.Opaque_type_variable).S) = struct
     let f _ (repr, constraint_) state =
       (* Format.printf "In AddConstraint for %s and constraint %a\n%!" name PP.type_constraint_ constraint_; *)
       Indexer_plugin.add_constraint repr state constraint_
@@ -54,7 +54,7 @@ module RemoveConstraint = struct
   module MakeInType = PerPluginState
   module MakeOutType = PerPluginState
   module Monad = Typer_error_trace_monad
-  module F(Indexer_plugin : INDEXER_PLUGIN) = struct
+  module F(Indexer_plugin : INDEXER_PLUGIN_TYPE(Solver_types.Type_variable)(Solver_types.Opaque_type_variable).S) = struct
     let f _ (repr, to_remove) state =
       (* Format.printf "In Remove Constraint in %s for %a\n%!" name PP.type_constraint_ to_remove; *)
       Indexer_plugin.remove_constraint Ast_typed.PP.type_variable repr state to_remove
@@ -69,7 +69,7 @@ module CreateState = struct
   module MakeInType = PerPluginUnit
   module MakeOutType = PerPluginState
   module Monad = NoMonad
-  module F(Indexer_plugin : INDEXER_PLUGIN) = struct
+  module F(Indexer_plugin : INDEXER_PLUGIN_TYPE(Solver_types.Type_variable)(Solver_types.Opaque_type_variable).S) = struct
     let f _ () (() as _state) = Indexer_plugin.create_state ~cmp:Ast_typed.Compare.type_variable
   end
 end
@@ -82,7 +82,7 @@ module PPPlugin = struct
   module MakeInType = PerPluginState
   module MakeOutType = PerPluginUnit
   module Monad = NoMonad
-  module F(Indexer_plugin : INDEXER_PLUGIN) = struct
+  module F(Indexer_plugin : INDEXER_PLUGIN_TYPE(Solver_types.Type_variable)(Solver_types.Opaque_type_variable).S) = struct
     let f _ ppf state =
       Format.fprintf ppf "%s =@ @[<hv 2> %a @] ;@ " Indexer_plugin.name (Indexer_plugin.pp Var.pp) state
   end

@@ -150,6 +150,14 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
         proof_trace : proof_trace ;
       }
       type updates = update list
+
+      type expression_
+      and expression_variable = expression_ Var.t Location.wrap
+
+      type module_variable = string
+
+      type type_expression
+      type expression
     end
 
     module Compare : sig
@@ -159,12 +167,13 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       val c_constructor_simpl : c_constructor_simpl comparator
       val c_row_simpl : c_row_simpl comparator
       val c_poly_simpl : c_poly_simpl comparator
-      val c_typeclass_simpl : c_typeclass_simpl comparator
       val c_access_label_simpl : c_access_label_simpl comparator
+      val c_typeclass_simpl : c_typeclass_simpl comparator
       val constructor_or_row : constructor_or_row comparator
       val label : label comparator
       val constant_tag : constant_tag comparator
       val row_tag : row_tag comparator
+      val constraint_identifier : constraint_identifier comparator
       val type_variable : type_variable comparator
     end
 
@@ -179,6 +188,8 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       val c_typeclass_simpl_short : c_typeclass_simpl pretty_printer
       val c_access_label_simpl : c_access_label_simpl pretty_printer
       val constructor_or_row_short : constructor_or_row pretty_printer
+      val c_row_simpl_short : c_row_simpl pretty_printer
+      val constraint_identifier : constraint_identifier pretty_printer
       val type_variable : type_variable pretty_printer
     end
 
@@ -234,6 +245,87 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       open Types
       val type_level_eval : type_value -> type_value * type_constraint list
       val check_applied : ((type_value * _) as 'a) -> 'a
+    end
+
+    module Errors : sig
+      type typer_error = [
+        | `Typer_missing_funarg_annotation of Types.expression_variable
+        | `Typer_michelson_comb_no_record of Location.t
+        | `Typer_michelson_comb_no_variant of Location.t
+        | `Typer_unbound_module_variable of Ast_typed.Environment.t * Types.module_variable * Location.t
+        | `Typer_unbound_type_variable of Ast_typed.Environment.t * Types.type_variable * Location.t
+        | `Typer_unbound_variable of Ast_typed.Environment.t * Types.expression_variable * Location.t
+        | `Typer_match_missing_case of Types.label list * Types.label list * Location.t
+        | `Typer_match_extra_case of Types.label list * Types.label list * Location.t
+        | `Typer_unbound_constructor of Ast_typed.Environment.t * Types.label * Location.t
+        | `Typer_redundant_constructor of Ast_typed.Environment.t * Types.label * Location.t
+        | `Typer_type_constant_wrong_number_of_arguments of Types.type_variable* int * int * Location.t
+        | `Typer_michelson_or_no_annotation of Types.label * Location.t
+        | `Typer_module_tracer of Ast_core.module_ * typer_error
+        | `Typer_constant_declaration_tracer of Ast_core.expression_variable * Ast_core.expression * (Types.type_expression option) * typer_error
+        | `Typer_match_error of Ast_core.matching_expr * Types.type_expression * Location.t
+        | `Typer_needs_annotation of Ast_core.expression * string
+        | `Typer_fvs_in_create_contract_lambda of Ast_core.expression * Types.expression_variable
+        | `Typer_create_contract_lambda of Ast_core.constant' * Ast_core.expression
+        | `Typer_should_be_a_function_type of Types.type_expression * Ast_core.expression
+        | `Typer_bad_record_access of Ast_core.label * Ast_core.expression * Types.type_expression * Location.t
+        | `Typer_expression_tracer of Ast_core.expression * typer_error
+        | `Typer_record_access_tracer of Types.expression * typer_error
+        | `Typer_assert_equal of Location.t * Types.type_expression * Types.type_expression
+        | `Typer_corner_case of string
+        | `Typer_bad_collect_loop of Types.type_expression * Location.t
+        | `Typer_declaration_order_record of Location.t
+        | `Typer_too_small_record of Location.t
+        | `Typer_expected_record of Location.t * Types.type_expression
+        | `Typer_expected_variant of Location.t * Types.type_expression
+        | `Typer_wrong_param_number of Location.t * string * int * Types.type_expression list
+        | `Typer_expected_function of Location.t * Types.type_expression
+        | `Typer_expected_pair of Location.t * Types.type_expression
+        | `Typer_expected_list of Location.t * Types.type_expression
+        | `Typer_expected_set of Location.t * Types.type_expression
+        | `Typer_expected_map of Location.t * Types.type_expression
+        | `Typer_expected_big_map of Location.t * Types.type_expression
+        | `Typer_expected_option of Location.t * Types.type_expression
+        | `Typer_expected_nat of Location.t * Types.type_expression
+        | `Typer_expected_bytes of Location.t * Types.type_expression
+        | `Typer_expected_key of Location.t * Types.type_expression
+        | `Typer_expected_signature of Location.t * Types.type_expression
+        | `Typer_expected_contract of Location.t * Types.type_expression
+        | `Typer_expected_string of Location.t * Types.type_expression
+        | `Typer_expected_key_hash of Location.t * Types.type_expression
+        | `Typer_expected_mutez of Location.t * Types.type_expression
+        | `Typer_expected_op_list of Location.t * Types.type_expression
+        | `Typer_expected_int of Location.t * Types.type_expression
+        | `Typer_expected_bool of Location.t * Types.type_expression
+        | `Typer_expected_ticket of Location.t * Types.type_expression
+        | `Typer_expected_sapling_transaction of Location.t * Types.type_expression
+        | `Typer_expected_sapling_state of Location.t * Types.type_expression
+        | `Typer_not_matching of Location.t * Types.type_expression * Types.type_expression
+        | `Typer_not_annotated of Location.t
+        | `Typer_bad_substraction of Location.t
+        | `Typer_wrong_size of Location.t * Types.type_expression
+        | `Typer_wrong_neg of Location.t * Types.type_expression
+        | `Typer_wrong_not of Location.t * Types.type_expression
+        | `Typer_typeclass_error of Location.t * Types.type_expression list list * Types.type_expression list
+        | `Typer_converter of Types.type_expression
+        | `Typer_uncomparable_types of Location.t * Types.type_expression * Types.type_expression
+        | `Typer_comparator_composed of Location.t * Types.type_expression
+        | `Typer_constant_decl_tracer of Ast_core.expression_variable * Ast_core.expression * Types.type_expression option * typer_error
+        | `Typer_match_variant_tracer of Ast_core.matching_expr * typer_error
+        | `Typer_unrecognized_type_constant of Ast_core.type_expression
+        | `Typer_expected_ascription of Ast_core.expression
+        | `Typer_different_types of Types.type_expression * Types.type_expression
+        | `Typer_variant_redefined_error of Location.t
+        | `Typer_record_redefined_error of Location.t
+        | `Typer_constant_tag_number_of_arguments of string * Types.constant_tag * Types.constant_tag * int * int
+        | `Typer_typeclass_not_a_rectangular_matrix
+        | `Typer_could_not_remove of Types.type_constraint_simpl
+        | `Typer_internal_error of string * string
+        | `Trace_debug of string * typer_error
+        | `Typer_pattern_do_not_match of Location.t
+        | `Typer_label_do_not_match of Types.label * Types.label * Location.t
+        | `Typer_solver_no_progress of string
+      ]
     end
   end
 end

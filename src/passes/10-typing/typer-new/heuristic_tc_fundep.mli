@@ -6,9 +6,9 @@ open Solver_types
 
 val heuristic : <
     assignments              : type_variable Assignments.t ;
-    grouped_by_variable      : type_variable GroupedByVariable.t ;
-    typeclasses_constraining : type_variable TypeclassesConstraining.t ;
-    by_constraint_identifier : type_variable ByConstraintIdentifier.t ;
+    grouped_by_variable      : type_variable Grouped_by_variable.t ;
+    typeclasses_constraining : type_variable Typeclasses_constraining.t ;
+    by_constraint_identifier : type_variable By_constraint_identifier.t ;
   ..
 > ex_heuristic_plugin
 

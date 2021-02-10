@@ -8,6 +8,6 @@ type selector_output = {
 }
 
 val heuristic : <
-  grouped_by_variable : type_variable GroupedByVariable.t ;
+  grouped_by_variable : type_variable Grouped_by_variable.t ;
   ..
 > ex_heuristic_plugin
