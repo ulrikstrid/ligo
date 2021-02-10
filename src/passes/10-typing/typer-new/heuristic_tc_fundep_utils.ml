@@ -18,7 +18,6 @@ open Typer_common.Errors
 module Map = RedBlackTrees.PolyMap
 module Set = RedBlackTrees.PolySet
 
-
 module Utils = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
   open Type_variable_abstraction
   open Type_variable_abstraction.Types

@@ -55,7 +55,7 @@ module Grouped_by_variable_tests = struct
     same_state' __LOC__ (Grouped_by_variable.bindings expected) (Grouped_by_variable.bindings actual)
 end
 
-open Grouped_by_variable_tests
+open! Grouped_by_variable_tests
 
 let merge_in_state ~demoted_repr ~new_repr state =
   let updater = {
