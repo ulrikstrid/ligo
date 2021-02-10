@@ -5,7 +5,9 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       type p_constraints
       type constraint_identifier
       type constant_tag
-      type row_tag
+      type row_tag =
+        | C_record    (* ( label , * ) … -> * *)
+        | C_variant   (* ( label , * ) … -> * *)
       type label
       type typeclass
       module LMap : Map.S with type key = label
@@ -157,6 +159,7 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       val c_constructor_simpl : c_constructor_simpl comparator
       val c_row_simpl : c_row_simpl comparator
       val c_poly_simpl : c_poly_simpl comparator
+      val c_access_label_simpl : c_access_label_simpl comparator
       val label : label comparator
       module Solver_should_be_generated : sig
         (* This module can probably be merged with Compare just above,
@@ -177,6 +180,8 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       val c_constructor_simpl_short : c_constructor_simpl pretty_printer
       val c_row_simpl : c_row_simpl pretty_printer
       val c_poly_simpl_short : c_poly_simpl pretty_printer
+
+      val c_access_label_simpl : c_access_label_simpl pretty_printer
       val constructor_or_row_short : constructor_or_row pretty_printer
 
       module Solver_should_be_generated : sig
@@ -194,7 +199,9 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       type 'a json_printer = 'a -> Yojson.Safe.t
       val constructor_or_row : constructor_or_row json_printer
       val c_constructor_simpl : c_constructor_simpl json_printer
+      val c_row_simpl : c_row_simpl json_printer
       val c_poly_simpl : c_poly_simpl json_printer
+      val c_access_label_simpl : c_access_label_simpl json_printer
     end
 
     module Var : sig
