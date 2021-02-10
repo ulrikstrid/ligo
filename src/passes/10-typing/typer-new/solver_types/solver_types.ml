@@ -60,21 +60,27 @@ type ('state, 'a) normalizer_rm = 'state -> 'a -> ('state, Typer_common.Errors.t
      merge_aliases :: forall old new . merge_keys old new → old → old → t old → t new
    }
 *)
-module type INDEXER_PLUGIN (* (Type_variable_abstraction : sig end) *) = sig
-  type 'typeVariable t
-  (* Create the indexer's initial state *)
-  val create_state : cmp:('typeVariable -> 'typeVariable -> int) -> 'typeVariable t
-  (* Update the state when a constraint is added *)
-  val add_constraint : ?debug:(Format.formatter -> 'type_variable -> unit) -> (type_variable -> 'type_variable) -> 'type_variable t -> type_constraint_simpl -> 'type_variable t
-  (* Update the state when a constraint is removed *)
-  (* TODO: check this API to see if we're giving too much flexibility to the plugin *)
-  val remove_constraint :(Format.formatter -> 'type_variable -> unit) -> (type_variable -> 'type_variable) -> 'type_variable t -> type_constraint_simpl -> ('type_variable t, Typer_common.Errors.typer_error) Trace.result
-  (* Update the state to merge entries of maps and sets of type
-     variables.  *)
-  val merge_aliases : ?debug:(Format.formatter -> 'new_ t -> unit) -> ('old, 'new_) merge_keys -> 'old t -> 'new_ t
-  (* The pretty-printer is used for debugging *)
-  val pp : (Format.formatter -> 'typeVariable -> unit) -> Format.formatter -> 'typeVariable t -> unit
-  val name : string
+module INDEXER_PLUGIN = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
+  module type S = sig
+    type 'typeVariable t
+    (* Create the indexer's initial state *)
+    val create_state : cmp:('typeVariable -> 'typeVariable -> int) -> 'typeVariable t
+    (* Update the state when a constraint is added *)
+    val add_constraint : ?debug:(Format.formatter -> 'type_variable -> unit) -> (type_variable -> 'type_variable) -> 'type_variable t -> type_constraint_simpl -> 'type_variable t
+    (* Update the state when a constraint is removed *)
+    (* TODO: check this API to see if we're giving too much flexibility to the plugin *)
+    val remove_constraint :(Format.formatter -> 'type_variable -> unit) -> (type_variable -> 'type_variable) -> 'type_variable t -> type_constraint_simpl -> ('type_variable t, Typer_common.Errors.typer_error) Trace.result
+    (* Update the state to merge entries of maps and sets of type
+       variables.  *)
+    val merge_aliases : ?debug:(Format.formatter -> 'new_ t -> unit) -> ('old, 'new_) merge_keys -> 'old t -> 'new_ t
+    (* The pretty-printer is used for debugging *)
+    val pp : (Format.formatter -> 'typeVariable -> unit) -> Format.formatter -> 'typeVariable t -> unit
+    val name : string
+  end
+end
+
+module type INDEXER_PLUGIN_ = sig
+  module M : functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> INDEXER_PLUGIN(Type_variable)(Type_variable_abstraction).S
 end
 
 (* The kind PerPluginType describes type-level functions which take
@@ -121,7 +127,7 @@ module type Mapped_function = sig
   module MakeInType : PerPluginType
   module MakeOutType : PerPluginType
   module Monad : Monad
-  module F(Indexer_plugin : INDEXER_PLUGIN) : sig
+  module F(Indexer_plugin : INDEXER_PLUGIN(Type_variable)(Type_variable_abstraction).S) : sig
     val f : string -> extra_args -> MakeInType(Indexer_plugin).t -> MakeOutType(Indexer_plugin).t Monad.t
   end
 end
