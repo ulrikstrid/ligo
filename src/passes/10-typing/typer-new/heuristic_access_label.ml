@@ -106,7 +106,7 @@ let propagator : (selector_output, typer_error) Type_Variable_Abstraction.Solver
   let row_tv = repr a_k_var.tv in
   let record_type = repr a_var_l.record_type in
   let access_result = repr a_var_l.tv in
-  assert (Var.equal row_tv record_type);
+  assert (Compare.type_variable row_tv record_type = 0);
   (* produce constraints: *)
 
   let%bind () = match a_k_var.r_tag with

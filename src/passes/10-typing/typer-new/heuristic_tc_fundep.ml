@@ -145,7 +145,7 @@ let restrict repr (constructor_or_row : constructor_or_row) (tcs : c_typeclass_s
   (* TODO: this is bogus if there is shadowing *)
   let index =
     let repr_tv = (repr tv) in
-    try List.find_index (fun x -> Var.equal repr_tv (repr x)) tcs.args
+    try List.find_index (fun x -> Compare.type_variable repr_tv (repr x) = 0) tcs.args
     with Failure _ ->
       failwith (Format.asprintf "problem: couldn't find tv = %a in tcs.args = %a"
                   PP.type_variable repr_tv (PP_helpers.list_sep_d PP.type_variable) tcs.args);
@@ -168,7 +168,7 @@ let restrict repr (constructor_or_row : constructor_or_row) (tcs : c_typeclass_s
      [ x = map( m , n , o ) ; o = float ( ) ],
      [ m ? [ nat  ; bytes ]
        n ? [ unit ; mutez ] ] *)
-let replace_var_and_possibilities_1 repr ((x : type_variable) , (possibilities_for_x : type_value list)) =
+let replace_var_and_possibilities_1 (repr:type_variable -> type_variable) ((x : type_variable) , (possibilities_for_x : type_value list)) =
   let%bind tags_and_args = bind_map_list get_tag_and_args_of_constant possibilities_for_x in
   let tags_of_constructors, arguments_of_constructors = List.split @@ tags_and_args in
   match all_equal Compare.constant_tag tags_of_constructors with
@@ -189,7 +189,7 @@ let replace_var_and_possibilities_1 repr ((x : type_variable) , (possibilities_f
     | [] -> failwith "the typeclass does not allow any possibilities \
                       for the variable %a:PP_variable:x at this point"
     | (arguments_of_first_constructor :: _) as arguments_of_constructors ->
-      let fresh_vars = List.map (fun _arg -> Var.fresh_like (repr x)) arguments_of_first_constructor in
+      let fresh_vars = List.map (fun _arg -> Core.fresh_type_variable ()) arguments_of_first_constructor in
       let deduced : c_constructor_simpl = {
         id_constructor_simpl = ConstraintIdentifier 0L;
         original_id = None;

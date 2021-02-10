@@ -128,8 +128,8 @@ let printer_json ({a_k_var;a_k'_var'}) =
     ("a_k_var", constructor_or_row a_k_var);
     ("a_k'_var'", constructor_or_row a_k'_var')]
 let comparator { a_k_var=a1; a_k'_var'=a2 } { a_k_var=b1; a_k'_var'=b2 } =
-  let open Type_Variable_Abstraction.Compare.Solver_should_be_generated in
-  compare_constructor_or_row a1 b1 <? fun () -> compare_constructor_or_row a2 b2
+  let open Type_Variable_Abstraction.Compare in
+  constructor_or_row a1 b1 <? fun () -> constructor_or_row a2 b2
 
 let propagator : (selector_output, _) Type_Variable_Abstraction.Solver_types.propagator =
   fun selected repr ->
@@ -144,7 +144,7 @@ let propagator : (selector_output, _) Type_Variable_Abstraction.Solver_types.pro
   (* The selector is expected to provice two constraints with the shape x = k(var …) and x = k'(var' …) *)
   let a_tv = repr @@ get_tv a in
   let b_tv = repr @@ get_tv b in
-  assert (Type_Variable_Abstraction.Var.equal a_tv b_tv);
+  assert (Type_Variable_Abstraction.Compare.type_variable a_tv b_tv = 0);
   (* produce constraints: *)
   (* a.tv = b.tv *) (* nope, already the same *)
   (* let eq1 = c_equation (wrap (Propagator_break_ctor "a") @@ P_variable a_tv) (wrap (Propagator_break_ctor "b") @@ P_variable b_tv) "propagator: break_ctor" in *)
@@ -154,19 +154,19 @@ let propagator : (selector_output, _) Type_Variable_Abstraction.Solver_types.pro
   (* a.c_tag = b.c_tag *)
   ( match a , b with
     | `Row a , `Row b ->
-      if (Type_Variable_Abstraction.Compare.Solver_should_be_generated.compare_simple_c_row a.r_tag b.r_tag) <> 0 then
+      if (Type_Variable_Abstraction.Compare.row_tag a.r_tag b.r_tag) <> 0 then
         (* TODO : use error monad *)
         failwith (Format.asprintf "type error: incompatible types, not same ctor %a vs. %a (compare returns %d)"
-                    Type_Variable_Abstraction.PP.Solver_should_be_generated.debug_pp_c_row_simpl a
-                    Type_Variable_Abstraction.PP.Solver_should_be_generated.debug_pp_c_row_simpl b
-                    (Type_Variable_Abstraction.Compare.Solver_should_be_generated.compare_simple_c_row a.r_tag b.r_tag))
+                    Type_Variable_Abstraction.PP.c_row_simpl a
+                    Type_Variable_Abstraction.PP.c_row_simpl b
+                    (Type_Variable_Abstraction.Compare.row_tag a.r_tag b.r_tag))
     | `Constructor a , `Constructor b ->
-      if (Type_Variable_Abstraction.Compare.Solver_should_be_generated.compare_simple_c_constant a.c_tag b.c_tag) <> 0 then
+      if (Type_Variable_Abstraction.Compare.constant_tag a.c_tag b.c_tag) <> 0 then
         (* TODO : use error monad *)
         failwith (Format.asprintf "type error: incompatible types, not same ctor %a vs. %a (compare returns %d)"
-                    Type_Variable_Abstraction.PP.Solver_should_be_generated.debug_pp_c_constructor_simpl a
-                    Type_Variable_Abstraction.PP.Solver_should_be_generated.debug_pp_c_constructor_simpl b
-                    (Type_Variable_Abstraction.Compare.Solver_should_be_generated.compare_simple_c_constant a.c_tag b.c_tag))
+                    Type_Variable_Abstraction.PP.c_constructor_simpl a
+                    Type_Variable_Abstraction.PP.c_constructor_simpl b
+                    (Type_Variable_Abstraction.Compare.constant_tag a.c_tag b.c_tag))
     | _ -> failwith "type error : break_ctor propagator"
   );
   (* Produce constraint a.tv_list = b.tv_list *)

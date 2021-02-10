@@ -164,17 +164,8 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       val constructor_or_row : constructor_or_row comparator
       val label : label comparator
       val constant_tag : constant_tag comparator
+      val row_tag : row_tag comparator
       val type_variable : type_variable comparator
-      module Solver_should_be_generated : sig
-        (* This module can probably be merged with Compare just above,
-           leaving as-is for now to avoid risking changing the semantics
-           and breaking tests *)
-        type 'a comparator = 'a -> 'a -> int
-        val (<?) : int -> (unit -> int) -> int
-        val compare_constructor_or_row : constructor_or_row comparator
-        val compare_simple_c_row : row_tag comparator
-        val compare_simple_c_constant : constant_tag comparator
-      end
     end
 
     module PP : sig
@@ -189,15 +180,6 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       val c_access_label_simpl : c_access_label_simpl pretty_printer
       val constructor_or_row_short : constructor_or_row pretty_printer
       val type_variable : type_variable pretty_printer
-
-      module Solver_should_be_generated : sig
-        (* This module can probably be merged with the rest of PP,
-           leaving as-is for now to avoid risking changing the semantics
-           and breaking tests *)
-        type 'a pretty_printer = Format.formatter -> 'a -> unit
-        val debug_pp_c_row_simpl : c_row_simpl pretty_printer
-        val debug_pp_c_constructor_simpl : c_constructor_simpl pretty_printer
-      end
     end
 
     module Yojson : sig
@@ -209,12 +191,6 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       val c_poly_simpl : c_poly_simpl json_printer
       val c_typeclass_simpl : c_typeclass_simpl json_printer
       val c_access_label_simpl : c_access_label_simpl json_printer
-    end
-
-    module Var : sig
-      open Types
-      val equal : type_variable -> type_variable -> bool
-      val fresh_like : type_variable -> type_variable
     end
 
     module Solver_types : sig

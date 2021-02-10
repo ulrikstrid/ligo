@@ -98,7 +98,7 @@ let propagator : (selector_output , typer_error) Type_Variable_Abstraction.Solve
   let b = selected.a_k_var in
 
   (* The selector is expected to provide two constraints with the shape (x = forall y, z) and x = k'(var' …) *)
-  assert (Type_Variable_Abstraction.Var.equal (repr (a : c_poly_simpl).tv) (repr (b : c_constructor_simpl).tv));
+  assert (Type_Variable_Abstraction.Compare.type_variable (repr (a : c_poly_simpl).tv) (repr (b : c_constructor_simpl).tv) = 0);
 
   (* produce constraints: *)
 
@@ -138,7 +138,6 @@ let printer_json ({poly;a_k_var}) =
     ("a_k_var", c_constructor_simpl a_k_var)]
 let comparator { poly = a1; a_k_var = a2 } { poly = b1; a_k_var = b2 } =
   let open Type_Variable_Abstraction.Compare in
-  (* Possible bug : change for Solver_should_be_generated *)
   c_poly_simpl a1 b1 <? fun () -> c_constructor_simpl a2 b2
 end
 
