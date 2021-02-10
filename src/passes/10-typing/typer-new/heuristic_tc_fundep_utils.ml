@@ -139,7 +139,7 @@ let get_tag_and_args_of_constant (tv : type_value) =
     failwith "Unsuported"
   | P_variable _ ->
     (* In this case we  *)
-    failwith "TODO"
+    failwith "TODO : P_variable"
   | P_apply _ ->
     (* In this case we would need to do β-reduction, if
        possible, or invoke another heuristic.

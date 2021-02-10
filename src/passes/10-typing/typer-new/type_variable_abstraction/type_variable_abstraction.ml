@@ -156,6 +156,7 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       val (<?) : int -> (unit -> int) -> int
       val c_constructor_simpl : c_constructor_simpl comparator
       val c_row_simpl : c_row_simpl comparator
+      val c_poly_simpl : c_poly_simpl comparator
       val label : label comparator
       module Solver_should_be_generated : sig
         (* This module can probably be merged with Compare just above,
@@ -173,7 +174,9 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       open Types
       type 'a pretty_printer = Format.formatter -> 'a -> unit
       val c_constructor_simpl : c_constructor_simpl pretty_printer
+      val c_constructor_simpl_short : c_constructor_simpl pretty_printer
       val c_row_simpl : c_row_simpl pretty_printer
+      val c_poly_simpl_short : c_poly_simpl pretty_printer
       val constructor_or_row_short : constructor_or_row pretty_printer
 
       module Solver_should_be_generated : sig
@@ -190,6 +193,8 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       open Types
       type 'a json_printer = 'a -> Yojson.Safe.t
       val constructor_or_row : constructor_or_row json_printer
+      val c_constructor_simpl : c_constructor_simpl json_printer
+      val c_poly_simpl : c_poly_simpl json_printer
     end
 
     module Var : sig
@@ -227,6 +232,17 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       open Types
       val f_equal : axiom
       val specialize : axiom
+    end
+
+    module Core : sig
+      open Types
+      val fresh_type_variable : ?name:string -> unit -> type_variable
+    end
+
+    module Typelang : sig
+      open Types
+      val type_level_eval : type_value -> type_value * type_constraint list
+      val check_applied : ((type_value * _) as 'a) -> 'a
     end
   end
 end

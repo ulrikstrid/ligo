@@ -234,6 +234,7 @@ let replace_vars_and_possibilities repr possibilities_alist =
   ok (list_of_rope possibilities_alist, list_of_rope deduced)
 
 let deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result, _) result = fun repr tcs ->
+  Format.printf "In deduce_and_clean for : %a\n%!" Ast_typed.PP.c_typeclass_simpl_short tcs;
   (* ex.   [ x                             ; z      ]
        ∈ [ [ map3( nat   , unit  , float ) ; int    ] ;
            [ map3( bytes , mutez , float ) ; string ] ] *)
