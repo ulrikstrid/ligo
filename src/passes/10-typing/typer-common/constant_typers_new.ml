@@ -23,27 +23,14 @@ module Operators_types = struct
                                                                   [nat;mutez;mutez] ;
                                                                   (* bl struff todo ..*)
                                                                 ]
-  let tc_edivargs a b c = tc "arguments for ediv"       [a;b;c] [ [nat;nat;option @@ tuple2 nat nat] ; 
-                                                                  [nat;int;option @@ tuple2 int nat] ;
-                                                                  [int;nat;option @@ tuple2 int nat] ;
-                                                                  [int;int;option @@ tuple2 int nat] ;
-                                                                  [mutez;nat;option @@ tuple2 mutez mutez] ;
-                                                                  [mutez;mutez;option @@ tuple2 nat mutez] ;
-                                                                ]
-  let tc_divargs  a b c = tc "arguments for div"        [a;b;c] [ [nat;nat;nat] ;
-                                                                  [nat;int;int] ;
-                                                                  [int;nat;int] ;
-                                                                  [int;int;int] ;
-                                                                  [mutez;nat;mutez] ;
-                                                                  [mutez;mutez;nat] ;
-                                                                ]
-  let tc_modargs  a b c = tc "arguments for mod"        [a;b;c] [ [nat;nat;nat] ;
-                                                                  [nat;int;nat] ;
-                                                                  [int;nat;nat] ;
-                                                                  [int;int;nat] ;
-                                                                  [mutez;nat;mutez] ;
-                                                                  [mutez;mutez;mutez] ;
-                                                                ]
+  let tc_edivargs a b c d = tc "arguments and return values for ediv, div and mod"
+                                                        [a;b;c;d] [ [nat;nat;nat;nat] ; 
+                                                                    [nat;int;int;nat] ;
+                                                                    [int;nat;int;nat] ;
+                                                                    [int;int;int;nat] ;
+                                                                    [mutez;nat;mutez;mutez] ;
+                                                                    [mutez;mutez;nat;mutez] ;
+                                                                  ]
   let tc_addargs  a b c = tc "arguments for (+)"        [a;b;c] [ [nat;nat;nat] ; 
                                                                   [int;int;int] ; 
                                                                   (* [nat;int;int] ;
@@ -123,9 +110,9 @@ module Operators_types = struct
   let t_assertion    = tuple1 bool --> unit
   let t_assert_some  = forall "a" @@ fun a -> tuple1 (option a) --> unit
   let t_times        = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_timargs a b c] => tuple2 a b --> c (* TYPECLASS *)
-  let t_ediv         = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_edivargs a b c] => tuple2 a b --> c (* TYPECLASS *)
-  let t_div          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_divargs a b c] => tuple2 a b --> c (* TYPECLASS *)
-  let t_mod          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_modargs a b c] => tuple2 a b --> c (* TYPECLASS *)
+  let t_ediv         = forall4_tc "a" "b" "c" "d" @@ fun a b c d -> [tc_edivargs a b c d] => tuple2 a b --> (option @@ tuple2 c d) (* TYPECLASS *)
+  let t_div          = forall4_tc "a" "b" "c" "d" @@ fun a b c d -> [tc_edivargs a b c d] => tuple2 a b --> c (* TYPECLASS *)
+  let t_mod          = forall4_tc "a" "b" "c" "d" @@ fun a b c d -> [tc_edivargs a b c d] => tuple2 a b --> d (* TYPECLASS *)
   let t_add          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_addargs a b c] => tuple2 a b --> c (* TYPECLASS *)
   let t_set_mem      = forall "a" @@ fun a -> tuple2 a (set a) --> bool
   let t_set_add      = forall "a" @@ fun a -> tuple2 a (set a) --> set a
