@@ -167,7 +167,7 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> ('a, 'err) result =
   | ENew {value = (_, e); _} -> self init e
   | EArray {value = {inside; _}; _} ->
     let fold_array_item init = function
-      Empty_entry -> ok init
+      Empty_entry _ -> ok init
     | Expr_entry e -> self init e
     | Rest_entry {value = {expr; _}; _} -> self init expr
     in
@@ -412,7 +412,7 @@ let rec map_expression : 'err mapper -> expr -> (expr, 'err) result = fun f e  -
   | EBytes _ as e -> return @@ e
   | EArray {value;region} ->
       let map_array_item = function
-        Empty_entry -> ok Empty_entry
+        Empty_entry r -> ok @@ Empty_entry r
       | Expr_entry e ->
         let%bind e = self e in
         ok @@ Expr_entry e

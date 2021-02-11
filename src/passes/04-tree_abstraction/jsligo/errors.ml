@@ -20,6 +20,11 @@ type abs_error = [
   | `Concrete_jsligo_unsupported_deep_pattern_matching of Region.t
   | `Concrete_jsligo_not_in_switch_or_loop of Region.t
   | `Concrete_jsligo_statement_not_supported_at_toplevel of Raw.statement
+  | `Concrete_jsligo_not_a_valid_parameter of Raw.expr
+  | `Concrete_jsligo_rest_not_supported_here of Raw.property
+  | `Concrete_jsligo_property_not_supported of Raw.property
+  | `Concrete_jsligo_expected_an_expression of Raw.array_item 
+  | `Concrete_jsligo_new_not_supported of Raw.expr
   ]
 
 let unknown_predefined_type name = `Concrete_jsligo_unknown_predefined_type name
@@ -36,6 +41,11 @@ let funarg_tuple_type_mismatch r p t = `Concrete_jsligo_funarg_tuple_type_mismat
 let unsupported_deep_pattern_matching l = `Concrete_jsligo_unsupported_deep_pattern_matching l
 let not_in_switch_or_loop b = `Concrete_jsligo_not_in_switch_or_loop b
 let statement_not_supported_at_toplevel s = `Concrete_jsligo_statement_not_supported_at_toplevel s
+let not_a_valid_parameter p = `Concrete_jsligo_not_a_valid_parameter p
+let rest_not_supported_here p = `Concrete_jsligo_rest_not_supported_here p
+let property_not_supported p = `Concrete_jsligo_property_not_supported p
+let expected_an_expression p = `Concrete_jsligo_expected_an_expression p
+let new_not_supported n = `Concrete_jsligo_new_not_supported n
 
 let error_ppformat : display_format:string display_format ->
   Format.formatter -> abs_error -> unit =
@@ -116,6 +126,26 @@ Other forms of pattern matching are not (yet) supported. @]"
     | `Concrete_jsligo_statement_not_supported_at_toplevel s -> (
         Format.fprintf f "@[<hv>%a@.Statement not supported at toplevel.@.Only let, const, and type statements are supported at the toplevel. @]"
           Snippet.pp_lift (Raw.statement_to_region s)
+    )
+    | `Concrete_jsligo_not_a_valid_parameter p -> (
+      Format.fprintf f "@[<hv>%a@.Not a valid function parameter. @]"
+          Snippet.pp_lift (Raw.expr_to_region p)
+    )
+    | `Concrete_jsligo_rest_not_supported_here p -> (
+      Format.fprintf f "@[<hv>%a@.Rest property not supported here. @]"
+          Snippet.pp_lift (Raw.property_to_region p)
+    )
+    | `Concrete_jsligo_property_not_supported p -> (
+      Format.fprintf f "@[<hv>%a@.This kind of property not supported here. @]"
+          Snippet.pp_lift (Raw.property_to_region p)
+    )
+    | `Concrete_jsligo_expected_an_expression a -> (
+      Format.fprintf f "@[<hv>%a@.Expected an expression. @]"
+          Snippet.pp_lift (Raw.array_item_to_region a)
+    )
+    | `Concrete_jsligo_new_not_supported p -> (
+      Format.fprintf f "@[<hv>%a@.'new' keyword not supported. @]"
+          Snippet.pp_lift (Raw.expr_to_region p)
     )
   )
 
@@ -226,6 +256,41 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
   | `Concrete_jsligo_statement_not_supported_at_toplevel statement ->
     let message = `String "Statement not supported at toplevel." in
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.statement_to_region statement) in
+    let content = `Assoc [
+      ("message", message );
+      ("location", `String loc);] in
+    json_error ~stage ~content
+  | `Concrete_jsligo_not_a_valid_parameter expr ->
+    let message = `String "Not a valid function parameter." in
+    let loc = Format.asprintf "%a" Location.pp_lift (Raw.expr_to_region expr) in
+    let content = `Assoc [
+      ("message", message );
+      ("location", `String loc);] in
+    json_error ~stage ~content
+  | `Concrete_jsligo_rest_not_supported_here p ->
+    let message = `String "Rest property not supported here." in
+    let loc = Format.asprintf "%a" Location.pp_lift (Raw.property_to_region p) in
+    let content = `Assoc [
+      ("message", message );
+      ("location", `String loc);] in
+    json_error ~stage ~content
+  | `Concrete_jsligo_property_not_supported p -> 
+    let message = `String "This kind of property not supported here." in
+    let loc = Format.asprintf "%a" Location.pp_lift (Raw.property_to_region p) in
+    let content = `Assoc [
+      ("message", message );
+      ("location", `String loc);] in
+    json_error ~stage ~content
+  | `Concrete_jsligo_expected_an_expression p ->
+    let message = `String "Expected an expression." in
+    let loc = Format.asprintf "%a" Location.pp_lift (Raw.array_item_to_region p) in
+    let content = `Assoc [
+      ("message", message );
+      ("location", `String loc);] in
+    json_error ~stage ~content
+  | `Concrete_jsligo_new_not_supported p ->
+    let message = `String "'new' keyword not supported." in
+    let loc = Format.asprintf "%a" Location.pp_lift (Raw.expr_to_region p) in
     let content = `Assoc [
       ("message", message );
       ("location", `String loc);] in

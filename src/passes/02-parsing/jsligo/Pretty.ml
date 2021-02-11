@@ -148,7 +148,7 @@ and pp_new_expr {value =(_, e);_} =
   string "new " ^^ pp_expr e
 
 and pp_array_item = function
-  Empty_entry -> empty
+  Empty_entry _ -> empty
 | Expr_entry e -> pp_expr e
 | Rest_entry {value = {expr; _}; _} -> string "..." ^^ pp_expr expr
 

@@ -283,7 +283,7 @@ and array_item_rest = {
 }
 
 and array_item =
-  | Empty_entry
+  | Empty_entry of Region.t
   | Expr_entry of expr
   | Rest_entry of array_item_rest reg
 
@@ -529,3 +529,13 @@ let selection_to_region = function
 let arrow_function_body_to_region = function
   FunctionBody {region; _} -> region
 | ExpressionBody s -> expr_to_region s
+
+let property_to_region = function
+  Punned_property {region; _}
+| Property {region; _}
+| Property_rest {region; _} -> region
+
+let array_item_to_region = function 
+  Expr_entry e -> expr_to_region e
+| Empty_entry r -> r
+| Rest_entry {region; _} -> region

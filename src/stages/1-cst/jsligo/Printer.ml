@@ -364,7 +364,7 @@ and print_new_expr state {value = (kwd_new, expr); _} =
   print_expr state expr
 
 and print_array_item state = function
-  Empty_entry -> print_token state Region.ghost "<empty>"
+  Empty_entry r -> print_token state r "<empty>"
 | Expr_entry expr -> print_expr state expr
 | Rest_entry {value = {ellipsis; expr}; _} ->
   print_token state ellipsis "...";
@@ -809,7 +809,7 @@ and pp_expr state = function
     pp_code_inj state value
 
 and pp_array_item state = function
-  Empty_entry -> pp_node state "<empty>"
+  Empty_entry _ -> pp_node state "<empty>"
 | Expr_entry e ->
     pp_node state "<expr>";
     pp_expr (state#pad 1 0) e

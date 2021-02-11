@@ -688,7 +688,7 @@ call_expr_level:
   }
 
 array_item:
-  /* */      { Empty_entry }
+  /* */      { Empty_entry Region.ghost }
 | expr       { Expr_entry $1 }
 | "..." expr {
   let region = cover $1 (expr_to_region $2) in
@@ -703,8 +703,8 @@ array_item:
  }
 
 array_items:
-  array_item "," array_items { Utils.nsepseq_cons $1 $2 $3 }
-| array_item                { ($1, []) }
+  array_item "," array_items {  Utils.nsepseq_cons $1 $2 $3 }
+| array_item                 { ($1, []) }
 
 array_literal:
   "[" array_items "]" {
