@@ -58,13 +58,15 @@ let rec type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     let recur = List.map type_constraint_simpl new_constraints in
     let resimpl = type_constraint_simpl (c_equation a reduced "simplifier: reduce_type_app") in (* Note: this calls recursively but cant't fall in the same case. *)
     resimpl @ List.flatten recur in
-  let split_typeclass args tc original_id =
+  let split_typeclass tc_bound tc_constraints args tc original_id =
     let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
     let fresh_eqns = List.map (fun (v,t) -> c_equation (wrap (Todo "solver: simplifier: split typeclass") @@ P_variable v) t "simplifier: split_typeclass") (List.combine fresh_vars args) in
     let recur = List.map type_constraint_simpl fresh_eqns in
     let id_typeclass_simpl = ConstraintIdentifier (!global_next_constraint_id) in
+    (* TODO: potential bug: I'm not sure if something needs to be done about the bound variables. It's probably okay as-is. *)
+    let tc_constraints_simpl = List.flatten @@ List.map type_constraint_simpl tc_constraints in
     global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
-    [SC_Typeclass { tc ; args = fresh_vars ; id_typeclass_simpl ; original_id; reason_typeclass_simpl="simplifier: split_typeclass"}] @ List.flatten recur in
+    [SC_Typeclass { tc_bound; tc_constraints = tc_constraints_simpl; tc ; args = fresh_vars ; id_typeclass_simpl ; original_id; reason_typeclass_simpl="simplifier: split_typeclass"}] @ List.flatten recur in
 
   match new_constraint.c with
   (* break down (forall 'b, body = forall 'c, body') into ('a = forall 'b, body and 'a = forall 'c, body')) *)
@@ -95,6 +97,6 @@ let rec type_constraint_simpl : type_constraint -> type_constraint_simpl list =
   | C_equation {aval=(_ as a); bval=({ location = _ ; wrap_content = P_apply _ } as b)}               -> reduce_type_app a b
   | C_equation {aval=({ location = _ ; wrap_content = P_apply _ } as a); bval=(_ as b)}               -> reduce_type_app b a
   (* break down (TC(args)) into (TC('a, …) and ('a = arg) …) *)
-  | C_typeclass { tc_args; typeclass; original_id }                              -> split_typeclass tc_args typeclass original_id
+  | C_typeclass { tc_bound; tc_constraints; tc_args; typeclass; original_id }                         -> split_typeclass tc_bound tc_constraints tc_args typeclass original_id
   | C_access_label { c_access_label_tval; accessor; c_access_label_tvar } -> access_label_via_fresh c_access_label_tvar c_access_label_tval accessor
 

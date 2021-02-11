@@ -13,19 +13,20 @@ module INDEXES = functor (Type_variable : sig type t end) (Type_variable_abstrac
 end
 
 (* open Typesystem.Solver_types *)
-open Trace
-open Typer_common.Errors
+(* open Trace
+ * open Typer_common.Errors *)
 module Map = RedBlackTrees.PolyMap
 module Set = RedBlackTrees.PolySet
 
 module Utils = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
   open Type_variable_abstraction
-  open Type_variable_abstraction.Types
+  (* open Type_variable_abstraction.Types *)
   type type_variable = Type_variable.t
 
   let set_of_vars l = (Set.add_list l (Set.create ~cmp:Compare.type_variable )).set
   type flds = (module INDEXES(Type_variable)(Type_variable_abstraction).S)
   module All_plugins = Database_plugins.All_plugins.M(Type_variable)(Type_variable_abstraction)
+  (*
   open All_plugins
 
   let constraint_identifier_to_tc ((module Dbs) : flds) (ci : constraint_identifier) =
@@ -155,4 +156,5 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
         possible, or invoke another heuristic.
         For now we just leave as-is and don't deduce anything *)
       failwith "TODO"
+   *)
 end

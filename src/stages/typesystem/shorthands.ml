@@ -3,6 +3,10 @@ open Core
 open Ast_typed.Misc
 open Ast_typed.Reasons
 
+(* TODO: remove this () argument, it is just here to make sure that
+   the ~bound and ~constraints arguments are given (while adding the
+   fields to the record, we need to make sure they're supplied
+   everywhere) *)
 let tc description ~bound ~constraints () type_vars allowed_list : type_constraint = {
     c = C_typeclass { tc_bound=bound; tc_constraints=constraints; tc_args = type_vars ; original_id = None ; typeclass = allowed_list} ;
     reason = "typeclass for operator: " ^ description

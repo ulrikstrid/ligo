@@ -64,7 +64,7 @@ let typeclasses_constraining () =
     [ tval_unit ; tval_int ] ;
     [ tval_map_int_unit; tval_map_int_unit ] ;
   ] in
-  let tc_bc = make_c_typeclass_simpl 1 None [tvb;tvc] tc_allowed_bc in
+  let tc_bc = make_c_typeclass_simpl ~bound:[] ~constraints:[] () 1 None [tvb;tvc] tc_allowed_bc in
   let state'' = add_constraint repr state' (SC_Typeclass tc_bc) in
   Format.printf "%a" (pp Var.pp) state'';
   (* assert state'' = [], [] because there is no refined typeclass yet *)
@@ -79,7 +79,7 @@ let typeclasses_constraining () =
     [ tval_int ] ;
     [ tval_unit ] ;
   ] in
-  let tc_b = make_c_typeclass_simpl 2 (Some 1) [tvb] tc_allowed_b in
+  let tc_b = make_c_typeclass_simpl ~bound:[] ~constraints:[] ()  2 (Some 1) [tvb] tc_allowed_b in
   let state''' = add_constraint repr state'' (SC_Typeclass tc_b) in
   (* assert state''' = … *)
   let%bind () = same_state2 state''' [

@@ -23,13 +23,13 @@ open Simple_utils
 module TYPE_VARIABLE_ABSTRACTION = Type_variable_abstraction.TYPE_VARIABLE_ABSTRACTION
 
 module M = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
-  open Type_variable_abstraction
+  (* open Type_variable_abstraction *)
   open Type_variable_abstraction.Types
-  open Type_variable_abstraction.Reasons
+  (* open Type_variable_abstraction.Reasons *)
 
   module Utils = Heuristic_tc_fundep_utils.Utils(Type_variable)(Type_variable_abstraction)
   open Utils
-  open Utils.All_plugins
+  (* open Utils.All_plugins *)
 
   type selector_output = {
     tc : c_typeclass_simpl ;
@@ -38,6 +38,16 @@ module M = functor (Type_variable : sig type t end) (Type_variable_abstraction :
 
   let heuristic_name = "tc_fundep"
 
+  let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds -> selector_output list =
+    fun _ _ _ -> []             (* TODO *)
+
+  let alias_selector : type_variable -> type_variable -> flds -> selector_output list =
+    fun _ _ _ -> []             (* TODO *)
+
+  let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
+    fun _ _ -> ok []            (* TODO *)
+  
+  (*
 (* ***********************************************************************
  * Selector
  * *********************************************************************** *)
@@ -108,7 +118,7 @@ let alias_selector : type_variable -> type_variable -> flds -> selector_output l
             { tc ; c })
          (a_ctors @ b_ctors @ a_rows @ b_rows ))
     (a_tcs @ b_tcs)
-
+*)
 let get_referenced_constraints ({ tc; c } : selector_output) : type_constraint_simpl list =
   [
     SC_Typeclass tc;
@@ -120,7 +130,7 @@ let get_referenced_constraints ({ tc; c } : selector_output) : type_constraint_s
  * *********************************************************************** *)
 
 
-
+(*
 (* 
 
 type t = { m : int; n : unit }
@@ -227,6 +237,11 @@ let restrict_one (cr : constructor_or_row) (allowed : type_value) =
     else None   (* case removed because argument lists are of different lengths *)
   | _, (P_forall _ | P_variable _ | P_apply _ | P_row _ | P_constant _) -> None
 
+*)
+let restrict : (type_variable -> type_variable) -> constructor_or_row -> c_typeclass_simpl -> c_typeclass_simpl =
+  fun _ _ c -> c
+
+  (*
 (* Restricts a typeclass to the possible cases given v = k(a, …) in c *)
 let restrict repr (constructor_or_row : constructor_or_row) (tcs : c_typeclass_simpl) =
   let (tv_list, tv) = match constructor_or_row with
@@ -337,11 +352,14 @@ let replace_vars_and_possibilities repr possibilities_alist =
   let%bind (_changed, possibilities_alist, deduced) = replace_vars_and_possibilities_list repr possibilities_alist in
   ok (list_of_rope possibilities_alist, list_of_rope deduced)
 
-
+*)
 type deduce_and_clean_result = {
   deduced : c_constructor_simpl list ;
   cleaned : c_typeclass_simpl ;
 }
+let deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result, _) result =
+  fun _ c -> ok { deduced = []; cleaned = c }
+(*
 let deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result, _) result = fun repr tcs ->
   Format.printf "In deduce_and_clean for : %a\n%!" PP.c_typeclass_simpl_short tcs;
   (* ex.   [ x                             ; z      ]
@@ -415,7 +433,8 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
 (* ***********************************************************************
  * Heuristic
  * *********************************************************************** *)
-
+*)
+    
 let printer ppd (t : selector_output) =
   let open Format in
   let open Type_variable_abstraction.PP in
@@ -488,3 +507,182 @@ type nonrec deduce_and_clean_result = MM.deduce_and_clean_result = {
 let restrict = MM.restrict
 let deduce_and_clean = MM.deduce_and_clean
 let pp_deduce_and_clean_result = MM.pp_deduce_and_clean_result
+
+
+
+
+
+
+(*
+                          ========NOTES=======
+
+  (* typeclass size(a) = ∃ x, size(x) =>
+                         a ∈ [ (int);
+                               (pair(t,t));
+                               (list(x)) ] (* une typeclass *) *)
+  let x = fresh x
+  let tc_sizearg3 a   =
+                       tc "arguments for size"       [x;y] (* bound local vars *)
+                                                     [ c_typeclass_simpl([x], tc_comparable) ;
+                                                       c_typeclass_simpl([y], tc_length) ] (* new tcs *)
+                                                     [a] (* ∈ *)
+                                                     [ [int] ;       (* possibilities *)
+                                                       [ pair[t,t] ];
+                                                       [ map[x;y] ] ;
+                                                       [ map[x;float] ] ;
+                                                       [ map[float;x] ] ;
+                                                       [ map[unit;unit] ] ;
+						       [ y ]
+                                                     ]
+
+                         tc_comp = a ∈ [ [unit];[cmp2];[cmp3] ]
+                         tc_len = a ∈ [ [map(int,int)];[len2] ]
+                         a = map[z;w]
+                         // z = autre
+                         // w = chose
+
+test:
+	 
+  def get_allowed(tc_constraint):
+    return enumeration of all allowed types a which satisfy tc_constraint(args), i.e a matrix of type_value with len(args) columns and N rows
+
+  def test_main():
+    initial_args = a
+    initial_typeclass = size(a)
+    allowed = get_allowed(initial_typeclass)
+    for each type in allowed:
+      genealogies([], [], (a, initial_typeclass), [(a, type)])
+
+  # Order of traversal of the tree where parents are always produced before children
+  # (i.e. realistic orders of birth in a genealogy tree where the dates are missing and time-travel is not permitted):
+  def genalogies(order, all_deduced, (args, constraint), candidates, get_var_from_path):
+    if len(nodes) == 0:
+      check_end(cleaned, order)
+    else:
+      for candidate in candidates:
+	ctor_or_row = mk_constraint(candidate) # α = κ(βᵢ…)
+
+        # test stuff
+        deduced, cleaned = deduce_and_clean(ctor_or_row, constraint, get_var_from_path)
+	new_deduced = new_deduced + deduced
+        check(constraint, new_deduced, cleaned, filter, order, candidate)
+        constraint = cleaned
+
+        # tree stuff
+	new_candidates = Set.add_list (Set.remove candidate candidates) children
+        new_order = order + [candidate]
+        genealogies(new_order, new_deduced, ctor_or_row, new_candidates)
+
+  def check(constraint, all_deduced, cleaned, filter, order_before_candidate, candidate):
+    if allowed(constraint) != List.filter(mk_filter(partial_assignment), allowed):
+      print "Error: cleaned constraint is not as simplified as it should be or it is incorrect"
+
+  def mk_filter(all_deduced, ):
+
+  def check_end():
+    # sanity check (already enforced by check())
+    # the tc should be empty (fully inferred) at the end
+    if len(cleaned.bound) == 0 and len(cleaned.tcs) == 0 and len(cleaned.args) == 0 and len(cleaned.possibilities) == 0:
+      print "okay " + order
+    else:
+      print "error " + order
+
+Test: list of type values
+     1 simplify
+         |
+       2 map
+     /       \
+3 list    5 map
+    |      /   \
+ 4 int  6 str  7 list
+                 |
+               8 int
+
+map(x, map(string, x))
+map(x, map(float,  x))
+map(bool, bool)
+x ∈ (list(int), bool)
+
+extension(cleaned) == filter(extension(initial_typeclass), sent_info=map(list(_),_))
+already_deduced + deduced ≥ sent_info
+extension(cleaned) == filter(extension(initial_typeclass), sent_info=to_partial_type(already_deduced + deduced))
+ideally: (already_deduced + deduced) is maximal
+
+Propagator args: (c_constructor_simpl or c_row_simpl or ())                               Propagator deduced
+                 + c_typeclass_simpl([a], …)
+
+               1 ()                                                                        1 a=map(l,m)
+						       							    
+           2 a=map(b,c)				                                               2 []		    
+            					       							    
+ 3 b=list(d)       5 c=map(e,f)			             3 [l=list(n),n=int,m=map(o,l)]                         5 []	    
+           					       		   					    
+  4 d=int        6 e=str  7 f=list(g)		                     4 []                                 6[o=str]       7[]
+                				       							    
+                        8 g=int			         	                                                 8[]
+
+Deduced DAG
+
+           map
+	/     \
+	|    map
+	|    :  \
+	|  (str)|
+	|      /
+	 \    /
+          list
+           |
+          int
+
+
+
+
+
+
+     
+
+                                                     [ [ x;     y ] ;
+                                                       [ x;     float ] ;
+                                                       [ float; x ] ;
+                                                       [ unit;  unit ] ;
+						       [ int,   int] (* from y *)
+                                                     ]
+
+
+
+
+
+
+  ~> c_typeclass_simpl([x], tc_comparable)  (* x ∈ tc_comparable *)
+                       tc "arguments for size"       [x;y] (* bound local vars *)
+                                                     [ c_typeclass_simpl([y], tc_length)
+                                                        ] (* new tcs *)
+                                                     [a] (* ∈ *)
+                                                     [
+						       map[cmp1; map(int,int)]
+						       map[cmp1; len2]
+						       map[cmp2; map(int,int)]
+						       map[cmp2; len2]
+						       map[cmp3; map(int,int)]
+						       map[cmp3; len2]
+						       map[cmp1; float]
+						       map[cmp2; float]
+						       map[cmp3; float]
+						       map[unit;unit]
+						       map(int,int);
+						       len2;
+                                                     ]
+
+  
+                       tc "arguments for size"       […union of tvars from tc_co tc_len…] (* bound local vars *)
+                                                     […union ……] (* new tcs *)
+                                                     [b fresh;c fresh] (* ∈ *)
+                                                     [ [ x ; y ] ;
+                                                       [ unit; unit ] ;
+                                                       [ y ]
+                                                     ]
+
+======== END NOTES =========
+
+*)  
+

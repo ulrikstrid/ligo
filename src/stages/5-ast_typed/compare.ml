@@ -504,24 +504,26 @@ let c_alias {reason_alias_simpl=ra;a=aa;b=ba} {reason_alias_simpl=rb;a=ab;b=bb} 
 let c_poly_simpl {id_poly_simpl = ConstraintIdentifier ca;_} {id_poly_simpl = ConstraintIdentifier cb;_} =
   Int64.compare ca cb
 
-let c_typeclass_simpl_compare_all_fields {reason_typeclass_simpl=ra;id_typeclass_simpl=ida;original_id=oia;tc=ta;args=la} {reason_typeclass_simpl=rb;id_typeclass_simpl=idb;original_id=oib;tc=tb;args=lb} =
-  cmp5
+let rec c_typeclass_simpl_compare_all_fields {tc_bound=ba;tc_constraints=ca;reason_typeclass_simpl=ra;id_typeclass_simpl=ida;original_id=oia;tc=ta;args=la} {tc_bound=bb;tc_constraints=cb;reason_typeclass_simpl=rb;id_typeclass_simpl=idb;original_id=oib;tc=tb;args=lb} =
+  cmp7
+    (List.compare ~compare:type_variable) ba bb
+    (List.compare ~compare:type_constraint_simpl) ca cb
     String.compare ra rb
     constraint_identifier ida idb
     (Option.compare constraint_identifier) oia oib
     (List.compare ~compare:tc_allowed) ta tb
     (List.compare ~compare:type_variable) la lb
 
-let c_typeclass_simpl a b =
+and c_typeclass_simpl a b =
   constraint_identifier a.id_typeclass_simpl b.id_typeclass_simpl
 
-let c_access_label_simpl a b =
+and c_access_label_simpl a b =
   constraint_identifier a.id_access_label_simpl b.id_access_label_simpl
 
-let c_row_simpl {id_row_simpl = ConstraintIdentifier ca;_} {id_row_simpl = ConstraintIdentifier cb;_} =
+and c_row_simpl {id_row_simpl = ConstraintIdentifier ca;_} {id_row_simpl = ConstraintIdentifier cb;_} =
   Int64.compare ca cb
 
-let constructor_or_row
+and constructor_or_row
     (a : constructor_or_row)
     (b : constructor_or_row) =
   match a,b with
@@ -530,7 +532,7 @@ let constructor_or_row
   | `Constructor _ , `Row _ -> -1
   | `Row _ , `Constructor _ -> 1
 
-let type_constraint_simpl_tag = function
+and type_constraint_simpl_tag = function
   | SC_Constructor _ -> 1
   | SC_Alias       _ -> 2
   | SC_Poly        _ -> 3
@@ -538,7 +540,7 @@ let type_constraint_simpl_tag = function
   | SC_Access_label   _ -> 6
   | SC_Row         _ -> 5
 
-let type_constraint_simpl a b =
+and type_constraint_simpl a b =
   match (a,b) with
   SC_Constructor ca, SC_Constructor cb -> c_constructor_simpl ca cb
 | SC_Alias       aa, SC_Alias       ab -> c_alias aa ab

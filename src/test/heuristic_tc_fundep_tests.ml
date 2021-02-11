@@ -1,6 +1,7 @@
 open Test_helpers
 open Main_errors
 
+open Ast_typed.Combinators
 module Core = Typesystem.Core
 open Ast_typed.Types
 open Ast_typed.Reasons
@@ -35,8 +36,8 @@ let test''
   let%bind e =
     trace typer_tracer @@
     let info = `Constructor { reason_constr_simpl = "unit test" ; original_id = None; id_constructor_simpl = ConstraintIdentifier 42L ; tv ; c_tag ; tv_list } in
-    let tc =  { reason_typeclass_simpl = "unit test"; original_id = None; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
-    let expected =  { reason_typeclass_simpl = "unit test" ; original_id = None; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
+    let tc = make_c_typeclass_simpl ~bound:[] ~constraints:[] () 42 None args tc in
+    let expected =  make_c_typeclass_simpl ~bound:[] ~constraints:[] () 42 None expected_args expected_tc in
     (* TODO: use an error not an assert *)
     (* Format.printf "\n\nActual: %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl (restrict info tc);
      * Format.printf "\n\nExpected %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl expected; *)
@@ -89,8 +90,8 @@ let test'
     expected_args (_in : string) expected_tc =
   test name @@ fun () ->
     trace typer_tracer @@
-      let input_tc =  { reason_typeclass_simpl = "unit test" ; original_id = None; id_typeclass_simpl = ConstraintIdentifier 42L ; args ; tc } in
-      let expected_tc =  { reason_typeclass_simpl = "unit test" ; original_id = None; id_typeclass_simpl = ConstraintIdentifier 42L ; args = expected_args ; tc = expected_tc } in
+      let input_tc = make_c_typeclass_simpl ~bound:[] ~constraints:[] () 42 None args tc in
+      let expected_tc = make_c_typeclass_simpl ~bound:[] ~constraints:[] () 42 None expected_args expected_tc in
       let expected_inferred = List.map
           (fun (tv , c_tag , tv_list) -> {reason_constr_simpl = "unit test" ; original_id = None; id_constructor_simpl = ConstraintIdentifier 42L ; tv ; c_tag ; tv_list})
           expected_inferred in

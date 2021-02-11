@@ -136,7 +136,7 @@ and type_value : type_value cmp = fun expected actual ->
   let { location=_; wrap_content=b1 } : type_value = actual in
   type_value_ a1 b1
 
-and type_variable_list : type_variable_list cmp = fun expected actual ->
+and type_variable_list : type_variable list cmp = fun expected actual ->
   list ~compare:type_variable expected actual
 
 and c_typeclass_simpl : c_typeclass_simpl cmp = fun expected actual ->
