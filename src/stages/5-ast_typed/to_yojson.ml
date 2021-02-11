@@ -355,8 +355,10 @@ and constraint_identifier (ConstraintIdentifier ci : constraint_identifier) : js
     "ConstraintIdentifier", `String (Format.asprintf "%Li" ci);
   ]
 
-and c_typeclass {tc_args; typeclass=tc;original_id} =
+and c_typeclass {tc_bound; tc_constraints; tc_args; typeclass=tc;original_id} =
   `Assoc [
+    ("tc_bound", list type_variable_to_yojson tc_bound);
+    ("tc_constraints", list type_constraint tc_constraints);
     ("tc_args", list type_value tc_args);
     ("original_id", match original_id with Some x -> constraint_identifier x | None -> `String "none");
     ("typeclass", typeclass tc)
@@ -439,8 +441,10 @@ let c_poly_simpl {id_poly_simpl = ConstraintIdentifier ci; reason_poly_simpl; or
     ("forall", p_forall forall)
   ]
 
-let c_typeclass_simpl {id_typeclass_simpl = ConstraintIdentifier ci;reason_typeclass_simpl;original_id;tc;args} =
+let rec c_typeclass_simpl {tc_bound; tc_constraints; id_typeclass_simpl = ConstraintIdentifier ci;reason_typeclass_simpl;original_id;tc;args} =
   `Assoc [
+    ("tc_bound", list type_variable_to_yojson tc_bound);
+    ("tc_constraints", list type_constraint_simpl tc_constraints);
     ("id_typeclass_simpl", `String (Format.sprintf "%Li" ci));
     ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
     ("reason_typeclass_simpl", `String reason_typeclass_simpl);
@@ -448,7 +452,7 @@ let c_typeclass_simpl {id_typeclass_simpl = ConstraintIdentifier ci;reason_typec
     ("args", list type_variable_to_yojson args)
   ]
 
-let c_access_label_simpl { id_access_label_simpl = ConstraintIdentifier ci ; reason_access_label_simpl ; record_type ; label = l ; tv } =
+and c_access_label_simpl { id_access_label_simpl = ConstraintIdentifier ci ; reason_access_label_simpl ; record_type ; label = l ; tv } =
   `Assoc [
     ("id_access_label_simpl", `String (Format.sprintf "%Li" ci));
     ("reason_access_label_simpl", `String reason_access_label_simpl);
@@ -457,14 +461,14 @@ let c_access_label_simpl { id_access_label_simpl = ConstraintIdentifier ci ; rea
     ("tv", type_variable_to_yojson tv)
   ]
 
-let row_variable {associated_variable; michelson_annotation; decl_pos} =
+and row_variable {associated_variable; michelson_annotation; decl_pos} =
   `Assoc [
     ("associated_variable", type_variable_to_yojson associated_variable);
     ("michelson_annotation", option (fun s -> `String s) michelson_annotation);
     ("decl_pos", `Int decl_pos);
   ]
 
-let c_row_simpl {id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; original_id; tv;r_tag;tv_map} =
+and c_row_simpl {id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; original_id; tv;r_tag;tv_map} =
   `Assoc [
     ("id_row_simpl", `String (Format.sprintf "%Li" ci));
     ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
@@ -473,7 +477,7 @@ let c_row_simpl {id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; origi
     ("r_tag", row_tag r_tag);
     ("tv_map", label_map row_variable tv_map)
   ]
-let type_constraint_simpl = function
+and type_constraint_simpl = function
   | SC_Constructor c -> `List [`String "SC_constructor"; c_constructor_simpl c]
   | SC_Alias       c -> `List [`String "SC_alias"; c_alias c]
   | SC_Poly        c -> `List [`String "SC_Poly"; c_poly_simpl c]

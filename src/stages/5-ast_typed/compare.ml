@@ -473,8 +473,10 @@ and c_equation {aval=a1;bval=b1} {aval=a2;bval=b2} =
 
 and tc_args a = List.compare ~compare:type_value a
 
-and c_typeclass {tc_args=ta;typeclass=ca; original_id=x} {tc_args=tb;typeclass=cb; original_id =y} =
-  cmp3
+and c_typeclass {tc_bound=wa; tc_constraints=za; tc_args=ta;typeclass=ca; original_id=x} {tc_bound=wb; tc_constraints=zb; tc_args=tb;typeclass=cb; original_id =y} =
+  cmp5
+    (List.compare ~compare:type_variable) wa wb
+    (List.compare ~compare:type_constraint) za zb
     tc_args ta tb
     typeclass ca cb
     (Option.compare (constraint_identifier ))x y

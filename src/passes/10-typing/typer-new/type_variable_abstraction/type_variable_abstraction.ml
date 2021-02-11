@@ -80,6 +80,8 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
         reason_typeclass_simpl : string ;
         id_typeclass_simpl : constraint_identifier ;
         original_id        : constraint_identifier option ;
+        tc_bound           : type_variable list; (* NOTE: these variables are disjoint from unification variables; using repr on them is harmless but useless *)
+        tc_constraints     : type_constraint_simpl list;
         tc   : typeclass          ;
         args : type_variable list ;
       }
@@ -123,6 +125,8 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       and tc_args = type_value list
 
       and c_typeclass = {
+        tc_bound : type_variable list; (* NOTE: these variables are disjoint from unification variables; using repr on them is harmless but useless *)
+        tc_constraints : type_constraint list;
         tc_args : tc_args ;
         original_id : constraint_identifier option ;
         typeclass : typeclass ;
@@ -134,7 +138,7 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
         c_access_label_tvar : type_variable ;
       }
 
-      type type_constraint = {
+      and type_constraint = {
         reason : string ;
         c : type_constraint_ ;
       }

@@ -258,12 +258,14 @@ let rec c_equation ppf {aval; bval} =
     type_value aval
     type_value bval
 
-and c_typeclass ppf {tc_args; typeclass=tc;original_id} =
+and c_typeclass ppf {tc_bound; tc_constraints; tc_args; typeclass=tc;original_id} =
   fprintf ppf "{@,@[<hv 2>
-original_id : %s
+tc_bound : %a;@ tc_constraints : %a;@ original_id : %s
               tc_args : %a ;@
               typeclass : %a
               @]@,}"
+    (list_sep_d type_variable) tc_bound
+    (list_sep_d type_constraint) tc_constraints
     (match original_id with Some (ConstraintIdentifier x) -> Int64.to_string x | None -> "null")
     (list_sep_d type_value) tc_args
     typeclass tc
@@ -385,21 +387,25 @@ let c_poly_simpl ppf ({id_poly_simpl = ConstraintIdentifier ci; reason_poly_simp
     type_variable tv
     p_forall forall
 
-let c_typeclass_simpl ppf ({id_typeclass_simpl = ConstraintIdentifier ci; reason_typeclass_simpl; original_id; tc; args}) =
+let rec c_typeclass_simpl ppf ({tc_bound; tc_constraints; id_typeclass_simpl = ConstraintIdentifier ci; reason_typeclass_simpl; original_id; tc; args}) =
   fprintf ppf "{@,@[<hv 2>
+              tc_bound: %a; @
+              tc_constraints: %a; @
               id_typeclass_simpl : %Li; @
               original_id : %s; @
               reason_typeclass_simpl : %s; @
               tc : %a ;@
               args : %a
               @]@,}"
+    (list_sep_d type_variable) tc_bound
+    (list_sep_d type_constraint_simpl) tc_constraints
     ci
     (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null")
     reason_typeclass_simpl
     typeclass tc
     (list_sep_d type_variable) args
 
-let c_access_label_simpl ppf { id_access_label_simpl = ConstraintIdentifier ci ; reason_access_label_simpl ; record_type ; label = l ; tv } =
+and c_access_label_simpl ppf { id_access_label_simpl = ConstraintIdentifier ci ; reason_access_label_simpl ; record_type ; label = l ; tv } =
   fprintf ppf "{@,@[<hv 2>
               id_access_label_simpl : %Li; @
               reason_access_label_simpl : %s; @
@@ -413,20 +419,20 @@ let c_access_label_simpl ppf { id_access_label_simpl = ConstraintIdentifier ci ;
     label l
     type_variable tv
 
-let constraint_identifier ppf (ConstraintIdentifier ci) =
+and constraint_identifier ppf (ConstraintIdentifier ci) =
   fprintf ppf "ConstraintIdentifier %Li" ci
-let constraint_identifierMap = fun f ppf tvmap   ->
+and constraint_identifierMap = fun f ppf tvmap   ->
       let lst = RedBlackTrees.PolyMap.bindings tvmap in
       let aux ppf (k, v) =
         fprintf ppf "(%a, %a)" constraint_identifier k f v in
       fprintf ppf "typeVariableMap [@,@[<hv 2> %a @]@,]" (list_sep aux (fun ppf () -> fprintf ppf " ;@ ")) lst
 
-let row_variable : formatter -> row_variable -> unit =
+and row_variable : formatter -> row_variable -> unit =
   fun ppf { associated_variable ; michelson_annotation=_ ; decl_pos } ->
     fprintf ppf "{associated_variable %a ; pos %i}"
       type_variable associated_variable
       decl_pos
-let c_row_simpl ppf ({id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; original_id; tv; r_tag; tv_map}) =
+and c_row_simpl ppf ({id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; original_id; tv; r_tag; tv_map}) =
   fprintf ppf "{@,@[<hv 2>
               id_row_simpl : %Li; @
               original_id : %s; @
@@ -442,7 +448,7 @@ let c_row_simpl ppf ({id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; 
     row_tag r_tag
     (lmap_sep_d row_variable) @@ LMap.to_kv_list tv_map
 
-let type_constraint_simpl ppf (tc: type_constraint_simpl) = match tc with
+and type_constraint_simpl ppf (tc: type_constraint_simpl) = match tc with
   | SC_Constructor c -> fprintf ppf "SC_Constructor (%a)" c_constructor_simpl c
   | SC_Alias       a -> fprintf ppf "SC_Alias (%a)" c_alias a
   | SC_Poly        p -> fprintf ppf "SC_Poly (%a)" c_poly_simpl p

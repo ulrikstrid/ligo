@@ -293,10 +293,11 @@ module Substitution = struct
         let aux tv = type_value ~tv ~substs in
           C_equation { aval = aux aval ; bval = aux bval }
         )
-      | C_typeclass { tc_args; original_id; typeclass=tc } -> (
+      | C_typeclass { tc_bound; tc_constraints; tc_args; original_id; typeclass=tc } -> (
           let tc_args = List.map (fun tv -> type_value ~tv ~substs) tc_args in
+          let tc_constraints = List.map (fun c -> constraint_ ~c ~substs) tc_constraints in
           let tc = typeclass ~tc ~substs in
-          C_typeclass {tc_args ; original_id; typeclass=tc}
+          C_typeclass {tc_bound; tc_constraints; tc_args ; original_id; typeclass=tc}
         )
       | C_access_label { c_access_label_tval; accessor; c_access_label_tvar } -> (
           let c_access_label_tval = type_value ~tv:c_access_label_tval ~substs in

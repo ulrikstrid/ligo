@@ -400,6 +400,9 @@ and tc_args = type_value list
 and constraint_identifier =
 | ConstraintIdentifier of int64
 and c_typeclass = {
+  (* TODO: possible bug: bound variables must not intersect with the tc_args *)
+  tc_bound : type_variable list ;
+  tc_constraints : type_constraint list ;
   tc_args : tc_args ;
   original_id : constraint_identifier option ;
   typeclass : typeclass ;
@@ -461,7 +464,6 @@ and c_constructor_simpl_list = c_constructor_simpl list
 and c_poly_simpl_list        = c_poly_simpl        list
 and c_typeclass_simpl_list   = c_typeclass_simpl   list
 and c_row_simpl_list         = c_row_simpl         list
-and type_variable_list = type_variable list
 and type_variable_lmap = type_variable label_map
 and c_constructor_simpl = {
   reason_constr_simpl : string ;
@@ -470,7 +472,7 @@ and c_constructor_simpl = {
   tv : type_variable;
   c_tag : constant_tag;
   (* Types wih no arguments like int, string etc. have an empty tv_list *)
-  tv_list : type_variable_list;
+  tv_list : type_variable list;
 }
 and c_row_simpl = {
   reason_row_simpl : string ;
@@ -500,8 +502,10 @@ and c_typeclass_simpl = {
   (* see description above in c_constructor_simpl *)
   id_typeclass_simpl : constraint_identifier ;
   original_id        : constraint_identifier option ; (* Pointer to the original typeclass, if this one is a refinement of it *)
+  tc_bound           : type_variable list ;
+  tc_constraints     : type_constraint_simpl list ;
   tc   : typeclass          ;
-  args : type_variable_list ;
+  args : type_variable list ;
 }
 and c_access_label_simpl = {
   reason_access_label_simpl : string ;

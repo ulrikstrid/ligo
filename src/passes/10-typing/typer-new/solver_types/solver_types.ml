@@ -3,9 +3,6 @@ module Set = RedBlackTrees.PolySet
 
 module TYPE_VARIABLE_ABSTRACTION = Type_variable_abstraction.TYPE_VARIABLE_ABSTRACTION
 
-type 'old_constraint_type selector_input = 'old_constraint_type (* some info about the constraint just added, so that we know what to look for *)
-type 'selector_output selector_outputs = 'selector_output list
-(* type ('old_contraint_type, 'selector_output) selector = 'old_constraint_type selector_input -> structured_dbs -> 'selector_output selector_outputs *)
 type ('selector_output , 'errors) propagator = 'selector_output -> (Ast_typed.type_variable -> Ast_typed.type_variable) -> (Ast_typed.updates, 'errors) result
 
 (* TODO: move this with the AST, probably? *)
@@ -242,7 +239,7 @@ type -'flds ex_heuristic_state =
     Heuristic_state : ('selector_output, 'flds) heuristic_state -> 'flds ex_heuristic_state
 
 type -'flds ex_heuristic_selector =
-    Heuristic_selector: ('selector_output, 'flds) heuristic_state * 'selector_output selector_outputs -> 'flds ex_heuristic_selector
+    Heuristic_selector: ('selector_output, 'flds) heuristic_state * 'selector_output list -> 'flds ex_heuristic_selector
 
 type 'flds heuristic_plugins = 'flds ex_heuristic_plugin list
 

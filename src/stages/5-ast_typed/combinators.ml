@@ -367,8 +367,10 @@ let make_c_row_simpl ?(reason_row_simpl="") id_row_simpl original_id tv r_tag tv
 }
 
 
-let make_c_typeclass_simpl ?(reason_typeclass_simpl="") id_typeclass_simpl original_id args tc : c_typeclass_simpl =
+let make_c_typeclass_simpl ?(reason_typeclass_simpl="") ~bound ~constraints id_typeclass_simpl original_id args tc : c_typeclass_simpl =
   {
+    tc_bound = bound;
+    tc_constraints = constraints;
     reason_typeclass_simpl ;
     id_typeclass_simpl = ConstraintIdentifier (Int64.of_int id_typeclass_simpl) ;
     original_id = Option.map (fun i -> ConstraintIdentifier (Int64.of_int i)) original_id;
@@ -398,8 +400,10 @@ let make_sc_constructor ?(reason_constr_simpl="") id_constructor_simpl original_
   SC_Constructor (make_c_constructor_simpl ~reason_constr_simpl id_constructor_simpl original_id tv c_tag tv_list)
 let make_sc_row ?(reason_row_simpl="") id_row_simpl original_id tv r_tag tv_map_as_lst : type_constraint_simpl =
   SC_Row (make_c_row_simpl ~reason_row_simpl id_row_simpl original_id tv r_tag tv_map_as_lst)
-let make_sc_typeclass ?(reason_typeclass_simpl="") (tc : typeclass) (args : type_variable_list) =
+let make_sc_typeclass ?(reason_typeclass_simpl="") ~bound ~constraints (tc : typeclass) (args : type_variable list) =
   SC_Typeclass {
+    tc_bound = bound;
+    tc_constraints = constraints;
     reason_typeclass_simpl ;
     id_typeclass_simpl = ConstraintIdentifier 1L ;
     original_id = None ;
