@@ -41,6 +41,13 @@ let forall4 a b c d f =
   forall d @@ fun d' ->
   f a' b' c' d'
 
+let forall4_tc a b c d f =
+  forall    a @@ fun a' ->
+  forall    b @@ fun b' ->
+  forall    c @@ fun c' ->
+  forall_tc d @@ fun d' ->
+  f a' b' c' d'
+
 let forall3_tc a b c f =
   forall    a @@ fun a' ->
   forall    b @@ fun b' ->

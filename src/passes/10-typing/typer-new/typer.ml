@@ -563,27 +563,6 @@ and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.match
         bind_fold_map_list aux (e,state,[]) lst in
       (* TODO: check that the variant is complete *)
       return e state c @@ O.Match_variant {cases ; tv= t }
-    (*
-    | Match_variant lst ->
-      (* Check that the matching contains the same number of case as the number of constructors of the variants
-        and that all the constructors belong to the variants. *)
-      let%bind () =
-        let%bind variant_cases' =
-          trace_option (match_error ~expected:i ~actual:t loc)
-          @@ Ast_typed.Combinators.get_t_sum variant in
-        let variant_cases = List.map fst @@ O.LMap.to_kv_list_rev variant_cases'.content in
-        let match_cases = List.map (fun ({constructor;_} : I.match_variant) -> constructor) lst in
-        let test_case = fun c ->
-          Assert.assert_true (corner_case "match case") (List.mem c match_cases)
-        in
-        let%bind () =
-          trace_strong (match_missing_case variant_cases match_cases loc) @@
-          bind_iter_list test_case variant_cases in
-        let%bind () = Assert.assert_true (match_extra_case variant_cases match_cases loc) @@
-          List.(length variant_cases = length match_cases) in
-        ok ()
-      in
-      *)
 
 (* Apply type_declaration on every node of the AST_core from the root p *)
 and type_module_returns_env ((env, state, p) : environment * _ O'.typer_state * I.module_) : (environment * _ O'.typer_state * O.module_with_unification_vars, Typer_common.Errors.typer_error) result =
