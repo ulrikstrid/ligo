@@ -23,13 +23,13 @@ open Simple_utils
 module TYPE_VARIABLE_ABSTRACTION = Type_variable_abstraction.TYPE_VARIABLE_ABSTRACTION
 
 module M = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
-  (* open Type_variable_abstraction *)
+  open Type_variable_abstraction
   open Type_variable_abstraction.Types
-  (* open Type_variable_abstraction.Reasons *)
+  open Type_variable_abstraction.Reasons
 
   module Utils = Heuristic_tc_fundep_utils.Utils(Type_variable)(Type_variable_abstraction)
   open Utils
-  (* open Utils.All_plugins *)
+  open Utils.All_plugins
 
   type selector_output = {
     tc : c_typeclass_simpl ;
@@ -38,16 +38,15 @@ module M = functor (Type_variable : sig type t end) (Type_variable_abstraction :
 
   let heuristic_name = "tc_fundep"
 
-  let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds -> selector_output list =
-    fun _ _ _ -> []             (* TODO *)
+  (* let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds -> selector_output list =
+   *   fun _ _ _ -> []             (\* TODO *\)
+   * 
+   * let alias_selector : type_variable -> type_variable -> flds -> selector_output list =
+   *   fun _ _ _ -> []             (\* TODO *\) *)
 
-  let alias_selector : type_variable -> type_variable -> flds -> selector_output list =
-    fun _ _ _ -> []             (* TODO *)
-
-  let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
-    fun _ _ -> ok []            (* TODO *)
+  (* let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
+   *   fun _ _ -> ok []            (\* TODO *\) *)
   
-  (*
 (* ***********************************************************************
  * Selector
  * *********************************************************************** *)
@@ -118,7 +117,7 @@ let alias_selector : type_variable -> type_variable -> flds -> selector_output l
             { tc ; c })
          (a_ctors @ b_ctors @ a_rows @ b_rows ))
     (a_tcs @ b_tcs)
-*)
+
 let get_referenced_constraints ({ tc; c } : selector_output) : type_constraint_simpl list =
   [
     SC_Typeclass tc;
@@ -130,7 +129,7 @@ let get_referenced_constraints ({ tc; c } : selector_output) : type_constraint_s
  * *********************************************************************** *)
 
 
-(*
+
 (* 
 
 type t = { m : int; n : unit }
@@ -199,11 +198,11 @@ simplified constraint
 
 
 
-module Matrix = struct
-  let matrix (tc : c_typeclass_simpl) =
-    let { reason_typeclass_simpl; id_typeclass_simpl; original_id; tc; args } = tc in
-    ??
-end
+(* module Matrix = struct
+ *   let matrix (tc : c_typeclass_simpl) =
+ *     let { reason_typeclass_simpl; id_typeclass_simpl; original_id; tc; args } = tc in
+ *     ??
+ * end *)
 
 
 (* type tag = [ `Constructor of constant_tag | `Row of row_tag ]
@@ -219,29 +218,30 @@ end
 (* type arg
  * let get_arg : constructor_or_row -> arg = ?? *)
 
-module Eq = struct include Ast_typed.Compare let (==) fa b = fa b = 0 end
+(* module Eq = struct include Ast_typed.Compare let (==) fa b = fa b = 0 end *)
 
 let restrict_one (cr : constructor_or_row) (allowed : type_value) =
   match cr, allowed.wrap_content with
   | `Constructor { reason_constr_simpl=_; tv=_; c_tag; tv_list }, P_constant { p_ctor_tag; p_ctor_args } ->
     if Compare.constant_tag c_tag p_ctor_tag = 0
     then if List.compare_lengths tv_list p_ctor_args = 0
-      then Some (`Constructor p_ctor_args)
+      then Some p_ctor_args
+(*      then Some (`Constructor p_ctor_args)*)
       else None (* case removed because type constructors are different *)
     else None   (* case removed because argument lists are of different lengths *)
-  | `Row { reason_row_simpl=_; id_row_simpl=_; original_id=_; tv=_; r_tag; tv_map }, P_row { p_row_tag; p_row_args } ->
+  | `Row _, P_row _ -> failwith "TODO: support P_row similarly to P_constant"
+(*  | `Row { reason_row_simpl=_; id_row_simpl=_; original_id=_; tv=_; r_tag; tv_map }, P_row { p_row_tag; p_row_args } ->
     if Compare.row_tag r_tag p_row_tag = 0
     then if List.compare ~compare:Compare.label (LMap.keys tv_map) (LMap.keys p_row_args) = 0
       then Some (`Row p_row_args)
       else None (* case removed because type constructors are different *)
     else None   (* case removed because argument lists are of different lengths *)
-  | _, (P_forall _ | P_variable _ | P_apply _ | P_row _ | P_constant _) -> None
-
 *)
-let restrict : (type_variable -> type_variable) -> constructor_or_row -> c_typeclass_simpl -> c_typeclass_simpl =
-  fun _ _ c -> c
+  | _, (P_forall _ | P_variable _ | P_apply _ | P_row _ | P_constant _) -> None (* TODO: does this mean that we can't satisfy these constraints? *)
 
-  (*
+(* let restrict : (type_variable -> type_variable) -> constructor_or_row -> c_typeclass_simpl -> c_typeclass_simpl =
+ *   fun _ _ c -> c *)
+
 (* Restricts a typeclass to the possible cases given v = k(a, …) in c *)
 let restrict repr (constructor_or_row : constructor_or_row) (tcs : c_typeclass_simpl) =
   let (tv_list, tv) = match constructor_or_row with
@@ -264,7 +264,7 @@ let restrict repr (constructor_or_row : constructor_or_row) (tcs : c_typeclass_s
      variables passed to the type constructor *)
   let args = splice (fun _arg -> tv_list) index tcs.args in
   let id_typeclass_simpl = tcs.id_typeclass_simpl in
-  { reason_typeclass_simpl = tcs.reason_typeclass_simpl; original_id = tcs.original_id; id_typeclass_simpl ; tc ; args }
+  { tc_bound = [](*TODO*); tc_constraints = [](*TODO*); reason_typeclass_simpl = tcs.reason_typeclass_simpl; original_id = tcs.original_id; id_typeclass_simpl ; tc ; args }
 
 (* input:
      x ? [ map3( nat , unit , float ) ; map3( bytes , mutez , float ) ]
@@ -312,6 +312,7 @@ let replace_var_and_possibilities_1 (repr:type_variable -> type_variable) ((x : 
       } in
       (* discard the identical tags, splice their arguments instead, and deduce the x = tag(…) constraint *)
       let sub_part_of_typeclass = {
+        tc_bound = [](*TODO*); tc_constraints = [](*TODO*);
         reason_typeclass_simpl = Format.asprintf
             "sub-part of a typeclass: expansion of the possible \
              arguments for the constructor associated with %a"
@@ -352,14 +353,13 @@ let replace_vars_and_possibilities repr possibilities_alist =
   let%bind (_changed, possibilities_alist, deduced) = replace_vars_and_possibilities_list repr possibilities_alist in
   ok (list_of_rope possibilities_alist, list_of_rope deduced)
 
-*)
 type deduce_and_clean_result = {
   deduced : c_constructor_simpl list ;
   cleaned : c_typeclass_simpl ;
 }
-let deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result, _) result =
-  fun _ c -> ok { deduced = []; cleaned = c }
-(*
+(* let deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result, _) result =
+ *   fun _ c -> ok { deduced = []; cleaned = c } *)
+
 let deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result, _) result = fun repr tcs ->
   Format.printf "In deduce_and_clean for : %a\n%!" PP.c_typeclass_simpl_short tcs;
   (* ex.   [ x                             ; z      ]
@@ -400,6 +400,7 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
   let cleaned : type_constraint = {
       reason = cleaned.reason_typeclass_simpl;
       c = C_typeclass {
+          tc_bound = [](*TODO*); tc_constraints = [](*TODO*);
         tc_args ;
         typeclass = cleaned.tc;
         original_id = selected.tc.original_id;
@@ -433,7 +434,6 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
 (* ***********************************************************************
  * Heuristic
  * *********************************************************************** *)
-*)
     
 let printer ppd (t : selector_output) =
   let open Format in
