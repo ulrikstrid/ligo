@@ -51,6 +51,12 @@ module Operators_types = struct
                                                                   [key_hash] ;
                                                                   (* pair of comparable *)
                                                                 ]
+  (* TODO: enabling this makes some tests fail:
+  let tc_concatable a b = tc "concatenable"             [a;b]   [ [tuple2 string string  ; string ] ;
+                                                                  [tuple1 @@ list string ; string ] ; 
+                                                                  [tuple2 bytes  bytes   ; bytes  ] ;
+                                                                  [tuple1 @@ list bytes  ; bytes  ] ;
+                                                                ] *)
   let tc_concatable a   = tc "concatenable"             [a]     [ [string] ; [bytes] ]
   let tc_slicable   a   = tc "slicable"                 [a]     [ [string] ; [bytes] ]
   let tc_storable a     = tc "storable"                 [a]     [ [string] ; [bytes] ; (*Humm .. TODO ?*) ]
@@ -128,6 +134,8 @@ module Operators_types = struct
   let t_lsl           = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_bitwise a b c] => tuple2 a b --> c
   let t_lsr           = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_bitwise a b c] => tuple2 a b --> c
   let t_comp          = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple2 a a --> bool
+  (*  TODO: enabling this makes some tests fail
+      let t_concat        = forall2_tc "a" "b" @@ fun a b -> [tc_concatable a b] => a --> b *)
   let t_concat        = forall_tc "a" @@ fun a -> [tc_concatable a] => tuple2 a a --> a
 
   let t_set_empty     = forall_tc "a" @@ fun a -> [tc_comparable a] => tuple0 --> set a
