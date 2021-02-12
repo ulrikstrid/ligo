@@ -407,7 +407,7 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let (case, loc1) = r_split case in
     let%bind matchee = self case.expr in
     let (cases, loc2) = r_split case.cases in
-    let loc = Location.cover loc1 loc2 in
+    let loc = Location.cover loc1 loc2 in (* TODO: locations are weird here *)
     let%bind cases = compile_matching_expr @@ npseq_to_ne_list cases in
     return @@ e_matching ~loc matchee cases
   | EAnnot annot ->
