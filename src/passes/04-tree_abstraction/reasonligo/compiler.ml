@@ -573,6 +573,7 @@ and conv : CST.pattern -> (AST.ty_expr AST.pattern,_) result =
     in
     ok @@ repr
   )
+  | CST.PUnit _ -> ok P_unit
   | _ -> fail @@ unsupported_pattern_type p
 
 and compile_tuple_let_destructuring :

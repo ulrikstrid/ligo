@@ -567,6 +567,7 @@ and conv : CST.pattern -> (AST.ty_expr AST.pattern,_) result =
     in
     ok @@ repr
   )
+  | CST.PUnit _ -> ok P_unit
   | _ -> fail @@ unsupported_pattern_type [p]
 
 and compile_tuple_let_destructuring : AST.expression -> AST.expression -> (CST.pattern, CST.comma) Utils.nsepseq CST.reg -> (AST.expression,_) result =

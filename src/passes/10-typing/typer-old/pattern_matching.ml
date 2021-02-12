@@ -276,14 +276,8 @@ and var_rule : type_f:type_fun -> body_t:O.type_expression option -> bool -> mat
         match pl with
         | (P_var b , t)::ptl -> (
           let%bind body' = substitute_var_in_body b.var mhd body in
-          (* let () = Format.printf "\n----- \n Sub %a by %a in :\n %a \n gave :\n %a \n----- \n"
-            I.PP.expression_variable b.var
-            I.PP.expression_variable mhd
-            I.PP.expression body
-            I.PP.expression body'
-          in *)
+          (* Is substitution avoidable ? mhd here can be the result of a tuple/record destructuring *)
           let env' = O.Environment.add_ez_binder mhd t env in
-          (* REMITODO Also substitute b.var in env ?? should not *)
           ok (ptl , (body',env'))
         )
         | (P_unit, _t)::ptl -> (
