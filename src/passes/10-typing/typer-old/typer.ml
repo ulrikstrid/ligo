@@ -401,13 +401,15 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
   (* Advanced *)
   | E_matching {matchee;cases} -> (
     let%bind matchee' = type_expression' e matchee in
-    let matcheevar = ignore matchee' ; Location.wrap (Var.fresh ()) in (* REMITODO *)
+    let matcheevar = Location.wrap (Var.fresh ()) in
     let aux : (I.expression, I.type_expression) I.match_case -> ((I.type_expression I.pattern * O.type_expression) list * (I.expression * O.environment)) =
       fun {pattern ; body} -> ([(pattern,matchee'.type_expression)], (body,e))
     in
     let eqs = List.map aux cases in
-    let%bind case_exp = Pattern_matching.compile_matching ~type_f:(type_expression') ~body_t:(tv_opt) matcheevar eqs in
-    let x = O.e_let_in matcheevar matchee' case_exp false in
+    (* let () = Format.printf "NIAAAA : %a\n" Location.pp ae.location in *)
+    let%bind case_exp = Pattern_matching.compile_matching ae.location ~type_f:(type_expression') ~body_t:(tv_opt) matcheevar eqs in
+    (* let case_exp = { case_exp with location = ae.location } in *)
+    let x = O.e_let_in matcheevar matchee' case_exp false in (* what if matchee type contains a ticket ? *)
     return x case_exp.type_expression
     (* return c.expression_content c.type_expression *)
   )

@@ -404,9 +404,10 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let args = Option.unopt ~default:(e_unit ~loc:(Location.lift constr.region) ()) args_o in
     return @@ e_constructor ~loc constr.value args
   | ECase case ->
-    let (case, loc) = r_split case in
+    let (case, loc1) = r_split case in
     let%bind matchee = self case.expr in
-    let (cases, _) = r_split case.cases in
+    let (cases, loc2) = r_split case.cases in
+    let loc = Location.cover loc1 loc2 in
     let%bind cases = compile_matching_expr @@ npseq_to_ne_list cases in
     return @@ e_matching ~loc matchee cases
   | EAnnot annot ->

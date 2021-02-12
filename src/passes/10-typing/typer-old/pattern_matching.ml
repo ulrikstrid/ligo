@@ -144,8 +144,11 @@ let rec substitute_var_in_body : I.expression_variable -> O.expression_variable 
         let ret continue exp = ok (continue,(),exp) in
         match exp.content with
         | I.E_variable var when Var.equal var.wrap_content to_subst.wrap_content -> ret true { exp with content = E_variable new_var }
-        | I.E_let_in letin when Var.equal letin.let_binder.var.wrap_content to_subst.wrap_content -> ret false exp
-        | I.E_lambda _ -> failwith "REMITODO: if to_subst as arg, do not substitute the body.."
+        | I.E_let_in letin when Var.equal letin.let_binder.var.wrap_content to_subst.wrap_content ->
+          let%bind rhs = substitute_var_in_body to_subst new_var letin.rhs in
+          let letin = { letin with rhs } in
+          ret false { exp with content = E_let_in letin}
+        | I.E_lambda lamb when Var.equal lamb.binder.var.wrap_content to_subst.wrap_content -> ret false exp
         | I.E_matching m -> (
           let%bind matchee = substitute_var_in_body to_subst new_var m.matchee in
           let aux : bool -> _ I.pattern -> bool =
@@ -158,7 +161,10 @@ let rec substitute_var_in_body : I.expression_variable -> O.expression_variable 
             (fun (case : _ I.match_case) ->
               match Stage_common.Helpers.fold_pattern aux false case.pattern with
               | true -> ok case
-              | false -> ok case)
+              | false ->
+                let%bind body = substitute_var_in_body to_subst new_var case.body in
+                ok { case with body }
+            )
             m.cases
           in
           let m' = I.{matchee ; cases} in
@@ -415,18 +421,13 @@ and product_rule : type_f:type_fun -> body_t:O.type_expression option -> matchee
     let fields = O.LMap.of_list lb in
     let new_matchees = List.map (fun (_,((x:O.expression_variable),_)) -> x) lb in
     let%bind body = match_ ~type_f ~body_t (new_matchees @ ms) eqs' def in
-    let record_type : O.rows =
-      match (snd product_shape).type_content with
-      | O.T_record rows -> rows
-      | _ -> failwith "corner_case 7"
-    in
-    let cases = O.Match_record { fields; body ; record_type } in
+    let cases = O.Match_record { fields; body ; tv = snd product_shape } in
     let matchee = O.make_e (O.e_variable mhd) matchee_t in
     ok @@ O.make_e (O.E_matching { matchee ; cases }) body.type_expression
   )
   | [] -> failwith "corner case 8"
 
-and compile_matching ~type_f ~body_t matchee (eqs:equations) =
+and compile_matching loc ~type_f ~body_t matchee (eqs:equations) =
     let p1s = List.map (fun el -> fst @@ List.hd @@ fst el) eqs in
     let f =
       if List.exists is_product p1s then
@@ -441,9 +442,31 @@ and compile_matching ~type_f ~body_t matchee (eqs:equations) =
       O.e_failwith fs
     in
     let%bind res = f [matchee] eqs def in
+    let res = { res with location = loc } in (*REMITOD : no need after we move simpls in self_ast_typed *)
     let%bind res = top_level_simpl res in
+    let%bind res = exhaustive_check res in
     (* let () = Format.printf "\n\n--SIMPL--\n%a\n----\n\n" O.PP.expression res_simpl in *)
     ok res
+
+and exhaustive_check : O.expression -> O.expression pm_result =
+  fun exp ->
+    let aux :unit -> O.expression -> (unit,_) result =
+      fun () exp ->
+        match exp.expression_content with
+        | O.E_matching _ ->
+          let contains_partial_match : O.expression -> O.expression pm_result =
+            fun exp' ->
+              if is_generated_partial_match exp' then
+                let s = Format.asprintf "%a" Location.pp exp.location in
+                fail (corner_case @@ "not exhaustive case at "^s)
+              else ok exp'
+          in
+          let%bind _ = Self_ast_typed.map_expression contains_partial_match exp in
+          ok ()
+        | _ -> ok ()
+    in
+    let%bind () = Self_ast_typed.fold_expression aux () exp in
+    ok exp
 
 and is_generated_partial_match : O.expression -> bool =
   fun exp ->
@@ -456,7 +479,7 @@ and is_generated_partial_match : O.expression -> bool =
     | _ -> false
 
 and merge_record_case : (O.expression_variable * O.matching_content_record) -> O.matching_content_record option pm_result =
-  fun (mvar, {fields=_ ; body ; record_type }) ->
+  fun (mvar, {fields=_ ; body ; tv }) ->
     let aux : (O.expression_variable * O.type_expression) O.label_map option -> O.expression ->
       (bool * (O.expression_variable * O.type_expression) O.label_map option * O.expression,_) result =
         fun prev exp ->
@@ -477,7 +500,7 @@ and merge_record_case : (O.expression_variable * O.matching_content_record) -> O
     let%bind (new_fields_opt , body') = Self_ast_typed.fold_map_expression aux None body in
     match new_fields_opt with
     | Some fields ->
-      let new_case : O.matching_content_record = { fields ; record_type ; body=body' } in
+      let new_case : O.matching_content_record = { fields ; tv ; body=body' } in
       ok (Some new_case)
     | None -> ok None
 
