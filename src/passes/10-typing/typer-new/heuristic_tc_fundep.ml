@@ -37,32 +37,20 @@ module M = functor (Type_variable : sig type t end) (Type_variable_abstraction :
   }
 
   let heuristic_name = "tc_fundep"
-
-  (* let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds -> selector_output list =
-   *   fun _ _ _ -> []             (\* TODO *\)
-   * 
-   * let alias_selector : type_variable -> type_variable -> flds -> selector_output list =
-   *   fun _ _ _ -> []             (\* TODO *\) *)
-
-  (* let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
-   *   fun _ _ -> ok []            (\* TODO *\) *)
   
 (* ***********************************************************************
  * Selector
  * *********************************************************************** *)
 
+(* selector:
+ *   find in db "αᵢ = κ(β…)" and "(…,αᵢ,…) ∈ ∃δ…, c… => [ (…,τᵢⱼ,…) … ]"
+ *   find in db "αᵢ = Ξ(ℓ↦β…)" and "(…,αᵢ,…) ∈ ∃δ…, c… => [ (τ…) … ]" *)
+  
 (* Find typeclass constraints in the dbs which constrain c.tv *)
-let selector_by_ctor : (type_variable -> type_variable) -> flds -> c_constructor_simpl -> selector_output list =
-  fun repr (module Indexes) c ->
-  let typeclasses = (Typeclasses_constraining.get_typeclasses_constraining_list (repr c.tv) Indexes.typeclasses_constraining) in
-  let cs_pairs_db = List.map (fun tc -> { tc ; c = `Constructor c }) typeclasses in
-  cs_pairs_db
-
-let selector_by_row : (type_variable -> type_variable) -> flds -> c_row_simpl -> selector_output list =
-  fun repr (module Indexes) r ->
-  let typeclasses = (Typeclasses_constraining.get_typeclasses_constraining_list (repr r.tv) Indexes.typeclasses_constraining) in
-  let cs_pairs_db = List.map (fun tc -> { tc ; c = `Row r }) typeclasses in
-  cs_pairs_db
+let selector_by_variable : (type_variable -> type_variable) -> flds -> constructor_or_row -> type_variable -> selector_output list =
+  fun repr (module Indexes) c_or_r tv ->
+  let typeclasses = (Typeclasses_constraining.get_typeclasses_constraining_list (repr tv) Indexes.typeclasses_constraining) in
+  List.map (fun tc -> { tc ; c = c_or_r }) typeclasses
 
 (* Find constructor constraints α = κ(β …) where α is one of the
    variables constrained by the (refined version of the) typeclass
@@ -83,8 +71,8 @@ let selector_by_tc : (type_variable -> type_variable) -> flds -> c_typeclass_sim
 let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds -> selector_output list =
   fun repr type_constraint_simpl indexes ->
   match type_constraint_simpl with
-    SC_Constructor c  -> selector_by_ctor repr indexes c
-  | SC_Row r          -> selector_by_row repr indexes r
+    SC_Constructor c  -> selector_by_variable repr indexes (`Constructor c) c.tv
+  | SC_Row r          -> selector_by_variable repr indexes (`Row         r) r.tv
   | SC_Alias        _  -> [] (* TODO: this case should go away since aliases are handled by the solver structure *)
   | SC_Poly         _  -> []
   | SC_Access_label _  -> []
@@ -239,9 +227,6 @@ let restrict_one (cr : constructor_or_row) (allowed : type_value) =
 *)
   | _, (P_forall _ | P_variable _ | P_apply _ | P_row _ | P_constant _) -> None (* TODO: does this mean that we can't satisfy these constraints? *)
 
-(* let restrict : (type_variable -> type_variable) -> constructor_or_row -> c_typeclass_simpl -> c_typeclass_simpl =
- *   fun _ _ c -> c *)
-
 (* Restricts a typeclass to the possible cases given v = k(a, …) in c *)
 let restrict repr (constructor_or_row : constructor_or_row) (tcs : c_typeclass_simpl) =
   let (tv_list, tv) = match constructor_or_row with
@@ -357,8 +342,6 @@ type deduce_and_clean_result = {
   deduced : c_constructor_simpl list ;
   cleaned : c_typeclass_simpl ;
 }
-(* let deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result, _) result =
- *   fun _ c -> ok { deduced = []; cleaned = c } *)
 
 let deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result, _) result = fun repr tcs ->
   Format.printf "In deduce_and_clean for : %a\n%!" PP.c_typeclass_simpl_short tcs;
@@ -532,6 +515,7 @@ let pp_deduce_and_clean_result = MM.pp_deduce_and_clean_result
                                                        [ map[x;float] ] ;
                                                        [ map[float;x] ] ;
                                                        [ map[unit;unit] ] ;
+                                                       [ P_variable bool ] ;
 						       [ y ]
                                                      ]
 
@@ -540,6 +524,49 @@ let pp_deduce_and_clean_result = MM.pp_deduce_and_clean_result
                          a = map[z;w]
                          // z = autre
                          // w = chose
+
+selector:
+  find in db αᵢ = κ(β…)  and ∃δ…, c… => (…,αᵢ,…) ∈ [ (…,τᵢⱼ,…) … ]
+    if τᵢⱼ != (P_variable unbound)
+  find in db αᵢ = Ξ(ℓ↦β…) and ∃δ…, c… => (…,αᵢ,…) ∈ [ (τ…) … ]
+    if τᵢⱼ != (P_variable unbound)
+
+propagator:
+  filter col (* = ᵢ *):
+    List.filter (fltr col) (get_lines matrix)
+  deduce:
+    List.map deduce1 (get_columns matrix)
+
+deduce1 column:
+  if all_equal_root:
+    return v = eq
+
+fltr col line:
+  match line[col] with:
+    P_abs -> …
+  | P_forall -> unsupported
+  | P_constant/ctor -> true if same k + len(args)
+  | P_row/row -> true if same r + keys
+  | P_variable (bound) -> filter recursively in the c…
+  | P_variable (unbound)
+     -> do not touch a column which contains a var (wait for inlining)
+  | P_apply -> unsupported
+
+
+
+selector:
+  find in db γᵢ = κ(β…)  and ∃δ…, c… => (…,αᵢ,…) ∈ [ (…,P_variable γᵢ,…) … ]
+  find in db γᵢ = Ξ(ℓ↦β…) and ∃δ…, c… => (…,αᵢ,…) ∈ [ (…,P_variable γᵢ,…) … ]
+
+inline_var:
+when a var which appears at the root of a column is found by the selector; inline it
+
+
+
+inline:
+if there is only one line, and it contains only variables used in a typeclass, then inline it
+
+
 
 test:
 	 
