@@ -5,6 +5,7 @@ module Helpers = Helpers
 let all_module_passes = [
   Helpers.map_module Tail_recursion.peephole_expression ;
   Helpers.map_module Michelson_layout.peephole_expression ;
+  Helpers.map_module Pattern_matching_simpl.peephole_expression ;
   Uncurry.uncurry_module_fully_typed ;
 ]
 

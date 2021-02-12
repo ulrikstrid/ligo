@@ -407,8 +407,8 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
     in
     let eqs = List.map aux cases in
     (* let () = Format.printf "NIAAAA : %a\n" Location.pp ae.location in *)
-    let%bind case_exp = Pattern_matching.compile_matching ae.location ~type_f:(type_expression') ~body_t:(tv_opt) matcheevar eqs in
-    (* let case_exp = { case_exp with location = ae.location } in *)
+    let%bind case_exp = Pattern_matching.compile_matching ~type_f:(type_expression') ~body_t:(tv_opt) matcheevar eqs in
+    let case_exp = { case_exp with location = ae.location } in
     let x = O.e_let_in matcheevar matchee' case_exp false in (* what if matchee type contains a ticket ? *)
     return x case_exp.type_expression
     (* return c.expression_content c.type_expression *)
