@@ -35,7 +35,6 @@ end
 module M = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
   open Type_variable_abstraction
   open Type_variable_abstraction.Types
-  open Type_variable_abstraction.Reasons
 
   module Utils = Heuristic_tc_fundep_utils.Utils(Type_variable)(Type_variable_abstraction)
   open Utils
@@ -263,117 +262,6 @@ let restrict repr (constructor_or_row : constructor_or_row) (tcs : c_typeclass_s
   let id_typeclass_simpl = tcs.id_typeclass_simpl in
   { tc_bound = [](*TODO*); tc_constraints = [](*TODO*); reason_typeclass_simpl = tcs.reason_typeclass_simpl; original_id = tcs.original_id; id_typeclass_simpl ; tc ; args }
 
-(* input:
-     x ? [ map3( nat , unit , float ) ; map3( bytes , mutez , float ) ]
-   output:
-     true,
-     [ x = map( m , n , o ) ; o = float ( ) ],
-     [ m ? [ nat  ; bytes ]
-       n ? [ unit ; mutez ] ]
-   input:
-     x ? [ record( a = nat , b = unit , c = float ) ; record( a = bytes , b = mutez , c = float ) ]
-   output:
-     true,
-     [ x = record( a=m , b=n , c=o ) ; o = float ( ) ],
-     [ m ? [ nat  ; bytes ]
-       n ? [ unit ; mutez ] ] *)
-let replace_var_and_possibilities_1 (repr:type_variable -> type_variable) ((x : type_variable) , (possibilities_for_x : type_value list)) =
-  let%bind tags_and_args = bind_map_list get_tag_and_args_of_constant possibilities_for_x in
-  let tags_of_constructors, arguments_of_constructors = List.split @@ tags_and_args in
-  match all_equal Compare.constant_tag tags_of_constructors with
-  | Different ->
-    (* The "changed" boolean return indicates whether any update was done.
-       It is used to detect when the variable doesn't need any further cleanup. *)
-    ok ( false, [ (x, possibilities_for_x) ], [] )            (* Leave as-is, don't deduce anything *)
-  | Empty ->
-    (* TODO: keep track of the constraints used to refine the
-       typeclass so far. *)
-    (* fail @@ typeclass_error
-     *   "original expected by typeclass"
-     *   "<actual> partially guessed so far (needs a recursive substitution)" *)
-    failwith "type error: the typeclass does not allow any type for \
-              the variable %a:PP_variable:x at this point"
-  | All_equal_to c_tag ->
-    match arguments_of_constructors with
-    | [] -> failwith "the typeclass does not allow any possibilities \
-                      for the variable %a:PP_variable:x at this point"
-    | (arguments_of_first_constructor :: _) as arguments_of_constructors ->
-      let fresh_vars = List.map (fun _arg -> Core.fresh_type_variable ()) arguments_of_first_constructor in
-      let deduced : c_constructor_simpl = {
-        id_constructor_simpl = ConstraintIdentifier 0L;
-        original_id = None;
-        reason_constr_simpl = "inferred because it is the only remaining possibility at this point according to the typeclass [TODO:link to the typeclass here]" ;
-        tv = (repr x);
-        c_tag ;
-        tv_list = fresh_vars
-      } in
-      (* discard the identical tags, splice their arguments instead, and deduce the x = tag(…) constraint *)
-      let sub_part_of_typeclass = {
-        tc_bound = [](*TODO*); tc_constraints = [](*TODO*);
-        reason_typeclass_simpl = Format.asprintf
-            "sub-part of a typeclass: expansion of the possible \
-             arguments for the constructor associated with %a"
-            PP.type_variable (repr x);
-        original_id = None;     (* TODO this and the is_mandatory_constraint are not actually used, should use a different type without these fields. *)
-        id_typeclass_simpl = ConstraintIdentifier (-1L) ; (* TODO: this and the reason_typeclass_simpl should simply not be used here *)
-        args = fresh_vars ;
-        tc = arguments_of_constructors ;
-      } in
-      let%bind possibilities_alist = transpose sub_part_of_typeclass in
-      (* The "changed" boolean return indicates whether any update was done.
-         It is used to detect when the variable doesn't need any further cleanup. *)
-      ok (true, possibilities_alist, [deduced])
-
-let rec replace_var_and_possibilities_rec repr ((x : type_variable) , (possibilities_for_x : type_value list)) =
-  let open Rope.SimpleRope in
-  let%bind (changed1, possibilities_alist, deduced) = replace_var_and_possibilities_1 repr (x, possibilities_for_x) in
-  if changed1 then
-    (* the initial var_and_possibilities has been changed, recursively
-       replace in the resulting vars and their possibilities, and
-       aggregate the deduced constraints. *)
-    let%bind (_changed, vp, more_deduced) = replace_vars_and_possibilities_list repr possibilities_alist in
-    ok (true, vp, pair (rope_of_list deduced) more_deduced)
-  else
-    ok (changed1, rope_of_list possibilities_alist, rope_of_list deduced)
-
-and replace_vars_and_possibilities_list repr possibilities_alist =
-  let open Rope.SimpleRope in
-  bind_fold_list
-    (fun (changed_so_far, vps, ds) x ->
-       let%bind (changed, vp, d) = replace_var_and_possibilities_rec repr x in
-       ok (changed_so_far || changed, pair vps vp, pair ds d))
-    (false, empty, empty)
-    possibilities_alist
-
-let replace_vars_and_possibilities repr possibilities_alist =
-  let open Rope.SimpleRope in
-  let%bind (_changed, possibilities_alist, deduced) = replace_vars_and_possibilities_list repr possibilities_alist in
-  ok (list_of_rope possibilities_alist, list_of_rope deduced)
-
-type deduce_and_clean_result = {
-  deduced : c_constructor_simpl list ;
-  cleaned : c_typeclass_simpl ;
-}
-
-let deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result, _) result = fun repr tcs ->
-  Format.printf "In deduce_and_clean for : %a\n%!" PP.c_typeclass_simpl_short tcs;
-  (* ex.   [ x                             ; z      ]
-       ∈ [ [ map3( nat   , unit  , float ) ; int    ] ;
-           [ map3( bytes , mutez , float ) ; string ] ] *)
-  let%bind possibilities_alist = transpose tcs in
-  (* ex. [ x ? [ map3( nat , unit , float ) ; map3( bytes , mutez , float ) ; ] ;
-           z ? [ int                        ; string                        ; ] ; ] *)
-  let%bind (vars_and_possibilities, deduced) = replace_vars_and_possibilities repr possibilities_alist in
-  (* ex. possibilities_alist:
-         [   fresh_x_1 ? [ nat   ; bytes  ] ;
-             fresh_x_2 ? [ unit  ; mutez  ] ;
-             y         ? [ int   ; string ]     ]
-         deduced:
-         [ x         = map3  ( fresh_x_1 , fresh_x_2 , fresh_x_3 ) ;
-           fresh_x_3 = float (                                   ) ; ] *)
-  let%bind cleaned = transpose_back (tcs.reason_typeclass_simpl, tcs.original_id) tcs.id_typeclass_simpl vars_and_possibilities in
-  ok { deduced ; cleaned }
-
 let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
   fun selected repr ->
   (* The selector is expected to provide constraints with the shape (α
@@ -382,41 +270,7 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
   let () = Format.printf "and tv: %a and repr tv :%a \n%!" (PP_helpers.list_sep_d PP.type_variable) selected.tc.args (PP_helpers.list_sep_d PP.type_variable) @@ List.map repr selected.tc.args in
   let restricted = restrict repr selected.c selected.tc in
   let () = Format.printf "restricted: %a\n!" PP.c_typeclass_simpl_short restricted in
-  let%bind {deduced ; cleaned} = deduce_and_clean repr restricted in
-  (* TODO: this is because we cannot return a simplified constraint,
-     and instead need to retun a constraint as it would appear if it
-     came from the module (generated by the ill-named module
-     "Wrap"). type_constraint_simpl is more or less a subset of
-     type_constraint, but some parts have been shuffled
-     around. Hopefully this can be sorted out so that we don't need a
-     dummy value for the srcloc and maybe even so that we don't need a
-     conversion (one may dream). *)
-  let tc_args = List.map (fun x -> wrap (Todo "no idea") @@ P_variable (repr x)) cleaned.args in
-  let cleaned : type_constraint = {
-      reason = cleaned.reason_typeclass_simpl;
-      c = C_typeclass {
-          tc_bound = [](*TODO*); tc_constraints = [](*TODO*);
-        tc_args ;
-        typeclass = cleaned.tc;
-        original_id = selected.tc.original_id;
-      }
-    }
-  in
-  let aux (x : c_constructor_simpl) : type_constraint = {
-    reason = "inferred: only possible type for that variable in the typeclass";
-    c = C_equation {
-      aval = wrap (Todo "?") @@ P_variable (repr x.tv) ;
-      bval = wrap (Todo "? generated") @@
-              P_constant {
-                p_ctor_tag  = x.c_tag ;
-                p_ctor_args = List.map
-                  (fun v -> wrap (Todo "? probably generated") @@ P_variable (repr v))
-                  x.tv_list ;
-              }
-      }
-    }
-  in
-  let deduced : type_constraint list = List.map aux deduced in
+  let%bind (deduced , cleaned) = wrapped_deduce_and_clean repr restricted ~original:selected.tc in
   let ret = [
       {
         remove_constraints = [SC_Typeclass selected.tc];
@@ -493,12 +347,12 @@ module Compat = struct
 end
 let heuristic = Heuristic_plugin Compat.{ heuristic_name; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }
 
-type nonrec deduce_and_clean_result = MM.deduce_and_clean_result = {
+type nonrec deduce_and_clean_result = MM.Utils.deduce_and_clean_result = {
     deduced : c_constructor_simpl list ;
     cleaned : c_typeclass_simpl ;
   }
 let restrict = MM.restrict
-let deduce_and_clean = MM.deduce_and_clean
+let deduce_and_clean = MM.Utils.deduce_and_clean
 let pp_deduce_and_clean_result = MM.pp_deduce_and_clean_result
 
 

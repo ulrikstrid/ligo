@@ -154,7 +154,7 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
     | other -> other
   in
   let updated_tc = map_cells aux tc in
-  let cleaned, deduced = let _ = updated_tc in failwith "TODO: call deduce_and_clean updated_tc here" in
+  let%bind ( deduced , cleaned ) = wrapped_deduce_and_clean repr updated_tc ~original:selected.tc in
   ok [{
       remove_constraints = [SC_Typeclass selected.tc];
       add_constraints = cleaned :: deduced;
