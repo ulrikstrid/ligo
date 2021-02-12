@@ -4,20 +4,35 @@ open Trace
 
 module Operators_types = struct
   open Typesystem.Shorthands
+  let var = p_var
 
-  let tc_subarg   a b c = tc "arguments for (-)"        ~bound:[] ~constraints:[] ()
-                                                        [a;b;c] [ [nat;nat;int] ;
-                                                                  [nat;int;int] ;
-                                                                  [int;nat;int] ;
-                                                                  [int;int;int] ;
-                                                                  [timestamp;int;timestamp] ;
-                                                                  [timestamp;timestamp;int] ;
-                                                                  [mutez;mutez;mutez] ;
-                                                                ]
-  let tc_sizearg  a     = tc "arguments for size"       ~bound:[] ~constraints:[] ()
-                                                        [a]     [ [string] ; [bytes] ; let a = Location.wrap @@ P_variable (Var.fresh ()) in [list a] ]
-  let tc_packable a     = tc "packable"                 ~bound:[] ~constraints:[] ()
-                                                        [a]     [ [int] ; [string] ; [bool] ; [address] ; (*TODO…*) ]
+  (* Typeclass for arithmetic operations *)
+  let tc_addargs  a b c = 
+    tc "arguments for (+)"
+      ~bound:[] ~constraints:[] ()
+      [a;b;c] [ [nat;nat;nat] ; 
+                [int;int;int] ; 
+                [nat;int;int] ;
+                [int;nat;int] ;
+                [timestamp;int;timestamp] ;
+                [int;timestamp;int] ;
+                [mutez;mutez;mutez] ;
+                [bls12_381_g1;bls12_381_g1;bls12_381_g1] ;
+                [bls12_381_g2;bls12_381_g2;bls12_381_g2] ;
+                [bls12_381_fr;bls12_381_fr;bls12_381_fr] ;
+              ]
+  let tc_subarg   a b c = 
+    tc "arguments for (-)"
+      ~bound:[] ~constraints:[] ()
+      [a;b;c] [ [nat;nat;int] ;
+                [nat;int;int] ;
+                [int;nat;int] ;
+                [int;int;int] ;
+                [timestamp;int;timestamp] ;
+                [timestamp;timestamp;int] ;
+                [mutez;mutez;mutez] ;
+              ]
+
   let tc_timargs  a b c = tc "arguments for ( * )"      ~bound:[] ~constraints:[] ()
                                                         [a;b;c] [ [nat;nat;nat] ; 
                                                                   [nat;int;int] ; 
@@ -25,7 +40,13 @@ module Operators_types = struct
                                                                   [int;int;int] ;
                                                                   [mutez;nat;mutez] ;
                                                                   [nat;mutez;mutez] ;
-                                                                  (* bl struff todo ..*)
+                                                                  [bls12_381_g1;bls12_381_fr;bls12_381_fr] ;
+                                                                  [bls12_381_g2;bls12_381_fr;bls12_381_fr] ;
+                                                                  [bls12_381_fr;bls12_381_fr;bls12_381_fr] ;
+                                                                  [int; bls12_381_fr; bls12_381_fr] ;
+                                                                  [nat; bls12_381_fr; bls12_381_fr] ;
+                                                                  [bls12_381_fr; int; bls12_381_fr] ;
+                                                                  [bls12_381_fr; nat; bls12_381_fr] ;
                                                                 ]
   let tc_edivargs a b c d = tc "arguments and return values for ediv, div and mod"
                                                         ~bound:[] ~constraints:[] ()
@@ -36,28 +57,25 @@ module Operators_types = struct
                                                                     [mutez;nat;mutez;mutez] ;
                                                                     [mutez;mutez;nat;mutez] ;
                                                                   ]
-  let tc_addargs  a b c = tc "arguments for (+)"        ~bound:[] ~constraints:[] ()
-                                                        [a;b;c] [ [nat;nat;nat] ; 
-                                                                  [int;int;int] ; 
-                                                                  (* [nat;int;int] ;
-                                                                  [int;nat;int] ; makes a bug in closure *)
-                                                                  [timestamp;int;timestamp] ;
-                                                                  [int;timestamp;int] ;
-                                                                  [mutez;mutez;mutez]
-                                                                  (* bls stuff *)
+  (* Typeclass for boolean operations *)
+  let tc_andargs a b c  = tc "arguments and return values for and"
+    ~bound:[] ~constraints:[] ()
+    [a;b;c] [ [nat;nat;nat] ;
+              [bool;bool;bool] ;
+              [int;nat;nat] ;
+            ]
+  let tc_bitwise a b c  = tc "bitwise"                  ~bound:[] ~constraints:[] ()
+                                                        [a;b;c] [ [nat;nat;nat] ;
+                                                                  [bool;bool;bool] ;
                                                                 ]
-  let tc_comparable a   = tc "comparable"               ~bound:[] ~constraints:[] ()
-                                                        [a]     [ [int] ; 
-                                                                  [nat] ; 
-                                                                  [bool] ;
-                                                                  [mutez] ; 
-                                                                  [string] ;
-                                                                  [bytes] ;
-                                                                  [address] ;
-                                                                  [timestamp] ;
-                                                                  [key_hash] ;
-                                                                  (* pair of comparable *)
-                                                                ]
+  let tc_notargs a b = tc "arguments and return values for not"
+    ~bound:[] ~constraints:[] ()
+    [a;b] [ [bool;bool] ;
+            [nat;int] ; 
+            [int;int] ]
+
+
+  (* Typeclasses for data structure manipulations *)
   (* TODO: enabling this makes some tests fail:
   let tc_concatable a b = tc "concatenable"             ~bound:[] ~constraints:[] ()
                                                         [a;b]   [ [tuple2 string string  ; string ] ;
@@ -65,21 +83,123 @@ module Operators_types = struct
                                                                   [tuple2 bytes  bytes   ; bytes  ] ;
                                                                   [tuple1 @@ list bytes  ; bytes  ] ;
                                                                 ] *)
-  let tc_concatable a   = tc "concatenable"             ~bound:[] ~constraints:[] ()
-                                                        [a]     [ [string] ; [bytes] ]
+  let tc_concatable a = 
+    tc "concatenable"
+      ~bound:[] ~constraints:[] ()
+      [a]     [ [string] ; [bytes] ]
+
+  let tc_sizearg  a     = 
+    let x = Var.fresh () in
+    let y = Var.fresh () in
+    tc "arguments for size"
+      ~bound:[x;y] ~constraints:[] ()
+      [a]     [ [string] ; [bytes] ; [list (var x)] ; [set (var y)] ; [map (var x) (var y)] ]
+
   let tc_slicable   a   = tc "slicable"                 ~bound:[] ~constraints:[] ()
                                                         [a]     [ [string] ; [bytes] ]
-  let tc_storable a     = tc "storable"                 ~bound:[] ~constraints:[] ()
-                                                        [a]     [ [string] ; [bytes] ; (*Humm .. TODO ?*) ]
-  let tc_failwith a     = tc "failwith"                 ~bound:[] ~constraints:[] ()
-                                                        [a]     [ [string] ; [int] ]
-  let tc_bitwise a b c  = tc "bitwise"                  ~bound:[] ~constraints:[] ()
-                                                        [a;b;c] [ [nat;nat;nat] ;
-                                                                  [bool;bool;bool] ;
-                                                                ]
+
+  (* Typeclasses for typegroups *)
+  let tc_comparable a = 
+    let x = Var.fresh () in
+    let y = Var.fresh () in
+    tc "comparable"
+      ~bound:[x;y] ~constraints:[] ()
+      [a]     [ 
+                [address] ;
+                [bool] ;
+                [bytes] ;
+                [chain_id] ;
+                [int] ; 
+                [key] ; 
+                [key_hash] ;
+                [mutez] ; 
+                [nat] ; 
+                (* [never] ; *)
+                [option (var x)] ;
+                [sum (var x) (var y)] ;
+                [pair (var x) (var y)] ;
+                [set (var x)] ;
+                [signature] ;
+                [string] ;
+                [timestamp] ;
+                [unit] ; 
+                (* pair of comparable *)
+              ]
+  let tc_storable a =
+    let x = Var.fresh () in
+    let y = Var.fresh () in
+    tc "storable"
+      ~bound:[x;y] ~constraints:[] ()
+      [a]     [ 
+                [address] ;
+                [big_map (var x) (var y)] ;
+                [bls12_381_fr] ;
+                [bls12_381_g1] ;
+                [bls12_381_g2] ;
+                [bool] ;
+                [bytes] ;
+                [chain_id] ;
+                [int] ; 
+                [key] ; 
+                [key_hash] ; 
+                [(var x) --> (var y)] ;
+                [list (var x)] ;
+                [map (var x) (var y)] ;
+                [mutez] ; 
+                [nat] ; 
+                (* [never] ; *)
+                [option (var x)] ;
+                [sum (var x) (var y)] ;
+                [pair (var x) (var y)] ;
+                (* [sapling_state (var x)] ;
+                [sapling_transaction (var x)] ; *)
+                [set (var x)] ;
+                [signature] ;
+                [string] ;
+                (* [ticket (var x)] ; *)
+                [timestamp] ;
+                [unit] ; 
+              ]
+  let tc_packable a =  
+    let u = Var.fresh () in
+    let v = Var.fresh () in
+    let x = Var.fresh () in
+    let y = Var.fresh () in
+    tc "packable"
+      ~bound:[u;v;x;y] ~constraints:[] ()
+      [a]     [ 
+                [address] ;
+                [bls12_381_fr] ;
+                [bls12_381_g1] ;
+                [bls12_381_g2] ;
+                [bool] ;
+                [bytes] ;
+                [chain_id] ;
+                [contract (var u)] ;
+                [int] ; 
+                [key] ; 
+                [key_hash] ; 
+                [(var u) --> (var v)] ;
+                [list (var x)] ;
+                [map (var x) (var y)] ;
+                [mutez] ; 
+                [nat] ; 
+                (* [never] ; *)
+                [option (var x)] ;
+                [sum (var x) (var y)] ;
+                [pair (var x) (var y)] ;
+                [set (var x)] ;
+                [signature] ;
+                [string] ;
+                [timestamp] ;
+                [unit] ; 
+              ]
+
+  (* Others typeclasses *)                                                      
+  let tc_failwith a = tc "failwith" ~bound:[] ~constraints: [] () [a] [ [string] ; [int] ]
+
 
   let t_none         = forall "a" @@ fun a -> tuple0 --> option a
-
   let t_sub          = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_subarg a b c] => tuple2 a b --> c (* TYPECLASS *)
   let t_some         = forall "a" @@ fun a -> tuple1 a --> option a
   let t_map_remove   = forall2 "src" "dst" @@ fun src dst -> tuple2 src (map src dst) --> map src dst
@@ -136,12 +256,11 @@ module Operators_types = struct
   let t_set_mem      = forall "a" @@ fun a -> tuple2 a (set a) --> bool
   let t_set_add      = forall "a" @@ fun a -> tuple2 a (set a) --> set a
   let t_set_remove   = forall "a" @@ fun a -> tuple2 a (set a) --> set a
-  let t_not          = tuple1 bool --> bool
-
+  let t_not          = forall2_tc "a" "b" @@ fun a b -> [tc_notargs a b] => tuple1 a --> b
   let t_continuation  = forall "a" @@ fun a -> tuple1 a --> pair bool a
   let t_fold_while    = forall "a" @@ fun a -> tuple2 (a --> pair bool a) a --> a
   let t_neg           = tuple1 int --> int
-  let t_and           = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_bitwise a b c] => tuple2 a b --> c
+  let t_and           = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_andargs a b c] => tuple2 a b --> c
   let t_or            = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_bitwise a b c] => tuple2 a b --> c
   let t_xor           = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_bitwise a b c] => tuple2 a b --> c
   let t_lsl           = forall3_tc "a" "b" "c" @@ fun a b c -> [tc_bitwise a b c] => tuple2 a b --> c

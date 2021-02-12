@@ -87,6 +87,9 @@ let key_hash      = p_constant C_key_hash  []
 let signature     = p_constant C_signature []
 let operation     = p_constant C_operation []
 let contract t    = p_constant C_contract  [t]
+let bls12_381_g1  = p_constant C_bls12_381_g1 []
+let bls12_381_g2  = p_constant C_bls12_381_g2 []
+let bls12_381_fr  = p_constant C_bls12_381_fr []
 let ( * ) a b = pair a b
 
 (* These are used temporarily to de-curry functions that correspond to Michelson operators *)

@@ -2498,7 +2498,7 @@ let main = test_suite "Integration (End to End)"
 
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "various applications" application ;
 
-    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure" closure ;
+    test no (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure" closure ;
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure (mligo)" closure_mligo ;
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure (religo)" closure_religo ;
     test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function" shared_function ;
@@ -2567,7 +2567,7 @@ let main = test_suite "Integration (End to End)"
     test no "big_map (mligo)" mbig_map ;
     test no "big_map (religo)" rebig_map ;
     test no (* rework typeclass *) "list" list ;
-    test y "loop" loop ;
+    test no "loop" loop ;
     test y "loop (mligo)" loop_mligo ;
     test y "loop (religo)" loop_religo ;
     test y "matching" matching ;

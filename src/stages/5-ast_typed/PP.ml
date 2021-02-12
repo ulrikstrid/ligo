@@ -251,48 +251,29 @@ let poly_unionfind = (fun f ppf p   ->
   fprintf ppf "UnionFind [@[<hv 2>@ %a @]@ ]" aux2 lst)
 
 let constant_tag ppf c_tag = match c_tag with
-  | C_arrow     -> fprintf ppf "C_arrow"
-  | C_option    -> fprintf ppf "C_option"
-  | C_map       -> fprintf ppf "C_map"
-  | C_big_map   -> fprintf ppf "C_big_map"
-  | C_list      -> fprintf ppf "C_list"
-  | C_set       -> fprintf ppf "C_set"
-  | C_unit      -> fprintf ppf "C_unit"
-  | C_string    -> fprintf ppf "C_string"
-  | C_nat       -> fprintf ppf "C_nat"
-  | C_mutez     -> fprintf ppf "C_mutez"
-  | C_timestamp -> fprintf ppf "C_timestamp"
-  | C_int       -> fprintf ppf "C_int"
-  | C_address   -> fprintf ppf "C_address"
-  | C_bytes     -> fprintf ppf "C_bytes"
-  | C_key_hash  -> fprintf ppf "C_key_hash"
-  | C_key       -> fprintf ppf "C_key"
-  | C_signature -> fprintf ppf "C_signature"
-  | C_operation -> fprintf ppf "C_operation"
-  | C_contract  -> fprintf ppf "C_contract"
-  | C_chain_id  -> fprintf ppf "C_chain_id"
-
-let constant_tag_short ppf c_tag = match c_tag with
-  | C_arrow     -> fprintf ppf "C_arrow"
-  | C_option    -> fprintf ppf "option"
-  | C_map       -> fprintf ppf "map"
-  | C_big_map   -> fprintf ppf "big_map"
-  | C_list      -> fprintf ppf "list"
-  | C_set       -> fprintf ppf "set"
-  | C_unit      -> fprintf ppf "unit"
-  | C_string    -> fprintf ppf "string"
-  | C_nat       -> fprintf ppf "nat"
-  | C_mutez     -> fprintf ppf "mutez"
-  | C_timestamp -> fprintf ppf "timestamp"
-  | C_int       -> fprintf ppf "int"
-  | C_address   -> fprintf ppf "address"
-  | C_bytes     -> fprintf ppf "bytes"
-  | C_key_hash  -> fprintf ppf "key_hash"
-  | C_key       -> fprintf ppf "key"
-  | C_signature -> fprintf ppf "signature"
-  | C_operation -> fprintf ppf "operation"
-  | C_contract  -> fprintf ppf "contract"
-  | C_chain_id  -> fprintf ppf "chain_id"
+  | C_arrow        -> fprintf ppf "C_arrow"
+  | C_option       -> fprintf ppf "C_option"
+  | C_map          -> fprintf ppf "C_map"
+  | C_big_map      -> fprintf ppf "C_big_map"
+  | C_list         -> fprintf ppf "C_list"
+  | C_set          -> fprintf ppf "C_set"
+  | C_unit         -> fprintf ppf "C_unit"
+  | C_string       -> fprintf ppf "C_string"
+  | C_nat          -> fprintf ppf "C_nat"
+  | C_mutez        -> fprintf ppf "C_mutez"
+  | C_timestamp    -> fprintf ppf "C_timestamp"
+  | C_int          -> fprintf ppf "C_int"
+  | C_address      -> fprintf ppf "C_address"
+  | C_bytes        -> fprintf ppf "C_bytes"
+  | C_key_hash     -> fprintf ppf "C_key_hash"
+  | C_key          -> fprintf ppf "C_key"
+  | C_signature    -> fprintf ppf "C_signature"
+  | C_operation    -> fprintf ppf "C_operation"
+  | C_contract     -> fprintf ppf "C_contract"
+  | C_chain_id     -> fprintf ppf "C_chain_id"
+  | C_bls12_381_g1 -> fprintf ppf "C_bls12_381_g1"
+  | C_bls12_381_g2 -> fprintf ppf "C_bls12_381_g2"
+  | C_bls12_381_fr -> fprintf ppf "C_bls12_381_fr"
 
 let row_tag ppf = function
     C_record -> fprintf ppf "C_record"
@@ -378,9 +359,9 @@ and p_constant ppf {p_ctor_tag; p_ctor_args} =
 and p_constant_short ppf {p_ctor_tag; p_ctor_args} =
   match p_ctor_tag, p_ctor_args with
   | Ast_typed__.Ast.C_arrow, [a;b] -> fprintf ppf "%a -> %a" type_value_short a type_value_short b
-  | tag, [] -> fprintf ppf "%a" constant_tag_short tag
+  | tag, [] -> fprintf ppf "%a" constant_tag tag
   | tag, args -> fprintf ppf "%a(%a)"
-                   constant_tag_short tag
+                   constant_tag tag
                    (list_sep_d_short type_value_short) args
 
 and p_apply ppf {tf; targ} =
@@ -464,12 +445,12 @@ let c_constructor_simpl_short ppf ({id_constructor_simpl = ConstraintIdentifier 
     fprintf ppf "%a ~%a %a"
       type_variable tv
       constraint_identifier_short ci
-      constant_tag_short tag
+      constant_tag tag
   | tag, args ->
     fprintf ppf "%a ~%a %a(%a)"
       type_variable tv
       constraint_identifier_short ci
-      constant_tag_short tag
+      constant_tag tag
       (list_sep_d_short type_variable) args
 
 let c_alias ppf ({reason_alias_simpl;a;b}: c_alias) =

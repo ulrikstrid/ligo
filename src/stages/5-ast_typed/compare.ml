@@ -56,26 +56,29 @@ let type_expression_tag ty_cont =
 
 let rec constant_tag (ct : constant_tag) =
   match ct with
-    C_arrow     ->  1
-  | C_option    ->  2
-  | C_map       ->  3
-  | C_big_map   ->  4
-  | C_list      ->  5
-  | C_set       ->  6
-  | C_unit      ->  8
-  | C_string    ->  7
-  | C_nat       ->  9
-  | C_mutez     -> 10
-  | C_timestamp -> 11
-  | C_int       -> 12
-  | C_address   -> 13
-  | C_bytes     -> 14
-  | C_key_hash  -> 15
-  | C_key       -> 16
-  | C_signature -> 17
-  | C_operation -> 18
-  | C_contract  -> 19
-  | C_chain_id  ->  0
+    C_arrow        ->  1
+  | C_option       ->  2
+  | C_map          ->  3
+  | C_big_map      ->  4
+  | C_list         ->  5
+  | C_set          ->  6
+  | C_unit         ->  8
+  | C_string       ->  7
+  | C_nat          ->  9
+  | C_mutez        -> 10
+  | C_timestamp    -> 11
+  | C_int          -> 12
+  | C_address      -> 13
+  | C_bytes        -> 14
+  | C_key_hash     -> 15
+  | C_key          -> 16
+  | C_signature    -> 17
+  | C_operation    -> 18
+  | C_contract     -> 19
+  | C_chain_id     -> 20
+  | C_bls12_381_g1 -> 21
+  | C_bls12_381_g2 -> 22
+  | C_bls12_381_fr -> 23
 
 and type_expression a b =
   type_content a.type_content b.type_content
