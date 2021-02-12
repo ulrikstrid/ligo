@@ -11,6 +11,7 @@ struct
   module Cycle_detection_topological_Sort = CycleDetectionTopologicalSort.M(Type_variable)(Type_variable_abstraction)
   module By_constraint_identifier         = ByConstraintIdentifier.M(Type_variable)(Type_variable_abstraction)
   module Typeclasses_constraining         = TypeclassesConstraining.M(Type_variable)(Type_variable_abstraction)
+  module Typeclasses_using_as_unbound_var = Typeclasses_using_as_unbound_var.M(Type_variable)(Type_variable_abstraction)
 end
 
 include M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)

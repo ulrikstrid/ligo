@@ -22,6 +22,16 @@ open Simple_utils
 
 module TYPE_VARIABLE_ABSTRACTION = Type_variable_abstraction.TYPE_VARIABLE_ABSTRACTION
 
+module INDEXES = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
+  module All_plugins = Database_plugins.All_plugins.M(Type_variable)(Type_variable_abstraction)
+  open All_plugins
+  module type S = sig
+    val grouped_by_variable : Type_variable.t  Grouped_by_variable.t
+    val assignments : Type_variable.t Assignments.t
+    val typeclasses_constraining : Type_variable.t Typeclasses_constraining.t
+  end
+end
+
 module M = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
   open Type_variable_abstraction
   open Type_variable_abstraction.Types
@@ -30,6 +40,8 @@ module M = functor (Type_variable : sig type t end) (Type_variable_abstraction :
   module Utils = Heuristic_tc_fundep_utils.Utils(Type_variable)(Type_variable_abstraction)
   open Utils
   open Utils.All_plugins
+
+  type flds = (module INDEXES(Type_variable)(Type_variable_abstraction).S)
 
   type selector_output = {
     tc : c_typeclass_simpl ;
@@ -44,27 +56,26 @@ module M = functor (Type_variable : sig type t end) (Type_variable_abstraction :
 
 (* selector:
  *   find in db "αᵢ = κ(β…)" and "(…,αᵢ,…) ∈ ∃δ…, c… => [ (…,τᵢⱼ,…) … ]"
- *   find in db "αᵢ = Ξ(ℓ↦β…)" and "(…,αᵢ,…) ∈ ∃δ…, c… => [ (τ…) … ]" *)
+ *   find in db "αᵢ = Ξ(ℓ:β…)" and "(…,αᵢ,…) ∈ ∃δ…, c… => [ (τ…) … ]" *)
   
-(* Find typeclass constraints in the dbs which constrain c.tv *)
+(* Find typeclass constraints in the dbs which constrain c_or_r.tv *)
 let selector_by_variable : (type_variable -> type_variable) -> flds -> constructor_or_row -> type_variable -> selector_output list =
   fun repr (module Indexes) c_or_r tv ->
   let typeclasses = (Typeclasses_constraining.get_typeclasses_constraining_list (repr tv) Indexes.typeclasses_constraining) in
   List.map (fun tc -> { tc ; c = c_or_r }) typeclasses
 
-(* Find constructor constraints α = κ(β …) where α is one of the
-   variables constrained by the (refined version of the) typeclass
-   constraint tcs. *)
+(* Find constructor constraints α = κ(β …) and and row constraints
+   α = Ξ(ℓ:β …) where α is one of the variables constrained by the
+   typeclass constraint tcs. *)
 let selector_by_tc : (type_variable -> type_variable) -> flds -> c_typeclass_simpl -> selector_output list =
   fun repr (module Indexes) tc ->
   let aux tv =
-    (* Find the constructor constraints which apply to tv. *)
     (* Since we are only refining the typeclass one type expression
        node at a time, we only need the top-level assignment for
        that variable, e.g. α = κ(βᵢ, …). We can therefore look
        directly in the assignments. *)
     match Assignments.find_opt (repr tv) Indexes.assignments with
-    | Some cr -> [({ tc ; c = cr } : selector_output)]
+    | Some cr -> [{ tc ; c = cr }]
     | None   -> [] in
   List.flatten @@ List.map aux tc.args
 
@@ -77,6 +88,10 @@ let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds
   | SC_Poly         _  -> []
   | SC_Access_label _  -> []
   | SC_Typeclass   tc -> selector_by_tc repr indexes tc
+
+(* selector:
+ *   find in db γᵢ = κ(β…)  and ∃δ…, c… => (…,αᵢ,…) ∈ [ (…,P_variable γᵢ,…) … ]
+ *   find in db γᵢ = Ξ(ℓ:β…) and ∃δ…, c… => (…,αᵢ,…) ∈ [ (…,P_variable γᵢ,…) … ] *)
 
 (* When (αᵢ, …) ∈ { (τ, …) , … } and β = κ(δ …) are in the db,
    aliasing α and β should check if they are non-empty, and in that
@@ -462,7 +477,6 @@ module Compat = struct
       let grouped_by_variable : type_variable Grouped_by_variable.t = flds#grouped_by_variable
       let assignments : type_variable Assignments.t = flds#assignments
       let typeclasses_constraining : type_variable Typeclasses_constraining.t = flds#typeclasses_constraining
-      let by_constraint_identifier : type_variable By_constraint_identifier.t = flds#by_constraint_identifier
     end
     in
     MM.selector repr c (module Flds)
@@ -471,7 +485,6 @@ module Compat = struct
       let grouped_by_variable : type_variable Grouped_by_variable.t = flds#grouped_by_variable
       let assignments : type_variable Assignments.t = flds#assignments
       let typeclasses_constraining : type_variable Typeclasses_constraining.t = flds#typeclasses_constraining
-      let by_constraint_identifier : type_variable By_constraint_identifier.t = flds#by_constraint_identifier
     end
     in
     MM.alias_selector a b (module Flds)
@@ -528,7 +541,7 @@ let pp_deduce_and_clean_result = MM.pp_deduce_and_clean_result
 selector:
   find in db αᵢ = κ(β…)  and ∃δ…, c… => (…,αᵢ,…) ∈ [ (…,τᵢⱼ,…) … ]
     if τᵢⱼ != (P_variable unbound)
-  find in db αᵢ = Ξ(ℓ↦β…) and ∃δ…, c… => (…,αᵢ,…) ∈ [ (τ…) … ]
+  find in db αᵢ = Ξ(ℓ:β…) and ∃δ…, c… => (…,αᵢ,…) ∈ [ (τ…) … ]
     if τᵢⱼ != (P_variable unbound)
 
 propagator:
@@ -556,7 +569,7 @@ fltr col line:
 
 selector:
   find in db γᵢ = κ(β…)  and ∃δ…, c… => (…,αᵢ,…) ∈ [ (…,P_variable γᵢ,…) … ]
-  find in db γᵢ = Ξ(ℓ↦β…) and ∃δ…, c… => (…,αᵢ,…) ∈ [ (…,P_variable γᵢ,…) … ]
+  find in db γᵢ = Ξ(ℓ:β…) and ∃δ…, c… => (…,αᵢ,…) ∈ [ (…,P_variable γᵢ,…) … ]
 
 inline_var:
 when a var which appears at the root of a column is found by the selector; inline it

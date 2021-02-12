@@ -1,36 +1,32 @@
 [@@@warning "-32"]
 module TYPE_VARIABLE_ABSTRACTION = Type_variable_abstraction.TYPE_VARIABLE_ABSTRACTION
 
-module INDEXES = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
-  module All_plugins = Database_plugins.All_plugins.M(Type_variable)(Type_variable_abstraction)
-  open All_plugins
-  module type S = sig
-    val grouped_by_variable : Type_variable.t  Grouped_by_variable.t
-    val assignments : Type_variable.t Assignments.t
-    val typeclasses_constraining : Type_variable.t Typeclasses_constraining.t
-    val by_constraint_identifier : Type_variable.t By_constraint_identifier.t
-  end
-end
-
 open Trace
 open Typer_common.Errors
 module Map = RedBlackTrees.PolyMap
 module Set = RedBlackTrees.PolySet
 
+module INDEXES_ = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
+  module All_plugins = Database_plugins.All_plugins.M(Type_variable)(Type_variable_abstraction)
+  open All_plugins
+  module type S = sig
+    val by_constraint_identifier : Type_variable.t By_constraint_identifier.t
+  end
+end
+
 module Utils = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
   open Type_variable_abstraction
   open Type_variable_abstraction.Types
-  type type_variable = Type_variable.t
-
-  let set_of_vars l = (Set.add_list l (Set.create ~cmp:Compare.type_variable )).set
-  type flds = (module INDEXES(Type_variable)(Type_variable_abstraction).S)
-  module All_plugins = Database_plugins.All_plugins.M(Type_variable)(Type_variable_abstraction)
-  
+  include Heuristic_tc_utils.Utils(Type_variable)(Type_variable_abstraction)
   open All_plugins
 
-  let constraint_identifier_to_tc ((module Dbs) : flds) (ci : constraint_identifier) =
+  type flds_ = (module INDEXES_(Type_variable)(Type_variable_abstraction).S)
+
+  let set_of_vars l = (Set.add_list l (Set.create ~cmp:Compare.type_variable )).set
+  
+  let constraint_identifier_to_tc ((module Indexes) : flds_) (ci : constraint_identifier) =
     (* TODO: this can fail: catch the exception and throw an error *)
-    match By_constraint_identifier.find_opt ci Dbs.by_constraint_identifier with
+    match By_constraint_identifier.find_opt ci Indexes.by_constraint_identifier with
       Some x -> x
     | None -> failwith "TODO: internal error : do something"
 

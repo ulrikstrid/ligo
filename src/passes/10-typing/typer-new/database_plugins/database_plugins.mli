@@ -6,6 +6,7 @@ module GroupedByVariable : module type of GroupedByVariable.M(Solver_types.Type_
 module CycleDetectionTopologicalSort : module type of CycleDetectionTopologicalSort.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
 module ByConstraintIdentifier : module type of ByConstraintIdentifier.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
 module TypeclassesConstraining : module type of TypeclassesConstraining.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+module Typeclasses_using_as_unbound_var : module type of Typeclasses_using_as_unbound_var.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
 
 module Indexers_plugins_fields_ (Ppt : PerPluginType) : sig
   type flds = <
@@ -14,6 +15,7 @@ module Indexers_plugins_fields_ (Ppt : PerPluginType) : sig
     cycle_detection_topological_sort : Ppt(CycleDetectionTopologicalSort).t ;
     by_constraint_identifier         : Ppt(ByConstraintIdentifier).t ;
     typeclasses_constraining         : Ppt(TypeclassesConstraining).t ;
+    typeclasses_using_as_unbound_var : Ppt(Typeclasses_using_as_unbound_var).t
   >
 
   module Assignments : sig
