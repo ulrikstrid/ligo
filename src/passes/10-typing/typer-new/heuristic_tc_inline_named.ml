@@ -35,7 +35,7 @@ module INDEXES = functor (Type_variable : sig type t end) (Type_variable_abstrac
 end
 
 module M = functor (Type_variable : sig type t end) (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) -> struct
-  (* open Type_variable_abstraction *)
+  open Type_variable_abstraction
   open Type_variable_abstraction.Types
   (* open Type_variable_abstraction.Reasons *)
 
@@ -57,18 +57,19 @@ module M = functor (Type_variable : sig type t end) (Type_variable_abstraction :
  * *********************************************************************** *)
 
 (* selector:
- *   find in db γᵢ = κ(β…)  and (…,αᵢ,…) ∈ ∃δ…, c… => [ (…,P_variable γᵢ,…) … ]
- *   find in db γᵢ = Ξ(ℓ↦β…) and (…,αᵢ,…) ∈ ∃δ…, c… => [ (…,P_variable γᵢ,…) … ] *)
+ *   find in db γᵢ = κ(β…)   and (…,αᵢ,…) ∈ ∃δ…, c… => [ (…,P_variable γᵢ,…) … ]
+ *   find in db γᵢ = Ξ(ℓ:β…) and (…,αᵢ,…) ∈ ∃δ…, c… => [ (…,P_variable γᵢ,…) … ] *)
   
 (* Find typeclass constraints in the dbs which constrain c_or_r.tv *)
 let selector_by_variable : (type_variable -> type_variable) -> flds -> constructor_or_row -> type_variable -> selector_output list =
   fun repr (module Indexes) c_or_r tv ->
-  let typeclasses = (Typeclasses_constraining.get_typeclasses_constraining_list (repr tv) Indexes.typeclasses_constraining) in
+  let typeclasses = Typeclasses_using_as_unbound_var.get_list (repr tv) (module Indexes) in
   List.map (fun tc -> { tc ; c = c_or_r }) typeclasses
 
-(* Find constructor constraints γᵢ = κ(β …) and and row constraints
-   γᵢ = Ξ(ℓ↦β …) where γᵢ is one of the variables occurring as a root
-   of one of the cells of the matrix of the typeclass. *)
+(* Find all constructor constraints γᵢ = κ(β …) and and row
+   constraints γᵢ = Ξ(ℓ:β …) where γᵢ is one of the variables
+   occurring as a root of one of the cells of the matrix of the
+   typeclass. *)
 let selector_by_tc : (type_variable -> type_variable) -> flds -> c_typeclass_simpl -> selector_output list =
   fun repr (module Indexes) tc ->
   let aux (tval : type_value) =
@@ -101,27 +102,23 @@ let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds
    (typeclasses_constraining indexer). Add to this the logic for
    refined_typeclass vs. typeclass. *)
 
+let alias_selector_half : type_variable -> type_variable -> flds -> selector_output list =
+  fun a b (module Indexes) ->
+  let a_tcs = Typeclasses_using_as_unbound_var.get_list a (module Indexes) in
+  let b_lhs_constructors = Grouped_by_variable.get_constructors_by_lhs b Indexes.grouped_by_variable in
+  let b_lhs_rows = Grouped_by_variable.get_rows_by_lhs b Indexes.grouped_by_variable in
+  let b_ctors = MultiSet.map_elements (fun a -> `Constructor a) b_lhs_constructors in
+  let b_rows  = MultiSet.map_elements (fun a -> `Row a        ) b_lhs_rows         in
+  List.flatten @@
+  List.map
+    (fun tc ->
+       List.map (fun c -> { tc ; c })
+         (b_ctors @ b_rows ))
+    a_tcs  
+
 let alias_selector : type_variable -> type_variable -> flds -> selector_output list =
-  fun _a _b (module Indexes) ->
-  []                            (* TODO *)
-  (* let a_tcs = (Typeclasses_constraining.get_typeclasses_constraining_list a Indexes.typeclasses_constraining) in
-   * let b_tcs = (Typeclasses_constraining.get_typeclasses_constraining_list b Indexes.typeclasses_constraining) in
-   * let a_lhs_constructors = Grouped_by_variable.get_constructors_by_lhs a Indexes.grouped_by_variable in
-   * let b_lhs_constructors = Grouped_by_variable.get_constructors_by_lhs b Indexes.grouped_by_variable in
-   * let a_lhs_rows = Grouped_by_variable.get_rows_by_lhs a Indexes.grouped_by_variable in
-   * let b_lhs_rows = Grouped_by_variable.get_rows_by_lhs b Indexes.grouped_by_variable in
-   * let a_ctors = MultiSet.map_elements (fun a -> `Constructor a) a_lhs_constructors in
-   * let a_rows  = MultiSet.map_elements (fun a -> `Row a        ) a_lhs_rows         in
-   * let b_ctors = MultiSet.map_elements (fun a -> `Constructor a) b_lhs_constructors in
-   * let b_rows  = MultiSet.map_elements (fun a -> `Row a        ) b_lhs_rows         in
-   * List.flatten @@
-   * List.map
-   *   (fun tc ->
-   *      List.map
-   *        (fun c ->
-   *           { tc ; c })
-   *        (a_ctors @ b_ctors @ a_rows @ b_rows ))
-   *   (a_tcs @ b_tcs) *)
+  fun a b indexes ->
+  alias_selector_half a b indexes @ alias_selector_half b a indexes
 
 let get_referenced_constraints ({ tc; c } : selector_output) : type_constraint_simpl list =
   [
@@ -133,58 +130,36 @@ let get_referenced_constraints ({ tc; c } : selector_output) : type_constraint_s
  * Propagator
  * *********************************************************************** *)
 
+let p_variable v = Location.wrap (* ~loc: TODO *) @@ P_variable v
+let tv : constructor_or_row -> type_variable =
+  function `Constructor c -> c.tv | `Row r -> r.tv
+let row_value v = { associated_value = p_variable v.associated_variable; michelson_annotation = v.michelson_annotation ; decl_pos = v.decl_pos; }
+
+
 let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
-  fun _selected _repr ->
-  ok []                         (* TODO *)
-  (* (\* The selector is expected to provide constraints with the shape (α
-   *    = κ(β, …)) and to update the private storage to keep track of the
-   *    refined typeclass *\)
-   * let () = Format.printf "and tv: %a and repr tv :%a \n%!" (PP_helpers.list_sep_d PP.type_variable) selected.tc.args (PP_helpers.list_sep_d PP.type_variable) @@ List.map repr selected.tc.args in
-   * let restricted = restrict repr selected.c selected.tc in
-   * let () = Format.printf "restricted: %a\n!" PP.c_typeclass_simpl_short restricted in
-   * let%bind {deduced ; cleaned} = deduce_and_clean repr restricted in
-   * (\* TODO: this is because we cannot return a simplified constraint,
-   *    and instead need to retun a constraint as it would appear if it
-   *    came from the module (generated by the ill-named module
-   *    "Wrap"). type_constraint_simpl is more or less a subset of
-   *    type_constraint, but some parts have been shuffled
-   *    around. Hopefully this can be sorted out so that we don't need a
-   *    dummy value for the srcloc and maybe even so that we don't need a
-   *    conversion (one may dream). *\)
-   * let tc_args = List.map (fun x -> wrap (Todo "no idea") @@ P_variable (repr x)) cleaned.args in
-   * let cleaned : type_constraint = {
-   *     reason = cleaned.reason_typeclass_simpl;
-   *     c = C_typeclass {
-   *         tc_bound = [](\*TODO*\); tc_constraints = [](\*TODO*\);
-   *       tc_args ;
-   *       typeclass = cleaned.tc;
-   *       original_id = selected.tc.original_id;
-   *     }
-   *   }
-   * in
-   * let aux (x : c_constructor_simpl) : type_constraint = {
-   *   reason = "inferred: only possible type for that variable in the typeclass";
-   *   c = C_equation {
-   *     aval = wrap (Todo "?") @@ P_variable (repr x.tv) ;
-   *     bval = wrap (Todo "? generated") @@
-   *             P_constant {
-   *               p_ctor_tag  = x.c_tag ;
-   *               p_ctor_args = List.map
-   *                 (fun v -> wrap (Todo "? probably generated") @@ P_variable (repr v))
-   *                 x.tv_list ;
-   *             }
-   *     }
-   *   }
-   * in
-   * let deduced : type_constraint list = List.map aux deduced in
-   * let ret = [
-   *     {
-   *       remove_constraints = [SC_Typeclass selected.tc];
-   *       add_constraints = cleaned :: deduced;
-   *       proof_trace = Axiom (HandWaved "cut with the following (cleaned => removed_typeclass) to show that the removal does not lose info, (removed_typeclass => selected.c => cleaned) to show that the cleaned vesion does not introduce unwanted constraints.")
-   *     }
-   *   ] in
-   * ok ret *)
+  fun selected repr ->
+  let { tc; c } = selected in
+  let aux = function
+      { Location.wrap_content = P_variable v ; location } when Compare.type_variable (repr v) (repr (tv c)) = 0 ->
+      (* TODO: This is not quite the right location *)
+      Location.wrap ~loc:location @@
+      (match c with
+         `Constructor { reason_constr_simpl; id_constructor_simpl=_; original_id=_; tv=_; c_tag; tv_list } ->
+         let _ = reason_constr_simpl in (* TODO: use it *)
+         P_constant { p_ctor_tag = c_tag ; p_ctor_args = (List.map p_variable tv_list) }
+       | `Row { reason_row_simpl; id_row_simpl=_; original_id=_; tv=_; r_tag; tv_map } ->
+         let _ = reason_row_simpl in (* TODO: use it *)
+         P_row { p_row_tag = r_tag ; p_row_args = (LMap.map row_value tv_map) }
+      )
+    | other -> other
+  in
+  let updated_tc = map_cells aux tc in
+  let cleaned, deduced = let _ = updated_tc in failwith "TODO: call deduce_and_clean updated_tc here" in
+  ok [{
+      remove_constraints = [SC_Typeclass selected.tc];
+      add_constraints = cleaned :: deduced;
+      proof_trace = Axiom (HandWaved "unfold")
+    }]
 
 (* ***********************************************************************
  * Heuristic

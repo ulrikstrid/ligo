@@ -16,4 +16,7 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
 
   let get_cells (tc : c_typeclass_simpl) =
     List.flatten tc.tc
+
+  let map_cells (f : type_value -> type_value) (tc : c_typeclass_simpl) =
+    { tc with tc = List.map (List.map f) tc.tc }
 end

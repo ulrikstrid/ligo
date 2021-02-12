@@ -5,7 +5,6 @@ module M = functor
   (Type_variable_abstraction : TYPE_VARIABLE_ABSTRACTION(Type_variable).S) ->
 struct
   open Type_variable_abstraction.Types
-open Solver_types
 open UnionFind
 open Trace
 
@@ -75,11 +74,12 @@ let name = "typeclasses_constraining"
 
 let get_state_for_tests state = state
 
+module type STATE = sig val typeclasses_constraining : Type_variable.t t end
 
-let get_typeclasses_constraining tv state =
+let get tv (module State : STATE) =
   Option.unopt ~default:(MultiSet.create ~cmp:Type_variable_abstraction.Compare.c_typeclass_simpl)
-  @@ ReprMap.find_opt tv state
+  @@ ReprMap.find_opt tv State.typeclasses_constraining
 
-let get_typeclasses_constraining_list tv state =
-  MultiSet.elements @@ get_typeclasses_constraining tv state
+let get_list tv state =
+  MultiSet.elements @@ get tv state
 end

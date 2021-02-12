@@ -61,7 +61,7 @@ module M = functor (Type_variable : sig type t end) (Type_variable_abstraction :
 (* Find typeclass constraints in the dbs which constrain c_or_r.tv *)
 let selector_by_variable : (type_variable -> type_variable) -> flds -> constructor_or_row -> type_variable -> selector_output list =
   fun repr (module Indexes) c_or_r tv ->
-  let typeclasses = (Typeclasses_constraining.get_typeclasses_constraining_list (repr tv) Indexes.typeclasses_constraining) in
+  let typeclasses = Typeclasses_constraining.get_list (repr tv) (module Indexes) in
   List.map (fun tc -> { tc ; c = c_or_r }) typeclasses
 
 (* Find constructor constraints α = κ(β …) and and row constraints
@@ -100,26 +100,23 @@ let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds
    (typeclasses_constraining indexer). Add to this the logic for
    refined_typeclass vs. typeclass. *)
 
-let alias_selector : type_variable -> type_variable -> flds -> selector_output list =
+let alias_selector_half : type_variable -> type_variable -> flds -> selector_output list =
   fun a b (module Indexes) ->
-  let a_tcs = (Typeclasses_constraining.get_typeclasses_constraining_list a Indexes.typeclasses_constraining) in
-  let b_tcs = (Typeclasses_constraining.get_typeclasses_constraining_list b Indexes.typeclasses_constraining) in
-  let a_lhs_constructors = Grouped_by_variable.get_constructors_by_lhs a Indexes.grouped_by_variable in
+  let a_tcs = Typeclasses_constraining.get_list a (module Indexes) in
   let b_lhs_constructors = Grouped_by_variable.get_constructors_by_lhs b Indexes.grouped_by_variable in
-  let a_lhs_rows = Grouped_by_variable.get_rows_by_lhs a Indexes.grouped_by_variable in
   let b_lhs_rows = Grouped_by_variable.get_rows_by_lhs b Indexes.grouped_by_variable in
-  let a_ctors = MultiSet.map_elements (fun a -> `Constructor a) a_lhs_constructors in
-  let a_rows  = MultiSet.map_elements (fun a -> `Row a        ) a_lhs_rows         in
   let b_ctors = MultiSet.map_elements (fun a -> `Constructor a) b_lhs_constructors in
   let b_rows  = MultiSet.map_elements (fun a -> `Row a        ) b_lhs_rows         in
   List.flatten @@
   List.map
     (fun tc ->
-       List.map
-         (fun c ->
-            { tc ; c })
-         (a_ctors @ b_ctors @ a_rows @ b_rows ))
-    (a_tcs @ b_tcs)
+       List.map (fun c -> { tc ; c })
+         (b_ctors @ b_rows ))
+    a_tcs  
+
+let alias_selector : type_variable -> type_variable -> flds -> selector_output list =
+  fun a b indexes ->
+  alias_selector_half a b indexes @ alias_selector_half b a indexes
 
 let get_referenced_constraints ({ tc; c } : selector_output) : type_constraint_simpl list =
   [
@@ -566,10 +563,6 @@ fltr col line:
   | P_apply -> unsupported
 
 
-
-selector:
-  find in db γᵢ = κ(β…)  and ∃δ…, c… => (…,αᵢ,…) ∈ [ (…,P_variable γᵢ,…) … ]
-  find in db γᵢ = Ξ(ℓ:β…) and ∃δ…, c… => (…,αᵢ,…) ∈ [ (…,P_variable γᵢ,…) … ]
 
 inline_var:
 when a var which appears at the root of a column is found by the selector; inline it

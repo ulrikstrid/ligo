@@ -80,10 +80,11 @@ struct
   let get_state_for_tests state = state
 
 
-  let get_typeclasses_using_as_unbound_var tv state =
+  module type STATE = sig val typeclasses_using_as_unbound_var : Type_variable.t t end
+  let get tv (module State : STATE) =
     Option.unopt ~default:(MultiSet.create ~cmp:Type_variable_abstraction.Compare.c_typeclass_simpl)
-    @@ ReprMap.find_opt tv state
+    @@ ReprMap.find_opt tv State.typeclasses_using_as_unbound_var
 
-  let get_typeclasses_using_as_unbound_var_list tv state =
-    MultiSet.elements @@ get_typeclasses_using_as_unbound_var tv state
+  let get_list tv state =
+    MultiSet.elements @@ get tv state
 end
