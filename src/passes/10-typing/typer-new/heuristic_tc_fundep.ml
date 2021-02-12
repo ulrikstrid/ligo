@@ -322,28 +322,14 @@ open Solver_types
 module Compat = struct
   module All_plugins = Database_plugins.All_plugins.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
   open All_plugins
-  let heuristic_name = MM.heuristic_name
-  let selector repr c flds =
-    let module Flds = struct
-      let grouped_by_variable : type_variable Grouped_by_variable.t = flds#grouped_by_variable
-      let assignments : type_variable Assignments.t = flds#assignments
-      let typeclasses_constraining : type_variable Typeclasses_constraining.t = flds#typeclasses_constraining
-    end
-    in
-    MM.selector repr c (module Flds)
-  let alias_selector a b flds =
-    let module Flds = struct
-      let grouped_by_variable : type_variable Grouped_by_variable.t = flds#grouped_by_variable
-      let assignments : type_variable Assignments.t = flds#assignments
-      let typeclasses_constraining : type_variable Typeclasses_constraining.t = flds#typeclasses_constraining
-    end
-    in
-    MM.alias_selector a b (module Flds)
-  let get_referenced_constraints = MM.get_referenced_constraints
-  let propagator = MM.propagator
-  let printer = MM.printer
-  let printer_json = MM.printer_json
-  let comparator = MM.comparator
+  include MM
+  let compat_flds flds : MM.flds = (module struct
+    let grouped_by_variable : type_variable Grouped_by_variable.t = flds#grouped_by_variable
+    let assignments : type_variable Assignments.t = flds#assignments
+    let typeclasses_constraining : type_variable Typeclasses_constraining.t = flds#typeclasses_constraining
+  end)
+  let selector repr c flds = MM.selector repr c (compat_flds flds)
+  let alias_selector a b flds = MM.alias_selector a b (compat_flds flds)
 end
 let heuristic = Heuristic_plugin Compat.{ heuristic_name; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }
 

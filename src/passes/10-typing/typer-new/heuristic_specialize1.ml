@@ -139,26 +139,13 @@ open Ast_typed.Types
 open Solver_types
 
 module Compat = struct
-  module All_plugins = Database_plugins.All_plugins.M(Solver_types.Type_variable)(Solver_types.Opaque_type_variable)
+  include MM
   open All_plugins
-  let heuristic_name = MM.heuristic_name
-  let selector repr c (flds : < grouped_by_variable : type_variable Grouped_by_variable.t ; .. >) =
-    let module Flds = struct
-      let grouped_by_variable : type_variable Grouped_by_variable.t = flds#grouped_by_variable
-    end
-    in
-    MM.selector repr c (module Flds)
-  let alias_selector a b (flds : < grouped_by_variable : type_variable Grouped_by_variable.t ; .. >) =
-    let module Flds = struct
-      let grouped_by_variable : type_variable Grouped_by_variable.t = flds#grouped_by_variable
-    end
-    in
-    MM.alias_selector a b (module Flds)
-  let get_referenced_constraints = MM.get_referenced_constraints
-  let propagator = MM.propagator
-  let printer = MM.printer
-  let printer_json = MM.printer_json
-  let comparator = MM.comparator
+  let compat_flds flds : MM.flds = (module struct
+    let grouped_by_variable : type_variable Grouped_by_variable.t = flds#grouped_by_variable
+  end)
+  let selector repr c flds = MM.selector repr c (compat_flds flds)
+  let alias_selector a b flds = MM.alias_selector a b (compat_flds flds)
 end
 let heuristic = Heuristic_plugin Compat.{ heuristic_name; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }
 type nonrec selector_output = MM.selector_output = {
