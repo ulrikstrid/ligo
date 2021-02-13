@@ -217,6 +217,7 @@ let peephole_statement : unit -> statement -> (unit, 'err) result = fun _ s ->
   | SBlock  _
   | SCond   _
   | SReturn _
+  | SBreak _
   | SSwitch _ -> ok @@ ()
 
 let peephole : (unit,'err) Helpers.folder = {

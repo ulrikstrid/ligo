@@ -152,12 +152,10 @@ and print_statement state = function
 | SReturn {value = {kwd_return; expr}; _} ->
     print_token state kwd_return "return";
     print_option state (fun state expr -> print_expr state expr) expr;
-| SLet   { value = {kwd_let; bindings; attributes} ; _ } ->
-    print_attributes    state attributes;
+| SLet   { value = {kwd_let; bindings} ; _ } ->
     print_token         state kwd_let "let";
     print_nsepseq       state "," print_let_binding bindings;
-| SConst { value = {kwd_const; bindings; attributes} ; _ } ->
-    print_attributes    state attributes;
+| SConst { value = {kwd_const; bindings} ; _ } ->
     print_token         state kwd_const "const";
     print_nsepseq       state "," print_let_binding bindings;
 | SType { value = {kwd_type; name; eq; type_expr}; _ } ->
@@ -183,6 +181,7 @@ and print_statement state = function
     print_token state lbrace    "{";
     print_cases state cases;
     print_token state rbrace    "}"
+| SBreak b -> print_token state b "break"
 
 and print_type_expr state = function
   TProd prod      -> print_cartesian state prod
@@ -286,7 +285,7 @@ and print_terminator state = function
   Some semi -> print_token state semi ";"
 | None -> ()
 
-and print_let_binding state {value = {binders; lhs_type; eq; expr}; _} =
+and print_let_binding state {value = {binders; lhs_type; eq; expr; attributes = _}; _} =
   print_pattern state binders;
   print_option state (fun state (colon, type_expr) ->
     print_token state colon ":";
@@ -374,7 +373,7 @@ and print_new_expr state {value = (kwd_new, expr); _} =
   print_expr state expr
 
 and print_array_item state = function
-  Empty_entry -> print_token state Region.ghost "<empty>"
+  Empty_entry r -> print_token state r "<empty>"
 | Expr_entry expr -> print_expr state expr
 | Rest_entry {value = {ellipsis; expr}; _} ->
   print_token state ellipsis "...";
@@ -628,29 +627,27 @@ and pp_statement state = function
     match expr with
     | Some e -> pp_expr (state#pad 1 0) e
     | None -> ()
-  )
-| SLet {value = {bindings; attributes; _}; region} ->
+)
+| SLet {value = {bindings; _}; region} ->
     let let_bindings = Utils.nsepseq_to_list bindings in
     pp_loc_node state "SLet" region;
     let len = List.length let_bindings in
     let apply rank =
       pp_let_binding (state#pad len rank) in
-    List.iteri apply let_bindings;
-    if attributes <> [] then
-      pp_attributes state attributes
-| SConst {value = {bindings; attributes; _}; region} ->
+    List.iteri apply let_bindings
+| SConst {value = {bindings; _}; region} ->
     let let_bindings = Utils.nsepseq_to_list bindings in
     pp_loc_node state "SConst" region;
     let apply len rank = pp_let_binding (state#pad len rank) in
-    List.iteri (List.length let_bindings |> apply) let_bindings;
-    if attributes <> [] then
-      pp_attributes state attributes
+    List.iteri (List.length let_bindings |> apply) let_bindings
 | SType {value; region} ->
     pp_loc_node state "SType" region;
     pp_type_decl state value
 | SSwitch {value; region} ->
     pp_loc_node state "SSwitch" region;
     pp_switch_statement state value
+| SBreak b ->
+  pp_loc_node state "SBreak" b
 
 and pp_switch_statement state node =
   let {expr; cases; _} = node in
@@ -825,7 +822,7 @@ and pp_expr state = function
     pp_code_inj state value
 
 and pp_array_item state = function
-  Empty_entry -> pp_node state "<empty>"
+  Empty_entry _ -> pp_node state "<empty>"
 | Expr_entry e ->
     pp_node state "<expr>";
     pp_expr (state#pad 1 0) e

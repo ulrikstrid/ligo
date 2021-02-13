@@ -36,6 +36,7 @@ type kwd_default = Region.t
 type kwd_unit    = Region.t
 type kwd_new     = Region.t
 type kwd_as      = Region.t
+type kwd_break   = Region.t
 
 (* Data constructors *)
 
@@ -153,10 +154,11 @@ and attributes = attribute list
 (* Non-recursive values *)
 
 and let_binding = {
-  binders  : pattern;
-  lhs_type : (colon * type_expr) option;
-  eq       : equal;
-  expr     : expr
+  binders    : pattern;
+  lhs_type   : (colon * type_expr) option;
+  eq         : equal;
+  expr       : expr;
+  attributes : attributes
 }
 
 (* Type declarations *)
@@ -270,7 +272,7 @@ and array_item_rest = {
 }
 
 and array_item =
-  | Empty_entry
+  | Empty_entry of Region.t
   | Expr_entry of expr
   | Rest_entry of array_item_rest reg
 
@@ -320,6 +322,7 @@ and statement =
 | SConst      of const_ reg
 | SType       of type_decl reg
 | SSwitch     of switch reg
+| SBreak      of kwd_break
 
 and statements = (statement, semi) nsepseq
 
@@ -400,13 +403,11 @@ and selection =
 and let_ = {
   kwd_let    : kwd_let;
   bindings   : (let_binding reg, comma) nsepseq;
-  attributes : attributes
 }
 
 and const_ = {
   kwd_const  : kwd_const;
   bindings   : (let_binding reg, comma) nsepseq;
-  attributes : attributes
 }
 
 and fun_expr_body =
@@ -502,7 +503,8 @@ let rec expr_to_region = function
 | ECodeInj {region; _} -> region
 
 let statement_to_region = function
-  SExpr e -> expr_to_region e
+  SBreak b -> b
+| SExpr e -> expr_to_region e
 | SBlock {region; _ }
 | SCond {region; _}
 | SReturn {region; _}
@@ -518,3 +520,13 @@ let selection_to_region = function
 let arrow_function_body_to_region = function
   FunctionBody {region; _} -> region
 | ExpressionBody s -> expr_to_region s
+
+let property_to_region = function
+  Punned_property {region; _}
+| Property {region; _}
+| Property_rest {region; _} -> region
+
+let array_item_to_region = function 
+  Expr_entry e -> expr_to_region e
+| Empty_entry r -> r
+| Rest_entry {region; _} -> region
