@@ -33,7 +33,6 @@ type lexeme = string
 type keyword        = Region.t
 
 type kwd_and        = Region.t
-type kwd_attributes = Region.t
 type kwd_begin      = Region.t
 type kwd_block      = Region.t
 type kwd_case       = Region.t
@@ -118,6 +117,7 @@ type type_ctor   = string reg
 type field_name  = string reg
 type ctor        = string reg
 type attribute   = string reg
+type language    = string reg
 
 (* Parentheses *)
 
@@ -152,8 +152,6 @@ type t = {
 
 and cst = t
 
-and attributes = attribute list
-
 (* Declarations *)
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
@@ -173,7 +171,7 @@ and const_decl = {
   equal      : equal;
   init       : expr;
   terminator : semi option;
-  attributes : attributes
+  attributes : attribute list
 }
 
 (* Type declarations *)
@@ -224,14 +222,14 @@ and type_expr =
 and sum_type = {
   lead_vbar  : vbar option;
   variants   : (variant reg, vbar) nsepseq;
-  attributes : attributes
+  attributes : attribute list
 }
 
 and field_decl = {
   field_name : field_name;
   colon      : colon;
   field_type : type_expr;
-  attributes : attributes
+  attributes : attribute list
 }
 
 and cartesian = (type_expr, times) nsepseq reg
@@ -239,7 +237,7 @@ and cartesian = (type_expr, times) nsepseq reg
 and variant = {
   ctor       : ctor;
   arg        : (kwd_of * type_expr) option;
-  attributes : attributes
+  attributes : attribute list
 }
 
 and type_tuple = (type_expr, comma) nsepseq par reg
@@ -263,7 +261,7 @@ and fun_decl = {
   kwd_is        : kwd_is;
   return        : expr;
   terminator    : semi option;
-  attributes    : attributes
+  attributes    : attribute list
 }
 
 and type_annot = colon * type_expr
@@ -472,7 +470,7 @@ and collection = [
    whereas the innermost covers the <language> part. *)
 
 and code_inj = {
-  language : string reg reg;
+  language : language reg;
   code     : expr;
   rbracket : rbracket;
 }
@@ -623,7 +621,7 @@ and 'a ne_injection = {
   enclosing   : enclosing;
   ne_elements : ('a, semi) nsepseq;
   terminator  : semi option;
-  attributes  : attributes
+  attributes  : attribute list
 }
 
 and ne_injection_kwd = [

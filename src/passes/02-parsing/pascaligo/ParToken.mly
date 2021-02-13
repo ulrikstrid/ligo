@@ -14,8 +14,8 @@ module Token = Lexer_pascaligo.Token
 %token    <(Token.lexeme * Z.t) Region.reg> Mutez    "<mutez>"
 %token            <Token.lexeme Region.reg> Ident    "<ident>"
 %token            <Token.lexeme Region.reg> UIdent   "<uident>"
-%token                  <string Region.reg> Attr     "[@attr]"
-%token <Token.lexeme Region.reg Region.reg> Lang     "[%lang"
+%token                  <string Region.reg> Attr     "[@<attr>]"
+%token <Token.lexeme Region.reg Region.reg> Lang     "[%<lang>"
 
   (* Symbols *)
 

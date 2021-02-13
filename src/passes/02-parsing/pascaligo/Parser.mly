@@ -117,12 +117,12 @@ sep_or_term_list(item,sep):
     $1, None
   }
 | nseq(item sep {$1,$2}) {
-    let (first,sep), tail = $1 in
+    let (first, sep), tail = $1 in
     let rec trans (seq, prev_sep as acc) = function
       [] -> acc
-    | (item,next_sep)::others ->
-        trans ((prev_sep,item)::seq, next_sep) others in
-    let list, term = trans ([],sep) tail
+    | (item, next_sep) :: others ->
+        trans ((prev_sep, item) :: seq, next_sep) others in
+    let list, term = trans ([], sep) tail
     in (first, List.rev list), Some term }
 
 (* Compound constructs *)
@@ -130,19 +130,13 @@ sep_or_term_list(item,sep):
 par(X):
   "(" X ")" {
     let region = cover $1 $3
-    and value  = {
-      lpar   = $1;
-      inside = $2;
-      rpar   = $3}
+    and value  = {lpar=$1; inside=$2; rpar=$3}
     in {region; value} }
 
 brackets(X):
   "[" X "]" {
     let region = cover $1 $3
-    and value  = {
-      lbracket = $1;
-      inside   = $2;
-      rbracket = $3}
+    and value  = {lbracket=$1; inside=$2; rbracket=$3}
     in {region; value} }
 
 (* Sequences
@@ -157,8 +151,8 @@ brackets(X):
    static control-flow graph. The rule [sepseq] parses possibly empty
    sequences of items separated by some token (e.g., a comma), and
    rule [nsepseq] is for non-empty such sequences. See module [Utils]
-   for the types corresponding to the semantic actions of those rules.
- *)
+   for the types corresponding to the semantic actions of those
+   rules. *)
 
 (* Possibly empty sequence of items *)
 
@@ -184,7 +178,7 @@ sepseq(X,Sep):
   (**)           { None    }
 | nsepseq(X,Sep) { Some $1 }
 
-(* Inlines *)
+(* Aliasing and inlining some tokens *)
 
 %inline variable    : "<ident>"  { $1 }
 %inline type_name   : "<ident>"  { $1 }
@@ -333,13 +327,13 @@ sum_type:
     let value  = {variants=$1; attributes=[]; lead_vbar=None}
     in T_Sum {region; value}
   }
-| seq("[@attr]") "|" nsepseq(variant,"|") {
+| seq("[@<attr>]") "|" nsepseq(variant,"|") {
     let region = nsepseq_to_region (fun x -> x.region) $3 in
     let value  = {attributes=$1; lead_vbar = Some $2; variants=$3}
     in T_Sum {region; value} }
 
 variant:
-  nseq("[@attr]") ctor {
+  nseq("[@<attr>]") ctor {
     let attributes = Utils.nseq_to_list $1 in
     let value      = {ctor=$2; arg=None; attributes}
     and region     = cover (fst $1).region $2.region
@@ -348,7 +342,7 @@ variant:
 | ctor {
     {$1 with value = {ctor=$1; arg=None; attributes=[]}}
   }
-| nseq("[@attr]") ctor "of" fun_type {
+| nseq("[@<attr>]") ctor "of" fun_type {
     let attributes = Utils.nseq_to_list $1 in
     let value      = {ctor = $2; arg = Some ($3,$4); attributes}
     and stop       = type_expr_to_region $4 in
@@ -364,7 +358,7 @@ variant:
     in {region; value} }
 
 record_type:
-  seq("[@attr]") "record" sep_or_term_list(field_decl,";") "end" {
+  seq("[@<attr>]") "record" sep_or_term_list(field_decl,";") "end" {
     let fields, terminator = $3 in
     let region = match first_region $1 with
                          None -> cover $2 $4
@@ -376,7 +370,7 @@ record_type:
                   attributes  = $1}
     in T_Record {region; value}
   }
-| seq("[@attr]") "record" "[" sep_or_term_list(field_decl,";") "]" {
+| seq("[@<attr>]") "record" "[" sep_or_term_list(field_decl,";") "]" {
     let fields, terminator = $4 in
     let region = match first_region $1 with
                          None -> cover $2 $5
@@ -401,7 +395,7 @@ module_var_t:
 | field_name    { T_Var     $1 }
 
 field_decl:
-  seq("[@attr]") field_name ":" type_expr {
+  seq("[@<attr>]") field_name ":" type_expr {
     let stop   = type_expr_to_region $4 in
     let region = match first_region $1 with
                          None -> cover $2.region stop
@@ -420,7 +414,7 @@ fun_expr:
 (* Function declarations *)
 
 open_fun_decl:
-  seq("[@attr]") ioption("recursive") "function" fun_name parameters
+  seq("[@<attr>]") ioption("recursive") "function" fun_name parameters
   ioption(type_annot) "is" expr {
     let stop   = expr_to_region $8 in
     let region = match first_region $1 with
@@ -481,7 +475,7 @@ statement:
 | open_var_decl    { S_VarDecl $1 }
 
 open_const_decl:
-  seq("[@attr]") "const" unqualified_decl("=") {
+  seq("[@<attr>]") "const" unqualified_decl("=") {
     let name, const_type, equal, init, stop = $3 in
     let region= match first_region $1 with
                   None -> cover $2 stop
@@ -551,65 +545,45 @@ map_patch:
     in {region; value} }
 
 injection(Kind,element):
-  Kind sep_or_term_list(element,";") "end" {
+  Kind option(sep_or_term_list(element,";")) "end" {
     fun mk_kwd ->
-      let elements, terminator = $2 in
+      let kind, enclosing = mk_kwd $1, End $3
+      and elements, terminator =
+        match $2 with
+          Some (elts, term) -> Some elts, term
+        | None -> None, None in
       let region = cover $1 $3
-      and value  = {kind      = mk_kwd $1;
-                    enclosing = End $3;
-                    elements  = Some elements;
-                    terminator}
+      and value  = {kind; enclosing; elements; terminator}
       in {region; value}
   }
-| Kind "end" {
+| Kind "[" option(sep_or_term_list(element,";")) "]" {
     fun mk_kwd ->
-      let region = cover $1 $2
-      and value  = {kind       = mk_kwd $1;
-                    enclosing  = End $2;
-                    elements   = None;
-                    terminator = None}
-      in {region; value}
-  }
-| Kind "[" sep_or_term_list(element,";") "]" {
-    fun mk_kwd ->
-      let elements, terminator = $3 in
+      let kind, enclosing = mk_kwd $1, Brackets ($2,$4)
+      and elements, terminator =
+        match $3 with
+          Some (elts, term) -> Some elts, term
+        | None -> None, None in
       let region = cover $1 $4
-      and value  = {kind      = mk_kwd $1;
-                    enclosing = Brackets ($2,$4);
-                    elements  = Some elements;
-                    terminator}
-      in {region; value}
-  }
-| Kind "[" "]" {
-    fun mk_kwd ->
-      let region = cover $1 $3
-      and value  = {kind       = mk_kwd $1;
-                    enclosing  = Brackets ($2,$3);
-                    elements   = None;
-                    terminator = None}
+      and value  = {kind; enclosing; elements; terminator}
       in {region; value} }
 
 ne_injection(Kind,element):
   Kind sep_or_term_list(element,";") "end" {
     fun mk_kwd ->
-      let ne_elements, terminator = $2 in
+      let kind, enclosing = mk_kwd $1, End $3
+      and ne_elements, terminator = $2 in
       let region = cover $1 $3
-      and value  = {kind      = mk_kwd $1;
-                    enclosing = End $3;
-                    ne_elements;
-                    terminator;
-                    attributes = []}
+      and value  = {kind; enclosing; ne_elements;
+                    terminator; attributes=[]}
       in {region; value}
   }
 | Kind "[" sep_or_term_list(element,";") "]" {
     fun mk_kwd ->
-      let ne_elements, terminator = $3 in
+      let kind, enclosing = mk_kwd $1, Brackets ($2, $4)
+      and ne_elements, terminator = $3 in
       let region = cover $1 $4
-      and value = {kind      = mk_kwd $1;
-                   enclosing = Brackets ($2,$4);
-                   ne_elements;
-                   terminator;
-                   attributes = []}
+      and value = {kind; enclosing; ne_elements;
+                   terminator; attributes=[]}
       in {region; value} }
 
 binding:
@@ -725,8 +699,8 @@ iter:
     let bind_to    = Some ($3,$4)
     and collection = `Map $6 in
     let region     = cover $1 $8.region in
-    let value      = {kwd_for=$1; var=$2; bind_to; kwd_in=$5; collection;
-                      expr=$7; block=$8}
+    let value      = {kwd_for=$1; var=$2; bind_to; kwd_in=$5;
+                      collection; expr=$7; block=$8}
     in {region; value}
   }
 | "for" variable "in" collection expr block {
@@ -855,10 +829,19 @@ core_expr:
 | code_inj                     { E_CodeInj   $1 }
 | some_expr                    { E_Some      $1 }
 | ctor_expr                    { E_Ctor      $1 }
-| injection("map",binding)     { E_Map       ($1 mk_map)     }
-| injection("big_map",binding) { E_BigMap    ($1 mk_big_map) }
-| injection("set",expr)        { E_Set       ($1 mk_set)     }
+| map_expr                     { E_Map       $1 }
+| big_map_expr                 { E_BigMap    $1 }
+| set_expr                     { E_Set       $1 }
 | call_or_par_or_proj          { $1 }
+
+map_expr:
+  injection("map",binding) { $1 mk_map }
+
+big_map_expr:
+  injection("big_map",binding) { $1 mk_big_map }
+
+set_expr:
+  injection("set",expr) { $1 mk_set }
 
 map_lookup:
   path brackets(expr) {
@@ -885,8 +868,8 @@ call_or_par_or_proj:
     match $2 with
       None -> parens
     | Some args ->
-        let region = cover $1.region args.region in
-        E_Call {region; value = parens,args}
+        let region = cover $1.region args.region
+        in E_Call {region; value = parens, args}
   }
 | projection arguments? {
     let project = E_Proj $1 in
@@ -894,7 +877,7 @@ call_or_par_or_proj:
       None -> project
     | Some args ->
         let region = cover $1.region args.region
-        in E_Call {region; value = project,args}
+        in E_Call {region; value = project, args}
   }
 | fun_call { E_Call $1 }
 
@@ -956,7 +939,7 @@ field_path_assignment:
     in {region; value} }
 
 code_inj:
-  "[%lang" expr "]" {
+  "[%<lang>" expr "]" {
     let region = cover $1.region $3
     and value  = {language=$1; code=$2; rbracket=$3}
     in {region; value} }
@@ -1030,4 +1013,4 @@ ctor_pattern:
     let region = cover $1.region $2.region in
     {region; value = ($1, Some $2)}
   }
-| ctor { {$1 with value=($1,None)} }
+| ctor { {$1 with value = ($1, None)} }

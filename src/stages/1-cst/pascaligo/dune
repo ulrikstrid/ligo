@@ -7,6 +7,6 @@
     ;; Third party
     hex
     zarith)
-  (modules CST Printer)
+  (modules CST PrintTokens PrintCST)
   (preprocess
     (pps ppx_let bisect_ppx --conditional)))

@@ -15,10 +15,9 @@ module type PRINTER =
     type state
 
     val mk_state :
-      offsets:bool -> mode:[`Point|`Byte] -> buffer:Buffer.t -> state
+      ?buffer:Buffer.t -> offsets:bool -> [`Point|`Byte] -> state
 
-    val print_tokens : state -> tree -> unit
-    val pp_cst       : state -> tree -> unit
+    val to_string : state -> tree -> string
   end
 
 module type PRETTY =
@@ -34,7 +33,8 @@ module Make (Comments    : Shared_lexer.Comments.S)
             (Parser      : PARSER with type token = Token.t
                                   and type tree = CST.t)
             (ParErr      : sig val message : int -> string end)
-            (Printer     : PRINTER with type tree = CST.t)
+            (PrintTokens : PRINTER with type tree = CST.t)
+            (PrintCST    : PRINTER with type tree = CST.t)
             (Pretty      : PRETTY with type tree = CST.t)
             (CLI         : ParserLib.CLI.S)
             (Self_lexing : Shared_lexer.Self_lexing.S with type token = Token.t) =
@@ -100,22 +100,19 @@ module Make (Comments    : Shared_lexer.Comments.S)
               print_newline ()
             end
           else
-            let buffer = Buffer.create 231 in
-            let state  = Printer.mk_state
-                           ~offsets:Preproc_CLI.offsets
-                           ~mode:Lexer_CLI.mode
-                           ~buffer in
             if CLI.cst then
-              begin
-                Printer.pp_cst state tree;
-                Printf.printf "%s%!" (Buffer.contents buffer)
-              end
+              let state = PrintCST.mk_state
+                            ~offsets:Preproc_CLI.offsets
+                            Lexer_CLI.mode in
+              let result = PrintCST.to_string state tree
+              in Printf.printf "%s%!" result
             else
               if CLI.cst_tokens then
-                begin
-                  Printer.print_tokens state tree;
-                  Printf.printf "%s%!" (Buffer.contents buffer);
-                end
+                let state = PrintTokens.mk_state
+                              ~offsets:Preproc_CLI.offsets
+                              Lexer_CLI.mode in
+                let result = PrintTokens.to_string state tree
+                in Printf.printf "%s%!" result
               else ();
             flush_all ()
       | Error msg -> (flush_all (); print_in_red msg.Region.value)

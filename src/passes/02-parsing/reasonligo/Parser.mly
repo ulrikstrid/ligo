@@ -220,13 +220,13 @@ sum_type:
     let value  = {variants=$1; attributes=[]; lead_vbar=None}
     in TSum {region; value}
   }
-| seq("[@attr]") "|" nsepseq(variant,"|") {
+| seq("[@<attr>]") "|" nsepseq(variant,"|") {
     let region = nsepseq_to_region (fun x -> x.region) $3 in
     let value  = {variants=$3; attributes=$1; lead_vbar = Some $2}
     in TSum {region; value} }
 
 variant:
-  nseq("[@attr]") ctor {
+  nseq("[@<attr>]") ctor {
     let attr   = Utils.nseq_to_list $1 in
     let region = cover (fst $1).region $2.region
     and value  = {ctor=$2; arg=None; attributes=attr}
@@ -240,14 +240,14 @@ variant:
     and value  = {ctor=$1; arg = Some (ghost,$3); attributes=[]}
     in {region; value}
   }
-| nseq("[@attr]") ctor "(" fun_type ")" {
+| nseq("[@<attr>]") ctor "(" fun_type ")" {
     let attributes = Utils.nseq_to_list $1 in
     let region     = cover (fst $1).region $5
     and value      = {ctor=$2; arg = Some (ghost,$4); attributes}
     in {region; value} }
 
 record_type:
-  seq("[@attr]") "{" sep_or_term_list(field_decl,",") "}" {
+  seq("[@<attr>]") "{" sep_or_term_list(field_decl,",") "}" {
     let ne_elements, terminator = $3 in
     let region   = match first_region $1 with
                      None -> cover $2 $4
@@ -269,7 +269,7 @@ module_var_t:
 | field_name      { TVar  $1 }
 
 field_decl:
-  seq("[@attr]") field_name {
+  seq("[@<attr>]") field_name {
     let value = {
       field_name = $2;
       colon      = ghost;
@@ -277,7 +277,7 @@ field_decl:
       attributes = $1}
     in {$2 with value}
   }
-| seq("[@attr]") field_name ":" type_expr {
+| seq("[@<attr>]") field_name ":" type_expr {
     let stop   = type_expr_to_region $4 in
     let region = match first_region $1 with
                    None -> cover $2.region stop
@@ -288,7 +288,7 @@ field_decl:
 (* Top-level definitions *)
 
 let_decl:
-  seq("[@attr]") "let" ioption("rec") let_binding {
+  seq("[@<attr>]") "let" ioption("rec") let_binding {
     let value  = $2, $3, $4, $1 in
     let stop   = expr_to_region binding.let_rhs in
     let region = match first_region $1 with
@@ -499,7 +499,7 @@ case_clause(right_expr):
     in $1, {region; value} }
 
 let_expr(right_expr):
-  seq("[@attr]") "let" ioption("rec") let_binding ";" right_expr {
+  seq("[@<attr>]") "let" ioption("rec") let_binding ";" right_expr {
     let attributes = $1 in
     let kwd_let = $2 in
     let kwd_rec = $3 in
@@ -714,7 +714,7 @@ core_expr:
 | par(annot_expr) {                       EPar $1 }
 
 code_inj:
-  "[%lang" expr "]" {
+  "[%<lang>" expr "]" {
     let region = cover $1.region $3
     and value  = {language=$1; code=$2; rbracket=$3}
     in {region; value} }
@@ -854,7 +854,7 @@ last_expr:
 | seq_expr { $1 }
 
 let_in_sequence:
-  seq("[@attr]") "let" ioption("rec") let_binding ";" series  {
+  seq("[@<attr>]") "let" ioption("rec") let_binding ";" series  {
     let seq      = $6 in
     let stop     = nsepseq_to_region expr_to_region seq in
     let region   = match first_region $1 with

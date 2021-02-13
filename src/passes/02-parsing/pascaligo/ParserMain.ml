@@ -40,9 +40,15 @@ module Pretty =
     type tree = CST.t
   end
 
-module Printer =
+module PrintTokens =
   struct
-    include Cst_pascaligo.Printer
+    include Cst_pascaligo.PrintTokens
+    type tree = CST.t
+  end
+
+module PrintCST =
+  struct
+    include Cst_pascaligo.PrintCST
     type tree = CST.t
   end
 
@@ -55,7 +61,8 @@ module Main = Shared_parser.ParserMainGen.Make
                 (CST)
                 (Parser)
                 (ParErr)
-                (Printer)
+                (PrintTokens)
+                (PrintCST)
                 (Pretty)
                 (Parser_CLI)
                 (Self_lexing)
