@@ -154,8 +154,12 @@ let check_variants variants =
     let items = Utils.nsepseq_to_list inside in
     match items with 
       hd :: [] -> add acc hd
-    | _ -> fail @@ not_supported_variant t)
-  | _ as t -> fail @@ not_supported_variant t
+    | TString _ as hd :: _ -> add acc hd
+    | _ -> 
+      fail @@ not_supported_variant t
+      )
+  | _ as t -> 
+    fail @@ not_supported_variant t
   in
   let variants =
     bind_fold_list add VarSet.empty variants
