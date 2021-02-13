@@ -21,6 +21,8 @@ const Output = styled.div`
 const Pre = styled.pre`
   margin: 0;
   width: -webkit-fill-available;
+  white-space: pre-wrap;
+  padding-bottom: 20px;
 `;
 
 
@@ -45,9 +47,9 @@ const CompileOutputPane = (props) => {
 };
 
 function mapStateToProps(state) {
-  const { Result } = state
+  const { result } = state
   return { 
-    output: Result.output,
+    output: result.output,
   }
 }
 
