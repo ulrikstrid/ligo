@@ -18,7 +18,12 @@ open! Region
 
 let sprintf = Printf.sprintf
 
+let some x = Some x
+
+let (<@) = Utils.(<@)
 let swap = Utils.swap
+type 'a nseq = 'a Utils.nseq
+type ('a, 'sep) nsepseq = ('a, 'sep) Utils.nsepseq
 
 (* STATE *)
 
@@ -123,20 +128,6 @@ let print_tree state label print_sub {value; region} =
   print_root state label ~region;
   print_sub  state value
 
-let print_tree' state label print_sub node =
-  print_root state label ~region:node.region;
-  print_sub  state node
-
-let print_unary state label ?region print_sub node =
-  print_root state label ?region;
-  print_sub  (state#pad 1 0) node
-
-let print_par state label ?region print_sub (e : 'a par reg) =
-  print_unary state label ?region print_sub e.value.inside
-
-let print_brackets state label ?region print_sub (e : 'a brackets reg) =
-  print_unary state label ?region print_sub e.value.inside
-
 let mk_child print = function
         None -> None
 | Some value -> Some (swap print value)
@@ -151,14 +142,21 @@ let print_multi state label ?region children =
   print_root   state label ?region;
   print_forest state children
 
+let print_unary state label ?region print_sub node =
+  print_multi state label ?region [mk_child print_sub (Some node)]
+
+let print_par state label ?region print_sub (e : 'a par reg) =
+  print_unary state label ?region print_sub e.value.inside
+
+let print_brackets state label ?region print_sub (e : 'a brackets reg) =
+  print_unary state label ?region print_sub e.value.inside
+
 (* Printing the root of the CST *)
 
 let rec print_cst state (node : cst) =
-  let apply len rank =
-    print_declaration (state#pad len rank) in
-  let decls = Utils.nseq_to_list node.decl in
-  print_node state "<cst>";
-  List.iteri (List.length decls |> apply) decls
+  print_multi state "<cst>"
+  @@ List.map (mk_child print_declaration <@ some)
+  @@ Utils.nseq_to_list node.decl
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
@@ -172,8 +170,7 @@ and print_declaration state = function
 
 and print_const_type state (node : type_annot) =
   let _, type_expr = node in
-  let children = [mk_child print_type_expr (Some type_expr)]
-  in print_multi state "<type>" children
+  print_unary state "<type>" print_type_expr type_expr
 
 and print_D_Const state (node : const_decl reg) =
   let node = node.value in
@@ -186,17 +183,15 @@ and print_D_Const state (node : const_decl reg) =
 
 and print_parameters state (node : parameters) =
   print_multi state "<parameters>"
-  @@ List.map (fun decl -> mk_child print_param_decl (Some decl))
+  @@ List.map (mk_child print_param_decl <@ some)
   @@ Utils.nsepseq_to_list node.value.inside
 
 and print_ret_type state (node : type_annot) =
   let _, type_expr = node in
-  let children = [mk_child print_type_expr (Some type_expr)]
-  in print_multi state "<return type>" children
+  print_unary state "<return type>" print_type_expr type_expr
 
-and print_ret_expr state (node : expr) =
-  let children = [mk_child print_expr (Some node)]
-  in print_multi state "<return expression>" children
+and print_ret_expr state =
+  print_unary state "<return expression>" print_expr
 
 and print_recursive state _ = print_node state "recursive"
 
@@ -218,9 +213,9 @@ and print_D_Module state (node : module_decl reg) =
      mk_child print_declarations (Some node.declarations)]
   in print_multi state "D_Module" children
 
-and print_declarations state (node : declaration Utils.nseq) =
+and print_declarations state (node : declaration nseq) =
   print_multi state "<structure>"
-  @@ List.map (fun decl -> mk_child print_declaration (Some decl))
+  @@ List.map (mk_child print_declaration <@ some)
   @@ Utils.nseq_to_list node
 
 and print_D_ModAlias state (node : module_alias reg) =
@@ -229,9 +224,9 @@ and print_D_ModAlias state (node : module_alias reg) =
                   mk_child print_mod_path (Some node.mod_path)]
   in print_multi state "D_ModAlias" children
 
-and print_mod_path state (node : (module_name, dot) Utils.nsepseq) =
+and print_mod_path state (node : (module_name, dot) nsepseq) =
   print_multi state "<path>"
-  @@ List.map (fun name -> mk_child print_ident (Some name))
+  @@ List.map (mk_child print_ident <@ some)
   @@ Utils.nsepseq_to_list node
 
 and print_D_Type state (node : type_decl reg) =
@@ -245,26 +240,26 @@ and print_D_Type state (node : type_decl reg) =
 and print_type_expr state = function
   T_Ctor    e -> print_T_Ctor    state e
 | T_Fun     e -> print_T_Fun     state e
-| T_Int     e -> print_multi state "T_Int" (mk_children_int e)
+| T_Int     e -> print_multi     state "T_Int" (mk_children_int e)
 | T_ModPath e -> print_T_ModPath state e
 | T_Par     e -> print_par       state "T_Par" print_type_expr e
-| T_Prod    e -> print_tree'     state "T_Prod " print_cartesian e
+| T_Prod    e -> print_T_Prod    state e
 | T_Record  e -> print_T_Record  state e
 | T_String  e -> print_unary     state "T_String" print_T_String e
-| T_Sum     e -> print_unary     state "T_Sum" print_sum_type e
+| T_Sum     e -> print_T_Sum     state e
 | T_Var     e -> print_unary     state "T_Var" print_ident e
 | T_Wild    e -> print_unary     state "T_Wild" print_wild e
 
 and print_T_ModPath state (node : type_expr module_path reg) =
   let node = node.value in
-  let children = [mk_child print_ident (Some node.module_name);
+  let children = [mk_child print_ident     (Some node.module_name);
                   mk_child print_type_expr (Some node.field)]
   in print_multi state "T_ModPath" children
 
 and print_T_Record state (node : field_decl reg ne_injection reg) =
   let node = node.value in
   let children =
-    (List.map (fun decl -> mk_child print_field_decl (Some decl))
+    (List.map (mk_child print_field_decl <@ some)
      @@ Utils.nsepseq_to_list node.ne_elements)
     @ [mk_child print_attributes (list_to_option node.attributes)]
   in print_multi state "T_Record" children
@@ -273,52 +268,42 @@ and print_wild state = print_loc_node state "_"
 
 and print_T_Ctor state (node : (type_ctor * type_tuple) reg) =
   let {value=(name, tuple); region} = node in
-  let children = [mk_child print_ident (Some name);
+  let children = [mk_child print_ident      (Some name);
                   mk_child print_type_tuple (Some tuple)]
   in print_multi state "T_Ctor" ~region children
 
 and print_T_Fun state (node : (type_expr * arrow * type_expr) reg) =
-  print_loc_node state "T_Fun" node.region;
-  let apply len rank = print_type_expr (state#pad len rank)
-  and domain, _, range = node.value in
-  List.iteri (apply 2) [domain; range]
+  let {value = (domain, _, codomain); region} = node in
+  let children = [mk_child print_type_expr (Some domain);
+                  mk_child print_type_expr (Some codomain)]
+  in print_multi state "T_Fun" ~region children
 
-and print_sum_type state (node : sum_type reg) =
+and print_T_Sum state (node : sum_type reg) =
   let node = node.value in
-  let variants = Utils.nsepseq_to_list node.variants in
-  let arity    = List.length variants in
-  let arity    = if node.attributes = [] then arity else arity+1 in
-  let apply arity rank variant =
-    let state = state#pad arity rank in
-    print_variant state variant.value in
-  let () = List.iteri (apply arity) variants in
-  if node.attributes <> [] then
-    let state = state#pad arity (arity-1)
-    in print_attributes state node.attributes
+  let children =
+    (List.map (fun {value; _} -> mk_child print_variant (Some value))
+     @@ Utils.nsepseq_to_list node.variants)
+      @ [mk_child print_attributes (list_to_option node.attributes)]
+  in print_multi state "T_Sum" children
 
-and print_cartesian state (node : cartesian) =
-  let apply len rank = print_type_expr (state#pad len rank) in
-  let components = Utils.nsepseq_to_list node.value
-  in List.iteri (List.length components |> apply) components
+and print_T_Prod state (node : cartesian) =
+  let {value; region} = node in
+  print_multi state "T_Prod" ~region
+  @@ List.map (mk_child print_type_expr <@ some)
+  @@ Utils.nsepseq_to_list value
 
 and print_attributes state attributes =
-  print_node state "<attributes>";
-  let length         = List.length attributes in
-  let apply len rank = print_ident (state#pad len rank)
-  in List.iteri (apply length) attributes
+  print_multi state "<attributes>"
+  @@ List.map (mk_child print_ident <@ some) attributes
 
 and print_variant state (node : variant) =
-  let arity = if node.attributes = [] then 0 else 1 in
-  let arity = if node.arg = None then arity else arity + 1 in
-  let rank  = 0 in
-  let ()    = print_ident state node.ctor in
-  let rank =
-    match node.arg with
-      None -> rank
-    | Some (_, c) ->
-        print_type_expr (state#pad arity rank) c; rank+1 in
-  if node.attributes <> [] then
-    print_attributes (state#pad arity rank) node.attributes
+  let children =
+      [mk_child print_of_type_expr node.arg]
+    @ [mk_child print_attributes (list_to_option node.attributes)]
+  in print_multi state node.ctor.value ~region:node.ctor.region children
+
+and print_of_type_expr state node =
+  print_type_expr state @@ snd node
 
 and print_field_decl state (node : field_decl reg) =
   let arity = if node.value.attributes = [] then 1 else 2 in
@@ -328,31 +313,18 @@ and print_field_decl state (node : field_decl reg) =
     print_attributes (state#pad arity 1) node.value.attributes
 
 and print_type_tuple
-      state
-      (node : (type_expr, comma) Utils.nsepseq par reg) =
+      state (node : (type_expr, comma) nsepseq par reg) =
   print_multi state "<arguments>" ~region:node.region
-  @@ List.map (fun te -> mk_child print_type_expr (Some te))
+  @@ List.map (mk_child print_type_expr <@ some)
   @@ Utils.nsepseq_to_list node.value.inside
 
-and print_fun_expr state (expr: fun_expr) =
-  let arity = if expr.ret_type = None then 2 else 3 in
-  let rank = 0 in
-  let rank =
-    let state = state#pad arity rank in
-    print_node       state "<parameters>";
-    print_parameters state expr.param;
-    rank + 1 in
-  let rank =
-    match expr.ret_type with
-      None -> rank
-    | Some (_, t_expr) ->
-        let state = state#pad arity rank in
-        print_unary state "<return type>" print_type_expr t_expr;
-        rank + 1 in
-  let () =
-    let state = state#pad arity rank in
-    print_unary state "<return>" print_expr expr.return
-  in ()
+and print_E_Fun state (node : fun_expr reg) =
+  let node = node.value in
+  let children = [
+     mk_child print_parameters (Some node.param);
+     mk_child print_ret_type   node.ret_type;
+     mk_child print_ret_expr   (Some node.return)]
+  in print_multi state "E_Fun" children
 
 and print_code_inj state (node : code_inj) =
   let () =
@@ -373,14 +345,6 @@ and print_block_with state (node : block_with) =
     print_unary state "<expr>" print_expr node.expr
   in ()
 
-(*
-and print_parameters state
-                  (node : (param_decl, semi) Utils.nsepseq par reg) =
-  let params = Utils.nsepseq_to_list node.value.inside in
-  let arity  = List.length params in
-  let apply len rank = print_param_decl (state#pad len rank)
-  in List.iteri (apply arity) params
- *)
 and print_param_decl state = function
   ParamConst {value; region} ->
     let arity = if value.param_type = None then 1 else 2 in
@@ -549,14 +513,11 @@ and print_bytes state {value=lexeme,hex; region} =
   print_loc_node (state#pad 2 0) lexeme region;
   print_node     (state#pad 2 1) (Hex.show hex)
 
-and print_int state {value=lexeme,z; region} =
-  let children = [mk_child print_ident (Some {value=lexeme; region});
-                  mk_child print_node (Some (Z.to_string z))]
-  in print_forest state children
-
+and print_int state node =
+  print_forest state @@ mk_children_int node
 and mk_children_int {value=lexeme,z; region} =
   [mk_child print_ident (Some {value=lexeme; region});
-   mk_child print_node (Some (Z.to_string z))]
+   mk_child print_node  (Some (Z.to_string z))]
 
 and print_ctor_app_pattern state (node : (ctor * tuple_pattern option) reg) =
   let ctor, pat_opt = node.value in
@@ -589,7 +550,8 @@ and print_ne_injection :
          let state = state#pad arity (arity-1)
          in print_attributes state inj.attributes
 
-and print_tuple_pattern state (node :  (pattern, comma) Utils.nsepseq par reg) =
+and print_tuple_pattern
+      state (node :  (pattern, comma) nsepseq par reg) =
   let node = node.value in
   let patterns       = Utils.nsepseq_to_list node.inside in
   let length         = List.length patterns in
@@ -774,9 +736,7 @@ and print_expr state = function
 | E_Ctor e -> print_E_Ctor state e
 | E_Div e   -> print_op2 state "E_Div" e
 | E_False e -> print_loc_node state "False" e
-| E_Fun {value; region} ->
-    print_loc_node state "E_Fun" region;
-    print_fun_expr state value;
+| E_Fun e -> print_E_Fun state e
 | E_Geq   e -> print_op2 state "E_Geq"   e
 | E_Gt    e -> print_op2 state "E_Gt"    e
 | E_Int e   -> print_node state "Int";
@@ -874,7 +834,7 @@ and print_E_Ctor state (node :  (ctor * arguments option) reg) =
   ignore args_opt (* TODO: remove. see below *)
 (* TODO   print_option state print_tuple_expr args_opt*)
 
-and print_tuple_expr state (node : (expr, comma) Utils.nsepseq par reg) =
+and print_tuple_expr state (node : (expr, comma) nsepseq par reg) =
   let exprs          = Utils.nsepseq_to_list node.value.inside in
   let length         = List.length exprs in
   let apply len rank = print_expr (state#pad len rank)
