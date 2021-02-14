@@ -33,34 +33,13 @@ type getTotalSupply = {
   callback : contract <nat>,
 };
 
-type Transfer = {
-  kind: "Transfer",
-  value: transfer
-};
-type Approve = {
-  kind: "Approve",
-  value: approve
-};
-type GetAllowance = {
-  kind: "GetAllowance",
-  value: getAllowance
-} ;
-type GetBalance = {
-  kind: "GetBalance",
-  value: getBalance
-};
-type GetTotalSupply = {
-  kind: "GetTotalSupply",
-  value: getTotalSupply
-}; 
-
 type action =
-| Transfer
-| Approve
-| GetAllowance
-| GetBalance
-| GetTotalSupply
-;
+| ["Transfer", transfer]
+| ["Approve", approve]
+| ["GetAllowance", getAllowance]
+| ["GetBalance", getBalance]
+| ["GetTotalSupply", getTotalSupply];
+
 let transfer = ([p,s] : [transfer, storage]) : [list <operation>, storage] => {
   let new_allowances = 0; 
   if (Tezos.sender == p.address_from) { 
@@ -76,7 +55,7 @@ let transfer = ([p,s] : [transfer, storage]) : [list <operation>, storage] => {
 	    (failwith ("Not Enough Allowance") as allowances); 
 	  }
 	  else { 
-	    new_allowances = Big_map.update ([Tezos.sender,p.address_from], (Some (abs(authorized_value - p.value))), s.allowances); 
+	    new_allowances = Big_map.update ((Tezos.sender,p.address_from), (Some (abs(authorized_value - p.value))), s.allowances); 
 	  };
   };
   let opt = Big_map.find_opt (p.address_from, s.tokens);
@@ -95,7 +74,7 @@ let transfer = ([p,s] : [transfer, storage]) : [list <operation>, storage] => {
 	    None: () => (0 as nat)
 	  });
 	  let new_tokens2 = Big_map.update (p.address_to, (Some (receiver_balance + p.value)), new_tokens);
-	  return [(List() as list <operation>), { ...s, tokens:new_tokens2, allowances:new_allowances}];
+	  return [(List() as list <operation>), { ...s,tokens:new_tokens2, allowances:new_allowances}];
   };
 };
 
@@ -148,10 +127,8 @@ let main = ([a,s]: [action, storage]) =>
 	  GetAllowance: (p: getAllowance) => getAllowance ([p, s]),
 	  GetBalance: (p: getBalance) => getBalance ([p, s]),
 	  GetTotalSupply: (p: getTotalSupply) => getTotalSupply ([p, s])
-  });let main = (p : key_hash) : address => {
-  let c : contract<unit> = Tezos.implicit_account(p);
-  return Tezos.address(c);
-};
+  });
+  
 let check_ = (p : unit) : int => {
   if (Tezos.amount == (100 as tez)) { 
     return 42; 
@@ -312,12 +289,8 @@ type transferAuxiliary = {
 };
 type transferMichelson = michelson_pair_right_comb<transferAuxiliary>;
 type transferParameter = list<transferMichelson>;
-type Transfer = {
-  kind: "Transfer",
-  value: transferParameter
-};
 type parameter = 
-| Transfer;
+| ["Transfer", transferParameter];
 type storage = big_map<[tokenId, tokenOwner]>;
 type entrypointParameter = [parameter, storage];
 type entrypointReturn = [list<operation>, storage];
@@ -360,7 +333,7 @@ let transferIterator = ([storage, transferMichelson]: [storage, transferMichelso
   let [storage2, _] = List.fold(
     transferContentsIterator, 
     transferAuxiliary2.txs,
-    [storage, from_]
+    List(storage, from_)
   );
   return storage2
 };
@@ -372,24 +345,7 @@ let main = ([parameter, storage]: entrypointParameter): entrypointReturn =>
   match(parameter, {
     Transfer: (transferParameter: transferParameter) => transfer([transferParameter, storage])
   });
-type Bar = {
-  kind: "Bar",
-  value: int
-};
-
-type Baz = {
-  kind: "Baz"
-};
-
-type fooBarBaz =
-| Bar
-| Baz;
-
-let main = (f : fooBarBaz) : int =>
-  match(f, {
-    Bar: (i: int) => i,
-    Baz: () => -1
-  });/* Test boolean comparison in JsLIGO */
+/* Test boolean comparison in JsLIGO */
 
 let main = ([a, b] : [bool, bool]) => {
   if (a == b) { return 999; } else { return 1; }
@@ -465,6 +421,7 @@ let c = 300, d = 200;let check_hash_key = (kh1_k2 : [key_hash, key]) : [bool, ke
   let kh2 : key_hash = Crypto.hash_key (k2);
   return [(kh1 == kh2), kh2]
 };
+
 type storagex = unit;
 
 let mainx = ([p,s] : [unit, storage]) : unit =>
@@ -500,14 +457,14 @@ type returnx = [list <operation>, storage];
 
 let x : list <int> = [];
 let y : list <int> = [3, 4, 5];
-let z : list <int> = [2, ...y];
+/* let z : list <int> = [2, ...y]; */
 
 let main = ([action, s] : [parameter, storage]) : returnx => {
   if (action == []) {
     return [(List() as list<operation>), s]
   }
   else {
-    let [hd, ...tl] = action;
+    let [hd, ...tl] : list<int> = action;
     return [(List() as list<operation>), [s[0] + hd, tl]]
   }
 };
