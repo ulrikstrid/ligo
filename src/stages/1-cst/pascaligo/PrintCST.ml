@@ -89,17 +89,6 @@ let compact state (region: Region.t) =
 
 (* Printing the tokens (leaves of the CST) *)
 
-let print_ident state {value; region} =
-  let reg  = compact state region in
-  let node = sprintf "%s%s (%s)\n" state#pad_path value reg
-  in Buffer.add_string state#buffer node
-
-let print_loc_node state value region = print_ident state {value; region}
-
-let print_node state name =
-  let node = sprintf "%s%s\n" state#pad_path name
-  in Buffer.add_string state#buffer node
-
 let print_E_String state {value; region} =
   let reg  = compact state region in
   let node = sprintf "%s%S (%s)\n" state#pad_path value reg
@@ -118,6 +107,17 @@ let print_E_Verbatim state {value; region} =
 let list_to_option = function
   [] -> None
 |  l -> Some l
+
+let print_ident state {value; region} =
+  let reg  = compact state region in
+  let node = sprintf "%s%s (%s)\n" state#pad_path value reg
+  in Buffer.add_string state#buffer node
+
+let print_loc_node state value region = print_ident state {value; region}
+
+let print_node state name =
+  let node = sprintf "%s%s\n" state#pad_path name
+  in Buffer.add_string state#buffer node
 
 let print_root ?region state label =
   match region with
@@ -232,7 +232,7 @@ and print_mod_path state (node : (module_name, dot) nsepseq) =
 and print_D_Type state (node : type_decl reg) =
   let node = node.value in
   let print_type_expr state =
-    print_unary state "<type expression>" print_type_expr in
+    print_unary state "<type>" print_type_expr in
   let children = [mk_child print_ident     (Some node.name);
                   mk_child print_type_expr (Some node.type_expr)]
   in print_multi state "D_Type" children
@@ -291,26 +291,29 @@ and print_T_Prod state (node : cartesian) =
   print_multi state "T_Prod" ~region
   @@ List.map (mk_child print_type_expr <@ some)
   @@ Utils.nsepseq_to_list value
-
-and print_attributes state attributes =
+and print_attributes state =
   print_multi state "<attributes>"
-  @@ List.map (mk_child print_ident <@ some) attributes
+  <@ List.map (mk_child print_ident <@ some)
 
 and print_variant state (node : variant) =
+  let {value; region} = node.ctor in
   let children =
       [mk_child print_of_type_expr node.arg]
-    @ [mk_child print_attributes (list_to_option node.attributes)]
-  in print_multi state node.ctor.value ~region:node.ctor.region children
+    @ [mk_child print_attributes   (list_to_option node.attributes)]
+  in print_multi state value ~region children
 
-and print_of_type_expr state node =
-  print_type_expr state @@ snd node
+and print_of_type_expr state = print_type_expr state <@ snd
 
 and print_field_decl state (node : field_decl reg) =
-  let arity = if node.value.attributes = [] then 1 else 2 in
-  print_ident     state node.value.field_name;
-  print_type_expr (state#pad arity 0) node.value.field_type;
-  if node.value.attributes <> [] then
-    print_attributes (state#pad arity 1) node.value.attributes
+  let node = node.value in
+  let children =
+      [mk_child print_field_type (Some node.field_type)]
+    @ [mk_child print_attributes (list_to_option node.attributes)]
+  in print_ident state node.field_name;
+     print_forest state children
+
+and print_field_type state =
+  print_unary state "<type>" print_type_expr
 
 and print_type_tuple
       state (node : (type_expr, comma) nsepseq par reg) =
@@ -326,14 +329,20 @@ and print_E_Fun state (node : fun_expr reg) =
      mk_child print_ret_expr   (Some node.return)]
   in print_multi state "E_Fun" children
 
-and print_code_inj state (node : code_inj) =
-  let () =
-    let state = state#pad 2 0 in
-    print_unary state "<language>" print_E_String node.language.value in
-  let () =
-    let state = state#pad 2 1 in
-    print_unary state "<code>" print_expr node.code
-  in ()
+and print_E_CodeInj state {value; region} =
+  let children =
+    [mk_child print_language (Some value.language.value);
+     mk_child print_code     (Some value.code)]
+  in print_multi state "E_CodeInj" ~region children
+
+and print_language state =
+  print_unary state "<language>" print_E_String
+
+and print_code state = print_unary state "<code>" print_expr
+
+and print_E_Block state {value; region} =
+    print_loc_node   state "E_Block" region;
+    print_block_with state value;
 
 and print_block_with state (node : block_with) =
   let () =
@@ -716,9 +725,7 @@ and print_expr state = function
 | E_BigMap {value; region} ->
     print_loc_node  state "E_BigMap" region;
     print_injection state print_binding value
-| E_Block {value; region} ->
-    print_loc_node   state "E_Block" region;
-    print_block_with state value;
+| E_Block e -> print_E_Block state e
 | E_Bytes b ->
     print_node state "E_Bytes";
     print_bytes state b
@@ -727,9 +734,7 @@ and print_expr state = function
     print_fun_call state value
 | E_Case  e -> print_expr_case state e
 | E_Cat e      -> print_op2 state "E_Cat" e
-| E_CodeInj {value; region} ->
-    print_loc_node state "E_CodeInj" region;
-    print_code_inj state value;
+| E_CodeInj e -> print_E_CodeInj state e
 | E_Equal e -> print_op2 state "E_Equal" e
 | E_Cond  e -> print_expr_conditional state e
 | E_Cons     e -> print_op2       state "E_Cons" e
