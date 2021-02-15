@@ -21,10 +21,15 @@ let comment : formatter -> string -> unit = fun ppf s -> fprintf ppf "(* %s *)" 
 
 let list_sep value separator = pp_print_list ~pp_sep:separator value
 let list_sep_d x = list_sep x (tag " ,@ ")
+(* let list_sep_space x = list_sep x (tag " ") *)
 let list_sep_d_par f ppf lst =
   match lst with 
   | [] -> ()
   | _ -> fprintf ppf " (%a)" (list_sep_d f) lst
+(* let list_sep_space f ppf lst =
+  match lst with 
+  | [] -> ()
+  | _ -> fprintf ppf "%a" (list_sep_space f) lst *)
 
 let list value = pp_print_list ~pp_sep:(tag "") value
 

@@ -134,9 +134,9 @@ let e_constructor ?loc s a : expression = make_e ?loc @@ E_constructor { constru
 let e_true  ?loc (): expression = e_constructor ?loc "true"  @@ e_unit ?loc ()
 let e_false ?loc (): expression = e_constructor ?loc "false" @@ e_unit ?loc ()
 let e_matching ?loc a b : expression = make_e ?loc @@ E_matching {matchee=a;cases=b}
-let e_matching_tuple ?loc matchee binders body : expression =
-  let pv_lst = List.map (fun b -> P_var b) binders in
-  let pattern = P_tuple pv_lst in
+let e_matching_tuple ?loc matchee (binders: _ binder list) body : expression =
+  let pv_lst = List.map (fun (b:_ binder) -> Location.wrap @@ (P_var b)) binders in
+  let pattern = Location.wrap @@ P_tuple pv_lst in
   let cases = [ { pattern ; body } ] in
   make_e ?loc @@ E_matching {matchee;cases}
 let e_accessor ?loc record path      = make_e ?loc @@ E_accessor {record; path}

@@ -366,8 +366,8 @@ let rec list_pattern type_expression lp =
   | Cons (a,b) -> `List [`String "Cons" ; pattern type_expression a ; pattern type_expression b]
   | List lp -> `List [`String "Tuple" ; list (pattern type_expression) lp ]
 
-and pattern type_expression repr =
-  match repr with
+and pattern type_expression p =
+  match p.wrap_content with
   | P_unit -> `List [`String "Unit" ; `Null]
   | P_var b -> `List [`String "Var"; binder type_expression b]
   | P_list lp -> `List [`String "List" ; list_pattern type_expression lp]

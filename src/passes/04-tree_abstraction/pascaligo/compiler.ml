@@ -520,62 +520,74 @@ and conv : CST.pattern -> (AST.ty_expr AST.pattern,_) result =
   | CST.PWild reg ->
     let loc = Location.lift reg in
     let b = make_fresh_var ~loc () in
-    ok @@ P_var b
+    ok @@ Location.wrap ~loc @@ P_var b
   | CST.PVar var ->
     let (var,loc) = r_split var in
     let b =
       let var = Location.wrap ~loc @@ Var.of_name var in
       { var ; ascr = None }
     in
-    ok @@ P_var b
+    ok @@ Location.wrap ~loc @@ P_var b
   | CST.PTuple tuple ->
-    let (tuple, _loc) = r_split tuple in
+    let (tuple, loc) = r_split tuple in
     let lst = npseq_to_ne_list tuple.inside in
     let patterns = List.Ne.to_list lst in
     let%bind nested = bind_map_list conv patterns in
-    ok @@ P_tuple nested
+    ok @@ Location.wrap ~loc @@ P_tuple nested
   | CST.PConstr constr_pattern -> (
     match constr_pattern with
-    | PUnit _ -> ok @@ P_unit
-    | PFalse _ -> ok @@ P_variant (Label "false" , None)
-    | PTrue _ -> ok @@ P_variant (Label "true" , None)
-    | PNone _ -> ok @@ P_variant (Label "None" , None)
+    | PUnit p ->
+      let loc = Location.lift p in
+      ok @@ Location.wrap ~loc @@ P_unit
+    | PFalse p ->
+      let loc = Location.lift p in
+      ok @@ Location.wrap ~loc @@ P_variant (Label "false" , None)
+    | PTrue p ->
+      let loc = Location.lift p in
+      ok @@ Location.wrap ~loc @@ P_variant (Label "true" , None)
+    | PNone p ->
+      let loc = Location.lift p in
+      ok @@ Location.wrap ~loc @@ P_variant (Label "None" , None)
     | PSomeApp some ->
-      let ((_,p), _loc) = r_split some in
+      let ((_,p), loc) = r_split some in
       let (p,_loc) = r_split p in
       let%bind pattern' = conv p.inside in
-      ok @@ P_variant (Label "Some", Some pattern')
+      ok @@ Location.wrap ~loc @@ P_variant (Label "Some", Some pattern')
     | PConstrApp constr_app ->
-      let ((constr,p_opt), _loc) = r_split constr_app in
+      let ((constr,p_opt), loc) = r_split constr_app in
       let (l , _loc) = r_split constr in
       let aux : CST.tuple_pattern -> (AST.ty_expr AST.pattern , _) result =
         fun p -> conv (CST.PTuple p)
       in
       let%bind pv_opt = bind_map_option aux p_opt in
-      ok @@ P_variant (Label l, pv_opt)
+      ok @@ Location.wrap ~loc @@ P_variant (Label l, pv_opt)
   )
   | CST.PList list_pattern -> (
     let%bind repr = match list_pattern with
     | PListComp p_inj -> (
+      let loc = Location.lift p_inj.region in
       match p_inj.value.elements with
       | None ->
-        ok @@ P_list (List [])
+        ok @@ Location.wrap ~loc @@ P_list (List [])
       | Some l ->
         let patterns  = Utils.nsepseq_to_list @@ l in
         let%bind nested = bind_map_list conv patterns in
-        ok @@ P_list (List nested)
+        ok @@ Location.wrap ~loc @@ P_list (List nested)
     )
     | PParCons p ->
       let (hd, _, tl) = p.value.inside in
+      let loc = Location.lift p.region in
       let%bind hd = conv hd in
       let%bind tl = conv tl in
-      ok @@ P_list (Cons (hd,tl))
+      ok @@ Location.wrap ~loc @@ P_list (Cons (hd,tl))
     | PCons l ->
+      let loc = Location.lift l.region in
       let patterns  = Utils.nsepseq_to_list l.value in
       let%bind nested = bind_map_list conv patterns in
-      ok @@ P_list (List nested)
-    | PNil _ ->
-      ok @@ P_list (List [])
+      ok @@ Location.wrap ~loc @@ P_list (List nested)
+    | PNil n ->
+      let loc = Location.lift n in
+      ok @@ Location.wrap ~loc @@ P_list (List [])
     in
     ok @@ repr
   )

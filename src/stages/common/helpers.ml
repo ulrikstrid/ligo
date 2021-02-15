@@ -75,7 +75,7 @@ let kv_list_of_record_or_tuple (m: _ LMap.t) =
 let fold_pattern : ('a -> 'b pattern -> 'a) -> 'a -> 'b pattern -> 'a =
   fun f acc p ->
     let self = f acc p in
-    match p with
+    match p.wrap_content with
     | P_unit -> self
     | P_var _ -> self
     | P_list lp -> (
@@ -130,11 +130,12 @@ let rec map_pattern : ('a pattern -> ('b pattern, 'err) result) -> 'a pattern ->
 let rec map_pattern_t : ('a binder -> ('b binder, 'err) result) -> 'a pattern -> ('b pattern, 'err) result =
   fun f p ->
     let self = map_pattern_t f in
-    match p with
-    | P_unit -> ok P_unit
+    let ret wrap_content = ok { p with wrap_content } in
+    match p.wrap_content with
+    | P_unit -> ret P_unit
     | P_var b ->
       let%bind b' = f b in
-      ok (P_var b')
+      ret (P_var b')
     | P_list lp -> (
       let%bind lp =
         match lp with
@@ -146,15 +147,15 @@ let rec map_pattern_t : ('a binder -> ('b binder, 'err) result) -> 'a pattern ->
           let%bind lp = bind_map_list self lp in
           ok @@ (List lp : 'b list_pattern)
       in
-      ok @@ P_list lp
+      ret @@ P_list lp
     )
     | P_variant (l,p_opt) -> (
       let%bind p_opt = bind_map_option self p_opt in
-      ok @@ P_variant (l,p_opt)
+      ret @@ P_variant (l,p_opt)
     )
     | P_tuple lp ->
       let%bind lp = bind_map_list self lp in
-      ok @@ P_tuple lp
+      ret @@ P_tuple lp
     | P_record (x,lp) ->
       let%bind lp = bind_map_list self lp in
-      ok @@ P_record (x,lp)
+      ret @@ P_record (x,lp)

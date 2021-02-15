@@ -250,7 +250,7 @@ let rec list_pattern type_expression ppf = fun pl ->
   | List pl -> fprintf ppf "[ %a ]" (list_sep_d_par mpp) pl
 
 and match_pattern type_expression ppf = fun p ->
-  match p with
+  match p.wrap_content with
   | P_unit -> fprintf ppf "()"
   | P_var b -> fprintf ppf "%a" (binder type_expression) b
   | P_list l -> list_pattern type_expression ppf l
@@ -260,13 +260,13 @@ and match_pattern type_expression ppf = fun p ->
     | None -> fprintf ppf "%a" label l
   )
   | P_tuple pl ->
-    fprintf ppf "%a" (list_sep_d_par (match_pattern type_expression)) pl
+    fprintf ppf "(%a)" (list_sep (match_pattern type_expression) (tag ",")) pl
   | P_record (ll , pl) ->
     let x = List.combine ll pl in
     let aux ppf (l,p) =
-      fprintf ppf "%a : %a" label l (match_pattern type_expression) p
+      fprintf ppf "%a = %a" label l (match_pattern type_expression) p
     in
-    fprintf ppf "{ %a }" (list_sep_d_par aux) x
+    fprintf ppf "{%a}" (list_sep aux (tag " ; ")) x
 
 let match_case expression type_expression ppf = fun {pattern ; body} ->
   fprintf ppf "@[| %a -> %a@]" (match_pattern type_expression) pattern expression body

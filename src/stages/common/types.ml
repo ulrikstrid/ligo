@@ -175,13 +175,15 @@ type 'ty_exp list_pattern =
   | Cons of 'ty_exp pattern * 'ty_exp pattern
   | List of 'ty_exp pattern list
 
-and 'ty_exp pattern =
+and 'ty_exp pattern_repr =
   | P_unit
   | P_var of 'ty_exp binder
   | P_list of 'ty_exp list_pattern
   | P_variant of label * 'ty_exp pattern option
   | P_tuple of 'ty_exp pattern list
   | P_record of label list * 'ty_exp pattern list
+
+and 'ty_exp pattern = 'ty_exp pattern_repr Location.wrap
 
 type ('exp , 'ty_exp) match_case = {
   pattern : 'ty_exp pattern ;

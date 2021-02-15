@@ -66,8 +66,8 @@ let scopes : with_types:bool -> options:Compiler_options.t -> Ast_core.module_ -
     | E_matching {matchee; cases} -> (
       let (i,all_defs,_,scopes) = find_scopes' (i,all_defs,env,scopes,matchee.location) bindings matchee in
       let aux = fun (i,all_defs,scopes) ({pattern;body}: (Ast_core.expression,_) Ast_core.match_case) ->
-        let aux (i,env) p =
-          match p with
+        let aux (i,env) (p: _ Ast_core.pattern) =
+          match p.wrap_content with
           | Ast_core.P_var binder ->
             let proj_def = make_v_def_from_core bindings binder.var binder.var.location binder.var.location in
             add_shadowing_def (i,binder.var.wrap_content) proj_def env

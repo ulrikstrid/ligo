@@ -508,22 +508,22 @@ and conv : CST.pattern -> (AST.ty_expr AST.pattern,_) result =
   | CST.PWild reg ->
     let loc = Location.lift reg in
     let b = make_fresh_var ~loc () in
-    ok @@ P_var b
+    ok @@ Location.wrap ~loc @@ P_var b
   | CST.PVar var ->
     let (var,loc) = r_split var in
     let b =
       let var = Location.wrap ~loc @@ Var.of_name var in
       { var ; ascr = None }
     in
-    ok @@ P_var b
+    ok @@ Location.wrap ~loc @@ P_var b
   | CST.PTuple tuple ->
-    let (tuple, _loc) = r_split tuple in
+    let (tuple, loc) = r_split tuple in
     let lst = npseq_to_ne_list tuple in
     let patterns = List.Ne.to_list lst in
     let%bind nested = bind_map_list conv patterns in
-    ok @@ P_tuple nested
+    ok @@ Location.wrap ~loc @@ P_tuple nested
   | CST.PRecord record ->
-    let (inj, _loc) = r_split record in
+    let (inj, loc) = r_split record in
     let aux : CST.field_pattern CST.reg -> (label * AST.ty_expr AST.pattern,_) result = fun field ->
       let { field_name ; eq=_ ; pattern } : CST.field_pattern = field.value in
       let%bind pattern = conv pattern in
@@ -532,52 +532,61 @@ and conv : CST.pattern -> (AST.ty_expr AST.pattern,_) result =
     let%bind lst = bind_map_ne_list aux @@ npseq_to_ne_list inj.ne_elements in
     let lst = List.Ne.to_list lst in
     let (labels,nested) = List.split lst in
-    ok @@ P_record (labels , nested)
+    ok @@ Location.wrap ~loc @@ P_record (labels , nested)
   | CST.PConstr constr_pattern -> (
     match constr_pattern with
-    | PFalse _ -> ok @@ P_variant (Label "false" , None)
-    | PTrue _ -> ok @@ P_variant (Label "true" , None)
-    | PNone _ -> ok @@ P_variant (Label "None" , None)
+    | PFalse reg ->
+      let loc = Location.lift reg in
+      ok @@ Location.wrap ~loc @@ P_variant (Label "false" , None)
+    | PTrue reg ->
+      let loc = Location.lift reg in
+      ok @@ Location.wrap ~loc @@ P_variant (Label "true" , None)
+    | PNone reg ->
+      let loc = Location.lift reg in
+      ok @@ Location.wrap ~loc @@ P_variant (Label "None" , None)
     | PSomeApp some ->
-      let ((_,p), _loc) = r_split some in
+      let ((_,p), loc) = r_split some in
       let%bind pattern' = conv p in
-      ok @@ P_variant (Label "Some", Some pattern')
+      ok @@ Location.wrap ~loc @@ P_variant (Label "Some", Some pattern')
     | PConstrApp constr_app ->
-      let ((constr,p_opt), _loc) = r_split constr_app in
+      let ((constr,p_opt), loc) = r_split constr_app in
       let (l , _loc) = r_split constr in
       let%bind pv_opt = bind_map_option conv p_opt in
-      ok @@ P_variant (Label l, pv_opt)
+      ok @@ Location.wrap ~loc @@ P_variant (Label l, pv_opt)
   )
   | CST.PList list_pattern -> (
     let%bind repr = match list_pattern with
     | PListComp p_inj -> (
+      let loc = Location.lift p_inj.region in
       match p_inj.value.elements with
       | None ->
-        ok @@ P_list (List [])
+        ok @@ Location.wrap ~loc @@ P_list (List [])
       | Some l ->
-        let patterns  = Utils.nsepseq_to_list @@ l in
+        let patterns = Utils.nsepseq_to_list @@ l in
         let%bind nested = bind_map_list conv patterns in
-        ok @@ P_list (List nested)
+        ok @@ Location.wrap ~loc @@ P_list (List nested)
     )
     | PCons p ->
+      let loc = Location.lift p.region in
       let (hd, _, tl) = p.value in
       let%bind hd = conv hd in
       let%bind tl = conv tl in
-      ok @@ P_list (Cons (hd,tl))
+      ok @@ Location.wrap ~loc @@ P_list (Cons (hd,tl))
     in
     ok @@ repr
   )
-  | CST.PUnit _ -> ok P_unit
+  | CST.PUnit u ->
+    let loc = Location.lift u.region in
+    ok @@ Location.wrap ~loc @@ P_unit
   | _ -> fail @@ unsupported_pattern_type [p]
 
 and compile_tuple_let_destructuring : AST.expression -> AST.expression -> (CST.pattern, CST.comma) Utils.nsepseq CST.reg -> (AST.expression,_) result =
   fun matchee body tuple ->
-    (* REMITODO: propagate E_destructuring (pattern,body) *)
     let (tuple, loc) = r_split tuple in
     let lst = npseq_to_ne_list tuple in
     let patterns = List.Ne.to_list lst in
     let%bind nested_patterns = bind_map_list conv patterns in
-    let pattern = P_tuple nested_patterns in
+    let pattern = Location.wrap @@ P_tuple nested_patterns in
     let cases : (AST.expression , AST.ty_expr) AST.match_case = { pattern ; body } in
     ok @@ e_matching ~loc matchee [cases]
 
@@ -592,7 +601,7 @@ and compile_record_let_destructuring : AST.expression -> AST.expression -> CST.f
     let lst = List.Ne.to_list lst in
     let (labels,patterns) = List.split lst in
     let%bind nested_patterns = bind_map_list conv patterns in
-    let pattern = P_record (labels , nested_patterns) in
+    let pattern = Location.wrap @@ P_record (labels , nested_patterns) in
     let cases : (AST.expression , AST.ty_expr) AST.match_case = { pattern ; body } in
     ok @@ e_matching ~loc matchee [cases]
 

@@ -79,8 +79,10 @@ type typer_error = [
   | `Typer_pattern_do_not_match of Location.t
   | `Typer_label_do_not_match of Ast_typed.label * Ast_typed.label * Location.t
   | `Typer_solver_no_progress of string
+  | `Typer_pattern_do_not_conform_type of Ast_core.type_expression Ast_core.pattern * Ast_typed.type_expression 
 ]
 
+let pattern_do_not_conform_type p t = `Typer_pattern_do_not_conform_type (p,t)
 let label_do_not_match la lb loc = `Typer_label_do_not_match (la , lb , loc )
 let pattern_do_not_match loc = `Typer_pattern_do_not_match loc
 let missing_funarg_annotation v = `Typer_missing_funarg_annotation v
@@ -562,9 +564,15 @@ The following forms of subtractions are possible:
     | `Typer_typeclass_not_a_rectangular_matrix ->
       Format.fprintf f "@[<hv>internal error: typeclass is not represented as a rectangular matrix with one column per argument@]"
     | `Typer_internal_error (loc, msg) -> Format.fprintf f "internal error at %s: %s" loc msg
-    | `Typer_could_not_remove constraint_ -> Format.fprintf f "Heuristic requested removal of a constraint that cannot be removed: %a" Ast_typed.PP.type_constraint_simpl constraint_
+    | `Typer_could_not_remove constraint_ ->
+      Format.fprintf f "Heuristic requested removal of a constraint that cannot be removed: %a"
+        Ast_typed.PP.type_constraint_simpl constraint_
     | `Typer_solver_no_progress msg ->
       Format.fprintf f "Solver made no progress %s" msg
+    | `Typer_pattern_do_not_conform_type (p,t) ->
+      Format.fprintf f
+        "@[<hv>%a@.Pattern %a do not conform type %a @]"
+        Snippet.pp p.location (Stage_common.PP.match_pattern Ast_core.PP.type_expression) p Ast_typed.PP.type_expression t
   )
 
 let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
@@ -1312,4 +1320,15 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     let content = `Assoc [
         ("message", message);
       ] in
+    json_error ~stage ~content
+  | `Typer_pattern_do_not_conform_type (p,t) ->
+    let message = `String "pattern do not conform type" in
+    let pattern = (Stage_common.To_yojson.pattern Ast_core.Yojson.type_expression) p in
+    let t = Ast_typed.Yojson.type_expression t in
+    let content = `Assoc [
+      ("message", message);
+      ("type", t);
+      ("pattern", pattern);
+      ("location", Location.to_yojson p.location);
+    ] in
     json_error ~stage ~content

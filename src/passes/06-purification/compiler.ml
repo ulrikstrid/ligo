@@ -312,7 +312,7 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
       let%bind body = compile_expression body in
       let get_pattern_vars : I.expression_variable list -> I.type_expression I.pattern -> I.expression_variable list =
         fun acc p->
-          match p with
+          match p.wrap_content with
           | P_var b -> b.var::acc
           | _ -> acc
       in
