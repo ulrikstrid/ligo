@@ -457,16 +457,14 @@ type returnx = [list <operation>, storage];
 
 let x : list <int> = [];
 let y : list <int> = [3, 4, 5];
-/* let z : list <int> = [2, ...y]; */
+let z : list <int> = [2, ...y];
 
 let main = ([action, s] : [parameter, storage]) : returnx => {
-  if (action == []) {
-    return [(List() as list<operation>), s]
-  }
-  else {
-    let [hd, ...tl] : list<int> = action;
-    return [(List() as list<operation>), [s[0] + hd, tl]]
-  }
+  let storage = match(action, list([
+    ([]: parameter) => s,
+    ([hd, ...tl]: parameter) => [s[0] + hd, tl]
+  ]));
+  return [(List() as list<operation>), [s[0] + hd, tl]]
 };
 
 let size_ = (s : list <int>) : nat => List.length (s);
