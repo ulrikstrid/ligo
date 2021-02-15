@@ -59,6 +59,9 @@ val bind_concat :
 val bind_map_list :
   ('a -> ('b, 'd) result) ->
   'a list -> ('b list, 'd) result
+val bind_map2_list :
+  ('a1 -> 'a2 -> ('b, 'd) result) ->
+  'a1 list -> 'a2 list -> ('b list, 'd) result
 val bind_mapi_list :
   (int -> 'a -> ('b, 'd) result) ->
   'a list -> ('b list, 'd) result

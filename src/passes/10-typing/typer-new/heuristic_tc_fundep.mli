@@ -6,13 +6,11 @@ open Solver_types
 
 val heuristic : <
     assignments              : type_variable Assignments.t ;
-    grouped_by_variable      : type_variable Grouped_by_variable.t ;
     typeclasses_constraining : type_variable Typeclasses_constraining.t ;
-    by_constraint_identifier : type_variable By_constraint_identifier.t ;
   ..
 > ex_heuristic_plugin
 
-val restrict : (type_variable -> type_variable) -> constructor_or_row -> c_typeclass_simpl -> c_typeclass_simpl
+val restrict : (type_variable -> type_variable) -> constructor_or_row -> c_typeclass_simpl -> (c_typeclass_simpl, typer_error) result
 
 type deduce_and_clean_result = {
   deduced : c_constructor_simpl list ;

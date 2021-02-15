@@ -139,7 +139,7 @@ let row_value v = { associated_value = p_variable v.associated_variable; michels
 let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
   fun selected repr ->
   let { tc; c } = selected in
-  let aux = function
+  let inline_p_variable = function
       { Location.wrap_content = P_variable v ; location } when Compare.type_variable (repr v) (repr (tv c)) = 0 ->
       (* TODO: This is not quite the right location *)
       Location.wrap ~loc:location @@
@@ -153,7 +153,7 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
       )
     | other -> other
   in
-  let updated_tc = map_cells aux tc in
+  let updated_tc = map_cells inline_p_variable tc in
   let%bind ( deduced , cleaned ) = wrapped_deduce_and_clean repr updated_tc ~original:selected.tc in
   ok [{
       remove_constraints = [SC_Typeclass selected.tc];

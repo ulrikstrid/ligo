@@ -22,7 +22,7 @@ let (m,n,o,p,x,y,z) = let v name = Var.fresh ~name () in v "m", v "n", v "o", v 
 let test''
     (name : string)
     (* Restriction function under test *)
-    (restrict : (type_variable -> type_variable) -> constructor_or_row -> c_typeclass_simpl -> c_typeclass_simpl)
+    (restrict : (type_variable -> type_variable) -> constructor_or_row -> c_typeclass_simpl -> (c_typeclass_simpl, _) result)
     (* New info: a variable assignment constraint: *)
     tv (_eq : string) c_tag tv_list
     (* Initial typeclass constraint: *)
@@ -41,7 +41,8 @@ let test''
     (* TODO: use an error not an assert *)
     (* Format.printf "\n\nActual: %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl (restrict info tc);
      * Format.printf "\n\nExpected %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl expected; *)
-    if Ast_typed.Compare.c_typeclass_simpl_compare_all_fields (restrict repr info tc) expected != 0 then ok @@ Some (test_internal __LOC__)
+    let%bind restricted = restrict repr info tc in
+    if Ast_typed.Compare.c_typeclass_simpl_compare_all_fields restricted expected != 0 then ok @@ Some (test_internal __LOC__)
     else ok None
   in match e with None -> ok () | Some e -> fail e
 

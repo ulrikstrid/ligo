@@ -26,7 +26,6 @@ module INDEXES = functor (Type_variable : sig type t end) (Type_variable_abstrac
   module All_plugins = Database_plugins.All_plugins.M(Type_variable)(Type_variable_abstraction)
   open All_plugins
   module type S = sig
-    val grouped_by_variable : Type_variable.t  Grouped_by_variable.t
     val assignments : Type_variable.t Assignments.t
     val typeclasses_constraining : Type_variable.t Typeclasses_constraining.t
   end
@@ -102,16 +101,9 @@ let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds
 let alias_selector_half : type_variable -> type_variable -> flds -> selector_output list =
   fun a b (module Indexes) ->
   let a_tcs = Typeclasses_constraining.get_list a (module Indexes) in
-  let b_lhs_constructors = Grouped_by_variable.get_constructors_by_lhs b Indexes.grouped_by_variable in
-  let b_lhs_rows = Grouped_by_variable.get_rows_by_lhs b Indexes.grouped_by_variable in
-  let b_ctors = MultiSet.map_elements (fun a -> `Constructor a) b_lhs_constructors in
-  let b_rows  = MultiSet.map_elements (fun a -> `Row a        ) b_lhs_rows         in
-  List.flatten @@
-  List.map
-    (fun tc ->
-       List.map (fun c -> { tc ; c })
-         (b_ctors @ b_rows ))
-    a_tcs  
+  match Assignments.find_opt b Indexes.assignments with
+  | Some cr -> List.map (fun tc -> { tc ; c = cr }) a_tcs
+  | None   -> []
 
 let alias_selector : type_variable -> type_variable -> flds -> selector_output list =
   fun a b indexes ->
@@ -126,6 +118,76 @@ let get_referenced_constraints ({ tc; c } : selector_output) : type_constraint_s
 (* ***********************************************************************
  * Propagator
  * *********************************************************************** *)
+
+let tv : constructor_or_row -> _ = function `Constructor { tv; _ } -> tv | `Row { tv; _ } -> tv
+
+(* TODO: we are calling decude_and_clean here. Do we have all the info
+   / are we cleaning everywhere ? Also, this cleanup won't be done
+   recursively by the deduce and clean; so the cleaning part should be
+   moved to the deduce_and_clean heuristic instead (e.g. so that the
+   initial clenaup also deduces and cleans based on the nested constraints). *)
+let rec restrict_recur repr c_or_r (tc_c  : type_constraint_simpl) =
+  let opt b = if b then Some [] else None in
+  match tc_c with
+    SC_Constructor  tc_c  ->
+    (match c_or_r with
+       `Constructor c     -> ok @@ opt (Compare.constant_tag c.c_tag tc_c.c_tag = 0 && (List.length c.tv_list) = (List.length tc_c.tv_list))
+     | `Row         _     -> ok None)
+  | SC_Row          tc_r  ->
+    (match c_or_r with
+       `Row         r     -> ok @@ opt (Compare.row_tag r.r_tag tc_r.r_tag = 0 && List.compare ~compare:Compare.label (LMap.keys r.tv_map) (LMap.keys tc_r.tv_map) = 0)
+     | `Constructor _     -> ok None)
+  | SC_Alias        _     -> fail @@ corner_case "alias constraints not yet supported in typeclass constraints"
+  | SC_Poly         _     -> fail @@ corner_case "forall in the nested constraints of a typeclass is unsupported"
+  | SC_Typeclass    tc_tc -> let _ = (restrict repr c_or_r tc_tc) in ok (failwith "TODO") (*  TODO: keep the updated tc, and return a signal to say that it's impossible when it has no possibilities left *)
+  | SC_Access_label _l    -> ok (failwith "TODO: access_label in typeclass constraints not supported yet")
+
+and restrict_cell repr (c : constructor_or_row) (tc : c_typeclass_simpl) (header : type_variable) (cell : type_value) =
+  if Compare.type_variable (repr @@ tv c) (repr header) = 0 then
+    match cell.wrap_content with
+    (* P_abs -> … *)
+    | P_forall   _                 -> fail @@ corner_case "forall in the righ-hand-side of a typeclass is unsupported"
+    | P_constant p                 ->
+      (match c with
+         `Constructor c -> ok (Compare.constant_tag c.c_tag p.p_ctor_tag = 0 && (List.length c.tv_list) = (List.length p.p_ctor_args))
+       | `Row         _ -> ok false)
+    | P_row      p                 ->
+      (match c with
+         `Constructor _ -> ok false
+       | `Row         r -> ok (Compare.row_tag r.r_tag p.p_row_tag = 0 && List.compare ~compare:Compare.label (LMap.keys r.tv_map) (LMap.keys p.p_row_args) = 0))
+    | P_variable v
+      (* TODO: this should be a set, not a list *)
+      when List.mem ~compare:Compare.type_variable v tc.tc_bound ->
+      let%bind updated_tc_constraints = bind_map_list (restrict_recur repr c) tc.tc_constraints in
+      let all_accept = List.for_all (function None -> false | Some _ -> true) updated_tc_constraints in
+      let _cleaned_constraints = List.flatten @@ List.filter_map (fun x -> x) updated_tc_constraints in
+      let _ = failwith "TODO: use cleaned_constraints i.e. save the result somewhere so that it is used for future operations, needs a List.fold or something" in
+      ok all_accept
+    | P_variable _v                -> ok true (* Always keep unresolved variables; when they get resolved the heuristic will be called again and they will be kept or eliminated. *)
+    | P_apply    _                 -> failwith "unsupported, TODO soon"
+  else
+    ok true
+
+and restrict_line repr c tc (`headers, headers, `line, line) : (bool, _) result =
+  let%bind filtered_cells = bind_map2_list (restrict_cell repr c tc) headers line in
+  ok @@ List.for_all (fun x -> x) filtered_cells
+
+and restrict repr c tc =
+  filter_lines (restrict_line repr c tc) tc
+         
+let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
+  fun selected repr ->
+  let%bind restricted = restrict repr selected.c selected.tc in
+  let%bind (deduced , cleaned) = wrapped_deduce_and_clean repr restricted ~original:selected.tc in
+  let ret = [
+      {
+        remove_constraints = [SC_Typeclass selected.tc];
+        add_constraints = cleaned :: deduced;
+        proof_trace = Axiom (HandWaved "cut with the following (cleaned => removed_typeclass) to show that the removal does not lose info, (removed_typeclass => selected.c => cleaned) to show that the cleaned vesion does not introduce unwanted constraints.")
+      }
+    ] in
+  ok ret
+
 
 
 
@@ -197,13 +259,6 @@ simplified constraint
 
 
 
-(* module Matrix = struct
- *   let matrix (tc : c_typeclass_simpl) =
- *     let { reason_typeclass_simpl; id_typeclass_simpl; original_id; tc; args } = tc in
- *     ??
- * end *)
-
-
 (* type tag = [ `Constructor of constant_tag | `Row of row_tag ]
  * type 'a comparer = 'a -> 'a -> int *)
 
@@ -219,66 +274,66 @@ simplified constraint
 
 (* module Eq = struct include Ast_typed.Compare let (==) fa b = fa b = 0 end *)
 
-let restrict_one (cr : constructor_or_row) (allowed : type_value) =
-  match cr, allowed.wrap_content with
-  | `Constructor { reason_constr_simpl=_; tv=_; c_tag; tv_list }, P_constant { p_ctor_tag; p_ctor_args } ->
-    if Compare.constant_tag c_tag p_ctor_tag = 0
-    then if List.compare_lengths tv_list p_ctor_args = 0
-      then Some p_ctor_args
-(*      then Some (`Constructor p_ctor_args)*)
-      else None (* case removed because type constructors are different *)
-    else None   (* case removed because argument lists are of different lengths *)
-  | `Row _, P_row _ -> failwith "TODO: support P_row similarly to P_constant"
-(*  | `Row { reason_row_simpl=_; id_row_simpl=_; original_id=_; tv=_; r_tag; tv_map }, P_row { p_row_tag; p_row_args } ->
-    if Compare.row_tag r_tag p_row_tag = 0
-    then if List.compare ~compare:Compare.label (LMap.keys tv_map) (LMap.keys p_row_args) = 0
-      then Some (`Row p_row_args)
-      else None (* case removed because type constructors are different *)
-    else None   (* case removed because argument lists are of different lengths *)
-*)
-  | _, (P_forall _ | P_variable _ | P_apply _ | P_row _ | P_constant _) -> None (* TODO: does this mean that we can't satisfy these constraints? *)
-
-(* Restricts a typeclass to the possible cases given v = k(a, …) in c *)
-let restrict repr (constructor_or_row : constructor_or_row) (tcs : c_typeclass_simpl) =
-  let (tv_list, tv) = match constructor_or_row with
-    | `Row r -> List.map (fun {associated_variable} -> associated_variable) @@ LMap.to_list r.tv_map , (repr r.tv)
-    | `Constructor c -> c.tv_list , (repr c.tv)
-  in
-  let index =
-    let repr_tv = (repr tv) in
-    try List.find_index (fun x -> Compare.type_variable repr_tv (repr x) = 0) tcs.args
-    with Failure _ ->
-      failwith (Format.asprintf "problem: couldn't find tv = %a in tcs.args = %a"
-                  PP.type_variable repr_tv (PP_helpers.list_sep_d PP.type_variable) tcs.args);
-  in
-  (* Eliminate the impossible cases and splice in the type arguments
-     for the possible cases: *)
-  let aux allowed_tuple =
-    splice_or_none (fun allowed -> restrict_one constructor_or_row allowed) index allowed_tuple in
-  let tc = List.filter_map aux tcs.tc in
-  (* Replace the corresponding typeclass argument with the type
-     variables passed to the type constructor *)
-  let args = splice (fun _arg -> tv_list) index tcs.args in
-  let id_typeclass_simpl = tcs.id_typeclass_simpl in
-  { tc_bound = [](*TODO*); tc_constraints = [](*TODO*); reason_typeclass_simpl = tcs.reason_typeclass_simpl; original_id = tcs.original_id; id_typeclass_simpl ; tc ; args }
-
-let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
-  fun selected repr ->
-  (* The selector is expected to provide constraints with the shape (α
-     = κ(β, …)) and to update the private storage to keep track of the
-     refined typeclass *)
-  let () = Format.printf "and tv: %a and repr tv :%a \n%!" (PP_helpers.list_sep_d PP.type_variable) selected.tc.args (PP_helpers.list_sep_d PP.type_variable) @@ List.map repr selected.tc.args in
-  let restricted = restrict repr selected.c selected.tc in
-  let () = Format.printf "restricted: %a\n!" PP.c_typeclass_simpl_short restricted in
-  let%bind (deduced , cleaned) = wrapped_deduce_and_clean repr restricted ~original:selected.tc in
-  let ret = [
-      {
-        remove_constraints = [SC_Typeclass selected.tc];
-        add_constraints = cleaned :: deduced;
-        proof_trace = Axiom (HandWaved "cut with the following (cleaned => removed_typeclass) to show that the removal does not lose info, (removed_typeclass => selected.c => cleaned) to show that the cleaned vesion does not introduce unwanted constraints.")
-      }
-    ] in
-  ok ret
+(* let restrict_one (cr : constructor_or_row) (allowed : type_value) =
+ *   match cr, allowed.wrap_content with
+ *   | `Constructor { reason_constr_simpl=_; tv=_; c_tag; tv_list }, P_constant { p_ctor_tag; p_ctor_args } ->
+ *     if Compare.constant_tag c_tag p_ctor_tag = 0
+ *     then if List.compare_lengths tv_list p_ctor_args = 0
+ *       then Some p_ctor_args
+ * (\*      then Some (`Constructor p_ctor_args)*\)
+ *       else None (\* case removed because type constructors are different *\)
+ *     else None   (\* case removed because argument lists are of different lengths *\)
+ *   | `Row _, P_row _ -> failwith "TODO: support P_row similarly to P_constant"
+ * (\*  | `Row { reason_row_simpl=_; id_row_simpl=_; original_id=_; tv=_; r_tag; tv_map }, P_row { p_row_tag; p_row_args } ->
+ *     if Compare.row_tag r_tag p_row_tag = 0
+ *     then if List.compare ~compare:Compare.label (LMap.keys tv_map) (LMap.keys p_row_args) = 0
+ *       then Some (`Row p_row_args)
+ *       else None (\* case removed because type constructors are different *\)
+ *     else None   (\* case removed because argument lists are of different lengths *\)
+ * *\)
+ *   | _, (P_forall _ | P_variable _ | P_apply _ | P_row _ | P_constant _) -> None (\* TODO: does this mean that we can't satisfy these constraints? *\)
+ * 
+ * (\* Restricts a typeclass to the possible cases given v = k(a, …) in c *\)
+ * let restrict repr (constructor_or_row : constructor_or_row) (tcs : c_typeclass_simpl) =
+ *   let (tv_list, tv) = match constructor_or_row with
+ *     | `Row r -> List.map (fun {associated_variable} -> associated_variable) @@ LMap.to_list r.tv_map , (repr r.tv)
+ *     | `Constructor c -> c.tv_list , (repr c.tv)
+ *   in
+ *   let index =
+ *     let repr_tv = (repr tv) in
+ *     try List.find_index (fun x -> Compare.type_variable repr_tv (repr x) = 0) tcs.args
+ *     with Failure _ ->
+ *       failwith (Format.asprintf "problem: couldn't find tv = %a in tcs.args = %a"
+ *                   PP.type_variable repr_tv (PP_helpers.list_sep_d PP.type_variable) tcs.args);
+ *   in
+ *   (\* Eliminate the impossible cases and splice in the type arguments
+ *      for the possible cases: *\)
+ *   let aux allowed_tuple =
+ *     splice_or_none (fun allowed -> restrict_one constructor_or_row allowed) index allowed_tuple in
+ *   let tc = List.filter_map aux tcs.tc in
+ *   (\* Replace the corresponding typeclass argument with the type
+ *      variables passed to the type constructor *\)
+ *   let args = splice (fun _arg -> tv_list) index tcs.args in
+ *   let id_typeclass_simpl = tcs.id_typeclass_simpl in
+ *   { tc_bound = [](\*TODO*\); tc_constraints = [](\*TODO*\); reason_typeclass_simpl = tcs.reason_typeclass_simpl; original_id = tcs.original_id; id_typeclass_simpl ; tc ; args }
+ * 
+ * let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
+ *   fun selected repr ->
+ *   (\* The selector is expected to provide constraints with the shape (α
+ *      = κ(β, …)) and to update the private storage to keep track of the
+ *      refined typeclass *\)
+ *   let () = Format.printf "and tv: %a and repr tv :%a \n%!" (PP_helpers.list_sep_d PP.type_variable) selected.tc.args (PP_helpers.list_sep_d PP.type_variable) @@ List.map repr selected.tc.args in
+ *   let restricted = restrict repr selected.c selected.tc in
+ *   let () = Format.printf "restricted: %a\n!" PP.c_typeclass_simpl_short restricted in
+ *   let%bind (deduced , cleaned) = wrapped_deduce_and_clean repr restricted ~original:selected.tc in
+ *   let ret = [
+ *       {
+ *         remove_constraints = [SC_Typeclass selected.tc];
+ *         add_constraints = cleaned :: deduced;
+ *         proof_trace = Axiom (HandWaved "cut with the following (cleaned => removed_typeclass) to show that the removal does not lose info, (removed_typeclass => selected.c => cleaned) to show that the cleaned vesion does not introduce unwanted constraints.")
+ *       }
+ *     ] in
+ *   ok ret *)
 
 (* ***********************************************************************
  * Heuristic
@@ -324,7 +379,6 @@ module Compat = struct
   open All_plugins
   include MM
   let compat_flds flds : MM.flds = (module struct
-    let grouped_by_variable : type_variable Grouped_by_variable.t = flds#grouped_by_variable
     let assignments : type_variable Assignments.t = flds#assignments
     let typeclasses_constraining : type_variable Typeclasses_constraining.t = flds#typeclasses_constraining
   end)
@@ -401,6 +455,14 @@ fltr col line:
   | P_variable (unbound)
      -> do not touch a column which contains a var (wait for inlining)
   | P_apply -> unsupported
+
+
+
+inline_var:
+when a var which appears at the root of a column is found by the selector; inline it
+inline_var:
+when a var which appears at the root of a column is found by the selector; inline it
+
 
 
 
