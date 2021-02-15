@@ -40,27 +40,6 @@ let compile_attributes attributes : string list =
 
 module Compile_type = struct
 
-  let type_expression_to_variable : CST.type_expr -> (CST.variable, _) result = function
-    | TVar v -> ok v
-    | _ -> failwith "Expected a variable in this variant"
-
-  let type_expression_to_constructor : CST.type_expr -> (CST.constr, _) result = function
-    | TConstr v -> ok v
-    | _ -> failwith "Expected a variable in this variant"
-
-    (* todo: add `int` singletons to JsLIGO *)
-    (* let get_t_int_singleton_opt = function
-    *   | CST.TInt x ->
-    *     let (_,z) = x.value in
-    *     Some z
-    *   | _ -> None
-    *)
-  let get_t_int_singleton_opt = function
-  | _ -> None
-
-  let get_t_string_singleton_opt = function
-  | CST.TString s -> Some s.value
-  | _ -> None
 
   (*
     `type_compiler_opt` represents an abstractor for a single pattern.
@@ -78,24 +57,52 @@ module Compile_type = struct
 
   type type_compiler_opt = CST.type_expr -> (AST.type_expression option, abs_error) result
 
+
+  let rec type_expression_to_variable : CST.type_expr -> (CST.variable, _) result = function
+    | TVar v -> ok v
+    | _ -> failwith "Expected a variable in this variant"
+
+  and type_expression_to_constructor : CST.type_expr -> (string * AST.type_expression * attributes, _) result = function
+    | TConstr v -> ok (v.value, t_unit () ~loc:(Location.lift v.region), [])
+    | TProd {value = {inside = (TString s, rest); _}; region} ->
+      let lst = List.map snd rest in
+      let%bind lst = bind_map_list compile_type_expression lst in
+      let t = t_tuple lst in
+      ok @@ (s.value, t, [])
+    | _ -> failwith "Expected a variable in this variant"
+
+    (* todo: add `int` singletons to JsLIGO *)
+    (* let get_t_int_singleton_opt = function
+    *   | CST.TInt x ->
+    *     let (_,z) = x.value in
+    *     Some z
+    *   | _ -> None
+    *)
+  and get_t_int_singleton_opt = function
+  | _ -> None
+
+  and get_t_string_singleton_opt = function
+  | CST.TString s -> Some s.value
+  | _ -> None
+
   (*
     This chains the application of multiple `type_compiler_opt`. If the first returns `None`, use
     the next one, etc.
   *)
-  let rec type_compiler_opt_list : type_compiler_opt list -> type_compiler_opt = fun compilers te ->
-  match compilers with
-  | [] -> ok None
-  | hd :: tl -> (
-    match%bind hd te with
-    | Some x -> ok (Some x)
-    | None -> type_compiler_opt_list tl te
-  )
+  and type_compiler_opt_list : type_compiler_opt list -> type_compiler_opt = fun compilers te ->
+    match compilers with
+    | [] -> ok None
+    | hd :: tl -> (
+      match%bind hd te with
+      | Some x -> ok (Some x)
+      | None -> type_compiler_opt_list tl te
+    )
 
   (*
     `try_type_compilers compilers type_expression other` will try to run the `compilers` on
     `type_expression`. If they all return `None`, it will run `other` instead.
   *)
-  let try_type_compilers :
+  and try_type_compilers :
     type_compiler_opt list -> CST.type_expr ->
     (unit -> (AST.type_expression, _) result) ->
     (AST.type_expression, _) result =
@@ -104,7 +111,7 @@ module Compile_type = struct
   | Some x -> ok x
   | None -> other ()
 
-  let rec compile_type_function_args : CST.fun_type_args -> (type_expression, _) result = fun args ->
+  and compile_type_function_args : CST.fun_type_args -> (type_expression, _) result = fun args ->
     let unpar = args.inside in
     let (hd , tl_sep) = unpar in
     let tl = List.map snd tl_sep in
@@ -205,10 +212,8 @@ and compile_type_expression : CST.type_expr -> (type_expression, _) result =
       let lst = npseq_to_list variants in
       let attr = compile_attributes attributes in
       let aux (v : CST.type_expr) : (string * type_expression * string list, _) result =
-        let%bind constructor = type_expression_to_constructor v in
-        let type_expr = t_unit () in
-        let variant_attr = [] in
-        ok @@ (constructor.value, type_expr, variant_attr) in
+        let%bind (constructor, type_expr, variant_attr) = type_expression_to_constructor v in
+        ok @@ (constructor, type_expr, variant_attr) in
       let%bind sum = bind_map_list aux lst
       in return @@ t_sum_ez_attr ~loc ~attr sum
   | TObject record ->
@@ -580,13 +585,15 @@ and conv : CST.pattern -> (nested_match_repr,_) result =
     let (var,loc) = r_split var in
     let var = Location.wrap ~loc @@ Var.of_name var in
     ok (PatternVar { var ; ascr = None })
-  (* | CST.PArray tuple ->
+  | CST.PArray tuple ->
+
+
     let (tuple, _loc) = r_split tuple in
-    let lst = npseq_to_ne_list tuple in
+    let lst = npseq_to_ne_list tuple.inside in
     let patterns = List.Ne.to_list lst in
     let%bind nested = bind_map_list conv patterns in
     let var = Location.wrap @@ Var.fresh () in
-    ok (TupleVar ({var ; ascr = None} , nested)) *)
+    ok (TupleVar ({var ; ascr = None} , nested))
   (* | CST.PObject record ->
     let (inj, _loc) = r_split record in
     let aux : CST.field_pattern CST.reg -> (label * nested_match_repr,_) result = fun field ->
@@ -599,7 +606,9 @@ and conv : CST.pattern -> (nested_match_repr,_) result =
     let (labels,nested) = List.split lst in
     let var = Location.wrap @@ Var.fresh () in
     ok (RecordVar ({var ; ascr = None}, labels , nested)) *)
-  | _ -> fail @@ unsupported_pattern_type p
+  | _ ->
+    failwith "nsdfsadf"
+    (* fail @@ unsupported_pattern_type p *)
 
 and get_binder : nested_match_repr -> AST.ty_expr binder =
   fun s ->
@@ -793,17 +802,34 @@ and merge_statement_results : statement_result -> statement_result -> statement_
 and compile_let_binding: CST.attributes -> CST.expr -> (Region.t * CST.type_expr) option -> CST.pattern -> Region.t -> env -> (('a * type_expression binder * Ast_imperative__.Types.attributes * expression) list, _) result =
   fun attributes let_rhs type_expr binders region env ->
   let attributes = compile_attributes attributes in
+  let%bind expr = compile_expression_in let_rhs env in
+  let%bind lhs_type =
+      bind_map_option (compile_type_expression <@ snd) type_expr in
   let aux = function
   | CST.PVar name -> (*function or const *)
-    let%bind expr = compile_expression_in let_rhs env in
     let fun_binder = compile_variable name in
-    (* let%bind lambda = trace_option (recursion_on_non_function expr.location) @@ get_e_lambda expr.expression_content in *)
-    let%bind lhs_type =
-      bind_map_option (compile_type_expression <@ snd) type_expr in
-    (* let%bind fun_type = trace_option (untyped_recursive_fun Region.ghost) @@ lhs_type in
-    let expr = e_recursive ~loc:(Location.lift region) fun_binder fun_type lambda in *)
     ok @@ [(Some name.value, {var=fun_binder;ascr=lhs_type}, attributes, expr)]
-  | _ -> fail @@ unsupported_pattern_type @@ binders
+  | CST.PArray a ->  (* tuple destructuring (for top-level only) *)
+    let (tuple, loc) = r_split a in
+    let array_items = npseq_to_list tuple.inside in
+    let var = Location.wrap ~loc @@ Var.fresh () in
+    let body = e_variable var in
+    let aux i binder = (
+      let binder: type_expression binder =
+        match binder with
+          CST.PVar p ->
+            {
+              var  = Location.wrap (Var.of_name p.value);
+              ascr = None
+            }
+        | _ -> failwith "Not implemented yet..."
+      in
+      Z.add i Z.one, (None, binder, attributes,
+                      e_accessor body @@ [Access_tuple i]))
+    in
+    ok @@ (None, {var; ascr = None}, [], expr) :: List.fold_map aux Z.zero array_items
+  | _ ->
+    fail @@ unsupported_pattern_type @@ binders
     (* ok (Some name.value, {var=fun_binder;ascr=lhs_type}, attributes, expr) *)
   in
   aux binders
