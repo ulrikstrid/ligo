@@ -339,11 +339,13 @@ let row_tag = function
 let rec type_value t = Location.wrap_to_yojson type_value_ t
 
 and type_value_ = function
-  | P_forall    p -> `List [`String "P_"; p_forall p ]
-  | P_variable  p -> `List [`String "P_"; type_variable_to_yojson p ]
-  | P_constant  p -> `List [`String "P_"; p_constant p ]
-  | P_apply     p -> `List [`String "P_"; p_apply p ]
-  | P_row       p -> `List [`String "P_"; p_row p ]
+  | P_forall     p -> `List [`String "P_"; p_forall p ]
+  | P_variable   p -> `List [`String "P_"; type_variable_to_yojson p ]
+  | P_constant   p -> `List [`String "P_"; p_constant p ]
+  | P_apply      p -> `List [`String "P_"; p_apply p ]
+  | P_row        p -> `List [`String "P_"; p_row p ]
+  | P_abs        p -> `List [`String "P_"; p_abs p ]
+  | P_constraint p -> `List [`String "P_"; p_constraint p ]
 
 
 and typeclass tc = list (list type_value) tc
@@ -408,6 +410,17 @@ and p_row {p_row_tag;p_row_args} =
   `Assoc [
     ("p_row_tag", row_tag p_row_tag);
     ("p_row_args", label_map row_value p_row_args);
+  ]
+
+and p_abs {arg;ret} =
+  `Assoc [
+    ("arg", type_variable_to_yojson arg);
+    ("ret", type_value ret);
+  ]
+
+and p_constraint {pc} =
+  `Assoc [
+    ("pc", type_constraint pc)
   ]
 
 and row_value {associated_value; michelson_annotation; decl_pos} =

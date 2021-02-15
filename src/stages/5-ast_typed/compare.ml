@@ -405,11 +405,13 @@ let type_constraint_tag = function
   | C_access_label _ -> 3
 
 let type_value_tag = function
-  | P_forall   _  -> 1
-  | P_variable _  -> 2
-  | P_constant _  -> 3
-  | P_apply    _  -> 4
-  | P_row      _  -> 5
+  | P_forall     _ -> 1
+  | P_variable   _ -> 2
+  | P_constant   _ -> 3
+  | P_apply      _ -> 4
+  | P_row        _ -> 5
+  | P_abs        _ -> 6
+  | P_constraint _ -> 7
 
 
 let row_tag = function

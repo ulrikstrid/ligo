@@ -236,7 +236,7 @@ let restrict_one (cr : constructor_or_row) (allowed : type_value) =
       else None (* case removed because type constructors are different *)
     else None   (* case removed because argument lists are of different lengths *)
 *)
-  | _, (P_forall _ | P_variable _ | P_apply _ | P_row _ | P_constant _) -> None (* TODO: does this mean that we can't satisfy these constraints? *)
+  | _, (P_forall _ | P_variable _ | P_apply _ | P_row _ | P_constant _| P_abs _ | P_constraint _) -> None (* TODO: does this mean that we can't satisfy these constraints? *)
 
 (* Restricts a typeclass to the possible cases given v = k(a, …) in c *)
 let restrict repr (constructor_or_row : constructor_or_row) (tcs : c_typeclass_simpl) =

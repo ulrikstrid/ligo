@@ -374,6 +374,15 @@ and p_row ppf {p_row_tag; p_row_args} =
     row_tag p_row_tag
     (lmap_sep_d row_value) @@ LMap.to_kv_list p_row_args
 
+and p_abs ppf {arg; ret} =
+  fprintf ppf "{@[<hv 2>@ arg: %a;@ ret: %a;@]@ }"
+    type_variable arg
+    type_value ret
+
+and p_constraint ppf {pc} =
+  fprintf ppf "{@[<hv 2>@ pc: %a;@]@ }"
+    type_constraint pc
+
 and p_row_short ppf {p_row_tag; p_row_args} =
   match p_row_tag, LMap.cardinal p_row_args with
     C_record, 0 ->
@@ -400,11 +409,13 @@ and row_value_short : formatter -> row_value -> unit =
 
 
 and type_value_ ppf = function
-    P_forall   fa -> fprintf ppf "%a" p_forall fa
-  | P_variable tv -> fprintf ppf "%a" type_variable tv
-  | P_constant c  -> fprintf ppf "%a" p_constant c
-  | P_apply   app -> fprintf ppf "%a" p_apply app
-  | P_row       r -> fprintf ppf "%a" p_row r
+    P_forall    fa -> fprintf ppf "%a" p_forall fa
+  | P_variable  tv -> fprintf ppf "%a" type_variable tv
+  | P_constant   c -> fprintf ppf "%a" p_constant c
+  | P_apply    app -> fprintf ppf "%a" p_apply app
+  | P_row        r -> fprintf ppf "%a" p_row r
+  | P_abs        a -> fprintf ppf "%a" p_abs a
+  | P_constraint c -> fprintf ppf "%a" p_constraint c
 
 and type_value_short_ ppf = function
   | P_constant c  -> fprintf ppf "%a" p_constant_short c
@@ -412,6 +423,8 @@ and type_value_short_ ppf = function
   | P_forall   fa -> fprintf ppf "%a" p_forall_short fa
   | P_apply   _app -> fprintf ppf "apply"
   | P_row       r -> fprintf ppf "%a" p_row_short r
+  | P_abs       _ -> fprintf ppf "abs"
+  | P_constraint _ -> fprintf ppf "constraint"
 
 and type_value ppf t =
   fprintf ppf "{@[<hv 2> @ t : %a;@ loc : %a;@]@ }"

@@ -99,4 +99,6 @@ let rec type_constraint_simpl : type_constraint -> type_constraint_simpl list =
   (* break down (TC(args)) into (TC('a, …) and ('a = arg) …) *)
   | C_typeclass { tc_bound; tc_constraints; tc_args; typeclass; original_id }                         -> split_typeclass tc_bound tc_constraints tc_args typeclass original_id
   | C_access_label { c_access_label_tval; accessor; c_access_label_tvar } -> access_label_via_fresh c_access_label_tvar c_access_label_tval accessor
+  | C_equation {aval={ location = _; wrap_content = P_abs _ | P_constraint _};bval=_} -> failwith "unimplemented"
+  | C_equation {aval=_;bval={ location = _; wrap_content = P_abs _ | P_constraint _}} -> failwith "unimplemented"
 

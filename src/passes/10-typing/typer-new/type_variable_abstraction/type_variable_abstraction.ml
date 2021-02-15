@@ -18,6 +18,13 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
         | P_constant     of p_constant
         | P_apply        of p_apply
         | P_row          of p_row
+          (* new stuff: *)
+        | P_abs          of p_abs
+        | P_constraint   of p_constraint
+      
+      and p_abs = { arg: type_variable; ret: type_value }
+      and p_constraint = { pc: type_constraint }
+
       and p_forall = {
         binder      : type_variable ;
         constraints : p_constraints ;
