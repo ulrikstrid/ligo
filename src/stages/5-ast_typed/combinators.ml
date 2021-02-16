@@ -249,6 +249,8 @@ let e_nil (): expression_content = E_constant {cons_name=C_NIL; arguments=[]}
 let e_cons hd tl : expression_content = E_constant {cons_name=C_CONS; arguments=[hd; tl]}
 let e_map_empty (): expression_content = E_constant {cons_name=C_MAP_EMPTY; arguments=[]}
 let e_map_add k v m: expression_content = E_constant {cons_name=C_MAP_ADD; arguments=[k; v; m]}
+let e_set_empty ():  expression_content = E_constant {cons_name=C_SET_EMPTY; arguments=[]}
+let e_set_add v s: expression_content = E_constant {cons_name=C_SET_ADD; arguments=[v; s]}
 
 let e_unit () : expression_content =     E_literal (Literal_unit)
 let e_int n : expression_content = E_literal (Literal_int n)
@@ -301,6 +303,8 @@ let e_a_let_in binder expr body attributes = make_e (e_let_in binder expr body a
 let e_a_constructor ?(layout=default_layout) m l v = make_e (e_constructor l v) (t_sum ~layout:layout m)
 let e_a_map_empty k_ty v_ty = make_e (e_map_empty ()) (t_map k_ty v_ty)
 let e_a_map_add k v m = make_e (e_map_add k v m) (t_map k.type_expression v.type_expression)
+let e_a_set_empty v_ty = make_e (e_set_empty ()) (t_set v_ty)
+let e_a_set_add v s = make_e (e_set_add v s) (t_set v.type_expression)
 
 
 let get_a_int (t:expression) =

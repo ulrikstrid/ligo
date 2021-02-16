@@ -704,7 +704,16 @@ let rec expr_gen : type_expression -> expression QCheck.Gen.t =
        let rec of_list l = match l with
          | [] -> e_a_nil type_expr_r
          | hd :: tl -> e_a_cons hd (of_list tl) in
-       QCheck.Gen.(list (expr_gen type_expr_r) >>= fun l ->
+       QCheck.Gen.(small_list (expr_gen type_expr_r) >>= fun l ->
+                   return (of_list l))
+    | None -> failwith "type error"
+  else if is_t_set type_expr then
+    match get_t_set type_expr with
+    | Some type_expr_r ->
+       let rec of_list l = match l with
+         | [] -> e_a_set_empty type_expr_r
+         | hd :: tl -> e_a_set_add hd (of_list tl) in
+       QCheck.Gen.(small_list (expr_gen type_expr_r) >>= fun l ->
                    return (of_list l))
     | None -> failwith "type error"
   else if is_t_sum type_expr then
@@ -755,7 +764,12 @@ let eval_test_func_expr  : int -> Monad.context -> env -> type_expression -> exp
        with Temporary_hack s -> fail @@ Errors.failwith s in
      let cell = QCheck.Test.make_cell ~count:ct ~name:"Test for funcs." generator e_bool in
      let r = QCheck.Test.check_cell cell in
-       ok @@ QCheck.TestResult.is_success r
+     match r.state with
+     | QCheck.TestResult.Success -> ok @@ true
+     | QCheck.TestResult.Failed {instances=failed::_} ->
+        Format.printf "Counter-example: %a\n" Ast_typed.PP.expression failed.QCheck.TestResult.instance;
+        ok @@ false
+     | _ -> ok @@ false
 
 let eval_test_random : ?options:options -> int -> Ast_typed.module_fully_typed -> string -> (bool , Errors.interpreter_error) result =
   fun ?(options = default_options) ct prg test_entry ->
