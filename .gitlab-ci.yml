@@ -288,7 +288,7 @@ build-preview-ligo-webide-front-end:
       #   - tools/webide/**/*
       when: always
   tags:
-    - gitlab-org-docker
+    - gitlab-org
 
 # This job builds the ligo-webide front-end from the tools/webide/ directory and does a production deployment to Netlify and publishes the site using the netlify-cli tool.
 build-ligo-webide-front-end:
