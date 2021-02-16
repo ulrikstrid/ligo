@@ -26,7 +26,7 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
           let%bind b = f (`headers, tc.args, `line, line) in
           if b then ok (line :: acc) else ok acc) [] tc.tc
     in
-    ok { tc with tc = updated }
+    ok { tc with tc = List.rev updated }
 
   (* Check that the typeclass is a rectangular matrix, with one column
     per argument. *)
