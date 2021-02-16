@@ -329,6 +329,7 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
         | `Typer_pattern_do_not_match of Location.t
         | `Typer_label_do_not_match of Types.label * Types.label * Location.t
         | `Typer_solver_no_progress of string
+        | `Typer_different_typeclasses of Ast_typed.c_typeclass_simpl * Ast_typed.c_typeclass_simpl
       ]
     end
   end

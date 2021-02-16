@@ -150,7 +150,7 @@ and restrict_cell repr (c : constructor_or_row) (tc : c_typeclass_simpl) (header
     | P_constant p                 ->
       (match c with
          `Constructor c ->
-         let _ = Format.asprintf "%a " PP.constant_tag c.c_tag in
+         (* let _ = Format.asprintf "%a " PP.constant_tag c.c_tag in *)
           ok (Compare.constant_tag c.c_tag p.p_ctor_tag = 0 && (List.length c.tv_list) = (List.length p.p_ctor_args))
        | `Row         _ -> ok false)
     | P_row      p                 ->

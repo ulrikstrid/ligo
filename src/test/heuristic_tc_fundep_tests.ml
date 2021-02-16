@@ -33,7 +33,6 @@ let test''
     expected_args (_in : string) expected_tc =
   test name @@ fun () ->
   let repr = (fun v -> v) in
-  let%bind e =
     trace typer_tracer @@
     let info = `Constructor { reason_constr_simpl = "unit test" ; original_id = None; id_constructor_simpl = ConstraintIdentifier 42L ; tv ; c_tag ; tv_list } in
     let tc = make_c_typeclass_simpl ~bound:[] ~constraints:[] () 42 None args tc in
@@ -42,9 +41,7 @@ let test''
     (* Format.printf "\n\nActual: %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl (restrict info tc);
      * Format.printf "\n\nExpected %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl expected; *)
     let%bind restricted = restrict repr info tc in
-    if Ast_typed.Compare.c_typeclass_simpl_compare_all_fields restricted expected != 0 then ok @@ Some (test_internal __LOC__)
-    else ok None
-  in match e with None -> ok () | Some e -> fail e
+    Assert.assert_true (Typer_common.Errors.different_typeclasses expected restricted) (Ast_typed.Compare.c_typeclass_simpl_compare_all_fields restricted expected = 0)
 
 let tests1 restrict = [
   (
