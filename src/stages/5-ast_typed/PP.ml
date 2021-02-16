@@ -299,11 +299,16 @@ and c_typeclass ppf {tc_bound; tc_constraints; tc_args; typeclass=tc;original_id
                                         x) -> Int64.to_string x | None ->"null")
 
 and c_typeclass_short ppf {tc_bound; tc_constraints; tc_args; typeclass=tc;original_id=_} =
-  fprintf ppf "∀ %a, %a => (%a) ∈ %a"
-    (list_sep_d_short type_variable) tc_bound
-    (list_sep_d_short type_constraint) tc_constraints
-    (list_sep_d_short type_value_short) tc_args
-    typeclass_short tc
+  if List.length tc_bound = 0 && List.length tc_constraints = 0 then
+    fprintf ppf "(%a) ∈ %a"
+      (list_sep_d_short type_value_short) tc_args
+      typeclass_short tc
+  else
+    fprintf ppf "∃ %a, %a => (%a) ∈ %a"
+      (list_sep_d_short type_variable) tc_bound
+      (list_sep_d_short type_constraint) tc_constraints
+      (list_sep_d_short type_value_short) tc_args
+      typeclass_short tc
 
 and c_access_label ppf {c_access_label_tval; accessor; c_access_label_tvar} =
   fprintf ppf "{@[<hv 2>@
@@ -489,12 +494,18 @@ let rec c_typeclass_simpl ppf ({ tc_bound ; tc_constraints ; id_typeclass_simpl 
     (list_sep_d type_variable) args
 
 and c_typeclass_simpl_short ppf ({tc_bound ; tc_constraints ; id_typeclass_simpl = ConstraintIdentifier ci; reason_typeclass_simpl=_; original_id=_; tc; args}) =
-  fprintf ppf "∀ %a, %a => (%a) ∈%a %a"
-    (list_sep_d_short type_variable) tc_bound
-    (list_sep_d_short type_constraint_simpl_short) tc_constraints
-    (list_sep_d_short type_variable) args
-    constraint_identifier_short ci
-    typeclass_short tc
+  if List.length tc_bound = 0 && List.length tc_constraints = 0 then
+    fprintf ppf "(%a) ∈%a %a"
+      (list_sep_d_short type_variable) args
+      constraint_identifier_short ci
+      typeclass_short tc
+  else
+    fprintf ppf "∃ %a, %a => (%a) ∈%a %a"
+      (list_sep_d_short type_variable) tc_bound
+      (list_sep_d_short type_constraint_simpl_short) tc_constraints
+      (list_sep_d_short type_variable) args
+      constraint_identifier_short ci
+      typeclass_short tc
 
 and constraint_identifier ppf (ConstraintIdentifier ci) =
   fprintf ppf "ConstraintIdentifier %Li" ci
