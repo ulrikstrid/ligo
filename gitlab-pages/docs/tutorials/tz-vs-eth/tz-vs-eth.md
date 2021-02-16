@@ -4,13 +4,13 @@ This article is aimed at those who have some experience with developing smart co
 
 ## Languages and libraries
 
-Tezos is an upgradeable blockchain that focuses on decentralization. It offers a wide variety of languages, frameworks, and tools you can use to develop your contracts. In this article, we mainly focus on the LIGO language, and the provided examples use the Truffle framework for testing. However, many of the points here cover the inherent differences in the blockchain architectures, so they should be valid for other languages and frameworks in the Tezos ecosystem.
+Tezos is an upgradeable blockchain that focuses on decentralisation. It offers a wide variety of languages, frameworks, and tools you can use to develop your contracts. In this article, we mainly focus on the LIGO language, and the provided examples use the Truffle framework for testing. However, many of the points here cover the inherent differences in the blockchain architectures, so they should be valid for other languages and frameworks in the Tezos ecosystem.
 
-The current Tezos protocol uses Michelson language under the hood. Michelson is much like EVM in Ethereum – it is low-level code executed by the embedded virtual machine. But contrary to EVM bytecode, Michelson is a strongly-typed stack-based language designed to be human-readable.
+The current Tezos protocol uses the Michelson language under the hood. Michelson is much like EVM in Ethereum, inasmuch as its programs are low-level code executed by an embedded virtual machine. Nevertheless, contrary to EVM bytecode, Michelson is a strongly-typed stack-based language designed to be human-readable.
 
 Having a human-readable representation of compiled contracts makes it harder for compiler bugs to pass unnoticed: everyone can review the Michelson code of the contract and even formally prove its correctness.
 
-LIGO is a family of high-level languages. There are several _flavors_ or _syntaxes_ of LIGO – PascaLIGO, CameLIGO, and ReasonLIGO. The developers may choose whatever syntax looks more familiar to them.
+LIGO is a family of high-level languages. There are several _flavours_ or _syntaxes_ of LIGO – PascaLIGO, CameLIGO, and ReasonLIGO. The developers may choose whatever syntax looks more familiar to them.
 
 ## Terminology
 
@@ -34,7 +34,7 @@ We will, however, try to associate the terms known to you with the terms used in
 
 ## Types and why they matter
 
-If you come from the Solidity world, you may be accustomed to simple types like `string` or `uint256`, structures, and enums. In LIGO, the types are more advanced. They tend to reflect how the values of these types should be used rather than how they are stored. That's why, for example, LIGO has separate types for `signature` and public `key` instead of just using a byte string (`bytes`) everywhere. Numeric types follow this philosophy: the numbers have arbitrary precision and are, in practice, bounded only by the transaction gas consumption.
+If you come from the Solidity world, you may be accustomed to simple types like `string` or `uint256`, structures, and enums. In LIGO, the types are more advanced. They tend to reflect how the values of these types should be used rather than how they are stored. That is why, for example, LIGO has separate types for `signature` and public `key` instead of just using a byte string (`bytes`) everywhere. Numeric types follow this philosophy: the numbers have arbitrary precision and are, in practice, bounded only by the transaction gas consumption.
 
 Since types are not some purely "technical" concept and have inherent meaning attached to them, it is often a good idea to start thinking about your contract in terms of functions that transform values of one type to values of, possibly, some other type.
 
@@ -61,14 +61,14 @@ let x : int_option = Number 5
 let y : int_option = Null
 ```
 
-Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number 5`, `Number 10`, etc.) or `Null`. Notice how `Null` does not hold any value. There is a special built-in parametrized `option` type with `Some` and `None` constructors, so we can rewrite the snippet above as:
+Valid values of this type are regular numbers wrapped in `Number` (e.g., `Number 5`, `Number 10`, etc.) or `Null`. Notice how `Null` does not hold any value. There is a special built-in parametrised `option` type with `Some` and `None` constructors, so we can rewrite the snippet above as:
 
 ```
 let x : int option = Some 5
 let y : int option = None
 ```
 
-This is how we express _nullability_ in LIGO: instead of using a special ad-hoc value like "zero address", we just say it's an `address option`. We can then use `match` to see if there's something inside:
+This is how we express _nullability_ in LIGO: instead of using a special ad-hoc value like "zero address", we just say it is an `address option`. We can then use `match` to see if there is something inside:
 
 ```
 let x : int option = Some 5
@@ -125,7 +125,7 @@ let main (parameter, storage : bytes * int) : operation list * int =
   else (failwith "Unknown entrypoint" : operation list * int)
 ```
 
-However, we can do better. As we discussed, LIGO has a much richer type system than Solidity does. We can encode the entrypoint directly in the parameter type. For our counter contract, we can say, e.g., that the parameter is _either_ Increment or Decrement, and implement the dispatching logic using `match`:
+However, we can do better. As we discussed, LIGO has a much richer type system than Solidity does. We can encode the entrypoint directly in the parameter type. For our counter contract, we can say, e.g., that the parameter is _either_ `Increment` or `Decrement`, and implement the dispatching logic using `match`:
 
 ```
 type parameter = Increment | Decrement
@@ -137,7 +137,7 @@ let main (p, s : parameter * storage) =
   | Decrement -> ([] : operation list), s - 1
 ```
 
-We do not need any internal operations, since we neither call other contracts nor transfer money. Here's how we can add arguments to our entrypoints:
+We do not need any internal operations, since we neither call other contracts nor transfer money. Here is how we can add arguments to our entrypoints:
 
 ```
 type parameter =
@@ -152,7 +152,7 @@ let main (p, s: parameter * storage) =
   | Subtract n -> ([]: operation list), s - n
 ```
 
-Tezos has special support for parameters encoded with variant types. If the parameter is a variant type, Tezos will treat each constructor as a separate entrypoint (with the first letter lowercased). It is important when we want to call a contract but don't know the full type of its parameter. For example, we can call our counter contract with the following CLI command:
+Tezos has special support for parameters encoded with variant types. If the parameter is a variant type, Tezos will treat each constructor as a separate entrypoint (with the first letter lowercased). It is important when we want to call a contract but do not know the full type of its parameter. For example, we can call our counter contract with the following CLI command:
 
 `tezos-client call contract counter from alice --entrypoint '%subtract' --arg 100`
 
@@ -189,15 +189,15 @@ let main (param, storage : parameter * storage) =
 ```
 
 Here:
-1. `multiplyBy2` is _private_ (in Solidity terms): we can't call it directly from outside of the contract.
+1. `multiplyBy2` is _private_ (in Solidity terms): we cannot call it directly from outside of the contract.
 2. `multiplyBy4` is _public:_ we can call it both from inside the contract and using the `%multiplyBy4` entrypoint.
-3. `%multiplyBy16` is _external:_ there is no function `multiplyBy16` in the contract so we can't call it from inside the source code, but there is an entrypoint `%multiplyBy16` encoded in the parameter, so we can use tezos-client or taquito to call it externally.
+3. `%multiplyBy16` is _external:_ there is no function `multiplyBy16` in the contract so we cannot call it from inside the source code, but there is an entrypoint `%multiplyBy16` encoded in the parameter, so we can use tezos-client or taquito to call it externally.
 
 There is no analog of `internal` methods in LIGO because LIGO contracts do not support inheritance.
 
 ## Lambdas
 
-In Tezos, you can accept _code_ as a parameter. Such functions that you can pass around are called _lambdas_ in functional languages. Let's say we want to support arbitrary mathematic operations with the counter value. We can just accept the intended formula as the parameter:
+In Tezos, you can accept _code_ as a parameter. Such functions that you can pass around are called _lambdas_ in functional languages. Let us say that we want to support arbitrary mathematic operations with the counter value. We can just accept the intended formula as the parameter:
 
 ```
 type parameter =
@@ -256,7 +256,7 @@ contract Treasury {
 }
 ```
 
-Those of you experienced with Solidity may notice that this contract is not reentrancy-safe: the beneficiary contract may utilize the fact that by the time of the call, `rewardsLeft` storage variable hasn't been updated. The atacker can _call back_ into the caller contract, invoking `disburseRewards` until it drains the treasury contract:
+Those of you experienced with Solidity may notice that this contract is not reentrancy-safe: the beneficiary contract may utilise the fact that by the time of the call, `rewardsLeft` storage variable has not been updated. The atacker can _call back_ into the caller contract, invoking `disburseRewards` until it drains the treasury contract:
 
 ```
 contract Beneficiary {
@@ -319,7 +319,7 @@ let doSomethingCont (p, s: int * int) =
 
 However, here you leave your contract in an _intermediate_ state before making an external call. You would need additional precautions to make such callback-style calls secure. In most cases, you should avoid this pattern.
 
-By making contract interactions harder, Tezos incentivizes you to simplify your architecture. Think about whether you can use lambdas or merge your contracts to avoid complex inter-contract dependencies. If it is possible to _not_ split your logic into multiple contracts, then don't.
+By making contract interactions harder, Tezos incentivises you to simplify your architecture. Think about whether you can use lambdas or merge your contracts to avoid complex inter-contract dependencies. If it is possible to _not_ split your logic into multiple contracts, then avoid the split.
 
 You can find more details on how Tezos contracts interact with each other in our [inter-contract calls](https://) article.
 
@@ -327,10 +327,10 @@ You can find more details on how Tezos contracts interact with each other in our
 
 Fee model in Tezos is more complicated than the Ethereum one. The most important bits you should know about are:
 1. In Tezos, you _burn_ a certain amount of Tez for increasing the size of the stored data. For example, if you add a new entry to a map or replace a string with a longer one, you must burn your Tez tokens.
-2. When you call a contract, the transaction spends gas for reading, deserializing and typechecking the storage. Also, a certain amount of gas gets spent for serializing and writing the storage back to the context. In practice, it means that **the larger your code and storage are, the more expensive it is to call your contract,** regardless of the number of computations performed. If you have big or unbounded containers in storage, you should most probably use `BigMap`.
-3. Emitting internal operations is very expensive in terms of gas: there is a fixed cost of 10000 gas for `Tezos.get_{contract, entrypoint}_opt` plus the cost of reading, deserializing, and typechecking the parameter of the callee.
+2. When you call a contract, the transaction spends gas for reading, deserialising and typechecking the storage. Also, a certain amount of gas gets spent for serialising and writing the storage back to the context. In practice, it means that **the larger your code and storage are, the more expensive it is to call your contract,** regardless of the number of computations performed. If you have big or unbounded containers in storage, you should most probably use `big_map`.
+3. Emitting internal operations is very expensive in terms of gas: there is a fixed cost of 10000 gas for `Tezos.get_{contract, entrypoint}_opt` plus the cost of reading, deserialising, and typechecking the parameter of the callee.
 
-Always test for gas consumption and strive to minimize the size of the data stored on chain and the number of internal operations emitted. You can read more on fees in our [Optimization guide](https://) or in the [Serokell blog post](https://).
+Always test for gas consumption and strive to minimise the size of the data stored on chain and the number of internal operations emitted. You can read more on fees in our [Optimisation guide](https://ligolang.org/docs/tutorials/optimisation) or in the [Serokell blog post](https://medium.com/tqtezos/how-to-minimize-transaction-costs-of-tezos-smart-contracts-9962347faf64).
 
 ## Conclusion
 
