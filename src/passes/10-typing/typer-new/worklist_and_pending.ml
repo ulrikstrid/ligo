@@ -33,7 +33,7 @@ type worklist_ = {
   pending_type_constraint_simpl                  : type_constraint_simpl Pending.t;
   pending_c_alias                                : c_alias               Pending.t;
   pending_non_alias                              : type_constraint_simpl Pending.t;
-  pending_hc                                     : (indexers_plugins_states ex_heuristic_state * type_constraint list) list Pending.t;
+  pending_hc                                     : (type_constraint_simpl * indexers_plugins_states ex_heuristic_state * ((indexers_plugins_states ex_heuristic_state as 'a) list -> 'a -> 'a list)) Pending.t;
 }
 
 type ('part, 'whole) mini_lens = { get : 'whole -> 'part Pending.t; set : 'whole -> 'part Pending.t -> 'whole; }   

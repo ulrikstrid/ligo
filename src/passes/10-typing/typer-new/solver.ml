@@ -161,7 +161,7 @@ end = struct
     (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
     try Some (UF.repr variable aliases) with Not_found -> None
 
-  let aux_heuristic___ constraint_ state (Heuristic_state heuristic) =
+  let aux_heuristic___ (state, (constraint_, (Heuristic_state heuristic), set_heuristic_state)) =
     let repr = mk_repr state in
     (* let () = queue_print (fun () -> Formatt.printf "Apply heuristic %s for constraint : %a\n%!" 
       heuristic.plugin.heuristic_name
@@ -175,11 +175,7 @@ end = struct
     let heuristic = { heuristic with already_selected } in
     let%bind (state, new_constraints) = bind_fold_map_list (aux_propagator___ heuristic) state selector_outputs in
     (* let () = queue_print (fun () -> Format.printf "Return with new constraints: (%a)\n%!" Ast_typed.PP.(list_sep_d (list_sep_d type_constraint_short)) new_constraints) in *)
-    ok (state, (Heuristic_state heuristic, List.flatten new_constraints))
-
-  let add_constraint_and_apply_heuristics___2 (state, hc) =
-    let (already_selected_and_propagators, new_constraints) = List.split hc in
-    let state = { state with already_selected_and_propagators } in
+    let state = { state with already_selected_and_propagators = set_heuristic_state state.already_selected_and_propagators (Heuristic_state heuristic) } in
     ok (state, { Worklist.empty with pending_type_constraint = Pending.of_list @@ List.flatten new_constraints })
 
   (* apply all the selectors and propagators *)
@@ -192,8 +188,8 @@ end = struct
         let module MapAddConstraint = Plugins.Indexers.Map_indexer_plugins(AddConstraint) in
         { state with plugin_states = MapAddConstraint.f (repr, constraint_) state.plugin_states }
       in
-      let%bind (state, hc) = bind_fold_map_list (aux_heuristic___ constraint_) state state.already_selected_and_propagators in
-      add_constraint_and_apply_heuristics___2 (state, hc)
+      let hc = List.mapi (fun i asap -> constraint_, asap, List.set_nth i) state.already_selected_and_propagators in
+      ok (state, { Worklist.empty with pending_hc = Pending.of_list hc })
 
   let pp_indented_constraint_list =
     let open PP_helpers in
@@ -262,7 +258,14 @@ end = struct
                 add_constraint_and_apply_heuristics___1
                 (state, worklist)
            );
-         ]
+
+           (fun (state, worklist) ->
+              Worklist.process_all ~time_to_live
+                pending_hc
+                aux_heuristic___
+                (state, worklist)
+           );
+           ]
            (state, worklist)
       )
 
