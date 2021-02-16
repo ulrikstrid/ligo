@@ -13,7 +13,7 @@ stages:
   - push            # deploy docker images, pages, releases (tag)
   - ide-deploy      # deploy web IDE
 
-# .nix:
+.nix:
 #   before_script:
 #     - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
 #     - nix-env -f "https://gitlab.com/ligolang/nixpkgs/repository/archive.tar.gz?ref=7f50e4b4311f1489bc73ee8470ab797c271d04b1" -iA gnutar gitMinimal
@@ -267,9 +267,6 @@ build-preview-ligo-webide-front-end:
   stage: ide-deploy
   image: node:12.20.0-buster
   script:
-    # - npm install netlify-cli -g
-    - apt-get update
-    - apt-get install -y --no-install-recommends jq
     - cd ./tools/webide/
     - mv ./packages/client/staging-netlify.toml ./packages/client/netlify.toml
     - yarn install
@@ -287,8 +284,6 @@ build-preview-ligo-webide-front-end:
       # changes:
       #   - tools/webide/**/*
       when: always
-  tags:
-    - gitlab-org
 
 # This job builds the ligo-webide front-end from the tools/webide/ directory and does a production deployment to Netlify and publishes the site using the netlify-cli tool.
 build-ligo-webide-front-end:
