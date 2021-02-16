@@ -1,4 +1,4 @@
-(*
+(**
 
 This implements the pattern_matching compiler of `Peyton-Jones, S.L., The Implementation of Functional Programming Languages`, chapter 5.
 By reduction, this algorithm transforms pattern matching expression into (nested) cases expressions.
@@ -7,13 +7,12 @@ By reduction, this algorithm transforms pattern matching expression into (nested
 List patterns are treated as the variant type `NIL | Cons of (hd , tl)` would be.
 "Product patterns" (e.g. tuple & record) are considered variables, but an extra rule (product_rule) was necessary to handle them
 
-*)
+**)
 
 module I = Ast_core
 module O = Ast_typed
 
 open Trace
-(* open Stage_common.Maps *)
 open Typer_common.Errors
 
 type matchees = O.expression_variable list
@@ -23,6 +22,7 @@ type equations = (typed_pattern list * (I.expression * O.environment)) list
 type type_fun =
   O.environment -> ?tv_opt:O.type_expression -> I.expression -> (O.expression, typer_error) result
 type rest = O.expression_content
+type 'a pm_result = ('a, typer_error) result
 
 let is_var : _ I.pattern -> bool = fun p ->
   match p.wrap_content with
@@ -31,7 +31,7 @@ let is_var : _ I.pattern -> bool = fun p ->
   | P_record _ -> true
   | P_unit -> true
   | _ -> false
-let is_product : _ I.pattern -> bool = fun p ->
+let is_product' : _ I.pattern -> bool = fun p ->
   match p.wrap_content with
   | P_tuple _ -> true
   | P_record _ -> true
@@ -41,12 +41,10 @@ let is_product : equations -> typed_pattern option = fun eqs ->
   List.find_map
     (fun (pl,_) ->
       match pl with
-      | (p,t)::_ -> if is_product p then Some(p,t) else None 
+      | (p,t)::_ -> if is_product' p then Some(p,t) else None 
       | [] -> None
     )
     eqs
-
-type 'a pm_result = ('a, typer_error) result
 
 let corner_case loc = fail (corner_case ("broken invariant at "^loc))
 

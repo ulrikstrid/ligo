@@ -3,16 +3,15 @@
   patterns matching a given expression alternates between variable and constructors.
 
   Those generated failwith expressions could be avoided but would unnecessarily complicate the pattern matching compiler.
-
+  
+  An example of such generated FAILWITH would be:
   ```
   match (u1,u2) with
   | Nil , ys  -> 1
   | xs  , Nil -> 2
   | Cons (a,b) , Cons (c,d) -> a + b + c + d
   ```
-
   being compiled to
-
   ```
   match u1 with
   | Nil -> 1
@@ -31,7 +30,7 @@
   This pass aims to remove those partial match failwiths by identifying matched variable and trying to merge them.
   If failwith expression still remain after this pass, the matching expression is not exhaustive. That will trigger an error
 
-  TODO: It might be desirable to allow non-exhaustive patterns when users wants it
+  TODO: It might be desirable to allow non-exhaustive patterns when users wants it, leaving the generated failwiths (?)
 *)
 
 open Errors
@@ -69,7 +68,7 @@ let merge_record_case : (expression_variable * matching_content_record) -> match
           match exp.expression_content with
           | E_matching m -> (
             match get_variable m.matchee with
-            | Some v when Var.equal v.wrap_content mvar.wrap_content && Var.is_generated v.wrap_content -> (
+            | Some v when Var.equal v.wrap_content mvar.wrap_content && Var.is_generated v.wrap_content -> ( (*is_generated can be removed safely, but this is to ensure that*)
               match m.cases with
               | Match_record v -> stop v.fields v.body.expression_content
               | _ -> continue
@@ -99,14 +98,14 @@ let merge_variant_case : (expression_variable * matching_content_case) -> matchi
             | Match_variant v -> (
               let (_fw,no_fw) = List.partition (fun (case:matching_content_case) -> is_generated_partial_match case.body) v.cases in
               match no_fw with
-              | [] -> fail (corner_case "REMITODO: mmmmmhhhh ?")
+              | [] -> fail (corner_case "pattern match branches being all being all generated failwith should never happen")
               | lst -> (
                 let x = List.find_opt (fun ({constructor=c;_}:matching_content_case) -> Compare.label c constructor = 0 ) lst in
                 match x with
                 | Some x ->
                   let { pattern ; body ; _ } : matching_content_case = x in
                   stop pattern body.expression_content
-                | None -> fail (corner_case "REMITODO: NON EXHAU ?")
+                | None -> fail (corner_case "constructor here is a case of an higher pattern match")
               )
             )
             | _ -> continue
@@ -169,9 +168,8 @@ let exhaustiveness_check : expression -> unit self_res =
         | E_matching _ ->
           let contains_partial_match : expression -> expression self_res =
             fun exp' ->
-              if is_generated_partial_match exp' then
-                let s = Format.asprintf "%a" Location.pp exp.location in
-                fail (corner_case @@ "not exhaustive case at "^s)
+              (*TODO: find a way to suggest missing cases *)
+              if is_generated_partial_match exp' then fail (non_exhaustive_pattern_matching exp.location)
               else ok exp'
           in
           let%bind _ = map_expression contains_partial_match exp in

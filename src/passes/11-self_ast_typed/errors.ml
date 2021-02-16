@@ -16,7 +16,10 @@ type self_ast_typed_error = [
     string * Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.expression
   | `Self_ast_typed_pair_in of Location.t
   | `Self_ast_typed_pair_out of Location.t
+  | `Self_ast_typed_non_exhaustive of Location.t
 ]
+
+let non_exhaustive_pattern_matching (loc:Location.t) : self_ast_typed_error = `Self_ast_typed_non_exhaustive loc
 let recursive_call_is_only_allowed_as_the_last_operation name loc =
   `Self_ast_typed_rec_call (name,loc)
 let bad_self_type expected got loc =
@@ -43,6 +46,10 @@ let error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
+    | `Self_ast_typed_non_exhaustive loc ->
+      Format.fprintf f
+        "@[<hv>%a@.Pattern matching is not exhaustive. @]"
+        Snippet.pp loc
     | `Self_ast_typed_rec_call (_name,loc) ->
       Format.fprintf f
         "@[<hv>%a@.Recursive call not in tail position. @.The value of a recursive call must be immediately returned by the defined function. @]"
@@ -112,25 +119,31 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
+  | `Self_ast_typed_non_exhaustive loc ->
+    let message = `String "pattern matching is not exhaustive" in
+    let content = `Assoc [
+      ("message", message);
+      ("loc", Location.to_yojson loc);
+      ]
+    in
+    json_error ~stage ~content
   | `Self_ast_typed_rec_call (name,loc) ->
     let message = `String "recursion must be achieved through tail-calls only" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let fn = `String (Format.asprintf "%a" Ast_typed.PP.expression_variable name) in
     let content = `Assoc [
        ("message", message);
-       ("location", loc);
+       ("location", Location.to_yojson loc);
        ("function", fn);
        ]
     in
     json_error ~stage ~content
   | `Self_ast_typed_bad_self_type (expected,got,loc) ->
     let message = `String "bad self type" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let expected = `String (Format.asprintf "%a" Ast_typed.PP.type_expression expected) in
     let actual = `String (Format.asprintf "%a" Ast_typed.PP.type_expression got) in
     let content = `Assoc [
        ("message", message);
-       ("location", loc);
+       ("location", Location.to_yojson loc);
        ("expected", expected);
        ("actual", actual);
        ]
@@ -138,12 +151,11 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Self_ast_typed_format_entrypoint_ann (ep,loc) ->
     let message = `String "bad entrypoint format" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let entrypoint = `String ep in
     let hint = `String "we expect '%%bar' for entrypoint Bar and '%%default' when no entrypoint used" in
     let content = `Assoc [
        ("message", message);
-       ("location", loc);
+       ("location", Location.to_yojson loc);
        ("hint", hint);
        ("entrypoint", entrypoint);
        ]
@@ -151,28 +163,25 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Self_ast_typed_entrypoint_ann_not_literal loc ->
     let message = `String "entrypoint annotation must be a string literal" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [
        ("message", message);
-       ("location", loc);
+       ("location", Location.to_yojson loc);
        ]
     in
     json_error ~stage ~content
   | `Self_ast_typed_unmatched_entrypoint loc ->
     let message = `String "no constructor matches the entrypoint annotation" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [
        ("message", message);
-       ("location", loc);
+       ("location", Location.to_yojson loc);
        ]
     in
     json_error ~stage ~content
   | `Self_ast_typed_nested_big_map loc ->
     let message = `String "it looks like you have nested a big map inside another big map, this is not supported" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [
        ("message", message);
-       ("location", loc);
+       ("location", Location.to_yojson loc);
        ]
     in
     json_error ~stage ~content
@@ -189,13 +198,12 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
     let message = `String "badly typed contract" in
     let description = `String "unexpected entrypoint type" in
     let entrypoint = `String entrypoint in
-    let loc = `String (Format.asprintf "%a" Location.pp e.location) in
     let eptype = `String (Format.asprintf "%a" Ast_typed.PP.type_expression e.type_expression) in
     let content = `Assoc [
        ("message", message);
        ("description", description);
        ("entrypoint", entrypoint);
-       ("location", loc);
+       ("location", Location.to_yojson e.location);
        ("type", eptype);
        ]
     in
@@ -203,14 +211,13 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
   | `Self_ast_typed_contract_list_ops (entrypoint, got, e) ->
     let entrypoint = `String entrypoint in
     let message = `String "badly typed contract" in
-    let loc = `String (Format.asprintf "%a" Location.pp e.location) in
     let actual = `String (Format.asprintf "%a"
       Ast_typed.PP.type_expression {got with type_content= T_constant {language="Michelson";injection=Ligo_string.verbatim Stage_common.Constant.list_name;parameters=[{got with type_content=(Ast_typed.t_operation ()).type_content}]}}) in
     let expected = `String (Format.asprintf "%a" Ast_typed.PP.type_expression got) in
     let content = `Assoc [
        ("message", message);
        ("entrypoint", entrypoint);
-       ("location", loc);
+       ("location", Location.to_yojson e.location);
        ("expected", expected);
        ("actual", actual);
        ]
@@ -220,13 +227,12 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
     let entrypoint = `String entrypoint in
     let message = `String "badly typed contract" in
     let description = `String "expected storages" in
-    let loc = `String (Format.asprintf "%a" Location.pp e.location) in
     let t1 = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t1) in
     let t2 = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t2) in
     let content = `Assoc [
        ("entrypoint", entrypoint);
        ("message", message);
-       ("location", loc);
+       ("location", Location.to_yojson e.location);
        ("description", description);
        ("type1", t1);
        ("type2", t2);
@@ -236,10 +242,9 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
   | `Self_ast_typed_pair_in loc ->
     let message = `String "badly typed contract" in
     let description = `String "expected a pair as parameter" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [
        ("message", message);
-       ("location", loc);
+       ("location", Location.to_yojson loc);
        ("description", description);
        ]
     in
@@ -247,10 +252,9 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
   | `Self_ast_typed_pair_out loc ->
     let message = `String "badly typed contract" in
     let description = `String "expected a pair as return type" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
     let content = `Assoc [
        ("message", message);
-       ("location", loc);
+       ("location", Location.to_yojson loc);
        ("description", description);
        ]
     in
