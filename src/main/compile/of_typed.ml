@@ -29,4 +29,4 @@ let assert_equal_contract_type : Simple_utils.Runned_result.check_type -> string
 
 let some_interpret ~options x test_entry = trace interpret_tracer @@ Interpreter.eval_test ~options x test_entry
 
-let some_interpret_random ~options x test_entry = trace interpret_tracer @@ Interpreter.eval_test_random ~options x test_entry
+let some_interpret_random ~options n x test_entry = trace interpret_tracer @@ Interpreter.eval_test_random ~options n x test_entry

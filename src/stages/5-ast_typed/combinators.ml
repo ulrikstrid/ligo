@@ -125,6 +125,7 @@ let get_t_signature (t:type_expression) : unit option = get_t_base_inj t signatu
 let get_t_key_hash (t:type_expression) : unit option = get_t_base_inj t key_hash_name
 let get_t_sapling_state (t:type_expression) : type_expression option = get_t_unary_inj t sapling_state_name
 let get_t_sapling_transaction (t:type_expression) : type_expression option = get_t_unary_inj t sapling_transaction_name
+let get_t_address (t:type_expression) : unit option = get_t_base_inj t address_name
 
 let tuple_of_record (m: _ LMap.t) =
   let aux i =
@@ -224,6 +225,7 @@ let is_t_sum t = Option.is_some (get_t_sum t)
 let is_t_pair t = Option.is_some (get_t_pair t)
 let is_t_unit t = Option.is_some (get_t_unit t)
 let is_t_record t = Option.is_some (get_t_record t)
+let is_t_address t = Option.is_some (get_t_address t)
 
 let assert_t_list_operation (t : type_expression) : unit option =
   match get_t_list t with
@@ -241,10 +243,12 @@ let ez_e_record (lst : (label * expression) list) : expression_content =
   let aux prev (k, v) = LMap.add k v prev in
   let map = List.fold_left aux LMap.empty lst in
   e_record map
-let e_some s : expression_content = E_constant {cons_name=C_SOME;arguments=[s]}
+let e_some s : expression_content = E_constant {cons_name=C_SOME; arguments=[s]}
 let e_none (): expression_content = E_constant {cons_name=C_NONE; arguments=[]}
 let e_nil (): expression_content = E_constant {cons_name=C_NIL; arguments=[]}
-let e_cons hd tl : expression_content = E_constant {cons_name=C_CONS;arguments=[hd; tl]}
+let e_cons hd tl : expression_content = E_constant {cons_name=C_CONS; arguments=[hd; tl]}
+let e_map_empty (): expression_content = E_constant {cons_name=C_MAP_EMPTY; arguments=[]}
+let e_map_add k v m: expression_content = E_constant {cons_name=C_MAP_ADD; arguments=[k; v; m]}
 
 let e_unit () : expression_content =     E_literal (Literal_unit)
 let e_int n : expression_content = E_literal (Literal_int n)
@@ -295,6 +299,8 @@ let e_a_variable v ty = make_e (e_variable v) ty
 let ez_e_a_record ?layout r = make_e (ez_e_record r) (ez_t_record ?layout (List.mapi (fun i (x, y) -> x, {associated_type = y.type_expression ; michelson_annotation = None ; decl_pos = i}) r))
 let e_a_let_in binder expr body attributes = make_e (e_let_in binder expr body attributes) (get_type_expression body)
 let e_a_constructor ?(layout=default_layout) m l v = make_e (e_constructor l v) (t_sum ~layout:layout m)
+let e_a_map_empty k_ty v_ty = make_e (e_map_empty ()) (t_map k_ty v_ty)
+let e_a_map_add k v m = make_e (e_map_add k v m) (t_map k.type_expression v.type_expression)
 
 
 let get_a_int (t:expression) =

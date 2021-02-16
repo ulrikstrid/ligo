@@ -686,6 +686,12 @@ let rec expr_gen : type_expression -> expression QCheck.Gen.t =
   if is_t_unit type_expr then
     QCheck.Gen.(unit >>= fun _ ->
                 return e_a_unit)
+  else if is_t_string type_expr then
+    QCheck.Gen.(string >>= fun s ->
+                return (e_a_string (Ligo_string.standard s)))
+  else if is_t_address type_expr then
+    QCheck.Gen.(int >>= fun i ->
+                return (e_a_address (string_of_int i)))
   else if is_t_int type_expr then
     QCheck.Gen.(small_int >>= fun n ->
                 return (e_a_int (Z.of_int n)))
@@ -718,10 +724,20 @@ let rec expr_gen : type_expression -> expression QCheck.Gen.t =
                        (label, expr_gen row_el.associated_type)) l in
        let rec gen l : ((label * expression) list) QCheck.Gen.t = match l with
          | [] -> QCheck.Gen.(return [])
-         | (label, expr) :: tl -> QCheck.Gen.(expr >>= fun row_el -> (gen tl >>= fun r ->
-                                   return ((label, row_el) :: r))) in
+         | (label, expr) :: tl -> QCheck.Gen.(expr >>= fun row_el ->
+                                             (gen tl >>= fun r ->
+                                              return ((label, row_el) :: r))) in
        QCheck.Gen.(gen _gens >>= fun l ->
                    return (e_a_record ~layout:rows.layout (LMap.of_list l)))
+    | None -> failwith "type error"
+  else if is_t_map type_expr then
+    match get_t_map type_expr with
+    | Some (type_expr_k, type_expr_v) ->
+       let rec of_list l = match l with
+         | [] -> e_a_map_empty type_expr_k type_expr_v
+         | (k, v) :: tl -> e_a_map_add k v (of_list tl) in
+       QCheck.Gen.(list (pair (expr_gen type_expr_k) (expr_gen type_expr_v)) >>= fun l ->
+                   return (of_list l))
     | None -> failwith "type error"
   else
     (failwith "Test generator not implemented")
@@ -732,23 +748,24 @@ let eval_test_func_expr  : int -> Monad.context -> env -> type_expression -> exp
      let expr_app (n : expr) : expression = e_a_application expr n in
      let e_bool (n : expr) : bool = to_bool @@
        try
+         (* Format.printf "%a" Ast_typed.PP.expression n; *)
          let>>= (v, _ctxt) = Monad.eval (eval_ligo (expr_app n) env) init_ctxt None in
          if is_true v then ok true
          else fail @@ Errors.failwith ""
        with Temporary_hack s -> fail @@ Errors.failwith s in
-     let cell = QCheck.Test.make_cell ~count:ct ~name:"my_buggy_test" generator e_bool in
+     let cell = QCheck.Test.make_cell ~count:ct ~name:"Test for funcs." generator e_bool in
      let r = QCheck.Test.check_cell cell in
        ok @@ QCheck.TestResult.is_success r
 
-let eval_test_random : ?options:options -> Ast_typed.module_fully_typed -> string -> (bool , Errors.interpreter_error) result =
-  fun ?(options = default_options) prg test_entry ->
+let eval_test_random : ?options:options -> int -> Ast_typed.module_fully_typed -> string -> (bool , Errors.interpreter_error) result =
+  fun ?(options = default_options) ct prg test_entry ->
   let init_ctxt = Ligo_interpreter.Mini_proto.option_to_context options in
   let>>= (env, b) = eval_random ~options prg test_entry in
   match b with
   | Some (_, expr) ->
      let ty_expr = get_type_expression expr in
      let (src, _) = get_t_function_exn ty_expr in
-     eval_test_func_expr 1000 init_ctxt env src expr
+     eval_test_func_expr ct init_ctxt env src expr
   | None -> fail @@ Errors.test_entry_not_found test_entry
 
 let () = Printexc.record_backtrace true

@@ -34,6 +34,14 @@ let entry_point n =
     info ~docv ~doc [] in
   required @@ pos n (some string) (Some "main") info
 
+let counter n =
+  let open Arg in
+  let info =
+    let docv = "COUNTER" in
+    let doc = "$(docv) is the number of random cases that will be generated." in
+    info ~docv ~doc [] in
+  required @@ pos n (some int) (Some 1000) info
+
 let test_entry n =
   let open Arg in
   let info =
@@ -665,17 +673,17 @@ let test =
   (Term.ret term , Term.info ~doc cmdname)
 
 let test_random =
-  let f source_file test_entry syntax typer_switch protocol_version amount balance sender source now display_format =
+  let f source_file test_entry counter syntax typer_switch protocol_version amount balance sender source now display_format =
     return_result ~display_format (Ligo_interpreter.Formatter.test_format) @@
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
       let options = Compiler_options.make ~typer_switch ~init_env () in
       let%bind typed,_,_    = Compile.Utils.type_file ~options source_file syntax Env in
       let%bind options    = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
-      Compile.Of_typed.some_interpret_random ~options typed test_entry
+      Compile.Of_typed.some_interpret_random ~options counter typed test_entry
   in
   let term =
-    Term.(const f $ source_file 0 $ test_entry 1 $ syntax $ typer_switch $ protocol_version $ amount $ balance $ sender $ source $ now $ display_format) in
+    Term.(const f $ source_file 0 $ test_entry 1 $ counter 2 $ syntax $ typer_switch $ protocol_version $ amount $ balance $ sender $ source $ now $ display_format) in
   let cmdname = "test-random" in
   let doc = "Subcommand: Test a boolean function with the LIGO interpreter (BETA)." in
   (Term.ret term , Term.info ~doc cmdname)
