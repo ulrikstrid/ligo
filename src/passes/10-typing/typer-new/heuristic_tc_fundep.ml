@@ -149,7 +149,9 @@ and restrict_cell repr (c : constructor_or_row) (tc : c_typeclass_simpl) (header
     | P_forall   _                 -> fail @@ corner_case "forall in the righ-hand-side of a typeclass is unsupported"
     | P_constant p                 ->
       (match c with
-         `Constructor c -> ok (Compare.constant_tag c.c_tag p.p_ctor_tag = 0 && (List.length c.tv_list) = (List.length p.p_ctor_args))
+         `Constructor c ->
+         let _ = Format.asprintf "%a " PP.constant_tag c.c_tag in
+          ok (Compare.constant_tag c.c_tag p.p_ctor_tag = 0 && (List.length c.tv_list) = (List.length p.p_ctor_args))
        | `Row         _ -> ok false)
     | P_row      p                 ->
       (match c with
@@ -168,13 +170,16 @@ and restrict_cell repr (c : constructor_or_row) (tc : c_typeclass_simpl) (header
   else
     ok true
 
+and bind_for_all2_list f l1 l2 =
+  let%bind results = bind_map2_list f l1 l2 in
+  ok @@ List.for_all (fun x -> x) results
+
 and restrict_line repr c tc (`headers, headers, `line, line) : (bool, _) result =
-  let%bind filtered_cells = bind_map2_list (restrict_cell repr c tc) headers line in
-  ok @@ List.for_all (fun x -> x) filtered_cells
+  bind_for_all2_list (restrict_cell repr c tc) headers line
 
 and restrict repr c tc =
   filter_lines (restrict_line repr c tc) tc
-         
+
 let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
   fun selected repr ->
   let%bind restricted = restrict repr selected.c selected.tc in

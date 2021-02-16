@@ -28,7 +28,7 @@ let test''
     (* Initial typeclass constraint: *)
     args (_in : string) tc
     (* Intermediate step (not tested): *)
-    (_intermediate : type_value list option list)
+    (_intermediate : bool list)
     (* Expected restricted typeclass:: *)
     expected_args (_in : string) expected_tc =
   test name @@ fun () ->
@@ -54,9 +54,9 @@ let tests1 restrict = [
     (* Initial typeclass constraint: *)
     [x;y;z] "∈" [[int ; unit ; unit] ; [nat ; int ; int] ; [nat ; int ; string] ; ]
     (* Intermediate step (not tested): *)
-    (**)        [ None               ;  Some []          ;  Some []             ; ]
+    (**)        [ false              ;  true             ;  true                ; ]
     (* Expected restricted typeclass: *)
-    [y;z]   "∈" [                      [      int ; int] ; [      int ; string] ; ]
+    [y;z]   "∈" [                      [nat ; int ; int] ; [nat ; int ; string] ; ]
 );
 
 (  test'' "restrict2" restrict
@@ -65,9 +65,9 @@ let tests1 restrict = [
     (* Initial typeclass constraint: *)
     [x;y]   "∈" [[int  ; unit] ; [map(nat,nat)   ; int] ; [map(nat,string)   ; int] ; ]
     (* Intermediate step (not tested): *)
-    (**)        [ None         ;  Some [nat;nat]        ;  Some [nat;string]        ; ]
+    (**)        [ false        ;  true                  ; true                      ; ]
     (* Expected restricted typeclass constraint: *)
-    [m;n;y] "∈" [                [nat ; nat      ; int] ; [nat ; string      ; int] ; ]
+    [m;n;y] "∈" [                [map(nat,nat)   ; int] ; [map(nat,string)   ; int] ; ]
 )  ;
 
 (  test'' "restrict3" restrict
@@ -76,9 +76,9 @@ let tests1 restrict = [
     (* Initial typeclass constraint: *)
     [x;y;z] "∈" [[int ; unit ; unit] ; [nat ; int ; int] ; [nat ; int ; string] ; ]
     (* Intermediate step (not tested): *)
-    (**)        [       None         ;        Some []    ;        Some []       ; ]
+    (**)        [false               ; true              ; true                 ; ]
     (* Expected restricted typeclass: *)
-    [x;z]   "∈" [                      [nat ;       int] ; [nat ;       string] ; ]
+    [x;z]   "∈" [                      [nat ; int ; int] ; [nat ; int ; string] ; ]
 )  ;    
 ]
 
