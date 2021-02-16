@@ -147,7 +147,8 @@ let rec restrict_recur repr c_or_r (tc_c  : type_constraint_simpl) =
                              else ok @@ Some (SC_Typeclass restricted_nested)
   | SC_Access_label _l    -> ok (failwith "TODO: access_label in typeclass constraints not supported yet")
 
-and restrict_cell repr (c : constructor_or_row) (tc : c_typeclass_simpl ref) (header : type_variable) (cell : type_value) =
+and restrict_cell repr (c : constructor_or_row) (tc : c_typeclass_simpl) (header : type_variable) (cell : type_value) =
+  let return ?(tc = tc) b = ok (tc,b) in
   if Compare.type_variable (repr @@ tv c) (repr header) = 0 then
     match cell.wrap_content with
     (* P_abs -> … *)
@@ -156,38 +157,34 @@ and restrict_cell repr (c : constructor_or_row) (tc : c_typeclass_simpl ref) (he
       (match c with
          `Constructor c ->
          (* let _ = Format.asprintf "%a " PP.constant_tag c.c_tag in *)
-          ok (Compare.constant_tag c.c_tag p.p_ctor_tag = 0 && (List.length c.tv_list) = (List.length p.p_ctor_args))
-       | `Row         _ -> ok false)
+          return (Compare.constant_tag c.c_tag p.p_ctor_tag = 0 && (List.length c.tv_list) = (List.length p.p_ctor_args))
+       | `Row         _ -> return false)
     | P_row      p                 ->
       (match c with
-         `Constructor _ -> ok false
-       | `Row         r -> ok (Compare.row_tag r.r_tag p.p_row_tag = 0 && List.compare ~compare:Compare.label (LMap.keys r.tv_map) (LMap.keys p.p_row_args) = 0))
+         `Constructor _ -> return false
+       | `Row         r -> return (Compare.row_tag r.r_tag p.p_row_tag = 0 && List.compare ~compare:Compare.label (LMap.keys r.tv_map) (LMap.keys p.p_row_args) = 0))
     | P_variable v
       (* TODO: this should be a set, not a list *)
-      when List.mem ~compare:Compare.type_variable v !tc.tc_bound ->
-      let%bind updated_tc_constraints = bind_map_list (restrict_recur repr c) !tc.tc_constraints in
+      when List.mem ~compare:Compare.type_variable v tc.tc_bound ->
+      let%bind updated_tc_constraints = bind_map_list (restrict_recur repr c) tc.tc_constraints in
       let all_accept = List.for_all (function None -> false | Some _ -> true) updated_tc_constraints in
       let restricted_constraints = List.filter_map (fun x -> x) updated_tc_constraints in
-      let () = tc := { !tc with tc_constraints = restricted_constraints } in
-      ok all_accept
-    | P_variable _v                -> ok true (* Always keep unresolved variables; when they get resolved the heuristic will be called again and they will be kept or eliminated. *)
+      let tc = { tc with tc_constraints = restricted_constraints } in
+      return ~tc all_accept
+    | P_variable _v                -> return true (* Always keep unresolved variables; when they get resolved the heuristic will be called again and they will be kept or eliminated. *)
     | P_apply    _                 -> failwith "P_apply unsupported, TODO soon"
     | P_abs      _                 -> failwith "P_abs unsupported, TODO soon"
     | P_constraint pc              -> fail @@ corner_case @@ Format.asprintf "Kind error: a cell of a typeclass cannot contain a constraint. %a has kind Constraint but a type-level expression with kind * was expected" PP.type_constraint pc.pc
   else
-    ok true
+    return true
 
-and bind_for_all2_list f l1 l2 =
-  let%bind results = bind_map2_list f l1 l2 in
-  ok @@ List.for_all (fun x -> x) results
-
-and restrict_line repr c tc (`headers, headers, `line, line) : (bool, _) result =
-  bind_for_all2_list (restrict_cell repr c tc) headers line
+and restrict_line repr c tc (`headers, headers, `line, line) : (bool * _, _) result =
+  let%bind tc,results = bind_fold_map2_list (restrict_cell repr c) tc headers line in
+  ok @@ (List.for_all (fun x -> x) results,tc)
 
 and restrict repr c tc =
-  let mutable_tc = ref tc in
-  let%bind filtered_lines = filter_lines (restrict_line repr c mutable_tc) tc in
-  ok { filtered_lines with tc_constraints = !mutable_tc.tc_constraints }
+  let%bind filtered_lines = filter_lines (restrict_line repr c) tc in
+  ok { filtered_lines with tc_constraints = tc.tc_constraints }
 
 let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
   fun selected repr ->

@@ -20,13 +20,13 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
   let map_cells (f : type_value -> type_value) (tc : c_typeclass_simpl) =
     { tc with tc = List.map (List.map f) tc.tc }
 
-  let filter_lines (f : ([`headers] * type_variable list * [`line] * type_value list) -> (bool, _) result) (tc : c_typeclass_simpl) =
-    let%bind updated =
-      bind_fold_list (fun acc line ->
-          let%bind b = f (`headers, tc.args, `line, line) in
-          if b then ok (line :: acc) else ok acc) [] tc.tc
+  let filter_lines (f : _ -> ([`headers] * type_variable list * [`line] * type_value list) -> (bool*_, _) result) (tc_org : c_typeclass_simpl) =
+    let%bind (updated,_) =
+      bind_fold_list (fun (acc,tc) line ->
+          let%bind b,tc = f tc (`headers, tc_org.args, `line, line) in
+          if b then ok (line :: acc,tc) else ok (acc,tc)) ([],tc_org) tc_org.tc
     in
-    ok { tc with tc = List.rev updated }
+    ok { tc_org with tc = List.rev updated }
 
   (* Check that the typeclass is a rectangular matrix, with one column
     per argument. *)

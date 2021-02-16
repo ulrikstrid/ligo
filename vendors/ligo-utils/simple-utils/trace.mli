@@ -155,6 +155,9 @@ val bind_fold_triple :
 val bind_fold_map_list :
   ('a -> 'b -> ('a * 'c, 'e) result) ->
   'a -> 'b list -> ('a * 'c list, 'e) result
+val bind_fold_map2_list :
+  ('a -> 'b -> 'c -> ('a * 'd, 'e) result) ->
+  'a -> 'b list -> 'c list -> ('a * 'd list, 'e) result
 val bind_fold_map_location :
   ('a -> 'b -> ('a * 'c, 'e) result) ->
   'a -> 'b Location.wrap -> ('a * 'c Location.wrap, 'e) result
