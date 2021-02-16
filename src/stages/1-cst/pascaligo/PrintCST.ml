@@ -125,15 +125,15 @@ let print_tree state label print_sub {value; region} =
   print_root state label ~region;
   print_sub  state value
 
+let mk_child print value = Some (swap print value)
+
 let mk_child_opt print = function
         None -> None
-| Some value -> Some (swap print value)
-
-let mk_child print value = Some (swap print value)
+| Some value -> mk_child print value
 
 let mk_child_list print = function
     [] -> None
-| list -> Some (swap print list)
+| list -> mk_child print list
 
 let print_forest state forest =
   let forest = List.filter_map (fun x -> x) forest in
@@ -149,9 +149,6 @@ let print_unary state label ?region print_sub node =
   print_multi state label ?region [mk_child print_sub node]
 
 let print_par state label ?region print_sub (e : 'a par reg) =
-  print_unary state label ?region print_sub e.value.inside
-
-let print_brackets state label ?region print_sub (e : 'a brackets reg) =
   print_unary state label ?region print_sub e.value.inside
 
 (* Printing the root of the CST *)
@@ -445,15 +442,13 @@ and print_E_Case state = print_case state "E_Case" print_expr
 
 and print_case :
   'a.state -> string -> (state -> 'a -> unit) -> 'a case reg -> unit =
-  fun state label print node ->
-    let {value; region} = node in
+  fun state label print {value; region} ->
     let cases =
       List.map (mk_child @@ swap print_case_clause print)
       @@ Utils.nsepseq_to_list
-      @@ Utils.nsepseq_map (fun x -> x.value) value.cases.value in
-    let children =
-      mk_child print_case_test value.expr :: cases
-    in print_multi state label ~region children
+      @@ Utils.nsepseq_map (fun x -> x.value) value.cases.value
+    in print_multi state label ~region
+       @@ mk_child print_case_test value.expr :: cases
 
 and print_case_test state =
   print_unary state "<condition>" print_expr
@@ -470,20 +465,25 @@ and print_clause_pattern state =
 
 (*----*)
 
-and print_I_Cond state (node : test_clause conditional reg) =
-  print_tree state "I_Cond" print_cond_instr node
+and print_I_Cond state = print_conditional state "I_Cond" print_test_clause
+and print_E_Cond state = print_conditional state "E_Cond" print_expr
 
-and print_cond_instr state (cond: test_clause conditional) =
-  let () =
-    let state = state#pad 3 0 in
-    print_unary state "<condition>" print_expr cond.test in
-  let () =
-    let state = state#pad 3 1 in
-    print_unary state "<true>" print_test_clause cond.ifso in
-  let () =
-    let state = state#pad 3 2 in
-    print_unary state "<false>" print_test_clause cond.ifnot
-  in ()
+and print_conditional :
+  'a.state -> string -> (state -> 'a -> unit) -> 'a conditional reg -> unit =
+  fun state label print {value; region} ->
+    let children = [
+      mk_child print_condition         value.test;
+      mk_child (swap print_then print) value.ifso;
+      mk_child (swap print_else print) value.ifnot]
+    in print_multi state label ~region children
+
+and print_condition state = print_unary state "<condition>" print_expr
+
+and print_then : 'a.state -> (state -> 'a -> unit) -> 'a -> unit =
+  fun state print -> print_unary state "<true>" print
+
+and print_else : 'a.state -> (state -> 'a -> unit) -> 'a -> unit =
+  fun state print -> print_unary state "<false>" print
 
 and print_test_clause state = function
   ClauseInstr instr ->
@@ -493,39 +493,14 @@ and print_test_clause state = function
 
 and print_clause_block state = function
   LongBlock {value; region} ->
-    print_loc_node   state "LongBlock" region;
-    print_statements state value.statements
-| ShortBlock {value; region} ->
-    print_loc_node   state "ShortBlock" region;
-    print_statements state (fst value.inside)
-
-(*----*)
-
-and print_E_Cond state = print_expr_conditional state
-
-and print_expr_conditional state (node : expr conditional reg) =
-  print_loc_node  state "E_Cond" node.region;
-  print_cond_expr state node.value
-
-and print_cond_expr state (cond : expr conditional) =
-  let () =
-    let state = state#pad 3 0 in
-    print_unary state "<condition>" print_expr cond.test in
-  let () =
-    let state = state#pad 3 1 in
-    print_unary state "<true>" print_expr cond.ifso in
-  let () =
-    let state = state#pad 3 2 in
-    print_unary state "<false>" print_expr cond.ifnot
-  in ()
-
-(*----*)
-
-and print_statements state statements =
-  let statements     = Utils.nsepseq_to_list statements in
-  let length         = List.length statements in
-  let apply len rank = print_statement (state#pad len rank)
-  in List.iteri (apply length) statements
+    print_multi state "LongBlock" ~region
+    @@ List.map (mk_child print_statement)
+    @@ Utils.nsepseq_to_list value.statements
+  | ShortBlock {value; region} ->
+      print_multi state "ShortBlock" ~region
+    @@ List.map (mk_child print_statement)
+    @@ Utils.nsepseq_to_list (fst value.inside)
+(* Patterns *)
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
@@ -672,7 +647,7 @@ and print_map_lookup state (node : map_lookup) =
   let print_path state (path : path) =
     print_unary state "<map>" print_path path
   and print_index state (index : expr brackets reg) =
-    print_brackets state "<index>" print_expr index in
+    print_unary state "<index>" print_expr index.value.inside in
   print_forest state [mk_child print_path  node.path;
                       mk_child print_index node.index]
 
@@ -694,6 +669,12 @@ and print_for_int state (node : for_int) =
                   mk_child_opt print_step node.step;
                   Some (swap print_block node.block.value)]
   in print_forest state printers
+
+and print_statements state statements =
+  let statements     = Utils.nsepseq_to_list statements in
+  let length         = List.length statements in
+  let apply len rank = print_statement (state#pad len rank)
+  in List.iteri (apply length) statements
 
 and print_iter state (node : iter) =
   let () =
