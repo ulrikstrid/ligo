@@ -7,5 +7,4 @@ block {
     else
       if (parameter = 0x36e44653)
       then (nop, storage - 1)
-      else
-        (failwith ("Unknown entrypoint") : list (operation) * int)
+      else (failwith ("Unknown entrypoint") : list (operation) * int)
