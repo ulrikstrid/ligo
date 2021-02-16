@@ -13,9 +13,9 @@ We will mainly focus on internal _transactions,_ as this is the most common type
 
 ## A note on complexity
 
-Usually, you don't want to have overly-complex contract interactions when you develop your Tezos contracts. There are several reasons for this:
-1. Transactions between contracts are expensive. Tezos bakers need to fetch the callee from the context (this is how internal blockchain storage is called in Tezos), deserialize and typecheck it, then perform the requested operation and store the result. Among these actions, code execution is the cheapest one in terms of gas.
-2. Transactions between contracts are hard and error-prone. When you split your business logic across several contracts, you need to think of how these contracts interact. This may cause unforeseen vulnerabilities if you don't give it enough attention.
+Usually, you do not want to have overly-complex contract interactions when you develop your Tezos contracts. There are several reasons for this:
+1. Transactions between contracts are expensive. Tezos bakers need to fetch the callee from the context (this is how internal blockchain storage is called in Tezos), deserialise and typecheck it, then perform the requested operation and store the result. Among these actions, code execution is the cheapest one in terms of gas.
+2. Transactions between contracts are hard and error-prone. When you split your business logic across several contracts, you need to think of how these contracts interact. This may cause unforeseen vulnerabilities if you do not give it enough attention.
 3. Tezos most probably has other means to achieve what you want. Lambdas make it possible to alter the behavior of the contract after origination, new cryptographic primitives get introduced via protocol upgrades, separation of concerns can be achieved by splitting your business logic into LIGO modules that will eventually get compiled into a single contract, etc.
 
 However, there are legit reasons for using internal operations, including the following:
@@ -24,7 +24,7 @@ However, there are legit reasons for using internal operations, including the fo
 3. You implement a standard that explicitly forbids you to extend the functionality.
 
 ## Internal transactions in LIGO
-The simplest example of an internal transaction is sending Tez to a contract. Note that in Tezos, implicit accounts owned by people holding private keys are contracts as well. Implicit accounts have no code and accept _unit_ as the parameter. Let's look at the following code snippet:
+The simplest example of an internal transaction is sending Tez to a contract. Note that in Tezos, implicit accounts owned by people holding private keys are contracts as well. Implicit accounts have no code and accept _unit_ as the parameter. Consider the following code snippet:
 
 <Syntax syntax="pascaligo">
 
@@ -88,9 +88,9 @@ let main = ((destination_addr, _): (parameter, storage)) => {
 
 </Syntax>
 
-It accepts a destination address as the parameter. Then we need to check whether the address points to a contract that accepts a unit. We do this with `Tezos.get_contract_opt`. This function returns `Some (value)` if the contract exists and the parameter type is correct. Otherwise, it returns `None`. In case it's `None`, we fail with an error, otherwise we use `Tezos.transaction` to forge the internal transaction to the destination contract.
+It accepts a destination address as the parameter. Then we need to check whether the address points to a contract that accepts a unit. We do this with `Tezos.get_contract_opt`. This function returns `Some (value)` if the contract exists and the parameter type is correct. Otherwise, it returns `None`. In case it is `None`, we fail with an error, otherwise we use `Tezos.transaction` to forge the internal transaction to the destination contract.
 
-Let's also examine a contract that stores the address of another contract and passes an argument to it. Here is how this "proxy" can look like:
+Let us also examine a contract that stores the address of another contract and passes an argument to it. Here is how this "proxy" can look like:
 
 <Syntax syntax="pascaligo">
 
@@ -197,7 +197,7 @@ let main = ((param, storage): (int, int)) =>
 
 </Syntax>
 
-But what if we want to make a transaction to a contract but don't know the full type of its parameter? For example, we may know that some contract accepts `Add 5` as its parameter, but we don't know what other entrypoints are there.
+But what if we want to make a transaction to a contract but do not know the full type of its parameter? For example, we may know that some contract accepts `Add 5` as its parameter, but we do not know what other entrypoints are there.
 
 <Syntax syntax="pascaligo">
 
@@ -271,7 +271,7 @@ LIGO compiler generates the following Michelson type for the parameter of this c
 
 The type got transformed to an annotated tree of Michelson union types (denoted with `or typeA typeB`). The annotations (`%add`, `%multiply`, etc.) here represent _entrypoints_ – a construct Tezos has special support for.
 
-In Tezos, we are not required to provide the _full_ type of the contract parameter if we specify an entrypoint. In this case, we just need to know the type of the _entrypoint_ parameter – in case of `%add`, it's an `int` – not the full type.
+In Tezos, we are not required to provide the _full_ type of the contract parameter if we specify an entrypoint. In this case, we just need to know the type of the _entrypoint_ parameter – in case of `%add`, it is an `int` – not the full type.
 
 To specify an entrypoint, we can use `Tezos.get_entrypoint_opt` instead of `Tezos.get_contract_opt`. It accepts an extra argument with an entrypoint name:
 
@@ -351,11 +351,11 @@ let main = ((param, callee_addr): (parameter, storage)) => {
 
 To get the entrypoint names from parameter constructors, you should make the first letters lowercase and prepend a percent sign: `Add` -> `%add`, `CallThePolice` -> `%callThePolice`. LIGO does this transformation internally when it compiles your code into Michelson.
 
-Entrypoints are especially useful for standardization. For example, FA2 token standard does not force the contracts to have some specific parameter type – it would be too limiting for tokens that want to have additional functionality. Instead, the standard requires the tokens to have some predefined set of entrypoints, and other contracts may expect these entrypoints to be present in FA2-compliant tokens.
+Entrypoints are especially useful for standardisation. For example, FA2 token standard does not force the contracts to have some specific parameter type – it would be too limiting for tokens that want to have additional functionality. Instead, the standard requires the tokens to have some predefined set of entrypoints, and other contracts may expect these entrypoints to be present in FA2-compliant tokens.
 
 ## Interoperability and standards compliance
 
-There are several high-level languages for Tezos, and you shouldn't expect that all the contracts you interact with are written in LIGO.
+There are several high-level languages for Tezos, and you should not expect that all the contracts you interact with are written in LIGO.
 
 Internally, Tezos stores and operates on contracts in Michelson. Currently, Michelson does not support record and variant types of arbitrary length natively. It only has `pair a b` and `or a b`, each containing just _two_ type parameters.
 
@@ -408,7 +408,7 @@ If you interact with other contracts, or expect other contracts to interact with
 ## Execution order
 
 When you emit an internal operation, Tezos puts it into the _internal operations queue._
-Let's see what this queue looks like when you have one contract that emits two internal operations:
+Here is how this queue looks like when you have one contract that emits two internal operations:
 
 | Current call | Queue before | Queue after |
 |--------------|--------------|-------------|
@@ -416,7 +416,7 @@ Let's see what this queue looks like when you have one contract that emits two i
 | `B %foo` | [`C %bar`] | [`C %bar`] |
 | `C %bar` | [] | [] |
 
-Now let's say that `B %foo` emits another operation, e.g. it calls back to `A %fooCallback`. Tezos will put this internal operation to the end of the queue:
+Now imagine that `B %foo` emits another operation, e.g. it calls back to `A %fooCallback`. Tezos will put this internal operation to the end of the queue:
 
 | Current call | Queue before | Queue after |
 |--------------|--------------|-------------|
@@ -433,7 +433,7 @@ This BFS execution order is very different from Ethereum's direct synchronous me
 
 ![DFS order of execution](./assets/dfs_order.png)
 
-Here's a more complex scenario featuring a graph of 12 different operations. We omit the contract and entrypoint names and use lowercase latin letters and numbers to identify operations.
+Here is a more complex scenario featuring a graph of 12 different operations. We omit the contract and entrypoint names and use lowercase latin letters and numbers to identify operations.
 1. BFS order (Tezos):
 
 ![BFS order of execution](./assets/complex_bfs.png)
@@ -446,7 +446,7 @@ Here's a more complex scenario featuring a graph of 12 different operations. We 
 In practice, you should always bear in mind that the internal operations are queued and not executed immediately. It means that:
 
 * There is no guarantee that there would be no operations in between the current transaction and an emitted operation (e.g., on the BFS graph above, `b2` emits `b2a`, but 4 operations are executed in between these two).
-* If you emit a sequence of operations, they will be executed one after the other, with no operations in between. In other words, it's guaranteed that `b`, `c`, and `d`, emitted by `a`, will not be interleaved by other operations. This property holds true even if `a` is not the root of the call graph.
+* If you emit a sequence of operations, they will be executed one after the other, with no operations in between. In other words, it is guaranteed that `b`, `c`, and `d`, emitted by `a`, will not be interleaved by other operations. This property holds true even if `a` is not the root of the call graph.
 * If you emit a sequence of operations, the whole sequence will be executed _before_ any possible internal operations that may arise as a result of any of these operations.
 
 ## Returning values
@@ -454,10 +454,10 @@ In practice, you should always bear in mind that the internal operations are que
 When trying to port an existing distributed application to Tezos, you may want to _read_ the storage of another contract or call some entrypoint to get a computed value. In Tezos, entrypoints can only update storage and emit other operations.
 
 In theory, one can use a callback – the callee could emit an operation back to the caller with the computed value. However, this pattern is often insecure:
-* You should somehow make sure that the response matches the request. Due to the breadth-first order of execution, you can't assume that there have been no other requests in between.
-* Some contracts use `Tezos.sender` value for authorization. If a third-party contract can make a contract emit an operation, the dependent contracts may no longer be sure that the operation coming from the sender is indeed _authorized_ by the sender.
+* You should somehow make sure that the response matches the request. Due to the breadth-first order of execution, you cannot assume that there have been no other requests in between.
+* Some contracts use `Tezos.sender` value for authorisation. If a third-party contract can make a contract emit an operation, the dependent contracts may no longer be sure that the operation coming from the sender is indeed _authorised_ by the sender.
 
-Let's look at a simple access control contract with a "view" entrypoint:
+Let us look at a simple access control contract with a "view" entrypoint:
 <Syntax syntax="pascaligo">
 
 ```pascaligo
@@ -699,7 +699,7 @@ Tezos.create_contract(
 
 </Syntax>
 
-`Tezos.create_contract` returns a pair of _origination operation_ and the _address_ of the new contract. Note that, at this stage, the contract has not been originated yet! That's why you cannot forge a transaction to the newly-created contract: `Tezos.get_{contract, entrypoint}_opt` would fail if called before the origination operation has been processed.
+`Tezos.create_contract` returns a pair of _origination operation_ and the _address_ of the new contract. Note that, at this stage, the contract has not been originated yet! That is why you cannot forge a transaction to the newly-created contract: `Tezos.get_{contract, entrypoint}_opt` would fail if called before the origination operation has been processed.
 
 `CreateAndCall` contract in the examples folder shows how we can call the created contract with a callback mechanism:
 
