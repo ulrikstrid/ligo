@@ -58,6 +58,7 @@ depends: [
   "ezjsonm" {= "1.2.0"}
   "fieldslib" {= "v0.14.0"}
   "fmt" {= "0.8.9"}
+  "fpath" {= "0.7.3"}
   "getopt" {= "20120615"}
   "hacl" {= "0.3"}
   "hex" {= "1.4.0"}
@@ -97,6 +98,7 @@ depends: [
   "ocplib-json-typed" {= "0.7.1"}
   "ocplib-json-typed-bson" {= "0.7.1"}
   "octavius" {= "1.2.2"}
+  "odoc" {= "1.5.2"}
   "ounit" {= "2.2.4"}
   "ounit2" {= "2.2.4"}
   "parsexp" {= "v0.14.0"}
@@ -124,6 +126,9 @@ depends: [
   "ppxlib" {= "0.13.0"}
   "proto-alpha-utils" {= "dev"}
   "ptime" {= "0.8.5"}
+  "qcheck" {= "0.16"}
+  "qcheck-core" {= "0.16"}
+  "qcheck-ounit" {= "0.16"}
   "re" {= "1.9.0"}
   "repr" {= "0.2.1"}
   "resto" {= "0.5"}
@@ -174,6 +179,7 @@ depends: [
   "tezos-workers" {= "7.4"}
   "time_now" {= "v0.14.0"}
   "topkg" {= "1.0.3"}
+  "tyxml" {= "4.4.0"}
   "uchar" {= "0.0.2"}
   "uecc" {= "0.2"}
   "uri" {= "4.1.0"}
