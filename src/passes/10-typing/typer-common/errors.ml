@@ -79,7 +79,8 @@ type typer_error = [
   | `Typer_pattern_do_not_match of Location.t
   | `Typer_label_do_not_match of Ast_typed.label * Ast_typed.label * Location.t
   | `Typer_solver_no_progress of string
-  | `Typer_pattern_do_not_conform_type of Ast_core.type_expression Ast_core.pattern * Ast_typed.type_expression 
+  | `Typer_pattern_do_not_conform_type of Ast_core.type_expression Ast_core.pattern * Ast_typed.type_expression
+  | `Typer_redundant_product_pattern of Ast_core.expression list
 ]
 
 let pattern_do_not_conform_type p t = `Typer_pattern_do_not_conform_type (p,t)
@@ -173,6 +174,7 @@ let internal_error (loc : string) (msg : string) : typer_error = `Typer_internal
 let could_not_remove = fun constraints -> `Typer_could_not_remove constraints
 let trace_debug (msg : string) (err : typer_error) : typer_error = `Trace_debug (msg,err)
 let solver_made_no_progress (msg : string) : typer_error = `Typer_solver_no_progress msg
+let redundant_product_pattern (x : Ast_core.expression list) : typer_error = `Typer_redundant_product_pattern x
 
 let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> typer_error -> unit =
@@ -573,6 +575,11 @@ The following forms of subtractions are possible:
       Format.fprintf f
         "@[<hv>%a@.Pattern %a do not conform type %a @]"
         Snippet.pp p.location (Stage_common.PP.match_pattern Ast_core.PP.type_expression) p Ast_typed.PP.type_expression t
+    | `Typer_redundant_product_pattern x ->
+      let loc = List.fold_left (fun acc (x:Ast_core.expression) -> Location.cover acc x.location) Location.generated x in
+      Format.fprintf f
+        "@[<hv>%a@.Matching over redundant pattern@]"
+        Snippet.pp loc
   )
 
 let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
@@ -587,6 +594,14 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     let content = `Assoc [
       ("message", `String msg );
       ("children", error_jsonformat err); ] in
+    json_error ~stage ~content
+  | `Typer_redundant_product_pattern x ->
+    let loc = List.fold_left (fun acc (x:Ast_core.expression) -> Location.cover acc x.location) Location.generated x in
+    let message = Format.asprintf "Matching over redundant pattern" in
+    let content = `Assoc [
+      ("message", `String message );
+      ("location", Location.to_yojson loc);
+    ] in
     json_error ~stage ~content
   | `Typer_label_do_not_match (la , lb , loc ) ->
     let message = Format.asprintf "Labels do not match" in

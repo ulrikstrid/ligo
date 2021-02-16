@@ -48,7 +48,7 @@ let is_generated_partial_match : expression -> bool =
     match exp.expression_content with
     | E_constant {cons_name=C_FAILWITH ; arguments=[e]} -> (
       match get_a_string e with
-      | Some fw -> String.equal fw "PARTIAL MATCH"
+      | Some fw -> String.equal fw (Ligo_string.extract Stage_common.Backends.fw_partial_match)
       | None -> false
     )
     | _ -> false
