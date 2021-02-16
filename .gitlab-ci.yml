@@ -267,6 +267,9 @@ build-preview-ligo-webide-front-end:
   stage: ide-deploy
   image: node:12.20.0-buster
   script:
+    # - npm install netlify-cli -g
+    - apt-get update
+    - apt-get install -y --no-install-recommends jq
     - cd ./tools/webide/
     - mv ./packages/client/staging-netlify.toml ./packages/client/netlify.toml
     - yarn install
@@ -284,6 +287,8 @@ build-preview-ligo-webide-front-end:
       # changes:
       #   - tools/webide/**/*
       when: always
+  tags:
+  - gitlab-org-docker
 
 # This job builds the ligo-webide front-end from the tools/webide/ directory and does a production deployment to Netlify and publishes the site using the netlify-cli tool.
 build-ligo-webide-front-end:
