@@ -267,7 +267,6 @@ build-preview-ligo-webide-front-end:
   stage: ide-deploy
   image: node:12.20.0-buster
   script:
-    - apt-get install -y --no-install-recommends jq
     - cd ./tools/webide/
     - mv ./packages/client/staging-netlify.toml ./packages/client/netlify.toml
     - yarn install
