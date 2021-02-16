@@ -171,7 +171,9 @@ and restrict_cell repr (c : constructor_or_row) (tc : c_typeclass_simpl ref) (he
       let () = tc := { !tc with tc_constraints = restricted_constraints } in
       ok all_accept
     | P_variable _v                -> ok true (* Always keep unresolved variables; when they get resolved the heuristic will be called again and they will be kept or eliminated. *)
-    | P_apply    _                 -> failwith "unsupported, TODO soon"
+    | P_apply    _                 -> failwith "P_apply unsupported, TODO soon"
+    | P_abs      _                 -> failwith "P_abs unsupported, TODO soon"
+    | P_constraint pc              -> fail @@ corner_case @@ Format.asprintf "Kind error: a cell of a typeclass cannot contain a constraint. %a has kind Constraint but a type-level expression with kind * was expected" PP.type_constraint pc.pc
   else
     ok true
 
@@ -303,7 +305,7 @@ simplified constraint
  *       else None (\* case removed because type constructors are different *\)
  *     else None   (\* case removed because argument lists are of different lengths *\)
  * *\)
- *   | _, (P_forall _ | P_variable _ | P_apply _ | P_row _ | P_constant _) -> None (\* TODO: does this mean that we can't satisfy these constraints? *\)
+ *   | _, (P_forall _ | P_variable _ | P_apply _ | P_row _ | P_constant _ | P_abs _ | P_constraint _) -> None (\* TODO: does this mean that we can't satisfy these constraints? *\)
  * 
  * (\* Restricts a typeclass to the possible cases given v = k(a, …) in c *\)
  * let restrict repr (constructor_or_row : constructor_or_row) (tcs : c_typeclass_simpl) =

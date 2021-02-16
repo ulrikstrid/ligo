@@ -283,6 +283,8 @@ module Substitution = struct
             wrap (Todo "5") @@ T.P_forall { p with constraints ; body }
           )
         )
+      | P_abs _ -> failwith "P_abs : unimplemented"
+      | P_constraint _ -> failwith "P_constraint : unimplemented"
 
     and constraint_ ~c:{c;reason} ~substs =
       {c = constraint__ ~c ~substs;reason}

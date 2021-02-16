@@ -347,6 +347,9 @@ type type_value_ =
   | P_constant     of p_constant
   | P_apply        of p_apply   (* TODO: remove this until it is usead (for now waiting on a kinding system and appropriate evaluation heuristics similar to eval_beta_root in src/stages/typesystem/misc.ml) *)
   | P_row          of p_row
+    (* new stuff: *)
+  | P_abs          of p_abs
+  | P_constraint   of p_constraint
 
 and type_value = type_value_ location_wrap
 
@@ -354,6 +357,9 @@ and p_apply = {
     tf : type_value ;
     targ : type_value ;
   }
+
+and p_abs = { arg: type_variable; ret: type_value }
+and p_constraint = { pc: type_constraint }
 
 and p_ctor_args = type_value list
 and p_ctor_args_list = p_ctor_args list

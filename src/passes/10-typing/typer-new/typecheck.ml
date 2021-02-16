@@ -347,6 +347,8 @@ let check_forall_constraints_are_satisfied : db_access:db_access -> bound_var_as
           | Ast_typed.Types.P_apply _ ->
             failwith "p_apply is not currently used, this case should not happen. When it gets used, implement this case."
           | Ast_typed.Types.P_row r -> check_access_label ~db_access ~bound_var_assignments accessor c_access_label_tvar r
+          | Ast_typed.Types.P_abs _ -> failwith "P_abs: unimplemented"
+          | Ast_typed.Types.P_constraint _ -> failwith "P_constraint: unimplemented"
         )
         (* compare_type_values_using_bound_vars ~db_access ~bound_var_assignments (c_access_label_tval . accessor) == c_access_label_tvar *)
   in

@@ -108,7 +108,10 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
         possible, or invoke another heuristic.
         For now we just leave as-is and don't deduce anything *)
       failwith "TODO"
-
+    | P_abs _ ->
+      failwith "TODO"
+    | P_constraint _ ->
+      failwith "TODO"
   
 
 
