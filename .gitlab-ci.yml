@@ -277,15 +277,15 @@ build-preview-ligo-webide-front-end:
     - cd ./packages/client
     - npm install netlify-cli
     - npx netlify deploy --site $NETLIFY_SITE_ID --auth $NETLIFY_AUTH_TOKEN --json --alias="$CI_COMMIT_SHORT_SHA" > netlify.json
-    - export NETLIFY_DEPLOY_URL=$(jq -r .deploy_url netlify.json)
-    - export NETLIFY_DEPLOY_LOGS=$(jq -r .logs netlify.json)
+    - export NETLIFY_DEPLOY_URL=$(cat netlify.json | python3 -c "import sys, json; print(json.load(sys.stdin)['deploy_url'])")
+    - export NETLIFY_DEPLOY_LOGS=$(cat netlify.json | python3 -c "import sys, json; print(json.load(sys.stdin)['logs'])")
     - echo "The URL for this deployment is $NETLIFY_DEPLOY_URL"
     - echo "Logs for this deployment can be found at $NETLIFY_DEPLOY_LOGS"
     - '[ ! -z "$CI_MERGE_REQUEST_IID" ] && curl POST https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/merge_requests/$CI_MERGE_REQUEST_IID/notes -d "{\"body\": \"A new deploy preview is available on Netlify at $NETLIFY_DEPLOY_URL, you can view the logs at $NETLIFY_DEPLOY_LOGS\"}" --header "Content-Type: application/json" --header "Private-Token: $GITLAB_PERSONAL_API_PRIVATE_TOKEN"'
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      changes:
-        - tools/webide/**/*
+      # changes:
+      #   - tools/webide/**/*
       when: always
 
 # This job builds the ligo-webide front-end from the tools/webide/ directory and does a production deployment to Netlify and publishes the site using the netlify-cli tool.
