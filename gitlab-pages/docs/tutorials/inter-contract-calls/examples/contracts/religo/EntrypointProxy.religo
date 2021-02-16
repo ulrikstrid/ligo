@@ -3,12 +3,10 @@ type parameter = int;
 type storage = address;
 
 let get_add_entrypoint = (addr: address) => {
-  let entrypoint : option(contract(int)) = 
-      Tezos.get_entrypoint_opt("%add", addr);
-  switch(entrypoint) {
-  | Some(contract) => contract
-  | None =>
-      (failwith("The entrypoint does not exist") : contract(int))
+  let entrypoint: option(contract(int)) = Tezos.get_entrypoint_opt("%add", addr);
+  switch(entrypoint){
+  | Some (contract) => contract
+  | None => (failwith("The entrypoint does not exist") : contract(int))
   }
 };
 

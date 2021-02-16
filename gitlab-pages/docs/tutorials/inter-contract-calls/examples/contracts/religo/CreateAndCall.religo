@@ -1,9 +1,7 @@
 let create_and_call =  (st: list(address)) => {
     let (create_op, addr) =
         Tezos.create_contract(
-            (((p, s): (int, int)) => {
-                ([] : list(operation), (p + s))
-            }),
+            ((p, s): (int, int)) => ([] : list(operation), (p + s)),
             (None : option(key_hash)),
             0mutez,
             1

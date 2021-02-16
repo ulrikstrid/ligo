@@ -6,32 +6,30 @@
    "Security" tutorials for the details
 */
 
-type parameter = 
-| Call(unit => operation)
+type parameter =
+  Call((unit => operation))
 | IsWhitelisted((address, contract(bool)));
 
-type storage = { senders_whitelist: set(address) };
+type storage = {senders_whitelist: set(address) };
 
 let main = ((p, s): (parameter, storage)) => {
-  let op =
-    switch(p) {
-    | Call op => {
+  let op = 
+    switch(p){
+    | Call op =>
+        {
           if (Set.mem(Tezos.sender, s.senders_whitelist)) {
             op()
           } else {
             (failwith("Sender is not whitelisted") : operation)
           }
-      }
-    | IsWhitelisted addr_and_callback => {
+        }
+    | IsWhitelisted addr_and_callback =>
+        {
           let addr = addr_and_callback[0];
           let callback_contract = addr_and_callback[1];
           let whitelisted = Set.mem(addr, s.senders_whitelist);
-          Tezos.transaction(
-              whitelisted,
-              0mutez,
-              callback_contract
-          )
-      }
+          Tezos.transaction(whitelisted, 0mutez, callback_contract)
+        }
     };
   ([op], s)
 };
