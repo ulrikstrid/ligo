@@ -108,6 +108,10 @@ let%expect_test _ =
            test
                Subcommand: Test a contract with the LIGO interpreter (BETA).
 
+           test-random
+               Subcommand: Test a boolean function with the LIGO interpreter
+               (BETA).
+
            transpile-contract
                Subcommand: Transpile a contract to another syntax.
 
@@ -228,6 +232,10 @@ let%expect_test _ =
 
            test
                Subcommand: Test a contract with the LIGO interpreter (BETA).
+
+           test-random
+               Subcommand: Test a boolean function with the LIGO interpreter
+               (BETA).
 
            transpile-contract
                Subcommand: Transpile a contract to another syntax.

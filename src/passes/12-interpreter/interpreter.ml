@@ -1,6 +1,7 @@
 open Trace
 open Ligo_interpreter.Types
 open Ligo_interpreter.Combinators
+open Ast_typed.Combinators
 include Ast_typed.Types
 
 module Errors = Errors
@@ -648,6 +649,106 @@ let eval_test : ?options:options -> Ast_typed.module_fully_typed -> string -> (b
   in
   match List.find_opt aux v with
   | Some (_,v) -> if is_bool v then ok @@ is_true v else fail @@ Errors.bad_test v test_entry
+  | None -> fail @@ Errors.test_entry_not_found test_entry
+
+let eval_random : ?options:options -> Ast_typed.module_fully_typed -> string -> (env * (expression_variable * expression) option , Errors.interpreter_error) result =
+  fun ?(options = default_options) (Module_Fully_Typed prg) test_entry ->
+    let init_ctxt = Ligo_interpreter.Mini_proto.option_to_context options in
+    let aux : (env * (expression_variable * expression) option) -> declaration location_wrap -> (env * (expression_variable * expression) option, Errors.interpreter_error) Trace.result =
+      fun (top_env, b) el ->
+        match Location.unwrap el with
+        | Ast_typed.Declaration_type _ -> ok (top_env, b)
+        | Ast_typed.Declaration_constant {binder; expr ; inline=_ ; _} ->
+          let entry = Var.to_name @@ Location.unwrap binder in
+          if String.equal entry test_entry then
+            ok (top_env, Some (binder, expr))
+          else
+            let>>= v =
+              try
+                let>>= (v, _ctxt) = Monad.eval (eval_ligo expr top_env) init_ctxt None in
+                ok v
+              with Temporary_hack s -> fail @@ Errors.failwith s
+            in
+            let top_env' = Env.extend top_env (binder, v) in
+            ok (top_env', b)
+        | Ast_typed.Declaration_module {module_binder; module_=_} ->
+          let>>= module_env =
+            failwith "Module are not handled in interpreter yet"
+          in
+          let top_env' = Env.extend top_env (Location.wrap @@ Var.of_name module_binder, module_env) in
+          ok (top_env', b)
+        | Ast_typed.Module_alias _ -> failwith "Module are not handled in interpreter yet"
+    in
+    bind_fold_list aux (Env.empty_env, None) prg
+
+let rec expr_gen : type_expression -> expression QCheck.Gen.t =
+  fun type_expr ->
+  if is_t_unit type_expr then
+    QCheck.Gen.(unit >>= fun _ ->
+                return e_a_unit)
+  else if is_t_int type_expr then
+    QCheck.Gen.(small_int >>= fun n ->
+                return (e_a_int (Z.of_int n)))
+  else if is_t_nat type_expr then
+    QCheck.Gen.(small_nat >>= fun n ->
+                return (e_a_nat (Z.of_int n)))
+  else if is_t_list type_expr then
+    match get_t_list type_expr with
+    | Some type_expr_r ->
+       let rec of_list l = match l with
+         | [] -> e_a_nil type_expr_r
+         | hd :: tl -> e_a_cons hd (of_list tl) in
+       QCheck.Gen.(list (expr_gen type_expr_r) >>= fun l ->
+                   return (of_list l))
+    | None -> failwith "type error"
+  else if is_t_sum type_expr then
+    match get_t_sum type_expr with
+    | Some rows ->
+       let l = LMap.to_kv_list rows.content in
+       let gens = List.map (fun (label, row_el) ->
+                    QCheck.Gen.(expr_gen row_el.associated_type >>= fun v ->
+                    return (e_a_constructor ~layout:rows.layout rows.content label v))) l in
+       QCheck.Gen.oneof gens
+    | None -> failwith "type error"
+  else if is_t_record type_expr then
+    match get_t_record type_expr with
+    | Some rows ->
+       let l = LMap.to_kv_list rows.content in
+       let _gens = List.map (fun (label, row_el) ->
+                       (label, expr_gen row_el.associated_type)) l in
+       let rec gen l : ((label * expression) list) QCheck.Gen.t = match l with
+         | [] -> QCheck.Gen.(return [])
+         | (label, expr) :: tl -> QCheck.Gen.(expr >>= fun row_el -> (gen tl >>= fun r ->
+                                   return ((label, row_el) :: r))) in
+       QCheck.Gen.(gen _gens >>= fun l ->
+                   return (e_a_record ~layout:rows.layout (LMap.of_list l)))
+    | None -> failwith "type error"
+  else
+    (failwith "Test generator not implemented")
+
+let eval_test_func_expr  : int -> Monad.context -> env -> type_expression -> expression -> (bool , Errors.interpreter_error) result =
+  fun ct init_ctxt env type_expr expr ->
+     let generator = QCheck.make (expr_gen type_expr) in
+     let expr_app (n : expr) : expression = e_a_application expr n in
+     let e_bool (n : expr) : bool = to_bool @@
+       try
+         let>>= (v, _ctxt) = Monad.eval (eval_ligo (expr_app n) env) init_ctxt None in
+         if is_true v then ok true
+         else fail @@ Errors.failwith ""
+       with Temporary_hack s -> fail @@ Errors.failwith s in
+     let cell = QCheck.Test.make_cell ~count:ct ~name:"my_buggy_test" generator e_bool in
+     let r = QCheck.Test.check_cell cell in
+       ok @@ QCheck.TestResult.is_success r
+
+let eval_test_random : ?options:options -> Ast_typed.module_fully_typed -> string -> (bool , Errors.interpreter_error) result =
+  fun ?(options = default_options) prg test_entry ->
+  let init_ctxt = Ligo_interpreter.Mini_proto.option_to_context options in
+  let>>= (env, b) = eval_random ~options prg test_entry in
+  match b with
+  | Some (_, expr) ->
+     let ty_expr = get_type_expression expr in
+     let (src, _) = get_t_function_exn ty_expr in
+     eval_test_func_expr 1000 init_ctxt env src expr
   | None -> fail @@ Errors.test_entry_not_found test_entry
 
 let () = Printexc.record_backtrace true

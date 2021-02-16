@@ -664,6 +664,22 @@ let test =
   let doc = "Subcommand: Test a contract with the LIGO interpreter (BETA)." in
   (Term.ret term , Term.info ~doc cmdname)
 
+let test_random =
+  let f source_file test_entry syntax typer_switch protocol_version amount balance sender source now display_format =
+    return_result ~display_format (Ligo_interpreter.Formatter.test_format) @@
+      let%bind init_env   = Helpers.get_initial_env protocol_version in
+      let%bind typer_switch = Helpers.typer_switch_to_variant typer_switch in
+      let options = Compiler_options.make ~typer_switch ~init_env () in
+      let%bind typed,_,_    = Compile.Utils.type_file ~options source_file syntax Env in
+      let%bind options    = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
+      Compile.Of_typed.some_interpret_random ~options typed test_entry
+  in
+  let term =
+    Term.(const f $ source_file 0 $ test_entry 1 $ syntax $ typer_switch $ protocol_version $ amount $ balance $ sender $ source $ now $ display_format) in
+  let cmdname = "test-random" in
+  let doc = "Subcommand: Test a boolean function with the LIGO interpreter (BETA)." in
+  (Term.ret term , Term.info ~doc cmdname)
+
 let buffer = Buffer.create 100
 
 
@@ -671,6 +687,7 @@ let run ?argv () =
   let err = Format.formatter_of_buffer buffer in
   Term.eval_choice ~err ?argv main [
     test ;
+    test_random ;
     compile_file ;
     measure_contract ;
     compile_parameter ;

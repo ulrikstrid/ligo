@@ -3,6 +3,7 @@
   (public_name ligo.interpreter)
   (libraries
     simple-utils
+    qcheck
     tezos-utils
     proto-alpha-utils
     ast_typed

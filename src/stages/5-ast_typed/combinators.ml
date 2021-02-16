@@ -220,6 +220,10 @@ let is_t_nat t = Option.is_some (get_t_nat t)
 let is_t_string t = Option.is_some (get_t_string t)
 let is_t_bytes t = Option.is_some (get_t_bytes t)
 let is_t_int t = Option.is_some (get_t_int t)
+let is_t_sum t = Option.is_some (get_t_sum t)
+let is_t_pair t = Option.is_some (get_t_pair t)
+let is_t_unit t = Option.is_some (get_t_unit t)
+let is_t_record t = Option.is_some (get_t_record t)
 
 let assert_t_list_operation (t : type_expression) : unit option =
   match get_t_list t with
@@ -239,6 +243,8 @@ let ez_e_record (lst : (label * expression) list) : expression_content =
   e_record map
 let e_some s : expression_content = E_constant {cons_name=C_SOME;arguments=[s]}
 let e_none (): expression_content = E_constant {cons_name=C_NONE; arguments=[]}
+let e_nil (): expression_content = E_constant {cons_name=C_NIL; arguments=[]}
+let e_cons hd tl : expression_content = E_constant {cons_name=C_CONS;arguments=[hd; tl]}
 
 let e_unit () : expression_content =     E_literal (Literal_unit)
 let e_int n : expression_content = E_literal (Literal_int n)
@@ -258,6 +264,7 @@ let e_pair a b : expression_content = ez_e_record [(Label "0",a);(Label "1", b)]
 let e_application lamb args : expression_content = E_application {lamb;args}
 let e_variable v : expression_content = E_variable v
 let e_let_in let_binder rhs let_result inline = E_let_in { let_binder ; rhs ; let_result; inline }
+let e_sum l a : expression_content = ez_e_record [(l,a)]
 
 let e_constructor constructor element: expression_content = E_constructor {constructor;element}
 
@@ -270,6 +277,8 @@ let e_a_mutez n = make_e (e_mutez n) (t_mutez ())
 let e_a_bool b = make_e (e_bool b) (t_bool ())
 let e_a_string s = make_e (e_string s) (t_string ())
 let e_a_address s = make_e (e_address s) (t_address ())
+let e_a_nil t = make_e (e_nil ()) (t_list t)
+let e_a_cons hd tl = make_e (e_cons hd tl) (t_list hd.type_expression)
 let e_a_pair a b = make_e (e_pair a b)
   (t_pair a.type_expression b.type_expression )
 let e_a_some s = make_e (e_some s) (t_option s.type_expression)
@@ -285,7 +294,7 @@ let e_a_application a b = make_e (e_application a b) (get_type_expression b)
 let e_a_variable v ty = make_e (e_variable v) ty
 let ez_e_a_record ?layout r = make_e (ez_e_record r) (ez_t_record ?layout (List.mapi (fun i (x, y) -> x, {associated_type = y.type_expression ; michelson_annotation = None ; decl_pos = i}) r))
 let e_a_let_in binder expr body attributes = make_e (e_let_in binder expr body attributes) (get_type_expression body)
-
+let e_a_constructor ?(layout=default_layout) m l v = make_e (e_constructor l v) (t_sum ~layout:layout m)
 
 
 let get_a_int (t:expression) =
