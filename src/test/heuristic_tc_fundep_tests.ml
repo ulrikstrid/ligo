@@ -19,7 +19,7 @@ let map (k,v) = mk C_map [k; v]
 (* A bunch of type variables: *)
 let (m,n,o,p,x,y,z) = let v name = Var.fresh ~name () in v "m", v "n", v "o", v "p", v "x", v "y", v "z"
 
-let test''
+let test_restrict
     (name : string)
     (* Restriction function under test *)
     (restrict : (type_variable -> type_variable) -> constructor_or_row -> c_typeclass_simpl -> (c_typeclass_simpl, _) result)
@@ -45,7 +45,7 @@ let test''
 
 let tests1 restrict = [
   (
-  test'' "restrict1" restrict
+  test_restrict "restrict1" restrict
     (* New info: a variable assignment constraint: *)
     x "=" C_nat[]
     (* Initial typeclass constraint: *)
@@ -53,10 +53,10 @@ let tests1 restrict = [
     (* Intermediate step (not tested): *)
     (**)        [ false              ;  true             ;  true                ; ]
     (* Expected restricted typeclass: *)
-    [y;z]   "∈" [                      [nat ; int ; int] ; [nat ; int ; string] ; ]
+    [x;y;z] "∈" [                      [nat ; int ; int] ; [nat ; int ; string] ; ]
 );
 
-(  test'' "restrict2" restrict
+(  test_restrict "restrict2" restrict
     (* New info: a variable assignment constraint: *)
     x "=" C_map[m;n]
     (* Initial typeclass constraint: *)
@@ -64,10 +64,10 @@ let tests1 restrict = [
     (* Intermediate step (not tested): *)
     (**)        [ false        ;  true                  ; true                      ; ]
     (* Expected restricted typeclass constraint: *)
-    [m;n;y] "∈" [                [map(nat,nat)   ; int] ; [map(nat,string)   ; int] ; ]
+    [x;y]   "∈" [                [map(nat,nat)   ; int] ; [map(nat,string)   ; int] ; ]
 )  ;
 
-(  test'' "restrict3" restrict
+(  test_restrict "restrict3" restrict
     (* New info: a variable assignment constraint: *)
     y "=" C_int[]
     (* Initial typeclass constraint: *)
@@ -75,11 +75,11 @@ let tests1 restrict = [
     (* Intermediate step (not tested): *)
     (**)        [false               ; true              ; true                 ; ]
     (* Expected restricted typeclass: *)
-    [x;z]   "∈" [                      [nat ; int ; int] ; [nat ; int ; string] ; ]
+    [x;y;z] "∈" [                      [nat ; int ; int] ; [nat ; int ; string] ; ]
 )  ;    
 ]
 
-let test'
+let test_deduce_and_clean
     name
     (deduce_and_clean : (type_variable -> type_variable) -> c_typeclass_simpl -> (_, _) result)
     repr
@@ -100,7 +100,7 @@ let inferred v (_eq : string) c args = v, c, args
 let tests2 deduce_and_clean =
   let repr : type_variable ->type_variable = (fun v -> v) in
   [
-  test' "deduce_and_clean split type constructor" deduce_and_clean repr
+  test_deduce_and_clean "deduce_and_clean split type constructor" deduce_and_clean repr
     (* Input restricted typeclass: *)
     [x;z]   "∈" [ [ map( nat , unit ) ; int ] ; [ map( bytes , mutez ) ; string ] ; ]
     (* Expected inferred constraints: *)
@@ -109,7 +109,7 @@ let tests2 deduce_and_clean =
     [m;n;z] "∈" [ [      nat ; unit   ; int ] ; [      bytes ; mutez   ; string ] ; ]
   ;
 
-  test' "deduce_and_clean recursive" deduce_and_clean repr
+  test_deduce_and_clean "deduce_and_clean recursive" deduce_and_clean repr
     (* Input restricted typeclass: *)
     [x;z]   "∈" [ [ map( nat , unit ) ; int ] ; [ map( bytes , unit ) ; string ] ; ]
     (* Expected inferred constraints: *)
@@ -119,7 +119,7 @@ let tests2 deduce_and_clean =
     [m;z]   "∈" [ [      nat ;          int ] ; [      bytes ;          string ] ; ]
   ;
 
-  test' "deduce_and_clean remove recursive" deduce_and_clean repr
+  test_deduce_and_clean "deduce_and_clean remove recursive" deduce_and_clean repr
     (* Input restricted typeclass: *)
     [x;z]   "∈" [ [ map( nat , unit ) ; int ] ; [ map( nat , unit ) ; string ] ; ]
     (* Expected inferred constraints: *)
@@ -130,7 +130,7 @@ let tests2 deduce_and_clean =
     [z]     "∈" [ [                     int ] ; [                     string ] ; ]
   ;
 
-  test' "deduce_and_clean remove no-argument type constructor" deduce_and_clean repr
+  test_deduce_and_clean "deduce_and_clean remove no-argument type constructor" deduce_and_clean repr
     (* Input restricted typeclass: *)
     [x;z]   "∈" [ [nat ; int] ; [nat ; string] ; ]
     (* Expected inferred constraints: *)
@@ -139,7 +139,7 @@ let tests2 deduce_and_clean =
     [z]     "∈" [ [      int] ; [      string] ; ]
   ;
 
-  test' "deduce_and_clean remove two no-argument type constructors" deduce_and_clean repr
+  test_deduce_and_clean "deduce_and_clean remove two no-argument type constructors" deduce_and_clean repr
     (* Input restricted typeclass: *)
     [x;y;z] "∈" [ [nat ; int ; unit] ; [nat ; string ; unit] ; ]
     (* Expected inferred constraints: *)
@@ -149,7 +149,7 @@ let tests2 deduce_and_clean =
     [y]     "∈" [ [      int       ] ; [      string       ] ; ]
   ;
 
-  test' "deduce_and_clean split type constructor (again)" deduce_and_clean repr
+  test_deduce_and_clean "deduce_and_clean split type constructor (again)" deduce_and_clean repr
     (* Input restricted typeclass: *)
     [x;z]   "∈" [ [map(nat,unit) ; int] ; [map(unit,nat) ; string] ; ]
     (* Expected inferred constraints: *)
@@ -158,7 +158,7 @@ let tests2 deduce_and_clean =
     [m;n;z] "∈" [ [    nat;unit  ; int] ; [    unit;nat  ; string] ; ]
   ;
 
-  test' "deduce_and_clean two recursive" deduce_and_clean repr
+  test_deduce_and_clean "deduce_and_clean two recursive" deduce_and_clean repr
     (* Input restricted typeclass: *)
     [x;y;z]   "∈" [ [ map( nat , unit ) ; map( bytes , mutez ) ; int ] ; [ map( nat , unit ) ; map( bytes , unit ) ; string ] ; ]
     (* Expected inferred constraints: *)
