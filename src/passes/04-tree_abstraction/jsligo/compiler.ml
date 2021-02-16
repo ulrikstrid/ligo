@@ -420,23 +420,45 @@ and compile_expression_in : CST.expr -> env -> (AST.expr, _) result = fun e env 
       | Neq ne   -> compile_bin_op C_NEQ ne env
     )
   )
-  | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, EObject _)]); _}; _}); region} ->
+  | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, EObject {value = {inside = fields; _}; _})]); _}; _}); region} ->
     (* Pattern matching for JsLIGO is implemented as a 'built-in function' as
        JavaScript and TypeScript don't have native pattern matching. *)
+    let fields' = Utils.nsepseq_to_list fields in
+    let compile_parameters p =
+      let rec aux = function
+        CST.EVar v -> ok @@ Var.of_name v.value
+      | EPar par -> aux par.value.inside
+      | ESeq {value = (hd, []); _} -> aux hd
+      | EAnnot {value = (a, _, _); _} -> aux a
+      | EUnit _ -> ok @@ Var.of_name "_"
+      | _ -> failwith "improve error message"
+      in 
+      aux p
+    in
+    let compile_constr_pattern = function 
+      CST.Property {value = {name = EConstr {value = constr; _}; value; _}; _} -> (
+        match value with 
+          EFun {value = {parameters; body; _}; _} -> 
+            let%bind parameters = compile_parameters parameters in
+            let%bind expr = compile_function_body_to_expression body env in
+            ok ((Label constr, Location.wrap @@ parameters), expr)
+        | _ as e -> fail @@ invalid_case constr e (* TODO: improve error message *)
+      ) 
+    | _ -> failwith "todo: write a better error message"
+    in
+    let loc = Location.lift region in
+    let%bind matchee = compile_expression_in input env in
+    let%bind constrs = bind_map_list compile_constr_pattern fields' in
+    let cases = AST.Match_variant constrs in
+    ok @@ e_matching ~loc matchee cases
 
-    failwith "TODO: pattern match on constructors"
-  | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, EArray _)]); _}; _}); region} ->
-    (* Pattern matching for JsLIGO is implemented as a 'built-in function' as
-        JavaScript and TypeScript don't have native pattern matching. *)
-    failwith "TODO: pattern match on tuples"
-
-  | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, ECall {value = EVar {value="list"; _}, _ ;_})]); _}; _}); region} ->
-    (* Pattern matching for JsLIGO is implemented as a 'built-in function' as
-        JavaScript and TypeScript don't have native pattern matching. *)
+  | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, ECall {value = EVar {value="list"; _}, Multiple args ;_})]); _}; _}); region} ->
+    (* let args = Utils.nsepseq_to_list args.value.inside in
+    let compile_case = function 
+      CST.EFun _ -> failwith "todo"
+    | _ -> ()
+    in *)
     failwith "TODO: pattern match on lists"
-  
-    
-    
   
   (* This case is due to a bad besign of our constant it as to change
     with the new typer so LIGO-684 on Jira *)
