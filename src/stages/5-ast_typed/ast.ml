@@ -467,7 +467,6 @@ and constraint_identifier_set_map = constraint_identifier_set typeVariableMap
 and c_constructor_simpl_typeVariableMap = c_constructor_simpl typeVariableMap
 and c_typeclass_simpl_constraint_identifierMap = c_typeclass_simpl constraint_identifierMap
 and constraint_identifier_constraint_identifierMap = (constraint_identifier, constraint_identifier) RedBlackTrees.PolyMap.t
-and type_constraint_simpl_list = type_constraint_simpl list
 
 and c_constructor_simpl_list = c_constructor_simpl list
 and c_poly_simpl_list        = c_poly_simpl        list
@@ -571,8 +570,9 @@ type proof_trace =
   (* | … future extension: allow for proof traces *)
 
 type update = {
-  remove_constraints : type_constraint_simpl_list ;
+  remove_constraints : type_constraint_simpl list ;
   add_constraints : type_constraint_list ;
+  add_constraints_simpl : type_constraint_simpl list ;
   proof_trace : proof_trace ;
 }
 type updates = update list

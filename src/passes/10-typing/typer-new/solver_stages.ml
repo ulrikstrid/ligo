@@ -1,5 +1,4 @@
 open Trace
-open Worklist_and_pending
 
 module Core = Typesystem.Core
 module Map = RedBlackTrees.PolyMap
@@ -8,11 +7,13 @@ module UF = UnionFind.Poly2
 open Solver_types
 
 module M(Plugins : Plugins)(Solver : sig
-    type plugin_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState).flds
-    type nonrec typer_state = plugin_states Solver_types.typer_state
+    type indexers_plugins_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState).flds
+    type nonrec typer_state = indexers_plugins_states Solver_types.typer_state
+    module Worklist_and_pending : module type of Worklist_and_pending.M(struct type nonrec indexers_plugins_states = indexers_plugins_states end)
   end) = struct
 
   open Solver
+  open Worklist_and_pending
 
   let filter_already_added ((state : typer_state), type_constraint) =
     Format.printf "in filter_aleady_added\n%!";

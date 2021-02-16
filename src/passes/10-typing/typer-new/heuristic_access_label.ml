@@ -50,13 +50,10 @@ let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds
   | SC_Access_label l               -> (
       let other_rows_lhs = Grouped_by_variable.get_rows_by_lhs (repr l.record_type) Indexes.grouped_by_variable in
       let other_constructors_lhs = Grouped_by_variable.get_constructors_by_lhs (repr l.record_type) Indexes.grouped_by_variable in
-      let other_records_lhs, other_variants_lhs = List.partition (function { r_tag = C_record; _ } -> true | { r_tag = C_variant; _ } -> false) (MultiSet.elements other_rows_lhs) in
-      if List.length other_variants_lhs != 0 then
-        failwith (Format.asprintf "TODO: type error with %a (needs a record, but) %a (are variants)" PP.c_access_label_simpl l (Ast_typed.PP.list_sep_d PP.c_row_simpl) other_variants_lhs)
-      else if not (MultiSet.is_empty other_constructors_lhs) then
+      if not (MultiSet.is_empty other_constructors_lhs) then
         failwith (Format.asprintf "TODO: type error with %a (needs a record, but) %a (are constructors)" PP.c_access_label_simpl l (MultiSet.pp PP.c_constructor_simpl) other_constructors_lhs)
       else
-      let cs_pairs = List.map (fun x -> { a_k_var = x ; a_var_l = l }) other_records_lhs in
+      let cs_pairs = MultiSet.map_elements (fun x -> { a_k_var = x ; a_var_l = l }) other_rows_lhs in
       (* Format.printf "cs_pairs (%a)\n%!" (PP_helpers.list_sep_d printer) cs_pairs; *)
       cs_pairs
     )
@@ -104,11 +101,6 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
   assert (Compare.type_variable row_tv record_type = 0);
   (* produce constraints: *)
 
-  let%bind () = match a_k_var.r_tag with
-    | C_record -> ok ()
-    | C_variant -> fail @@ corner_case "Type error: can't access field on variant"
-  in
-
   let%bind field_type =
     match LMap.find_opt a_var_l.label a_k_var.tv_map with
     | None -> fail @@ corner_case "Type error: label {a_var_l.label} does not exist in record {a_k_var.tv_map}"
@@ -128,6 +120,7 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
     {
       remove_constraints = [];
       add_constraints = eqs;
+      add_constraints_simpl = [];
       proof_trace = Axiom (HandWaved "TODO: proof trace") (* Axiom Axioms.f_equal *)
     }
   ]

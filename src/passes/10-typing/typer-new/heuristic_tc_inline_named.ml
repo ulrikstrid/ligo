@@ -158,6 +158,7 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
   ok [{
       remove_constraints = [SC_Typeclass selected.tc];
       add_constraints = cleaned :: deduced;
+      add_constraints_simpl = [];
       proof_trace = Axiom (HandWaved "unfold")
     }]
 

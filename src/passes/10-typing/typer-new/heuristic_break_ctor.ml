@@ -182,6 +182,7 @@ let propagator : (selector_output, _) Type_variable_abstraction.Solver_types.pro
     {
       remove_constraints = [];
       add_constraints = eqs;
+      add_constraints_simpl = [];
       proof_trace = Axiom Type_variable_abstraction.Axioms.f_equal
     }
   ]

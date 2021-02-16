@@ -158,6 +158,7 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       type update = {
         remove_constraints : type_constraint_simpl list ;
         add_constraints : type_constraint list ;
+        add_constraints_simpl : type_constraint_simpl list ;
         proof_trace : proof_trace ;
       }
       type updates = update list

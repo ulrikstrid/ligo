@@ -624,10 +624,11 @@ let axiom ppf = function |HandWaved s -> fprintf ppf "HandWaved %s" s
 let proof_trace ppf = function
   Axiom a -> fprintf ppf "Axiom %a" axiom a
 
-let update ppf {remove_constraints;add_constraints;proof_trace=x} =
-  fprintf ppf "{@[<hv 2> @ remove_constraints : %a;@ add_constraints : %a;@ proof_trace : %a;@]@ }"
+let update ppf {remove_constraints;add_constraints;add_constraints_simpl;proof_trace=x} =
+  fprintf ppf "{@[<hv 2> @ remove_constraints : %a;@ add_constraints : %a;@ add_constraints_simpl : %a;@ proof_trace : %a;@]@ }"
     (list type_constraint_simpl_short) remove_constraints
     (list type_constraint_short) add_constraints
+    (list type_constraint_simpl_short) add_constraints_simpl
     proof_trace x
 
 let updates_list ppf = fprintf ppf "%a" (list (list update))

@@ -20,6 +20,8 @@ let map f lst =
   in
   List.rev (aux [] f lst)
 
+let set_nth new_i l new_v = mapi (fun old_i old_v -> if old_i = new_i then new_v else old_v) l
+
 let map2 f lst_a lst_b ~ok ~fail =
   let rec aux acc f lst_a lst_b =
     match lst_a, lst_b with

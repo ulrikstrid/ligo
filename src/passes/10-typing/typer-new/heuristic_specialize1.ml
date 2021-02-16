@@ -113,6 +113,7 @@ let propagator : (selector_output , typer_error) Type_variable_abstraction.Solve
         {
           remove_constraints = [ SC_Poly a ];
           add_constraints = eqs;
+          add_constraints_simpl = [];
           proof_trace = Axiom Axioms.specialize
         }
       ]

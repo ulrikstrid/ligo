@@ -267,4 +267,12 @@ let wrapped_deduce_and_clean repr tc ~(original:c_typeclass_simpl) =
   let deduced : type_constraint list = List.map aux deduced in
   ok (deduced, cleaned)
 
+(* let wrapped_deduce_and_clean repr tc ~(original:c_typeclass_simpl) =
+  let%bind {deduced; cleaned} = deduce_and_clean repr tc in
+  let cleaned = SC_Typeclass { cleaned with original_id = Some original.id_typeclass_simpl } in
+  let aux c = SC_Constructor c in
+  let deduced = List.map aux deduced in
+  ok (deduced, cleaned)
+*)
+
 end
