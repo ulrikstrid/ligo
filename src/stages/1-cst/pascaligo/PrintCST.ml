@@ -76,7 +76,7 @@ TODO: Really?
 
      * then name of a constructor followed by "_arg", for example,
        "print_E_Ctor_arg" means that the argument of the constructor
-       [E_Ctor] is printed, whereas, for example, [print_Int] would
+       [E_Ctor] is printed, whereas, for example, [print_E_Int] would
        mean that the constructor itself would be printed, because it
        denotes a token;
 
@@ -87,21 +87,6 @@ TODO: Really?
 
 let compact state (region: Region.t) =
   region#compact ~offsets:state#offsets state#mode
-
-(* Printing the tokens (leaves of the CST) *)
-
-let print_E_String state {value; region} =
-  let reg  = compact state region in
-  let node = sprintf "%s%S (%s)\n" state#pad_path value reg
-  in Buffer.add_string state#buffer node
-
-let print_P_String = print_E_String
-let print_T_String = print_E_String
-
-let print_E_Verbatim state {value; region} =
-  let reg  = compact state region in
-  let node = sprintf "%s{|%s|} (%s)\n" state#pad_path value reg
-  in Buffer.add_string state#buffer node
 
 (* Higher-order printers *)
 
@@ -145,18 +130,70 @@ let print_multi state label ?region children =
   print_root   state label ?region;
   print_forest state children
 
+let print_multi_reg state {value; region} children =
+  print_root   state value ~region;
+  print_forest state children
+
 let print_unary state label ?region print_sub node =
   print_multi state label ?region [mk_child print_sub node]
 
 let print_par state label ?region print_sub (e : 'a par reg) =
   print_unary state label ?region print_sub e.value.inside
 
+(* Printing strings *)
+
+let print_string state {value; region} =
+  let reg  = compact state region in
+  let node = sprintf "%s%S (%s)\n" state#pad_path value reg
+  in Buffer.add_string state#buffer node
+
+let print_E_String state =
+  print_unary state "E_String" print_string
+
+let print_P_String state =
+  print_unary state "P_String" print_string
+
+let print_T_String state =
+  print_unary state "T_String" print_string
+
+let print_E_Verbatim state {value; region} =
+  let reg  = compact state region in
+  let node = sprintf "%s{|%s|} (%s)\n" state#pad_path value reg
+  in Buffer.add_string state#buffer node
+
+(* Printing integers and natural numbers *)
+
+let print_int state label {value=(lexeme, z); region} =
+  let children = [
+    mk_child print_ident {value=lexeme; region};
+    mk_child print_node  (Z.to_string z)]
+  in print_multi state label children
+
+let print_T_Int state = print_int state "T_Int"
+and print_P_Int state = print_int state "P_Int"
+and print_E_Int state = print_int state "E_Int"
+
+and print_P_Nat state = print_int state "P_Nat"
+and print_E_Nat state = print_int state "E_Nat"
+
+(* Printing bytes *)
+
+let print_bytes state label {value=(lexeme, hex); region} =
+  let children = [
+    mk_child print_ident {value=lexeme; region};
+    mk_child print_node  (Hex.show hex)]
+  in print_multi state label children
+
+let print_P_Bytes state = print_bytes state "P_Bytes"
+and print_E_Bytes state = print_bytes state "E_Bytes"
+
 (* Printing the root of the CST *)
 
 let rec print_cst state (node : cst) =
-  print_multi state "<cst>"
-  @@ List.map (mk_child print_declaration)
+  let children =
+     List.map (mk_child print_declaration)
   @@ Utils.nseq_to_list node.decl
+  in print_multi state "<cst>" children
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
@@ -184,8 +221,7 @@ and print_D_Const state (node : const_decl reg) =
   in print_multi state "D_Const" children
 
 and print_attributes state =
-  print_multi state "<attributes>"
-  <@ List.map (mk_child print_ident)
+  print_multi state "<attributes>" <@ List.map (mk_child print_ident)
 
 (* Function declarations *)
 
@@ -203,9 +239,10 @@ and print_D_Fun state (node : fun_decl reg) =
 and print_recursive state _ = print_node state "recursive"
 
 and print_parameters state (node : parameters) =
-  print_multi state "<parameters>"
-  @@ List.map (mk_child print_param_decl)
+  let children =
+     List.map (mk_child print_param_decl)
   @@ Utils.nsepseq_to_list node.value.inside
+  in print_multi state "<parameters>" children
 
 and print_param_decl state = function
   ParamConst d -> print_ParamConst state d
@@ -276,17 +313,21 @@ and print_D_Type state (node : type_decl reg) =
 and print_type_expr state = function
   T_Ctor    e -> print_T_Ctor    state e
 | T_Fun     e -> print_T_Fun     state e
-| T_Int     e -> print_multi     state "T_Int" (mk_children_int e)
+| T_Int     e -> print_T_Int     state e
 | T_ModPath e -> print_T_ModPath state e
-| T_Par     e -> print_par       state "T_Par" print_type_expr e
+| T_Par     e -> print_T_Par     state e
 | T_Prod    e -> print_T_Prod    state e
 | T_Record  e -> print_T_Record  state e
-| T_String  e -> print_unary     state "T_String" print_T_String e
+| T_String  e -> print_T_String  state e
 | T_Sum     e -> print_T_Sum     state e
-| T_Var     e -> print_unary     state "T_Var" print_ident e
-| T_Wild    e -> print_unary     state "T_Wild" print_wild e
+| T_Var     e -> print_T_Var     state e
+| T_Wild    e -> print_T_Wild    state e
 
-(* Module paths as type expressions *)
+and print_T_Wild state = print_unary state "T_Wild" print_wild
+and print_T_Var  state = print_unary state "T_Var" print_ident
+
+and print_T_Par state (node : type_expr par reg) =
+  print_unary state "T_Par" print_type_expr node.value.inside
 
 and print_T_ModPath state (node : type_expr module_path reg) =
   let node = node.value in
@@ -299,11 +340,12 @@ and print_T_ModPath state (node : type_expr module_path reg) =
 
 and print_T_Record state (node : field_decl reg ne_injection reg) =
   let node = node.value in
-  let children =
-    (List.map (mk_child print_field_decl)
-     @@ Utils.nsepseq_to_list node.ne_elements)
-    @ [mk_child_list print_attributes node.attributes]
-  in print_multi state "T_Record" children
+  let fields =
+     List.map (mk_child print_field_decl)
+  @@ Utils.nsepseq_to_list node.ne_elements
+  and attributes =
+    [mk_child_list print_attributes node.attributes]
+  in print_multi state "T_Record" (fields @ attributes)
 
 and print_wild state = print_loc_node state "_"
 
@@ -323,17 +365,20 @@ and print_T_Fun state (node : (type_expr * arrow * type_expr) reg) =
 
 and print_T_Sum state (node : sum_type reg) =
   let node = node.value in
-  let children =
-    (List.map (fun {value; _} -> mk_child print_variant value)
-     @@ Utils.nsepseq_to_list node.variants)
-    @ [mk_child_list print_attributes node.attributes]
-  in print_multi state "T_Sum" children
+  let variants =
+    List.map (fun v -> mk_child print_variant v.value)
+  @@ Utils.nsepseq_to_list node.variants in
+  let attributes =
+    [mk_child_list print_attributes node.attributes]
+  in print_multi state "T_Sum" (variants @ attributes)
 
 and print_T_Prod state (node : cartesian) =
   let {value; region} = node in
-  print_multi state "T_Prod" ~region
-  @@ List.map (mk_child print_type_expr)
+  let children =
+     List.map (mk_child print_type_expr)
   @@ Utils.nsepseq_to_list value
+  in print_multi state "T_Prod" ~region children
+
 and print_variant state (node : variant) =
   let {value; region} = node.ctor in
   let children = [
@@ -344,12 +389,11 @@ and print_variant state (node : variant) =
 and print_of_type_expr state = print_type_expr state <@ snd
 
 and print_field_decl state (node : field_decl reg) =
-  let node = node.value in
+  let {value; _} = node in
   let children = [
-    mk_child      print_field_type node.field_type;
-    mk_child_list print_attributes node.attributes]
-  in print_ident  state node.field_name;
-     print_forest state children
+    mk_child      print_field_type value.field_type;
+    mk_child_list print_attributes value.attributes]
+  in print_multi_reg state value.field_name children
 
 and print_field_type state =
   print_unary state "<type>" print_type_expr
@@ -357,9 +401,10 @@ and print_field_type state =
 and print_type_tuple
       state (node : (type_expr, comma) nsepseq par reg) =
   let {value; region} = node in
-  print_multi state "<arguments>" ~region
-  @@ List.map (mk_child print_type_expr)
+  let children =
+     List.map (mk_child print_type_expr)
   @@ Utils.nsepseq_to_list value.inside
+  in print_multi state "<arguments>" ~region children
 
 and print_E_Fun state (node : fun_expr reg) =
   let node = node.value in
@@ -391,9 +436,10 @@ and print_E_Block state (node : block_with reg) =
   in print_multi state "E_Block" ~region children
 
 and print_block state (node : block) =
-  print_multi state "<block>"
-  @@ List.map (mk_child print_statement)
+  let children =
+     List.map (mk_child print_statement)
   @@ Utils.nsepseq_to_list node.statements
+  in print_multi state "<block>" children
 
 and print_block_expr state =
   print_unary state "<expr>" print_expr
@@ -401,19 +447,28 @@ and print_block_expr state =
 (* Statements *)
 
 and print_statement state = function
-  S_Instr   i -> print_unary state "S_Instr"   print_instruction i
-| S_Decl    i -> print_unary state "S_Decl"    print_declaration i
-| S_VarDecl i -> print_unary state "S_VarDecl" print_var_decl    i.value
+  S_Instr   i -> print_S_Instr   state i
+| S_Decl    i -> print_S_Decl    state i
+| S_VarDecl i -> print_S_VarDecl state i
+
+and print_S_Instr state =
+  print_unary state "S_Instr" print_instruction
+
+and print_S_Decl state =
+  print_unary state "S_Decl" print_declaration
+
+and print_S_VarDecl state (node : var_decl reg) =
+  print_unary state "S_VarDecl" print_var_decl node.value
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
 
 and print_instruction state = function
-  I_Assign      e -> print_tree    state "I_Assign" print_assignment e
-| I_Call        e -> print_tree    state "I_Call" print_fun_call e
+  I_Assign      e -> print_I_Assign state e
+| I_Call        e -> print_I_Call   state e
 | I_Case        e -> print_I_Case  state e
 | I_Cond        e -> print_I_Cond  state e
-| I_For         e -> print_tree    state "I_For" print_for_int e
+| I_For         e -> print_I_For   state e
 | I_Iter        e -> print_tree    state "I_Iter" print_iter e
 | I_MapPatch    e -> print_tree    state "I_MapPatch" print_map_patch e
 | I_MapRemove   e -> print_tree    state "I_MapRemove" print_map_remove e
@@ -422,6 +477,53 @@ and print_instruction state = function
 | I_SetPatch    e -> print_tree    state "I_SetPatch" print_set_patch e
 | I_SetRemove   e -> print_tree    state "I_SetRemove" print_set_remove e
 | I_While       e -> print_I_While state e
+
+(* Function and procedure calls *)
+
+and print_E_Call state = print_call state "E_Call"
+and print_I_Call state = print_call state "I_Call"
+
+and print_call state label (node : fun_call) =
+  let {value=(func, args); region} = node in
+  let children = [
+    mk_child mk_func func;
+    mk_child mk_args args]
+  in print_multi state label ~region children
+
+and mk_func state = print_unary state "<function>" print_expr
+
+and mk_args state (node : (expr, comma) nsepseq par reg) =
+  let children =
+     List.map (mk_child print_expr)
+  @@ Utils.nsepseq_to_list node.value.inside
+  in print_multi state "<arguments>" children
+
+(* Assignments *)
+
+and print_I_Assign state (node : assignment reg) =
+  let {value; region} = node in
+  print_multi state "I_Assign" ~region
+              [mk_child print_lhs value.lhs;
+               mk_child print_rhs value.rhs]
+
+and print_lhs state (node : lhs) =
+  let print state : lhs -> unit = function
+    Path    p -> print_unary      state "Path" print_path p
+  | MapPath p -> print_map_lookup state "MapPath" p
+  in print_unary state "<lhs>" print node
+
+and print_rhs state = print_unary state "<rhs>" print_expr
+
+and print_map_lookup state label (node : map_lookup reg) =
+  let {value; region} = node in
+  let print_path state (path : path) =
+    print_unary state "<map>" print_path path
+  and print_index state (index : expr brackets reg) =
+    print_unary state "<index>" print_expr index.value.inside in
+  let children = [
+    mk_child print_path  value.path;
+    mk_child print_index value.index]
+  in print_multi state label ~region children
 
 (* While loops *)
 
@@ -434,7 +536,7 @@ and print_I_While state (node : while_loop reg) =
 
 and print_cond state = print_unary state "<condition>" print_expr
 
-(* Case instructions and expressions *)
+(* Cases as instructions or expressions *)
 
 and print_I_Case state = print_case state "I_Case" print_test_clause
 
@@ -446,9 +548,10 @@ and print_case :
     let cases =
       List.map (mk_child @@ swap print_case_clause print)
       @@ Utils.nsepseq_to_list
-      @@ Utils.nsepseq_map (fun x -> x.value) value.cases.value
-    in print_multi state label ~region
-       @@ mk_child print_case_test value.expr :: cases
+      @@ Utils.nsepseq_map (fun x -> x.value) value.cases.value in
+    let children =
+      mk_child print_case_test value.expr :: cases
+    in print_multi state label ~region children
 
 and print_case_test state =
   print_unary state "<condition>" print_expr
@@ -456,14 +559,15 @@ and print_case_test state =
 and print_case_clause :
   'a.state -> (state -> 'a -> unit) -> 'a case_clause -> unit =
   fun state print clause ->
-    print_multi state "<clause>"
-                [mk_child print_clause_pattern clause.pattern;
-                 mk_child print                clause.rhs]
+    let children = [
+      mk_child print_clause_pattern clause.pattern;
+      mk_child print                clause.rhs]
+    in print_multi state "<clause>" children
 
 and print_clause_pattern state =
   print_unary state "<pattern>" print_pattern
 
-(*----*)
+(* Conditionals as expressions or instructions *)
 
 and print_I_Cond state = print_conditional state "I_Cond" print_test_clause
 and print_E_Cond state = print_conditional state "E_Cond" print_expr
@@ -486,57 +590,51 @@ and print_else : 'a.state -> (state -> 'a -> unit) -> 'a -> unit =
   fun state print -> print_unary state "<false>" print
 
 and print_test_clause state = function
-  ClauseInstr instr ->
-    print_unary state "ClauseInstr" print_instruction instr
-| ClauseBlock block ->
-    print_unary state "ClauseBlock" print_clause_block block
+  ClauseInstr instr -> print_ClauseInstr state instr
+| ClauseBlock block -> print_ClauseBlock state block
+
+and print_ClauseInstr state =
+  print_unary state "ClauseInstr" print_instruction
+
+and print_ClauseBlock state =
+  print_unary state "ClauseBlock" print_clause_block
 
 and print_clause_block state = function
-  LongBlock {value; region} ->
-    print_multi state "LongBlock" ~region
-    @@ List.map (mk_child print_statement)
-    @@ Utils.nsepseq_to_list value.statements
-  | ShortBlock {value; region} ->
-      print_multi state "ShortBlock" ~region
-    @@ List.map (mk_child print_statement)
-    @@ Utils.nsepseq_to_list (fst value.inside)
+  LongBlock  b -> print_LongBlock  state b
+| ShortBlock b -> print_ShortBlock state b
+
+and print_LongBlock state (node : block reg) =
+  let {value; region} = node in
+  let children =
+     List.map (mk_child print_statement)
+  @@ Utils.nsepseq_to_list value.statements
+  in print_multi state "LongBlock" ~region children
+
+and print_ShortBlock state (node : (statements * semi option) braces reg) =
+  let {value; region} = node in
+  let children =
+     List.map (mk_child print_statement)
+  @@ Utils.nsepseq_to_list (fst value.inside)
+  in print_multi state "ShortBlock" ~region children
+
 (* Patterns *)
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
 
 and print_pattern state = function
-  P_Bytes b ->
-    print_node  state "P_Bytes";
-    print_bytes state b
-| P_Cons {value; region} ->
-    let patterns = Utils.nsepseq_to_list value in
-    let length   = List.length patterns in
-    let apply len rank =
-      print_pattern (state#pad len rank) in
-    print_loc_node state "P_Cons" region;
-    List.iteri (apply length) patterns
-| P_Ctor p ->
-    print_unary state "P_Ctor" ~region:p.region print_ctor_app_pattern p
-| P_False region ->
-    print_loc_node state "P_False" region
-| P_Int n ->
-    print_node state "P_Int";
-    print_int state n
-| P_List {value; region} ->
-    print_loc_node state "P_List" region;
-    print_injection (state#pad 1 0) print_pattern value
-| P_Nat n ->
-    print_node state "P_Nat";
-    print_int state n
-| P_Nil region ->
-    print_loc_node state "P_Nil" region
-| P_None region ->
-    print_loc_node state "P_None" region
-| P_ParCons p ->
-    print_par state "P_ParCons" ~region:p.region print_bin_cons p
-| P_Some p -> print_P_Some state p
-| P_String p -> print_unary state "P_String" print_P_String p
+  P_Bytes   p -> print_P_Bytes state p
+| P_Cons    p -> print_P_Cons state p
+| P_Ctor    p -> print_P_Ctor state p
+| P_False   p -> print_loc_node state "P_False" p
+| P_Int     p -> print_P_Int state p
+| P_List    p -> print_P_List state p
+| P_Nat     p -> print_P_Nat state p
+| P_Nil     p -> print_loc_node state "P_Nil" p
+| P_None    p -> print_loc_node state "P_None" p
+| P_ParCons p -> print_P_ParCons state p
+| P_Some    p -> print_P_Some state p
+| P_String  p -> print_P_String state p
 | P_True region ->
     print_loc_node state "P_True" region
 | P_Tuple p ->
@@ -548,38 +646,52 @@ and print_pattern state = function
 | P_Wild region ->
     print_loc_node state "P_Wild" region
 
+and print_P_List state (node : pattern injection reg) =
+  let {value; region} = node in
+  let children =
+     List.map (mk_child print_pattern)
+  @@ Utils.sepseq_to_list value.elements
+  in print_multi state "P_List" ~region children
+
 and print_P_Some state (node : (kwd_Some * pattern par reg) reg) =
-  let arg = snd node.value in
-  print_par state "P_Some" ~region:node.region print_pattern arg
+  let {value=_, arg; region} = node in
+  print_par state "P_Some" ~region print_pattern arg
 
-and print_bytes state {value=lexeme,hex; region} =
-  print_loc_node (state#pad 2 0) lexeme region;
-  print_node     (state#pad 2 1) (Hex.show hex)
+and print_P_Ctor state (node : (ctor * tuple_pattern option) reg) =
+  let {value = (ctor, tuple); region} = node in
+  let children = [
+    mk_child     print_ident ctor;
+    mk_child_opt print_ctor_arg tuple]
+  in print_multi state "P_Ctor" ~region children
 
-and print_int state node =
-  print_forest state @@ mk_children_int node
-and mk_children_int {value=lexeme,z; region} =
-  [mk_child print_ident {value=lexeme; region};
-   mk_child print_node  (Z.to_string z)]
+and print_ctor_arg state (node : tuple_pattern) =
+  let children =
+     List.map (mk_child print_pattern)
+  @@ Utils.nsepseq_to_list node.value.inside
+  in print_multi state "<arguments>" children
 
-and print_ctor_app_pattern state (node : (ctor * tuple_pattern option) reg) =
-  let ctor, pat_opt = node.value in
-  print_ident state ctor;
-  match pat_opt with
-      None -> ()
-  | Some p -> print_tuple_pattern state p
+and print_P_Cons state {value; region} =
+  let patterns = Utils.nsepseq_to_list value in
+  let length   = List.length patterns in
+  let apply len rank =
+    print_pattern (state#pad len rank) in
+  print_loc_node state "P_Cons" region;
+  List.iteri (apply length) patterns
 
-and print_bin_cons state (head, _, tail) =
-  print_pattern (state#pad 2 0) head;
-  print_pattern (state#pad 2 1) tail
+and print_P_ParCons state (node : (pattern * cons * pattern) par reg) =
+  let {value; region} = node in
+  let head, _, tail = value.inside in
+  let children = [
+    mk_child print_pattern head;
+    mk_child print_pattern tail]
+  in print_multi state "P_ParCons" ~region children
 
 and print_injection :
   'a.state -> (state -> 'a -> unit) -> 'a injection -> unit =
   fun state print inj ->
-    let elements       = Utils.sepseq_to_list inj.elements in
-    let length         = List.length elements in
-    let apply len rank = print (state#pad len rank)
-    in List.iteri (apply length) elements
+    print_forest state
+    @@ List.map (mk_child print)
+    @@ Utils.sepseq_to_list inj.elements
 
 and print_ne_injection :
   'a.state -> (state -> 'a -> unit) -> 'a ne_injection -> unit =
@@ -600,16 +712,6 @@ and print_tuple_pattern
   let length         = List.length patterns in
   let apply len rank = print_pattern (state#pad len rank)
   in List.iteri (apply length) patterns
-
-and print_assignment state (node : assignment) =
-  print_lhs  (state#pad 2 0) node.lhs;
-  print_expr (state#pad 2 1) node.rhs
-
-and print_lhs state = function
-  Path p ->
-    print_unary state "Path" print_path p
-| MapPath {value; region} ->
-    print_unary state "MapPath" ~region print_map_lookup value
 
 and print_path state = function
   Name name ->
@@ -635,40 +737,47 @@ and print_update state update =
   print_ne_injection state print_field_path_assignment update.updates.value
 
 and print_selection state = function
-  FieldName name -> print_unary state "FieldName" print_ident name
-| Component comp ->
-    print_node state "Component";
-    print_int state comp
+  FieldName name -> print_FieldName state name
+| Component comp -> print_Component state comp
 
-and print_E_MapLookUp state {region; value} =
-  print_unary state "E_MapLookUp" ~region print_map_lookup value
+and print_FieldName state =
+  print_unary state "FieldName" print_ident
 
-and print_map_lookup state (node : map_lookup) =
-  let print_path state (path : path) =
-    print_unary state "<map>" print_path path
-  and print_index state (index : expr brackets reg) =
-    print_unary state "<index>" print_expr index.value.inside in
-  print_forest state [mk_child print_path  node.path;
-                      mk_child print_index node.index]
+and print_Component state (node : (lexeme * Z.t) reg) =
+  let {value=(lexeme, z); region} = node in
+  let children = [
+    mk_child print_ident {value=lexeme; region};
+    mk_child print_node  (Z.to_string z)]
+  in print_multi state "Component" children
 
-and print_for_int state (node : for_int) =
-  let print_init state =
-    print_node   state "<init>";
-    print_forest state [mk_child print_ident node.binder;
-                        mk_child print_expr  node.init]
+and print_E_MapLookUp state = print_map_lookup state "E_MapLookUp"
+
+and print_I_For state (node : for_int reg) =
+  let {value; region} = node in
+
+  let print_init state (binder, init : variable * expr) =
+    let children = [
+      mk_child print_ident binder;
+      mk_child print_expr  init]
+    in print_multi state "<init>" children
+
   and print_bound state =
-    print_node   state "<bound>";
-    print_forest state [mk_child print_expr node.bound]
+    print_unary state "<bound>" print_expr
+
   and print_step state (_, expr) =
     print_unary state "<step>" print_expr expr
-  and print_block state {statements; _} =
+
+  and print_block state (node : block reg) =
+    let {statements; _} = node.value in
     print_node       state "<statements>";
     print_statements state statements in
-  let printers = [Some print_init;
-                  Some print_bound;
-                  mk_child_opt print_step node.step;
-                  Some (swap print_block node.block.value)]
-  in print_forest state printers
+
+  let children = [
+    mk_child     print_init  (value.binder, value.init);
+    mk_child     print_bound value.bound;
+    mk_child_opt print_step  value.step;
+    mk_child     print_block value.block]
+  in print_multi state "I_For" ~region children
 
 and print_statements state statements =
   let statements     = Utils.nsepseq_to_list statements in
@@ -705,13 +814,6 @@ and print_var_binding state (source, image) =
   print_node  state "<binding>";
   print_ident (state#pad 2 0) source;
   print_ident (state#pad 2 1) image
-
-and print_fun_call state (expr, args) =
-  let args           = Utils.nsepseq_to_list args.value.inside in
-  let arity          = List.length args in
-  let apply len rank = print_expr (state#pad len rank)
-  in print_expr (state#pad (1+arity) 0) expr;
-     List.iteri (apply arity) args
 
 and print_record_patch state (node : record_patch) =
   print_path         (state#pad 2 0) node.path;
@@ -766,12 +868,8 @@ and print_expr state = function
     print_loc_node  state "E_BigMap" region;
     print_injection state print_binding value
 | E_Block e -> print_E_Block state e
-| E_Bytes b ->
-    print_node state "E_Bytes";
-    print_bytes state b
-| E_Call {value; region} ->
-    print_loc_node state "E_Call" region;
-    print_fun_call state value
+| E_Bytes e -> print_E_Bytes state e
+| E_Call e -> print_E_Call state e
 | E_Case  e -> print_E_Case state e
 | E_Cat e      -> print_op2 state "E_Cat" e
 | E_CodeInj e -> print_E_CodeInj state e
@@ -784,8 +882,7 @@ and print_expr state = function
 | E_Fun e -> print_E_Fun state e
 | E_Geq   e -> print_op2 state "E_Geq"   e
 | E_Gt    e -> print_op2 state "E_Gt"    e
-| E_Int e   -> print_node state "Int";
-            print_int  state e
+| E_Int e   -> print_E_Int state e
 | E_Leq   e -> print_op2 state "E_Leq"   e
 | E_List e -> print_list_comp state e
 | E_Lt    e -> print_op2 state "E_Lt"    e
@@ -796,10 +893,8 @@ and print_expr state = function
 | E_Mod e   -> print_op2 state "E_Mod" e
 | E_ModPath e -> print_E_ModPath state e
 | E_Mult e  -> print_op2 state "E_Mult" e
-| E_Mutez e -> print_node state "Mutez";
-            print_int  state e
-| E_Nat e   -> print_node state "Nat";
-            print_int  state e
+| E_Mutez _ -> print_node state "E_Mutez"
+| E_Nat e   -> print_E_Nat state e
 | E_Neg e   -> print_op1 state "E_Neg" e
 | E_Nil      e -> print_loc_node  state "E_Nil" e
 | E_Neq   e -> print_op2 state "E_Neq"   e
@@ -812,7 +907,7 @@ and print_expr state = function
 | E_Set e -> print_set_injection state e
 | E_SetMem e -> print_set_mem state e
 | E_Some e -> print_some_app state e
-| E_String e   -> print_unary state "E_String" print_E_String e
+| E_String e -> print_T_String state e
 | E_Sub e   -> print_op2 state "E_Sub" e
 | E_True  e -> print_loc_node state "True"  e
 | E_Tuple e_tuple ->
@@ -826,8 +921,14 @@ and print_expr state = function
 | E_Var e -> print_unary state "E_Var" print_ident e
 | E_Verbatim e -> print_unary state "E_Verbatim" print_E_Verbatim e
 
+and print_tuple_expr state (node : (expr, comma) nsepseq par reg) =
+  let exprs          = Utils.nsepseq_to_list node.value.inside in
+  let length         = List.length exprs in
+  let apply len rank = print_expr (state#pad len rank)
+  in List.iteri (apply length) exprs
+
 and print_E_ModPath state =
-     print_tree state "E_ModPath"
+  print_tree state "E_ModPath"
   @@ swap print_module_path print_expr
 and print_proj_expr state (node : projection reg) =
   print_loc_node   state "E_Proj" node.region;
@@ -870,12 +971,6 @@ and print_E_Ctor state (node :  (ctor * arguments option) reg) =
   print_ident     state ctor;
   ignore args_opt (* TODO: remove. see below *)
 (* TODO   print_option state print_tuple_expr args_opt*)
-
-and print_tuple_expr state (node : (expr, comma) nsepseq par reg) =
-  let exprs          = Utils.nsepseq_to_list node.value.inside in
-  let length         = List.length exprs in
-  let apply len rank = print_expr (state#pad len rank)
-  in List.iteri (apply length) exprs
 
 and print_op1 state label {value; region} =
   print_unary state label ~region print_expr value.arg
