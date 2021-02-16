@@ -226,6 +226,20 @@ end = struct
          choose_processor [
            (fun (state, worklist) ->
               Worklist.process_all ~time_to_live
+                pending_hc
+                aux_heuristic___
+                (state, worklist)
+           );
+
+           (fun (state, worklist) ->
+              Worklist.process
+                pending_non_alias
+                add_constraint_and_apply_heuristics___1
+                (state, worklist)
+           );
+
+           (fun (state, worklist) ->
+              Worklist.process_all ~time_to_live
                 pending_type_constraint
                 filter_already_added
                 (state, worklist)
@@ -249,20 +263,6 @@ end = struct
               Worklist.process_all ~time_to_live
                 pending_c_alias
                 add_alias___
-                (state, worklist)
-           );
-
-           (fun (state, worklist) ->
-              Worklist.process_all ~time_to_live
-                pending_non_alias
-                add_constraint_and_apply_heuristics___1
-                (state, worklist)
-           );
-
-           (fun (state, worklist) ->
-              Worklist.process_all ~time_to_live
-                pending_hc
-                aux_heuristic___
                 (state, worklist)
            );
            ]
