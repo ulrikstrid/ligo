@@ -269,6 +269,7 @@ build-preview-ligo-webide-front-end:
   script:
     - cd ./tools/webide/
     - mv ./packages/client/staging-netlify.toml ./packages/client/netlify.toml
+    - npm install yarn
     - yarn install
     - CI= yarn workspaces run build
     - cd ./packages/client
