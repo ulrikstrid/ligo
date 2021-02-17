@@ -203,6 +203,7 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       val c_row_simpl_short : c_row_simpl pretty_printer
       val constraint_identifier : constraint_identifier pretty_printer
       val type_variable : type_variable pretty_printer
+      val type_value_short : type_value pretty_printer
       val type_constraint : type_constraint pretty_printer
     end
 

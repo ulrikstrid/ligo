@@ -357,15 +357,15 @@ let printer ppd (t : selector_output) =
   let lst = t.tc in
   let a = t.c in fprintf ppd "%a and %a" c_typeclass_simpl_short lst constructor_or_row_short a
 
-let pp_deduce_and_clean_result ppf {deduced;cleaned} =
+let pp_deduce_and_clean_result_short ppf {deduced;cleaned} =
   let open Format in
   let open Type_variable_abstraction.PP in
   fprintf ppf "{@[<hv 2>@
               deduced : %a;@
               cleaned : %a;@
               @]}"
-    (PP_helpers.list_sep_d c_constructor_simpl) deduced
-    c_typeclass_simpl cleaned
+    (PP_helpers.list_sep_d c_constructor_simpl_short) deduced
+    c_typeclass_simpl_short cleaned
 
 let printer_json (t : selector_output) =
   let open Type_variable_abstraction.Yojson in
@@ -405,7 +405,7 @@ type nonrec deduce_and_clean_result = MM.Utils.deduce_and_clean_result = {
   }
 let restrict = MM.restrict
 let deduce_and_clean = MM.Utils.deduce_and_clean
-let pp_deduce_and_clean_result = MM.pp_deduce_and_clean_result
+let pp_deduce_and_clean_result_short = MM.pp_deduce_and_clean_result_short
 
 
 

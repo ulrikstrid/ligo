@@ -18,4 +18,4 @@ type deduce_and_clean_result = {
 }
 val deduce_and_clean : (type_variable -> type_variable) -> c_typeclass_simpl -> (deduce_and_clean_result, typer_error) result
 
-val pp_deduce_and_clean_result : Format.formatter -> deduce_and_clean_result -> unit
+val pp_deduce_and_clean_result_short : Format.formatter -> deduce_and_clean_result -> unit

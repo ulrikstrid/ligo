@@ -20,6 +20,40 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
   let map_cells (f : type_value -> type_value) (tc : c_typeclass_simpl) =
     { tc with tc = List.map (List.map f) tc.tc }
 
+  type column = (type_variable * type_value list)
+  type columns = column list
+  let loop3 : 'e 'x 'a 'b 'c . ('x -> ('a * 'b * 'c, 'e) result) -> ('a * 'b * 'c) -> (('a -> 'a -> 'a) * ('b -> 'b -> 'b) * ('c -> 'c -> 'c)) -> 'x list -> (('a * 'b * 'c), 'e) result =
+    fun f (a0, b0, c0) (a,b,c) xs ->
+    let%bind r = bind_map_list f xs in
+    let (as_, bs, cs) = List.split3 r in
+    ok (List.fold_left a a0 as_, List.fold_left b b0 bs, List.fold_left c c0 cs)
+
+  let update_columns3 : (columns -> (column Rope.SimpleRope.t * 'b * 'c, _) result) -> c_typeclass_simpl -> (c_typeclass_simpl * 'b * 'c, _) result =
+    fun f tc ->
+    let rec transpose (headers : type_variable list) (matrix : type_value list list) =
+      match headers with
+        [] -> []
+      | hd::tl -> (hd, (List.map List.hd matrix)) :: transpose tl (List.map List.tl matrix) in
+    let rec transpose_back (columns : columns) : (type_variable list * type_value list list) =
+      match columns with
+        [] -> [], []
+      | (_header, _::_)::_ ->
+        let (headers, matrix) = transpose_back @@ List.map (fun (header, cells) -> header, List.tl cells) columns in
+        headers, (List.map (fun (_header,cells) -> List.hd cells) columns :: matrix)
+      | _ -> (List.map fst columns), []
+    in
+    (*let transpose_back cs = let (hs, m) = transpose_back cs in (hs, List.rev m) in*)
+    let () = Format.printf "\n\noriginal=\n%a\n\n" PP.c_typeclass_simpl_short tc in
+    let transposed = transpose tc.args tc.tc in
+    let () = Format.printf "\n\ntransposed=\n%a\n\n" (Ast_typed.PP.list_sep_d_short (fun ppf (a,b) -> Format.fprintf ppf "(%a,%a)" PP.type_variable a (PP_helpers.list_sep_d PP.type_value_short) b)) transposed in
+    let%bind updated, b, c = f @@ transpose tc.args tc.tc in
+    let () = Format.printf "\n\nupdated rope=\n%a\n\n" (Rope.SimpleRope.pp (fun ppf (a,b) -> Format.fprintf ppf "(%a,%a)" PP.type_variable a (PP_helpers.list_sep_d PP.type_value_short) b)) updated in
+    let () = Format.printf "\n\nupdated=\n%a\n\n" (Ast_typed.PP.list_sep_d_short (fun ppf (a,b) -> Format.fprintf ppf "(%a,%a)" PP.type_variable a (PP_helpers.list_sep_d PP.type_value_short) b)) (Rope.SimpleRope.list_of_rope updated) in
+    let headers', matrix' = transpose_back @@ Rope.SimpleRope.list_of_rope updated in
+    let () = Format.printf "\n\nback=\n%a\n\n" PP.c_typeclass_simpl_short { tc with args = headers'; tc = matrix' } in
+    ok ({ tc with args = headers'; tc = matrix' }, b, c)
+    
+
   let filter_lines (f : _ -> ([`headers] * type_variable list * [`line] * type_value list) -> (bool*_, _) result) (tc_org : c_typeclass_simpl) =
     let%bind (updated,_) =
       bind_fold_list (fun (acc,tc) line ->
@@ -131,27 +165,33 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
      [ x = record( a=m , b=n , c=o ) ; o = float ( ) ],
      [ m ? [ nat  ; bytes ]
        n ? [ unit ; mutez ] ] *)
-let replace_var_and_possibilities_1 (repr:type_variable -> type_variable) ((x : type_variable) , (possibilities_for_x : type_value list)) =
+let rec replace_var_and_possibilities_1
+    (repr:type_variable -> type_variable)
+    ((x : type_variable), (possibilities_for_x : type_value list))
+    : (column Rope.SimpleRope.t * _ * bool, _) result =
+  let open Rope.SimpleRope in
   let%bind tags_and_args = bind_map_list get_tag_and_args_of_constant possibilities_for_x in
   let tags_of_constructors, arguments_of_constructors = List.split @@ tags_and_args in
   match all_equal Compare.constant_tag tags_of_constructors with
   | Different ->
     (* The "changed" boolean return indicates whether any update was done.
        It is used to detect when the variable doesn't need any further cleanup. *)
-    ok ( false, [ (x, possibilities_for_x) ], [] )            (* Leave as-is, don't deduce anything *)
+    ok (singleton (x, possibilities_for_x), empty, false)            (* Leave as-is, don't deduce anything *)
   | Empty ->
     (* TODO: keep track of the constraints used to refine the
        typeclass so far. *)
     (* fail @@ typeclass_error
      *   "original expected by typeclass"
      *   "<actual> partially guessed so far (needs a recursive substitution)" *)
-    failwith "type error: the typeclass does not allow any type for \
-              the variable %a:PP_variable:x at this point"
+    (* TODO: possible bug: if there is nothing left because everything was inferred, we shouldn't fail and just continue with an empty TC… can this happen? *)
+    fail @@ corner_case "type error: the typeclass does not allow any type for \
+                         the variable %a:PP_variable:x at this point"
   | All_equal_to c_tag ->
     match arguments_of_constructors with
     | [] -> failwith "the typeclass does not allow any possibilities \
                       for the variable %a:PP_variable:x at this point"
     | (arguments_of_first_constructor :: _) as arguments_of_constructors ->
+      (* discard the identical tags, splice their arguments instead, and deduce the x = tag(…) constraint *)
       let fresh_vars = List.map (fun _arg -> Core.fresh_type_variable ()) arguments_of_first_constructor in
       let deduced : c_constructor_simpl = {
         id_constructor_simpl = ConstraintIdentifier 0L;
@@ -161,24 +201,15 @@ let replace_var_and_possibilities_1 (repr:type_variable -> type_variable) ((x : 
         c_tag ;
         tv_list = fresh_vars
       } in
-      (* discard the identical tags, splice their arguments instead, and deduce the x = tag(…) constraint *)
-      let sub_part_of_typeclass = {
-        tc_bound = [](*TODO*); tc_constraints = [](*TODO*);
-        reason_typeclass_simpl = Format.asprintf
-            "sub-part of a typeclass: expansion of the possible \
-             arguments for the constructor associated with %a"
-            PP.type_variable (repr x);
-        original_id = None;     (* TODO this and the is_mandatory_constraint are not actually used, should use a different type without these fields. *)
-        id_typeclass_simpl = ConstraintIdentifier (-1L) ; (* TODO: this and the reason_typeclass_simpl should simply not be used here *)
-        args = fresh_vars ;
-        tc = arguments_of_constructors ;
-      } in
-      let%bind possibilities_alist = transpose sub_part_of_typeclass in
-      (* The "changed" boolean return indicates whether any update was done.
-         It is used to detect when the variable doesn't need any further cleanup. *)
-      ok (true, possibilities_alist, [deduced])
 
-let rec replace_var_and_possibilities_rec repr ((x : type_variable) , (possibilities_for_x : type_value list)) =
+      let%bind (rec_cleaned, rec_deduced, _rec_changed) =
+        loop3 (replace_var_and_possibilities_1 repr) (empty, empty, false) (pair, pair, (||)) (List.combine fresh_vars arguments_of_constructors)
+      in
+      (* The "changed" boolean return indicates whether any update was done.
+         It is used to prevent removal + update of the typeclass if it wasn't modified. *)
+      ok (rec_cleaned, pair (singleton deduced) rec_deduced, true)
+
+(*let rec replace_var_and_possibilities_rec repr (x : type_variable) (possibilities_for_x : type_value list) : ((type_variable * type_value list) list * _, _) result =
   let open Rope.SimpleRope in
   let%bind (changed1, possibilities_alist, deduced) = replace_var_and_possibilities_1 repr (x, possibilities_for_x) in
   if changed1 then
@@ -189,20 +220,15 @@ let rec replace_var_and_possibilities_rec repr ((x : type_variable) , (possibili
     ok (true, vp, pair (rope_of_list deduced) more_deduced)
   else
     ok (changed1, rope_of_list possibilities_alist, rope_of_list deduced)
-
-and replace_vars_and_possibilities_list repr possibilities_alist =
+*)
+(*and replace_vars_and_possibilities_list  =
   let open Rope.SimpleRope in
   bind_fold_list
     (fun (changed_so_far, vps, ds) x ->
        let%bind (changed, vp, d) = replace_var_and_possibilities_rec repr x in
        ok (changed_so_far || changed, pair vps vp, pair ds d))
     (false, empty, empty)
-    possibilities_alist
-
-let replace_vars_and_possibilities repr possibilities_alist =
-  let open Rope.SimpleRope in
-  let%bind (_changed, possibilities_alist, deduced) = replace_vars_and_possibilities_list repr possibilities_alist in
-  ok (list_of_rope possibilities_alist, list_of_rope deduced)
+    possibilities_alist*)
 
 type deduce_and_clean_result = {
   deduced : c_constructor_simpl list ;
@@ -210,23 +236,22 @@ type deduce_and_clean_result = {
 }
 
 let deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result, _) result = fun repr tcs ->
+  let open Rope.SimpleRope in
   Format.printf "In deduce_and_clean for : %a\n%!" PP.c_typeclass_simpl_short tcs;
   (* ex.   [ x                             ; z      ]
        ∈ [ [ map3( nat   , unit  , float ) ; int    ] ;
            [ map3( bytes , mutez , float ) ; string ] ] *)
-  let%bind possibilities_alist = transpose tcs in
-  (* ex. [ x ? [ map3( nat , unit , float ) ; map3( bytes , mutez , float ) ; ] ;
-           z ? [ int                        ; string                        ; ] ; ] *)
-  let%bind (vars_and_possibilities, deduced) = replace_vars_and_possibilities repr possibilities_alist in
-  (* ex. possibilities_alist:
-         [   fresh_x_1 ? [ nat   ; bytes  ] ;
-             fresh_x_2 ? [ unit  ; mutez  ] ;
-             y         ? [ int   ; string ]     ]
+  let%bind (cleaned, deduced, changed) = update_columns3 (loop3 (replace_var_and_possibilities_1 repr) (empty, empty, false) (pair, pair, (||))) tcs in
+  
+  (* ex. cleaned:
+           [ fresh_x_1 ; fresh_x_2 ; y      ]
+       ∈ [ [ nat       ; unit      ; int    ]
+           [ bytes     ; mutez     ; string ] ]
          deduced:
          [ x         = map3  ( fresh_x_1 , fresh_x_2 , fresh_x_3 ) ;
            fresh_x_3 = float (                                   ) ; ] *)
-  let%bind cleaned = transpose_back (tcs.reason_typeclass_simpl, tcs.original_id) tcs.id_typeclass_simpl vars_and_possibilities in
-  ok { deduced ; cleaned }
+  let _ = changed in (* TODO *)
+  ok { deduced = list_of_rope deduced ; cleaned }
 
 let wrapped_deduce_and_clean repr tc ~(original:c_typeclass_simpl) =
   let open Type_variable_abstraction.Reasons in

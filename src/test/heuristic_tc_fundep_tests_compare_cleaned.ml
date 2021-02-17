@@ -9,6 +9,6 @@ let deduce_and_clean_result : deduce_and_clean_result cmp  = fun expected actual
 let compare_and_check_vars_deduce_and_clean_result expected actual =
   compare_and_check_vars
     ~compare:deduce_and_clean_result
-    ~print_whole:pp_deduce_and_clean_result
+    ~print_whole:pp_deduce_and_clean_result_short
     expected
     actual
