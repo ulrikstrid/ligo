@@ -202,7 +202,7 @@ let rec choose_processor' : 'typer_state 'typer_error . ('typer_state * Worklist
 let choose_processor : 'typer_state 'typer_error . ('typer_state * Worklist.t -> ('typer_state * Worklist.monad, 'typer_error) result) list -> 'typer_state * Worklist.t -> ('typer_state * Worklist.monad, 'typer_error) result =
   fun processors (state, worklist) -> choose_processor' processors (state, Worklist.Unchanged worklist)
 
-module Worklist_monad = struct
+(* module Worklist_monad = struct
 
   module Let_syntax = struct
     let bind some_result ~f =
@@ -211,5 +211,5 @@ module Worklist_monad = struct
         Worklist.Some_processing_done w -> ok (state, Worklist.Some_processing_done w)
       | Worklist.Unchanged w -> f (state, w)
   end
-end
+end *)
 end

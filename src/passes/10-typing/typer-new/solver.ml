@@ -211,75 +211,16 @@ end = struct
 
          (* let () = queue_print (fun () -> Formatt.printf "Start iteration with constraints :\n  %a\n\n" pp_indented_constraint_list (Pending.to_list worklist.pending_type_constraint)) in *)
 
-         (* The worklist monad changes let%bind so that it executes
-            the "in" part only if the bound expression left the
-            worklist unchanged. In other words, processing stops at
-            the first handler which does some work. *)
-
          choose_processor [
-           (fun (state, worklist) ->
-              Worklist.process_all ~time_to_live
-                pending_hc
-                aux_heuristic
-                (state, worklist)
-           );
-
-           (fun (state, worklist) ->
-              Worklist.process
-                pending_non_alias
-                add_constraint_and_apply_heuristics
-                (state, worklist)
-           );
-
-           (fun (state, worklist) ->
-              Worklist.process_all ~time_to_live
-                pending_type_constraint
-                filter_already_added
-                (state, worklist)
-           );
-
-           (fun (state, worklist) ->
-              Worklist.process_all ~time_to_live
-                pending_filtered_not_already_added_constraints
-                simplify_constraint
-                (state, worklist)
-           );
-
-           (fun (state, worklist) ->
-              Worklist.process_all ~time_to_live
-                pending_type_constraint_simpl
-                split_aliases
-                (state, worklist)
-           );
-
-           (fun (state, worklist) ->
-              Worklist.process_all ~time_to_live
-                pending_removes
-                aux_remove
-                (state, worklist)
-           );
-
-           (fun (state, worklist) ->
-              Worklist.process_all ~time_to_live
-                pending_updates
-                aux_update
-                (state, worklist)
-           );
-
-           (fun (state, worklist) ->
-              Worklist.process
-                pending_c_alias
-                add_alias
-                (state, worklist)
-           );
-
-           (fun (state, worklist) ->
-              Worklist.process
-                pending_propagators
-                aux_propagator
-                (state, worklist)
-           );
-
+           (Worklist.process_all ~time_to_live pending_hc                                     aux_heuristic                      );
+           (Worklist.process                   pending_non_alias                              add_constraint_and_apply_heuristics);
+           (Worklist.process_all ~time_to_live pending_type_constraint                        filter_already_added               );
+           (Worklist.process_all ~time_to_live pending_filtered_not_already_added_constraints simplify_constraint                );
+           (Worklist.process_all ~time_to_live pending_type_constraint_simpl                  split_aliases                      );
+           (Worklist.process_all ~time_to_live pending_removes                                aux_remove                         );
+           (Worklist.process_all ~time_to_live pending_updates                                aux_update                         );
+           (Worklist.process                   pending_c_alias                                add_alias                          );
+           (Worklist.process                   pending_propagators                            aux_propagator                     );
            ]
            (state, worklist)
       )
