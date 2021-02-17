@@ -313,7 +313,7 @@ let check_access_label_simpl : db_access:db_access -> bound_var_assignments:(typ
       ~compare:Compare_renaming.type_value
       ~print_whole:(Ast_typed.PP.type_value)
       c_access_label_tvar_value field_type_value
-  | Ast_typed.Types.C_variant -> failwith "Type error: cannot access field in variant"
+  | Ast_typed.Types.C_variant -> failwith "TODO: cannot access field in variant in typechecker, but works in the rest of the typer."
 
 (* -> check 3c that each constraint is satisfied given the 'x -> part_of_α which was found by the check 3a and "checked all =" by 3b *)
 let check_forall_constraints_are_satisfied : db_access:db_access -> bound_var_assignments:(type_variable, type_variable) PolyMap.t -> bound_info Compare_renaming.tree -> unit result =
@@ -330,10 +330,10 @@ let check_forall_constraints_are_satisfied : db_access:db_access -> bound_var_as
         let aux'' (arg, possible) = match Trace.to_option @@ compare_type_values_using_bound_vars ~db_access ~bound_var_assignments arg possible with None -> false | Some () -> true in
         let aux' args allowed_tuple = List.for_all aux'' (List.combine args allowed_tuple) in
         Assert.assert_true (err_TODO __LOC__) @@ List.exists (aux' c_tc.tc_args) c_tc.typeclass
-      | C_access_label { c_access_label_tval ; accessor ; c_access_label_tvar } ->
+      | C_access_label { c_access_label_record_type ; accessor ; c_access_label_tvar } ->
         (* ....................................................................................................................................... *)
         (
-          match c_access_label_tval.wrap_content with
+          match c_access_label_record_type.wrap_content with
             Ast_typed.Types.P_forall _ -> failwith "fields cannot be accessed on polymorphic values yet, please implement this check"
           | Ast_typed.Types.P_variable tv ->
             (match PolyMap.find_opt tv bound_var_assignments with
@@ -350,7 +350,7 @@ let check_forall_constraints_are_satisfied : db_access:db_access -> bound_var_as
           | Ast_typed.Types.P_abs _ -> failwith "P_abs: unimplemented"
           | Ast_typed.Types.P_constraint _ -> failwith "P_constraint: unimplemented"
         )
-        (* compare_type_values_using_bound_vars ~db_access ~bound_var_assignments (c_access_label_tval . accessor) == c_access_label_tvar *)
+        (* compare_type_values_using_bound_vars ~db_access ~bound_var_assignments (c_access_label_record_type . accessor) == c_access_label_tvar *)
   in
   (* finally, return the map built that way. *)
   let constraints =

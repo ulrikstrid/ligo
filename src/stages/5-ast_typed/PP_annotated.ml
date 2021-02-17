@@ -273,13 +273,13 @@ tc_bound : %a;@ tc_constraints : %a;@ original_id : %s
     (list_sep_d type_value) tc_args
     typeclass tc
 
-and c_access_label ppf {c_access_label_tval; accessor; c_access_label_tvar} =
+and c_access_label ppf {c_access_label_record_type; accessor; c_access_label_tvar} =
   fprintf ppf "{@,@[<hv 2>
-              c_access_label_tval : %a ;@
+              c_access_label_record_type : %a ;@
               accessor : %a ;@
               c_access_label_tvar : %a
               @]@,}"
-    type_value c_access_label_tval
+    type_value c_access_label_record_type
     label accessor
     type_variable c_access_label_tvar
 

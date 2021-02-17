@@ -310,19 +310,19 @@ and c_typeclass_short ppf {tc_bound; tc_constraints; tc_args; typeclass=tc;origi
       (list_sep_d_short type_value_short) tc_args
       typeclass_short tc
 
-and c_access_label ppf {c_access_label_tval; accessor; c_access_label_tvar} =
+and c_access_label ppf {c_access_label_record_type; accessor; c_access_label_tvar} =
   fprintf ppf "{@[<hv 2>@
-              c_access_label_tval : %a;@
+              c_access_label_record_type : %a;@
               accessor : %a;@
               c_access_label_tvar : %a;@
               @]}"
-    type_value c_access_label_tval
+    type_value c_access_label_record_type
     label accessor
     type_variable c_access_label_tvar
 
-and c_access_label_short ppf {c_access_label_tval; accessor; c_access_label_tvar} =
+and c_access_label_short ppf {c_access_label_record_type; accessor; c_access_label_tvar} =
   fprintf ppf "%a.%a = %a"
-    type_value_short_ c_access_label_tval.wrap_content
+    type_value_short_ c_access_label_record_type.wrap_content
     label accessor
     type_variable c_access_label_tvar
 

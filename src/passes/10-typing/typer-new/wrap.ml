@@ -152,7 +152,7 @@ let record : T.rows -> (constraints * T.type_variable) = fun {content;layout} ->
 let access_label ~(base : T.type_expression) ~(label : O.accessor) : (constraints * T.type_variable) =
   let base' = type_expression_to_type_value base in
   let expr_type = Core.fresh_type_variable () in
-  [{ c = C_access_label { c_access_label_tval = base' ; accessor = label ; c_access_label_tvar = expr_type } ; reason = "wrap: access_label" }] , expr_type
+  [{ c = C_access_label { c_access_label_record_type = base' ; accessor = label ; c_access_label_tvar = expr_type } ; reason = "wrap: access_label" }] , expr_type
 
 let record_update ~(base : T.type_expression) ~(label : O.accessor) (update : T.type_expression) : (constraints * T.type_variable) =
   let base' = type_expression_to_type_value base in
@@ -161,7 +161,7 @@ let record_update ~(base : T.type_expression) ~(label : O.accessor) (update : T.
   let update_var = Core.fresh_type_variable ~name:("up_fld_"^l) () in
   let whole_expr = Core.fresh_type_variable ~name:"update" () in
   [
-    { c = C_access_label { c_access_label_tval = base' ; accessor = label ; c_access_label_tvar = update_var } ; reason = "wrap: access_label" };
+    { c = C_access_label { c_access_label_record_type = base' ; accessor = label ; c_access_label_tvar = update_var } ; reason = "wrap: access_label" };
     c_equation update (T.Reasons.wrap (Todo "wrap: record_update: update") @@ T.P_variable update_var) "wrap: record_update: update";
     c_equation base' (T.Reasons.wrap (Todo "wrap: record_update: whole") @@ T.P_variable whole_expr) "wrap: record_update: record (whole)"
   ] , whole_expr
@@ -276,14 +276,14 @@ let match_lst :T.type_expression -> T.type_expression -> constraints =
         {p_ctor_tag=C_list;p_ctor_args=[elt]} ) "wrap: match_lst"
     ]
 
-let match_variant : T.label -> T.type_expression -> T.type_expression -> constraints =
-  fun cons variant t ->
+let match_variant : T.label -> case:T.type_expression -> T.type_expression -> constraints =
+  fun cons ~case t ->
     let t = type_expression_to_type_value t in
-    let variant = type_expression_to_type_value variant in
     let t_var = Core.fresh_type_variable () in
+    let case  = type_expression_to_type_value case in
   [
-    c_equation variant (T.Reasons.wrap (Todo "wrap: match_variant") @@ T.P_variable t_var) "wrap: match_variant";
-    { c = C_access_label { c_access_label_tval = t ; accessor = cons ; c_access_label_tvar = t_var } ; reason = "wrap: match_variant" }
+    c_equation case (T.Reasons.wrap (Todo "wrap: match_variant") @@ T.P_variable t_var) "wrap: match_variant";
+    { c = C_access_label { c_access_label_record_type = t ; accessor = cons ; c_access_label_tvar = t_var } ; reason = "wrap: match_variant" }
   ]
 
 let match_record : T.type_expression T.label_map -> T.type_expression -> constraints =

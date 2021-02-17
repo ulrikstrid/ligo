@@ -20,12 +20,12 @@ let rec type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     let cs1 = type_constraint_simpl (c_equation (wrap (Todo "solver: simplifier: simpl 1") @@ P_variable fresh) a "simplifier: simpl 1") in
     let cs2 = type_constraint_simpl (c_equation (wrap (Todo "solver: simplifier: simpl 2") @@ P_variable fresh) b "simplifier: simpl 2") in
     cs1 @ cs2 in
-  let access_label_via_fresh tv record_type label = (* τ.label = β  via  α = τ && α.label = β *)
+  let access_label_via_fresh ~tv ~record_type ~label = (* α = τ.label  via  β = τ && α = β.label *)
     let fresh = Core.fresh_type_variable () in
     let cs1 = type_constraint_simpl (c_equation (wrap (Todo "solver: simplifier: simpl target of label access") @@ P_variable fresh) record_type "simplifier: simpl target of label access") in
     let id_access_label_simpl = ConstraintIdentifier (!global_next_constraint_id) in
     global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
-    let cs2 = [SC_Access_label { id_access_label_simpl; record_type = fresh; label; tv; reason_access_label_simpl= "simplifier: simpl label access on record via a fresh var for the record's type" }] in
+    let cs2 = [SC_Access_label { id_access_label_simpl; tv; record_type = fresh; label;reason_access_label_simpl= "simplifier: simpl label access on record via a fresh var for the record's type" }] in
     cs2 @ cs1 in
   let split_constant a c_tag args =
     let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
@@ -98,7 +98,7 @@ let rec type_constraint_simpl : type_constraint -> type_constraint_simpl list =
   | C_equation {aval=({ location = _ ; wrap_content = P_apply _ } as a); bval=(_ as b)}               -> reduce_type_app b a
   (* break down (TC(args)) into (TC('a, …) and ('a = arg) …) *)
   | C_typeclass { tc_bound; tc_constraints; tc_args; typeclass; original_id }                         -> split_typeclass tc_bound tc_constraints tc_args typeclass original_id
-  | C_access_label { c_access_label_tval; accessor; c_access_label_tvar } -> access_label_via_fresh c_access_label_tvar c_access_label_tval accessor
+  | C_access_label { c_access_label_record_type; accessor; c_access_label_tvar } -> access_label_via_fresh ~tv:c_access_label_tvar ~record_type:c_access_label_record_type ~label:accessor
   | C_equation {aval={ location = _; wrap_content = P_abs _ | P_constraint _};bval=_} -> failwith "unimplemented"
   | C_equation {aval=_;bval={ location = _; wrap_content = P_abs _ | P_constraint _}} -> failwith "unimplemented"
 

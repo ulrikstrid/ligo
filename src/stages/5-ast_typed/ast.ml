@@ -417,7 +417,7 @@ and c_typeclass = {
   typeclass : typeclass ;
 }
 and c_access_label = {
-    c_access_label_tval : type_value ;
+    c_access_label_record_type : type_value ;
     accessor : label ;
     c_access_label_tvar : type_variable ;
   }
