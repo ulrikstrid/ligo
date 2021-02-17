@@ -420,6 +420,46 @@ and compile_expression_in : CST.expr -> env -> (AST.expr, _) result = fun e env 
       | Neq ne   -> compile_bin_op C_NEQ ne env
     )
   )
+  | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, EObject {value = {inside = fields; _}; _})]); _}; _}); region} ->
+    (* Pattern matching for JsLIGO is implemented as a 'built-in function' as
+       JavaScript and TypeScript don't have native pattern matching. *)
+    let fields' = Utils.nsepseq_to_list fields in
+    let compile_parameters p =
+      let rec aux = function
+        CST.EVar v -> ok @@ Var.of_name v.value
+      | EPar par -> aux par.value.inside
+      | ESeq {value = (hd, []); _} -> aux hd
+      | EAnnot {value = (a, _, _); _} -> aux a
+      | EUnit _ -> ok @@ Var.of_name "_"
+      | _ -> failwith "improve error message"
+      in
+      aux p
+    in
+    let compile_constr_pattern = function
+      CST.Property {value = {name = EConstr {value = constr; _}; value; _}; _} -> (
+        match value with
+          EFun {value = {parameters; body; _}; _} ->
+            let%bind parameters = compile_parameters parameters in
+            let%bind expr = compile_function_body_to_expression body env in
+            ok ((Label constr, Location.wrap @@ parameters), expr)
+        | _ as e -> fail @@ invalid_case constr e (* TODO: improve error message *)
+      )
+    | _ -> failwith "todo: write a better error message"
+    in
+    let loc = Location.lift region in
+    let%bind matchee = compile_expression_in input env in
+    let%bind constrs = bind_map_list compile_constr_pattern fields' in
+    let cases = AST.Match_variant constrs in
+    ok @@ e_matching ~loc matchee cases
+
+  | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, ECall {value = EVar {value="list"; _}, Multiple args ;_})]); _}; _}); region} ->
+    (* let args = Utils.nsepseq_to_list args.value.inside in
+    let compile_case = function
+      CST.EFun _ -> failwith "todo"
+    | _ -> ()
+    in *)
+    failwith "TODO: pattern match on lists"
+
   (* This case is due to a bad besign of our constant it as to change
     with the new typer so LIGO-684 on Jira *)
   | ECall {value=(EVar var,args);region} ->
@@ -462,6 +502,7 @@ and compile_expression_in : CST.expr -> env -> (AST.expr, _) result = fun e env 
    *   | None ->
    *     fail @@ unknown_constant var loc
    *     ) *)
+
   | ECall call ->
     let ((func, args), loc) = r_split call in
     let args = match args with
@@ -607,8 +648,7 @@ and conv : CST.pattern -> (nested_match_repr,_) result =
     let var = Location.wrap @@ Var.fresh () in
     ok (RecordVar ({var ; ascr = None}, labels , nested)) *)
   | _ ->
-    failwith "nsdfsadf"
-    (* fail @@ unsupported_pattern_type p *)
+    fail @@ unsupported_pattern_type p
 
 and get_binder : nested_match_repr -> AST.ty_expr binder =
   fun s ->
@@ -714,6 +754,7 @@ and compile_parameter : CST.expr ->
             | Expr_entry EVar e ->
                 let (var,loc) = r_split e in
                 return loc [] @@ Var.of_name var
+            | Rest_entry _ -> failwith "w--p"
             | _ -> fail @@ not_a_valid_parameter expr
             in
             let%bind lst = bind_map_ne_list array_item @@ npseq_to_ne_list array_items in
@@ -856,9 +897,10 @@ and compile_statement : CST.statement -> env -> (statement_result * env, _) resu
   let in_switch_or_loop = env.in_switch || env.in_loop in
   let compile_initializer ({value = {binders; lhs_type; expr = let_rhs; attributes}; region} : CST.let_binding Region.reg) : (expression -> expression, _) result =
     match binders with
-      PArray array ->
-      let%bind matchee = compile_expression_in let_rhs env in
-      compile_array_let_destructuring matchee array
+      PArray array -> (
+        let%bind matchee = compile_expression_in let_rhs env in
+        compile_array_let_destructuring matchee array
+      )
     | PObject o ->
       let%bind matchee = compile_expression_in let_rhs env in
       compile_object_let_destructuring matchee o

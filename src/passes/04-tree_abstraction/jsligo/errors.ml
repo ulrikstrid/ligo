@@ -25,6 +25,7 @@ type abs_error = [
   | `Concrete_jsligo_property_not_supported of Raw.property
   | `Concrete_jsligo_expected_an_expression of Raw.array_item 
   | `Concrete_jsligo_new_not_supported of Raw.expr
+  | `Concrete_jsligo_invalid_case of string * Raw.expr
   ]
 
 let unknown_predefined_type name = `Concrete_jsligo_unknown_predefined_type name
@@ -46,6 +47,7 @@ let rest_not_supported_here p = `Concrete_jsligo_rest_not_supported_here p
 let property_not_supported p = `Concrete_jsligo_property_not_supported p
 let expected_an_expression p = `Concrete_jsligo_expected_an_expression p
 let new_not_supported n = `Concrete_jsligo_new_not_supported n
+let invalid_case s e = `Concrete_jsligo_invalid_case (s, e)
 
 let error_ppformat : display_format:string display_format ->
   Format.formatter -> abs_error -> unit =
@@ -146,6 +148,10 @@ Other forms of pattern matching are not (yet) supported. @]"
     | `Concrete_jsligo_new_not_supported p -> (
       Format.fprintf f "@[<hv>%a@.'new' keyword not supported. @]"
           Snippet.pp_lift (Raw.expr_to_region p)
+    )
+    | `Concrete_jsligo_invalid_case (s, e) -> (
+      Format.fprintf f "@[<hv>%a@.Invalid '%s' field value. An anonymous arrow function was expected, eg. `None: () => foo`.@]"
+          Snippet.pp_lift (Raw.expr_to_region e) @@ s
     )
   )
 
@@ -293,5 +299,12 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
     let loc = Format.asprintf "%a" Location.pp_lift (Raw.expr_to_region p) in
     let content = `Assoc [
       ("message", message );
+      ("location", `String loc);] in
+    json_error ~stage ~content
+  | `Concrete_jsligo_invalid_case (_, e) ->
+    let message = `String "Invalid case." in
+    let loc = Format.asprintf "%a" Location.pp_lift (Raw.expr_to_region e) in
+    let content = `Assoc [
+      ("message", message);
       ("location", `String loc);] in
     json_error ~stage ~content
