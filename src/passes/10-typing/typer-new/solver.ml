@@ -68,6 +68,17 @@ end = struct
       (UnionFind.Poly2.pp Ast_typed.PP.type_variable) aliases
       (list_sep pp_ex_propagator_state (fun ppf () -> Formatt.fprintf ppf " ;@ ")) already_selected_and_propagators
 
+  let make_pending_propagators =
+    (fun (type a) (heuristic_plugin : (a, indexers_plugins_states) heuristic_plugin) (selector_outputs : a list) : (module PENDING_PROPAGATOR) list ->
+      List.map
+      (fun (selector_output : a) ->
+        (module struct
+          type nonrec a = a
+          let heuristic_plugin = heuristic_plugin
+          let selector_output = selector_output
+          end : PENDING_PROPAGATOR))
+      selector_outputs)
+
   let aux_remove (state, to_remove) =
     (* let () = Formatt.printf "Remove constraint :\n  %a\n\n%!" Ast_typed.PP.type_constraint_simpl_short to_remove in *)
     (* let () = Formatt.printf "and state:%a\n" pp_typer_state state in *)
@@ -83,7 +94,7 @@ end = struct
                                      pending_type_constraint_simpl = Pending.of_list add_constraints_simpl;
                                      pending_removes = Pending.of_list remove_constraints })
 
-  let aux_propagator (state, (module M : PENDING_PROPAGATOR)) =
+  and aux_propagator (state, (module M : PENDING_PROPAGATOR)) =
     let heuristic_plugin, selector_output = M.heuristic_plugin, M.selector_output in
     (* TODO: before applying a propagator, check if it does
        not depend on constraints which were removed by the
@@ -96,28 +107,17 @@ end = struct
       let%bind updates = heuristic_plugin.propagator selector_output (mk_repr state) in
       ok (state, { Worklist.empty with pending_updates = Pending.of_list @@ updates })
 
-  let aux_selector_alias demoted_repr new_repr state (Heuristic_state heuristic) =
-    let selector_outputs = heuristic.plugin.alias_selector demoted_repr new_repr state.plugin_states in
-    let aux = fun (l,already_selected) el ->
-      if PolySet.mem el already_selected then (l,already_selected)
-      else (el::l, PolySet.add el already_selected)
+  and add_alias : (typer_state * c_alias) -> (typer_state * Worklist.t) result =
+    let aux_selector_alias demoted_repr new_repr state (Heuristic_state heuristic) =
+      let selector_outputs = heuristic.plugin.alias_selector demoted_repr new_repr state.plugin_states in
+      let aux = fun (l,already_selected) el ->
+        if PolySet.mem el already_selected then (l,already_selected)
+        else (el::l, PolySet.add el already_selected)
+      in
+      let selector_outputs,already_selected = List.fold_left aux ([], heuristic.already_selected) selector_outputs in
+      let heuristic = { heuristic with already_selected } in
+      Heuristic_selector (heuristic, selector_outputs)
     in
-    let selector_outputs,already_selected = List.fold_left aux ([], heuristic.already_selected) selector_outputs in
-    let heuristic = { heuristic with already_selected } in
-    Heuristic_selector (heuristic, selector_outputs)
-
-  let make_pending_propagators =
-    (fun (type a) (heuristic_plugin : (a, indexers_plugins_states) heuristic_plugin) (selector_outputs : a list) : (module PENDING_PROPAGATOR) list ->
-      List.map
-      (fun (selector_output : a) ->
-        (module struct
-          type nonrec a = a
-          let heuristic_plugin = heuristic_plugin
-          let selector_output = selector_output
-          end : PENDING_PROPAGATOR))
-      selector_outputs)
-
-  let add_alias : (typer_state * c_alias) -> (typer_state * Worklist.t) result =
     fun (state , ({ reason_alias_simpl=_; a; b } as new_constraint)) ->
       (* let () = Format.printf "Add_alias %a=%a\n%!" Ast_typed.PP.type_variable a Ast_typed.PP.type_variable b in *)
 
@@ -150,12 +150,12 @@ end = struct
       ok (state, { Worklist.empty with pending_propagators = Pending.of_list @@ List.flatten pending_propagators })
     
 
-  let get_alias variable aliases =
+  and get_alias variable aliases =
     trace_option (corner_case (Format.asprintf "can't find alias root of variable %a" Var.pp variable)) @@
     (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
     try Some (UF.repr variable aliases) with Not_found -> None
 
-  let aux_heuristic (state, (constraint_, (Heuristic_state heuristic), set_heuristic_state)) =
+  and aux_heuristic (state, (constraint_, (Heuristic_state heuristic), set_heuristic_state)) =
     let repr = mk_repr state in
     (* let () = queue_print (fun () -> Formatt.printf "Apply heuristic %s for constraint : %a\n%!" 
       heuristic.plugin.heuristic_name
@@ -172,7 +172,7 @@ end = struct
     ok (state, { Worklist.empty with pending_propagators = Pending.of_list pending_propagators })
 
   (* apply all the selectors and propagators *)
-  let add_constraint_and_apply_heuristics (state , constraint_) =
+  and add_constraint_and_apply_heuristics (state , constraint_) =
     (* let () = queue_print (fun () -> Format.printf "Add constraint and apply heuristics for constraint: %a\n%!" Ast_typed.PP.type_constraint_simpl constraint_) in *)
     if PolySet.mem constraint_ state.all_constraints then ok (state, Worklist.empty)
     else
