@@ -161,19 +161,44 @@ This is cheaper than pushing the same string to stack every time it is needed. T
 ### Inlining
 
 Consider the following contract:
+
+<Syntax syntax="pascaligo">
+
+```pascaligo
+function sum (const x : int; const y : int) is x + y
+
+function main (const parameter : int; const storage : int) is
+  ((list [] : list (operation)), sum (parameter, storage))
 ```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo
 let sum (x, y : int * int) = x + y
 
 let main (parameter, storage : int * int) =
   ([] : operation list), sum (parameter, storage)
 ```
 
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo
+let sum = ((x, y): (int, int)) => x + y;
+
+let main = ((parameter, storage): (int, int)) =>
+  (([] : list(operation)), sum(parameter, storage));
+```
+
+</Syntax>
+
 There are two major ways to represent functions (like `sum`) in Michelson. The first way is to first push the function `f` to the stack, and then execute it with the argument `(parameter, storage)`:
 
 | Michelson instruction | Stack after the instruction                    |
 |-----------------------|------------------------------------------------|
 |                       | `(parameter, storage)`                         |
-| `LAMBDA`<br>`  (pair int int) int`<br>`  { UNPAIR; ADD }` | `{ UNPAIR; ADD }`; `(parameter, storage)` |
+| `LAMBDA`<br/>`  (pair int int) int`<br/>`  { UNPAIR; ADD }` | `{ UNPAIR; ADD }`; `(parameter, storage)` |
 | `SWAP`                | `(parameter, storage)`; `{ UNPAIR; ADD }`      |
 | `EXEC`                | `parameter + storage`                          |
 | `NIL operation`       | `[]`, `parameter + storage`                    |
@@ -195,12 +220,36 @@ You may notice that in this case, inlining reduced the size of the contract.
 
 Other declarations can be inlined as well. In this contract, the compiler may generate the code that does `PUSH int 4` twice (in case there is an `[@inline]` annotation), or `PUSH int 4; DUP` (if there is no instruction to inline this binding):
 
+<Syntax syntax="pascaligo">
+
+```pascaligo
+const n = 4
+
+function main (const p : int; const s : int) is
+  ((list [] : list (operation)), n * n)
 ```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo
 let n = 4
 
 let main (p, s : unit * int) =
   ([] : operation list), n * n
 ```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo
+let n = 4;
+
+let main = ((p, s): (unit, int)) =>
+  (([] : list(operation)), n * n);
+```
+
+</Syntax>
 
 LIGO will automatically inline declarations if two conditions are met:
 1. The declaration is only used once
@@ -221,34 +270,142 @@ This peculiar technique can be used to lower the average gas consumption of your
 
 Imagine you have a contract with a number of small frequently-used entrypoints and several large entrypoints that are called rarely. During each transaction to the contract, the bakers would read **the whole code** of your contract, deserialise and typecheck it, and only after that, execute the requested entrypoint.
 
+<Syntax syntax="pascaligo">
+
+It turns out we can do better. Tezos has a lazy container – big map. The contents of big map are read, deserialised and typechecked during the call to `Big_map.find_opt`, and not at the beginning of the transaction. We can use this container to store the code of our heavy entrypoints: we need to add a `big_map(bool, entrypoint_lambda)` to the storage record, and then use `Big_map.find_opt` to fetch the code of the entrypoint from storage. (Note: in theory, we could use `big_map(unit, entrypoint_lambda)`, but, unfortunately, `unit` type is not comparable, so we cannot use it as a big map index).
+
+Here is how it looks like:
+
+```pascaligo skip
+type parameter is
+    LargeEntrypoint of int | ...
+
+type storage is
+  record [
+    large_entrypoint : big_map (bool, int -> int);
+    result : int
+  ]
+
+function load_large_ep (const storage : storage) is
+block {
+  const maybe_large_entrypoint : option (int -> int)
+  = Map.find_opt (True, storage.large_entrypoint)
+} with
+    case maybe_large_entrypoint of [
+      Some (ep) -> ep
+    | None -> (failwith ("Internal error") : int -> int)
+    ]
+
+function main
+  (const parameter : parameter;
+   const storage : storage) is
+block {
+  const nop = (list [] : list (operation))
+} with
+    case parameter of [
+      LargeEntrypoint (n) ->
+        block {
+          const loaded_entrypoint = load_large_ep (storage)
+        } with
+            (nop,
+             storage with
+               record [result = loaded_entrypoint (n)])
+    | ...
+      (* Other entrypoints *)
+    | ...
+    ]
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
 It turns out we can do better. Tezos has a lazy container – big map. The contents of big map are read, deserialised and typechecked during the call to `Big_map.find_opt`, and not at the beginning of the transaction. We can use this container to store the code of our heavy entrypoints: we need to add a `(bool, entrypoint_lambda) big_map` to the storage record, and then use `Big_map.find_opt` to fetch the code of the entrypoint from storage. (Note: in theory, we could use `(unit, entrypoint_lambda) big_map`, but, unfortunately, `unit` type is not comparable, so we cannot use it as a big map index).
 
 Here is how it looks like:
-```
-type storage = {
-  large_entrypoint : (bool, int -> int) big_map;
-  data : int
-}
+```cameligo skip
+type parameter =
+  LargeEntrypoint of int | ...
+
+type storage =
+  {large_entrypoint : (bool, int -> int) big_map;
+   result : int}
 
 let load_large_ep (storage : storage) =
   let maybe_large_entrypoint : (int -> int) option =
-    Big_map.find_opt true storage.large_entrypoint in
+    Big_map.find_opt true (storage.large_entrypoint) in
   match maybe_large_entrypoint with
-  | Some ep -> ep
+    Some ep -> ep
   | None -> (failwith "Internal error" : (int -> int))
 
 let main (parameter, storage : parameter * storage) =
   match parameter with
-  | LargeEntrypoint n ->
-    ([] : operation list), {storage with data = (load_large_ep storage) n}
+    LargeEntrypoint n ->
+      ([] : operation list),
+      {storage with
+        result = (load_large_ep storage) n}
   | ...
-  (* Other entrypoints * )
+    (* Other entrypoints *)
   | ...
 ```
 
+</Syntax>
+<Syntax syntax="reasonligo">
+
+It turns out we can do better. Tezos has a lazy container – big map. The contents of big map are read, deserialised and typechecked during the call to `Big_map.find_opt`, and not at the beginning of the transaction. We can use this container to store the code of our heavy entrypoints: we need to add a `big_map(bool, entrypoint_lambda)` to the storage record, and then use `Big_map.find_opt` to fetch the code of the entrypoint from storage. (Note: in theory, we could use `big_map(unit, entrypoint_lambda)`, but, unfortunately, `unit` type is not comparable, so we cannot use it as a big map index).
+
+Here is how it looks like:
+```reasonligo skip
+type parameter = LargeEntrypoint(int) | ...;
+
+type storage = {
+  large_entrypoint: big_map(bool, (int => int)),
+  result: int
+};
+
+let load_large_ep = (storage: storage) => {
+  let maybe_large_entrypoint: option(int => int) =
+    Map.find_opt(true, storage.large_entrypoint);
+  switch(maybe_large_entrypoint){
+  | Some (ep) => ep
+  | None => (failwith("Internal error") : (int => int))
+  }
+};
+
+let main = ((parameter, storage): (parameter, storage)) => {
+  let nop: list(operation) = [];
+  switch(parameter){
+  | LargeEntrypoint n =>
+      {
+        let loaded_entrypoint: (int => int) =
+          load_large_ep(storage);
+        (nop, {...storage, result: loaded_entrypoint(n)})
+      }
+  | ...
+    /* Other entrypoints */
+  | ...
+  }
+};
+```
+
+</Syntax>
+
 We can now put the code of this large entrypoint to storage upon the contract origination. If we do not provide any means to change the stored lambda, the immutability of the contract will not be affected.
 
+<Syntax syntax="pascaligo">
+
 This pattern is also useful if you have long code blocks that repeat across some subset of entrypoints. For example, if you develop a custom token, you may need different flavors of transfers with a common pre-transfer check. In this case, you can add a lambda `preTransferCheck : (transfer_params -> bool)` to the storage and call it upon transfer.
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+This pattern is also useful if you have long code blocks that repeat across some subset of entrypoints. For example, if you develop a custom token, you may need different flavors of transfers with a common pre-transfer check. In this case, you can add a lambda `preTransferCheck : (transfer_params -> bool)` to the storage and call it upon transfer.
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+This pattern is also useful if you have long code blocks that repeat across some subset of entrypoints. For example, if you develop a custom token, you may need different flavors of transfers with a common pre-transfer check. In this case, you can add a lambda `preTransferCheck : (transfer_params => bool)` to the storage and call it upon transfer.
+
+</Syntax>
 
 However, you always need to measure the gas consumption and the occupied storage. It may be the case that the wrapper code that extracts the lambda from storage and calls it is costlier than the piece of code you are trying to optimise.
 
