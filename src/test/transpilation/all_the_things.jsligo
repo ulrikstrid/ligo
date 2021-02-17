@@ -457,7 +457,7 @@ type returnx = [list <operation>, storage];
 
 let x : list <int> = [];
 let y : list <int> = [3, 4, 5];
-let z : list <int> = [2, ...y];
+/* let z : list <int> = [2, ...y]; */
 
 let main = ([action, s] : [parameter, storage]) : returnx => {
   let storage = match(action, list([
@@ -584,18 +584,9 @@ let deep_op = (m: foobar) : foobar => {
 };
 type storage = int;
 
-type Add = {
-  kind: "Add",
-  value: int
-};
-type Sub = {
-  kind: "Sub",
-  value: int
-};
-
 type parameter =
-| Add
-| Sub;
+| ["Add", int]
+| ["Sub", int];
 
 type return_ = [list <operation>, storage];
 
@@ -608,19 +599,9 @@ let main = ([action, store]: [parameter, storage]) => {
 };
 type storage = int;
 
-type Increment = {
-  kind: "Increment", 
-  value: int
-};
-
-type Decrement = {
-  kind: "Decrement",
-  value: int
-};
-
 type parameter =
-| Increment
-| Decrement;
+| ["Increment", int]
+| ["Decrement", int];
 
 let add = (a: int, b: int) => a + b;
 let sub = (a: int, b: int) => a - b;

@@ -337,6 +337,11 @@ let env_l = {
   in_loop     = false;
 }
 
+type foo = 
+  Match_nil of AST.expression
+| Match_cons of expression_ Var.t location_wrap * expression_ Var.t location_wrap
+
+
 let rec compile_tuple_expression ?loc tuple_expr env =
   let%bind lst = bind_map_list (fun e -> compile_expression_in e env) @@ nseq_to_list tuple_expr in
   match lst with
@@ -424,7 +429,7 @@ and compile_expression_in : CST.expr -> env -> (AST.expr, _) result = fun e env 
     (* Pattern matching for JsLIGO is implemented as a 'built-in function' as
        JavaScript and TypeScript don't have native pattern matching. *)
     let fields' = Utils.nsepseq_to_list fields in
-    let compile_parameters p =
+    let compile_simple_pattern p =
       let rec aux = function
         CST.EVar v -> ok @@ Var.of_name v.value
       | EPar par -> aux par.value.inside
@@ -436,10 +441,11 @@ and compile_expression_in : CST.expr -> env -> (AST.expr, _) result = fun e env 
       aux p
     in
     let compile_constr_pattern = function 
-      CST.Property {value = {name = EConstr {value = constr; _}; value; _}; _} -> (
+      CST.Property {value = {name = EConstr {value = constr; _}; value; _}; _}
+    |     Property {value = {name = EVar    {value = constr; _}; value; _}; _} -> (
         match value with 
           EFun {value = {parameters; body; _}; _} -> 
-            let%bind parameters = compile_parameters parameters in
+            let%bind parameters = compile_simple_pattern parameters in
             let%bind expr = compile_function_body_to_expression body env in
             ok ((Label constr, Location.wrap @@ parameters), expr)
         | _ as e -> fail @@ invalid_case constr e (* TODO: improve error message *)
@@ -451,14 +457,61 @@ and compile_expression_in : CST.expr -> env -> (AST.expr, _) result = fun e env 
     let%bind constrs = bind_map_list compile_constr_pattern fields' in
     let cases = AST.Match_variant constrs in
     ok @@ e_matching ~loc matchee cases
-
-  | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, ECall {value = EVar {value="list"; _}, Multiple args ;_})]); _}; _}); region} ->
-    (* let args = Utils.nsepseq_to_list args.value.inside in
+  | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, ECall {value = EVar {value="list"; _}, Multiple { value = {inside = (CST.EArray args, _); _} ;_} ;_})]); _}; _}); region} ->
+    let args = Utils.nsepseq_to_list args.value.inside in
+    let compile_simple_pattern p =
+      let rec aux = function
+        CST.EVar v -> ok @@ Var.of_name v.value
+      | EPar par -> aux par.value.inside
+      | ESeq {value = (hd, []); _} -> aux hd
+      | EAnnot {value = (a, _, _); _} -> aux a
+      | EUnit _ -> ok @@ Var.of_name "_"
+      | _ -> failwith "improve error message"
+      in 
+      aux p
+    in
+    let rec compile_parameter = function
+      CST.EPar p -> compile_parameter p.value.inside
+    | ESeq {value = (EAnnot {value = (EArray {value = {inside = (Empty_entry _, []); _}; _}, _, _); _}, _); _} -> 
+      ok @@ Match_nil (e_unit ())
+    | ESeq {value = (EAnnot {value = (EArray {value = {inside = (Expr_entry hd, [(_, Rest_entry {value = {expr = tl; _}; _})]); _}; _}, _, _); _}, _); _} -> 
+      let hd_loc = Location.lift @@ Raw.expr_to_region hd in
+      let tl_loc = Location.lift @@ Raw.expr_to_region tl in
+      let%bind hd = compile_simple_pattern hd in
+      let%bind tl = compile_simple_pattern tl in
+      let hd = Location.wrap ~loc:hd_loc hd in
+      let tl = Location.wrap ~loc:tl_loc tl in
+      ok @@ Match_cons (hd, tl)
+    | _ -> failwith "write a good error here"
+    in
     let compile_case = function 
-      CST.EFun _ -> failwith "todo"
-    | _ -> ()
-    in *)
-    failwith "TODO: pattern match on lists"
+      CST.EFun {value = {parameters; body; _}; _} -> 
+        let%bind args = compile_parameter parameters in
+        let%bind b    = compile_function_body_to_expression body env in
+        ok (args, b)
+    | _ -> failwith "nope 3"
+    in
+    (match args with 
+      [CST.Expr_entry a; CST.Expr_entry b]
+    | [CST.Expr_entry a; CST.Expr_entry b; CST.Rest_entry _] -> 
+        let%bind (params_a, body_a) = compile_case a in
+        let%bind (params_b, body_b) = compile_case b in
+        (match params_a, params_b, body_a, body_b with 
+          Match_nil match_nil,  Match_cons (a,b), _, body
+        | Match_cons (a,b), Match_nil match_nil, body, _ ->
+          (* failwith *)
+          let%bind matchee = compile_expression_in input env in
+          let loc = Location.lift region in
+          ok @@ e_matching ~loc matchee @@ AST.Match_list {match_nil;match_cons = (a,b, body) }
+        | _ -> failwith "no"
+        )
+        (* ok () *)
+    | _ -> failwith "no")
+    (* in
+    ignore(args);
+    ignore(compile_case);
+    (* let _ = bind_map_list compile_case args in *)
+    failwith "TODO: pattern match on lists" *)
   
   (* This case is due to a bad besign of our constant it as to change
     with the new typer so LIGO-684 on Jira *)
