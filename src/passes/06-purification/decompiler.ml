@@ -75,7 +75,17 @@ let rec decompile_expression : O.expression -> (I.expression, Errors.purificatio
   | O.E_constructor {constructor;element} ->
     let%bind element = self element in
     return @@ I.E_constructor {constructor;element}
-  | O.E_matching {matchee; cases} -> ignore (matchee,cases) ; failwith "REMITODO"
+  | O.E_matching {matchee; cases} ->
+    let%bind matchee = self matchee in
+    let aux :
+      (O.expression, O.type_expression) O.match_case -> ((I.expression, I.type_expression) I.match_case , _) result =
+        fun {pattern ; body} ->
+          let%bind body = self body in
+          let%bind pattern = Stage_common.Helpers.map_pattern_t (binder self_type) pattern in
+          ok I.{pattern ; body}
+    in
+    let%bind cases = bind_map_list aux cases in
+    return @@ I.E_matching {matchee ; cases}
   | O.E_record recd ->
     let%bind recd = record self recd in
     return @@ I.E_record recd
