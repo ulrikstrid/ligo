@@ -4,8 +4,11 @@ This implements the pattern_matching compiler of `Peyton-Jones, S.L., The Implem
 By reduction, this algorithm transforms pattern matching expression into (nested) cases expressions.
 `Sugar` match expression being 'pattern matching' expression and `Core`/`Typed` being 'case expressions'.
 
+"Product patterns" (e.g. tuple & record) are considered variables, an extra rule (product_rule) handles them
+
 List patterns are treated as the variant type `NIL | Cons of (hd , tl)` would be.
-"Product patterns" (e.g. tuple & record) are considered variables, but an extra rule (product_rule) was necessary to handle them
+Option patterns are treated as the variant type `Some a | None` would be
+- ... cleanable once we have proper representation of type -
 
 **)
 
@@ -48,7 +51,7 @@ let is_product : equations -> typed_pattern option = fun eqs ->
 
 let corner_case loc = fail (corner_case ("broken invariant at "^loc))
 
-let list_sep_x x = let open Simple_utils.PP_helpers in list_sep x (tag "@,")
+(* let list_sep_x x = let open Simple_utils.PP_helpers in list_sep x (tag "@,")
 let pp_matchees : Format.formatter -> O.expression_variable list -> unit =
   fun ppf lst ->
     let lst = List.map (fun (e:O.expression_variable) -> e.wrap_content) lst in
@@ -65,7 +68,7 @@ let pp_eq : Format.formatter ->  (typed_pattern list * (I.expression * O.environ
 
 let pp_eqs : Format.formatter -> equations -> unit =
   fun ppf lst ->
-    Format.fprintf ppf "@[<v>[@,%a@,] @]" (list_sep_x pp_eq) lst
+    Format.fprintf ppf "@[<v>[@,%a@,] @]" (list_sep_x pp_eq) lst *)
 
 let assert_body_t : body_t:O.type_expression option -> Location.t -> O.type_expression -> unit pm_result =
   fun ~body_t loc t ->
@@ -81,7 +84,13 @@ let extract_variant_type : pattern -> O.label -> O.type_expression -> O.type_exp
   | T_sum rows -> (
     match O.LMap.find_opt label rows.content with
     | Some t -> ok t.associated_type
-    | _ -> fail @@ expected_variant p.location t
+    | None -> fail @@ pattern_do_not_conform_type p t
+  )
+  | O.T_constant { injection ; parameters = [proj_t] } when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name -> (
+    match label with
+    | Label "Some" -> ok proj_t
+    | Label "None" -> ok (O.t_unit ())
+    | Label _ -> fail @@ pattern_do_not_conform_type p t
   )
   | _ -> fail @@ pattern_do_not_conform_type p t
 
@@ -91,7 +100,7 @@ let extract_record_type : pattern -> O.label -> O.type_expression -> O.type_expr
   | T_record rows -> (
     match O.LMap.find_opt label rows.content with
     | Some t -> ok t.associated_type
-    | _ -> fail @@ expected_record p.location t
+    | None -> fail @@ pattern_do_not_conform_type p t
   )
   | _ -> fail @@ pattern_do_not_conform_type p t
 
@@ -112,6 +121,7 @@ let type_matchee : equations -> O.type_expression pm_result =
       match p.wrap_content , t.type_content with
       | I.P_var _ , _ -> ok ()
       | I.P_variant _ , O.T_sum _ -> ok ()
+      | I.P_variant _ , O.T_constant { injection ; _ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name -> ok ()
       | (P_tuple _ | P_record _) , O.T_record _ -> ok ()
       | I.P_unit , O.T_constant { injection ; _ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.unit_name -> ok ()
       | I.P_list _ , O.T_constant { injection ; _ } when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name -> ok ()
@@ -188,7 +198,10 @@ let rec partition : ('a -> bool) -> 'a list -> 'a list list =
       if f x = f x' then add_inner x (partition f (x'::tl))
       else [x] :: (partition f (x'::tl))
 
-let split_equations : equations -> equations O.label_map pm_result =
+(**
+  groups together equations that begin with the same constructor 
+**)
+let group_equations : equations -> equations O.label_map pm_result =
   fun eqs ->
     let aux : equations O.label_map -> typed_pattern list * (I.expression * O.environment) -> equations O.label_map pm_result =
       fun m (pl , (body , env)) ->
@@ -282,42 +295,89 @@ and ctor_rule : type_f:type_fun -> body_t:O.type_expression option -> matchees -
   fun ~type_f ~body_t ms eqs def ->
   match ms with
   | mhd::mtl ->
-    let aux_p : O.label * equations -> O.matching_content_case pm_result =
-      fun (constructor,eq) ->
-        let proj = Location.wrap @@ Var.fresh ~name:"ctor_proj" () in
-        let new_ms = proj::mtl in
-        let%bind nested = match_ ~type_f ~body_t new_ms eq def in
-        ok @@ ({ constructor ; pattern = proj ; body = nested } : O.matching_content_case)
-    in
-    let aux_m : O.label * O.type_expression -> O.matching_content_case =
-      fun (constructor,t) ->
-        let proj = Location.wrap @@ Var.fresh ~name:"_" () in
-        let body = O.make_e def t in
-        { constructor ; pattern = proj ; body }
-    in
     let%bind matchee_t = type_matchee eqs in
-    let%bind eq_map = split_equations eqs in
-    let%bind rows = trace_option (expected_variant Location.generated matchee_t) (O.get_t_sum matchee_t) in
-    let eq_opt_map = O.LMap.mapi (fun label _ -> O.LMap.find_opt label eq_map) rows.content in
-    let splitted_eqs = O.LMap.to_kv_list @@ eq_opt_map in
-    let present = List.filter_map (fun (c,eq_opt) -> match eq_opt with Some eq -> Some (c,eq) | None -> None) splitted_eqs in
-    let%bind present_cases = bind_map_list aux_p present in
     let matchee = O.make_e (O.e_variable mhd) matchee_t in
-    let%bind body_t =
-      let aux t_opt (c:O.matching_content_case) =
-        let%bind () = assert_body_t ~body_t:t_opt c.body.location c.body.type_expression in
-        match t_opt with
-        | None -> ok (Some c.body.type_expression)
-        | Some _ -> ok t_opt
+    let%bind eq_map = group_equations eqs in
+    if Option.is_some (O.get_t_option matchee_t) then
+      (* TODO [CLEANABLE] the following won't be necessary once the option type will be expressed as a sum type `Some 'a | None` *)
+      let some_case = O.LMap.find_opt (Label "Some") eq_map in
+      let none_case = O.LMap.find_opt (Label "None") eq_map in
+      let tv = Option.unopt_exn (O.get_t_option matchee_t) in
+      let%bind match_some = match some_case with
+        | Some eq ->
+          let opt = Location.wrap @@ Var.fresh ~name:"opt_proj" () in
+          let new_ms = opt::mtl in
+          let%bind body = match_ ~type_f ~body_t new_ms eq def in
+          ok @@ Some ({opt ; body ; tv }:O.matching_content_some) 
+        | None -> ok None
       in
-      let%bind t = bind_fold_list aux body_t present_cases in
-      let t = Option.unopt_exn t in
-      ok t
-    in
-    let missing = List.filter_map (fun (c,eq_opt) -> match eq_opt with Some _ -> None | None -> Some (c,body_t)) splitted_eqs in
-    let missing_cases = List.map aux_m missing in
-    let cases = O.Match_variant { cases = missing_cases @ present_cases ; tv = matchee_t } in
-    ok @@ O.make_e (O.E_matching { matchee ; cases }) body_t
+      let%bind match_none = match none_case with
+        | Some eq ->
+          let opt = Location.wrap @@ Var.fresh ~name:"_" () in
+          let new_ms = opt::mtl in
+          let%bind body = match_ ~type_f ~body_t new_ms eq def in
+          ok @@ Some body
+        | None -> ok None
+      in
+      let%bind body_t =
+        match match_some, match_none with
+        | Some x , Some y ->
+          let%bind () = Typer_common.Helpers.assert_type_expression_eq Location.generated (x.body.type_expression, y.type_expression) in
+          let%bind () = assert_body_t ~body_t x.body.location x.body.type_expression in
+          let%bind () = assert_body_t ~body_t y.location y.type_expression in
+          ok x.body.type_expression
+        | Some x , None ->
+          let%bind () = assert_body_t ~body_t x.body.location x.body.type_expression in
+          ok x.body.type_expression
+        | None , Some x ->
+          let%bind () = assert_body_t ~body_t x.location x.type_expression in
+          ok x.type_expression
+        | None , None -> corner_case __LOC__ (* caught in extract_variant *)
+      in
+      let missing_case_body = O.make_e def body_t in
+      let match_none = Option.unopt ~default:missing_case_body match_none in
+      let missing_case_some : O.matching_content_some =
+        let opt = Location.wrap @@ Var.fresh ~name:"_" () in
+        { opt ; body = missing_case_body ; tv }
+      in
+      let match_some = Option.unopt ~default:missing_case_some match_some in
+      let cases = O.Match_option { match_some ; match_none } in
+      ok @@ O.make_e (O.E_matching { matchee ; cases }) body_t
+    else
+      let aux_p : O.label * equations -> O.matching_content_case pm_result =
+        fun (constructor,eq) ->
+          let proj = Location.wrap @@ Var.fresh ~name:"ctor_proj" () in
+          let new_ms = proj::mtl in
+          let%bind nested = match_ ~type_f ~body_t new_ms eq def in
+          ok @@ ({ constructor ; pattern = proj ; body = nested } : O.matching_content_case)
+      in
+      let aux_m : O.label * O.type_expression -> O.matching_content_case =
+        fun (constructor,t) ->
+          let proj = Location.wrap @@ Var.fresh ~name:"_" () in
+          let body = O.make_e def t in
+          { constructor ; pattern = proj ; body }
+      in
+      let%bind rows = trace_option (expected_variant Location.generated matchee_t) (O.get_t_sum matchee_t) in
+      let eq_opt_map = O.LMap.mapi (fun label _ -> O.LMap.find_opt label eq_map) rows.content in
+      let grouped_eqs = O.LMap.to_kv_list @@ eq_opt_map in
+      let present = List.filter_map (fun (c,eq_opt) -> match eq_opt with Some eq -> Some (c,eq) | None -> None) grouped_eqs in
+      let%bind present_cases = bind_map_list aux_p present in
+      
+      let%bind body_t =
+        let aux t_opt (c:O.matching_content_case) =
+          let%bind () = assert_body_t ~body_t:t_opt c.body.location c.body.type_expression in
+          match t_opt with
+          | None -> ok (Some c.body.type_expression)
+          | Some _ -> ok t_opt
+        in
+        let%bind t = bind_fold_list aux body_t present_cases in
+        let t = Option.unopt_exn t in
+        ok t
+      in
+      let missing = List.filter_map (fun (c,eq_opt) -> match eq_opt with Some _ -> None | None -> Some (c,body_t)) grouped_eqs in
+      let missing_cases = List.map aux_m missing in
+      let cases = O.Match_variant { cases = missing_cases @ present_cases ; tv = matchee_t } in
+      ok @@ O.make_e (O.E_matching { matchee ; cases }) body_t
   | [] -> corner_case __LOC__
 
 and product_rule : type_f:type_fun -> body_t:O.type_expression option -> typed_pattern -> matchees -> equations -> rest -> O.expression pm_result =

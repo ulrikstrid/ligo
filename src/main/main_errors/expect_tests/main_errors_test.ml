@@ -490,15 +490,6 @@ let%expect_test "typer" =
       orig_var = None ;
       location= File default_location }
   in
-  (* let ast_core_matching_expr : Ast_core.matching_expr =
-    Match_variant
-      [ { constructor= Label "Foo";
-          proj= Location.wrap (Var.of_name "bar");
-          body= ast_core_expression };
-        { constructor= Label "Cat";
-          proj= Location.wrap (Var.of_name "dog");
-          body= ast_core_expression } ]
-  in REMITODO*)
   let ast_core_constant = C_INT in
   let expression_content = E_literal Literal_unit in
   let expression =
@@ -592,15 +583,6 @@ let%expect_test "typer" =
 
     Invalid usage of type "michelson_pair".
     The "michelson_pair" type expects a record type as argument.|}] ;
-  (* error
-    (`Typer_match_error (ast_core_matching_expr, type_expression, location_t)) ;
-  [%expect
-    {|
-  in file "a dummy file name", line 20, characters 5-5
-
-  Pattern matching over an expression of an incorrect type.
-  Type "variant | Foo bar
-  | Cat dog" was expected, but got type "foo".|}] ; REMITODO *)
   error (`Typer_needs_annotation (ast_core_expression, "foo")) ;
   [%expect
     {|
