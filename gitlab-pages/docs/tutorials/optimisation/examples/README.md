@@ -1,10 +1,10 @@
-# Migrating from Ethereum guide
+# Optimisation examples
 
-These examples act as a supplementary material for the optimization tutorial. Here you can find four groups of contracts that showcase different optimization techniques:
+These examples act as a supplementary material for the optimisation tutorial. Here you can find four groups of contracts that showcase different optimisation techniques:
 
-1. Constants optimization (`contracts/constants`):
-  * V1 – a non-optimized version that uses a large constant
-  * V2 – an optimized version that uses a smaller constant
+1. Constants optimisation (`contracts/constants`):
+  * V1 – a non-optimised version that uses a large constant
+  * V2 – an optimised version that uses a smaller constant
 2. Basic function inlining (`contracts/inlining`):
   * V1 – a version with no inlining
   * V2 – a contract with one of the functions marked as "inline"
@@ -28,4 +28,4 @@ You can use the provided script (`./bin/estimateGas`) to compare the different v
 
 ## Switching between the dialects
 
-By default, all the scripts run CameLIGO contracts. To change this behavior, set the `syntax` variable in `truffle-config.js` to one of `ligo`, `mligo`, or `religo`. You would need to re-run your migrations to deploy the new contracts to your development network (run `npx truffle migrate --reset` to do it).
+By default, all the scripts run CameLIGO contracts. To change this behaviour, set the `syntax` variable in `truffle-config.js` to one of `ligo`, `mligo`, or `religo`. You would need to re-run your migrations to deploy the new contracts to your development network (run `npx truffle migrate --reset` to do it).
