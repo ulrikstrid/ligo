@@ -68,21 +68,22 @@ end = struct
       (UnionFind.Poly2.pp Ast_typed.PP.type_variable) aliases
       (list_sep pp_ex_propagator_state (fun ppf () -> Formatt.fprintf ppf " ;@ ")) already_selected_and_propagators
 
-  let aux_remove state to_remove =
+  let aux_remove (state, to_remove) =
     (* let () = Formatt.printf "Remove constraint :\n  %a\n\n%!" Ast_typed.PP.type_constraint_simpl_short to_remove in *)
     (* let () = Formatt.printf "and state:%a\n" pp_typer_state state in *)
     let module MapRemoveConstraint = Plugins.Indexers.Map_indexer_plugins(RemoveConstraint) in
     let%bind plugin_states = MapRemoveConstraint.f (mk_repr state, to_remove) state.plugin_states in
-    ok {state with plugin_states ; deleted_constraints = PolySet.add to_remove state.deleted_constraints}
+    ok ({state with plugin_states ; deleted_constraints = PolySet.add to_remove state.deleted_constraints}, Worklist.empty)
 
-  let aux_update___ state { remove_constraints; add_constraints; add_constraints_simpl; proof_trace } =
+  and aux_update (state, { remove_constraints; add_constraints; add_constraints_simpl; proof_trace }) =
     let _TODOTODOTODO = add_constraints_simpl in
     let%bind () = check_proof_trace proof_trace in
-    let%bind state = bind_fold_list aux_remove state remove_constraints in
     Format.printf "Returning from aux_update\n%!" ;
-    ok (state, add_constraints)
+    ok (state, { Worklist.empty with pending_type_constraint = Pending.of_list add_constraints;
+                                     pending_type_constraint_simpl = Pending.of_list add_constraints_simpl;
+                                     pending_removes = Pending.of_list remove_constraints })
 
-  let aux_propagator___ (state, (module M : PENDING_PROPAGATOR)) =
+  let aux_propagator (state, (module M : PENDING_PROPAGATOR)) =
     let heuristic_plugin, selector_output = M.heuristic_plugin, M.selector_output in
     (* TODO: before applying a propagator, check if it does
        not depend on constraints which were removed by the
@@ -93,8 +94,7 @@ end = struct
       ok (state, Worklist.empty)
     else
       let%bind updates = heuristic_plugin.propagator selector_output (mk_repr state) in
-      let%bind (state, new_constraints) = bind_fold_map_list aux_update___ state updates in
-      ok (state, { Worklist.empty with pending_type_constraint = Pending.of_list @@ List.flatten new_constraints })
+      ok (state, { Worklist.empty with pending_updates = Pending.of_list @@ updates })
 
   let aux_selector_alias demoted_repr new_repr state (Heuristic_state heuristic) =
     let selector_outputs = heuristic.plugin.alias_selector demoted_repr new_repr state.plugin_states in
@@ -117,7 +117,7 @@ end = struct
           end : PENDING_PROPAGATOR))
       selector_outputs)
 
-  let add_alias___ : (typer_state * c_alias) -> (typer_state * Worklist.t) result =
+  let add_alias : (typer_state * c_alias) -> (typer_state * Worklist.t) result =
     fun (state , ({ reason_alias_simpl=_; a; b } as new_constraint)) ->
       (* let () = Format.printf "Add_alias %a=%a\n%!" Ast_typed.PP.type_variable a Ast_typed.PP.type_variable b in *)
 
@@ -155,7 +155,7 @@ end = struct
     (* TODO: after upgrading UnionFind, this will be an option, not an exception. *)
     try Some (UF.repr variable aliases) with Not_found -> None
 
-  let aux_heuristic___ (state, (constraint_, (Heuristic_state heuristic), set_heuristic_state)) =
+  let aux_heuristic (state, (constraint_, (Heuristic_state heuristic), set_heuristic_state)) =
     let repr = mk_repr state in
     (* let () = queue_print (fun () -> Formatt.printf "Apply heuristic %s for constraint : %a\n%!" 
       heuristic.plugin.heuristic_name
@@ -220,7 +220,7 @@ end = struct
            (fun (state, worklist) ->
               Worklist.process_all ~time_to_live
                 pending_hc
-                aux_heuristic___
+                aux_heuristic
                 (state, worklist)
            );
 
@@ -254,15 +254,29 @@ end = struct
 
            (fun (state, worklist) ->
               Worklist.process_all ~time_to_live
-                pending_c_alias
-                add_alias___
+                pending_removes
+                aux_remove
                 (state, worklist)
            );
 
            (fun (state, worklist) ->
               Worklist.process_all ~time_to_live
+                pending_updates
+                aux_update
+                (state, worklist)
+           );
+
+           (fun (state, worklist) ->
+              Worklist.process
+                pending_c_alias
+                add_alias
+                (state, worklist)
+           );
+
+           (fun (state, worklist) ->
+              Worklist.process
                 pending_propagators
-                aux_propagator___
+                aux_propagator
                 (state, worklist)
            );
 

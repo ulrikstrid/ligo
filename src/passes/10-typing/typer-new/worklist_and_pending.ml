@@ -40,7 +40,9 @@ type worklist_ = {
   pending_c_alias                                : c_alias               Pending.t;
   pending_non_alias                              : type_constraint_simpl Pending.t;
   pending_hc                                     : (type_constraint_simpl * indexers_plugins_states ex_heuristic_state * ((indexers_plugins_states ex_heuristic_state as 'a) list -> 'a -> 'a list)) Pending.t;
-  pending_propagators                            : (module PENDING_PROPAGATOR)       Pending.t
+  pending_propagators                            : (module PENDING_PROPAGATOR)       Pending.t;
+  pending_updates                                : update                Pending.t;
+  pending_removes                                : type_constraint_simpl Pending.t
 }
 
 type ('part, 'whole) mini_lens = { get : 'whole -> 'part Pending.t; set : 'whole -> 'part Pending.t -> 'whole; }   
@@ -64,8 +66,10 @@ module Worklist = struct
         pending_c_alias;
         pending_non_alias;
         pending_hc;
-        pending_propagators } =
-    Printf.fprintf stderr "size(worklist)=(%d | %d | %d | %d | %d | %d | %d)\n"
+        pending_propagators;
+        pending_updates;
+        pending_removes } =
+    Printf.fprintf stderr "size(worklist)=(%d | %d | %d | %d | %d | %d | %d | %d | %d)\n"
       (List.length @@ Pending.to_list pending_type_constraint                       )
       (List.length @@ Pending.to_list pending_filtered_not_already_added_constraints)
       (List.length @@ Pending.to_list pending_type_constraint_simpl                 )
@@ -73,6 +77,8 @@ module Worklist = struct
       (List.length @@ Pending.to_list pending_non_alias                             )
       (List.length @@ Pending.to_list pending_hc                                    )
       (List.length @@ Pending.to_list pending_propagators                           )
+      (List.length @@ Pending.to_list pending_updates                               )
+      (List.length @@ Pending.to_list pending_removes                               )
       
   let is_empty ~time_to_live
       (_state,
@@ -82,7 +88,9 @@ module Worklist = struct
           pending_c_alias;
           pending_non_alias;
           pending_hc;
-          pending_propagators } as worklist)) =
+          pending_propagators;
+          pending_updates;
+          pending_removes } as worklist)) =
     let () = show_sizes worklist in
     decrement_has_timeout_expired time_to_live
     || (Pending.is_empty pending_type_constraint                        &&
@@ -91,7 +99,9 @@ module Worklist = struct
         Pending.is_empty pending_c_alias                                &&
         Pending.is_empty pending_non_alias                              &&
         Pending.is_empty pending_hc                                     &&
-        Pending.is_empty pending_propagators                             )
+        Pending.is_empty pending_propagators                            &&
+        Pending.is_empty pending_updates                                &&
+        Pending.is_empty pending_removes                                 )
 
   let process lens f (state, worklist) =
     match (Pending.pop (lens.get worklist)) with
@@ -110,6 +120,8 @@ module Worklist = struct
         pending_non_alias                              = Pending.union new_worklist.pending_non_alias                              worklist.pending_non_alias                              ;
         pending_hc                                     = Pending.union new_worklist.pending_hc                                     worklist.pending_hc                                     ;
         pending_propagators                            = Pending.union new_worklist.pending_propagators                            worklist.pending_propagators                            ;
+        pending_updates                                = Pending.union new_worklist.pending_updates                                worklist.pending_updates                                ;
+        pending_removes                                = Pending.union new_worklist.pending_removes                                worklist.pending_removes                                ;
       }
       (* return the state updated by f, and the updated worklist (without the processed element, with the new tasks) *)
       in ok (state, Some_processing_done merged_worklists)
@@ -140,6 +152,8 @@ module Worklist = struct
     pending_non_alias                              = Pending.empty ;
     pending_hc                                     = Pending.empty ;
     pending_propagators                            = Pending.empty ;
+    pending_updates                                = Pending.empty ;
+    pending_removes                                = Pending.empty ;
   }
 end
 
@@ -150,6 +164,8 @@ let pending_c_alias                                = { get = (fun { pending_c_al
 let pending_non_alias                              = { get = (fun { pending_non_alias                              = x ; _ } -> x); set = (fun w x -> { w with pending_non_alias                              = x }) }
 let pending_hc                                     = { get = (fun { pending_hc                                     = x ; _ } -> x); set = (fun w x -> { w with pending_hc                                     = x }) }
 let pending_propagators                            = { get = (fun { pending_propagators                            = x ; _ } -> x); set = (fun w x -> { w with pending_propagators                            = x }) }
+let pending_updates                                = { get = (fun { pending_updates                                = x ; _ } -> x); set = (fun w x -> { w with pending_updates                                = x }) }
+let pending_removes                                = { get = (fun { pending_removes                                = x ; _ } -> x); set = (fun w x -> { w with pending_removes                                = x }) }
 
 
 let rec until' :
