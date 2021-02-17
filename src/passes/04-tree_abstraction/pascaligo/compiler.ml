@@ -528,12 +528,16 @@ and conv : CST.pattern -> (AST.ty_expr AST.pattern,_) result =
       { var ; ascr = None }
     in
     ok @@ Location.wrap ~loc @@ P_var b
-  | CST.PTuple tuple ->
+  | CST.PTuple tuple -> (
     let (tuple, loc) = r_split tuple in
     let lst = npseq_to_ne_list tuple.inside in
     let patterns = List.Ne.to_list lst in
     let%bind nested = bind_map_list conv patterns in
-    ok @@ Location.wrap ~loc @@ P_tuple nested
+    (* Weird(?) : (t) in Foo (t) should be a variable, not a 1-uplet *)
+    match nested with
+    | [({wrap_content = P_var _;_ } as x)] -> ok x
+    | _ -> ok @@ Location.wrap ~loc @@ P_tuple nested
+  )
   | CST.PConstr constr_pattern -> (
     match constr_pattern with
     | PUnit p ->
