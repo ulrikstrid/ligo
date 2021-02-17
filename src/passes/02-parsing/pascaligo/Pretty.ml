@@ -250,7 +250,7 @@ and pp_instruction = function
 | I_Case        i -> pp_case pp_if_clause i
 | I_Cond        i -> group (pp_cond_instr i)
 | I_For         i -> pp_for_int i
-| I_Iter        i -> pp_for_collect i
+| I_ForIn       i -> pp_for_in i
 | I_MapPatch    i -> pp_map_patch i
 | I_MapRemove   i -> pp_map_remove i
 | I_RecordPatch i -> pp_record_patch i
@@ -384,7 +384,7 @@ and pp_for_int {value; _} =
   ^^ prefix 2 1 (string " to") (pp_expr bound)
   ^^ step ^^ hardline ^^ pp_block block
 
-and pp_for_collect {value; _} =
+and pp_for_in {value; _} =
   let {var; bind_to; collection; expr; block; _} = value in
   let binding =
     match bind_to with

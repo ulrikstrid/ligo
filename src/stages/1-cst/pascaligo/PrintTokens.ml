@@ -40,8 +40,7 @@ let mk_state ?(buffer=Buffer.create 131) ~offsets mode =
    "print_". The rest of the name is either
 
      * the name of the type whose value is printed, for example
-       [print_declaration], [print_attribute], [print_statements]
-       etc.;
+       [print_declaration] prints values of type [declaration];
 
      * the name of a CST constructor, for example, [print_E_Int],
        meaning that the argument of the constructor is printed;
@@ -54,12 +53,18 @@ let mk_state ?(buffer=Buffer.create 131) ~offsets mode =
 let compact state (region: Region.t) =
   region#compact ~offsets:state#offsets state#mode
 
-(* Some higher-order printers for optional and special lists *)
+(* HIGHER-ORDER PRINTERS *)
+
+(* Printing optional values *)
 
 let print_option : state -> (state -> 'a -> unit) -> 'a option -> unit =
   fun state print -> function
          None -> ()
   | Some node -> print state node
+
+(* The functions [print_nsepseq], [print_sepseq] and [print_nseq]
+   print values of types [Utils.nsepseq], [Utils.sepseq] and
+   [Utils.nseq], respectively. *)
 
 let print_nsepseq :
   state -> (state -> 'a -> unit) -> string -> ('a, region) Utils.nsepseq -> unit =
@@ -78,6 +83,10 @@ let print_sepseq :
 
 let print_nseq : state -> (state -> 'a -> unit) -> 'a Utils.nseq -> unit =
   fun state print -> Utils.nseq_iter (print state)
+
+(* When printing a sequence, e.g., by means of [nsepseq], whose items
+   are of type [Region.reg], the function [strip] is useful to strip
+   the items from their region (type [Region.t]). *)
 
 let strip : 'a.(state -> 'a -> unit) -> state -> 'a reg -> unit =
   fun print state node -> print state node.value
@@ -165,11 +174,33 @@ let print_language state {region; value} =
             value.Region.value
   in Buffer.add_string state#buffer line
 
-(* Printing the tokens from the CST *)
+(* HIGHER-ORDER PRINTERS *)
+
+let print_par : 'a.state -> (state -> 'a -> unit) -> 'a par -> unit =
+  fun state print par ->
+    print_token state "LPAR" par.lpar;
+    print       state par.inside;
+    print_token state "RPAR" par.rpar
+
+let print_braces : 'a.state -> (state -> 'a -> unit) -> 'a braces -> unit =
+  fun state print braces ->
+    print_token state "LBRACE" braces.lbrace;
+    print       state braces.inside;
+    print_token state "RBRACE" braces.rbrace
+
+let print_brackets : 'a.state -> (state -> 'a -> unit) -> 'a brackets -> unit =
+  fun state print brackets ->
+    print_token state "LBRACKET" brackets.lbracket;
+    print       state brackets.inside;
+    print_token state "LBRACKET" brackets.rbracket
+
+(* PRINTING THE CST *)
 
 let rec print_cst state (node : cst) =
   print_nseq  state print_declaration node.decl;
   print_token state "EOF" node.eof
+
+(* Declarations *)
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
@@ -223,53 +254,7 @@ and print_module_alias state (node : module_alias) =
   print_nsepseq   state print_variable "DOT" node.mod_path;
   print_token_opt state "SEMI" node.terminator
 
-and print_par : 'a.state -> (state -> 'a -> unit) -> 'a par -> unit =
-  fun state print par ->
-    print_token state "LPAR" par.lpar;
-    print       state par.inside;
-    print_token state "RPAR" par.rpar
-
-and print_braces : 'a.state -> (state -> 'a -> unit) -> 'a braces -> unit =
-  fun state print braces ->
-    print_token state "LBRACE" braces.lbrace;
-    print       state braces.inside;
-    print_token state "RBRACE" braces.rbrace
-
-and print_brackets : 'a.state -> (state -> 'a -> unit) -> 'a brackets -> unit =
-  fun state print brackets ->
-    print_token state "LBRACKET" brackets.lbracket;
-    print       state brackets.inside;
-    print_token state "LBRACKET" brackets.rbracket
-
-and print_case : 'a.state -> (state -> 'a -> unit) -> 'a case -> unit =
-  fun state print node ->
-    print_token state "Case" node.kwd_case;
-    print_expr  state node.expr;
-    print_token state "Of" node.kwd_of;
-    match node.enclosing with
-      Brackets (lbracket, rbracket) ->
-        print_token     state "LBRACKET" lbracket;
-        print_token_opt state "VBAR" node.lead_vbar;
-        print_cases     state print node.cases.value;
-        print_token     state "RBRACKET" rbracket
-    | End kwd_end ->
-        print_token_opt state "VBAR" node.lead_vbar;
-        print_cases     state print node.cases.value;
-        print_token     state "End" kwd_end
-
-and print_cases :
-  'a.state -> (state -> 'a -> unit) ->
-  ('a case_clause reg, vbar) Utils.nsepseq -> unit =
-    fun state print node ->
-      let print state node = print_case_clause state print node.value
-      in print_nsepseq state print "VBAR" node
-
-and print_case_clause :
-  'a.state -> (state -> 'a -> unit) -> 'a case_clause -> unit =
-  fun state print node ->
-    print_pattern state node.pattern;
-    print_token   state "ARROW" node.arrow;
-    print         state node.rhs
+(* Type expressions *)
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
@@ -369,6 +354,8 @@ and print_param_var state (node : param_var reg) =
   print_variable state node.value.var;
   print_option   state print_type_annot node.value.param_type
 
+(* Blocks *)
+
 and print_block state (node : block reg) =
   match node.value.enclosing with
     Block (kwd_block, lbrace, rbrace) ->
@@ -401,6 +388,8 @@ and print_statement state = function
 | S_Decl    s -> print_declaration state s
 | S_VarDecl s -> print_var_decl    state s.value
 
+(* Instructions *)
+
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
 
@@ -410,7 +399,7 @@ and print_instruction state = function
 | I_Case        i -> print_case         state print_test_clause i.value
 | I_Cond        i -> print_conditional  state print_test_clause i.value
 | I_For         i -> print_for_int      state i.value
-| I_Iter        i -> print_iter         state i.value
+| I_ForIn       i -> print_for_in         state i.value
 | I_MapPatch    i -> print_map_patch    state i.value
 | I_MapRemove   i -> print_map_remove   state i.value
 | I_RecordPatch i -> print_record_patch state i.value
@@ -418,6 +407,36 @@ and print_instruction state = function
 | I_SetPatch    i -> print_set_patch    state i.value
 | I_SetRemove   i -> print_set_remove   state i.value
 | I_While       i -> print_while_loop   state i.value
+
+and print_case : 'a.state -> (state -> 'a -> unit) -> 'a case -> unit =
+  fun state print node ->
+    print_token state "Case" node.kwd_case;
+    print_expr  state node.expr;
+    print_token state "Of" node.kwd_of;
+    match node.enclosing with
+      Brackets (lbracket, rbracket) ->
+        print_token     state "LBRACKET" lbracket;
+        print_token_opt state "VBAR" node.lead_vbar;
+        print_cases     state print node.cases.value;
+        print_token     state "RBRACKET" rbracket
+    | End kwd_end ->
+        print_token_opt state "VBAR" node.lead_vbar;
+        print_cases     state print node.cases.value;
+        print_token     state "End" kwd_end
+
+and print_cases :
+  'a.state -> (state -> 'a -> unit) ->
+  ('a case_clause reg, vbar) Utils.nsepseq -> unit =
+    fun state print node ->
+      let print state node = print_case_clause state print node.value
+      in print_nsepseq state print "VBAR" node
+
+and print_case_clause :
+  'a.state -> (state -> 'a -> unit) -> 'a case_clause -> unit =
+  fun state print node ->
+    print_pattern state node.pattern;
+    print_token   state "ARROW" node.arrow;
+    print         state node.rhs
 
 and print_test_clause state = function
   ClauseInstr instr -> print_instruction  state instr
@@ -460,7 +479,7 @@ and print_for_int state (node : for_int) =
   print_option   state print_step node.step;
   print_block    state node.block
 
-and print_iter state (node : iter) =
+and print_for_in state (node : for_in) =
   print_token      state "For" node.kwd_for;
   print_variable   state node.var;
   print_option     state print_bind_to node.bind_to;
@@ -477,6 +496,8 @@ and print_collection state = function
 and print_bind_to state (arrow, variable) =
   print_token state "ARROW" arrow;
   print_variable state variable
+
+(* Expressions *)
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
@@ -703,6 +724,8 @@ and print_E_Some state (node : (kwd_Some * arguments) reg) =
   let ctor_Some, arguments = node.value in
   print_token      state "Ctor_Some" ctor_Some;
   print_tuple_expr state arguments
+
+(* Patterns *)
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)

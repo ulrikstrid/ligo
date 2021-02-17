@@ -331,7 +331,7 @@ and instruction =
 | I_Case        of test_clause case reg
 | I_Cond        of test_clause conditional reg
 | I_For         of for_int reg
-| I_Iter        of iter reg
+| I_ForIn       of for_in reg
 | I_MapPatch    of map_patch reg
 | I_MapRemove   of map_remove reg
 | I_RecordPatch of record_patch reg
@@ -449,7 +449,7 @@ and for_int = {
   block   : block reg
 }
 
-and iter = {
+and for_in = {
   kwd_for    : kwd_for;
   var        : variable;
   bind_to    : (arrow * variable) option;
@@ -767,7 +767,7 @@ let instr_to_region = function
 | I_Case        {region; _}
 | I_Cond        {region; _}
 | I_For         {region; _}
-| I_Iter        {region; _}
+| I_ForIn       {region; _}
 | I_MapPatch    {region; _}
 | I_MapRemove   {region; _}
 | I_RecordPatch {region; _}

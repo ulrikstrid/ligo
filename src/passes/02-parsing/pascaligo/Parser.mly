@@ -507,7 +507,7 @@ instruction:
 | case_instr   { I_Case        $1 }
 | conditional  { I_Cond        $1 }
 | for_int      { I_For         $1 }
-| iter         { I_Iter        $1 }
+| for_in         { I_ForIn       $1 }
 | map_patch    { I_MapPatch    $1 }
 | map_remove   { I_MapRemove   $1 }
 | record_patch { I_RecordPatch $1 }
@@ -694,7 +694,7 @@ for_int:
                   kwd_to=$5; bound=$6; step=$7; block=$8}
     in {region; value} }
 
-iter:
+for_in:
   "for" variable "->" variable "in" "map" expr block {
     let bind_to    = Some ($3,$4)
     and collection = `Map $6 in
