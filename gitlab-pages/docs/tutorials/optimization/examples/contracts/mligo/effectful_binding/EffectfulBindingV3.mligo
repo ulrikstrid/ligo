@@ -8,32 +8,25 @@
    attribute. Let's check our assumption.
 *)
 
-let some_contract = ("KT1WhG8rMaC1azBJApBHW2JJdhWuhvemw4Zf" : address)
+let some_contract =
+  ("KT1WhG8rMaC1azBJApBHW2JJdhWuhvemw4Zf" : address)
 
 (* Calls to the function are not inlined anymore *)
 let target_exists () =
   let c : int contract option =
     Tezos.get_contract_opt some_contract in
-    match c with
-    | Some contract -> true
-    | None -> false
+  match c with
+    Some contract -> true
+  | None -> false
 
 type parameter =
-  Increment
-| IncrementIfEmpty
-| IncrementIfExists
+  Increment | IncrementIfEmpty | IncrementIfExists
 
 let main (p, s : parameter * int) =
   let nop = ([] : operation list) in
   match p with
-  | Increment -> nop, s + 1
-
+    Increment -> nop, s + 1
   | IncrementIfEmpty ->
-    if not target_exists ()
-    then nop, s + 1
-    else nop, s
-
+      if not target_exists () then nop, s + 1 else nop, s
   | IncrementIfExists ->
-    if target_exists ()
-    then nop, s + 1
-    else nop, s
+      if target_exists () then nop, s + 1 else nop, s

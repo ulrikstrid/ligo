@@ -19,8 +19,8 @@ type large_record = {
 let large_entrypoint = (p: int) => {
   let x = 
     "A long line of meaningless words occupying storage";
-  let some_lambda =
-    (n : int) => { 
+  let some_lambda = (n: int) =>
+    {
       a: "A large record with dummy values",
       b: n,
       c: true,
@@ -37,14 +37,14 @@ let small_entrypoint = ((p: int) => p);
 
 type parameter = LargeEntrypoint(int) | SmallEntrypoint(int);
 
-type storage = { result: int };
+type storage = {result: int };
 
 let main = ((parameter, storage): (parameter, storage)) => {
-  let nop : list(operation) = [];
-  switch(parameter) {
+  let nop: list(operation) = [];
+  switch(parameter){
   | LargeEntrypoint n =>
-      (nop, {...storage, result: large_entrypoint(n) })
+      (nop, {...storage, result: large_entrypoint(n)})
   | SmallEntrypoint n =>
-      (nop, {...storage, result: small_entrypoint(n) })
-  };
+      (nop, {...storage, result: small_entrypoint(n)})
+  }
 };

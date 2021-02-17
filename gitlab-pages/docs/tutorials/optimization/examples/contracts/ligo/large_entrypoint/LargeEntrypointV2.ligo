@@ -18,8 +18,8 @@ type large_record is
    see /migrations/5_deploy_large_entrypoint.js *)
 function large_entrypoint (const p : int) is
 block {
-  const x = 
-      "A long line of meaningless words occupying storage";
+  const x
+  = "A long line of meaningless words occupying storage";
   function some_lambda (const n : int) is
     record [
       a = "A large record with dummy values";
@@ -36,36 +36,40 @@ block {
 function small_entrypoint (const p : int) is p
 
 type parameter is
-| LargeEntrypoint of int
-| SmallEntrypoint of int
+    LargeEntrypoint of int | SmallEntrypoint of int
 
 type storage is
   record [
-    (* a big map that stores our large entrypoint *)
     large_entrypoint : big_map (bool, int -> int);
     result : int
   ]
 
-(* A function to fetch the large entrypoint from the storage *)
 function load_large_ep (const storage : storage) is
 block {
-  const maybe_large_entrypoint : option (int -> int) =
-      Map.find_opt (True, storage.large_entrypoint)
+  const maybe_large_entrypoint : option (int -> int)
+  = Map.find_opt (True, storage.large_entrypoint)
 } with
-  case maybe_large_entrypoint of
-  | Some (ep) -> ep
-  | None -> (failwith ("Internal error") : int -> int)
-  end
+    case maybe_large_entrypoint of [
+      Some (ep) -> ep
+    | None -> (failwith ("Internal error") : int -> int)
+    ]
 
-function main (const parameter : parameter; const storage : storage) is
-block { 
-  const nop = (list [] : list (operation));
+function main
+  (const parameter : parameter;
+   const storage : storage) is
+block {
+  const nop = (list [] : list (operation))
 } with
-  case parameter of
-  | LargeEntrypoint (n) ->
-      block {
-        const loaded_entrypoint = load_large_ep(storage);
-      } with (nop, storage with record [result = loaded_entrypoint (n)])
-  | SmallEntrypoint (n) ->
-      (nop, storage with record [result = small_entrypoint (n)])
-  end
+    case parameter of [
+      LargeEntrypoint (n) ->
+        block {
+          const loaded_entrypoint = load_large_ep (storage)
+        } with
+            (nop,
+             storage with
+               record [result = loaded_entrypoint (n)])
+    | SmallEntrypoint (n) ->
+        (nop,
+         storage with
+           record [result = small_entrypoint (n)])
+    ]

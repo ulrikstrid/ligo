@@ -7,15 +7,16 @@ type a_complex_record is
     h : int;
     e : int;
     l : int;
-    l_: int;
+    l_ : int;
     o : int;
-    ligo : int;
+    ligo : int
   ]
 
 (* A function that doesn't perform a lot of computations
    but has a complex type *)
 function h_plus_one (const r : a_complex_record) is
-    r with record [ h = r.h + 1 ]
+  r with
+    record [h = r.h + 1]
 
 function main (const p : int; const s : a_complex_record) is
-    ((list [] : list(operation)), h_plus_one(h_plus_one(s)))
+  ((list [] : list (operation)), h_plus_one (h_plus_one (s)))

@@ -12,14 +12,14 @@ let some_contract =
   ("KT1WhG8rMaC1azBJApBHW2JJdhWuhvemw4Zf" : address);
 
 /* Calls to the function are not inlined anymore */
-let target_exists = (_ : unit) => {
+let target_exists = (_: unit) => {
   let c: option(contract(int)) = 
     Tezos.get_contract_opt(some_contract);
-  switch(c) {
-  | Some(contract) => true
+  switch(c){
+  | Some (contract) => true
   | None => false
-  };
-}
+  }
+};
 
 type parameter = 
   Increment
@@ -27,22 +27,20 @@ type parameter =
 | IncrementIfExists;
 
 let main = ((p, s): (parameter, int)) => {
-  let nop : list(operation) = [];
-  switch(p) {
+  let nop: list(operation) = [];
+  switch(p){
   | Increment => (nop, s + 1)
-
   | IncrementIfEmpty =>
-      if (!target_exists()) {
+      if (! target_exists()) {
         (nop, s + 1)
       } else {
         (nop, s)
       }
-
   | IncrementIfExists =>
       if (target_exists()) {
         (nop, s + 1)
       } else {
         (nop, s)
       }
-  };
-}
+  }
+};

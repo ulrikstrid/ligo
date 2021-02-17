@@ -18,8 +18,8 @@ type large_record = {
 let large_entrypoint = (p: int) => {
   let x = 
     "A long line of meaningless words occupying storage";
-  let some_lambda =
-    (n: int) => {
+  let some_lambda = (n: int) =>
+    {
       a: "A large record with dummy values",
       b: n,
       c: true,
@@ -42,22 +42,24 @@ type storage = {
 };
 
 let load_large_ep = (storage: storage) => {
-  let maybe_large_entrypoint: option(int => int) = 
-      Map.find_opt(true, storage.large_entrypoint);
-  switch(maybe_large_entrypoint) {
-  | Some(ep) => ep
+  let maybe_large_entrypoint: option(int => int) =
+    Map.find_opt(true, storage.large_entrypoint);
+  switch(maybe_large_entrypoint){
+  | Some (ep) => ep
   | None => (failwith("Internal error") : (int => int))
-  };
+  }
 };
 
 let main = ((parameter, storage): (parameter, storage)) => {
-  let nop : list(operation) = [];
-  switch(parameter) {
-  | LargeEntrypoint n => {
-      let loaded_entrypoint : (int => int) = load_large_ep(storage);
-      (nop, {...storage, result: loaded_entrypoint(n) })
-    }
+  let nop: list(operation) = [];
+  switch(parameter){
+  | LargeEntrypoint n =>
+      {
+        let loaded_entrypoint: (int => int) =
+          load_large_ep(storage);
+        (nop, {...storage, result: loaded_entrypoint(n)})
+      }
   | SmallEntrypoint n =>
-      (nop, {...storage, result: small_entrypoint(n) })
-  };
+      (nop, {...storage, result: small_entrypoint(n)})
+  }
 };

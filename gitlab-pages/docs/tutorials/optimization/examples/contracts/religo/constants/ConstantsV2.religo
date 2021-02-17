@@ -4,4 +4,4 @@ let main = ((parameter, storage): (int, unit)) => {
   } else {
     (failwith("PARAM_TOO_LARGE") : (list(operation), unit))
   }
-}
+};

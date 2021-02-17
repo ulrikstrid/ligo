@@ -4,6 +4,7 @@
    will not work: the declaration has a side-effect, so it must be
    executed before running the main contract code
 */
+
 let some_contract =
   ("KT1WhG8rMaC1azBJApBHW2JJdhWuhvemw4Zf" : address);
 
@@ -12,34 +13,32 @@ let some_contract =
 let target_exists = {
   let c: option(contract(int)) = 
     Tezos.get_contract_opt(some_contract);
-  switch(c) {
-  | Some(contract) => true
+  switch(c){
+  | Some (contract) => true
   | None => false
-  };
-}
+  }
+};
 
-type parameter = 
+type parameter =
   Increment
 | IncrementIfEmpty
 | IncrementIfExists;
 
 let main = ((p, s): (parameter, int)) => {
-  let nop : list (operation) = [];
-  switch(p) {
+  let nop: list(operation) = [];
+  switch(p){
   | Increment => (nop, s + 1)
-
   | IncrementIfEmpty =>
-      if (!target_exists) {
+      if (! target_exists) {
         (nop, s + 1)
       } else {
         (nop, s)
       }
-
   | IncrementIfExists =>
       if (target_exists) {
         (nop, s + 1)
       } else {
         (nop, s)
       }
-  };
-}
+  }
+};
