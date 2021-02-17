@@ -551,17 +551,17 @@ and type_match : environment -> _ O'.typer_state -> O.type_expression -> I.match
     | Match_variant lst ->
       let%bind (e, state, c), cases =
         let aux (e,state,c) ({constructor; proj; body}: I.match_variant) =
-          let%bind (constructor_type , variant) =
+          let%bind (constructor_type , _variant) =
             trace_option (unbound_constructor e constructor loc) @@
             Environment.get_constructor constructor e in
           let pattern = cast_var proj in
           let e = Environment.add_ez_binder pattern constructor_type e in
           let%bind (e,state,body),c1 = self e state body in
-          let c2 = Wrap.match_variant constructor variant t in
+          let c2 = Wrap.match_variant constructor ~case:constructor_type t in
           ok ((e, state,c1@c2@c) , ({constructor ; pattern ; body} : O.matching_content_case))
         in
         bind_fold_map_list aux (e,state,[]) lst in
-      (* TODO: check that the variant is complete *)
+      (* TODO: check that the variant is complete, has to do with the unused variant *)
       return e state c @@ O.Match_variant {cases ; tv= t }
 
 (* Apply type_declaration on every node of the AST_core from the root p *)

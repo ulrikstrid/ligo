@@ -140,7 +140,7 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       }
 
       and c_access_label = {
-        c_access_label_tval : type_value ;
+        c_access_label_record_type : type_value ;
         accessor : label ;
         c_access_label_tvar : type_variable ;
       }
@@ -233,6 +233,7 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
         | Forall_TC
         | Builtin_type
         | Propagator_break_ctor of string
+        | Propagator_access_label of string
         | Propagator_specialize_apply
         | Propagator_specialize_tf
         | Propagator_specialize_targ

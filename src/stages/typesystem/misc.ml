@@ -301,9 +301,9 @@ module Substitution = struct
           let tc = typeclass ~tc ~substs in
           C_typeclass {tc_bound; tc_constraints; tc_args ; original_id; typeclass=tc}
         )
-      | C_access_label { c_access_label_tval; accessor; c_access_label_tvar } -> (
-          let c_access_label_tval = type_value ~tv:c_access_label_tval ~substs in
-          C_access_label {c_access_label_tval ; accessor ; c_access_label_tvar}
+      | C_access_label { c_access_label_record_type; accessor; c_access_label_tvar } -> (
+          let c_access_label_record_type = type_value ~tv:c_access_label_record_type ~substs in
+          C_access_label {c_access_label_record_type ; accessor ; c_access_label_tvar}
         )
 
     and typeclass ~tc ~substs =

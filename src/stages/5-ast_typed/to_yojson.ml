@@ -369,9 +369,9 @@ and c_typeclass {tc_bound; tc_constraints; tc_args; typeclass=tc;original_id} =
     ("typeclass", typeclass tc)
   ]
 
-and c_access_label {c_access_label_tval; accessor; c_access_label_tvar} =
+and c_access_label {c_access_label_record_type; accessor; c_access_label_tvar} =
   `Assoc [
-    ("c_access_label_tval", type_value c_access_label_tval);
+    ("c_access_label_record_type", type_value c_access_label_record_type);
     ("accessor", label accessor);
     ("c_acces_label_tvar", type_variable_to_yojson c_access_label_tvar);
   ]

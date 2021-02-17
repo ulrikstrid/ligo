@@ -487,8 +487,8 @@ and c_typeclass {tc_bound=wa; tc_constraints=za; tc_args=ta;typeclass=ca; origin
     (Option.compare (constraint_identifier ))x y
 
 and c_access_label
-      {c_access_label_tval=val1;accessor=a1;c_access_label_tvar=var1}
-      {c_access_label_tval=val2;accessor=a2;c_access_label_tvar=var2} =
+      {c_access_label_record_type=val1;accessor=a1;c_access_label_tvar=var1}
+      {c_access_label_record_type=val2;accessor=a2;c_access_label_tvar=var2} =
   cmp3
     type_value val1 val2
     label a1 a2

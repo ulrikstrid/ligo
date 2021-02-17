@@ -61,8 +61,8 @@ and c_typeclass : c_typeclass cmp = fun expected actual ->
   tc_args a1 b1 <? fun () -> typeclass a2 b2
 
 and c_access_label : c_access_label cmp = fun expected actual ->
-  let { c_access_label_tval=a1; accessor=a2; c_access_label_tvar=a3 } = expected in
-  let { c_access_label_tval=b1; accessor=b2; c_access_label_tvar=b3 } = actual in
+  let { c_access_label_record_type=a1; accessor=a2; c_access_label_tvar=a3 } = expected in
+  let { c_access_label_record_type=b1; accessor=b2; c_access_label_tvar=b3 } = actual in
   type_value a1 b1 <? fun () -> use_generated Ast_typed.Compare.label a2 b2 <? fun () -> type_variable a3 b3
 
 and type_constaint_ : type_constraint_ cmp = fun expected actual ->
