@@ -26,6 +26,12 @@ module Pending = struct
   let is_empty : 'a t -> bool = function { l = [] } -> true | _ -> false
 end
 
+module type PENDING_PROPAGATOR = sig
+  type a
+  val heuristic_plugin : (a, indexers_plugins_states) heuristic_plugin
+  val selector_output : a
+end
+
 type worklist_ = {
   (* I don't know how to "open" the module to get only the fields for { w with … = … } or w.…, so I'm declaring this outside of the module. *)
   pending_type_constraint                        : type_constraint       Pending.t;
@@ -34,6 +40,7 @@ type worklist_ = {
   pending_c_alias                                : c_alias               Pending.t;
   pending_non_alias                              : type_constraint_simpl Pending.t;
   pending_hc                                     : (type_constraint_simpl * indexers_plugins_states ex_heuristic_state * ((indexers_plugins_states ex_heuristic_state as 'a) list -> 'a -> 'a list)) Pending.t;
+  pending_propagators                            : (module PENDING_PROPAGATOR)       Pending.t
 }
 
 type ('part, 'whole) mini_lens = { get : 'whole -> 'part Pending.t; set : 'whole -> 'part Pending.t -> 'whole; }   
@@ -56,15 +63,17 @@ module Worklist = struct
         pending_type_constraint_simpl;
         pending_c_alias;
         pending_non_alias;
-        pending_hc } =
-    Printf.fprintf stderr "size(worklist)=(%d | %d | %d | %d | %d | %d)\n"
+        pending_hc;
+        pending_propagators } =
+    Printf.fprintf stderr "size(worklist)=(%d | %d | %d | %d | %d | %d | %d)\n"
       (List.length @@ Pending.to_list pending_type_constraint                       )
       (List.length @@ Pending.to_list pending_filtered_not_already_added_constraints)
       (List.length @@ Pending.to_list pending_type_constraint_simpl                 )
       (List.length @@ Pending.to_list pending_c_alias                               )
       (List.length @@ Pending.to_list pending_non_alias                             )
       (List.length @@ Pending.to_list pending_hc                                    )
-
+      (List.length @@ Pending.to_list pending_propagators                           )
+      
   let is_empty ~time_to_live
       (_state,
        ({ pending_type_constraint;
@@ -72,7 +81,8 @@ module Worklist = struct
           pending_type_constraint_simpl;
           pending_c_alias;
           pending_non_alias;
-          pending_hc } as worklist)) =
+          pending_hc;
+          pending_propagators } as worklist)) =
     let () = show_sizes worklist in
     decrement_has_timeout_expired time_to_live
     || (Pending.is_empty pending_type_constraint                        &&
@@ -80,7 +90,8 @@ module Worklist = struct
         Pending.is_empty pending_type_constraint_simpl                  &&
         Pending.is_empty pending_c_alias                                &&
         Pending.is_empty pending_non_alias                              &&
-        Pending.is_empty pending_hc                                      )
+        Pending.is_empty pending_hc                                     &&
+        Pending.is_empty pending_propagators                             )
 
   let process lens f (state, worklist) =
     match (Pending.pop (lens.get worklist)) with
@@ -98,6 +109,7 @@ module Worklist = struct
         pending_c_alias                                = Pending.union new_worklist.pending_c_alias                                worklist.pending_c_alias                                ;
         pending_non_alias                              = Pending.union new_worklist.pending_non_alias                              worklist.pending_non_alias                              ;
         pending_hc                                     = Pending.union new_worklist.pending_hc                                     worklist.pending_hc                                     ;
+        pending_propagators                            = Pending.union new_worklist.pending_propagators                            worklist.pending_propagators                            ;
       }
       (* return the state updated by f, and the updated worklist (without the processed element, with the new tasks) *)
       in ok (state, Some_processing_done merged_worklists)
@@ -127,6 +139,7 @@ module Worklist = struct
     pending_c_alias                                = Pending.empty ;
     pending_non_alias                              = Pending.empty ;
     pending_hc                                     = Pending.empty ;
+    pending_propagators                            = Pending.empty ;
   }
 end
 
@@ -136,6 +149,7 @@ let pending_type_constraint_simpl                  = { get = (fun { pending_type
 let pending_c_alias                                = { get = (fun { pending_c_alias                                = x ; _ } -> x); set = (fun w x -> { w with pending_c_alias                                = x }) }
 let pending_non_alias                              = { get = (fun { pending_non_alias                              = x ; _ } -> x); set = (fun w x -> { w with pending_non_alias                              = x }) }
 let pending_hc                                     = { get = (fun { pending_hc                                     = x ; _ } -> x); set = (fun w x -> { w with pending_hc                                     = x }) }
+let pending_propagators                            = { get = (fun { pending_propagators                            = x ; _ } -> x); set = (fun w x -> { w with pending_propagators                            = x }) }
 
 
 let rec until' :

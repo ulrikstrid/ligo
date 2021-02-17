@@ -7,13 +7,17 @@ module UF = UnionFind.Poly2
 open Solver_types
 
 module M(Plugins : Plugins)(Solver : sig
+    module Indexers_plugins_states : module type of Plugins.Indexers.Indexers_plugins_fields(PerPluginState)
     type indexers_plugins_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState).flds
     type nonrec typer_state = indexers_plugins_states Solver_types.typer_state
+    (*type indexers_plugins_fields_unit = Plugins.Indexers.Indexers_plugins_fields(PerPluginUnit).flds*)
     module Worklist_and_pending : module type of Worklist_and_pending.M(struct type nonrec indexers_plugins_states = indexers_plugins_states end)
   end) = struct
 
   open Solver
   open Worklist_and_pending
+
+  let mk_repr state x = UnionFind.Poly2.repr x state.aliases
 
   let filter_already_added ((state : typer_state), type_constraint) =
     Format.printf "in filter_aleady_added\n%!";
@@ -33,5 +37,5 @@ module M(Plugins : Plugins)(Solver : sig
       ok (state, { Worklist.empty with pending_c_alias = Pending.singleton c_alias })
     | non_alias ->
       ok (state, { Worklist.empty with pending_non_alias = Pending.singleton non_alias })
-
+  
 end

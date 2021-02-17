@@ -39,21 +39,21 @@ end = struct
   module Indexers_plugins_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState)
   type indexers_plugins_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState).flds
   type nonrec typer_state = indexers_plugins_states Solver_types.typer_state
+  type indexers_plugins_fields_unit = Plugins.Indexers.Indexers_plugins_fields(PerPluginUnit).flds
 
   module Worklist_and_pending' = Worklist_and_pending.M(struct type nonrec indexers_plugins_states = indexers_plugins_states end)
   open Worklist_and_pending'
   
   module Solver_stages' = Solver_stages.M(Plugins)(struct
+    module Indexers_plugins_states = Indexers_plugins_states
     type nonrec indexers_plugins_states = indexers_plugins_states
     type nonrec typer_state = typer_state
+    (*type nonrec indexers_plugins_fields_unit = indexers_plugins_fields_unit*)
     module Worklist_and_pending = Worklist_and_pending'
   end)
   open Solver_stages'
 
-  type indexers_plugins_fields_unit = Plugins.Indexers.Indexers_plugins_fields(PerPluginUnit).flds
   let indexers_plugins_fields_unit : indexers_plugins_fields_unit = Plugins.Indexers.indexers_plugins_fields_unit
-
-  let mk_repr state x = UnionFind.Poly2.repr x state.aliases
 
   let pp_typer_state = fun ppf ({ all_constraints; plugin_states; aliases ; already_selected_and_propagators } : typer_state) ->
     let open Solver_types in
@@ -82,18 +82,19 @@ end = struct
     Format.printf "Returning from aux_update\n%!" ;
     ok (state, add_constraints)
 
-  let aux_propagator___ heuristic state selector_output =
+  let aux_propagator___ (state, (module M : PENDING_PROPAGATOR)) =
+    let heuristic_plugin, selector_output = M.heuristic_plugin, M.selector_output in
     (* TODO: before applying a propagator, check if it does
        not depend on constraints which were removed by the
        previous propagator *)
-    let referenced_constraints = heuristic.plugin.get_referenced_constraints selector_output in
+    let referenced_constraints = heuristic_plugin.get_referenced_constraints selector_output in
     let uses_deleted_constraints = List.exists (fun c -> (PolySet.mem c state.deleted_constraints)) referenced_constraints in
     if uses_deleted_constraints then
-      ok (state, [])
+      ok (state, Worklist.empty)
     else
-      let%bind updates = heuristic.plugin.propagator selector_output (mk_repr state) in
+      let%bind updates = heuristic_plugin.propagator selector_output (mk_repr state) in
       let%bind (state, new_constraints) = bind_fold_map_list aux_update___ state updates in
-      ok (state, List.flatten new_constraints)
+      ok (state, { Worklist.empty with pending_type_constraint = Pending.of_list @@ List.flatten new_constraints })
 
   let aux_selector_alias demoted_repr new_repr state (Heuristic_state heuristic) =
     let selector_outputs = heuristic.plugin.alias_selector demoted_repr new_repr state.plugin_states in
@@ -105,10 +106,16 @@ end = struct
     let heuristic = { heuristic with already_selected } in
     Heuristic_selector (heuristic, selector_outputs)
 
-  let aux_propagator_alias___ state (Heuristic_selector (heuristic, selector_outputs)) =
-    let%bind (state, new_constraints) = bind_fold_map_list (aux_propagator___ heuristic) state selector_outputs in
-    (* let () = queue_print (fun () -> Format.printf "Return with new constraints: (%a)\n%!" Ast_typed.PP.(list_sep_d (list_sep_d type_constraint_short)) new_constraints) in *)
-    ok (state, (Heuristic_state heuristic, List.flatten new_constraints))
+  let make_pending_propagators =
+    (fun (type a) (heuristic_plugin : (a, indexers_plugins_states) heuristic_plugin) (selector_outputs : a list) : (module PENDING_PROPAGATOR) list ->
+      List.map
+      (fun (selector_output : a) ->
+        (module struct
+          type nonrec a = a
+          let heuristic_plugin = heuristic_plugin
+          let selector_output = selector_output
+          end : PENDING_PROPAGATOR))
+      selector_outputs)
 
   let add_alias___ : (typer_state * c_alias) -> (typer_state * Worklist.t) result =
     fun (state , ({ reason_alias_simpl=_; a; b } as new_constraint)) ->
@@ -136,24 +143,11 @@ end = struct
       let state = { all_constraints ; added_constraints ; deleted_constraints; plugin_states ; aliases ; already_selected_and_propagators } in
 
       (* apply all the alias_selectors and propagators given the new alias *)
-      let%bind (state, new_constraints) = (
-        if true then
-          (* TODO: possible bug: here, should we use the demoted_repr
-             and new_repr, or the ones as given by the alias? We should
-             maintain as much as possible the illusion that aliased
-             variables have always been aliased from the start,
-             therefore if the alias constraint contains outdated
-             references, it makes sense to update them before calling
-             the .alias_selector functions. *)
-          let%bind (state, hc) = bind_fold_map_list (aux_propagator_alias___) state selected in
-          let (already_selected_and_propagators, new_constraints) = List.split hc in
-          let state = { state with already_selected_and_propagators } in
-          ok (state, List.flatten new_constraints)
-        else
-          ok (state, [])
-      ) in
-      (* let () = Format.printf "End of add alias\n" in *)
-      ok (state,{ Worklist.empty with pending_type_constraint = Pending.of_list new_constraints})
+      (* This must be called before aliasing the variables in the database *)
+      let pending_propagators = List.map
+        (fun (Heuristic_selector (heuristic, selector_outputs)) -> make_pending_propagators heuristic.plugin selector_outputs)
+        selected in
+      ok (state, { Worklist.empty with pending_propagators = Pending.of_list @@ List.flatten pending_propagators })
     
 
   let get_alias variable aliases =
@@ -173,19 +167,18 @@ end = struct
     in
     let selector_outputs,already_selected = List.fold_left aux ([], heuristic.already_selected) selector_outputs in
     let heuristic = { heuristic with already_selected } in
-    let%bind (state, new_constraints) = bind_fold_map_list (aux_propagator___ heuristic) state selector_outputs in
-    (* let () = queue_print (fun () -> Format.printf "Return with new constraints: (%a)\n%!" Ast_typed.PP.(list_sep_d (list_sep_d type_constraint_short)) new_constraints) in *)
+    let pending_propagators = make_pending_propagators heuristic.plugin selector_outputs in
     let state = { state with already_selected_and_propagators = set_heuristic_state state.already_selected_and_propagators (Heuristic_state heuristic) } in
-    ok (state, { Worklist.empty with pending_type_constraint = Pending.of_list @@ List.flatten new_constraints })
+    ok (state, { Worklist.empty with pending_propagators = Pending.of_list pending_propagators })
 
   (* apply all the selectors and propagators *)
-  let add_constraint_and_apply_heuristics___1 (state , constraint_) =
+  let add_constraint_and_apply_heuristics (state , constraint_) =
     (* let () = queue_print (fun () -> Format.printf "Add constraint and apply heuristics for constraint: %a\n%!" Ast_typed.PP.type_constraint_simpl constraint_) in *)
     if PolySet.mem constraint_ state.all_constraints then ok (state, Worklist.empty)
     else
       let repr = mk_repr state in
+      let module MapAddConstraint = Plugins.Indexers.Map_indexer_plugins(AddConstraint) in
       let state =
-        let module MapAddConstraint = Plugins.Indexers.Map_indexer_plugins(AddConstraint) in
         { state with plugin_states = MapAddConstraint.f (repr, constraint_) state.plugin_states }
       in
       let hc = List.mapi (fun i asap -> constraint_, asap, List.set_nth i) state.already_selected_and_propagators in
@@ -234,7 +227,7 @@ end = struct
            (fun (state, worklist) ->
               Worklist.process
                 pending_non_alias
-                add_constraint_and_apply_heuristics___1
+                add_constraint_and_apply_heuristics
                 (state, worklist)
            );
 
@@ -265,6 +258,14 @@ end = struct
                 add_alias___
                 (state, worklist)
            );
+
+           (fun (state, worklist) ->
+              Worklist.process_all ~time_to_live
+                pending_propagators
+                aux_propagator___
+                (state, worklist)
+           );
+
            ]
            (state, worklist)
       )
