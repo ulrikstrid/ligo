@@ -125,10 +125,6 @@ let print_root ?region state label =
            None -> print_node state label
   | Some region -> print_loc_node state label region
 
-let print_tree state label print_sub {value; region} =
-  print_root state label ~region;
-  print_sub  state value
-
 let mk_child print value = Some (swap print value)
 
 let mk_child_opt print = function
@@ -174,10 +170,13 @@ let print_P_String state =
 let print_T_String state =
   print_unary state "T_String" print_string
 
-let print_E_Verbatim state {value; region} =
+let print_verbatim state {value; region} =
   let reg  = compact state region in
   let node = sprintf "%s{|%s|} (%s)\n" state#pad_path value reg
   in Buffer.add_string state#buffer node
+
+let print_E_Verbatim state =
+  print_unary state "E_Verbatim" print_verbatim
 
 (* Integers and natural numbers *)
 
@@ -464,6 +463,11 @@ and print_block_expr state =
 
 (* Statements *)
 
+and print_statements state =
+  print_multi state "<statements>"
+  <@ List.map (mk_child print_statement)
+  <@ Utils.nsepseq_to_list
+
 and print_statement state = function
   S_Instr   i -> print_S_Instr   state i
 | S_Decl    i -> print_S_Decl    state i
@@ -491,10 +495,34 @@ and print_instruction state = function
 | I_MapPatch    e -> print_I_MapPatch    state e
 | I_MapRemove   e -> print_I_MapRemove   state e
 | I_RecordPatch e -> print_I_RecordPatch state e
-| I_Skip        e -> print_root     state ~region:e "I_Skip"
-| I_SetPatch    e -> print_tree     state "I_SetPatch" print_set_patch e
-| I_SetRemove   e -> print_tree     state "I_SetRemove" print_set_remove e
+| I_Skip        e -> print_I_Skip        state e
+| I_SetPatch    e -> print_I_SetPatch    state e
+| I_SetRemove   e -> print_I_SetRemove   state e
 | I_While       e -> print_I_While       state e
+
+(* Removal from sets *)
+
+and print_I_SetRemove state (node : set_remove reg) =
+  let {value; region} = node in
+  let children = [
+    mk_child print_expr value.element;
+    mk_child print_path value.set]
+  in print_multi state "I_SetRemove" ~region children
+
+(* Patching sets *)
+
+and print_I_SetPatch state (node : set_patch reg) =
+  let {value; region} = node in
+  let path = mk_child print_path value.path in
+  let fields =
+     List.map (mk_child print_expr)
+  @@ Utils.nsepseq_to_list value.set_inj.value.ne_elements
+  in print_multi state "I_Setatch" ~region (path :: fields)
+
+(* Skipping (non-operation) *)
+
+and print_I_Skip state (node : kwd_skip) =
+  print_root state ~region:node "I_Skip"
 
 (* Patching records *)
 
@@ -562,12 +590,7 @@ and print_I_ForIn state (node : for_in reg) =
     let children = [
       mk_child print_collection collection;
       mk_child print_expr       expr]
-    in print_multi state "<collection>" children
-
-  and print_statements state =
-    print_multi state "<statements>"
-    <@ List.map (mk_child print_statement)
-    <@ Utils.nsepseq_to_list in
+    in print_multi state "<collection>" children in
 
   let children = [
     mk_child print_index      (value.var, value.bind_to);
@@ -823,8 +846,8 @@ and print_projection state proj =
 and print_ne_injection :
   'a.state -> (state -> 'a -> unit) -> 'a ne_injection -> unit =
   fun state print inj ->
-    let ne_elements    = Utils.nsepseq_to_list inj.ne_elements in
-    let length         = List.length ne_elements in
+    let ne_elements = Utils.nsepseq_to_list inj.ne_elements in
+    let length      = List.length ne_elements in
     let arity      = if inj.attributes = [] then length else length + 1
     and apply len rank = print (state#pad len rank)
     in List.iteri (apply arity) ne_elements;
@@ -868,9 +891,7 @@ and print_I_For state (node : for_int reg) =
     print_unary state "<step>" print_expr expr
 
   and print_block state (node : block reg) =
-    let {statements; _} = node.value in
-    print_node       state "<statements>";
-    print_statements state statements in
+    print_statements state node.value.statements in
 
   let children = [
     mk_child     print_init  (value.binder, value.init);
@@ -878,12 +899,6 @@ and print_I_For state (node : for_int reg) =
     mk_child_opt print_step  value.step;
     mk_child     print_block value.block]
   in print_multi state "I_For" ~region children
-
-and print_statements state statements =
-  let statements     = Utils.nsepseq_to_list statements in
-  let length         = List.length statements in
-  let apply len rank = print_statement (state#pad len rank)
-  in List.iteri (apply length) statements
 
 and print_field_path_assignment state (node : field_path_assignment reg) =
   print_node state "<update>";
@@ -896,20 +911,6 @@ and print_binding state (node : binding) =
     mk_child print_expr node.image]
   in print_multi state "<binding>" children
 
-and print_binding' state (node : binding reg) = (* TODO: Remove *)
-  let children = [
-    mk_child print_expr node.value.source;
-    mk_child print_expr node.value.image]
-  in print_multi state "<binding>" children
-
-and print_set_patch state (node : set_patch) =
-  print_path         (state#pad 2 0) node.path;
-  print_ne_injection state print_expr node.set_inj.value
-
-and print_set_remove state (node : set_remove) =
-  print_expr (state#pad 2 0) node.element;
-  print_path (state#pad 2 1) node.set
-
 and print_var_decl state (node : var_decl) =
   let arity = if node.var_type = None then 2 else 3
   and rank  = 0 in
@@ -921,65 +922,81 @@ and print_var_decl state (node : var_decl) =
    add or modify some, please make sure they remain in order. *)
 
 and print_expr state = function
-  E_Add e   -> print_op2 state "E_Add" e
-| E_And   e -> print_op2      state "E_And"   e
-| E_Annot e -> print_annot_expr state e
-| E_BigMap {value; region} ->
-    print_loc_node  state "E_BigMap" region;
-    print_injection state print_binding' value
-| E_Block e -> print_E_Block state e
-| E_Bytes e -> print_E_Bytes state e
-| E_Call e -> print_E_Call state e
-| E_Case  e -> print_E_Case state e
-| E_Cat e      -> print_op2 state "E_Cat" e
-| E_CodeInj e -> print_E_CodeInj state e
-| E_Equal e -> print_op2 state "E_Equal" e
-| E_Cond  e -> print_E_Cond state e
-| E_Cons     e -> print_op2       state "E_Cons" e
-| E_Ctor e -> print_E_Ctor state e
-| E_Div e   -> print_op2 state "E_Div" e
-| E_False e -> print_loc_node state "False" e
-| E_Fun e -> print_E_Fun state e
-| E_Geq   e -> print_op2 state "E_Geq"   e
-| E_Gt    e -> print_op2 state "E_Gt"    e
-| E_Int e   -> print_E_Int state e
-| E_Leq   e -> print_op2 state "E_Leq"   e
-| E_List e -> print_list_comp state e
-| E_Lt    e -> print_op2 state "E_Lt"    e
-| E_Map {value; region} ->
-    print_loc_node  state "E_Map" region;
-    print_injection state print_binding' value
+  E_Add       e -> print_op2 state "E_Add" e
+| E_And       e -> print_op2 state "E_And"   e
+| E_Annot     e -> print_annot_expr state e
+| E_BigMap    e -> print_E_BigMap state e
+| E_Block     e -> print_E_Block state e
+| E_Bytes     e -> print_E_Bytes state e
+| E_Call      e -> print_E_Call state e
+| E_Case      e -> print_E_Case state e
+| E_Cat       e -> print_op2 state "E_Cat" e
+| E_CodeInj   e -> print_E_CodeInj state e
+| E_Equal     e -> print_op2 state "E_Equal" e
+| E_Cond      e -> print_E_Cond state e
+| E_Cons      e -> print_op2 state "E_Cons" e
+| E_Ctor      e -> print_E_Ctor state e
+| E_Div       e -> print_op2 state "E_Div" e
+| E_False     e -> print_loc_node state "False" e
+| E_Fun       e -> print_E_Fun state e
+| E_Geq       e -> print_op2 state "E_Geq"   e
+| E_Gt        e -> print_op2 state "E_Gt"    e
+| E_Int       e -> print_E_Int state e
+| E_Leq       e -> print_op2 state "E_Leq"   e
+| E_List      e -> print_list_comp state e
+| E_Lt        e -> print_op2 state "E_Lt"    e
+| E_Map       e -> print_E_Map state e
 | E_MapLookUp e -> print_E_MapLookUp state e
-| E_Mod e   -> print_op2 state "E_Mod" e
-| E_ModPath e -> print_E_ModPath state e
-| E_Mult e  -> print_op2 state "E_Mult" e
-| E_Mutez _ -> print_node state "E_Mutez"
-| E_Nat e   -> print_E_Nat state e
-| E_Neg e   -> print_op1 state "E_Neg" e
-| E_Nil      e -> print_loc_node  state "E_Nil" e
-| E_Neq   e -> print_op2 state "E_Neq"   e
-| E_None e -> print_loc_node state "E_None" e
-| E_Not   e -> print_op1      state "E_Not"   e
-| E_Or    e -> print_op2      state "E_Or"    e
-| E_Par e -> print_E_Par state e
-| E_Proj e -> print_proj_expr state e
-| E_Record e -> print_E_Record state e
-| E_Set e -> print_set_injection state e
-| E_SetMem e -> print_set_mem state e
-| E_Some e -> print_some_app state e
-| E_String e -> print_T_String state e
-| E_Sub e   -> print_op2 state "E_Sub" e
-| E_True  e -> print_loc_node state "True"  e
-| E_Tuple e_tuple ->
-    print_node       state "E_Tuple";
-    print_tuple_expr state e_tuple
-| E_Unit region ->
-    print_loc_node state "E_Unit" region
-| E_Update {value; region} ->
-    print_loc_node state "E_Update" region;
-    print_update   state value
-| E_Var e -> print_unary state "E_Var" print_ident e
-| E_Verbatim e -> print_unary state "E_Verbatim" print_E_Verbatim e
+| E_Mod       e -> print_op2 state "E_Mod" e
+| E_ModPath   e -> print_E_ModPath state e
+| E_Mult      e -> print_op2 state "E_Mult" e
+| E_Mutez     e -> print_E_Mutez state e
+| E_Nat       e -> print_E_Nat state e
+| E_Neg       e -> print_op1 state "E_Neg" e
+| E_Nil       e -> print_loc_node  state "E_Nil" e
+| E_Neq       e -> print_op2 state "E_Neq"   e
+| E_None      e -> print_loc_node state "E_None" e
+| E_Not       e -> print_op1 state "E_Not"   e
+| E_Or        e -> print_op2 state "E_Or"    e
+| E_Par       e -> print_E_Par state e
+| E_Proj      e -> print_proj_expr state e
+| E_Record    e -> print_E_Record state e
+| E_Set       e -> print_set_injection state e
+| E_SetMem    e -> print_set_mem state e
+| E_Some      e -> print_some_app state e
+| E_String    e -> print_T_String state e
+| E_Sub       e -> print_op2 state "E_Sub" e
+| E_True      e -> print_loc_node state "True"  e
+| E_Tuple     e -> print_E_Tuple state e
+| E_Unit      e -> print_loc_node state "E_Unit" e
+| E_Update    e -> print_E_Update state e
+| E_Var       e -> print_E_Var state e
+| E_Verbatim  e -> print_E_Verbatim state e
+
+and print_E_Mutez state _ = print_node state "E_Mutez"
+
+and print_E_Var state = print_unary state "E_Var" print_ident
+
+and print_E_Update state (node : update reg) =
+  let {value; region} = node in
+  print_loc_node state "E_Update" region;
+  print_update   state value
+
+and print_E_Tuple state (node : (expr, comma) nsepseq par reg) =
+  print_node       state "E_Tuple";
+  print_tuple_expr state node
+
+and print_E_Map state (node : binding reg injection reg) =
+  let {value; region} = node in
+  print_loc_node  state "E_Map" region;
+  print_injection state (strip print_binding) value
+
+and print_E_BigMap state (node : binding reg injection reg) =
+  let {value; region} = node in
+  let children =
+     List.map (mk_child (strip print_binding))
+  @@ Utils.sepseq_to_list value.elements
+  in print_multi state "E_BigMap" ~region children
 
 and print_injection :
   'a.state -> (state -> 'a -> unit) -> 'a injection -> unit =
@@ -1000,8 +1017,9 @@ and print_tuple_expr state (node : (expr, comma) nsepseq par reg) =
 
 and print_E_ModPath state (node : expr module_path reg) =
   let node = node.value in
-  let children = [mk_child print_ident node.module_name;
-                  mk_child print_expr node.field]
+  let children = [
+    mk_child print_ident node.module_name;
+    mk_child print_expr node.field]
   in print_multi state "E_ModPath" children
 
 and print_proj_expr state (node : projection reg) =
