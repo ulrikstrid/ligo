@@ -158,8 +158,8 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
   let () = Format.printf "TODO: delete only if _changed || updated_tc.changed" in
   ok [{
       remove_constraints = [SC_Typeclass selected.tc];
-      add_constraints = cleaned :: deduced;
-      add_constraints_simpl = [];
+      add_constraints = [];
+      add_constraints_simpl = cleaned :: deduced;
       proof_trace = Axiom (HandWaved "unfold")
     }]
 

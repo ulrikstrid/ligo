@@ -81,8 +81,8 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
   else
     ok [{
         remove_constraints = [SC_Typeclass selected.tc];
-        add_constraints = cleaned :: deduced;
-        add_constraints_simpl = [];
+        add_constraints = [];
+        add_constraints_simpl = cleaned :: deduced;
         proof_trace = Axiom (HandWaved "cut with (cleaned => removed_typeclass) to show that the removal does not lose info, (removed_typeclass => cleaned) to show that the cleaned vesion does not introduce unwanted constraints.")
       }]
 
