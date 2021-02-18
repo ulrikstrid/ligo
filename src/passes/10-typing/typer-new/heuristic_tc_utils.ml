@@ -173,30 +173,10 @@ let rec replace_var_and_possibilities_1
     let open Rope.SimpleRope in
     (loop3 (replace_var_and_possibilities_1 repr) (empty, empty, false) (pair, pair, (||))) matrix
 
-(*let rec replace_var_and_possibilities_rec repr (x : type_variable) (possibilities_for_x : type_value list) : ((type_variable * type_value list) list * _, _) result =
-  let open Rope.SimpleRope in
-  let%bind (changed1, possibilities_alist, deduced) = replace_var_and_possibilities_1 repr (x, possibilities_for_x) in
-  if changed1 then
-    (* the initial var_and_possibilities has been changed, recursively
-       replace in the resulting vars and their possibilities, and
-       aggregate the deduced constraints. *)
-    let%bind (_changed, vp, more_deduced) = replace_vars_and_possibilities_list repr possibilities_alist in
-    ok (true, vp, pair (rope_of_list deduced) more_deduced)
-  else
-    ok (changed1, rope_of_list possibilities_alist, rope_of_list deduced)
-*)
-(*and replace_vars_and_possibilities_list  =
-  let open Rope.SimpleRope in
-  bind_fold_list
-    (fun (changed_so_far, vps, ds) x ->
-       let%bind (changed, vp, d) = replace_var_and_possibilities_rec repr x in
-       ok (changed_so_far || changed, pair vps vp, pair ds d))
-    (false, empty, empty)
-    possibilities_alist*)
-
 type deduce_and_clean_result = {
   deduced : c_constructor_simpl list ;
   cleaned : c_typeclass_simpl ;
+  changed : bool
 }
 
 let deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result, _) result = fun repr tcs ->
@@ -214,8 +194,7 @@ let deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result
          deduced:
          [ x         = map3  ( fresh_x_1 , fresh_x_2 , fresh_x_3 ) ;
            fresh_x_3 = float (                                   ) ; ] *)
-  let _ = changed in (* TODO *)
-  ok { deduced = list_of_rope deduced ; cleaned }
+  ok { deduced = list_of_rope deduced ; cleaned ; changed }
 
 let wrapped_deduce_and_clean repr tc ~(original:c_typeclass_simpl) =
   let open Type_variable_abstraction.Reasons in
