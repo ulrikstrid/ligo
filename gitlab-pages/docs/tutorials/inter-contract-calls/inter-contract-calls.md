@@ -552,7 +552,7 @@ Now imagine we want to control a contract with the following interface (we omit 
 
 <Syntax syntax="pascaligo">
 
-```pascaligo
+```pascaligo skip
 (* examples/contracts/ligo/PausableToken.ligo *)
 
 type parameter is SetPaused of bool | Transfer of address * address * nat
@@ -590,7 +590,7 @@ block {
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo skip
 (* examples/contracts/mligo/PausableToken.mligo *)
 
 type parameter = Transfer of address * address * nat | SetPaused of bool
@@ -618,7 +618,7 @@ let main (p, s : parameter * storage) =
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo
+```reasonligo skip
 /* examples/contracts/religo/PausableToken.religo */
 
 type parameter = SetPaused(bool) | Transfer((address, address, nat));
