@@ -127,6 +127,7 @@ and type_value_ : type_value_ cmp = fun expected actual ->
   | (Ast_typed.Types.P_constant a , Ast_typed.Types.P_constant b) -> p_constant a b
   | (Ast_typed.Types.P_apply    a , Ast_typed.Types.P_apply    b) -> p_apply a b
   | (Ast_typed.Types.P_row      a , Ast_typed.Types.P_row      b) -> p_row a b
+  | TODO: missing cases here because OCaml and pattern-matching exhaustiveness
   | (a, b) ->
     let different = use_generated Ast_typed.Compare.type_value_ a b in
     assert (match different with None -> true | _ -> false); different
@@ -151,8 +152,25 @@ and c_constructor_simpl : c_constructor_simpl cmp = fun expected actual ->
     use_generated Ast_typed.Compare.constant_tag a2 b2 <? fun () ->
       type_variable_list a3 b3
 
+and c_row_simpl : c_row_simpl cmp = fun expected actual ->
+  let { reason_row_simpl=_; tv=a1; r_tag=a2; tv_map=a3 } = expected in
+  let { reason_row_simpl=_; tv=b1; r_tag=b2; tv_map=b3 } = actual in
+  type_variable a1 b1 <? fun () ->
+    use_generated Ast_typed.Compare.row_tag a2 b2 <? fun () ->
+      type_variable_map a3 b3
+
 and c_constructor_simpl_list : c_constructor_simpl_list cmp = fun expected actual ->
   list ~compare:c_constructor_simpl expected actual
+
+and constructor_or_row : constructor_or_row cmp = fun expected actual ->
+  match expected, actual with
+    `Constructor a, `Constructor b -> c_constructor_simpl a b
+  | `Row a, `Row b -> c_row_simpl a b
+  | (`Constructor _ | `Row _), (`Constructor _ | `Row _) ->
+    let different = TODO in different
+
+and constructor_or_row_list : constructor_or_row_list cmp = fun expected actual ->
+  list ~compare:constructor_or_row expected actual
 
 let rec flatten_tree : _ tree -> _ list -> _ list = fun t acc ->
   match t with

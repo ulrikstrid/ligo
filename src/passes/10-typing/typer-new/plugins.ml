@@ -7,6 +7,7 @@ let heuristics : Indexers.Indexers_plugins_fields(PerPluginState).flds heuristic
   Heuristic_specialize1.heuristic ;
   Heuristic_tc_fundep.heuristic ;
   Heuristic_tc_inline_named.heuristic ;
+  (*Heuristic_tc_deduce_and_clean.heuristic ;*)
 ]
 
 (* module HBC = Heuristic_break_ctor.H *)
