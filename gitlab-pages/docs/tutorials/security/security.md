@@ -154,7 +154,7 @@ A classic example of a system vulnerable to this kind of attacks is a decentrali
 
 <Syntax syntax="pascaligo">
 
-```pascaligo
+```pascaligo skip
 type order is record [price : nat; volume : nat]
 
 type storage is record [bids : list (order); asks : list (order)]
@@ -169,7 +169,7 @@ function main (const p : parameter; var s : storage) is ...
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo skip
 type order = {price : nat; volume : nat}
 
 type storage = {bids : order list; asks : order list}
@@ -184,7 +184,7 @@ let main (p, s : parameter * storage) = ...
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo
+```reasonligo skip
 type order = {price: nat, volume: nat };
 
 type storage = {bids: list(order), asks: list(order) };
