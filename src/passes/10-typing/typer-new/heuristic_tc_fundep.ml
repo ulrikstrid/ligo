@@ -402,6 +402,7 @@ let heuristic = Heuristic_plugin Compat.{ heuristic_name; selector; alias_select
 type nonrec deduce_and_clean_result = MM.Utils.deduce_and_clean_result = {
     deduced : c_constructor_simpl list ;
     cleaned : c_typeclass_simpl ;
+    changed : bool ;
   }
 let restrict = MM.restrict
 let deduce_and_clean = MM.Utils.deduce_and_clean

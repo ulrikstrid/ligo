@@ -15,6 +15,7 @@ val restrict : (type_variable -> type_variable) -> constructor_or_row -> c_typec
 type deduce_and_clean_result = {
   deduced : c_constructor_simpl list ;
   cleaned : c_typeclass_simpl ;
+  changed : bool ;
 }
 val deduce_and_clean : (type_variable -> type_variable) -> c_typeclass_simpl -> (deduce_and_clean_result, typer_error) result
 

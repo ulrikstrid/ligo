@@ -94,7 +94,7 @@ let test_deduce_and_clean
           (fun (tv , c_tag , tv_list) -> {reason_constr_simpl = "unit test" ; original_id = None; id_constructor_simpl = ConstraintIdentifier 42L ; tv ; c_tag ; tv_list})
           expected_inferred in
       let%bind actual = deduce_and_clean repr input_tc in
-      Heuristic_tc_fundep_tests_compare_cleaned.compare_and_check_vars_deduce_and_clean_result { deduced = expected_inferred ; cleaned = expected_tc } actual
+      Heuristic_tc_fundep_tests_compare_cleaned.compare_and_check_vars_deduce_and_clean_result { deduced = expected_inferred ; cleaned = expected_tc ; changed = true } actual
 
 let inferred v (_eq : string) c args = v, c, args
 let tests2 deduce_and_clean =
