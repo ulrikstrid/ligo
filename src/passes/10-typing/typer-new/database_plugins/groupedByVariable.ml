@@ -27,6 +27,13 @@ type 'typeVariable t = {
   access_label_by_result_type : ('typeVariable, c_access_label_simpl MultiSet.t) ReprMap.t ;
   access_label_by_record_type : ('typeVariable, c_access_label_simpl MultiSet.t) ReprMap.t ;
 }
+let pp type_variable ppf (state : _ t) =
+  let open PP_helpers in
+  Format.fprintf ppf "{ constructor = %a ; row = %a ; poly = %a }"
+  (list_sep_d (pair type_variable (MultiSet.pp Type_variable_abstraction.PP.c_constructor_simpl_short))) (ReprMap.bindings state.constructor)
+  (list_sep_d (pair type_variable (MultiSet.pp Type_variable_abstraction.PP.c_row_simpl_short))) (ReprMap.bindings state.row)
+  (list_sep_d (pair type_variable (MultiSet.pp Type_variable_abstraction.PP.c_poly_simpl_short))) (ReprMap.bindings state.poly)
+
 
 let create_state ~cmp =
   { constructor = ReprMap.create ~cmp ~merge:MultiSet.union ;
@@ -86,7 +93,7 @@ let remove_constraint _ repr (state : _ t) constraint_to_rm =
       | SC_Access_label c -> {
           state with
           access_label_by_result_type = ReprMap.monotonic_update (repr c.tv) (update_remove_constraint_from_set constraint_to_rm c) state.access_label_by_result_type ;
-          access_label_by_record_type = ReprMap.monotonic_update (repr c.tv) (update_remove_constraint_from_set constraint_to_rm c) state.access_label_by_record_type
+          access_label_by_record_type = ReprMap.monotonic_update (repr c.record_type) (update_remove_constraint_from_set constraint_to_rm c) state.access_label_by_record_type ;
         }
       | SC_Typeclass   _ -> state
       | SC_Alias       _ -> failwith "TODO: impossible: tc_alias handled in main solver loop and aliasing constraints cannot be removed"
@@ -105,13 +112,6 @@ let merge_aliases =
       access_label_by_result_type = updater.map access_label_by_result_type ;
       access_label_by_record_type = updater.map access_label_by_record_type ;
     }
-
-let pp type_variable ppf (state : _ t) =
-  let open PP_helpers in
-  Format.fprintf ppf "{ constructor = %a ; row = %a ; poly = %a }"
-  (list_sep_d (pair type_variable (MultiSet.pp Type_variable_abstraction.PP.c_constructor_simpl_short))) (ReprMap.bindings state.constructor)
-  (list_sep_d (pair type_variable (MultiSet.pp Type_variable_abstraction.PP.c_row_simpl_short))) (ReprMap.bindings state.row)
-  (list_sep_d (pair type_variable (MultiSet.pp Type_variable_abstraction.PP.c_poly_simpl_short))) (ReprMap.bindings state.poly)
 
 let name = "grouped_by_variable"
 
