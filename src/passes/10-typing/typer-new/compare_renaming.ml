@@ -27,7 +27,7 @@ type 'a cmp = 'a -> 'a -> (type_variable * type_variable) tree option
 let use_generated g : 'a cmp = fun expected actual ->
   if g expected actual = 0 then Some (List []) else None
 
-let list ~compare : 'a cmp = fun expected actual ->
+let list : compare:('a cmp) -> ('a list) cmp = fun ~compare  expected actual ->
   let aux = fun tree (exp, act) ->
     match tree with
     | None -> None
@@ -40,6 +40,12 @@ let list ~compare : 'a cmp = fun expected actual ->
   if List.compare_lengths expected actual != 0
   then None
   else List.fold_left aux (Some (List [])) (List.combine expected actual)
+
+let lmap : compare:('a cmp) -> ('a LMap.t) cmp = fun ~compare expected actual ->
+  if List.compare ~compare:Ast_typed.Compare.label (LMap.keys expected) (LMap.keys actual) != 0 then
+    None
+  else
+    list ~compare (LMap.values expected) (LMap.values actual)
 
 let rec c_equation : c_equation cmp = fun expected actual ->
   let { aval=a1; bval=a2 } = expected in
@@ -91,6 +97,11 @@ and p_forall : p_forall cmp = fun expected actual ->
   p_constraints a1 b1 <? fun () ->
     type_value a2 b2
 
+and p_abs : p_abs cmp = fun expected actual ->
+  let { arg=_; ret=a2 } = expected in
+  let { arg=_; ret=b2 } = actual in
+  type_value a2 b2
+
 and p_ctor_args : p_ctor_args cmp = fun expected actual ->
   list ~compare:type_value expected actual
 
@@ -119,6 +130,8 @@ and p_row : p_row cmp = fun expected actual ->
 
 and row_value : row_value cmp = fun expected actual ->
   use_generated Ast_typed.Compare.row_value expected actual
+
+and p_constraint { pc = a } { pc = b } = type_constraint a b
   
 and type_value_ : type_value_ cmp = fun expected actual ->
   match expected, actual with
@@ -127,8 +140,10 @@ and type_value_ : type_value_ cmp = fun expected actual ->
   | (Ast_typed.Types.P_constant a , Ast_typed.Types.P_constant b) -> p_constant a b
   | (Ast_typed.Types.P_apply    a , Ast_typed.Types.P_apply    b) -> p_apply a b
   | (Ast_typed.Types.P_row      a , Ast_typed.Types.P_row      b) -> p_row a b
-  | TODO: missing cases here because OCaml and pattern-matching exhaustiveness
-  | (a, b) ->
+  | (Ast_typed.Types.P_constraint a , Ast_typed.Types.P_constraint b) -> p_constraint a b
+  | (Ast_typed.Types.P_abs        a , Ast_typed.Types.P_abs        b) -> p_abs a b
+  | ((Ast_typed.Types.(P_forall _ | P_variable _ | P_constant _ | P_apply _ | P_row _ | P_constraint _ | P_abs _) as a),
+     (Ast_typed.Types.(P_forall _ | P_variable _ | P_constant _ | P_apply _ | P_row _ | P_constraint _ | P_abs _) as b)) ->
     let different = use_generated Ast_typed.Compare.type_value_ a b in
     assert (match different with None -> true | _ -> false); different
 
@@ -136,6 +151,13 @@ and type_value : type_value cmp = fun expected actual ->
   let { location=_; wrap_content=a1 } : type_value = expected in
   let { location=_; wrap_content=b1 } : type_value = actual in
   type_value_ a1 b1
+
+and row_variable : row_variable cmp = fun expected actual ->
+  let { associated_variable=a1; michelson_annotation=a2; decl_pos=a3 } = expected in
+  let { associated_variable=b1; michelson_annotation=b2; decl_pos=b3 } = actual in
+  type_variable a1 b1 <? fun () ->
+  use_generated (Option.compare String.compare) a2 b2 <? fun () ->
+  use_generated Int.compare a3 b3
 
 and type_variable_list : type_variable list cmp = fun expected actual ->
   list ~compare:type_variable expected actual
@@ -157,19 +179,18 @@ and c_row_simpl : c_row_simpl cmp = fun expected actual ->
   let { reason_row_simpl=_; tv=b1; r_tag=b2; tv_map=b3 } = actual in
   type_variable a1 b1 <? fun () ->
     use_generated Ast_typed.Compare.row_tag a2 b2 <? fun () ->
-      type_variable_map a3 b3
+      lmap ~compare:row_variable a3 b3
 
 and c_constructor_simpl_list : c_constructor_simpl_list cmp = fun expected actual ->
   list ~compare:c_constructor_simpl expected actual
 
 and constructor_or_row : constructor_or_row cmp = fun expected actual ->
   match expected, actual with
-    `Constructor a, `Constructor b -> c_constructor_simpl a b
-  | `Row a, `Row b -> c_row_simpl a b
-  | (`Constructor _ | `Row _), (`Constructor _ | `Row _) ->
-    let different = TODO in different
+    `Constructor a,             `Constructor b           -> c_constructor_simpl a b
+  | `Row         a,             `Row         b           -> c_row_simpl a b
+  | (`Constructor _ | `Row _), (`Constructor _ | `Row _) -> None
 
-and constructor_or_row_list : constructor_or_row_list cmp = fun expected actual ->
+and constructor_or_row_list : constructor_or_row list cmp = fun expected actual ->
   list ~compare:constructor_or_row expected actual
 
 let rec flatten_tree : _ tree -> _ list -> _ list = fun t acc ->

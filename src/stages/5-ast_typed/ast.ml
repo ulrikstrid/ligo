@@ -505,6 +505,25 @@ and c_equation_e = {
     aex : type_expression ;
     bex : type_expression ;
   }
+(* the type c_typeclass_simpl is "∃ tc_bound, tc_constraints => args ∈ tc"
+   given the env
+      Packable    = ∃ , () => (δ) ∈ [(int),(bool),(nat)]
+      Show        = ∃ , () => (δ) ∈ [(int),(string),(nat)]
+   and the typeclass
+      my_tc       = ∃ α β, (Packable α && Packable β && Show a) => (χ,γ) ∈ [(int,string), (bool, string), (α,β), (α,mutez) ]
+  
+   the allowed combinations of types for χ and γ are
+    χ = int   && γ = string
+    χ = bool  && γ = string
+    χ = int   && γ = int
+    χ = int   && γ = bool
+    χ = int   && γ = nat
+    χ = nat   && γ = int
+    χ = nat   && γ = bool
+    χ = nat   && γ = nat
+    χ = int   && γ = mutez
+    χ = nat   && γ = mutez
+    *)
 and c_typeclass_simpl = {
   reason_typeclass_simpl : string ;
   (* see description above in c_constructor_simpl *)
