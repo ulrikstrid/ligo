@@ -713,9 +713,10 @@ and compile_recursive module_env {fun_name; fun_type; lambda} =
           in
           return @@ E_if_cons (expr , nil , cons)
         )
-      | Match_variant {cases=[{constructor=Label t;body=match_true};{constructor=Label f;body=match_false}];_}
-        when String.equal t "true" && String.equal f "false" ->
-          let%bind (t , f) = bind_map_pair (replace_callback fun_name loop_type shadowed) (match_true, match_false) in
+      | Match_variant {cases;_} when expr.type_expression.type_content = T_base (TB_bool)->
+          let match_true = List.find (fun ({constructor= Label x;_}:AST.matching_content_case) -> String.equal x "true") cases in
+          let match_false = List.find (fun ({constructor= Label x;_}:AST.matching_content_case)  -> String.equal x "false") cases in
+          let%bind (t , f) = bind_map_pair (replace_callback fun_name loop_type shadowed) (match_true.body, match_false.body) in
           return @@ E_if_bool (expr, t, f)
       | Match_variant {cases;tv} -> (
           let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
