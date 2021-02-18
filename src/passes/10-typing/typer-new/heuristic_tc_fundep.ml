@@ -365,7 +365,7 @@ let pp_deduce_and_clean_result_short ppf {deduced;cleaned} =
               deduced : %a;@
               cleaned : %a;@
               @]}"
-    (PP_helpers.list_sep_d c_constructor_simpl_short) deduced
+    (PP_helpers.list_sep_d constructor_or_row_short) deduced
     c_typeclass_simpl_short cleaned
 
 let printer_json (t : selector_output) =
@@ -401,7 +401,7 @@ end
 let heuristic = Heuristic_plugin Compat.{ heuristic_name; selector; alias_selector; get_referenced_constraints; propagator; printer; printer_json; comparator }
 
 type nonrec deduce_and_clean_result = MM.Utils.deduce_and_clean_result = {
-    deduced : c_constructor_simpl list ;
+    deduced : constructor_or_row list ;
     cleaned : c_typeclass_simpl ;
     changed : bool ;
   }

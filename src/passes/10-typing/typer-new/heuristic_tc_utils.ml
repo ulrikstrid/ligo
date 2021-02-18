@@ -107,9 +107,50 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
     | P_constraint _ ->
       failwith "TODO"
   
-
-
-
+let all_equal' : (type_variable) -> type_value list -> (constructor_or_row * type_variable list * type_value list list) all_equal =
+  fun repr_x -> function
+      [] -> Empty
+    | hd :: tl ->
+      match hd.wrap_content with
+        P_forall _ -> failwith "forall in typeclass cells is not supported"
+      | P_variable _ -> Different
+      | P_apply _ -> Different
+      | P_abs _ -> Different
+      | P_constraint _ -> failwith "kinding error: constraints have kind Constraint, but the cells of a typeclass can only contain types (i.e. kind *)"
+      | P_constant { p_ctor_tag=hd_ctor_tag; p_ctor_args=hd_ctor_args } ->
+        if List.for_all (function { Location.wrap_content = P_constant { p_ctor_tag; p_ctor_args=_ }} -> Compare.constant_tag p_ctor_tag hd_ctor_tag = 0 | _ -> false) tl
+        then
+          let fresh_vars = List.map (fun _arg -> Core.fresh_type_variable ()) hd_ctor_args in
+          let deduced : c_constructor_simpl = {
+            id_constructor_simpl = ConstraintIdentifier 0L;
+            original_id = None;
+            reason_constr_simpl = "inferred because it is the only remaining possibility at this point according to the typeclass [TODO:link to the typeclass here]" ;
+            tv = repr_x;
+            c_tag = hd_ctor_tag;
+            tv_list = fresh_vars
+          } in
+          All_equal_to (`Constructor deduced, fresh_vars, List.map (function { Location.wrap_content = P_constant { p_ctor_tag=_; p_ctor_args }} -> p_ctor_args | _ -> failwith "impossible") (hd :: tl))
+        else Different
+      | P_row { p_row_tag=hd_row_tag; p_row_args=hd_row_args } ->
+        let hd_labels = LMap.keys hd_row_args in
+        if List.for_all (function { Location.wrap_content = P_row { p_row_tag; p_row_args=_ }} ->
+                           Compare.row_tag p_row_tag hd_row_tag = 0
+                           && List.compare ~compare:Compare.label hd_labels (LMap.keys hd_row_args) = 0
+                         | _ -> false)
+                        tl
+        then
+          let deduced : c_row_simpl = {
+            id_row_simpl = ConstraintIdentifier 0L;
+            original_id = None;
+            reason_row_simpl = "inferred because it is the only remaining possibility at this point according to the typeclass [TODO:link to the typeclass here]" ;
+            tv = repr_x;
+            r_tag = hd_row_tag;
+            tv_map = LMap.map (fun { associated_value=_; michelson_annotation; decl_pos } -> ({ associated_variable=Core.fresh_type_variable (); michelson_annotation; decl_pos} : row_variable)) hd_row_args
+          } in
+          let fresh_vars = List.map (fun x -> x.associated_variable) @@ LMap.values deduced.tv_map in
+          All_equal_to (`Row deduced, fresh_vars, List.map (function { Location.wrap_content = P_row { p_row_tag=_; p_row_args }} -> List.map (fun x -> x.associated_value) @@ LMap.values p_row_args | _ -> failwith "impossible") (hd :: tl))
+        else Different
+      
 
 (* input:
      x ? [ map3( nat , unit , float ) ; map3( bytes , mutez , float ) ]
@@ -130,9 +171,9 @@ let rec replace_var_and_possibilities_1
     ((x : type_variable), (possibilities_for_x : type_value list))
     : (column Rope.SimpleRope.t * _ * bool, _) result =
   let open Rope.SimpleRope in
-  let%bind tags_and_args = bind_map_list get_tag_and_args_of_constant possibilities_for_x in
-  let tags_of_constructors, arguments_of_constructors = List.split @@ tags_and_args in
-  match all_equal Compare.constant_tag tags_of_constructors with
+  (*let%bind tags_and_args = bind_map_list get_tag_and_args_of_constant possibilities_for_x in
+  let tags_of_constructors, arguments_of_constructors = List.split tags_and_args in*)
+  match all_equal' (repr x) possibilities_for_x  with
   | Different ->
     (* The "changed" boolean return indicates whether any update was done.
        It is used to detect when the variable doesn't need any further cleanup. *)
@@ -146,21 +187,8 @@ let rec replace_var_and_possibilities_1
     (* TODO: possible bug: if there is nothing left because everything was inferred, we shouldn't fail and just continue with an empty TC… can this happen? *)
     fail @@ corner_case "type error: the typeclass does not allow any type for \
                          the variable %a:PP_variable:x at this point"
-  | All_equal_to c_tag ->
-    match arguments_of_constructors with
-    | [] -> failwith "the typeclass does not allow any possibilities \
-                      for the variable %a:PP_variable:x at this point"
-    | (arguments_of_first_constructor :: _) as arguments_of_constructors ->
+  | All_equal_to (deduced, fresh_vars, arguments_of_constructors) ->
       (* discard the identical tags, splice their arguments instead, and deduce the x = tag(…) constraint *)
-      let fresh_vars = List.map (fun _arg -> Core.fresh_type_variable ()) arguments_of_first_constructor in
-      let deduced : c_constructor_simpl = {
-        id_constructor_simpl = ConstraintIdentifier 0L;
-        original_id = None;
-        reason_constr_simpl = "inferred because it is the only remaining possibility at this point according to the typeclass [TODO:link to the typeclass here]" ;
-        tv = (repr x);
-        c_tag ;
-        tv_list = fresh_vars
-      } in
 
       let%bind (rec_cleaned, rec_deduced, _rec_changed) =
         replace_var_and_possibilities_rec repr (List.combine fresh_vars (transpose_list_of_lists arguments_of_constructors))
@@ -174,7 +202,7 @@ let rec replace_var_and_possibilities_1
     (loop3 (replace_var_and_possibilities_1 repr) (empty, empty, false) (pair, pair, (||))) matrix
 
 type deduce_and_clean_result = {
-  deduced : c_constructor_simpl list ;
+  deduced : constructor_or_row list ;
   cleaned : c_typeclass_simpl ;
   changed : bool
 }
@@ -211,26 +239,40 @@ let wrapped_deduce_and_clean repr tc ~(original:c_typeclass_simpl) =
   let cleaned : type_constraint = {
       reason = cleaned.reason_typeclass_simpl;
       c = C_typeclass {
-          tc_bound = [](*TODO*); tc_constraints = [](*TODO*);
+        tc_bound = (Format.printf "TODO678906\n\n\n\nTODO678906\n\n\n\nTODO678906\n\n\n\nTODO678906\n\n\n\nTODO678906\n\n\n\nTODO678906\n\n\n\nTODO678906\n\n\n\nTODO678906\n\n\n\nTODO678906\n\n\n\nTODO678906\n\n\n\nTODO678906\n\n\n\nTODO678906\n\n\n\n"; [])(*TODO*); tc_constraints = [](*TODO*);
         tc_args ;
         typeclass = cleaned.tc;
         original_id = original.original_id;
       }
     }
   in
-  let aux (x : c_constructor_simpl) : type_constraint = {
-    reason = "inferred: only possible type for that variable in the typeclass";
-    c = C_equation {
-      aval = wrap (Todo "?") @@ P_variable (repr x.tv) ;
-      bval = wrap (Todo "? generated") @@
-              P_constant {
-                p_ctor_tag  = x.c_tag ;
-                p_ctor_args = List.map
-                  (fun v -> wrap (Todo "? probably generated") @@ P_variable (repr v))
-                  x.tv_list ;
-              }
+  let aux : constructor_or_row -> type_constraint = function
+      `Constructor x -> {
+        reason = "inferred: only possible type for that variable in the typeclass";
+        c = C_equation {
+          aval = wrap (Todo "?") @@ P_variable (repr x.tv) ;
+          bval = wrap (Todo "? generated") @@
+            P_constant {
+              p_ctor_tag  = x.c_tag ;
+              p_ctor_args = List.map
+                (fun v -> wrap (Todo "? probably generated") @@ P_variable (repr v))
+                x.tv_list ;
+            }
+          }
+        }
+    | `Row x -> {
+        reason = "inferred: only possible type for that variable in the typeclass";
+        c = C_equation {
+          aval = wrap (Todo "?") @@ P_variable (repr x.tv) ;
+          bval = wrap (Todo "? generated") @@
+            P_row {
+              p_row_tag  = x.r_tag ;
+              p_row_args = LMap.map
+                (fun { associated_variable=v; michelson_annotation; decl_pos } -> { associated_value = wrap (Todo "? probably generated") @@ P_variable (repr v); michelson_annotation; decl_pos })
+                x.tv_map ;
+            }
+          }
       }
-    }
   in
   let deduced : type_constraint list = List.map aux deduced in
   ok (deduced, cleaned, changed)
