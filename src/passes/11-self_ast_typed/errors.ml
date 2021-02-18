@@ -16,10 +16,10 @@ type self_ast_typed_error = [
     string * Ast_typed.type_expression * Ast_typed.type_expression * Ast_typed.expression
   | `Self_ast_typed_pair_in of Location.t
   | `Self_ast_typed_pair_out of Location.t
-  | `Self_ast_typed_non_exhaustive of Location.t
+  | `Self_ast_typed_match_anomaly of Location.t
 ]
 
-let non_exhaustive_pattern_matching (loc:Location.t) : self_ast_typed_error = `Self_ast_typed_non_exhaustive loc
+let pattern_matching_anomaly (loc:Location.t) : self_ast_typed_error = `Self_ast_typed_match_anomaly loc
 let recursive_call_is_only_allowed_as_the_last_operation name loc =
   `Self_ast_typed_rec_call (name,loc)
 let bad_self_type expected got loc =
@@ -46,9 +46,9 @@ let error_ppformat : display_format:string display_format ->
   match display_format with
   | Human_readable | Dev -> (
     match a with
-    | `Self_ast_typed_non_exhaustive loc ->
+    | `Self_ast_typed_match_anomaly loc ->
       Format.fprintf f
-        "@[<hv>%a@.Pattern matching is not exhaustive. @]"
+        "@[<hv>%a@.Pattern matching anomaly (redundant, or non exhaustive). @]"
         Snippet.pp loc
     | `Self_ast_typed_rec_call (_name,loc) ->
       Format.fprintf f
@@ -119,8 +119,8 @@ let error_jsonformat : self_ast_typed_error -> Yojson.Safe.t = fun a ->
       ("content",  content )]
   in
   match a with
-  | `Self_ast_typed_non_exhaustive loc ->
-    let message = `String "pattern matching is not exhaustive" in
+  | `Self_ast_typed_match_anomaly loc ->
+    let message = `String "pattern matching anomaly" in
     let content = `Assoc [
       ("message", message);
       ("loc", Location.to_yojson loc);

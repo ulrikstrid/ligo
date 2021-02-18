@@ -144,7 +144,6 @@ let type_matchee : equations -> O.type_expression pm_result =
 **)
 let rec substitute_var_in_body : I.expression_variable -> O.expression_variable -> I.expression -> I.expression pm_result =
   fun to_subst new_var body ->
-    (* let () = Format.printf "substituting %a by %a in %a\n" I.PP.expression_variable to_subst I.PP.expression_variable new_var I.PP.expression body in *)
     let aux : unit -> I.expression -> (bool * unit * I.expression,_) result =
       fun () exp ->
         let ret continue exp = ok (continue,(),exp) in
@@ -313,7 +312,7 @@ and ctor_rule : type_f:type_fun -> body_t:O.type_expression option -> matchees -
       in
       let%bind match_none = match none_case with
         | Some eq ->
-          let opt = Location.wrap @@ Var.fresh ~name:"_" () in
+          let opt = Location.wrap @@ Var.fresh ~name:"ctor_proj" () in
           let new_ms = opt::mtl in
           let%bind body = match_ ~type_f ~body_t new_ms eq def in
           ok @@ Some body
@@ -337,7 +336,7 @@ and ctor_rule : type_f:type_fun -> body_t:O.type_expression option -> matchees -
       let missing_case_body = O.make_e def body_t in
       let match_none = Option.unopt ~default:missing_case_body match_none in
       let missing_case_some : O.matching_content_some =
-        let opt = Location.wrap @@ Var.fresh ~name:"_" () in
+        let opt = Location.wrap @@ Var.fresh ~name:"opt_proj" () in
         { opt ; body = missing_case_body ; tv }
       in
       let match_some = Option.unopt ~default:missing_case_some match_some in
@@ -353,7 +352,7 @@ and ctor_rule : type_f:type_fun -> body_t:O.type_expression option -> matchees -
       in
       let aux_m : O.label * O.type_expression -> O.matching_content_case =
         fun (constructor,t) ->
-          let proj = Location.wrap @@ Var.fresh ~name:"_" () in
+          let proj = Location.wrap @@ Var.fresh ~name:"ctor_proj" () in
           let body = O.make_e def t in
           { constructor ; pattern = proj ; body }
       in

@@ -27,10 +27,12 @@
         | Cons (c,d) -> a + b + c + d
   ```
   
-  This pass aims to remove those partial match failwiths by identifying matched variable and trying to merge them.
-  If failwith expression still remain after this pass, the matching expression is not exhaustive. That will trigger an error
+  This pass aims to remove those partial match failwiths by folding over the AST, and simplify a case-expression that appears
+  inside another case expression for the same variable.
+  If failwith expression still remain after this pass, the matching expression is anomalous (redundant. That will trigger an error
 
-  TODO: It might be desirable to allow non-exhaustive patterns when users wants it, leaving the generated failwiths (?)
+  TODO: It might be desirable to allow anomalous patterns when users wants it, leaving the generated failwiths (?)
+  TODO: This approach is naive, with a more sophisticated approach it is possible to descriminate between non-exhaustive and redundant patterns
 *)
 
 open Errors
@@ -39,6 +41,10 @@ let fold_expression = Helpers.fold_expression
 let map_expression = Helpers.map_expression
 open Ast_typed
 open Trace
+
+module SimplMap = Map.Make( struct type t = expression_variable let compare (a:expression_variable) (b:expression_variable) = Var.compare a.wrap_content b.wrap_content end)
+
+type simpl_map = ((label * expression_variable) list) SimplMap.t
 
 type 'a self_res = ('a, self_ast_typed_error) result
 
@@ -58,109 +64,91 @@ let rec do_while : (expression -> (bool * expression) self_res) -> expression ->
     if has_been_simpl then do_while f exp
     else ok exp
 
-let merge_record_case : (expression_variable * matching_content_record) -> matching_content_record option self_res =
-  fun (mvar, {fields=_ ; body ; tv }) ->
-    let aux : (expression_variable * type_expression) label_map option -> expression ->
-      (bool * (expression_variable * type_expression) label_map option * expression,_) result =
-        fun prev exp ->
-          let continue = ok (true,prev,exp) in
-          let stop new_fields expression_content = ok (false,Some new_fields,{exp with expression_content}) in
-          match exp.expression_content with
-          | E_matching m -> (
-            match get_variable m.matchee with
-            | Some v when Var.equal v.wrap_content mvar.wrap_content && Var.is_generated v.wrap_content -> ( (*is_generated can be removed safely, but this is to ensure that*)
-              match m.cases with
-              | Match_record v -> stop v.fields v.body.expression_content
-              | _ -> continue
-            )
-            | _ -> continue
-          )
-          | _ -> continue
-    in
-    let%bind (new_fields_opt , body') = fold_map_expression aux None body in
-    match new_fields_opt with
-    | Some fields ->
-      let new_case : matching_content_record = { fields ; tv ; body=body' } in
-      ok (Some new_case)
-    | None -> ok None
+let make_le : matching_content_variant -> (label * expression_variable) list = fun ml ->
+  List.map (fun (m:matching_content_case) -> (m.constructor,m.pattern)) ml.cases
 
-let merge_variant_case : (expression_variable * matching_content_case) -> matching_content_case option self_res =
-  fun (mvar , {constructor;pattern=_;body}) ->
-    let aux : expression_variable option -> expression -> (bool * expression_variable option * expression,_) result =
-      fun prev exp ->
-        let continue = ok (true,prev,exp) in
-        let stop new_pattern expression_content = ok (false,Some new_pattern,{exp with expression_content}) in
+let substitute_var_in_body : expression_variable -> expression_variable -> expression -> expression self_res =
+(* let rec substitute_var_in_body : expression_variable -> expression_variable -> expression -> expression self_res = *)
+  fun to_subst new_var body ->
+    let aux : unit -> expression -> (bool * unit * expression,_) result =
+      fun () exp ->
+        let ret continue exp = ok (continue,(),exp) in
         match exp.expression_content with
-        | E_matching m -> (
-          match get_variable m.matchee with
-          | Some v when Var.equal v.wrap_content mvar.wrap_content && Var.is_generated v.wrap_content -> (
-            match m.cases with
-            | Match_variant v -> (
-              let (_fw,no_fw) = List.partition (fun (case:matching_content_case) -> is_generated_partial_match case.body) v.cases in
-              match no_fw with
-              | [] -> fail (corner_case "pattern match branches being all being all generated failwith should never happen")
-              | lst -> (
-                let x = List.find_opt (fun ({constructor=c;_}:matching_content_case) -> Compare.label c constructor = 0 ) lst in
-                match x with
-                | Some x ->
-                  let { pattern ; body ; _ } : matching_content_case = x in
-                  stop pattern body.expression_content
-                | None -> fail (corner_case "constructor here is a case of an higher pattern match")
-              )
-            )
-            | _ -> continue
-          )
-          | _ -> continue
-        )
-        | _ -> continue
+        | E_variable var when Var.equal var.wrap_content to_subst.wrap_content -> ret true { exp with expression_content = E_variable new_var }
+        (* | E_let_in letin when Var.equal letin.let_binder.wrap_content to_subst.wrap_content ->
+          let%bind rhs = substitute_var_in_body to_subst new_var letin.rhs in
+          let letin = { letin with rhs } in
+          ret false { exp with expression_content = E_let_in letin}
+        | E_lambda lamb when Var.equal lamb.binder.wrap_content to_subst.wrap_content -> ret false exp
+        | E_matching _ -> (
+          ret true exp (* TODO *)
+        ) *)
+        | _ -> ret true exp
     in
-    let%bind (new_pattern_opt , body') = fold_map_expression aux None body in
-    match new_pattern_opt with
-    | Some pattern ->
-      let new_case : matching_content_case = { constructor ; pattern ; body=body' } in
-      ok (Some new_case)
-    | None -> ok None
+    let%bind ((), res) = fold_map_expression aux () body in
+    ok res
 
-let top_level_simpl : expression -> expression self_res =
+(*never used in substitution*)
+let dummy = Location.wrap @@ Var.fresh ()
+
+let compress_matching : expression -> expression self_res =
   fun exp ->
-    let aux : bool -> expression -> (bool * bool * expression) self_res =
-      fun has_been_simpl exp ->
-        let continue = ok (true,has_been_simpl,exp) in
-        let ret continue has_been_simpl expression_content = ok (continue,has_been_simpl,{exp with expression_content}) in
+    let aux : (bool*simpl_map) -> expression -> (bool * (bool*simpl_map) * expression) self_res =
+      fun (has_been_simpl,smap) exp ->
+        let continue smap = ok (true,(has_been_simpl,smap),exp) in
+        let stop e = ok (false,(true,smap),e) in
         match exp.expression_content with
         | E_matching m -> (
-          match m.matchee.expression_content with
-          | E_variable x when Var.is_generated x.wrap_content -> (
-            match m.cases with
-            | Match_variant v -> (
-              let aux : (bool * matching_content_case list) -> matching_content_case -> (bool * matching_content_case list) self_res =
-                fun (has_been_simpl,res) case ->
-                  let%bind new_case_opt = merge_variant_case (x,case) in
-                  match new_case_opt with
-                  | Some case -> ok (true,case::res)
-                  | None -> ok (has_been_simpl,case::res)
-              in
-              let%bind (has_been_simpl,cases) = bind_fold_list aux (false,[]) v.cases in
-              if has_been_simpl then 
-                ret false has_been_simpl (E_matching { m with cases = Match_variant { v with cases} })
-              else
-                continue
+          let matchee_var = get_variable m.matchee in
+          match m.cases with
+          | Match_option {match_none ; match_some} -> (
+            match matchee_var with
+            | Some v -> (
+              match SimplMap.find_opt v smap with
+              | Some le -> (
+                let reconstructed_var_list = [(Label "Some",match_some.opt,match_some.body) ; (Label "None",dummy,match_none)] in
+                let (fw,no_fw) = List.partition (fun (_,_,body) -> is_generated_partial_match body) reconstructed_var_list in
+                match no_fw, fw with
+                | [(Label constructor,pattern,body)] , lst when List.length lst >= 1 ->
+                  let (_,proj) = List.find (fun (Label constructor',_) -> String.equal constructor' constructor) le in
+                  let%bind body' = substitute_var_in_body pattern proj body in
+                  stop body'
+                | _ , [] -> continue smap
+                | _ , _ -> fail (corner_case __LOC__)
+              )
+              | None -> continue (SimplMap.add v ([(Label "Some", match_some.opt) ; (Label "None", Location.wrap @@ Var.fresh ())]) smap)
             )
-            | Match_record r -> (
-              let%bind new_ = merge_record_case (x,r) in
-              match new_ with
-              | Some r -> ret false true (E_matching { m with cases = Match_record r })
-              | None -> continue
-            )
-            | _ -> continue
+            | None -> continue smap
           )
-          | _ -> continue
+          | Match_variant cases -> (
+            match matchee_var with
+            | Some v -> (
+              match SimplMap.find_opt v smap with
+              | Some le -> (
+                let (fw,no_fw) = List.partition (fun (case:matching_content_case) -> is_generated_partial_match case.body) cases.cases in
+                match no_fw, fw with
+                | [{constructor= Label constructor;pattern;body}] , lst when List.length lst >= 1 ->
+                  let (_,proj) = List.find (fun (Label constructor',_) -> String.equal constructor' constructor) le in
+                  let%bind body' = substitute_var_in_body pattern proj body in
+                  stop body'
+                | _ , [] -> continue smap
+                | _ , _ -> fail (corner_case __LOC__)
+              )
+              | None -> continue (SimplMap.add v (make_le cases) smap)
+            )
+            | None -> continue smap
+          )
+          | _ -> continue smap
         )
-        | _ -> continue
+        | _ -> continue smap
     in
-    do_while (fold_map_expression aux false) exp
+    let simplify = fun exp ->
+      let%bind ((has_been_simpl,_),exp) = fold_map_expression aux (false,SimplMap.empty) exp in
+      ok (has_been_simpl,exp)
+    in
+    do_while simplify exp
 
-let exhaustiveness_check : expression -> unit self_res =
+let anomaly_check : expression -> unit self_res =
   fun exp ->
     let aux : unit -> expression -> unit self_res =
       fun () exp ->
@@ -168,8 +156,7 @@ let exhaustiveness_check : expression -> unit self_res =
         | E_matching _ ->
           let contains_partial_match : expression -> expression self_res =
             fun exp' ->
-              (*TODO: find a way to suggest missing cases *)
-              if is_generated_partial_match exp' then fail (non_exhaustive_pattern_matching exp.location)
+              if is_generated_partial_match exp' then fail (pattern_matching_anomaly exp.location)
               else ok exp'
           in
           let%bind _ = map_expression contains_partial_match exp in
@@ -179,9 +166,6 @@ let exhaustiveness_check : expression -> unit self_res =
     fold_expression aux () exp
 
 let peephole_expression exp =
-  match exp.expression_content with
-  | E_matching _ ->
-    let%bind exp' = top_level_simpl exp in
-    let%bind () = exhaustiveness_check exp' in
-    ok exp'
-  | _ -> ok exp
+  let%bind exp' = compress_matching exp in
+  let%bind () = anomaly_check exp' in
+  ok exp'

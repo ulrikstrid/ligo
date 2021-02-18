@@ -12,6 +12,7 @@ let all_module_passes = [
 let all_expression_passes = [
   Helpers.map_expression Tail_recursion.peephole_expression ;
   Helpers.map_expression Michelson_layout.peephole_expression ;
+  Pattern_matching_simpl.peephole_expression ;
   Uncurry.uncurry_expression ;
 ]
 
