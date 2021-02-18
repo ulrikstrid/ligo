@@ -291,6 +291,7 @@ type transferMichelson = michelson_pair_right_comb<transferAuxiliary>;
 type transferParameter = list<transferMichelson>;
 type parameter = 
 | ["Transfer", transferParameter];
+
 type storage = big_map<[tokenId, tokenOwner]>;
 type entrypointParameter = [parameter, storage];
 type entrypointReturn = [list<operation>, storage];
@@ -735,18 +736,10 @@ let main = (p: key_hash) : list <operation> => {
 let size_op = (s: string) : nat => String.length (s);
 let slice_op = (s: string) : string => String.sub ((1 as nat), (2 as nat), s);
 let concat_syntax = (s: string) => s + "test_literal";
-type Increment = {
-  kind: "Increment",
-  value: int
-};
-type Decrement = {
-  kind: "Decrement",
-  value: int
-};
 
 type parameter =
-| Increment
-| Decrement;
+| ["Increment", int]
+| ["Decrement", int];
 
 type storage = int;
 
@@ -878,25 +871,10 @@ let r = {
 // let t = (((((((2)))))));
 // let u = if (true) { 1; } else { 2; };
 
-type Foo = {
-  kind: "Foo",
-  value: int
-};
-
-type Bar = {
-  kind: "Bar",
-  value: bool
-};
-
-type Kee = {
-  kind: "Kee",
-  value: nat
-};
-
 type foobar =
-| Foo
-| Bar
-| Kee;
+| ["Foo", int]
+| ["Bar", bool]
+| ["Kee", nat];
 
 let foo: foobar = { kind: "Foo", value: 42 };
 let bar: foobar = { kind: "Bar", value: true };
@@ -907,19 +885,9 @@ type storage = int;
 
 /* variant defining pseudo multi-entrypoint actions */
 
-type Increment = {
-  kind: "increment",
-  value: int
-};
-
-type Decrement = {
-  kind: "decrement",
-  value: int
-};
-
 type parameter =
-| Increment
-| Decrement;
+| ["Increment", int]
+| ["Decrement", int];
 
 let add = ([a,b]: [int, int]): int => a + b;
 let sub = ([a,b]: [int, int]): int => a - b;

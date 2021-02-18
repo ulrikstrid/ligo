@@ -163,6 +163,10 @@ module Compile_type = struct
       match operator.value with
       | "michelson_or" ->
         let lst = npseq_to_list args.value.inside in
+        let%bind lst = match lst with 
+        | [TProd a] -> ok @@ npseq_to_list a.value.inside
+        | _ -> fail @@ michelson_type_wrong_arity loc operator.value
+        in
         (match lst with
         | [a ; b ; c ; d ] -> (
           let%bind b' =
@@ -178,6 +182,10 @@ module Compile_type = struct
         | _ -> fail @@ michelson_type_wrong_arity loc operator.value)
       | "michelson_pair" ->
         let lst = npseq_to_list args.value.inside in
+        let%bind lst = match lst with 
+        | [TProd a] -> ok @@ npseq_to_list a.value.inside
+        | _ -> fail @@ michelson_type_wrong_arity loc operator.value
+        in
         (match lst with
         | [a ; b ; c ; d ] -> (
           let%bind b' =
