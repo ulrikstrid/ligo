@@ -22,12 +22,30 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
 
   type column = (type_variable * type_value list)
   type columns = column list
-  let loop3 : 'e 'x 'a 'b 'c . ('x -> ('a * 'b * 'c, 'e) result) -> ('a * 'b * 'c) -> (('a -> 'a -> 'a) * ('b -> 'b -> 'b) * ('c -> 'c -> 'c)) -> 'x list -> (('a * 'b * 'c), 'e) result =
-    fun f (a0, b0, c0) (a,b,c) xs ->
-    let%bind r = bind_map_list f xs in
+  let depth = ref 0
+  let loop3 : 'e 'x 'a 'b 'c . (Format.formatter -> 'x -> unit) -> (Format.formatter -> 'a -> unit) -> (Format.formatter -> ('a * 'b * 'c) -> unit) -> ('x -> ('a * 'b * 'c, 'e) result) -> ('a * 'b * 'c) -> (('a -> 'a -> 'a) * ('b -> 'b -> 'b) * ('c -> 'c -> 'c)) -> 'x list -> (('a * 'b * 'c), 'e) result =
+    fun pp ppa ppres f (a0, b0, c0) (a,b,c) xs ->
+    let () = depth := !depth +1 in
+    let%bind r = bind_mapi_list (fun i x -> let%bind res = f x in Format.printf "%d %d : %a ~~~> %a\n" !depth i pp x ppres res; ok res) xs in
     let (as_, bs, cs) = List.split3 r in
+    let () = Format.printf "\nsplit3 ~>> %a\n" (Ast_typed.PP.list_sep_d_short ppa) as_ in
+    let () = depth := !depth-1 in
     ok (List.fold_left a a0 as_, List.fold_left b b0 bs, List.fold_left c c0 cs)
 
+  let pptata = (fun ppf (a,b) -> Format.fprintf ppf "(%a,%a)" PP.type_variable a (PP_helpers.list_sep_d PP.type_value_short) b)
+  let pplalala = (Ast_typed.PP.list_sep_d_short pptata)
+
+   let rec transpose_list_of_lists (matrix : type_value list list) =
+      match matrix with
+        [] -> []
+      | (_::_)::_ -> (List.map List.hd matrix) :: transpose_list_of_lists (List.map List.tl matrix)
+      | []::_ -> assert (List.for_all List.is_empty matrix); []
+
+  type 'a all_equal = Empty | All_equal_to of 'a | Different
+  let all_equal cmp = function
+    | [] -> Empty
+    | hd :: tl -> if List.for_all (fun x -> cmp x hd = 0) tl then All_equal_to hd else Different  
+   
   let update_columns3 : (columns -> (column Rope.SimpleRope.t * 'b * 'c, _) result) -> c_typeclass_simpl -> (c_typeclass_simpl * 'b * 'c, _) result =
     fun f tc ->
     let rec transpose (headers : type_variable list) (matrix : type_value list list) =
@@ -40,15 +58,15 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
       | (_header, _::_)::_ ->
         let (headers, matrix) = transpose_back @@ List.map (fun (header, cells) -> header, List.tl cells) columns in
         headers, (List.map (fun (_header,cells) -> List.hd cells) columns :: matrix)
-      | _ -> (List.map fst columns), []
+      | _ -> assert (List.for_all List.is_empty @@ List.map snd columns); (List.map fst columns), []
     in
     (*let transpose_back cs = let (hs, m) = transpose_back cs in (hs, List.rev m) in*)
     let () = Format.printf "\n\noriginal=\n%a\n\n" PP.c_typeclass_simpl_short tc in
     let transposed = transpose tc.args tc.tc in
-    let () = Format.printf "\n\ntransposed=\n%a\n\n" (Ast_typed.PP.list_sep_d_short (fun ppf (a,b) -> Format.fprintf ppf "(%a,%a)" PP.type_variable a (PP_helpers.list_sep_d PP.type_value_short) b)) transposed in
+    let () = Format.printf "\n\ntransposed=\n%a\n\n" pplalala transposed in
     let%bind updated, b, c = f @@ transpose tc.args tc.tc in
     let () = Format.printf "\n\nupdated rope=\n%a\n\n" (Rope.SimpleRope.pp (fun ppf (a,b) -> Format.fprintf ppf "(%a,%a)" PP.type_variable a (PP_helpers.list_sep_d PP.type_value_short) b)) updated in
-    let () = Format.printf "\n\nupdated=\n%a\n\n" (Ast_typed.PP.list_sep_d_short (fun ppf (a,b) -> Format.fprintf ppf "(%a,%a)" PP.type_variable a (PP_helpers.list_sep_d PP.type_value_short) b)) (Rope.SimpleRope.list_of_rope updated) in
+    let () = Format.printf "\n\nupdated=\n%a\n\n" pplalala (Rope.SimpleRope.list_of_rope updated) in
     let headers', matrix' = transpose_back @@ Rope.SimpleRope.list_of_rope updated in
     let () = Format.printf "\n\nback=\n%a\n\n" PP.c_typeclass_simpl_short { tc with args = headers'; tc = matrix' } in
     ok ({ tc with args = headers'; tc = matrix' }, b, c)
@@ -81,51 +99,6 @@ module Utils = functor (Type_variable : sig type t end) (Type_variable_abstracti
       then ok tc
       else fail typeclass_not_a_rectangular_matrix
 
-
-  (* transpose ([x;z] ∈ [ [map(nat,unit) ; int    ; ] ;
-                          [map(unit,nat) ; string ; ] ;
-                          [map(int,int)  ; unit   ; ] ; ])
-    will return [ x ? [ map(nat,unit) ; map(unit,nat) ; map(int,int) ; ] ;
-                  z ? [ int           ; string        ; unit         ; ] ; ] *)
-  let transpose : c_typeclass_simpl -> ((type_variable * type_value list) list, _) result =
-    fun { reason_typeclass_simpl = _; tc; args } ->
-    bind_fold_list
-      (fun accs allowed_tuple ->
-        List.map2 (fun (var, acc) allowed_type -> (var, allowed_type :: acc)) accs allowed_tuple
-          ~ok ~fail:(fun _ _ -> fail @@ internal_error __LOC__ "typeclass is not represented by a rectangular matrix"))
-      (List.map (fun var -> var, []) args)
-      tc
-    >>|? List.map (fun (var, acc) -> (var, List.rev acc))
-    >>? check_typeclass_transposed_rectangular
-
-  (* transpose_back [ x ? [ map(nat,unit) ; map(unit,nat) ; map(int,int) ; ] ;
-                      z ? [ int           ; string        ; unit         ; ] ; ]
-    will return ([x;z] ∈ [ [map(nat,unit) ; int    ; ] ;
-                            [map(unit,nat) ; string ; ] ;
-                            [map(int,int)  ; unit   ; ] ; ]) *)
-  let transpose_back : _ -> _ -> (type_variable * type_value list) list -> (c_typeclass_simpl, _) result =
-    fun (reason_typeclass_simpl, original_id) id_typeclass_simpl tcs ->
-    let%bind tc =
-      match tcs with
-      | [] -> ok []
-      | (_, hd_allowed_types) :: _ ->
-        bind_fold_list
-          (fun allowed_tuples allowed_types ->
-            List.map2 (fun allowed_tuple allowed_type -> allowed_type :: allowed_tuple) allowed_tuples allowed_types
-              ~ok ~fail:(fun _ _ -> fail @@ internal_error __LOC__ "transposed typeclass is not represented by a rectangular matrix"))
-          (List.map (fun _ -> []) hd_allowed_types)
-          (List.map snd tcs)
-        >>|? List.map (fun allowed_typle -> List.rev allowed_typle)
-    in
-    let args = List.map fst tcs in
-    check_typeclass_rectangular @@
-    { tc_bound = [](*TODO*); tc_constraints = [](*TODO*); reason_typeclass_simpl; original_id; id_typeclass_simpl; tc; args }
-
-  type 'a all_equal = Empty | All_equal_to of 'a | Different
-  let all_equal cmp = function
-    | [] -> Empty
-    | hd :: tl -> if List.for_all (fun x -> cmp x hd = 0) tl then All_equal_to hd else Different
-  
   let get_tag_and_args_of_constant (tv : type_value) =
     match tv.wrap_content with
     | P_constant { p_ctor_tag; p_ctor_args } -> ok (p_ctor_tag, p_ctor_args)
@@ -203,11 +176,18 @@ let rec replace_var_and_possibilities_1
       } in
 
       let%bind (rec_cleaned, rec_deduced, _rec_changed) =
-        loop3 (replace_var_and_possibilities_1 repr) (empty, empty, false) (pair, pair, (||)) (List.combine fresh_vars arguments_of_constructors)
+        replace_var_and_possibilities_rec repr (List.combine fresh_vars (transpose_list_of_lists arguments_of_constructors))
       in
       (* The "changed" boolean return indicates whether any update was done.
          It is used to prevent removal + update of the typeclass if it wasn't modified. *)
       ok (rec_cleaned, pair (singleton deduced) rec_deduced, true)
+
+  and replace_var_and_possibilities_rec repr matrix =
+    let open Rope.SimpleRope in
+    (loop3 pptata
+      (Rope.SimpleRope.pp pptata)
+     (fun ppf (a,b,c) -> Format.fprintf ppf "(%a   ,   %a   ,   %a)" (Rope.SimpleRope.pp pptata) a (Rope.SimpleRope.pp PP.c_constructor_simpl_short) b PP_helpers.bool c)
+      (replace_var_and_possibilities_1 repr) (empty, empty, false) (pair, pair, (||))) matrix
 
 (*let rec replace_var_and_possibilities_rec repr (x : type_variable) (possibilities_for_x : type_value list) : ((type_variable * type_value list) list * _, _) result =
   let open Rope.SimpleRope in
@@ -241,7 +221,7 @@ let deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result
   (* ex.   [ x                             ; z      ]
        ∈ [ [ map3( nat   , unit  , float ) ; int    ] ;
            [ map3( bytes , mutez , float ) ; string ] ] *)
-  let%bind (cleaned, deduced, changed) = update_columns3 (loop3 (replace_var_and_possibilities_1 repr) (empty, empty, false) (pair, pair, (||))) tcs in
+  let%bind (cleaned, deduced, changed) = update_columns3 (replace_var_and_possibilities_rec repr) tcs in
   
   (* ex. cleaned:
            [ fresh_x_1 ; fresh_x_2 ; y      ]
