@@ -86,6 +86,7 @@ find ./gitlab-pages/ -iname "*.md"
 let md_files = [
   "/gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-smart-contract.md";
   "/gitlab-pages/docs/tutorials/get-started/tezos-taco-shop-payout.md";
+  "/gitlab-pages/docs/tutorials/tz-vs-eth/tz-vs-eth.md";
   "/gitlab-pages/docs/intro/installation.md";
   "/gitlab-pages/docs/intro/editor-support.md";
   "/gitlab-pages/docs/intro/ligo-intro.md";

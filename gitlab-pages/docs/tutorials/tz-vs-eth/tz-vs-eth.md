@@ -753,7 +753,7 @@ It is a common idiom in Ethereum to make read-only calls to other contracts. Tez
 
 <Syntax syntax="pascaligo">
 
-```pascaligo
+```pascaligo skip
 type parameter is DoSomething | DoSomethingCont of int
 
 function doSomething (const p : unit; const s : int) is
@@ -769,7 +769,7 @@ function doSomethingCont (const p : int; const s : int) is
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo skip
 type parameter = DoSomething | DoSomethingCont of int
 
 let doSomething (p, s : unit * int) =
@@ -783,7 +783,7 @@ let doSomethingCont (p, s : int * int) = ([] : operation list), p + s
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo
+```reasonligo skip
 type parameter = DoSomething | DoSomethingCont(int);
 
 let doSomething = ((p, s): (unit, int)) => {
