@@ -189,7 +189,8 @@ and restrict repr c tc =
 let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
   fun selected repr ->
   let%bind restricted = restrict repr selected.c selected.tc in
-  let%bind (deduced , cleaned) = wrapped_deduce_and_clean repr restricted ~original:selected.tc in
+  let%bind (deduced , cleaned, _changed) = wrapped_deduce_and_clean repr restricted ~original:selected.tc in
+  let () = Format.printf "TODO: delete only if _changed || restricted.changed" in
   let ret = [
       {
         remove_constraints = [SC_Typeclass selected.tc];

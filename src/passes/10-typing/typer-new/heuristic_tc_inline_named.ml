@@ -154,7 +154,8 @@ let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver
     | other -> other
   in
   let updated_tc = map_cells inline_p_variable tc in
-  let%bind ( deduced , cleaned ) = wrapped_deduce_and_clean repr updated_tc ~original:selected.tc in
+  let%bind ( deduced , cleaned , _changed ) = wrapped_deduce_and_clean repr updated_tc ~original:selected.tc in
+  let () = Format.printf "TODO: delete only if _changed || updated_tc.changed" in
   ok [{
       remove_constraints = [SC_Typeclass selected.tc];
       add_constraints = cleaned :: deduced;
