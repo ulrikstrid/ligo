@@ -65,7 +65,7 @@ let by_constraint_identifier () =
   let state'' = add_constraint repr state' (SC_Typeclass tc_bc) in
   (* assert state'' = … *)
   let%bind () = same_state2 state'' [
-      (ConstraintIdentifier 2L, tc_bc)
+      (ConstraintIdentifier.T 2L, tc_bc)
     ]
   in
 
@@ -79,8 +79,8 @@ let by_constraint_identifier () =
   let state''' = add_constraint ~debug:(Ast_typed.PP.type_variable) repr state'' (SC_Typeclass tc_b) in
   (* assert state''' = … *)
   let%bind () = same_state2 state''' [
-      (ConstraintIdentifier 2L, tc_bc) ;
-      (ConstraintIdentifier 3L, tc_b)
+      (ConstraintIdentifier.T 2L, tc_bc) ;
+      (ConstraintIdentifier.T 3L, tc_b)
     ]
   in
 
@@ -97,8 +97,8 @@ let by_constraint_identifier () =
   (* assert that c has been merged to a in state'''' *)
   (* state'''' = same as above, because this indexer does not store any type variable. *)
   let%bind () = same_state2 state'''' [
-      (ConstraintIdentifier 2L, tc_bc) ;
-      (ConstraintIdentifier 3L, tc_b)
+      (ConstraintIdentifier.T 2L, tc_bc) ;
+      (ConstraintIdentifier.T 3L, tc_b)
     ]
   in
   ok ()

@@ -23,16 +23,14 @@ let rec type_constraint_simpl : type_constraint -> type_constraint_simpl list =
   let access_label_via_fresh ~tv ~record_type ~label = (* α = τ.label  via  β = τ && α = β.label *)
     let fresh = Core.fresh_type_variable () in
     let cs1 = type_constraint_simpl (c_equation (wrap (Todo "solver: simplifier: simpl target of label access") @@ P_variable fresh) record_type "simplifier: simpl target of label access") in
-    let id_access_label_simpl = ConstraintIdentifier (!global_next_constraint_id) in
-    global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
+    let id_access_label_simpl = ConstraintIdentifier.fresh () in
     let cs2 = [SC_Access_label { id_access_label_simpl; tv; record_type = fresh; label;reason_access_label_simpl= "simplifier: simpl label access on record via a fresh var for the record's type" }] in
     cs2 @ cs1 in
   let split_constant a c_tag args =
     let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
     let fresh_eqns = List.map (fun (v,t) -> c_equation (wrap (Todo "solver: simplifier: split_constant") @@ P_variable v) t "simplifier: split_constant") (List.combine fresh_vars args) in
     let recur = List.map type_constraint_simpl fresh_eqns in
-    let id_constructor_simpl = ConstraintIdentifier (!global_next_constraint_id) in
-    global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
+    let id_constructor_simpl = ConstraintIdentifier.fresh () in
     SC_Constructor {id_constructor_simpl;original_id=None;tv=a;c_tag;tv_list=fresh_vars;reason_constr_simpl=Format.asprintf "simplifier: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.constant_tag c_tag (PP_helpers.list_sep Ast_typed.PP.type_value (fun ppf () -> Format.fprintf ppf ", ")) args} :: List.flatten recur in
   let split_row a r_tag args =
     let aux const _ {associated_value = v;michelson_annotation;decl_pos} =
@@ -42,12 +40,10 @@ let rec type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     in
     let fresh_eqns, fresh_vars = LMap.fold_map aux [] args in
     let recur = List.map type_constraint_simpl fresh_eqns in
-    let id_row_simpl = ConstraintIdentifier (!global_next_constraint_id) in
-    global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
+    let id_row_simpl = ConstraintIdentifier.fresh () in
     [SC_Row {id_row_simpl;original_id=None;tv=a;r_tag;tv_map=fresh_vars;reason_row_simpl=Format.asprintf "simplifier: split constant %a = %a (%a)" Var.pp a Ast_typed.PP.row_tag r_tag (Ast_typed.PP.record_sep Ast_typed.PP.row_value (fun ppf () -> Format.fprintf ppf ", ")) args}] @ List.flatten recur in
   let gather_forall a forall = 
-    let id_poly_simpl = ConstraintIdentifier (!global_next_constraint_id) in
-    global_next_constraint_id := Int64.add !global_next_constraint_id 1L;
+    let id_poly_simpl = ConstraintIdentifier.fresh () in
     [SC_Poly {id_poly_simpl; original_id=None; tv=a; forall ; reason_poly_simpl="simplifier: gather_forall"}] in
   let gather_alias a b =
     if Var.equal a b
@@ -62,7 +58,7 @@ let rec type_constraint_simpl : type_constraint -> type_constraint_simpl list =
     let fresh_vars = List.map (fun _ -> Core.fresh_type_variable ()) args in
     let fresh_eqns = List.map (fun (v,t) -> c_equation (wrap (Todo "solver: simplifier: split typeclass") @@ P_variable v) t "simplifier: split_typeclass") (List.combine fresh_vars args) in
     let recur = List.map type_constraint_simpl fresh_eqns in
-    let id_typeclass_simpl = ConstraintIdentifier (!global_next_constraint_id) in
+    let id_typeclass_simpl = ConstraintIdentifier.fresh () in
     (* TODO: potential bug: I'm not sure if something needs to be done about the bound variables. It's probably okay as-is. *)
     let tc_constraints_simpl = List.flatten @@ List.map type_constraint_simpl tc_constraints in
     global_next_constraint_id := Int64.add !global_next_constraint_id 1L;

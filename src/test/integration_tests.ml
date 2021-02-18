@@ -2498,7 +2498,7 @@ let main = test_suite "Integration (End to End)"
 
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "various applications" application ;
 
-    test no (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure" closure ;
+    test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure" closure ;
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure (mligo)" closure_mligo ;
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure (religo)" closure_religo ;
     test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function" shared_function ;

@@ -15,7 +15,7 @@ module Operators_types = struct
                 [nat;int;int] ;
                 [int;nat;int] ;
                 [timestamp;int;timestamp] ;
-                [int;timestamp;int] ;
+                [int;timestamp;timestamp] ;
                 [mutez;mutez;mutez] ;
                 [bls12_381_g1;bls12_381_g1;bls12_381_g1] ;
                 [bls12_381_g2;bls12_381_g2;bls12_381_g2] ;

@@ -90,8 +90,8 @@ module Worklist = struct
           pending_hc;
           pending_propagators;
           pending_updates;
-          pending_removes } as worklist)) =
-    let () = show_sizes worklist in
+          pending_removes })) =
+    (* let () = show_sizes worklist in *)
     decrement_has_timeout_expired time_to_live
     || (Pending.is_empty pending_type_constraint                        &&
         Pending.is_empty pending_filtered_not_already_added_constraints &&

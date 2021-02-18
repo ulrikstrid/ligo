@@ -46,6 +46,11 @@ module M = functor (Type_variable : sig type t end) (Type_variable_abstraction :
     c :  constructor_or_row ;
   }
 
+  let pp_selector_output ppf {tc;c} =
+    Format.fprintf ppf "{tc:%a,c:%a}"
+      PP.c_typeclass_simpl_short tc
+      PP.constructor_or_row_short c
+
   let heuristic_name = "tc_fundep"
   
 (* ***********************************************************************
@@ -67,18 +72,25 @@ let selector_by_variable : (type_variable -> type_variable) -> flds -> construct
    typeclass constraint tcs. *)
 let selector_by_tc : (type_variable -> type_variable) -> flds -> c_typeclass_simpl -> selector_output list =
   fun repr (module Indexes) tc ->
+    Format.printf "In selector_by_tc : %a\n%!" PP.c_typeclass_simpl_short tc;
   let aux tv =
     (* Since we are only refining the typeclass one type expression
        node at a time, we only need the top-level assignment for
        that variable, e.g. α = κ(βᵢ, …). We can therefore look
        directly in the assignments. *)
+    Format.printf "Searching for tv :%a, repr: %a in assignments\n%!" PP.type_variable tv PP.type_variable @@ repr tv;
     match Assignments.find_opt (repr tv) Indexes.assignments with
-    | Some cr -> [{ tc ; c = cr }]
-    | None   -> [] in
+    | Some cr -> 
+        Format.printf "found :%a\n%!" PP.constructor_or_row_short cr;
+        [{ tc ; c = cr }]
+    | None    -> 
+        Format.printf "Not found";
+        [] in
   List.flatten @@ List.map aux tc.args
 
 let selector : (type_variable -> type_variable) -> type_constraint_simpl -> flds -> selector_output list =
   fun repr type_constraint_simpl indexes ->
+  Format.printf "in selector for tc_fundep with type_constraint : %a\n%!" PP.type_constraint_simpl_short type_constraint_simpl ;
   match type_constraint_simpl with
     SC_Constructor c  -> selector_by_variable repr indexes (`Constructor c) c.tv
   | SC_Row r          -> selector_by_variable repr indexes (`Row         r) r.tv
@@ -169,7 +181,7 @@ and restrict_cell repr (c : constructor_or_row) (tc : c_typeclass_simpl) (header
       let%bind updated_tc_constraints = bind_map_list (restrict_recur repr c) tc.tc_constraints in
       let all_accept = List.for_all (function None -> false | Some _ -> true) updated_tc_constraints in
       let restricted_constraints = List.filter_map (fun x -> x) updated_tc_constraints in
-      let tc = { tc with tc_constraints = restricted_constraints } in
+      let tc = { tc with tc_constraints = restricted_constraints ; original_id = Some (tc.id_typeclass_simpl); id_typeclass_simpl = ConstraintIdentifier.fresh () } in
       return ~tc all_accept
     | P_variable _v                -> return true (* Always keep unresolved variables; when they get resolved the heuristic will be called again and they will be kept or eliminated. *)
     | P_apply    _                 -> failwith "P_apply unsupported, TODO soon"
@@ -188,7 +200,9 @@ and restrict repr c tc =
 
 let propagator : (selector_output, typer_error) Type_variable_abstraction.Solver_types.propagator =
   fun selected repr ->
+    Format.printf "In propagator for tc_fundep for :%a\n" pp_selector_output selected; 
   let%bind restricted = restrict repr selected.c selected.tc in
+  Format.printf "restricted : %a\n%!" PP.c_typeclass_simpl_short restricted;
   let%bind (deduced , cleaned, _changed) = wrapped_deduce_and_clean repr restricted ~original:selected.tc in
   let () = Format.printf "TODO: delete only if _changed || restricted.changed" in
   let ret = [

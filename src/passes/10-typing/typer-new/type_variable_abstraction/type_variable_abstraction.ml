@@ -1,9 +1,13 @@
 module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> struct
   module type S = sig
     module Types : sig
+      module ConstraintIdentifier : sig
+        type t = T of int64
+        val fresh : unit -> t
+      end
       type type_variable = Type_variable.t
       type p_constraints
-      type constraint_identifier = ConstraintIdentifier of int64
+      type constraint_identifier = ConstraintIdentifier.t
       type constant_tag
       type row_tag =
         | C_record    (* ( label , * ) … -> * *)
@@ -205,6 +209,7 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
       val type_variable : type_variable pretty_printer
       val type_value_short : type_value pretty_printer
       val type_constraint : type_constraint pretty_printer
+      val type_constraint_simpl_short : type_constraint_simpl pretty_printer
     end
 
     module Yojson : sig

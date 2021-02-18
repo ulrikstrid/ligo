@@ -122,7 +122,7 @@ let all_equal' : (type_variable) -> type_value list -> (constructor_or_row * typ
         then
           let fresh_vars = List.map (fun _arg -> Core.fresh_type_variable ()) hd_ctor_args in
           let deduced : c_constructor_simpl = {
-            id_constructor_simpl = ConstraintIdentifier 0L;
+            id_constructor_simpl = ConstraintIdentifier.fresh ();
             original_id = None;
             reason_constr_simpl = "inferred because it is the only remaining possibility at this point according to the typeclass [TODO:link to the typeclass here]" ;
             tv = repr_x;
@@ -140,7 +140,7 @@ let all_equal' : (type_variable) -> type_value list -> (constructor_or_row * typ
                         tl
         then
           let deduced : c_row_simpl = {
-            id_row_simpl = ConstraintIdentifier 0L;
+            id_row_simpl = ConstraintIdentifier.fresh ();
             original_id = None;
             reason_row_simpl = "inferred because it is the only remaining possibility at this point according to the typeclass [TODO:link to the typeclass here]" ;
             tv = repr_x;
@@ -226,7 +226,7 @@ let deduce_and_clean : (_ -> _) -> c_typeclass_simpl -> (deduce_and_clean_result
 
  let wrapped_deduce_and_clean repr tc ~(original:c_typeclass_simpl) =
   let%bind {deduced; cleaned; changed} = deduce_and_clean repr tc in
-  let cleaned = SC_Typeclass { cleaned with original_id = Some original.id_typeclass_simpl } in
+  let cleaned = SC_Typeclass { cleaned with original_id = Some original.id_typeclass_simpl; id_typeclass_simpl = ConstraintIdentifier.fresh ()} in
   let aux : constructor_or_row -> type_constraint_simpl = function
       `Constructor x -> SC_Constructor x
     | `Row x -> SC_Row x in

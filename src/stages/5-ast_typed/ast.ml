@@ -309,6 +309,15 @@ and environment = {
    keep the two together until that gets refactored. *)
 
 (* core *)
+module ConstraintIdentifier = struct
+  type t = T of int64
+  let counter : int64 ref = ref Int64.zero 
+  let fresh () = 
+    let res = !counter in
+    counter := Int64.succ !counter;
+    T res
+
+end
 
 (* add information on the type or the kind for operator *)
 type constant_tag =
@@ -406,8 +415,8 @@ and c_equation = {
   bval : type_value ;
 }
 and tc_args = type_value list
-and constraint_identifier =
-| ConstraintIdentifier of int64
+and constraint_identifier = ConstraintIdentifier.t
+
 and c_typeclass = {
   (* TODO: possible bug: bound variables must not intersect with the tc_args *)
   tc_bound : type_variable list ;

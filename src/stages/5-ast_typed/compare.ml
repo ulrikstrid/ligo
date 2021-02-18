@@ -107,7 +107,7 @@ and rows {content=ca; layout=la} {content=cb; layout=lb} =
     (label_map ~compare:row_element) ca cb
     layout la lb
 
-and constraint_identifier (ConstraintIdentifier a) (ConstraintIdentifier b) =
+and constraint_identifier (ConstraintIdentifier.T a) (ConstraintIdentifier.T b) =
   cmp2
     Int64.compare a b
     (List.compare ~compare:type_expression) [] []
@@ -497,7 +497,7 @@ and c_access_label
 and tc_allowed t = List.compare ~compare:type_value t
 and typeclass  t = List.compare ~compare:tc_allowed t
 
-let c_constructor_simpl {id_constructor_simpl = ConstraintIdentifier ca;_} {id_constructor_simpl = ConstraintIdentifier cb;_} =
+let c_constructor_simpl {id_constructor_simpl = ConstraintIdentifier.T ca;_} {id_constructor_simpl = ConstraintIdentifier.T cb;_} =
   Int64.compare ca cb
 
 let c_alias {reason_alias_simpl=ra;a=aa;b=ba} {reason_alias_simpl=rb;a=ab;b=bb} =
@@ -506,7 +506,7 @@ let c_alias {reason_alias_simpl=ra;a=aa;b=ba} {reason_alias_simpl=rb;a=ab;b=bb} 
     type_variable  aa ab
     type_variable  ba bb
 
-let c_poly_simpl {id_poly_simpl = ConstraintIdentifier ca;_} {id_poly_simpl = ConstraintIdentifier cb;_} =
+let c_poly_simpl {id_poly_simpl = ConstraintIdentifier.T ca;_} {id_poly_simpl = ConstraintIdentifier.T cb;_} =
   Int64.compare ca cb
 
 let rec c_typeclass_simpl_compare_all_fields {tc_bound=ba;tc_constraints=ca;reason_typeclass_simpl=ra;id_typeclass_simpl=ida;original_id=oia;tc=ta;args=la} {tc_bound=bb;tc_constraints=cb;reason_typeclass_simpl=rb;id_typeclass_simpl=idb;original_id=oib;tc=tb;args=lb} =
@@ -525,7 +525,7 @@ and c_typeclass_simpl a b =
 and c_access_label_simpl a b =
   constraint_identifier a.id_access_label_simpl b.id_access_label_simpl
 
-and c_row_simpl {id_row_simpl = ConstraintIdentifier ca;_} {id_row_simpl = ConstraintIdentifier cb;_} =
+and c_row_simpl {id_row_simpl = ConstraintIdentifier.T ca;_} {id_row_simpl = ConstraintIdentifier.T cb;_} =
   Int64.compare ca cb
 
 and constructor_or_row

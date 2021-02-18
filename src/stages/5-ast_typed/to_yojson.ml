@@ -355,7 +355,7 @@ and c_equation {aval;bval} =
     ("bval", type_value bval);
   ]
 
-and constraint_identifier (ConstraintIdentifier ci : constraint_identifier) : json =
+and constraint_identifier (ConstraintIdentifier.T ci : constraint_identifier) : json =
   `Assoc [
     "ConstraintIdentifier", `String (Format.asprintf "%Li" ci);
   ]
@@ -431,10 +431,10 @@ and row_value {associated_value; michelson_annotation; decl_pos} =
   ]
 
 
-let c_constructor_simpl {id_constructor_simpl = ConstraintIdentifier ci;reason_constr_simpl;original_id;tv;c_tag;tv_list} =
+let c_constructor_simpl {id_constructor_simpl = ConstraintIdentifier.T ci;reason_constr_simpl;original_id;tv;c_tag;tv_list} =
   `Assoc [
     ("id_row_simpl", `String (Format.sprintf "%Li" ci));
-    ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
+    ("original_id", `String (match original_id with Some (ConstraintIdentifier.T x) -> Format.asprintf "%Li" x | None -> "null" ));
     ("reason_constr_simpl", `String reason_constr_simpl);
     ("tv", type_variable_to_yojson tv);
     ("c_tag", constant_tag c_tag);
@@ -448,27 +448,27 @@ let c_alias {reason_alias_simpl; a; b} =
     ("b", type_variable_to_yojson b);
   ]
 
-let c_poly_simpl {id_poly_simpl = ConstraintIdentifier ci; reason_poly_simpl; original_id; tv; forall} =
+let c_poly_simpl {id_poly_simpl = ConstraintIdentifier.T ci; reason_poly_simpl; original_id; tv; forall} =
   `Assoc [
     ("id_row_simpl", `String (Format.sprintf "%Li" ci));
-    ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
+    ("original_id", `String (match original_id with Some (ConstraintIdentifier.T x) -> Format.asprintf "%Li" x | None -> "null" ));
     ("reason_poly_simpl", `String reason_poly_simpl);
     ("tv", type_variable_to_yojson tv);
     ("forall", p_forall forall)
   ]
 
-let rec c_typeclass_simpl {tc_bound; tc_constraints; id_typeclass_simpl = ConstraintIdentifier ci;reason_typeclass_simpl;original_id;tc;args} =
+let rec c_typeclass_simpl {tc_bound; tc_constraints; id_typeclass_simpl = ConstraintIdentifier.T ci;reason_typeclass_simpl;original_id;tc;args} =
   `Assoc [
     ("tc_bound", list type_variable_to_yojson tc_bound);
     ("tc_constraints", list type_constraint_simpl tc_constraints);
     ("id_typeclass_simpl", `String (Format.sprintf "%Li" ci));
-    ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
+    ("original_id", `String (match original_id with Some (ConstraintIdentifier.T x) -> Format.asprintf "%Li" x | None -> "null" ));
     ("reason_typeclass_simpl", `String reason_typeclass_simpl);
     ("tc", typeclass tc);
     ("args", list type_variable_to_yojson args)
   ]
 
-and c_access_label_simpl { id_access_label_simpl = ConstraintIdentifier ci ; reason_access_label_simpl ; record_type ; label = l ; tv } =
+and c_access_label_simpl { id_access_label_simpl = ConstraintIdentifier.T ci ; reason_access_label_simpl ; record_type ; label = l ; tv } =
   `Assoc [
     ("id_access_label_simpl", `String (Format.sprintf "%Li" ci));
     ("reason_access_label_simpl", `String reason_access_label_simpl);
@@ -484,10 +484,10 @@ and row_variable {associated_variable; michelson_annotation; decl_pos} =
     ("decl_pos", `Int decl_pos);
   ]
 
-and c_row_simpl {id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; original_id; tv;r_tag;tv_map} =
+and c_row_simpl {id_row_simpl = ConstraintIdentifier.T ci; reason_row_simpl; original_id; tv;r_tag;tv_map} =
   `Assoc [
     ("id_row_simpl", `String (Format.sprintf "%Li" ci));
-    ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
+    ("original_id", `String (match original_id with Some (ConstraintIdentifier.T x) -> Format.asprintf "%Li" x | None -> "null" ));
     ("reason_row_simpl", `String reason_row_simpl);
     ("tv", type_variable_to_yojson tv);
     ("r_tag", row_tag r_tag);
@@ -518,8 +518,8 @@ let typeVariableMap f tvmap =
   let lst' = List.map aux lst in
   `Assoc ["typeVariableMap",  `List lst']
 let ciMap f tvmap =
-  let lst = List.sort (fun (ConstraintIdentifier a, _) (ConstraintIdentifier b, _) -> Int64.compare a b) (RedBlackTrees.PolyMap.bindings tvmap) in
-  let aux (ConstraintIdentifier k, v) =
+  let lst = List.sort (fun (ConstraintIdentifier.T a, _) (ConstraintIdentifier.T b, _) -> Int64.compare a b) (RedBlackTrees.PolyMap.bindings tvmap) in
+  let aux (ConstraintIdentifier.T k, v) =
     `Assoc [ Format.asprintf "%Li" k , f v ] in
   let lst' = List.map aux lst in
   `Assoc ["typeVariableMap",  `List lst']
@@ -530,8 +530,8 @@ let jmap (fk : _ -> json) (fv : _ -> json)  tvmap : json =
   let lst' = List.map aux lst in
   `Assoc ["typeVariableMap",  `List lst']
 let constraint_identifier_set s =
-  let lst = List.sort (fun (ConstraintIdentifier a) (ConstraintIdentifier b) -> Int64.compare a b) (RedBlackTrees.PolySet.elements s) in
-  let aux (ConstraintIdentifier ci) =
+  let lst = List.sort (fun (ConstraintIdentifier.T a) (ConstraintIdentifier.T b) -> Int64.compare a b) (RedBlackTrees.PolySet.elements s) in
+  let aux (ConstraintIdentifier.T ci) =
     `String (Format.asprintf "ConstraintIdentifier %Li" ci) in
   let lst' = List.map aux lst in
   `Assoc ["constraintIdentifierSet",  `List lst']
@@ -542,7 +542,7 @@ let type_variable_set s =
   let lst' = List.map aux lst in
   `Assoc ["typeVariableSet",  `List lst']
 
-let constraint_identifier (ConstraintIdentifier ci : constraint_identifier) : json =
+let constraint_identifier (ConstraintIdentifier.T ci : constraint_identifier) : json =
   `Assoc [
     "ConstraintIdentifier", `String (Format.asprintf "%Li" ci);
   ]
