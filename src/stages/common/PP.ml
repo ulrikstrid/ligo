@@ -247,7 +247,7 @@ let rec list_pattern type_expression ppf = fun pl ->
   let mpp = match_pattern type_expression in
   match pl with
   | Cons (pl,pr) -> fprintf ppf "%a :: %a" mpp pl mpp pr
-  | List pl -> fprintf ppf "[ %a ]" (list_sep_d_par mpp) pl
+  | List pl -> fprintf ppf "[ %a ]" (list_sep mpp (tag " ;")) pl
 
 and match_pattern type_expression ppf = fun p ->
   match p.wrap_content with
