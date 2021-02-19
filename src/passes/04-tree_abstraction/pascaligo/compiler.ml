@@ -581,11 +581,16 @@ and conv : CST.pattern -> (AST.ty_expr AST.pattern,_) result =
       let%bind hd = conv hd in
       let%bind tl = conv tl in
       ok @@ Location.wrap ~loc @@ P_list (Cons (hd,tl))
-    | PCons l ->
+    | PCons l -> (
       let loc = Location.lift l.region in
       let patterns  = Utils.nsepseq_to_list l.value in
-      let%bind nested = bind_map_list conv patterns in
-      ok @@ Location.wrap ~loc @@ P_list (List nested)
+      match patterns with
+      | [ hd ; tl ] ->
+        let%bind hd = conv hd in
+        let%bind tl = conv tl in
+        ok @@ Location.wrap ~loc @@ P_list (Cons (hd,tl))
+      | _ -> fail @@ unsupported_pattern_type p
+    )
     | PNil n ->
       let loc = Location.lift n in
       ok @@ Location.wrap ~loc @@ P_list (List [])
