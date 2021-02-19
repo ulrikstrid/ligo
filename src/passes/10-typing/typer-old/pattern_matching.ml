@@ -90,6 +90,14 @@ let extract_variant_type : pattern -> O.label -> O.type_expression -> O.type_exp
     | Label "None" -> ok (O.t_unit ())
     | Label _ -> fail @@ pattern_do_not_conform_type p t
   )
+  | O.T_constant { injection ; parameters = [proj_t] } when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name -> (
+    match label with
+    | Label "Cons" ->
+      let cons_proj = O.make_t_ez_record [("0",proj_t);("1",t)] in
+      ok cons_proj
+    | Label "Nil" -> ok (O.t_unit ())
+    | Label _ -> fail @@ pattern_do_not_conform_type p t
+  )
   | _ -> fail @@ pattern_do_not_conform_type p t
 
 let extract_record_type : pattern -> O.label -> O.type_expression -> O.type_expression pm_result =
@@ -196,7 +204,7 @@ let rec partition : ('a -> bool) -> 'a list -> 'a list list =
       else [x] :: (partition f (x'::tl))
 
 (**
-  groups together equations that begin with the same constructor 
+  groups together equations that begin with the same constructor
 **)
 let group_equations : equations -> equations O.label_map pm_result =
   fun eqs ->
@@ -208,21 +216,31 @@ let group_equations : equations -> equations O.label_map pm_result =
           let var =  Location.wrap @@ Var.fresh ~name:"_" () in
           (make_var_pattern var, O.t_unit ())
         in
+        let upd : O.type_expression -> pattern option -> equations option -> equations option =
+        fun proj_t p_opt kopt ->
+          match kopt, p_opt with
+          | Some eqs , None   -> Some ( (dummy_p ()::ptl , (body,env))::eqs )
+          | None     , None   -> Some [ (dummy_p ()::ptl , (body,env)) ]
+          | Some eqs , Some p ->
+            let p = (p,proj_t) in
+            Some (( p::ptl , (body,env))::eqs)
+          | None     , Some p ->
+            let p = (p,proj_t) in
+            Some [ (p::ptl          , (body,env)) ]
+        in
         match phd.wrap_content with
         | P_variant (label,p_opt) ->
-          let%bind t = extract_variant_type phd label t in
-          let upd : equations option -> equations option = fun kopt ->
-            match kopt, p_opt with
-            | Some eqs , None   -> Some ( (dummy_p ()::ptl , (body,env))::eqs )
-            | None     , None   -> Some [ (dummy_p ()::ptl , (body,env)) ]
-            | Some eqs , Some p ->
-              let p = (p,t) in
-              Some (( p::ptl , (body,env))::eqs)
-            | None     , Some p ->
-              let p = (p,t) in
-              Some [ (p::ptl          , (body,env)) ]
-          in
-          ok @@ O.LMap.update label upd m
+          let%bind proj_t = extract_variant_type phd label t in
+          ok @@ O.LMap.update label (upd proj_t p_opt) m
+        | P_list (List []) ->
+          let label = O.Label "Nil" in
+          let%bind proj_t = extract_variant_type phd label t in
+          ok @@ O.LMap.update label (upd proj_t None) m
+        | P_list (Cons (p_hd,p_tl)) ->
+          let label = O.Label "Cons" in
+          let pattern = Location.wrap ~loc:(phd.location) @@ I.P_tuple [p_hd;p_tl] in
+          let%bind proj_t = extract_variant_type phd label t in
+          ok @@ O.LMap.update label (upd proj_t (Some pattern)) m
         | _ -> corner_case __LOC__
     in
     bind_fold_right_list aux O.LMap.empty eqs
@@ -231,8 +249,8 @@ let rec match_ : type_f:type_fun -> body_t:O.type_expression option -> matchees 
   fun ~type_f ~body_t ms eqs def ->
   match ms , eqs with
   | [] , [([],(body,env))] ->
-      let%bind body =
-        type_f ?tv_opt:body_t env body in
+      let%bind body = type_f ?tv_opt:body_t env body in
+      let%bind () = assert_body_t ~body_t body.location body.type_expression in
       ok body
   | [] , eqs when List.for_all (fun (ps,_) -> List.length ps = 0) eqs ->
     let bodies = List.map (fun x -> fst (snd x)) eqs in
@@ -243,7 +261,7 @@ let rec match_ : type_f:type_fun -> body_t:O.type_expression option -> matchees 
       let%bind r =
         match prev_opt with
         | None -> consvar ~type_f ~body_t ms part_eq def
-        | Some prev -> consvar ~type_f ~body_t ms part_eq prev.expression_content
+        | Some prev -> consvar ~type_f ~body_t:(Some prev.type_expression) ms part_eq prev.expression_content
       in
       ok (Some r)
     in
@@ -316,12 +334,15 @@ and ctor_rule : type_f:type_fun -> body_t:O.type_expression option -> matchees -
         | None -> (
           match O.get_t_option matchee_t with
           | Some _ -> ok @@ List.map (fun label -> (label, O.LMap.find_opt label eq_map)) [Label "Some"; Label "None"]
-          | None -> failwith "expected a sum type or option type"
+          | None -> (
+            match O.get_t_list matchee_t with
+            | Some _ -> ok @@ List.map (fun label -> (label, O.LMap.find_opt label eq_map)) [Label "Cons"; Label "Nil"]
+            | None -> failwith "REMITODO: expected sum, option or list type"
+          )
         )
       in
       let present = List.filter_map (fun (c,eq_opt) -> match eq_opt with Some eq -> Some (c,eq) | None -> None) grouped_eqs in
       let%bind present_cases = bind_map_list aux_p present in
-      
       let%bind body_t =
         let aux t_opt (c:O.matching_content_case) =
           let%bind () = assert_body_t ~body_t:t_opt c.body.location c.body.type_expression in

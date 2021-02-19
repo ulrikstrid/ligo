@@ -496,21 +496,33 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
   | E_matching {matchee=expr; cases=m} -> (
       let%bind expr' = self expr in
       match m with
-      | Match_list {
-          match_nil ;
-          match_cons = {hd; tl; body; tv} ;
-        } -> (
-          let%bind nil = self match_nil in
-          let%bind cons =
-            let%bind elt_ty = compile_type tv in
-            let list_ty = { type_content = T_list elt_ty ; location = Location.generated } in
-            let%bind match_cons' = self body in
-            ok (((Location.map Var.todo_cast hd , elt_ty) , (Location.map Var.todo_cast tl , list_ty)) , match_cons')
-          in
-          return @@ E_if_cons (expr' , nil , cons)
-        )
       | Match_variant {cases ; tv} -> (
         match expr'.type_expression.type_content with
+          | T_list list_ty ->
+            let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
+            let c_body_lst = AST.LMap.of_list (List.map get_c_body cases) in
+            let get_case c =
+              trace_option
+                (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
+                (AST.LMap.find_opt (Label c) c_body_lst) in
+            let%bind match_nil = get_case "Nil" in
+            let%bind match_cons = get_case "Cons" in
+            let%bind nil = self (fst match_nil) in
+            let%bind cons =
+              (* if this is weird: change the representation of E_if_cons *)
+              match (fst match_cons).expression_content with
+              | E_matching {matchee=_; cases = Match_record { fields ; body ; tv=_}} ->
+                let (hd,_) = LMap.find (Label "0") fields in
+                let (tl,_) = LMap.find (Label "1") fields in
+                let%bind match_cons' = self body in
+                ok (((Location.map Var.todo_cast hd , list_ty) , (Location.map Var.todo_cast tl , expr'.type_expression)) , match_cons')
+              | _ ->
+                let%bind match_cons' = self (fst match_cons) in
+                let hd = Var.fresh () in
+                let tl = Var.fresh () in
+                ok (((Location.wrap hd , list_ty) , (Location.wrap tl , expr'.type_expression)) , match_cons')
+            in
+            return @@ E_if_cons (expr' , nil , cons)
           | T_option opt_tv ->
             let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
             let c_body_lst = AST.LMap.of_list (List.map get_c_body cases) in
@@ -701,81 +713,93 @@ and compile_recursive module_env {fun_name; fun_type; lambda} =
     let%bind expr' = compile_expression ~module_env m.matchee in
     let self = replace_callback fun_name loop_type shadowed in
     match m.cases with
-      | Match_list {
-          match_nil ;
-          match_cons = {hd; tl; body; tv} ;
-        } -> (
-          let%bind nil = self match_nil in
-          let%bind cons =
-            let%bind elt_ty = compile_type tv in
-            let list_ty = { type_content = T_list elt_ty ; location = Location.generated } in
-            let%bind match_cons' = self body in
-            ok (((Location.map Var.todo_cast hd , elt_ty) , (Location.map Var.todo_cast tl , list_ty)) , match_cons')
-          in
-          return @@ E_if_cons (expr' , nil , cons)
-        )
       | Match_variant {cases ; tv} -> (
         match expr'.type_expression.type_content with
-          | T_option opt_tv ->
-            let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
-            let c_body_lst = AST.LMap.of_list (List.map get_c_body cases) in
-            let get_case c =
-              trace_option
-                (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
-                (AST.LMap.find_opt (Label c) c_body_lst) in
-            let%bind match_none = get_case "None" in
-            let%bind match_some = get_case "Some" in
-            let%bind n = self (fst match_none) in
-            let%bind (tv' , s') =
-              let tv' = opt_tv in
-              let%bind s' = self (fst match_some) in
-              ok (tv' , s')
+        | T_list list_ty ->
+          let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
+          let c_body_lst = AST.LMap.of_list (List.map get_c_body cases) in
+          let get_case c =
+            trace_option
+              (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
+              (AST.LMap.find_opt (Label c) c_body_lst) in
+          let%bind match_nil = get_case "Nil" in
+          let%bind match_cons = get_case "Cons" in
+          let%bind nil = self (fst match_nil) in
+          let%bind cons =
+            (* if this is weird: change the representation of E_if_cons *)
+            match (fst match_cons).expression_content with
+            | E_matching {matchee=_; cases = Match_record { fields ; body ; tv=_}} ->
+              let (hd,_) = LMap.find (Label "0") fields in
+              let (tl,_) = LMap.find (Label "1") fields in
+              let%bind match_cons' = self body in
+              ok (((Location.map Var.todo_cast hd , list_ty) , (Location.map Var.todo_cast tl , expr'.type_expression)) , match_cons')
+            | _ ->
+              let%bind match_cons' = self (fst match_cons) in
+              let hd = Var.fresh () in
+              let tl = Var.fresh () in
+              ok (((Location.wrap hd , list_ty) , (Location.wrap tl , expr'.type_expression)) , match_cons')
+          in
+          return @@ E_if_cons (expr' , nil , cons)
+        | T_option opt_tv ->
+          let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
+          let c_body_lst = AST.LMap.of_list (List.map get_c_body cases) in
+          let get_case c =
+            trace_option
+              (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
+              (AST.LMap.find_opt (Label c) c_body_lst) in
+          let%bind match_none = get_case "None" in
+          let%bind match_some = get_case "Some" in
+          let%bind n = self (fst match_none) in
+          let%bind (tv' , s') =
+            let tv' = opt_tv in
+            let%bind s' = self (fst match_some) in
+            ok (tv' , s')
+          in
+          return @@ E_if_none (expr' , n , ((Location.map Var.todo_cast (snd match_some) , tv') , s'))
+        | T_base TB_bool ->
+          let ctor_body (case : AST.matching_content_case) = (case.constructor, case.body) in
+          let cases = AST.LMap.of_list (List.map ctor_body cases) in
+          let get_case c =
+            trace_option
+              (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
+              (AST.LMap.find_opt (Label c) cases) in
+          let%bind match_true  = get_case "true" in
+          let%bind match_false = get_case "false" in
+          let%bind (t , f) = bind_map_pair (self) (match_true, match_false) in
+          return @@ E_if_bool (expr', t, f)
+        | _ -> (
+            let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
+              get_t_sum tv in
+            let%bind tree = Layout.match_variant_to_tree ~layout ~compile_type content in
+            let rec aux top t =
+              match t with
+              | ((`Leaf (Label constructor_name)) , tv) -> (
+                  let%bind {constructor=_ ; pattern ; body} =
+                    trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
+                    let aux ({constructor = Label c ; pattern=_ ; body=_} : AST.matching_content_case) =
+                      (c = constructor_name) in
+                    List.find_opt aux cases in
+                  let%bind body' = self body in
+                  return @@ E_let_in (top, false, ((Location.map Var.todo_cast pattern , tv) , body'))
+                )
+              | ((`Node (a , b)) , tv) ->
+                let%bind a' =
+                  let%bind a_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_left tv in
+                  let left_var = Location.wrap @@ Var.fresh ~name:"left" () in
+                  let%bind e = aux (((Expression.make (E_variable left_var) a_ty))) a in
+                  ok ((left_var , a_ty) , e)
+                in
+                let%bind b' =
+                  let%bind b_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_right tv in
+                  let right_var = Location.wrap @@ Var.fresh ~name:"right" () in
+                  let%bind e = aux (((Expression.make (E_variable right_var) b_ty))) b in
+                  ok ((right_var , b_ty) , e)
+                in
+                return @@ E_if_left (top , a' , b')
             in
-            return @@ E_if_none (expr' , n , ((Location.map Var.todo_cast (snd match_some) , tv') , s'))
-          | T_base TB_bool ->
-            let ctor_body (case : AST.matching_content_case) = (case.constructor, case.body) in
-            let cases = AST.LMap.of_list (List.map ctor_body cases) in
-            let get_case c =
-              trace_option
-                (corner_case ~loc:__LOC__ ("missing " ^ c ^ " case in match"))
-                (AST.LMap.find_opt (Label c) cases) in
-            let%bind match_true  = get_case "true" in
-            let%bind match_false = get_case "false" in
-            let%bind (t , f) = bind_map_pair (self) (match_true, match_false) in
-            return @@ E_if_bool (expr', t, f)
-          | _ -> (
-              let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
-                get_t_sum tv in
-              let%bind tree = Layout.match_variant_to_tree ~layout ~compile_type content in
-              let rec aux top t =
-                match t with
-                | ((`Leaf (Label constructor_name)) , tv) -> (
-                    let%bind {constructor=_ ; pattern ; body} =
-                      trace_option (corner_case ~loc:__LOC__ "missing match clause") @@
-                      let aux ({constructor = Label c ; pattern=_ ; body=_} : AST.matching_content_case) =
-                        (c = constructor_name) in
-                      List.find_opt aux cases in
-                    let%bind body' = self body in
-                    return @@ E_let_in (top, false, ((Location.map Var.todo_cast pattern , tv) , body'))
-                  )
-                | ((`Node (a , b)) , tv) ->
-                  let%bind a' =
-                    let%bind a_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_left tv in
-                    let left_var = Location.wrap @@ Var.fresh ~name:"left" () in
-                    let%bind e = aux (((Expression.make (E_variable left_var) a_ty))) a in
-                    ok ((left_var , a_ty) , e)
-                  in
-                  let%bind b' =
-                    let%bind b_ty = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_right tv in
-                    let right_var = Location.wrap @@ Var.fresh ~name:"right" () in
-                    let%bind e = aux (((Expression.make (E_variable right_var) b_ty))) b in
-                    ok ((right_var , b_ty) , e)
-                  in
-                  return @@ E_if_left (top , a' , b')
-              in
-              trace_strong (corner_case ~loc:__LOC__ "building constructor") @@
-              aux expr' tree
-            )
+            trace_strong (corner_case ~loc:__LOC__ "building constructor") @@
+            aux expr' tree
+          )
       )
       | Match_record { fields; body; tv } ->
         let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@

@@ -9,7 +9,6 @@ module Free_variables = struct
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat
   let empty : bindings = []
-  let of_list : expression_variable list -> bindings = fun x -> x
 
   let rec expression_content : bindings -> expression_content -> bindings = fun b ec ->
     let self = expression b in
@@ -54,7 +53,6 @@ module Free_variables = struct
 
   and matching : (bindings -> expression -> bindings) -> bindings -> matching_expr -> bindings = fun f b m ->
     match m with
-    | Match_list { match_nil = n ; match_cons = {hd; tl; body; tv=_} } -> union (f b n) (f (union (of_list [hd ; tl]) b) body)
     | Match_variant { cases ; tv=_ } -> unions @@ List.map (matching_variant_case f b) cases
     | Match_record {fields; body; tv = _} ->
       f (union (List.map fst (LMap.to_list fields)) b) body

@@ -249,36 +249,16 @@ and record_update {record=ra;path=pa;update=ua} {record=rb;path=pb;update=ub} =
     expression ua ub
 
 and matching_expr_tag = function
-  Match_list    _ -> 1
-| Match_variant _ -> 2
-| Match_record _ -> 3
+| Match_variant _ -> 1
+| Match_record _ -> 2
 
 and matching_expr a b =
   match (a,b) with
-    Match_list    a, Match_list    b -> matching_content_list a b
   | Match_variant a, Match_variant b -> matching_content_variant a b
   | Match_record a, Match_record b -> matching_content_record a b
-  | (Match_list _| Match_variant _ | Match_record _),
-    (Match_list _| Match_variant _ | Match_record _) ->
+  | (Match_variant _ | Match_record _),
+    (Match_variant _ | Match_record _) ->
     Int.compare (matching_expr_tag a) (matching_expr_tag b)
-
-and matching_content_cons {hd=ha;tl=ta;body=ba;tv=va} {hd=hb;tl=tb;body=bb;tv=vb} =
-  cmp4
-    expression_variable ha hb
-    expression_variable ta tb
-    expression      ba bb
-    type_expression va vb
-
-and matching_content_list {match_nil=na;match_cons=ca} {match_nil=nb;match_cons=cb} =
-  cmp2
-    expression na nb
-    matching_content_cons ca cb
-
-and matching_content_some {opt=oa;body=ba;tv=ta} {opt=ob;body=bb;tv=tb} =
-  cmp3
-    expression_variable oa ob
-    expression ba bb
-    type_expression ta tb
 
 and matching_content_case {constructor=ca;pattern=pa;body=ba} {constructor=cb;pattern=pb;body=bb} =
   cmp3

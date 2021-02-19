@@ -182,8 +182,6 @@ and matching_variant_case : (_ -> expression -> unit) -> _ -> matching_content_c
 and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit = fun f ppf m -> match m with
   | Match_variant {cases ; tv=_} ->
       fprintf ppf "@[%a@]" (list_sep (matching_variant_case f) (tag "@ ")) cases
-  | Match_list {match_nil ; match_cons = {hd; tl; body; tv=_}} ->
-      fprintf ppf "| Nil ->@ %a @ | %a :: %a ->@ %a" f match_nil expression_variable hd expression_variable tl f body
   | Match_record {fields ; body ; tv = _} ->
       (* let with_annots f g ppf (a , b) = fprintf ppf "%a:%a" f a g b in *)
       let fields = LMap.map (fun (v,_) -> v) fields in

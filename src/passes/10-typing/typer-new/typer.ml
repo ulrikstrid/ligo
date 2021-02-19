@@ -52,10 +52,6 @@ end = struct
     | O.E_constructor     { constructor=_; element } -> expression element
     | O.E_matching        { matchee; cases } -> let%bind () = expression matchee in
       (match cases with
-         O.Match_list    { match_nil; match_cons = { hd = _; tl = _; body; tv } } ->
-         let%bind () = expression match_nil in
-         let%bind () = expression body in
-         te where tv
        | O.Match_variant { cases; tv } ->
          let%bind () = bind_fold_list (fun () ({ constructor = _ ; pattern = _ ; body } : Ast_typed.matching_content_case) -> expression body) () cases in
          te where tv

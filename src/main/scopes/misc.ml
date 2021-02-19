@@ -43,12 +43,6 @@ let extract_variable_types :
         return @@ [(let_binder,rhs.type_expression)]
       | E_matching {matchee ; cases } -> (
         match cases with
-        | Match_list {match_nil = _ ; match_cons = {hd ; tl ; _}} ->
-          let proj_t = match Ast_typed.get_t_list matchee.type_expression with
-            | Some t -> t
-            | None -> failwith "match_list projection does not have type list"
-          in
-          return [ (tl , matchee.type_expression) ; (hd , proj_t) ]
         | Match_variant {cases ; tv=_} ->
           let variant_t = match Ast_typed.get_t_sum matchee.type_expression with
             | Some t -> t

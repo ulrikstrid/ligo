@@ -71,11 +71,6 @@ let rec fold_expression : ('a , 'err) folder -> 'a -> expression -> ('a , 'err) 
 
 and fold_cases : ('a , 'err) folder -> 'a -> matching_expr -> ('a , 'err) result = fun f init m ->
   match m with
-  | Match_list { match_nil ; match_cons = {hd=_; tl=_ ; body; tv=_} } -> (
-      let%bind res = fold_expression f init match_nil in
-      let%bind res = fold_expression f res body in
-      ok res
-    )
   | Match_variant {cases;tv=_} -> (
       let aux init' {constructor=_; pattern=_ ; body} =
         let%bind res' = fold_expression f init' body in
@@ -175,11 +170,6 @@ let rec map_expression : 'err mapper -> expression -> (expression , 'err) result
 
 and map_cases : 'err mapper -> matching_expr -> (matching_expr , 'err) result = fun f m ->
   match m with
-  | Match_list { match_nil ; match_cons = {hd ; tl ; body ; tv} } -> (
-      let%bind match_nil = map_expression f match_nil in
-      let%bind body = map_expression f body in
-      ok @@ Match_list { match_nil ; match_cons = {hd ; tl ; body; tv} }
-    )
   | Match_variant {cases;tv} -> (
       let aux { constructor ; pattern ; body } =
         let%bind body = map_expression f body in
@@ -282,11 +272,6 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a
 
 and fold_map_cases : ('a , 'err) fold_mapper -> 'a -> matching_expr -> ('a * matching_expr , 'err) result = fun f init m ->
   match m with
-  | Match_list { match_nil ; match_cons = { hd ; tl ; body ; tv } } -> (
-      let%bind (init, match_nil) = fold_map_expression f init match_nil in
-      let%bind (init, body) = fold_map_expression f init body in
-      ok @@ (init, Match_list { match_nil ; match_cons = { hd ; tl ; body ; tv } })
-    )
   | Match_variant {cases ; tv} -> (
       let aux init {constructor ; pattern ; body} =
         let%bind (init, body) = fold_map_expression f init body in

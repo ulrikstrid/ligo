@@ -560,12 +560,6 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
     | E_matching { matchee ; cases} -> (
       let* e' = eval_ligo matchee env in
       match cases, e' with
-      | Match_list cases , V_List [] ->
-        eval_ligo cases.match_nil env
-      | Match_list cases , V_List (head::tail) ->
-        let {hd;tl;body;tv=_} = cases.match_cons in
-        let env' = Env.extend (Env.extend env (hd,head)) (tl, V_List tail) in
-        eval_ligo body env'
       | Match_variant {cases;_}, V_Ct (C_bool b) ->
         let ctor_body (case : matching_content_case) = (case.constructor, case.body) in
         let cases = LMap.of_list (List.map ctor_body cases) in
