@@ -307,7 +307,7 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
   let%bind matchee = compile_expression matchee in
   let env = Location.wrap (Var.fresh ~name:"env" ()) in
   let aux :
-    (I.expression, I.type_expression) I.match_case -> ((O.expression, O.type_expression) O.match_case  * (I.expression_variable list), Errors.purification_error) result =
+    _ I.match_case -> ((_ O.match_case * _ O.match_case)  * (I.expression_variable list), Errors.purification_error) result =
     fun {pattern ; body} ->
       let%bind body = compile_expression body in
       let get_pattern_vars : I.expression_variable list -> I.type_expression I.pattern -> I.expression_variable list =
@@ -317,25 +317,20 @@ and compile_matching : I.matching -> Location.t -> (O.expression option -> O.exp
           | _ -> acc
       in
       let n = Stage_common.Helpers.fold_pattern get_pattern_vars [] pattern in
-      let%bind ((_,free_vars), body') = repair_mutable_variable_in_matching body n env in
       let%bind pattern = Stage_common.Helpers.map_pattern_t (binder compile_type_expression) pattern in
-      match free_vars with
-      | [] ->
-        let case : (O.expression, O.type_expression) O.match_case = { pattern ; body } in
-        ok (case, free_vars)
-      | _ ->
-        let body = add_to_end body' (O.e_variable env) in
-        let case : (O.expression, O.type_expression) O.match_case = { pattern ; body } in
-        ok (case, free_vars)
+      let%bind ((_,free_vars), body') = repair_mutable_variable_in_matching body n env in
+      let body' = add_to_end body' (O.e_variable env) in
+      let cases_no_fv : (O.expression, O.type_expression) O.match_case = { pattern ; body } in
+      let cases_fv : (O.expression, O.type_expression) O.match_case = { pattern ; body = body' } in
+      ok ((cases_no_fv,cases_fv),free_vars)
   in
   let%bind l = bind_map_list aux cases in
-  let cases = List.map fst l in
-  let free_vars = List.flatten @@ List.map snd l in
+  let (cases_no_fv,cases_fv) = List.split @@ List.map fst l in
+  let free_vars = List.sort_uniq compare_var (List.flatten @@ List.map snd l) in
   match free_vars with
-  | [] -> return (O.e_matching ~loc matchee cases) 
+  | [] -> return (O.e_matching ~loc matchee cases_no_fv) 
   | _ ->
-    let free_vars = List.sort_uniq compare_var @@ free_vars in
-    let match_expr  = O.e_matching matchee cases in
+    let match_expr  = O.e_matching matchee cases_fv in
     let return_expr = fun expr ->
       O.e_let_in_ez env false [] (store_mutable_variable free_vars) @@
       O.e_let_in_ez env false [] match_expr @@
