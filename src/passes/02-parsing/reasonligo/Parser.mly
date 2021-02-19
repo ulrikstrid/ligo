@@ -563,12 +563,14 @@ fun_expr(right_expr):
 | ES6FUN "(" nsepseq(fun_arg, ",") ")" type_annotation? "=>" right_expr {
     let region = cover $1 (expr_to_region $7) in
     let ptuple_region = nsepseq_to_region pattern_to_region $3 in
+    let (hd, tl) = $3 in
     let value = {
       binders = PPar {
         region = cover $2 $4;
-        value  = {lpar   = $2;
-                  inside = PTuple {value=$3; region=ptuple_region};
-                  rpar   = $4}};
+        value = {lpar = $2;
+                 inside = if tl = [] then hd
+                          else PTuple {value = $3; region = ptuple_region};
+                 rpar = $4}};
       lhs_type = $5;
       arrow    = $6;
       body     = $7}
