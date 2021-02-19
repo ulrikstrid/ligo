@@ -68,28 +68,16 @@ let make_le : matching_content_variant -> (label * expression_variable) list = f
   List.map (fun (m:matching_content_case) -> (m.constructor,m.pattern)) ml.cases
 
 let substitute_var_in_body : expression_variable -> expression_variable -> expression -> expression self_res =
-(* let rec substitute_var_in_body : expression_variable -> expression_variable -> expression -> expression self_res = *)
   fun to_subst new_var body ->
     let aux : unit -> expression -> (bool * unit * expression,_) result =
       fun () exp ->
         let ret continue exp = ok (continue,(),exp) in
         match exp.expression_content with
         | E_variable var when Var.equal var.wrap_content to_subst.wrap_content -> ret true { exp with expression_content = E_variable new_var }
-        (* | E_let_in letin when Var.equal letin.let_binder.wrap_content to_subst.wrap_content ->
-          let%bind rhs = substitute_var_in_body to_subst new_var letin.rhs in
-          let letin = { letin with rhs } in
-          ret false { exp with expression_content = E_let_in letin}
-        | E_lambda lamb when Var.equal lamb.binder.wrap_content to_subst.wrap_content -> ret false exp
-        | E_matching _ -> (
-          ret true exp (* TODO *)
-        ) *)
         | _ -> ret true exp
     in
     let%bind ((), res) = fold_map_expression aux () body in
     ok res
-
-(*never used in substitution*)
-let dummy = Location.wrap @@ Var.fresh ()
 
 let compress_matching : expression -> expression self_res =
   fun exp ->
@@ -101,25 +89,6 @@ let compress_matching : expression -> expression self_res =
         | E_matching m -> (
           let matchee_var = get_variable m.matchee in
           match m.cases with
-          | Match_option {match_none ; match_some} -> (
-            match matchee_var with
-            | Some v -> (
-              match SimplMap.find_opt v smap with
-              | Some le -> (
-                let reconstructed_var_list = [(Label "Some",match_some.opt,match_some.body) ; (Label "None",dummy,match_none)] in
-                let (fw,no_fw) = List.partition (fun (_,_,body) -> is_generated_partial_match body) reconstructed_var_list in
-                match no_fw, fw with
-                | [(Label constructor,pattern,body)] , lst when List.length lst >= 1 ->
-                  let (_,proj) = List.find (fun (Label constructor',_) -> String.equal constructor' constructor) le in
-                  let%bind body' = substitute_var_in_body pattern proj body in
-                  stop body'
-                | _ , [] -> continue smap
-                | _ , _ -> fail (corner_case __LOC__)
-              )
-              | None -> continue (SimplMap.add v ([(Label "Some", match_some.opt) ; (Label "None", Location.wrap @@ Var.fresh ())]) smap)
-            )
-            | None -> continue smap
-          )
           | Match_variant cases -> (
             match matchee_var with
             | Some v -> (

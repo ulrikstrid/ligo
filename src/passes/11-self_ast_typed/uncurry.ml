@@ -106,10 +106,6 @@ let rec usage_in_expr (f : expression_variable) (expr : expression) : usage =
                  cases = Ast_typed.Match_list { match_nil;
                                                 match_cons = { hd; tl; body; tv = _ } } } ->
     usages [self matchee; self match_nil; self_binder [hd; tl] body]
-  | E_matching { matchee;
-                 cases = Ast_typed.Match_option { match_none;
-                                                  match_some = { opt; body; tv = _ } } } ->
-    usages [self matchee; self match_none; self_binder [opt] body]
   | E_matching { matchee; cases = Ast_typed.Match_variant { cases; tv = _ } } ->
     usages (self matchee ::
             List.map (fun { constructor = _; pattern; body } -> self_binder [pattern] body) cases)
@@ -266,11 +262,6 @@ let rec uncurry_in_expression
     let%bind match_nil = self match_nil in
     let%bind body = self_binder [hd; tl] body in
     return (E_matching { matchee; cases = Match_list { match_nil; match_cons = { hd; tl; body; tv } } })
-  | E_matching { matchee; cases = Match_option { match_none; match_some = { opt; body; tv } } } ->
-    let%bind matchee = self matchee in
-    let%bind match_none = self match_none in
-    let%bind body = self_binder [opt] body in
-    return (E_matching { matchee; cases = Match_option { match_none; match_some = { opt; body; tv } } })
   | E_matching { matchee; cases = Match_variant { cases; tv } } ->
     let%bind matchee = self matchee in
     let%bind cases =

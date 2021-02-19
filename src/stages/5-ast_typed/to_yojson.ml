@@ -172,7 +172,6 @@ and record_update {record; path; update} =
 
 and matching_expr = function
   | Match_list    m -> `List [ `String "Match_list";    matching_content_list    m ]
-  | Match_option  m -> `List [ `String "Match_option";  matching_content_option  m ]
   | Match_variant m -> `List [ `String "Match_variant"; matching_content_variant m ]
   | Match_record m -> `List [ `String "Match_record"; matching_content_record m ]
 
@@ -188,12 +187,6 @@ and matching_content_cons {hd;tl;body;tv} =
     ("tl", expression_variable_to_yojson tl);
     ("body", expression body);
     ("tv", type_expression tv);
-  ]
-
-and matching_content_option {match_none;match_some} =
-  `Assoc [
-    ("match_none", expression match_none);
-    ("match_some", matching_content_some match_some);
   ]
 
 and matching_content_some {opt;body;tv} =

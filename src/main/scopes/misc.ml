@@ -49,12 +49,6 @@ let extract_variable_types :
             | None -> failwith "match_list projection does not have type list"
           in
           return [ (tl , matchee.type_expression) ; (hd , proj_t) ]
-        | Match_option {match_none = _ ; match_some = {opt; }} ->
-          let proj_t = match Ast_typed.get_t_option matchee.type_expression with
-            | Some t -> t
-            | None -> failwith "match_option projection does not have type option"
-          in
-          return [ (opt,proj_t) ]
         | Match_variant {cases ; tv=_} ->
           let variant_t = match Ast_typed.get_t_sum matchee.type_expression with
             | Some t -> t

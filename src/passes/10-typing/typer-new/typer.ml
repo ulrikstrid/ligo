@@ -56,10 +56,6 @@ end = struct
          let%bind () = expression match_nil in
          let%bind () = expression body in
          te where tv
-       | O.Match_option  { match_none; match_some = { opt=_; body; tv } } ->
-         let%bind () = expression match_none in
-         let%bind () = expression body in
-         te where tv
        | O.Match_variant { cases; tv } ->
          let%bind () = bind_fold_list (fun () ({ constructor = _ ; pattern = _ ; body } : Ast_typed.matching_content_case) -> expression body) () cases in
          te where tv

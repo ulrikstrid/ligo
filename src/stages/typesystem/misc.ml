@@ -118,11 +118,6 @@ module Substitution = struct
         let%bind body      = s_expression ~substs body in
         let%bind tv        = s_type_expression ~substs tv in
         ok @@ T.Match_list {match_nil;match_cons={hd;tl;body;tv}}
-      | Match_option {match_none;match_some={opt;body;tv}} ->
-        let%bind match_none = s_expression ~substs match_none in
-        let%bind body      = s_expression ~substs body in
-        let%bind tv        = s_type_expression ~substs tv in
-        ok @@ T.Match_option {match_none;match_some={opt;body;tv}}
       | Match_variant {cases;tv} ->
         let%bind cases = bind_map_list (
           fun ({constructor;pattern;body} : T.matching_content_case) ->

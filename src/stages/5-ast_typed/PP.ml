@@ -150,7 +150,7 @@ and expression_content ppf (ec: expression_content) =
       fprintf ppf "lambda (%a) return %a" expression_variable binder
         expression result
   | E_matching {matchee; cases;} ->
-      fprintf ppf "@[<v 2> match %a with@,%a@]" expression matchee (matching expression) cases
+      fprintf ppf "@[<v 2> match @[%a@] with@ %a@]" expression matchee (matching expression) cases
   | E_let_in {let_binder; rhs; let_result; inline} ->
       fprintf ppf "let %a = %a%a in %a" expression_variable let_binder expression
         rhs option_inline inline expression let_result
@@ -184,12 +184,10 @@ and matching : (formatter -> expression -> unit) -> _ -> matching_expr -> unit =
       fprintf ppf "@[%a@]" (list_sep (matching_variant_case f) (tag "@ ")) cases
   | Match_list {match_nil ; match_cons = {hd; tl; body; tv=_}} ->
       fprintf ppf "| Nil ->@ %a @ | %a :: %a ->@ %a" f match_nil expression_variable hd expression_variable tl f body
-  | Match_option {match_none ; match_some = {opt; body; tv=_}} ->
-      fprintf ppf "| None ->@ %a @ | Some %a ->@ %a" f match_none expression_variable opt f body
   | Match_record {fields ; body ; tv = _} ->
       (* let with_annots f g ppf (a , b) = fprintf ppf "%a:%a" f a g b in *)
       let fields = LMap.map (fun (v,_) -> v) fields in
-      fprintf ppf "| %a ->@ %a"
+      fprintf ppf "| @[%a@] ->@ @[%a@]"
         (tuple_or_record_sep_expr expression_variable) fields
         f body
 

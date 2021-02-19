@@ -583,12 +583,6 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
             cases in
         let env' = Env.extend env (pattern, proj) in
         eval_ligo body env'
-      | Match_option cases, V_Construct ("Some" , proj) ->
-        let {opt;body;tv=_} = cases.match_some in
-        let env' = Env.extend env (opt,proj) in
-        eval_ligo body env'
-      | Match_option cases, V_Construct ("None" , V_Ct C_unit) ->
-        eval_ligo cases.match_none env
       | Match_record {fields ; body ; tv = _} , V_Record rv ->
         let aux : label -> ( expression_variable * _ ) -> env -> env =
           fun l (v,_) env ->
