@@ -26,28 +26,12 @@ type getBalance = {owner: address, callback: contract<nat>};
 
 type getTotalSupply = {callback: contract<nat>};
 
-type Transfer = {kind: "Transfer", value: transfer};
-
-type Approve = {kind: "Approve", value: approve};
-
-type GetAllowance = {
-  kind: "GetAllowance",
-  value: getAllowance
-};
-
-type GetBalance = {kind: "GetBalance", value: getBalance};
-
-type GetTotalSupply = {
-  kind: "GetTotalSupply",
-  value: getTotalSupply
-};
-
 type action = 
-| Transfer
-| Approve
-| GetAllowance
-| GetBalance
-| GetTotalSupply;
+| ["Transfer", transfer]
+| ["Approve", approve]
+| ["GetAllowance", getAllowance]
+| ["GetBalance", getBalance]
+| ["GetTotalSupply", getTotalSupply];
 
 let transfer = 
   ([p, s]: [transfer, storage]): [list<operation>, storage] => {
@@ -65,8 +49,8 @@ let transfer =
       if(authorized_value < p.value) {
         (failwith("Not Enough Allowance") as allowances)
       } else {
-        new_allowances = Big_map.update([
-        Tezos.sender, p.address_from], (Some(abs(authorized_value - p.value))), s.allowances)
+        new_allowances = Big_map.update((Tezos.sender,
+         p.address_from), (Some(abs(authorized_value - p.value))), s.allowances)
       }
     };
     let opt = Big_map.find_opt(p.address_from, s.tokens);
@@ -173,12 +157,6 @@ let main =
       GetTotalSupply: (p: getTotalSupply) => 
         getTotalSupply([p, s])
     });
-
-let main = 
-  (p: key_hash): address => {
-    let c: contract<unit> = Tezos.implicit_account(p);
-    return Tezos.address(c)
-  };
 
 let check_ = 
   (p: unit): int => {
@@ -390,9 +368,7 @@ type transferMichelson = michelson_pair_right_comb<transferAuxiliary>;
 
 type transferParameter = list<transferMichelson>;
 
-type Transfer = {kind: "Transfer", value: transferParameter};
-
-type parameter = Transfer;
+type parameter = |["Transfer", transferParameter];
 
 type storage = big_map<[tokenId, tokenOwner]>;
 
@@ -453,8 +429,7 @@ let transferIterator =
     let from_: tokenOwner = transferAuxiliary2.from_;
     allowOnlyOwnTransfer(from_);
     let [storage2, _] = 
-      List.fold(transferContentsIterator, transferAuxiliary2.txs, [
-      storage, from_]);
+      List.fold(transferContentsIterator, transferAuxiliary2.txs, List(storage, from_));
     return storage2
   };
 
@@ -471,19 +446,6 @@ let main =
     match(parameter, {
       Transfer: (transferParameter: transferParameter) => 
         transfer([transferParameter, storage])
-    });
-
-type Bar = {kind: "Bar", value: int};
-
-type Baz = {kind: "Baz"};
-
-type fooBarBaz = | Bar | Baz;
-
-let main = 
-  (f: fooBarBaz): int => 
-    match(f, {
-      Bar: (i: int) => i,
-      Baz: unit => -1
     });
 
 let main = 
@@ -625,16 +587,13 @@ let x: list<int> = [];
 
 let y: list<int> = [3, 4, 5];
 
-let z: list<int> = [2, ...y];
-
 let main = 
   ([action, s]: [parameter, storage]): returnx => {
-    if(action == []) {
-      return [(List() as list<operation>), s]
-    } else {
-      let [hd, ...tl] = action;
-      return [(List() as list<operation>), [s[0] + hd, tl]]
-    }
+    let storage = 
+      match(action, list([
+      ([]: parameter) => s,
+      ([hd, ...tl]: parameter) => [s[0] + hd, tl]]));
+    return [(List() as list<operation>), [s[0] + hd, tl]]
   };
 
 let size_ = (s: list<int>): nat => List.length(s);
@@ -785,11 +744,7 @@ let deep_op =
 
 type storage = int;
 
-type Add = {kind: "Add", value: int};
-
-type Sub = {kind: "Sub", value: int};
-
-type parameter = | Add | Sub;
+type parameter = | ["Add", int] | ["Sub", int];
 
 type return_ = [list<operation>, storage];
 
@@ -805,11 +760,7 @@ let main =
 
 type storage = int;
 
-type Increment = {kind: "Increment", value: int};
-
-type Decrement = {kind: "Decrement", value: int};
-
-type parameter = | Increment | Decrement;
+type parameter = | ["Increment", int] | ["Decrement", int];
 
 let add = (a: int, b: int) => a + b;
 
@@ -966,11 +917,7 @@ let slice_op =
 
 let concat_syntax = (s: string) => s + "test_literal";
 
-type Increment = {kind: "Increment", value: int};
-
-type Decrement = {kind: "Decrement", value: int};
-
-type parameter = | Increment | Decrement;
+type parameter = | ["Increment", int] | ["Decrement", int];
 
 type storage = int;
 
@@ -1092,13 +1039,7 @@ let q =
     }
   };
 
-type Foo = {kind: "Foo", value: int};
-
-type Bar = {kind: "Bar", value: bool};
-
-type Kee = {kind: "Kee", value: nat};
-
-type foobar = | Foo | Bar | Kee;
+type foobar = | ["Foo", int] | ["Bar", bool] | ["Kee", nat];
 
 let foo: foobar = 
   {
@@ -1120,11 +1061,7 @@ let kee: foobar =
 
 type storage = int;
 
-type Increment = {kind: "increment", value: int};
-
-type Decrement = {kind: "decrement", value: int};
-
-type parameter = | Increment | Decrement;
+type parameter = | ["Increment", int] | ["Decrement", int];
 
 let add = ([a, b]: [int, int]): int => a + b;
 

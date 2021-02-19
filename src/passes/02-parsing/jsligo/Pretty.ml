@@ -274,7 +274,7 @@ and pp_sum_type {value; _} =
   let head, tail = variants in
   let head = pp_type_expr head in
   let head =
-    if tail = [] then head
+    if tail = [] then string "|" ^^ head
     else ifflat (string "| " ^^ head) (string "| " ^^ head) in
   let rest = List.map snd tail in
   let app variant = break 1 ^^ string "| " ^^ pp_type_expr variant in
