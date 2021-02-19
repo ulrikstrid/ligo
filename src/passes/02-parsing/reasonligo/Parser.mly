@@ -567,10 +567,10 @@ fun_expr(right_expr):
     let value = {
       binders = PPar {
         region = cover $2 $4;
-        value = {lpar = $2;
+        value = {lpar   = $2;
                  inside = if tl = [] then hd
                           else PTuple {value = $3; region = ptuple_region};
-                 rpar = $4}};
+                 rpar   = $4}};
       lhs_type = $5;
       arrow    = $6;
       body     = $7}
