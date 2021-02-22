@@ -592,7 +592,48 @@ and untype_expression_content ty (ec:O.expression_content) : (I.expression , typ
     let%bind r' = untype_expression r in
     let%bind e = untype_expression e in
     return (e_record_update r' (I.Label l) e)
-  | E_matching {matchee;cases} -> ignore (matchee,cases) ; failwith "REMITODO"
+  | E_matching {matchee;cases} -> (
+    let%bind matchee = untype_expression matchee in
+    match cases with
+    | Match_variant {cases ; tv} ->
+      (*
+        If one day this code is actually executed, and if the list type is still not a tuple type.
+        A special case for lists might be required here
+      *)
+      let aux : Ast_typed.matching_content_case -> (_ match_case, _) result =
+        fun { constructor ; pattern ; body } -> (
+          let pattern =
+            match tv with
+            | _ ->
+              let proj = Location.wrap @@ P_var { ascr = None ; var = (cast_var pattern) } in
+              Location.wrap @@ P_variant (constructor, Some proj)
+          in
+          let%bind body = untype_expression body in
+          ok @@ ({pattern ; body } : (Ast_core.expression, Ast_core.type_expression) match_case)
+        )
+      in
+      let%bind cases = bind_map_list aux cases in
+      return (e_matching matchee cases)
+    | Match_record {fields ; body ; tv=_} -> (
+      let aux : (Ast_typed.label * (Ast_typed.expression_variable * _)) -> label * Ast_core.type_expression pattern =
+        fun (Ast_typed.Label label, (proj,_)) -> (
+          let proj = Location.wrap @@ P_var { ascr = None ; var = (cast_var proj) } in
+          (Label label, proj)
+        )
+      in
+      let (labels,patterns) = List.split @@ List.map aux (LMap.to_kv_list fields) in
+      let%bind body = untype_expression body in
+      let case = match Ast_typed.Helpers.is_tuple_lmap fields with
+        | false ->
+          let pattern = Location.wrap (P_record (labels,patterns)) in
+          ({ pattern ; body } : _ Ast_core.match_case)
+        | true ->
+          let pattern = Location.wrap (P_tuple patterns) in
+          ({ pattern ; body } : _ Ast_core.match_case)
+      in
+      return (e_matching matchee [case])
+    )
+  )
   | E_let_in {let_binder;rhs;let_result; inline} ->
       let let_binder = cast_var let_binder in
       let%bind tv = Typer_common.Untyper.untype_type_expression rhs.type_expression in

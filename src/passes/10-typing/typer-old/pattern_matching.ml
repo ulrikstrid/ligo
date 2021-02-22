@@ -138,7 +138,10 @@ let type_matchee : equations -> O.type_expression pm_result =
       match t_opt with
       | None -> ok (Some t)
       | Some t' ->
-        let%bind () = Typer_common.Helpers.assert_type_expression_eq Location.generated (t, t') in
+        let%bind () =
+          trace_strong (match_error ~expected:t ~actual:t' p.location) @@
+            Typer_common.Helpers.assert_type_expression_eq Location.generated (t, t')
+        in
         ok t_opt
     in
     let%bind t = bind_fold_list aux None pt1s in
@@ -337,7 +340,7 @@ and ctor_rule : type_f:type_fun -> body_t:O.type_expression option -> matchees -
           | None -> (
             match O.get_t_list matchee_t with
             | Some _ -> ok @@ List.map (fun label -> (label, O.LMap.find_opt label eq_map)) [Label "Cons"; Label "Nil"]
-            | None -> failwith "REMITODO: expected sum, option or list type"
+            | None -> corner_case __LOC__ (* should be caught when typing the matchee *)
           )
         )
       in

@@ -215,6 +215,58 @@ and decompile_statements : dialect -> AST.expression -> _ result = fun dialect e
         AST.PP.expression expr
         Location.pp expr.location
 
+and decompile_pattern : dialect -> AST.type_expression AST.pattern -> (CST.pattern,_) result =
+  fun dialect pattern ->
+    match pattern.wrap_content with
+    | AST.P_unit -> ok @@ CST.PConstr (PUnit (ghost))
+    | AST.P_var v ->
+      let name = (decompile_variable v.var.wrap_content).value in
+      ok @@ CST.PVar (wrap name)
+    | AST.P_list pl -> (
+      let ret x = ok (CST.PList x) in
+      match pl with
+      | AST.Cons (pa,pb) ->
+        let%bind plst = bind_map_list (decompile_pattern dialect) [pa;pb] in
+        let%bind plst' = list_to_nsepseq plst in
+        let cons = wrap plst' in
+        ret (PCons cons)
+      | AST.List [] ->
+        ret (PNil ghost)
+      | AST.List plst ->
+        let%bind plst = bind_map_list (decompile_pattern dialect) plst in
+        let elements = list_to_sepseq plst in
+        let inj = inject dialect (CST.InjList ghost) elements in
+        ret (CST.PListComp (wrap inj))
+    )
+    | AST.P_variant (constructor,popt) -> (
+      match constructor with
+      | Label "Some" ->
+        let p = Option.unopt_exn popt in
+        let%bind p = decompile_pattern dialect p in
+        let proj = wrap (ghost, (wrap (par p))) in
+        ok @@ CST.PConstr (PSomeApp proj)
+      | Label "None" -> ok @@ CST.PConstr (PNone ghost)
+      | Label "true" -> ok @@ CST.PConstr (PTrue ghost)
+      | Label "false" -> ok @@ CST.PConstr (PFalse ghost)
+      | Label constructor -> (
+        match popt with
+        | Some p ->
+          let%bind p = decompile_pattern dialect p in
+          let%bind p = list_to_nsepseq [p] in
+          let p = wrap (par p) in
+          let constr = wrap (wrap constructor, Some p) in
+          ok @@ CST.PConstr (PConstrApp constr)
+        | None ->
+          let constr = wrap (wrap constructor, None) in
+          ok @@ CST.PConstr (PConstrApp constr)
+      )
+    )
+    | AST.P_tuple lst ->
+      let%bind pl = bind_map_list (decompile_pattern dialect) lst in
+      let%bind pl = list_to_nsepseq pl in
+      ok @@ CST.PTuple (wrap (par pl))
+    | AST.P_record _ -> failwith "REMITODO: add the record syntax anyway"
+
 and decompile_to_block : dialect -> AST.expression -> _ result = fun dialect expr ->
   let%bind (stats,next) = decompile_eos dialect Expression expr in
   let block = Option.map (to_block dialect <@ nelist_to_npseq) stats in
@@ -382,20 +434,29 @@ and decompile_eos : dialect -> eos -> AST.expression -> ((CST.statement List.Ne.
     let constr = wrap constr in
     let%bind element = bind (decompile_to_tuple_expr dialect) @@ get_e_tuple element in
     return_expr_with_par @@ CST.EConstr (ConstrApp (wrap (constr, Some element)))
-  | E_matching {matchee; cases} ->  ignore (matchee,cases) ; failwith "REMITODO"
-     (* let%bind expr  = decompile_expression ~dialect matchee in
-     let enclosing = enclosing dialect in
-     let lead_vbar = lead_vbar dialect in
-    (match output with
-      Expression ->
-      let%bind cases = decompile_matching_expr (decompile_expression ~dialect) cases in
-      let cases : _ CST.case = {kwd_case=ghost;expr;kwd_of=ghost;enclosing;lead_vbar;cases} in
+  | E_matching {matchee; cases} -> (
+    let%bind expr  = decompile_expression ~dialect matchee in
+    let enclosing = enclosing dialect in
+    let lead_vbar = lead_vbar dialect in
+    let aux decompile_f =
+      fun ({ pattern ; body }:(AST.expression, AST.type_expression) AST.match_case) ->
+        let%bind pattern = decompile_pattern dialect pattern in
+        let%bind rhs = decompile_f body in
+        let clause : (_ CST.case_clause)= { pattern ; arrow = ghost ; rhs } in
+        ok (wrap clause)
+    in
+    match output with
+    | Expression ->
+      let%bind cases = bind_map_list (aux (decompile_expression ~dialect)) cases in
+      let%bind cases = list_to_nsepseq cases in 
+      let cases : _ CST.case = {kwd_case=ghost;expr;kwd_of=ghost;enclosing;lead_vbar;cases = wrap cases} in
       return_expr @@ CST.ECase (wrap cases)
     | Statements ->
-      let%bind cases = decompile_matching_expr (decompile_if_clause dialect) cases in
-      let cases : _ CST.case = {kwd_case=ghost;expr;kwd_of=ghost;enclosing;lead_vbar;cases} in
+      let%bind cases = bind_map_list (aux (decompile_if_clause dialect)) cases in
+      let%bind cases = list_to_nsepseq cases in 
+      let cases : _ CST.case = {kwd_case=ghost;expr;kwd_of=ghost;enclosing;lead_vbar;cases = wrap cases} in
       return_inst @@ CST.CaseInstr (wrap cases)
-    ) *)
+  )
   | E_record record  ->
     let record = AST.LMap.to_kv_list record in
     let aux (AST.Label str, expr) =

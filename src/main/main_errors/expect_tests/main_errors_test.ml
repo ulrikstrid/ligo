@@ -920,15 +920,6 @@ let%expect_test "typer" =
 
   Invalid arguments.
   Only composed types of not more than two element are allowed to be compared.|}] ;
-(* error
-  (`Typer_match_variant_tracer
-    (ast_core_matching_expr, `Typer_comparator_composed (location_t, type_expression))) ;
-[%expect
-  {|
-  in file "a dummy file name", line 20, characters 5-5
-
-  Invalid arguments.
-  Only composed types of not more than two element are allowed to be compared.|}] ; REMITODO *)
   error
     (`Typer_different_types
       ( type_expression,

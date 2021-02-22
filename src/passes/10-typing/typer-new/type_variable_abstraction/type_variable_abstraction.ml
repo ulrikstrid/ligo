@@ -263,7 +263,7 @@ module TYPE_VARIABLE_ABSTRACTION = functor (Type_variable : sig type t end) -> s
         | `Typer_michelson_or_no_annotation of Types.label * Location.t
         | `Typer_module_tracer of Ast_core.module_ * typer_error
         | `Typer_constant_declaration_tracer of Ast_core.expression_variable * Ast_core.expression * (Types.type_expression option) * typer_error
-        (* REMITODO | `Typer_match_error of Ast_core.matching_expr * Types.type_expression * Location.t *)
+        | `Typer_match_error of Ast_typed.type_expression * Types.type_expression * Location.t
         | `Typer_needs_annotation of Ast_core.expression * string
         | `Typer_fvs_in_create_contract_lambda of Ast_core.expression * Types.expression_variable
         | `Typer_create_contract_lambda of Ast_core.constant' * Ast_core.expression
