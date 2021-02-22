@@ -497,8 +497,9 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
       let%bind expr' = self expr in
       match m with
       | Match_variant {cases ; tv} -> (
-        match expr'.type_expression.type_content with
-          | T_list list_ty ->
+          match expr.type_expression.type_content with
+          | T_constant { injection ; parameters = [list_ty] } when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name ->
+            let%bind list_ty = compile_type list_ty in
             let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
             let c_body_lst = AST.LMap.of_list (List.map get_c_body cases) in
             let get_case c =
@@ -523,7 +524,7 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
                 ok (((Location.wrap hd , list_ty) , (Location.wrap tl , expr'.type_expression)) , match_cons')
             in
             return @@ E_if_cons (expr' , nil , cons)
-          | T_option opt_tv ->
+          | T_constant { injection ; parameters = [opt_tv] } when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name ->
             let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
             let c_body_lst = AST.LMap.of_list (List.map get_c_body cases) in
             let get_case c =
@@ -534,12 +535,12 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
             let%bind match_some = get_case "Some" in
             let%bind n = self (fst match_none) in
             let%bind (tv' , s') =
-              let tv' = opt_tv in
+              let%bind tv' = compile_type opt_tv in
               let%bind s' = self (fst match_some) in
               ok (tv' , s')
             in
             return @@ E_if_none (expr' , n , ((Location.map Var.todo_cast (snd match_some) , tv') , s'))
-          | T_base TB_bool ->
+          | T_sum _ when Option.is_some (Ast_typed.get_t_bool expr.type_expression) ->
             let ctor_body (case : AST.matching_content_case) = (case.constructor, case.body) in
             let cases = AST.LMap.of_list (List.map ctor_body cases) in
             let get_case c =
@@ -713,9 +714,10 @@ and compile_recursive module_env {fun_name; fun_type; lambda} =
     let%bind expr' = compile_expression ~module_env m.matchee in
     let self = replace_callback fun_name loop_type shadowed in
     match m.cases with
-      | Match_variant {cases ; tv} -> (
-        match expr'.type_expression.type_content with
-        | T_list list_ty ->
+    | Match_variant {cases ; tv} -> (
+        match m.matchee.type_expression.type_content with
+        | T_constant { injection ; parameters = [list_ty] } when String.equal (Ligo_string.extract injection) Stage_common.Constant.list_name ->
+          let%bind list_ty = compile_type list_ty in
           let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
           let c_body_lst = AST.LMap.of_list (List.map get_c_body cases) in
           let get_case c =
@@ -740,7 +742,7 @@ and compile_recursive module_env {fun_name; fun_type; lambda} =
               ok (((Location.wrap hd , list_ty) , (Location.wrap tl , expr'.type_expression)) , match_cons')
           in
           return @@ E_if_cons (expr' , nil , cons)
-        | T_option opt_tv ->
+        | T_constant { injection ; parameters = [opt_tv] } when String.equal (Ligo_string.extract injection) Stage_common.Constant.option_name ->
           let get_c_body (case : AST.matching_content_case) = (case.constructor, (case.body, case.pattern)) in
           let c_body_lst = AST.LMap.of_list (List.map get_c_body cases) in
           let get_case c =
@@ -751,12 +753,12 @@ and compile_recursive module_env {fun_name; fun_type; lambda} =
           let%bind match_some = get_case "Some" in
           let%bind n = self (fst match_none) in
           let%bind (tv' , s') =
-            let tv' = opt_tv in
+            let%bind tv' = compile_type opt_tv in
             let%bind s' = self (fst match_some) in
             ok (tv' , s')
           in
           return @@ E_if_none (expr' , n , ((Location.map Var.todo_cast (snd match_some) , tv') , s'))
-        | T_base TB_bool ->
+        | T_sum _ when Option.is_some (Ast_typed.get_t_bool m.matchee.type_expression) ->
           let ctor_body (case : AST.matching_content_case) = (case.constructor, case.body) in
           let cases = AST.LMap.of_list (List.map ctor_body cases) in
           let get_case c =
@@ -800,29 +802,29 @@ and compile_recursive module_env {fun_name; fun_type; lambda} =
             trace_strong (corner_case ~loc:__LOC__ "building constructor") @@
             aux expr' tree
           )
-      )
-      | Match_record { fields; body; tv } ->
-        let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
-          get_t_record tv in
-        let%bind tree = Layout.record_tree ~layout compile_type content in
-        let%bind body = self body in
-        let rec aux expr (tree : Layout.record_tree) body =
-          match tree.content with
-          | Field l ->
-            let var = fst (LMap.find l fields) in
-            return @@ E_let_in (expr, false, ((var, tree.type_), body))
-          | Pair (x, y) ->
-            let x_var = Location.wrap (Var.fresh ()) in
-            let y_var = Location.wrap (Var.fresh ()) in
-            let x_ty = x.type_ in
-            let y_ty = y.type_ in
-            let x_var_expr = Combinators.Expression.make_tpl (E_variable x_var, x_ty) in
-            let y_var_expr = Combinators.Expression.make_tpl (E_variable y_var, y_ty) in
-            let%bind yrec = aux y_var_expr y body in
-            let%bind xrec = aux x_var_expr x yrec in
-            return @@ E_let_pair (expr, (((x_var, x_ty), (y_var, y_ty)), xrec))
-        in
-        aux expr' tree body
+    )
+    | Match_record { fields; body; tv } ->
+      let%bind { content ; layout } = trace_option (corner_case ~loc:__LOC__ "getting lr tree") @@
+        get_t_record tv in
+      let%bind tree = Layout.record_tree ~layout compile_type content in
+      let%bind body = self body in
+      let rec aux expr (tree : Layout.record_tree) body =
+        match tree.content with
+        | Field l ->
+          let var = fst (LMap.find l fields) in
+          return @@ E_let_in (expr, false, ((var, tree.type_), body))
+        | Pair (x, y) ->
+          let x_var = Location.wrap (Var.fresh ()) in
+          let y_var = Location.wrap (Var.fresh ()) in
+          let x_ty = x.type_ in
+          let y_ty = y.type_ in
+          let x_var_expr = Combinators.Expression.make_tpl (E_variable x_var, x_ty) in
+          let y_var_expr = Combinators.Expression.make_tpl (E_variable y_var, y_ty) in
+          let%bind yrec = aux y_var_expr y body in
+          let%bind xrec = aux x_var_expr x yrec in
+          return @@ E_let_pair (expr, (((x_var, x_ty), (y_var, y_ty)), xrec))
+      in
+      aux expr' tree body
   in
   let%bind fun_type = compile_type fun_type in
   let%bind (input_type,output_type) = trace_option (corner_case ~loc:__LOC__ "wrongtype") @@ get_t_function fun_type in
