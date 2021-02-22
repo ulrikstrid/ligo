@@ -18,7 +18,7 @@ let%expect_test _ =
       4 |   let { a = a ; f = b }  = { a = 1 ; b = 1n } in
       5 |   (a,b)
 
-    Labels do not match: Expected b but got f . |}]
+    Pattern {a = a ; f = b} do not conform type record[a -> int , b -> nat] |}]
 
 let%expect_test _ =
   run_ligo_good [ "interpret" ; "--init="^(test "let_destructuring.religo") ; "t1" ] ;

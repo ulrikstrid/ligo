@@ -584,7 +584,7 @@ and compile_tuple_let_destructuring : AST.expression -> AST.expression -> (CST.p
     let lst = npseq_to_ne_list tuple in
     let patterns = List.Ne.to_list lst in
     let%bind nested_patterns = bind_map_list conv patterns in
-    let pattern = Location.wrap @@ P_tuple nested_patterns in
+    let pattern = Location.wrap ~loc @@ P_tuple nested_patterns in
     let cases : (AST.expression , AST.ty_expr) AST.match_case = { pattern ; body } in
     ok @@ e_matching ~loc matchee [cases]
 
@@ -599,7 +599,7 @@ and compile_record_let_destructuring : AST.expression -> AST.expression -> CST.f
     let lst = List.Ne.to_list lst in
     let (labels,patterns) = List.split lst in
     let%bind nested_patterns = bind_map_list conv patterns in
-    let pattern = Location.wrap @@ P_record (labels , nested_patterns) in
+    let pattern = Location.wrap ~loc @@ P_record (labels , nested_patterns) in
     let cases : (AST.expression , AST.ty_expr) AST.match_case = { pattern ; body } in
     ok @@ e_matching ~loc matchee [cases]
 
