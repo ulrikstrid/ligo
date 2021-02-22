@@ -560,6 +560,24 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
     | E_matching { matchee ; cases} -> (
       let* e' = eval_ligo matchee env in
       match cases, e' with
+      | Match_variant {cases;_}, V_List [] ->
+        let {constructor=_ ; pattern=_ ; body} =
+          List.find
+            (fun {constructor = (Label c) ; pattern=_ ; body=_} ->
+              String.equal "Nil" c)
+            cases in
+        eval_ligo body env
+      | Match_variant {cases;_}, V_List lst ->
+        let {constructor=_ ; pattern ; body} =
+          List.find
+            (fun {constructor = (Label c) ; pattern=_ ; body=_} ->
+              String.equal "Cons" c)
+            cases in
+        let hd = List.hd lst in
+        let tl = V_List (List.tl lst) in
+        let proj = v_pair (hd,tl) in
+        let env' = Env.extend env (pattern, proj) in
+        eval_ligo body env'
       | Match_variant {cases;_}, V_Ct (C_bool b) ->
         let ctor_body (case : matching_content_case) = (case.constructor, case.body) in
         let cases = LMap.of_list (List.map ctor_body cases) in
