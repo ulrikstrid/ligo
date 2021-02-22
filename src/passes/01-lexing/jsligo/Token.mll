@@ -27,8 +27,8 @@ module T =
     | Int      of (lexeme * Z.t) Region.reg
     | Nat      of (lexeme * Z.t) Region.reg
     | Mutez    of (lexeme * Z.t) Region.reg
-    | Ident    of lexeme Region.reg
-    | Constr   of lexeme Region.reg
+    | Lident   of lexeme Region.reg
+    | Uident   of lexeme Region.reg
     | Lang     of lexeme Region.reg Region.reg
     | Attr     of string Region.reg
 
@@ -134,8 +134,8 @@ module T =
     let concrete = function
         (* Identifiers, labels, numbers and strings *)
 
-      "Ident"    -> id_sym ()
-    | "Constr"   -> ctor_sym ()
+      "Lident"   -> id_sym ()
+    | "Uident"   -> ctor_sym ()
     | "Int"      -> "1"
     | "Nat"      -> "1n"
     | "Mutez"    -> "1mutez"
@@ -260,10 +260,10 @@ module T =
         region, sprintf "Nat (%S, %s)" s (Z.to_string n)
     | Mutez Region.{region; value = s,n} ->
         region, sprintf "Mutez (%S, %s)" s (Z.to_string n)
-    | Ident Region.{region; value} ->
-        region, sprintf "Ident %S" value
-    | Constr Region.{region; value} ->
-        region, sprintf "Constr %S" value
+    | Lident Region.{region; value} ->
+        region, sprintf "Lident %S" value
+    | Uident Region.{region; value} ->
+        region, sprintf "Uident %S" value
     | Lang Region.{region; value} ->
         region, sprintf "Lang %S" (value.Region.value)
     | Attr Region.{region; value} ->
@@ -366,8 +366,8 @@ module T =
     | Int i
     | Nat i
     | Mutez i    -> fst i.Region.value
-    | Ident id   -> id.Region.value
-    | Constr id  -> id.Region.value
+    | Lident id  -> id.Region.value
+    | Uident id  -> id.Region.value
     | Attr a     -> sprintf "[@%s]" a.Region.value
     | Lang lang  -> Region.(lang.value.value)
 
@@ -558,13 +558,13 @@ rule scan_ident region lexicon = parse
     then Error Reserved_name
     else Ok (match SMap.find_opt value lexicon.kwd with
                Some mk_kwd -> mk_kwd region
-             |        None -> Ident Region.{region; value}) }
+             |        None -> Lident Region.{region; value}) }
 
 and scan_constr region lexicon = parse
   (constr as value) eof {
     match SMap.find_opt value lexicon.cstr with
       Some mk_cstr -> mk_cstr region
-    |         None -> Constr Region.{region; value} }
+    |         None -> Uident Region.{region; value} }
 
 (* END LEXER DEFINITION *)
 
@@ -714,14 +714,14 @@ and scan_constr region lexicon = parse
     let is_int      = function Int _      -> true | _ -> false
     let is_nat      = function Nat _      -> true | _ -> false
     let is_mutez    = function Mutez _    -> true | _ -> false
-    let is_ident    = function Ident _    -> true | _ -> false
-    let is_constr   = function Constr _   -> true | _ -> false
+    let is_ident    = function Lident _    -> true | _ -> false
+    let is_constr   = function Uident _   -> true | _ -> false
     let is_lang     = function Lang _     -> true | _ -> false
     let is_minus    = function MINUS _    -> true | _ -> false
     let is_eof      = function EOF _      -> true | _ -> false
 
     let is_hexa = function
-      Constr Region.{value="A"|"a"|"B"|"b"|"C"|"c"
+      Uident Region.{value="A"|"a"|"B"|"b"|"C"|"c"
                      |"D"|"d"|"E"|"e"|"F"|"f"; _} -> true
     | _ -> false
 

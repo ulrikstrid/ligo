@@ -307,8 +307,8 @@ and expr =
   EFun     of fun_expr reg
 | EPar     of expr par reg
 | ESeq     of (expr, comma) nsepseq reg
-| EVar     of variable
-| EConstr  of variable
+| ELident  of variable
+| EUident  of variable
 | ELogic   of logic_expr
 | EArith   of arith_expr
 | ECall    of (expr * arguments) reg
@@ -505,10 +505,10 @@ let rec expr_to_region = function
 | EString e -> string_expr_to_region e
 | EAssign (f, _, e) -> Region.cover (expr_to_region f) (expr_to_region e)
 | EAnnot {region;_ } | EFun {region;_}
-| ECall {region;_}   | EVar {region; _}    | EProj {region; _}
+| ECall {region;_}   | ELident {region; _}    | EProj {region; _}
 | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
 | ESeq {region; _}   | EObject {region; _} | EArray { region; _}
-| ENew {region; _}   | EConstr {region; _}
+| ENew {region; _}   | EUident {region; _}
 | ECodeInj {region; _} -> region
 
 let statement_to_region = function

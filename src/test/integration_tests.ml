@@ -5,6 +5,9 @@ open Main_errors
 open Ast_imperative.Combinators
 
 let init_env = Environment.default Environment.Protocols.current
+
+let jstype_file f =
+  Ligo.Compile.Utils.type_file ~options f "jsligo" Env
 let retype_file f =
   Ligo.Compile.Utils.type_file ~options f "reasonligo" Env
 let mtype_file f =
@@ -1996,6 +1999,19 @@ let amount_religo () : (unit, _) result =
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
   expect_eq ~options program "check_" input expected
 
+let amount_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/amount.jsligo" in
+  let input = e_unit () in
+  let expected = e_int 42 in
+  let amount =
+    match Memory_proto_alpha.Protocol.Alpha_context.Tez.of_string "100" with
+    | Some t -> t
+    | None -> Memory_proto_alpha.Protocol.Alpha_context.Tez.one
+  in
+  let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount () in
+  expect_eq ~options program "check_" input expected
+  
+
 let addr_test program =
   let open Proto_alpha_utils.Memory_proto_alpha in
   let addr = Protocol.Alpha_context.Contract.to_b58check @@
@@ -2017,6 +2033,10 @@ let address_religo () : (unit, _) result =
   let%bind program = retype_file "./contracts/address.religo" in
   addr_test program
 
+let address_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/address.jsligo" in
+  addr_test program
+  
 
 let self_address () : (unit, _) result =
   let%bind _ = type_file "./contracts/self_address.ligo" in
@@ -2635,9 +2655,11 @@ let main = test_suite "Integration (End to End)"
     test y "amount" amount ;
     test y "amount (mligo)" amount_mligo ;
     test y "amount (religo)" amount_religo ;
+    test y "amount (jsligo)" amount_jsligo ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "address" address ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "address (mligo)" address_mligo ;
     test y (* enabled AND PASSES as of 02021-02-03 427107ca8 *) "address (religo)" address_religo ;
+    test y "address (jsligo)" address_jsligo ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "self address" self_address ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "self address (mligo)" self_address_mligo ;
     test y (* enabled AND PASSES as of 02021-01-26 f6601c830 *) "self address (religo)" self_address_religo ;

@@ -38,6 +38,23 @@ let compile_variable var = Location.map Var.of_name @@ Location.lift_region var
 let compile_attributes attributes : string list =
   List.map (fst <@ r_split) attributes
 
+type env = {
+  let_vars   : string list;
+  const_vars : string list;
+  types      : string list;
+  in_switch  : bool;
+  in_loop    : bool;
+}
+
+let env_l = {
+  let_vars    = [];
+  const_vars  = [];
+  types       = [];
+  in_switch   = false;
+  in_loop     = false;
+}
+  
+
 module Compile_type = struct
 
 
@@ -267,8 +284,8 @@ end
 open Compile_type
 
 let expression_to_variable : CST.expr -> (CST.variable, _) result = function
-  | EVar var -> ok var
-  | EConstr var -> ok var
+  | ELident var -> ok var
+  | EUident var -> ok var
   | _ as _e -> 
     
     
@@ -329,22 +346,6 @@ type statement_result =
 | Break of AST.expression
 | Return of AST.expression
 
-type env = {
-  let_vars   : string list;
-  const_vars : string list;
-  types      : string list;
-  in_switch  : bool;
-  in_loop    : bool;
-}
-
-let env_l = {
-  let_vars    = [];
-  const_vars  = [];
-  types       = [];
-  in_switch   = false;
-  in_loop     = false;
-}
-
 type foo = 
   Match_nil of AST.expression
 | Match_cons of expression_ Var.t location_wrap * expression_ Var.t location_wrap
@@ -378,7 +379,7 @@ and compile_expression_in : CST.expr -> env -> (AST.expr, _) result = fun e env 
   let self: CST.expr -> env -> (AST.expr, _) result = compile_expression_in in
   let return e = ok @@ e in
   match e with
-    EVar var ->
+    ELident var ->
     let (var, loc) = r_split var in
     (match constants var with
       Some const -> return @@ e_constant ~loc const []
@@ -433,13 +434,32 @@ and compile_expression_in : CST.expr -> env -> (AST.expr, _) result = fun e env 
       | Neq ne   -> compile_bin_op C_NEQ ne env
     )
   )
-  | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, EObject {value = {inside = fields; _}; _})]); _}; _}); region} ->
+  | ECall {value = EProj {value = {expr = EUident {value = module_name; _}; selection = FieldName {value = {value = {value = fun_name; _}; _}; _}}; _}, arguments; region} when 
+    List.mem module_name build_ins -> 
+      let var = module_name ^ "." ^ fun_name in
+      let loc = Location.lift region in
+      let argsx = match arguments with 
+        Unit e -> CST.EUnit e, []
+      | Multiple xs ->
+        let hd,tl = xs.value.inside in
+        hd,List.map snd tl
+      in
+      (match constants var with
+      Some const ->
+      let%bind args = bind_map_list (fun e -> self e env) @@ nseq_to_list argsx in
+      return @@ e_constant ~loc const args
+    | None ->
+      fail @@ unknown_constant var loc
+      )
+  | ECall {value=(ELident {value = "list"; _}, Multiple {value = {inside = (EArray e, []); _}; _}); _ } -> 
+    failwith "todo list handling"
+  | ECall {value=(ELident {value = "match"; _}, Multiple {value = {inside = (input, [(_, EObject {value = {inside = fields; _}; _})]); _}; _}); region} ->
     (* Pattern matching for JsLIGO is implemented as a 'built-in function' as
        JavaScript and TypeScript don't have native pattern matching. *)
     let fields' = Utils.nsepseq_to_list fields in
     let compile_simple_pattern p =
       let rec aux = function
-        CST.EVar v -> ok @@ Var.of_name v.value
+        CST.ELident v -> ok @@ Var.of_name v.value
       | EPar par -> aux par.value.inside
       | ESeq {value = (hd, []); _} -> aux hd
       | EAnnot {value = (a, _, _); _} -> aux a
@@ -449,8 +469,8 @@ and compile_expression_in : CST.expr -> env -> (AST.expr, _) result = fun e env 
       aux p
     in
     let compile_constr_pattern = function 
-      CST.Property {value = {name = EConstr {value = constr; _}; value; _}; _}
-    |     Property {value = {name = EVar    {value = constr; _}; value; _}; _} -> (
+      CST.Property {value = {name = EUident {value = constr; _}; value; _}; _}
+    |     Property {value = {name = ELident    {value = constr; _}; value; _}; _} -> (
         match value with 
           EFun {value = {parameters; body; _}; _} -> 
             let%bind parameters = compile_simple_pattern parameters in
@@ -465,11 +485,11 @@ and compile_expression_in : CST.expr -> env -> (AST.expr, _) result = fun e env 
     let%bind constrs = bind_map_list compile_constr_pattern fields' in
     let cases = AST.Match_variant constrs in
     ok @@ e_matching ~loc matchee cases
-  | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, ECall {value = EVar {value="list"; _}, Multiple { value = {inside = (CST.EArray args, _); _} ;_} ;_})]); _}; _}); region} ->
+  | ECall {value=(ELident {value = "match"; _}, Multiple {value = {inside = (input, [(_, ECall {value = ELident {value="list"; _}, Multiple { value = {inside = (CST.EArray args, _); _} ;_} ;_})]); _}; _}); region} ->
     let args = Utils.nsepseq_to_list args.value.inside in
     let compile_simple_pattern p =
       let rec aux = function
-        CST.EVar v -> ok @@ Var.of_name v.value
+        CST.ELident v -> ok @@ Var.of_name v.value
       | EPar par -> aux par.value.inside
       | ESeq {value = (hd, []); _} -> aux hd
       | EAnnot {value = (a, _, _); _} -> aux a
@@ -523,7 +543,7 @@ and compile_expression_in : CST.expr -> env -> (AST.expr, _) result = fun e env 
   
   (* This case is due to a bad besign of our constant it as to change
     with the new typer so LIGO-684 on Jira *)
-  | ECall {value=(EVar var,args);region} ->
+  | ECall {value=(ELident var,args);region} ->
     let args = match args with
       | Unit the_unit -> CST.EUnit the_unit,[]
       | Multiple xs ->
@@ -541,7 +561,7 @@ and compile_expression_in : CST.expr -> env -> (AST.expr, _) result = fun e env 
       return @@ e_application ~loc func args
     )
   (* TODO: modules *)
-  (* | ECall {value=(EVar {value={module_name;field};region=_},args);region} when
+  (* | ECall {value=(ELident {value={module_name;field};region=_},args);region} when
    *   List.mem module_name.value build_ins ->
    *   let args = match args with
    *     | Unit the_unit -> CST.EUnit the_unit,[]
@@ -550,8 +570,8 @@ and compile_expression_in : CST.expr -> env -> (AST.expr, _) result = fun e env 
    *        hd,List.map snd tl in
    *   let loc = Location.lift region in
    *   let%bind fun_name = match field with
-   *     EVar v -> ok @@ v.value | EModA _ -> fail @@ unknown_constant module_name.value loc
-   *     |ECase _|ECond _|EAnnot _|EList _|EConstr _|EUpdate _|ELetIn _|EFun _|ESeq _|ECodeInj _
+   *     ELident v -> ok @@ v.value | EModA _ -> fail @@ unknown_constant module_name.value loc
+   *     |ECase _|ECond _|EAnnot _|EList _|EUident _|EUpdate _|ELetIn _|EFun _|ESeq _|ECodeInj _
    *     |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETypeIn _
    *     |ETuple _|EPar _ -> failwith "Corner case : This couldn't be produce by the parser"
    *   in
@@ -588,10 +608,10 @@ and compile_expression_in : CST.expr -> env -> (AST.expr, _) result = fun e env 
     let aux up =
       let (_, p) = up in
       match p with 
-        CST.Punned_property {value = EVar v as evar; region} ->
+        CST.Punned_property {value = ELident v as evar; region} ->
           let%bind expr = compile_expression_in evar env in
           ok ([Access_record v.value], expr, Location.lift region)
-      | Property {value = {name = EVar name; value; _}; region} ->
+      | Property {value = {name = ELident name; value; _}; region} ->
           let%bind expr = compile_expression_in value env in
           ok ([Access_record name.value], expr, Location.lift region)
       | Property_rest _ -> fail @@ rest_not_supported_here p
@@ -622,10 +642,22 @@ and compile_expression_in : CST.expr -> env -> (AST.expr, _) result = fun e env 
     let%bind obj = bind_map_list aux @@ npseq_to_list obj.inside in
     return @@ e_record_ez ~loc obj
   | EProj proj ->
+    (* check if local variable, otherwise go for a module *)
+
+    print_endline "aaaa1";
     let (proj, loc) = r_split proj in
     let%bind (selection , _) = compile_selection proj.selection in
-    let%bind selected = compile_expression_in proj.expr env in
-    return @@ e_accessor ~loc selected [ selection ]
+
+    (* let%bind selected = compile_expression_in proj.expr env in *)
+    let var = match proj.expr with 
+      ELident {value; region}
+    | EUident {value; region} -> e_variable_ez ~loc:(Location.lift region) value
+    | _ -> failwith "not supported in jsligo..."
+    in
+    
+    (* let var  = e_variable_ez ~loc:loc_var proj.expr in *)
+
+    return @@ e_accessor ~loc var [ selection ]
   | EFun func ->
     (* todo : make it in common with let function *)
     let (func, loc) = r_split func in
@@ -636,7 +668,7 @@ and compile_expression_in : CST.expr -> env -> (AST.expr, _) result = fun e env 
     let aux (binder,attr,rhs) expr = e_let_in binder attr rhs expr in
     let expr = List.fold_right aux exprs body  in
     return @@ e_lambda ~loc binder lhs_type expr
-  | EConstr constr ->
+  | EUident constr ->
     let (constr, loc) = r_split constr in
     return @@ e_constructor ~loc constr (e_unit ())
   | EAnnot annot ->
@@ -798,14 +830,14 @@ and compile_parameter : CST.expr ->
         let (expr, _, type_expr) : CST.annot_expr = ea in
         let%bind ascr = compile_type_expression type_expr in
         (match expr with 
-          CST.EVar ev -> 
+          CST.ELident ev -> 
             return ~ascr loc [] @@ Var.of_name ev.value
         | EArray {value = {inside = array_items; _}; _} -> 
             let array_item = function 
               CST.Empty_entry reg -> 
                 let loc = Location.lift reg in
                 return loc [] @@ Var.fresh ()
-            | Expr_entry EVar e ->              
+            | Expr_entry ELident e ->              
                 let (var,loc) = r_split e in
                 return loc [] @@ Var.of_name var
             | Rest_entry _ -> failwith "w--p"
@@ -851,7 +883,7 @@ and compile_parameter : CST.expr ->
     let exprs = List.flatten @@ expr :: List.Ne.to_list exprs in
     return ?ascr loc exprs @@ var
 
-  | EVar var -> 
+  | ELident var -> 
     let (var,loc) = r_split var in
     return loc [] @@ Var.of_name var
   | EUnit the_unit ->
@@ -865,12 +897,16 @@ and compile_function_body_to_expression : CST.fun_expr_body -> env -> (AST.expre
   | FunctionBody statements -> compile_statements_to_expression statements.value.inside env
   | ExpressionBody expr -> compile_expression_in expr env
 
-and compile_let_to_declaration ?(const = false) : CST.let_binding Region.reg -> env -> (AST.declaration, _) result = fun let_binding env ->
+and compile_let_to_declaration : const:bool -> CST.let_binding Region.reg -> env -> (AST.declaration list * env, _) result = fun ~const let_binding env ->
   let ({binders; lhs_type; expr = let_rhs; attributes; _} : CST.let_binding) = let_binding.value in
-  let%bind lst = compile_let_binding attributes let_rhs lhs_type binders let_binding.region env in
+  let%bind (lst, env) = compile_let_binding ~const attributes let_rhs lhs_type binders let_binding.region env in
+  let aux (name, binder,attr, expr) =  AST.Declaration_constant {name; binder; attr; expr} in
+  ok @@ (List.map aux lst, env)
+(* 
   match lst with 
-    (name, binder, attr, expr) :: tl -> ok @@ AST.Declaration_constant {name; binder; attr; expr}
-  | []                               -> failwith "nope"
+    (name, binder, attr, expr) :: tl -> 
+      ok @@ (AST.Declaration_constant {name; binder; attr; expr}, env)
+  | []                               -> failwith "nope" *)
 
 (*
   JsLIGO has statements. There are two cases when compiling a statement:
@@ -894,8 +930,18 @@ and merge_statement_results : statement_result -> statement_result -> statement_
   | Break   a, _ ->         Break a
   | Return  a, _ ->         Return a
 
-and compile_let_binding: CST.attributes -> CST.expr -> (Region.t * CST.type_expr) option -> CST.pattern -> Region.t -> env -> (('a * type_expression binder * Ast_imperative__.Types.attributes * expression) list, _) result = 
-  fun attributes let_rhs type_expr binders region env ->     
+and compile_pattern :  CST.pattern -> (type_expression binder, _) result =
+  fun pattern ->
+  let return ?ascr loc var =
+    ok ({var=Location.wrap ~loc var; ascr}) in
+  match pattern with 
+    PVar var -> 
+    let (var,loc) = r_split var in
+    return loc @@ Var.of_name var
+  | _ -> fail @@ unsupported_pattern_type pattern
+
+and compile_let_binding: const:bool -> CST.attributes -> CST.expr -> (Region.t * CST.type_expr) option -> CST.pattern -> Region.t -> env -> (('a * type_expression binder * Ast_imperative__.Types.attributes * expression) list * env, _) result = 
+  fun ~const attributes let_rhs type_expr binders region env ->     
   let attributes = compile_attributes attributes in
   let%bind expr = compile_expression_in let_rhs env in
   let%bind lhs_type =
@@ -903,26 +949,21 @@ and compile_let_binding: CST.attributes -> CST.expr -> (Region.t * CST.type_expr
   let aux = function
   | CST.PVar name -> (*function or const *)
     let fun_binder = compile_variable name in
-    ok @@ [(Some name.value, {var=fun_binder;ascr=lhs_type}, attributes, expr)]
+    let env = if const then 
+      { env with const_vars = name.value :: env.const_vars }
+    else
+      { env with let_vars = name.value :: env.let_vars }
+    in
+    ok @@ ([(Some name.value, {var=fun_binder;ascr=lhs_type}, attributes, expr)], env)
   | CST.PArray a ->  (* tuple destructuring (for top-level only) *)
+    let matchee = expr in  
     let (tuple, loc) = r_split a in
     let array_items = npseq_to_list tuple.inside in
-    let var = Location.wrap ~loc @@ Var.fresh () in
-    let body = e_variable var in
-    let aux i binder = (
-      let binder: type_expression binder = 
-        match binder with 
-          CST.PVar p ->
-            {
-              var  = Location.wrap (Var.of_name p.value);
-              ascr = None
-            }
-        | _ -> failwith "Not implemented yet..."
-      in
-      Z.add i Z.one, (None, binder, attributes,
-                      e_accessor body @@ [Access_tuple i]))
-    in
-    ok @@ (None, {var; ascr = None}, [], expr) :: List.fold_map aux Z.zero array_items
+    let%bind lst = bind_map_list compile_pattern array_items in
+    let expr = matchee in 
+    let aux i binder = Z.add i Z.one, (None, binder, attributes, e_accessor expr @@ [Access_tuple i]) in
+    let lst = List.fold_map aux Z.zero @@ lst in
+    ok @@  (lst, env)
   | _ -> 
     fail @@ unsupported_pattern_type @@ binders
     (* ok (Some name.value, {var=fun_binder;ascr=lhs_type}, attributes, expr) *)
@@ -949,26 +990,25 @@ and compile_statement : CST.statement -> env -> (statement_result * env, _) resu
   let expr e env = ok @@ (Expr e, env) in
   let return r env = ok @@ (Return r, env) in
   let in_switch_or_loop = env.in_switch || env.in_loop in
-  let compile_initializer ({value = {binders; lhs_type; expr = let_rhs; attributes}; region} : CST.let_binding Region.reg) : (expression -> expression, _) result = 
+  let compile_initializer ~const ({value = {binders; lhs_type; expr = let_rhs; attributes}; region} : CST.let_binding Region.reg) : (expression -> expression, _) result = 
     match binders with 
-      PArray array -> (
-        let%bind matchee = compile_expression_in let_rhs env in
-        compile_array_let_destructuring matchee array 
-      )
+      PArray array ->
+      let%bind matchee = compile_expression_in let_rhs env in
+      compile_array_let_destructuring matchee array 
     | PObject o ->
       let%bind matchee = compile_expression_in let_rhs env in
       compile_object_let_destructuring matchee o
     | _ -> 
-      let%bind lst = compile_let_binding attributes let_rhs lhs_type binders region env in
+      let%bind (lst, env) = compile_let_binding ~const attributes let_rhs lhs_type binders region env in
       let aux (_name,binder,attr,rhs) expr = e_let_in ~loc: (Location.lift region) binder attr rhs expr in
       ok @@ List.fold_right aux lst
   in
-  let rec initializers (result: expression -> expression) (rem: (Region.t * CST.let_binding Region.reg) list) : (expression -> expression, _) result =
+  let rec initializers ~const (result: expression -> expression) (rem: (Region.t * CST.let_binding Region.reg) list) : (expression -> expression, _) result =
     match rem with
     | (_, hd) :: tl -> 
-      let%bind init = compile_initializer hd in
+      let%bind init = compile_initializer ~const hd in
       let new_result = result <@ init in
-      initializers new_result tl
+      initializers ~const new_result tl
     | [] -> ok result
   in
   match statement with
@@ -1011,16 +1051,16 @@ and compile_statement : CST.statement -> env -> (statement_result * env, _) resu
     
     let hd = fst bindings in
     let tl = snd bindings in
-    let%bind init = compile_initializer hd in
-    let%bind initializers' = initializers init tl in 
+    let%bind init = compile_initializer ~const:false hd in
+    let%bind initializers' = initializers ~const:false init tl in 
     binding initializers' env
   | SConst li ->
     let (li, loc) = r_split li in
     let {bindings; _} : CST.const_ = li in
     let hd = fst bindings in
     let tl = snd bindings in
-    let%bind init = compile_initializer hd in
-    let%bind initializers' = initializers init tl in 
+    let%bind init = compile_initializer ~const:true hd in
+    let%bind initializers' = initializers ~const:true init tl in 
     binding initializers' env
   | SSwitch switch -> 
     let (s, loc) = r_split switch in
@@ -1120,30 +1160,42 @@ and compile_statements_to_expression : CST.statements -> env -> (AST.expression,
   
 [@@@warning "-39"]
 
-let rec compile_statement_to_declaration : CST.statement -> env -> (AST.declaration list, _) result = fun statement env ->
+let rec compile_statement_to_declaration : CST.statement -> env -> (AST.declaration list * env, _) result = fun statement env ->
   match statement with
   | SType {value; _} ->
     let name = value.name.value in
     let%bind type_expr = compile_type_expression value.type_expr in
-    ok @@ [AST.Declaration_type {type_binder = Var.of_name name; type_expr}]
+    ok @@ ([AST.Declaration_type {type_binder = Var.of_name name; type_expr}], env)
   | SLet {value = {bindings;_ }; _} -> (
-    let bindings = npseq_to_list bindings in
-    bind_map_list (fun binding -> 
-      compile_let_to_declaration binding env  
-    ) bindings
+    let fst_binding = fst bindings in
+    let%bind (fst_binding, env) = compile_let_to_declaration ~const:false fst_binding env in
+    let bindings = List.map (fun (_, b) -> b) @@ snd bindings in
+    let rec aux result env = function
+      binding :: remaining -> 
+        let%bind (d, env) = compile_let_to_declaration ~const:false binding env in
+        aux (d @ result) env remaining
+    | [] -> ok (List.rev result, env)
+    in 
+    aux fst_binding env bindings
   )
   | SConst {value = {bindings; _}} -> (
-    let bindings = npseq_to_list bindings in
-    bind_map_list (fun binding -> 
-      compile_let_to_declaration binding env  
-    ) bindings
+    let fst_binding = fst bindings in
+    let%bind (fst_binding, env) = compile_let_to_declaration ~const:true fst_binding env in
+    let bindings = List.map (fun (_, b) -> b) @@ snd bindings in
+    let rec aux result env = function
+      binding :: remaining -> 
+        let%bind (d, env) = compile_let_to_declaration ~const:true binding env in
+        aux (d @ result) env remaining
+    | [] -> ok (List.rev result, env)
+    in 
+    aux fst_binding env bindings
   )
   | _ ->
     fail @@ statement_not_supported_at_toplevel statement
 
 and compile_statements_to_program : CST.ast -> env -> (AST.module_, _) result = fun ast env ->
   let aux : CST.statement -> (declaration location_wrap list, _) result = fun statement ->
-    let%bind declarations = compile_statement_to_declaration statement env in
+    let%bind (declarations, env) = compile_statement_to_declaration statement env in
     ok @@ List.map (fun d -> 
       let loc = Location.lift @@ CST.statement_to_region statement in
       Location.wrap ~loc d

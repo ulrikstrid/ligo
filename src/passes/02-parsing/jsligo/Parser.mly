@@ -108,10 +108,10 @@ sep_or_term_list(item,sep):
 (* Helpers *)
 
 
-%inline type_name        : "<ident>"  { $1 }
-%inline field_name       : "<ident>"  { $1 }
-(* %inline struct_name      : "<ident>"  { $1 } *)
-%inline module_name      : "<constr>" { $1 }
+%inline type_name        : "<lident>"  { $1 }
+%inline field_name       : "<lident>"  { $1 }
+(* %inline struct_name      : "<lident>"  { $1 } *)
+%inline module_name      : "<uident>" { $1 }
 
 (* Non-empty comma-separated values (at least two values) *)
 
@@ -192,8 +192,8 @@ initializer_:
   }
 
 rest:
-  "..." "<constr>"
-| "..." "<ident>" {
+  "..." "<uident>"
+| "..." "<lident>" {
     let region = cover $1 $2.region in
     let value = {
       ellipsis = $1;
@@ -206,8 +206,8 @@ rest:
   }
 
 object_binding_property:
-  "<constr>" initializer_?
-| "<ident>" initializer_?  {
+  "<uident>" initializer_?
+| "<lident>" initializer_?  {
     match $2 with
     | Some (eq, expr) ->
       let region = cover $1.region (expr_to_region expr) in
@@ -223,8 +223,8 @@ object_binding_property:
     | None ->
       PVar $1
   }
-| "<constr>" ":" binding_initializer
-| "<ident>" ":" binding_initializer {
+| "<uident>" ":" binding_initializer
+| "<lident>" ":" binding_initializer {
     let region = cover $1.region $3.region in
     let value = {
       property = $1;
@@ -260,8 +260,8 @@ object_binding_pattern:
 array_binding_pattern_item:
   /* empty  */          { PWild Region.ghost }
 | rest                  { $1 }
-| "<constr>"            { PConstr $1 }
-| "<ident>"             { PVar $1 }
+| "<uident>"            { PConstr $1 }
+| "<lident>"             { PVar $1 }
 | "_"                   { PWild $1 }
 | array_binding_pattern { $1 }
 
@@ -281,8 +281,8 @@ array_binding_pattern:
   }
 
 binding_pattern:
-  "<constr>"              { PConstr $1 }
-| "<ident>"               { PVar $1 }
+  "<uident>"              { PConstr $1 }
+| "<lident>"               { PVar $1 }
 | object_binding_pattern  { $1 }
 | array_binding_pattern   { $1 }
 | "_"                     { PWild $1 }
@@ -340,8 +340,8 @@ type_expr:
   fun_type | sum_type | record_type { $1 }
 
 fun_type_arg:
-  "<constr>" ":" type_expr
-| "<ident>" ":" type_expr {
+  "<uident>" ":" type_expr
+| "<lident>" ":" type_expr {
     {name      = $1;
      colon     = $2;
      type_expr = $3; }
@@ -365,8 +365,8 @@ cartesian:
 | brackets(nsepseq(type_expr, ",")) {  TProd $1 }
 
 core_type:
-  "<ident>"            {       TVar $1 }
-| "<constr>"           {    TConstr $1 }
+  "<lident>"            {       TVar $1 }
+| "<uident>"           {    TConstr $1 }
 | "<string>"           {    TString $1 }
 |  "_"                 {      TWild $1 }
 | par(type_expr)       {       TPar $1 }
@@ -426,7 +426,7 @@ field_decl:
   }
 
 type_decl:
-  "type" "<constr>" "=" type_expr
+  "type" "<uident>" "=" type_expr
 | "type" type_name "=" type_expr {
     let region = cover $1 (type_expr_to_region $4) in
     let value  = {kwd_type  = $1;
@@ -594,11 +594,11 @@ arrow_function:
       value;
     }
  }
-| "<constr>" "=>" arrow_function_body
-| "<ident>" "=>" arrow_function_body {
+| "<uident>" "=>" arrow_function_body
+| "<lident>" "=>" arrow_function_body {
     let region = cover $1.region (arrow_function_body_to_region $3) in
     let value = {
-      parameters = EVar $1;
+      parameters = ELident $1;
       lhs_type = None; (* TODO *)
       arrow = $2;
       body = $3
@@ -722,22 +722,22 @@ array_literal:
 
 property_name:
   "<int>"    {       EArith (Int $1) }
-| "<ident>"  {               EVar $1 }
-| "<constr>" {            EConstr $1 }
+| "<lident>"  {           ELident $1 }
+| "<uident>" {            EUident $1 }
 | "<string>" {   EString (String $1) }
 
 property:
-  "<ident>" {
+  "<lident>" {
     let region = $1.region in
-    let value = EVar $1 in
+    let value = ELident $1 in
     Punned_property {
       region;
       value
     }
   }
-| "<constr>" {
+| "<uident>" {
     let region = $1.region in
-    let value = EConstr $1 in
+    let value = EUident $1 in
     Punned_property {
       region;
       value
@@ -786,8 +786,8 @@ object_literal:
   }
 
 member_expr:
-  "<ident>"                  {                         EVar $1 }
-| "<constr>"                 {                      EConstr $1 }
+  "<lident>"                  {                     ELident $1 }
+| "<uident>"                 {                      EUident $1 }
 | "<int>"                    {                 EArith (Int $1) }
 | "<bytes>"                  {                       EBytes $1 }
 | "<string>"                 {             EString (String $1) }
@@ -812,8 +812,8 @@ member_expr:
     value
   }
 }
-| member_expr "." "<constr>"
-| member_expr "." "<ident>"  {
+| member_expr "." "<uident>"
+| member_expr "." "<lident>"  {
   let region = cover (expr_to_region $1) $3.region in
   let value = {
     expr = $1;
