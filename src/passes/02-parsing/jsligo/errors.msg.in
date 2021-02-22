@@ -1,12 +1,12 @@
-interactive_expr: LBRACE Constr XOR_EQ
+interactive_expr: LBRACE Uident XOR_EQ
 ##
 ## Ends in an error in state: 256.
 ##
-## property -> Constr . [ RBRACE COMMA ]
-## property_name -> Constr . [ COLON ]
+## property -> Uident . [ RBRACE COMMA ]
+## property_name -> Uident . [ COLON ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr
+## Uident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -52,7 +52,7 @@ interactive_expr: LBRACE ELLIPSIS XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: LBRACE Ident COMMA XOR_EQ
+interactive_expr: LBRACE Lident COMMA XOR_EQ
 ##
 ## Ends in an error in state: 261.
 ##
@@ -64,15 +64,15 @@ interactive_expr: LBRACE Ident COMMA XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: LBRACE Ident XOR_EQ
+interactive_expr: LBRACE Lident XOR_EQ
 ##
 ## Ends in an error in state: 86.
 ##
-## property -> Ident . [ RBRACE COMMA ]
-## property_name -> Ident . [ COLON ]
+## property -> Lident . [ RBRACE COMMA ]
+## property_name -> Lident . [ COLON ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident
+## Lident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -177,32 +177,32 @@ contract: Const XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Constr ARROW XOR_EQ
+contract: Uident ARROW XOR_EQ
 ##
 ## Ends in an error in state: 95.
 ##
-## arrow_function -> Constr ARROW . arrow_function_body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
+## arrow_function -> Uident ARROW . arrow_function_body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr ARROW
+## Uident ARROW
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Constr XOR_EQ
+contract: Uident XOR_EQ
 ##
 ## Ends in an error in state: 94.
 ##
-## arrow_function -> Constr . ARROW arrow_function_body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
-## member_expr -> Constr . [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
+## arrow_function -> Uident . ARROW arrow_function_body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
+## member_expr -> Uident . [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr
+## Uident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Ident ARROW LBRACE XOR_EQ
+contract: Lident ARROW LBRACE XOR_EQ
 ##
 ## Ends in an error in state: 91.
 ##
@@ -214,27 +214,27 @@ contract: Ident ARROW LBRACE XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Ident ARROW XOR_EQ
+contract: Lident ARROW XOR_EQ
 ##
 ## Ends in an error in state: 90.
 ##
-## arrow_function -> Ident ARROW . arrow_function_body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
+## arrow_function -> Lident ARROW . arrow_function_body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident ARROW
+## Lident ARROW
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Ident XOR_EQ
+contract: Lident XOR_EQ
 ##
 ## Ends in an error in state: 89.
 ##
-## arrow_function -> Ident . ARROW arrow_function_body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
-## member_expr -> Ident . [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
+## arrow_function -> Lident . ARROW arrow_function_body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
+## member_expr -> Lident . [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident
+## Lident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -296,7 +296,7 @@ contract: If LPAR True SEMI
 ##
 ## Ends in an error in state: 231.
 ##
-## par(expr) -> LPAR expr . RPAR [ Type True Switch String Return New MINUS Let LPAR LBRACKET LBRACE Int If Ident False Constr Const Bytes BOOL_NOT ]
+## par(expr) -> LPAR expr . RPAR [ Type True Switch String Return New MINUS Let LPAR LBRACKET LBRACE Int If Lident False Uident Const Bytes BOOL_NOT ]
 ##
 ## The known suffix of the stack is as follows:
 ## LPAR expr
@@ -324,7 +324,7 @@ contract: If LPAR XOR_EQ
 ##
 ## Ends in an error in state: 230.
 ##
-## par(expr) -> LPAR . expr RPAR [ Type True Switch String Return New MINUS Let LPAR LBRACKET LBRACE Int If Ident False Constr Const Bytes BOOL_NOT ]
+## par(expr) -> LPAR . expr RPAR [ Type True Switch String Return New MINUS Let LPAR LBRACKET LBRACE Int If Lident False Uident Const Bytes BOOL_NOT ]
 ##
 ## The known suffix of the stack is as follows:
 ## LPAR
@@ -451,7 +451,7 @@ contract: LBRACKET XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: LPAR LBRACE Ident RBRACE XOR_EQ
+contract: LPAR LBRACE Lident RBRACE XOR_EQ
 ##
 ## Ends in an error in state: 276.
 ##
@@ -577,7 +577,7 @@ contract: LPAR True As XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: LPAR True COLON Constr RPAR ARROW XOR_EQ
+contract: LPAR True COLON Uident RPAR ARROW XOR_EQ
 ##
 ## Ends in an error in state: 290.
 ##
@@ -589,7 +589,7 @@ contract: LPAR True COLON Constr RPAR ARROW XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: LPAR True COLON Constr RPAR COLON WILD ARROW XOR_EQ
+contract: LPAR True COLON Uident RPAR COLON WILD ARROW XOR_EQ
 ##
 ## Ends in an error in state: 288.
 ##
@@ -601,7 +601,7 @@ contract: LPAR True COLON Constr RPAR COLON WILD ARROW XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: LPAR True COLON Constr RPAR COLON WILD XOR_EQ
+contract: LPAR True COLON Uident RPAR COLON WILD XOR_EQ
 ##
 ## Ends in an error in state: 287.
 ##
@@ -613,7 +613,7 @@ contract: LPAR True COLON Constr RPAR COLON WILD XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: LPAR True COLON Constr RPAR COLON XOR_EQ
+contract: LPAR True COLON Uident RPAR COLON XOR_EQ
 ##
 ## Ends in an error in state: 286.
 ##
@@ -625,7 +625,7 @@ contract: LPAR True COLON Constr RPAR COLON XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: LPAR True COLON Constr RPAR XOR_EQ
+contract: LPAR True COLON Uident RPAR XOR_EQ
 ##
 ## Ends in an error in state: 285.
 ##
@@ -755,32 +755,32 @@ contract: LPAR XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LBRACE Constr COLON XOR_EQ
+contract: Let LBRACE Uident COLON XOR_EQ
 ##
 ## Ends in an error in state: 213.
 ##
-## object_binding_property -> Constr COLON . binding_initializer [ RBRACE COMMA ]
+## object_binding_property -> Uident COLON . binding_initializer [ RBRACE COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr COLON
+## Uident COLON
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LBRACE Constr XOR_EQ
+contract: Let LBRACE Uident XOR_EQ
 ##
 ## Ends in an error in state: 212.
 ##
-## object_binding_property -> Constr . option(initializer_) [ RBRACE COMMA ]
-## object_binding_property -> Constr . COLON binding_initializer [ RBRACE COMMA ]
+## object_binding_property -> Uident . option(initializer_) [ RBRACE COMMA ]
+## object_binding_property -> Uident . COLON binding_initializer [ RBRACE COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr
+## Uident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LBRACE ELLIPSIS Constr XOR_EQ
+contract: Let LBRACE ELLIPSIS Uident XOR_EQ
 ##
 ## Ends in an error in state: 221.
 ##
@@ -792,19 +792,19 @@ contract: Let LBRACE ELLIPSIS Constr XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LBRACE Ident COLON XOR_EQ
+contract: Let LBRACE Lident COLON XOR_EQ
 ##
 ## Ends in an error in state: 199.
 ##
-## object_binding_property -> Ident COLON . binding_initializer [ RBRACE COMMA ]
+## object_binding_property -> Lident COLON . binding_initializer [ RBRACE COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident COLON
+## Lident COLON
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LBRACE Ident COMMA XOR_EQ
+contract: Let LBRACE Lident COMMA XOR_EQ
 ##
 ## Ends in an error in state: 218.
 ##
@@ -816,7 +816,7 @@ contract: Let LBRACE Ident COMMA XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LBRACE Ident EQ True SEMI
+contract: Let LBRACE Lident EQ True SEMI
 ##
 ## Ends in an error in state: 217.
 ##
@@ -844,20 +844,20 @@ contract: Let LBRACE Ident EQ True SEMI
 ## In state 198, spurious reduction of production initializer_expr -> expr 
 ## In state 197, spurious reduction of production initializer_ -> EQ initializer_expr 
 ## In state 211, spurious reduction of production option(initializer_) -> initializer_ 
-## In state 210, spurious reduction of production object_binding_property -> Ident option(initializer_) 
+## In state 210, spurious reduction of production object_binding_property -> Lident option(initializer_) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LBRACE Ident XOR_EQ
+contract: Let LBRACE Lident XOR_EQ
 ##
 ## Ends in an error in state: 195.
 ##
-## object_binding_property -> Ident . option(initializer_) [ RBRACE COMMA ]
-## object_binding_property -> Ident . COLON binding_initializer [ RBRACE COMMA ]
+## object_binding_property -> Lident . option(initializer_) [ RBRACE COMMA ]
+## object_binding_property -> Lident . COLON binding_initializer [ RBRACE COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident
+## Lident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -890,8 +890,8 @@ contract: Let LBRACKET ELLIPSIS XOR_EQ
 ##
 ## Ends in an error in state: 183.
 ##
-## rest -> ELLIPSIS . Constr [ RBRACKET RBRACE COMMA ]
-## rest -> ELLIPSIS . Ident [ RBRACKET RBRACE COMMA ]
+## rest -> ELLIPSIS . Uident [ RBRACKET RBRACE COMMA ]
+## rest -> ELLIPSIS . Lident [ RBRACKET RBRACE COMMA ]
 ##
 ## The known suffix of the stack is as follows:
 ## ELLIPSIS
@@ -1055,7 +1055,7 @@ contract: MINUS XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: New LPAR LBRACE Ident RBRACE XOR_EQ
+contract: New LPAR LBRACE Lident RBRACE XOR_EQ
 ##
 ## Ends in an error in state: 301.
 ##
@@ -1112,8 +1112,8 @@ contract: New True XOR_EQ
 ## Ends in an error in state: 304.
 ##
 ## member_expr -> member_expr . LBRACKET expr RBRACKET [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
-## member_expr -> member_expr . DOT Constr [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
-## member_expr -> member_expr . DOT Ident [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
+## member_expr -> member_expr . DOT Uident [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
+## member_expr -> member_expr . DOT Lident [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
 ## new_expr -> member_expr . [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LE GT GE Else EQ2 EQ EOF Default Case COMMA COLON BOOL_OR BOOL_AND As ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1350,8 +1350,8 @@ contract: True DOT XOR_EQ
 ##
 ## Ends in an error in state: 169.
 ##
-## member_expr -> member_expr DOT . Constr [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
-## member_expr -> member_expr DOT . Ident [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
+## member_expr -> member_expr DOT . Uident [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
+## member_expr -> member_expr DOT . Lident [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
 ##
 ## The known suffix of the stack is as follows:
 ## member_expr DOT
@@ -1720,8 +1720,8 @@ contract: True XOR_EQ
 ## call_expr -> member_expr . par(nsepseq(expr,COMMA)) [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE GT GE Else EQ2 EQ EOF Default Case COMMA COLON BOOL_OR BOOL_AND As ]
 ## call_expr -> member_expr . LPAR RPAR [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE GT GE Else EQ2 EQ EOF Default Case COMMA COLON BOOL_OR BOOL_AND As ]
 ## member_expr -> member_expr . LBRACKET expr RBRACKET [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
-## member_expr -> member_expr . DOT Constr [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
-## member_expr -> member_expr . DOT Ident [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
+## member_expr -> member_expr . DOT Uident [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
+## member_expr -> member_expr . DOT Lident [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
 ## new_expr -> member_expr . [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LE GT GE Else EQ2 EQ EOF Default Case COMMA COLON BOOL_OR BOOL_AND As ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1730,63 +1730,63 @@ contract: True XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Constr EQ XOR_EQ
+contract: Type Uident EQ XOR_EQ
 ##
 ## Ends in an error in state: 67.
 ##
-## type_decl -> Type Constr EQ . type_expr [ SEMI RBRACE Else EOF Default Case ]
+## type_decl -> Type Uident EQ . type_expr [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## Type Constr EQ
+## Type Uident EQ
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Constr XOR_EQ
+contract: Type Uident XOR_EQ
 ##
 ## Ends in an error in state: 66.
 ##
-## type_decl -> Type Constr . EQ type_expr [ SEMI RBRACE Else EOF Default Case ]
+## type_decl -> Type Uident . EQ type_expr [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## Type Constr
+## Type Uident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ Constr DOT XOR_EQ
+contract: Type Lident EQ Uident DOT XOR_EQ
 ##
 ## Ends in an error in state: 16.
 ##
-## core_type -> Constr DOT . Ident [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA ARROW ]
+## core_type -> Uident DOT . Lident [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr DOT
+## Uident DOT
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ Constr XOR_EQ
+contract: Type Lident EQ Uident XOR_EQ
 ##
 ## Ends in an error in state: 15.
 ##
-## core_type -> Constr . [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA ARROW ]
-## core_type -> Constr . DOT Ident [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA ARROW ]
+## core_type -> Uident . [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA ARROW ]
+## core_type -> Uident . DOT Lident [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr
+## Uident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ Ident LT WILD RBRACKET
+contract: Type Lident EQ Lident LT WILD RBRACKET
 ##
 ## Ends in an error in state: 28.
 ##
-## core_type -> Ident LT nsepseq(type_expr,COMMA) . GT [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA ARROW ]
+## core_type -> Lident LT nsepseq(type_expr,COMMA) . GT [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident LT nsepseq(type_expr,COMMA)
+## Lident LT nsepseq(type_expr,COMMA)
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -1797,32 +1797,32 @@ contract: Type Ident EQ Ident LT WILD RBRACKET
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ Ident LT XOR_EQ
+contract: Type Lident EQ Lident LT XOR_EQ
 ##
 ## Ends in an error in state: 14.
 ##
-## core_type -> Ident LT . nsepseq(type_expr,COMMA) GT [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA ARROW ]
+## core_type -> Lident LT . nsepseq(type_expr,COMMA) GT [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident LT
+## Lident LT
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ Ident XOR_EQ
+contract: Type Lident EQ Lident XOR_EQ
 ##
 ## Ends in an error in state: 13.
 ##
-## core_type -> Ident . [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA ARROW ]
-## core_type -> Ident . LT nsepseq(type_expr,COMMA) GT [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA ARROW ]
+## core_type -> Lident . [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA ARROW ]
+## core_type -> Lident . LT nsepseq(type_expr,COMMA) GT [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident
+## Lident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LBRACE Ident COLON String XOR_EQ
+contract: Type Lident EQ LBRACE Lident COLON String XOR_EQ
 ##
 ## Ends in an error in state: 35.
 ##
@@ -1836,19 +1836,19 @@ contract: Type Ident EQ LBRACE Ident COLON String XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LBRACE Ident COLON XOR_EQ
+contract: Type Lident EQ LBRACE Lident COLON XOR_EQ
 ##
 ## Ends in an error in state: 12.
 ##
-## field_decl -> Ident COLON . type_expr [ RBRACE COMMA ]
+## field_decl -> Lident COLON . type_expr [ RBRACE COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident COLON
+## Lident COLON
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LBRACE Ident COMMA Ident COLON String XOR_EQ
+contract: Type Lident EQ LBRACE Lident COMMA Lident COLON String XOR_EQ
 ##
 ## Ends in an error in state: 39.
 ##
@@ -1862,7 +1862,7 @@ contract: Type Ident EQ LBRACE Ident COMMA Ident COLON String XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LBRACE Ident COMMA Ident COMMA XOR_EQ
+contract: Type Lident EQ LBRACE Lident COMMA Lident COMMA XOR_EQ
 ##
 ## Ends in an error in state: 40.
 ##
@@ -1875,7 +1875,7 @@ contract: Type Ident EQ LBRACE Ident COMMA Ident COMMA XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LBRACE Ident COMMA XOR_EQ
+contract: Type Lident EQ LBRACE Lident COMMA XOR_EQ
 ##
 ## Ends in an error in state: 36.
 ##
@@ -1888,20 +1888,20 @@ contract: Type Ident EQ LBRACE Ident COMMA XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LBRACE Ident XOR_EQ
+contract: Type Lident EQ LBRACE Lident XOR_EQ
 ##
 ## Ends in an error in state: 11.
 ##
-## field_decl -> Ident . [ RBRACE COMMA ]
-## field_decl -> Ident . COLON type_expr [ RBRACE COMMA ]
+## field_decl -> Lident . [ RBRACE COMMA ]
+## field_decl -> Lident . COLON type_expr [ RBRACE COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident
+## Lident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LBRACE XOR_EQ
+contract: Type Lident EQ LBRACE XOR_EQ
 ##
 ## Ends in an error in state: 10.
 ##
@@ -1913,7 +1913,7 @@ contract: Type Ident EQ LBRACE XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LBRACKET WILD COMMA XOR_EQ
+contract: Type Lident EQ LBRACKET WILD COMMA XOR_EQ
 ##
 ## Ends in an error in state: 19.
 ##
@@ -1925,7 +1925,7 @@ contract: Type Ident EQ LBRACKET WILD COMMA XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LBRACKET WILD GT
+contract: Type Lident EQ LBRACKET WILD GT
 ##
 ## Ends in an error in state: 42.
 ##
@@ -1943,7 +1943,7 @@ contract: Type Ident EQ LBRACKET WILD GT
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LBRACKET WILD XOR_EQ
+contract: Type Lident EQ LBRACKET WILD XOR_EQ
 ##
 ## Ends in an error in state: 18.
 ##
@@ -1956,7 +1956,7 @@ contract: Type Ident EQ LBRACKET WILD XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LBRACKET XOR_EQ
+contract: Type Lident EQ LBRACKET XOR_EQ
 ##
 ## Ends in an error in state: 9.
 ##
@@ -1968,57 +1968,57 @@ contract: Type Ident EQ LBRACKET XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LPAR Constr COLON XOR_EQ
+contract: Type Lident EQ LPAR Uident COLON XOR_EQ
 ##
 ## Ends in an error in state: 48.
 ##
-## fun_type_arg -> Constr COLON . type_expr [ RPAR COMMA ]
+## fun_type_arg -> Uident COLON . type_expr [ RPAR COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr COLON
+## Uident COLON
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LPAR Constr XOR_EQ
+contract: Type Lident EQ LPAR Uident XOR_EQ
 ##
 ## Ends in an error in state: 47.
 ##
-## core_type -> Constr . [ RPAR ]
-## core_type -> Constr . DOT Ident [ RPAR ]
-## fun_type_arg -> Constr . COLON type_expr [ RPAR COMMA ]
+## core_type -> Uident . [ RPAR ]
+## core_type -> Uident . DOT Lident [ RPAR ]
+## fun_type_arg -> Uident . COLON type_expr [ RPAR COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr
+## Uident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LPAR Ident COLON Constr COMMA Constr XOR_EQ
+contract: Type Lident EQ LPAR Lident COLON Uident COMMA Uident XOR_EQ
 ##
 ## Ends in an error in state: 59.
 ##
-## fun_type_arg -> Constr . COLON type_expr [ RPAR COMMA ]
+## fun_type_arg -> Uident . COLON type_expr [ RPAR COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## Constr
+## Uident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LPAR Ident COLON Constr COMMA Ident XOR_EQ
+contract: Type Lident EQ LPAR Lident COLON Uident COMMA Lident XOR_EQ
 ##
 ## Ends in an error in state: 58.
 ##
-## fun_type_arg -> Ident . COLON type_expr [ RPAR COMMA ]
+## fun_type_arg -> Lident . COLON type_expr [ RPAR COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident
+## Lident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LPAR Ident COLON Constr COMMA XOR_EQ
+contract: Type Lident EQ LPAR Lident COLON Uident COMMA XOR_EQ
 ##
 ## Ends in an error in state: 57.
 ##
@@ -2030,7 +2030,7 @@ contract: Type Ident EQ LPAR Ident COLON Constr COMMA XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LPAR Ident COLON Constr RPAR ARROW XOR_EQ
+contract: Type Lident EQ LPAR Lident COLON Uident RPAR ARROW XOR_EQ
 ##
 ## Ends in an error in state: 54.
 ##
@@ -2042,7 +2042,7 @@ contract: Type Ident EQ LPAR Ident COLON Constr RPAR ARROW XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LPAR Ident COLON Constr RPAR XOR_EQ
+contract: Type Lident EQ LPAR Lident COLON Uident RPAR XOR_EQ
 ##
 ## Ends in an error in state: 53.
 ##
@@ -2054,7 +2054,7 @@ contract: Type Ident EQ LPAR Ident COLON Constr RPAR XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LPAR Ident COLON String XOR_EQ
+contract: Type Lident EQ LPAR Lident COLON String XOR_EQ
 ##
 ## Ends in an error in state: 56.
 ##
@@ -2067,33 +2067,33 @@ contract: Type Ident EQ LPAR Ident COLON String XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LPAR Ident COLON XOR_EQ
+contract: Type Lident EQ LPAR Lident COLON XOR_EQ
 ##
 ## Ends in an error in state: 45.
 ##
-## fun_type_arg -> Ident COLON . type_expr [ RPAR COMMA ]
+## fun_type_arg -> Lident COLON . type_expr [ RPAR COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident COLON
+## Lident COLON
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LPAR Ident XOR_EQ
+contract: Type Lident EQ LPAR Lident XOR_EQ
 ##
 ## Ends in an error in state: 44.
 ##
-## core_type -> Ident . [ RPAR ]
-## core_type -> Ident . LT nsepseq(type_expr,COMMA) GT [ RPAR ]
-## fun_type_arg -> Ident . COLON type_expr [ RPAR COMMA ]
+## core_type -> Lident . [ RPAR ]
+## core_type -> Lident . LT nsepseq(type_expr,COMMA) GT [ RPAR ]
+## fun_type_arg -> Lident . COLON type_expr [ RPAR COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## Ident
+## Lident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LPAR WILD XOR_EQ
+contract: Type Lident EQ LPAR WILD XOR_EQ
 ##
 ## Ends in an error in state: 50.
 ##
@@ -2105,7 +2105,7 @@ contract: Type Ident EQ LPAR WILD XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ LPAR XOR_EQ
+contract: Type Lident EQ LPAR XOR_EQ
 ##
 ## Ends in an error in state: 8.
 ##
@@ -2118,7 +2118,7 @@ contract: Type Ident EQ LPAR XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ VBAR LPAR XOR_EQ
+contract: Type Lident EQ VBAR LPAR XOR_EQ
 ##
 ## Ends in an error in state: 7.
 ##
@@ -2130,7 +2130,7 @@ contract: Type Ident EQ VBAR LPAR XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ VBAR WILD VBAR XOR_EQ
+contract: Type Lident EQ VBAR WILD VBAR XOR_EQ
 ##
 ## Ends in an error in state: 63.
 ##
@@ -2142,7 +2142,7 @@ contract: Type Ident EQ VBAR WILD VBAR XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ VBAR WILD XOR_EQ
+contract: Type Lident EQ VBAR WILD XOR_EQ
 ##
 ## Ends in an error in state: 62.
 ##
@@ -2155,7 +2155,7 @@ contract: Type Ident EQ VBAR WILD XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ VBAR XOR_EQ
+contract: Type Lident EQ VBAR XOR_EQ
 ##
 ## Ends in an error in state: 5.
 ##
@@ -2167,26 +2167,26 @@ contract: Type Ident EQ VBAR XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident EQ XOR_EQ
+contract: Type Lident EQ XOR_EQ
 ##
 ## Ends in an error in state: 3.
 ##
-## type_decl -> Type Ident EQ . type_expr [ SEMI RBRACE Else EOF Default Case ]
+## type_decl -> Type Lident EQ . type_expr [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## Type Ident EQ
+## Type Lident EQ
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Ident XOR_EQ
+contract: Type Lident XOR_EQ
 ##
 ## Ends in an error in state: 2.
 ##
-## type_decl -> Type Ident . EQ type_expr [ SEMI RBRACE Else EOF Default Case ]
+## type_decl -> Type Lident . EQ type_expr [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## Type Ident
+## Type Lident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -2195,8 +2195,8 @@ contract: Type XOR_EQ
 ##
 ## Ends in an error in state: 1.
 ##
-## type_decl -> Type . Constr EQ type_expr [ SEMI RBRACE Else EOF Default Case ]
-## type_decl -> Type . Ident EQ type_expr [ SEMI RBRACE Else EOF Default Case ]
+## type_decl -> Type . Uident EQ type_expr [ SEMI RBRACE Else EOF Default Case ]
+## type_decl -> Type . Lident EQ type_expr [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
 ## Type
@@ -2256,7 +2256,7 @@ contract: LBRACE True SEMI XOR_EQ
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Ident ARROW LBRACE True Default
+contract: Lident ARROW LBRACE True Default
 ##
 ## Ends in an error in state: 252.
 ##
