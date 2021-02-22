@@ -55,10 +55,12 @@ let pp_matchees : Format.formatter -> O.expression_variable list -> unit =
     let lst = List.map (fun (e:O.expression_variable) -> e.wrap_content) lst in
     Format.fprintf ppf "@[%a@]" (Simple_utils.PP_helpers.list_sep_d_par Var.pp) lst
 
+let pp_typed_patterns : Format.formatter -> typed_pattern -> unit =
+  fun ppf (pattern,t) ->
+    Format.fprintf ppf "(%a, %a)" (Stage_common.PP.match_pattern I.PP.type_expression) pattern O.PP.type_expression t
 let pp_patterns : Format.formatter -> typed_pattern list -> unit =
-  fun ppf lst ->
-    let patterns = List.map fst lst in
-    Format.fprintf ppf "@[ [ %a ]@]" (Simple_utils.PP_helpers.list_sep_d (Stage_common.PP.match_pattern I.PP.type_expression)) patterns
+  fun ppf typed_patterns ->
+    Format.fprintf ppf "@[ [ %a ]@]" (Simple_utils.PP_helpers.list_sep_d (pp_typed_patterns)) typed_patterns
 
 let pp_eq : Format.formatter ->  (typed_pattern list * (I.expression * O.environment)) -> unit =
   fun ppf (pl,(body,_env)) ->
