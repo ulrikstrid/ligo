@@ -252,13 +252,7 @@ error (`Concrete_pascaligo_unsupported_pattern_type pvar) ;
       in file "a dummy file name", line 20, characters 5-5
 
       Invalid case pattern.
-      If this is a case over Booleans, then "true" or "false" is expected.
-      If this is a case on a list, then one of the following is expected:
-        * an empty list pattern "[]";
-        * a cons list pattern "head#tail".
-      If this is a case over variants, then a constructor of a variant is expected.
-
-      Other patterns in case clauses are not (yet) supported.|}] ;
+              Can't match on values.|}] ;
   error (`Concrete_pascaligo_unsupported_string_singleton type_expr) ;
   [%expect
     {|
@@ -349,14 +343,8 @@ let%expect_test "main_cit_cameligo" =
     {|
       in file "a dummy file name", line 20, characters 5-5
 
-      Invalid pattern matching.
-      If this is pattern matching over Booleans, then "true" or "false" is expected.
-      If this is pattern matching on a list, then one of the following is expected:
-        * an empty list pattern "[]";
-        * a cons list pattern "head#tail".
-      If this is pattern matching over variants, then a constructor of a variant is expected.
-
-      Other forms of pattern matching are not (yet) supported.|}] ;
+      Invalid pattern.
+              Can't match on values.|}] ;
   error (`Concrete_cameligo_unsupported_string_singleton type_expr) ;
   [%expect
     {|
@@ -419,13 +407,7 @@ let%expect_test "main_cit_reasonligo" =
       in file "a dummy file name", line 20, characters 5-5
 
       Invalid pattern matching.
-      If this is pattern matching over Booleans, then "true" or "false" is expected.
-      If this is pattern matching on a list, then one of the following is expected:
-        * an empty list pattern "[]";
-        * a cons list pattern "[head, ...tail]".
-      If this is pattern matching over variants, then a constructor of a variant is expected.
-
-      Other forms of pattern matching are not (yet) supported.|}] ;
+              Can't match on values.|}] ;
   error (`Concrete_reasonligo_unsupported_string_singleton type_expr) ;
   [%expect
     {|
