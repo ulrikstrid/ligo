@@ -32,8 +32,9 @@ Variable definitions:
 (j#2 -> j) |core: int | in file "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 4, characters 46-55
 (k#4 -> k) |resolved: int | in file "../../test/contracts/get_scope_tests/lambda_letin.mligo", line 6, characters 8-9
 Type definitions:
-Module definitions: |} ];
+Module definitions: |} ]
 
+let%expect_test _ =
   run_ligo_good [ "get-scope" ; gs "letin.mligo" ; "--syntax=cameligo" ; "--format=dev" ; "--with-types" ] ;
   [%expect {|
 Scopes:
@@ -61,8 +62,9 @@ Variable definitions:
 (e#2 -> e) |resolved: int | in file "../../test/contracts/get_scope_tests/letin.mligo", line 6, characters 8-9
 (f#3 -> f) |resolved: int | in file "../../test/contracts/get_scope_tests/letin.mligo", line 7, characters 8-9
 Type definitions:
-Module definitions: |} ] ;
+Module definitions: |} ]
 
+let%expect_test _ =
   run_ligo_good [ "get-scope" ; gs "lambda.mligo" ; "--syntax=cameligo" ; "--format=dev" ; "--with-types" ] ;
   [%expect {|
 Scopes:
@@ -80,18 +82,19 @@ Variable definitions:
 (i#1 -> i) |core: int | in file "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 35-44
 (j#2 -> j) |core: int | in file "../../test/contracts/get_scope_tests/lambda.mligo", line 4, characters 45-54
 Type definitions:
-Module definitions: |} ] ;
+Module definitions: |} ]
 
+let%expect_test _ =
   run_ligo_good [ "get-scope" ; gs "match.mligo" ; "--syntax=cameligo" ; "--format=dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
+    [ a#1 b#5 c#9 mytype#0 ] in file "../../test/contracts/get_scope_tests/match.mligo", line 20, characters 12-13
     [ a#1 b#5 c#9 mytype#0 s#11 ] in file "../../test/contracts/get_scope_tests/match.mligo", line 19, characters 20-21
     [ a#1 b#5 c#9 mytype#0 s#11 ] in file "../../test/contracts/get_scope_tests/match.mligo", line 19, characters 16-17
-    [ a#1 b#5 c#9 mytype#0 ] in file "../../test/contracts/get_scope_tests/match.mligo", line 20, characters 12-13
     [ a#1 b#5 c#9 d#10 mytype#0 ] in file "../../test/contracts/get_scope_tests/match.mligo", line 18, characters 30-31
     [ a#1 b#5 c#9 d#10 mytype#0 ] in file "../../test/contracts/get_scope_tests/match.mligo", line 18, characters 28-29
     [ a#1 b#5 c#9 mytype#0 ] in file "../../test/contracts/get_scope_tests/match.mligo", line 18, characters 9-32
-    [ a#1 b#5 hd#7 mytype#0 tl#8 ] in file "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 14-15
+    [ a#1 b#5 hd#8 mytype#0 tl#7 ] in file "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 14-15
     [ a#1 b#5 c#6 mytype#0 ] in file "../../test/contracts/get_scope_tests/match.mligo", line 14, characters 4-5
     [ a#1 b#5 mytype#0 ] in file "../../test/contracts/get_scope_tests/match.mligo", line 13, character 4 to line 14, character 5
     [ a#1 b#5 mytype#0 ] in file "../../test/contracts/get_scope_tests/match.mligo", line 11, characters 18-19
@@ -113,15 +116,16 @@ Module definitions: |} ] ;
     (c#9 -> c) |resolved: int | in file "../../test/contracts/get_scope_tests/match.mligo", line 10, characters 4-5
     (d#10 -> d) |resolved: int | in file "../../test/contracts/get_scope_tests/match.mligo", line 18, characters 13-14
     (d#12 -> d) |resolved: int | in file "../../test/contracts/get_scope_tests/match.mligo", line 17, characters 4-5
-    (hd#7 -> hd) |resolved: int | in file "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 4-6
-    (s#11 -> s) |resolved: int | in file "../../test/contracts/get_scope_tests/match.mligo", line 19, characters 4-12
-    (tl#8 -> tl) |resolved: list (int) | in file "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 4-6
-    (x#3 -> x) |resolved: int | in file "../../test/contracts/get_scope_tests/match.mligo", line 7, characters 4-9
-    (y#4 -> y) |resolved: string | in file "../../test/contracts/get_scope_tests/match.mligo", line 8, characters 4-9
+    (hd#8 -> hd) |resolved: int | in file "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 4-6
+    (s#11 -> s) |resolved: int | in file "../../test/contracts/get_scope_tests/match.mligo", line 19, characters 10-11
+    (tl#7 -> tl) |resolved: list (int) | in file "../../test/contracts/get_scope_tests/match.mligo", line 15, characters 8-10
+    (x#3 -> x) |resolved: int | in file "../../test/contracts/get_scope_tests/match.mligo", line 7, characters 8-9
+    (y#4 -> y) |resolved: string | in file "../../test/contracts/get_scope_tests/match.mligo", line 8, characters 8-9
     Type definitions:
     (mytype#0 -> mytype) : sum[Bar -> string []  , Foo -> int [] ] in file "../../test/contracts/get_scope_tests/match.mligo", line 1, characters 0-40
-    Module definitions: |} ] ;
+    Module definitions: |} ]
 
+let%expect_test _ =
   run_ligo_good [ "get-scope" ; gs "rec.mligo" ; "--syntax=cameligo" ; "--format=dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
@@ -149,8 +153,8 @@ Module definitions: |} ] ;
     (j#3 -> j) |resolved: int | in file "../../test/contracts/get_scope_tests/rec.mligo", line 4, characters 39-40
     (k#4 -> k) |resolved: int | in file "../../test/contracts/get_scope_tests/rec.mligo", line 5, characters 8-9
     Type definitions:
-    Module definitions: |} ] ;
-
+    Module definitions: |} ] 
+let%expect_test _ =
   run_ligo_good [ "get-scope" ; gs "shadowing.mligo" ; "--syntax=cameligo" ; "--format=dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
@@ -177,8 +181,8 @@ Module definitions: |} ] ;
     (d#4 -> d) |resolved: int | in file "../../test/contracts/get_scope_tests/shadowing.mligo", line 5, characters 6-7
     (e#2 -> e) |resolved: int | in file "../../test/contracts/get_scope_tests/shadowing.mligo", line 6, characters 8-9
     Type definitions:
-    Module definitions: |} ] ;
-
+    Module definitions: |} ] 
+let%expect_test _ =
   run_ligo_good [ "get-scope" ; gs "records.mligo" ; "--syntax=cameligo" ; "--format=dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
@@ -204,8 +208,8 @@ Module definitions: |} ] ;
     (j#3 -> j) |resolved: int | in file "../../test/contracts/get_scope_tests/records.mligo", line 6, characters 31-32
     Type definitions:
     (myrec#0 -> myrec) : record[bar -> int []  , foo -> int [] ] in file "../../test/contracts/get_scope_tests/records.mligo", line 1, characters 0-36
-    Module definitions: |} ] ;
-
+    Module definitions: |} ] 
+let%expect_test _ =
   run_ligo_good [ "get-scope" ; gs "constant.mligo" ; "--syntax=cameligo" ; "--format=dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
@@ -227,8 +231,8 @@ Module definitions: |} ] ;
     (d#2 -> d) |resolved: int | in file "../../test/contracts/get_scope_tests/constant.mligo", line 5, characters 26-27
     (e#3 -> e) |resolved: int | in file "../../test/contracts/get_scope_tests/constant.mligo", line 6, characters 9-10
     Type definitions:
-    Module definitions: |} ] ;
-
+    Module definitions: |} ] 
+let%expect_test _ =
   run_ligo_good [ "get-scope" ; gs "application.mligo" ; "--syntax=cameligo" ; "--format=dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
@@ -248,8 +252,8 @@ Module definitions: |} ] ;
     (i#0 -> i) |core: int | in file "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 35-44
     (j#1 -> j) |core: int | in file "../../test/contracts/get_scope_tests/application.mligo", line 2, characters 45-54
     Type definitions:
-    Module definitions: |} ] ;
-
+    Module definitions: |} ] 
+let%expect_test _ =
   run_ligo_good [ "get-scope" ; gs "include.mligo" ; "--format=dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
@@ -282,8 +286,8 @@ Module definitions: |} ] ;
     (x#6 -> x) |resolved: int | in file "../../test/contracts/get_scope_tests/include.mligo", line 3, characters 4-5
     (y#7 -> y) |resolved: int | in file "../../test/contracts/get_scope_tests/include.mligo", line 5, characters 4-5
     Type definitions:
-    Module definitions: |} ] ;
-
+    Module definitions: |} ] 
+let%expect_test _ =
   run_ligo_good [ "get-scope" ; gs "bad_field_record.mligo" ; "--format=dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
@@ -302,8 +306,8 @@ Module definitions: |} ] ;
     (j#4 -> j) |unresolved| in file "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 13, characters 6-7
     Type definitions:
     (foo_record#0 -> foo_record) : record[bar -> int []  , foo -> int [] ] in file "../../test/contracts/get_scope_tests/bad_field_record.mligo", line 1, characters 0-43
-    Module definitions: |} ] ;
-
+    Module definitions: |} ] 
+let%expect_test _ =
   run_ligo_good [ "get-scope" ; gs "nominal_types.mligo" ; "--format=dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:
@@ -323,8 +327,9 @@ Module definitions: |} ] ;
     (foo_record#1 -> foo_record) : record[bar -> foo_variant []  ,
                                           foo -> foo_variant [] ] in file "../../test/contracts/get_scope_tests/nominal_types.mligo", line 2, characters 0-58
     (foo_variant#0 -> foo_variant) : sum[Bar -> string []  , Foo -> int [] ] in file "../../test/contracts/get_scope_tests/nominal_types.mligo", line 1, characters 0-45
-    Module definitions: |} ] ;
-    
+    Module definitions: |} ]
+
+let%expect_test _ =
   run_ligo_good [ "get-scope" ; gs "module.mligo" ; "--format=dev" ; "--with-types" ] ;
   [%expect{|
     Scopes:

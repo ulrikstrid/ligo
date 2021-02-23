@@ -1478,8 +1478,8 @@ const letin_nesting =
  s}}}
 const letin_nesting2 =
   lambda (x : int) return let y = 2 in let z = 3 in ADD(ADD(x , y) , z)
-const x = match (+1 , (+2 , +3)) with (#2 , #4) -> match #4 with (x ,
-  #3) -> x
+const x =  match (+1 , (+2 , +3)) with
+            | (#2,(x,#3)) -> x
     |}];
 
   run_ligo_good ["print-ast"; contract "letin.religo"];
@@ -1500,8 +1500,8 @@ const letin_nesting =
  s}}}
 const letin_nesting2 =
   lambda (x : int) return let y = 2 in let z = 3 in ADD(ADD(x , y) , z)
-const x = match (+1 , (+2 , +3)) with (#2 , #4) -> match #4 with (x ,
-  #3) -> x
+const x =  match (+1 , (+2 , +3)) with
+            | (#2,(x,#3)) -> x
     |}];
 
   run_ligo_bad ["print-ast-typed"; contract "existential.mligo"];
