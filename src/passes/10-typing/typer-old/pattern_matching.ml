@@ -222,16 +222,16 @@ let group_equations : equations -> equations O.label_map pm_result =
           (make_var_pattern var, O.t_unit ())
         in
         let upd : O.type_expression -> pattern option -> equations option -> equations option =
-        fun proj_t p_opt kopt ->
-          match kopt, p_opt with
-          | Some eqs , None   -> Some ( (dummy_p ()::ptl , (body,env))::eqs )
-          | None     , None   -> Some [ (dummy_p ()::ptl , (body,env)) ]
-          | Some eqs , Some p ->
-            let p = (p,proj_t) in
-            Some (( p::ptl , (body,env))::eqs)
-          | None     , Some p ->
-            let p = (p,proj_t) in
-            Some [ (p::ptl          , (body,env)) ]
+          fun proj_t p_opt kopt ->
+            match kopt, p_opt with
+            | Some eqs , None   -> Some ( (dummy_p ()::ptl , (body,env))::eqs )
+            | None     , None   -> Some [ (dummy_p ()::ptl , (body,env)) ]
+            | Some eqs , Some p ->
+              let p = (p,proj_t) in
+              Some (( p::ptl , (body,env))::eqs)
+            | None     , Some p ->
+              let p = (p,proj_t) in
+              Some [ (p::ptl          , (body,env)) ]
         in
         match phd.wrap_content with
         | P_variant (label,p_opt) ->
@@ -320,7 +320,17 @@ and ctor_rule : type_f:type_fun -> body_t:O.type_expression option -> matchees -
     let%bind eq_map = group_equations eqs in
       let aux_p : O.label * equations -> O.matching_content_case pm_result =
         fun (constructor,eq) ->
-          let proj = Location.wrap @@ Var.fresh ~name:"ctor_proj" () in
+          let proj =
+            match eq with
+            | [(tp,_)] -> (
+              let (pattern,_t) = List.hd tp in
+              match pattern.wrap_content with
+              | P_var x -> x.var
+              | _ -> Location.wrap @@ Var.fresh ~name:"ctor_proj" ()
+            )
+            | _ ->
+              Location.wrap @@ Var.fresh ~name:"ctor_proj" ()
+          in
           let new_ms = proj::mtl in
           let%bind nested = match_ ~type_f ~body_t new_ms eq def in
           ok @@ ({ constructor ; pattern = proj ; body = nested } : O.matching_content_case)
@@ -373,22 +383,28 @@ and product_rule : type_f:type_fun -> body_t:O.type_expression option -> typed_p
       let (p,t) = product_shape in
       match (p.wrap_content,t) with
       | P_tuple ps , t ->
-        let aux : int -> _ -> (O.label * (O.expression_variable * O.type_expression)) pm_result =
-          fun i _ ->
+        let aux : int -> _ O.pattern_repr Location.wrap -> (O.label * (O.expression_variable * O.type_expression)) pm_result =
+          fun i proj_pattern ->
             let l = (O.Label (string_of_int i)) in
             let%bind field_t = extract_record_type p l t in
-            let v = Location.wrap @@ Var.fresh ~name:"tuple_proj" () in
+            let v = match proj_pattern.wrap_content with
+              | P_var x -> x.var
+              | _ -> Location.wrap ~loc:proj_pattern.location @@ Var.fresh ~name:"tuple_proj" ()
+            in
             ok @@ (l, (v,field_t))
         in
         bind_mapi_list aux ps
-      | P_record (labels,_) , t ->
-        let aux : O.label -> (O.label * (O.expression_variable * O.type_expression)) pm_result  =
-          fun l ->
-            let v = Location.wrap @@ Var.fresh ~name:"record_proj" () in
+      | P_record (labels,patterns) , t ->
+        let aux : (O.label * _ O.pattern_repr Location.wrap)  -> (O.label * (O.expression_variable * O.type_expression)) pm_result  =
+          fun (l,proj_pattern) ->
+            let v = match proj_pattern.wrap_content with
+              | P_var x -> x.var
+              | _ -> Location.wrap ~loc:proj_pattern.location @@ Var.fresh ~name:"record_proj" ()
+            in
             let%bind field_t = extract_record_type p l t in
             ok @@ (l , (v,field_t))
         in
-        bind_map_list aux labels
+        bind_map_list aux (List.combine labels patterns)
       | _ -> corner_case __LOC__
     in
     let aux : typed_pattern list * (I.expression * O.environment) -> (typed_pattern list * (I.expression * O.environment)) pm_result =
@@ -416,19 +432,25 @@ and product_rule : type_f:type_fun -> body_t:O.type_expression option -> typed_p
             let (p,t) = product_shape in
             match (p.wrap_content,t) with
             | P_tuple ps , t ->
-              let aux i _ =
+              let aux i p =
                 let%bind field_t = extract_record_type p (O.Label (string_of_int i)) t in
-                let v = make_var_pattern (Location.wrap @@ Var.fresh ~name:"_" ()) in
+                let v = match p.wrap_content with
+                  | P_var _ -> p
+                  | _ -> make_var_pattern (Location.wrap ~loc:p.location @@ Var.fresh ~name:"_" ())
+                in
                 ok (v,field_t)
               in
               bind_mapi_list aux ps
-            | P_record (labels,_) , t ->
-              let aux l =
+            | P_record (labels,patterns) , t ->
+              let aux (l,p) =
                 let%bind field_t = extract_record_type p l t in
-                let v = make_var_pattern (Location.wrap @@ Var.fresh ~name:"_" ()) in
+                let v = match p.wrap_content with
+                  | P_var _ -> p
+                  | _ -> make_var_pattern (Location.wrap ~loc:p.location @@ Var.fresh ~name:"_" ())
+                in
                 ok (v,field_t)
               in
-              bind_map_list aux labels
+              bind_map_list aux (List.combine labels patterns)
             | _ -> corner_case __LOC__
           in
           ok (filler @ pl , (body,env))
