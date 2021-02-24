@@ -85,9 +85,11 @@ module Token = Lexing_jsligo.Token
 %token <Region.t> Default  "default"
 %token <Region.t> Else     "else"
 %token <Region.t> Enum     "enum"
+%token <Region.t> Export   "export"
 %token <Region.t> False    "false"
 %token <Region.t> For      "for"
 %token <Region.t> If       "if"
+%token <Region.t> Import   "import"
 %token <Region.t> Let      "let"
 %token <Region.t> New      "new"
 %token <Region.t> Return   "return"
@@ -98,9 +100,11 @@ module Token = Lexing_jsligo.Token
 %token <Region.t> While    "while"
 %token <Region.t> With     "with"
 
+
 (* TypeScript keywords *)
 
 %token <Region.t> As          "as"
+%token <Region.t> Namespace   "namespace"
 %token <Region.t> Type        "type"
 
 (* Virtual tokens *)

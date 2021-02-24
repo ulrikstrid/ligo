@@ -44,6 +44,18 @@ and pp_statement = function
 | SType       s -> pp_type s
 | SSwitch     s -> pp_switch s
 | SBreak      _ -> string "break" ^^ hardline
+| SNamespace  s -> pp_namespace s
+| SExport     s -> pp_export s
+| SImport     s -> pp_import s
+
+and pp_import {value; _} = 
+  string "import" ^^ string value.alias.value ^^ string "=" ^^ pp_nsepseq "." (fun a -> string a.value) value.module_path
+
+and pp_export {value = (_, statement); _} =
+  string "export" ^^ pp_statement statement
+
+and pp_namespace {value = (_, name, statements); _} =
+  string "namespace" ^^ string name.value ^^ group (pp_braced ";" pp_statement statements) 
 
 and pp_cond_expr {value; _} =
   let {test; ifso; ifnot; _} = value in
@@ -259,6 +271,12 @@ and pp_type_expr: type_expr -> document = function
 | TConstr t -> pp_ident t
 | TWild   _ -> string "_"
 | TString s -> pp_string s
+| TModA   t -> pp_module_access pp_type_expr t
+
+and pp_module_access : type a.(a -> document) -> a module_access reg -> document
+= fun f {value; _} ->
+  let {module_name; field; _} = value in
+  group (pp_ident module_name ^^ string "." ^^ break 0 ^^ f field)
 
 and pp_cartesian v =
   group(pp_brackets "," pp_type_expr v)

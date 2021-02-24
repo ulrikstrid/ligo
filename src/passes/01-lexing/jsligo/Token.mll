@@ -99,9 +99,11 @@ module T =
     | Default  of Region.t  (* default  *)
     | Else     of Region.t  (* else     *)
     | Enum     of Region.t  (* enum     *)
+    | Export   of Region.t  (* export   *)
     | False    of Region.t  (* false    *)
     | For      of Region.t  (* for      *)
     | If       of Region.t  (* if       *)
+    | Import   of Region.t  (* import   *)
     | Let      of Region.t  (* let      *)
     | New      of Region.t  (* new      *)
     | Return   of Region.t  (* return   *)
@@ -115,6 +117,7 @@ module T =
     (* TypeScript keywords *)
 
     | As          of Region.t  (* as          *)
+    | Namespace   of Region.t  (* namespace   *)
     | Type        of Region.t  (* type        *)
 
     (* Virtual tokens *)
@@ -212,9 +215,11 @@ module T =
     | "Default"  -> "default"
     | "Else"     -> "else"
     | "Enum"     -> "enum"
+    | "Export"   -> "export"
     | "False"    -> "false"
     | "For"      -> "for"
     | "If"       -> "if"
+    | "Import"   -> "import"
     | "Let"      -> "let"
     | "New"      -> "new"
     | "Return"   -> "return"
@@ -228,6 +233,7 @@ module T =
     (* TypeScript keywords *)
 
     | "Type"        -> "type"
+    | "Namespace"   -> "namespace"
     | "As"          -> "as"
     
     (* Virtual tokens *)
@@ -336,9 +342,11 @@ module T =
     | Default  region -> region, "Default"
     | Else     region -> region, "Else"
     | Enum     region -> region, "Enum"
+    | Export   region -> region, "Enum"
     | False    region -> region, "False"
     | For      region -> region, "For"
     | If       region -> region, "If"
+    | Import   region -> region, "Import"
     | Let      region -> region, "Let"
     | New      region -> region, "New"
     | Return   region -> region, "Return"
@@ -350,9 +358,10 @@ module T =
     | With     region -> region, "With"
 
     (* TypeScript keywords *)
-
-    | Type        region -> region, "Type"
     | As          region -> region, "As"
+    | Namespace   region -> region, "Namespace"
+    | Type        region -> region, "Type"
+    
 
     | EOF    region -> region, "EOF"
 
@@ -437,10 +446,12 @@ module T =
     | Const    _ -> "const"
     | Default  _ -> "default"
     | Else     _ -> "else"
+    | Export   _ -> "export"
     | Enum     _ -> "enum"
     | False    _ -> "false"
     | For      _ -> "for"
     | If       _ -> "if"
+    | Import   _ -> "import"
     | Let      _ -> "let"
     | New      _ -> "new"
     | Return   _ -> "return"
@@ -452,9 +463,10 @@ module T =
     | With     _ -> "with"
 
     (* TypeScript keywords *)
-
-    | Type        _ -> "type"
+    
     | As          _ -> "as"
+    | Namespace   _ -> "namespace"
+    | Type        _ -> "type"
 
 
     (* Virtual tokens *)
@@ -482,9 +494,11 @@ module T =
        (fun reg -> Default reg);
        (fun reg -> Else    reg);
        (fun reg -> Enum    reg);
+       (fun reg -> Export  reg);
        (fun reg -> False   reg);
        (fun reg -> For     reg);
        (fun reg -> If      reg);
+       (fun reg -> Import  reg);
        (fun reg -> Let     reg);
        (fun reg -> New     reg);
        (fun reg -> Return  reg);
@@ -497,8 +511,10 @@ module T =
 
        (* TypeScript keywords *)
 
-       (fun reg -> Type    reg);
-       (fun reg -> As      reg);
+       (fun reg -> As        reg);
+       (fun reg -> Namespace reg);
+       (fun reg -> Type      reg);
+       
     ]
 
     let reserved = SSet.empty

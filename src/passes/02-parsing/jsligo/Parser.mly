@@ -111,7 +111,7 @@ sep_or_term_list(item,sep):
 %inline type_name        : "<lident>"  { $1 }
 %inline field_name       : "<lident>"  { $1 }
 (* %inline struct_name      : "<lident>"  { $1 } *)
-%inline module_name      : "<uident>" { $1 }
+// %inline module_name      : "<uident>" { $1 }
 
 (* Non-empty comma-separated values (at least two values) *)
 
@@ -364,19 +364,26 @@ cartesian:
   core_type { $1 }
 | brackets(nsepseq(type_expr, ",")) {  TProd $1 }
 
+module_access_t:
+  ident "." module_var_t {
+  let start       = $1.region in
+    let stop        = type_expr_to_region $3 in
+    let region      = cover start stop in
+    let value       = {module_name=$1; selector=$2; field=$3}
+    in {region; value} 
+  }
+
+module_var_t: 
+  module_access_t   { TModA $1 }
+| ident             { TVar  $1 }
+
 core_type:
-  "<lident>"            {       TVar $1 }
+  "<lident>"           {       TVar $1 }
 | "<uident>"           {    TConstr $1 }
 | "<string>"           {    TString $1 }
 |  "_"                 {      TWild $1 }
 | par(type_expr)       {       TPar $1 }
-| module_name "." type_name {
-    let module_name = $1.value in
-    let type_name   = $3.value in
-    let value       = module_name ^ "." ^ type_name in
-    let region      = cover $1.region $3.region
-    in TVar {region; value}
-  }
+| module_access_t      {      TModA $1 }
 | type_name chevrons(nsepseq(type_expr, ",")) {
    let region = cover $1.region $2.region
    in TApp {region; value = $1,$2} }
@@ -476,15 +483,53 @@ statement:
 | block_statement
 | if_else_statement
 | switch_statement
-| return_statement
-| declaration
-  { $1 }
+| import_statement
+| return_statement { $1 }
+| "export"? declaration
+  { $2 }
+
+ident:
+  "<lident>"
+| "<uident>" { $1 }
+
+import_statement: 
+  "import" ident "=" nsepseq(ident, ".") { 
+    let region = cover $1 (nsepseq_to_region (fun a -> a.region) $4) in 
+    SImport {
+      value = {
+        kwd_import  = $1;
+        alias       = $2;
+        equal       = $3;
+        module_path = $4;
+      };
+      region 
+    }
+   } 
+
+
+namespace_statement: 
+  "export"? "namespace" ident "{" statements_with_namespace "}" { 
+    let region = cover (match $1 with Some s -> s | _ -> $2) $6 in 
+    let value = ($2, $3, {
+      value = {
+        lbrace = $4;
+        inside = $5;
+        rbrace = $6
+      };
+      region = cover $4 $6
+    }) in
+    SNamespace {value; region}
+  }
+
+statement_with_namespace:
+  statement { $1 }
+| namespace_statement { $1 }
 
 toplevel_statements:
-  statement ";" toplevel_statements {
+  statement_with_namespace ";" toplevel_statements {
     Utils.nseq_cons ($1, Some $2) $3
   }
-| statement ";"? { ($1,$2), [] }
+| statement_with_namespace ";"? { ($1,$2), [] }
 (*
 | "<directive>" toplevel_statements {
     Utils.nseq_cons ($1, None) $2
@@ -498,6 +543,15 @@ statements:
     | None -> ($1, [])
   }
 | statement { $1, [] }
+
+statements_with_namespace:
+  statement_with_namespace ";" statements_with_namespace? {
+    match $3 with
+    | Some s ->  Utils.nsepseq_cons $1 $2 s
+    | None -> ($1, [])
+  }
+| statement_with_namespace { $1, [] }
+
 
 contract:
   toplevel_statements EOF { {statements=$1; eof=$2} }

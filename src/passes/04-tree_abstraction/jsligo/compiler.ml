@@ -1,4 +1,6 @@
 [@@@warning "-27"]
+[@@@warning "-39"]
+
 open Errors
 open Trace
 open Function
@@ -254,6 +256,7 @@ and compile_type_expression : CST.type_expr -> (type_expression, _) result =
     let%bind fields = bind_map_list aux lst in
     return @@ t_record_ez_attr ~loc ~attr:attributes fields
   | TProd prod  ->
+    print_endline "tprod hi";
     let (nsepseq, loc) = r_split prod in
     let lst = npseq_to_list nsepseq.inside in
     let%bind lst = bind_map_list self lst in
@@ -279,6 +282,11 @@ and compile_type_expression : CST.type_expr -> (type_expression, _) result =
     return @@ t_variable ~loc v
   | TWild _reg -> failwith "TWild unsupported"
   | TString _s -> fail @@ unsupported_string_singleton te
+  | TModA ma ->
+    let (ma, loc) = r_split ma in
+    let (module_name, _) = r_split ma.module_name in
+    let%bind element = self ma.field in
+    return @@ t_module_accessor ~loc module_name element
 end
 
 open Compile_type
@@ -644,7 +652,6 @@ and compile_expression_in : CST.expr -> env -> (AST.expr, _) result = fun e env 
   | EProj proj ->
     (* check if local variable, otherwise go for a module *)
 
-    print_endline "aaaa1";
     let (proj, loc) = r_split proj in
     let%bind (selection , _) = compile_selection proj.selection in
 
@@ -1149,6 +1156,20 @@ and compile_statement : CST.statement -> env -> (statement_result * env, _) resu
     let%bind rhs = compile_type_expression type_expr in
     (* let%bind body = compile_expression_in body in *)
     binding (e_type_in ~loc type_binder rhs) env
+  | SNamespace n -> 
+    let ((m, name, rhs), loc) = r_split n in
+    let module_binder = name.value in
+    let%bind rhs = compile_namespace rhs.value.inside env in
+    binding (e_mod_in ~loc module_binder rhs) env
+  | SExport e -> 
+    let ((_, statement), _) = r_split e in
+    compile_statement statement env
+  | SImport i ->
+    let (({alias; module_path; _}: CST.import), loc) = r_split i in
+    let start = (fst module_path).value in
+    let rest = List.map (fun (_, (b: CST.ident)) -> b.value) (snd module_path) in
+    let x = (start, rest) in
+    binding (e_mod_alias ~loc alias.value x) env
 
 and compile_statements_to_expression : CST.statements -> env -> (AST.expression, _) result = fun statements env ->
   let%bind (statement_result, env) = compile_statements statements env in
@@ -1158,9 +1179,8 @@ and compile_statements_to_expression : CST.statements -> env -> (AST.expression,
   | Break r 
   | Return r -> r)
   
-[@@@warning "-39"]
 
-let rec compile_statement_to_declaration : CST.statement -> env -> (AST.declaration list * env, _) result = fun statement env ->
+and compile_statement_to_declaration : CST.statement -> env -> (AST.declaration list * env, _) result = fun statement env ->
   match statement with
   | SType {value; _} ->
     let name = value.name.value in
@@ -1178,7 +1198,7 @@ let rec compile_statement_to_declaration : CST.statement -> env -> (AST.declarat
     in 
     aux fst_binding env bindings
   )
-  | SConst {value = {bindings; _}} -> (
+  | SConst {value = {bindings; _}; _} -> (
     let fst_binding = fst bindings in
     let%bind (fst_binding, env) = compile_let_to_declaration ~const:true fst_binding env in
     let bindings = List.map (fun (_, b) -> b) @@ snd bindings in
@@ -1190,6 +1210,14 @@ let rec compile_statement_to_declaration : CST.statement -> env -> (AST.declarat
     in 
     aux fst_binding env bindings
   )
+  | SNamespace {value = (_, ident, {value = {inside = statements; _}; _}); _} ->
+    let (name,_) = r_split ident in
+    let%bind module_ = compile_namespace statements env in
+    ok @@ ([AST.Declaration_module  {module_binder=name; module_}], env)
+  | SImport {value = {alias; module_path; _}; _} ->
+    let (alias,_)   = r_split alias in
+    let binders,_ = List.Ne.split @@ List.Ne.map r_split @@ npseq_to_ne_list module_path in
+    ok @@ ([AST.Module_alias {alias; binders}], env)
   | _ ->
     fail @@ statement_not_supported_at_toplevel statement
 
@@ -1203,6 +1231,19 @@ and compile_statements_to_program : CST.ast -> env -> (AST.module_, _) result = 
   in
   let statements = nseq_to_list ast.statements in
   let statements = List.map fst statements in
+  let%bind declarations = bind_map_list aux statements in
+  let lst = List.flatten declarations in
+  ok lst
+
+and compile_namespace : CST.statements -> env -> (AST.module_, _) result = fun statements env ->
+  let aux : CST.statement -> (declaration location_wrap list, _) result = fun statement ->
+    let%bind (declarations, env) = compile_statement_to_declaration statement env in
+    ok @@ List.map (fun d -> 
+      let loc = Location.lift @@ CST.statement_to_region statement in
+      Location.wrap ~loc d
+    ) declarations
+  in
+  let statements = Utils.nsepseq_to_list statements in
   let%bind declarations = bind_map_list aux statements in
   let lst = List.flatten declarations in
   ok lst

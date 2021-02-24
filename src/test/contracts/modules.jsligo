@@ -1,5 +1,5 @@
 namespace B {
-    export type titi = number;
+    export type titi = int;
 };
 
 namespace A {

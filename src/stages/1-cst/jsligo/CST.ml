@@ -28,26 +28,30 @@ type 'a reg = 'a Region.reg
 
 type lexeme = string
 type field_name = string reg
+type ident = string reg
 
 (* Keywords of Reason *)
 
-type kwd_else    = Region.t
-type kwd_false   = Region.t
-type kwd_if      = Region.t
-type kwd_let     = Region.t
-type kwd_const   = Region.t
-type kwd_or      = Region.t
-type kwd_then    = Region.t
-type kwd_true    = Region.t
-type kwd_type    = Region.t
-type kwd_return  = Region.t
-type kwd_switch  = Region.t
-type kwd_case    = Region.t
-type kwd_default = Region.t
-type kwd_unit    = Region.t
-type kwd_new     = Region.t
-type kwd_as      = Region.t
-type kwd_break   = Region.t
+type kwd_else      = Region.t
+type kwd_false     = Region.t
+type kwd_if        = Region.t
+type kwd_let       = Region.t
+type kwd_const     = Region.t
+type kwd_or        = Region.t
+type kwd_then      = Region.t
+type kwd_true      = Region.t
+type kwd_type      = Region.t
+type kwd_return    = Region.t
+type kwd_switch    = Region.t
+type kwd_case      = Region.t
+type kwd_default   = Region.t
+type kwd_unit      = Region.t
+type kwd_new       = Region.t
+type kwd_as        = Region.t
+type kwd_break     = Region.t
+type kwd_namespace = Region.t
+type kwd_export    = Region.t
+type kwd_import    = Region.t
 
 (* Data constructors *)
 
@@ -200,6 +204,13 @@ and type_expr =
 | TConstr of variable
 | TWild   of wild
 | TString of lexeme reg
+| TModA   of type_expr module_access reg
+
+and 'a module_access = {
+  module_name : ident;
+  selector    : dot;
+  field       : 'a;
+}
 
 and cartesian = (type_expr, comma) nsepseq brackets reg
 
@@ -334,6 +345,16 @@ and statement =
 | SType       of type_decl reg
 | SSwitch     of switch reg
 | SBreak      of kwd_break
+| SNamespace  of (kwd_namespace * ident * (statements braced reg)) reg
+| SExport     of (kwd_export * statement) reg
+| SImport     of import reg
+
+and import = {
+  kwd_import   : kwd_import;
+  alias        : ident;
+  equal        : equal;
+  module_path  : (ident, dot) nsepseq
+}
 
 and arguments =
   Multiple of (expr,comma) nsepseq par reg
@@ -467,6 +488,7 @@ let type_expr_to_region = function
 | TPar    {region; _}
 | TString {region; _}
 | TVar    {region; _}
+| TModA   {region; _}
 | TConstr {region; _}
 | TWild    region
  -> region
@@ -520,7 +542,10 @@ let statement_to_region = function
 | SLet  {region; _}
 | SConst {region; _}
 | SSwitch {region; _}
-| SType {region; _} -> region
+| SType {region; _} 
+| SImport {region; _}
+| SExport {region; _}
+| SNamespace {region; _} -> region
 
 let selection_to_region = function
   FieldName f -> f.region

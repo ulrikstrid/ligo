@@ -81,7 +81,12 @@ let print_lident state {region; value} =
             (compact state region)value
   in Buffer.add_string state#buffer line
 
-
+let print_ident state {region; value} =
+  let line =
+    sprintf "%s: Ident %s\n"
+            (compact state region)value
+  in Buffer.add_string state#buffer line
+  
 
 let print_tconstr state {region; value} =
   let line =
@@ -175,6 +180,20 @@ and print_statement state = function
     print_cases state cases;
     print_token state rbrace    "}"
 | SBreak b -> print_token state b "break"
+| SNamespace { value = (kwd_namespace, name, {value = {lbrace; inside; rbrace}; _}); _} ->
+    print_token   state kwd_namespace "namespace";
+    print_lident  state name;
+    print_token   state lbrace    "{";
+    print_nsepseq state ";" print_statement inside;
+    print_token   state rbrace    "}"
+| SImport {value = {kwd_import; alias; equal; module_path}; _} -> 
+    print_token state kwd_import "import";
+    print_lident state alias;
+    print_token state equal "=";
+    print_nsepseq state "." (fun state a -> print_lident state a) module_path
+| SExport { value = (e, s) ; _} ->
+    print_token state e "export;";
+    print_statement state s
 
 and print_type_expr state = function
   TProd prod      -> print_cartesian state prod
@@ -187,6 +206,14 @@ and print_type_expr state = function
 | TFun t          -> print_fun_type state t
 | TWild wild      -> print_token state wild " "
 | TString s       -> print_string state s
+| TModA ma        -> print_module_access print_type_expr state ma
+
+and print_module_access : type a.(state -> a -> unit ) -> state -> a module_access reg -> unit =
+fun f state {value; _} ->
+  let {module_name; selector; field} = value in
+  print_ident   state module_name;
+  print_token   state selector ".";
+  f             state field;
 
 and print_sum_type state {value; _} =
   let {variants; attributes; lead_vbar} = value in
@@ -634,7 +661,30 @@ and pp_statement state = function
     pp_loc_node state "SSwitch" region;
     pp_switch_statement state value
 | SBreak b -> 
-  pp_loc_node state "SBreak" b
+    pp_loc_node state "SBreak" b
+| SNamespace {value; region} -> 
+    pp_loc_node  state "SNamespace" region;
+    pp_namespace state value
+| SExport {value; region} ->
+    pp_loc_node state "SExport" region;
+    pp_statement state (snd value)
+| SImport {value; region} ->
+    pp_loc_node state "SImport" region;
+    pp_import state value
+
+and pp_import state  {alias; module_path; _} =
+  pp_ident state alias;
+  let items = Utils.nsepseq_to_list module_path in
+  let aux p = pp_ident state p in
+  List.iter aux items
+
+and pp_namespace state (n, name, {value = {inside = statements;_}; _}) = 
+  pp_loc_node state "<namespace>" n;
+  pp_ident    state name;
+  let statements = Utils.nsepseq_to_list statements in
+  let apply len rank = pp_statement (state#pad len rank) in
+  List.iteri (List.length statements |> apply) statements
+  
 
 and pp_switch_statement state node =
   let {expr; cases; _} = node in
@@ -1015,6 +1065,15 @@ and pp_type_expr state = function
 | TString s ->
     pp_node   state "TString";
     pp_string (state#pad 1 0) s
+| TModA {value; region} ->
+    pp_loc_node state "TModA" region;
+    pp_module_access pp_type_expr state value
+
+and pp_module_access : type a. (state -> a -> unit ) -> state -> a module_access -> unit
+= fun f state ma ->
+  pp_ident (state#pad 2 0) ma.module_name;
+  f (state#pad 2 1) ma.field
+    
 
 and pp_fun_type_arg state {name; type_expr; _} =
   pp_ident     state name;

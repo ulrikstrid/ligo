@@ -60,6 +60,7 @@ let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> ('a, 'err
   | TVar    _
   | TConstr    _
   | TWild   _
+  | TModA _
   | TString _ -> ok @@ init
 
 let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> ('a, 'err) result = fun f init e  ->
@@ -228,8 +229,9 @@ and fold_statement : ('a, 'err) folder -> 'a -> statement -> ('a, 'err) result =
     in
     bind_fold_ne_list fold_case res cases
   | SBreak _ -> ok init
-
-
+  | SNamespace {value = (_, _, {value = {inside; _}; _} ); _} -> bind_fold_npseq self init inside
+  | SExport {value = (_, s); _} -> self init s 
+  | SImport _ -> ok init
 
 and fold_module : ('a, 'err) folder -> 'a -> t -> ('a, 'err) result =
   fun f init {statements;eof=_} ->
@@ -291,6 +293,7 @@ let rec map_type_expression : ('err) mapper -> type_expr -> ('b, 'err) result = 
   | (TVar    _
   | TConstr _
   | TWild   _
+  | TModA _
   | TString _ as e) -> ok e
 
 let rec map_expression : 'err mapper -> expr -> (expr, 'err) result = fun f e  ->
@@ -555,6 +558,30 @@ and map_statement : ('err) mapper -> statement -> (statement, 'err) result =
     return @@ SSwitch { value = {value with expr; cases}; region}
   | SBreak b ->
     return @@ SBreak b
+  | SNamespace {value; region} -> 
+    let (kwd_namespace, name, statements) = value in
+    let ({value = statements_value; region = statements_region}: statements braced reg) = statements in
+    let%bind inside = bind_map_npseq self statements_value.inside in
+    let statements: statements braced reg = {
+      value = {
+        statements_value with 
+        inside
+      };
+      region = statements_region
+    } in
+    let value = (kwd_namespace, name, statements) in
+    return @@ SNamespace {
+      value;
+      region
+    }
+  | SExport {value; region} -> 
+    let (kwd_export, statement) = value in
+    let%bind statement = self statement in
+    return @@ SExport {
+      value = (kwd_export, statement);
+      region
+    }
+  | SImport i -> return @@ SImport i
 
 and map_toplevel_statement =
   fun f (statement, semi_opt) ->
