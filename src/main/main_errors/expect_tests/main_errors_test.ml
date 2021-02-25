@@ -308,7 +308,7 @@ error (`Concrete_pascaligo_unsupported_pattern_type pvar) ;
                   (LocalVar
                      { value=
                          { kwd_var= Region.ghost;
-                           name= {value= "foo"; region= Region.ghost};
+                           pattern= PVar {value= "foo"; region= Region.ghost};
                            var_type= None;
                            assign= Region.ghost;
                            init= EVar {value= "xxx"; region= Region.ghost};

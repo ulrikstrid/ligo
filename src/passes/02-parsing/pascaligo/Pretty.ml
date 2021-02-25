@@ -35,8 +35,8 @@ and pp_declaration = function
 | ModuleAlias d -> pp_module_alias d
 
 and pp_const_decl {value; _} =
-  let {name; const_type; init; attributes; _} = value in
-  let start = string ("const " ^ name.value) in
+  let {pattern; const_type; init; attributes; _} = value in
+  let start = string "const " ^^ pp_pattern pattern in
   let start = if attributes = [] then start
               else pp_attributes attributes ^/^ start in
   let start =
@@ -237,8 +237,8 @@ and pp_data_decl = function
 | LocalModuleAlias d -> pp_module_alias d
 
 and pp_var_decl {value; _} =
-  let {name; var_type; init; _} = value in
-  let start = string ("var " ^ name.value) in
+  let {pattern; var_type; init; _} = value in
+  let start = string "var " ^^ pp_pattern pattern in
   let start =
     match var_type with
       None -> start
@@ -611,6 +611,7 @@ and pp_injection_kwd = function
 | InjMap    _ -> "map"
 | InjBigMap _ -> "big_map"
 | InjList   _ -> "list"
+| InjRecord _ -> "record"
 
 and pp_ne_injection :
   'a.('a -> document) -> 'a ne_injection reg -> document =
@@ -649,6 +650,14 @@ and pp_pattern = function
 | PString s -> pp_string s
 | PList   l -> pp_list_pattern l
 | PTuple  t -> pp_tuple_pattern t
+| PRecord r -> pp_record_pattern r
+
+and pp_record_pattern fields = pp_injection pp_field_pattern fields
+
+and pp_field_pattern {value; _} =
+  let {field_name; pattern; _} = value in
+  prefix 2 1 (pp_ident field_name ^^ string " =") (pp_pattern pattern)
+
 
 and pp_int {value; _} =
   string (Z.to_string (snd value))

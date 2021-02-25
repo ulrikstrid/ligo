@@ -682,7 +682,7 @@ and decompile_to_data_decl : dialect -> _ AST.binder -> AST.expression -> AST.at
     ok @@ CST.LocalFun (wrap fun_decl)
   | _ ->
     let%bind init = decompile_expression ~dialect expr in
-    let const_decl : CST.const_decl = {kwd_const=ghost;name;const_type;equal=ghost;init;terminator; attributes} in
+    let const_decl : CST.const_decl = {kwd_const=ghost;pattern = PVar name;const_type;equal=ghost;init;terminator; attributes} in
     let data_decl  : CST.data_decl  =  LocalConst (wrap const_decl) in
     ok @@ data_decl
 
@@ -760,7 +760,7 @@ and decompile_declaration ~dialect : AST.declaration Location.wrap -> (CST.decla
     | _ ->
       let%bind const_type = bind_map_option (bind_compose (ok <@ prefix_colon) (decompile_type_expr dialect)) binder.ascr in
       let%bind init = decompile_expression ~dialect expr in
-      let const_decl : CST.const_decl = {kwd_const=ghost;name;const_type=const_type;equal=ghost;init;terminator; attributes} in
+      let const_decl : CST.const_decl = {kwd_const=ghost;pattern = PVar name;const_type=const_type;equal=ghost;init;terminator; attributes} in
       ok @@ CST.ConstDecl (wrap const_decl)
   )
   | Declaration_module {module_binder;module_} ->

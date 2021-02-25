@@ -167,7 +167,7 @@ and declaration =
 
 and const_decl = {
   kwd_const  : kwd_const;
-  name       : variable;
+  pattern    : pattern;
   const_type : (colon * type_expr) option;
   equal      : equal;
   init       : expr;
@@ -314,7 +314,7 @@ and data_decl =
 
 and var_decl = {
   kwd_var    : kwd_var;
-  name       : variable;
+  pattern    : pattern;
   var_type   : (colon * type_expr) option;
   assign     : assign;
   init       : expr;
@@ -645,6 +645,7 @@ and injection_kwd =
 | InjMap    of keyword
 | InjBigMap of keyword
 | InjList   of keyword
+| InjRecord of keyword
 
 and enclosing =
   Brackets of lbracket * rbracket
@@ -675,6 +676,13 @@ and pattern =
 | PString of lexeme reg
 | PList   of list_pattern
 | PTuple  of tuple_pattern
+| PRecord of field_pattern reg injection reg
+  
+and field_pattern = {
+  field_name : field_name;
+  eq         : equal;
+  pattern    : pattern
+}
 
 and constr_pattern =
   PUnit      of c_Unit
@@ -854,7 +862,8 @@ let pattern_to_region = function
 | PList PNil  region
 | PList PParCons {region; _}
 | PList PCons {region; _}
-| PTuple      {region; _} -> region
+| PTuple      {region; _}
+| PRecord     {region; _} -> region
 
 let declaration_to_region = function
   TypeDecl    {region;_}

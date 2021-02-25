@@ -841,22 +841,24 @@ and compile_data_declaration : next:AST.expression -> CST.data_decl -> _ =
   in
   match data_decl with
     LocalConst const_decl ->
-      let cd, loc = r_split const_decl in
-      let name, ploc = r_split cd.name in
-      let%bind init = compile_expression cd.init in
+      let cd, _loc = r_split const_decl in
+      let _pattern = cd.pattern in
+      failwith "Fix abstractor here"
+      (* let%bind init = compile_expression cd.init in
       let p = Location.wrap ~loc:ploc @@ Var.of_name name
       and attr = const_decl.value.attributes in
       let attr = compile_attributes attr in
       let%bind type_ = bind_map_option (compile_type_expression <@ snd) cd.const_type in
-      return loc p type_ attr init
+      return loc p type_ attr init *)
 
   | LocalVar var_decl ->
-      let vd, loc = r_split var_decl in
-      let name, ploc = r_split vd.name in
-      let%bind init = compile_expression vd.init in
+      let vd, _loc = r_split var_decl in
+      let _pattern = vd.pattern in
+      failwith "Fix abstractor here"
+      (* let%bind init = compile_expression vd.init in
       let p = Location.wrap ~loc:ploc @@ Var.of_name name in
       let%bind type_ = bind_map_option (compile_type_expression <@ snd) vd.var_type in
-      return loc p type_ [] init
+      return loc p type_ [] init *)
 
   | LocalFun fun_decl ->
       let fun_decl, loc = r_split fun_decl in
@@ -960,15 +962,16 @@ and compile_declaration : CST.declaration -> _ =
     let name, _ = r_split name in
     let%bind type_expr = compile_type_expression type_expr in
     return region @@ AST.Declaration_type {type_binder=Var.of_name name; type_expr}
-  | ConstDecl {value={name; const_type; init; attributes; _}; region} ->
-    let attr = compile_attributes attributes in
-    let name, loc = r_split name in
-    let var = Location.wrap ~loc @@ Var.of_name name in
+  | ConstDecl {value={pattern; const_type=_; init=_; attributes; _}; region=_} ->
+    let _attr = compile_attributes attributes in
+    let _name = pattern in
+    failwith "fix abstractor here"
+    (* let var = Location.wrap ~loc @@ Var.of_name name in
     let%bind ascr =
       bind_map_option (compile_type_expression <@ snd) const_type in
     let%bind expr = compile_expression init in
     let binder = {var;ascr} in
-    return region @@ AST.Declaration_constant {name = Some name; binder;attr;expr}
+    return region @@ AST.Declaration_constant {name = Some name; binder;attr;expr} *)
   | FunDecl {value;region} ->
     let%bind (name,var,ascr,attr,expr) = compile_fun_decl value in
     let binder = {var;ascr} in
