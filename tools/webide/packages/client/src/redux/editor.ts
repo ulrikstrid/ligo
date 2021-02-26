@@ -3,6 +3,7 @@ import {
   ChangeSelectedAction as ChangeSelectedExampleAction,
 } from './examples';
 import { Language } from './types';
+import {} from './actions/editor';
 
 export enum ActionType {
   ChangeLanguage = 'editor-change-language',
