@@ -16,6 +16,8 @@ open! Region
 
 let sprintf = Printf.sprintf
 
+type ('a, 'sep) nsepseq = ('a, 'sep) Utils.nsepseq
+
 (* STATE *)
 
 (* The printing of the tokens makes use of a threaded data structure:
@@ -43,12 +45,26 @@ let mk_state ?(buffer=Buffer.create 131) ~offsets mode =
        [print_declaration] prints values of type [declaration];
 
      * the name of a CST constructor, for example, [print_E_Int],
-       meaning that the argument of the constructor is printed;
+       meaning that the argument of the constructor [CST.E_Int] is
+       printed; when some constructors belong to different types, we
+       compromise.
 
      * a generic name, like [print_token] for tokens which are
        keywords or symbols; another example is [print_token_opt] when
-       we have an optional keyword. Or higher-order functions like
-       [print_injection], [print_option], [print_nsepseq] etc. *)
+       we have an optional token. Or higher-order functions like
+       [print_injection], [print_option], [print_nsepseq] etc.
+
+   Another design pattern we used here was to make all pattern
+   matching on CST constructors a simple routing function, that is,
+   without other logic. For example:
+
+   and print_type_expr state = function
+     T_Ctor    t -> print_T_Ctor    state t
+   | T_Fun     t -> print_T_Fun     state t
+   ...
+
+   This means that those functions can be ignored by the maintainers
+   if they know the data constructor. *)
 
 let compact state (region: Region.t) =
   region#compact ~offsets:state#offsets state#mode
@@ -91,7 +107,20 @@ let print_nseq : state -> (state -> 'a -> unit) -> 'a Utils.nseq -> unit =
 let strip : 'a.(state -> 'a -> unit) -> state -> 'a reg -> unit =
   fun print state node -> print state node.value
 
-(* Printing tokens like the lexer would do. *)
+(* PRINTING TOKENS (LEAVES) *)
+
+(* Guideline: When destructuring a value [v] of type [Region.t], use
+   the following order: [let {value; region} = v in ...]
+
+   The following functions are used by others to make strings,
+   vertbatim strings, integers and bytes. See for example functions
+   [print_T_String], [print_E_Nat], [print_P_Int] etc.
+
+   Note that, contrary to the following utility functions,
+   higher-order printers, like [print_call], [print_case],
+   [print_conditional] etc. are defined when they are first needed.*)
+
+(* Keywords and symbols *)
 
 let print_token state token region =
   let line =
@@ -101,29 +130,21 @@ let print_token state token region =
 let print_token_opt state lexeme =
   print_option state (fun state -> print_token state lexeme)
 
-let print_T_String state {region; value} =
+(* Strings *)
+
+let print_string state {region; value} =
   let line =
     sprintf "%s: String %S\n" (compact state region) value
   in Buffer.add_string state#buffer line
 
-let print_E_String = print_T_String
-let print_P_String = print_T_String
-
-let print_E_Verbatim state {region; value} =
+let print_verbatim state {region; value} =
   let line =
     sprintf "%s: Verbatim %S\n" (compact state region) value
   in Buffer.add_string state#buffer line
 
-let print_E_Bytes state {region; value} =
-  let lexeme, abstract = value in
-  let line = sprintf "%s: Bytes (%S, \"0x%s\")\n"
-                     (compact state region) lexeme
-                     (Hex.show abstract)
-  in Buffer.add_string state#buffer line
+(* Integers and natural numbers *)
 
-let print_P_Bytes = print_E_Bytes
-
-let print_E_Int state {region; value} =
+let print_int state {region; value} =
   let lexeme, abstract = value in
   let line =
     sprintf "%s: Int (%S, %s)\n"
@@ -131,11 +152,7 @@ let print_E_Int state {region; value} =
             (Z.to_string abstract)
   in Buffer.add_string state#buffer line
 
-let print_P_Int     = print_E_Int
-let print_T_Int     = print_E_Int
-let print_Component = print_E_Int
-
-let print_E_Nat state {region; value} =
+let print_nat state {region; value} =
   let lexeme, abstract = value in
   let line =
     sprintf "%s: Nat (%S, %s)\n"
@@ -143,14 +160,23 @@ let print_E_Nat state {region; value} =
             (Z.to_string abstract)
   in Buffer.add_string state#buffer line
 
-let print_P_Nat = print_E_Nat
+(* Bytes *)
 
-let print_E_Mutez state {region; value=lex,z} =
+let print_bytes state {region; value} =
+  let lexeme, abstract = value in
+  let line = sprintf "%s: Bytes (%S, \"0x%s\")\n"
+                     (compact state region) lexeme
+                     (Hex.show abstract)
+  in Buffer.add_string state#buffer line
+
+(* Mutez *)
+
+let print_mutez state {region; value=lex,z} =
   let line =
     sprintf "Mutez %s (%s)" lex (Z.to_string z)
   in print_token state line region
 
-let print_variable state {region; value} =
+let print_ident state {region; value} =
   let line =
     sprintf "%s: Ident %S\n" (compact state region) value
   in Buffer.add_string state#buffer line
@@ -160,39 +186,27 @@ let print_UIdent state {region; value} =
     sprintf "%s: UIdent %S\n" (compact state region) value
   in Buffer.add_string state#buffer line
 
-let print_module_name = print_UIdent
 let print_ctor = print_UIdent
-
-let print_attribute state {region; value} =
-  let line =
-    sprintf "%s: Attr %S\n" (compact state region) value
-  in Buffer.add_string state#buffer line
-
-let print_language state {region; value} =
-  let line =
-    sprintf "%s: Lang %S" (compact state region)
-            value.Region.value
-  in Buffer.add_string state#buffer line
 
 (* HIGHER-ORDER PRINTERS *)
 
-let print_par : 'a.state -> (state -> 'a -> unit) -> 'a par -> unit =
-  fun state print par ->
-    print_token state "LPAR" par.lpar;
-    print       state par.inside;
-    print_token state "RPAR" par.rpar
+let print_par : 'a.state -> (state -> 'a -> unit) -> 'a par reg -> unit =
+  fun state print {value; _} ->
+    print_token state "LPAR" value.lpar;
+    print       state value.inside;
+    print_token state "RPAR" value.rpar
 
-let print_braces : 'a.state -> (state -> 'a -> unit) -> 'a braces -> unit =
-  fun state print braces ->
-    print_token state "LBRACE" braces.lbrace;
-    print       state braces.inside;
-    print_token state "RBRACE" braces.rbrace
+let print_braces : 'a.state -> (state -> 'a -> unit) -> 'a braces reg -> unit =
+  fun state print {value; _} ->
+    print_token state "LBRACE" value.lbrace;
+    print       state value.inside;
+    print_token state "RBRACE" value.rbrace
 
-let print_brackets : 'a.state -> (state -> 'a -> unit) -> 'a brackets -> unit =
-  fun state print brackets ->
-    print_token state "LBRACKET" brackets.lbracket;
-    print       state brackets.inside;
-    print_token state "LBRACKET" brackets.rbracket
+let print_brackets : 'a.state -> (state -> 'a -> unit) -> 'a brackets reg -> unit =
+  fun state print {value; _} ->
+    print_token state "LBRACKET" value.lbracket;
+    print       state value.inside;
+    print_token state "LBRACKET" value.rbracket
 
 (* PRINTING THE CST *)
 
@@ -200,39 +214,80 @@ let rec print_cst state (node : cst) =
   print_nseq  state print_declaration node.decl;
   print_token state "EOF" node.eof
 
-(* Declarations *)
+(* DECLARATIONS *)
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
 
 and print_declaration state = function
-  D_Const    d -> print_const_decl   state d.value
-| D_Fun      d -> print_fun_decl     state d.value
-| D_Module   d -> print_module_decl  state d.value
-| D_ModAlias d -> print_module_alias state d.value
-| D_Type     d -> print_type_decl    state d.value
+  D_Const    d -> print_D_Const    state d
+| D_Fun      d -> print_D_Fun      state d
+| D_Module   d -> print_D_Module   state d
+| D_ModAlias d -> print_D_ModAlias state d
+| D_Type     d -> print_D_Type     state d
 
-and print_const_decl state (node : const_decl) =
+(* Constant declarations *)
+
+and print_D_Const state (node : const_decl reg) =
+  let node = node.value in
   print_attributes state node.attributes;
   print_token      state "Const" node.kwd_const;
-  print_variable   state node.name;
+  print_ident   state node.name;
   print_option     state print_type_annot node.const_type;
   print_token      state "EQ" node.equal;
   print_expr       state node.init;
   print_token_opt  state "SEMI" node.terminator
 
-and print_type_decl state (node : type_decl) =
-  print_token     state "Type" node.kwd_type;
-  print_variable  state node.name;
-  print_token     state "Is" node.kwd_is;
-  print_type_expr state node.type_expr;
-  print_token_opt state "SEMI" node.terminator
+and print_attributes state = List.iter (print_attribute state)
 
-and print_module_decl state (node : module_decl) =
+and print_attribute state {region; value} =
+  let line =
+    sprintf "%s: Attr %S\n" (compact state region) value
+  in Buffer.add_string state#buffer line
+
+and print_type_annot state (colon, type_expr) =
+  print_token     state "COLON" colon;
+  print_type_expr state type_expr;
+
+(* Function declarations *)
+
+and print_D_Fun state (node : fun_decl reg) =
+  let node = node.value in
+  print_attributes state node.attributes;
+  print_token      state "Function" node.kwd_function;
+  print_ident      state node.fun_name;
+  print_parameters state node.param;
+  print_option     state print_type_annot node.ret_type;
+  print_token      state "Is" node.kwd_is;
+  print_expr       state node.return;
+  print_token_opt  state "SEMI" node.terminator;
+
+and print_parameters state (node : parameters) =
+  let print state = print_nsepseq state print_param_decl "SEMI"
+  in print_par state print node
+
+and print_param_decl state = function
+  ParamConst p -> print_ParamConst state p
+| ParamVar   p -> print_ParamVar   state p
+
+and print_ParamConst state (node : param_const reg) =
+  print_token  state "Const" node.value.kwd_const;
+  print_ident  state node.value.var;
+  print_option state print_type_annot node.value.param_type
+
+and print_ParamVar state (node : param_var reg) =
+  print_token  state "Var" node.value.kwd_var;
+  print_ident  state node.value.var;
+  print_option state print_type_annot node.value.param_type
+
+(* Module declarations *)
+
+and print_D_Module state (node : module_decl reg) =
+  let node = node.value in
   match node.enclosing with
     Brace (lbrace, rbrace) ->
       print_token     state "Module" node.kwd_module;
-      print_variable  state node.name;
+      print_ident     state node.name;
       print_token     state "Is" node.kwd_is;
       print_token     state "LBRACE" lbrace;
       print_nseq      state print_declaration node.declarations;
@@ -240,63 +295,65 @@ and print_module_decl state (node : module_decl) =
       print_token_opt state "SEMI" node.terminator
   | BeginEnd (kwd_begin, kwd_end) ->
       print_token     state "Module" node.kwd_module;
-      print_variable  state node.name;
+      print_ident     state node.name;
       print_token     state "Is" node.kwd_is;
       print_token     state "Begin" kwd_begin;
       print_nseq      state print_declaration node.declarations;
       print_token     state "End" kwd_end;
       print_token_opt state "SEMI" node.terminator
 
-and print_module_alias state (node : module_alias) =
+(* Module aliases declarations *)
+
+and print_D_ModAlias state (node : module_alias reg) =
+  let node = node.value in
   print_token     state "Module" node.kwd_module;
-  print_variable  state node.alias;
+  print_ident     state node.alias;
   print_token     state "Is" node.kwd_is;
-  print_nsepseq   state print_variable "DOT" node.mod_path;
+  print_nsepseq   state print_ident "DOT" node.mod_path;
   print_token_opt state "SEMI" node.terminator
 
-(* Type expressions *)
+(* Type declarations *)
+
+and print_D_Type state (node : type_decl reg) =
+  let node = node.value in
+  print_token     state "Type" node.kwd_type;
+  print_ident     state node.name;
+  print_token     state "Is" node.kwd_is;
+  print_type_expr state node.type_expr;
+  print_token_opt state "SEMI" node.terminator
+
+(* TYPE EXPRESSIONS *)
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
-   add or modify some, please make sure they remain in order. *)
+   add or modify some, please make sure they remain in order. Note
+   that the sections below follow the alphabetical order too:
+   [print_T_Ctor] comes before [print_T_Fun]. *)
 
 and print_type_expr state = function
-  T_Ctor    t -> print_T_Ctor       state t
-| T_Fun     t -> print_T_Fun        state t
-| T_Int     t -> print_T_Int        state t
-| T_ModPath t -> print_module_path  state print_type_expr t.value
-| T_Par     t -> print_par          state print_type_expr t.value
-| T_Prod    t -> print_cartesian    state t
-| T_Record  t -> print_ne_injection state (strip print_field_decl) t.value
-| T_String  t -> print_T_String     state t
-| T_Sum     t -> print_sum_type     state t.value
-| T_Var     t -> print_variable     state t
-| T_Wild    t -> print_token        state "WILD" t
+  T_Ctor    t -> print_T_Ctor    state t
+| T_Fun     t -> print_T_Fun     state t
+| T_Int     t -> print_T_Int     state t
+| T_ModPath t -> print_T_ModPath state t
+| T_Par     t -> print_T_Par     state t
+| T_Prod    t -> print_T_Prod    state t
+| T_Record  t -> print_T_Record  state t
+| T_String  t -> print_T_String  state t
+| T_Sum     t -> print_T_Sum     state t
+| T_Var     t -> print_T_Var     state t
+| T_Wild    t -> print_T_Wild    state t
 
-and print_type_annot state (colon, type_expr) =
-  print_token     state "COLON" colon;
-  print_type_expr state type_expr;
-
-and print_cartesian state (node : cartesian) =
-  print_nsepseq state print_type_expr "TIMES" node.value
-
-and print_of_type_expr state (kwd_of, type_expr) =
-  print_token     state "Of" kwd_of;
-  print_type_expr state type_expr
-
-and print_variant state (node : variant) =
-  print_attributes state node.attributes;
-  print_ctor       state node.ctor;
-  print_option     state print_of_type_expr node.arg
-
-and print_sum_type state (node : sum_type) =
-  print_attributes state node.attributes;
-  print_token_opt  state "VBAR" node.lead_vbar;
-  print_nsepseq    state (strip print_variant) "VBAR" node.variants
+(* General constructors *)
 
 and print_T_Ctor state (node : (type_ctor * type_tuple) reg) =
   let type_name, type_tuple = node.value in
-  print_variable   state type_name;
+  print_ident      state type_name;
   print_type_tuple state type_tuple
+
+and print_type_tuple state (node : type_tuple) =
+  let print state = print_nsepseq state print_type_expr "COMMA"
+  in print_par state print node
+
+(* Functional types *)
 
 and print_T_Fun state (node : (type_expr * arrow * type_expr) reg) =
   let domain, arrow, codomain = node.value in
@@ -304,115 +361,209 @@ and print_T_Fun state (node : (type_expr * arrow * type_expr) reg) =
   print_token     state "ARROW" arrow;
   print_type_expr state codomain
 
-and print_field_decl state (node : field_decl) =
+(* The integer type *)
+
+and print_T_Int state = print_int state
+
+(* Module paths *)
+
+and print_T_ModPath state = print_module_path state print_type_expr
+
+and print_module_path :
+  'a.state -> (state -> 'a -> unit ) -> 'a module_path reg -> unit =
+  fun state print {value; _} ->
+    print_UIdent state value.module_name;
+    print_token  state "DOT" value.selector;
+    print        state value.field
+
+(* Parenthesised type expressions *)
+
+and print_T_Par state = print_par state print_type_expr
+
+(* Product types *)
+
+and print_T_Prod state (node : cartesian) =
+  print_nsepseq state print_type_expr "TIMES" node.value
+
+(* Record types *)
+
+and print_T_Record state = print_ne_injection state print_field_decl
+
+and print_field_decl state (node : field_decl reg) =
+  let node = node.value in
   print_attributes state node.attributes;
-  print_variable   state node.field_name;
+  print_ident      state node.field_name;
   print_token      state "COLON" node.colon;
   print_type_expr  state node.field_type
 
-and print_type_tuple state (node : type_tuple) =
-  let print state = print_nsepseq state print_type_expr "COMMA"
-  in print_par state print node.value
+and print_ne_injection :
+  'a.state -> (state -> 'a -> unit) -> 'a ne_injection reg -> unit =
+  fun state print {value; _} ->
+    print_attributes       state value.attributes;
+    print_ne_injection_kwd state value.kind;
+    print_ne_inj_enclosing state print value
 
-and print_fun_decl state (node : fun_decl) =
+and print_ne_inj_enclosing :
+  'a.state -> (state -> 'a -> unit) -> 'a ne_injection -> unit =
+  fun state print node ->
+    match node.enclosing with
+      Brackets (lbracket, rbracket) ->
+        print_token     state "LBRACKET" lbracket;
+        print_nsepseq   state print "SEMI" node.ne_elements;
+        print_token_opt state "SEMI" node.terminator;
+        print_token     state "RBRACKET" rbracket
+    | End kwd_end ->
+        print_nsepseq   state print "SEMI" node.ne_elements;
+        print_token_opt state "SEMI" node.terminator;
+        print_token     state "End" kwd_end
+
+and print_ne_injection_kwd state = function
+  `Map    kwd -> print_token state "Map"    kwd
+| `Record kwd -> print_token state "Record" kwd
+| `Set    kwd -> print_token state "Set"    kwd
+
+(* The string type *)
+
+and print_T_String state = print_string state
+
+(* Sum types *)
+
+and print_T_Sum state (node : sum_type reg) =
+  let node = node.value in
   print_attributes state node.attributes;
-  print_token      state "Function" node.kwd_function;
-  print_variable   state node.fun_name;
-  print_parameters state node.param;
-  print_option     state print_type_annot node.ret_type;
-  print_token      state "Is" node.kwd_is;
-  print_expr       state node.return;
-  print_token_opt  state "SEMI" node.terminator;
+  print_token_opt  state "VBAR" node.lead_vbar;
+  print_nsepseq    state (strip print_variant) "VBAR" node.variants
 
-and print_fun_expr state (node : fun_expr) =
-  print_token      state "Function" node.kwd_function;
-  print_parameters state node.param;
-  print_option     state print_type_annot node.ret_type;
-  print_token      state "Is" node.kwd_is;
-  print_expr       state node.return
+and print_variant state (node : variant) =
+  print_attributes state node.attributes;
+  print_ctor       state node.ctor;
+  print_option     state print_of_type_expr node.arg
 
-and print_block_with state (node : block_with) =
-  print_block state node.block;
-  print_token state "With" node.kwd_with;
-  print_expr  state node.expr;
+and print_of_type_expr state (kwd_of, type_expr) =
+  print_token     state "Of" kwd_of;
+  print_type_expr state type_expr
 
-and print_parameters state (node : parameters) =
-  let print state = print_nsepseq state print_param_decl "SEMI"
-  in print_par state print node.value
+(* A type variable *)
 
-and print_param_decl state = function
-  ParamConst p -> print_param_const state p
-| ParamVar   p -> print_param_var   state p
+and print_T_Var state = print_ident state
 
-and print_param_const state (node : param_const reg) =
-  print_token    state "Const" node.value.kwd_const;
-  print_variable state node.value.var;
-  print_option   state print_type_annot node.value.param_type
+(* A catch-all variable (a.k.a. joker) *)
 
-and print_param_var state (node : param_var reg) =
-  print_token    state "Var" node.value.kwd_var;
-  print_variable state node.value.var;
-  print_option   state print_type_annot node.value.param_type
+and print_T_Wild state = print_token state "WILD"
 
-(* Blocks *)
 
-and print_block state (node : block reg) =
-  match node.value.enclosing with
-    Block (kwd_block, lbrace, rbrace) ->
-      print_token      state "Block" kwd_block;
-      print_token      state "LBRACE" lbrace;
-      print_statements state node.value.statements;
-      print_token_opt  state "SEMI" node.value.terminator;
-      print_token      state "RBRACE" rbrace
-  | BeginEnd (kwd_begin, kwd_end) ->
-      print_token      state "Begin" kwd_begin;
-      print_statements state node.value.statements;
-      print_token_opt  state "SEMI" node.value.terminator;
-      print_token      state "End" kwd_end
+(* STATEMENTS *)
 
-and print_var_decl state (node : var_decl) =
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. Note
+   that the sections below follow the alphabetical order too:
+   [print_S_Instr] comes before [print_S_Decl]. *)
+
+and print_statement state = function
+  S_Instr   s -> print_S_Instr   state s
+| S_Decl    s -> print_S_Decl    state s
+| S_VarDecl s -> print_S_VarDecl state s
+
+and print_statements state =
+  print_nsepseq state print_statement "SEMI"
+
+and print_S_Instr state = print_instruction state
+
+and print_S_Decl state = print_declaration state
+
+and print_S_VarDecl state (node : var_decl reg) =
+  let node = node.value in
   print_token     state "Var" node.kwd_var;
-  print_variable  state node.name;
+  print_ident     state node.name;
   print_option    state print_type_annot node.var_type;
   print_token     state "ASSIGN" node.assign;
   print_expr      state node.init;
   print_token_opt state "SEMI" node.terminator
 
-and print_attributes state = List.iter (print_attribute state)
-
-and print_statements state =
-  print_nsepseq state print_statement "SEMI"
-
-and print_statement state = function
-  S_Instr   s -> print_instruction state s
-| S_Decl    s -> print_declaration state s
-| S_VarDecl s -> print_var_decl    state s.value
-
-(* Instructions *)
+(* INSTRUCTIONS *)
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
-   add or modify some, please make sure they remain in order. *)
+   add or modify some, please make sure they remain in order. Note
+   that the sections below follow the alphabetical order too:
+   [print_I_Assign] comes before [print_I_Call]. *)
 
 and print_instruction state = function
-  I_Assign      i -> print_assignment   state i.value
-| I_Call        i -> print_fun_call     state i
-| I_Case        i -> print_case         state print_test_clause i.value
-| I_Cond        i -> print_conditional  state print_test_clause i.value
-| I_For         i -> print_for_int      state i.value
-| I_ForIn       i -> print_for_in         state i.value
-| I_MapPatch    i -> print_map_patch    state i.value
-| I_MapRemove   i -> print_map_remove   state i.value
-| I_RecordPatch i -> print_record_patch state i.value
-| I_Skip        i -> print_token        state "Skip" i
-| I_SetPatch    i -> print_set_patch    state i.value
-| I_SetRemove   i -> print_set_remove   state i.value
-| I_While       i -> print_while_loop   state i.value
+  I_Assign      i -> print_I_Assign      state i
+| I_Call        i -> print_I_Call        state i
+| I_Case        i -> print_I_Case        state i
+| I_Cond        i -> print_I_Cond        state i
+| I_For         i -> print_I_For         state i
+| I_ForIn       i -> print_I_ForIn       state i
+| I_MapPatch    i -> print_I_MapPatch    state i
+| I_MapRemove   i -> print_I_MapRemove   state i
+| I_RecordPatch i -> print_I_RecordPatch state i
+| I_Skip        i -> print_I_Skip        state i
+| I_SetPatch    i -> print_I_SetPatch    state i
+| I_SetRemove   i -> print_I_SetRemove   state i
+| I_While       i -> print_I_While       state i
 
-and print_case : 'a.state -> (state -> 'a -> unit) -> 'a case -> unit =
+(* Assignments *)
+
+and print_I_Assign state (node : assignment reg) =
+  let node = node.value in
+  print_lhs   state node.lhs;
+  print_token state "ASSIGN" node.assign;
+  print_expr  state node.rhs
+
+and print_lhs state = function
+  Path    path -> print_path       state path
+| MapPath path -> print_map_lookup state path
+
+and print_map_lookup state (node : map_lookup reg) =
+  let node = node.value in
+  print_path     state node.path;
+  print_brackets state print_expr node.index
+
+and print_path state = function
+  Name p -> print_Name       state p
+| Path p -> print_projection state p
+
+and print_Name state = print_ident state
+
+and print_projection state (node : projection reg) =
+  let node = node.value in
+  print_ident   state node.struct_name;
+  print_token   state "DOT" node.selector;
+  print_nsepseq state print_selection "DOT" node.field_path
+
+and print_selection state = function
+  FieldName s -> print_FieldName state s
+| Component s -> print_Component state s
+
+and print_FieldName state = print_ident state
+and print_Component state = print_int state
+
+(* Procedure calls *)
+
+and print_I_Call state = print_call state
+
+and print_call state (node : call) =
+  let expr, arguments = node.value in
+  print_expr       state expr;
+  print_tuple_expr state arguments
+
+and print_tuple_expr state (node : tuple_expr) =
+  let print state = print_nsepseq state print_expr "COMMA"
+  in print_par state print node
+
+(* Case instructions *)
+
+and print_I_Case state = print_case state print_test_clause
+
+and print_case : 'a.state -> (state -> 'a -> unit) -> 'a case reg -> unit =
+  fun state print {value; _} ->
+    print_token          state "Case" value.kwd_case;
+    print_expr           state value.expr;
+    print_token          state "Of" value.kwd_of;
+    print_case_enclosing state print value
+
+and print_case_enclosing : 'a.state  -> (state -> 'a -> unit) -> 'a case -> unit =
   fun state print node ->
-    print_token state "Case" node.kwd_case;
-    print_expr  state node.expr;
-    print_token state "Of" node.kwd_of;
     match node.enclosing with
       Brackets (lbracket, rbracket) ->
         print_token     state "LBRACKET" lbracket;
@@ -439,230 +590,225 @@ and print_case_clause :
     print         state node.rhs
 
 and print_test_clause state = function
-  ClauseInstr instr -> print_instruction  state instr
-| ClauseBlock block -> print_clause_block state block
+  ClauseInstr c -> print_ClauseInstr state c
+| ClauseBlock c -> print_ClauseBlock state c
+
+and print_ClauseInstr state = print_instruction state
+
+and print_ClauseBlock state = print_clause_block state
 
 and print_clause_block state = function
-  LongBlock block ->
-    print_block state block
-| ShortBlock block ->
-    let print state (stmts, terminator) =
-      print_statements state stmts;
-      print_token_opt  state "SEMI" terminator
-    in print_braces state print block.value
+  LongBlock  b -> print_LongBlock  state b
+| ShortBlock b -> print_ShortBlock state b
 
-and print_assignment state (node : assignment) =
-  print_lhs   state node.lhs;
-  print_token state "ASSIGN" node.assign;
-  print_expr  state node.rhs
+and print_LongBlock state = print_block state
 
-and print_lhs state = function
-  Path    path -> print_path       state path
-| MapPath path -> print_map_lookup state path.value
+and print_ShortBlock state (node :  (statements * semi option) braces reg) =
+  let print state (stmts, terminator) =
+    print_statements state stmts;
+    print_token_opt  state "SEMI" terminator
+  in print_braces state print node
 
-and print_while_loop state (node : while_loop) =
-  print_token state "While" node.kwd_while;
-  print_expr  state node.cond;
-  print_block state node.block
+and print_block state (node : block reg) =
+  match node.value.enclosing with
+    Block (kwd_block, lbrace, rbrace) ->
+      print_token      state "Block" kwd_block;
+      print_token      state "LBRACE" lbrace;
+      print_statements state node.value.statements;
+      print_token_opt  state "SEMI" node.value.terminator;
+      print_token      state "RBRACE" rbrace
+  | BeginEnd (kwd_begin, kwd_end) ->
+      print_token      state "Begin" kwd_begin;
+      print_statements state node.value.statements;
+      print_token_opt  state "SEMI" node.value.terminator;
+      print_token      state "End" kwd_end
+
+(* Conditional instructions *)
+
+and print_I_Cond state = print_conditional state print_test_clause
+
+and print_conditional :
+  'a.state -> (state -> 'a -> unit) -> 'a conditional reg -> unit =
+  fun state print {value; _} ->
+    print_token     state "If" value.kwd_if;
+    print_expr      state value.test;
+    print_token     state "Then" value.kwd_then;
+    print           state value.ifso;
+    print_token_opt state "SEMI" value.terminator;
+    print_token     state "Else" value.kwd_else;
+    print           state value.ifnot
+
+(* Bounded iterations on integer intervals (a.k.a. "for loops") *)
+
+and print_I_For state (node : for_int reg) =
+  let node = node.value in
+  print_token  state "For" node.kwd_for;
+  print_ident  state node.binder;
+  print_token  state "ASSIGN" node.assign;
+  print_expr   state node.init;
+  print_token  state "To" node.kwd_to;
+  print_expr   state node.bound;
+  print_option state print_step node.step;
+  print_block  state node.block
 
 and print_step state (kwd_step, expr) =
   print_token state "Step" kwd_step;
   print_expr  state expr
 
-and print_for_int state (node : for_int) =
-  print_token    state "For" node.kwd_for;
-  print_variable state node.binder;
-  print_token    state "ASSIGN" node.assign;
-  print_expr     state node.init;
-  print_token    state "To" node.kwd_to;
-  print_expr     state node.bound;
-  print_option   state print_step node.step;
-  print_block    state node.block
+(* Iterations over collections (maps, sets and lists) *)
 
-and print_for_in state (node : for_in) =
+and print_I_ForIn state (node : for_in reg) =
+  let node = node.value in
   print_token      state "For" node.kwd_for;
-  print_variable   state node.var;
+  print_ident      state node.var;
   print_option     state print_bind_to node.bind_to;
   print_token      state "In" node.kwd_in;
   print_collection state node.collection;
   print_expr       state node.expr;
   print_block      state node.block
 
+and print_bind_to state (arrow, variable) =
+  print_token state "ARROW" arrow;
+  print_ident state variable
+
 and print_collection state = function
   `List kwd -> print_token state "List" kwd
 | `Map  kwd -> print_token state "Map"  kwd
 | `Set  kwd -> print_token state "Set"  kwd
 
-and print_bind_to state (arrow, variable) =
-  print_token state "ARROW" arrow;
-  print_variable state variable
+(* Map patches *)
 
-(* Expressions *)
-
-(* IMPORTANT: The data constructors are sorted alphabetically. If you
-   add or modify some, please make sure they remain in order. *)
-
-and print_expr state = function
-  E_Add       e -> print_bin_op      state "PLUS" e.value
-| E_And       e -> print_bin_op      state "And" e.value
-| E_Annot     e -> print_par         state print_annot_expr e.value
-| E_BigMap    e -> print_injection   state (strip print_binding) e.value
-| E_Block     e -> print_block_with  state e.value
-| E_Bytes     e -> print_E_Bytes     state e
-| E_Call      e -> print_fun_call    state e
-| E_Case      e -> print_case        state print_expr e.value
-| E_Cat       e -> print_bin_op      state "CARET" e.value
-| E_CodeInj   e -> print_language    state e.value.language
-| E_Equal     e -> print_bin_op      state "EQ" e.value
-| E_Cond      e -> print_conditional state print_expr e.value
-| E_Cons      e -> print_bin_op      state "SHARP" e.value
-| E_Ctor      e -> print_E_Ctor      state e
-| E_Div       e -> print_bin_op      state "SLASH" e.value
-| E_False     e -> print_token       state "False" e
-| E_Fun       e -> print_fun_expr    state e.value
-| E_Geq       e -> print_bin_op      state "Geq" e.value
-| E_Gt        e -> print_bin_op      state "Gt" e.value
-| E_Int       e -> print_E_Int       state e
-| E_Leq       e -> print_bin_op      state "Leq" e.value
-| E_List      e -> print_injection   state print_expr e.value
-| E_Lt        e -> print_bin_op      state "Lt" e.value
-| E_Map       e -> print_injection   state (strip print_binding) e.value
-| E_MapLookUp e -> print_map_lookup  state e.value
-| E_Mod       e -> print_bin_op      state "Mod" e.value
-| E_ModPath   e -> print_module_path state print_expr e.value
-| E_Mult      e -> print_bin_op      state "TIMES" e.value
-| E_Mutez     e -> print_E_Mutez     state e
-| E_Nat       e -> print_E_Nat       state e
-| E_Neg       e -> print_un_op       state "MINUS" e.value
-| E_Nil       e -> print_token       state "Nil" e
-| E_Neq       e -> print_bin_op      state "NE" e.value
-| E_None      e -> print_token       state "Ctor_None" e
-| E_Not       e -> print_un_op       state "Not" e.value
-| E_Or        e -> print_bin_op      state "Or" e.value
-| E_Par       e -> print_par         state print_expr e.value
-| E_Proj      e -> print_projection  state e.value
-| E_Record    e -> print_record      state e.value
-| E_Set       e -> print_injection   state print_expr e.value
-| E_SetMem    e -> print_set_mem     state e.value
-| E_Some      e -> print_E_Some      state e
-| E_String    e -> print_E_String    state e
-| E_Sub       e -> print_bin_op      state "MINUS" e.value
-| E_True      e -> print_token       state "True" e
-| E_Tuple     e -> print_tuple_expr  state e
-| E_Unit      e -> print_token       state "Unit" e
-| E_Update    e -> print_update      state e.value
-| E_Var       e -> print_variable    state e
-| E_Verbatim  e -> print_E_Verbatim  state e
-
-and print_conditional :
-  'a.state -> (state -> 'a -> unit) -> 'a conditional -> unit =
-  fun state print node ->
-    print_token     state "If" node.kwd_if;
-    print_expr      state node.test;
-    print_token     state "Then" node.kwd_then;
-    print           state node.ifso;
-    print_token_opt state "SEMI" node.terminator;
-    print_token     state "Else" node.kwd_else;
-    print           state node.ifnot
-
-and print_annot_expr state (expr, type_annot) =
-  print_expr       state expr;
-  print_type_annot state type_annot
-
-and print_set_mem state (node : set_mem) =
-  print_expr  state node.set;
-  print_token state "Contains" node.kwd_contains;
-  print_expr  state node.element
-
-and print_map_lookup state (node : map_lookup) =
-  print_path     state node.path;
-  print_brackets state print_expr node.index.value
-
-and print_path state = function
-  Name var  -> print_variable   state var
-| Path path -> print_projection state path.value
-
-and print_un_op state lexeme (node : keyword un_op) =
-  print_token state lexeme node.op;
-  print_expr  state node.arg
-
-and print_bin_op state lexeme (node : keyword bin_op) =
-  print_expr  state node.arg1;
-  print_token state lexeme node.op;
-  print_expr  state node.arg2
-
-and print_record state =
-  print_ne_injection state (strip print_field_assignment)
-
-and print_field_assignment state (node : field_assignment) =
-  print_variable state node.field_name;
-  print_token    state "EQ" node.assignment;
-  print_expr     state node.field_expr
-
-and print_field_path_assignment state (node : field_path_assignment) =
-  print_path  state node.field_path;
-  print_token state "EQ" node.assignment;
-  print_expr  state node.field_expr
-
-and print_update state (node : update) =
-  print_path         state node.record;
-  print_token        state "With" node.kwd_with;
-  print_ne_injection state (strip print_field_path_assignment)
-                     node.updates.value
-
-and print_projection state (node : projection) =
-  print_variable state node.struct_name;
-  print_token    state "DOT" node.selector;
-  print_nsepseq  state print_selection "DOT" node.field_path
-
-and print_module_path :
-  'a.state -> (state -> 'a -> unit ) -> 'a module_path -> unit =
-  fun state print node ->
-    print_module_name state node.module_name;
-    print_token       state "DOT" node.selector;
-    print             state node.field
-
-and print_selection state = function
-  FieldName name -> print_variable  state name
-| Component int  -> print_Component state int
-
-and print_record_patch state (node : record_patch) =
+and print_I_MapPatch state (node : map_patch reg) =
+  let node = node.value in
   print_token        state "Patch" node.kwd_patch;
   print_path         state node.path;
   print_token        state "With" node.kwd_with;
-  print_ne_injection state (strip print_field_assignment)
-                           node.record_inj.value
+  print_ne_injection state print_binding node.map_inj
 
-and print_set_patch state (node : set_patch) =
-  print_token        state "Patch" node.kwd_patch;
-  print_path         state node.path;
-  print_token        state "With" node.kwd_with;
-  print_ne_injection state print_expr node.set_inj.value
+(* Removal of entries in a map *)
 
-and print_map_patch state (node : map_patch) =
-  print_token        state "Patch" node.kwd_patch;
-  print_path         state node.path;
-  print_token        state "With" node.kwd_with;
-  print_ne_injection state (strip print_binding) node.map_inj.value
-
-and print_map_remove state (node : map_remove) =
+and print_I_MapRemove state (node : map_remove reg) =
+  let node = node.value in
   print_token state "Remove" node.kwd_remove;
   print_expr  state node.key;
   print_token state "From" node.kwd_from;
   print_token state "Map" node.kwd_map;
   print_path  state node.map
 
-and print_set_remove state (node : set_remove) =
+(* Patching records *)
+
+and print_I_RecordPatch state (node : record_patch reg) =
+  let node = node.value in
+  print_token        state "Patch" node.kwd_patch;
+  print_path         state node.path;
+  print_token        state "With" node.kwd_with;
+  print_ne_injection state print_field_assignment
+                           node.record_inj
+
+and print_field_assignment state (node : field_assignment reg) =
+  let node = node.value in
+  print_ident state node.field_name;
+  print_token state "EQ" node.assignment;
+  print_expr  state node.field_expr
+
+(* Skipping (non-operation) *)
+
+and print_I_Skip state = print_token state "Skip"
+
+(* Patching sets *)
+
+and print_I_SetPatch state (node : set_patch reg) =
+  let node = node.value in
+  print_token        state "Patch" node.kwd_patch;
+  print_path         state node.path;
+  print_token        state "With" node.kwd_with;
+  print_ne_injection state print_expr node.set_inj
+
+(* Removal from sets *)
+
+and print_I_SetRemove state (node : set_remove reg) =
+  let node = node.value in
   print_token state "Remove" node.kwd_remove;
   print_expr  state node.element;
   print_token state "From" node.kwd_from;
   print_token state "Set" node.kwd_set;
   print_path  state node.set
 
+(* While loops *)
+
+and print_I_While state (node : while_loop reg) =
+  let node = node.value in
+  print_token state "While" node.kwd_while;
+  print_expr  state node.cond;
+  print_block state node.block
+
+(* PATTERNS *)
+
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. Note
+   that the sections below follow the alphabetical order too:
+   [print_I_Bytes] comes before [print_P_Cons]. *)
+
+and print_pattern state = function
+  P_Bytes    p -> print_P_Bytes   state p
+| P_Cons     p -> print_P_Cons    state p
+| P_Ctor     p -> print_P_Ctor    state p
+| P_False    p -> print_P_False   state p
+| P_Int      p -> print_P_Int     state p
+| P_List     p -> print_P_List    state p
+| P_Nat      p -> print_P_Nat     state p
+| P_Nil      p -> print_P_Nil     state p
+| P_None     p -> print_P_None    state p
+| P_ParCons  p -> print_P_ParCons state p
+| P_Some     p -> print_P_Some    state p
+| P_String   p -> print_P_String  state p
+| P_True     p -> print_P_True    state p
+| P_Tuple    p -> print_P_Tuple   state p
+| P_Unit     p -> print_P_Unit    state p
+| P_Var      p -> print_P_Var     state p
+| P_Wild     p -> print_P_Wild    state p
+
+(* Bytes as literals in patterns *)
+
+and print_P_Bytes state = print_bytes state
+
+(* A series of cons operators in patterns *)
+
+and print_P_Cons state (node : (pattern, cons) nsepseq reg) =
+  print_nsepseq state print_pattern "SHARP" node.value
+
+(* A constructor application (or constant constructor) in patterns *)
+
+and print_P_Ctor state (node : (ctor * tuple_pattern option) reg) =
+  let ctor, arg_opt = node.value in
+  print_ctor   state ctor;
+  print_option state print_tuple_pattern arg_opt
+
+and print_tuple_pattern state (node : tuple_pattern) =
+  let print state = print_nsepseq state print_pattern "COMMA"
+  in print_par state print node
+
+(* The Boolean untruth as a pattern *)
+
+and print_P_False state = print_token state "False"
+
+(* Integers in patterns *)
+
+and print_P_Int state = print_int state
+
+(* Patterns of lists by extension *)
+
+and print_P_List state = print_injection state print_pattern
+
 and print_injection :
+  'a.state -> (state -> 'a -> unit) -> 'a injection reg -> unit =
+  fun state print {value; _} ->
+    print_injection_kwd state value.kind;
+    print_inj_enclosing state print value
+
+and print_inj_enclosing :
   'a.state -> (state -> 'a -> unit) -> 'a injection -> unit =
   fun state print node ->
-    print_injection_kwd state node.kind;
     match node.enclosing with
       Brackets (lbracket, rbracket) ->
         print_token     state "LBRACKET" lbracket;
@@ -680,95 +826,380 @@ and print_injection_kwd state = function
 | `Map    kwd -> print_token state "Map"    kwd
 | `Set    kwd -> print_token state "Set"    kwd
 
-and print_ne_injection :
-  'a.state -> (state -> 'a -> unit) -> 'a ne_injection -> unit =
-  fun state print node ->
-    print_attributes       state node.attributes;
-    print_ne_injection_kwd state node.kind;
-    match node.enclosing with
-      Brackets (lbracket, rbracket) ->
-        print_token     state "LBRACKET" lbracket;
-        print_nsepseq   state print "SEMI" node.ne_elements;
-        print_token_opt state "SEMI" node.terminator;
-        print_token     state "RBRACKET" rbracket
-    | End kwd_end ->
-        print_nsepseq   state print "SEMI" node.ne_elements;
-        print_token_opt state "SEMI" node.terminator;
-        print_token     state "End" kwd_end
+(* Natural numbers in patterns *)
 
-and print_ne_injection_kwd state = function
-  `Map    kwd -> print_token state "Map"    kwd
-| `Record kwd -> print_token state "Record" kwd
-| `Set    kwd -> print_token state "Set"    kwd
+and print_P_Nat state = print_nat state
 
-and print_binding state (node : binding) =
-  print_expr  state node.source;
-  print_token state "ARROW" node.arrow;
-  print_expr  state node.image
+(* The pattern for the empty list *)
 
-and print_tuple_expr state (node : tuple_expr) =
-  let print state = print_nsepseq state print_expr "COMMA"
-  in print_par state print node.value
+and print_P_Nil state = print_token state "Nil"
 
-and print_fun_call state (node : fun_call) =
-  let expr, arguments = node.value in
-  print_expr       state expr;
-  print_tuple_expr state arguments
+(* The pattern for the predefined constructor [None] *)
 
-and print_E_Ctor state (node : (ctor * arguments option) reg) =
-  let ctor, arguments = node.value in
-  print_ctor   state ctor;
-  print_option state print_tuple_expr arguments
+and print_P_None state = print_token state "Ctor_None"
 
-and print_E_Some state (node : (kwd_Some * arguments) reg) =
-  let ctor_Some, arguments = node.value in
-  print_token      state "Ctor_Some" ctor_Some;
-  print_tuple_expr state arguments
-
-(* Patterns *)
-
-(* IMPORTANT: The data constructors are sorted alphabetically. If you
-   add or modify some, please make sure they remain in order. *)
-
-and print_pattern state = function
-  P_Bytes    p -> print_P_Bytes       state p
-| P_Cons     p -> print_nsepseq       state print_pattern "SHARP" p.value
-| P_Ctor     p -> print_P_Ctor        state p
-| P_False    p -> print_token         state "False" p
-| P_Int      p -> print_P_Int         state p
-| P_List     p -> print_injection     state print_pattern p.value
-| P_Nat      p -> print_P_Nat         state p
-| P_Nil      p -> print_token         state "Nil" p
-| P_None     p -> print_token         state "Ctor_None" p
-| P_ParCons  p -> print_P_ParCons     state p
-| P_Some     p -> print_P_Some        state p
-| P_String   p -> print_P_String      state p
-| P_True     p -> print_token         state "True" p
-| P_Tuple    p -> print_tuple_pattern state p
-| P_Unit     p -> print_token         state "Unit" p
-| P_Var      p -> print_variable      state p
-| P_Wild     p -> print_token         state "WILD" p
-
-and print_P_Ctor state (node : (ctor * tuple_pattern option) reg) =
-  let ctor, arg_opt = node.value in
-  print_ctor   state ctor;
-  print_option state print_tuple_pattern arg_opt
-
-and print_P_Some state (node : (kwd_Some * pattern par reg) reg) =
-  let ctor_Some, patterns = node.value in
-  print_token state "Ctor_Some" ctor_Some;
-  print_par   state print_pattern patterns.value
+(* The special pattern matching the head of a list and its tail, the
+   whole between parentheses. *)
 
 and print_P_ParCons state (node : (pattern * cons * pattern) par reg) =
   let print state (head, cons, tail) =
     print_pattern state head;
     print_token   state "SHARP" cons;
     print_pattern state tail;
-  in print_par state print node.value
+  in print_par state print node
 
-and print_tuple_pattern state (node : tuple_pattern) =
-  let print state = print_nsepseq state print_pattern "COMMA"
-  in print_par state print node.value
+(* The pattern for the application of the predefined constructor
+   [Some] *)
+
+and print_P_Some state (node : (kwd_Some * pattern par reg) reg) =
+  let ctor_Some, patterns = node.value in
+  print_token state "Ctor_Some" ctor_Some;
+  print_par   state print_pattern patterns
+
+(* String literals as patterns *)
+
+and print_P_String state = print_string state
+
+(* The Boolean for truth in patterns *)
+
+and print_P_True state = print_token state "True"
+
+(* The pattern matching a tuple *)
+
+and print_P_Tuple state = print_tuple_pattern state
+
+(* The pattern matching the unique value of the type "unit". *)
+
+and print_P_Unit state = print_token state "Unit"
+
+(* A pattern variable *)
+
+and print_P_Var state = print_ident state
+
+(* The catch-all pattern (a.k.a. the joker) *)
+
+and print_P_Wild state = print_token state "WILD"
+
+
+(* EXPRESSIONS *)
+
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. Note
+   that the sections below follow the alphabetical order too:
+   [print_E_Add] comes before [print_E_And]. *)
+
+and print_expr state = function
+  E_Add       e -> print_E_Add       state e
+| E_And       e -> print_E_And       state e
+| E_Annot     e -> print_E_Annot     state e
+| E_BigMap    e -> print_E_BigMap    state e
+| E_Block     e -> print_E_Block     state e
+| E_Bytes     e -> print_E_Bytes     state e
+| E_Call      e -> print_E_Call      state e
+| E_Case      e -> print_E_Case      state e
+| E_Cat       e -> print_E_Cat       state e
+| E_CodeInj   e -> print_E_CodeInj   state e
+| E_Equal     e -> print_E_Equal     state e
+| E_Cond      e -> print_E_Cond      state e
+| E_Cons      e -> print_E_Cons      state e
+| E_Ctor      e -> print_E_Ctor      state e
+| E_Div       e -> print_E_Div       state e
+| E_False     e -> print_E_False     state e
+| E_Fun       e -> print_E_Fun       state e
+| E_Geq       e -> print_E_Geq       state e
+| E_Gt        e -> print_E_Gt        state e
+| E_Int       e -> print_E_Int       state e
+| E_Leq       e -> print_E_Leq       state e
+| E_List      e -> print_E_List      state e
+| E_Lt        e -> print_E_Lt        state e
+| E_Map       e -> print_E_Map       state e
+| E_MapLookUp e -> print_E_MapLookup state e
+| E_Mod       e -> print_E_Mod       state e
+| E_ModPath   e -> print_E_ModPath   state e
+| E_Mult      e -> print_E_Mult      state e
+| E_Mutez     e -> print_E_Mutez     state e
+| E_Nat       e -> print_E_Nat       state e
+| E_Neg       e -> print_E_Neg       state e
+| E_Nil       e -> print_E_Nil       state e
+| E_Neq       e -> print_E_Neq       state e
+| E_None      e -> print_E_None      state e
+| E_Not       e -> print_E_Not       state e
+| E_Or        e -> print_E_Or        state e
+| E_Par       e -> print_E_Par       state e
+| E_Proj      e -> print_E_Proj      state e
+| E_Record    e -> print_E_Record    state e
+| E_Set       e -> print_E_Set       state e
+| E_SetMem    e -> print_E_SetMem    state e
+| E_Some      e -> print_E_Some      state e
+| E_String    e -> print_E_String    state e
+| E_Sub       e -> print_E_Sub       state e
+| E_True      e -> print_E_True      state e
+| E_Tuple     e -> print_E_Tuple     state e
+| E_Unit      e -> print_E_Unit      state e
+| E_Update    e -> print_E_Update    state e
+| E_Var       e -> print_E_Var       state e
+| E_Verbatim  e -> print_E_Verbatim  state e
+
+(* Arithmetic addition *)
+
+and print_E_Add state = print_op2 state "PLUS"
+
+and print_op2 state lexeme (node : keyword bin_op reg) =
+  let node = node.value in
+  print_expr  state node.arg1;
+  print_token state lexeme node.op;
+  print_expr  state node.arg2
+
+(* Boolean conjunction *)
+
+and print_E_And state = print_op2 state "And"
+
+(* Expressions annotated with a type *)
+
+and print_E_Annot state = print_par state print_annot_expr
+
+and print_annot_expr state (expr, type_annot) =
+  print_expr       state expr;
+  print_type_annot state type_annot
+
+(* Big maps defined intensionally *)
+
+and print_E_BigMap state = print_injection state print_binding
+
+and print_binding state (node : binding reg) =
+  let node = node.value in
+  print_expr  state node.source;
+  print_token state "ARROW" node.arrow;
+  print_expr  state node.image
+
+(* Block expressions *)
+
+and print_E_Block state (node : block_with reg) =
+  let node = node.value in
+  print_block state node.block;
+  print_token state "With" node.kwd_with;
+  print_expr  state node.expr
+
+(* Bytes as expressions *)
+
+and print_E_Bytes state = print_bytes state
+
+(* Function calls *)
+
+and print_E_Call state = print_call state
+
+(* Case expressions *)
+
+and print_E_Case state = print_case state print_expr
+
+(* String catenation *)
+
+and print_E_Cat state = print_op2 state "CARET"
+
+(* Code Injection *)
+
+and print_E_CodeInj state (node : code_inj reg) =
+  let {value; region} = node.value.language in
+  let line =
+    sprintf "%s: Lang %S" (compact state region)
+            value.Region.value
+  in Buffer.add_string state#buffer line
+
+(* Equality *)
+
+and print_E_Equal state = print_op2 state "EQ"
+
+(* Conditional expressions *)
+
+and print_E_Cond state = print_conditional state print_expr
+
+(* Consing (that is, pushing an item on top of a stack/list *)
+
+and print_E_Cons state = print_op2 state "SHARP"
+
+(* Constructor application (or constant constructor) as expressions *)
+
+and print_E_Ctor state (node : (ctor * arguments option) reg) =
+  let ctor, arguments = node.value in
+  print_ctor   state ctor;
+  print_option state print_tuple_expr arguments
+
+(* The Euclidean quotient *)
+
+and print_E_Div state = print_op2 state "SLASH"
+
+(* The Boolean untruth *)
+
+and print_E_False state = print_token state "False"
+
+(* Functional expressions *)
+
+and print_E_Fun state (node : fun_expr reg) =
+  let node = node.value in
+  print_token      state "Function" node.kwd_function;
+  print_parameters state node.param;
+  print_option     state print_type_annot node.ret_type;
+  print_token      state "Is" node.kwd_is;
+  print_expr       state node.return
+
+(* Greater or Equal *)
+
+and print_E_Geq state = print_op2 state "Geq"
+
+(* Greater Than *)
+
+and print_E_Gt state = print_op2 state "Gt"
+
+(* Integer literals as expressions *)
+
+and print_E_Int state = print_int state
+
+(* Lower or Equal *)
+
+and print_E_Leq state = print_op2 state "Leq"
+
+(* Lists of expressions defined intensionally *)
+
+and print_E_List state = print_injection state print_expr
+
+(* Lower Than *)
+
+and print_E_Lt state = print_op2 state "Lt"
+
+(* Map expressions defined intensionally (that is, by a series of
+   bindings from keys to values. *)
+
+and print_E_Map state = print_injection state print_binding
+
+(* Map lookup as an expression (denoting the key or a failure) *)
+
+and print_E_MapLookup state = print_map_lookup state
+
+(* Euclidean reminder ("modulo") *)
+
+and print_E_Mod state = print_op2 state "Mod"
+
+(* Module path as an expression *)
+
+and print_E_ModPath state = print_module_path state print_expr
+
+(* Arithmetic multiplication *)
+
+and print_E_Mult state = print_op2 state "TIMES"
+
+(* Literal mutez as expressions *)
+
+and print_E_Mutez state = print_mutez state
+
+(* Natural numbers as expressions *)
+
+and print_E_Nat state = print_nat state
+
+(* Arithmetic negation *)
+
+and print_E_Neg state = print_op1 state "MINUS"
+
+and print_op1 state lexeme (node : keyword un_op reg) =
+  let node = node.value in
+  print_token state lexeme node.op;
+  print_expr  state node.arg
+
+(* The empty list as a value *)
+
+and print_E_Nil state = print_token state "Nil"
+
+(* Not Equal *)
+
+and print_E_Neq state = print_op2 state "NE"
+
+(* The predefined constant constructor [None] as an expression *)
+
+and print_E_None state = print_token state "Ctor_None"
+
+(* Boolean negation *)
+
+and print_E_Not state = print_op1 state "Not"
+
+(* Boolean disjunction *)
+
+and print_E_Or state = print_op2 state "Or"
+
+(* Parenthesised expression *)
+
+and print_E_Par state = print_par state print_expr
+
+(* Projections *)
+
+and print_E_Proj state = print_projection state
+
+(* Record expression defined intensionally (that is, by listing all
+   the field assignments) *)
+
+and print_E_Record state =
+  print_ne_injection state print_field_assignment
+
+(* Set expression defined intensionally (that is, by listing all the
+   elements) *)
+
+and print_E_Set state = print_injection state print_expr
+
+(* Set membership *)
+
+and print_E_SetMem state (node : set_mem reg) =
+  let node = node.value in
+  print_expr  state node.set;
+  print_token state "Contains" node.kwd_contains;
+  print_expr  state node.element
+
+(* Application of the predefined constructor [Some] *)
+
+and print_E_Some state (node : (kwd_Some * arguments) reg) =
+  let ctor_Some, arguments = node.value in
+  print_token      state "Ctor_Some" ctor_Some;
+  print_tuple_expr state arguments
+
+(* String literals as expressions *)
+
+and print_E_String state = print_string state
+
+(* Arithmetic subtraction *)
+
+and print_E_Sub state = print_op2 state "MINUS"
+
+(* Boolean truth as an expression *)
+
+and print_E_True state = print_token state "True"
+
+(* Tuples of expressions *)
+
+and print_E_Tuple state = print_tuple_expr state
+
+(* The unique value of the type "unit" *)
+
+and print_E_Unit state = print_token state "Unit"
+
+(* Functional updates of record expressions *)
+
+and print_E_Update state (node : update reg) =
+  let node = node.value in
+  print_path         state node.record;
+  print_token        state "With" node.kwd_with;
+  print_ne_injection state print_field_path_assignment
+                     node.updates
+
+and print_field_path_assignment state (node : field_path_assignment reg) =
+  let node = node.value in
+  print_path  state node.field_path;
+  print_token state "EQ" node.assignment;
+  print_expr  state node.field_expr
+
+(* Expression variables *)
+
+and print_E_Var state = print_ident state
+
+(* Verbatim strings as expressions *)
+
+and print_E_Verbatim state = print_verbatim state
 
 (* Printing tokens (client-slide) *)
 

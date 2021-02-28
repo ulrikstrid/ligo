@@ -327,7 +327,7 @@ and var_decl = {
 
 and instruction =
   I_Assign      of assignment reg
-| I_Call        of fun_call
+| I_Call        of call
 | I_Case        of test_clause case reg
 | I_Cond        of test_clause conditional reg
 | I_For         of for_int reg
@@ -487,7 +487,7 @@ and expr =
 | E_BigMap    of binding reg injection reg
 | E_Block     of block_with reg
 | E_Bytes     of (lexeme * Hex.t) reg
-| E_Call      of fun_call
+| E_Call      of call
 | E_Case      of expr case reg
 | E_Cat       of caret bin_op reg              (* "^"   *)
 | E_CodeInj   of code_inj reg
@@ -592,7 +592,7 @@ and selection =
 
 and tuple_expr = (expr, comma) nsepseq par reg
 
-and fun_call = (expr * arguments) reg
+and call = (expr * arguments) reg
 
 and arguments = tuple_expr
 
