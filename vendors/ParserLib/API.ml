@@ -114,11 +114,12 @@ module Make (Lexer: LEXER)
       let menhir_lexer = mk_menhir_lexer Lexer.scan in
       try Stdlib.Ok (Parser.main menhir_lexer lexbuf) with
         (* See [mk_menhir_lexer]: *)
-        LexingError msg -> Stdlib.Error msg
+        LexingError msg ->
+          Stdlib.Error msg
       | Parser.Error -> (* Menhir exception *)
-        let window = get_window () in
-        let region = Token.to_region window#current_token
-        in Stdlib.Error Region.{value=""; region}
+          let window = get_window () in
+          let region = Token.to_region window#current_token
+          in Stdlib.Error Region.{value=""; region}
 
     let mono_from_lexbuf  = mono_menhir (fun x -> x)
     let mono_from_channel = mono_menhir Lexing.from_channel
@@ -207,10 +208,10 @@ module Make (Lexer: LEXER)
         (* See [mk_menhir_lexer]: *)
           LexingError msg -> Stdlib.Error msg
         | ParsingError msg ->
-          let window = get_window () in
-          let region = Token.to_region window#current_token in
-          let msg    = msg ^ "\n"
-          in Stdlib.Error Region.{value=msg; region}
+            let window = get_window () in
+            let region = Token.to_region window#current_token in
+            let msg    = msg ^ "\n"
+            in Stdlib.Error Region.{value=msg; region}
       in flush_all (); tree
 
     let incr_from_lexbuf  = incr_menhir (fun x -> x)

@@ -94,7 +94,7 @@ module Make (Lexer  : LEXER)
     type 'src parser =
       'src -> (Parser.tree, message) Stdlib.result
 
-    val get_window   : unit -> Lexer.window
+    val get_window : unit -> Lexer.window
 
     (* Monolithic API of Menhir *)
 
