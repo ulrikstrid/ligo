@@ -828,4 +828,4 @@ In this article, we discussed some Solidity patterns and their LIGO counterparts
 | `contract.doX(...)` | Emit an internal operation |
 | `uint x = contract.getX()` | Do not do this. Think if you can merge the contracts or reverse the execution flow |
 | Proxy upgrade pattern | Put lambdas to storage and provide means to update them |
-| `emit Event(...)` | Event logs are not supported at the moment. If you want to save events in storage, put them to a big map, and index it incrementally |
+| `emit Event(...)` | Event logs are not supported at the moment. There is a [proposal](https://gitlab.com/tzip/tzip/-/blob/8ac4f90cdc2e3ffb135f6a6a4b3ee0ece3e39870/proposals/tzip-20/tzip-20.md) to support event logs in the future |
