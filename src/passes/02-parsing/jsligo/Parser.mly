@@ -111,7 +111,6 @@ sep_or_term_list(item,sep):
 %inline field_name  : "<lident>" { $1 }
 %inline module_name : "<uident>" { $1 }
 
-
 %inline 
 
 (* Non-empty comma-separated values (at least two values) *)

@@ -239,7 +239,6 @@ and compile_type_expression : CST.type_expr -> (type_expression, _) result =
     let%bind fields = bind_map_list aux lst in
     return @@ t_record_ez_attr ~loc ~attr:attributes fields
   | TProd prod  ->
-    print_endline "tprod hi";
     let (nsepseq, loc) = r_split prod in
     let lst = npseq_to_list nsepseq.inside in
     let%bind lst = bind_map_list self lst in
@@ -592,7 +591,6 @@ and compile_expression_in : CST.expr -> (AST.expr, _) result = fun e ->
         fail @@ unknown_constant var loc
         )
   | ECall call ->
-    print_endline "ecall aha!";
     let ((func, args), loc) = r_split call in
     let args = match args with
       | Unit the_unit -> CST.EUnit the_unit,[]
@@ -673,7 +671,6 @@ and compile_expression_in : CST.expr -> (AST.expr, _) result = fun e ->
     else
       return @@ e_module_accessor ~loc module_name element
   | EFun func ->
-    (* todo : make it in common with let function *)
     let (func, loc) = r_split func in
     let ({parameters; lhs_type; body} : CST.fun_expr) = func in
     let%bind lhs_type = bind_map_option (compile_type_expression <@ snd) lhs_type in
@@ -866,9 +863,9 @@ and compile_parameter : CST.expr ->
             in 
             let%bind lst = bind_map_ne_list array_item @@ npseq_to_ne_list array_items in
             let (lst,exprs) = List.Ne.split lst in
-            let var, ascr, expr = match lst with
+            let var, expr = match lst with
               {var;ascr}, [] ->
-              Location.unwrap var, ascr, []
+              Location.unwrap var, []
             | var, lst ->
               let binder = Var.fresh () in
               let aux (i: Z.t) (b: type_expression binder) =
@@ -876,11 +873,10 @@ and compile_parameter : CST.expr ->
                 (b, [], e_accessor (e_variable @@ Location.wrap ~loc binder) @@ [Access_tuple i])
               in
               binder,
-              Option.map (t_tuple ~loc) @@ Option.bind_list @@ List.map (fun e -> e.ascr) @@ var::lst,
               List.fold_map aux Z.zero @@ var :: lst
             in
             let exprs = List.flatten @@ expr :: List.Ne.to_list exprs in
-            return ?ascr loc exprs @@ var
+            return ~ascr loc exprs @@ var
         | _ -> fail @@ not_a_valid_parameter expr
         )
     | _ as e -> fail @@ not_a_valid_parameter e
