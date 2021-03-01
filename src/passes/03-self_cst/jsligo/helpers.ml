@@ -109,7 +109,8 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> ('a, 'err) result =
   | EArith Int _ -> ok init
   | EString String   _
   | EString Verbatim _
-  | EUident _ -> ok init
+  | EModA _
+  | EVar _ -> ok init
   | EObject  {value;region=_} ->
     let aux init = function
       Punned_property {value; _} -> self init value
@@ -134,7 +135,6 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> ('a, 'err) result =
     let%bind res = self init expr in
     let%bind res = fold_selection res selection in
     ok res
-  | ELident     _ -> ok init
   | ECall    {value;region=_} ->
     let (lam, args) = value in
     let%bind res = self init lam in
@@ -343,8 +343,8 @@ let rec map_expression : 'err mapper -> expr -> (expr, 'err) result = fun f e  -
   | ESeq  {value; region} ->
       let%bind value = bind_map_npseq self value in
       return @@ ESeq { value; region }
-  | ELident v -> return @@ ELident v
-  | EUident c -> return @@ EUident c
+  | EVar v -> return @@ EVar v
+  | EModA a -> return @@ EModA a
   | ELogic BoolExpr Or  {value;region} ->
     let%bind value = bin_op value in
     return @@ ELogic (BoolExpr (Or {value;region}))

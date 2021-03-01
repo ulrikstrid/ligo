@@ -131,8 +131,8 @@ and pp_expr = function
   EFun     e -> pp_fun e
 | EPar     e -> pp_par_expr e.value
 | ESeq     e -> pp_seq e
-| ELident  v -> pp_ident v
-| EUident  e -> pp_ident e
+| EVar     v -> pp_ident v
+| EModA    e -> pp_module_access pp_expr e
 | ELogic   e -> pp_logic_expr e
 | EArith   e -> group (pp_arith_expr e)
 | ECall    e -> pp_call_expr e

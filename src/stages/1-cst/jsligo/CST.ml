@@ -26,9 +26,7 @@ type 'a reg = 'a Region.reg
 
 (* Lexemes *)
 
-type lexeme = string
-type field_name = string reg
-type ident = string reg
+type lexeme       = string
 
 (* Keywords of Reason *)
 
@@ -114,12 +112,15 @@ type eof = Region.t
 
 (* Literals *)
 
-type variable    = string reg
-type fun_name    = string reg
-type type_name   = string reg
-type type_constr = string reg
-type constr      = string reg
-type attribute   = string reg
+type variable     = string reg
+type fun_name     = string reg
+type type_name    = string reg
+type type_constr  = string reg
+type constr       = string reg
+type attribute    = string reg
+type field_name   = string reg
+type module_name  = string reg
+
 
 (* Parentheses *)
 
@@ -207,7 +208,7 @@ and type_expr =
 | TModA   of type_expr module_access reg
 
 and 'a module_access = {
-  module_name : ident;
+  module_name : module_name;
   selector    : dot;
   field       : 'a;
 }
@@ -318,8 +319,8 @@ and expr =
   EFun     of fun_expr reg
 | EPar     of expr par reg
 | ESeq     of (expr, comma) nsepseq reg
-| ELident  of variable
-| EUident  of variable
+| EVar     of variable
+| EModA    of expr module_access reg
 | ELogic   of logic_expr
 | EArith   of arith_expr
 | ECall    of (expr * arguments) reg
@@ -345,15 +346,15 @@ and statement =
 | SType       of type_decl reg
 | SSwitch     of switch reg
 | SBreak      of kwd_break
-| SNamespace  of (kwd_namespace * ident * (statements braced reg)) reg
+| SNamespace  of (kwd_namespace * module_name * (statements braced reg)) reg
 | SExport     of (kwd_export * statement) reg
 | SImport     of import reg
 
 and import = {
   kwd_import   : kwd_import;
-  alias        : ident;
+  alias        : module_name;
   equal        : equal;
-  module_path  : (ident, dot) nsepseq
+  module_path  : (module_name, dot) nsepseq
 }
 
 and arguments =
@@ -527,11 +528,10 @@ let rec expr_to_region = function
 | EString e -> string_expr_to_region e
 | EAssign (f, _, e) -> Region.cover (expr_to_region f) (expr_to_region e)
 | EAnnot {region;_ } | EFun {region;_}
-| ECall {region;_}   | ELident {region; _}    | EProj {region; _}
+| ECall {region;_}   | EVar {region; _}    | EProj {region; _}
 | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
 | ESeq {region; _}   | EObject {region; _} | EArray { region; _}
-| ENew {region; _}   | EUident {region; _}
-| ECodeInj {region; _} -> region
+| ENew {region; _}   | ECodeInj {region; _} | EModA { region; _} -> region
 
 let statement_to_region = function
   SBreak b -> b

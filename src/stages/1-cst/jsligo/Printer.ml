@@ -69,25 +69,12 @@ let print_token state region lexeme =
     sprintf "%s: %s\n" (compact state region) lexeme
   in Buffer.add_string state#buffer line
 
-let print_uident state {region; value} =
-  let line =
-    sprintf "%s: Uident %s\n"
-            (compact state region)value
-  in Buffer.add_string state#buffer line
-
-let print_lident state {region; value} =
-  let line =
-    sprintf "%s: Lident %s\n"
-            (compact state region)value
-  in Buffer.add_string state#buffer line
-
-let print_ident state {region; value} =
+let print_var state {region; value} =
   let line =
     sprintf "%s: Ident %s\n"
             (compact state region)value
   in Buffer.add_string state#buffer line
   
-
 let print_tconstr state {region; value} =
   let line =
     sprintf "%s: TConstr %s\n"
@@ -158,7 +145,7 @@ and print_statement state = function
     print_nsepseq       state "," print_let_binding bindings;
 | SType { value = {kwd_type; name; eq; type_expr}; _ } ->
     print_token     state kwd_type "type";
-    print_lident    state name;
+    print_var       state name;
     print_token     state eq       "=";
     print_type_expr state type_expr
 | SSwitch {
@@ -182,15 +169,15 @@ and print_statement state = function
 | SBreak b -> print_token state b "break"
 | SNamespace { value = (kwd_namespace, name, {value = {lbrace; inside; rbrace}; _}); _} ->
     print_token   state kwd_namespace "namespace";
-    print_lident  state name;
+    print_var     state name;
     print_token   state lbrace    "{";
     print_nsepseq state ";" print_statement inside;
     print_token   state rbrace    "}"
 | SImport {value = {kwd_import; alias; equal; module_path}; _} -> 
     print_token state kwd_import "import";
-    print_lident state alias;
+    print_var   state alias;
     print_token state equal "=";
-    print_nsepseq state "." (fun state a -> print_lident state a) module_path
+    print_nsepseq state "." (fun state a -> print_var state a) module_path
 | SExport { value = (e, s) ; _} ->
     print_token state e "export;";
     print_statement state s
@@ -201,7 +188,7 @@ and print_type_expr state = function
 | TObject t       -> print_object_type state t
 | TApp app        -> print_type_app state app
 | TPar par        -> print_type_par state par
-| TVar var        -> print_lident state var
+| TVar var        -> print_var state var
 | TConstr var     -> print_tconstr state var
 | TFun t          -> print_fun_type state t
 | TWild wild      -> print_token state wild " "
@@ -211,7 +198,7 @@ and print_type_expr state = function
 and print_module_access : type a.(state -> a -> unit ) -> state -> a module_access reg -> unit =
 fun f state {value; _} ->
   let {module_name; selector; field} = value in
-  print_ident   state module_name;
+  print_var   state module_name;
   print_token   state selector ".";
   f             state field;
 
@@ -222,7 +209,7 @@ and print_sum_type state {value; _} =
   print_nsepseq    state "|" print_type_expr variants
 
 and print_fun_type_arg state {name; colon; type_expr} =
-  print_lident     state name;
+  print_var     state name;
   print_token     state colon ":";
   print_type_expr state type_expr
 
@@ -240,7 +227,7 @@ and print_fun_type state {value; _} =
 and print_type_app state {value; _} =
   let type_constr, type_tuple = value in
   print_type_tuple state type_tuple;
-  print_uident     state type_constr
+  print_tconstr    state type_constr
 
 and print_type_tuple state {value; _} =
   let {lchevron; inside; rchevron} = value in
@@ -259,7 +246,7 @@ and print_projection state {value; _} =
   match selection with
     FieldName { value = {dot; value}; _ } ->
       print_token state dot ".";
-      print_lident state value
+      print_var   state value
   | Component { value = {lbracket; inside; rbracket}; _} ->
       print_token state lbracket "[";
       print_expr state inside;
@@ -277,7 +264,7 @@ and print_object_type state =
 and print_field_decl state {value; _} =
   let {field_name; colon; field_type; attributes} = value
   in print_attributes state attributes;
-     print_lident        state field_name;
+     print_var        state field_name;
      print_token      state colon ":";
      print_type_expr  state field_type
 
@@ -316,15 +303,15 @@ and print_let_binding state {value = {binders; lhs_type; eq; expr; attributes = 
 
 and print_rest_pattern state { value = {ellipsis; rest}; _ } =
   print_token state ellipsis "...";
-  print_lident state rest
+  print_var state rest
 
 and print_assign_pattern state { value = { property; eq; value }; _ } =
-  print_lident state property;
+  print_var state property;
   print_token state eq "=";
   print_expr state value
 
 and print_destruct_pattern state { value = {property; colon; target}; _ } =
-  print_lident state property;
+  print_var state property;
   print_token state colon ":";
   print_let_binding state target
 
@@ -372,9 +359,9 @@ and print_expr state = function
   EFun e                 -> print_fun_expr    state e
 | EPar e                 -> print_expr_par    state e
 | ESeq seq               -> print_sequence    state seq
-| ELident v              -> print_lident      state v
+| EVar v                 -> print_var       state v
+| EModA ma               -> print_module_access print_expr state ma
 | EAssign (lhs, eq, rhs) -> print_assignment  state (lhs, eq, rhs)
-| EUident c              -> print_uident      state c
 | ELogic e               -> print_logic_expr  state e
 | EArith e               -> print_arith_expr  state e
 | ECall e                -> print_fun_call    state e
@@ -804,12 +791,9 @@ and pp_expr state = function
     pp_node state "EAssign";
     pp_expr (state#pad 1 0) lhs;
     pp_expr (state#pad 1 0) rhs
-| ELident v ->
-    pp_node  state "ELident";
+| EVar v ->
+    pp_node  state "EVar";
     pp_ident (state#pad 1 0) v
-| EUident c ->
-  pp_node  state "EUident";
-  pp_ident (state#pad 1 0) c
 | ELogic e_logic ->
     pp_node state "ELogic";
     pp_e_logic (state#pad 1 0) e_logic
@@ -851,6 +835,9 @@ and pp_expr state = function
         let state = state#pad 2 1 in
         pp_loc_node state "<component>" region;
         pp_expr (state#pad 1 0) inside)
+| EModA {value; region} ->
+  pp_loc_node state "EModA" region;
+  pp_module_access pp_expr state value
 | EAnnot {value; region} ->
     pp_loc_node state "EAnnot" region;
     pp_annotated state value
