@@ -260,7 +260,7 @@ contract Counter {
 
 When the contract is compiled, the Solidity compiler automatically adds dispatching logic into the resulting EVM bytecode. The contract inspects the data passed to it and chooses a method based on the first four bytes of the method's signature hash: `0xbc1ecb8e` means `increment()` and `0x36e44653` means `decrement()`.
 
-In Tezos, a contract must define a default entrypoint that does the dispatching. It is much like a `main` function in C-like languages. It accepts a typed _parameter_ and the current value of the contract _storage,_ and returns a list of internal operations and the new value of the storage.
+In Tezos, a contract must define a default entrypoint that does the dispatching. It is much like a `main` function in C-like languages. It accepts a typed _parameter_ (some data that comes with a transaction) and the current value of the contract _storage_ (the internal state of the contract). The default entrypoint returns a list of internal operations and the new value of the storage.
 
 For example, we can simulate Ethereum dispatching behavior:
 <Syntax syntax="pascaligo">
