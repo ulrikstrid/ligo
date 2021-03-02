@@ -1,7 +1,7 @@
 open Simple_utils.Display
 
 module Raw = Cst.Reasonligo
-module Parser = Parser.Reasonligo
+module Parser = Ligo_parser.Reasonligo
 
 let stage = "abstracter"
 

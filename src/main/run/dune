@@ -4,7 +4,7 @@
   (libraries
     simple-utils
     tezos-utils
-    parser
+    ligo_parser
     tree_abstraction
     self_ast_imperative
     desugaring
@@ -16,7 +16,7 @@
     mini_c
     predefined
     stacking
-    compile
+    ligo_compile
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

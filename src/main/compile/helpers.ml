@@ -10,9 +10,9 @@ type meta = {
 let protocol_to_variant : string -> (Environment.Protocols.t, all) result = fun s ->
   trace_option (invalid_protocol_version Environment.Protocols.protocols_str s) @@ Environment.Protocols.protocols_to_variant s
 
-let get_initial_env  : string -> (Ast_typed.environment, all) result = fun protocol_as_str ->
+let get_initial_env  : ?test_env:bool -> string -> (Ast_typed.environment, all) result = fun ?(test_env=false) protocol_as_str ->
   let%bind protocol = protocol_to_variant protocol_as_str in
-  ok @@ Environment.default protocol
+  ok @@ (if test_env then Environment.default_with_test else Environment.default) protocol
 
 (*TODO : move this function to src/helpers so that src/build/.. can use it *)
 let file_extension_to_variant sf =
@@ -59,7 +59,7 @@ let preprocess_string ~(options:Compiler_options.t) ~meta source =
 
 let parse_and_abstract_pascaligo libs c_unit source =
   let%bind raw = trace parser_tracer @@
-    Parser.Pascaligo.parse_file libs c_unit source in
+    Ligo_parser.Pascaligo.parse_file libs c_unit source in
   let%bind applied = trace self_cst_pascaligo_tracer @@
     Self_cst.Pascaligo.all_module raw in
   let%bind imperative = trace cit_pascaligo_tracer @@
@@ -68,7 +68,7 @@ let parse_and_abstract_pascaligo libs c_unit source =
 
 let parse_and_abstract_expression_pascaligo libs c_unit =
   let%bind raw = trace parser_tracer @@
-    Parser.Pascaligo.parse_expression libs c_unit in
+    Ligo_parser.Pascaligo.parse_expression libs c_unit in
   let%bind applied = trace self_cst_pascaligo_tracer @@
     Self_cst.Pascaligo.all_expression raw in
   let%bind imperative = trace cit_pascaligo_tracer @@
@@ -77,7 +77,7 @@ let parse_and_abstract_expression_pascaligo libs c_unit =
 
 let parse_and_abstract_cameligo libs c_unit source =
   let%bind raw = trace parser_tracer @@
-    Parser.Cameligo.parse_file libs c_unit source in
+    Ligo_parser.Cameligo.parse_file libs c_unit source in
   let%bind applied = trace self_cst_cameligo_tracer @@
     Self_cst.Cameligo.all_module raw in
   let%bind imperative = trace cit_cameligo_tracer @@
@@ -86,7 +86,7 @@ let parse_and_abstract_cameligo libs c_unit source =
 
 let parse_and_abstract_expression_cameligo libs source =
   let%bind raw = trace parser_tracer @@
-    Parser.Cameligo.parse_expression libs source in
+    Ligo_parser.Cameligo.parse_expression libs source in
   let%bind applied = trace self_cst_cameligo_tracer @@
     Self_cst.Cameligo.all_expression raw in
   let%bind imperative = trace cit_cameligo_tracer @@
@@ -95,7 +95,7 @@ let parse_and_abstract_expression_cameligo libs source =
 
 let parse_and_abstract_reasonligo libs c_unit source =
   let%bind raw = trace parser_tracer @@
-    Parser.Reasonligo.parse_file libs c_unit source in
+    Ligo_parser.Reasonligo.parse_file libs c_unit source in
   let%bind applied = trace self_cst_reasonligo_tracer @@
     Self_cst.Reasonligo.all_module raw in
   let%bind imperative = trace cit_reasonligo_tracer @@
@@ -104,7 +104,7 @@ let parse_and_abstract_reasonligo libs c_unit source =
 
 let parse_and_abstract_expression_reasonligo libs source =
   let%bind raw = trace parser_tracer @@
-    Parser.Reasonligo.parse_expression libs source in
+    Ligo_parser.Reasonligo.parse_expression libs source in
   let%bind applied = trace self_cst_reasonligo_tracer @@
     Self_cst.Reasonligo.all_expression raw in
   let%bind imperative = trace cit_reasonligo_tracer @@
@@ -134,7 +134,7 @@ let parse_and_abstract_expression ~(options:Compiler_options.t) ~meta source =
 
 let parse_and_abstract_string_reasonligo libs source =
   let%bind raw = trace parser_tracer @@
-    Parser.Reasonligo.parse_module_string libs source
+    Ligo_parser.Reasonligo.parse_module_string libs source
   in
   let%bind imperative = trace cit_reasonligo_tracer @@
     Tree_abstraction.Reasonligo.compile_module raw
@@ -142,7 +142,7 @@ let parse_and_abstract_string_reasonligo libs source =
 
 let parse_and_abstract_string_pascaligo libs source =
   let%bind raw = trace parser_tracer @@
-    Parser.Pascaligo.parse_module_string libs source
+    Ligo_parser.Pascaligo.parse_module_string libs source
   in
   let%bind imperative = trace cit_pascaligo_tracer @@
     Tree_abstraction.Pascaligo.compile_module raw
@@ -150,7 +150,7 @@ let parse_and_abstract_string_pascaligo libs source =
 
 let parse_and_abstract_string_cameligo libs source =
   let%bind raw = trace parser_tracer @@
-    Parser.Cameligo.parse_module_string libs source
+    Ligo_parser.Cameligo.parse_module_string libs source
   in
   let%bind imperative = trace cit_cameligo_tracer @@
     Tree_abstraction.Cameligo.compile_module raw
@@ -168,7 +168,7 @@ let parse_and_abstract_string ~libs syntax source =
   in ok applied
 
 let pretty_print_pascaligo_cst libs c_unit source =
-  let%bind ast = trace parser_tracer @@ Parser.Pascaligo.parse_file libs c_unit source in
+  let%bind ast = trace parser_tracer @@ Ligo_parser.Pascaligo.parse_file libs c_unit source in
   let buffer = Buffer.create 59 in
   let state =
     Cst_pascaligo.Printer.mk_state
@@ -179,7 +179,7 @@ let pretty_print_pascaligo_cst libs c_unit source =
   ok buffer
 
 let pretty_print_cameligo_cst libs c_unit source =
-  let%bind ast = trace parser_tracer @@ Parser.Cameligo.parse_file libs c_unit source in
+  let%bind ast = trace parser_tracer @@ Ligo_parser.Cameligo.parse_file libs c_unit source in
   let buffer = Buffer.create 59 in
   let state = (* TODO: Should flow from the CLI *)
     Cst_cameligo.Printer.mk_state
@@ -190,7 +190,7 @@ let pretty_print_cameligo_cst libs c_unit source =
   ok buffer
 
 let pretty_print_reasonligo_cst libs c_unit source =
-  let%bind ast = trace parser_tracer @@ Parser.Reasonligo.parse_file libs c_unit source in
+  let%bind ast = trace parser_tracer @@ Ligo_parser.Reasonligo.parse_file libs c_unit source in
   let buffer = Buffer.create 59 in
   let state = (* TODO: Should flow from the CLI *)
     Cst_reasonligo.Printer.mk_state
@@ -207,7 +207,7 @@ let pretty_print_cst ~(options:Compiler_options.t) ~meta c_unit source =
   | ReasonLIGO -> pretty_print_reasonligo_cst options.libs c_unit source
 
 let pretty_print_pascaligo libs c_unit source =
-  let%bind ast = Parser.Pascaligo.parse_file libs c_unit source in
+  let%bind ast = Ligo_parser.Pascaligo.parse_file libs c_unit source in
   let doc    = Parser_pascaligo.Pretty.print ast in
   let buffer = Buffer.create 131 in
   let width  =
@@ -218,7 +218,7 @@ let pretty_print_pascaligo libs c_unit source =
   in Trace.ok buffer
 
 let pretty_print_cameligo libs c_unit source =
-  let%bind ast = Parser.Cameligo.parse_file libs c_unit source in
+  let%bind ast = Ligo_parser.Cameligo.parse_file libs c_unit source in
   let doc    = Parser_cameligo.Pretty.print ast in
   let buffer = Buffer.create 131 in
   let width  =
@@ -229,7 +229,7 @@ let pretty_print_cameligo libs c_unit source =
   in Trace.ok buffer
 
 let pretty_print_reasonligo libs c_unit source =
-  let%bind ast = Parser.Reasonligo.parse_file libs c_unit source in
+  let%bind ast = Ligo_parser.Reasonligo.parse_file libs c_unit source in
   let doc    = Parser_reasonligo.Pretty.print ast in
   let buffer = Buffer.create 131 in
   let width  =

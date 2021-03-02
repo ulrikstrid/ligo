@@ -37,42 +37,42 @@ let specialise_and_print_pascaligo dialect m =
   let%bind cst = trace cit_pascaligo_tracer @@
     Tree_abstraction.Pascaligo.decompile_module ?dialect m in
   let%bind source = trace pretty_tracer @@
-    ok (Parser.Pascaligo.pretty_print cst)
+    ok (Ligo_parser.Pascaligo.pretty_print cst)
   in ok source
 
 let specialise_and_print_expression_pascaligo dialect expression =
   let%bind cst = trace cit_pascaligo_tracer @@
     Tree_abstraction.Pascaligo.decompile_expression ?dialect expression in
   let%bind source = trace pretty_tracer @@
-    ok (Parser.Pascaligo.pretty_print_expression cst)
+    ok (Ligo_parser.Pascaligo.pretty_print_expression cst)
   in ok source
 
 let specialise_and_print_cameligo m =
   let%bind cst = trace cit_cameligo_tracer @@
     Tree_abstraction.Cameligo.decompile_module m in
   let%bind source = trace pretty_tracer @@
-    ok (Parser.Cameligo.pretty_print cst)
+    ok (Ligo_parser.Cameligo.pretty_print cst)
   in ok source
 
 let specialise_and_print_expression_cameligo expression =
   let%bind cst = trace cit_cameligo_tracer @@
     Tree_abstraction.Cameligo.decompile_expression expression in
   let%bind source = trace pretty_tracer @@
-    ok (Parser.Cameligo.pretty_print_expression cst)
+    ok (Ligo_parser.Cameligo.pretty_print_expression cst)
   in ok source
 
 let specialise_and_print_reasonligo m =
   let%bind cst = trace cit_reasonligo_tracer @@
     Tree_abstraction.Reasonligo.decompile_module m in
   let%bind source = trace pretty_tracer @@
-    ok (Parser.Reasonligo.pretty_print cst)
+    ok (Ligo_parser.Reasonligo.pretty_print cst)
   in ok source
 
 let specialise_and_print_expression_reasonligo expression =
   let%bind cst = trace cit_reasonligo_tracer @@
     Tree_abstraction.Reasonligo.decompile_expression expression in
   let%bind source = trace pretty_tracer @@
-    ok (Parser.Reasonligo.pretty_print_expression cst)
+    ok (Ligo_parser.Reasonligo.pretty_print_expression cst)
   in ok source
 
 

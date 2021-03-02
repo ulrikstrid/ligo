@@ -57,19 +57,20 @@ let get_groups md_file =
 let compile_groups filename grp_list =
   let%bind (_michelsons : Stacking.compiled_expression list list) = bind_map_list
     (fun ((s,grp),contents) ->
+      let open Ligo_compile in
       trace (test_md_file filename s grp contents) @@
-      let options         = Compiler_options.make () in
-      let {init_env;infer} : Compiler_options.t = options in
-      let%bind meta       = Compile.Of_source.make_meta s None in
-      let%bind c_unit,_   = Compile.Of_source.compile_string ~options ~meta contents in
-      let%bind imperative = Compile.Of_c_unit.compile ~options ~meta c_unit filename in
-      let%bind sugar      = Ligo.Compile.Of_imperative.compile imperative in
-      let%bind core       = Ligo.Compile.Of_sugar.compile sugar in
-      let%bind typed,_    = Compile.Of_core.compile ~infer ~init_env Env core in
-      let%bind mini_c     = Compile.Of_typed.compile typed in
-      bind_map_list
-        (fun ((_, _, exp),_) -> Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp)
-        mini_c
+        let options         = Compiler_options.make () in
+        let {init_env;infer} : Compiler_options.t = options in
+        let%bind meta       = Of_source.make_meta s None in
+        let%bind c_unit,_   = Of_source.compile_string ~options ~meta contents in
+        let%bind imperative = Of_c_unit.compile ~options ~meta c_unit filename in
+        let%bind sugar      = Of_imperative.compile imperative in
+        let%bind core       = Of_sugar.compile sugar in
+        let%bind typed,_    = Of_core.compile ~infer ~init_env Env core in
+        let%bind mini_c     = Of_typed.compile typed in
+        bind_map_list
+          (fun ((_, _, exp),_) -> Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp)
+          mini_c
     )
     grp_list in
   ok ()

@@ -4,7 +4,7 @@
   (libraries
     simple-utils
     preproc
-    parser
+    ligo_parser
     self_cst
     tree_abstraction
     self_ast_imperative
@@ -16,12 +16,11 @@
     inferance
     checking
     self_ast_typed
-    interpreter
+    ligo_interpreter
     spilling
     self_mini_c
     stacking
     self_michelson
-    tezos-client-008-PtEdoTez
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)

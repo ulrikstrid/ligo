@@ -6,11 +6,11 @@ open Ast_imperative.Combinators
 
 let init_env = Environment.default Environment.Protocols.current
 let retype_file f =
-  Ligo.Compile.Utils.type_file ~options f "reasonligo" Env
+  Ligo_compile.Utils.type_file ~options f "reasonligo" Env
 let mtype_file f =
-  Ligo.Compile.Utils.type_file ~options f "cameligo" Env
+  Ligo_compile.Utils.type_file ~options f "cameligo" Env
 let type_file f =
-  Ligo.Compile.Utils.type_file ~options f "pascaligo" Env
+  Ligo_compile.Utils.type_file ~options f "pascaligo" Env
 
 let type_alias () : (unit,_) result =
   let%bind program = type_file "./contracts/type-alias.ligo" in

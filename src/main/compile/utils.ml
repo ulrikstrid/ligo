@@ -84,8 +84,8 @@ let compile_and_aggregate_expression ~options source_file syntax expression env 
 
 let compile_storage ~options storage input source_file syntax env mini_c_prg =
   let%bind meta       = Of_source.extract_meta syntax source_file in
-  let%bind (storage,_),(input,_) = Of_source.compile_contract_input ~options ~meta storage input in
-  let%bind imperative = Of_c_unit.compile_contract_input ~options ~meta storage input in
+  let%bind (input,_),(storage,_) = Of_source.compile_contract_input ~options ~meta input storage in
+  let%bind imperative = Of_c_unit.compile_contract_input ~options ~meta input storage in
   let%bind sugar      = Of_imperative.compile_expression imperative in
   let%bind core       = Of_sugar.compile_expression sugar in
   let%bind typed,_    = Of_core.compile_expression ~env core in

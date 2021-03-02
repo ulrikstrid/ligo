@@ -1,6 +1,7 @@
 (library
-  (name parser)
-  (public_name ligo.parser)
+  ; ligo_parser instead of parser to avoid a dune bug
+  (name ligo_parser)
+  (public_name ligo.ligo_parser)
   (libraries
      Shared_parser
      

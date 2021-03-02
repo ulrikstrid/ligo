@@ -1,7 +1,7 @@
 open Simple_utils.Display
 
 module Raw = Cst.Cameligo
-module Parser = Parser.Cameligo
+module Parser = Ligo_parser.Cameligo
 
 let stage = "abstracter"
 

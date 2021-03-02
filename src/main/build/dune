@@ -6,7 +6,7 @@
     preproc
     simple-utils
     tezos-utils
-    compile
+    ligo_compile
     ocamlgraph
   )
   (preprocess

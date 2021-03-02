@@ -15,9 +15,9 @@ let compile_string : options:Compiler_options.t -> meta:meta -> c_unit -> (Ast_i
   parse_and_abstract_string ~libs:options.libs meta.syntax c_unit
 
 let compile_contract_input : options:Compiler_options.t -> meta:meta -> c_unit -> c_unit -> (Ast_imperative.expression , _) result =
-    fun ~options ~meta storage parameter ->
-  let%bind (storage,parameter) = bind_map_pair (compile_expression ~options ~meta) (storage,parameter) in
-  ok @@ Ast_imperative.e_pair storage parameter
+    fun ~options ~meta parameter storage ->
+  let%bind (parameter,storage) = bind_map_pair (compile_expression ~options ~meta) (parameter,storage) in
+  ok @@ Ast_imperative.e_pair parameter storage
 
 let pretty_print_cst ~meta source_filename c_unit =
   pretty_print_cst ~meta c_unit source_filename

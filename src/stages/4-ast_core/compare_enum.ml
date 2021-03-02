@@ -128,31 +128,38 @@ let constant'_tag = function
   | C_CONVERT_FROM_LEFT_COMB  -> 113
   | C_CONVERT_FROM_RIGHT_COMB -> 114
   (* and more *)
-  | C_TRUE                    -> 110
-  | C_FALSE                   -> 111
-  | C_TEST_ORIGINATE          -> 112
-  | C_TEST_SET_NOW            -> 113
-  | C_TEST_SET_SOURCE         -> 114
-  | C_TEST_SET_BALANCE        -> 115
-  | C_TEST_EXTERNAL_CALL      -> 116
-  | C_TEST_GET_STORAGE        -> 117
-  | C_TEST_GET_BALANCE        -> 118
-  | C_TEST_ASSERT_FAILURE     -> 119
-  | C_TEST_LOG                -> 120
-  | C_SHA3                    -> 121
-  | C_KECCAK                  -> 122
-  | C_LEVEL                   -> 123
-  | C_VOTING_POWER            -> 124
-  | C_TOTAL_VOTING_POWER      -> 125
-  | C_TICKET                  -> 126
-  | C_READ_TICKET             -> 127
-  | C_SPLIT_TICKET            -> 128
-  | C_JOIN_TICKET             -> 129
-  | C_PAIRING_CHECK           -> 130
-  | C_MAP_GET_AND_UPDATE      -> 131
-  | C_BIG_MAP_GET_AND_UPDATE  -> 132
-  | C_SAPLING_EMPTY_STATE     -> 133
-  | C_SAPLING_VERIFY_UPDATE   -> 134
+  | C_TRUE                    -> 115
+  | C_FALSE                   -> 116
+  | C_SHA3                    -> 117
+  | C_KECCAK                  -> 118
+  | C_LEVEL                   -> 119
+  | C_VOTING_POWER            -> 120
+  | C_TOTAL_VOTING_POWER      -> 121
+  | C_TICKET                  -> 122
+  | C_READ_TICKET             -> 123
+  | C_SPLIT_TICKET            -> 124
+  | C_JOIN_TICKET             -> 125
+  | C_PAIRING_CHECK           -> 126
+  | C_MAP_GET_AND_UPDATE      -> 127
+  | C_BIG_MAP_GET_AND_UPDATE  -> 128
+  | C_SAPLING_EMPTY_STATE     -> 129
+  | C_SAPLING_VERIFY_UPDATE   -> 130
+  | C_TEST_ORIGINATE          -> 131
+  | C_TEST_SET_NOW            -> 132
+  | C_TEST_SET_SOURCE         -> 133
+  | C_TEST_SET_BAKER          -> 134
+  | C_TEST_EXTERNAL_CALL      -> 135
+  | C_TEST_GET_STORAGE        -> 136
+  | C_TEST_GET_BALANCE        -> 137
+  | C_TEST_MICHELSON_EQUAL    -> 138
+  | C_TEST_LOG                -> 139
+  | C_TEST_COMPILE_EXPRESSION -> 140
+  | C_TEST_STATE_RESET        -> 141
+  | C_TEST_EXTERNAL_CALL_EXN  -> 142
+  | C_TEST_GET_NTH_BS         -> 143
+  | C_TEST_LAST_ORIGINATIONS  -> 144
+  | C_TEST_COMPILE_META_VALUE -> 145
+  | C_TEST_COMPILE_EXPRESSION_SUBST -> 146
 
 let constant' a b = Int.compare (constant'_tag a) (constant'_tag b)
 

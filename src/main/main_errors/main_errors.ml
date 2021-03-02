@@ -1,5 +1,6 @@
 module Formatter = Formatter
 module Types = Types
+
 type all = Types.all
 
 (* build system *)
@@ -10,8 +11,8 @@ let build_corner_case (loc:string) (msg:string)  = `Build_corner_case (loc,msg)
 (* passes tracers *)
 
 let preproc_tracer (e:Preproc.Errors.preproc_error) : all = `Main_preproc e
-let parser_tracer (e:Parser.Errors.parse_error) : all = `Main_parser e
-let pretty_tracer (e:Parser.Errors.parse_error) : all = `Main_pretty e
+let parser_tracer (e:Ligo_parser.Errors.parse_error) : all = `Main_parser e
+let pretty_tracer (e:Ligo_parser.Errors.parse_error) : all = `Main_pretty e
 let self_cst_cameligo_tracer (e:Self_cst.Cameligo.Errors.self_cst_cameligo_error) : all = `Main_self_cst_cameligo e
 let self_cst_pascaligo_tracer (e:Self_cst.Pascaligo.Errors.self_cst_pascaligo_error) : all = `Main_self_cst_pascaligo e
 let self_cst_reasonligo_tracer (e:Self_cst.Reasonligo.Errors.self_cst_reasonligo_error) : all = `Main_self_cst_reasonligo e
@@ -29,8 +30,6 @@ let self_ast_typed_tracer (e:Self_ast_typed.Errors.self_ast_typed_error) : all =
 let self_mini_c_tracer (e:Self_mini_c.Errors.self_mini_c_error) : all = `Main_self_mini_c e
 let spilling_tracer (e:Spilling.Errors.spilling_error) : all = `Main_spilling e
 let stacking_tracer (e:Stacking.Errors.stacking_error) : all = `Main_stacking e
-let interpret_tracer (e:Interpreter.interpreter_error) : all = `Main_interpreter e
-
 let decompile_mini_c : Spilling.Errors.spilling_error -> all = fun e -> `Main_decompile_mini_c e
 let decompile_typed : Checking.Errors.typer_error -> all = fun e -> `Main_decompile_typed e
 let decompile_inferred : Inferance.Errors.typer_error -> all = fun e -> `Main_decompile_inferred e
