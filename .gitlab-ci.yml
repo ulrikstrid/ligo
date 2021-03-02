@@ -263,6 +263,7 @@ deploy-handoff-feature:
     LIGO_COMMIT_REF_NAME: "${CI_COMMIT_SHORT_SHA}"
   trigger: 
     project: ligolang/ligo-webide-deploy
+    branch: new-api-server-changes
   rules:
     # Only deploy handoff when from the dev branch AND on the canonical ligolang/ligo repository
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
