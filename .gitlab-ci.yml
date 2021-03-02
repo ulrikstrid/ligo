@@ -214,49 +214,49 @@ webide-push:
   after_script:
     - docker image rm "${WEBIDE_IMAGE_TAG}"
 
-release:
-  stage: push
-  image: registry.gitlab.com/gitlab-org/release-cli
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
-      when: always
-  dependencies:
-    - docker_extract
-    - changelog
-  ## FIXME find a better solution to upload the binary
-  artifacts:
-    expire_in: 1000 yrs
-    paths:
-      - ligo
-      - ligo.deb
-  script:
-    - release-cli create --name "Release $CI_COMMIT_TAG" --description "$(cat release-notes.md)" --assets-links-name "Static Linux binary" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo" --assets-links-name "deb package" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo.deb"
+# release:
+#   stage: push
+#   image: registry.gitlab.com/gitlab-org/release-cli
+#   rules:
+#     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
+#       when: always
+#   dependencies:
+#     - docker_extract
+#     - changelog
+#   ## FIXME find a better solution to upload the binary
+#   artifacts:
+#     expire_in: 1000 yrs
+#     paths:
+#       - ligo
+#       - ligo.deb
+#   script:
+#     - release-cli create --name "Release $CI_COMMIT_TAG" --description "$(cat release-notes.md)" --assets-links-name "Static Linux binary" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo" --assets-links-name "deb package" --assets-links-url "$CI_PROJECT_URL/-/jobs/$CI_JOB_ID/artifacts/raw/ligo.deb"
 
-.website:
-  stage: push
-  extends: .nix
-  dependencies:
-    - docker_extract
-  script:
-    - nix-build nix -A ligo-website
-    - cp -Lr --no-preserve=mode,ownership,timestamps result/ public
-  artifacts:
-    paths:
-      - public
+# .website:
+#   stage: push
+#   extends: .nix
+#   dependencies:
+#     - docker_extract
+#   script:
+#     - nix-build nix -A ligo-website
+#     - cp -Lr --no-preserve=mode,ownership,timestamps result/ public
+#   artifacts:
+#     paths:
+#       - public
 
-pages:
-  extends: .website
-  rules:
-    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
-      when: always
-    - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
-      when: always
+# pages:
+#   extends: .website
+#   rules:
+#     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+#       when: always
+#     - if: '$CI_COMMIT_TAG =~ /[0-9]+\.[0-9]+\.[0-9]+/'
+#       when: always
 
-pages-attempt:
-  extends: .website
-  only:
-    - merge_requests
-    - /^.*-run-dev$/
+# pages-attempt:
+#   extends: .website
+#   only:
+#     - merge_requests
+#     - /^.*-run-dev$/
 
 # This job will deploy the web-ide docker container to the test server.
 deploy-handoff-feature:
@@ -285,8 +285,22 @@ deploy-handoff:
     project: ligolang/ligo-webide-deploy
   rules:
     # Only deploy handoff when from the dev branch AND on the canonical ligolang/ligo repository
-    - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
+
+# deploy-handoff:
+#   # Handoff deployment duties to private repo
+#   stage: ide-deploy
+#   variables:
+#     IDE_DOCKER_IMAGE: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
+#     LIGO_COMMIT_REF_NAME: "${CI_COMMIT_SHORT_SHA}"
+#   trigger: 
+#     project: ligolang/ligo-webide-deploy
+#     branch: new-api-server-changes
+#   rules:
+#     # Only deploy handoff when from the dev branch AND on the canonical ligolang/ligo repository
+#     - if: '$CI_COMMIT_REF_NAME == "dev" && $CI_PROJECT_PATH == "ligolang/ligo"'
+#       when: always
 
 # This job builds the ligo-webide front-end from the tools/webide/ directory and deploys it as a Branch Deploy to Netlify using the netlify-cli tool.
 # After the deployment is done a comment is posted to the MR with the draft site URL as well as the Netlify logs
