@@ -119,8 +119,9 @@ module Compile_type = struct
     let tl = List.map snd tl_sep in
     let aux : CST.fun_type_arg -> (type_expression, _) result = fun x -> compile_type_expression x.type_expr in
     let%bind lst = Trace.bind_map_list aux (hd :: tl) in
-    let tpl = t_tuple lst in
-    ok tpl
+    match lst with 
+      [a] -> ok @@ a
+    | lst -> ok @@ t_tuple lst
 
   and compile_sapling : type_compiler_opt = fun te ->
     match te with
