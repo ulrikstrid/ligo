@@ -71,6 +71,7 @@ let constant' = function
   | C_SET_ITER           -> `List [`String "C_SET_ITER"; `Null ]
   | C_SET_FOLD           -> `List [`String "C_SET_FOLD"; `Null ]
   | C_SET_MEM            -> `List [`String "C_SET_MEM"; `Null ]
+  | C_SET_UPDATE         -> `List [`String "C_SET_UPDATE"; `Null ]
   (* List *)
   | C_LIST_EMPTY         -> `List [`String "C_LIST_EMPTY"; `Null ]
   | C_LIST_LITERAL       -> `List [`String "C_LIST_LITERAL"; `Null ]
@@ -346,6 +347,7 @@ let collect_type = function
   | Map  -> `List [ `String "Map"; `Null]
   | Set  -> `List [ `String "Set"; `Null]
   | List -> `List [ `String "List"; `Null]
+  | Any  -> `List [ `String "Any"; `Null]
 
 let for_each expression {fe_binder;collection;collection_type;fe_body} =
   `Assoc [
