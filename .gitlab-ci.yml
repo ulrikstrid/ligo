@@ -294,7 +294,8 @@ build-preview-ligo-webide-front-end:
     - apt-get update
     - apt-get install -y --no-install-recommends jq
     - cd ./tools/webide/
-    - cat >> ./packages/client/feature-netlify.toml <<EOL
+    - >
+      cat >> ./packages/client/feature-netlify.toml <<EOL
       [[redirects]]
       from = "/api/*"
       to = "https://${CI_COMMIT_SHORT_SHA}.ligopreview.tez.ie/api/:splat"
