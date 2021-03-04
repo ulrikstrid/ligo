@@ -4,14 +4,14 @@ type parameter =
 | ["Increment", int]
 | ["Decrement", int];
 
-let add = (a: int, b: int) => a + b;
-let sub = (a: int, b: int) => a - b;
+let add = (a: int, b: int): int => a + b;
+let sub = (a: int, b: int): int => a - b;
 
-let main = ([action, store] : [parameter, storage]) => {
+let main = ([action, store] : [parameter, storage]): [list <operation>, storage] => {
   let store2 = match(action, {
     Increment: (value: int) => add (store, value),
-    Decrement: (value: int) => sub (store, value),
+    Decrement: (value: int) => sub (store, value)
   });
-  return [(List() as list <operation>), store2];
+  return [(list([]) as list <operation>), store2];
 };
 

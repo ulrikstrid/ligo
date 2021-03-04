@@ -534,21 +534,16 @@ and compile_expression_in : CST.expr -> (AST.expr, _) result = fun e ->
         let%bind (params_a, body_a) = compile_case a in
         let%bind (params_b, body_b) = compile_case b in
         (match params_a, params_b, body_a, body_b with 
-          Match_nil match_nil,  Match_cons (a,b), _, body
-        | Match_cons (a,b), Match_nil match_nil, body, _ ->
+          Match_nil match_nil,  Match_cons (a,b), body_nil, body
+        | Match_cons (a,b), Match_nil match_nil, body, body_nil ->
           (* failwith *)
           let%bind matchee = compile_expression_in input in
           let loc = Location.lift region in
-          ok @@ e_matching ~loc matchee @@ AST.Match_list {match_nil;match_cons = (a,b, body) }
+          ok @@ e_matching ~loc matchee @@ AST.Match_list {match_nil = body_nil;match_cons = (a,b, body) }
         | _ -> failwith "no"
         )
         (* ok () *)
     | _ -> failwith "no")
-    (* in
-    ignore(args);
-    ignore(compile_case);
-    (* let _ = bind_map_list compile_case args in *)
-    failwith "TODO: pattern match on lists" *)
   
   (* This case is due to a bad besign of our constant it as to change
     with the new typer so LIGO-684 on Jira *)
