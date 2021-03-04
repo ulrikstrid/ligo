@@ -442,8 +442,21 @@ and compile_expression_in : CST.expr -> (AST.expr, _) result = fun e ->
     | None ->
       fail @@ unknown_constant var loc
       )
-  | ECall {value=(EVar {value = "list"; _}, Multiple {value = {inside = (EArray e, []); _}; _}); _ } -> 
-    failwith "todo list handling"
+  | ECall {value=(EVar {value = "list"; _}, Multiple {value = {inside = (EArray {value = {inside = (Expr_entry e, [(_, Rest_entry {value = {expr; _}; _})]); _}; _}, []); _}; _}); region } -> 
+    let loc = Location.lift region in
+    let%bind a = self e in
+    let%bind b = self expr in
+    return @@ e_constant ~loc (Const C_CONS) [a; b]
+  | ECall {value=(EVar {value = "list"; _}, Multiple {value = {inside = (EArray {value = {inside = items}}, []); _}; _}); region } -> 
+    let loc = Location.lift region in
+    let items = Utils.nsepseq_to_list items in
+    let%bind lst = bind_map_list (fun e -> 
+      match e with 
+        CST.Expr_entry e -> compile_expression_in e
+      | Empty_entry e -> ok @@ e_unit ()
+      | Rest_entry _ -> failwith "not supported here"  
+    ) items in
+    return @@ e_list ~loc lst
   | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, EObject {value = {inside = fields; _}; _})]); _}; _}); region} ->
     (* Pattern matching for JsLIGO is implemented as a 'built-in function' as
        JavaScript and TypeScript don't have native pattern matching. *)
@@ -977,6 +990,15 @@ and compile_let_binding: const:bool -> CST.attributes -> CST.expr -> (Region.t *
   let aux = function
   | CST.PVar name -> (*function or const *)
     let fun_binder = compile_variable name in
+    let%bind expr = (match let_rhs with 
+      CST.EFun _ ->
+        let%bind lambda = trace_option (recursion_on_non_function expr.location) @@ get_e_lambda expr.expression_content in
+        let lhs_type = Option.map (Utils.uncurry t_function) @@ Option.bind_pair (lambda.binder.ascr, lambda.output_type) in
+        let%bind fun_type = trace_option (untyped_recursive_fun name.region) @@ lhs_type in
+        ok @@ e_recursive ~loc:(Location.lift name.region) fun_binder fun_type lambda
+      | _ -> ok @@ expr 
+      )
+    in
     ok @@ [(Some name.value, {var=fun_binder;ascr=lhs_type}, attributes, expr)]
   | CST.PArray a ->  (* tuple destructuring (for top-level only) *)
     let matchee = expr in  

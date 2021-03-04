@@ -1,7 +1,7 @@
 /* Test set operations in JsLIGO */
 
 let literal_op = (p: unit) : set <string> =>
-  Set.literal (["foo", "bar", "foobar"]);
+  Set.literal (list(["foo", "bar", "foobar"]));
 
 let add_op = (s: set <string>) : set <string> =>
   Set.add ("foobar", s);
