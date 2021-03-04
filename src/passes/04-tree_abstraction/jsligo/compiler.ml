@@ -999,7 +999,9 @@ and compile_let_binding: const:bool -> CST.attributes -> CST.expr -> (Region.t *
     let%bind expr = (match let_rhs with 
       CST.EFun _ ->
         let%bind lambda = trace_option (recursion_on_non_function expr.location) @@ get_e_lambda expr.expression_content in
-        let lhs_type = Option.map (Utils.uncurry t_function) @@ Option.bind_pair (lambda.binder.ascr, lambda.output_type) in
+        let lhs_type = (match lhs_type with 
+        | Some lhs_type -> Some lhs_type
+        | None ->  Option.map (Utils.uncurry t_function) @@ Option.bind_pair (lambda.binder.ascr, lambda.output_type)) in
         let%bind fun_type = trace_option (untyped_recursive_fun name.region) @@ lhs_type in
         ok @@ e_recursive ~loc:(Location.lift name.region) fun_binder fun_type lambda
       | _ -> ok @@ expr 

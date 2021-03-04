@@ -1079,10 +1079,12 @@ and pp_type_expr state = function
     pp_type_tuple (state#pad 2 1) tuple
 | TFun {value; region} ->
     pp_loc_node state "TFun" region;
+    let state = state#pad 0 1 in
     let apply len rank =
       pp_type_expr (state#pad len rank) in
     let args, _, range = value in
     pp_fun_type_args state args;
+    pp_loc_node state "<result>" region;
     List.iteri (apply 2) [range]
 | TPar {value={inside;_}; region} ->
     pp_loc_node  state "TPar" region;
@@ -1110,10 +1112,13 @@ and pp_module_access : type a. (state -> a -> unit ) -> state -> a module_access
     
 
 and pp_fun_type_arg state {name; type_expr; _} =
+
   pp_ident     state name;
+  let state = (state#pad 1 0) in
   pp_type_expr state type_expr
 
 and pp_fun_type_args state {inside; _} =
+  pp_node state "<parameters>";
   let fun_type_args = Utils.nsepseq_to_list inside in
   let apply len rank = pp_fun_type_arg (state#pad len rank) in
   List.iteri (List.length fun_type_args |> apply) fun_type_args
