@@ -122,14 +122,14 @@ If we want to get the first and last name of the `full_name` type, we can use
 destructuring. Destructuring a tuple allows you to give names to the elements
 inside the tuple.
 
-```reasonligo group=tuple
+```jsligo group=tuple
 let [first_name, last_name] : full_name = full_name;
 ```
 
 This also works in functions:
 
 ```jsligo group=tuple
-let first_name = ([first_name, _]: full_name) => first_name;
+let first_name = ([first_name, _]: full_name):string => first_name;
 let alice = first_name(full_name);
 ```
 
@@ -224,8 +224,8 @@ let my_list : list (int) = [1, 2, 2]; // The head is 1
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let empty_list : list <int> = [];
-let my_list : list <int> = [1, 2, 2]; // The head is 1
+let empty_list : list <int> = list([]);
+let my_list : list <int> = list([1, 2, 2]); // The head is 1
 ```
 
 </Syntax>
@@ -280,7 +280,7 @@ not symmetric: on the left lies the element to cons, and, on the
 right, a list on which to cons.
 
 ```jsligo group=lists
-let larger_list : list <int> = List(5, ...my_list); // [5,1,2,2]
+let larger_list : list <int> = list([5, ...my_list]); // [5,1,2,2]
 ```
 
 </Syntax>
@@ -387,7 +387,7 @@ let iter_op = (l : list (int)) : unit => {
 
 ```jsligo group=lists
 let iter_op = (l : list <int>) : unit => {
-  let predicate = (i : int) => assert (i > 3);
+  let predicate = (i : int): unit => assert (i > 3);
   List.iter (predicate, l);
 };
 ```
@@ -440,7 +440,7 @@ let plus_one : list (int) = List.map (increment, larger_list);
 </Syntax>
 <Syntax syntax="jsligo">
 
-```reasonligo group=lists
+```jsligo group=lists
 let increment = (i : int) : int => i + 1;
 
 // Creates a new list with all elements incremented by 1
@@ -621,7 +621,7 @@ gitlab-pages/docs/language-basics/src/sets-lists-tuples/sets.religo my_set
 
 ```jsligo group=sets
 let my_set : set <int> =
-  Set.add (3, Set.add (2, Set.add (2, Set.add (1, Set.empty : set (int)))));
+  Set.add (3, Set.add (2, Set.add (2, Set.add (1, (Set.empty as set <int>)))));
 ```
 
 You can check that `2` is not repeated in `my_set` by using the LIGO
@@ -863,7 +863,7 @@ let iter_op = (s : set (int)) : unit => {
 
 ```jsligo group=sets
 let iter_op = (s : set <int>) : unit => {
-  let predicate = (i : int) => assert (i > 3);
+  let predicate = (i : int): unit => assert (i > 3);
   Set.iter (predicate, s);
 };
 ```
