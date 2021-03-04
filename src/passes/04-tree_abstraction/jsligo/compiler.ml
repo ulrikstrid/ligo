@@ -746,10 +746,12 @@ and compile_expression_in : CST.expr -> (AST.expr, _) result = fun e ->
       in
       aux hd @@ tl
   )
-  | EAssign (e1, _, e2) -> 
+  | EAssign (EVar {value; _} as e1, _, e2) -> 
     (* expression access list *)
-    let%bind expr = compile_expression_in e2 in
-    ok @@ e_assign (Location.wrap @@ Var.fresh ()) [Access_tuple Z.zero] expr
+    let%bind e1 = compile_expression_in e1 in
+    let%bind e2 = compile_expression_in e2 in
+    ok @@ e_assign (Location.wrap @@ Var.of_name value) [] e2
+  | EAssign _ -> failwith "todo: add proper error message"
   | ENew {value = (_, e); _} -> fail @@ new_not_supported e
 
 and conv : CST.pattern -> (nested_match_repr,_) result =

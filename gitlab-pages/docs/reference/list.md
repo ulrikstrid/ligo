@@ -122,9 +122,9 @@ let iter_op = (l : list (int)) : unit => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let iter_op = (l : list <int>) : unit => {
-  let predicate = (i : int) => assert (i > 3);
-  List.iter (predicate, l);
+let iter_op = (l: list<int>): unit => {
+  let predicate = (i: int): unit => assert(i > 3);
+  List.iter(predicate, l);
 };
 ```
 
@@ -187,12 +187,12 @@ let plus_one : list (int) = List.map (increment, larger_list);
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let larger_list: list<int> = List(1, 2, 3);
+let larger_list: list<int> = list([1, 2, 3]);
 
-let increment = (i : int) : int => i + 1;
+let increment = (i : int): int => i + 1;
 
 // Creates a new list with all elements incremented by 1
-let plus_one : list <int> = List.map (increment, larger_list);
+let plus_one : list<int> = List.map(increment, larger_list);
 ```
 
 </Syntax>
@@ -250,11 +250,11 @@ let sum_of_elements : int = List.fold (sum, my_list, 0);
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let my_list : list<int> = List(1, 2, 3);
+let my_list: list<int> = list([1, 2, 3]);
 
 let sum = ([result, i]: [int, int]): int => result + i;
 
-let sum_of_elements : int = List.fold (sum, my_list, 0);
+let sum_of_elements: int = List.fold(sum, my_list, 0);
 ```
 
 </Syntax>

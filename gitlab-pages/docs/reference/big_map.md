@@ -140,9 +140,9 @@ let moves: register =
 
 ```jsligo group=big_map
 let moves: register =
-  Big_map.literal ([
+  Big_map.literal (list([
     [("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address), [1, 2]],
-    [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [0, 3]]]);
+    [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [0, 3]]]));
 ```
 
 </Syntax>

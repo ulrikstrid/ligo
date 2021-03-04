@@ -55,7 +55,7 @@ let my_set : set (int) = Set.empty;
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
-let my_set : set <int> = Set.empty;
+let my_set: set<int> = Set.empty;
 ```
 
 </Syntax>
@@ -107,8 +107,8 @@ let my_set : set (int) =
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
-let my_set : set <int> =
-  Set.literal ([3, 2, 2, 1]);
+let my_set : set<int> =
+  Set.literal(list([3, 2, 2, 1]));
 ```
 
 </Syntax>
@@ -204,7 +204,7 @@ let cardinal : nat = Set.size (my_set);
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
-let cardinal : nat = Set.size (my_set);
+let cardinal: nat = Set.size(my_set);
 ```
 
 </Syntax>
@@ -303,9 +303,9 @@ let iter_op = (s : set (int)) : unit => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
-let iter_op = (s : set <int>) : unit => {
-  let predicate = (i : int) => assert (i > 3);
-  Set.iter (predicate, s);
+let iter_op = (s: set<int>): unit => {
+  let predicate = (i : int): unit => assert(i > 3);
+  Set.iter(predicate, s);
 };
 ```
 
@@ -356,8 +356,8 @@ let sum_of_elements : int = Set.fold (sum, my_set, 0);
 <Syntax syntax="jsligo">
 
 ```jsligo group=sets
-let sum = ([acc, i] : [int, int]) : int => acc + i;
-let sum_of_elements : int = Set.fold (sum, my_set, 0);
+let sum = ([acc, i]: [int, int]): int => acc + i;
+let sum_of_elements: int = Set.fold(sum, my_set, 0);
 ```
 
 </Syntax>
