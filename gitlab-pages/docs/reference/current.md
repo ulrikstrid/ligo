@@ -55,8 +55,8 @@ let main = ((p,s) : (unit, tez)) =>
 <Syntax syntax="jsligo">
 
 ```jsligo
-let main = ([p, s] : [unit, tez]) =>
-  [(List() as list (operation)), Tezos.balance];
+let main = ([p, s] : [unit, tez]):[unit, tez] =>
+  [(list([]) as list (operation)), Tezos.balance];
 ```
 
 </Syntax>
@@ -278,7 +278,7 @@ let threshold = (p : unit) : int =>
 ```jsligo
 let threshold = (p : unit) : int => {
   if (Tezos.amount == (100 as tez)) { return 42; } else { return 0; };
-}
+};
 ```
 
 </Syntax>
@@ -393,9 +393,9 @@ let main = (p : key_hash) : address => {
 <Syntax syntax="jsligo">
 
 ```jsligo
-let main = (p : key_hash) : address => {
-  let c : contract <unit> = Tezos.implicit_account (p);
-  return Tezos.address (c);
+let main = (p : key_hash): address => {
+  let c: contract<unit> = Tezos.implicit_account(p);
+  return Tezos.address(c);
 };
 ```
 
@@ -449,7 +449,7 @@ let main = (p : unit) : address => Tezos.self_address;
 <Syntax syntax="jsligo">
 
 ```jsligo
-let main = (p : unit) : address => Tezos.self_address;
+let main = (p : unit): address => Tezos.self_address;
 ```
 
 </Syntax>
@@ -555,8 +555,8 @@ let main = (kh : key_hash): contract (unit) =>
 <Syntax syntax="jsligo">
 
 ```jsligo
-let main = (kh : key_hash): contract <unit> =>
-  Tezos.implicit_account (kh);
+let main = (kh: key_hash): contract<unit> =>
+  Tezos.implicit_account(kh);
 ```
 
 </Syntax>
@@ -722,13 +722,13 @@ let main = ((ignore, storage): (unit, storage)) => {
 ```jsligo
 type storage = bytes;
 
-let main = ([ignore, storage]: [unit, storage]) => {
+let main = ([ignore, storage]: [unit, storage]):[list<operation>, storage] => {
   let packed = Bytes.pack(Tezos.chain_id);
   if (storage != packed) {
     (failwith("wrong chain") as [list<operation>, storage]);
   } else {
-    return [(List() as list<operation>), packed];
-  }
+    return [(list([]) as list<operation>), packed];
+  };
 };
 ```
 

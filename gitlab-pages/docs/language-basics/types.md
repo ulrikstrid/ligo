@@ -113,7 +113,7 @@ type account_balances = map <address, tez>;
 
 let ledger: account_balances =
   Map.literal
-    ([("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address), (10 as mutez)]);
+    (list([[("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address), (10 as mutez)]]));
 ```
 
 </Syntax>
@@ -231,9 +231,9 @@ type account_data = {
 type ledger = map <account, account_data>;
 
 let my_ledger : ledger =
-  Map.literal([
+  Map.literal(list([
     [("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address),
-     {balance: (10 as mutez), transactions: (5 as nat)}]]);
+     {balance: (10 as mutez), transactions: (5 as nat)}]]));
 ```
 
 </Syntax>
@@ -354,19 +354,19 @@ type storage = {
 type return_ = [list <operation>, storage];
 
 let back = ([param, store] : [unit, storage]) : return_ => {
-  let no_op : list <operation> = [];
+  let no_op : list <operation> = list([]);
   if (Tezos.now > store.deadline) {
-    (failwith ("Deadline passed.") as return_); // Annotation
+    return (failwith ("Deadline passed.") as return_); // Annotation
   }
   else {
-    match (Map.find_opt (sender, store.backers), {
-    None: () => {
+    return match (Map.find_opt (sender, store.backers), {
+      None: () => {
         let backers = Map.update (sender, Some (amount), store.backers);
         return [no_op, {...store, backers:backers}]; 
       },
-    Some (x:tez) => (no_op, store)
+      Some: (x:tez) => [no_op, store]
     })
-  }
+  };
 };
 ```
 

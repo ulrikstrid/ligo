@@ -612,9 +612,9 @@ that we type-cast a string into an address. -->
 
 ```jsligo group=maps
 let moves : register =
-  Map.literal ([
+  Map.literal (list([
     [("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address), [1,2]],
-    [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [0,3]]]);
+    [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [0,3]]]));
 ```
 
 The `Map.literal` predefined function builds a map from a list of
@@ -709,10 +709,10 @@ let force_access = ((key, moves) : (address, register)) : move => {
 
 ```jsligo group=maps
 let force_access = ([key, moves] : [address, register]) : move => {
-  match (Map.find_opt (key, moves),
-   Some: (move: register) => return move,
-   None: () => (failwith ("No move.") : move)
-  }
+  return match (Map.find_opt (key, moves), {
+   Some: (move: register) => move,
+   None: () => (failwith ("No move.") as move)
+  });
 };
 ```
 
@@ -936,7 +936,7 @@ let iter_op = (m : register) : unit => {
 
 ```jsligo group=maps
 let iter_op = (m : register) : unit => {
-  let predicate = ([i,j] : [address, move]) => assert (j[0] > 3);
+  let predicate = ([i,j] : [address, move]): unit => assert (j[0] > 3);
   Map.iter (predicate, m);
 };
 ```
@@ -991,7 +991,7 @@ let map_op = (m : register) : register => {
 
 ```jsligo group=maps
 let map_op = (m : register) : register => {
-  let increment = ([i,j]: [address, move]) => (j[0], j[1] + 1);
+  let increment = ([i,j]: [address, move]): [int, int]=> [j[0], j[1] + 1];
   return Map.map (increment, m);
 };
 ```
@@ -1048,7 +1048,7 @@ let fold_op = (m : register) : int => {
 
 ```jsligo group=maps
 let fold_op = (m : register) : int => {
-  let folded = ([i,j]: [int, [address, move]]) => i + j[1][1];
+  let folded = ([i,j]: [int, [address, move]]):int => i + j[1][1];
   return Map.fold (folded, m, 5);
 };
 ```
@@ -1196,9 +1196,9 @@ value>" : address)` means that we cast a string into an address.
 
 ```jsligo group=big_maps
 let moves : register =
-  Big_map.literal ([
+  Big_map.literal (list([
     [("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address), [1,2]],
-    [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [0,3]]]);
+    [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [0,3]]]));
 ```
 
 The predefined function `Big_map.literal` constructs a big map from a
