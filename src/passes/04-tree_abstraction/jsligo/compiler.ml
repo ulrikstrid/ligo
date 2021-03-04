@@ -1031,7 +1031,17 @@ and compile_let_binding: const:bool -> CST.attributes -> CST.expr -> (Region.t *
 
 and compile_statements : CST.statements -> (statement_result, _) result = fun statements ->
   let rec aux result = function
-    (_, hd) :: tl -> 
+    (_, (CST.SExpr (CST.EAssign _ ) as hd)) :: tl ->       
+      let wrapper = CST.SBlock {
+        value = {
+          inside = (hd, tl); 
+          lbrace = Region.ghost; 
+          rbrace = Region.ghost}; 
+          region = Region.ghost
+      } in
+      let%bind block = compile_statement wrapper in
+      aux (merge_statement_results result block) []
+  | (_, hd) :: tl -> 
       let%bind a = compile_statement hd in
       aux (merge_statement_results result a) tl
   | [] -> ok result
@@ -1075,7 +1085,6 @@ and compile_statement : CST.statement -> (statement_result, _) result = fun stat
     let%bind e = self_expr e in
     expr e
   | SBlock {value = {inside; _}; region} -> 
-    (* is this a correct block? *)
     let%bind statements = self_statements inside in
     ok statements
   | SCond cond -> 
