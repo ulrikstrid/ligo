@@ -6,10 +6,10 @@ type parameter =
 
 type return_ = [list <operation>, storage];
 
-let main = ([action, store]: [parameter, storage]) => {
-  let store2 = match (action, {
-    Add: (n: nat) => n,
-    Sub: (n: nat) => -n
+let main = ([action, store]: [parameter, storage]) : return_ => {
+  let store2 = store + match (action, {
+    Add: (n: int) => n,
+    Sub: (n: int) => -n
   });  
-  return [(List() as list <operation>), store2];
-}
+  return [(list([]) as list <operation>), store2];
+};
