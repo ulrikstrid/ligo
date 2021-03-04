@@ -75,6 +75,13 @@ let print_var state {region; value} =
             (compact state region)value
   in Buffer.add_string state#buffer line
   
+let print_constr state {region; value} =
+  let line =
+    sprintf "%s: Constr %s\n"
+            (compact state region)value
+  in Buffer.add_string state#buffer line
+  
+  
 let print_tconstr state {region; value} =
   let line =
     sprintf "%s: TConstr %s\n"
@@ -373,7 +380,27 @@ and print_expr state = function
 | EProj e                -> print_projection  state e
 | EAnnot e               -> print_annot_expr  state e
 | EUnit e                -> print_unit        state e
+| EConstr e              -> print_constr_expr state e
 | ECodeInj e             -> print_code_inj    state e
+
+and print_constr_expr state = function
+  ENone e      -> print_none_expr       state e
+| ESomeApp e   -> print_some_app_expr   state e
+| EConstrApp e -> print_constr_app_expr state e
+
+and print_none_expr state value = print_token state value "None"
+
+and print_some_app_expr state {value; _} =
+  let c_Some, argument = value in
+  print_token state c_Some "Some";
+  print_expr  state argument
+
+and print_constr_app_expr state {value; _} =
+  let constr, argument = value in
+  print_constr state constr;
+  match argument with
+    None -> ()
+  | Some arg -> print_expr state arg
 
 and print_new_expr state {value = (kwd_new, expr); _} =
   print_token state kwd_new "new";
@@ -814,6 +841,9 @@ and pp_expr state = function
     let items  = Utils.nsepseq_to_list inside in
     let apply len rank = pp_array_item (state#pad len rank) in
     List.iteri (List.length items |> apply) items
+| EConstr e_constr ->
+    pp_node state "EConstr";
+    pp_constr_expr (state#pad 1 0) e_constr
 | EObject {value = {inside; _}; region} ->
     pp_loc_node state "EObject" region;
     let properties  = Utils.nsepseq_to_list inside in
@@ -846,6 +876,23 @@ and pp_expr state = function
 | ECodeInj {value; region} ->
     pp_loc_node state "ECodeInj" region;
     pp_code_inj state value
+
+and pp_constr_expr state = function
+  ENone region ->
+    pp_loc_node state "ENone" region
+| ESomeApp {value=_,arg; region} ->
+    pp_loc_node state "ESomeApp" region;
+    pp_expr (state#pad 1 0) arg
+| EConstrApp {value; region} ->
+    pp_loc_node state "EConstrApp" region;
+    pp_constr_app_expr state value
+
+and pp_constr_app_expr state (constr, expr_opt) =
+  match expr_opt with
+    None -> pp_ident (state#pad 1 0) constr
+  | Some expr ->
+      pp_ident (state#pad 2 0) constr;
+      pp_expr  (state#pad 2 1) expr
 
 and pp_array_item state = function
   Empty_entry _ -> pp_node state "<empty>"

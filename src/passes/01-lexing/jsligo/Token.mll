@@ -112,7 +112,7 @@ module T =
     | True     of Region.t  (* true     *)
     | Void     of Region.t  (* void     *)
     | While    of Region.t  (* while    *)
-    | With     of Region.t  (* with     *)
+    | With     of Region.t  (* with     *)    
 
     (* TypeScript keywords *)
 
@@ -120,7 +120,13 @@ module T =
     | Namespace   of Region.t  (* namespace   *)
     | Type        of Region.t  (* type        *)
 
+    (* Data constructors *)
+
+    | C_None  of Region.t  (* None *)
+    | C_Some  of Region.t  (* Some *)
+
     (* Virtual tokens *)
+
 
     | EOF of Region.t
 
@@ -356,13 +362,14 @@ module T =
     | Void     region -> region, "Void"
     | While    region -> region, "While"
     | With     region -> region, "With"
+    | C_None   region -> region, "C_None"
+    | C_Some   region -> region, "C_Some"
 
     (* TypeScript keywords *)
     | As          region -> region, "As"
     | Namespace   region -> region, "Namespace"
     | Type        region -> region, "Type"
     
-
     | EOF    region -> region, "EOF"
 
 
@@ -468,7 +475,11 @@ module T =
     | Namespace   _ -> "namespace"
     | Type        _ -> "type"
 
+    (* Data constructors *)
 
+    | C_None  _ -> "None"
+    | C_Some  _ -> "Some"
+    
     (* Virtual tokens *)
 
     | EOF _ -> ""

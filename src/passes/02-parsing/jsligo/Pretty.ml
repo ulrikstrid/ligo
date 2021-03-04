@@ -144,6 +144,7 @@ and pp_expr = function
 | EProj    e -> pp_projection e
 | EAssign  (a,b,c) -> pp_assign (a,b,c)
 | EAnnot   e -> pp_annot_expr e
+| EConstr  e -> pp_constr_expr e
 | EUnit    _ -> string "unit"
 | ECodeInj _ -> failwith "TODO: ECodeInj"
 
@@ -164,6 +165,21 @@ and pp_array_item = function
 | Expr_entry e -> pp_expr e
 | Rest_entry {value = {expr; _}; _} -> string "..." ^^ pp_expr expr
 
+
+and pp_constr_expr = function
+  ENone      _ -> string "None ()" 
+| ESomeApp   a -> pp_some a
+| EConstrApp a -> pp_constr_app a
+
+and pp_some {value=_, e; _} =
+  prefix 4 1 (string "Some") (pp_expr e)
+
+and pp_constr_app {value; _} =
+  let constr, arg = value in
+  let constr = string constr.value in
+  match arg with
+      None -> constr ^^ string "()"
+  | Some e -> prefix 2 1 constr (pp_expr e)
 
 and pp_object_property = function
   Punned_property {value; _} -> pp_expr value

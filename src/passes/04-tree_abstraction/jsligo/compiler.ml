@@ -69,8 +69,11 @@ module Compile_type = struct
     | TProd {value = {inside = (TString s, rest); _}; region} -> 
       let lst = List.map snd rest in
       let%bind lst = bind_map_list compile_type_expression lst in
-      let t = t_tuple lst in
-      ok @@ (s.value, t, [])
+      (match lst with 
+        [a] -> ok @@ (s.value, a, [])
+      | lst -> 
+        let t = t_tuple lst in
+        ok @@ (s.value, t, []))
     | _ -> failwith "Expected a variable in this variant"
 
     (* todo: add `int` singletons to JsLIGO *)
@@ -547,6 +550,18 @@ and compile_expression_in : CST.expr -> (AST.expr, _) result = fun e ->
       let%bind args = compile_tuple_expression args in
       return @@ e_application ~loc func args
     )
+  | EConstr (ESomeApp some) ->
+    let ((_, arg), loc) = r_split some in
+    let%bind args = compile_tuple_expression @@ List.Ne.singleton arg in
+    return @@ e_some ~loc args
+  | EConstr (ENone reg) ->
+    let loc = Location.lift reg in
+    return @@ e_none ~loc ()
+  | EConstr (EConstrApp constr) ->
+    let ((constr,args_o), loc) = r_split constr in
+    let%bind args_o = bind_map_option (compile_tuple_expression <@ List.Ne.singleton) args_o in
+    let args = Option.unopt ~default:(e_unit ~loc:(Location.lift constr.region) ()) args_o in
+    return @@ e_constructor ~loc constr.value args
   (* TODO: modules *)
   (* | ECall {value=(EIdent {value={module_name;field};region=_},args);region} when
    *   List.mem module_name.value build_ins ->

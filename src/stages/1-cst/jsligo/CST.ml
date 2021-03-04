@@ -331,6 +331,7 @@ and expr =
 | EString  of string_expr
 | EProj    of projection reg
 | EAssign  of expr * equal * expr
+| EConstr  of constr_expr
 
 | EAnnot   of annot_expr reg
 | EUnit    of the_unit reg
@@ -379,6 +380,11 @@ and 'a ne_injection = {
 and compound =
 | Braces   of lbrace * rbrace
 | Brackets of lbracket * rbracket
+
+and constr_expr =
+  ENone      of c_None
+| ESomeApp   of (c_Some * expr) reg
+| EConstrApp of (constr * expr option) reg
 
 and arith_expr =
   Add   of plus bin_op reg
@@ -522,10 +528,16 @@ let arith_expr_to_region = function
 let string_expr_to_region = function
   Verbatim {region;_} | String {region;_} -> region
 
+and constr_expr_to_region = function
+  ENone region
+| EConstrApp {region; _}
+| ESomeApp   {region; _} -> region
+
 let rec expr_to_region = function
   ELogic e -> logic_expr_to_region e
 | EArith e -> arith_expr_to_region e
 | EString e -> string_expr_to_region e
+| EConstr e -> constr_expr_to_region e
 | EAssign (f, _, e) -> Region.cover (expr_to_region f) (expr_to_region e)
 | EAnnot {region;_ } | EFun {region;_}
 | ECall {region;_}   | EVar {region; _}    | EProj {region; _}

@@ -177,7 +177,17 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> ('a, 'err) result =
     let%bind res = self init e1 in
     let%bind res = self res e2 in
     self res e1
-
+  | EConstr ENone _ -> ok @@ init
+  | EConstr ESomeApp {value;region=_} ->
+    let _, expr = value in
+    self init expr
+  | EConstr EConstrApp {value;region=_} ->
+    let _, expr = value in
+    (match expr with
+      None -> ok @@ init
+    | Some e -> self init e
+    )
+    
 and fold_statement : ('a, 'err) folder -> 'a -> statement -> ('a, 'err) result =
   fun f init d ->
   let self_expr = fold_expression f in
@@ -471,6 +481,17 @@ let rec map_expression : 'err mapper -> expr -> (expr, 'err) result = fun f e  -
     let%bind code = self value.code in
     let value = {value with code} in
     return @@ ECodeInj {value;region}
+  | EConstr ENone _ as e -> return @@ e
+  | EConstr ESomeApp {value;region} ->
+    let some_, expr = value in
+    let%bind expr = self expr in
+    let value = some_,expr in
+    return @@ EConstr (ESomeApp {value;region})
+  | EConstr EConstrApp {value;region} ->
+    let const, expr = value in
+    let%bind expr = bind_map_option self expr in
+    let value = const,expr in
+    return @@ EConstr (EConstrApp {value;region})
 
 and map_statement : ('err) mapper -> statement -> (statement, 'err) result =
   fun f s ->

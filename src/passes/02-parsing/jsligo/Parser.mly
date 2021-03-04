@@ -110,6 +110,7 @@ sep_or_term_list(item,sep):
 %inline type_name   : "<lident>" { $1 }
 %inline field_name  : "<lident>" { $1 }
 %inline module_name : "<uident>" { $1 }
+%inline constr      : "<uident>" { $1 }
 
 %inline 
 
@@ -859,7 +860,7 @@ member_expr:
     value
   }
  }
-| module_access_e         { EModA $1}
+| module_access_e         { $1}
 | array_literal           { $1 }
 | "(" object_literal ")"  {
     let region = cover $1 $3 in
@@ -886,10 +887,25 @@ module_access_e :
     let stop        = expr_to_region $3 in
     let region      = cover start stop in
     let value       = {module_name=$1; selector=$2; field=$3}
-    in {region; value} }
+    in 
+    EModA {region; value} }
+| "Some" "(" expr_sequence ")" {
+    let region = cover $1 $4 in
+    EConstr (ESomeApp {region; value = ($1, ESeq $3)})
+}
+| "None" "(" ")" { 
+    EConstr (ENone (cover $1 $3))  
+}
+| constr "(" ")" {
+    EConstr (EConstrApp {$1 with value = ($1, None)})
+}
+| constr "(" expr_sequence ")" {
+    let region = cover $1.region $4 in
+    EConstr (EConstrApp {region; value = ($1, Some (ESeq $3))})
+}
 
 module_var_e:
-  module_access_e   { EModA $1 }
+  module_access_e   { $1 }
 // | "or"              { EVar {value="or"; region=$1} }
 | field_name        { EVar  $1 }
 // | projection        { EProj $1 }
