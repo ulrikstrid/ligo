@@ -764,6 +764,7 @@ array_literal:
 
 property_name:
   "<int>"    {       EArith (Int $1) }
+| constr
 | field_name {               EVar $1 }
 | "<string>" {   EString (String $1) }
 

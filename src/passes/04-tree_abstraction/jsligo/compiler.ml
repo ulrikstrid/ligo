@@ -450,13 +450,19 @@ and compile_expression_in : CST.expr -> (AST.expr, _) result = fun e ->
   | ECall {value=(EVar {value = "list"; _}, Multiple {value = {inside = (EArray {value = {inside = items}}, []); _}; _}); region } -> 
     let loc = Location.lift region in
     let items = Utils.nsepseq_to_list items in
-    let%bind lst = bind_map_list (fun e -> 
-      match e with 
-        CST.Expr_entry e -> compile_expression_in e
-      | Empty_entry e -> ok @@ e_unit ()
-      | Rest_entry _ -> failwith "not supported here"  
-    ) items in
-    return @@ e_list ~loc lst
+    (match items with 
+      [CST.Empty_entry _] -> 
+        return @@ e_list ~loc []
+    | _ -> (
+      let%bind lst = bind_map_list (fun e -> 
+        match e with 
+          CST.Expr_entry e -> compile_expression_in e
+        | Empty_entry _ -> ok @@ e_unit ()
+        | Rest_entry _ -> failwith "not supported here"  
+      ) items in
+      return @@ e_list ~loc lst
+    )
+    )
   | ECall {value=(EVar {value = "match"; _}, Multiple {value = {inside = (input, [(_, EObject {value = {inside = fields; _}; _})]); _}; _}); region} ->
     (* Pattern matching for JsLIGO is implemented as a 'built-in function' as
        JavaScript and TypeScript don't have native pattern matching. *)
