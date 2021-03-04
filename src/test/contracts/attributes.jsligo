@@ -13,6 +13,6 @@ let y = 1;
 
 let bar = (b : int) : int => {
   // [@inline][@foo][@bar]
-  let test = (z : int) => 2 + b + z;
+  let test = (z : int):int => 2 + b + z;
   return test (b);
 };

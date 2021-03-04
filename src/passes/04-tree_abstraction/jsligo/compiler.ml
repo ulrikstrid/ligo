@@ -65,7 +65,10 @@ module Compile_type = struct
     | _ -> failwith "Expected a variable in this variant"
 
   and type_expression_to_constructor : CST.type_expr -> (string * AST.type_expression * attributes, _) result = function
-    | TConstr v -> ok (v.value, t_unit () ~loc:(Location.lift v.region), [])
+    | TConstr v -> 
+      ok (v.value, t_unit () ~loc:(Location.lift v.region), [])
+    | TProd {value = {inside = (TString s, []); _}; region} ->
+      ok (s.value, t_unit () ~loc:(Location.lift region), [])
     | TProd {value = {inside = (TString s, rest); _}; region} -> 
       let lst = List.map snd rest in
       let%bind lst = bind_map_list compile_type_expression lst in

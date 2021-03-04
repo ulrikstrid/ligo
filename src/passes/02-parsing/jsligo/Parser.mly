@@ -820,12 +820,13 @@ object_literal:
   }
 
 member_expr:
-  "<lident>"                 {                         EVar $1 }
-| "<int>"                    {                 EArith (Int $1) }
-| "<bytes>"                  {                       EBytes $1 }
-| "<string>"                 {             EString (String $1) }
-| "false"                    {    ELogic (BoolExpr (False $1)) }
-| "true"                     {     ELogic (BoolExpr (True $1)) }
+  "<lident>"                 {                               EVar $1 }
+| "_"                        { EVar {value = "_"; region = $1}}
+| "<int>"                    {                       EArith (Int $1) }
+| "<bytes>"                  {                             EBytes $1 }
+| "<string>"                 {                   EString (String $1) }
+| "false"                    {          ELogic (BoolExpr (False $1)) }
+| "true"                     {           ELogic (BoolExpr (True $1)) }
 | member_expr "[" expr "]"   {
   let region = cover (expr_to_region $1) $4 in
   let value = {
