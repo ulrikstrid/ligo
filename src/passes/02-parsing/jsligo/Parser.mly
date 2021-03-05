@@ -479,7 +479,11 @@ statement:
 | import_statement
 | return_statement { $1 }
 | "export"? declaration
-  { $2 }
+  { 
+    match $1 with 
+      Some s -> SExport {value = (s, $2); region = cover s (statement_to_region $2)}
+    | None -> $2 
+  }
 
 import_statement: 
   "import" module_name "=" nsepseq(module_name, ".") { 
@@ -801,16 +805,12 @@ property:
   }
  }
 
-properties:
-  property "," properties { Utils.nsepseq_cons $1 $2 $3 }
-| property                { ($1, []) }
-
 object_literal:
-  "{" properties "}" {
+  "{" sep_or_term_list(property, ",") "}" {
     let region = cover $1 $3 in
     let value = {
       lbrace = $1;
-      inside = $2;
+      inside = fst $2;
       rbrace = $3
     } in
     EObject {

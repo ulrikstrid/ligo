@@ -674,7 +674,7 @@ type big_record = {
   b : int,
   c : int,
   d : int,
-  e : int
+  e : int,
 };
 
 let br : big_record = {
@@ -682,7 +682,7 @@ let br : big_record = {
   b : 23,
   c : 23,
   d : 23,
-  e : 23
+  e : 23,
 };
 
 type double_record = {
@@ -815,15 +815,15 @@ type storage = [int, string, nat, bool];
 type parameter = int;
 
 let main = ([p,storage]: [parameter, storage]):[list<operation>, storage] => {  
-  return ((list([]) as list <operation>), [2, "2", (2 as nat), false]);
+  return ((list([]) as list <operation>), [2, "2", (2 as nat), false])
 };
 let a = 1;
 let b = (1 as nat);
 let c = (2 as mutez);
 let d = (1 as nat) + (2 as nat);
 let e = (1 as mutez) + (3 as mutez);
-let f = [a, c];
-let g = [a + 1, c];
+let f = [a, c]
+let g = [a + 1, c]
 let h = ["a" + "2", d];
 let i = (a: int, b: int): int => a + b;
 let j = (a: int, b: int): int => a - b;
@@ -833,10 +833,10 @@ let j = (a: int, b: int): int => a - b;
 //     let z = 3;
 //     z;
 // };
-let n = (a: int): int => a + 1;
-let o = (a: int): int => a + 1;
-let n2 = (a: int, b: int): int => a + 1;
-let o2 = (a: int, b: int): int => a + 1;
+let n = (a: int): int => a + 1
+let o = (a: int): int => a + 1
+let n2 = (a: int, b: int): int => a + 1
+let o2 = (a: int, b: int): int => a + 1
 // let p = {{
 //     3;
 // }};
@@ -851,7 +851,7 @@ let q = {
       z: 2
     }
   }
-};
+}
 
 /*
 Not supported yet by parser:
@@ -878,20 +878,20 @@ type foobar =
 | ["Kee", nat];
 
 let foo: foobar = { kind: "Foo", value: 42 };
-let bar: foobar = { kind: "Bar", value: true };
+let bar: foobar = { kind: "Bar", value: true }
 let kee: foobar = { kind: "Kee", value: (23 as nat) };
 /* IF YOU CHANGE THIS, CHANGE THE EXAMPLE ON THE FRONT PAGE OF THE WEBSITE */
 
-type storage = int;
+type storage = int
 
 /* variant defining pseudo multi-entrypoint actions */
 
 type parameter =
 | ["Increment", int]
-| ["Decrement", int];
+| ["Decrement", int]
 
-let add = ([a,b]: [int, int]): int => a + b;
-let sub = ([a,b]: [int, int]): int => a - b;
+let add = ([a,b]: [int, int]): int => a + b
+let sub = ([a,b]: [int, int]): int => a - b
 
 /* real entrypoint that re-routes the flow based on the parameter provided */
 
@@ -899,8 +899,8 @@ let main = ([p,storage]: [parameter, storage]):[list<operation>, storage] => {
   let storage2 = match(p, {
     increment: (n: int) => add ([storage, n]),
     decrement: (n: int) => sub ([storage, n]) 
-  });
-  return [(list([]) as list <operation>), storage2];
-};
+  })
+  return [(list([]) as list <operation>), storage2]
+}
 
 /* IF YOU CHANGE THIS, CHANGE THE EXAMPLE ON THE FRONT PAGE OF THE WEBSITE */
