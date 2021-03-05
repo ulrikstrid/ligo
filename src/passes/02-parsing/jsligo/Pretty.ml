@@ -172,14 +172,14 @@ and pp_constr_expr = function
 | EConstrApp a -> pp_constr_app a
 
 and pp_some {value=_, e; _} =
-  prefix 4 1 (string "Some") (pp_expr e)
+  prefix 4 1 (string "Some") (string "(" ^^ pp_expr e ^^ string ")")
 
 and pp_constr_app {value; _} =
   let constr, arg = value in
   let constr = string constr.value in
   match arg with
       None -> constr ^^ string "()"
-  | Some e -> prefix 2 1 constr (pp_expr e)
+  | Some e -> prefix 2 1 constr (string "(" ^^ pp_expr e ^^ string ")")
 
 and pp_object_property = function
   Punned_property {value; _} -> pp_expr value
