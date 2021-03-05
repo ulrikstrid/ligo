@@ -25,7 +25,7 @@ export class LigoCompiler {
     `${dataDir}:${dataDir}`,
     '-w',
     dataDir,
-    'ligolang/ligo:next'
+    'ligolang/ligo:next',
   ];
 
   private execPromise(cmd: string | string[], args: string[]): Promise<string> {
@@ -82,7 +82,7 @@ export class LigoCompiler {
               return;
             }
 
-            fs.write(fd, Buffer.from(fileContent), err => {
+            fs.write(fd, Buffer.from(fileContent), (err) => {
               if (err) {
                 reject(err);
                 return;
@@ -104,7 +104,7 @@ export class LigoCompiler {
                   } catch (ex) {
                     logger.error(`Unable to remove file ${ppFile}`);
                   }
-                }
+                },
               });
             });
           }
@@ -129,7 +129,7 @@ export class LigoCompiler {
         '-s',
         syntax,
         name,
-        entrypoint
+        entrypoint,
       ]);
       return result;
     } finally {
@@ -137,16 +137,40 @@ export class LigoCompiler {
     }
   }
 
-  async compileExpression(syntax: string, expression: string, format: string) {
-    const result = await this.execPromise(this.ligoCmd, [
-      'compile-expression',
-      '--michelson-format',
-      format,
-      syntax,
-      expression
-    ]);
+  async compileExpression(
+    syntax: string,
+    expression: string,
+    methodName: string
+  ) {
+    const { name, remove } = await this.createTemporaryFile(expression);
+    try {
+      const result = await this.execPromise(this.ligoCmd, [
+        'compile-expression',
+        '--init-file',
+        name,
+        syntax,
+        methodName,
+      ]);
 
-    return result;
+      return result;
+    } finally {
+      remove();
+    }
+  }
+
+  async listDeclaration(syntax: string, code: string) {
+    const { name, remove } = await this.createTemporaryFile(code);
+    try {
+      const result = await this.execPromise(this.ligoCmd, [
+        'list-declarations',
+        '-s',
+        syntax,
+        name,
+      ]);
+      return result;
+    } finally {
+      remove();
+    }
   }
 
   async compileStorage(
@@ -167,7 +191,7 @@ export class LigoCompiler {
         syntax,
         name,
         entrypoint,
-        storage
+        storage,
       ]);
 
       return result;
@@ -192,7 +216,7 @@ export class LigoCompiler {
         name,
         entrypoint,
         parameter,
-        storage
+        storage,
       ]);
       return result;
     } finally {
@@ -208,7 +232,7 @@ export class LigoCompiler {
         '-s',
         syntax,
         name,
-        entrypoint
+        entrypoint,
       ]);
       return result;
     } finally {
@@ -230,7 +254,7 @@ export class LigoCompiler {
         syntax,
         name,
         entrypoint,
-        parameter
+        parameter,
       ]);
       return result;
     } finally {

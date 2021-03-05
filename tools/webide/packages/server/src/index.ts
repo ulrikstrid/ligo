@@ -1,6 +1,5 @@
 import cors from 'cors';
 import express from 'express';
-import fs from 'fs';
 import { dirname, join } from 'path';
 
 import { compileContractHandler } from './handlers/compile-contract';
@@ -12,12 +11,11 @@ import { evaluateValueHandler } from './handlers/evaluate-value';
 import { runFunctionHandler } from './handlers/run-function';
 import { shareHandler } from './handlers/share';
 import { sharedLinkHandler } from './handlers/shared-link';
-import { loadDefaultState } from './load-state';
+import { listDeclarationHandler } from './handlers/list-declarations';
 import { errorLoggerMiddleware, loggerMiddleware } from './logger';
 require('./metrics');
 
 const bodyParser = require('body-parser');
-const escape = require('escape-html');
 const prometheus = require('express-prometheus-middleware');
 
 const app = express();
@@ -52,23 +50,6 @@ app.use(
   })
 );
 
-const file = fs.readFileSync(join(appBundleDirectory, 'index.html'));
-
-const template = (defaultState: string = '{}') => {
-  return file.toString().replace(
-    `<div id="root"></div>`,
-    // Injecting a script that contains a default state (Might want to refactor this if we do ssr)
-    // Adding an div containing the initial state this is vulnerable to xss
-    // To avoid vulnerability we escape it and then parse the content into a global variable
-    `
-     <input type="hidden" id="initialState" value="${escape(defaultState)}" />
-     <div id="root"></div>
-     <script>var defaultServerState = JSON.parse(document.getElementById("initialState").value); document.getElementById("initialState").remove()</script>`
-  );
-};
-app.use('^/$', async (_, res) =>
-  res.send(template(JSON.stringify(await loadDefaultState(appBundleDirectory))))
-);
 app.use(express.static(appBundleDirectory));
 
 app.options('/api/share', cors(corsOptions));
@@ -82,6 +63,7 @@ app.post('/api/share', cors(corsOptions), shareHandler);
 app.post('/api/evaluate-value', evaluateValueHandler);
 app.post('/api/run-function', runFunctionHandler);
 app.post('/api/deploy', deployHandler);
+app.post('/api/list-declaration', listDeclarationHandler);
 
 app.use(errorLoggerMiddleware);
 
