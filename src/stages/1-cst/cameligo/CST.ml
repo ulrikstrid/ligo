@@ -30,6 +30,10 @@ type lexeme = string
 
 (* Keywords of CameLIGO *)
 
+(* IMPORTANT: The types are sorted alphabetically, except the generic
+   [keyword]. If you add or modify some, please make sure they remain
+   in order. *)
+
 type keyword    = Region.t
 
 type kwd_and    = Region.t
@@ -58,52 +62,36 @@ type kwd_with   = Region.t
 
 (* Symbols *)
 
+(* IMPORTANT: The types are sorted alphabetically. If you add or
+   modify some, please make sure they remain in order. *)
+
 type arrow    = Region.t  (* "->" *)
-type cons     = Region.t  (* "::" *)
-type caret    = Region.t  (* "^"  *)
-type append   = Region.t  (* "@"  *)
-type dot      = Region.t  (* "."  *)
-
-(* Arithmetic operators *)
-
-type minus    = Region.t  (* "-" *)
-type plus     = Region.t  (* "+" *)
-type slash    = Region.t  (* "/" *)
-type times    = Region.t  (* "*" *)
-
-(* Boolean operators *)
-
-type bool_or  = Region.t  (* "||" *)
 type bool_and = Region.t  (* "&&" *)
-
-(* Comparisons *)
-
-type equal = Region.t  (* "="  *)
-type neq   = Region.t  (* "<>" *)
-type lt    = Region.t  (* "<"  *)
-type gt    = Region.t  (* ">"  *)
-type leq   = Region.t  (* "=<" *)
-type geq   = Region.t  (* ">=" *)
-
-(* Compounds *)
-
-type lpar     = Region.t  (* "(" *)
-type rpar     = Region.t  (* ")" *)
-type lbracket = Region.t  (* "[" *)
-type rbracket = Region.t  (* "]" *)
-type lbrace   = Region.t  (* "{" *)
-type rbrace   = Region.t  (* "}" *)
-
-(* Separators *)
-
-type comma = Region.t  (* "," *)
-type semi  = Region.t  (* ";" *)
-type vbar  = Region.t  (* "|" *)
-type colon = Region.t  (* ":" *)
-
-(* Wildcard *)
-
-type wild = Region.t  (* "_" *)
+type bool_or  = Region.t  (* "||" *)
+type caret    = Region.t  (* "^"  *)
+type colon    = Region.t  (* ":"  *)
+type comma    = Region.t  (* ","  *)
+type cons     = Region.t  (* "::" *)
+type dot      = Region.t  (* "."  *)
+type equal    = Region.t  (* "="  *)
+type geq      = Region.t  (* ">=" *)
+type gt       = Region.t  (* ">"  *)
+type lbrace   = Region.t  (* "{"  *)
+type lbracket = Region.t  (* "["  *)
+type leq      = Region.t  (* "=<" *)
+type lpar     = Region.t  (* "("  *)
+type lt       = Region.t  (* "<"  *)
+type minus    = Region.t  (* "-"  *)
+type neq      = Region.t  (* "<>" *)
+type plus     = Region.t  (* "+"  *)
+type rbrace   = Region.t  (* "}"  *)
+type rbracket = Region.t  (* "]"  *)
+type rpar     = Region.t  (* ")"  *)
+type semi     = Region.t  (* ";"  *)
+type slash    = Region.t  (* "/"  *)
+type times    = Region.t  (* "*"  *)
+type vbar     = Region.t  (* "|"  *)
+type wild     = Region.t  (* "_"  *)
 
 (* Virtual tokens *)
 
@@ -119,6 +107,7 @@ type type_ctor   = string reg
 type field_name  = string reg
 type ctor        = string reg
 type attribute   = string reg
+type language    = string reg
 
 (* Parentheses *)
 
@@ -127,6 +116,8 @@ type 'a par = {
   inside : 'a;
   rpar   : rpar
 }
+
+(* Unit type and value *)
 
 type the_unit = lpar * rpar
 
@@ -139,43 +130,52 @@ type t = {
 
 and cst = t
 
-and attributes = attribute list
+(* DECLARATIONS (top-level) *)
+
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
 
 and declaration =
-  Let         of let_decl     reg
-| TypeDecl    of type_decl    reg
-| ModuleDecl  of module_decl  reg
-| ModuleAlias of module_alias reg
+  D_Let      of let_decl     reg
+| D_Module   of module_decl  reg
+| D_ModAlias of module_alias reg
+| D_Type     of type_decl    reg
 
-(* Non-recursive values *)
+(* Value declarations (a.k.a. let/let-rec declarations) *)
 
 and let_decl =
-  (kwd_let * kwd_rec option * let_binding * attributes)
+  kwd_let * kwd_rec option * let_binding * attribute list
 
 and let_binding = {
   binders  : pattern nseq;
-  lhs_type : (colon * type_expr) option;
+  lhs_type : type_annot option;
   eq       : equal;
   let_rhs  : expr
 }
 
+and type_annot = colon * type_expr
+
 (* Type declarations *)
 
 and type_decl = {
-  kwd_type   : kwd_type;
-  name       : type_name;
-  eq         : equal;
-  type_expr  : type_expr
+  kwd_type  : kwd_type;
+  name      : type_name;
+  eq        : equal;
+  type_expr : type_expr
 }
 
+(* Module declarations (structures) *)
+
 and module_decl = {
-  kwd_module : kwd_module;
-  name       : module_name;
-  eq         : equal;
-  kwd_struct : kwd_struct;
-  structure  : t; (* TODO: declaration nseq *)
-  kwd_end    : kwd_end;
+  kwd_module   : kwd_module;
+  name         : module_name;
+  eq           : equal;
+  kwd_struct   : kwd_struct;
+  declarations : declaration nseq;
+  kwd_end      : kwd_end
 }
+
+(* Declaration of module aliases *)
 
 and module_alias = {
   kwd_module : kwd_module;
@@ -184,68 +184,97 @@ and module_alias = {
   mod_path   : (module_name, dot) nsepseq;
 }
 
+(* TYPE EXPRESSIONS *)
+
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
+
 and type_expr =
-  TProd   of cartesian
-| TSum    of sum_type reg
-| TRecord of field_decl reg ne_injection reg
-| TApp    of (type_ctor * type_tuple) reg
-| TFun    of (type_expr * arrow * type_expr) reg
-| TPar    of type_expr par reg
-| TVar    of variable
-| TWild   of wild
-| TString of lexeme reg
-| TInt    of (lexeme * Z.t) reg
-| TModA   of type_expr module_access reg
+  T_App     of (type_ctor * type_tuple) reg
+| T_Fun     of (type_expr * arrow * type_expr) reg
+| T_Int     of (lexeme * Z.t) reg
+| T_ModPath of type_expr module_path reg
+| T_Par     of type_expr par reg
+| T_Prod    of cartesian
+| T_Record  of field_decl reg ne_injection reg
+| T_String  of lexeme reg
+| T_Sum     of sum_type reg
+| T_Var     of variable
+| T_Wild    of wild
 
-and cartesian = (type_expr, times) nsepseq reg
+(* Constructors *)
 
-and sum_type = {
-  lead_vbar  : vbar option;
-  variants   : (variant reg, vbar) nsepseq;
-  attributes : attributes
-}
+and type_tuple = (type_expr, comma) nsepseq par reg
 
-and variant = {
-  ctor       : ctor;
-  arg        : (kwd_of * type_expr) option;
-  attributes : attributes
-}
+(* Record types *)
 
 and field_decl = {
   field_name : field_name;
   colon      : colon;
   field_type : type_expr;
-  attributes : attributes
+  attributes : attribute list
 }
 
-and type_tuple = (type_expr, comma) nsepseq par reg
+and 'a ne_injection = {
+  compound    : compound option;
+  ne_elements : ('a, semi) nsepseq;
+  terminator  : semi option;
+  attributes  : attribute list
+}
+
+and compound =
+  BeginEnd of kwd_begin * kwd_end
+| Braces   of lbrace * rbrace
+| Brackets of lbracket * rbracket
+
+(* Sum types *)
+
+and sum_type = {
+  lead_vbar  : vbar option;
+  variants   : (variant reg, vbar) nsepseq;
+  attributes : attribute list
+}
+
+and cartesian = (type_expr, times) nsepseq reg
+
+and variant = {
+  ctor       : ctor;
+  arg        : (kwd_of * type_expr) option;
+  attributes : attribute list
+}
+
+(* Module path as a type expression *)
+
+and 'a module_path = {
+  module_path : (module_name, dot) nsepseq;
+  selector    : dot;
+  field       : 'a
+}
+
+(* PATTERNS *)
+
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
 
 and pattern =
-  PCtor     of ctor_pattern
-| PUnit     of the_unit reg
-| PVar      of variable
-| PInt      of (lexeme * Z.t) reg
-| PNat      of (lexeme * Z.t) reg
-| PBytes    of (lexeme * Hex.t) reg
-| PString   of string reg
-| PVerbatim of string reg
-| PWild     of wild
-| PList     of list_pattern
-| PTuple    of (pattern, comma) nsepseq reg
-| PPar      of pattern par reg
-| PRecord   of field_pattern reg ne_injection reg
-| PTyped    of typed_pattern reg
-
-and ctor_pattern =
-  PFalse   of kwd_false
-| PTrue    of kwd_true
-| PNone    of kwd_None
-| PSomeApp of (kwd_Some * pattern) reg
-| PCtorApp of (ctor * pattern option) reg
-
-and list_pattern =
-  PListComp of pattern injection reg
-| PCons     of (pattern * cons * pattern) reg
+  P_Bytes    of (lexeme * Hex.t) reg
+| P_Cons     of (pattern, cons) nsepseq reg
+| P_Ctor     of (ctor * pattern option) reg
+| P_False    of kwd_false
+| P_Int      of (lexeme * Z.t) reg
+| P_List     of pattern injection reg
+| P_Nat      of (lexeme * Z.t) reg
+| P_None     of kwd_None
+| P_Par      of pattern par reg
+| P_Record   of field_pattern reg ne_injection reg
+| P_Some     of (kwd_Some * pattern) reg
+| P_String   of string reg
+| P_True     of kwd_true
+| P_Tuple    of (pattern, comma) nsepseq reg
+| P_Typed    of typed_pattern reg
+| P_Unit     of the_unit reg
+| P_Var      of variable
+| P_Wild     of wild
 
 and typed_pattern = {
   pattern   : pattern;
@@ -259,6 +288,8 @@ and field_pattern = {
   pattern    : pattern
 }
 
+(* EXPRESSIONS *)
+
 and expr =
   ECase     of expr case reg
 | ECond     of cond_expr reg
@@ -270,7 +301,7 @@ and expr =
 | ECtor     of ctor_expr
 | ERecord   of record reg
 | EProj     of projection reg
-| EModA     of expr module_access reg
+| EModPath   of expr module_path reg
 | EUpdate   of update reg
 | EVar      of variable
 | ECall     of (expr * expr nseq) reg
@@ -286,25 +317,13 @@ and expr =
 | ESeq      of expr injection reg
 | ECodeInj  of code_inj reg
 
-and annot_expr = expr * colon * type_expr
+and annot_expr = expr * type_annot
 
 and 'a injection = {
   compound   : compound option;
   elements   : ('a, semi) sepseq;
   terminator : semi option
 }
-
-and 'a ne_injection = {
-  compound    : compound option;
-  ne_elements : ('a, semi) nsepseq;
-  terminator  : semi option;
-  attributes  : attributes
-}
-
-and compound =
-  BeginEnd of kwd_begin * kwd_end
-| Braces   of lbrace * rbrace
-| Brackets of lbracket * rbracket
 
 and list_expr =
   ECons     of cons bin_op reg
@@ -363,12 +382,6 @@ and comp_expr =
 
 and record = field_assignment reg ne_injection
 
-and 'a module_access = { (* TODO: Left-associativity expected + expression *)
-  module_name : module_name;
-  selector    : dot;
-  field       : 'a;
-}
-
 and projection = {
   struct_name : variable;
   selector    : dot;
@@ -423,7 +436,7 @@ and let_in = {
   binding    : let_binding;
   kwd_in     : kwd_in;
   body       : expr;
-  attributes : attributes
+  attributes : attribute list
 }
 
 and type_in = {
@@ -447,7 +460,7 @@ and mod_alias = {
 and fun_expr = {
   kwd_fun    : kwd_fun;
   binders    : pattern nseq;
-  lhs_type   : (colon * type_expr) option;
+  lhs_type   : type_annot option;
   arrow      : arrow;
   body       : expr;
 }
@@ -465,7 +478,7 @@ and cond_expr = {
    the innermost covers the <language>. *)
 
 and code_inj = {
-  language : string reg reg;
+  language : language reg;
   code     : expr;
   rbracket : rbracket;
 }
@@ -482,37 +495,37 @@ let nsepseq_to_region to_region (hd,tl) =
   Region.cover (to_region hd) (last reg tl)
 
 let type_expr_to_region = function
-  TProd   {region; _}
-| TSum    {region; _}
-| TRecord {region; _}
-| TApp    {region; _}
-| TFun    {region; _}
-| TPar    {region; _}
-| TString {region; _}
-| TInt    {region; _}
-| TVar    {region; _}
-| TWild    region
-| TModA   {region; _}
+  T_Prod   {region; _}
+| T_Sum    {region; _}
+| T_Record {region; _}
+| T_App    {region; _}
+| T_Fun    {region; _}
+| T_Par    {region; _}
+| T_String {region; _}
+| T_Int    {region; _}
+| T_Var    {region; _}
+| T_Wild    region
+| T_ModA   {region; _}
    -> region
 
 let list_pattern_to_region = function
   PListComp {region; _} | PCons {region; _} -> region
 
 let ctor_pattern_to_region = function
-  PNone region | PSomeApp {region;_}
-| PTrue region | PFalse region
-| PCtorApp {region;_} -> region
+  P_None region | P_SomeApp {region;_}
+| P_True region | P_False region
+| P_CtorApp {region;_} -> region
 
 let pattern_to_region = function
-| PList p -> list_pattern_to_region p
-| PCtor c -> ctor_pattern_to_region c
-| PUnit {region;_}
-| PTuple {region;_} | PVar {region;_}
-| PInt {region;_}
-| PString {region;_} | PVerbatim {region;_}
-| PWild region | PPar {region;_}
-| PRecord {region; _} | PTyped {region; _}
-| PNat {region; _} | PBytes {region; _}
+| P_List p -> list_pattern_to_region p
+| P_Ctor c -> ctor_pattern_to_region c
+| P_Unit {region;_}
+| P_Tuple {region;_} | P_Var {region;_}
+| P_Int {region;_}
+| P_String {region;_} | P_Verbatim {region;_}
+| P_Wild region | P_P_ar {region;_}
+| P_Record {region; _} | P_Typed {region; _}
+| P_Nat {region; _} | P_Bytes {region; _}
   -> region
 
 let bool_expr_to_region = function
@@ -548,18 +561,18 @@ and ctor_expr_to_region = function
 | ESomeApp {region; _} -> region
 
 let expr_to_region = function
-  ELogic e  -> logic_expr_to_region e
-| EArith e  -> arith_expr_to_region e
-| EString e -> string_expr_to_region e
-| EList e   -> list_expr_to_region e
-| ECtor e   -> ctor_expr_to_region e
-| EAnnot {region;_}  | ELetIn {region;_}  | EFun {region;_}
-| ETypeIn {region;_} | EModIn {region;_}  | EModAlias {region;_}
-| ECond {region;_}   | ETuple {region;_}  | ECase {region;_}
-| ECall {region;_}   | EVar {region;_}    | EProj {region;_}
-| EUnit {region;_}   | EPar {region;_}    | EBytes {region;_}
-| ESeq {region;_}    | ERecord {region;_} | EUpdate {region;_}
-| EModA {region;_}   | ECodeInj {region;_}
+  E_Logic e  -> logic_expr_to_region e
+| E_Arith e  -> arith_expr_to_region e
+| E_String e -> string_expr_to_region e
+| E_List e   -> list_expr_to_region e
+| E_Ctor e   -> ctor_expr_to_region e
+| E_Annot {region;_}  | E_LetIn {region;_}  | E_Fun {region;_}
+| E_TypeIn {region;_} | E_ModIn {region;_}  | E_ModAlias {region;_}
+| E_Cond {region;_}   | E_Tuple {region;_}  | E_Case {region;_}
+| E_Call {region;_}   | E_Var {region;_}    | E_Proj {region;_}
+| E_Unit {region;_}   | E_Par {region;_}    | E_Bytes {region;_}
+| E_Seq {region;_}    | E_Record {region;_} | E_Update {region;_}
+| E_ModA {region;_}   | E_CodeInj {region;_}
   -> region
 
 let declaration_to_region = function

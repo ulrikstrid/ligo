@@ -30,6 +30,10 @@ type lexeme = string
 
 (* Keywords of PascaLIGO *)
 
+(* IMPORTANT: The types are sorted alphabetically, except the generic
+   [keyword]. If you add or modify some, please make sure they remain
+   in order. *)
+
 type keyword        = Region.t
 
 type kwd_and        = Region.t
@@ -76,32 +80,35 @@ type kwd_with       = Region.t
 
 (* Symbols *)
 
-type semi     = Region.t  (* ";"   *)
-type comma    = Region.t  (* ","   *)
-type lpar     = Region.t  (* "("   *)
-type rpar     = Region.t  (* ")"   *)
-type lbrace   = Region.t  (* "{"   *)
-type rbrace   = Region.t  (* "}"   *)
-type lbracket = Region.t  (* "["   *)
-type rbracket = Region.t  (* "]"   *)
-type cons     = Region.t  (* "#"   *)
-type vbar     = Region.t  (* "|"   *)
+(* IMPORTANT: The types are sorted alphabetically. If you add or
+   modify some, please make sure they remain in order. *)
+
 type arrow    = Region.t  (* "->"  *)
 type assign   = Region.t  (* ":="  *)
-type equal    = Region.t  (* "="   *)
+type caret    = Region.t  (* "^"   *)
 type colon    = Region.t  (* ":"   *)
-type lt       = Region.t  (* "<"   *)
-type leq      = Region.t  (* "<="  *)
-type gt       = Region.t  (* ">"   *)
+type comma    = Region.t  (* ","   *)
+type cons     = Region.t  (* "#"   *)
+type dot      = Region.t  (* "."   *)
+type equal    = Region.t  (* "="   *)
 type geq      = Region.t  (* ">="  *)
+type gt       = Region.t  (* ">"   *)
+type lbrace   = Region.t  (* "{"   *)
+type lbracket = Region.t  (* "["   *)
+type leq      = Region.t  (* "<="  *)
+type lpar     = Region.t  (* "("   *)
+type lt       = Region.t  (* "<"   *)
+type minus    = Region.t  (* "-"   *)
 type neq      = Region.t  (* "=/=" *)
 type plus     = Region.t  (* "+"   *)
-type minus    = Region.t  (* "-"   *)
+type rbrace   = Region.t  (* "}"   *)
+type rbracket = Region.t  (* "]"   *)
+type rpar     = Region.t  (* ")"   *)
+type semi     = Region.t  (* ";"   *)
 type slash    = Region.t  (* "/"   *)
 type times    = Region.t  (* "*"   *)
-type dot      = Region.t  (* "."   *)
+type vbar     = Region.t  (* "|"   *)
 type wild     = Region.t  (* "_"   *)
-type caret    = Region.t  (* "^"   *)
 
 (* Virtual tokens *)
 
@@ -135,14 +142,6 @@ type 'a brackets = {
   rbracket : rbracket
 }
 
-(* Braces compounds *)
-
-type 'a braces = {
-  lbrace : lbrace;
-  inside : 'a;
-  rbrace : rbrace
-}
-
 (* The Concrete Syntax Tree *)
 
 type t = {
@@ -152,7 +151,7 @@ type t = {
 
 and cst = t
 
-(* Declarations *)
+(* DECLARATIONS (top-level) *)
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
@@ -163,6 +162,8 @@ and declaration =
 | D_Module   of module_decl  reg
 | D_ModAlias of module_alias reg
 | D_Type     of type_decl    reg
+
+(* Declarations of constants *)
 
 and const_decl = {
   kwd_const  : kwd_const;
@@ -184,14 +185,18 @@ and type_decl = {
   terminator : semi option
 }
 
+(* Module declarations (structures) *)
+
 and module_decl = {
   kwd_module   : kwd_module;
   name         : module_name;
   kwd_is       : kwd_is;
-  enclosing    : module_enclosing;
+  enclosing    : block_enclosing;
   declarations : declaration nseq;
   terminator   : semi option;
 }
+
+(* Declaration of module aliases *)
 
 and module_alias = {
   kwd_module : kwd_module;
@@ -201,7 +206,7 @@ and module_alias = {
   terminator : semi option;
 }
 
-(* Type expressions *)
+(* TYPE EXPRESSIONS *)
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
@@ -219,16 +224,41 @@ and type_expr =
 | T_Var     of variable
 | T_Wild    of wild
 
-and sum_type = {
-  lead_vbar  : vbar option;
-  variants   : (variant reg, vbar) nsepseq;
-  attributes : attribute list
-}
+(* Constructors *)
+
+and type_tuple = (type_expr, comma) nsepseq par reg
+
+(* Record types *)
 
 and field_decl = {
   field_name : field_name;
-  colon      : colon;
-  field_type : type_expr;
+  field_type : type_annot;
+  attributes : attribute list
+}
+
+and 'a ne_injection = {
+  kind        : ne_injection_kwd;
+  enclosing   : enclosing;
+  ne_elements : ('a, semi) nsepseq;
+  terminator  : semi option;
+  attributes  : attribute list
+}
+
+and ne_injection_kwd = [
+  `Set    of keyword
+| `Map    of keyword
+| `Record of keyword
+]
+
+and enclosing =
+  Brackets of lbracket * rbracket
+| End      of kwd_end
+
+(* Sum types *)
+
+and sum_type = {
+  lead_vbar  : vbar option;
+  variants   : (variant reg, vbar) nsepseq;
   attributes : attribute list
 }
 
@@ -240,17 +270,7 @@ and variant = {
   attributes : attribute list
 }
 
-and type_tuple = (type_expr, comma) nsepseq par reg
-
 (* Function and procedure declarations *)
-
-and fun_expr = {
-  kwd_function : kwd_function;
-  param        : parameters;
-  ret_type     : type_annot option;
-  kwd_is       : kwd_is;
-  return       : expr
-}
 
 and fun_decl = {
   kwd_recursive : kwd_recursive option;
@@ -262,14 +282,6 @@ and fun_decl = {
   return        : expr;
   terminator    : semi option;
   attributes    : attribute list
-}
-
-and type_annot = colon * type_expr
-
-and block_with = {
-  block    : block reg;   (* TODO: optional keyword "block" *)
-  kwd_with : kwd_with;
-  expr     : expr
 }
 
 and parameters = (param_decl, semi) nsepseq par reg
@@ -290,26 +302,24 @@ and param_var = {
   param_type : type_annot option
 }
 
-and block = {
-  enclosing  : block_enclosing;
-  statements : statements;
-  terminator : semi option
+and type_annot = colon * type_expr
+
+(* Module path as a type expression *)
+
+and 'a module_path = {
+  module_path : (module_name, dot) nsepseq;
+  selector    : dot;
+  field       : 'a
 }
 
-and block_enclosing = (* TODO: Merge with module_enclosing *)
-  Block    of kwd_block * lbrace * rbrace
-| BeginEnd of kwd_begin * kwd_end
-
-and module_enclosing =
-  Brace    of lbrace * rbrace
-| BeginEnd of kwd_begin * kwd_end
-
-and statements = (statement, semi) nsepseq
+(* STATEMENTS *)
 
 and statement =
   S_Instr    of instruction
 | S_Decl     of declaration
 | S_VarDecl  of var_decl reg
+
+and statements = (statement, semi) nsepseq
 
 and var_decl = {
   kwd_var    : kwd_var;
@@ -395,11 +405,17 @@ and 'branch conditional = {
 
 and test_clause =
   ClauseInstr of instruction
-| ClauseBlock of clause_block
+| ClauseBlock of block reg
 
-and clause_block =
-  LongBlock  of block reg
-| ShortBlock of (statements * semi option) braces reg
+and block = {
+  enclosing  : block_enclosing;
+  statements : statements;
+  terminator : semi option
+}
+
+and block_enclosing =
+  Braces   of kwd_block option * lbrace * rbrace
+| BeginEnd of kwd_begin * kwd_end
 
 and set_mem = {
   set          : expr;
@@ -475,7 +491,33 @@ and code_inj = {
   rbracket : rbracket;
 }
 
-(* Expressions *)
+(* PATTERNS *)
+
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
+
+and pattern =
+  P_Bytes  of (lexeme * Hex.t) reg
+| P_Cons   of (pattern, cons) nsepseq reg
+| P_Ctor   of (ctor * tuple_pattern option) reg
+| P_False  of kwd_False
+| P_Int    of (lexeme * Z.t) reg
+| P_List   of pattern injection reg
+| P_Nat    of (lexeme * Z.t) reg
+| P_Nil    of kwd_nil
+| P_None   of kwd_None
+| P_Par    of pattern par reg
+| P_Some   of (kwd_Some * pattern par reg) reg
+| P_String of lexeme reg
+| P_True   of kwd_True
+| P_Tuple  of tuple_pattern
+| P_Unit   of kwd_Unit
+| P_Var    of lexeme reg
+| P_Wild   of wild
+
+and tuple_pattern = (pattern, comma) nsepseq par reg
+
+(* EXPRESSIONS *)
 
 (* IMPORTANT: The data constructors are sorted alphabetically. If you
    add or modify some, please make sure they remain in order. *)
@@ -532,6 +574,20 @@ and expr =
 | E_Var       of lexeme reg
 | E_Verbatim  of lexeme reg
 
+and block_with = {
+  block    : block reg;
+  kwd_with : kwd_with;
+  expr     : expr
+}
+
+and fun_expr = {
+  kwd_function : kwd_function;
+  param        : parameters;
+  ret_type     : type_annot option;
+  kwd_is       : kwd_is;
+  return       : expr
+}
+
 and annot_expr = expr * type_annot
 
 and map_lookup = {
@@ -561,12 +617,6 @@ and field_assignment = {
 }
 
 and record = field_assignment reg ne_injection
-
-and 'a module_path = { (* TODO: Left-associativity expected + expression *)
-  module_name : module_name;
-  selector    : dot;
-  field       : 'a
-}
 
 and projection = {
   struct_name : variable;
@@ -611,50 +661,6 @@ and injection_kwd = [
 | `Map    of keyword
 | `Set    of keyword
 ]
-
-and enclosing =
-  Brackets of lbracket * rbracket
-| End      of kwd_end
-
-and 'a ne_injection = {
-  kind        : ne_injection_kwd;
-  enclosing   : enclosing;
-  ne_elements : ('a, semi) nsepseq;
-  terminator  : semi option;
-  attributes  : attribute list
-}
-
-and ne_injection_kwd = [
-  `Set    of keyword
-| `Map    of keyword
-| `Record of keyword
-]
-
-(* Patterns *)
-
-(* IMPORTANT: The data constructors are sorted alphabetically. If you
-   add or modify some, please make sure they remain in order. *)
-
-and pattern =
-  P_Bytes   of (lexeme * Hex.t) reg
-| P_Cons    of (pattern, cons) nsepseq reg
-| P_Ctor    of (ctor * tuple_pattern option) reg
-| P_False   of kwd_False
-| P_Int     of (lexeme * Z.t) reg
-| P_List    of pattern injection reg
-| P_Nat     of (lexeme * Z.t) reg
-| P_Nil     of kwd_nil
-| P_None    of kwd_None
-| P_ParCons of (pattern * cons * pattern) par reg
-| P_Some    of (kwd_Some * pattern par reg) reg
-| P_String  of lexeme reg
-| P_True    of kwd_True
-| P_Tuple   of tuple_pattern
-| P_Unit    of kwd_Unit
-| P_Var     of lexeme reg
-| P_Wild    of wild
-
-and tuple_pattern = (pattern, comma) nsepseq par reg
 
 (* PROJECTING REGIONS *)
 
@@ -754,7 +760,7 @@ and annot_expr_to_region x = x.Region.region
 and record_expr_to_region x = x.Region.region
 
 let path_to_region = function
-  Name var -> var.region
+  Name var  -> var.region
 | Path path -> path.region
 
 (* IMPORTANT: In the following function definition, the data
@@ -777,13 +783,9 @@ let instr_to_region = function
 | I_While       {region; _}
   -> region
 
-let clause_block_to_region = function
-  LongBlock  {region; _}
-| ShortBlock {region; _} -> region
-
 let test_clause_to_region = function
   ClauseInstr instr -> instr_to_region instr
-| ClauseBlock block -> clause_block_to_region block
+| ClauseBlock block -> block.Region.region
 
 (* IMPORTANT: In the following function definition, the data
    constructors are sorted alphabetically. If you add or modify some,
@@ -799,7 +801,7 @@ let pattern_to_region = function
 | P_Nat     {region; _}
 | P_Nil      region
 | P_None     region
-| P_ParCons {region; _}
+| P_Par     {region; _}
 | P_Some    {region; _}
 | P_String  {region; _}
 | P_True     region

@@ -405,9 +405,10 @@ and print_T_Int = swap print_int "T_Int"
 
 and print_T_ModPath state (node : type_expr module_path reg) =
   let {value; region} = node in
-  let children = [
-    mk_child print_long      value.module_name;
-    mk_child print_type_expr value.field]
+  let children =
+    (List.map (mk_child print_long)
+    @@ Utils.nsepseq_to_list value.module_path)
+    @ [mk_child print_type_expr value.field]
   in print_tree state "T_ModPath" ~region children
 
 (* Parenthesised type expressions *)
@@ -438,13 +439,10 @@ and print_T_Record state (node : field_decl reg ne_injection reg) =
 and print_field_decl state (node : field_decl reg) =
   let {value; _} = node in
   let children = [
-    mk_child      print_field_type value.field_type;
+    mk_child      print_type_annot value.field_type;
     mk_child_list print_attributes value.attributes] in
   let {value; region} = value.field_name in
   print_tree state value ~region children
-
-and print_field_type state =
-  print_unary state "<type>" print_type_expr
 
 (* The string type *)
 
@@ -602,25 +600,7 @@ and print_ClauseInstr state =
   print_unary state "ClauseInstr" print_instruction
 
 and print_ClauseBlock state =
-  print_unary state "ClauseBlock" print_clause_block
-
-and print_clause_block state = function
-  LongBlock  b -> print_LongBlock  state b
-| ShortBlock b -> print_ShortBlock state b
-
-and print_LongBlock state (node : block reg) =
-  let {value; region} = node in
-  let children =
-     List.map (mk_child print_statement)
-  @@ Utils.nsepseq_to_list value.statements
-  in print_tree state "LongBlock" ~region children
-
-and print_ShortBlock state (node : (statements * semi option) braces reg) =
-  let {value; region} = node in
-  let children =
-     List.map (mk_child print_statement)
-  @@ Utils.nsepseq_to_list (fst value.inside)
-  in print_tree state "ShortBlock" ~region children
+  print_unary state "ClauseBlock" print_block
 
 and print_case :
   'a.state -> string -> (state -> 'a -> unit) -> 'a case reg -> unit =
@@ -832,12 +812,13 @@ and print_I_While state (node : while_loop reg) =
   let {value; _} = node in
   let children = [
     mk_child print_cond  value.cond;
-    mk_child print_block value.block.value]
+    mk_child print_block value.block]
   in print_tree state "<while>" children
 
 and print_cond state = print_unary state "<condition>" print_expr
 
-and print_block state (node : block) =
+and print_block state (node : block reg) =
+  let node = node.value in
   let children =
      List.map (mk_child print_statement)
   @@ Utils.nsepseq_to_list node.statements
@@ -864,7 +845,7 @@ and print_pattern state = function
 | P_Nat     p -> print_P_Nat     state p
 | P_Nil     p -> print_P_Nil     state p
 | P_None    p -> print_P_None    state p
-| P_ParCons p -> print_P_ParCons state p
+| P_Par     p -> print_P_Par     state p
 | P_Some    p -> print_P_Some    state p
 | P_String  p -> print_P_String  state p
 | P_True    p -> print_P_True    state p
@@ -932,16 +913,10 @@ and print_P_Nil = swap print_long' "P_Nil"
 
 and print_P_None = swap print_long' "P_None"
 
-(* The special pattern matching the head of a list and its tail, the
-   whole between parentheses. *)
+(* Parenthesised patterns *)
 
-and print_P_ParCons state (node : (pattern * cons * pattern) par reg) =
-  let {value; region} = node in
-  let head, _, tail = value.inside in
-  let children = [
-    mk_child print_pattern head;
-    mk_child print_pattern tail]
-  in print_tree state "P_ParCons" ~region children
+and print_P_Par state (node : pattern par reg) =
+  print_unary state "P_Par" print_pattern node.value.inside
 
 (* The pattern for the application of the predefined constructor
    [Some] *)
@@ -1077,7 +1052,7 @@ and print_E_BigMap state (node : binding reg injection reg) =
 and print_E_Block state (node : block_with reg) =
   let {value; region} = node in
   let children = [
-    mk_child print_block      value.block.value;
+    mk_child print_block      value.block;
     mk_child print_block_expr value.expr]
   in print_tree state "E_Block" ~region children
 
@@ -1201,11 +1176,12 @@ and print_E_Mod state = print_op2 state "E_Mod"
 (* Module path as an expression *)
 
 and print_E_ModPath state (node : expr module_path reg) =
-  let node = node.value in
-  let children = [
-    mk_child print_long node.module_name;
-    mk_child print_expr node.field]
-  in print_tree state "E_ModPath" children
+  let {value; region} = node in
+  let children =
+    (List.map (mk_child print_long)
+    @@ Utils.nsepseq_to_list value.module_path)
+    @ [mk_child print_expr value.field]
+  in print_tree state "E_ModPath" ~region children
 
 (* Arithmetic multiplication *)
 

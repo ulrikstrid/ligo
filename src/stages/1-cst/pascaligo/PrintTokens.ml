@@ -196,12 +196,6 @@ let print_par : 'a.state -> (state -> 'a -> unit) -> 'a par reg -> unit =
     print       state value.inside;
     print_token state "RPAR" value.rpar
 
-let print_braces : 'a.state -> (state -> 'a -> unit) -> 'a braces reg -> unit =
-  fun state print {value; _} ->
-    print_token state "LBRACE" value.lbrace;
-    print       state value.inside;
-    print_token state "RBRACE" value.rbrace
-
 let print_brackets : 'a.state -> (state -> 'a -> unit) -> 'a brackets reg -> unit =
   fun state print {value; _} ->
     print_token state "LBRACKET" value.lbracket;
@@ -232,7 +226,7 @@ and print_D_Const state (node : const_decl reg) =
   let node = node.value in
   print_attributes state node.attributes;
   print_token      state "Const" node.kwd_const;
-  print_ident   state node.name;
+  print_ident      state node.name;
   print_option     state print_type_annot node.const_type;
   print_token      state "EQ" node.equal;
   print_expr       state node.init;
@@ -285,10 +279,11 @@ and print_ParamVar state (node : param_var reg) =
 and print_D_Module state (node : module_decl reg) =
   let node = node.value in
   match node.enclosing with
-    Brace (lbrace, rbrace) ->
+    Braces (kwd_block_opt, lbrace, rbrace) ->
       print_token     state "Module" node.kwd_module;
       print_ident     state node.name;
       print_token     state "Is" node.kwd_is;
+      print_token_opt state "BLOCK" kwd_block_opt;
       print_token     state "LBRACE" lbrace;
       print_nseq      state print_declaration node.declarations;
       print_token     state  "RBRACE" rbrace;
@@ -372,9 +367,9 @@ and print_T_ModPath state = print_module_path state print_type_expr
 and print_module_path :
   'a.state -> (state -> 'a -> unit ) -> 'a module_path reg -> unit =
   fun state print {value; _} ->
-    print_UIdent state value.module_name;
-    print_token  state "DOT" value.selector;
-    print        state value.field
+    print_nsepseq state print_UIdent "." value.module_path;
+    print_token   state "DOT" value.selector;
+    print         state value.field
 
 (* Parenthesised type expressions *)
 
@@ -393,8 +388,7 @@ and print_field_decl state (node : field_decl reg) =
   let node = node.value in
   print_attributes state node.attributes;
   print_ident      state node.field_name;
-  print_token      state "COLON" node.colon;
-  print_type_expr  state node.field_type
+  print_type_annot state node.field_type
 
 and print_ne_injection :
   'a.state -> (state -> 'a -> unit) -> 'a ne_injection reg -> unit =
@@ -595,32 +589,21 @@ and print_test_clause state = function
 
 and print_ClauseInstr state = print_instruction state
 
-and print_ClauseBlock state = print_clause_block state
-
-and print_clause_block state = function
-  LongBlock  b -> print_LongBlock  state b
-| ShortBlock b -> print_ShortBlock state b
-
-and print_LongBlock state = print_block state
-
-and print_ShortBlock state (node :  (statements * semi option) braces reg) =
-  let print state (stmts, terminator) =
-    print_statements state stmts;
-    print_token_opt  state "SEMI" terminator
-  in print_braces state print node
+and print_ClauseBlock state = print_block state
 
 and print_block state (node : block reg) =
-  match node.value.enclosing with
-    Block (kwd_block, lbrace, rbrace) ->
-      print_token      state "Block" kwd_block;
+  let node = node.value in
+  match node.enclosing with
+    Braces (kwd_block_opt, lbrace, rbrace) ->
+      print_token_opt  state "Block" kwd_block_opt;
       print_token      state "LBRACE" lbrace;
-      print_statements state node.value.statements;
-      print_token_opt  state "SEMI" node.value.terminator;
+      print_statements state node.statements;
+      print_token_opt  state "SEMI" node.terminator;
       print_token      state "RBRACE" rbrace
   | BeginEnd (kwd_begin, kwd_end) ->
       print_token      state "Begin" kwd_begin;
-      print_statements state node.value.statements;
-      print_token_opt  state "SEMI" node.value.terminator;
+      print_statements state node.statements;
+      print_token_opt  state "SEMI" node.terminator;
       print_token      state "End" kwd_end
 
 (* Conditional instructions *)
@@ -759,7 +742,7 @@ and print_pattern state = function
 | P_Nat      p -> print_P_Nat     state p
 | P_Nil      p -> print_P_Nil     state p
 | P_None     p -> print_P_None    state p
-| P_ParCons  p -> print_P_ParCons state p
+| P_Par      p -> print_P_Par state p
 | P_Some     p -> print_P_Some    state p
 | P_String   p -> print_P_String  state p
 | P_True     p -> print_P_True    state p
@@ -841,12 +824,7 @@ and print_P_None state = print_token state "Ctor_None"
 (* The special pattern matching the head of a list and its tail, the
    whole between parentheses. *)
 
-and print_P_ParCons state (node : (pattern * cons * pattern) par reg) =
-  let print state (head, cons, tail) =
-    print_pattern state head;
-    print_token   state "SHARP" cons;
-    print_pattern state tail;
-  in print_par state print node
+and print_P_Par state = print_par state print_pattern
 
 (* The pattern for the application of the predefined constructor
    [Some] *)
