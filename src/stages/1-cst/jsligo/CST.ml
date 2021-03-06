@@ -28,7 +28,7 @@ type 'a reg = 'a Region.reg
 
 type lexeme       = string
 
-(* Keywords of Reason *)
+(* Keywords of JsLIGO *)
 
 type kwd_else      = Region.t
 type kwd_false     = Region.t
@@ -50,6 +50,9 @@ type kwd_break     = Region.t
 type kwd_namespace = Region.t
 type kwd_export    = Region.t
 type kwd_import    = Region.t
+type kwd_while     = Region.t
+type kwd_for     = Region.t
+type kwd_of     = Region.t
 
 (* Data constructors *)
 
@@ -350,6 +353,27 @@ and statement =
 | SNamespace  of (kwd_namespace * module_name * (statements braced reg)) reg
 | SExport     of (kwd_export * statement) reg
 | SImport     of import reg
+| SWhile      of while_ reg
+| SForOf      of for_of reg
+
+and while_ = {
+  kwd_while: kwd_while;
+  lpar:      lpar;
+  expr:      expr;
+  rpar:      rpar;
+  statement: statement;
+}
+
+and for_of = {
+  kwd_for   : kwd_for;
+  lpar      : lpar;
+  const     : bool;
+  name      : variable;
+  kwd_of    : kwd_of;
+  expr      : expr;
+  rpar      : rpar;
+  statement : statement
+}
 
 and import = {
   kwd_import   : kwd_import;
@@ -557,6 +581,8 @@ let statement_to_region = function
 | SType {region; _} 
 | SImport {region; _}
 | SExport {region; _}
+| SForOf {region; _}
+| SWhile {region; _}
 | SNamespace {region; _} -> region
 
 let selection_to_region = function

@@ -242,6 +242,10 @@ and fold_statement : ('a, 'err) folder -> 'a -> statement -> ('a, 'err) result =
   | SNamespace {value = (_, _, {value = {inside; _}; _} ); _} -> bind_fold_npseq self init inside
   | SExport {value = (_, s); _} -> self init s 
   | SImport _ -> ok init
+  | SForOf {value = {expr; statement; _}; _}
+  | SWhile {value = {expr; statement; _}; _} ->
+      let%bind res = self_expr init expr in
+      self res statement  
 
 and fold_module : ('a, 'err) folder -> 'a -> t -> ('a, 'err) result =
   fun f init {statements;eof=_} ->
@@ -603,6 +607,22 @@ and map_statement : ('err) mapper -> statement -> (statement, 'err) result =
       region
     }
   | SImport i -> return @@ SImport i
+  | SForOf {value; region} -> (
+    let%bind expr = self_expr value.expr in
+    let%bind statement = self value.statement in
+    return @@ SForOf {
+      value = {value with expr; statement };
+      region
+    }
+  )
+  | SWhile {value; region} -> (
+    let%bind expr = self_expr value.expr in
+    let%bind statement = self value.statement in
+    return @@ SWhile {
+      value = {value with expr; statement };
+      region
+    }
+  )
 
 and map_toplevel_statement =
   fun f (statement, semi_opt) ->

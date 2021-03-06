@@ -106,6 +106,7 @@ module T =
     | Import   of Region.t  (* import   *)
     | Let      of Region.t  (* let      *)
     | New      of Region.t  (* new      *)
+    | Of       of Region.t  (* of       *)
     | Return   of Region.t  (* return   *)
     | Switch   of Region.t  (* switch   *)
     | This     of Region.t  (* this     *)
@@ -228,6 +229,7 @@ module T =
     | "Import"   -> "import"
     | "Let"      -> "let"
     | "New"      -> "new"
+    | "Of"       -> "of"
     | "Return"   -> "return"
     | "Switch"   -> "switch"
     | "This"     -> "this"
@@ -355,6 +357,7 @@ module T =
     | Import   region -> region, "Import"
     | Let      region -> region, "Let"
     | New      region -> region, "New"
+    | Of       region -> region, "Of"
     | Return   region -> region, "Return"
     | Switch   region -> region, "Switch"
     | This     region -> region, "This"
@@ -461,6 +464,7 @@ module T =
     | Import   _ -> "import"
     | Let      _ -> "let"
     | New      _ -> "new"
+    | Of       _ -> "of"
     | Return   _ -> "return"
     | Switch   _ -> "switch"
     | This     _ -> "this"
@@ -512,6 +516,7 @@ module T =
        (fun reg -> Import  reg);
        (fun reg -> Let     reg);
        (fun reg -> New     reg);
+       (fun reg -> Of     reg);
        (fun reg -> Return  reg);
        (fun reg -> Switch  reg);
        (fun reg -> This    reg);

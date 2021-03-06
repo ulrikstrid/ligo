@@ -224,6 +224,11 @@ let rec peephole_statement : unit -> statement -> (unit, 'err) result = fun _ s 
   | SType  {value = {name; _}; _} ->
     let%bind () = check_reserved_name name in 
     ok @@ ()
+  | SWhile {value = {expr; statement; _}; _}
+  | SForOf {value = {expr; statement; _}; _} ->
+    let%bind () = peephole_expression () expr in
+    let%bind () = peephole_statement () statement in
+    ok @@ ()
   | SBlock  _
   | SCond   _
   | SReturn _

@@ -477,12 +477,66 @@ statement:
 | if_else_statement
 | switch_statement
 | import_statement
+| iteration_statement
 | return_statement { $1 }
 | "export"? declaration
   { 
     match $1 with 
       Some s -> SExport {value = (s, $2); region = cover s (statement_to_region $2)}
     | None -> $2 
+  }
+
+iteration_statement:
+  for_of_statement
+| while_statement  { $1 }
+
+for_of_statement:
+  "for" "(" "let" "<lident>" "of" assignment_expr ")" statement {
+    let region = cover $1 (statement_to_region $8) in
+    SForOf {
+      value = {
+        kwd_for   = $1;
+        lpar      = $2;
+        const     = false;
+        name      = $4;
+        kwd_of    = $5;
+        expr      = $6;
+        rpar      = $7;
+        statement = $8;
+      };
+      region
+    }
+  }
+| "for" "(" "const" "<lident>" "of" assignment_expr ")" statement {
+    let region = cover $1 (statement_to_region $8) in
+    SForOf {
+      value = {
+        kwd_for   = $1;
+        lpar      = $2;
+        const     = true;
+        name      = $4;
+        kwd_of    = $5;
+        expr      = $6;
+        rpar      = $7;
+        statement = $8;
+      };
+      region
+    }
+  }
+
+while_statement: 
+  "while" "(" expr ")" statement {
+    let region = cover $1 (statement_to_region $5) in
+    SWhile {
+      value = {
+        kwd_while = $1;
+        lpar      = $2;
+        expr      = $3;
+        rpar      = $4;
+        statement = $5;
+      };
+      region
+    }
   }
 
 import_statement: 

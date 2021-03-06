@@ -186,8 +186,26 @@ and print_statement state = function
     print_token state equal "=";
     print_nsepseq state "." (fun state a -> print_var state a) module_path
 | SExport { value = (e, s) ; _} ->
-    print_token state e "export;";
+    print_token state e "export";
     print_statement state s
+| SForOf {value = {kwd_for; lpar; const; name; kwd_of; expr; rpar; statement } ; _} ->
+    print_token state kwd_for "for";
+    print_token state lpar "(";
+    (if const then
+      print_token state lpar "const"
+    else 
+      print_token state lpar "let");
+    print_var state name;
+    print_token state kwd_of "of";
+    print_expr state expr;
+    print_token state rpar ")";
+    print_statement state statement
+| SWhile {value = {kwd_while; lpar; expr; rpar; statement} ; _} -> 
+    print_token state kwd_while "while";
+    print_token state lpar "(";
+    print_expr state expr;
+    print_token state rpar ")";
+    print_statement state statement
 
 and print_type_expr state = function
   TProd prod      -> print_cartesian state prod
@@ -685,6 +703,21 @@ and pp_statement state = function
 | SImport {value; region} ->
     pp_loc_node state "SImport" region;
     pp_import state value
+| SForOf {value; region} -> 
+    pp_loc_node state "SForOf" region;
+    pp_for_of state value
+| SWhile {value; region} -> 
+    pp_loc_node state "SWhile" region;
+    pp_while state value
+
+and pp_for_of state {name; expr; statement; _} =
+  pp_ident state name;
+  pp_expr state expr;
+  pp_statement state statement
+
+and pp_while state {expr; statement; _} =
+  pp_expr state expr;
+  pp_statement state statement
 
 and pp_import state  {alias; module_path; _} =
   pp_ident state alias;

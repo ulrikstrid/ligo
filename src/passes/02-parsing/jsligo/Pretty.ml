@@ -47,6 +47,8 @@ and pp_statement = function
 | SNamespace  s -> pp_namespace s
 | SExport     s -> pp_export s
 | SImport     s -> pp_import s
+| SForOf      _ -> failwith "Todo"
+| SWhile      _ -> failwith "Todo2"
 
 and pp_import {value; _} = 
   string "import" ^^ string value.alias.value ^^ string "=" ^^ pp_nsepseq "." (fun a -> string a.value) value.module_path

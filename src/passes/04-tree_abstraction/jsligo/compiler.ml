@@ -1230,14 +1230,34 @@ and compile_statement : CST.statement -> (statement_result, _) result = fun stat
     let rest = List.map (fun (_, (b: _ Region.reg)) -> b.value) (snd module_path) in
     let x = (start, rest) in
     binding (e_mod_alias ~loc alias.value x)
+  | SForOf s -> 
+    let (v, loc) = r_split s in
+    let binder = (
+      Location.wrap ~loc @@ Var.of_name v.name.value,
+      None
+    )
+    in
+    let%bind collection  = compile_expression v.expr in
+    let%bind sr = compile_statement v.statement in
+    let%bind body = statement_result_to_expression sr in     
+    binding (e_sequence (e_for_each ~loc binder collection Any body))
+  | SWhile e -> 
+    let (w, loc) = r_split e in
+    let%bind cond = compile_expression_in w.expr in
+    let%bind statement_result = compile_statement w.statement in
+    let%bind body = statement_result_to_expression statement_result in
+    binding (e_sequence (e_while ~loc cond body))
 
-and compile_statements_to_expression : CST.statements -> (AST.expression, _) result = fun statements ->
-  let%bind statement_result = compile_statements statements in
+and statement_result_to_expression: statement_result -> (AST.expression, _) result = fun statement_result ->
   ok @@ (match statement_result with 
     Binding b -> b (e_unit ())
   | Expr e -> e_sequence e (e_unit ())
   | Break r 
   | Return r -> r)
+
+and compile_statements_to_expression : CST.statements -> (AST.expression, _) result = fun statements ->
+  let%bind statement_result = compile_statements statements in
+  statement_result_to_expression statement_result
   
 and compile_statement_to_declaration : CST.statement -> (AST.declaration list, _) result = fun statement ->
   match statement with
