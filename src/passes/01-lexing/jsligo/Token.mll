@@ -815,6 +815,9 @@ and scan_constr region lexicon = parse
     | WILD     _ (* "_"    *) -> true
     | _ -> false
 
+    let support_string_delimiter c =
+      c = '"' || c = '\''
+
   end
 
 include T

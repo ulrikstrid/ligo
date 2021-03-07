@@ -712,6 +712,10 @@ and scan_constr region lexicon = parse
     | WILD _
     | CARET _ -> true
     | _ -> false
+
+    let support_string_delimiter c =
+      c = '"'
+
   end
 
 include T

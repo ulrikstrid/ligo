@@ -665,6 +665,10 @@ and scan_constr region lexicon = parse
     | BOOL_OR _
     | BOOL_AND _ -> true
     | _ -> false
+
+    let support_string_delimiter c =
+      c = '"'
+
   end
 
 include T

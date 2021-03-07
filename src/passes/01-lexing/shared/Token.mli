@@ -96,4 +96,6 @@ module type S =
     val is_eof      : token -> bool
     val is_hexa     : token -> bool
     val is_sym      : token -> bool
+
+    val support_string_delimiter : char -> bool
   end

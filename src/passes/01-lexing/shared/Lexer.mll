@@ -71,6 +71,8 @@ module Make (Token : Token.S) =
       let msg = error_to_string error in
       raise (Error Region.{value=msg;region})
 
+    let support_string_delimiter = Token.support_string_delimiter
+
     (* TOKENS *)
 
     (* Making tokens *)
@@ -306,6 +308,7 @@ let client : token Core.client =
       method mk_string = mk_string
       method mk_eof    = lift <@ mk_eof
       method callback  = lift <@ scan
+      method support_string_delimiter = support_string_delimiter
     end
 
 let scan = Core.mk_scan client
