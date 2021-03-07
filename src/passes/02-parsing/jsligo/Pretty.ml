@@ -47,6 +47,17 @@ and pp_statement = function
 | SNamespace  s -> pp_namespace s
 | SExport     s -> pp_export s
 | SImport     s -> pp_import s
+| SForOf      s -> pp_for_of s
+| SWhile      s -> pp_while s
+
+and pp_for_of {value; _} =
+  string "for" ^^ string "(" ^^ string 
+    (if value.const then "const" else "let") ^^ string value.name.value ^^ 
+    string " of " ^^ 
+    pp_expr value.expr ^^ string ")" ^^ pp_statement value.statement
+
+and pp_while {value; _} =
+  string "while" ^^ string "(" ^^ pp_expr value.expr ^^ string ")" ^^ pp_statement value.statement 
 
 and pp_import {value; _} = 
   string "import" ^^ string value.alias.value ^^ string "=" ^^ pp_nsepseq "." (fun a -> string a.value) value.module_path
