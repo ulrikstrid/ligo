@@ -543,14 +543,13 @@ and print_comp_expr state = function
     print_expr  state arg2
 
 and print_code_inj state {value; _} =
-  let {language; code; rbracket} = value in
-  let {value=lang; region} = language in
-  let header_stop = region#start#shift_bytes 1 in
-  let header_reg  = Region.make ~start:region#start ~stop:header_stop in
-  print_token  state header_reg "[%";
-  print_string state lang;
+  let {language; code} = value in
+  (* let header_stop = region#start#shift_bytes 1 in *)
+  (* let header_reg  = Region.make ~start:region#start ~stop:header_stop in *)
+  (* print_token  state lbacktick "`"; *)
+  print_string state language;
   print_expr   state code;
-  print_token  state rbracket "]"
+  (* print_token  state rbracket "`" *)
 
 and print_sequence state {value; _} =
   print_nsepseq state "," print_expr value
@@ -981,7 +980,7 @@ and pp_code_inj state rc =
   let () =
     let state = state#pad 2 0 in
     pp_node state "<language>";
-    pp_string (state#pad 1 0) rc.language.value in
+    pp_string (state#pad 1 0) rc.language in
   let () =
     let state = state#pad 2 1 in
     pp_node state "<code>";

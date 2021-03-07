@@ -715,6 +715,8 @@ and scan_constr region lexicon = parse
 
     let support_string_delimiter c =
       c = '"'
+    
+    let verbatim_delimiters = ("{|", "|}")
 
   end
 

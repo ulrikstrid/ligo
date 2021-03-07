@@ -494,9 +494,8 @@ and cond_statement = {
    the innermost covers the <language>. *)
 
 and code_inj = {
-  language : string reg reg;
+  language : string reg;
   code     : expr;
-  rbracket : rbracket;
 }
 
 (* Projecting regions from some nodes of the AST *)

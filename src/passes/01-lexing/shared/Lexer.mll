@@ -268,25 +268,41 @@ rule scan state = parse
 | "[@" (attr as a) "]"   { mk_attr       a state lexbuf }
 | "[%" (attr as l)       { mk_lang       l state lexbuf }
 
-| "{|" {
-    let Core.{region; state; _} = state#sync lexbuf in
-    let thread = Core.mk_thread region
-    in scan_verbatim thread state lexbuf |> mk_verbatim }
+| "`"
+| "{|" as lexeme {
+    if lexeme = fst Token.verbatim_delimiters then (
+      let Core.{region; state; _} = state#sync lexbuf in
+      let thread = Core.mk_thread region
+      in scan_verbatim (snd Token.verbatim_delimiters) thread state lexbuf |> mk_verbatim
+    )
+    else (
+      let Core.{region; _} = state#sync lexbuf
+      in fail region (Unexpected_character lexeme.[0])
+    )
+  }
 
 | _ as c { let Core.{region; _} = state#sync lexbuf
            in fail region (Unexpected_character c) }
 
-and scan_verbatim thread state = parse
+and scan_verbatim verbatim_end thread state = parse
   nl as nl { let ()    = Lexing.new_line lexbuf
              and state = state#set_pos (state#pos#new_line nl) in
-             scan_verbatim (thread#push_string nl) state lexbuf }
+             scan_verbatim verbatim_end (thread#push_string nl) state lexbuf }
 | '#' blank* (natural as line) blank+ '"' (string as file) '"' {
              let state = Core.line_preproc ~line ~file state lexbuf
-             in scan_verbatim thread state lexbuf }
+             in scan_verbatim verbatim_end thread state lexbuf }
 | eof      { fail thread#opening Unterminated_verbatim }
-| "|}"     { Core.(thread, (state#sync lexbuf).state) }
+| "`" 
+| "|}" as lexeme  { 
+  if verbatim_end = lexeme then  
+    Core.(thread, (state#sync lexbuf).state) 
+  else 
+    let Core.{state; _} = state#sync lexbuf in
+    scan_verbatim verbatim_end (thread#push_string lexeme) state lexbuf
+  
+} 
 | _ as c   { let Core.{state; _} = state#sync lexbuf in
-             scan_verbatim (thread#push_char c) state lexbuf }
+             scan_verbatim verbatim_end (thread#push_char c) state lexbuf }
 
 (* END LEXER DEFINITION *)
 

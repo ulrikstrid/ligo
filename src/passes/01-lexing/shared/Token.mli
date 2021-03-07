@@ -98,4 +98,5 @@ module type S =
     val is_sym      : token -> bool
 
     val support_string_delimiter : char -> bool
+    val verbatim_delimiters : string * string
   end

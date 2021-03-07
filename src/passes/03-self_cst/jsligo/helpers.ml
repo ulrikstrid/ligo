@@ -162,9 +162,8 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> ('a, 'err) result =
     )
   | ESeq     {value;region=_} ->
     bind_fold_npseq self init value
-  | ECodeInj {value;region=_} ->
-    let {language=_;code;rbracket=_} = value in
-    self init code
+  | ECodeInj _ ->
+    ok @@ init
   | ENew {value = (_, e); _} -> self init e
   | EArray {value = {inside; _}; _} ->
     let fold_array_item init = function

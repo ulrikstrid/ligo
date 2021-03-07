@@ -2294,6 +2294,9 @@ let michelson_insertion_mligo () : (unit, _) result =
 let michelson_insertion_religo () : (unit, _) result =
   michelson_insertion @@ retype_file "./contracts/michelson_insertion.religo"
 
+let michelson_insertion_jsligo () : (unit, _) result =
+  michelson_insertion @@ jstype_file "./contracts/michelson_insertion.jsligo"
+
 let website1_ligo () : (unit, _) result =
   let%bind program = type_file "./contracts/website1.ligo" in
   let make_input = fun n-> e_pair (e_int n) (e_int 42) in
@@ -3307,6 +3310,7 @@ let main = test_suite "Integration (End to End)"
     test y "michelson inserion ligo" michelson_insertion_ligo;
     test y "michelson inserion mligo" michelson_insertion_mligo;
     test y "michelson inserion religo" michelson_insertion_religo;
+    test y "michelson inserion jsligo" michelson_insertion_jsligo;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website1 ligo" website1_ligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website2 ligo" website2_ligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "website2 (mligo)" website2_mligo ;

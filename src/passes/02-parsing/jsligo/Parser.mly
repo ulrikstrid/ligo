@@ -875,10 +875,17 @@ object_literal:
 
 member_expr:
   "<lident>"                 {                               EVar $1 }
-| "_"                        { EVar {value = "_"; region = $1}}
+| "_"                        {        EVar {value = "_"; region = $1}}
 | "<int>"                    {                       EArith (Int $1) }
 | "<bytes>"                  {                             EBytes $1 }
 | "<string>"                 {                   EString (String $1) }
+| "<uident>" "<verbatim>"    {                           
+  let value = {
+    language = $1;
+    code = EString (Verbatim $2);
+  }
+  in
+  ECodeInj {value; region = cover $1.region $2.region } }
 | "false"                    {          ELogic (BoolExpr (False $1)) }
 | "true"                     {           ELogic (BoolExpr (True $1)) }
 | member_expr "[" expr "]"   {

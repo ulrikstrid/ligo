@@ -722,16 +722,26 @@ and compile_expression_in : CST.expr -> (AST.expr, _) result = fun e ->
   | EAnnot {value = (EArith(Int i), _, TVar {value = "mutez"; _}); region } -> 
     let ((_,i), loc) = r_split i in
     return @@ e_mutez_z ~loc i
+
+  | EAnnot {value = (ECodeInj {value = {language; code};_ }, kwd_as, type_expr); region} -> 
+    let value: CST.code_inj = {
+      language = language;
+      code = EAnnot {
+        value = code, kwd_as, type_expr;
+        region
+      }
+    } in
+    let e = CST.ECodeInj { value; region } in
+    compile_expression e
   | EAnnot annot ->
     let (annot, loc) = r_split annot in
     let (expr, _ , ty) = annot in
     let%bind expr = self expr in
     let%bind ty   = compile_type_expression ty in
-    return @@ e_annotation ~loc expr ty
+    return @@ e_annotation ~loc expr ty    
   | ECodeInj ci ->
     let (ci, loc) = r_split ci in
     let (language, _) = r_split ci.language in
-    let (language, _) = r_split language in
     let%bind code = self ci.code in
     return @@ e_raw_code ~loc language code
   | ESeq seq -> (
