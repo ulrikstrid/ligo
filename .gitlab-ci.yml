@@ -281,6 +281,7 @@ deploy-handoff:
   variables:
     IDE_DOCKER_IMAGE: "registry.gitlab.com/${CI_PROJECT_PATH}/ligo_webide"
     LIGO_COMMIT_REF_NAME: "${CI_COMMIT_SHORT_SHA}"
+    LIGO_CI_MERGE_REQUEST_IID: "${CI_MERGE_REQUEST_IID}"
   trigger: 
     project: ligolang/ligo-webide-deploy
   rules:
