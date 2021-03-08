@@ -22,7 +22,6 @@ const compileFunction = (
 ): CompileFunctionState => {
   switch (action.type) {
     case ActionType.ChangeSelected:
-      console.log('****', action);
       return {
         ...state,
         functionName: action.payload,
