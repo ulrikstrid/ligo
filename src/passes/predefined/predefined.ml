@@ -106,6 +106,7 @@ module Tree_abstraction = struct
     | "Set.remove"   -> some_const C_SET_REMOVE
     | "Set.iter"     -> some_const C_SET_ITER
     | "Set.fold"     -> some_const C_SET_FOLD
+    | "Set.update"   -> some_const C_SET_UPDATE
 
     (* Map module *)
 
@@ -229,6 +230,7 @@ module Tree_abstraction = struct
     | C_SET_REMOVE  -> "Set.remove"
     | C_SET_ITER    -> "Set.iter"
     | C_SET_FOLD    -> "Set.fold"
+    | C_SET_UPDATE  -> "Set.update"
 
     (* Map module *)
 
@@ -776,8 +778,7 @@ module Stacking = struct
     | C_BALANCE            , _   -> Some ( simple_constant @@ prim "BALANCE")
     | C_AMOUNT             , _   -> Some ( simple_constant @@ prim "AMOUNT")
     | C_ADDRESS            , _   -> Some ( simple_unary @@ prim "ADDRESS")
-    | C_SELF_ADDRESS       , Edo -> Some ( simple_constant @@ seq [prim "SELF_ADDRESS"])
-    | C_SELF_ADDRESS       , _   -> Some ( simple_constant @@ seq [prim "SELF"; prim "ADDRESS"])
+    | C_SELF_ADDRESS       , _   -> Some ( simple_constant @@ seq [prim "SELF_ADDRESS"])
     | C_IMPLICIT_ACCOUNT   , _   -> Some ( simple_unary @@ prim "IMPLICIT_ACCOUNT")
     | C_SET_DELEGATE       , _   -> Some ( simple_unary @@ prim "SET_DELEGATE")
     | C_NOW                , _   -> Some ( simple_constant @@ prim "NOW")
@@ -787,6 +788,7 @@ module Stacking = struct
     | C_SET_MEM            , _   -> Some ( simple_binary @@ prim "MEM")
     | C_SET_ADD            , _   -> Some ( simple_binary @@ seq [dip (i_push (prim "bool") (prim "True")) ; prim "UPDATE"])
     | C_SET_REMOVE         , _   -> Some ( simple_binary @@ seq [dip (i_push (prim "bool") (prim "False")) ; prim "UPDATE"])
+    | C_SET_UPDATE         , _   -> Some ( simple_ternary @@ prim "UPDATE" )
     | C_SLICE              , _   -> Some ( simple_ternary @@ seq [prim "SLICE" ; i_assert_some_msg (i_push_string "SLICE")])
     | C_SHA256             , _   -> Some ( simple_unary @@ prim "SHA256")
     | C_SHA512             , _   -> Some ( simple_unary @@ prim "SHA512")
