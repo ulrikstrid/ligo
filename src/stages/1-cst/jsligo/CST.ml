@@ -205,7 +205,6 @@ and type_expr =
 | TFun    of (fun_type_args * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
-| TConstr of variable
 | TWild   of wild
 | TString of lexeme reg
 | TModA   of type_expr module_access reg
@@ -519,7 +518,6 @@ let type_expr_to_region = function
 | TString {region; _}
 | TVar    {region; _}
 | TModA   {region; _}
-| TConstr {region; _}
 | TWild    region
  -> region
 

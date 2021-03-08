@@ -295,7 +295,6 @@ and pp_type_expr: type_expr -> document = function
 | TFun    t -> pp_fun_type t
 | TPar    t -> pp_type_par t
 | TVar    t -> pp_ident t
-| TConstr t -> pp_ident t
 | TWild   _ -> string "_"
 | TString s -> pp_string s
 | TModA   t -> pp_module_access pp_type_expr t

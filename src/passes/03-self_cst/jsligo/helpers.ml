@@ -58,7 +58,6 @@ let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> ('a, 'err
   | TPar    {value;region=_} ->
     self init value.inside
   | TVar    _
-  | TConstr    _
   | TWild   _
   | TModA _
   | TString _ -> ok @@ init
@@ -304,7 +303,6 @@ let rec map_type_expression : ('err) mapper -> type_expr -> ('b, 'err) result = 
     let value = {value with inside} in
     return @@ TPar {value;region}
   | (TVar    _
-  | TConstr _
   | TWild   _
   | TModA _
   | TString _ as e) -> ok e

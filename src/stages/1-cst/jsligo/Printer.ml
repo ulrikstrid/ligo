@@ -81,13 +81,6 @@ let print_constr state {region; value} =
             (compact state region)value
   in Buffer.add_string state#buffer line
   
-  
-let print_tconstr state {region; value} =
-  let line =
-    sprintf "%s: TConstr %s\n"
-            (compact state region)value
-  in Buffer.add_string state#buffer line
-
 let print_pconstr state {region; value} =
   let line =
     sprintf "%s: PConstr %s\n"
@@ -214,7 +207,6 @@ and print_type_expr state = function
 | TApp app        -> print_type_app state app
 | TPar par        -> print_type_par state par
 | TVar var        -> print_var state var
-| TConstr var     -> print_tconstr state var
 | TFun t          -> print_fun_type state t
 | TWild wild      -> print_token state wild " "
 | TString s       -> print_string state s
@@ -252,9 +244,9 @@ and print_fun_type state {value; _} =
   print_type_expr     state range
 
 and print_type_app state {value; _} =
-  let type_constr, type_tuple = value in
+  let value, type_tuple = value in
   print_type_tuple state type_tuple;
-  print_tconstr    state type_constr
+  print_var        state value
 
 and print_type_tuple state {value; _} =
   let {lchevron; inside; rchevron} = value in
@@ -1125,9 +1117,6 @@ and pp_type_expr state = function
     pp_type_expr (state#pad 1 0) inside
 | TVar v ->
     pp_node  state "TVar";
-    pp_ident (state#pad 1 0) v
-| TConstr v ->
-    pp_node  state "TConstr";
     pp_ident (state#pad 1 0) v
 | TWild wild ->
     pp_node  state "TWild";

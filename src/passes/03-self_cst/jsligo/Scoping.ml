@@ -145,7 +145,6 @@ and check_patterns patterns =
 let check_variants variants =
   let rec add acc = function
     TString value
-  | TConstr value
   | TVar value -> 
       if VarSet.mem value acc then
         fail @@ duplicate_variant value
@@ -190,7 +189,6 @@ let peephole_type : unit -> type_expr -> (unit,'err) result = fun _ t ->
   | TPar _
   | TString _
   | TVar _
-  | TConstr _
   | TModA _
   | TWild _ -> ok @@ ()
 

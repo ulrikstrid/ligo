@@ -65,8 +65,6 @@ module Compile_type = struct
     | _ -> failwith "Expected a variable in this variant"
 
   and type_expression_to_constructor : CST.type_expr -> (string * AST.type_expression * attributes, _) result = function
-    | TConstr v -> 
-      ok (v.value, t_unit () ~loc:(Location.lift v.region), [])
     | TProd {value = {inside = (TString s, []); _}; region} ->
       ok (s.value, t_unit () ~loc:(Location.lift region), [])
     | TProd {value = {inside = (TString s, rest); _}; region} -> 
@@ -222,7 +220,6 @@ and compile_type_expression : CST.type_expr -> (type_expression, _) result =
     compile_michelson_pair_or ;
   ] te @@ fun () ->
   match te with
-  | TConstr _constr -> failwith "TODO: parser is weird when there is a single constructor"
   | TSum sum ->
       let sum_type, loc = r_split sum in
       let {variants; attributes; _} : CST.sum_type = sum_type in
