@@ -219,7 +219,7 @@ and 'a module_access = {
 and cartesian = (type_expr, comma) nsepseq brackets reg
 
 and sum_type = {
-  lead_vbar  : vbar;
+  lead_vbar  : vbar option;
   variants   : (type_expr, vbar) nsepseq;
   attributes : attributes
 }

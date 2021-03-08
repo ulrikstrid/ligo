@@ -342,9 +342,11 @@ fun_type_arg:
      type_expr = $3; }
   }
 
+fun_type2:
+  cartesian | fun_type { $1 }
+
 fun_type:
-  cartesian { $1 }
-| "(" nsepseq(fun_type_arg, ",") ")" "=>" fun_type {
+  "(" nsepseq(fun_type_arg, ",") ")" "=>" fun_type2 {
     let start = $1
     and stop   = type_expr_to_region $5 in
     let region = cover start stop in
@@ -383,15 +385,32 @@ core_type:
    in TApp {region; value = $1,$2} }
 
 sum_type:
-  "|" nsepseq(cartesian,"|") {
-    TSum {
-      region = cover $1 (nsepseq_to_region type_expr_to_region $2);
-      value = {
-        lead_vbar  = $1;
-        variants   = $2;
-        attributes = []
+  ioption("|") nsepseq(cartesian,"|") {
+    match $1 with 
+      Some s ->       
+      let region = cover s (nsepseq_to_region type_expr_to_region $2) in
+      TSum {
+        region;
+        value = {
+          lead_vbar  = $1;
+          variants   = $2;
+          attributes = []
+        }
       }
-    }
+    | None -> 
+      let region = nsepseq_to_region type_expr_to_region $2 in
+      (match $2 with 
+        (hd, []) -> hd
+      | _ ->
+        TSum {
+          region;
+          value = {
+            lead_vbar  = $1;
+            variants   = $2;
+            attributes = []
+          }
+        })
+      
   }
 
 record_type:

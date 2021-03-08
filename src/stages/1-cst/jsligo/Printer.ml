@@ -230,7 +230,9 @@ fun f state {value; _} ->
 and print_sum_type state {value; _} =
   let {variants; attributes; lead_vbar} = value in
   print_attributes state attributes;
-  print_token      state lead_vbar "|";
+  print_option state (fun state lead_vbar -> 
+    print_token      state lead_vbar "|";  
+  ) lead_vbar;
   print_nsepseq    state "|" print_type_expr variants
 
 and print_fun_type_arg state {name; colon; type_expr} =
