@@ -57,7 +57,7 @@ let get_groups md_file =
 let compile_groups filename grp_list =
   let%bind (_michelsons : Stacking.compiled_expression list list) = bind_map_list
     (fun ((s,grp),contents) ->
-      trace (test_md_file_tracer filename s grp contents) @@
+      trace (test_md_file filename s grp contents) @@
       let options         = Compiler_options.make () in
       let {typer_switch;init_env} : Compiler_options.t = options in
       let%bind meta       = Compile.Of_source.make_meta s None in
@@ -93,6 +93,7 @@ let md_files = [
   "/gitlab-pages/docs/language-basics/functions.md";
   "/gitlab-pages/docs/language-basics/exceptions.md";
   "/gitlab-pages/docs/language-basics/boolean-if-else.md";
+  "/gitlab-pages/docs/language-basics/modules.md";
   "/gitlab-pages/docs/language-basics/types.md";
   "/gitlab-pages/docs/language-basics/strings.md";
   "/gitlab-pages/docs/language-basics/maps-records.md";
@@ -120,6 +121,7 @@ let md_files = [
   "/gitlab-pages/docs/advanced/inline.md";
   "/gitlab-pages/docs/advanced/interop.md";
   "/gitlab-pages/docs/advanced/code-injection.md";
+  "/gitlab-pages/docs/advanced/testing.md";
   "/gitlab-pages/docs/api/cli-commands.md";
   "/gitlab-pages/docs/api/cheat-sheet.md";
   "/gitlab-pages/docs/reference/toplevel.md";

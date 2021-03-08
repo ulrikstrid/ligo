@@ -4,11 +4,11 @@ open Ast_typed.Types
 open Solver_helpers
 
 open Pretty_print_variables
-open Typesystem.Solver_types
+open Solver_types
 
 module All_vars(Plugins : Plugins) = struct
-  module Plugin_states = Plugins.Indexers.PluginFields(PerPluginState)
-  let all_vars (state : ('typer_error, 'plugin_states) Typesystem.Solver_types.typer_state) =
+  module Plugin_states = Plugins.Indexers.Indexers_plugins_fields(PerPluginState)
+  let all_vars (state : 'plugin_states typer_state) =
     let from_aliases = List.flatten @@ UnionFind.Poly2.partitions state.aliases in
     let aux1 : type_variable * constructor_or_row  -> type_variable list = fun (tv, cor) ->
       match cor with
@@ -18,7 +18,9 @@ module All_vars(Plugins : Plugins) = struct
       aux1
       (Plugin_states.Assignments.bindings (Plugin_states.assignments state.plugin_states)#assignments)
     in
-    let aux = function
+    let type_constraint_simpl_all_vars = function
+    | SC_Apply       a  -> [a.f; a.arg]                       (* φ(β) *)
+    | SC_Abs         a  -> [a.tv;]                            (* α = λβ.τ *)
     | SC_Constructor k  -> k.tv :: k.tv_list                  (* α = ctor(β, …) *)
     | SC_Alias       al -> [al.a ; al.b]                      (* α = β *)
     (* the binder β is not a unification variable of the program,
@@ -31,7 +33,7 @@ module All_vars(Plugins : Plugins) = struct
     | SC_Access_label l  -> [l.tv; l.record_type]                   (* TC(α, …) *)
     | SC_Row         r  -> r.tv :: List.map (fun {associated_variable} -> associated_variable) (LMap.to_list r.tv_map)      (* α = row(l -> β, …) *)
     in
-    let from_constraints = List.flatten @@ List.map aux @@ PolySet.elements state.all_constraints in
+    let from_constraints = List.flatten @@ List.map type_constraint_simpl_all_vars @@ PolySet.elements state.all_constraints in
     let uniq lst = PolySet.elements (PolySet.add_list lst (PolySet.create ~cmp:Var.compare)).set in
     uniq (from_aliases @ from_assignments @ from_constraints)
 end
@@ -51,7 +53,7 @@ let other_check all_constraints assignments =
                  (type_variable PolySet.t * type_variable Compare_renaming.tree) result
     = fun already_seen unification_var repr find_assignment ->
       let repr_unification_var = repr unification_var in
-      Format.printf "In toposort for : %a , repr : %a\n%!" Ast_typed.PP.type_variable repr_unification_var Ast_typed.PP.type_variable unification_var;
+      (* Format.printf "In toposort for : %a , repr : %a\n%!" Ast_typed.PP.type_variable unification_var Ast_typed.PP.type_variable repr_unification_var; *)
       if Set.mem repr_unification_var already_seen then 
         (*return without further changes*) ok (already_seen, Compare_renaming.List [])
       else (*add the dependencies first, then our newfound variable if it is still new*) (

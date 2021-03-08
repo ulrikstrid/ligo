@@ -309,29 +309,41 @@ and environment = {
    keep the two together until that gets refactored. *)
 
 (* core *)
+module ConstraintIdentifier = struct
+  type t = T of int64
+  let counter : int64 ref = ref Int64.zero 
+  let fresh () = 
+    let res = !counter in
+    counter := Int64.succ !counter;
+    T res
+
+end
 
 (* add information on the type or the kind for operator *)
 type constant_tag =
-  | C_arrow     (* * -> * -> *    isn't this wrong? *)
-  | C_option    (* * -> * *)
-  | C_map       (* * -> * -> * *)
-  | C_big_map   (* * -> * -> * *)
-  | C_list      (* * -> * *)
-  | C_set       (* * -> * *)
-  | C_unit      (* * *)
-  | C_string    (* * *)
-  | C_nat       (* * *)
-  | C_mutez     (* * *)
-  | C_timestamp (* * *)
-  | C_int       (* * *)
-  | C_address   (* * *)
-  | C_bytes     (* * *)
-  | C_key_hash  (* * *)
-  | C_key       (* * *)
-  | C_signature (* * *)
-  | C_operation (* * *)
-  | C_contract  (* * -> * *)
-  | C_chain_id  (* * *)
+  | C_arrow        (* * -> * -> * *)
+  | C_option       (* * -> * *)
+  | C_map          (* * -> * -> * *)
+  | C_big_map      (* * -> * -> * *)
+  | C_list         (* * -> * *)
+  | C_set          (* * -> * *)
+  | C_unit         (* * *)
+  | C_string       (* * *)
+  | C_nat          (* * *)
+  | C_mutez        (* * *)
+  | C_timestamp    (* * *)
+  | C_int          (* * *)
+  | C_address      (* * *)
+  | C_bytes        (* * *)
+  | C_key_hash     (* * *)
+  | C_key          (* * *)
+  | C_signature    (* * *)
+  | C_operation    (* * *)
+  | C_contract     (* * -> * *)
+  | C_chain_id     (* * *)
+  | C_bls12_381_g1 (* * *)
+  | C_bls12_381_g2 (* * *)
+  | C_bls12_381_fr (* * *)
 
 type row_tag =
   | C_record    (* ( label , * ) … -> * *)
@@ -344,6 +356,9 @@ type type_value_ =
   | P_constant     of p_constant
   | P_apply        of p_apply   (* TODO: remove this until it is usead (for now waiting on a kinding system and appropriate evaluation heuristics similar to eval_beta_root in src/stages/typesystem/misc.ml) *)
   | P_row          of p_row
+    (* new stuff: *)
+  | P_abs          of p_abs
+  | P_constraint   of p_constraint
 
 and type_value = type_value_ location_wrap
 
@@ -351,6 +366,9 @@ and p_apply = {
     tf : type_value ;
     targ : type_value ;
   }
+
+and p_abs = { arg: type_variable; ret: type_value }
+and p_constraint = { pc: type_constraint }
 
 and p_ctor_args = type_value list
 and p_ctor_args_list = p_ctor_args list
@@ -397,18 +415,25 @@ and c_equation = {
   bval : type_value ;
 }
 and tc_args = type_value list
-and constraint_identifier =
-| ConstraintIdentifier of int64
+and constraint_identifier = ConstraintIdentifier.t
+
 and c_typeclass = {
+  (* TODO: possible bug: bound variables must not intersect with the tc_args *)
+  tc_bound : type_variable list ;
+  tc_constraints : type_constraint list ;
   tc_args : tc_args ;
   original_id : constraint_identifier option ;
   typeclass : typeclass ;
 }
 and c_access_label = {
-    c_access_label_tval : type_value ;
+    c_access_label_record_type : type_value ;
     accessor : label ;
     c_access_label_tvar : type_variable ;
   }
+and c_apply = {
+  f: type_variable;
+  arg: type_variable;
+}
 and type_constraint = {
   reason : string ;
   c : type_constraint_ ;
@@ -417,7 +442,8 @@ and type_constraint_ =
   (* | C_assignment of (type_variable * type_pattern) *)
   | C_equation of c_equation (* TVA = TVB *)
   | C_typeclass of c_typeclass (* TVL ∈ TVLs, for now in extension, later add intensional (rule-based system for inclusion in the typeclass) *)
-  | C_access_label of c_access_label (* poor man's type-level computation to ensure that TV.label is type_variable *)
+  | C_access_label of c_access_label (* simple substitute for a type-level computation to ensure that TV.label is type_variable *)
+  | C_apply of c_apply
 (* | … *)
 
 (* is the first list in case on of the type of the type class as a kind *->*->* ? *)
@@ -455,13 +481,11 @@ and constraint_identifier_set_map = constraint_identifier_set typeVariableMap
 and c_constructor_simpl_typeVariableMap = c_constructor_simpl typeVariableMap
 and c_typeclass_simpl_constraint_identifierMap = c_typeclass_simpl constraint_identifierMap
 and constraint_identifier_constraint_identifierMap = (constraint_identifier, constraint_identifier) RedBlackTrees.PolyMap.t
-and type_constraint_simpl_list = type_constraint_simpl list
 
 and c_constructor_simpl_list = c_constructor_simpl list
 and c_poly_simpl_list        = c_poly_simpl        list
 and c_typeclass_simpl_list   = c_typeclass_simpl   list
 and c_row_simpl_list         = c_row_simpl         list
-and type_variable_list = type_variable list
 and type_variable_lmap = type_variable label_map
 and c_constructor_simpl = {
   reason_constr_simpl : string ;
@@ -470,7 +494,7 @@ and c_constructor_simpl = {
   tv : type_variable;
   c_tag : constant_tag;
   (* Types wih no arguments like int, string etc. have an empty tv_list *)
-  tv_list : type_variable_list;
+  tv_list : type_variable list;
 }
 and c_row_simpl = {
   reason_row_simpl : string ;
@@ -495,13 +519,53 @@ and c_equation_e = {
     aex : type_expression ;
     bex : type_expression ;
   }
+
+  (* my_tc       = ∃ α β, (Packable α && Packable β && Show α) => (χ,γ) ∈ [(int,string), (bool, string), (α,β), (α,mutez) ] *)
+  (*env = [
+    (bool, P_row C_variant [Label True unit; Label False unit])
+  ]
+  my_tc = {
+    tc_bound = [α; β];
+    tc_constraints = [
+      SC_Typeclass { tc_bound = []; tc_constraints = []; args = [α]; tc = [(int),(bool),(nat)]; }   (* Packable α *)
+      SC_Typeclass { tc_bound = []; tc_constraints = []; args = [β]; tc = [(int),(bool),(nat)]; }   (* Packable β *)
+      SC_Typeclass { tc_bound = []; tc_constraints = []; args = [α]; tc = [(int),(string),(nat)]; } (* Show α *)
+    ];
+    vars = [χ;γ];
+    [
+      [ P_constant int []; P_constant string [] ];
+      [ P_variable bool;   P_constant string [] ];
+      [ P_variable α;      P_variable β         ];
+      [ P_variable α;      P_constant mutez     ];
+    ]*)
+(* the type c_typeclass_simpl is "∃ tc_bound, tc_constraints => args ∈ tc"
+   given the env
+      Packable    = ∃ , () => (δ) ∈ [(int),(bool),(nat)]
+      Show        = ∃ , () => (δ) ∈ [(int),(string),(nat)]
+   and the typeclass
+      my_tc       = ∃ α β, (Packable α && Packable β && Show α) => (χ,γ) ∈ [(int,string), (bool, string), (α,β), (α,mutez) ]
+  
+   the allowed combinations of types for χ and γ are
+    χ = int   && γ = string
+    χ = bool  && γ = string
+    χ = int   && γ = int
+    χ = int   && γ = bool
+    χ = int   && γ = nat
+    χ = nat   && γ = int
+    χ = nat   && γ = bool
+    χ = nat   && γ = nat
+    χ = int   && γ = mutez
+    χ = nat   && γ = mutez
+    *)
 and c_typeclass_simpl = {
   reason_typeclass_simpl : string ;
   (* see description above in c_constructor_simpl *)
   id_typeclass_simpl : constraint_identifier ;
   original_id        : constraint_identifier option ; (* Pointer to the original typeclass, if this one is a refinement of it *)
+  tc_bound           : type_variable list ;
+  tc_constraints     : type_constraint_simpl list ;
   tc   : typeclass          ;
-  args : type_variable_list ;
+  args : type_variable list ;
 }
 and c_access_label_simpl = {
   reason_access_label_simpl : string ;
@@ -518,18 +582,28 @@ and c_poly_simpl = {
   tv     : type_variable ;
   forall : p_forall      ;
 }
+and c_apply_simpl = {
+  id_apply_simpl : constraint_identifier;
+  reason_apply_simpl : string;
+  f: type_variable;
+  arg: type_variable;
+}
+and c_abs_simpl = {
+  id_abs_simpl : constraint_identifier;
+  reason_abs_simpl : string;
+  tv:type_variable;
+  param: type_variable;
+  body: type_value;
+}
 and type_constraint_simpl =
+  | SC_Apply       of c_apply_simpl                   (* φ(α) *)
+  | SC_Abs         of c_abs_simpl                     (* α = λβ.τ *)
   | SC_Constructor of c_constructor_simpl             (* α = ctor(β, …) *)
   | SC_Alias       of c_alias                         (* α = β *)
   | SC_Poly        of c_poly_simpl                    (* α = forall β, δ where δ can be a more complex type *)
-  | SC_Typeclass   of c_typeclass_simpl               (* TC(α, …) *)
+  | SC_Typeclass   of c_typeclass_simpl               (* α ∈ TC(, …) *)
   | SC_Access_label of c_access_label_simpl           (* α = β.ℓ *)
   | SC_Row         of c_row_simpl                     (* α = row(l -> β, …) *)
-
-and deduce_and_clean_result = {
-  deduced : c_constructor_simpl_list ;
-  cleaned : c_typeclass_simpl ;
-}
 
 and c_alias = {
     reason_alias_simpl : string ;
@@ -549,29 +623,7 @@ type constructor_or_row = [ (* TODO : c_row_simpl and c_constructor_simpl must b
 (* selector / propagation rule for breaking down composite types *)
 (* For now: break pair(a, b) = pair(c, d) into a = c, b = d *)
 
-type output_break_ctor = { (* TODO : this type must be local heuristic_... *)
-    a_k_var : constructor_or_row ;
-    a_k'_var' : constructor_or_row ;
-  }
 
-type output_specialize1 = { (* TODO : this type must be local heuristic_... *) 
-    poly : c_poly_simpl ;
-    a_k_var : c_constructor_simpl ;
-  }
-
-
-type output_tc_fundep = { (* TODO : this type must be local heuristic_tc_fundep.. *)
-    tc : c_typeclass_simpl ;
-    c :  constructor_or_row ;
-  }
-
-type m_break_ctor__already_selected = output_break_ctor poly_set
-type m_specialize1__already_selected = output_specialize1 poly_set
-
-type already_selected = {
-  break_ctor  : m_break_ctor__already_selected  ;
-  specialize1 : m_specialize1__already_selected ;
-}
 
 type type_constraint_list = type_constraint list
 
@@ -585,8 +637,9 @@ type proof_trace =
   (* | … future extension: allow for proof traces *)
 
 type update = {
-  remove_constraints : type_constraint_simpl_list ;
+  remove_constraints : type_constraint_simpl list ;
   add_constraints : type_constraint_list ;
+  add_constraints_simpl : type_constraint_simpl list ;
   proof_trace : proof_trace ;
 }
 type updates = update list

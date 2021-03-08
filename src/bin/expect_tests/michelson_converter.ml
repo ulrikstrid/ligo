@@ -139,15 +139,9 @@ let%expect_test _ =
         (list (pair (address %from_)
                     (list %txs (pair (address %to_) (pair (nat %token_id) (nat %amount)))))) ;
       storage (big_map nat address) ;
-      code { DUP ;
-             CDR ;
-             SWAP ;
-             CAR ;
-             ITER { SWAP ;
-                    PAIR ;
-                    DUP ;
-                    CDR ;
-                    DUP ;
+      code { UNPAIR ;
+             ITER { DUP ;
+                    DUG 2 ;
                     CAR ;
                     SENDER ;
                     SWAP ;
@@ -156,24 +150,16 @@ let%expect_test _ =
                     COMPARE ;
                     NEQ ;
                     IF { PUSH string "NOT_OWNER" ; FAILWITH } {} ;
-                    DIG 2 ;
-                    CAR ;
+                    SWAP ;
                     PAIR ;
                     SWAP ;
                     CDR ;
                     ITER { SWAP ;
-                           DUP ;
-                           CDR ;
-                           SWAP ;
-                           CAR ;
-                           DIG 2 ;
-                           DUP ;
-                           DUG 3 ;
+                           UNPAIR ;
+                           DUP 3 ;
                            CDR ;
                            CAR ;
-                           DIG 3 ;
-                           DUP ;
-                           DUG 4 ;
+                           DUP 4 ;
                            CAR ;
                            DIG 4 ;
                            CDR ;
@@ -190,9 +176,7 @@ let%expect_test _ =
                            GET ;
                            IF_NONE
                              { PUSH string "TOKEN_UNDEFINED" ; FAILWITH }
-                             { DIG 3 ;
-                               DUP ;
-                               DUG 4 ;
+                             { DUP 4 ;
                                SWAP ;
                                DUP ;
                                DUG 2 ;
@@ -208,11 +192,6 @@ let%expect_test _ =
                            CDR ;
                            UPDATE ;
                            PAIR } ;
-                    DUP ;
-                    CDR ;
-                    SWAP ;
-                    CAR ;
-                    SWAP ;
-                    DROP } ;
+                    CAR } ;
              NIL operation ;
              PAIR } } |}]

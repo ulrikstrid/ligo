@@ -57,6 +57,8 @@ module Tree_abstraction = struct
     | "Tezos.set_delegate"       -> some_const C_SET_DELEGATE
     | "Tezos.get_contract_opt"   -> some_const C_CONTRACT_OPT
     | "Tezos.get_entrypoint_opt" -> some_const C_CONTRACT_ENTRYPOINT_OPT
+    | "Tezos.level"              -> some_const C_LEVEL
+    | "Tezos.pairing_check"      -> some_const C_PAIRING_CHECK
 
     (* Sapling *)
     | "Tezos.sapling_empty_state" -> some_const C_SAPLING_EMPTY_STATE
@@ -104,6 +106,7 @@ module Tree_abstraction = struct
     | "Set.remove"   -> some_const C_SET_REMOVE
     | "Set.iter"     -> some_const C_SET_ITER
     | "Set.fold"     -> some_const C_SET_FOLD
+    | "Set.update"   -> some_const C_SET_UPDATE
 
     (* Map module *)
 
@@ -227,6 +230,7 @@ module Tree_abstraction = struct
     | C_SET_REMOVE  -> "Set.remove"
     | C_SET_ITER    -> "Set.iter"
     | C_SET_FOLD    -> "Set.fold"
+    | C_SET_UPDATE  -> "Set.update"
 
     (* Map module *)
 
@@ -772,8 +776,7 @@ module Stacking = struct
     | C_BALANCE            , _   -> Some ( simple_constant @@ prim "BALANCE")
     | C_AMOUNT             , _   -> Some ( simple_constant @@ prim "AMOUNT")
     | C_ADDRESS            , _   -> Some ( simple_unary @@ prim "ADDRESS")
-    | C_SELF_ADDRESS       , Edo -> Some ( simple_constant @@ seq [prim "SELF_ADDRESS"])
-    | C_SELF_ADDRESS       , _   -> Some ( simple_constant @@ seq [prim "SELF"; prim "ADDRESS"])
+    | C_SELF_ADDRESS       , _   -> Some ( simple_constant @@ seq [prim "SELF_ADDRESS"])
     | C_IMPLICIT_ACCOUNT   , _   -> Some ( simple_unary @@ prim "IMPLICIT_ACCOUNT")
     | C_SET_DELEGATE       , _   -> Some ( simple_unary @@ prim "SET_DELEGATE")
     | C_NOW                , _   -> Some ( simple_constant @@ prim "NOW")
@@ -783,6 +786,7 @@ module Stacking = struct
     | C_SET_MEM            , _   -> Some ( simple_binary @@ prim "MEM")
     | C_SET_ADD            , _   -> Some ( simple_binary @@ seq [dip (i_push (prim "bool") (prim "True")) ; prim "UPDATE"])
     | C_SET_REMOVE         , _   -> Some ( simple_binary @@ seq [dip (i_push (prim "bool") (prim "False")) ; prim "UPDATE"])
+    | C_SET_UPDATE         , _   -> Some ( simple_ternary @@ prim "UPDATE" )
     | C_SLICE              , _   -> Some ( simple_ternary @@ seq [prim "SLICE" ; i_assert_some_msg (i_push_string "SLICE")])
     | C_SHA256             , _   -> Some ( simple_unary @@ prim "SHA256")
     | C_SHA512             , _   -> Some ( simple_unary @@ prim "SHA512")
@@ -819,6 +823,7 @@ module Stacking = struct
     | C_JOIN_TICKET        , Edo -> Some ( simple_unary @@ prim "JOIN_TICKETS" )
     | C_SAPLING_EMPTY_STATE, Edo -> Some (trivial_special "SAPLING_EMPTY_STATE")
     | C_SAPLING_VERIFY_UPDATE , Edo -> Some (simple_binary @@ prim "SAPLING_VERIFY_UPDATE")
+    | C_PAIRING_CHECK , _ -> Some (simple_binary @@ prim "PAIRING_CHECK")
     | C_CONTRACT           , _   ->
       Some (special
               (fun with_args ->

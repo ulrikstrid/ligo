@@ -391,36 +391,54 @@ let opt_dead_unpair : _ peep3 = function
     Some [Prim (l, "DROP", [], [])]
   | _ -> None
 
-(* expand "UNPAIR" if it is not yet an instruction *)
-let opt_unpair_nonedo : proto -> _ peep1 = function
-  | Edo -> fun _ -> None
-  | _ -> function
-    | Prim (l, "UNPAIR", [], _) ->
-      Some [Prim (l, "DUP", [], []);
-            Prim (l, "CDR", [], []);
-            Prim (l, "SWAP", [], []);
-            Prim (l, "CAR", [], [])]
-    | _ -> None
-
-(* for Edo *)
 let opt_beta2 : _ peep2 = function
   (* PAIR ; UNPAIR  ↦  *)
   | Prim (_, "PAIR", [], _), Prim (_, "UNPAIR", [], _) ->
     Some []
   | _ -> None
 
-(* for Edo *)
 let opt_eta2 : _ peep2 = function
   (* UNPAIR ; PAIR  ↦  *)
   | Prim (_, "UNPAIR", [], _), Prim (_, "PAIR", [], _) ->
     Some []
   | _ -> None
 
-(* let opt_unpair : _ peep2 = function
- *   (\* UNPAIR ; PAIR  ↦  *\)
- *   | Prim (_, "UNPAIR", [], _), Prim (_, "PAIR", [], _) ->
- *     Some []
- *   | _ -> None *)
+let opt_unpair_edo : _ peep4 = function
+  | (Prim (l, "DUP", [], []),
+     Prim (_, "CDR", [], []),
+     Prim (_, "SWAP", [], []),
+     Prim (_, "CAR", [], [])) ->
+    Some [Prim (l, "UNPAIR", [], [])]
+  | _ -> None
+
+let opt_dupn_edo : _ peep3 = function
+  | (Prim (l1, "DIG", [Int (l2, n)], []),
+     Prim (_, "DUP", [], []),
+     Prim (_, "DUG", [Int (_, m)], []))
+    when Z.equal (Z.succ n) m ->
+    Some [Prim (l1, "DUP", [Int (l2, m)], [])]
+  | _ -> None
+
+let opt_unpair_cdr () : _ peep =
+  match%bind peep with
+  | Prim (l, "UNPAIR", [], _) ->
+    (match%bind peep with
+     | Prim (_, "DROP", [], _) ->
+       Changed [Prim (l, "CDR", [], [])]
+     | _ -> No_change)
+  | _ -> No_change
+
+let opt_unpair_car () : _ peep =
+  match%bind peep with
+  | Prim (l, "UNPAIR", [], _) ->
+    (match%bind peep with
+     | Prim (_, "SWAP", [], _) ->
+       (match%bind peep with
+        | Prim (_, "DROP", [], _) ->
+          Changed [Prim (l, "CAR", [], [])]
+        | _ -> No_change)
+     | _ -> No_change)
+  | _ -> No_change
 
 (* This "optimization" deletes dead code produced by the compiler
    after a FAILWITH, which is illegal in Michelson. This means we are
@@ -528,6 +546,7 @@ let rec opt_strip_annots (x : _ michelson) : _ michelson =
 
 let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
   fun proto x ->
+  ignore proto;
   let x = flatten_seqs x in
   let x = opt_tail_fail x in
   let optimizers = [ peephole @@ peep2 opt_drop2 ;
@@ -544,8 +563,11 @@ let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
                      peephole @@ peep2 opt_beta2 ;
                      peephole @@ peep2 opt_eta2 ;
                      peephole @@ peep3 opt_dead_unpair ;
-                     peephole @@ peep1 (opt_unpair_nonedo proto) ;
                      peephole @@ opt_digdug_cycles () ;
+                     peephole @@ opt_unpair_car () ;
+                     peephole @@ opt_unpair_cdr () ;
+                     peephole @@ peep4 opt_unpair_edo ;
+                     peephole @@ peep3 opt_dupn_edo ;
                    ] in
   let optimizers = List.map on_seqs optimizers in
   let x = iterate_optimizer (sequence_optimizers optimizers) x in

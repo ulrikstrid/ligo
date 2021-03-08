@@ -117,9 +117,6 @@ export async function share({
   if (params.compile) {
     delete params.compile.michelsonFormat;
   }
-  if (params.deploy) {
-    delete params.deploy.useTezBridge;
-  }
   if (params.editor?.cursorPosition) {
     delete params.editor.cursorPosition;
   }
@@ -132,7 +129,8 @@ export async function deploy(
   syntax: Language,
   code: string,
   entrypoint: string,
-  storage: string
+  storage: string,
+  network: string
 ) {
   // For whatever reason, storage set by examples is not treated as a string. So we convert it here.
   storage = `${storage}`;
@@ -142,6 +140,7 @@ export async function deploy(
     code,
     entrypoint,
     storage,
+    network,
   });
   return response.data;
 }

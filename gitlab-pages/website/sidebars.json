@@ -13,6 +13,7 @@
       "language-basics/maps-records",
       "language-basics/sets-lists-tuples",
       "language-basics/exceptions",
+      "language-basics/modules",
       "language-basics/tezos-specific"
     ],
     "Advanced": [
@@ -20,7 +21,8 @@
       "advanced/entrypoints-contracts",
       "advanced/include",
       "advanced/first-contract",
-      "advanced/michelson-and-ligo",      
+      "advanced/michelson-and-ligo",
+      "advanced/testing",
       "advanced/inline",
       "advanced/interop",
       "advanced/embedded-michelson"

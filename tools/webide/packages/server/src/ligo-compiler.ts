@@ -6,6 +6,10 @@ import { logger } from './logger';
 
 const { spawn } = require('child_process');
 const dataDir = process.env['DATA_DIR'] || path.join(__dirname, 'tmp');
+// non existing tmp folder triggered a 500 error
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir);
+}
 
 const JOB_TIMEOUT = 50000;
 

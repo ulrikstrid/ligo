@@ -84,6 +84,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_SET_ITER -> C_SET_ITER
   | C_SET_FOLD -> C_SET_FOLD
   | C_SET_MEM -> C_SET_MEM
+  | C_SET_UPDATE -> C_SET_UPDATE
   (* List *)
   | C_LIST_EMPTY -> C_LIST_EMPTY
   | C_LIST_LITERAL -> C_LIST_LITERAL
@@ -619,7 +620,7 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
   | E_module_accessor {module_name; element} -> (
     let module_var = module_name in
     let%bind module_ =
-      trace_option (corner_case ~loc:__LOC__ "Mod_alias: This program shouldn't type")
+      trace_option (corner_case ~loc:__LOC__ "Module_accessor: This program shouldn't type")
       @@ SMap.find_opt module_var module_env in
     (* TODO E_module_accessor should not be this way *)
     let rec aux (element : AST.expression) =
@@ -780,7 +781,7 @@ and compile_recursive module_env {fun_name; fun_type; lambda} =
   let binder = Location.map Var.todo_cast lambda.binder :: binder in
   let%bind binder = match binder with hd::[] -> ok @@ hd | _ -> fail @@ unsupported_recursive_function fun_name in
   let expr = Expression.make_tpl (E_variable binder, input_type) in
-  let body = Expression.make (E_iterator (C_LOOP_LEFT, ((Location.map Var.todo_cast lambda.binder, loop_type),body), expr)) output_type in
+  let body = Expression.make (E_iterator (C_LOOP_LEFT, ((lambda.binder, input_type), body), expr)) output_type in
   ok @@ Expression.make (E_closure {binder;body}) fun_type
 
 and compile_declaration module_env env (d:AST.declaration) : ((toplevel_statement * _ SMap.t) option , spilling_error) result =

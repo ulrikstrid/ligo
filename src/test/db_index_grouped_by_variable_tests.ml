@@ -1,31 +1,8 @@
 open Trace
 open Ast_typed.Types
+open Solver_types
 open Database_plugins.All_plugins
 open Db_index_tests_common
-
-open GroupedByVariable
-
-let merge_in_state ~demoted_repr ~new_repr state =
-  let updater = {
-    map = (fun m -> UnionFind.ReprMap.alias ~demoted_repr ~new_repr m);
-    set = (fun s -> UnionFind.ReprSet.alias ~demoted_repr ~new_repr s);
-  } in
-  merge_aliases updater state
-
-let merge_in_repr ~demoted_repr ~new_repr repr =
-  fun tv -> match repr tv with
-      tv when Var.equal tv demoted_repr -> new_repr
-    | other -> other
-
-let merge ~demoted_repr ~new_repr repr state =
-  if (not (Var.equal (repr demoted_repr) demoted_repr)) ||
-     (not (Var.equal (repr new_repr) new_repr))
-  then
-    failwith "Internal error: bad test: the demoted_repr and new_repr \
-              should already be representants when merge is called."
-  else
-    ((merge_in_repr ~demoted_repr ~new_repr repr),
-     (merge_in_state ~demoted_repr ~new_repr state))
 
 (* can't be defined easily in MultiSet.ml because it doesn't have access to List.compare ~cmp  *)
 let multiset_compare a b =
@@ -37,7 +14,7 @@ let multiset_compare a b =
 
 module Grouped_by_variable_tests = struct
   include Test_vars
-  module Plugin_under_test = GroupedByVariable
+  module Plugin_under_test = Database_plugins.All_plugins.Grouped_by_variable
   include Plugin_under_test
   let repr : type_variable -> type_variable = fun tv ->
     match tv with
@@ -75,12 +52,34 @@ module Grouped_by_variable_tests = struct
     ok ()
 
   let same_state (expected : _ t) (actual : _ t) =
-    same_state' __LOC__ (GroupedByVariable.bindings expected) (GroupedByVariable.bindings actual)
+    same_state' __LOC__ (Grouped_by_variable.bindings expected) (Grouped_by_variable.bindings actual)
 end
 
-open Grouped_by_variable_tests
+open! Grouped_by_variable_tests
 
-type nonrec t_for_tests = type_variable GroupedByVariable.t_for_tests
+let merge_in_state ~demoted_repr ~new_repr state =
+  let updater = {
+    map = (fun m -> UnionFind.ReprMap.alias ~demoted_repr ~new_repr m);
+    set = (fun s -> UnionFind.ReprSet.alias ~demoted_repr ~new_repr s);
+  } in
+  merge_aliases updater state
+
+let merge_in_repr ~demoted_repr ~new_repr repr =
+  fun tv -> match repr tv with
+      tv when Var.equal tv demoted_repr -> new_repr
+    | other -> other
+
+let merge ~demoted_repr ~new_repr repr state =
+  if (not (Var.equal (repr demoted_repr) demoted_repr)) ||
+     (not (Var.equal (repr new_repr) new_repr))
+  then
+    failwith "Internal error: bad test: the demoted_repr and new_repr \
+              should already be representants when merge is called."
+  else
+    ((merge_in_repr ~demoted_repr ~new_repr repr),
+     (merge_in_state ~demoted_repr ~new_repr state))
+
+type nonrec t_for_tests = type_variable Grouped_by_variable.t_for_tests
 
 let filter_only_ctors  = List.filter_map (function Ast_typed.Types.SC_Constructor c -> Some c | _ -> None)
 let filter_only_rows   = List.filter_map (function Ast_typed.Types.SC_Row         c -> Some c | _ -> None)
@@ -108,7 +107,7 @@ let assert_states_equal
       access_label_by_result_type = to_access_label_sets expected_access_labels_by_result_type ;
       access_label_by_record_type = to_access_label_sets expected_access_labels_by_record_type ;
     }
-    (GroupedByVariable.bindings actual)
+    (Grouped_by_variable.bindings actual)
 
 let remove_constraint repr state constraint_to_rm =
   trace Main_errors.typer_tracer @@
@@ -369,6 +368,7 @@ let access_label_add_and_remove () =
 (* Test mixed + remove + merge *)
 
 let mixed () =
+  Format.printf "In mixed \n%!";
   let repr : type_variable -> type_variable = fun tv -> tv in
   let state = create_state ~cmp:Ast_typed.Compare.type_variable in
 
@@ -377,6 +377,7 @@ let mixed () =
   let state = add_constraint repr state sc_a in
 
   (* Test 1: state is { a -> [sc_a]} *)
+  Format.printf "Test 1\n%!";
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a])]
       state in
@@ -387,6 +388,7 @@ let mixed () =
   (* Test 2: state is { a -> [sc_a]; b -> [sc_b]} *)
 
   (* Test 2; state is ctors = {a -> [sc_a]} rows = {b -> [sc_b]} *)
+  Format.printf "Test 2\n%!";
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a])]
       ~expected_rows:[(tvb, [sc_b])]
@@ -402,6 +404,7 @@ let mixed () =
   let state = add_constraint repr state sc_c in
 
   (* Test 3; state is ctors = {a -> [sc_a]} rows = {b -> [sc_b]} polys = {c -> [sc_c]} *)
+  Format.printf "Test 3\n%!";
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a])]
       ~expected_rows:[(tvb, [sc_b])]
@@ -422,6 +425,7 @@ let mixed () =
   let repr, state = merge ~demoted_repr:tvb ~new_repr:tva repr state in
 
   (* Test 5; state is ctors = {a -> [sc_a]; c -> [sc_c2]} rows = {a -> [sc_b]} polys = {c -> [sc_c]} *)
+  Format.printf "Test 5\n%!";
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
       ~expected_rows:[(tva, [sc_b])]
@@ -433,6 +437,7 @@ let mixed () =
   let state = add_constraint repr state sc_b2 in
 
   (* Test 6; state is ctors = {a -> [sc_a]; c -> [sc_c2]} rows = {a -> [sc_b; sc_b2]} polys = {c -> [sc_c]} *)
+  Format.printf "Test 6\n%!";
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
       ~expected_rows:[(tva, [sc_b; sc_b2])]
@@ -443,6 +448,7 @@ let mixed () =
   let%bind state = remove_constraint repr state sc_b in
 
   (* Test 7; state is ctors = {a -> [sc_a]; c -> [sc_c2]} rows = {a -> [sc_b2]} polys = {c -> [sc_c]} *)
+  Format.printf "Test 7\n%!";
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
       ~expected_rows:[(tva, [sc_b2])]
@@ -454,6 +460,7 @@ let mixed () =
   let state = add_constraint repr state sc_b3 in
 
   (* Test 8; state is ctors = {a -> [sc_a]; c -> [sc_c2]} rows = {a -> [sc_b2; sc_b3]} polys = {c -> [sc_c]} *)
+  Format.printf "Test 8\n%!";
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
       ~expected_rows:[(tva, [sc_b2; sc_b3])]
@@ -464,6 +471,7 @@ let mixed () =
   let%bind state = remove_constraint repr state sc_b2 in
 
   (* Test 9; state is ctors = {a -> [sc_a]; c -> [sc_c2]} rows = {a -> [sc_b3]} polys = {c -> [sc_c]} *)
+  Format.printf "Test 9\n%!";
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
       ~expected_rows:[(tva, [sc_b3])]
@@ -499,11 +507,16 @@ let mixed () =
       ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]
       ~expected_rows:[(tva, [sc_b3])]
       ~expected_polys:[(tvc, [sc_c])]
-      ~expected_access_labels_by_result_type:[(tva, [sc_acf; sc_bcb]); (tvd, [sc_dcb])]
-      ~expected_access_labels_by_record_type:[(tvc, [sc_acf; sc_bcb; sc_dcb])]
+      ~expected_access_labels_by_result_type:[(tva, [sc_acf; sc_bcb]); (tvc, [sc_dcb])]
+      ~expected_access_labels_by_record_type:[(tvc, [sc_acf; sc_bcb]); (tva, [sc_dcb])]
       state in
 
+  Format.printf "Before remove constraint :%a\n"
+    Ast_typed.PP.type_constraint_simpl_short sc_acf
+    ;
   let%bind state = remove_constraint repr state sc_acf in
+  Format.printf "Afer remove\n%!";
+
 
   let%bind () = assert_states_equal __LOC__
       ~expected_ctors:[(tva, [sc_a]); (tvc, [sc_c2])]

@@ -53,9 +53,10 @@ app.use(
 app.use(express.static(appBundleDirectory));
 
 app.options('/api/share', cors(corsOptions));
+app.options('/api/compile-contract', cors(corsOptions));
 
 app.get(`/api/share/:hash([0-9a-zA-Z\-\_]+)`, sharedLinkHandler());
-app.post('/api/compile-contract', compileContractHandler);
+app.post('/api/compile-contract', cors(corsOptions), compileContractHandler);
 app.post('/api/compile-expression', compileExpressionHandler);
 app.post('/api/compile-storage', compileStorageHandler);
 app.post('/api/dry-run', dryRunHandler);

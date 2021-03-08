@@ -1,22 +1,14 @@
 open Trace
 
-(* module Core = Typesystem.Core *)
 open Ast_typed.Types
-(* open Ast_typed.Reasons *)
+open Solver_types
 open Ast_typed.Combinators
-open Database_plugins.All_plugins
-(* module Assignments                   = Assignments
-module GroupedByVariable             = GroupedByVariable
-module CycleDetectionTopologicalSort = CycleDetectionTopologicalSort
-module ByConstraintIdentifier        = ByConstraintIdentifier
-module RefinedTypeclasses            = RefinedTypeclasses
-module TypeclassesConstraining       = TypeclassesConstraining *)
 
 open Db_index_tests_common
 
 module By_constraint_identifier_tests = struct
   include Test_vars
-  module Plugin_under_test = ByConstraintIdentifier
+  module Plugin_under_test = Database_plugins.All_plugins.By_constraint_identifier
   include  Plugin_under_test
   let repr : type_variable -> type_variable = fun tv ->
     match tv with
@@ -69,11 +61,11 @@ let by_constraint_identifier () =
     [ tval_unit ; tval_int ] ;
     [ tval_map_int_unit; tval_map_int_unit ] ;
   ] in
-  let tc_bc = make_c_typeclass_simpl 2 None [tvb;tvc] tc_allowed_bc in
+  let tc_bc = make_c_typeclass_simpl ~bound:[] ~constraints:[] () 2 None [tvb;tvc] tc_allowed_bc in
   let state'' = add_constraint repr state' (SC_Typeclass tc_bc) in
   (* assert state'' = … *)
   let%bind () = same_state2 state'' [
-      (ConstraintIdentifier 2L, tc_bc)
+      (ConstraintIdentifier.T 2L, tc_bc)
     ]
   in
 
@@ -83,12 +75,12 @@ let by_constraint_identifier () =
     [ tval_int ] ;
     [ tval_unit ] ;
   ] in
-  let tc_b = make_c_typeclass_simpl 3 (Some 2) [tvb;tvc] tc_allowed_b in
+  let tc_b = make_c_typeclass_simpl ~bound:[] ~constraints:[] ()  3 (Some 2) [tvb;tvc] tc_allowed_b in
   let state''' = add_constraint ~debug:(Ast_typed.PP.type_variable) repr state'' (SC_Typeclass tc_b) in
   (* assert state''' = … *)
   let%bind () = same_state2 state''' [
-      (ConstraintIdentifier 2L, tc_bc) ;
-      (ConstraintIdentifier 3L, tc_b)
+      (ConstraintIdentifier.T 2L, tc_bc) ;
+      (ConstraintIdentifier.T 3L, tc_b)
     ]
   in
 
@@ -105,8 +97,8 @@ let by_constraint_identifier () =
   (* assert that c has been merged to a in state'''' *)
   (* state'''' = same as above, because this indexer does not store any type variable. *)
   let%bind () = same_state2 state'''' [
-      (ConstraintIdentifier 2L, tc_bc) ;
-      (ConstraintIdentifier 3L, tc_b)
+      (ConstraintIdentifier.T 2L, tc_bc) ;
+      (ConstraintIdentifier.T 3L, tc_b)
     ]
   in
   ok ()
@@ -119,7 +111,7 @@ let by_constraint_identifier () =
   (* Test mixtes *)
 
 
-  (*                              ctor row poly tc  (alias)      <---- variant des types de contraintes
+  (*                              ctor row poly tc  (alias)      <---- variant of constraint types
    assignment                     test t   t    t   (impossible)
    by_ctr_identifier              t    t   …
    cycle_detection

@@ -68,9 +68,11 @@ let%expect_test _ =
       code { PUSH int 42 ;
              PUSH int 1 ;
              ADD ;
+             SWAP ;
+             CDR ;
+             SWAP ;
              PUSH int 1 ;
              DIG 2 ;
-             CDR ;
              ADD ;
              ADD ;
              NIL operation ;
@@ -82,7 +84,7 @@ let%expect_test _ =
     const toto = ADD(E.toto ,
     C.B.titi)
     const fb = record[tata -> 2 , tete -> 3 , titi -> 1 , toto -> toto]
-    const main = lambda (#3) return let s = #3.1 in let p = #3.0 in let s = ADD(ADD(p ,
+    const main = lambda (#3) return match #3 with | ( p:int , s:int ) -> let s = ADD(ADD(p ,
     s) ,
     toto) in ( LIST_EMPTY() , s ) |}]
 
@@ -95,10 +97,10 @@ let%expect_test _ =
       let toto = L(32) in
       let titi = ADD(A , L(42)) in
       let f =
-        fun #2 ->
-        (let x = CDR(#2) in
-         let #1 = CAR(#2) in
-         let x = ADD(ADD(x , A) , titi) in PAIR(LIST_EMPTY() , x)) in
+        fun #1 ->
+        (let (#4, #5) = #1 in
+         let #2 = #4 in
+         let x = #5 in let x = ADD(ADD(x , A) , titi) in PAIR(LIST_EMPTY() , x)) in
       PAIR(PAIR(A , f) , PAIR(titi , toto))
     let ../../test/contracts/build/C.mligo =
       let A = ../../test/contracts/build/A.mligo[@inline] in
@@ -119,9 +121,9 @@ let%expect_test _ =
     let fb = PAIR(L(1) , PAIR(toto , PAIR(L(2) , L(3))))
     let main =
       fun #3 ->
-      (let s = CDR(#3) in
-       let p = CAR(#3) in
-       let s = ADD(ADD(p , s) , toto) in PAIR(LIST_EMPTY() , s)) |}]
+      (let (#6, #7) = #3 in
+       let p = #6 in
+       let s = #7 in let s = ADD(ADD(p , s) , toto) in PAIR(LIST_EMPTY() , s)) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "D.mligo"; "main" ] ;
@@ -139,50 +141,36 @@ let%expect_test _ =
              DUP ;
              DUG 2 ;
              PAIR ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              DIG 2 ;
              PAIR ;
              LAMBDA
                (pair (pair int int) (pair unit int))
                (pair (list operation) int)
-               { DUP ;
-                 CDR ;
-                 SWAP ;
-                 CAR ;
-                 DUP ;
-                 CDR ;
-                 SWAP ;
-                 CAR ;
+               { UNPAIR ;
+                 UNPAIR ;
                  DIG 2 ;
+                 CDR ;
                  SWAP ;
                  DUG 2 ;
-                 CDR ;
                  ADD ;
                  ADD ;
                  NIL operation ;
                  PAIR } ;
              SWAP ;
              APPLY ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              PAIR ;
              PAIR ;
              DUP ;
              CDR ;
              CAR ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              ADD ;
              PUSH int 3 ;
              PUSH unit Unit ;
              PAIR ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              CAR ;
              CDR ;
              SWAP ;
@@ -199,11 +187,7 @@ let%expect_test _ =
              PUSH int 10 ;
              ADD ;
              SWAP ;
-             DUP ;
-             DUG 2 ;
-             CDR ;
-             DIG 2 ;
-             CAR ;
+             UNPAIR ;
              ADD ;
              ADD ;
              NIL operation ;
@@ -223,4 +207,8 @@ let%expect_test _ =
   [%expect {|
     { parameter string ;
       storage int ;
-      code { PUSH int 1 ; SWAP ; CDR ; ADD ; NIL operation ; PAIR } } |}]
+      code { CDR ; PUSH int 1 ; ADD ; NIL operation ; PAIR } } |}]
+
+let%expect_test _ = 
+  run_ligo_good [ "compile-expression" ; "--init-file" ; contract "C.mligo" ; "cameligo" ; "tata" ] ;
+  [%expect {| 44 |}]
