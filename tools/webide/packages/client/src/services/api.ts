@@ -41,7 +41,6 @@ export async function compileExpression(
   expression: string,
   format?: string
 ) {
-  console.log('0000', syntax, expression, format);
   const response = await axios.post('/api/compile-expression', {
     syntax,
     expression: `${expression}`,
