@@ -254,7 +254,7 @@ webide-push:
 #     - merge_requests
 #     - /^.*-run-dev$/
 
-# This job will deploy the docker container to the test server.
+# This job will deploy the docker container to the test server
 deploy-handoff-feature:
   # Handoff deployment duties to private repo
   stage: ide-deploy
