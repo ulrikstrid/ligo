@@ -745,6 +745,12 @@ conj_expr_level:
   bin_op(conj_expr_level, "&&", comp_expr_level) {
     ELogic (BoolExpr (And $1)) }
 | comp_expr_level { $1 }
+| call_expr_level "as" type_expr { 
+   EAnnot {
+      region = cover (expr_to_region $1) (type_expr_to_region $3);
+      value = $1, $2, $3
+    }
+}
 
 comp_expr_level:
   bin_op(comp_expr_level, "<", add_expr_level) {
@@ -789,22 +795,23 @@ unary_expr_level:
   }
 | call_expr_level { $1 }
 
+
 call_expr_level:
   call_expr { $1 }
 | new_expr  { $1 }
-| "(" call_expr_level "as" type_expr ")" {
-    EPar {
-      region = cover $1 $5;
-      value = {
-        lpar = $1;
-        inside = EAnnot {
-          region = cover (expr_to_region $2) (type_expr_to_region $4);
-          value = $2, $3, $4
-        };
-        rpar = $5;
-      }
-    }
-  }
+// | "(" call_expr_level "as" type_expr ")" {
+//     EPar {
+//       region = cover $1 $5;
+//       value = {
+//         lpar = $1;
+//         inside = EAnnot {
+//           region = cover (expr_to_region $2) (type_expr_to_region $4);
+//           value = $2, $3, $4
+//         };
+//         rpar = $5;
+//       }
+//     }
+//   }
 
 array_item:
   /* */      { Empty_entry Region.ghost }
