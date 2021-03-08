@@ -1,14 +1,23 @@
 import * as monaco from 'monaco-editor';
-import React, { useEffect, useRef } from 'react';
-import { useDispatch, useStore } from 'react-redux';
+import React, { useEffect, useRef, useState } from 'react';
+import { useDispatch, useStore , connect, useSelector} from 'react-redux';
 import styled from 'styled-components';
 
 import { AppState } from '../../redux/app';
 import { ChangeCodeAction, ChangeDirtyAction, ChangeCursorPositionAction } from '../../redux/editor';
 import { ClearSelectedAction } from '../../redux/examples';
+import { ListDeclarationAction } from '../../redux/actions/list-declaration'
+import {ChangeSelectedAction} from '../../redux/compile-function'
+import { CompileFunctionAction } from '../../redux/actions/compile-function';
+import {  EditorState } from '../../redux/editor';
+import { ChangeDispatchedAction } from '../../redux/command';
 
 interface TopPaneStyled {
   editorHeight: number;
+}
+export interface MethodType {
+  [x: string]: any;
+  declarations: string[];
 }
 
 const Container = styled.div<TopPaneStyled>`
@@ -18,10 +27,27 @@ const Container = styled.div<TopPaneStyled>`
   font-size: 0.8em;
 `;
 
-export const MonacoComponent = ({editorHeight}) => {
+const MonacoComponent = (props) => {
+  const { editorHeight, code, language, getDeclarationList } = props
   let containerRef = useRef(null);
   const store = useStore();
   const dispatch = useDispatch();
+  const [hasCompiledFunction, setHasCompiledFunction] = useState(false)
+
+  const compileFunctionHandler = () => {
+    console.log('***', code, language)
+  }
+
+    const onRightClickAction = () => {
+      return {
+        id: '1',
+        label: "Compile Function",
+        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.F10],
+	      contextMenuGroupId: 'navigation',
+	      contextMenuOrder: 2.5,
+        run: (e) => {setHasCompiledFunction(true)}
+      }
+    }
 
   useEffect(() => {
     const cleanupFunc: Array<() => void> = [];
@@ -58,6 +84,8 @@ export const MonacoComponent = ({editorHeight}) => {
         enabled: false
       }
     })
+
+    editor.addAction(onRightClickAction())
 
     let shouldDispatchCodeChangedAction = true;
 
@@ -98,7 +126,30 @@ export const MonacoComponent = ({editorHeight}) => {
     return function cleanUp() {
       cleanupFunc.forEach(f => f());
     };
-  }, [store, dispatch]);
+  }, [store, dispatch, language, code, getDeclarationList]);
 
-  return <Container id="editor" ref={containerRef} editorHeight={editorHeight}></Container>;
-};
+  return (
+  <>
+  {hasCompiledFunction && 
+  compileFunctionHandler()
+  }
+  <Container id="editor" ref={containerRef} editorHeight={editorHeight}></Container>
+  </>
+  )};
+
+const mapStateToProps = state => {
+  const { editor } = state
+  return { 
+    code : editor.code,
+    language: editor.language
+   }
+}
+
+const mapDispatchToProps = dispatch => {
+  return({
+    getDeclarationList: (syntax, code)  => dispatch(ListDeclarationAction(syntax, code)),
+    setCompileFunction: (functionName)  => dispatch({...new ChangeSelectedAction(functionName)})
+  })
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(MonacoComponent)

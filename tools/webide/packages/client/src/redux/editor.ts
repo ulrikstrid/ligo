@@ -75,10 +75,10 @@ const editor = (state, action: Action): EditorState => {
     case ExamplesActionType.ChangeSelected:
       return {
         ...state,
-        ...action.payload?.editor,
-        title: action.payload.name
-          ? action.payload.name
-          : action.payload?.editor.title,
+        ...(action.payload && {
+          ...action.payload.editor,
+          title: action.payload.name,
+        }),
       };
     case ActionType.ChangeLanguage:
       return {
