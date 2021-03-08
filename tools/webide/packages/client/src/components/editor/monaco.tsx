@@ -6,7 +6,6 @@ import styled from 'styled-components';
 import { AppState } from '../../redux/app';
 import { ChangeCodeAction, ChangeDirtyAction, ChangeCursorPositionAction } from '../../redux/editor';
 import { ClearSelectedAction } from '../../redux/examples';
-import { EditorAction } from '../../redux/actions/editor'
 
 interface TopPaneStyled {
   editorHeight: number;
@@ -59,31 +58,6 @@ export const MonacoComponent = ({editorHeight}) => {
         enabled: false
       }
     })
-
-const m = editor.getModel()
-
-    const onRightClickAction = () => {
-      return {
-        id: '1',
-        label: "Compile Function",
-        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.F10],
-	      contextMenuGroupId: 'navigation',
-	      contextMenuOrder: 2.5,
-        run: (e) => {
-          const position = e.getPosition()
-          const val = m && m.getLineContent(position.lineNumber)
-          
-
-          const isFunctionStart = val && val.indexOf('function') > -1
-
-          // if( isFunctionStart ) { dispatch({ ...new getMicklesonCode() })}
-
-          console.log('p', position.lineNumber, val)
-        }
-      }
-    }
-
-editor.addAction(onRightClickAction())
 
     let shouldDispatchCodeChangedAction = true;
 
