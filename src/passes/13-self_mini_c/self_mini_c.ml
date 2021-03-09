@@ -176,7 +176,7 @@ let is_variable : expression -> bool =
 
 let should_inline : expression_variable -> expression -> expression -> bool =
   fun x e1 e2 ->
-  occurs_count x e2 <= 1 || is_variable e1
+  occurs_count x e2 = 1 || is_variable e1
 
 let inline_let : bool ref -> expression -> expression =
   fun changed e ->
