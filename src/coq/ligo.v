@@ -40,7 +40,7 @@ Inductive expr : Set :=
 | E_map : A -> splitting -> binds -> expr -> expr
 | E_loop_left : A -> splitting -> binds -> node A string -> expr -> expr
 | E_fold : A -> splitting -> expr -> splitting -> expr -> binds -> expr
-| E_fold_right : A -> splitting -> expr -> splitting -> expr -> binds -> expr
+| E_fold_right : A -> node A string -> splitting -> expr -> splitting -> expr -> binds -> expr
 
 | E_failwith : A -> expr -> expr
 
@@ -173,7 +173,7 @@ Inductive expr_typed : list (node A string) -> expr -> node A string -> Prop :=
       expr_typed g1 e1 ret ->
       expr_typed g2 e2 coll ->
       binds_typed g3 e3 [Prim l1 "pair" [elem; ret] n1] ret ->
-      expr_typed g (E_fold_right l2 ss1 e1 ss2 e2 e3) ret}
+      expr_typed g (E_fold_right l2 elem ss1 e1 ss2 e2 e3) ret}
 | E_failwith_typed {g a b e} :
     `{expr_typed g e a ->
       expr_typed g (E_failwith l1 e) b}

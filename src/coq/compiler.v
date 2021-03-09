@@ -191,7 +191,7 @@ Fixpoint compile_expr
      Prim nil "ITER" [Seq nil [Prim nil "SWAP" [] []; Prim nil "PAIR" [] [];
                                Seq nil (compile_binds env3 (keep_rights (left_usages inner2)) (filter_keeps (right_usages inner1)) e3)]] [];
      Seq nil (compile_usages (Keep :: right_usages inner2))]
-  | E_fold_right _ inner1 e1 inner2 e2 e3 =>
+  | E_fold_right _ elem inner1 e1 inner2 e2 e3 =>
     let (env1, env') := split inner1 env in
     let (env2, env3) := split inner2 env' in
     let (outer, inner1) := assoc_splitting outer inner1 in
@@ -199,8 +199,7 @@ Fixpoint compile_expr
     [Seq nil (compile_expr env1 outer e1);
      Seq nil (compile_expr env2 (Right :: inner1) e2);
      (* build reversed list: *)
-     (* TODO use actual elt type instead of "int"! *)
-     Seq nil [Prim nil "NIL" [Prim nil "int" [] []] [];
+     Seq nil [Prim nil "NIL" [elem] [];
               Prim nil "SWAP" [] [];
               Prim nil "ITER" [Seq nil [Prim nil "CONS" [] []]] []];
      (* fold over reversed list: *)
