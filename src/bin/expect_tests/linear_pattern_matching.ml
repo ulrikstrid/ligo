@@ -13,19 +13,25 @@ let%expect_test _ =
 
   run_ligo_good [ "interpret" ; "--syntax=cameligo" ; "( (match (1,2n,\"3\") with | (a,b,c) -> a) : int )" ] ;
    [%expect {|
+    Warning: unused variable #4 at
+    Warning: unused variable #2 at
     1 |}] ;
 
   run_ligo_good [ "interpret" ; "--syntax=cameligo" ; "match (1,2) with | (a,b) -> a" ] ;
    [%expect {|
+    Warning: unused variable #2 at
     1 |}]
 
 let%expect_test _ =
   run_ligo_good [ "interpret" ; "--syntax=pascaligo" ; "( (case (1,2n,\"3\") of (a,b,c) -> a end) : int)" ] ;
    [%expect {|
+    Warning: unused variable #4 at
+    Warning: unused variable #2 at
     1 |}] ;
 
   run_ligo_good [ "interpret" ; "--syntax=pascaligo" ; "case (1,2) of (a,b) -> a end" ] ;
    [%expect {|
+    Warning: unused variable #2 at
     1 |}]
 
 (* let%expect_test _ =

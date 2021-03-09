@@ -7,6 +7,9 @@ let contract basename =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "annotated_michelson_variant_comb.mligo" ; "main_comb_two" ] ;
   [%expect {|
+             Warning: unused variable left#6 at
+             Warning: unused variable right#7 at
+             Warning: unused variable #8 at
              { parameter unit ;
                storage (or (int %anbfoo) (string %anabar)) ;
                code { CDR ;
@@ -17,11 +20,30 @@ let%expect_test _ =
                       PAIR } } |}];
   run_ligo_good [ "compile-contract" ; contract "annotated_michelson_variant_comb.mligo" ; "main_comb_three" ] ;
   [%expect {|
+             Warning: unused variable left#6 at
+             Warning: unused variable right#7 at
+             Warning: unused variable #8 at
+             Warning: unused variable #10 at
+             Warning: unused variable #11 at
+             Warning: unused variable main_comb_two at in file "../../test/contracts/annotated_michelson_variant_comb.mligo", line 21, characters 4-17
              { parameter unit ;
                storage (or (int %ana) (or (string %anb) (nat %anc))) ;
                code { DROP ; PUSH nat 1 ; RIGHT string ; RIGHT int ; NIL operation ; PAIR } } |}];
   run_ligo_good [ "compile-contract" ; contract "annotated_michelson_variant_comb.mligo" ; "main_comb_five" ] ;
   [%expect {|
+             Warning: unused variable left#6 at
+             Warning: unused variable right#7 at
+             Warning: unused variable #8 at
+             Warning: unused variable #10 at
+             Warning: unused variable #11 at
+             Warning: unused variable left#12 at
+             Warning: unused variable left#14 at
+             Warning: unused variable left#16 at
+             Warning: unused variable left#18 at
+             Warning: unused variable right#19 at
+             Warning: unused variable #20 at
+             Warning: unused variable main_comb_three at in file "../../test/contracts/annotated_michelson_variant_comb.mligo", line 28, characters 4-19
+             Warning: unused variable main_comb_two at in file "../../test/contracts/annotated_michelson_variant_comb.mligo", line 21, characters 4-17
              { parameter unit ;
                storage
                  (or (int %an_One)
@@ -41,16 +63,86 @@ let%expect_test _ =
 
 let%expect_test _ =
   run_ligo_good [ "dry-run" ; contract "annotated_michelson_variant_comb.mligo" ; "main_comb_two" ; "()" ; "Foo(1)" ] ;
-  [%expect{| ( LIST_EMPTY() , Bar("foo") ) |}];
+  [%expect{|
+    Warning: unused variable left#6 at
+    Warning: unused variable right#7 at
+    Warning: unused variable #8 at
+    Warning: unused variable left#6 at
+    Warning: unused variable right#7 at
+    Warning: unused variable #8 at
+    Warning: unused variable #10 at
+    Warning: unused variable #11 at
+    Warning: unused variable left#12 at
+    Warning: unused variable left#14 at
+    Warning: unused variable left#16 at
+    Warning: unused variable left#18 at
+    Warning: unused variable right#19 at
+    Warning: unused variable #20 at
+    Warning: unused variable main_comb_five at in file "../../test/contracts/annotated_michelson_variant_comb.mligo", line 32, characters 4-18
+    Warning: unused variable main_comb_three at in file "../../test/contracts/annotated_michelson_variant_comb.mligo", line 28, characters 4-19
+    Warning: unused variable main_comb_two at in file "../../test/contracts/annotated_michelson_variant_comb.mligo", line 21, characters 4-17
+    ( LIST_EMPTY() , Bar("foo") ) |}];
   run_ligo_good [ "dry-run" ; contract "annotated_michelson_variant_comb.mligo" ; "main_comb_three" ; "()" ; "A(1)" ] ;
-  [%expect{| ( LIST_EMPTY() , C(+1) ) |}];
+  [%expect{|
+    Warning: unused variable left#6 at
+    Warning: unused variable right#7 at
+    Warning: unused variable #8 at
+    Warning: unused variable #10 at
+    Warning: unused variable #11 at
+    Warning: unused variable main_comb_two at in file "../../test/contracts/annotated_michelson_variant_comb.mligo", line 21, characters 4-17
+    Warning: unused variable left#6 at
+    Warning: unused variable right#7 at
+    Warning: unused variable #8 at
+    Warning: unused variable #10 at
+    Warning: unused variable #11 at
+    Warning: unused variable left#12 at
+    Warning: unused variable left#14 at
+    Warning: unused variable left#16 at
+    Warning: unused variable left#18 at
+    Warning: unused variable right#19 at
+    Warning: unused variable #20 at
+    Warning: unused variable main_comb_five at in file "../../test/contracts/annotated_michelson_variant_comb.mligo", line 32, characters 4-18
+    Warning: unused variable main_comb_three at in file "../../test/contracts/annotated_michelson_variant_comb.mligo", line 28, characters 4-19
+    Warning: unused variable main_comb_two at in file "../../test/contracts/annotated_michelson_variant_comb.mligo", line 21, characters 4-17
+    ( LIST_EMPTY() , C(+1) ) |}];
   run_ligo_good [ "dry-run" ; contract "annotated_michelson_variant_comb.mligo" ; "main_comb_five" ; "()" ; "One(1)"] ;
-  [%expect{| ( LIST_EMPTY() , Five(1) ) |}]
+  [%expect{|
+    Warning: unused variable left#6 at
+    Warning: unused variable right#7 at
+    Warning: unused variable #8 at
+    Warning: unused variable #10 at
+    Warning: unused variable #11 at
+    Warning: unused variable left#12 at
+    Warning: unused variable left#14 at
+    Warning: unused variable left#16 at
+    Warning: unused variable left#18 at
+    Warning: unused variable right#19 at
+    Warning: unused variable #20 at
+    Warning: unused variable main_comb_three at in file "../../test/contracts/annotated_michelson_variant_comb.mligo", line 28, characters 4-19
+    Warning: unused variable main_comb_two at in file "../../test/contracts/annotated_michelson_variant_comb.mligo", line 21, characters 4-17
+    Warning: unused variable left#6 at
+    Warning: unused variable right#7 at
+    Warning: unused variable #8 at
+    Warning: unused variable #10 at
+    Warning: unused variable #11 at
+    Warning: unused variable left#12 at
+    Warning: unused variable left#14 at
+    Warning: unused variable left#16 at
+    Warning: unused variable left#18 at
+    Warning: unused variable right#19 at
+    Warning: unused variable #20 at
+    Warning: unused variable main_comb_five at in file "../../test/contracts/annotated_michelson_variant_comb.mligo", line 32, characters 4-18
+    Warning: unused variable main_comb_three at in file "../../test/contracts/annotated_michelson_variant_comb.mligo", line 28, characters 4-19
+    Warning: unused variable main_comb_two at in file "../../test/contracts/annotated_michelson_variant_comb.mligo", line 21, characters 4-17
+    ( LIST_EMPTY() , Five(1) ) |}]
 
 (*TREE*)
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "annotated_michelson_variant_tree.mligo" ; "main_comb_two" ] ;
   [%expect {|
+             Warning: unused variable left#6 at
+             Warning: unused variable right#7 at
+             Warning: unused variable #8 at
              { parameter unit ;
                storage (or (string %anabar) (int %anbfoo)) ;
                code { CDR ;
@@ -61,11 +153,30 @@ let%expect_test _ =
                       PAIR } } |}];
   run_ligo_good [ "compile-contract" ; contract "annotated_michelson_variant_tree.mligo" ; "main_comb_three" ] ;
   [%expect {|
+             Warning: unused variable left#6 at
+             Warning: unused variable right#7 at
+             Warning: unused variable #8 at
+             Warning: unused variable #10 at
+             Warning: unused variable #11 at
+             Warning: unused variable main_comb_two at in file "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 4-17
              { parameter unit ;
                storage (or (or (int %ana) (string %anb)) (nat %anc)) ;
                code { DROP ; PUSH nat 1 ; RIGHT (or int string) ; NIL operation ; PAIR } } |}];
   run_ligo_good [ "compile-contract" ; contract "annotated_michelson_variant_tree.mligo" ; "main_comb_five" ] ;
   [%expect {|
+             Warning: unused variable left#6 at
+             Warning: unused variable right#7 at
+             Warning: unused variable #8 at
+             Warning: unused variable #10 at
+             Warning: unused variable #11 at
+             Warning: unused variable left#14 at
+             Warning: unused variable right#15 at
+             Warning: unused variable left#17 at
+             Warning: unused variable right#18 at
+             Warning: unused variable right#19 at
+             Warning: unused variable #20 at
+             Warning: unused variable main_comb_three at in file "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 4-19
+             Warning: unused variable main_comb_two at in file "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 4-17
              { parameter unit ;
                storage
                  (or (or (or (int %an_Five) (nat %an_Four)) (or (int %an_One) (bool %an_Three)))
@@ -86,10 +197,74 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "dry-run" ; contract "annotated_michelson_variant_tree.mligo" ; "main_comb_two" ; "()" ; "Foo(1)" ] ;
   [%expect {|
+             Warning: unused variable left#6 at
+             Warning: unused variable right#7 at
+             Warning: unused variable #8 at
+             Warning: unused variable left#6 at
+             Warning: unused variable right#7 at
+             Warning: unused variable #8 at
+             Warning: unused variable #10 at
+             Warning: unused variable #11 at
+             Warning: unused variable left#14 at
+             Warning: unused variable right#15 at
+             Warning: unused variable left#17 at
+             Warning: unused variable right#18 at
+             Warning: unused variable right#19 at
+             Warning: unused variable #20 at
+             Warning: unused variable main_comb_five at in file "../../test/contracts/annotated_michelson_variant_tree.mligo", line 32, characters 4-18
+             Warning: unused variable main_comb_three at in file "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 4-19
+             Warning: unused variable main_comb_two at in file "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 4-17
              ( LIST_EMPTY() , Bar("foo") ) |}];
   run_ligo_good [ "dry-run" ; contract "annotated_michelson_variant_tree.mligo" ; "main_comb_three" ; "()" ; "A(2)" ] ;
   [%expect {|
+             Warning: unused variable left#6 at
+             Warning: unused variable right#7 at
+             Warning: unused variable #8 at
+             Warning: unused variable #10 at
+             Warning: unused variable #11 at
+             Warning: unused variable main_comb_two at in file "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 4-17
+             Warning: unused variable left#6 at
+             Warning: unused variable right#7 at
+             Warning: unused variable #8 at
+             Warning: unused variable #10 at
+             Warning: unused variable #11 at
+             Warning: unused variable left#14 at
+             Warning: unused variable right#15 at
+             Warning: unused variable left#17 at
+             Warning: unused variable right#18 at
+             Warning: unused variable right#19 at
+             Warning: unused variable #20 at
+             Warning: unused variable main_comb_five at in file "../../test/contracts/annotated_michelson_variant_tree.mligo", line 32, characters 4-18
+             Warning: unused variable main_comb_three at in file "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 4-19
+             Warning: unused variable main_comb_two at in file "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 4-17
              ( LIST_EMPTY() , C(+1) ) |}];
   run_ligo_good [ "dry-run" ; contract "annotated_michelson_variant_tree.mligo" ; "main_comb_five" ; "()" ; "One(1)"] ;
   [%expect {|
+             Warning: unused variable left#6 at
+             Warning: unused variable right#7 at
+             Warning: unused variable #8 at
+             Warning: unused variable #10 at
+             Warning: unused variable #11 at
+             Warning: unused variable left#14 at
+             Warning: unused variable right#15 at
+             Warning: unused variable left#17 at
+             Warning: unused variable right#18 at
+             Warning: unused variable right#19 at
+             Warning: unused variable #20 at
+             Warning: unused variable main_comb_three at in file "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 4-19
+             Warning: unused variable main_comb_two at in file "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 4-17
+             Warning: unused variable left#6 at
+             Warning: unused variable right#7 at
+             Warning: unused variable #8 at
+             Warning: unused variable #10 at
+             Warning: unused variable #11 at
+             Warning: unused variable left#14 at
+             Warning: unused variable right#15 at
+             Warning: unused variable left#17 at
+             Warning: unused variable right#18 at
+             Warning: unused variable right#19 at
+             Warning: unused variable #20 at
+             Warning: unused variable main_comb_five at in file "../../test/contracts/annotated_michelson_variant_tree.mligo", line 32, characters 4-18
+             Warning: unused variable main_comb_three at in file "../../test/contracts/annotated_michelson_variant_tree.mligo", line 28, characters 4-19
+             Warning: unused variable main_comb_two at in file "../../test/contracts/annotated_michelson_variant_tree.mligo", line 21, characters 4-17
              ( LIST_EMPTY() , Five(1) ) |}]

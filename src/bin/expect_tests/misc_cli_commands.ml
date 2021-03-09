@@ -4,10 +4,14 @@ open Cli_expect
 let%expect_test _ =
   run_ligo_good [ "evaluate-value" ; "../../test/contracts/evaluation_tests.ligo" ; "a" ] ;
   [%expect {|
+    Warning: unused variable b at in file "../../test/contracts/evaluation_tests.ligo", line 5, characters 6-7
+    Warning: unused variable a at in file "../../test/contracts/evaluation_tests.ligo", line 3, characters 6-7
     record[bar -> "bar" , foo -> +0] |} ];
 
   run_ligo_good [ "evaluate-value" ; "../../test/contracts/evaluation_tests.ligo" ; "b" ] ;
   [%expect {|
+    Warning: unused variable b at in file "../../test/contracts/evaluation_tests.ligo", line 5, characters 6-7
+    Warning: unused variable a at in file "../../test/contracts/evaluation_tests.ligo", line 3, characters 6-7
     2 |} ]
 
 (* list-declarations *)

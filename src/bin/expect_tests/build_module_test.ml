@@ -63,6 +63,8 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "B.mligo" ; "f" ] ;
   [%expect{|
+    Warning: unused variable #3 at
+    Warning: unused variable toto at in file "../../test/contracts/build/B.mligo", line 3, characters 4-8
     { parameter unit ;
       storage int ;
       code { PUSH int 42 ;
@@ -128,6 +130,8 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "D.mligo"; "main" ] ;
   [%expect{|
+    Warning: unused variable #4 at
+    Warning: unused variable fb at in file "../../test/contracts/build/D.mligo", line 6, characters 4-6
     { parameter int ;
       storage int ;
       code { PUSH int 1 ;
@@ -186,6 +190,13 @@ let%expect_test _ =
              CAR ;
              PUSH int 10 ;
              ADD ;
+             PUSH int 3 ;
+             PUSH int 2 ;
+             PAIR ;
+             SWAP ;
+             DUP ;
+             DUG 2 ;
+             DROP 2 ;
              SWAP ;
              UNPAIR ;
              ADD ;
@@ -205,10 +216,23 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "type_B.mligo"; "main" ] ;
   [%expect {|
+    Warning: unused variable p at in file "../../test/contracts/build/type_B.mligo", line 5, characters 5-6
     { parameter string ;
       storage int ;
-      code { CDR ; PUSH int 1 ; ADD ; NIL operation ; PAIR } } |}]
+      code { UNPAIR ;
+             PUSH int 1 ;
+             DIG 2 ;
+             ADD ;
+             PUSH string "titi" ;
+             DIG 2 ;
+             CONCAT ;
+             DROP ;
+             NIL operation ;
+             PAIR } } |}]
 
 let%expect_test _ = 
   run_ligo_good [ "compile-expression" ; "--init-file" ; contract "C.mligo" ; "cameligo" ; "tata" ] ;
-  [%expect {| 44 |}]
+  [%expect {|
+    Warning: unused variable #3 at
+    Warning: unused variable foo at in file "../../test/contracts/build/C.mligo", line 6, characters 4-7
+    44 |}]
