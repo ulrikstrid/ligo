@@ -59,12 +59,7 @@ module Compile_type = struct
 
   type type_compiler_opt = CST.type_expr -> (AST.type_expression option, abs_error) result
 
-
-  let rec type_expression_to_variable : CST.type_expr -> (CST.variable, _) result = function
-    | TVar v -> ok v
-    | _ -> failwith "Expected a variable in this variant"
-
-  and type_expression_to_constructor : CST.type_expr -> (string * AST.type_expression * attributes, _) result = function
+  let rec type_expression_to_constructor : CST.type_expr -> (string * AST.type_expression * attributes, _) result = function
     | TProd {value = {inside = (TString s, []); _}; region} ->
       ok (s.value, t_unit () ~loc:(Location.lift region), [])
     | TProd {value = {inside = (TString s, rest); _}; region} -> 
@@ -75,15 +70,8 @@ module Compile_type = struct
       | lst -> 
         let t = t_tuple lst in
         ok @@ (s.value, t, []))
-    | _ -> failwith "Expected a variable in this variant"
+    | _ as t -> fail @@ invalid_constructor t
 
-    (* todo: add `int` singletons to JsLIGO *)
-    (* let get_t_int_singleton_opt = function
-    *   | CST.TInt x ->
-    *     let (_,z) = x.value in
-    *     Some z
-    *   | _ -> None
-    *)
   and get_t_int_singleton_opt = function
   | _ -> None
 
@@ -210,77 +198,76 @@ module Compile_type = struct
     )
     | _ -> ok None
 
-and compile_type_expression : CST.type_expr -> (type_expression, _) result =
-  fun te ->
-  let self = compile_type_expression in
-  let return te = ok @@ te in
-  (* This is not efficient. It would make more sense to split each type_compiler in their own match branch. *)
-  try_type_compilers [
-    compile_sapling ;
-    compile_michelson_pair_or ;
-  ] te @@ fun () ->
-  match te with
-  | TSum sum ->
-      let sum_type, loc = r_split sum in
-      let {variants; attributes; _} : CST.sum_type = sum_type in
-      let lst = npseq_to_list variants in
-      let attr = compile_attributes attributes in
-      let aux (v : CST.type_expr) : (string * type_expression * string list, _) result =
-        let%bind (constructor, type_expr, variant_attr) = type_expression_to_constructor v in
-        ok @@ (constructor, type_expr, variant_attr) in
-      let%bind sum = bind_map_list aux lst
-      in return @@ t_sum_ez_attr ~loc ~attr sum
-  | TObject record ->
-    let injection, loc = r_split record in   
-    let attributes = compile_attributes injection.attributes in
-    let lst = npseq_to_list injection.ne_elements in
-    let aux (field : CST.field_decl CST.reg) =
-      let f, _ = r_split field in
-      let%bind type_expr =
-        self f.field_type in
-      let field_attr = compile_attributes f.attributes in
-      return @@ (f.field_name.value, type_expr, field_attr) in
-    let%bind fields = bind_map_list aux lst in
-    return @@ t_record_ez_attr ~loc ~attr:attributes fields
-  | TProd prod  ->
-    let (nsepseq, loc) = r_split prod in
-    let lst = npseq_to_list nsepseq.inside in
-    let%bind lst = bind_map_list self lst in
-    return @@ t_tuple ~loc lst
-  | TApp app ->
-    let ((operator,args), loc) = r_split app in
-    let operators = Var.of_name operator.value in
-    let lst = npseq_to_list args.value.inside in
-    let%bind lst = bind_map_list self lst in
-    return @@ t_app ~loc operators lst
-  | TFun func ->
-    let ((input_type,_,output_type), loc) = r_split func in
-    let%bind input_type = compile_type_function_args input_type in
-    let%bind output_type = self output_type in
-    return @@ t_function ~loc input_type output_type
-  | TPar par ->
-    let (par, _) = r_split par in
-    let type_expr = par.inside in
-    self type_expr
-  | TVar var ->
-    let (name,loc) = r_split var in
-    let v = Var.of_name name in
-    return @@ t_variable ~loc v
-  | TWild _reg -> failwith "TWild unsupported"
-  | TString _s -> fail @@ unsupported_string_singleton te
-  | TModA ma ->
-    let (ma, loc) = r_split ma in
-    let (module_name, _) = r_split ma.module_name in
-    let%bind element = self ma.field in
-    return @@ t_module_accessor ~loc module_name element
+  and compile_type_expression : CST.type_expr -> (type_expression, _) result =
+    fun te ->
+    let self = compile_type_expression in
+    let return te = ok @@ te in
+    (* This is not efficient. It would make more sense to split each type_compiler in their own match branch. *)
+    try_type_compilers [
+      compile_sapling ;
+      compile_michelson_pair_or ;
+    ] te @@ fun () ->
+    match te with
+    | TSum sum ->
+        let sum_type, loc = r_split sum in
+        let {variants; attributes; _} : CST.sum_type = sum_type in
+        let lst = npseq_to_list variants in
+        let attr = compile_attributes attributes in
+        let aux (v : CST.type_expr) : (string * type_expression * string list, _) result =
+          let%bind (constructor, type_expr, variant_attr) = type_expression_to_constructor v in
+          ok @@ (constructor, type_expr, variant_attr) in
+        let%bind sum = bind_map_list aux lst
+        in return @@ t_sum_ez_attr ~loc ~attr sum
+    | TObject record ->
+      let injection, loc = r_split record in   
+      let attributes = compile_attributes injection.attributes in
+      let lst = npseq_to_list injection.ne_elements in
+      let aux (field : CST.field_decl CST.reg) =
+        let f, _ = r_split field in
+        let%bind type_expr =
+          self f.field_type in
+        let field_attr = compile_attributes f.attributes in
+        return @@ (f.field_name.value, type_expr, field_attr) in
+      let%bind fields = bind_map_list aux lst in
+      return @@ t_record_ez_attr ~loc ~attr:attributes fields
+    | TProd prod  ->
+      let (nsepseq, loc) = r_split prod in
+      let lst = npseq_to_list nsepseq.inside in
+      let%bind lst = bind_map_list self lst in
+      return @@ t_tuple ~loc lst
+    | TApp app ->
+      let ((operator,args), loc) = r_split app in
+      let operators = Var.of_name operator.value in
+      let lst = npseq_to_list args.value.inside in
+      let%bind lst = bind_map_list self lst in
+      return @@ t_app ~loc operators lst
+    | TFun func ->
+      let ((input_type,_,output_type), loc) = r_split func in
+      let%bind input_type = compile_type_function_args input_type in
+      let%bind output_type = self output_type in
+      return @@ t_function ~loc input_type output_type
+    | TPar par ->
+      let (par, _) = r_split par in
+      let type_expr = par.inside in
+      self type_expr
+    | TVar var ->
+      let (name,loc) = r_split var in
+      let v = Var.of_name name in
+      return @@ t_variable ~loc v
+    | TWild _reg -> failwith "TWild unsupported"
+    | TString _s -> fail @@ unsupported_string_singleton te
+    | TModA ma ->
+      let (ma, loc) = r_split ma in
+      let (module_name, _) = r_split ma.module_name in
+      let%bind element = self ma.field in
+      return @@ t_module_accessor ~loc module_name element
 end
 
 open Compile_type
 
 let expression_to_variable : CST.expr -> (CST.variable, _) result = function
   | EVar var -> ok var
-  | _ as _e -> 
-    failwith "expected a variable"
+  | _ as e -> fail @@ expected_a_variable e
 
 let selection_to_variable : CST.selection -> (CST.variable, _) result = function
   | FieldName sfn -> (
@@ -303,15 +290,6 @@ let compile_selection : CST.selection -> (_ access * location, _) result = fun s
     let%bind index = compile_expression_to_int index_expr.inside in
     ok (Access_tuple index, loc)
 
-let compile_expression_constructor : CST.expr -> (AST.expr, _) result = function
-  | _ -> failwith "TODO1"
-
-let compile_expression_match : CST.expr -> (AST.expr, _) result = function
-  | _ -> failwith "TODO2"
-
-let compile_expression_module_access : CST.expr -> (AST.expr, _) result = function
-  | _ -> failwith "TODO3"
-
 let array_item_to_expression : CST.array_item -> (CST.expr, _) result = function
   | Expr_entry expr -> ok expr
   | (Empty_entry _ 
@@ -322,25 +300,15 @@ let get_t_string_singleton_opt = function
 | CST.TString s -> Some s.value
 | _ -> None
 
-
-(* let get_t_int_singleton_opt = function
-| CST.TInt i -> Some i.value
-| _ -> None *)
-
-(* type statement_result =
-| Context of (AST.expression -> AST.expression)
-| Return of AST.expression *)
-
 type statement_result =
   Binding of (AST.expression -> AST.expression)
 | Expr of AST.expression
 | Break of AST.expression
 | Return of AST.expression
 
-type foo = 
+type constr_types = 
   Match_nil of AST.expression
 | Match_cons of expression_ Var.t location_wrap * expression_ Var.t location_wrap
-
 
 let rec compile_tuple_expression ?loc tuple_expr =
   let%bind lst = bind_map_list (fun e -> compile_expression_in e) @@ nseq_to_list tuple_expr in
@@ -458,7 +426,7 @@ and compile_expression_in : CST.expr -> (AST.expr, _) result = fun e ->
         match e with 
           CST.Expr_entry e -> compile_expression_in e
         | Empty_entry _ -> ok @@ e_unit ()
-        | Rest_entry _ -> failwith "not supported here"  
+        | Rest_entry _ -> fail @@ array_rest_not_supported e
       ) items in
       return @@ e_list ~loc lst
     )
@@ -474,7 +442,7 @@ and compile_expression_in : CST.expr -> (AST.expr, _) result = fun e ->
       | ESeq {value = (hd, []); _} -> aux hd
       | EAnnot {value = (a, _, _); _} -> aux a
       | EUnit _ -> ok @@ Var.of_name "_"
-      | _ -> failwith "improve error message"
+      | _ as e -> fail @@ unsupported_match_pattern e
       in 
       aux p
     in
@@ -487,7 +455,7 @@ and compile_expression_in : CST.expr -> (AST.expr, _) result = fun e ->
             ok ((Label constr, Location.wrap @@ parameters), expr)
         | _ as e -> fail @@ invalid_case constr e (* TODO: improve error message *)
       ) 
-    | _ -> failwith "todo: write a better error message"
+    | _ as f -> fail @@ unsupported_match_object_property f
     in
     let loc = Location.lift region in
     let%bind matchee = compile_expression_in input in
@@ -503,7 +471,7 @@ and compile_expression_in : CST.expr -> (AST.expr, _) result = fun e ->
       | ESeq {value = (hd, []); _} -> aux hd
       | EAnnot {value = (a, _, _); _} -> aux a
       | EUnit _ -> ok @@ Var.of_name "_"
-      | _ -> failwith "improve error message"
+      | _ as e -> fail @@ unsupported_match_pattern e
       in 
       aux p
     in
@@ -519,14 +487,14 @@ and compile_expression_in : CST.expr -> (AST.expr, _) result = fun e ->
       let hd = Location.wrap ~loc:hd_loc hd in
       let tl = Location.wrap ~loc:tl_loc tl in
       ok @@ Match_cons (hd, tl)
-    | _ -> failwith "write a good error here"
+    | _ as e -> fail @@ not_a_valid_parameter e
     in
     let compile_case = function 
       CST.EFun {value = {parameters; body; _}; _} -> 
         let%bind args = compile_parameter parameters in
         let%bind b    = compile_function_body_to_expression body in
         ok (args, b)
-    | _ -> failwith "nope 3"
+    | _ as e -> fail @@ expected_a_function e
     in
     (match args with 
       [CST.Expr_entry a; CST.Expr_entry b]
@@ -536,13 +504,11 @@ and compile_expression_in : CST.expr -> (AST.expr, _) result = fun e ->
         (match params_a, params_b, body_a, body_b with 
           Match_nil match_nil,  Match_cons (a,b), body_nil, body
         | Match_cons (a,b), Match_nil match_nil, body, body_nil ->
-          (* failwith *)
           let%bind matchee = compile_expression_in input in
           let loc = Location.lift region in
           ok @@ e_matching ~loc matchee @@ AST.Match_list {match_nil = body_nil;match_cons = (a,b, body) }
         | _ -> failwith "no"
         )
-        (* ok () *)
     | _ -> failwith "no")
   
   (* This case is due to a bad besign of our constant it as to change
@@ -576,29 +542,6 @@ and compile_expression_in : CST.expr -> (AST.expr, _) result = fun e ->
     let%bind args_o = bind_map_option (compile_tuple_expression <@ List.Ne.singleton) args_o in
     let args = Option.unopt ~default:(e_unit ~loc:(Location.lift constr.region) ()) args_o in
     return @@ e_constructor ~loc constr.value args
-  (* TODO: modules *)
-  (* | ECall {value=(EIdent {value={module_name;field};region=_},args);region} when
-   *   List.mem module_name.value build_ins ->
-   *   let args = match args with
-   *     | Unit the_unit -> CST.EUnit the_unit,[]
-   *     | Multiple xs ->
-   *        let hd,tl = xs.value.inside in
-   *        hd,List.map snd tl in
-   *   let loc = Location.lift region in
-   *   let%bind fun_name = match field with
-   *     EIdent v -> ok @@ v.value | EModA _ -> fail @@ unknown_constant module_name.value loc
-   *     |ECase _|ECond _|EAnnot _|EList _|EIdent _|EUpdate _|ELetIn _|EFun _|ESeq _|ECodeInj _
-   *     |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETypeIn _
-   *     |ETuple _|EPar _ -> failwith "Corner case : This couldn't be produce by the parser"
-   *   in
-   *   let var = module_name.value ^ "." ^ fun_name in
-   *   (match constants var with
-   *     Some const ->
-   *     let%bind args = bind_map_list self @@ nseq_to_list args in
-   *     return @@ e_constant ~loc const args
-   *   | None ->
-   *     fail @@ unknown_constant var loc
-   *     ) *)
   | ECall {value=(EModA {value={module_name;field};region=_},args);region} when
     List.mem module_name.value build_ins ->
       let args = match args with
@@ -719,7 +662,6 @@ and compile_expression_in : CST.expr -> (AST.expr, _) result = fun e ->
   | EAnnot {value = (EArith(Int i), _, TVar {value = "mutez"; _}); region } -> 
     let ((_,i), loc) = r_split i in
     return @@ e_mutez_z ~loc i
-
   | EAnnot {value = (ECodeInj {value = {language; code};_ }, kwd_as, type_expr); region} -> 
     let value: CST.code_inj = {
       language = language;
@@ -753,12 +695,12 @@ and compile_expression_in : CST.expr -> (AST.expr, _) result = fun e ->
       in
       aux hd @@ tl
   )
+
   | EAssign (EVar {value; _} as e1, _, e2) -> 
-    (* expression access list *)
     let%bind e1 = compile_expression_in e1 in
     let%bind e2 = compile_expression_in e2 in
     ok @@ e_assign (Location.wrap @@ Var.of_name value) [] e2
-  | EAssign _ -> failwith "todo: add proper error message"
+  | EAssign _ as e -> fail @@ not_supported_assignment e
   | ENew {value = (_, e); _} -> fail @@ new_not_supported e
 
 and conv : CST.pattern -> (nested_match_repr,_) result =
@@ -773,26 +715,12 @@ and conv : CST.pattern -> (nested_match_repr,_) result =
     let var = Location.wrap ~loc @@ Var.of_name var in
     ok (PatternVar { var ; ascr = None })
   | CST.PArray tuple ->
-
-    
     let (tuple, _loc) = r_split tuple in
     let lst = npseq_to_ne_list tuple.inside in
     let patterns = List.Ne.to_list lst in
     let%bind nested = bind_map_list conv patterns in
     let var = Location.wrap @@ Var.fresh () in
     ok (TupleVar ({var ; ascr = None} , nested))
-  (* | CST.PObject record ->
-    let (inj, _loc) = r_split record in
-    let aux : CST.field_pattern CST.reg -> (label * nested_match_repr,_) result = fun field ->
-      let { field_name ; eq=_ ; pattern } : CST.field_pattern = field.value in
-      let%bind pattern = conv pattern in
-      ok (AST.Label field_name.value , pattern)
-    in
-    let%bind lst = bind_map_ne_list aux @@ npseq_to_ne_list inj.ne_elements in
-    let lst = List.Ne.to_list lst in
-    let (labels,nested) = List.split lst in
-    let var = Location.wrap @@ Var.fresh () in
-    ok (RecordVar ({var ; ascr = None}, labels , nested)) *)
   | _ -> 
     fail @@ unsupported_pattern_type p
 
@@ -900,9 +828,10 @@ and compile_parameter : CST.expr ->
             | Expr_entry EVar e ->              
                 let (var,loc) = r_split e in
                 return loc [] @@ Var.of_name var
-            | Rest_entry _ -> failwith "w--p"
+            | Rest_entry _ as r -> fail @@ array_rest_not_supported r
             | _ -> fail @@ not_a_valid_parameter expr
             in 
+
             let%bind lst = bind_map_ne_list array_item @@ npseq_to_ne_list array_items in
             let (lst,exprs) = List.Ne.split lst in
             let var, expr = match lst with
@@ -1065,7 +994,6 @@ and compile_statement : CST.statement -> (statement_result, _) result = fun stat
   let binding e = ok @@ Binding (fun f -> e f) in
   let expr e = ok @@ Expr e in
   let return r = ok @@ Return r in
-  (* let in_switch_or_loop = env.in_switch || env.in_loop in *)
   let compile_initializer ~const ({value = {binders; lhs_type; expr = let_rhs; attributes}; region} : CST.let_binding Region.reg) : (expression -> expression, _) result = 
     match binders with 
       PArray array ->
@@ -1137,86 +1065,8 @@ and compile_statement : CST.statement -> (statement_result, _) result = fun stat
     let%bind init = compile_initializer ~const:true hd in
     let%bind initializers' = initializers ~const:true init tl in 
     binding initializers'
-  | SSwitch switch -> failwith "not implemented "
-    (* let (s, loc) = r_split switch in
-    let ({expr = switch_expr; cases; _}: CST.switch) = s in
-    let rec compile_cases: CST.expr -> CST.switch_case list -> (statement_result, _) result = fun switch_expr -> function
-      CST.Switch_case {expr = arg2; statements; _} :: remaining ->
-        let eq = ({
-          value = {
-            op   = Region.ghost; 
-            arg1 = switch_expr;
-            arg2
-          }; 
-          region = Region.ghost
-        }: CST.equal_cmp CST.bin_op Region.reg) in
-        let%bind test = compile_bin_op C_EQ eq in
-        let%bind then_clause = 
-          match statements with 
-          | Some statements -> compile_statements statements
-          | None -> expr (e_unit ())
-        in
-        let has_break_or_return = function
-          Break _
-        | Return _ -> true
-        | _ -> false
-        in
-        let to_expr = function
-          Break b   -> b
-        | Return r  -> r
-        | Binding b -> b @@ e_unit ()
-        | Expr e    -> e
-        in
-        let then_ = to_expr then_clause in
-        let%bind else_ = compile_cases switch_expr remaining in
-        let else_ = to_expr else_ in
-        if has_break_or_return then_clause then (
-          expr (e_cond ~loc test then_ else_) env
-        )
-        else 
-          expr (e_sequence ~loc (e_cond ~loc test (to_expr then_clause) (e_unit ~loc ())) else_) env
-    | CST.Switch_default_case {statements; _} :: remaining ->
-      let eq = ({
-        value = {
-          op   = Region.ghost; 
-          arg1 = switch_expr;
-          arg2 = switch_expr
-        }; 
-        region = Region.ghost
-      }: CST.equal_cmp CST.bin_op Region.reg) in
-        let%bind test = compile_bin_op C_EQ eq env in
-        let%bind (then_clause, env) = 
-          match statements with 
-          | Some statements -> compile_statements statements {env with in_switch = true}
-          | None -> expr (e_unit ()) env
-        in
-        let has_break_or_return = function
-          Break _
-        | Return _ -> true
-        | _ -> false
-        in
-        let to_expr = function
-          Break b   -> b
-        | Return r  -> r
-        | Binding b -> b @@ e_unit ()
-        | Expr e    -> e
-        in
-        let then_ = to_expr then_clause in
-        let%bind (else_, env) = compile_cases switch_expr remaining in
-        let else_ = to_expr else_ in
-        if has_break_or_return then_clause then 
-          expr (e_cond ~loc test then_ else_) env
-        else 
-          expr (e_sequence ~loc then_ else_) env
-    | _ -> expr (e_unit ()) env
-    in
-    let cases' = Utils.nseq_to_list cases in
-    compile_cases switch_expr cases' *)
-  | SBreak b -> failwith "not implemented"
-    (* if not in_switch_or_loop then 
-      fail @@ not_in_switch_or_loop b 
-    else 
-      ok (Break (e_unit ()), env) *)
+  | SSwitch s -> fail @@ switch_not_supported s
+  | SBreak b -> fail @@ break_not_implemented b
   | SType ti -> 
     let (ti, loc) = r_split ti in
     let ({name;type_expr;_}: CST.type_decl) = ti in
