@@ -5,13 +5,13 @@ variables:
   LIGO_IMAGE_TAG: "ligo:${CI_COMMIT_SHORT_SHA}-${CI_PIPELINE_ID}"
 
 stages:
-  - pretooling                      # changelog
-  - docker-build                    # build, test, produces binaries/.deb/doc within docker
-  - docker-extract                  # extract what have been built and expose them as artifact
-  - tooling                         # build miscellaneous tooling-related things (website, changelog..)
-  - push                            # deploy docker images, pages, releases (tag)
-  - ide-deploy                      # deploy web IDE
-  - ide-feature-container-removal   # remove feature branch containers of the webide
+  - pretooling          # changelog
+  - docker-build        # build, test, produces binaries/.deb/doc within docker
+  - docker-extract      # extract what have been built and expose them as artifact
+  - tooling             # build miscellaneous tooling-related things (website, changelog..)
+  - push                # deploy docker images, pages, releases (tag)
+  - ide-deploy          # deploy web IDE
+  - ide-feature-remove  # remove feature branch containers
 
 .nix:
   before_script:
@@ -254,7 +254,7 @@ webide-push:
 #     - merge_requests
 #     - /^.*-run-dev$/
 
-# This job will deploy the docker container to the test server
+# This job will deploy the web-ide docker container to the test server
 deploy-handoff-feature:
   # Handoff deployment duties to private repo
   stage: ide-deploy
@@ -269,6 +269,20 @@ deploy-handoff-feature:
     # Only deploy handoff when from the dev branch AND on the canonical ligolang/ligo repository
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
+
+# # This job will remove the web-ide docker containers that contain the MR_IID in their namefrom  the test server
+# remove-webide-containers-handoff:
+#   # Handoff deployment duties to private repo
+#   stage: ide-feature-remove
+#   variables:
+#     LIGO_CI_MERGE_REQUEST_IID: "${CI_MERGE_REQUEST_IID}"
+#   trigger: 
+#     project: ligolang/ligo-webide-deploy
+#     branch: new-api-server-changes
+#   rules:
+#     # Only deploy handoff when from the dev branch AND on the canonical ligolang/ligo repository
+#     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+#       when: always
 
 # deploy-handoff:
 #   # Handoff deployment duties to private repo
