@@ -40,6 +40,7 @@ Inductive expr : Set :=
 | E_map : A -> splitting -> binds -> expr -> expr
 | E_loop_left : A -> splitting -> binds -> node A string -> expr -> expr
 | E_fold : A -> splitting -> expr -> splitting -> expr -> binds -> expr
+| E_fold_right : A -> splitting -> expr -> splitting -> expr -> binds -> expr
 
 | E_failwith : A -> expr -> expr
 

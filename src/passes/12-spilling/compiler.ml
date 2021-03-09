@@ -483,46 +483,10 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
               return @@ E_fold (f' , collection' , initial')
             )
           | [ f ; collection ; initial ], C_FOLD_RIGHT -> (
-              let%bind (input , output) = trace_option (corner_case ~loc:__LOC__ "expected function type") @@ AST.get_t_function f.type_expression in
-              let%bind f' = compile_expression f in
-              let%bind input' = compile_type input in
-              let%bind (item_type, acc_type) = trace_option (corner_case ~loc:__LOC__ "expected pair of element type and accumulator type") (Mini_c.Combinators.get_t_pair input') in
-              let annot_item_type = (None, item_type) in
-              let annot_acc_type = (None, acc_type) in
-              let rev_input_var = Location.wrap @@ Var.fresh ~name:"reversed" () in
-              let rev_input_type = Mini_c.Combinators.t_pair annot_acc_type annot_item_type in
-              let%bind output' = compile_type output in
-              let binder = Location.wrap @@ Var.fresh ~name:"iterated" () in
-              let application = Mini_c.Combinators.e_application f' output' (Mini_c.Combinators.e_var binder input') in
-              let rev_input_var_sym = Mini_c.Combinators.e_var rev_input_var rev_input_type in
-              let f'' = ((rev_input_var, rev_input_type),
-                         Mini_c.Combinators.e_let_in binder input' false
-                           (Mini_c.Combinators.Expression.make (E_constant {cons_name = C_PAIR; arguments = [
-                                Mini_c.Combinators.Expression.make (E_constant {cons_name = C_CDR; arguments = [rev_input_var_sym]}) item_type;
-                                Mini_c.Combinators.Expression.make (E_constant {cons_name = C_CAR; arguments = [rev_input_var_sym]}) acc_type;
-                              ]}) input')
-                           application
-                        ) in
-              let%bind initial' = compile_expression initial in
-              let%bind collection' = compile_expression collection in
-              let list_type = collection'.type_expression in
-              let annot_list_type = (None, list_type) in
-              let rev_var = Location.wrap @@ Var.fresh ~name:"reversed" () in
-              let%bind elem_type = trace_option (corner_case ~loc:__LOC__ "expected list with element type") (Mini_c.Combinators.get_t_list list_type) in
-              let annot_elem_type = (None, elem_type) in
-              let rev_arg_type = Mini_c.Combinators.t_pair annot_list_type annot_elem_type in
-              let rev_var_sym = Mini_c.Combinators.e_var rev_var rev_arg_type in
-              let rev_fun = ((rev_var, Mini_c.Combinators.t_pair annot_list_type annot_elem_type),
-                             Mini_c.Combinators.Expression.make (E_constant {cons_name = C_CONS; arguments = [
-                                 Mini_c.Combinators.Expression.make (E_constant {cons_name = C_CDR; arguments = [rev_var_sym]}) elem_type;
-                                 Mini_c.Combinators.Expression.make (E_constant {cons_name = C_CAR; arguments = [rev_var_sym]}) list_type;
-                               ]}) list_type
-                            ) in
-              let collection'' = Mini_c.Combinators.Expression.make
-                  (E_fold (rev_fun, collection', Mini_c.Combinators.Expression.make (E_constant {cons_name = C_LIST_EMPTY; arguments = []}) list_type ))
-                  list_type
-              in
-              return @@ E_fold (f'' , collection'' , initial')
+              let%bind f' = expression_to_iterator_body f in
+              let%bind initial' = self initial in
+              let%bind collection' = self collection in
+              return @@ E_fold_right (f' , collection' , initial')
             )
           | [ f ; collection ; initial ] , C_SET_FOLD_RIGHT -> (
               let%bind (input , output) = trace_option (corner_case ~loc:__LOC__ "expected function type") @@ AST.get_t_function f.type_expression in

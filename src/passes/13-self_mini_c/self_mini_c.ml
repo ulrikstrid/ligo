@@ -143,6 +143,7 @@ let rec is_pure : expression -> bool = fun e ->
   | E_application _
   | E_iterator _
   | E_fold _
+  | E_fold_right _
     -> false
 
 let occurs_in : expression_variable -> expression -> bool =
