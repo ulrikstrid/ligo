@@ -35,6 +35,9 @@ type abs_error = [
   | `Concrete_jsligo_switch_not_supported of Raw.switch Region.reg
   | `Concrete_jsligo_break_not_implemented of Region.t
   | `Concrete_jsligo_expected_a_variable of Raw.expr
+  | `Concrete_jsligo_expected_a_field_name of Raw.selection
+  | `Concrete_jsligo_expected_an_int of Raw.expr
+  | `Concrete_jsligo_invalid_list_pattern_match of Raw.array_item list
   ]
 
 let unknown_predefined_type name = `Concrete_jsligo_unknown_predefined_type name
@@ -66,6 +69,9 @@ let array_rest_not_supported p = `Concrete_jsligo_array_rest_not_supported p
 let switch_not_supported s = `Concrete_jsligo_switch_not_supported s
 let break_not_implemented b = `Concrete_jsligo_break_not_implemented b
 let expected_a_variable e = `Concrete_jsligo_expected_a_variable e
+let expected_a_field_name f = `Concrete_jsligo_expected_a_field_name f
+let expected_an_int e = `Concrete_jsligo_expected_an_int e
+let invalid_list_pattern_match args = `Concrete_jsligo_invalid_list_pattern_match args
 
 let error_ppformat : display_format:string display_format ->
   Format.formatter -> abs_error -> unit =
@@ -206,6 +212,17 @@ Other forms of pattern matching are not (yet) supported. @]"
     | `Concrete_jsligo_expected_a_variable e -> (
       Format.fprintf f "@[<hv>%a@.Expected a variable.@]"
           Snippet.pp_lift (Raw.expr_to_region e)
+    )
+    | `Concrete_jsligo_expected_a_field_name s -> (
+      Format.fprintf f "@[<hv>%a@.Expected a field name.@]"
+      Snippet.pp_lift (Raw.selection_to_region s)
+    )
+    | `Concrete_jsligo_expected_an_int e -> (
+      Format.fprintf f "@[<hv>%a@.Expected an int.@]"
+      Snippet.pp_lift (Raw.expr_to_region e)
+    )
+    | `Concrete_jsligo_invalid_list_pattern_match _l -> (
+      Format.fprintf f "@[<hv>Invalid list pattern matching.@]"
     )
   )
 
@@ -424,4 +441,26 @@ let error_jsonformat : abs_error -> Yojson.Safe.t = fun a ->
     let content = `Assoc [
       ("message", message);
       ("location", `String loc);] in
+    json_error ~stage ~content
+  | `Concrete_jsligo_expected_a_field_name s ->
+    let message = `String "Expected a field name." in
+    let loc = Format.asprintf "%a" Location.pp_lift (Raw.selection_to_region s) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", `String loc);] in
+    json_error ~stage ~content
+  | `Concrete_jsligo_expected_an_int e ->
+    let message = `String "Expected an int." in
+    let loc = Format.asprintf "%a" Location.pp_lift (Raw.expr_to_region e) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", `String loc);] in
+    json_error ~stage ~content
+  | `Concrete_jsligo_invalid_list_pattern_match _l ->
+    let message = `String "Expected an int." in
+    (* let loc = Format.asprintf "%a" Location.pp_lift (Raw.expr_to_region e) in *)
+    let content = `Assoc [
+      ("message", message);
+      (* ("location", `String loc); *)
+      ] in
     json_error ~stage ~content

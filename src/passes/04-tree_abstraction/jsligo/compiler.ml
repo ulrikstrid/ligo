@@ -274,11 +274,11 @@ let selection_to_variable : CST.selection -> (CST.variable, _) result = function
       let (sfn , _) = r_split sfn in
       ok sfn.value
     )
-  | _ -> failwith "expected a field name"
+  | _ as f -> fail @@ expected_a_field_name f
 
 let compile_expression_to_int : CST.expr -> (z, _) result = function
   | EArith (Int i) -> ok (snd (i.value))
-  | _ -> failwith "expected an int in this expression"
+  | _ as e -> fail @@ expected_an_int e
 
 let compile_selection : CST.selection -> (_ access * location, _) result = fun selection ->
   match selection with
@@ -507,9 +507,9 @@ and compile_expression_in : CST.expr -> (AST.expr, _) result = fun e ->
           let%bind matchee = compile_expression_in input in
           let loc = Location.lift region in
           ok @@ e_matching ~loc matchee @@ AST.Match_list {match_nil = body_nil;match_cons = (a,b, body) }
-        | _ -> failwith "no"
+        | _ -> fail @@ invalid_list_pattern_match args
         )
-    | _ -> failwith "no")
+    | _ -> fail @@ invalid_list_pattern_match args)
   
   (* This case is due to a bad besign of our constant it as to change
     with the new typer so LIGO-684 on Jira *)
