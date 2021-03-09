@@ -289,6 +289,20 @@ deploy-handoff:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
       when: always
 
+# # This job will remove the web-ide docker containers that contain the MR_IID in their namefrom  the test server
+# remove-webide-containers-handoff:
+#   # Handoff deployment duties to private repo
+#   stage: ide-feature-remove
+#   variables:
+#     LIGO_CI_MERGE_REQUEST_IID: "${CI_MERGE_REQUEST_IID}"
+#   trigger: 
+#     project: ligolang/ligo-webide-deploy
+#     branch: new-api-server-changes
+#   rules:
+#     # Only deploy handoff when from the dev branch AND on the canonical ligolang/ligo repository
+#     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_PROJECT_PATH == "ligolang/ligo"'
+#       when: always
+
 # deploy-handoff:
 #   # Handoff deployment duties to private repo
 #   stage: ide-deploy
