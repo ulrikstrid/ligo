@@ -478,8 +478,8 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
             )
           | [ f ; initial ; collection ], C_FOLD_LEFT -> (
               let%bind f' = expression_to_iterator_body f in
-              let%bind initial' = compile_expression initial in
-              let%bind collection' = compile_expression collection in
+              let%bind initial' = self initial in
+              let%bind collection' = self collection in
               return @@ E_fold (f' , collection' , initial')
             )
           | [ f ; collection ; initial ], C_FOLD_RIGHT -> (
