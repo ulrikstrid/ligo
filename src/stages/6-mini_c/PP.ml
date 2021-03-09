@@ -139,7 +139,7 @@ and expression_content ppf (e:expression_content) = match e with
     fprintf ppf "@[for_%a %a of %a do ( %a )@]" constant b Var.pp name.wrap_content expression expr expression body
   | E_fold (((name , _) , body) , collection , initial) ->
     fprintf ppf "@[fold %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name.wrap_content expression body
-  | E_fold_right (((name , _) , body) , collection , initial) ->
+  | E_fold_right (((name , _) , body) , (collection,_) , initial) ->
     fprintf ppf "@[fold_right %a on %a with %a do ( %a )@]" expression collection expression initial Var.pp name.wrap_content expression body
   | E_raw_michelson code ->
     let open Tezos_micheline in

@@ -647,7 +647,7 @@ let set_arithmetic_mligo () : (unit, _) result =
   let%bind () =
     expect_eq program_1 "fold_right"
       (e_set [ e_int 4 ; e_int 10 ])
-      (e_list [e_int 10; e_int  4 ])
+      (e_list [e_int 4; e_int  10 ])
   in
   ok ()
 

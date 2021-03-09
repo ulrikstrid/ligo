@@ -135,12 +135,7 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
     let (ss1, us1) = union coll_usages body_usages in
     let (ss2, us2) = union init_usages us1 in
     (O.E_fold (meta, ss2, init, ss1, coll, body), us2)
-  | E_fold_right (body, coll, init) ->
-    let elem_type =
-      match coll.type_expression.type_content with
-      | T_list a -> a
-      | T_set a -> a
-      | _ -> internal_error __LOC__ "unexpected collection type for fold_right" in
+  | E_fold_right (body, (coll, elem_type), init) ->
     let elem_type = translate_type elem_type in
     let (body, body_usages) = translate_binder body env in
     let (coll, coll_usages) = translate_expression coll env in

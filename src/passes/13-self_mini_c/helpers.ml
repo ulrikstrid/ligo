@@ -50,7 +50,7 @@ let rec fold_expression : ('a,'err) folder -> 'a -> expression -> ('a, 'err) res
       let%bind res = bind_fold_triple self init' (body,col,init) in
       ok res
   )
-  | E_fold_right (((_ , _) , body) , col , init) -> (
+  | E_fold_right (((_ , _) , body) , (col,_) , init) -> (
       let%bind res = bind_fold_triple self init' (body,col,init) in
       ok res
   )
@@ -108,9 +108,9 @@ let rec map_expression : 'err mapper -> expression -> (expression, 'err) result 
       let%bind (body',col',init') = bind_map_triple self (body,col,init) in
       return @@ E_fold (((name , tv) , body') , col', init')
   )
-  | E_fold_right (((name , tv) , body) , col , init) -> (
+  | E_fold_right (((name , tv) , body) , (col,el_ty) , init) -> (
       let%bind (body',col',init') = bind_map_triple self (body,col,init) in
-      return @@ E_fold_right (((name , tv) , body') , col', init')
+      return @@ E_fold_right (((name , tv) , body') , (col',el_ty), init')
   )
   | E_if_bool cab -> (
       let%bind cab' = bind_map_triple self cab in
