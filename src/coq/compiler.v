@@ -198,7 +198,13 @@ Fixpoint compile_expr
     let (inner1, inner2) := assoc_splitting inner1 inner2 in
     [Seq nil (compile_expr env1 outer e1);
      Seq nil (compile_expr env2 (Right :: inner1) e2);
-     Prim nil "ITER" [Seq nil [Prim nil "SWAP" [] []; Prim nil "PAIR" [] [];
+     (* build reversed list: *)
+     (* TODO use actual elt type instead of "int"! *)
+     Seq nil [Prim nil "NIL" [Prim nil "int" [] []] [];
+              Prim nil "SWAP" [] [];
+              Prim nil "ITER" [Seq nil [Prim nil "CONS" [] []]] []];
+     (* fold over reversed list: *)
+     Prim nil "ITER" [Seq nil [Prim nil "PAIR" [] [];
                                Seq nil (compile_binds env3 (keep_rights (left_usages inner2)) (filter_keeps (right_usages inner1)) e3)]] [];
      Seq nil (compile_usages (Keep :: right_usages inner2))]
   | E_failwith x e => [Seq nil (compile_expr env outer e); Prim x "FAILWITH" [] []]
@@ -692,6 +698,8 @@ Proof.
     eapply used_filter_keeps_right_usages; eauto.
     eauto.
     eauto 10.
+  (* E_fold_right *)
+  - admit. (* TODO *)
   (* E_raw_michelson *)
   - apply splits_right in Hsplits; subst; simpl; eauto.
   (* Args_nil *)

@@ -110,7 +110,7 @@ let rec map_expression : 'err mapper -> expression -> (expression, 'err) result 
   )
   | E_fold_right (((name , tv) , body) , col , init) -> (
       let%bind (body',col',init') = bind_map_triple self (body,col,init) in
-      return @@ E_fold (((name , tv) , body') , col', init')
+      return @@ E_fold_right (((name , tv) , body') , col', init')
   )
   | E_if_bool cab -> (
       let%bind cab' = bind_map_triple self cab in
