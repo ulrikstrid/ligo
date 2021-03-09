@@ -49,8 +49,8 @@ let michelson_add = (n : (nat, nat)) : nat =>
 <Syntax syntax="jsligo">
 
 ```jsligo
-let michelson_add = (n : (nat, nat)) : nat =>
-  (michelson` { UNPAIR;ADD } ` as ((nat, nat) => nat))(n);
+let michelson_add = (n : [nat, nat]) : nat =>
+  (Michelson` { UNPAIR;ADD } ` as ((n: [nat, nat]) => nat))(n);
 ```
 
 </Syntax>

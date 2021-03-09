@@ -181,6 +181,15 @@ let closure_religo () : (unit, _) result =
   in
   ok ()
 
+let closure_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/closure.jsligo" in
+  let%bind _ =
+    let input = e_int 0 in
+    let expected = e_int 25 in
+    expect_eq program "test" input expected
+  in
+  ok ()
+  
 
 let shadow () : (unit, _) result =
   let%bind program = type_file "./contracts/shadow.ligo" in
@@ -2073,6 +2082,24 @@ let let_in_religo () : (unit, _) result =
   in
   ok ()
 
+let let_in_jsligo () : (unit, _) result =
+  let%bind program = retype_file "./contracts/letin.religo" in
+  let%bind () =
+    let make_input n = e_pair (e_int n) (e_pair (e_int 3) (e_int 5)) in
+    let make_expected n =
+      e_pair (e_typed_list [] (t_operation ())) (e_pair (e_int (7+n)) (e_int (3+5)))
+    in
+    expect_eq_n program "main" make_input make_expected
+  in
+  let%bind () =
+    expect_eq program "letin_nesting" (e_unit ()) (e_string "test")
+  in
+  let%bind () =
+    expect_eq program "letin_nesting2" (e_int 4) (e_int 9)
+  in
+  ok ()
+  
+
 let local_type_decl program : (unit, _) result =
   let%bind () =
     expect_eq program "local_type" (e_unit ()) (e_int 3)
@@ -2090,6 +2117,10 @@ let local_type_decl_mligo () : (unit, _) result =
 let local_type_decl_religo () : (unit, _) result =
   let%bind program = retype_file "./contracts/local_type_decl.religo" in
   local_type_decl program
+
+let local_type_decl_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/local_type_decl.jsligo" in
+  local_type_decl program  
 
 let match_variant () : (unit, _) result =
   let%bind program = mtype_file "./contracts/match.mligo" in
@@ -3097,6 +3128,15 @@ let no_semicolon_religo () : (unit, _) result =
   in
   ok ()
 
+let no_semicolon_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/no_semicolon.jsligo" in
+  let%bind () =
+    let input _ = e_int 2 in
+    let expected _ = e_int 3 in
+    expect_eq_n program "a" input expected
+  in
+  ok ()
+
 let tuple_list_religo () : (unit, _) result =
   let%bind _ = retype_file "./contracts/tuple_list.religo" in
   ok ()
@@ -3160,6 +3200,7 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure" closure ;
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure (mligo)" closure_mligo ;
     test y (* enabled AND PASSES as of 02021-01-29 b89bd94ef *) "closure (religo)" closure_religo ;
+    test y "closure (jsligo)" closure_jsligo ;
     test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function" shared_function ;
     test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function (mligo)" shared_function_mligo ;
     test y (* enabled AND PASSES as of 02021-01-30 938866182 *) "shared function (religo)" shared_function_religo ;
@@ -3222,6 +3263,7 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto" crypto ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto (mligo)" crypto_mligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto (religo)" crypto_religo ;
+    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "crypto (jsligo)" crypto_jsligo ;
     (* test "set_arithmetic" set_arithmetic ; *)
     test y (* Missing typeclass *) "set_arithmetic (mligo)" set_arithmetic_mligo ;
     test y "set_arithmetic (religo)" set_arithmetic_religo ;
@@ -3271,9 +3313,11 @@ let main = test_suite "Integration (End to End)"
 
     test y "let-in (mligo)" let_in_mligo ;
     test y "let-in (religo)" let_in_religo ;
+    test y "let-in (jsligo)" let_in_jsligo ;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (ligo)" local_type_decl_ligo;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (mligo)" local_type_decl_mligo;
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (religo)" local_type_decl_religo;
+    test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "local type declaration (jsligo)" local_type_decl_jsligo;
     test y (* enabled AND PASSES as of 02020-02-03 2e8d3689b *) "match variant (mligo)" match_variant ;
     test y (* enabled AND PASSES as of 02020-02-03 2e8d3689b *) "match variant (religo)" match_variant_re ;
     test y "match variant (jsligo)" match_variant_js ;
@@ -3373,6 +3417,7 @@ let main = test_suite "Integration (End to End)"
     test y (* enabled AND PASSES as of 02020-02-02 e38be768a *) "tuple type (religo)" tuple_type_religo ;
     test y "tuple type (jsligo)" tuple_type_jsligo ;
     test y "no semicolon (religo)" no_semicolon_religo ;
+    test y "no semicolon (jsligo)" no_semicolon_jsligo ;
     test y "loop_bugs (ligo)" loop_bugs_ligo ;
     test y (* new typeclass *) "tuple_list (religo)" tuple_list_religo ;
     test y "tuple_list (jsligo)" tuple_list_jsligo ;

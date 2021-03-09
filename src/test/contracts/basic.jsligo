@@ -1,0 +1,7 @@
+let counter = (n: nat): nat => {
+  let i : nat = (0 as nat);
+  while (i < n) {
+    i = i + (1 as nat)
+  };
+  return i
+};
