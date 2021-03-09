@@ -36,6 +36,7 @@ const command = (state = DEFAULT_STATE, action: Action): CommandState => {
         selected: action.payload,
       };
     case ActionType.ChangeDispatchedAction:
+      console.log(action);
       return {
         ...state,
         dispatchedAction: action.payload,

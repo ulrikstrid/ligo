@@ -1,6 +1,6 @@
 import * as monaco from 'monaco-editor';
 import React, { useEffect, useRef, useState } from 'react';
-import { useDispatch, useStore , connect, useSelector} from 'react-redux';
+import { useDispatch, useStore , connect} from 'react-redux';
 import styled from 'styled-components';
 
 import { AppState } from '../../redux/app';
@@ -9,8 +9,6 @@ import { ClearSelectedAction } from '../../redux/examples';
 import { ListDeclarationAction } from '../../redux/actions/list-declaration'
 import {ChangeSelectedAction} from '../../redux/compile-function'
 import { CompileFunctionAction } from '../../redux/actions/compile-function';
-import {  EditorState } from '../../redux/editor';
-import { ChangeDispatchedAction } from '../../redux/command';
 
 interface TopPaneStyled {
   editorHeight: number;
@@ -28,24 +26,42 @@ const Container = styled.div<TopPaneStyled>`
 `;
 
 const MonacoComponent = (props) => {
-  const { editorHeight, code, language, getDeclarationList } = props
+  const { editorHeight, code, language, getDeclarationList, setCompileFunction } = props
   let containerRef = useRef(null);
   const store = useStore();
   const dispatch = useDispatch();
   const [hasCompiledFunction, setHasCompiledFunction] = useState(false)
+  const [currentLineText, setCurrentLineText] = useState('')
 
   const compileFunctionHandler = () => {
-    console.log('***', code, language)
+    getDeclarationList(language, code).then((method: MethodType) => {
+      method.declarations.forEach(d => {
+        if (currentLineText.indexOf(d) !== -1) {
+          setCompileFunction(d)
+        } else {
+          setCompileFunction('')
+        }
+      });
+      // dispatch({ ...new ChangeDispatchedAction(new CompileFunctionAction()) });
+      dispatch( new CompileFunctionAction().getAction());
+      setHasCompiledFunction(false)
+      setCompileFunction('')
+    })
   }
 
-    const onRightClickAction = () => {
+    const onRightClickAction = (model) => {
       return {
         id: '1',
         label: "Compile Function",
         keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.F10],
 	      contextMenuGroupId: 'navigation',
 	      contextMenuOrder: 2.5,
-        run: (e) => {setHasCompiledFunction(true)}
+        run: (e) => {
+          setHasCompiledFunction(true)
+          const position = e.getPosition()
+          const currentLine = model && model.getLineContent(position.lineNumber)
+          setCurrentLineText(currentLine)
+        }
       }
     }
 
@@ -85,7 +101,8 @@ const MonacoComponent = (props) => {
       }
     })
 
-    editor.addAction(onRightClickAction())
+    const m = editor.getModel()
+    editor.addAction(onRightClickAction(m))
 
     let shouldDispatchCodeChangedAction = true;
 
