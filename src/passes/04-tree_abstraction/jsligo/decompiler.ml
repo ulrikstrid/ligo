@@ -167,7 +167,8 @@ let pattern_type (_: _ AST.binder) =
  *   ok @@ CST.PTyped (wrap @@ CST.{pattern=var;colon=ghost;type_expr}) *)
 
 let rec decompile_expression : AST.expression -> _ result = fun expr ->
-  let return_expr expr = ok @@ expr in
+  failwith "todo"
+  (* let return_expr expr = ok @@ expr in
   let return_expr_with_par expr = return_expr @@ CST.EPar (wrap @@ par @@ expr) in
   match expr.expression_content with
     E_variable name ->
@@ -448,7 +449,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
   | E_for_each _
   | E_while _ ->
     failwith @@ Format.asprintf "Decompiling a imperative construct to JsLIGO %a"
-    AST.PP.expression expr
+    AST.PP.expression expr *)
 
 (* and decompile_to_path : AST.expression_variable -> _ AST.access list -> (CST.path, _) result = fun var access ->
  *   let struct_name = decompile_variable var.wrap_content in
@@ -460,20 +461,22 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
  *     ok @@ (CST.Path (wrap @@ path) : CST.path) *)
 
 and decompile_to_selection : _ AST.access -> (CST.selection, _) result = fun access ->
-  match access with
+  failwith "todo"
+  (* match access with
     Access_tuple index -> ok @@ CST.Component (wrap @@ ("",index))
   | Access_record str  -> ok @@ CST.FieldName (wrap str)
   | Access_map _ ->
     failwith @@ Format.asprintf
-    "Can't decompile access_map to selection"
+    "Can't decompile access_map to selection" *)
 
 and decompile_lambda : (AST.expr, AST.ty_expr) AST.lambda -> _ =
   fun {binder;output_type;result} ->
-    let%bind param_decl = pattern_type binder in
+    failwith "todo"
+    (* let%bind param_decl = pattern_type binder in
     let param = CST.PPar (wrap @@ par @@ param_decl) in
     let%bind ret_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) output_type in
     let%bind return = decompile_expression result in
-    ok @@ (param,ret_type,return)
+    ok @@ (param,ret_type,return) *)
 
 (* and decompile_matching_cases : AST.matching_expr -> ((CST.expr CST.case_clause Region.reg, Region.t) Simple_utils.Utils.nsepseq Region.reg,_) result =
  * fun m ->
@@ -525,15 +528,27 @@ and decompile_lambda : (AST.expr, AST.ty_expr) AST.lambda -> _ =
  *   in
  *   map wrap @@ list_to_nsepseq cases *)
 
-let decompile_declaration : AST.declaration Location.wrap -> (CST.declaration, _) result = fun decl ->
+let decompile_declaration : AST.declaration Location.wrap -> (CST.statement, _) result = fun decl ->
   let decl = Location.unwrap decl in
   let wrap value = ({value;region=Region.ghost} : _ Region.reg) in
   match decl with
     Declaration_type {type_binder;type_expr} ->
     let name = decompile_variable type_binder in
     let%bind type_expr = decompile_type_expr type_expr in
-    ok @@ CST.TypeDecl (wrap (CST.{kwd_type=ghost; name; eq=ghost; type_expr}))
-  | Declaration_constant {binder;attr;expr}->
+    ok @@ CST.SType (wrap (CST.{kwd_type=ghost; name; eq=ghost; type_expr}))
+  | Declaration_constant {name; binder; expr; inline} ->
+    
+    let binding = {
+      binders;
+      lhs_type;
+      eq;
+      expr;
+      attributes
+    }
+
+    ok @@ CST.SConst (wrap (CST.{kwd_const=ghost; bindings}))
+  | _ -> failwith "todo"
+  (* | Declaration_constant {binder;attr;expr}->
     let attributes : CST.attributes = decompile_attributes attr in
     let var = CST.PVar (decompile_variable binder.var.wrap_content) in
     let binders = var in
@@ -553,7 +568,7 @@ let decompile_declaration : AST.declaration Location.wrap -> (CST.declaration, _
       let%bind let_rhs = decompile_expression expr in
       let let_binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
       let let_decl = wrap (ghost,None,let_binding,attributes) in
-      ok @@ CST.ConstDecl let_decl
+      ok @@ CST.ConstDecl let_decl *)
 
 let decompile_program : AST.program -> (CST.ast, _) result = fun prg ->
   let%bind decl = bind_map_list decompile_declaration prg in
