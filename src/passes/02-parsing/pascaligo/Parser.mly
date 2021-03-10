@@ -327,12 +327,12 @@ core_type:
     let tuple = {region; value={lpar; inside=inside,[]; rpar}}
     in T_Ctor {region=total; value = type_ctor, tuple}
   }
-| type_name        { T_Var     $1 }
-| "_"              { T_Wild    $1 }
-| "<string>"       { T_String  $1 }
-| "<int>"          { T_Int     $1 }
+| type_name      { T_Var     $1 }
+| "_"            { T_Wild    $1 }
+| "<string>"     { T_String  $1 }
+| "<int>"        { T_Int     $1 }
 | type_in_module { T_ModPath $1 }
-| par(type_expr)   { T_Par     $1 }
+| par(type_expr) { T_Par     $1 }
 
 type_in_module:
   module_path(type_name) { mk_mod_path $1 (fun x -> x.region) }

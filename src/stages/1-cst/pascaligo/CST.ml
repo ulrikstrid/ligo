@@ -557,7 +557,7 @@ and expr =
 | E_Nil       of kwd_nil
 | E_Neq       of neq bin_op reg                (* "=/=" *)
 | E_None      of kwd_None
-| E_Not       of kwd_not un_op  reg            (* "not" *)
+| E_Not       of kwd_not un_op reg             (* "not" *)
 | E_Or        of kwd_or bin_op reg             (* "or"  *)
 | E_Par       of expr par reg
 | E_Proj      of projection reg

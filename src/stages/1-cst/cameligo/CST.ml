@@ -190,7 +190,7 @@ and module_alias = {
    add or modify some, please make sure they remain in order. *)
 
 and type_expr =
-  T_App     of (type_ctor * type_tuple) reg
+  T_Ctor    of (type_ctor * t_ctor_args) reg
 | T_Fun     of (type_expr * arrow * type_expr) reg
 | T_Int     of (lexeme * Z.t) reg
 | T_ModPath of type_expr module_path reg
@@ -203,6 +203,10 @@ and type_expr =
 | T_Wild    of wild
 
 (* Constructors *)
+
+and t_ctor_args =
+  T_Unary of type_expr
+| T_Tuple of type_tuple
 
 and type_tuple = (type_expr, comma) nsepseq par reg
 
@@ -257,24 +261,24 @@ and 'a module_path = {
    add or modify some, please make sure they remain in order. *)
 
 and pattern =
-  P_Bytes    of (lexeme * Hex.t) reg
-| P_Cons     of (pattern, cons) nsepseq reg
-| P_Ctor     of (ctor * pattern option) reg
-| P_False    of kwd_false
-| P_Int      of (lexeme * Z.t) reg
-| P_List     of pattern injection reg
-| P_Nat      of (lexeme * Z.t) reg
-| P_None     of kwd_None
-| P_Par      of pattern par reg
-| P_Record   of field_pattern reg ne_injection reg
-| P_Some     of (kwd_Some * pattern) reg
-| P_String   of string reg
-| P_True     of kwd_true
-| P_Tuple    of (pattern, comma) nsepseq reg
-| P_Typed    of typed_pattern reg
-| P_Unit     of the_unit reg
-| P_Var      of variable
-| P_Wild     of wild
+  P_Bytes  of (lexeme * Hex.t) reg
+| P_Cons   of (pattern, cons) nsepseq reg
+| P_Ctor   of (ctor * pattern option) reg
+| P_False  of kwd_false
+| P_Int    of (lexeme * Z.t) reg
+| P_List   of pattern injection reg
+| P_Nat    of (lexeme * Z.t) reg
+| P_None   of kwd_None
+| P_Par    of pattern par reg
+| P_Record of field_pattern reg ne_injection reg
+| P_Some   of (kwd_Some * pattern) reg
+| P_String of string reg
+| P_True   of kwd_true
+| P_Tuple  of (pattern, comma) nsepseq reg
+| P_Typed  of typed_pattern reg
+| P_Unit   of the_unit reg
+| P_Var    of variable
+| P_Wild   of wild
 
 and typed_pattern = {
   pattern   : pattern;
@@ -291,31 +295,54 @@ and field_pattern = {
 (* EXPRESSIONS *)
 
 and expr =
-  ECase     of expr case reg
-| ECond     of cond_expr reg
-| EAnnot    of annot_expr par reg
-| ELogic    of logic_expr
-| EArith    of arith_expr
-| EString   of string_expr
-| EList     of list_expr
-| ECtor     of ctor_expr
-| ERecord   of record reg
-| EProj     of projection reg
-| EModPath   of expr module_path reg
-| EUpdate   of update reg
-| EVar      of variable
-| ECall     of (expr * expr nseq) reg
-| EBytes    of (string * Hex.t) reg
-| EUnit     of the_unit reg
-| ETuple    of (expr, comma) nsepseq reg
-| EPar      of expr par reg
-| ELetIn    of let_in reg
-| ETypeIn   of type_in reg
-| EModIn    of mod_in reg
-| EModAlias of mod_alias reg
-| EFun      of fun_expr reg
-| ESeq      of expr injection reg
-| ECodeInj  of code_inj reg
+  E_Add      of plus bin_op reg                (* "+"   *)
+| E_And      of kwd_and bin_op reg
+| E_Annot    of annot_expr par reg
+| E_Bytes    of (string * Hex.t) reg
+| E_Call     of (expr * expr nseq) reg
+| E_Case     of expr case reg
+| E_Cat      of caret bin_op reg
+| E_CodeInj  of code_inj reg
+| E_Equal    of equal bin_op reg
+| E_Cond     of cond_expr reg
+| E_Cons     of cons bin_op reg
+| E_Ctor     of (ctor * expr option) reg
+| E_Div      of slash bin_op reg
+| E_False    of kwd_false
+| E_Fun      of fun_expr reg
+| E_Geq      of geq bin_op reg
+| E_Gt       of gt bin_op reg
+| E_Int      of (string * Z.t) reg
+| E_Leq      of leq bin_op reg
+| E_LetIn    of let_in reg
+| E_List     of expr injection reg
+| E_Lt       of lt bin_op reg
+| E_Mod      of kwd_mod bin_op reg
+| E_ModAlias of mod_alias reg
+| E_ModIn    of mod_in reg
+| E_ModPath  of expr module_path reg
+| E_Mult     of times bin_op reg
+| E_Mutez    of (string * Z.t) reg
+| E_Nat      of (string * Z.t) reg
+| E_Neg      of minus un_op reg
+| E_Neq      of neq bin_op reg
+| E_None     of kwd_None
+| E_Not      of kwd_not un_op reg
+| E_Or       of kwd_or bin_op reg
+| E_Par      of expr par reg
+| E_Proj     of projection reg
+| E_Record   of record reg
+| E_Seq      of expr injection reg
+| E_Some     of (kwd_Some * expr) reg
+| E_String   of string reg
+| E_Sub      of minus bin_op reg
+| E_True     of kwd_true
+| E_Tuple    of (expr, comma) nsepseq reg
+| E_TypeIn   of type_in reg
+| E_Unit     of the_unit reg
+| E_Update   of update reg
+| E_Var      of variable
+| E_Verbatim of string reg
 
 and annot_expr = expr * type_annot
 
@@ -324,42 +351,6 @@ and 'a injection = {
   elements   : ('a, semi) sepseq;
   terminator : semi option
 }
-
-and list_expr =
-  ECons     of cons bin_op reg
-| EListComp of expr injection reg
-
-and string_expr =
-  Cat      of caret bin_op reg
-| String   of string reg
-| Verbatim of string reg
-
-and ctor_expr =
-  ENone    of kwd_None
-| ESomeApp of (kwd_Some * expr) reg
-| ECtorApp of (ctor * expr option) reg
-
-and arith_expr =
-  Add   of plus bin_op reg
-| Sub   of minus bin_op reg
-| Mult  of times bin_op reg
-| Div   of slash bin_op reg
-| Mod   of kwd_mod bin_op reg
-| Neg   of minus un_op reg
-| Int   of (string * Z.t) reg
-| Nat   of (string * Z.t) reg
-| Mutez of (string * Z.t) reg
-
-and logic_expr =
-  BoolExpr of bool_expr
-| CompExpr of comp_expr
-
-and bool_expr =
-  Or    of kwd_or bin_op reg
-| And   of kwd_and bin_op reg
-| Not   of kwd_not un_op reg
-| True  of kwd_true
-| False of kwd_false
 
 and 'a bin_op = {
   op   : 'a;
@@ -371,14 +362,6 @@ and 'a un_op = {
   op  : 'a;
   arg : expr
 }
-
-and comp_expr =
-  Lt    of lt    bin_op reg
-| Leq   of leq   bin_op reg
-| Gt    of gt    bin_op reg
-| Geq   of geq   bin_op reg
-| Equal of equal bin_op reg
-| Neq   of neq   bin_op reg
 
 and record = field_assignment reg ne_injection
 
@@ -505,81 +488,83 @@ let type_expr_to_region = function
 | T_Int    {region; _}
 | T_Var    {region; _}
 | T_Wild    region
-| T_ModA   {region; _}
-   -> region
-
-let list_pattern_to_region = function
-  PListComp {region; _} | PCons {region; _} -> region
-
-let ctor_pattern_to_region = function
-  P_None region | P_SomeApp {region;_}
-| P_True region | P_False region
-| P_CtorApp {region;_} -> region
+| T_ModPath {region; _} -> region
 
 let pattern_to_region = function
-| P_List p -> list_pattern_to_region p
-| P_Ctor c -> ctor_pattern_to_region c
-| P_Unit {region;_}
-| P_Tuple {region;_} | P_Var {region;_}
-| P_Int {region;_}
-| P_String {region;_} | P_Verbatim {region;_}
-| P_Wild region | P_P_ar {region;_}
-| P_Record {region; _} | P_Typed {region; _}
-| P_Nat {region; _} | P_Bytes {region; _}
-  -> region
-
-let bool_expr_to_region = function
-  Or {region;_} | And {region;_}
-| True region | False region
-| Not {region;_} -> region
-
-let comp_expr_to_region = function
-  Lt {region;_} | Leq {region;_}
-| Gt {region;_} | Geq {region;_}
-| Neq {region;_} | Equal {region;_} -> region
-
-let logic_expr_to_region = function
-  BoolExpr e -> bool_expr_to_region e
-| CompExpr e -> comp_expr_to_region e
-
-let arith_expr_to_region = function
-  Add {region;_} | Sub {region;_} | Mult {region;_}
-| Div {region;_} | Mod {region;_} | Neg {region;_}
-| Int {region;_} | Mutez {region; _}
-| Nat {region; _} -> region
-
-let string_expr_to_region = function
-  Verbatim {region;_} | String {region;_} | Cat {region;_} -> region
-
-let list_expr_to_region = function
-  ECons {region; _} | EListComp {region; _}
-(* | Append {region; _}*) -> region
-
-and ctor_expr_to_region = function
-  ENone region
-| ECtorApp {region; _}
-| ESomeApp {region; _} -> region
+  P_Bytes  {region; _}
+| P_Cons   {region; _}
+| P_Ctor   {region; _}
+| P_False  region
+| P_Int    {region; _}
+| P_List   {region; _}
+| P_Nat    {region; _}
+| P_None   region
+| P_Par    {region; _}
+| P_Record {region; _}
+| P_Some   {region; _}
+| P_String {region; _}
+| P_True   region
+| P_Tuple  {region; _}
+| P_Typed  {region; _}
+| P_Unit   {region; _}
+| P_Var    {region; _}
+| P_Wild   region -> region
 
 let expr_to_region = function
-  E_Logic e  -> logic_expr_to_region e
-| E_Arith e  -> arith_expr_to_region e
-| E_String e -> string_expr_to_region e
-| E_List e   -> list_expr_to_region e
-| E_Ctor e   -> ctor_expr_to_region e
-| E_Annot {region;_}  | E_LetIn {region;_}  | E_Fun {region;_}
-| E_TypeIn {region;_} | E_ModIn {region;_}  | E_ModAlias {region;_}
-| E_Cond {region;_}   | E_Tuple {region;_}  | E_Case {region;_}
-| E_Call {region;_}   | E_Var {region;_}    | E_Proj {region;_}
-| E_Unit {region;_}   | E_Par {region;_}    | E_Bytes {region;_}
-| E_Seq {region;_}    | E_Record {region;_} | E_Update {region;_}
-| E_ModA {region;_}   | E_CodeInj {region;_}
-  -> region
+  E_Add      {region; _}
+| E_And      {region; _}
+| E_Annot    {region; _}
+| E_Bytes    {region; _}
+| E_Call     {region; _}
+| E_Case     {region; _}
+| E_Cat      {region; _}
+| E_CodeInj  {region; _}
+| E_Equal    {region; _}
+| E_Cond     {region; _}
+| E_Cons     {region; _}
+| E_Ctor     {region; _}
+| E_Div      {region; _}
+| E_False    region
+| E_Fun      {region; _}
+| E_Geq      {region; _}
+| E_Gt       {region; _}
+| E_Int      {region; _}
+| E_Leq      {region; _}
+| E_LetIn    {region; _}
+| E_List     {region; _}
+| E_Lt       {region; _}
+| E_Mod      {region; _}
+| E_ModAlias {region; _}
+| E_ModIn    {region; _}
+| E_ModPath  {region; _}
+| E_Mult     {region; _}
+| E_Mutez    {region; _}
+| E_Nat      {region; _}
+| E_Neg      {region; _}
+| E_Neq      {region; _}
+| E_None     region
+| E_Not      {region; _}
+| E_Or       {region; _}
+| E_Par      {region; _}
+| E_Proj     {region; _}
+| E_Record   {region; _}
+| E_Seq      {region; _}
+| E_Some     {region; _}
+| E_String   {region; _}
+| E_Sub      {region; _}
+| E_True     region
+| E_Tuple    {region; _}
+| E_TypeIn   {region; _}
+| E_Unit     {region; _}
+| E_Update   {region; _}
+| E_Var      {region; _}
+| E_Verbatim {region; _} -> region
 
 let declaration_to_region = function
-  Let         {region;_}
-| TypeDecl    {region;_}
-| ModuleDecl  {region;_}
-| ModuleAlias {region;_} -> region
+  D_Let      {region;_}
+| D_Module   {region;_}
+| D_ModAlias {region;_}
+| D_Type     {region;_} -> region
 
 let selection_to_region = function
   FieldName f -> f.region

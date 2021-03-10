@@ -13,6 +13,22 @@ let first_region = function
     [] -> None
 | x::_ -> Some x.Region.region
 
+let mk_mod_path :
+  (module_name, dot) Utils.nseq * 'a ->
+  ('a -> Region.t) ->
+  'a CST.module_path Region.reg =
+  fun (nseq, field) to_region ->
+    let (first, sep), tail = nseq in
+    let rec trans (seq, prev_sep as acc) = function
+      [] -> acc
+    | (item, next_sep) :: others ->
+        trans ((prev_sep, item) :: seq, next_sep) others in
+    let list, last_dot = trans ([], sep) tail in
+    let module_path = first, List.rev list in
+    let region = nsepseq_to_region to_region nsepseq
+    and value = {module_path; selector=last_dot; field}
+    in {value; region}
+
 (* END HEADER *)
 %}
 
@@ -150,28 +166,26 @@ list__(item):
 (* Main *)
 
 contract:
-  structure EOF { {$1 with eof=$2} }
+  declarations EOF { {decl=$1; eof=$2} }
 
-structure:
-  nseq(declaration) { {decl=$1; eof=Region.ghost} }
+(* Declarations *)
+
+declarations:
+  nseq(declaration) { $1 }
 
 declaration:
-  type_decl    {    TypeDecl $1 }
-| let_decl     {         Let $1 }
-| module_decl  {  ModuleDecl $1 }
-| module_alias { ModuleAlias $1 }
+  type_decl    { D_Type     $1 }
+| let_decl     { D_Let      $1 }
+| module_decl  { D_Module   $1 }
+| module_alias { D_ModAlias $1 }
 
 (* Module declarations *)
 
 module_decl:
-  "module" module_name "=" "struct" structure "end" {
+  "module" module_name "=" "struct" declarations "end" {
     let region = cover $1 $6 in
-    let value  = {kwd_module  = $1;
-                  name        = $2;
-                  eq          = $3;
-                  kwd_struct  = $4;
-                  structure   = $5;
-                  kwd_end     = $6}
+    let value  = {kwd_module=$1; name=$2; eq=$3; kwd_struct=$4;
+                  structure=$5; kwd_end=$6}
     in {region; value} }
 
 module_alias:
@@ -197,7 +211,7 @@ fun_type:
     let start  = type_expr_to_region $1
     and stop   = type_expr_to_region $3 in
     let region = cover start stop in
-    TFun {region; value=$1,$2,$3}
+    T_Fun {region; value=$1,$2,$3}
   }
 | cartesian { $1 }
 
@@ -206,30 +220,27 @@ cartesian:
 | core_type "*" nsepseq(core_type,"*") {
     let value  = Utils.nsepseq_cons $1 $2 $3 in
     let region = nsepseq_to_region type_expr_to_region value
-    in TProd {region; value} }
+    in T_Prod {region; value} }
 
 core_type:
   core_type type_name {
-    let arg, ctor  = $1, $2 in
-    let start      = type_expr_to_region arg
-    and stop       = ctor.region in
-    let region     = cover start stop in
-    let lpar, rpar = ghost, ghost in
-    let value      = {lpar; inside=(arg,[]); rpar} in
-    let arg        = {region=start; value}
-    in TApp {region; value = (ctor,arg)}
+    let arg, ctor = $1, $2 in
+    let start     = type_expr_to_region arg in
+    let arg       = {region=start; value = (T_Unary arg)}
+    and region    = cover start ctor.region in
+    in T_Ctor {region; value = (ctor, arg)}
   }
 | type_tuple type_name {
     let arg, ctor = $1, $2 in
     let region    = cover arg.region ctor.region
-    in TApp {region; value=(ctor,arg)}
+    in T_Ctor {region; value = (ctor, T_Tuple arg)}
   }
-| type_name       {    TVar $1 }
-| "_"             {   TWild $1 }
-| par(type_expr)  {    TPar $1 }
-| "<string>"      { TString $1 }
-| "<int>"         {    TInt $1 }
-| module_access_t {   TModA $1 }
+| type_name      { T_Var     $1 }
+| "_"            { T_Wild    $1 }
+| par(type_expr) { T_Par     $1 }
+| "<string>"     { T_String  $1 }
+| "<int>"        { T_Int     $1 }
+| type_in_module { T_ModPath $1 }
 
 type_tuple:
   par(tuple(type_expr)) { $1 }
@@ -238,12 +249,12 @@ sum_type:
   nsepseq(variant,"|") {
     let region = nsepseq_to_region (fun x -> x.region) $1 in
     let value  = {variants=$1; attributes=[]; lead_vbar=None}
-    in TSum {region; value}
+    in T_Sum {region; value}
   }
 | seq("[@<attr>]") "|" nsepseq(variant,"|") {
     let region = nsepseq_to_region (fun x -> x.region) $3 in
     let value  = {variants=$3; attributes=$1; lead_vbar = Some $2}
-    in TSum {region; value} }
+    in T_Sum {region; value} }
 
 variant:
   nseq("[@<attr>]") ctor {
@@ -271,25 +282,22 @@ variant:
 record_type:
   seq("[@<attr>]") "{" sep_or_term_list(field_decl,";") "}" {
     let ne_elements, terminator = $3 in
-    let region =
-      match first_region $1 with
-        None -> cover $2 $4
-      | Some start -> cover start $4
+    let region = match first_region $1 with
+                         None -> cover $2 $4
+                 | Some start -> cover start $4
     and compound = Some (Braces ($2,$4)) in
     let value    = {compound; ne_elements; terminator; attributes=$1}
-    in TRecord {region; value} }
+    in T_Record {region; value} }
 
-module_access_t :
-  module_name "." module_var_t {
-    let start  = $1.region
-    and stop   = type_expr_to_region $3 in
-    let region = cover start stop
-    and value  = {module_name=$1; selector=$2; field=$3}
-    in {region; value} }
+type_in_module:
+  module_path(type_name) { mk_mod_path $1 (fun x -> x.region) }
 
-module_var_t:
-  module_access_t { TModA $1 }
-| field_name      { TVar  $1 }
+module_path(selected):
+  module_name "." module_path(selected) {
+    let (head, tail), selected = $3 in
+    (($1,$2), head::tail), selected
+  }
+| module_name "." selected { (($1,$2), []), $3 }
 
 field_decl:
   seq("[@<attr>]") field_name ":" type_expr {
@@ -304,10 +312,10 @@ field_decl:
 
 let_decl:
   seq("[@<attr>]") "let" ioption("rec") let_binding {
-    let attributes = $1 in
-    let kwd_let    = $2 in
-    let kwd_rec    = $3 in
-    let binding    = $4 in
+    let attributes = $1
+    and kwd_let    = $2
+    and kwd_rec    = $3
+    and binding    = $4 in
     let value      = kwd_let, kwd_rec, binding, attributes in
     let stop       = expr_to_region binding.let_rhs in
     let region     = match first_region $1 with
@@ -331,24 +339,24 @@ type_annotation:
 irrefutable:
   tuple(sub_irrefutable) {
     let region = nsepseq_to_region pattern_to_region $1
-    in PTuple {region; value=$1}
+    in P_Tuple {region; value=$1}
   }
 | sub_irrefutable { $1 }
 
 sub_irrefutable:
-  "<ident>"               { PVar    $1 }
-| "_"                     { PWild   $1 }
-| unit                    { PUnit   $1 }
-| record_pattern          { PRecord $1 }
-| par(closed_irrefutable) { PPar    $1 }
-| ctor { PCtor (PCtorApp {$1 with value = $1,None}) }
+  "<ident>"               { P_Var    $1 }
+| "_"                     { P_Wild   $1 }
+| unit                    { P_Unit   $1 }
+| record_pattern          { P_Record $1 }
+| par(closed_irrefutable) { P_Par    $1 }
+| ctor                    { P_Ctor {$1 with value = $1,None} }
 
 closed_irrefutable:
   ctor sub_pattern {
     let stop   = pattern_to_region $2 in
     let region = cover $1.region stop
     and value  = $1, Some $2 in
-    PCtor (PCtorApp {region; value})
+    P_Ctor {region; value}
   }
 | irrefutable
 | typed_pattern { $1 }
@@ -359,38 +367,38 @@ typed_pattern:
     let stop   = type_expr_to_region $3 in
     let region = cover start stop in
     let value  = {pattern=$1; colon=$2; type_expr=$3}
-    in PTyped {region; value} }
+    in P_Typed {region; value} }
 
 pattern:
   sub_pattern "::" tail {
     let start  = pattern_to_region $1 in
     let stop   = pattern_to_region $3 in
     let region = cover start stop in
-    PList (PCons {region; value=$1,$2,$3})
+    P_Cons {region; value=$1,$2,$3}
   }
 | tuple(sub_pattern) {
     let region = nsepseq_to_region pattern_to_region $1
-    in PTuple {region; value=$1}
+    in P_Tuple {region; value=$1}
   }
 | core_pattern { $1 }
 
 sub_pattern:
-  par(tail)    { PPar $1 }
-| core_pattern {      $1 }
+  par(tail)    { P_Par $1 }
+| core_pattern {       $1 }
 
 core_pattern:
-  "<ident>"      {              PVar $1 }
-| "_"            {             PWild $1 }
-| "<int>"        {              PInt $1 }
-| "<nat>"        {              PNat $1 }
-| "<bytes>"      {            PBytes $1 }
-| "<string>"     {           PString $1 }
-| "<verbatim>"   {         PVerbatim $1 }
-| unit           {             PUnit $1 }
-| par(ptuple)    {              PPar $1 }
-| list__(tail)   { PList (PListComp $1) }
-| ctor_pattern   {             PCtor $1 }
-| record_pattern {           PRecord $1 }
+  "<ident>"      { P_Var      $1 }
+| "_"            { P_Wild     $1 }
+| "<int>"        { P_Int      $1 }
+| "<nat>"        { P_Nat      $1 }
+| "<bytes>"      { P_Bytes    $1 }
+| "<string>"     { P_String   $1 }
+| "<verbatim>"   { P_Verbatim $1 }
+| unit           { P_Unit     $1 }
+| par(ptuple)    { P_Par      $1 }
+| list__(tail)   { P_List     $1 }
+| ctor_pattern   { P_Ctor     $1 }
+| record_pattern { P_Record   $1 }
 
 record_pattern:
   "{" sep_or_term_list(field_pattern,";") "}" {
@@ -691,7 +699,7 @@ core_expr:
 | "<bytes>"       {                     EBytes $1 }
 | "<ident>"       {                       EVar $1 }
 | projection      {                      EProj $1 }
-| module_access_e {                      EModA $1 }
+| value_in_module {                      E_ModPath $1 }
 | "<string>"      {           EString (String $1) }
 | "<verbatim>"    {         EString (Verbatim $1) }
 | unit            {                      EUnit $1 }
@@ -722,19 +730,13 @@ projection:
     and value  = {struct_name=$1; selector=$2; field_path=$3}
     in {region; value} }
 
-module_access_e:
-  module_name "." module_var_e {
-    let start  = $1.region
-    and stop   = expr_to_region $3 in
-    let region = cover start stop
-    and value  = {module_name=$1; selector=$2; field=$3}
-    in {region; value} }
+value_in_module:
+  module_path(selected_expr) { mk_mod_path $1 CST.expr_to_region }
 
-module_var_e:
-  module_access_e { EModA $1 }
-| "or"            { EVar {value="or"; region=$1} }
-| field_name      { EVar  $1 }
-| projection      { EProj $1 }
+selected_expr:
+  "or"       { E_Var  {value="or"; region=$1} }
+| field_name { E_Var  $1 }
+| projection { E_Proj $1 }
 
 selection:
   field_name { FieldName $1 }
