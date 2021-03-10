@@ -190,6 +190,7 @@ let peephole_type : unit -> type_expr -> (unit,'err) result = fun _ t ->
   | TString _
   | TVar _
   | TModA _
+  | TInt _
   | TWild _ -> ok @@ ()
 
 let peephole_expression : unit -> expr -> (unit,'err) result = fun () _ ->

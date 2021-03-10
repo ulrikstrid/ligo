@@ -1,3 +1,6 @@
+[@@@warning "-27"]
+[@@@warning "-39"]
+
 module AST = Ast_imperative
 module CST = Cst.Jsligo
 module Predefined = Predefined.Tree_abstraction.Jsligo
@@ -49,6 +52,7 @@ let braces = Some (CST.Braces (ghost,ghost))
 let chevrons x = CST.{lchevron=ghost;inside=x;rchevron=ghost}
 let brackets x = CST.{lbracket=ghost;inside=x;rbracket=ghost}
 let fun_type_arg x = CST.{ name = wrap "_" ; colon = ghost ; type_expr = x }
+let braced d = CST.{lbrace=ghost; rbrace=ghost; inside=d}
 
 (* Decompiler *)
 
@@ -123,12 +127,10 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
     return @@ CST.TApp (wrap (type_operator,lst))
   | T_annoted _annot ->
     failwith "let's work on it later"
-  | T_module_accessor _ ->
-    failwith "jsligo can't pretty-print modules yet"
-    (* | T_module_accessor {module_name;element} ->
-   *   let module_name = wrap module_name in
-   *   let%bind field  = decompile_type_expr element in
-   *   return @@ CST.TModA (wrap CST.{module_name;selector=ghost;field}) *)
+  | T_module_accessor {module_name;element} ->
+    let module_name = wrap module_name in
+    let%bind field  = decompile_type_expr element in
+    return @@ CST.TModA (wrap CST.{module_name;selector=ghost;field})
   | T_singleton _ ->
     failwith "jsligo can't pretty print singletons yet"
 (* | T_singleton x -> (
@@ -528,7 +530,7 @@ and decompile_lambda : (AST.expr, AST.ty_expr) AST.lambda -> _ =
  *   in
  *   map wrap @@ list_to_nsepseq cases *)
 
-let decompile_declaration : AST.declaration Location.wrap -> (CST.statement, _) result = fun decl ->
+let rec decompile_declaration : AST.declaration Location.wrap -> (CST.statement, _) result = fun decl ->
   let decl = Location.unwrap decl in
   let wrap value = ({value;region=Region.ghost} : _ Region.reg) in
   match decl with
@@ -536,41 +538,34 @@ let decompile_declaration : AST.declaration Location.wrap -> (CST.statement, _) 
     let name = decompile_variable type_binder in
     let%bind type_expr = decompile_type_expr type_expr in
     ok @@ CST.SType (wrap (CST.{kwd_type=ghost; name; eq=ghost; type_expr}))
-  | Declaration_constant {name; binder; expr; inline} ->
-    
-    let binding = {
-      binders;
-      lhs_type;
-      eq;
-      expr;
-      attributes
-    }
-
-    ok @@ CST.SConst (wrap (CST.{kwd_const=ghost; bindings}))
-  | _ -> failwith "todo"
-  (* | Declaration_constant {binder;attr;expr}->
+  | Declaration_constant {binder; attr; expr; } ->
     let attributes : CST.attributes = decompile_attributes attr in
     let var = CST.PVar (decompile_variable binder.var.wrap_content) in
     let binders = var in
     let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) binder.ascr in
-    match expr.expression_content with
-      E_lambda lambda ->
-      let%bind let_rhs = decompile_expression @@ AST.make_e @@ AST.E_lambda lambda in
-      let let_binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
-      let let_decl = wrap (ghost,None,let_binding,attributes) in
-      ok @@ CST.ConstDecl let_decl
-    | E_recursive {lambda; _} ->
-      let%bind let_rhs = decompile_expression @@ AST.make_e @@ AST.E_lambda lambda in
-      let let_binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
-      let let_decl = wrap (ghost,Some ghost,let_binding,attributes) in
-      ok @@ CST.ConstDecl let_decl
-    | _ ->
-      let%bind let_rhs = decompile_expression expr in
-      let let_binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
-      let let_decl = wrap (ghost,None,let_binding,attributes) in
-      ok @@ CST.ConstDecl let_decl *)
+    let%bind expr = decompile_expression expr in
+    let binding = CST.({
+      binders;
+      lhs_type;
+      eq = Region.ghost;
+      expr;
+      attributes
+    }) in
+    ok @@ CST.SConst (wrap (CST.{kwd_const=ghost; bindings = (wrap binding, [])}))
+  | Declaration_module {module_binder; module_} ->
+    let name = wrap module_binder in
+    let%bind module_ = decompile_module module_ in
+    (* let x = snd module_.statements in *)
+    let statements: CST.statements = (fst @@ fst module_.statements, List.map (fun e -> (ghost, fst e)) (snd module_.statements)) in 
+    let statements: CST.statements CST.braced Region.reg = wrap @@ braced statements in
+    ok @@ CST.SNamespace (wrap (ghost, name, statements))
+  | Module_alias {alias; binders} ->
+    let alias = wrap alias in
+    let binders = nelist_to_npseq @@ List.Ne.map wrap binders in
+    ok @@ CST.SImport (wrap CST.{alias; module_path = binders; kwd_import = ghost; equal = ghost})
 
-let decompile_program : AST.program -> (CST.ast, _) result = fun prg ->
+and decompile_module : AST.module_ -> (CST.ast, _) result = fun prg ->
   let%bind decl = bind_map_list decompile_declaration prg in
-  let decl = List.Ne.of_list decl in
-  ok @@ ({decl;eof=ghost}: CST.ast)
+  let statements = List.Ne.of_list decl in
+  let statements = ((fst statements, None), List.map (fun e -> (e, None)) (snd statements)) in
+  ok @@ ({statements;eof=ghost}: CST.ast)

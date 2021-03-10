@@ -113,6 +113,15 @@ let print_bytes state {region; value} =
             (Hex.show abstract)
   in Buffer.add_string state#buffer line
 
+let print_int state {region; value} =
+  let lexeme, abstract = value in
+  let line =
+    sprintf "%s: Int (\"%s\", %s)\n"
+            (compact state region) lexeme
+            (Z.to_string abstract)
+  in Buffer.add_string state#buffer line
+  
+
 let rec print_tokens state {statements; eof} =
   Utils.nseq_iter (print_toplevel_statement state) statements;
   print_token state eof "EOF"
@@ -207,6 +216,7 @@ and print_type_expr state = function
 | TApp app        -> print_type_app state app
 | TPar par        -> print_type_par state par
 | TVar var        -> print_var state var
+| TInt x          -> print_int state x
 | TFun t          -> print_fun_type state t
 | TWild wild      -> print_token state wild " "
 | TString s       -> print_string state s
@@ -1127,6 +1137,9 @@ and pp_type_expr state = function
 | TModA {value; region} ->
     pp_loc_node state "TModA" region;
     pp_module_access pp_type_expr state value
+| TInt s ->
+    pp_node   state "TInt";
+    pp_int (state#pad 1 0) s
 
 and pp_module_access : type a. (state -> a -> unit ) -> state -> a module_access -> unit
 = fun f state ma ->

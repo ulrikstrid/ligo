@@ -256,6 +256,7 @@ module Compile_type = struct
       return @@ t_variable ~loc v
     | TWild _reg -> failwith "TWild unsupported"
     | TString _s -> fail @@ unsupported_string_singleton te
+    | TInt _s -> fail @@ unsupported_string_singleton te
     | TModA ma ->
       let (ma, loc) = r_split ma in
       let (module_name, _) = r_split ma.module_name in

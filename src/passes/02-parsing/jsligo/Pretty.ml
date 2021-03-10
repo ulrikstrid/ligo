@@ -298,6 +298,7 @@ and pp_type_expr: type_expr -> document = function
 | TWild   _ -> string "_"
 | TString s -> pp_string s
 | TModA   t -> pp_module_access pp_type_expr t
+| TInt    t -> pp_int t
 
 and pp_module_access : type a.(a -> document) -> a module_access reg -> document
 = fun f {value; _} ->

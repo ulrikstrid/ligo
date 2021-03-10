@@ -375,8 +375,9 @@ module_var_t:
 | "<lident>"             { TVar  $1 }
 
 core_type:
-  type_name           {       TVar $1 }
+  type_name            {       TVar $1 }
 | "<string>"           {    TString $1 }
+| "<int>"              {       TInt $1 }
 |  "_"                 {      TWild $1 }
 | par(type_expr)       {       TPar $1 }
 | module_access_t      {      TModA $1 }

@@ -207,6 +207,7 @@ and type_expr =
 | TVar    of variable
 | TWild   of wild
 | TString of lexeme reg
+| TInt    of (lexeme * Z.t) reg
 | TModA   of type_expr module_access reg
 
 and 'a module_access = {
@@ -518,6 +519,7 @@ let type_expr_to_region = function
 | TString {region; _}
 | TVar    {region; _}
 | TModA   {region; _}
+| TInt    {region; _}
 | TWild    region
  -> region
 
