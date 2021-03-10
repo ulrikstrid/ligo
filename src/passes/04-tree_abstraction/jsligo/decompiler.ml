@@ -82,7 +82,7 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
     in
     let%bind variants = bind_map_list aux lst in
     let%bind variants = list_to_nsepseq variants in
-    let lead_vbar = ghost in
+    let lead_vbar = Some ghost in
     let attributes = decompile_attributes attributes in
     let sum : CST.sum_type = { lead_vbar ; variants ; attributes} in
     return @@ CST.TSum (wrap sum)
@@ -191,7 +191,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     (match literal with
         Literal_unit  ->  return_expr @@ CST.EUnit (wrap (ghost,ghost))
       | Literal_int i ->  return_expr @@ CST.EArith (Int (wrap ("",i)))
-      | Literal_nat n ->  return_expr @@ CST.EArith (Nat (wrap ("",n)))
+      | Literal_nat n ->  return_expr @@ CST.EAnnot {value = CST.EArith (Int (wrap ("",n))), ghost, CST.TVar {value = "nat"; region = ghost}; region = ghost } 
       | Literal_timestamp time ->
         let time = Tezos_utils.Time.Protocol.to_notation @@
           Tezos_utils.Time.Protocol.of_seconds @@ Z.to_int64 time in
@@ -199,7 +199,7 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
         let%bind ty = decompile_type_expr @@ AST.t_timestamp () in
         let time = CST.EString (String (wrap time)) in
         return_expr_with_par @@ CST.EAnnot (wrap @@ (time, ghost, ty))
-      | Literal_mutez mtez -> return_expr @@ CST.EArith (Mutez (wrap ("",mtez)))
+      | Literal_mutez mtez -> return_expr @@ CST.EAnnot {value = CST.EArith (Int (wrap ("", mtez))), ghost, CST.TVar {value = "mutez"; region = ghost}; region = ghost } 
       | Literal_string (Standard str) -> return_expr @@ CST.EString (String   (wrap str))
       | Literal_string (Verbatim ver) -> return_expr @@ CST.EString (Verbatim (wrap ver))
       | Literal_bytes b ->
@@ -441,11 +441,13 @@ let rec decompile_expression : AST.expression -> _ result = fun expr ->
     return_expr @@ CST.ECall (wrap @@ (var,args))
     (* We should avoid to generate skip instruction*)
   | E_skip -> return_expr @@ CST.EUnit (wrap (ghost,ghost))
+  | E_mod_in _
+  | E_mod_alias _
   | E_assign _
   | E_for _
   | E_for_each _
   | E_while _ ->
-    failwith @@ Format.asprintf "Decompiling a imperative construct to CameLIGO %a"
+    failwith @@ Format.asprintf "Decompiling a imperative construct to JsLIGO %a"
     AST.PP.expression expr
 
 (* and decompile_to_path : AST.expression_variable -> _ AST.access list -> (CST.path, _) result = fun var access ->
