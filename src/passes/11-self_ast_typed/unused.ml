@@ -61,8 +61,8 @@ let remove_defined_var_after defuse binder f expr =
 let add_if_unused unused binder defuse =
   match find_opt binder defuse with
   | None -> unused
-  | Some (k,b) ->
-     add_if_not_generated k unused b
+  | Some (_,b) ->
+     add_if_not_generated binder unused b
 
 (* Return a def-use graph + a list of unused variables *)
 let rec defuse_of_expr defuse expr : defuse =
@@ -139,25 +139,23 @@ and defuse_of_variant defuse {cases;_} =
       cases
 
 and defuse_of_record defuse {body;fields;_} =
-  (* TODO *)
-  let _vars = LMap.to_list fields |> List.map fst in
-  let _map = List.fold_left (fun m v -> M.add v false m) defuse _vars in
-  let _vars' = List.map (fun v -> (v, M.find_opt v defuse)) _vars in
-  let _defuse,_unused = defuse_of_expr _map body in
-  let _unused = List.fold_left (fun m v -> add_if_not_generated v m (M.find v _defuse)) _unused _vars in
-  let _defuse = List.fold_left (fun m (v, v') -> replace_opt v v' m) _defuse _vars' in
-  (_defuse, _unused)
+  let vars = LMap.to_list fields |> List.map fst in
+  let map = List.fold_left (fun m v -> M.add v false m) defuse vars in
+  let vars' = List.map (fun v -> (v, M.find_opt v defuse)) vars in
+  let defuse,unused = defuse_of_expr map body in
+  let unused = List.fold_left (fun m v -> add_if_not_generated v m (M.find v defuse)) unused vars in
+  let defuse = List.fold_left (fun m (v, v') -> replace_opt v v' m) defuse vars' in
+  (defuse, unused)
 
 let self_typing : contract_pass_data -> expression -> (bool * contract_pass_data * expression , self_ast_typed_error) result = fun dat el ->
   let rec update_annotations annots c = match annots with
       [] -> c
     | a :: xs -> update_annotation a @@ update_annotations xs c in
-  let _entrypoint = Var.of_name dat.main_name in
   let defuse,_ = defuse_neutral in
   let _,unused = defuse_of_expr defuse el in
   let f v =
-    let var = Format.asprintf "%a" Var.pp (Location.unwrap v) in
-    `Self_ast_typed_warning_unused (Location.get_location v, var) in
+    `Self_ast_typed_warning_unused
+      (Location.get_location v, Format.asprintf "%a" Var.pp (Location.unwrap v)) in
   let annots = List.map f unused in
   update_annotations annots @@
     ok (false, dat, el)

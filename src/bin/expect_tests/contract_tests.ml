@@ -1121,7 +1121,7 @@ let%expect_test _ =
   [%expect {|
     Warning: unused variable "p" in file "../../test/contracts/big_map.ligo", line 5, characters 21-22.
     Warning: unused variable "toto" in file "../../test/contracts/big_map.ligo", line 7, characters 8-12.
-    Warning: unused variable "toto" in file "../../test/contracts/big_map.ligo", line 7, characters 8-12.
+    Warning: unused variable "toto" in file "../../test/contracts/big_map.ligo", line 8, characters 4-19.
     (Pair { Elt 23 0 ; Elt 42 0 } Unit) |}]
 
 let%expect_test _ =
@@ -1468,3 +1468,31 @@ let%expect_test _ =
     Warning: unused variable "w" in file "../../test/contracts/uncurry_contract.mligo", line 5, characters 41-51.
     Warning: unused variable "z" in file "../../test/contracts/uncurry_contract.mligo", line 5, characters 30-40.
     Warning: unused variable "y" in file "../../test/contracts/uncurry_contract.mligo", line 5, characters 19-29. |}]
+
+(* warning unused variables example *)
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "warning_unused.mligo" ; "main" ] ;
+  [%expect {|
+    Warning: unused variable "x" in file "../../test/contracts/warning_unused.mligo", line 11, characters 6-7.
+    { parameter int ;
+      storage (pair (int %x) (int %y)) ;
+      code { CDR ;
+             PUSH int 3 ;
+             SWAP ;
+             DUP ;
+             DUG 2 ;
+             CAR ;
+             ADD ;
+             DROP ;
+             PUSH int 3 ;
+             PUSH int 9 ;
+             DUP 3 ;
+             CAR ;
+             MUL ;
+             ADD ;
+             SWAP ;
+             CDR ;
+             SWAP ;
+             PAIR ;
+             NIL operation ;
+             PAIR } } |}]
