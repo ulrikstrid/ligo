@@ -1461,13 +1461,14 @@ let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "uncurry_contract.mligo" ; "main" ] ;
   let output = [%expect.output] in
   let lines = String.split_on_char '\n' output in
-  let lines = List.take 3 lines in
+  let lines = List.take 4 lines in
   let output = String.concat "\n" lines in
   print_string output;
   [%expect {|
     Warning: unused variable "w" in file "../../test/contracts/uncurry_contract.mligo", line 5, characters 41-51.
     Warning: unused variable "z" in file "../../test/contracts/uncurry_contract.mligo", line 5, characters 30-40.
-    Warning: unused variable "y" in file "../../test/contracts/uncurry_contract.mligo", line 5, characters 19-29. |}]
+    Warning: unused variable "y" in file "../../test/contracts/uncurry_contract.mligo", line 5, characters 19-29.
+    Warning: unused variable "x" in file "../../test/contracts/uncurry_contract.mligo", line 5, characters 8-18. |}]
 
 (* warning unused variables example *)
 let%expect_test _ =

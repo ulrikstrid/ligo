@@ -6,7 +6,8 @@ let all_module_passes = [
   Helpers.map_module Tail_recursion.peephole_expression ;
   Helpers.map_module Michelson_layout.peephole_expression ;
   Uncurry.uncurry_module_fully_typed ;
-]
+  Unused.unused_map_module ;
+  ]
 
 let all_expression_passes = [
   Helpers.map_expression Tail_recursion.peephole_expression ;
@@ -17,7 +18,6 @@ let all_expression_passes = [
 let contract_passes = [
   Contract_passes.self_typing ;
   No_nested_big_map.self_typing ;
-  Unused.self_typing ;
 ]
 
 let all_module =
