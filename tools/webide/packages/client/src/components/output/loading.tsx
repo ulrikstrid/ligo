@@ -36,7 +36,7 @@ const Message = styled.div`
 
 export const Loading = (props: { onCancel?: () => void }) => {
   const loading = useSelector<AppState, LoadingState>(state => state.loading);
-//commit comment
+
   const dispatchedAction = useSelector<
     AppState,
     CommandState['dispatchedAction']
