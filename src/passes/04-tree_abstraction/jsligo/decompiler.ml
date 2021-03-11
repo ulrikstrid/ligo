@@ -1,4 +1,5 @@
 [@@@warning "-27"]
+[@@@warning "-26"]
 [@@@warning "-39"]
 
 module AST = Ast_imperative
@@ -131,15 +132,12 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
     let module_name = wrap module_name in
     let%bind field  = decompile_type_expr element in
     return @@ CST.TModA (wrap CST.{module_name;selector=ghost;field})
-  | T_singleton _ ->
-    failwith "jsligo can't pretty print singletons yet"
-(* | T_singleton x -> (
-   *   match x with
-   *   | Literal_int i ->
-   *     let z : CST.type_expr = CST.TInt { region = Region.ghost ; value = (Z.to_string i, i) } in
-   *     return z
-   *   | _ -> failwith "unsupported singleton"
-   * ) *)
+  | T_singleton x ->
+      match x with
+      | Literal_int i ->
+        let z : CST.type_expr = CST.TInt { region = Region.ghost ; value = (Z.to_string i, i) } in
+        return z
+      | _ -> failwith "unsupported singleton"
 
 let get_e_variable : AST.expression -> _ result = fun expr ->
   match expr.expression_content with
@@ -168,83 +166,112 @@ let pattern_type (_: _ AST.binder) =
  *   let type_expr = Option.unopt ~default:(CST.TWild ghost) type_expr in
  *   ok @@ CST.PTyped (wrap @@ CST.{pattern=var;colon=ghost;type_expr}) *)
 
-let rec decompile_expression : AST.expression -> _ result = fun expr ->
-  failwith "todo"
-  (* let return_expr expr = ok @@ expr in
-  let return_expr_with_par expr = return_expr @@ CST.EPar (wrap @@ par @@ expr) in
+let rec decompile_expression : AST.expression -> (CST.expr list, _) result = fun expr ->
+let return_expr expr = ok @@ expr in
+  let return_expr_with_par expr = return_expr @@ [CST.EPar (wrap @@ par @@ expr)] in
   match expr.expression_content with
     E_variable name ->
     let var = decompile_variable name.wrap_content in
-    return_expr @@ CST.EVar (var)
+    return_expr @@ [CST.EVar (var)]
   | E_constant {cons_name; arguments} ->
     let expr = CST.EVar (wrap @@ Predefined.constant_to_string cons_name) in
     (match arguments with
-      [] -> return_expr @@ expr
+      [] -> return_expr @@ [expr]
     | _ ->
-       let%bind arguments =
+        let%bind arguments =
         map (fun xs -> CST.Multiple (wrap (par xs))) @@
         map (fun (hd,tl) -> hd,List.map (fun x -> ghost,x) tl) @@
         map List.Ne.of_list @@
         map (List.map (fun x -> CST.EPar (wrap @@ par @@ x))) @@
-        bind_map_list decompile_expression arguments in
+        bind_map_list (fun e -> 
+          let%bind e = decompile_expression e in 
+          match e with 
+            hd :: [] -> ok @@ hd
+          | _ -> failwith "should not happen"
+          ) arguments in
       let const = wrap (expr, arguments) in
       return_expr_with_par @@ CST.ECall const
     )
-  | E_literal literal ->
-    (match literal with
-        Literal_unit  ->  return_expr @@ CST.EUnit (wrap (ghost,ghost))
-      | Literal_int i ->  return_expr @@ CST.EArith (Int (wrap ("",i)))
-      | Literal_nat n ->  return_expr @@ CST.EAnnot {value = CST.EArith (Int (wrap ("",n))), ghost, CST.TVar {value = "nat"; region = ghost}; region = ghost } 
-      | Literal_timestamp time ->
-        let time = Tezos_utils.Time.Protocol.to_notation @@
-          Tezos_utils.Time.Protocol.of_seconds @@ Z.to_int64 time in
-          (* TODO combinators for CSTs. *)
-        let%bind ty = decompile_type_expr @@ AST.t_timestamp () in
-        let time = CST.EString (String (wrap time)) in
-        return_expr_with_par @@ CST.EAnnot (wrap @@ (time, ghost, ty))
-      | Literal_mutez mtez -> return_expr @@ CST.EAnnot {value = CST.EArith (Int (wrap ("", mtez))), ghost, CST.TVar {value = "mutez"; region = ghost}; region = ghost } 
-      | Literal_string (Standard str) -> return_expr @@ CST.EString (String   (wrap str))
-      | Literal_string (Verbatim ver) -> return_expr @@ CST.EString (Verbatim (wrap ver))
-      | Literal_bytes b ->
-        let b = Hex.of_bytes b in
-        let s = Hex.to_string b in
-        return_expr @@ CST.EBytes (wrap (s,b))
-      | Literal_address addr ->
-        let addr = CST.EString (String (wrap addr)) in
-        let%bind ty = decompile_type_expr @@ AST.t_address () in
-        return_expr_with_par @@ CST.EAnnot (wrap @@ (addr,ghost,ty))
-      | Literal_signature sign ->
-        let sign = CST.EString (String (wrap sign)) in
-        let%bind ty = decompile_type_expr @@ AST.t_signature () in
-        return_expr_with_par @@ CST.EAnnot (wrap @@ (sign,ghost,ty))
-      | Literal_key k ->
-        let k = CST.EString (String (wrap k)) in
-        let%bind ty = decompile_type_expr @@ AST.t_key () in
-        return_expr_with_par @@ CST.EAnnot (wrap @@ (k,ghost,ty))
-      | Literal_key_hash kh ->
-        let kh = CST.EString (String (wrap kh)) in
-        let%bind ty = decompile_type_expr @@ AST.t_key_hash () in
-        return_expr_with_par @@ CST.EAnnot (wrap @@ (kh,ghost,ty))
-      | Literal_chain_id _
-      | Literal_operation _ ->
-        failwith "chain_id, operation are not created currently ?"
-    )
+    | E_literal literal ->
+      (match literal with
+          Literal_unit  ->  return_expr @@ [CST.EUnit (wrap (ghost,ghost))]
+        | Literal_int i ->  return_expr @@ [CST.EArith (Int (wrap ("",i)))]
+        | Literal_nat n ->  return_expr @@ [CST.EAnnot {value = CST.EArith (Int (wrap ("",n))), ghost, CST.TVar {value = "nat"; region = ghost}; region = ghost }]
+        | Literal_timestamp time ->
+          let time = Tezos_utils.Time.Protocol.to_notation @@
+            Tezos_utils.Time.Protocol.of_seconds @@ Z.to_int64 time in
+            (* TODO combinators for CSTs. *)
+          let%bind ty = decompile_type_expr @@ AST.t_timestamp () in
+          let time = CST.EString (String (wrap time)) in
+          return_expr_with_par @@ CST.EAnnot (wrap @@ (time, ghost, ty))
+        | Literal_mutez mtez -> return_expr @@ [CST.EAnnot {value = CST.EArith (Int (wrap ("", mtez))), ghost, CST.TVar {value = "mutez"; region = ghost}; region = ghost }]
+        | Literal_string (Standard str) -> return_expr @@ [CST.EString (String   (wrap str))]
+        | Literal_string (Verbatim ver) -> return_expr @@ [CST.EString (Verbatim (wrap ver))]
+        | Literal_bytes b ->
+          let b = Hex.of_bytes b in
+          let s = Hex.to_string b in
+          return_expr @@ [CST.EBytes (wrap (s,b))]
+        | Literal_address addr ->
+          let addr = CST.EString (String (wrap addr)) in
+          let%bind ty = decompile_type_expr @@ AST.t_address () in
+          return_expr_with_par @@ CST.EAnnot (wrap @@ (addr,ghost,ty))
+        | Literal_signature sign ->
+          let sign = CST.EString (String (wrap sign)) in
+          let%bind ty = decompile_type_expr @@ AST.t_signature () in
+          return_expr_with_par @@ CST.EAnnot (wrap @@ (sign,ghost,ty))
+        | Literal_key k ->
+          let k = CST.EString (String (wrap k)) in
+          let%bind ty = decompile_type_expr @@ AST.t_key () in
+          return_expr_with_par @@ CST.EAnnot (wrap @@ (k,ghost,ty))
+        | Literal_key_hash kh ->
+          let kh = CST.EString (String (wrap kh)) in
+          let%bind ty = decompile_type_expr @@ AST.t_key_hash () in
+          return_expr_with_par @@ CST.EAnnot (wrap @@ (kh,ghost,ty))
+        | Literal_chain_id _
+        | Literal_operation _ ->
+          failwith "chain_id, operation are not created currently ?"
+      )
   | E_application {lamb;args} ->
     let%bind lamb = decompile_expression lamb in
+    let lamb = match lamb with 
+      hd :: [] -> hd
+    |  _ -> failwith "should not happen"
+    in
     let%bind args =
       map (fun xs -> CST.Multiple (wrap (par xs))) @@
       map (fun (hd,tl) -> hd,List.map (fun x -> ghost,x) tl) @@
       map List.Ne.of_list @@
-      bind (bind_map_list decompile_expression) @@
+      bind (bind_map_list (fun e -> 
+        let%bind x = decompile_expression e in 
+        match x with 
+          hd :: [] -> ok hd
+        | _ -> failwith "should not happen"
+        )) @@
       get_e_tuple args
     in
-    return_expr @@ CST.ECall (wrap (lamb,args))
+    return_expr @@ [CST.ECall (wrap (lamb,args))]
   | E_lambda lambda ->
-    let%bind (binders,lhs_type,body) = decompile_lambda lambda in
-    let fun_expr : CST.fun_expr = {binders;lhs_type;arrow=ghost;body} in
+    let%bind (parameters,lhs_type,body) = decompile_lambda lambda in
+    let fun_expr : CST.fun_expr = {parameters;lhs_type;arrow=ghost;body} in
     return_expr_with_par @@ CST.EFun (wrap @@ fun_expr)
   | E_recursive _ ->
     failwith "corner case : annonymous recursive function"
+  (* | E_let_in {let_binder={var;ascr};rhs;let_result;attributes} ->
+    let var = CST.PVar (decompile_variable @@ var.wrap_content) in
+    let binders = var in
+    let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) ascr in
+    let%bind let_rhs = decompile_expression rhs in
+    let binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
+    let%bind body = decompile_expression let_result in
+    let attributes = decompile_attributes attributes in
+    let lin : CST.let_in = {kwd_let=ghost;kwd_rec=None;binding;semi=ghost;body;attributes} in
+    return_expr @@ CST.ELetIn (wrap lin) *)
+  | _ -> failwith "todo"
+  
+  
+
+  (* 
+  
   | E_let_in {let_binder={var;ascr};rhs;let_result;attributes} ->
     let var = CST.PVar (decompile_variable @@ var.wrap_content) in
     let binders = var in
@@ -544,6 +571,10 @@ let rec decompile_declaration : AST.declaration Location.wrap -> (CST.statement,
     let binders = var in
     let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) binder.ascr in
     let%bind expr = decompile_expression expr in
+    let expr = match expr with 
+      [hd] -> hd
+    | _ -> failwith "should not happen"
+    in
     let binding = CST.({
       binders;
       lhs_type;
