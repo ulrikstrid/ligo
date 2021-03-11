@@ -573,7 +573,7 @@ let set_fold loc = typer_3 loc "SET_FOLD" @@ fun body lst init ->
   let%bind () = assert_eq loc res init in
   ok res
 
-let set_fold_right loc = typer_3 loc "SET_FOLD_RIGHT" @@ fun body lst init ->
+let set_fold_desc loc = typer_3 loc "SET_FOLD_DESC" @@ fun body lst init ->
   let%bind (arg , res) = trace_option (expected_function loc body) @@ get_t_function body in
   let%bind (cur , prec) = trace_option (expected_pair loc arg) @@ get_t_pair arg in
   let%bind key = trace_option (expected_set loc lst) @@ get_t_set lst in
@@ -936,7 +936,7 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_SET_REMOVE          -> ok @@ set_remove loc ;
   | C_SET_ITER            -> ok @@ set_iter loc ;
   | C_SET_FOLD            -> ok @@ set_fold loc ;
-  | C_SET_FOLD_RIGHT      -> ok @@ set_fold_right loc ;
+  | C_SET_FOLD_DESC       -> ok @@ set_fold_desc loc ;
   | C_SET_MEM             -> ok @@ set_mem loc ;
   | C_SET_UPDATE          -> ok @@ set_update loc;
   (* LIST *)

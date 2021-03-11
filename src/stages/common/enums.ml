@@ -102,7 +102,7 @@ type constant' =
   | C_SET_REMOVE
   | C_SET_ITER
   | C_SET_FOLD
-  | C_SET_FOLD_RIGHT
+  | C_SET_FOLD_DESC
   | C_SET_MEM
   | C_SET_UPDATE
   (* List *)

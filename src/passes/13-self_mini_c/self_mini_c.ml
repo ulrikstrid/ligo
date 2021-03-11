@@ -80,7 +80,7 @@ let is_pure_constant : constant' -> bool =
   | C_FOLD_RIGHT
   | C_SET_ITER
   | C_SET_FOLD
-  | C_SET_FOLD_RIGHT
+  | C_SET_FOLD_DESC
   | C_LIST_ITER
   | C_LIST_MAP
   | C_LIST_FOLD

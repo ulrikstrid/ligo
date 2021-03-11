@@ -71,7 +71,7 @@ let constant' ppf : constant' -> unit = function
   | C_SET_REMOVE            -> fprintf ppf "SET_REMOVE"
   | C_SET_ITER              -> fprintf ppf "SET_ITER"
   | C_SET_FOLD              -> fprintf ppf "SET_FOLD"
-  | C_SET_FOLD_RIGHT        -> fprintf ppf "SET_FOLD_RIGHT"
+  | C_SET_FOLD_DESC        -> fprintf ppf "SET_FOLD_DESC"
   | C_SET_MEM               -> fprintf ppf "SET_MEM"
   | C_SET_UPDATE            -> fprintf ppf "SET_UPDATE"
   (* List *)

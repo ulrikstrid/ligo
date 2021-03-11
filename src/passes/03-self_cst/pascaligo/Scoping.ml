@@ -67,7 +67,7 @@ let reserved =
   |> add "set_remove"
   |> add "set_iter"
   |> add "set_fold"
-  |> add "set_fold_right"
+  |> add "SET_FOLD_DESC"
   |> add "list_iter"
   |> add "list_fold"
   |> add "list_fold_left"

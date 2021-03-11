@@ -72,7 +72,7 @@ let constant' = function
   | C_SET_REMOVE         -> `List [`String "C_SET_REMOVE"; `Null ]
   | C_SET_ITER           -> `List [`String "C_SET_ITER"; `Null ]
   | C_SET_FOLD           -> `List [`String "C_SET_FOLD"; `Null ]
-  | C_SET_FOLD_RIGHT     -> `List [`String "C_SET_FOLD_RIGHT"; `Null ]
+  | C_SET_FOLD_DESC     -> `List [`String "C_SET_FOLD_DESC"; `Null ]
   | C_SET_MEM            -> `List [`String "C_SET_MEM"; `Null ]
   | C_SET_UPDATE         -> `List [`String "C_SET_UPDATE"; `Null ]
   (* List *)

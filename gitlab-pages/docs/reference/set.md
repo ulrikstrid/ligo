@@ -292,13 +292,13 @@ let sum_of_elements : int = Set.fold (sum, my_set, 0);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function fold_right : (('item -> 'accumulator -> 'accumulator) -> set ('item) -> 'accumulator) -> 'accumulator
+function fold_desc: (('item -> 'accumulator -> 'accumulator) -> set ('item) -> 'accumulator) -> 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-val fold_right : ('item -> 'accumulator -> 'accumulator) -> 'set list -> 'accumulator -> 'accumulator
+val fold_desc : ('item -> 'accumulator -> 'accumulator) -> 'set list -> 'accumulator -> 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let fold_right: ((('item, 'accumulator) => 'accumulator), set('item), 'accumulator) => 'accumulator
+let fold_desc: ((('item, 'accumulator) => 'accumulator), set('item), 'accumulator) => 'accumulator
 </SyntaxTitle>
 
 [Fold over values in a set](../language-basics/sets-lists-tuples.md#folded-operation)
@@ -308,7 +308,7 @@ let fold_right: ((('item, 'accumulator) => 'accumulator), set('item), 'accumulat
 
 ```pascaligo group=sets
 function sum_right (const i : int; const acc : int): int is acc + i
-const sum_of_elements : int = Set.fold_right (sum_right, my_set, 0)
+const sum_of_elements : int = Set.fold_desc (sum_right, my_set, 0)
 ```
 
 </Syntax>
@@ -316,7 +316,7 @@ const sum_of_elements : int = Set.fold_right (sum_right, my_set, 0)
 
 ```cameligo group=sets
 let sum_right (i, acc : int * int) : int = acc + i
-let sum_of_elements : int = Set.fold_right sum_right my_set 0
+let sum_of_elements : int = Set.fold_desc sum_right my_set 0
 ```
 
 </Syntax>
@@ -324,7 +324,7 @@ let sum_of_elements : int = Set.fold_right sum_right my_set 0
 
 ```reasonligo group=sets
 let sum_right = ((i, acc) : (int, int)) : int => acc + i;
-let sum_of_elements : int = Set.fold_right (sum_right, my_set, 0);
+let sum_of_elements : int = Set.fold_desc (sum_right, my_set, 0);
 ```
 
 </Syntax>

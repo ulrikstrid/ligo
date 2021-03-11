@@ -85,7 +85,7 @@ let compile_constant' : AST.constant' -> constant' = function
   | C_SET_REMOVE -> C_SET_REMOVE
   | C_SET_ITER -> C_SET_ITER
   | C_SET_FOLD -> C_SET_FOLD
-  | C_SET_FOLD_RIGHT -> C_SET_FOLD_RIGHT
+  | C_SET_FOLD_DESC -> C_SET_FOLD_DESC
   | C_SET_MEM -> C_SET_MEM
   | C_SET_UPDATE -> C_SET_UPDATE
   (* List *)
@@ -509,7 +509,7 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
       | (C_MAP_FOLD , lst) -> fold lst
       | (C_LIST_FOLD_LEFT, lst) -> fold_left lst
       | (C_LIST_FOLD_RIGHT, lst) -> fold_right lst
-      | (C_SET_FOLD_RIGHT , lst) -> fold_right lst
+      | (C_SET_FOLD_DESC , lst) -> fold_right lst
       | _ -> (
           let%bind lst' = bind_map_list (self) lst in
           return @@ E_constant {cons_name=compile_constant' name;arguments=lst'}
