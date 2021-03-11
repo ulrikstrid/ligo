@@ -386,10 +386,10 @@ type z_or = michelson_or(unit, "z", y_or, "other")
 <Syntax syntax="jsligo">
 
 ```jsligo
-type w_and_v = michelson_pair<int, "w", nat, "v">;
-type x_and = michelson_pair<string, "x", w_and_v, "other">;
-type y_or = michelson_or<unit, "y", x_and, "other">;
-type z_or = michelson_or<unit, "z", y_or, "other">;
+type w_and_v = michelson_pair<[int, "w", nat, "v"]>;
+type x_and = michelson_pair<[string, "x", w_and_v, "other"]>;
+type y_or = michelson_or<[unit, "y", x_and, "other"]>;
+type z_or = michelson_or<[unit, "z", y_or, "other"]>;
 ```
 
 </Syntax>
@@ -450,14 +450,14 @@ let x: z_or = (M_right (y_1) : z_or)
 <Syntax syntax="jsligo">
 
 ```jsligo
-let z: z_or = (M_left <unit> as z_or);
+let z: z_or = M_left(unit) as z_or;
 
-let y_1: y_or = (M_left <unit> as y_or);
-let y: z_or = (M_right <y_1> as z_or);
+let y_1: y_or = M_left(unit) as y_or;
+let y: z_or = M_right(y_1) as z_or;
 
-let x_pair: x_and = ["foo", (2, (3 as nat))];
-let x_1: y_or = (M_right <x_pair> as y_or);
-let x: z_or = (M_right <y_1> as z_or);
+let x_pair: x_and = ["foo", [2, 3 as nat]];
+let x_1: y_or = M_right (x_pair) as y_or;
+let x: z_or = M_right (y_1) as z_or;
 ```
 
 </Syntax>
@@ -599,7 +599,7 @@ let of_michelson = (f: michelson) : l_record => {
 };
 
 let to_michelson = (f: l_record) : michelson => {
-  let p = Layout.convert_to_left_comb((f as l_record));
+  let p = Layout.convert_to_left_comb(f as l_record);
   return p
 };
 
@@ -720,7 +720,7 @@ let of_michelson_or = (f: r) : vari => {
 };
 
 let to_michelson_or = (f: vari) : r => {
-  let p = Layout.convert_to_left_comb((f as vari));
+  let p = Layout.convert_to_left_comb(f as vari);
   return p;
 };
 
