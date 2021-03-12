@@ -16,6 +16,7 @@
     "@mdx-js/react": "^1.6.21",
     "classnames": "^2.2.6",
     "clsx": "^1.1.1",
+    "jest-worker": "^26.6.2",
     "mime": "^1.6.0",
     "postcss": "^8.2.8",
     "react": "^17.0.1",
