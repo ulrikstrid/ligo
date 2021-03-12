@@ -14,6 +14,7 @@
     "@docusaurus/core": "^2.0.0-alpha.71",
     "@docusaurus/preset-classic": "^2.0.0-alpha.71",
     "@mdx-js/react": "^1.6.21",
+    "@nicolo-ribaudo/chokidar-2": "^2.1.8-no-fsevents",
     "classnames": "^2.2.6",
     "clsx": "^1.1.1",
     "jest-worker": "^26.6.2",
