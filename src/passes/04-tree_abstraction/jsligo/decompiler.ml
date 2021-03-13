@@ -174,6 +174,11 @@ let e_hd = function
   [Expr hd] -> hd
 | _ -> failwith "not supported"
 
+let s_hd = function 
+  [Statement hd] -> hd
+| [Expr e] -> SExpr e
+| _ -> failwith "not supported"
+
 let decompile_expression : AST.expression -> (CST.expr list, _) result = fun expr ->
   failwith "todo: fix me"
 
@@ -407,7 +412,66 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     let%bind expr1 = decompile_expression_in expr1 in
     let%bind expr2 = decompile_expression_in expr2 in
     return_expr @@ [Expr (CST.ESeq (wrap (e_hd expr1, [(ghost, e_hd expr2)])))]
-  
+  | E_cond {condition;then_clause;else_clause} ->
+    let%bind test  = decompile_expression_in condition in
+    let test = CST.{lpar = ghost; rpar = ghost; inside = e_hd test} in
+    let%bind ifso  = decompile_expression_in then_clause in
+    let ifso = s_hd ifso in
+    let%bind ifnot = decompile_expression_in else_clause in
+    let ifnot = s_hd ifnot in
+    let ifnot = Some(ghost,ifnot) in
+    let cond : CST.cond_statement = {kwd_if=ghost;test;ifso;ifnot} in
+    return_expr @@ [Statement (CST.SCond (wrap cond))]
+  | E_tuple tuple ->
+    let%bind tuple = bind_map_list (fun e ->
+      let%bind e = decompile_expression_in e in
+      ok @@ (CST.Expr_entry (e_hd e))
+    ) tuple in
+    let%bind tuple = list_to_nsepseq tuple in
+    return_expr @@ [Expr (CST.EArray (wrap @@ brackets @@ tuple))]
+  | E_map map ->
+    let%bind map = bind_map_list (bind_map_pair (fun e ->
+      let%bind e = decompile_expression_in e in
+      ok @@ (CST.Expr_entry (e_hd e))
+    )) map in
+    let%bind tuple = list_to_nsepseq map in
+    let aux (k,v) = CST.EArray (wrap @@ brackets (k,[(ghost,v)])) in
+    let map = List.map aux map in
+    (match map with
+      [] -> return_expr @@ [Expr (CST.EVar (wrap "Big_map.empty"))]
+    | hd::tl  ->
+        let var = CST.EVar (wrap "Map.literal") in
+        let args = CST.Multiple (wrap (par (hd,List.map (fun x -> ghost,x) tl))) in
+      return_expr @@ [Expr (CST.ECall (wrap @@ (var, args)))]
+    )
+    | E_big_map big_map ->
+      let%bind big_map = bind_map_list (bind_map_pair (fun e ->
+        let%bind e = decompile_expression_in e in
+        ok @@ (CST.Expr_entry (e_hd e))
+      )) big_map in
+      let aux (k,v) = CST.EArray (wrap @@ brackets (k,[(ghost,v)])) in
+      let big_map = List.map aux big_map in
+      (match big_map with
+        [] -> return_expr @@ [Expr (CST.EVar (wrap "Big_map.empty"))]
+      | hd::tl  ->
+        let var = CST.EVar (wrap "Big_map.literal") in
+        let args = CST.Multiple (wrap (par (hd,List.map (fun x -> ghost,x) tl))) in
+        return_expr @@ [Expr (CST.ECall (wrap @@ (var, args)))]
+      )
+  | E_list lst ->
+    let%bind lst = bind_map_list (fun e ->
+      let%bind e = decompile_expression_in e in
+      ok @@ (CST.Expr_entry (e_hd e))
+    ) lst in
+    let%bind lst = list_to_nsepseq lst in
+    return_expr @@ [Expr (ECall (wrap (CST.EVar (wrap "list"), CST.Multiple (wrap @@ par @@ (CST.EArray (wrap @@ brackets lst), [] )))))]
+  | E_set set ->
+    let%bind set = bind_map_list decompile_expression_in set in
+    let set = List.map e_hd set in
+    let hd,tl = List.Ne.of_list @@ set in
+    let var = CST.EVar (wrap "Set.literal") in
+    let args = CST.Multiple (wrap (par (hd,List.map (fun x -> ghost,x) tl))) in
+    return_expr @@ [Expr (CST.ECall (wrap @@ (var,args)))]
   | _ -> failwith "todo"
   
   (* 
@@ -487,51 +551,8 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     )
 
 
-  | E_cond {condition;then_clause;else_clause} ->
-    let%bind test  = decompile_expression_in condition in
-    let%bind ifso  = decompile_expression_in then_clause in
-    let ifso = CST.{lbrace=ghost; inside=(ifso,None); rbrace=ghost} in
-    let%bind ifnot = decompile_expression_in else_clause in
-    let ifnot = CST.{lbrace=ghost; inside=(ifnot,None); rbrace=ghost} in
-    let ifnot = Some(ghost,ifnot) in
-    let cond : CST.cond_expr = {kwd_if=ghost;test;ifso;ifnot} in
-    return_expr @@ CST.ECond (wrap cond)
-  | E_tuple tuple ->
-    let%bind tuple = bind_map_list decompile_expression_in tuple in
-    let%bind tuple = list_to_nsepseq tuple in
-    return_expr @@ CST.ETuple (wrap @@ tuple)
-  | E_map map ->
-    let%bind map = bind_map_list (bind_map_pair decompile_expression_in) map in
-    let aux (k,v) = CST.ETuple (wrap (k,[(ghost,v)])) in
-    let map = List.map aux map in
-    (match map with
-      [] -> return_expr @@ CST.EVar (wrap "Big_map.empty")
-    | hd::tl  ->
-       let var = CST.EVar (wrap "Map.literal") in
-       let args = CST.Multiple (wrap (par (hd,List.map (fun x -> ghost,x) tl))) in
-      return_expr @@ CST.ECall (wrap @@ (var, args))
-    )
-  | E_big_map big_map ->
-    let%bind big_map = bind_map_list (bind_map_pair decompile_expression_in) big_map in
-    let aux (k,v) = CST.ETuple (wrap (k,[(ghost,v)])) in
-    let big_map = List.map aux big_map in
-    (match big_map with
-      [] -> return_expr @@ CST.EVar (wrap "Big_map.empty")
-    | hd::tl  ->
-      let var = CST.EVar (wrap "Big_map.literal") in
-      let args = CST.Multiple (wrap (par (hd,List.map (fun x -> ghost,x) tl))) in
-      return_expr @@ CST.ECall (wrap @@ (var, args))
-    )
-  | E_list lst ->
-    let%bind lst = bind_map_list decompile_expression_in lst in
-    let lst = list_to_sepseq lst in
-    return_expr @@ CST.EList (EListComp (wrap @@ inject brackets @@ lst))
-  | E_set set ->
-    let%bind set = bind_map_list decompile_expression_in set in
-    let hd,tl = List.Ne.of_list @@ set in
-    let var = CST.EVar (wrap "Set.literal") in
-    let args = CST.Multiple (wrap (par (hd,List.map (fun x -> ghost,x) tl))) in
-    return_expr @@ CST.ECall (wrap @@ (var,args))
+
+
     (* We should avoid to generate skip instruction*)
   | E_skip -> return_expr @@ CST.EUnit (wrap (ghost,ghost))
   | E_mod_in _
