@@ -301,6 +301,19 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     let type_decl : CST.type_decl = {kwd_type=ghost;name;eq=ghost;type_expr} in
     let%bind body = decompile_expression_in let_result in
     return_expr @@ [Statement (CST.SType (wrap type_decl))] @ body
+  | E_mod_in {module_binder;rhs;let_result} ->
+    let name = wrap module_binder in
+    let%bind module_ = decompile_module rhs in
+    let statements: CST.statements = (fst @@ fst module_.statements, List.map (fun e -> (ghost, fst e)) (snd module_.statements)) in 
+    let statements: CST.statements CST.braced Region.reg = wrap @@ braced statements in
+    let%bind body = decompile_expression_in let_result in
+    ok @@ [Statement (CST.SNamespace (wrap (ghost, name, statements)))] @ body
+  | E_mod_alias {alias; binders; result} ->
+    let alias   = wrap alias in
+    let binders = nelist_to_npseq @@ List.Ne.map wrap binders in
+    let mod_alias : CST.import = {kwd_import=ghost;alias;equal=ghost;module_path=binders} in
+    let%bind body = decompile_expression_in result in
+    return_expr @@ [Statement (CST.SImport (wrap mod_alias))] @ body
   | E_raw_code {language; code} ->
     let language = wrap language in
     let%bind code = decompile_expression_in code in
@@ -472,6 +485,14 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     let var = CST.EVar (wrap "Set.literal") in
     let args = CST.Multiple (wrap (par (hd,List.map (fun x -> ghost,x) tl))) in
     return_expr @@ [Expr (CST.ECall (wrap @@ (var,args)))]
+  (* We should avoid to generate skip instruction*)
+  | E_skip -> return_expr @@ [Expr (CST.EUnit (wrap (ghost,ghost)))]
+  | E_assign _
+  | E_for _
+  | E_for_each _
+  | E_while _ ->
+    failwith @@ Format.asprintf "Decompiling a imperative construct to JsLIGO %a"
+    AST.PP.expression expr 
   | _ -> failwith "todo"
   
   (* 
@@ -551,18 +572,7 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     )
 
 
-
-
-    (* We should avoid to generate skip instruction*)
-  | E_skip -> return_expr @@ CST.EUnit (wrap (ghost,ghost))
-  | E_mod_in _
-  | E_mod_alias _
-  | E_assign _
-  | E_for _
-  | E_for_each _
-  | E_while _ ->
-    failwith @@ Format.asprintf "Decompiling a imperative construct to JsLIGO %a"
-    AST.PP.expression expr *)
+*)
 
 (* and decompile_to_path : AST.expression_variable -> _ AST.access list -> (CST.path, _) result = fun var access ->
  *   let struct_name = decompile_variable var.wrap_content in
@@ -642,7 +652,7 @@ and decompile_matching_cases : AST.matching_expr -> (CST.expr,_) result =
   in
   map wrap @@ list_to_nsepseq cases *)
 
-let rec decompile_declaration : AST.declaration Location.wrap -> (CST.statement, _) result = fun decl ->
+and decompile_declaration : AST.declaration Location.wrap -> (CST.statement, _) result = fun decl ->
   let decl = Location.unwrap decl in
   let wrap value = ({value;region=Region.ghost} : _ Region.reg) in
   match decl with
