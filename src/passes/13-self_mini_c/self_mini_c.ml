@@ -133,7 +133,7 @@ let rec is_pure : expression -> bool = fun e ->
 
   | E_let_in (e1, _, (_, e2))
     -> List.for_all is_pure [ e1 ; e2 ]
-  | E_let_pair (e1, (_, e2))
+  | E_let_tuple (e1, (_, e2))
     -> List.for_all is_pure [ e1 ; e2 ]
 
   | E_constant (c)
@@ -269,3 +269,7 @@ let rec all_expression : expression -> expression =
   if !changed
   then all_expression e
   else e
+
+let all_expression e =
+  let e = all_expression e in
+  Uncurry.uncurry_expression e
