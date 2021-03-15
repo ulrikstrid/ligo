@@ -174,10 +174,13 @@ let e_hd = function
   [Expr hd] -> hd
 | _ -> failwith "not supported"
 
-let s_hd = function 
-  [Statement hd] -> hd
-| [Expr e] -> SExpr e
-| _ -> failwith "not supported"
+let rec s_hd = function 
+  [Statement hd] -> ok @@ hd
+| [Expr e] -> ok @@ CST.SExpr e
+| lst -> 
+  let%bind lst = bind_map_list (fun e -> s_hd [e]) lst in
+  let%bind lst = list_to_nsepseq lst in
+  ok @@ CST.SBlock (wrap @@ braced @@ lst)
 
 let decompile_expression : AST.expression -> (CST.expr list, _) result = fun expr ->
   failwith "todo: fix me"
@@ -429,9 +432,9 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     let%bind test  = decompile_expression_in condition in
     let test = CST.{lpar = ghost; rpar = ghost; inside = e_hd test} in
     let%bind ifso  = decompile_expression_in then_clause in
-    let ifso = s_hd ifso in
+    let%bind ifso = s_hd ifso in
     let%bind ifnot = decompile_expression_in else_clause in
-    let ifnot = s_hd ifnot in
+    let%bind ifnot = s_hd ifnot in
     let ifnot = Some(ghost,ifnot) in
     let cond : CST.cond_statement = {kwd_if=ghost;test;ifso;ifnot} in
     return_expr @@ [Statement (CST.SCond (wrap cond))]
@@ -487,11 +490,29 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     return_expr @@ [Expr (CST.ECall (wrap @@ (var,args)))]
   (* We should avoid to generate skip instruction*)
   | E_skip -> return_expr @@ [Expr (CST.EUnit (wrap (ghost,ghost)))]
-  | E_assign _
-  | E_for _
-  | E_for_each _
-  | E_while _ ->
-    failwith @@ Format.asprintf "Decompiling a imperative construct to JsLIGO %a"
+  (* | E_assign {variable;access_path;expression} ->
+    let%bind lhs = decompile_to_lhs dialect variable access_path in
+    let%bind rhs = decompile_expression expression in
+    let assign : CST.assignment = {lhs;assign=ghost;rhs} in
+    return_expr @@ [Expr (CST.EAssign (wrap assign))]
+  | E_for_each {fe_binder;collection;collection_type;fe_body} ->
+    let var = decompile_variable @@ (fst fe_binder).wrap_content in
+    let bind_to = Option.map (fun (x:AST.expression_variable) -> (ghost,decompile_variable x.wrap_content)) @@ snd fe_binder in
+    let%bind expr = decompile_expression ~dialect collection in
+    let collection = match collection_type with
+      Map -> CST.Map ghost | Set -> Set ghost | List -> List ghost | Any -> failwith "TODO : have the type of the collection propagated from AST_typed" in
+    let%bind (block,_next) = decompile_to_block dialect fe_body in
+    let block = wrap @@ Option.unopt ~default:(empty_block dialect) block in
+    let fc : CST.for_collect = {kwd_for=ghost;var;bind_to;kwd_in=ghost;collection;expr;block} in
+    return_inst @@ CST.Loop (For (ForCollect (wrap fc)))
+  | E_while {cond;body} ->
+    let%bind cond  = decompile_expression ~dialect cond in
+    let%bind (block,_next) = decompile_to_block dialect body in
+    let block = wrap @@ Option.unopt ~default:(empty_block dialect) block in
+    let loop : CST.while_loop = {kwd_while=ghost;cond;block} in
+    return_inst @@ CST.Loop (While (wrap loop)) *)
+  | E_for _ ->
+    failwith @@ Format.asprintf "Decompiling a for loop to JsLIGO %a"
     AST.PP.expression expr 
   | _ -> failwith "todo"
   
