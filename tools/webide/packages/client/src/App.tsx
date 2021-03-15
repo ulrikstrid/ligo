@@ -21,7 +21,7 @@ import OutputTab from './components/output/output-tab';
 import configureStore from './configure-store';
 import ViewSharedFile from './components/view-shared-file'
 import ViewExampleFile from './components/view-example-file'
-// comment merge test
+
 const store = configureStore();
 
 interface TopPaneStyled {
