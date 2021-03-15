@@ -494,23 +494,23 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     let%bind lhs = decompile_to_lhs dialect variable access_path in
     let%bind rhs = decompile_expression expression in
     let assign : CST.assignment = {lhs;assign=ghost;rhs} in
-    return_expr @@ [Expr (CST.EAssign (wrap assign))]
-  | E_for_each {fe_binder;collection;collection_type;fe_body} ->
+    return_expr @@ [Expr (CST.EAssign (wrap assign))] *)
+  | E_for_each {fe_binder;collection;fe_body; _} ->
     let var = decompile_variable @@ (fst fe_binder).wrap_content in
     let bind_to = Option.map (fun (x:AST.expression_variable) -> (ghost,decompile_variable x.wrap_content)) @@ snd fe_binder in
-    let%bind expr = decompile_expression ~dialect collection in
-    let collection = match collection_type with
-      Map -> CST.Map ghost | Set -> Set ghost | List -> List ghost | Any -> failwith "TODO : have the type of the collection propagated from AST_typed" in
-    let%bind (block,_next) = decompile_to_block dialect fe_body in
-    let block = wrap @@ Option.unopt ~default:(empty_block dialect) block in
-    let fc : CST.for_collect = {kwd_for=ghost;var;bind_to;kwd_in=ghost;collection;expr;block} in
-    return_inst @@ CST.Loop (For (ForCollect (wrap fc)))
+    let%bind expr = decompile_expression_in collection in
+    let expr = e_hd expr in
+    let%bind block = decompile_expression_in fe_body in
+    let%bind statement = s_hd block in
+    let for_of : CST.for_of = {kwd_for=ghost;lpar=ghost;const=true;name=var;kwd_of=ghost;expr;rpar=ghost;statement} in
+    return_expr [Statement (CST.SForOf (wrap for_of))]
   | E_while {cond;body} ->
-    let%bind cond  = decompile_expression ~dialect cond in
-    let%bind (block,_next) = decompile_to_block dialect body in
-    let block = wrap @@ Option.unopt ~default:(empty_block dialect) block in
-    let loop : CST.while_loop = {kwd_while=ghost;cond;block} in
-    return_inst @@ CST.Loop (While (wrap loop)) *)
+    let%bind cond  = decompile_expression_in cond in
+    let expr = e_hd cond in
+    let%bind block = decompile_expression_in body in
+    let%bind statement = s_hd block in
+    let loop : CST.while_ = {kwd_while=ghost;lpar=ghost;expr;rpar=ghost;statement} in
+    return_expr @@ [Statement (CST.SWhile (wrap loop))]
   | E_for _ ->
     failwith @@ Format.asprintf "Decompiling a for loop to JsLIGO %a"
     AST.PP.expression expr 
