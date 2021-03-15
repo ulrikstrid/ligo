@@ -359,64 +359,28 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     let record = braced record in
     return_expr @@ [Expr (CST.EObject (wrap record))]
   | E_accessor {record; path} ->
-    failwith "blergh"
-    (* let rec proj expr = function
-      AST.Access_map e :: rest ->
-        let%bind map = decompile_expression_in expr in
-        let map = match map with 
-          [Expr hd] -> hd
-        |  _ -> failwith "not supported"
-        in
+    let%bind record = decompile_expression_in record in
+    let rec proj expr = function
+      AST.Access_map e :: rest ->        
         let%bind e = decompile_expression_in e in
-        let e = match e with 
-          [Expr hd] -> hd
-        | _ -> failwith "not supported"  
-        in
-        let arg = CST.Multiple (wrap (par (e,[ghost,map]))) in
+        let e = e_hd e in
+        let arg = CST.Multiple (wrap (par (e,[ghost,expr]))) in
         ok @@ (CST.ECall( wrap (CST.EVar (wrap "Map.find_opt"), arg)))
-    | _ as e :: rest -> 
-      let%bind selection = decompile_to_selection e in
+    | AST.Access_tuple e :: rest -> failwith "todo"
+      (* let%bind selection = decompile_to_selection e in
       let%bind struct_name = map (decompile_variable) @@ get_e_variable record in
       let expr = CST.EVar struct_name in
       let proj : CST.projection = {expr; selection} in
-      return_expr @@ [Expr (CST.EProj (wrap proj))]
-    | [] -> return_expr [Expr result]
+      return_expr @@ [Expr (CST.EProj (wrap proj))] *)
+    | AST.Access_record e :: rest ->
+      failwith "todo"
+    | [] -> ok expr
     in
-
-    (match List.rev path with
-      Access_map e :: [] ->
-      let%bind map = decompile_expression_in record in
-      let map = match map with 
-        [Expr hd] -> hd
-      |  _ -> failwith "not supported"
-      in
-      let%bind e = decompile_expression_in e in
-      let e = match e with 
-        [Expr hd] -> hd
-      | _ -> failwith "not supported"  
-      in
-      let arg = CST.Multiple (wrap (par (e,[ghost,map]))) in
-      return_expr @@ [Expr (CST.ECall( wrap (CST.EVar (wrap "Map.find_opt"), arg)))]
-     | Access_map e :: lst ->
-      let path = List.rev lst in
-      let%bind field_path = bind list_to_nsepseq @@ bind_map_list decompile_to_selection path in
-      let%bind struct_name = map (decompile_variable) @@ get_e_variable record in
-      let proj : CST.projection = {struct_name;selector=ghost;field_path} in
-      let%bind e = decompile_expression_in e in
-      let arg =  CST.Multiple (wrap (par (e,[ghost, CST.EProj (wrap proj)]))) in
-      return_expr @@ CST.ECall( wrap (CST.EVar (wrap "Map.find_opt"), arg))
-    | _ ->
-      let%bind field_path = bind list_to_nsepseq @@ bind_map_list decompile_to_selection path in
-      let%bind struct_name = map (decompile_variable) @@ get_e_variable record in
-      let proj : CST.projection = {expr; selection} in
-      return_expr @@ [Expr (CST.EProj (wrap proj))]
-    ) *)
+    let%bind x = proj (e_hd record) path in
+    ok @@ [Expr x]
   | E_ascription {anno_expr;type_annotation} ->
     let%bind expr = decompile_expression_in anno_expr in
-    let expr = match expr with 
-      [Expr hd] -> hd
-    | _ -> failwith "not supported"
-    in
+    let expr = e_hd expr in
     let%bind ty   = decompile_type_expr type_annotation in
     return_expr @@ [Expr (CST.EAnnot (wrap @@ (expr,ghost,ty)))]
   | E_module_accessor {module_name;element} ->
@@ -490,11 +454,13 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     return_expr @@ [Expr (CST.ECall (wrap @@ (var,args)))]
   (* We should avoid to generate skip instruction*)
   | E_skip -> return_expr @@ [Expr (CST.EUnit (wrap (ghost,ghost)))]
-  (* | E_assign {variable;access_path;expression} ->
-    let%bind lhs = decompile_to_lhs dialect variable access_path in
-    let%bind rhs = decompile_expression expression in
-    let assign : CST.assignment = {lhs;assign=ghost;rhs} in
-    return_expr @@ [Expr (CST.EAssign (wrap assign))] *)
+  | E_assign {variable;access_path;expression} when List.length access_path > 0 ->
+    failwith "Assignments with access paths are not supported by JsLIGO."
+  | E_assign {variable;expression;_} ->
+    let name = Var.to_name variable.wrap_content in
+    let evar = CST.EVar (wrap name) in
+    let%bind rhs = decompile_expression_in expression in
+    return_expr @@ [Expr (CST.EAssign (evar, ghost, e_hd rhs))]
   | E_for_each {fe_binder;collection;fe_body; _} ->
     let var = decompile_variable @@ (fst fe_binder).wrap_content in
     let bind_to = Option.map (fun (x:AST.expression_variable) -> (ghost,decompile_variable x.wrap_content)) @@ snd fe_binder in
