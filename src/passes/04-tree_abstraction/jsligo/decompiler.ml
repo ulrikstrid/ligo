@@ -365,15 +365,20 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
         let%bind e = decompile_expression_in e in
         let e = e_hd e in
         let arg = CST.Multiple (wrap (par (e,[ghost,expr]))) in
-        ok @@ (CST.ECall( wrap (CST.EVar (wrap "Map.find_opt"), arg)))
-    | AST.Access_tuple e :: rest -> failwith "todo"
-      (* let%bind selection = decompile_to_selection e in
-      let%bind struct_name = map (decompile_variable) @@ get_e_variable record in
-      let expr = CST.EVar struct_name in
-      let proj : CST.projection = {expr; selection} in
-      return_expr @@ [Expr (CST.EProj (wrap proj))] *)
+        proj (CST.ECall( wrap (CST.EVar (wrap "Map.find_opt"), arg))) rest
+    | AST.Access_tuple index :: rest -> 
+      let i = CST.EArith (Int (wrap ("", index))) in
+      let p = CST.{
+        expr;
+        selection = Component (wrap @@ brackets @@ i)
+      } in
+      proj (CST.EProj (wrap p)) rest
     | AST.Access_record e :: rest ->
-      failwith "todo"
+      let p = CST.{
+        expr;
+        selection = FieldName (wrap {dot = ghost; value = wrap e})
+      } in
+      proj (CST.EProj (wrap p)) rest
     | [] -> ok expr
     in
     let%bind x = proj (e_hd record) path in
@@ -479,105 +484,25 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     return_expr @@ [Statement (CST.SWhile (wrap loop))]
   | E_for _ ->
     failwith @@ Format.asprintf "Decompiling a for loop to JsLIGO %a"
-    AST.PP.expression expr 
-  | _ -> failwith "todo"
-  
-  (* 
-  | 
+    AST.PP.expression expr   
   (* Update on multiple field of the same record. may be removed by adding sugar *)
-  | E_update {record={expression_content=E_update _;_} as record;path;update} ->
-    let%bind record = decompile_expression_in record in
-    let%bind (record,updates) = match record with
-      CST.EUpdate {value;_} -> ok @@ (value.record,value.updates)
-    | _ -> failwith @@ Format.asprintf "Inpossible case %a" AST.PP.expression expr
-    in
-    let%bind var,path = match path with
-      Access_record var::path -> ok @@ (var,path)
-    | _ -> failwith "Impossible case %a"
-    in
-    let%bind field_path = decompile_to_path (Location.wrap @@ Var.of_name var) path in
-    let%bind field_expr = decompile_expression_in update in
-    let field_assign : CST.field_path_assignment = {field_path;assignment=ghost;field_expr} in
-    let updates = updates.value.ne_elements in
-    let updates =
-      wrap @@ ne_inject ~attr:[] braces @@ npseq_cons (wrap @@ field_assign) updates in
-    let update : CST.update = {lbrace=ghost;record;ellipsis=ghost;comma=ghost;updates;rbrace=ghost} in
-    return_expr @@ CST.EUpdate (wrap @@ update)
+  | E_update {record;path;update} when List.length path > 1 ->
+    failwith "Nested updates are not supported in JsLIGO."
   | E_update {record; path; update} ->
-    let%bind record = map (decompile_variable) @@ get_e_variable record in
-    let%bind field_expr = decompile_expression_in update in
-    let (struct_name,field_path) = List.Ne.of_list path in
-    (match field_path with
-      [] ->
-      (match struct_name with
-        Access_record name ->
-        let record : CST.path = Name record in
-        let field_path = CST.Name (wrap name) in
-        let update : CST.field_path_assignment = {field_path;assignment=ghost;field_expr} in
-        let updates = wrap @@ ne_inject ~attr:[] braces @@ (wrap update,[]) in
-        let update : CST.update = {lbrace=ghost;record;ellipsis=ghost;comma=ghost;updates;rbrace=ghost} in
-        return_expr @@ CST.EUpdate (wrap update)
-      | Access_tuple i ->
-        let record : CST.path = Name record in
-        let field_path = CST.Name (wrap @@ Z.to_string i) in
-        let update : CST.field_path_assignment = {field_path;assignment=ghost;field_expr} in
-        let updates = wrap @@ ne_inject ~attr:[] braces @@ (wrap update,[]) in
-        let update : CST.update = {lbrace=ghost;record;ellipsis=ghost;comma=ghost;updates;rbrace=ghost} in
-        return_expr @@ CST.EUpdate (wrap update)
-      | Access_map e ->
-        let%bind e = decompile_expression_in e in
-        let arg = CST.Multiple (wrap (par (field_expr,[ghost,e; ghost,CST.EVar record]))) in
-        return_expr @@ CST.ECall (wrap (CST.EVar (wrap "Map.add"), arg))
-      )
-    | _ ->
-      let%bind struct_name = match struct_name with
-          Access_record name -> ok @@ wrap name
-        | Access_tuple i -> ok @@ wrap @@ Z.to_string i
-        | Access_map _ -> failwith @@ Format.asprintf "invalid map update %a" AST.PP.expression expr
-      in
-      (match List.rev field_path with
-        Access_map e :: lst ->
-        let field_path = List.rev lst in
-        let%bind field_path = bind_map_list decompile_to_selection field_path in
-        let%bind field_path = list_to_nsepseq field_path in
-        let field_path : CST.projection = {struct_name; selector=ghost;field_path} in
-        let field_path = CST.EProj (wrap @@ field_path) in
-        let%bind e = decompile_expression_in e in
-        let arg = CST.Multiple (wrap (par (field_expr, [ghost,e; ghost,field_path]))) in
-        return_expr @@ CST.ECall (wrap (CST.EVar (wrap "Map.add"),arg))
-      | _ ->
-        let%bind field_path = bind_map_list decompile_to_selection field_path in
-        let%bind field_path = list_to_nsepseq field_path in
-        let field_path : CST.projection = {struct_name; selector=ghost;field_path} in
-        let field_path = CST.Path (wrap @@ field_path) in
-        let record : CST.path = Name record in
-        let update : CST.field_path_assignment = {field_path;assignment=ghost;field_expr} in
-        let updates = wrap @@ ne_inject ~attr:[] braces @@ (wrap update,[]) in
-        let update : CST.update = {lbrace=ghost;record;ellipsis=ghost;comma=ghost;updates;rbrace=ghost} in
-        return_expr @@ CST.EUpdate (wrap update)
-      )
-    )
-
-
-*)
-
-(* and decompile_to_path : AST.expression_variable -> _ AST.access list -> (CST.path, _) result = fun var access ->
- *   let struct_name = decompile_variable var.wrap_content in
- *   match access with
- *     [] -> ok @@ CST.Name struct_name
- *   | lst ->
- *     let%bind field_path = bind list_to_nsepseq @@ bind_map_list decompile_to_selection lst in
- *     let path : CST.projection = {struct_name;selector=ghost;field_path} in
- *     ok @@ (CST.Path (wrap @@ path) : CST.path) *)
-
-and decompile_to_selection : _ AST.access -> (CST.selection, _) result = fun access ->
-  failwith "todo"
-  (* match access with
-    Access_tuple index -> ok @@ CST.Component (wrap @@ ("",index))
-  | Access_record str  -> ok @@ CST.FieldName (wrap str)
-  | Access_map _ ->
-    failwith @@ Format.asprintf
-    "Can't decompile access_map to selection" *)
+    let%bind record = decompile_expression_in record in
+    let expr = e_hd record in
+    let name = match path with 
+      [AST.Access_record name] -> CST.EVar (wrap name)
+    | _ -> failwith "not supported"
+    in
+    let%bind update = decompile_expression_in update in 
+    let update = e_hd update in
+    let p:CST.property = CST.Property (wrap CST.{
+      name;
+      colon = ghost;
+      value = update
+    }) in
+    return_expr @@ [Expr (CST.EObject (wrap @@ braced (CST.Property_rest (wrap ({expr; ellipsis = ghost}: CST.property_rest)), [(ghost, p)])))]
 
 and decompile_lambda : (AST.expr, AST.ty_expr) AST.lambda -> _ =
   fun {binder;output_type;result} ->
