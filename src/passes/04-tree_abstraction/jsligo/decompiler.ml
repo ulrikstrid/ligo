@@ -329,17 +329,11 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     let Label constr = constructor in
     let constr = wrap constr in
     let%bind element = decompile_expression_in element in
-    let element = match element with 
-      [Expr e] -> e 
-    | _ -> failwith "not implemented"
-    in
+    let element = e_hd element in
     return_expr @@ [Expr (CST.EConstr (EConstrApp (wrap (constr, Some element))))]
   | E_matching {matchee; cases} ->
     let%bind expr  = decompile_expression_in matchee in
-    let expr = match expr with 
-      [Expr hd] -> hd
-    | _ -> failwith "not implemented"
-    in
+    let expr = e_hd expr in
     let%bind cases = decompile_matching_cases cases in
     return_expr @@ [Expr (CST.ECall (wrap (CST.EVar (wrap "match"), CST.Multiple (wrap CST.{lpar = ghost; rpar = ghost; inside = expr, [(ghost, cases)]}) )))]
   | E_record record  ->
@@ -347,10 +341,7 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     let aux (AST.Label str, expr) =
       let field_name = wrap str in
       let%bind field_expr = decompile_expression_in expr in
-      let expr = match field_expr with 
-        [Expr hd] -> hd
-      | _ -> failwith "not supported"
-      in
+      let expr = e_hd field_expr in
       let field : CST.property = CST.Property (wrap CST.{name = EVar (wrap str); colon = ghost; value = expr}) in
       ok @@ field
     in
@@ -504,65 +495,95 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     }) in
     return_expr @@ [Expr (CST.EObject (wrap @@ braced (CST.Property_rest (wrap ({expr; ellipsis = ghost}: CST.property_rest)), [(ghost, p)])))]
 
+and statements_to_block statements = 
+  let statements = List.map (fun f ->
+    match f with 
+      Statement s -> s
+    | Expr e -> SExpr e
+  ) statements in
+  let%bind s = list_to_nsepseq statements in
+  ok @@ wrap @@ braced s
+
 and decompile_lambda : (AST.expr, AST.ty_expr) AST.lambda -> _ =
   fun {binder;output_type;result} ->
-    failwith "todo"
-    (* let%bind param_decl = pattern_type binder in
-    let param = CST.PPar (wrap @@ par @@ param_decl) in
-    let%bind ret_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) output_type in
-    let%bind return = decompile_expression_in result in
-    ok @@ (param,ret_type,return) *)
+    let%bind type_expr = bind_map_option decompile_type_expr binder.ascr in
+    let type_expr = Option.unopt ~default:(CST.TWild ghost) type_expr in
+    let seq = CST.ESeq (wrap (CST.EAnnot (wrap (CST.EVar (wrap (Var.to_name binder.var.wrap_content)),ghost,type_expr)), [])) in
+    let parameters = CST.EPar (wrap @@ par seq ) in
+    let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) output_type in    
+    let%bind body = decompile_expression_in result in
+    let%bind body = match body with 
+    | [Expr e] -> ok @@ CST.ExpressionBody e
+    | (_ :: _) as s -> 
+      let%bind o = statements_to_block s in
+      ok @@ CST.FunctionBody o
+    | _ -> failwith "not supported"
+    in
+    ok @@ (parameters, lhs_type, body)
 
 and decompile_matching_cases : AST.matching_expr -> (CST.expr,_) result =
   fun m ->
-    failwith "Todo"
-  (* let%bind cases = match m with
-    Match_variable (var, expr) ->
-    let%bind pattern = pattern_type var in
-    let%bind rhs = decompile_expression_in expr in
-    let case : _ CST.case_clause = {pattern; arrow=ghost; rhs; terminator=None}in
-    ok @@ [wrap case]
-  | Match_tuple (lst, expr) ->
-    let%bind tuple = bind list_to_nsepseq @@ bind_map_list pattern_type lst in
-    let pattern : CST.pattern = PTuple (wrap @@ tuple) in
-    let%bind rhs = decompile_expression_in expr in
-    let case : _ CST.case_clause = {pattern; arrow=ghost; rhs; terminator=None}in
-    ok @@ [wrap case]
-  | Match_record _ -> failwith "match_record not availiable yet"
-  | Match_option {match_none;match_some}->
-    let%bind rhs = decompile_expression_in match_none in
-    let none_case : _ CST.case_clause = {pattern=PConstr (PNone ghost);arrow=ghost; rhs; terminator=None} in
-    let%bind rhs = decompile_expression_in @@ snd match_some in
-    let var = CST.PVar (decompile_variable @@ (fst match_some).wrap_content)in
-    let some_case : _ CST.case_clause =
-      {pattern=PConstr (PSomeApp (wrap (ghost,var)));arrow=ghost; rhs; terminator=None} in
-    ok @@ [wrap some_case;wrap none_case]
-  | Match_list {match_nil; match_cons} ->
-    let (hd,tl,expr) = match_cons in
-    let lpattern = CST.PVar (decompile_variable hd.wrap_content) in
-    let rpattern = CST.PVar (decompile_variable tl.wrap_content) in
-    let cons = CST.{lbracket=ghost;lpattern;comma=ghost;ellipsis=ghost;rpattern;rbracket=ghost} in
-    let%bind rhs = decompile_expression_in @@ expr in
-    let cons_case : _ CST.case_clause =
-      {pattern=PList (PCons (wrap cons));arrow=ghost; rhs; terminator=None} in
-    let%bind rhs = decompile_expression_in @@ match_nil in
-    let nil_case : _ CST.case_clause =
-      {pattern=PList (PListComp (wrap @@ inject brackets None));arrow=ghost; rhs; terminator=None} in
-    ok @@ [wrap cons_case; wrap nil_case]
-  | Match_variant lst ->
-    let aux ((c,(v:AST.expression_variable)),e) =
-      let AST.Label c = c in
-      let constr = wrap @@ c in
-      let var : CST.pattern = PVar (decompile_variable v.wrap_content) in
-      let tuple = var in
-      let pattern : CST.pattern = PConstr (PConstrApp (wrap (constr, Some tuple))) in
-      let%bind rhs = decompile_expression_in e in
-      let case : _ CST.case_clause = {pattern;arrow=ghost;rhs; terminator=None} in
-      ok @@ wrap case
-    in
-    bind_map_list aux lst
+    let cases = match m with
+    | Match_variant lst ->
+      let aux ((c,(v:AST.expression_variable)),e) =
+        let AST.Label c = c in
+        let%bind rhs = decompile_expression_in e in
+        let rhs = e_hd rhs in
+        ok @@ (CST.Property (wrap ({
+          name = CST.EVar (wrap c);
+          colon = ghost;
+          value = rhs;
+        }: CST.property2)))
+      in
+      let%bind fields = bind_map_list aux lst in 
+      let%bind fields = list_to_nsepseq fields in
+      ok @@ CST.EObject (wrap @@ braced fields)
+    | Match_list {match_nil; match_cons} ->
+      let (hd,tl,expr) = match_cons in
+      let%bind nil_expr = decompile_expression_in match_nil in
+      let%bind body = match nil_expr with 
+      | [Expr e] -> ok @@ CST.ExpressionBody e
+      | (_ :: _) as s -> 
+        let%bind o = statements_to_block s in
+        ok @@ CST.FunctionBody o
+      | _ -> failwith "not supported"
+      in
+      let nil  = CST.EFun (wrap CST.{
+        parameters = EAnnot (wrap (EArray (wrap @@ brackets (Empty_entry ghost, [])), ghost, TVar (wrap "any"))); 
+        lhs_type = None;
+        arrow = ghost; 
+        body}) in
+      let%bind cons_expr = decompile_expression_in expr in
+      let%bind body = match cons_expr with 
+      | [Expr e] -> ok @@ CST.ExpressionBody e
+      | (_ :: _) as s -> 
+        let%bind o = statements_to_block s in
+        ok @@ CST.FunctionBody o
+      | _ -> failwith "not supported"
+      in
+      let hd = Var.to_name hd.wrap_content in
+      let tl = ({expr = EVar (wrap (Var.to_name tl.wrap_content)); ellipsis = ghost }: CST.array_item_rest) in
+      let cons  = CST.EFun (wrap CST.{
+        parameters = EAnnot (wrap (EArray (wrap @@ brackets (Expr_entry (EVar (wrap hd)), [(ghost, (Rest_entry (wrap tl)))])), ghost, TVar (wrap "any"))); 
+        lhs_type = None;
+        arrow = ghost; 
+        body}) in
+      let args = (CST.Expr_entry cons, [(ghost, CST.Expr_entry nil)]) in
+      ok @@ CST.ECall (wrap ((CST.EVar (wrap "list")), CST.Multiple (wrap @@ par (CST.EArray (wrap @@ brackets args), []))))
+    | Match_variable (var, expr) -> failwith "not implemented"
+    | Match_record _ -> failwith "match_record not available yet"
+    | Match_tuple (lst, expr) ->  failwith "not implemented"
+    | _ -> failwith "Todoooo"
+    (* | Match_option {match_none;match_some} ->
+      let%bind rhs = decompile_expression match_none in
+      let none_case : _ CST.case_clause = {pattern=PConstr (PNone ghost);arrow=ghost; rhs; terminator=None} in
+      let%bind rhs = decompile_expression @@ snd match_some in
+      let var = CST.PVar (decompile_variable @@ (fst match_some).wrap_content)in
+      let some_case : _ CST.case_clause =
+        {pattern=PConstr (PSomeApp (wrap (ghost,var)));arrow=ghost; rhs; terminator=None} in
+      ok @@ [wrap some_case;wrap none_case] *)
   in
-  map wrap @@ list_to_nsepseq cases *)
+  cases
 
 and decompile_declaration : AST.declaration Location.wrap -> (CST.statement, _) result = fun decl ->
   let decl = Location.unwrap decl in
