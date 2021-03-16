@@ -273,8 +273,8 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     let%bind (parameters,lhs_type,body) = decompile_lambda lambda in
     let fun_expr : CST.fun_expr = {parameters;lhs_type;arrow=ghost;body} in
     return_expr @@ [Expr (CST.EFun (wrap @@ fun_expr))]
-  | E_recursive _ ->
-    failwith "corner case : annonymous recursive function"
+  | E_recursive {fun_name; fun_type; lambda} -> 
+    failwith "todo"
   | E_let_in {let_binder={var;ascr};rhs;let_result;attributes} ->
     let attributes = decompile_attributes attributes in
     let var = CST.PVar (decompile_variable @@ var.wrap_content) in
@@ -573,15 +573,38 @@ and decompile_matching_cases : AST.matching_expr -> (CST.expr,_) result =
     | Match_variable (var, expr) -> failwith "not implemented"
     | Match_record _ -> failwith "match_record not available yet"
     | Match_tuple (lst, expr) ->  failwith "not implemented"
-    | _ -> failwith "Todoooo"
-    (* | Match_option {match_none;match_some} ->
-      let%bind rhs = decompile_expression match_none in
-      let none_case : _ CST.case_clause = {pattern=PConstr (PNone ghost);arrow=ghost; rhs; terminator=None} in
-      let%bind rhs = decompile_expression @@ snd match_some in
-      let var = CST.PVar (decompile_variable @@ (fst match_some).wrap_content)in
-      let some_case : _ CST.case_clause =
-        {pattern=PConstr (PSomeApp (wrap (ghost,var)));arrow=ghost; rhs; terminator=None} in
-      ok @@ [wrap some_case;wrap none_case] *)
+    | Match_option {match_none;match_some} ->
+      let%bind a = decompile_expression_in match_none in
+      let%bind body = match a with 
+      | [Expr e] -> ok @@ CST.ExpressionBody e
+      | (_ :: _) as s -> 
+        let%bind o = statements_to_block s in
+        ok @@ CST.FunctionBody o
+      | _ -> failwith "not supported"
+      in
+      let name = Var.to_name (fst match_some).wrap_content in
+      let%bind body2 = decompile_expression_in (snd match_some) in
+      let%bind body2 = match body2 with 
+      | [Expr e] -> ok @@ CST.ExpressionBody e
+      | (_ :: _) as s -> 
+        let%bind o = statements_to_block s in
+        ok @@ CST.FunctionBody o
+      | _ -> failwith "not supported"
+      in
+      let fields = CST.[
+        CST.Property (wrap 
+          {name = CST.EVar (wrap "Some"); 
+          colon = ghost; 
+          value = EFun (wrap CST.{parameters = EAnnot (wrap (EVar (wrap name), ghost, TVar (wrap "any"))); lhs_type = None; arrow = ghost; body = body2})
+          });
+          CST.Property (wrap 
+            {name = CST.EVar (wrap "None"); 
+            colon = ghost; 
+            value = EFun (wrap CST.{parameters = EUnit (wrap (ghost, ghost)); lhs_type = None; arrow = ghost; body})
+          })
+      ] in
+      let%bind fields = list_to_nsepseq fields in
+      ok @@ CST.EObject (wrap @@ braced fields)
   in
   cases
 
