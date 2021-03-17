@@ -172,7 +172,11 @@ type statement_or_expr =
 
 let e_hd = function 
   [Expr hd] -> hd
-| _ -> failwith "not supported"
+| Expr hd :: rest  -> failwith "sequence?!"
+| [Statement s] -> failwith "wut"
+| [] -> failwith "uhhhhh"
+| Statement _ :: _ -> failwith "wut2"
+(* | _ -> failwith "not supported2" *)
 
 let rec s_hd = function 
   [Statement hd] -> ok @@ hd
@@ -269,12 +273,21 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
       get_e_tuple args
     in
     return_expr @@ [Expr (CST.ECall (wrap (lamb,args)))]
-  | E_lambda lambda ->
+  | E_lambda lambda
+  | E_recursive {lambda; _} ->
     let%bind (parameters,lhs_type,body) = decompile_lambda lambda in
     let fun_expr : CST.fun_expr = {parameters;lhs_type;arrow=ghost;body} in
     return_expr @@ [Expr (CST.EFun (wrap @@ fun_expr))]
-  | E_recursive {fun_name; fun_type; lambda} -> 
-    failwith "todo"
+  (* | E_recursive {lambda; _} -> 
+    let%bind (parameters,lhs_type,body) = decompile_lambda lambda in
+    let fun_expr : CST.fun_expr = {parameters;lhs_type;arrow=ghost;body} in
+    return_expr @@ [Expr (CST.EFun (wrap @@ fun_expr))] *)
+    
+    (* let%bind let_rhs = decompile_expression @@ AST.make_e @@ AST.E_lambda lambda in
+    let let_rhs = s_hd 
+    let let_binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
+    let let_decl : CST.let_decl = (ghost,Some ghost,let_binding,attributes) in
+    return_expr @@ [Statement (CST.SConst (wrap @@ let_decl))] *)
   | E_let_in {let_binder={var;ascr};rhs;let_result;attributes} ->
     let attributes = decompile_attributes attributes in
     let var = CST.PVar (decompile_variable @@ var.wrap_content) in
@@ -439,8 +452,13 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
       let%bind e = decompile_expression_in e in
       ok @@ (CST.Expr_entry (e_hd e))
     ) lst in
-    let%bind lst = list_to_nsepseq lst in
-    return_expr @@ [Expr (ECall (wrap (CST.EVar (wrap "list"), CST.Multiple (wrap @@ par @@ (CST.EArray (wrap @@ brackets lst), [] )))))]
+    (match lst with 
+      [] ->
+      let lst = (CST.Empty_entry ghost, []) in
+      return_expr @@ [Expr (ECall (wrap (CST.EVar (wrap "list"), CST.Multiple (wrap @@ par @@ (CST.EArray (wrap @@ brackets lst), [] )))))]
+    | _ ->
+      let%bind lst = list_to_nsepseq lst in
+      return_expr @@ [Expr (ECall (wrap (CST.EVar (wrap "list"), CST.Multiple (wrap @@ par @@ (CST.EArray (wrap @@ brackets lst), [] )))))])
   | E_set set ->
     let%bind set = bind_map_list decompile_expression_in set in
     let set = List.map e_hd set in
@@ -508,7 +526,8 @@ and decompile_lambda : (AST.expr, AST.ty_expr) AST.lambda -> _ =
   fun {binder;output_type;result} ->
     let%bind type_expr = bind_map_option decompile_type_expr binder.ascr in
     let type_expr = Option.unopt ~default:(CST.TWild ghost) type_expr in
-    let seq = CST.ESeq (wrap (CST.EAnnot (wrap (CST.EVar (wrap (Var.to_name binder.var.wrap_content)),ghost,type_expr)), [])) in
+    let v = decompile_variable binder.var.wrap_content in
+    let seq = CST.ESeq (wrap (CST.EAnnot (wrap (CST.EVar v,ghost,type_expr)), [])) in
     let parameters = CST.EPar (wrap @@ par seq ) in
     let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) output_type in    
     let%bind body = decompile_expression_in result in
