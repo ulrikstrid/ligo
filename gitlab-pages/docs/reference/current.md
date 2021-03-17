@@ -9,7 +9,7 @@ import Syntax from '@theme/Syntax';
 import SyntaxTitle from '@theme/SyntaxTitle';
 
 <SyntaxTitle syntax="pascaligo">
-function balance : tez
+const balance : tez
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val balance : tez
@@ -63,7 +63,7 @@ let main = ([p, s] : [unit, tez]):[list<operation>, tez] =>
 
 
 <SyntaxTitle syntax="pascaligo">
-function now : timestamp
+const now : timestamp
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val now : timestamp
@@ -227,7 +227,7 @@ let not_tomorrow: bool = (Tezos.now == in_24_hrs);
 
 
 <SyntaxTitle syntax="pascaligo">
-function amount : tez
+const amount : tez
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val amount : tez
@@ -284,7 +284,7 @@ let threshold = (p : unit) : int => {
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function sender : address
+const sender : address
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val sender : address
@@ -403,7 +403,7 @@ let main = (p : key_hash): address => {
 
 
 <SyntaxTitle syntax="pascaligo">
-function self_address : address
+const self_address : address
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val self_address : address
@@ -563,7 +563,7 @@ let main = (kh: key_hash): contract<unit> =>
 
 
 <SyntaxTitle syntax="pascaligo">
-function source : address
+const source : address
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val source : address
@@ -641,10 +641,10 @@ let main = (p : unit) : address => Tezos.source;
 function failwith : 'a -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-function failwith : 'a -> unit
+val failwith : 'a -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-function failwith: 'a -> unit
+let failwith: 'a -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
 function failwith: (message: 'a) -> unit
@@ -654,7 +654,7 @@ function failwith: (message: 'a) -> unit
 
 
 <SyntaxTitle syntax="pascaligo">
-function chain_id : chain_id
+const chain_id : chain_id
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val chain_id : chain_id
@@ -864,13 +864,25 @@ deprecated. Please use `Tezos.get_entrypoint_opt` instead.
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
+const level : nat
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val level : nat
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let level : nat
+</SyntaxTitle>
+
+Get the current block level.
+
+<SyntaxTitle syntax="pascaligo">
 function pairing_check : list(bls12_381_g1 * bls12_381_g2) -> bool
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
-function pairing_check : (bls12_381_g1 * bls12_381_g2) list -> bool
+val pairing_check : (bls12_381_g1 * bls12_381_g2) list -> bool
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-function pairing_check: list(bls12_381_g1 , bls12_381_g2) => bool
+let pairing_check: list(bls12_381_g1 , bls12_381_g2) => bool
 </SyntaxTitle>
 
 Verify that the product of pairings of the given list of points is equal to 1 in Fq12. Returns true if the list is empty.
@@ -908,7 +920,7 @@ type tr = sapling_transaction(8);
 </Syntax>
 
 <SyntaxTitle syntax="pascaligo">
-function sapling_empty_state : sapling_state (N)
+const sapling_empty_state : sapling_state (N)
 </SyntaxTitle>
 <SyntaxTitle syntax="cameligo">
 val sapling_empty_state : N sapling_state
@@ -1103,7 +1115,7 @@ function split_ticket : ticket ('value) -> nat * nat -> option (ticket('value) *
 val split_ticket : 'value ticket -> nat * nat -> ('value ticket * 'value ticket) option
 </SyntaxTitle>
 <SyntaxTitle syntax="reasonligo">
-let split_ticket : ticket('value) => (nat , nat) => option (ticket('value) * ticket('value))
+let split_ticket : ticket('value) => (nat , nat) => option ((ticket('value), ticket('value)))
 </SyntaxTitle>
 
 To partially use/consume a ticket, you have to split it.
