@@ -399,8 +399,12 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     return_expr @@ [Expr (CST.EModA (wrap CST.{module_name;selector=ghost;field}))]
   | E_sequence {expr1;expr2} ->
     let%bind expr1 = decompile_expression_in expr1 in
+    let%bind s1 = s_hd expr1 in
     let%bind expr2 = decompile_expression_in expr2 in
-    return_expr @@ [Expr (CST.ESeq (wrap (e_hd expr1, [(ghost, e_hd expr2)])))]
+    let%bind s2 = s_hd expr2 in
+    let l2: statement_or_expr list = [Statement s1; Statement s2] in 
+    let%bind s = statements_to_block l2 in
+    return_expr [Statement (CST.SBlock s)]
   | E_cond {condition;then_clause;else_clause} ->
     let%bind test  = decompile_expression_in condition in
     let test = CST.{lpar = ghost; rpar = ghost; inside = e_hd test} in
@@ -513,7 +517,7 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     }) in
     return_expr @@ [Expr (CST.EObject (wrap @@ braced (CST.Property_rest (wrap ({expr; ellipsis = ghost}: CST.property_rest)), [(ghost, p)])))]
 
-and statements_to_block statements = 
+and statements_to_block (statements: statement_or_expr list) = 
   let statements = List.map (fun f ->
     match f with 
       Statement s -> s
