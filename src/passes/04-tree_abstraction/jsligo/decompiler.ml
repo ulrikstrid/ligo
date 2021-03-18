@@ -526,6 +526,17 @@ and statements_to_block (statements: statement_or_expr list) =
   let%bind s = list_to_nsepseq statements in
   ok @@ wrap @@ braced s
 
+and function_body body = 
+  let%bind body = match body with 
+  | [Expr e] -> ok @@ CST.ExpressionBody e
+  | (_ :: _) as s -> 
+    let%bind o = statements_to_block s in
+    
+    ok @@ CST.FunctionBody o
+  | _ -> failwith "not supported"
+  in
+  ok @@ body
+
 and decompile_lambda : (AST.expr, AST.ty_expr) AST.lambda -> _ =
   fun {binder;output_type;result} ->
     let%bind type_expr = bind_map_option decompile_type_expr binder.ascr in
@@ -535,13 +546,7 @@ and decompile_lambda : (AST.expr, AST.ty_expr) AST.lambda -> _ =
     let parameters = CST.EPar (wrap @@ par seq ) in
     let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) output_type in    
     let%bind body = decompile_expression_in result in
-    let%bind body = match body with 
-    | [Expr e] -> ok @@ CST.ExpressionBody e
-    | (_ :: _) as s -> 
-      let%bind o = statements_to_block s in
-      ok @@ CST.FunctionBody o
-    | _ -> failwith "not supported"
-    in
+    let%bind body = function_body body in
     ok @@ (parameters, lhs_type, body)
 
 and decompile_matching_cases : AST.matching_expr -> (CST.expr,_) result =
@@ -564,26 +569,14 @@ and decompile_matching_cases : AST.matching_expr -> (CST.expr,_) result =
     | Match_list {match_nil; match_cons} ->
       let (hd,tl,expr) = match_cons in
       let%bind nil_expr = decompile_expression_in match_nil in
-      let%bind body = match nil_expr with 
-      | [Expr e] -> ok @@ CST.ExpressionBody e
-      | (_ :: _) as s -> 
-        let%bind o = statements_to_block s in
-        ok @@ CST.FunctionBody o
-      | _ -> failwith "not supported"
-      in
+      let%bind body = function_body nil_expr in
       let nil  = CST.EFun (wrap CST.{
         parameters = EAnnot (wrap (EArray (wrap @@ brackets (Empty_entry ghost, [])), ghost, TVar (wrap "any"))); 
         lhs_type = None;
         arrow = ghost; 
         body}) in
       let%bind cons_expr = decompile_expression_in expr in
-      let%bind body = match cons_expr with 
-      | [Expr e] -> ok @@ CST.ExpressionBody e
-      | (_ :: _) as s -> 
-        let%bind o = statements_to_block s in
-        ok @@ CST.FunctionBody o
-      | _ -> failwith "not supported"
-      in
+      let%bind body = function_body cons_expr in
       let hd = Var.to_name hd.wrap_content in
       let tl = ({expr = EVar (wrap (Var.to_name tl.wrap_content)); ellipsis = ghost }: CST.array_item_rest) in
       let cons  = CST.EFun (wrap CST.{
@@ -598,22 +591,10 @@ and decompile_matching_cases : AST.matching_expr -> (CST.expr,_) result =
     | Match_tuple (lst, expr) ->  failwith "not implemented"
     | Match_option {match_none;match_some} ->
       let%bind a = decompile_expression_in match_none in
-      let%bind body = match a with 
-      | [Expr e] -> ok @@ CST.ExpressionBody e
-      | (_ :: _) as s -> 
-        let%bind o = statements_to_block s in
-        ok @@ CST.FunctionBody o
-      | _ -> failwith "not supported"
-      in
+      let%bind body = function_body a in
       let name = Var.to_name (fst match_some).wrap_content in
       let%bind body2 = decompile_expression_in (snd match_some) in
-      let%bind body2 = match body2 with 
-      | [Expr e] -> ok @@ CST.ExpressionBody e
-      | (_ :: _) as s -> 
-        let%bind o = statements_to_block s in
-        ok @@ CST.FunctionBody o
-      | _ -> failwith "not supported"
-      in
+      let%bind body2 = function_body body2 in
       let fields = CST.[
         CST.Property (wrap 
           {name = CST.EVar (wrap "Some"); 
