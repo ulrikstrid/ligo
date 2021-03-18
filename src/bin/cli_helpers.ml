@@ -21,11 +21,12 @@ let toplevel : ?warn:bool -> ?output_file:string option -> display_format:ex_dis
       | Json -> Yojson.Safe.pretty_to_string @@ convert ~display_format:t disp
     in
     match Trace.to_stdlib_result value with
-    | Ok (_, a) ->
+    | Ok _ ->
       let fmt : Format.formatter = match output_file with
         | Some file_path -> Format.formatter_of_out_channel @@ open_out file_path
         | None -> Format.std_formatter
       in
+      let a = !Self_ast_typed.warns |> List.map Main_errors.self_ast_typed_tracer in
       if not (List.is_empty a) && warn then
         (match t with
          | Human_readable | Dev as t ->

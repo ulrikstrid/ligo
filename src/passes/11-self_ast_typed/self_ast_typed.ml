@@ -2,10 +2,14 @@ open Trace
 module Errors = Errors
 module Helpers = Helpers
 
+let warns : (Errors.self_ast_typed_error list) ref = ref []
+
 let all_module_passes = [
   Helpers.map_module Tail_recursion.peephole_expression ;
   Helpers.map_module Michelson_layout.peephole_expression ;
-  Unused.unused_map_module ;
+  fun m -> (warns := [];
+            let warn w = warns := (!warns @ [w]) in
+            Unused.unused_map_module_w m) ;
 ]
 
 let all_expression_passes = [

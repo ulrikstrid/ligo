@@ -22,7 +22,7 @@ let wrap_test name f =
   in
 
   match to_stdlib_result result with
-  | Ok ((), annotations) -> ignore annotations; ()
+  | Ok () -> ()
   | Error _ ->
     let format = Display.bind_format test_format Main.Formatter.error_format in
     let disp = Simple_utils.Display.Displayable {value=result ; format} in

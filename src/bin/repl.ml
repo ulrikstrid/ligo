@@ -154,7 +154,7 @@ let parse s =
 let eval display_format state c =
   let (Ex_display_format t) = display_format in
   match Trace.to_stdlib_result c with
-    Ok ((state, out), _) ->
+    Ok (state, out) ->
      let disp = (Displayable {value = out; format = repl_result_format }) in
      let out : string =
        match t with
@@ -162,7 +162,7 @@ let eval display_format state c =
        | Dev -> convert ~display_format:t disp ;
        | Json -> Yojson.Safe.pretty_to_string @@ convert ~display_format:t disp in
      (1, state, out)
-  | Error (e, _) ->
+  | Error e ->
      let disp = (Displayable {value = e; format = Main_errors.Formatter.error_format }) in
      let out : string =
        match t with
