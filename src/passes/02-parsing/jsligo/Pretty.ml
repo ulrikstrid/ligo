@@ -48,6 +48,29 @@ and pp_statement = function
 | SType       s -> pp_type s
 | SSwitch     s -> pp_switch s
 | SBreak      _ -> string "break" ^^ hardline
+| SNamespace  s -> pp_namespace s
+| SExport     s -> pp_export s
+| SImport     s -> pp_import s
+| SForOf      s -> pp_for_of s
+| SWhile      s -> pp_while s
+
+and pp_for_of {value; _} =
+  string "for" ^^ string "(" ^^ string 
+    (if value.const then "const" else "let") ^^ string value.name.value ^^ 
+    string " of " ^^ 
+    pp_expr value.expr ^^ string ")" ^^ pp_statement value.statement
+
+and pp_while {value; _} =
+  string "while" ^^ string "(" ^^ pp_expr value.expr ^^ string ")" ^^ pp_statement value.statement 
+
+and pp_import {value; _} = 
+  string "import" ^^ string value.alias.value ^^ string "=" ^^ pp_nsepseq "." (fun a -> string a.value) value.module_path
+
+and pp_export {value = (_, statement); _} =
+  string "export" ^^ pp_statement statement
+
+and pp_namespace {value = (_, name, statements); _} =
+  string "namespace" ^^ string name.value ^^ group (pp_braced ";" pp_statement statements) 
 
 and pp_cond_expr {value; _} =
   let {test; ifso; ifnot; _} = value in
@@ -125,7 +148,7 @@ and pp_expr = function
 | EPar     e -> pp_par_expr e.value
 | ESeq     e -> pp_seq e
 | EVar     v -> pp_ident v
-| EConstr  e -> pp_ident e
+| EModA    e -> pp_module_access pp_expr e
 | ELogic   e -> pp_logic_expr e
 | EArith   e -> group (pp_arith_expr e)
 | ECall    e -> pp_call_expr e
@@ -137,6 +160,7 @@ and pp_expr = function
 | EProj    e -> pp_projection e
 | EAssign  (a,b,c) -> pp_assign (a,b,c)
 | EAnnot   e -> pp_annot_expr e
+| EConstr  e -> pp_constr_expr e
 | EUnit    _ -> string "unit"
 | ECodeInj _ -> failwith "TODO: ECodeInj"
 
@@ -157,6 +181,21 @@ and pp_array_item = function
 | Expr_entry e -> pp_expr e
 | Rest_entry {value = {expr; _}; _} -> string "..." ^^ pp_expr expr
 
+
+and pp_constr_expr = function
+  ENone      _ -> string "None ()" 
+| ESomeApp   a -> pp_some a
+| EConstrApp a -> pp_constr_app a
+
+and pp_some {value=_, e; _} =
+  prefix 4 1 (string "Some") (string "(" ^^ pp_expr e ^^ string ")")
+
+and pp_constr_app {value; _} =
+  let constr, arg = value in
+  let constr = string constr.value in
+  match arg with
+      None -> constr ^^ string "()"
+  | Some e -> prefix 2 1 constr (string "(" ^^ pp_expr e ^^ string ")")
 
 and pp_object_property = function
   Punned_property {value; _} -> pp_expr value
@@ -262,9 +301,15 @@ and pp_type_expr: type_expr -> document = function
 | TFun    t -> pp_fun_type t
 | TPar    t -> pp_type_par t
 | TVar    t -> pp_ident t
-| TConstr t -> pp_ident t
 | TWild   _ -> string "_"
 | TString s -> pp_string s
+| TModA   t -> pp_module_access pp_type_expr t
+| TInt    t -> pp_int t
+
+and pp_module_access : type a.(a -> document) -> a module_access reg -> document
+= fun f {value; _} ->
+  let {module_name; field; _} = value in
+  group (pp_ident module_name ^^ string "." ^^ break 0 ^^ f field)
 
 and pp_cartesian v =
   group(pp_brackets "," pp_type_expr v)

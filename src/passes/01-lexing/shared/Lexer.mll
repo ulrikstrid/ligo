@@ -60,6 +60,8 @@ module Make (Token : Token.S) =
       let msg = error_to_string error in
       raise (Error Region.{value=msg;region})
 
+    let support_string_delimiter = Token.support_string_delimiter
+
     (* TOKENS *)
 
     (* Making tokens *)
@@ -253,17 +255,25 @@ rule scan state = parse
 | "[@" (attr as a) "]"   { mk_attr       a state lexbuf }
 | "[%" (attr as l)       { mk_lang       l state lexbuf }
 
-| "{|" {
-    let Core.{region; state; _} = state#sync lexbuf in
-    let thread = Core.mk_thread region
-    in scan_verbatim thread state lexbuf |> mk_verbatim }
+| "`"
+| "{|" as lexeme {
+    if lexeme = fst Token.verbatim_delimiters then (
+      let Core.{region; state; _} = state#sync lexbuf in
+      let thread = Core.mk_thread region
+      in scan_verbatim (snd Token.verbatim_delimiters) thread state lexbuf |> mk_verbatim
+    )
+    else (
+      let Core.{region; _} = state#sync lexbuf
+      in fail region (Unexpected_character lexeme.[0])
+    )
+  }
 
 | _ as c { let Core.{region; _} = state#sync lexbuf
            in fail region (Unexpected_character c) }
 
 (* Scanning verbatim strings *)
 
-and scan_verbatim thread state = parse
+and scan_verbatim verbatim_end thread state = parse
   (* Inclusion of Michelson code *)
   '#' blank* (natural as line) blank+ '"' (string as file) '"'
   (blank+ (('1' | '2') as flag))? blank* {
@@ -272,11 +282,19 @@ and scan_verbatim thread state = parse
   }
 | nl as nl { let ()    = Lexing.new_line lexbuf
              and state = state#set_pos (state#pos#new_line nl) in
-             scan_verbatim (thread#push_string nl) state lexbuf }
+             scan_verbatim verbatim_end (thread#push_string nl) state lexbuf }
 | eof      { fail thread#opening Unterminated_verbatim }
-| "|}"     { Core.(thread, (state#sync lexbuf).state) }
+| "`" 
+| "|}" as lexeme  { 
+  if verbatim_end = lexeme then  
+    Core.(thread, (state#sync lexbuf).state) 
+  else 
+    let Core.{state; _} = state#sync lexbuf in
+    scan_verbatim verbatim_end (thread#push_string lexeme) state lexbuf
+  
+} 
 | _ as c   { let Core.{state; _} = state#sync lexbuf in
-             scan_verbatim (thread#push_char c) state lexbuf }
+             scan_verbatim verbatim_end (thread#push_char c) state lexbuf }
 
 and eol region_prefix line file flag thread state = parse
   nl | eof { let _, state =
@@ -305,6 +323,7 @@ and eol region_prefix line file flag thread state = parse
         method mk_string = mk_string
         method mk_eof    = lift <@ mk_eof
         method callback  = lift <@ scan
+        method support_string_delimiter = support_string_delimiter
       end
 
     let scan = Core.mk_scan client

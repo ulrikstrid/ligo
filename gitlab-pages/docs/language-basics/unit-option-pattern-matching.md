@@ -97,8 +97,8 @@ let tail : coin = Tail;
 <Syntax syntax="jsligo">
 ```jsligo group=b
 type coin = | ["Head"] | ["Tail"];
-let head : coin = ["Head"];
-let tail : coin = ["Tail"];
+let head : coin = Head();
+let tail : coin = Tail();
 ```
 
 </Syntax>
@@ -169,8 +169,8 @@ type user =
 | ["Manager", id]
 | ["Guest"];
 
-let u : user = ["Admin", (1000 as nat)];
-let g : user = ["Guest"];
+let u : user = Admin((1000 as nat));
+let g : user = Guest();
 ```
 
 </Syntax>
@@ -219,7 +219,7 @@ let div = ((a, b) : (nat, nat)) : option (nat) =>
 
 ```jsligo group=d
 let div = ([a, b] : [nat, nat]) : option <nat> => {
-  if (b == (0 as nat)) { return (None as option <nat>); } else { return (Some (a/b)); };
+  if (b == (0 as nat)) { return (None() as option <nat>); } else { return (Some (a/b)); };
 };
 ```
 
@@ -301,12 +301,10 @@ flip Head
 
 ```jsligo group=e
 type coin = | ["Head"] | ["Tail"];
-let Tail = ["Tail"];
-let Head = ["Head"];
 let flip = (c : coin) : coin =>
   match (c, {
-  Head: () => Tail,
-  Tail: () => Head  
+  Head: () => Tail(),
+  Tail: () => Head()
   });
 ```
 

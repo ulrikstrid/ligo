@@ -32,8 +32,8 @@ module T =
     | Int      of (lexeme * Z.t) Region.reg
     | Nat      of (lexeme * Z.t) Region.reg
     | Mutez    of (lexeme * Z.t) Region.reg
-    | Ident    of lexeme Region.reg
-    | Constr   of lexeme Region.reg
+    | Lident   of lexeme Region.reg
+    | Uident   of lexeme Region.reg
     | Lang     of lexeme Region.reg Region.reg
     | Attr     of string Region.reg
 
@@ -104,25 +104,35 @@ module T =
     | Default  of Region.t  (* default  *)
     | Else     of Region.t  (* else     *)
     | Enum     of Region.t  (* enum     *)
+    | Export   of Region.t  (* export   *)
     | False    of Region.t  (* false    *)
     | For      of Region.t  (* for      *)
     | If       of Region.t  (* if       *)
+    | Import   of Region.t  (* import   *)
     | Let      of Region.t  (* let      *)
     | New      of Region.t  (* new      *)
+    | Of       of Region.t  (* of       *)
     | Return   of Region.t  (* return   *)
     | Switch   of Region.t  (* switch   *)
     | This     of Region.t  (* this     *)
     | True     of Region.t  (* true     *)
     | Void     of Region.t  (* void     *)
     | While    of Region.t  (* while    *)
-    | With     of Region.t  (* with     *)
+    | With     of Region.t  (* with     *)    
 
     (* TypeScript keywords *)
 
     | As          of Region.t  (* as          *)
+    | Namespace   of Region.t  (* namespace   *)
     | Type        of Region.t  (* type        *)
 
+    (* Data constructors *)
+
+    | C_None  of Region.t  (* None *)
+    | C_Some  of Region.t  (* Some *)
+
     (* Virtual tokens *)
+
 
     | EOF of Region.t
 
@@ -139,8 +149,8 @@ module T =
     let concrete = function
         (* Identifiers, labels, numbers and strings *)
 
-      "Ident"    -> id_sym ()
-    | "Constr"   -> ctor_sym ()
+      "Lident"   -> id_sym ()
+    | "Uident"   -> ctor_sym ()
     | "Int"      -> "1"
     | "Nat"      -> "1n"
     | "Mutez"    -> "1mutez"
@@ -217,11 +227,14 @@ module T =
     | "Default"  -> "default"
     | "Else"     -> "else"
     | "Enum"     -> "enum"
+    | "Export"   -> "export"
     | "False"    -> "false"
     | "For"      -> "for"
     | "If"       -> "if"
+    | "Import"   -> "import"
     | "Let"      -> "let"
     | "New"      -> "new"
+    | "Of"       -> "of"
     | "Return"   -> "return"
     | "Switch"   -> "switch"
     | "This"     -> "this"
@@ -233,6 +246,7 @@ module T =
     (* TypeScript keywords *)
 
     | "Type"        -> "type"
+    | "Namespace"   -> "namespace"
     | "As"          -> "as"
 
     (* Virtual tokens *)
@@ -270,10 +284,10 @@ module T =
         region, sprintf "Nat (%S, %s)" s (Z.to_string n)
     | Mutez Region.{region; value = s,n} ->
         region, sprintf "Mutez (%S, %s)" s (Z.to_string n)
-    | Ident Region.{region; value} ->
-        region, sprintf "Ident %S" value
-    | Constr Region.{region; value} ->
-        region, sprintf "Constr %S" value
+    | Lident Region.{region; value} ->
+        region, sprintf "Lident %S" value
+    | Uident Region.{region; value} ->
+        region, sprintf "Uident %S" value
     | Lang Region.{region; value} ->
         region, sprintf "Lang %S" (value.Region.value)
     | Attr Region.{region; value} ->
@@ -346,11 +360,14 @@ module T =
     | Default  region -> region, "Default"
     | Else     region -> region, "Else"
     | Enum     region -> region, "Enum"
+    | Export   region -> region, "Enum"
     | False    region -> region, "False"
     | For      region -> region, "For"
     | If       region -> region, "If"
+    | Import   region -> region, "Import"
     | Let      region -> region, "Let"
     | New      region -> region, "New"
+    | Of       region -> region, "Of"
     | Return   region -> region, "Return"
     | Switch   region -> region, "Switch"
     | This     region -> region, "This"
@@ -358,12 +375,14 @@ module T =
     | Void     region -> region, "Void"
     | While    region -> region, "While"
     | With     region -> region, "With"
+    | C_None   region -> region, "C_None"
+    | C_Some   region -> region, "C_Some"
 
     (* TypeScript keywords *)
-
-    | Type        region -> region, "Type"
     | As          region -> region, "As"
-
+    | Namespace   region -> region, "Namespace"
+    | Type        region -> region, "Type"
+    
     | EOF    region -> region, "EOF"
 
 
@@ -380,8 +399,8 @@ module T =
     | Int i
     | Nat i
     | Mutez i    -> fst i.Region.value
-    | Ident id   -> id.Region.value
-    | Constr id  -> id.Region.value
+    | Lident id  -> id.Region.value
+    | Uident id  -> id.Region.value
     | Attr a     -> sprintf "[@%s]" a.Region.value
     | Lang lang  -> Region.(lang.value.value)
 
@@ -451,12 +470,15 @@ module T =
     | Const    _ -> "const"
     | Default  _ -> "default"
     | Else     _ -> "else"
+    | Export   _ -> "export"
     | Enum     _ -> "enum"
     | False    _ -> "false"
     | For      _ -> "for"
     | If       _ -> "if"
+    | Import   _ -> "import"
     | Let      _ -> "let"
     | New      _ -> "new"
+    | Of       _ -> "of"
     | Return   _ -> "return"
     | Switch   _ -> "switch"
     | This     _ -> "this"
@@ -466,11 +488,16 @@ module T =
     | With     _ -> "with"
 
     (* TypeScript keywords *)
-
-    | Type        _ -> "type"
+    
     | As          _ -> "as"
+    | Namespace   _ -> "namespace"
+    | Type        _ -> "type"
 
+    (* Data constructors *)
 
+    | C_None  _ -> "None"
+    | C_Some  _ -> "Some"
+    
     (* Virtual tokens *)
 
     | EOF _ -> ""
@@ -496,11 +523,14 @@ module T =
        (fun reg -> Default reg);
        (fun reg -> Else    reg);
        (fun reg -> Enum    reg);
+       (fun reg -> Export  reg);
        (fun reg -> False   reg);
        (fun reg -> For     reg);
        (fun reg -> If      reg);
+       (fun reg -> Import  reg);
        (fun reg -> Let     reg);
        (fun reg -> New     reg);
+       (fun reg -> Of     reg);
        (fun reg -> Return  reg);
        (fun reg -> Switch  reg);
        (fun reg -> This    reg);
@@ -511,8 +541,10 @@ module T =
 
        (* TypeScript keywords *)
 
-       (fun reg -> Type    reg);
-       (fun reg -> As      reg);
+       (fun reg -> As        reg);
+       (fun reg -> Namespace reg);
+       (fun reg -> Type      reg);
+       
     ]
 
     let reserved = SSet.empty
@@ -572,13 +604,13 @@ rule scan_ident region lexicon = parse
     then Error Reserved_name
     else Ok (match SMap.find_opt value lexicon.kwd with
                Some mk_kwd -> mk_kwd region
-             |        None -> Ident Region.{region; value}) }
+             |        None -> Lident Region.{region; value}) }
 
 and scan_constr region lexicon = parse
   (constr as value) eof {
     match SMap.find_opt value lexicon.cstr with
       Some mk_cstr -> mk_cstr region
-    |         None -> Constr Region.{region; value} }
+    |         None -> Uident Region.{region; value} }
 
 (* END LEXER DEFINITION *)
 
@@ -723,6 +755,11 @@ and scan_constr region lexicon = parse
     (* Predicates *)
 
     let is_eof = function EOF _ -> true | _ -> false
+
+    let support_string_delimiter c =
+      c = '"' || c = '\''
+
+    let verbatim_delimiters = ("`", "`")
   end
 
 include T

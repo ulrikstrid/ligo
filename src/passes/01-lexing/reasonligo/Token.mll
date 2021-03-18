@@ -602,7 +602,13 @@ and scan_constr region lexicon = parse
 
     (* Predicates *)
 
-    let is_eof = function EOF _ -> true | _ -> false
+    let is_eof = function EOF _ -> true | _ -> False
+
+    let support_string_delimiter c =
+      c = '"'
+
+    let verbatim_delimiters = ("{|", "|}")
+
   end
 
 include T

@@ -54,7 +54,7 @@ let hasherman_blake = (s: bytes) => Crypto.blake2b(s);
 <Syntax syntax="jsligo">
 
 ```jsligo
-let hasherman_blake = (s: bytes) => Crypto.blake2b(s);
+let hasherman_blake = (s: bytes):bytes => Crypto.blake2b(s);
 ```
 
 </Syntax>
@@ -153,7 +153,7 @@ let hasherman512 = (s: bytes) => Crypto.sha512(s);
 <Syntax syntax="jsligo">
 
 ```jsligo
-let hasherman512 = (s: bytes) => Crypto.sha512(s);
+let hasherman512 = (s: bytes): bytes => Crypto.sha512(s);
 ```
 
 </Syntax>
@@ -224,7 +224,7 @@ let check_hash_key = ([kh1, k2]: [key_hash, key]) : [bool, key_hash] => {
   }
   else {
     return [false, kh2];
-  }
+  };
 };
 ```
 

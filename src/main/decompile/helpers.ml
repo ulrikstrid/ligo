@@ -80,11 +80,23 @@ let specialise_and_print_expression_reasonligo expression =
     ok (Parsing.Reasonligo.pretty_print_expression cst)
   in ok source
 
-let specialise_and_print_jsligo _program =
-  failwith "Not implemented: specialise_and_print_reasonligo"
+let specialise_and_print_jsligo m =
+  let%bind cst = trace cit_jsligo_tracer @@
+    Tree_abstraction.Jsligo.decompile_module m in
+  let%bind source = trace pretty_tracer @@
+    ok (Parsing.Jsligo.pretty_print cst)
+  in ok source
 
-let specialise_and_print_expression_jsligo _expression =
-  failwith "Not implemented: specialise_and_print_expression_reasonligo"
+let specialise_and_print_expression_jsligo expression =
+  let%bind cst = trace cit_jsligo_tracer @@
+    Tree_abstraction.Jsligo.decompile_expression expression in
+  let b = Buffer.create 100 in
+  bind_fold_list (fun all x -> 
+    let%bind source = trace pretty_tracer @@
+    ok (Parsing.Jsligo.pretty_print_expression x) in
+    Buffer.add_buffer all source; 
+    ok @@ b
+  ) b cst
 
 
 let specialise_and_print syntax source : (Buffer.t, _) Trace.result =

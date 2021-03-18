@@ -145,7 +145,6 @@ and check_patterns patterns =
 let check_variants variants =
   let rec add acc = function
     TString value
-  | TConstr value
   | TVar value -> 
       if VarSet.mem value acc then
         fail @@ duplicate_variant value
@@ -190,7 +189,8 @@ let peephole_type : unit -> type_expr -> (unit,'err) result = fun _ t ->
   | TPar _
   | TString _
   | TVar _
-  | TConstr _
+  | TModA _
+  | TInt _
   | TWild _ -> ok @@ ()
 
 let peephole_expression : unit -> expr -> (unit,'err) result = fun () _ ->
@@ -206,11 +206,16 @@ let check_bindings bindings =
     ok @@ ()
   in bind_fold_list add () bindings
 
-let peephole_statement : unit -> statement -> (unit, 'err) result = fun _ s ->
+let rec peephole_statement : unit -> statement -> (unit, 'err) result = fun _ s ->
   match s with
     SExpr e -> 
     let%bind () = peephole_expression () e in
     ok @@ ()
+  | SNamespace {value = (_, name, _); _} ->
+    let%bind () = check_reserved_name name in 
+    ok @@ ()
+  | SExport {value = (_, e); _} -> 
+    peephole_statement () e
   | SLet   {value = {bindings; _}; _}
   | SConst {value = {bindings; _}; _} ->
     let%bind () = Utils.nsepseq_to_list bindings |> check_bindings in 
@@ -218,10 +223,16 @@ let peephole_statement : unit -> statement -> (unit, 'err) result = fun _ s ->
   | SType  {value = {name; _}; _} ->
     let%bind () = check_reserved_name name in 
     ok @@ ()
+  | SWhile {value = {expr; statement; _}; _}
+  | SForOf {value = {expr; statement; _}; _} ->
+    let%bind () = peephole_expression () expr in
+    let%bind () = peephole_statement () statement in
+    ok @@ ()
   | SBlock  _
   | SCond   _
   | SReturn _
   | SBreak _
+  | SImport _
   | SSwitch _ -> ok @@ ()
 
 let peephole : (unit,'err) Helpers.folder = {

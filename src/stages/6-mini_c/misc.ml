@@ -33,6 +33,11 @@ module Free_variables = struct
                self collection ;
                self initial ;
              ]
+    | E_fold_right (((v, _), body), (collection,_elem_type), initial) ->
+      unions [ expression (union (singleton v) b) body ;
+               self collection ;
+               self initial ;
+             ]
     | E_if_bool (x, bt, bf) -> unions [ self x ; self bt ; self bf ]
     | E_if_none (x, bn, ((s, _), bs)) ->
       unions [ self x ;
@@ -53,9 +58,9 @@ module Free_variables = struct
       unions [ self expr ;
                expression (union (singleton v) b) body ;
              ]
-    | E_let_pair (expr, (((x, _) , (y, _)) , body)) ->
+    | E_let_tuple (expr, (fields , body)) ->
       unions [ self expr ;
-               expression (unions [ singleton x ; singleton y ; b ]) body
+               expression (unions (List.map (fun (x, _) -> singleton x) fields @ [b])) body
              ]
     | E_raw_michelson _ -> empty
 

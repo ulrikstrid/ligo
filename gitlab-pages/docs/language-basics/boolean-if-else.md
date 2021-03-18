@@ -787,7 +787,7 @@ gitlab-pages/docs/language-basics/src/boolean-if-else/cond.religo compare '21n'
 type magnitude = | ["Small"] | ["Large"]; // See variant types.
 
 let compare = (n : nat) : magnitude => {
-  if (n < 10n) { return Small; } else { return Large; };
+  if (n < (10 as nat)) { return (Small ()); } else { return (Large ()); };
 };
 ```
 

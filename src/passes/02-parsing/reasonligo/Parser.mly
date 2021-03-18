@@ -735,7 +735,7 @@ core_expr:
 | "<bytes>"                           {                     EBytes $1 }
 | "<ident>"                           {                       EVar $1 }
 | projection                          {                      EProj $1 }
-| module_access_e                     {                        EModA $1 }
+| module_access_e                     {                      EModA $1 }
 | "<string>"                          {           EString (String $1) }
 | "<verbatim>"                        {         EString (Verbatim $1) }
 | unit                                {                      EUnit $1 }

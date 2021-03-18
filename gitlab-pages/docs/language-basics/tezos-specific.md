@@ -58,9 +58,9 @@ let id_string = (p : string) : option (string) => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=a
-let id_string = (p : string) : option <string> => {
-  let packed : bytes = Bytes.pack (p);
-  return (Bytes.unpack(packed) as option <string>);
+let id_string = (p: string): option<string> => {
+  let packed: bytes = Bytes.pack(p);
+  return (Bytes.unpack(packed) as option<string>);
 };
 ```
 
@@ -265,10 +265,10 @@ let origination : (operation, address) = Tezos.create_contract (
 
 ```jsligo group=e
 let origination : [operation, address] = Tezos.create_contract (
-  ([p, s]: [nat,string]) : [list<operation>, string] => [(List() as list(operation)), s],
-  (None as option<key_hash>),
+  ([p, s]: [nat,string]) : [list<operation>, string] => [(list([]) as list<operation>), s],
+  (None() as option<key_hash>),
   (3 as tez),
-  "initial_storage")
+  "initial_storage");
 ```
 
 </Syntax>

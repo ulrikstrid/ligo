@@ -179,9 +179,10 @@ type 'token cut =
   thread * 'token state -> 'token lex_unit * 'token state
 
 type 'token client = <
-  mk_string : 'token cut;
-  mk_eof    : 'token scanner;
-  callback  : 'token scanner
+  mk_string                : 'token cut;
+  mk_eof                   : 'token scanner;
+  callback                 : 'token scanner;
+  support_string_delimiter : char -> bool
 >
 
 val mk_scan : 'token client -> 'token scanner

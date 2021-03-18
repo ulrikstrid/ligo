@@ -181,18 +181,20 @@ type 'token cut =
     module. *)
 
 type 'token client = <
-  mk_string : 'token cut;
-  mk_eof    : 'token scanner;
-  callback  : 'token scanner
+  mk_string                : 'token cut;
+  mk_eof                   : 'token scanner;
+  callback                 : 'token scanner;
+  support_string_delimiter : char -> bool
 >
 
 type 'token internal_scanner =
   'token state -> Lexing.lexbuf -> 'token lex_unit * 'token state
 
 type 'token internal_client = <
-  mk_string : 'token cut;
-  mk_eof    : 'token internal_scanner;
-  callback  : 'token internal_scanner
+  mk_string                : 'token cut;
+  mk_eof                   : 'token internal_scanner;
+  callback                 : 'token internal_scanner;
+  support_string_delimiter : char -> bool
 >
 
 let mk_state ~config ~window ~pos ~decoder ~supply : 'token state =
@@ -567,10 +569,17 @@ rule scan client state = parse
 | '\t'+ { state#mk_tabs    lexbuf }
 
   (* Strings *)
-
-| '"' { let {region; state; _} = state#sync lexbuf in
-        let thread             = mk_thread region
-        in scan_string thread state lexbuf |> client#mk_string }
+| '\''
+| '"' as lexeme {   
+  if client#support_string_delimiter lexeme then (
+    let {region; state; _} = state#sync lexbuf in
+    let thread             = mk_thread region in
+    scan_string lexeme thread state lexbuf |> client#mk_string
+  )
+  else (
+    rollback lexbuf; client#callback state lexbuf
+  )
+}
 
   (* Comment *)
 
@@ -607,7 +616,8 @@ rule scan client state = parse
 
 | eof { client#mk_eof state lexbuf }
 
-| _ { rollback lexbuf;
+| _ { 
+  rollback lexbuf;
       client#callback state lexbuf (* May raise exceptions *) }
 
 (* Finishing a linemarker *)
@@ -633,7 +643,7 @@ and scan_block block thread state = parse
          let thread             = thread#push_string lexeme in
          let thread             = thread#set_opening region in
          let scan_next          = if   lexeme = "\""
-                                  then scan_string
+                                  then scan_string '"'
                                   else scan_block block in
          let thread, state      = scan_next thread state lexbuf in
          let thread             = thread#set_opening opening
@@ -697,21 +707,36 @@ and scan_utf8_char if_eof thread state = parse
 
 (* Scanning strings *)
 
-and scan_string thread state = parse
+and scan_string delimiter thread state = parse
   nl     { fail thread#opening Broken_string }
 | eof    { fail thread#opening Unterminated_string }
 | ['\t' '\r' '\b']
          { let {region; _} = state#sync lexbuf
            in fail region Invalid_character_in_string }
-| '"'    { let {state; _} = state#sync lexbuf
-           in thread, state }
+| '"'    { 
+  if delimiter = '"' then
+    let {state; _} = state#sync lexbuf
+        in thread, state
+  else 
+    let {state; _} = state#sync lexbuf in
+           scan_string delimiter (thread#push_char '"') state lexbuf
+  }
+| '\''   {
+  if delimiter = '\'' then
+    let {state; _} = state#sync lexbuf
+        in thread, state
+  else 
+    let {state; _} = state#sync lexbuf in
+           scan_string delimiter (thread#push_char '\'') state lexbuf
+
+}
 | esc    { let {lexeme; state; _} = state#sync lexbuf in
            let thread = thread#push_string lexeme
-           in scan_string thread state lexbuf }
+           in scan_string delimiter thread state lexbuf }
 | '\\' _ { let {region; _} = state#sync lexbuf
            in fail region Undefined_escape_sequence }
 | _ as c { let {state; _} = state#sync lexbuf in
-           scan_string (thread#push_char c) state lexbuf }
+           scan_string delimiter (thread#push_char c) state lexbuf }
 
   (* Scanner called first *)
 
@@ -728,9 +753,10 @@ let mk_scan (client: 'token client) =
   let internal_client : 'token internal_client =
     let open Utils in
     object
-      method mk_string = client#mk_string
-      method mk_eof    = drop <@ client#mk_eof
-      method callback  = drop <@ client#callback
+      method mk_string                = client#mk_string
+      method mk_eof                   = drop <@ client#mk_eof
+      method callback                 = drop <@ client#callback
+      method support_string_delimiter = client#support_string_delimiter
     end
   and first_call = ref true in
   fun state ->

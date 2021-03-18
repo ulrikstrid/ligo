@@ -161,7 +161,7 @@ let add = ([a, b]: [int, int]): int => {
   const c : int = a + b;
   let d = 2;
   d = 5;
-  c;
+  return c;
 };
 ```
 

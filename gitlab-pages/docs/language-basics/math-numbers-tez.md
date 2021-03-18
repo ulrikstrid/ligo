@@ -146,7 +146,7 @@ let a : int = 5 + 10;
 let b : int = (5 as nat) + 10;
 
 // tez + tez yields tez
-let c : tez = (5 as mutez) + (0.000_010 as tez);
+let c : tez = (5 as mutez) + (1 as tez);
 
 // tez + int or tez + nat is invalid:
 // let d : tez = (5 as mutez) + (10 as nat);

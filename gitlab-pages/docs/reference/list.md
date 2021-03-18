@@ -122,9 +122,9 @@ let iter_op = (l : list (int)) : unit => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let iter_op = (l : list <int>) : unit => {
-  let predicate = (i : int) => assert (i > 3);
-  List.iter (predicate, l);
+let iter_op = (l: list<int>): unit => {
+  let predicate = (i: int): unit => assert(i > 3);
+  List.iter(predicate, l);
 };
 ```
 
@@ -187,12 +187,12 @@ let plus_one : list (int) = List.map (increment, larger_list);
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let larger_list: list<int> = List(1, 2, 3);
+let larger_list: list<int> = list([1, 2, 3]);
 
-let increment = (i : int) : int => i + 1;
+let increment = (i : int): int => i + 1;
 
 // Creates a new list with all elements incremented by 1
-let plus_one : list <int> = List.map (increment, larger_list);
+let plus_one : list<int> = List.map(increment, larger_list);
 ```
 
 </Syntax>
@@ -250,11 +250,130 @@ let sum_of_elements : int = List.fold (sum, my_list, 0);
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let my_list : list<int> = List(1, 2, 3);
+let my_list: list<int> = list([1, 2, 3]);
 
 let sum = ([result, i]: [int, int]): int => result + i;
 
-let sum_of_elements : int = List.fold (sum, my_list, 0);
+let sum_of_elements: int = List.fold(sum, my_list, 0);
+```
+
+</Syntax>
+<SyntaxTitle syntax="pascaligo">
+function fold_left : (('accumulator -> 'item -> 'accumulator) -> 'accumulator -> list('item)) -> 'accumulator
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val fold_left : ('accumulator -> 'item -> 'accumulator) -> 'accumulator -> 'item list -> 'accumulator
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let fold_left: ((('accumulator, 'item) => 'accumulator), 'accumulator, list('item)) => 'accumulator
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let fold_left: (((a: ['accumulator, 'item]) => 'accumulator), 'accumulator, list<'item>) => 'accumulator
+</SyntaxTitle>
+
+[Fold over items in a list](../language-basics/sets-lists-tuples.md#folded-operation-over-lists);
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=lists
+const my_list: list(int) = list [1; 2; 3]
+
+function sum (const acc : int; const i : int): int is acc + i
+
+const sum_of_elements : int = List.fold_left (sum, 0, my_list)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=lists
+let my_list : int list = [1; 2; 3]
+
+let sum (acc, i : int * int) : int = acc + i
+
+let sum_of_elements : int = List.fold_left sum 0 my_list
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=lists
+let my_list : list(int) = [1, 2, 3];
+
+let sum = ((result, i): (int, int)): int => result + i;
+
+let sum_of_elements : int = List.fold_left (sum, 0, my_list);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=lists
+let my_list : list<int> = list([1, 2, 3]);
+
+let sum = ([result, i]: [int, int]): int => result + i;
+
+let sum_of_elements : int = List.fold_left (sum, 0, my_list);
+```
+
+</Syntax>
+
+<SyntaxTitle syntax="pascaligo">
+function fold_right : (('item -> 'accumulator -> 'accumulator) -> list('item) -> 'accumulator) -> 'accumulator
+</SyntaxTitle>
+<SyntaxTitle syntax="cameligo">
+val fold_right : ('item -> 'accumulator -> 'accumulator) -> 'item list -> 'accumulator -> 'accumulator
+</SyntaxTitle>
+<SyntaxTitle syntax="reasonligo">
+let fold_right: ((('item, 'accumulator) => 'accumulator), list('item), 'accumulator) => 'accumulator
+</SyntaxTitle>
+<SyntaxTitle syntax="jsligo">
+let fold_right: (((a: ['item, 'accumulator]) => 'accumulator), list<'item>, 'accumulator) => 'accumulator
+</SyntaxTitle>
+
+[Fold over items in a list](../language-basics/sets-lists-tuples.md#folded-operation-over-lists);
+
+<Syntax syntax="pascaligo">
+
+```pascaligo group=lists
+const my_list: list(int) = list [1; 2; 3]
+
+function sum_right (const i : int; const acc : int): int is acc + i
+
+const sum_of_elements : int = List.fold_right (sum_right, my_list, 0)
+```
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+```cameligo group=lists
+let my_list : int list = [1; 2; 3]
+
+let sum_right (i, acc : int * int) : int = acc + i
+
+let sum_of_elements : int = List.fold_right sum_right my_list 0
+```
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+```reasonligo group=lists
+let my_list : list(int) = [1, 2, 3];
+
+let sum_right = ((i, result): (int, int)): int => result + i;
+
+let sum_of_elements : int = List.fold_right (sum_right, my_list, 0);
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=lists
+let my_list : list<int> = list([1, 2, 3]);
+
+let sum_right = ([i, result]: [int, int]): int => result + i;
+
+let sum_of_elements : int = List.fold_right (sum_right, my_list, 0);
 ```
 
 </Syntax>

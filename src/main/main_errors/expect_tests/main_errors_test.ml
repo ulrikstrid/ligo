@@ -727,7 +727,7 @@ let%expect_test "typer" =
     in file "a dummy file name", line 20, characters 5-5
 
     Incorrect argument.
-    Expected a tuple, but got an argument of type "foo".|}] ;
+    Expected a pair, but got an argument of type "foo".|}] ;
   error (`Typer_expected_list (location_t, type_expression)) ;
   [%expect
     {|
@@ -1073,7 +1073,7 @@ let%expect_test "self_ast_typed" =
 let%expect_test "self_mini_c" =
   let error e = human_readable_error (`Main_self_mini_c e) in
   error (`Self_mini_c_bad_self_address C_SELF_ADDRESS) ;
-  [%expect {|"Tezos.self_address" must be used directly and cannot be used via another function. |}] ;
+  [%expect {|"Tezos.self" must be used directly and cannot be used via another function. |}] ;
   error `Self_mini_c_not_a_function ;
   [%expect {|
     Invalid type for entrypoint.
