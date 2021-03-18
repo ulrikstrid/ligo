@@ -2,7 +2,7 @@ type (+'value, +'error) result
 val ok : 'a -> ('a, 'c) result
 val fail : 'a -> ('b, 'a) result
 val update_annotation : 'error -> ('value, 'error) result -> ('value, 'error) result
-val to_stdlib_result : ('value, 'error) result -> ('value * 'error list, 'error * 'error list) Stdlib.result
+val to_stdlib_result : ('value, 'error) result -> ('value, 'error) Stdlib.result
 val bind :
   ('a -> ('b, 'd) result) ->
   ('a, 'd) result -> ('b, 'd) result
