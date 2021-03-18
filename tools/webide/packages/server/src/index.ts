@@ -11,7 +11,7 @@ import { evaluateValueHandler } from './handlers/evaluate-value';
 import { runFunctionHandler } from './handlers/run-function';
 import { shareHandler } from './handlers/share';
 import { sharedLinkHandler } from './handlers/shared-link';
-import { listDeclarationHandler } from './handlers/list-declarations';
+import { listDeclarationHandler } from './handlers/list-declaration';
 import { errorLoggerMiddleware, loggerMiddleware } from './logger';
 require('./metrics');
 

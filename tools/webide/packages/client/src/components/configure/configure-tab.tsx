@@ -14,9 +14,9 @@ import { ChangeDispatchedAction, ChangeSelectedAction, CommandState } from '../.
 import { CommandType } from '../../redux/types';
 import { Option, Select } from '../form/select';
 import { CompilePaneComponent } from './compile-pane';
-import CompileFunctionPaneComponent from './compile-function-pane';
 import DeployPaneComponent from './deploy-pane';
 import { DryRunPaneComponent } from './dry-run-pane';
+import CompileFunctionPaneComponent from './compile-function-pane';
 import { EvaluateFunctionPaneComponent } from './evaluate-function-pane';
 import { EvaluateValuePaneComponent } from './evaluate-value-pane';
 import { GenerateDeployScriptPane } from './generate-deploy-script-pane';
@@ -149,10 +149,10 @@ export const ConfigureTabComponent = (props: {
       </CommonActionsGroup>
       {(command === CommandType.Compile && (
         <CompilePaneComponent></CompilePaneComponent>
-      )) ||
-      (command === CommandType.CompileFunction && (
-        <CompileFunctionPaneComponent></CompileFunctionPaneComponent>
-      )) ||
+        )) ||
+        (command === CommandType.CompileFunction && (
+          <CompileFunctionPaneComponent></CompileFunctionPaneComponent>
+        )) ||
         (command === CommandType.DryRun && (
           <DryRunPaneComponent></DryRunPaneComponent>
         )) ||

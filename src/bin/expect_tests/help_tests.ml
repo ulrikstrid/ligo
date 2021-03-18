@@ -102,6 +102,9 @@ let%expect_test _ =
                Subcommand: Print Mini-C. Warning: Intended for development of
                LIGO and can break at any time.
 
+           repl
+               Subcommand: REPL
+
            run-function
                Subcommand: Run a function with the given parameter.
 
@@ -223,6 +226,9 @@ let%expect_test _ =
                Subcommand: Print Mini-C. Warning: Intended for development of
                LIGO and can break at any time.
 
+           repl
+               Subcommand: REPL
+
            run-function
                Subcommand: Run a function with the given parameter.
 
@@ -301,7 +307,11 @@ let%expect_test _ =
                TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
-               Show version information. |} ] ;
+               Show version information.
+
+           --warn=BOOL (absent=true)
+               BOOL indicates whether warning messages should be printed in
+               stderr or not |} ] ;
 
   run_ligo_good [ "compile-parameter" ; "--help" ] ;
   [%expect {|
@@ -382,7 +392,11 @@ let%expect_test _ =
                TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
-               Show version information. |} ] ;
+               Show version information.
+
+           --warn=BOOL (absent=true)
+               BOOL indicates whether warning messages should be printed in
+               stderr or not |} ] ;
 
   run_ligo_good [ "compile-storage" ; "--help" ] ;
   [%expect {|
@@ -464,7 +478,11 @@ let%expect_test _ =
                TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
-               Show version information. |} ] ;
+               Show version information.
+
+           --warn=BOOL (absent=true)
+               BOOL indicates whether warning messages should be printed in
+               stderr or not |} ] ;
 
   run_ligo_good [ "dry-run" ; "--help" ] ;
   [%expect {|
@@ -538,7 +556,11 @@ let%expect_test _ =
                TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
-               Show version information. |} ] ;
+               Show version information.
+
+           --warn=BOOL (absent=true)
+               BOOL indicates whether warning messages should be printed in
+               stderr or not |} ] ;
 
   run_ligo_good [ "run-function" ; "--help" ] ;
   [%expect {|
@@ -727,4 +749,8 @@ let%expect_test _ =
                TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
-               Show version information. |} ] ;
+               Show version information.
+
+           --warn=BOOL (absent=true)
+               BOOL indicates whether warning messages should be printed in
+               stderr or not |} ] ;
