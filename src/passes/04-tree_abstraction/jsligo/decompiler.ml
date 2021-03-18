@@ -157,26 +157,13 @@ let get_e_tuple : AST.expression -> _ result = fun expr ->
     Format.asprintf "%a should be a tuple expression"
     AST.PP.expression expr
 
-let pattern_type (_: _ AST.binder) =
-  failwith "type patterns are not supported yet in jsligo"
-  
-(* let pattern_type ({var;ascr}: _ AST.binder) =
- *   let var = CST.PVar (decompile_variable var.wrap_content) in
- *   let%bind type_expr = bind_map_option decompile_type_expr ascr in
- *   let type_expr = Option.unopt ~default:(CST.TWild ghost) type_expr in
- *   ok @@ CST.PTyped (wrap @@ CST.{pattern=var;colon=ghost;type_expr}) *)
-
 type statement_or_expr =
   | Statement of CST.statement
   | Expr of CST.expr
 
 let e_hd = function 
   [Expr hd] -> hd
-| Expr hd :: rest  -> failwith "sequence?!"
-| [Statement s] -> failwith "wut"
-| [] -> failwith "uhhhhh"
-| Statement _ :: _ -> failwith "wut2"
-(* | _ -> failwith "not supported2" *)
+| _ -> failwith "not supported"
 
 let rec s_hd = function 
   [Statement hd] -> ok @@ hd
@@ -278,26 +265,13 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
     let%bind (parameters,lhs_type,body) = decompile_lambda lambda in
     let fun_expr : CST.fun_expr = {parameters;lhs_type;arrow=ghost;body} in
     return_expr @@ [Expr (CST.EFun (wrap @@ fun_expr))]
-  (* | E_recursive {lambda; _} -> 
-    let%bind (parameters,lhs_type,body) = decompile_lambda lambda in
-    let fun_expr : CST.fun_expr = {parameters;lhs_type;arrow=ghost;body} in
-    return_expr @@ [Expr (CST.EFun (wrap @@ fun_expr))] *)
-    
-    (* let%bind let_rhs = decompile_expression @@ AST.make_e @@ AST.E_lambda lambda in
-    let let_rhs = s_hd 
-    let let_binding : CST.let_binding = {binders;lhs_type;eq=ghost;let_rhs} in
-    let let_decl : CST.let_decl = (ghost,Some ghost,let_binding,attributes) in
-    return_expr @@ [Statement (CST.SConst (wrap @@ let_decl))] *)
   | E_let_in {let_binder={var;ascr};rhs;let_result;attributes} ->
     let attributes = decompile_attributes attributes in
     let var = CST.PVar (decompile_variable @@ var.wrap_content) in
     let binders = var in
     let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) ascr in
     let%bind expr = decompile_expression_in rhs in
-    let expr = match expr with 
-     [Expr hd] -> hd
-    | _ -> failwith "not supported"
-    in
+    let expr = e_hd expr in
     let let_binding = CST.{
       binders;
       lhs_type;
@@ -526,10 +500,48 @@ and statements_to_block (statements: statement_or_expr list) =
   let%bind s = list_to_nsepseq statements in
   ok @@ wrap @@ braced s
 
+and add_return statements = 
+  let statements = List.rev statements in
+  let (last, before) = match statements with 
+    Statement last :: before -> (last, before)
+  | Expr last :: before -> (SExpr last, before)
+  | _ -> failwith "not implemented"
+  in
+  let rec aux l =
+    match l with 
+      CST.SExpr (EUnit _) -> ok @@ CST.SReturn (wrap CST.{kwd_return = ghost; expr = None})
+    | CST.SExpr e -> ok @@ CST.SReturn (wrap CST.{kwd_return = ghost; expr = Some e})
+    | CST.SCond {value = {kwd_if; test; ifso; ifnot}; region} -> 
+      let%bind ifso = aux ifso in
+      let%bind ifnot = match ifnot with 
+        Some (e, s) -> 
+          let%bind s = aux s in
+          ok @@ Some (e, s)
+      | None -> ok @@ None
+      in
+      ok @@ CST.SCond {value = {kwd_if; test; ifso; ifnot}; region }
+    | CST.SBlock {value = {lbrace; inside; rbrace}; region} -> 
+      let inside = Utils.nsepseq_to_list inside in
+      let inside = List.rev inside in 
+      let (last, before) = (match inside with 
+        last :: before -> (last, before)
+      | [] -> failwith "not implemented"
+      ) in
+      let%bind last = aux last in
+      let inside = last :: before in
+      let inside = List.rev inside in
+      let%bind inside = list_to_nsepseq inside in
+      ok @@ CST.SBlock {value = {lbrace; inside; rbrace}; region}      
+    | _ -> failwith "not implemented"
+  in
+  let%bind last = aux last in
+  ok @@ List.rev (Statement last :: before)
+
 and function_body body = 
   let%bind body = match body with 
   | [Expr e] -> ok @@ CST.ExpressionBody e
   | (_ :: _) as s -> 
+    let%bind s = add_return s in
     let%bind o = statements_to_block s in
     
     ok @@ CST.FunctionBody o
@@ -626,10 +638,7 @@ and decompile_declaration : AST.declaration Location.wrap -> (CST.statement, _) 
     let binders = var in
     let%bind lhs_type = bind_map_option (bind_compose (ok <@ prefix_colon) decompile_type_expr) binder.ascr in
     let%bind expr = decompile_expression_in expr in
-    let expr = match expr with 
-      [Expr hd] -> hd
-    | _ -> failwith "should not happen"
-    in
+    let expr = e_hd expr in
     let binding = CST.({
       binders;
       lhs_type;
