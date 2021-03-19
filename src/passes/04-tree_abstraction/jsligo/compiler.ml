@@ -1156,18 +1156,23 @@ and compile_statement_to_declaration : CST.statement -> (AST.declaration list, _
     fail @@ statement_not_supported_at_toplevel statement
 
 and compile_statements_to_program : CST.ast -> (AST.module_, _) result = fun ast ->
-  let aux : CST.statement -> (declaration location_wrap list, _) result = fun statement ->
-    let%bind declarations = compile_statement_to_declaration statement in
-    ok @@ List.map (fun d -> 
-      let loc = Location.lift @@ CST.statement_to_region statement in
-      Location.wrap ~loc d
-    ) declarations
+  let aux : CST.toplevel_statement -> (declaration location_wrap list, _) result = fun statement ->
+    match statement with 
+      TopLevel (statement, _) -> 
+        let%bind declarations = compile_statement_to_declaration statement in  
+        ok @@ List.map (fun d -> 
+          let loc = Location.lift @@ CST.statement_to_region statement in
+          Location.wrap ~loc d
+        ) declarations
+    | Directive _ ->
+      ok []
   in
   let statements = nseq_to_list ast.statements in
-  let statements = List.map fst statements in
+  (* let statements = List.map fst statements in *)
   let%bind declarations = bind_map_list aux statements in
   let lst = List.flatten declarations in
   ok lst
+
 
 and compile_namespace : CST.statements -> (AST.module_, _) result = fun statements ->
   let aux : CST.statement -> (declaration location_wrap list, _) result = fun statement ->

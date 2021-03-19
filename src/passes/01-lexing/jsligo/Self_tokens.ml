@@ -77,6 +77,10 @@ let automatic_semicolon_insertion tokens =
   in 
   inner [] tokens
 
+let automatic_semicolon_insertion = function
+  Stdlib.Ok tokens -> automatic_semicolon_insertion tokens |> ok
+| Error _ as err -> err
+
 (* Exported *)
 
 let filter = Utils.(automatic_semicolon_insertion <@ tokens_of <@ Style.check)

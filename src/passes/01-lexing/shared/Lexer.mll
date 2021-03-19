@@ -278,7 +278,7 @@ and scan_verbatim verbatim_end thread state = parse
   '#' blank* (natural as line) blank+ '"' (string as file) '"'
   (blank+ (('1' | '2') as flag))? blank* {
     let Core.{state; region; _} = state#sync lexbuf
-    in eol region line file flag thread state lexbuf
+    in eol verbatim_end region line file flag thread state lexbuf
   }
 | nl as nl { let ()    = Lexing.new_line lexbuf
              and state = state#set_pos (state#pos#new_line nl) in
@@ -296,10 +296,10 @@ and scan_verbatim verbatim_end thread state = parse
 | _ as c   { let Core.{state; _} = state#sync lexbuf in
              scan_verbatim verbatim_end (thread#push_char c) state lexbuf }
 
-and eol region_prefix line file flag thread state = parse
+and eol verbatim_end region_prefix line file flag thread state = parse
   nl | eof { let _, state =
                Core.linemarker region_prefix ~line ~file ?flag state lexbuf
-             in scan_verbatim thread state lexbuf }
+             in scan_verbatim verbatim_end thread state lexbuf }
 | _        { let Core.{region; _} = state#sync lexbuf
              in fail region Invalid_linemarker_argument }
 

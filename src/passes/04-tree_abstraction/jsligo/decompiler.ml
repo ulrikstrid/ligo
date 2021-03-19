@@ -294,7 +294,12 @@ let rec decompile_expression_in : AST.expression -> (statement_or_expr list, _) 
   | E_mod_in {module_binder;rhs;let_result} ->
     let name = wrap module_binder in
     let%bind module_ = decompile_module rhs in
-    let statements: CST.statements = (fst @@ fst module_.statements, List.map (fun e -> (ghost, fst e)) (snd module_.statements)) in 
+    let toplevel_to_statement = function
+        CST.TopLevel (s, _) -> s
+      | _ -> failwith "not implemented"
+      in
+    let a = (fst module_.statements) in
+    let statements: CST.statements = (toplevel_to_statement a, List.map (fun e -> (ghost, toplevel_to_statement e)) (snd module_.statements)) in 
     let statements: CST.statements CST.braced Region.reg = wrap @@ braced statements in
     let%bind body = decompile_expression_in let_result in
     ok @@ [Statement (CST.SNamespace (wrap (ghost, name, statements)))] @ body
@@ -650,7 +655,12 @@ and decompile_declaration : AST.declaration Location.wrap -> (CST.statement, _) 
   | Declaration_module {module_binder; module_} ->
     let name = wrap module_binder in
     let%bind module_ = decompile_module module_ in
-    let statements: CST.statements = (fst @@ fst module_.statements, List.map (fun e -> (ghost, fst e)) (snd module_.statements)) in 
+    let toplevel_to_statement = function
+        CST.TopLevel (s, _) -> s
+      | _ -> failwith "not implemented"
+      in
+    let a = (fst module_.statements) in
+    let statements: CST.statements = (toplevel_to_statement a, List.map (fun e -> (ghost, toplevel_to_statement e)) (snd module_.statements)) in 
     let statements: CST.statements CST.braced Region.reg = wrap @@ braced statements in
     ok @@ CST.SNamespace (wrap (ghost, name, statements))
   | Module_alias {alias; binders} ->
@@ -661,5 +671,6 @@ and decompile_declaration : AST.declaration Location.wrap -> (CST.statement, _) 
 and decompile_module : AST.module_ -> (CST.ast, _) result = fun prg ->
   let%bind decl = bind_map_list decompile_declaration prg in
   let statements = List.Ne.of_list decl in
-  let statements = ((fst statements, None), List.map (fun e -> (e, None)) (snd statements)) in
+  let statements = Utils.nseq_map (fun s -> CST.TopLevel (s, None)) statements in
+  (* let statements = ((fst statements, None), List.map (fun e -> (e, None)) (snd statements)) in *)
   ok @@ ({statements;eof=ghost}: CST.ast)

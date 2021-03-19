@@ -238,6 +238,13 @@ and fold_statement : ('a, 'err) folder -> 'a -> statement -> ('a, 'err) result =
     in
     bind_fold_ne_list fold_case res cases
   | SBreak _ -> ok init
+  | SNamespace {value = (_, _, {value = {inside; _}; _} ); _} -> bind_fold_npseq self init inside
+  | SExport {value = (_, s); _} -> self init s 
+  | SImport _ -> ok init
+  | SForOf {value = {expr; statement; _}; _}
+  | SWhile {value = {expr; statement; _}; _} ->
+      let%bind res = self_expr init expr in
+      self res statement  
 
 and remove_directives : toplevel_statements -> statement list =
 fun (first, rest) ->
