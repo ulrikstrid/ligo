@@ -1,3 +1,4 @@
+exception Troce
 type (+'value, +'error) result
 val ok : 'a -> ('a, 'c) result
 val fail : 'a -> ('b, 'a) result
