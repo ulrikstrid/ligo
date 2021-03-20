@@ -959,9 +959,9 @@ fun_call:
     in {region; value = (E_ModPath $1), $2} }
 
 tuple_expr:
-  par(tuple_comp(expr)) { $1 }
+  par(tuple(expr)) { $1 }
 
-tuple_comp(item):
+tuple(item):
   item "," nsepseq(item,",") { Utils.nsepseq_cons $1 $2 $3 }
 
 arguments:
@@ -1014,4 +1014,4 @@ ctor_pattern:
 | ctor { {$1 with value = ($1, None)} }
 
 tuple_pattern:
-  par(tuple_comp(pattern)) { $1 }
+  par(tuple(pattern)) { $1 }

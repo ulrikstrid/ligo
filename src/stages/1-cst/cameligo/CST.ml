@@ -274,11 +274,13 @@ and pattern =
 | P_Some   of (kwd_Some * pattern) reg
 | P_String of string reg
 | P_True   of kwd_true
-| P_Tuple  of (pattern, comma) nsepseq reg
+| P_Tuple  of tuple_pattern
 | P_Typed  of typed_pattern reg
 | P_Unit   of the_unit reg
 | P_Var    of variable
 | P_Wild   of wild
+
+and tuple_pattern = (pattern, comma) nsepseq par reg
 
 and typed_pattern = {
   pattern   : pattern;
@@ -478,17 +480,17 @@ let nsepseq_to_region to_region (hd,tl) =
   Region.cover (to_region hd) (last reg tl)
 
 let type_expr_to_region = function
-  T_Prod   {region; _}
-| T_Sum    {region; _}
-| T_Record {region; _}
-| T_App    {region; _}
-| T_Fun    {region; _}
-| T_Par    {region; _}
-| T_String {region; _}
-| T_Int    {region; _}
-| T_Var    {region; _}
-| T_Wild    region
-| T_ModPath {region; _} -> region
+  T_Ctor    {region; _}
+| T_Fun     {region; _}
+| T_Int     {region; _}
+| T_ModPath {region; _}
+| T_Par     {region; _}
+| T_Prod    {region; _}
+| T_Record  {region; _}
+| T_String  {region; _}
+| T_Sum     {region; _}
+| T_Var     {region; _}
+| T_Wild    region -> region
 
 let pattern_to_region = function
   P_Bytes  {region; _}

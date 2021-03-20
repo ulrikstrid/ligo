@@ -147,11 +147,11 @@ sep_or_term_list(item,sep):
 (* Non-empty comma-separated values (at least two values) *)
 
 tuple(item):
-  item "," nsepseq(item,",") { let h,t = $3 in $1, ($2,h)::t }
+  item "," nsepseq(item,",") { Utils.nsepseq_cons $1 $2 $3 }
 
 (* Possibly empty semicolon-separated values between brackets *)
 
-list__(item):
+list_of(item):
   "[" sep_or_term_list(item,";")? "]" {
     let compound = Some (Brackets ($1,$3))
     and region = cover $1 $3 in
@@ -387,18 +387,40 @@ sub_pattern:
 | core_pattern {       $1 }
 
 core_pattern:
-  "<ident>"      { P_Var      $1 }
-| "_"            { P_Wild     $1 }
-| "<int>"        { P_Int      $1 }
-| "<nat>"        { P_Nat      $1 }
-| "<bytes>"      { P_Bytes    $1 }
-| "<string>"     { P_String   $1 }
-| "<verbatim>"   { P_Verbatim $1 }
-| unit           { P_Unit     $1 }
-| par(ptuple)    { P_Par      $1 }
-| list__(tail)   { P_List     $1 }
-| ctor_pattern   { P_Ctor     $1 }
-| record_pattern { P_Record   $1 }
+  "_"            { P_Wild   $1 }
+| "<int>"        { P_Int    $1 }
+| "<nat>"        { P_Nat    $1 }
+| "<bytes>"      { P_Bytes  $1 }
+| "<string>"     { P_String $1 }
+| unit           { P_Unit   $1 }
+| "false"        { P_False  $1 }
+| "true"         { P_True   $1 }
+| "None"         { P_None   $1 }
+| variable       { P_Var    $1 }
+| some_pattern   { P_Some   $1 }
+| list_pattern   { P_List   $1 }
+| ctor_pattern   { P_Ctor   $1 }
+| tuple_pattern  { P_Tuple  $1 }
+| record_pattern { P_Record $1 }
+
+list_pattern:
+  list_of(tail) { $1 }
+
+tuple_pattern:
+  par(tuple(tail)) { $1 }
+
+some_pattern:
+  "Some" sub_pattern {
+    let stop   = pattern_to_region $2 in
+    let region = cover $1 stop
+    in {region; value=$1,$2} }
+
+ctor_pattern:
+  ctor sub_pattern {
+    let region = cover $1.region (pattern_to_region $2)
+    in {region; value = ($1, Some $2)}
+  }
+| ctor { {$1 with value = ($1, None)} }
 
 record_pattern:
   "{" sep_or_term_list(field_pattern,";") "}" {
@@ -416,26 +438,6 @@ field_pattern:
     and value  = {field_name=$1; eq=$2; pattern=$3}
     in {region; value} }
 
-ctor_pattern:
-  "Some" sub_pattern {
-    let stop   = pattern_to_region $2 in
-    let region = cover $1 stop
-    in PSomeApp {region; value=$1,$2}
-  }
-| ctor sub_pattern {
-    let region = cover $1.region (pattern_to_region $2)
-    in PCtorApp {region; value = ($1, Some $2)}
-  }
-| ctor    { PCtorApp {$1 with value = ($1, None)} }
-| "None"  { PNone  $1 }
-| "false" { PFalse $1 }
-| "true"  { PTrue  $1 }
-
-ptuple:
-  tuple(tail) {
-    let region = nsepseq_to_region pattern_to_region $1
-    in PTuple {region; value=$1} }
-
 unit:
   "(" ")" { {region = cover $1 $2; value=$1,$2} }
 
@@ -444,7 +446,7 @@ tail:
     let start  = pattern_to_region $1 in
     let stop   = pattern_to_region $3 in
     let region = cover start stop in
-    PList (PCons {region; value=$1,$2,$3})
+    P_Cons {region; value=$1,$2,$3}
   }
 | sub_pattern { $1 }
 
@@ -474,7 +476,7 @@ base_expr(right_expr):
 tuple_expr:
   tuple(disj_expr_level) {
     let region = nsepseq_to_region expr_to_region $1
-    in ETuple {region; value=$1} }
+    in E_Tuple {region; value=$1} }
 
 conditional(right_expr):
   if_then_else(right_expr) | if_then(right_expr) { $1 }
@@ -484,14 +486,14 @@ if_then_else(right_expr):
     let region = cover $1 (expr_to_region $6)
     and value  =
       {kwd_if=$1; test=$2; kwd_then=$3; ifso=$4; ifnot = Some($5,$6)}
-    in ECond {region; value} }
+    in E_Cond {region; value} }
 
 if_then(right_expr):
   "if" expr "then" right_expr {
     let stop   = expr_to_region $4 in
     let region = cover $1 stop
     and value  = {kwd_if=$1; test=$2; kwd_then=$3; ifso=$4; ifnot=None}
-    in ECond {region; value} }
+    in E_Cond {region; value} }
 
 base_if_then_else__open(x):
   base_expr(x) | if_then_else(x) { $1 }
@@ -516,7 +518,7 @@ match_expr(right_expr):
     let region = cover $1 stop
     and value =
       {kwd_match=$1; expr=$2; kwd_with=$3; lead_vbar=$4; cases}
-    in ECase {region; value} }
+    in E_Case {region; value} }
 
 cases(right_expr):
   case_clause(right_expr) {
@@ -705,7 +707,7 @@ core_expr:
 | unit            {                      EUnit $1 }
 | "false"         {  ELogic (BoolExpr (False $1)) }
 | "true"          {  ELogic (BoolExpr (True  $1)) }
-| list__(expr)    {          EList (EListComp $1) }
+| list_of(expr)    {          EList (EListComp $1) }
 | sequence        {                       ESeq $1 }
 | record_expr     {                    ERecord $1 }
 | update_record   {                    EUpdate $1 }
