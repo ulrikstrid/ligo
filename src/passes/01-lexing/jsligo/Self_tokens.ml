@@ -45,7 +45,9 @@ let tokens_of = function
 let automatic_semicolon_insertion tokens = 
   let open Token in
   let rec inner result = function
-    (SEMI _ as semi) :: (Let _ as t)  :: rest
+    (Directive _ as d) :: rest -> 
+      inner (d :: result) rest
+  | (SEMI _ as semi) :: (Let _ as t)  :: rest
   | (SEMI _ as semi) :: (Const _ as t)  :: rest
   | (SEMI _ as semi) :: (Type _ as t)  :: rest
   | (SEMI _ as semi) :: (Return _ as t)  :: rest
