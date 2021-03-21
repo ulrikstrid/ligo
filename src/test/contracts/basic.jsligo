@@ -1,7 +1,49 @@
-let counter = (n: nat): nat => {
-  let i : nat = (0 as nat);
-  while (i < n) {
-    i = i + (1 as nat)
-  };
-  return i
+type animal =
+// @layout:comb
+| ["Elephant"]
+| ["Dog"]
+| ["Cat"];
+type w_and_v = michelson_pair<[int, "w", nat, "v"]>;
+type x_and = michelson_pair<[string, "x", w_and_v, "other"]>;
+type y_or = michelson_or<[unit, "y", x_and, "other"]>;
+type z_or = michelson_or<[unit, "z", y_or, "other"]>;
+let z: z_or = M_left(unit) as z_or;
+
+let y_1: y_or = M_left(unit) as y_or;
+let y: z_or = M_right(y_1) as z_or;
+
+let x_pair: x_and = ["foo", [2, 3 as nat]];
+let x_1: y_or = M_right (x_pair) as y_or;
+let x: z_or = M_right (y_1) as z_or;
+type l_record = {
+  s: string,
+  w: int,
+  v: nat
+};
+type michelson = michelson_pair_left_comb<l_record>;
+
+let of_michelson = (f: michelson) : l_record => { 
+  let p: l_record = Layout.convert_from_left_comb(f);
+  return p
+};
+
+let to_michelson = (f: l_record) : michelson => {
+  let p = Layout.convert_to_left_comb(f as l_record);
+  return p
+};
+
+type vari = 
+| ["Foo", int]
+| ["Bar", nat]
+| ["Other", bool];
+
+type r = michelson_or_left_comb<vari>;
+let of_michelson_or = (f: r) : vari => { 
+  let p: vari = Layout.convert_from_left_comb(f);
+  return p;
+};
+
+let to_michelson_or = (f: vari) : r => {
+  let p = Layout.convert_to_left_comb(f as vari);
+  return p;
 };

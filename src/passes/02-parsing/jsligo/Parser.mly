@@ -312,19 +312,27 @@ binding_list:
   }
 
 declaration:
-  "let" binding_list {
-    let region = cover $1 (nsepseq_to_region (fun e -> e.region) $2) in
+  seq("[@attr]") "let" binding_list {
+    let region = cover $2 (nsepseq_to_region (fun e -> e.region) $3) in
+    let bindings = Utils.nsepseq_map 
+      (fun ({value; region}) -> ({value = {value with attributes = $1}; region }: let_binding Region.reg)) 
+      $3 
+    in
     let value = {
-      kwd_let    = $1;
-      bindings   = $2
+      kwd_let  = $2;
+      bindings
     } in
     SLet { region; value }
   }
-| "const" binding_list {
-    let region = cover $1 (nsepseq_to_region (fun e -> e.region) $2) in
+| seq("[@attr]") "const" binding_list {
+    let region = cover $2 (nsepseq_to_region (fun e -> e.region) $3) in
+    let bindings = Utils.nsepseq_map 
+      (fun ({value; region}) -> ({value = {value with attributes = $1}; region }: let_binding Region.reg)) 
+      $3 
+    in
     let value = {
-      kwd_const  = $1;
-      bindings   = $2
+      kwd_const  = $2;
+      bindings
     }
     in
     SConst { region; value }
@@ -359,7 +367,7 @@ fun_type:
 
 cartesian:
   core_type { $1 }
-| brackets(nsepseq(type_expr, ",")) {  TProd $1 }
+| seq("[@attr]") brackets(nsepseq(type_expr, ",")) {  TProd $2 }
 
 module_access_t:
   "<uident>" "." module_var_t {
@@ -386,63 +394,61 @@ core_type:
    in TApp {region; value = $1,$2} }
 
 sum_type:
-  ioption("|") nsepseq(cartesian,"|") {
-    match $1 with 
-      Some s ->       
-      let region = cover s (nsepseq_to_region type_expr_to_region $2) in
+  nsepseq(cartesian,"|") {
+    let region = nsepseq_to_region type_expr_to_region $1 in
+    (match $1 with 
+      (hd, []) -> hd
+    | _ ->
       TSum {
         region;
         value = {
-          lead_vbar  = $1;
-          variants   = $2;
+          lead_vbar  = None;
+          variants   = $1;
           attributes = []
         }
+      })
+  }
+| seq("[@attr]") "|" nsepseq(cartesian,"|") {
+    let region = cover $2 (nsepseq_to_region type_expr_to_region $3) in
+    TSum {
+      region;
+      value = {
+        lead_vbar  = Some $2;
+        variants   = $3;
+        attributes = $1
       }
-    | None -> 
-      let region = nsepseq_to_region type_expr_to_region $2 in
-      (match $2 with 
-        (hd, []) -> hd
-      | _ ->
-        TSum {
-          region;
-          value = {
-            lead_vbar  = $1;
-            variants   = $2;
-            attributes = []
-          }
-        })
-      
+    }
   }
 
 record_type:
-  "{" sep_or_term_list(field_decl,",") "}" {
-    let fields, terminator = $2 in
-    let region = cover $1 $3
+  seq("[@attr]") "{" sep_or_term_list(field_decl,",") "}" {
+    let fields, terminator = $3 in
+    let region = cover $2 $4
     and value = {
-      compound = Some (Braces ($1,$3));
+      compound = Some (Braces ($2,$4));
       ne_elements = fields;
       terminator;
-      attributes=[]}
+      attributes=$1}
     in TObject {region; value} }
 
 field_decl:
-  field_name {
+  seq("[@attr]") field_name {
     let value = {
-      field_name=$1;
+      field_name=$2;
       colon=ghost;
-      field_type = TVar $1;
-      attributes=[]}
-    in {$1 with value}
+      field_type = TVar $2;
+      attributes=$1}
+    in {$2 with value}
   }
-| field_name ":" type_expr {
-    let stop   = type_expr_to_region $3 in
-    let region = cover $1.region stop in
-    let field_name = $1 in
+| seq("[@attr]") field_name ":" type_expr {
+    let stop   = type_expr_to_region $4 in
+    let region = cover $2.region stop in
+    let field_name = $2 in
     let value: field_decl = {
       field_name = field_name;
-      colon=$2;
-      field_type=$3;
-      attributes= []}
+      colon=$3;
+      field_type=$4;
+      attributes= $1}
     in {region; value}
   }
 

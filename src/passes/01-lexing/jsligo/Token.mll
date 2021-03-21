@@ -24,6 +24,11 @@ module T =
 
       Directive of Directive.t
 
+      (* Comments *)
+
+    | BlockCom of lexeme Region.reg
+    | LineCom  of lexeme Region.reg
+
       (* Literals *)
 
     | String   of lexeme Region.reg
@@ -269,8 +274,11 @@ module T =
       Directive d ->
         Directive.project d
 
-      (* Literals *)
+      (* comments *)
+    | LineCom Region.{region; value} -> region, sprintf "Line comment %S" value
+    | BlockCom Region.{region; value} -> region, sprintf "Block comment %S" value
 
+      (* Literals *) 
     | String Region.{region; value} ->
         region, sprintf "String %S" value
     | Verbatim Region.{region; value} ->
@@ -390,7 +398,11 @@ module T =
       (* Directives *)
 
       Directive d -> Directive.to_lexeme d
-
+    
+      (* Comments *)
+    | LineCom c -> sprintf "// %s" c.value
+    | BlockCom c -> sprintf "/* %s */" c.value
+    
       (* Literals *)
 
     | String s   -> sprintf "%S" (String.escaped s.Region.value)

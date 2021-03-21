@@ -7,6 +7,8 @@ module Token = Lexing_jsligo.Token
   (* Literals *)
 
 %token               <LexerLib.Directive.t> Directive "<directive>"
+%token                  <string Region.reg> BlockCom "<block_comment>"
+%token                  <string Region.reg> LineCom  "<line_comment>"
 %token                  <string Region.reg> String   "<string>"
 %token                  <string Region.reg> Verbatim "<verbatim>"
 %token  <(Token.lexeme * Hex.t) Region.reg> Bytes    "<bytes>"

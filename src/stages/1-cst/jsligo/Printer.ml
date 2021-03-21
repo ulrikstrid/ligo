@@ -330,7 +330,8 @@ and print_terminator state = function
   Some semi -> print_token state semi ";"
 | None -> ()
 
-and print_let_binding state {value = {binders; lhs_type; eq; expr; attributes = _}; _} =
+and print_let_binding state {value = {binders; lhs_type; eq; expr; attributes}; _} = 
+  print_attributes state attributes;
   print_pattern state binders;
   print_option state (fun state (colon, type_expr) ->
     print_token state colon ":";
@@ -779,9 +780,11 @@ and pp_case state = function
       List.iteri (List.length statements |> apply) statements
     | None -> ())
 
-and pp_let_binding state {value = {binders; lhs_type; expr; _}; _} =
+and pp_let_binding state {value = {binders; lhs_type; expr; attributes; _}; _} =
   let fields = if lhs_type = None then 2 else 3 in
   let arity = 0 in
+  if attributes <> [] then
+    pp_attributes state attributes;
   pp_node state "<binding>";
   pp_pattern (state#pad fields arity) binders;
   let arity = match lhs_type with

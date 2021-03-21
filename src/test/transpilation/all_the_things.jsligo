@@ -833,13 +833,12 @@ let j = (a: int, b: int): int => a - b;
 //     let z = 3;
 //     z;
 // };
+// @foo:bar
 let n = (a: int): int => a + 1
 let o = (a: int): int => a + 1
 let n2 = (a: int, b: int): int => a + 1
-let o2 = (a: int, b: int): int => a + 1
+let o2 = (a: int, b: int): int => a + 1;
 // let p = {{
-//     3;
-// }};
 let q = {
   f: 3,
   g: 6,
@@ -851,7 +850,7 @@ let q = {
       z: 2
     }
   }
-}
+};
 
 /*
 Not supported yet by parser:
@@ -882,16 +881,16 @@ let bar: foobar = { kind: "Bar", value: true }
 let kee: foobar = { kind: "Kee", value: (23 as nat) };
 /* IF YOU CHANGE THIS, CHANGE THE EXAMPLE ON THE FRONT PAGE OF THE WEBSITE */
 
-type storage = int
+type storage = int;
 
 /* variant defining pseudo multi-entrypoint actions */
 
 type parameter =
 | ["Increment", int]
-| ["Decrement", int]
+| ["Decrement", int];
 
 let add = ([a,b]: [int, int]): int => a + b
-let sub = ([a,b]: [int, int]): int => a - b
+let sub = ([a,b]: [int, int]): int => a - b;
 
 /* real entrypoint that re-routes the flow based on the parameter provided */
 

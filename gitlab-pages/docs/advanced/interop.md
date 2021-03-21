@@ -159,7 +159,7 @@ type animal =
 
 ```jsligo
 type animal =
-// [@layout:comb] 
+// @layout:comb
 | ["Elephant"]
 | ["Dog"]
 | ["Cat"];
@@ -260,9 +260,9 @@ type animal =
 
 ```jsligo group=annot
 type animal = 
-| /* [@annot:memory] */ ["Elephant"]
-| /* [@annot:face] */ ["Dog"]
-| /* [@annot:fish] */ ["Cat"]
+| /* @annot:memory */ ["Elephant"]
+| /* @annot:face */ ["Dog"]
+| /* @annot:fish */ ["Cat"]
 ```
 
 </Syntax>
@@ -319,9 +319,9 @@ type artist = {
 
 ```jsligo group=annot
 type artist = {
-  /* [@annot:style] */ genre: string,
-  /* [@annot:from] */ since: timestamp,
-  /* [@annot:performer] */ name: string
+  /* @annot:style */ genre: string,
+  /* @annot:from */ since: timestamp,
+  /* @annot:performer */ name: string
 }
 ```
 
