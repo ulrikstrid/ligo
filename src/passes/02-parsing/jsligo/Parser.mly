@@ -367,7 +367,10 @@ fun_type:
 
 cartesian:
   core_type { $1 }
-| seq("[@attr]") brackets(nsepseq(type_expr, ",")) {  TProd $2 }
+| seq("[@attr]") brackets(nsepseq(type_expr, ",")) {  TProd {
+  inside = $2;
+  attributes = $1} 
+}
 
 module_access_t:
   "<uident>" "." module_var_t {

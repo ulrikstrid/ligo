@@ -312,7 +312,10 @@ and pp_module_access : type a.(a -> document) -> a module_access reg -> document
   group (pp_ident module_name ^^ string "." ^^ break 0 ^^ f field)
 
 and pp_cartesian v =
-  group(pp_brackets "," pp_type_expr v)
+  (if v.attributes = [] then empty
+  else pp_attributes v.attributes)
+  ^/^
+  group(pp_brackets "," pp_type_expr v.inside)
 
 and pp_sum_type {value; _} =
   let {variants; attributes; _} = value in

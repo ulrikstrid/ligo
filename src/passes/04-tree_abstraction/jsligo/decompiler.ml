@@ -109,7 +109,7 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
     let%bind tuple = bind_map_list decompile_type_expr tuple in
     let%bind tuple = list_to_nsepseq tuple in
     let tuple = brackets tuple in
-    return @@ CST.TProd (wrap tuple)
+    return @@ CST.TProd ({inside = wrap tuple; attributes = []})
   | T_arrow {type1;type2} ->
     let%bind type1 = decompile_type_expr type1 in
     let type_arg = fun_type_arg type1 in

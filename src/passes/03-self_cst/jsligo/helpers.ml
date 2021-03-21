@@ -35,8 +35,8 @@ let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> ('a, 'err
   let self = fold_type_expression f in
   let%bind init = f.t init t in
   match t with
-    TProd   {value;region=_} ->
-    bind_fold_ne_list self init @@ npseq_to_ne_list value.inside
+    TProd  {inside; _} -> 
+    bind_fold_ne_list self init @@ npseq_to_ne_list inside.value.inside
   | TSum    {value;region=_} ->
     let {lead_vbar=_;variants;attributes=_} = value in
     bind_fold_ne_list self init @@ npseq_to_ne_list variants
@@ -270,10 +270,10 @@ let rec map_type_expression : ('err) mapper -> type_expr -> ('b, 'err) result = 
   let%bind t = f.t t in
   let return = ok in
   match t with
-    TProd   {value;region} ->
+    TProd   {inside ={value;region}; attributes} ->
     let%bind inside = bind_map_npseq self value.inside in
     let value = {value with inside} in
-    return @@ TProd {value;region}
+    return @@ TProd {inside = {value;region}; attributes}
   | TSum {value;region} ->
     let%bind variants = bind_map_npseq self value.variants in
     let value = {value with variants} in

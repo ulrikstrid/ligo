@@ -149,7 +149,7 @@ let check_variants variants =
       if VarSet.mem value acc then
         fail @@ duplicate_variant value
       else ok @@ VarSet.add value acc
-  | TProd {value = {inside; _}; _} as t -> (
+  | TProd {inside = {value = {inside; _}; _}; _ } as t -> (
     let items = Utils.nsepseq_to_list inside in
     match items with 
       hd :: [] -> add acc hd

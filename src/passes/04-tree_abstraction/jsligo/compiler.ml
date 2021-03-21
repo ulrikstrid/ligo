@@ -60,16 +60,18 @@ module Compile_type = struct
   type type_compiler_opt = CST.type_expr -> (AST.type_expression option, abs_error) result
 
   let rec type_expression_to_constructor : CST.type_expr -> (string * AST.type_expression * attributes, _) result = function
-    | TProd {value = {inside = (TString s, []); _}; region} ->
-      ok (s.value, t_unit () ~loc:(Location.lift region), [])
-    | TProd {value = {inside = (TString s, rest); _}; region} -> 
+    | TProd {inside = {value = {inside = (TString s, []); _}; region}; attributes} ->
+      let attributes = compile_attributes attributes in
+      ok (s.value, t_unit () ~loc:(Location.lift region), attributes)
+    | TProd {inside = {value = {inside = (TString s, rest); _}; region}; attributes} -> 
+      let attributes = compile_attributes attributes in
       let lst = List.map snd rest in
       let%bind lst = bind_map_list compile_type_expression lst in
       (match lst with 
-        [a] -> ok @@ (s.value, a, [])
+        [a] -> ok @@ (s.value, a, attributes)
       | lst -> 
         let t = t_tuple lst in
-        ok @@ (s.value, t, []))
+        ok @@ (s.value, t, attributes))
     | _ as t -> fail @@ invalid_constructor t
 
   and get_t_int_singleton_opt = function
@@ -159,7 +161,7 @@ module Compile_type = struct
       | "michelson_or" ->
         let lst = npseq_to_list args.value.inside in
         let%bind lst = match lst with
-        | [TProd a] -> ok @@ npseq_to_list a.value.inside
+        | [TProd a] -> ok @@ npseq_to_list a.inside.value.inside
         | _ -> fail @@ michelson_type_wrong_arity loc operator.value
         in
         (match lst with
@@ -178,7 +180,7 @@ module Compile_type = struct
       | "michelson_pair" ->
         let lst = npseq_to_list args.value.inside in
         let%bind lst = match lst with
-        | [TProd a] -> ok @@ npseq_to_list a.value.inside
+        | [TProd a] -> ok @@ npseq_to_list a.inside.value.inside
         | _ -> fail @@ michelson_type_wrong_arity loc operator.value
         in
         (match lst with
@@ -231,7 +233,7 @@ module Compile_type = struct
       let%bind fields = bind_map_list aux lst in
       return @@ t_record_ez_attr ~loc ~attr:attributes fields
     | TProd prod  ->
-      let (nsepseq, loc) = r_split prod in
+      let (nsepseq, loc) = r_split prod.inside in
       let lst = npseq_to_list nsepseq.inside in
       let%bind lst = bind_map_list self lst in
       return @@ t_tuple ~loc lst

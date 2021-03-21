@@ -205,7 +205,11 @@ and 'a module_access = {
   field       : 'a;
 }
 
-and cartesian = (type_expr, comma) nsepseq brackets reg
+
+and cartesian = {
+  inside: (type_expr, comma) nsepseq brackets reg;
+  attributes: attributes
+}
 
 and sum_type = {
   lead_vbar  : vbar option;
@@ -501,7 +505,7 @@ let nsepseq_to_region to_region (hd,tl) =
   Region.cover (to_region hd) (last reg tl)
 
 let type_expr_to_region = function
-  TProd   {region; _}
+  TProd   {inside = {region; _}; _}
 | TSum    {region; _}
 | TObject {region; _}
 | TApp    {region; _}

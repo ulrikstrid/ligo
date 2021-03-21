@@ -290,7 +290,8 @@ and print_projection state {value; _} =
       print_expr state inside;
       print_token state rbracket "]"
 
-and print_cartesian state Region.{value;_} =
+and print_cartesian state {inside = {value; _};attributes} =
+  print_attributes state attributes;
   let {lbracket;inside;rbracket} = value in
   print_token state lbracket "[";
   print_nsepseq state "," print_type_expr inside;
@@ -1015,7 +1016,7 @@ and pp_tuple_expr state {value; _} =
 
 and pp_arguments state = function
   | Multiple x ->
-     let {inside; _} = x.value in
+     let ({inside; _}: (expr,comma) Utils.nsepseq par) = x.value in
      pp_tuple_expr state {value=inside; region = x.region};
   | Unit x ->
      print_unit state x
@@ -1116,7 +1117,8 @@ and pp_cond_statement state (cond: cond_statement) =
   in ()
 
 and pp_type_expr state = function
-  TProd {value; region} ->
+  TProd {inside = {value; region}; attributes} ->
+    pp_attributes state attributes;
     pp_loc_node state "TProd" region;
     pp_cartesian state value
 | TSum {value; region} ->
