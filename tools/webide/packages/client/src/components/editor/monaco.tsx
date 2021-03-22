@@ -5,10 +5,12 @@ import styled from 'styled-components';
 
 import { AppState } from '../../redux/app';
 import { ChangeCodeAction, ChangeDirtyAction, ChangeCursorPositionAction } from '../../redux/editor';
+import { ChangeOutputAction } from '../../redux/result';
 import { ClearSelectedAction } from '../../redux/examples';
 import { ListDeclarationAction } from '../../redux/actions/list-declaration'
 import {ChangeSelectedAction} from '../../redux/compile-function'
 import { CompileFunctionAction } from '../../redux/actions/compile-function';
+import {CommandType} from '../../redux/types';
 
 interface TopPaneStyled {
   editorHeight: number;
@@ -26,7 +28,7 @@ const Container = styled.div<TopPaneStyled>`
 `;
 
 const MonacoComponent = (props) => {
-  const { editorHeight, code, language, getDeclarationList, setCompileFunction } = props
+  const { editorHeight, code, language, getDeclarationList, setCompileFunction, setError } = props
   let containerRef = useRef(null);
   const store = useStore();
   const dispatch = useDispatch();
@@ -36,16 +38,18 @@ const MonacoComponent = (props) => {
   const compileFunctionHandler = () => {
     getDeclarationList(language, code).then((method: MethodType) => {
       method.declarations.forEach(d => {
+        console.log('&&&&', currentLineText)
         if (currentLineText.indexOf(d) !== -1) {
           setCompileFunction(d)
+          console.log('****', d)
+          dispatch( new CompileFunctionAction().getAction());
         } else {
-          setCompileFunction('')
+          console.log('((((', d)
+          setError('function not found')
         }
+        setCompileFunction('')
+        setHasCompiledFunction(false)
       });
-      // dispatch({ ...new ChangeDispatchedAction(new CompileFunctionAction()) });
-      dispatch( new CompileFunctionAction().getAction());
-      setHasCompiledFunction(false)
-      setCompileFunction('')
     })
   }
 
@@ -165,7 +169,8 @@ const mapStateToProps = state => {
 const mapDispatchToProps = dispatch => {
   return({
     getDeclarationList: (syntax, code)  => dispatch(ListDeclarationAction(syntax, code)),
-    setCompileFunction: (functionName)  => dispatch({...new ChangeSelectedAction(functionName)})
+    setCompileFunction: (functionName)  => dispatch({...new ChangeSelectedAction(functionName)}),
+    setError: (errorMessage) => dispatch({...new ChangeOutputAction(`Error: ${errorMessage}`,CommandType.CompileFunction ,true),})
   })
 }
 
