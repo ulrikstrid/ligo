@@ -143,7 +143,7 @@ const MonacoComponent = (props) => {
     return function cleanUp() {
       cleanupFunc.forEach(f => f());
     };
-  }, [store, dispatch, language, code, getDeclarationList]);
+  }, []);
 
   return (
   <>
