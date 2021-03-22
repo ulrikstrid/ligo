@@ -63,7 +63,7 @@ let add_modules_in_env env deps =
 let aggregate_contract order_deps asts_typed =
   (* Add the module at the beginning of the file *)
   let aux map (file_name,(_,_,_,deps_lst)) =
-    let%bind (Ast_typed.Module_Fully_Typed contract,_) =
+    let%bind ((Ast_typed.Module_Fully_Typed contract, _),_) =
       trace_option (build_corner_case __LOC__ "Fail to find typed module") @@
       SMap.find_opt file_name asts_typed in
     let aux ast_typed (file_name,module_name) =
@@ -96,7 +96,7 @@ let aggregate_contract order_deps asts_typed =
     contract header_list in
   ok @@ Ast_typed.Module_Fully_Typed contract
 
-let type_file_with_dep ~options  asts_typed (file_name, (meta,form,c_unit,deps)) =
+let type_file_with_dep ~options asts_typed (file_name, (meta,form,c_unit,deps)) =
   let%bind ast_core = Compile.Utils.to_core ~options ~meta c_unit file_name in
   let aux (file_name,module_name) =
     let%bind ast_typed =
@@ -108,8 +108,8 @@ let type_file_with_dep ~options  asts_typed (file_name, (meta,form,c_unit,deps))
   in
   let%bind deps = bind_map_list aux deps in
   let init_env = add_modules_in_env options.init_env deps in
-  let%bind ast_typed,ast_typed_env,_ = Compile.Of_core.compile ~typer_switch:options.typer_switch ~init_env form ast_core in
-  ok @@ SMap.add file_name (ast_typed,ast_typed_env) asts_typed
+  let%bind ast_typed,ast_typed_env,typer_state = Compile.Of_core.compile ~typer_switch:options.typer_switch ~init_env form ast_core in
+  ok @@ SMap.add file_name ((ast_typed,typer_state),ast_typed_env) asts_typed
 
 let type_contract : options:Compiler_options.t -> string -> Compile.Of_core.form -> file_name -> (_, _) result =
   fun ~options syntax entry_point file_name ->
@@ -124,25 +124,25 @@ let combined_contract : options:Compiler_options.t -> _ -> _ -> file_name -> (_,
     let%bind order_deps = solve_graph deps file_name in
     let%bind asts_typed = bind_fold_list (type_file_with_dep ~options) (SMap.empty) order_deps in
     let%bind contract = aggregate_contract order_deps asts_typed in
-    ok @@ (contract, snd @@ SMap.find file_name asts_typed)
+    ok @@ (contract, snd @@ SMap.find file_name asts_typed, snd @@ fst @@ SMap.find file_name asts_typed)
 
 let build_mini_c : options:Compiler_options.t -> _ -> _ -> file_name -> (_, _) result =
   fun ~options syntax entry_point file_name ->
-    let%bind contract,env = combined_contract ~options syntax entry_point file_name in
+    let%bind contract,env,typer_state = combined_contract ~options syntax entry_point file_name in
     let%bind mini_c       = trace build_error_tracer @@ Compile.Of_typed.compile @@ contract in
-    ok @@ (mini_c,env)
+    ok @@ (mini_c,env, typer_state)
 
 let build_contract : options:Compiler_options.t -> string -> _ -> file_name -> (_, _) result =
   fun ~options syntax entry_point file_name ->
-    let%bind mini_c,_   = build_mini_c ~options syntax (Contract entry_point) file_name in
+    let%bind mini_c,_,_   = build_mini_c ~options syntax (Contract entry_point) file_name in
     let%bind michelson  = trace build_error_tracer @@ Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c entry_point in
     ok michelson
 
 let build_contract_use : options:Compiler_options.t -> string -> file_name -> (_, _) result =
   fun ~options syntax file_name ->
-    let%bind contract,env = combined_contract ~options syntax Compile.Of_core.Env file_name in
+    let%bind contract,env,typer_state = combined_contract ~options syntax Compile.Of_core.Env file_name in
     let%bind mini_c,map = trace build_error_tracer @@ Compile.Of_typed.compile_with_modules @@ contract in
-    ok (mini_c, map, contract, env)
+    ok (mini_c, map, contract, env, typer_state)
 
 let build_contract_module : options:Compiler_options.t -> string -> _ -> file_name -> module_name -> (_, _) result =
   fun ~options syntax entry_point file_name module_name ->

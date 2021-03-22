@@ -125,7 +125,7 @@ let import_file state file_name module_name =
 let use_file state s =
   let options = Compiler_options.make ~init_env:state.env ~typer_switch:state.typer_switch ~protocol_version:state.protocol () in
   (* Missing typer environment? *)
-  let%bind mini_c,mod_types,(Ast_typed.Module_Fully_Typed module'),env = Build.build_contract_use ~options (variant_to_syntax state.syntax) s in
+  let%bind mini_c,mod_types,(Ast_typed.Module_Fully_Typed module'),env,_ = Build.build_contract_use ~options (variant_to_syntax state.syntax) s in
   let mod_types = Ast_core.SMap.union (fun _ _ a -> Some a) state.mod_types mod_types in
   let state = { state with env = env;
                            decl_list = state.decl_list @ mini_c;
