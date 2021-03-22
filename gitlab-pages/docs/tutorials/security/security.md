@@ -137,7 +137,7 @@ But in Tezos, the amount of gas consumed depends on the size of the storage! All
 1. Our contract will be more and more expensive to call with every transaction made.
 2. Eventually, when the gas consumption is too high, every transaction will hit the upper bound, which will render the contract unusable.
 
-To avoid it in this particular case, you should store the logs in a big map, e.g., indexed incrementally.
+In this particular case the best solution would be to use an off-chain indexer that would monitor and record the transactions to the contract. If you are sure you need an event log in the contract storage, you should at least store the logs in a big map, e.g., indexed incrementally.
 
 Generally, you need to think about whether the side effect of gas consumption can halt the execution prematurely. Here are the tips that can help you reduce the risk of potential gas exhaustion.
 1. Limit the size of non-lazy storage:
