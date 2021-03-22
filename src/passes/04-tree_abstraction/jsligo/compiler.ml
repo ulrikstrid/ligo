@@ -795,7 +795,7 @@ and compile_object_let_destructuring : AST.expression -> (CST.pattern, Region.t)
       match field with
         PDestruct {value = {property; target; _}; _} ->
           ok @@ (AST.Label property.value, target.value.binders)
-      | _ ->
+      | _ -> 
         fail @@ unsupported_pattern_type field
     in
     let%bind lst = bind_map_list aux @@ Utils.nsepseq_to_list record.inside in
@@ -913,15 +913,31 @@ and merge_statement_results : statement_result -> statement_result -> statement_
   | Break   a, _ ->         Break a
   | Return  a, _ ->         Return a
 
-and compile_pattern : const:bool -> CST.pattern -> (type_expression binder, _) result =
+and compile_pattern : const:bool -> CST.pattern -> (type_expression binder * (_ -> _), _) result =
   fun ~const pattern ->
-  let return loc var =
-    ok {var=Location.wrap ~loc var; ascr=None} in
+  let return ?ascr loc fun_ var =
+    ok ({var=Location.wrap ~loc var; ascr}, fun_) in
+    let return_1 ?ascr loc var = return ?ascr loc (fun e -> e) var in
   match pattern with 
     PVar var -> 
     let (var,loc) = r_split var in
-    return loc (Var.of_name var)
-  | _ -> fail @@ unsupported_pattern_type pattern
+    print_endline ("test1:" ^ var);
+    return_1 loc (Var.of_name var)
+  | PWild p -> 
+    let loc = Location.lift p in
+    return_1 loc (Var.fresh ())
+  | PArray tuple ->
+    let (tuple, loc) = r_split tuple in
+    let var = Var.fresh () in
+    let aux (binder_lst, fun_) pattern =
+      let%bind (binder, fun_') = compile_pattern ~const pattern in
+      ok @@ (binder :: binder_lst, fun_' <@ fun_)
+    in
+    let%bind binder_lst, fun_ = bind_fold_right_list aux ([], fun e -> e) @@ Utils.nsepseq_to_list tuple.inside in
+    let expr = fun expr -> e_matching_tuple (e_variable @@ Location.wrap var) binder_lst @@ fun_ expr in
+    return loc expr var
+  | _ -> 
+    fail @@ unsupported_pattern_type pattern
 
 and compile_let_binding: const:bool -> CST.attributes -> CST.expr -> (Region.t * CST.type_expr) option -> CST.pattern -> Region.t -> (('a * type_expression binder * Ast_imperative__.Types.attributes * expression) list, _) result = 
   fun ~const attributes let_rhs type_expr binders region ->     
@@ -948,26 +964,19 @@ and compile_let_binding: const:bool -> CST.attributes -> CST.expr -> (Region.t *
     let matchee = expr in  
     let (tuple, loc) = r_split a in
     let array_items = npseq_to_list tuple.inside in
-    let rec aux result patterns = 
-      (match patterns with 
-      | item :: rest -> 
-        let%bind a = compile_pattern ~const item in 
-        aux (a :: result) rest
-      | [] -> ok @@ List.rev result)
-    in
-    let%bind lst = aux [] array_items in
-    let expr = matchee in 
+    let%bind lst = bind_map_list (compile_pattern ~const) array_items in
+    let (lst, exprs) = List.split lst in
+    let expr = List.fold_right (@@) exprs matchee in
     let aux i binder = Z.add i Z.one, (None, binder, attributes, e_accessor expr @@ [Access_tuple i]) in
     let lst = List.fold_map aux Z.zero @@ lst in
-    ok @@  lst
-  | _ -> 
-    fail @@ unsupported_pattern_type @@ binders
+    ok @@ lst
+  | _ -> fail @@ unsupported_pattern_type @@ binders
   in 
   aux binders
 
 and compile_statements : CST.statements -> (statement_result, _) result = fun statements ->
   let rec aux result = function
-    (_, (CST.SExpr (CST.EAssign _ ) as hd)) :: tl ->       
+    (_, (CST.SExpr _ as hd)) :: tl ->       
       let wrapper = CST.SBlock {
         value = {
           inside = (hd, tl); 

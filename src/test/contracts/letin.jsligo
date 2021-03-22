@@ -1,11 +1,9 @@
 type storage = [int, int];
 
 let main = (n : [int, storage]) : [list <operation>, storage] => {
-  let x : [int, int] = {
-    let x : int = 7;
-    return [x + n[0], n[1][0] + n[1][1]];
-  };
-  return [[] as list <operation>, x];
+  let x : int = 7;
+  let x2 : [int, int] = [x + n[0], n[1][0] + n[1][1]];
+  return [list([]) as list <operation>, x2];
 };
 
 let f0 = (a: string): bool => true
@@ -29,7 +27,7 @@ let letin_nesting2 = (x: int): int => {
   return x + y + z
 }
 
-let x = {
-  let [_, [x, _]] = [1n, [2n, 3n]];
-  return x
+let f = (x: int): nat => {
+ let [_, [x, _]] = [(1 as nat), [(2 as nat), (3 as nat)]];
+ return x;
 }

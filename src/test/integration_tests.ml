@@ -2088,7 +2088,7 @@ let let_in_religo () : (unit, _) result =
   ok ()
 
 let let_in_jsligo () : (unit, _) result =
-  let%bind program = retype_file "./contracts/letin.religo" in
+  let%bind program = jstype_file "./contracts/letin.jsligo" in
   let%bind () =
     let make_input n = e_pair (e_int n) (e_pair (e_int 3) (e_int 5)) in
     let make_expected n =
