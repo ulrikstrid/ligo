@@ -921,7 +921,6 @@ and compile_pattern : const:bool -> CST.pattern -> (type_expression binder * (_ 
   match pattern with 
     PVar var -> 
     let (var,loc) = r_split var in
-    print_endline ("test1:" ^ var);
     return_1 loc (Var.of_name var)
   | PWild p -> 
     let loc = Location.lift p in

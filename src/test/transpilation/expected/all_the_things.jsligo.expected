@@ -211,19 +211,20 @@ let some =
     assert_some(o)
   };
 
-let x = 1;
+let /* @inline */ x = 1;
 
-let foo = 
+let /* @inline */ foo = 
   (a: int): int => {
-    let test = 2 + a;
+    let /* @inline */ test = 2 + a;
     return test
   };
 
-let y = 1;
+let /* @inline @other */ y = 1;
 
 let bar = 
   (b: int): int => {
-    let test = (z: int): int => 2 + b + z;
+    let /* @inline @foo @bar */ test = 
+      (z: int): int => 2 + b + z;
     return test(b)
   };
 
@@ -1049,7 +1050,7 @@ let i = (a: int, b: int): int => a + b;
 
 let j = (a: int, b: int): int => a - b;
 
-let n = (a: int): int => a + 1;
+let /* @foo:bar */ n = (a: int): int => a + 1;
 
 let o = (a: int): int => a + 1;
 

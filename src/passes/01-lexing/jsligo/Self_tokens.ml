@@ -89,13 +89,14 @@ let automatic_semicolon_insertion = function
   Stdlib.Ok tokens -> automatic_semicolon_insertion tokens |> ok
 | Error _ as err -> err
 
-let attribute_regexp = Str.regexp "\\(@[a-zA-Z:0-9_]*\\)"
+let attribute_regexp = Str.regexp "@\\([a-zA-Z:0-9_]*\\)"
 
 let collect_attributes str =
   let rec inner result str = 
     try (
       let r = Str.search_forward attribute_regexp str 0 in
       let s = Str.matched_group 0 str in
+      let s = String.sub s 1 (String.length s - 1) in
       let next = (String.sub str (r + String.length s) (String.length str - (r + + String.length s))) in
       inner (s :: result) next
     )

@@ -291,15 +291,15 @@ binding_pattern:
   ":" type_expr { $1, $2 }
 
 binding_initializer:
-  binding_pattern type_annot_opt initializer_ {
-    let region = cover (pattern_to_region $1) (expr_to_region (snd $3))
+  seq("[@attr]") binding_pattern type_annot_opt initializer_ {
+    let region = cover (pattern_to_region $2) (expr_to_region (snd $4))
     in
     let value = {
-      binders    = $1;
-      lhs_type   = $2;
-      eq         = fst $3;
-      expr       = snd $3;
-      attributes = []
+      binders    = $2;
+      lhs_type   = $3;
+      eq         = fst $4;
+      expr       = snd $4;
+      attributes = $1;
     } in
     {
       region; value
@@ -315,7 +315,8 @@ declaration:
   seq("[@attr]") "let" binding_list {
     let region = cover $2 (nsepseq_to_region (fun e -> e.region) $3) in
     let bindings = Utils.nsepseq_map 
-      (fun ({value; region}) -> ({value = {value with attributes = $1}; region }: let_binding Region.reg)) 
+      (fun ({value; region}: let_binding Region.reg) ->
+      ({value = {value with attributes = ($1 @ value.attributes)}; region }: let_binding Region.reg)) 
       $3 
     in
     let value = {
@@ -327,7 +328,8 @@ declaration:
 | seq("[@attr]") "const" binding_list {
     let region = cover $2 (nsepseq_to_region (fun e -> e.region) $3) in
     let bindings = Utils.nsepseq_map 
-      (fun ({value; region}) -> ({value = {value with attributes = $1}; region }: let_binding Region.reg)) 
+      (fun ({value; region}: let_binding Region.reg) ->
+      ({value = {value with attributes = ($1 @ value.attributes)}; region }: let_binding Region.reg)) 
       $3 
     in
     let value = {
@@ -807,19 +809,6 @@ unary_expr_level:
 call_expr_level:
   call_expr { $1 }
 | new_expr  { $1 }
-// | "(" call_expr_level "as" type_expr ")" {
-//     EPar {
-//       region = cover $1 $5;
-//       value = {
-//         lpar = $1;
-//         inside = EAnnot {
-//           region = cover (expr_to_region $2) (type_expr_to_region $4);
-//           value = $2, $3, $4
-//         };
-//         rpar = $5;
-//       }
-//     }
-//   }
 
 array_item:
   /* */      { Empty_entry Region.ghost }

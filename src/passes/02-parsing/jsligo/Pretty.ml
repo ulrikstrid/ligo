@@ -90,7 +90,10 @@ and pp_let {value = {bindings; _}; _} =
 and pp_const {value = {bindings; _}; _} =
   string "const " ^^ pp_nsepseq "," pp_let_binding bindings
 
-and pp_let_binding {value = {binders; lhs_type; expr; _}; _} =
+and pp_let_binding {value = {binders; lhs_type; expr; attributes; _}; _} =
+  (if attributes = [] then empty else 
+  pp_attributes attributes)
+  ^^ 
   prefix 2 0 ((match lhs_type with
     Some (_, type_expr) -> pp_pattern binders ^^ string ": " ^^ pp_type_expr type_expr
   | None -> pp_pattern binders)
@@ -331,7 +334,11 @@ and pp_sum_type {value; _} =
   else pp_attributes attributes ^/^ whole
 
 and pp_attributes = function
-  _ -> empty
+  [] -> empty
+| attr -> 
+  let make s = string "@" ^^ string s.value ^^ string " "
+  in 
+  string "/* " ^^ concat_map make attr ^^ string "*/ "
 
 and pp_object_type fields = group (pp_ne_injection pp_field_decl fields)
 
