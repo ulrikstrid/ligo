@@ -153,6 +153,7 @@ let constant'_tag = function
   | C_SAPLING_EMPTY_STATE     -> 132
   | C_SAPLING_VERIFY_UPDATE   -> 133
   | C_SET_UPDATE              -> 134
+  | C_IGNORE                  -> 135
 
 let constant' a b = Int.compare (constant'_tag a) (constant'_tag b)
 

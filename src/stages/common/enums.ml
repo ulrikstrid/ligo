@@ -187,6 +187,8 @@ type constant' =
   | C_PAIRING_CHECK
   | C_SAPLING_VERIFY_UPDATE
   | C_SAPLING_EMPTY_STATE
+  (* LIGO constants *)
+  | C_IGNORE
 
 type deprecated = {
   name : string ;

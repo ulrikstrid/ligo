@@ -176,6 +176,9 @@ module Tree_abstraction = struct
     | "Test.assert_failure" -> some_const C_TEST_ASSERT_FAILURE
     | "Test.log" -> some_const C_TEST_LOG
 
+    (* Extra LIGO constants *)
+    | "Ligo.ignore" -> some_const C_IGNORE
+
     | _ -> None
 
 
@@ -288,6 +291,8 @@ module Tree_abstraction = struct
     (* Not parsed *)
     | C_SOME -> "Some"
     | C_NONE -> "None"
+
+    | C_IGNORE -> "Ligo.ignore"
 
     | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant' c
 

@@ -155,7 +155,7 @@ let constant' = function
   | C_PAIRING_CHECK            -> `List [`String "PAIRING_CHECK"; `Null ]
   | C_SAPLING_VERIFY_UPDATE    -> `List [`String "SAPLING_VERIFY_UPDATE"; `Null ]
   | C_SAPLING_EMPTY_STATE      -> `List [`String "SAPLING_EMPTY_STATE"; `Null ]
-
+  | C_IGNORE                   -> `List [`String "IGNORE"; `Null ]
 
 let literal = function
   | Literal_unit        -> `List [`String "Literal_unit"; `Null ]

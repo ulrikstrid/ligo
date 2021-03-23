@@ -887,6 +887,9 @@ let test_assert_failure loc = typer_1 loc "TEST_ASSERT_FAILURE" @@ fun f ->
 
 let test_log loc = typer_1 loc "TEST_LOG" @@ fun _ -> ok @@ t_unit ()
 
+let ligo_ignore loc : typer = typer_1 loc "LIGO_IGNORE" @@ fun _t ->
+  ok @@ t_unit ()
+
 let constant_typers loc c : (typer , typer_error) result = match c with
   | C_INT                 -> ok @@ int loc ;
   | C_UNIT                -> ok @@ unit loc ;
@@ -1012,4 +1015,5 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_TEST_GET_BALANCE -> ok @@ test_get_balance loc ;
   | C_TEST_ASSERT_FAILURE -> ok @@ test_assert_failure loc ;
   | C_TEST_LOG -> ok @@ test_log loc ;
+  | C_IGNORE -> ok @@ ligo_ignore loc;
   | _ as cst -> fail (corner_case @@ Format.asprintf "typer not implemented for constant %a" PP.constant' cst)

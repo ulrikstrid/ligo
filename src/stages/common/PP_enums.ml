@@ -156,6 +156,7 @@ let constant' ppf : constant' -> unit = function
   | C_PAIRING_CHECK -> fprintf ppf "PAIRING_CHECK"
   | C_SAPLING_EMPTY_STATE -> fprintf ppf "SAPLING_EMPTY_STATE"
   | C_SAPLING_VERIFY_UPDATE -> fprintf ppf "SAPLING_VERIFY_UPDATE"
+  | C_IGNORE -> fprintf ppf "IGNORE"
 
 let literal ppf (l : literal) =
   match l with
