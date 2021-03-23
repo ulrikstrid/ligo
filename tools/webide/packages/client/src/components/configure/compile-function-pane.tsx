@@ -25,6 +25,25 @@ const SelectCommand = styled(Select)`
     box-shadow: var(--box-shadow);
   }
 `;
+const Button = styled.div`
+  cursor: pointer;
+  user-select: none;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  min-height: 2em;
+  min-width: 3em;
+  margin-left: 1em;
+
+  color: white;
+  background-color: var(--orange);
+
+  &:hover {
+    box-shadow: var(--box-shadow);
+  }
+`;
 export interface MethodType {
   declarations: string[];
 }
@@ -33,19 +52,33 @@ const CompileFunctionPaneComponent = (props) => {
   const { getDeclarationList, code, setCompileFunction , language, setError} = props
   const [declaration, setDeclaration] = useState<string[]>([])
   const [functionName, setFunctionName] = useState<string>('')
+  const [showSpinner, setShowSpinner] = useState<boolean>(false)
 
-  useEffect(() => {
+  // useEffect(() => {
+  //   getDeclarationList(language, code).then((file: MethodType) => {
+  //     setDeclaration(file.declarations)
+  //     setFunctionName(file.declarations[0])
+  //   }).catch((error) => {
+  //     setError(error)
+  //   })
+  // }, [getDeclarationList, code, language]);
+
+  const getDeclarations = () => {
+    setShowSpinner(true)
     getDeclarationList(language, code).then((file: MethodType) => {
       setDeclaration(file.declarations)
       setFunctionName(file.declarations[0])
+      setShowSpinner(false)
     }).catch((error) => {
       setError(error)
+      setShowSpinner(false)
     })
-  }, [getDeclarationList, code, language]);
-
+  }
+ 
   return (
     <Container>
-      {declaration && declaration.length <= 0 && 
+      <Button onClick={getDeclarations}>Get Declarations</Button>
+      {showSpinner && 
         <SpinnerWrapper>
           <PushSpinner size={50} color="#fa6f41" />
         </SpinnerWrapper>
@@ -61,7 +94,7 @@ const CompileFunctionPaneComponent = (props) => {
             setCompileFunction(fn)
           }}
         >
-        {declaration && declaration.map(m => {
+        {declaration.map(m => {
           return(
             <Option key={m} value={m}>{m}</Option>
           )
