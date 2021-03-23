@@ -32,24 +32,22 @@ const MonacoComponent = (props) => {
   let containerRef = useRef(null);
   const store = useStore();
   const dispatch = useDispatch();
-  const [hasCompiledFunction, setHasCompiledFunction] = useState(false)
   const [currentLineText, setCurrentLineText] = useState('')
 
-  const compileFunctionHandler = () => {
+  const compileFunctionHandler = (currentLine) => {
+    if(code==='') {return}
     getDeclarationList(language, code).then((method: MethodType) => {
       method.declarations.forEach(d => {
-        console.log('&&&&', currentLineText)
-        if (currentLineText.indexOf(d) !== -1) {
+        if (currentLine.indexOf(d) !== -1) {
           setCompileFunction(d)
-          console.log('****', d)
           dispatch( new CompileFunctionAction().getAction());
         } else {
-          console.log('((((', d)
-          setError('function not found')
+          setError('Function not found in the selected line.')
         }
         setCompileFunction('')
-        setHasCompiledFunction(false)
       });
+    }).catch((error) => {
+      setError(error)
     })
   }
 
@@ -61,7 +59,6 @@ const MonacoComponent = (props) => {
 	      contextMenuGroupId: 'navigation',
 	      contextMenuOrder: 2.5,
         run: (e) => {
-          setHasCompiledFunction(true)
           const position = e.getPosition()
           const currentLine = model && model.getLineContent(position.lineNumber)
           setCurrentLineText(currentLine)
@@ -149,13 +146,11 @@ const MonacoComponent = (props) => {
     };
   }, []);
 
+  useEffect(() => { compileFunctionHandler(currentLineText) }, [currentLineText]);
+
+
   return (
-  <>
-  {hasCompiledFunction && 
-  compileFunctionHandler()
-  }
   <Container id="editor" ref={containerRef} editorHeight={editorHeight}></Container>
-  </>
   )};
 
 const mapStateToProps = state => {

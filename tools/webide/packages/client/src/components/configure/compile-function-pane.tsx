@@ -6,6 +6,8 @@ import { Group, Label } from '../form/inputs';
 import { Option, Select } from '../form/select';
 import { ListDeclarationAction } from '../../redux/actions/list-declaration'
 import {ChangeSelectedAction} from '../../redux/compile-function'
+import { ChangeOutputAction } from '../../redux/result';
+import {CommandType} from '../../redux/types';
 
 const Container = styled.div``;
 
@@ -28,24 +30,27 @@ export interface MethodType {
 }
 const CompileFunctionPaneComponent = (props) => {
 
-  const { getDeclarationList, code, setCompileFunction , language} = props
+  const { getDeclarationList, code, setCompileFunction , language, setError} = props
   const [declaration, setDeclaration] = useState<string[]>([])
-  const [functionName, setFunctionName] = useState<string>(declaration[0])
+  const [functionName, setFunctionName] = useState<string>('')
 
   useEffect(() => {
     getDeclarationList(language, code).then((file: MethodType) => {
       setDeclaration(file.declarations)
+      setFunctionName(file.declarations[0])
+    }).catch((error) => {
+      setError(error)
     })
   }, [getDeclarationList, code, language]);
 
   return (
     <Container>
-      {declaration.length <= 0 && 
+      {declaration && declaration.length <= 0 && 
         <SpinnerWrapper>
           <PushSpinner size={50} color="#fa6f41" />
         </SpinnerWrapper>
       }
-      {declaration.length > 0 &&
+      {declaration && declaration.length > 0 &&
       <Group>
         <Label>Select Function to compile</Label>
         <SelectCommand
@@ -79,7 +84,8 @@ const mapStateToProps = state => {
 const mapDispatchToProps = dispatch => {
   return({
     getDeclarationList: (syntax, code)  => dispatch(ListDeclarationAction(syntax, code)),
-    setCompileFunction: (functionName)  => dispatch({...new ChangeSelectedAction(functionName)})
+    setCompileFunction: (functionName)  => dispatch({...new ChangeSelectedAction(functionName)}),
+    setError: (errorMessage) => dispatch({...new ChangeOutputAction(`Error: ${errorMessage}`,CommandType.CompileFunction ,true),})
   })
 }
 
