@@ -4,7 +4,7 @@ import { useDispatch, useStore , connect} from 'react-redux';
 import styled from 'styled-components';
 
 import { AppState } from '../../redux/app';
-import { ChangeCodeAction, ChangeDirtyAction, ChangeCursorPositionAction } from '../../redux/editor';
+import { ChangeCodeAction, ChangeDirtyAction, ChangeCursorPositionAction, ChangeLastEditedTimeAction } from '../../redux/editor';
 import { ChangeOutputAction } from '../../redux/result';
 import { ClearSelectedAction } from '../../redux/examples';
 import { ListDeclarationAction } from '../../redux/actions/list-declaration'
@@ -115,6 +115,7 @@ const MonacoComponent = (props) => {
       if (shouldDispatchCodeChangedAction) {
         dispatch({ ...new ChangeCodeAction(editor.getValue()) });
         dispatch({ ...new ChangeDirtyAction(true) });
+        dispatch({ ...new ChangeLastEditedTimeAction(new Date()) });
         dispatch({ ...new ClearSelectedAction() });
       }
     });

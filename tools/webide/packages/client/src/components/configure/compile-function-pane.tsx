@@ -25,59 +25,34 @@ const SelectCommand = styled(Select)`
     box-shadow: var(--box-shadow);
   }
 `;
-const Button = styled.div`
-  cursor: pointer;
-  user-select: none;
 
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex: 1;
-  min-height: 2em;
-  min-width: 3em;
-  margin-left: 1em;
-
-  color: white;
-  background-color: var(--orange);
-
-  &:hover {
-    box-shadow: var(--box-shadow);
-  }
-`;
 export interface MethodType {
   declarations: string[];
 }
 const CompileFunctionPaneComponent = (props) => {
 
-  const { getDeclarationList, code, setCompileFunction , language, setError} = props
+  const { getDeclarationList, code, setCompileFunction , language, setError, lastEditedTime} = props
   const [declaration, setDeclaration] = useState<string[]>([])
   const [functionName, setFunctionName] = useState<string>('')
   const [showSpinner, setShowSpinner] = useState<boolean>(false)
 
-  // useEffect(() => {
-  //   getDeclarationList(language, code).then((file: MethodType) => {
-  //     setDeclaration(file.declarations)
-  //     setFunctionName(file.declarations[0])
-  //   }).catch((error) => {
-  //     setError(error)
-  //   })
-  // }, [getDeclarationList, code, language]);
-
-  const getDeclarations = () => {
+  useEffect(() => {
+    const lastLoadedTime = lastEditedTime ? new Date().getSeconds() - lastEditedTime.getSeconds() : null
+    if(lastLoadedTime===null || lastEditedTime >=5) {
     setShowSpinner(true)
     getDeclarationList(language, code).then((file: MethodType) => {
       setDeclaration(file.declarations)
-      setFunctionName(file.declarations[0])
+      file.declarations && setFunctionName(file.declarations[0])
       setShowSpinner(false)
     }).catch((error) => {
       setError(error)
       setShowSpinner(false)
     })
   }
+  }, [getDeclarationList, code, language, lastEditedTime]);
  
   return (
     <Container>
-      <Button onClick={getDeclarations}>Get Declarations</Button>
       {showSpinner && 
         <SpinnerWrapper>
           <PushSpinner size={50} color="#fa6f41" />
@@ -110,7 +85,8 @@ const mapStateToProps = state => {
   const { editor } = state
   return { 
     code : editor.code,
-    language: editor.language
+    language: editor.language,
+    lastEditedTime: editor.lastEditedTime
    }
 }
 
