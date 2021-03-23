@@ -54,7 +54,7 @@ const MonacoComponent = (props) => {
     const onRightClickAction = (model) => {
       return {
         id: '1',
-        label: "Compile Function",
+        label: "Compile Expression",
         keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.F10],
 	      contextMenuGroupId: 'navigation',
 	      contextMenuOrder: 2.5,
