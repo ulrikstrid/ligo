@@ -1535,3 +1535,26 @@ let%expect_test _ =
              PAIR ;
              NIL operation ;
              PAIR } } |}]
+
+(* ignore unused variables examples *)
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "ignore.ligo" ; "main" ] ;
+  [%expect {|
+    { parameter int ;
+      storage int ;
+      code { DROP ; PUSH int 42 ; NIL operation ; PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "ignore.mligo" ; "main" ] ;
+  [%expect {|
+    { parameter int ;
+      storage int ;
+      code { DROP ; PUSH int 42 ; NIL operation ; PAIR } } |}]
+
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "ignore.religo" ; "main" ] ;
+  [%expect {|
+    { parameter int ;
+      storage int ;
+      code { DROP ; PUSH int 42 ; NIL operation ; PAIR } } |}]
+
