@@ -100,21 +100,21 @@ type parameter =
 
 type return_ = [list <operation>, storage];
 
-(* Two entrypoints *)
+/* Two entrypoints */
 
 let add = ([store, delta] : [storage, int]) : storage => store + delta;
 let sub = ([store, delta] : [storage, int]) : storage => store - delta;
 
-(* Main access point that dispatches to the entrypoints according to
-   the smart contract parameter. *)
+/* Main access point that dispatches to the entrypoints according to
+   the smart contract parameter. */
 
 let main = ([action, store] : [parameter, storage]) : return_ => {
  return [
-   (List() as list <operation>),    // No operations
-   (match (action) ({
-    "Increment": (n: int) => add ([store, n]),
-    "Decrement": (n: int) => sub ([store, n]),
-    "Reset":     ()  => 0})
+   (list([]) as list <operation>),    // No operations
+   (match (action, {
+    Increment: (n: int) => add ([store, n]),
+    Decrement: (n: int) => sub ([store, n]),
+    Reset:     ()  => 0})
   ]
 };
 `;

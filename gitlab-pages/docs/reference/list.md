@@ -207,7 +207,7 @@ val fold : ('accumulator -> 'item -> 'accumulator) -> 'item list -> 'accumulator
 let fold: ((('accumulator, 'item) => 'accumulator), list('item), 'accumulator) => 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let fold: (folder: ((accumulator: 'accumulator, item: 'item) => 'accumulator), list: list('item), accumulator: 'accumulator) => 'accumulator
+let fold: ((folder: [accumulator: &apos;accumulator, item: &apos;item]) => &apos;accumulator, list: list&lt;&apos;item&gt;, accumulator: &apos;accumulator) => &apos;accumulator
 </SyntaxTitle>
 
 [Fold over items in a list](../language-basics/sets-lists-tuples.md#folded-operation-over-lists);
@@ -268,7 +268,7 @@ val fold_left : ('accumulator -> 'item -> 'accumulator) -> 'accumulator -> 'item
 let fold_left: ((('accumulator, 'item) => 'accumulator), 'accumulator, list('item)) => 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let fold_left: (((a: ['accumulator, 'item]) => 'accumulator), 'accumulator, list<'item>) => 'accumulator
+let fold_left: (((a: [&apos;accumulator, &apos;item]) => &apos;accumulator), &apos;accumulator, list&lt;&apos;item&gt;) => &apos;accumulator
 </SyntaxTitle>
 
 [Fold over items in a list](../language-basics/sets-lists-tuples.md#folded-operation-over-lists);
@@ -328,7 +328,7 @@ val fold_right : ('item -> 'accumulator -> 'accumulator) -> 'item list -> 'accum
 let fold_right: ((('item, 'accumulator) => 'accumulator), list('item), 'accumulator) => 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let fold_right: (((a: ['item, 'accumulator]) => 'accumulator), list<'item>, 'accumulator) => 'accumulator
+let fold_right: (((a: [&apos;item, &apos;accumulator]) => &apos;accumulator), list&lt;&apos;item&gt;, &apos;accumulator) => &apos;accumulator
 </SyntaxTitle>
 
 [Fold over items in a list](../language-basics/sets-lists-tuples.md#folded-operation-over-lists);

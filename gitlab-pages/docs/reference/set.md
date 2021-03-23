@@ -261,7 +261,7 @@ val iter : ('a -> unit) -> 'a set -> unit
 let iter: (('a => unit), set('a)) => unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let iter: (iterator: ((item: 'a) => unit), set: set&lt;'a&gt;) => unit
+let iter: (iterator: ((item: &apos;a) => unit), set: set&lt;&apos;a&gt;) => unit
 </SyntaxTitle>
 
 Iterate over values in a set.
@@ -321,7 +321,7 @@ val fold : ('accumulator -> 'item -> 'accumulator) -> 'set list -> 'accumulator 
 let fold: ((('accumulator, 'item) => 'accumulator), set('item), 'accumulator) => 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let fold: (iterator: ((accumulator: 'accumulator, item: 'item) => 'accumulator), set: set&lt;'item&gt;, accumulator: 'accumulator) => 'accumulator
+let fold: ((iterator: [accumulator: &apos;accumulator, item: &apos;item]) => &apos;accumulator), set: set&lt;&apos;item&gt;, accumulator: &apos;accumulator) => &apos;accumulator
 </SyntaxTitle>
 
 [Fold over values in a set](../language-basics/sets-lists-tuples.md#folded-operation)
@@ -371,7 +371,7 @@ val fold_desc : ('item -> 'accumulator -> 'accumulator) -> 'set list -> 'accumul
 let fold_desc: ((('item, 'accumulator) => 'accumulator), set('item), 'accumulator) => 'accumulator
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let fold_desc: (((a: ['item, 'accumulator]) => 'accumulator), set<'item>, 'accumulator) => 'accumulator
+let fold_desc: (((a: [&apos;item, &apos;accumulator]) => &apos;accumulator), set&lt;&apos;item&gt;, &apos;accumulator) => &apos;accumulator
 </SyntaxTitle>
 
 [Fold over values in a set](../language-basics/sets-lists-tuples.md#folded-operation)

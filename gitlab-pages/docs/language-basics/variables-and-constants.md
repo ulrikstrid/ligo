@@ -61,7 +61,7 @@ ligo evaluate-value gitlab-pages/docs/language-basics/src/variables-and-constant
 <Syntax syntax="jsligo">
 
 ```jsligo group=a
-let age : int = 25;
+let age: int = 25;
 ```
 
 You can evaluate the constant definition above using the following CLI
@@ -154,7 +154,6 @@ ligo run-function gitlab-pages/docs/language-basics/src/variables-and-constants/
 
 </Syntax>
 <Syntax syntax="jsligo">
-<!-- TODO SSPI: REVIEW THIS EXAMPLE. -->
 
 ```jsligo group=c
 let add = ([a, b]: [int, int]): int => {

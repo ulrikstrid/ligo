@@ -49,8 +49,8 @@ let michelson_add = (n : (nat, nat)) : nat =>
 <Syntax syntax="jsligo">
 
 ```jsligo
-let michelson_add = (n : [nat, nat]) : nat =>
-  (Michelson` { UNPAIR;ADD } ` as ((n: [nat, nat]) => nat))(n);
+let michelson_add = (n: [nat, nat]): nat =>
+  (Michelson`{ UNPAIR ; ADD }` as ((n: [nat, nat]) => nat))(n);
 ```
 
 </Syntax>
@@ -204,6 +204,26 @@ let main = ((action,store): (parameter, storage)) => {
     | Extend (k) => [%Michelson ({| { NEVER } |} : (never => int))](k)
     };
   ([]: list(operation), storage);
+};
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo skip
+type parameter =
+  ["Increment", int]
+| ["Extend", never];
+
+type storage = int;
+
+let main = ([action,store]: [parameter, storage]) => {
+  let storage =
+    match(action, {
+    | Increment(n) => store + n
+    | Extend(k) => (Michelson`{ NEVER }` as ((n: never) => int))(k);
+    });
+  return [list([]) as list<operation>, storage];
 };
 ```
 

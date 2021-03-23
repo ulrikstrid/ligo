@@ -1162,6 +1162,7 @@ and compile_statement_to_declaration : CST.statement -> (AST.declaration list, _
     let (alias,_)   = r_split alias in
     let binders,_ = List.Ne.split @@ List.Ne.map r_split @@ npseq_to_ne_list module_path in
     ok @@ [AST.Module_alias {alias; binders}]
+  | SExport {value = (_, s); _} -> compile_statement_to_declaration s
   | _ ->
     fail @@ statement_not_supported_at_toplevel statement
 

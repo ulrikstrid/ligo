@@ -38,8 +38,8 @@ let b : bool = false;
 <Syntax syntax="jsligo">
 
 ```jsligo group=a
-let a : bool = true;
-let b : bool = false;
+let a: bool = true;
+let b: bool = false;
 ```
 
 </Syntax>
@@ -580,9 +580,9 @@ let c : bool = (a == b); // true
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let a : string = "Alice";
-let b : string = "Alice";
-let c : bool = (a == b); // true
+let a: string = "Alice";
+let b: string = "Alice";
+let c: bool = (a == b); // true
 ```
 
 </Syntax>
@@ -636,14 +636,14 @@ let h : bool = (a != b);
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let a : int  = 5;
-let b : int  = 4;
-let c : bool = (a == b);
-let d : bool = (a > b);
-let e : bool = (a < b);
-let f : bool = (a <= b);
-let g : bool = (a >= b);
-let h : bool = (a != b);
+let a: int  = 5;
+let b: int  = 4;
+let c: bool = (a == b);
+let d: bool = (a > b);
+let e: bool = (a < b);
+let f: bool = (a <= b);
+let g: bool = (a >= b);
+let h: bool = (a != b);
 ```
 
 </Syntax>
@@ -684,9 +684,9 @@ let c : bool = (a == b); // false
 <Syntax syntax="jsligo">
 
 ```jsligo group=d
-let a : tez  = (5 as mutez);
-let b : tez  = (10 as mutez);
-let c : bool = (a == b); // false
+let a: tez  = 5 as mutez;
+let b: tez  = 10 as mutez;
+let c: bool = (a == b); // false
 ```
 
 </Syntax>
@@ -784,10 +784,10 @@ gitlab-pages/docs/language-basics/src/boolean-if-else/cond.religo compare '21n'
 <Syntax syntax="jsligo">
 
 ```jsligo group=e
-type magnitude = | ["Small"] | ["Large"]; // See variant types.
+type magnitude = ["Small"] | ["Large"]; // See variant types.
 
 let compare = (n : nat) : magnitude => {
-  if (n < (10 as nat)) { return (Small ()); } else { return (Large ()); };
+  if (n < (10 as nat)) { return Small (); } else { return Large (); };
 };
 ```
 

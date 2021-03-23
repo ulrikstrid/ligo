@@ -65,6 +65,18 @@ module EURO = {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=EURO
+namespace EURO {
+    export type t = nat;
+    export let add = ([a, b]: [t, t]): t => a + b;
+    export let zero: t = 0 as nat;
+    export let one: t = 1 as nat
+}
+```
+
+</Syntax>
 
 ## Using Modules
 
@@ -102,6 +114,17 @@ let main = ((action, store) : (unit, storage)) : (list (operation), storage) =>
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=EURO
+type storage = EURO.t;
+
+let main = ([action, store]: [unit, storage]): [list<operation>, storage] =>
+ [list([]) as list<operation>, EURO.add(store, EURO.one)];
+```
+
+</Syntax>
+
 
 In principle, we could change the implementation of `EURO`, without
 having to change the `storage` type or the function `main`. For
@@ -140,6 +163,18 @@ module EURO = {
     let add = ((a, b) : (t, t)) : t => a + b
     let zero : t = 0
     let one : t = 1
+}
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=EURO2
+namespace EURO {
+    export type t = int;
+    export let add = ([a, b]: [t, t]): t => a + b;
+    export let zero: t = 0;
+    export let one: t = 1;
 }
 ```
 
@@ -202,6 +237,20 @@ module EURO = {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=EURO3
+namespace EURO {
+    export type t = nat;
+    export let add = ([a, b]: [t, t]): t => a + b;
+    export namespace CONST {
+        export let zero: t = 0 as nat;
+        export let one: t = 1 as nat;
+    };
+};
+```
+
+</Syntax>
 
 To access nested modules we simply apply the accessor operator more
 than once:
@@ -233,6 +282,16 @@ type storage = EURO.t
 
 let main = ((action, store) : (unit, storage)) : (list (operation), storage) =>
  (([] : list (operation)), EURO.add(store, EURO.CONST.one))
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=EURO3
+type storage = EURO.t;
+
+let main = ([action, store]: [unit, storage]) : [list<operation>, storage] =>
+ [list([]) as list<operation>, EURO.add(store, EURO.CONST.one)]
 ```
 
 </Syntax>
@@ -291,6 +350,20 @@ let one : t = 1n
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+For example, in JsLIGO, we can create a file `imported.jsligo`:
+
+```jsligo group=imported
+type t = nat;
+
+let add = ([a, b]: [t, t]): t => a + b;
+
+let zero: t = 0 as nat;
+let one: t = 1 as nat;
+```
+
+</Syntax>
 
 <Syntax syntax="pascaligo">
 
@@ -343,6 +416,23 @@ let main = ((action, store) : (unit, storage)) : (list (operation), storage) =>
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+Later, in another file, we can import `imported.jsligo` as a module, and
+use its definitions. For example, we could create a `importer.jsligo`
+that imports all definitions from `imported.jsligo` as the module
+`EURO`:
+
+```jsligo skip
+#import "imported.religo" "EURO"
+
+type storage = EURO.t;
+
+let main = ([action, store]: [unit, storage]): [list<operation>, storage] =>
+  [list([]) as list (operation), EURO.add(store, EURO.one)];
+```
+
+</Syntax>
 
 We can compile the file that uses the `#import` statement directly,
 without having to mention the imported file.
@@ -368,6 +458,14 @@ ligo compile-contract gitlab-pages/docs/language-basics/src/modules/importer.rel
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```shell
+ligo compile-contract gitlab-pages/docs/language-basics/src/modules/importer.jsligo main
+```
+
+</Syntax>
+
 
 ## Module Aliases
 
@@ -394,6 +492,13 @@ module US_DOLLAR = EURO
 
 ```reasonligo group=EURO
 module US_DOLLAR = EURO
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=EURO
+import US_DOLLAR = EURO;
 ```
 
 </Syntax>
