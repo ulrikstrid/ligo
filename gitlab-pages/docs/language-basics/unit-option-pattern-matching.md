@@ -130,6 +130,10 @@ const u : user = Admin (1000n)
 const g : user = Guest
 ```
 
+In PascaLIGO, a constant constructor is equivalent to the same constructor
+taking an argument of type `unit`, so, for example, `Guest` is the
+same value as `Guest (unit)`.
+
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -144,6 +148,10 @@ type user =
 let u : user = Admin 1000n
 let g : user = Guest
 ```
+
+In CameLIGO, a constant constructor is equivalent to the same constructor
+taking an argument of type `unit`, so, for example, `Guest` is the
+same value as `Guest (unit)`.
 
 </Syntax>
 <Syntax syntax="reasonligo">
@@ -160,6 +168,10 @@ let u : user = Admin (1000n);
 let g : user = Guest;
 ```
 
+In ReasonLIGO, a constant constructor is equivalent to the same constructor
+taking an argument of type `unit`, so, for example, `Guest` is the
+same value as `Guest (unit)`.
+
 </Syntax>
 <Syntax syntax="jsligo">
 
@@ -167,7 +179,7 @@ let g : user = Guest;
 type id = nat;
 
 type user =
-| ["Admin", id]
+  ["Admin", id]
 | ["Manager", id]
 | ["Guest"];
 
@@ -175,12 +187,12 @@ let u : user = Admin(1000 as nat);
 let g : user = Guest();
 ```
 
+
+In JsLIGO, a constant constructor is equivalent to the same constructor
+taking an argument of type `unit`, so, for example, `Guest ()` is the
+same value as `Guest (unit)`.
 </Syntax>
 
-
-In LIGO, a constant constructor is equivalent to the same constructor
-taking an argument of type `unit`, so, for example, `Guest` is the
-same value as `Guest (unit)`.
 
 ## Optional values
 
@@ -305,6 +317,9 @@ flip Head
 </Syntax>
 <Syntax syntax="jsligo">
 
+JsLIGO uses a predefined function called `match` to perform pattern matching.
+In the case of pattern matching over a variant, an object should be used as argument:
+
 ```jsligo group=e
 type coin = ["Head"] | ["Tail"];
 let flip = (c: coin): coin =>
@@ -317,9 +332,21 @@ let flip = (c: coin): coin =>
 You can call the function `flip` by using the LIGO compiler like so:
 ```shell
 ligo run-function
-gitlab-pages/docs/language-basics/src/unit-option-pattern-matching/flip.religo
+gitlab-pages/docs/language-basics/src/unit-option-pattern-matching/flip.jsligo
 flip Head
 # Outputs: Tail(Unit)
+```
+
+In the case of pattern matching over a list, a list should be used as argument:
+
+```jsligo group=f
+let main = ([action, s] : [parameter, storage]) : returnx => {
+  let storage = match(action, list([
+    ([]: parameter) => s,
+    ([hd, ...tl]: parameter) => [s[0] + hd, tl]
+  ]));
+  return [(list([]) as list<operation>), [s[0] + hd, tl]]
+};
 ```
 
 </Syntax>

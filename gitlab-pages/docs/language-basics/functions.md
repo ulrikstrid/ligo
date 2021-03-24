@@ -183,8 +183,8 @@ let myFun = ((x, y) : (int, int)) : int => {
 </Syntax>
 <Syntax syntax="jsligo">
 
-Functions in JsLIGO are defined using the `let` keyword, like
-other values. The difference is that a tuple of parameters is provided
+Functions in JsLIGO are defined using the `let` or `const` keyword, like
+other values. The difference is that parameters are provided
 after the value name, with its type, then followed by the return type.
 
 Here is how you define a basic function that sums two integers:
@@ -215,6 +215,10 @@ let myFun = ([x, y]: [int, int]): int => {
   return doubleX + doubleY;
 };
 ```
+
+Note that JsLIGO, like JavaScript, requires the `return` keyword to indicate 
+what is being returned. If `return` is not used, it will be the same as 
+`return unit`.
 
 </Syntax>
 
@@ -411,14 +415,17 @@ let closure_example = (i: int): int => {
 
 </Syntax>
 
+
+
+<Syntax syntax="pascaligo">
+
 ## Recursive function
 
 LIGO functions are not recursive by default, the user need to indicate that the function is recursive.
 
 At the moment, recursive function are limited to one (possibly tupled) parameter and recursion is
-limited to tail recursion (i.e the recursive call should be the last expression of the function)
+limited to tail recursion (i.e the recursive call should be the last expression of the function).
 
-<Syntax syntax="pascaligo">
 In PascaLIGO recursive functions are defined using the `recursive` keyword
 
 ```pascaligo group=d
@@ -430,6 +437,14 @@ recursive function fibo (const n: int; const n_1: int; const n_0 :int) : int is
 ```
 </Syntax>
 <Syntax syntax="cameligo">
+
+## Recursive function
+
+LIGO functions are not recursive by default, the user need to indicate that the function is recursive.
+
+At the moment, recursive function are limited to one (possibly tupled) parameter and recursion is
+limited to tail recursion (i.e the recursive call should be the last expression of the function)
+
 In CameLIGO recursive functions are defined using the `rec` keyword
 
 ```cameligo group=d
@@ -441,6 +456,14 @@ let rec fibo ((n,n_1,n_0):int*int*int) : int =
 ```
 </Syntax>
 <Syntax syntax="reasonligo">
+
+## Recursive function
+
+LIGO functions are not recursive by default, the user need to indicate that the function is recursive.
+
+At the moment, recursive function are limited to one (possibly tupled) parameter and recursion is
+limited to tail recursion (i.e the recursive call should be the last expression of the function)
+
 In ReasonLIGO recursive functions are defined using the `rec` keyword
 
 ```reasonligo group=d

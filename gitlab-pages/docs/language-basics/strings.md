@@ -129,7 +129,7 @@ let slice : string = String.sub (0n, 1n, name);
 
 ```jsligo group=b
 let name  : string = "Alice";
-let slice : string = String.sub ((0 as nat), (1 as nat), name);
+let slice : string = String.sub (0 as nat, 1 as nat, name);
 ```
 
 </Syntax>
@@ -173,7 +173,7 @@ let length : nat = String.length (name);  // length == 5
 > Note that `String.size` is *deprecated*.
 
 </Syntax>
-<Syntax syntax="reasonligo">
+<Syntax syntax="jsligo">
 
 ```jsligo group=c
 let name : string = "Alice";

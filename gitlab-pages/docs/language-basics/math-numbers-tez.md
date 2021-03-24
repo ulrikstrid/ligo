@@ -14,6 +14,8 @@ values of type `tez` are units of measure of Tezos tokens.
     languages, for example, `10`, `-6` and `0`, but there is only one
     canonical zero: `0` (so, for instance, `-0` and `00` are invalid).
 
+<Syntax syntax="pascaligo">
+
   * Natural numbers are written as digits follwed by the suffix `n`,
     like so: `12n`, `0n`, and the same restriction on zero as integers
     applies: `0n` is the only way to specify the natural zero.
@@ -27,6 +29,44 @@ values of type `tez` are units of measure of Tezos tokens.
 
 Note that large integral values can be expressed using underscores to
 separate groups of digits, like `1_000mutez` or `0.000_004tez`.
+
+</Syntax>
+<Syntax syntax="cameligo">
+
+  * Natural numbers are written as digits follwed by the suffix `n`,
+    like so: `12n`, `0n`, and the same restriction on zero as integers
+    applies: `0n` is the only way to specify the natural zero.
+
+  * Tezos tokens can be specified using literals of three kinds:
+      * units of millionth of `tez`, using the suffix `mutez` after a
+        natural literal, like `10000mutez` or `0mutez`;
+      * units of `tez`, using the suffix `tz` or `tez`, like `3tz` or
+        `3tez`;
+      * decimal amounts of `tz` or `tez`, like `12.3tz` or `12.4tez`.
+
+Note that large integral values can be expressed using underscores to
+separate groups of digits, like `1_000mutez` or `0.000_004tez`.
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+  * Natural numbers are written as digits follwed by the annotation `as nat`,
+    like so: `12 as nat`, `0 as nat`, and the same restriction on zero as 
+    integers applies: `0 as nat` is the only way to specify the natural zero.
+
+  * Tezos tokens can be specified using literals of three kinds:
+      * units of millionth of `tez`, using the annotation `as mutez` after a
+        natural literal, like `10000 as mutez` or `0 as mutez`;
+      * units of `tez`, using the annotation `as tez`, like `3 as tez` or
+        `3 as tez`;
+      * decimal amounts of `tez` are not supported by JsLIGO, instead the 
+        amount should be written as `mutez`.
+      
+
+Note that large integral values can be expressed using underscores to
+separate groups of digits, like `1_000 as mutez`.
+
+</Syntax>
 
 ## Addition
 
