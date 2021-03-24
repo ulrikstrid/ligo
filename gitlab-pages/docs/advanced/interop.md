@@ -989,18 +989,18 @@ let make_concrete_record = (r: test): [string, int, string, bool, int] =>
 
 let make_abstract_sum = (z_or: z_or): z_to_v =>
   match(z_or, {
-    M_left: (n: unit) => Z,
+    M_left: (n: unit) => Z(),
     M_right: (y_or: y_or) => {
       return match(y_or, {
-        M_left: (n: unit) => Y,
+        M_left: (n: unit) => Y(),
         M_right: (x_or: x_or) => {
           return match(x_or, {
-            M_left: (n: unit) => X,
+            M_left: (n: unit) => X(),
             M_right: (w_or: w_or) => {
               return match(w_or, {
-                M_left: (n: unit) => W,
-                M_right: (n: unit) => V
-              }
+                M_left: (n: unit) => W(),
+                M_right: (n: unit) => V()
+              })
             }
           })
         }
@@ -1009,7 +1009,7 @@ let make_abstract_sum = (z_or: z_or): z_to_v =>
   })
 
 let make_abstract_record = (z: string, y: int, x: string, w: bool, v: int): test =>
-  { z: z, y, x, w, v }
+  ({ z: z, y, x, w, v })
   
 ```
 
@@ -1085,8 +1085,8 @@ type parameter =
 
 let main = ([p, x]: [parameter, storage]): [list<operation>, storage] =>
   [list ([]) as list<operation>, match(p, {
-    Left: (i) => x - i,
-    Right: (i) => x + i
+    Left: (i: int) => x - i,
+    Right: (i: int) => x + i
   })];
 
 ```
@@ -1172,12 +1172,12 @@ type storage = int;
 
 type parameter = int;
 
-type x = ["Left", int];
+type x = | ["Left", int];
 
 let main = ([p, s]: [parameter, storage]): [list<operation>, storage] => {
   let contract: contract<x> = 
     match (Tezos.get_entrypoint_opt("%left", "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address) as option<contract<x>>, {
-      Some: (c: contract<x>) => c,
+      Some: ( c: contract<x>) => c,
       None: () => (failwith ("contract does not match") as contract<x>)
     });
   return [

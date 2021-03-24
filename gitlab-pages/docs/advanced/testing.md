@@ -109,14 +109,14 @@ let main = ((action, store) : (parameter, storage)) : return => {
 type storage = string;
 
 type parameter =
-  ["Append", string];
+| ["Append", string];
 
 type return_ = [list<operation>, storage];
 
 let main = ([action, store]: [parameter, storage]): return_ => {
  return [list([]) as list<operation>,    // No operations
   match(action, {
-    Append: (s: string) => store + s
+    Append: (s: string) => store + s // will fail when there is no polymorphic +
   })]
 };
 ```

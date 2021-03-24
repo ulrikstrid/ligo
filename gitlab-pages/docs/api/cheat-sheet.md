@@ -1275,7 +1275,7 @@ If Statement
 ```jsligo
 let if_statement = (age : int): int => {
   if (age < 16) { 
-    return (failwith ("Too young to drive"): int)
+    return (failwith ("Too young to drive") as int)
   } else {
     return 1
   }
@@ -1291,7 +1291,7 @@ Options
 ```jsligo
 type middle_name = option<string>;
 let middle_name : middle_name = Some("Foo");
-let middle_name : middle_name = None;
+let middle_name : middle_name = None();
 ```
 
 </div>
@@ -1368,12 +1368,12 @@ Maps
 <div className="example">
 
 ```jsligo
-type prices = map<[nat, tez]>;
+type prices = map<nat, tez>;
 
 let prices: prices = Map.literal(list([
   [10 as nat, 60 as mutez],
   [50 as nat, 30 as mutez],
-  [100 as nat, 10 as mutez],
+  [100 as nat, 10 as mutez]
 ]));
 
 let price: option<tez> = Map.find_opt(50 as nat, prices)
@@ -1391,7 +1391,7 @@ Contracts & Accounts
 let destinationAddress: address = 
   "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
 
-let contract : contract(unit) = 
+let contract : contract<unit> = 
   match (Tezos.get_contract_opt(Tezos.sender) as option<contract<unit>>, {
     Some: (contract: contract<unit>) => contract,
     None: () => (failwith("no contract") as contract<unit>)
