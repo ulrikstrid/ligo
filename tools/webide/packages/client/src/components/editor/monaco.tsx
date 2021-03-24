@@ -53,16 +53,16 @@ const MonacoComponent = (props) => {
 
     const onRightClickAction = (model) => {
       return {
-        id: '1',
-        label: "Compile Expression",
-        keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.F10],
-	      contextMenuGroupId: 'navigation',
-	      contextMenuOrder: 2.5,
-        run: (e) => {
-          const position = e.getPosition()
-          const currentLine = model && model.getLineContent(position.lineNumber)
-          setCurrentLineText(currentLine)
-        }
+        // id: '1',
+        // label: "Compile Expression",
+        // keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.F10],
+	      // contextMenuGroupId: 'navigation',
+	      // contextMenuOrder: 2.5,
+        // run: (e) => {
+        //   const position = e.getPosition()
+        //   const currentLine = model && model.getLineContent(position.lineNumber)
+        //   setCurrentLineText(currentLine)
+        // }
       }
     }
 
