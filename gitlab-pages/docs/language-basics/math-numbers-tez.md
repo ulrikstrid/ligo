@@ -57,8 +57,7 @@ separate groups of digits, like `1_000mutez` or `0.000_004tez`.
   * Tezos tokens can be specified using literals of three kinds:
       * units of millionth of `tez`, using the annotation `as mutez` after a
         natural literal, like `10000 as mutez` or `0 as mutez`;
-      * units of `tez`, using the annotation `as tez`, like `3 as tez` or
-        `3 as tez`;
+      * units of `tez`, using the annotation `as tez`, like `3 as tez`;
       * decimal amounts of `tez` are not supported by JsLIGO, instead the 
         amount should be written as `mutez`.
       
@@ -172,7 +171,7 @@ let g : int = 1_000_000;
 > Pro tip: you can use underscores for readability when defining large
 > numbers:
 >```reasonligo
->let sum : tex = 100_000mutez;
+>let sum : tez = 100_000mutez;
 >```
 
 </Syntax>
@@ -203,7 +202,7 @@ let g: int = 1_000_000;
 > Pro tip: you can use underscores for readability when defining large
 > numbers:
 >```jsligo
->let sum : tex = (100_000 as mutez);
+>let sum : tez = 100_000 as mutez;
 >```
 
 </Syntax>

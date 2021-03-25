@@ -10,6 +10,8 @@ features `tuples`, `lists` and `sets`.
 
 ## Tuples
 
+<Syntax syntax="pascaligo">
+
 Tuples gather a given number of values in a specific order and those
 values, called *components*, can be retrieved by their index
 (position).  Probably the most common tuple is the *pair*. For
@@ -21,6 +23,49 @@ for example, we cannot add an extra component to a pair and obtain a
 triple of the same type: `(x,y)` has always a different type from
 `(x,y,z)`, whereas `(y,x)` might have the same type as `(x,y)`.
 
+</Syntax>
+<Syntax syntax="cameligo">
+
+Tuples gather a given number of values in a specific order and those
+values, called *components*, can be retrieved by their index
+(position).  Probably the most common tuple is the *pair*. For
+example, if we were storing coordinates on a two dimensional grid we
+might use a pair `(x,y)` to store the coordinates `x` and `y`. There
+is a *specific order*, so `(y,x)` is not equal to `(x,y)` in
+general. The number of components is part of the type of a tuple, so,
+for example, we cannot add an extra component to a pair and obtain a
+triple of the same type: `(x,y)` has always a different type from
+`(x,y,z)`, whereas `(y,x)` might have the same type as `(x,y)`.
+
+</Syntax>
+<Syntax syntax="reasonligo">
+
+Tuples gather a given number of values in a specific order and those
+values, called *components*, can be retrieved by their index
+(position).  Probably the most common tuple is the *pair*. For
+example, if we were storing coordinates on a two dimensional grid we
+might use a pair `(x,y)` to store the coordinates `x` and `y`. There
+is a *specific order*, so `(y,x)` is not equal to `(x,y)` in
+general. The number of components is part of the type of a tuple, so,
+for example, we cannot add an extra component to a pair and obtain a
+triple of the same type: `(x,y)` has always a different type from
+`(x,y,z)`, whereas `(y,x)` might have the same type as `(x,y)`.
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+Tuples gather a given number of values in a specific order and those
+values, called *components*, can be retrieved by their index
+(position).  Probably the most common tuple is the *pair*. For
+example, if we were storing coordinates on a two dimensional grid we
+might use a pair `[x, y]` to store the coordinates `x` and `y`. There
+is a *specific order*, so `[y, x]` is not equal to `[x, y]` in
+general. The number of components is part of the type of a tuple, so,
+for example, we cannot add an extra component to a pair and obtain a
+triple of the same type: `[x, y]` has always a different type from
+`[x, y, z]`, whereas `[y, x]` might have the same type as `[x, y]`.
+
+</Syntax>
 Like records, tuple components can be of arbitrary types.
 
 ### Defining Tuples
@@ -318,8 +363,8 @@ let tail : option (list (int)) = List.tail_opt (my_list); // [2,2]
 <Syntax syntax="jsligo">
 
 ```jsligo group=lists
-let head : option<int> = List.head_opt(my_list); // 1
-let tail : option<list<int>> = List.tail_opt(my_list); // [2,2]
+let head: option<int> = List.head_opt(my_list); // 1
+let tail: option<list<int>> = List.tail_opt(my_list); // [2,2]
 ```
 
 </Syntax>

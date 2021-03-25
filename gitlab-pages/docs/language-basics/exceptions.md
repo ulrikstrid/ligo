@@ -62,7 +62,7 @@ The call to failwith should be annoted with a type as the typechecker cannot inf
 <Syntax syntax="jsligo">
 
 ```jsligo group=failwith
-let main = (p : unit, s : unit): unit => {
+let main = (p: unit, s: unit): unit => {
   if (true) { 
     return failwith("This contract always fails"); 
   };
@@ -130,7 +130,7 @@ let main = (p: bool, s: unit): [list<operation>, unit] => {
   return [list([]) as list<operation>, s];
 };
 
-let some = (o: option<unit>):unit => {
+let some = (o: option<unit>): unit => {
   assert_some(o)
 };
 ```

@@ -5,6 +5,12 @@ title: Modules
 
 import Syntax from '@theme/Syntax';
 
+<Syntax syntax="jsligo">
+
+> Note that in JsLIGO modules are called `namespaces`.
+
+</Syntax>
+
 Modules are a programming language construction that allows us to
 package related definitions together. A canonical example of a module
 is a data type and associated operations over it (e.g. stacks or
@@ -21,12 +27,12 @@ module: it's abstract.
 
 ## Declaring Modules
 
+<Syntax syntax="pascaligo">
+
 Modules are introduced using the `module` keyword. For example, the
 following code defines a module `EURO` that packages together a type,
 called `t`, together with an operation `add` that sums two values of
 the given currency, as well as constants for zero and one.
-
-<Syntax syntax="pascaligo">
 
 ```pascaligo group=EURO
 module EURO is {
@@ -39,6 +45,11 @@ module EURO is {
 
 </Syntax>
 <Syntax syntax="cameligo">
+
+Modules are introduced using the `module` keyword. For example, the
+following code defines a module `EURO` that packages together a type,
+called `t`, together with an operation `add` that sums two values of
+the given currency, as well as constants for zero and one.
 
 ```cameligo group=EURO
 module EURO = struct
@@ -55,6 +66,11 @@ group together the definitions made in the module.
 </Syntax>
 <Syntax syntax="reasonligo">
 
+Modules are introduced using the `module` keyword. For example, the
+following code defines a module `EURO` that packages together a type,
+called `t`, together with an operation `add` that sums two values of
+the given currency, as well as constants for zero and one.
+
 ```reasonligo group=EURO
 module EURO = {
     type t = nat
@@ -67,6 +83,11 @@ module EURO = {
 </Syntax>
 <Syntax syntax="jsligo">
 
+Modules are introduced using the `namespace` keyword. For example, the
+following code defines a module `EURO` that packages together a type,
+called `t`, together with an operation `add` that sums two values of
+the given currency, as well as constants for zero and one.
+
 ```jsligo group=EURO
 namespace EURO {
     export type t = nat;
@@ -75,6 +96,9 @@ namespace EURO {
     export let one: t = 1 as nat
 }
 ```
+
+In this example you will also notice the `export` keyword. A statement within a
+module can be accessed from outside the module if it is exported.
 
 </Syntax>
 
@@ -124,7 +148,6 @@ let main = ([action, store]: [unit, storage]): [list<operation>, storage] =>
 ```
 
 </Syntax>
-
 
 In principle, we could change the implementation of `EURO`, without
 having to change the `storage` type or the function `main`. For
