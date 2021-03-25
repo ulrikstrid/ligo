@@ -10,20 +10,6 @@
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy"
   },
-  "devDependencies": {
-    "@docusaurus/core": "^2.0.0-alpha.71",
-    "@docusaurus/preset-classic": "^2.0.0-alpha.71",
-    "@mdx-js/react": "^1.6.21",
-    "@nicolo-ribaudo/chokidar-2": "^2.1.8-no-fsevents",
-    "classnames": "^2.2.6",
-    "clsx": "^1.1.1",
-    "jest-worker": "^26.6.2",
-    "mime": "^1.6.0",
-    "postcss": "^8.2.8",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
-    "webpack": "4.44.1"
-  },
   "browserslist": {
     "production": [
       ">0.2%",
@@ -37,10 +23,19 @@
     ]
   },
   "dependencies": {
-    "@docusaurus/plugin-sitemap": "^2.0.0-alpha.56",
+    "@docusaurus/core": "2.0.0-alpha.72",
+    "@docusaurus/preset-classic": "2.0.0-alpha.72",
     "@ligo/syntax": "file:src/@ligo/syntax",
-    "@ligolang/ligo-snippets": "^1.0.1",
-    "react-codejar": "^1.0.2",
-    "yaml": "^1.10.0"
-  }
+    "@ligolang/ligo-snippets": "^1.0.0",
+    "@mdx-js/react": "^1.6.22",
+    "clsx": "^1.1.1",
+    "html-minifier-terser": "^5.1.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "terser": "^5.6.1"
+  },
+  "nohoist": [
+    "**/html-minifier-terser",
+    "docs/**"
+  ]
 }
