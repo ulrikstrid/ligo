@@ -514,8 +514,8 @@ and compile_expression ?(module_env = SMap.empty) (ae:AST.expression) : (express
       | (C_IGNORE, [rhs]) ->
          let%bind rhs' = self rhs in
          let result' = Expression.make (E_constant { cons_name = C_UNIT ; arguments = [] }) (t_unit ()) in
-         return (E_let_in (rhs', false, (((Location.wrap @@ Var.of_name "_"), rhs'.type_expression), result')))
-      | (C_IGNORE, _) -> fail @@ corner_case ~loc:__LOC__ (Format.asprintf "bad iterator arity: %a" PP.constant C_IGNORE)
+         return (E_let_in (rhs', false, (((Location.wrap @@ Var.fresh ~name:"_" ()), rhs'.type_expression), result')))
+      | (C_IGNORE, _) -> fail @@ corner_case ~loc:__LOC__ (Format.asprintf "bad ignore arity: %a" PP.constant C_IGNORE)
       | _ -> (
           let%bind lst' = bind_map_list (self) lst in
           return @@ E_constant {cons_name=compile_constant' name;arguments=lst'}
