@@ -525,19 +525,19 @@ rule scan state = parse
           let path   = if path = "" || path = "." then base
                        else path ^ Filename.dir_sep ^ base in
           let ()     = print state (sprintf "\n# %i %S 2" (line+1) path)
-          in scan state lexbuf
-        else scan state lexbuf
+          in (proc_nl state lexbuf; scan state lexbuf)
+        else (proc_nl state lexbuf; scan state lexbuf)
     | "import" ->
         let reg, import_path, imported_module = scan_import state lexbuf in
         if state.mode = Copy then
-          let file_path = mk_path state in
-          let imported_file =
-            match find file_path import_path state.config#dirs with
-              Some (file, in_channel) -> close_in in_channel; file
-            | None -> fail state reg (File_not_found import_path) in
-          let import = (imported_file, imported_module) :: state.import
-          in scan {state with import} lexbuf
-        else scan state lexbuf
+          let path = mk_path state in
+          let imp_path =
+            match find path imp_file state.config#dirs with
+              Some p -> fst p
+            | None -> fail state reg (File_not_found imp_file) in
+          let state  = {state with imp = (imp_path,imp_name)::state.imp}
+          in (proc_nl state lexbuf; scan state lexbuf)
+        else (proc_nl state lexbuf; scan state lexbuf)
     | "if" ->
         let mode  = expr state lexbuf in
         let mode  = if state.mode = Copy then mode else Skip in
@@ -723,11 +723,17 @@ and scan_inclusion state = parse
 | _      { stop state lexbuf Missing_filename             }
 
 and in_inclusion opening acc len state = parse
-  '"'    { let closing = mk_reg lexbuf
-           in Region.cover opening closing, mk_str len acc    }
-| nl     { stop state lexbuf Newline_in_string                }
-| eof    { fail state opening Unterminated_string             }
-| _ as c { in_inclusion opening (c::acc) (len+1) state lexbuf }
+  '"'    { end_inclusion opening (mk_reg lexbuf) acc len state lexbuf }
+| nl     { stop state lexbuf Newline_in_string                        }
+| eof    { fail state opening Unterminated_string                     }
+| _ as c { in_inclusion opening (c::acc) (len+1) state lexbuf         }
+
+and end_inclusion opening closing acc len state = parse
+  nl
+| eof    { Region.cover opening closing, mk_str len acc             }
+| blank+ { end_inclusion opening closing acc len state lexbuf       }
+| _      { fail state (mk_reg lexbuf)
+                (Error_directive "#include expects a single path.") }
 
 (* #import *)
 
@@ -748,14 +754,19 @@ and scan_module opening imp_path state = parse
 | '"'    { in_module opening imp_path [] 0 state lexbuf }
 | _      { stop state lexbuf Missing_filename           }
 
-and in_module opening imported_path acc len state = parse
-  '"'    { let closing = mk_reg lexbuf
-           in Region.cover opening closing,
-              imported_path,
-              mk_str len acc }
-| nl     { stop state lexbuf Newline_in_string }
-| eof    { fail state opening Unterminated_string }
-| _ as c { in_module opening imported_path (c::acc) (len+1) state lexbuf }
+and in_module opening imp_path acc len state = parse
+  '"'    { end_module opening (mk_reg lexbuf) imp_path acc len state lexbuf }
+| nl     { stop state lexbuf Newline_in_string                              }
+| eof    { fail state opening Unterminated_string                           }
+| _ as c { in_module opening imp_path (c::acc) (len+1) state lexbuf         }
+
+
+and end_module opening closing imp_path acc len state = parse
+  nl
+| eof    { Region.cover opening closing, imp_path, mk_str len acc             }
+| blank+ { end_module opening closing imp_path acc len state lexbuf           }
+| _      { fail state (mk_reg lexbuf)
+                (Error_directive "#import expects a path and a module name.") }
 
 (* Strings *)
 
