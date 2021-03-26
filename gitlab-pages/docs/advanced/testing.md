@@ -441,9 +441,9 @@ let main = ([action, store]: [parameter, storage]) : return_ => {
   return [
     list([]) as list<operation>,    // No operations
     match(action, {
-      Increment(n: int) => add ([store, n]),
-      Decrement(n: int) => sub ([store, n]),
-      Reset         => 0})
+      Increment:(n: int) => add ([store, n]),
+      Decrement:(n: int) => sub ([store, n]),
+      Reset: ()          => 0})
   ]
 };
 ```

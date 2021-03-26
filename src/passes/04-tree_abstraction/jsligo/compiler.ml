@@ -363,7 +363,7 @@ and compile_expression : CST.expr -> (AST.expr, _) result = fun e ->
   )
   | EArith arth ->
     ( match arth with
-      Add plus   -> compile_bin_op C_ADD plus
+      Add plus   -> compile_bin_op C_POLYMORPHIC_ADD plus
     | Sub minus  -> compile_bin_op C_SUB minus
     | Mult times -> compile_bin_op C_MUL times
     | Div slash  -> compile_bin_op C_DIV slash

@@ -135,7 +135,7 @@ let slice : string = String.sub (0n, 1n, name);
 
 ```jsligo group=b
 let name: string = "Alice";
-let slice: string = String.su (0 as nat, 1 as nat, name);
+let slice: string = String.sub (0 as nat, 1 as nat, name);
 ```
 
 </Syntax>

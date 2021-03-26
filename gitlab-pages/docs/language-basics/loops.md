@@ -336,7 +336,7 @@ all the integers and concatenate all the strings.
 Here is an example where the keys are concatenated and the values are
 summed up.
 
-```jsligo group=d
+```jsligo skip
 let sum_map = (m: map<string, int>): [string, int] => {
   let string_total: string = "";
   let int_total: int = 0;
