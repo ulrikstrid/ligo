@@ -39,7 +39,8 @@ end = struct
         (O.Literal_signature _)|O.E_literal (O.Literal_key _)|O.E_literal
         (O.Literal_key_hash _)|O.E_literal (O.Literal_chain_id _)|O.E_literal
         (O.Literal_operation _) -> ok ()
-    | O.E_constant        { cons_name=_; arguments } -> bind_fold_list (fun () e -> expression e) () arguments
+    | O.E_constant        { cons_name = _; arguments } -> 
+      bind_fold_list (fun () e -> expression e) () arguments
     | O.E_variable        _ -> ok ()
     | O.E_application     { lamb; args } -> let%bind () = expression lamb in expression args
     | O.E_lambda          { binder=_; result } -> expression result
@@ -344,6 +345,31 @@ and type_expression' : ?tv_opt:O.type_expression -> environment -> _ O'.typer_st
       return_wrapped (e_unit ()) e state [] @@ Wrap.literal "unit" (t_unit ())
     )
 
+  | E_constant {cons_name = C_POLYMORPHIC_ADD; arguments=lst} -> 
+      let%bind t = Typer_common.Constant_typers_new.Operators_types.constant_type C_POLYMORPHIC_ADD in
+      let%bind (e,state,constraints),lst = bind_fold_map_list
+        (fun (e,state, c) l ->
+          let%bind (e,state,l), constraints = self e state l in
+          ok ((e,state, c @ constraints),l)
+        ) (e,state,[]) lst
+      in
+      let cst = (match lst with 
+        | {expression_content = E_literal (Literal_string _); _ } :: _ -> S.C_CONCAT
+        | {expression_content = E_constant {cons_name = C_ADD; _ }; _ } :: _ -> C_ADD
+        | {expression_content = E_constant {cons_name = C_CONCAT; _ }; _ } :: _ -> C_CONCAT
+        | {expression_content = E_literal (Literal_int _); _ } :: _ -> C_ADD
+        | {expression_content = E_variable _; type_expression = {type_content = T_constant { injection; _} }} :: _ -> 
+          let type_operator = Var.of_name (Ligo_string.extract injection) in
+          if type_operator = Var.of_name "string" then 
+            C_CONCAT
+          else 
+            C_ADD
+          
+      | _ -> C_ADD
+      ) in
+      let lst_annot = List.map get_type_expression lst in
+      let wrapped = Wrap.constant cst t lst_annot in
+      return_wrapped (E_constant {cons_name=cst;arguments=lst}) e state constraints wrapped
   | E_constant {cons_name; arguments=lst} ->
     let%bind t = Typer_common.Constant_typers_new.Operators_types.constant_type cons_name in
     let%bind (e,state,constraints),lst = bind_fold_map_list
