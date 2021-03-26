@@ -62,6 +62,8 @@ module type TOKEN =
     val is_annot  : token -> bool
     val is_sym    : token -> bool
     val is_eof    : token -> bool
+
+    val support_string_delimiter : char -> bool
   end
 
 (* The functorised interface *)
@@ -168,6 +170,8 @@ module Make (Token : TOKEN) =
     let fail region error =
       let msg = error_to_string error in
       raise (Error Region.{value=msg;region})
+
+    let support_string_delimiter = Token.support_string_delimiter
 
     (* TOKENS *)
 
@@ -292,6 +296,7 @@ let client =
     method mk_string = mk_string
     method mk_eof    = lift <@ mk_eof
     method callback  = lift <@ scan
+    method support_string_delimiter = support_string_delimiter
   end
 
 let scan = Core.mk_scan client
