@@ -619,7 +619,7 @@ let main =
       match(action, list([
       ([]: parameter) => s,
       ([hd, ...tl]: parameter) => [s[0] + hd, tl]]));
-    return [(List() as list<operation>), [s[0] + hd, tl]]
+    return [(list([]) as list<operation>), [s[0] + hd, tl]]
   };
 
 let size_ = (s: list<int>): nat => List.length(s);

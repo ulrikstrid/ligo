@@ -56,8 +56,8 @@ let is_sym =
   | SLASH _
   | TIMES _
   | REM _
-  | PLUS2 _
-  | MINUS2 _
+  (* | PLUS2 _ *)
+  (* | MINUS2 _ *)
   | LPAR _
   | RPAR _
   | LBRACKET _
@@ -73,11 +73,11 @@ let is_sym =
   | BOOL_OR _
   | BOOL_AND _
   | BOOL_NOT _
-  | BIT_AND _
+  (* | BIT_AND _
   | BIT_NOT _
   | BIT_XOR _
   | SHIFT_L _
-  | SHIFT_R _
+  | SHIFT_R _ *)
   | EQ _
   | EQ2 _
   | NE _
@@ -85,7 +85,7 @@ let is_sym =
   | GT _
   | LE _
   | GE _
-  | PLUS_EQ _
+  (* | PLUS_EQ _
   | MINUS_EQ _
   | MULT_EQ _
   | REM_EQ _
@@ -94,7 +94,7 @@ let is_sym =
   | SR_EQ _
   | AND_EQ _
   | OR_EQ _
-  | XOR_EQ _
+  | XOR_EQ _ *)
   | VBAR _
   | ARROW _
   | WILD _ -> true

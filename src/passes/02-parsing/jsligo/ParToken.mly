@@ -13,12 +13,12 @@ module Token = Lexing_jsligo.Token
 %token                  <string Region.reg> Verbatim "<verbatim>"
 %token  <(Token.lexeme * Hex.t) Region.reg> Bytes    "<bytes>"
 %token          <(string * Z.t) Region.reg> Int      "<int>"
-%token          <(string * Z.t) Region.reg> Nat      "<nat>"
-%token          <(string * Z.t) Region.reg> Mutez    "<mutez>"
+// %token          <(string * Z.t) Region.reg> Nat      "<nat>"
+// %token          <(string * Z.t) Region.reg> Mutez    "<mutez>"
 %token                  <string Region.reg> Lident   "<lident>"
 %token                  <string Region.reg> Uident   "<uident>"
 %token                  <string Region.reg> Attr     "[@attr]"
-%token <Token.lexeme Region.reg Region.reg> Lang     "<lang>"
+// %token <Token.lexeme Region.reg Region.reg> Lang     "<lang>"
 
   (* Symbols *)
 
@@ -27,8 +27,8 @@ module Token = Lexing_jsligo.Token
 %token <Region.t> SLASH   "/"
 %token <Region.t> TIMES   "*"
 %token <Region.t> REM     "%"
-%token <Region.t> PLUS2   "++"
-%token <Region.t> MINUS2  "--"
+// %token <Region.t> PLUS2   "++"
+// %token <Region.t> MINUS2  "--"
 
 %token <Region.t> LPAR     "("
 %token <Region.t> RPAR     ")"
@@ -48,11 +48,11 @@ module Token = Lexing_jsligo.Token
 %token <Region.t> BOOL_AND "&&"
 %token <Region.t> BOOL_NOT "!"
 
-%token <Region.t> BIT_AND  "&"
-%token <Region.t> BIT_NOT  "~"
-%token <Region.t> BIT_XOR  "^"
-%token <Region.t> SHIFT_L  "<<<"
-%token <Region.t> SHIFT_R  ">>>"
+// %token <Region.t> BIT_AND  "&"
+// %token <Region.t> BIT_NOT  "~"
+// %token <Region.t> BIT_XOR  "^"
+// %token <Region.t> SHIFT_L  "<<<"
+// %token <Region.t> SHIFT_R  ">>>"
 
 %token <Region.t> EQ    "="
 %token <Region.t> EQ2   "=="
@@ -63,16 +63,16 @@ module Token = Lexing_jsligo.Token
 %token <Region.t> LE    "<="
 %token <Region.t> GE    ">="
 
-%token <Region.t> PLUS_EQ  "+="
-%token <Region.t> MINUS_EQ "-="
-%token <Region.t> MULT_EQ  "*="
-%token <Region.t> REM_EQ   "%="
-%token <Region.t> DIV_EQ   "/="
-%token <Region.t> SL_EQ    "<<<="
-%token <Region.t> SR_EQ    ">>>="
-%token <Region.t> AND_EQ   "&="
-%token <Region.t> OR_EQ    "|="
-%token <Region.t> XOR_EQ   "^="
+// %token <Region.t> PLUS_EQ  "+="
+// %token <Region.t> MINUS_EQ "-="
+// %token <Region.t> MULT_EQ  "*="
+// %token <Region.t> REM_EQ   "%="
+// %token <Region.t> DIV_EQ   "/="
+// %token <Region.t> SL_EQ    "<<<="
+// %token <Region.t> SR_EQ    ">>>="
+// %token <Region.t> AND_EQ   "&="
+// %token <Region.t> OR_EQ    "|="
+// %token <Region.t> XOR_EQ   "^="
 
 
 %token <Region.t> VBAR   "|"
@@ -81,9 +81,9 @@ module Token = Lexing_jsligo.Token
 
 (* JavaScript Keywords *)
 
-%token <Region.t> Break    "break"
+// %token <Region.t> Break    "break"
 %token <Region.t> Case     "case"
-%token <Region.t> Class    "class"
+// %token <Region.t> Class    "class"
 %token <Region.t> Const    "const"
 %token <Region.t> Default  "default"
 %token <Region.t> Else     "else"
@@ -98,11 +98,11 @@ module Token = Lexing_jsligo.Token
 %token <Region.t> Of       "of"
 %token <Region.t> Return   "return"
 %token <Region.t> Switch   "switch"
-%token <Region.t> This     "this"
+// %token <Region.t> This     "this"
 %token <Region.t> True     "true"
-%token <Region.t> Void     "void"
+// %token <Region.t> Void     "void"
 %token <Region.t> While    "while"
-%token <Region.t> With     "with"
+// %token <Region.t> With     "with"
 
 
 (* TypeScript keywords *)

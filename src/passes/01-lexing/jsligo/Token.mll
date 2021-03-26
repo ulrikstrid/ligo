@@ -35,11 +35,11 @@ module T =
     | Verbatim of lexeme Region.reg
     | Bytes    of (lexeme * Hex.t) Region.reg
     | Int      of (lexeme * Z.t) Region.reg
-    | Nat      of (lexeme * Z.t) Region.reg
-    | Mutez    of (lexeme * Z.t) Region.reg
+   (* | Nat      of (lexeme * Z.t) Region.reg *)
+   (* | Mutez    of (lexeme * Z.t) Region.reg *)
     | Lident   of lexeme Region.reg
     | Uident   of lexeme Region.reg
-    | Lang     of lexeme Region.reg Region.reg
+   (* | Lang     of lexeme Region.reg Region.reg*)
     | Attr     of string Region.reg
 
     (* Symbols *)
@@ -49,8 +49,8 @@ module T =
     | SLASH    of Region.t  (* "/"    *)
     | TIMES    of Region.t  (* "*"    *)
     | REM      of Region.t  (* "%"    *)
-    | PLUS2    of Region.t  (* "++"   *)
-    | MINUS2   of Region.t  (* "--"   *)
+    (*| PLUS2    of Region.t  (* "++"   *)
+    | MINUS2   of Region.t  (* "--"   *) *)
 
     | LPAR     of Region.t  (* "("    *)
     | RPAR     of Region.t  (* ")"    *)
@@ -70,11 +70,11 @@ module T =
     | BOOL_AND of Region.t  (* "&&"   *)
     | BOOL_NOT of Region.t  (* "!"    *)
 
-    | BIT_AND  of Region.t  (* "&"    *)
+    (*| BIT_AND  of Region.t  (* "&"    *)
     | BIT_NOT  of Region.t  (* "~"    *)
     | BIT_XOR  of Region.t  (* "^"    *)
     | SHIFT_L  of Region.t  (* "<<<"  *)
-    | SHIFT_R  of Region.t  (* ">>>"  *)
+    | SHIFT_R  of Region.t  (* ">>>"  *) *)
 
     | EQ       of Region.t  (* "="    *)
     | EQ2      of Region.t  (* "=="  *)
@@ -85,7 +85,7 @@ module T =
     | LE       of Region.t  (* "<="   *)
     | GE       of Region.t  (* ">="   *)
 
-    | PLUS_EQ  of Region.t  (* "+="   *)
+    (* | PLUS_EQ  of Region.t  (* "+="   *)
     | MINUS_EQ of Region.t  (* "-="   *)
     | MULT_EQ  of Region.t  (* "*="   *)
     | REM_EQ   of Region.t  (* "%="   *)
@@ -94,7 +94,7 @@ module T =
     | SR_EQ    of Region.t  (* ">>>=" *)
     | AND_EQ   of Region.t  (* "&="   *)
     | OR_EQ    of Region.t  (* "|="   *)
-    | XOR_EQ   of Region.t  (* "^="   *)
+    | XOR_EQ   of Region.t  (* "^="   *) *)
 
     | VBAR     of Region.t  (* "|"    *)
     | ARROW    of Region.t  (* "=>"   *)
@@ -102,9 +102,9 @@ module T =
 
     (* JavaScript Keywords *)
 
-    | Break    of Region.t  (* break    *)
+    (* | Break    of Region.t  (* break    *) *)
     | Case     of Region.t  (* case     *)
-    | Class    of Region.t  (* class    *)
+    (* | Class    of Region.t  (* class    *) *)
     | Const    of Region.t  (* const    *)
     | Default  of Region.t  (* default  *)
     | Else     of Region.t  (* else     *)
@@ -119,11 +119,11 @@ module T =
     | Of       of Region.t  (* of       *)
     | Return   of Region.t  (* return   *)
     | Switch   of Region.t  (* switch   *)
-    | This     of Region.t  (* this     *)
+    (* | This     of Region.t  (* this     *) *)
     | True     of Region.t  (* true     *)
-    | Void     of Region.t  (* void     *)
+    (* | Void     of Region.t  (* void     *) *)
     | While    of Region.t  (* while    *)
-    | With     of Region.t  (* with     *)    
+    (* | With     of Region.t  (* with     *)  *)
 
     (* TypeScript keywords *)
 
@@ -157,13 +157,13 @@ module T =
       "Lident"   -> id_sym ()
     | "Uident"   -> ctor_sym ()
     | "Int"      -> "1"
-    | "Nat"      -> "1n"
-    | "Mutez"    -> "1mutez"
+    (* | "Nat"      -> "1n"
+    | "Mutez"    -> "1mutez" *)
     | "String"   -> "\"a string\""
     | "Verbatim" -> "{|verbatim|}"
     | "Bytes"    -> "0xAA"
     | "Attr"     -> "[@attr]"
-    | "Lang"     -> "[%Michelson"
+    (* | "Lang"     -> "[%Michelson" *)
 
     (* Symbols *)
 
@@ -172,8 +172,8 @@ module T =
     | "SLASH"    -> "/"
     | "TIMES"    -> "*"
     | "REM"      -> "%"
-    | "PLUS2"    -> "++"
-    | "MINUS2"   -> "--"
+    (* | "PLUS2"    -> "++"
+    | "MINUS2"   -> "--" *)
 
     | "LPAR"     -> "("
     | "RPAR"     -> ")"
@@ -193,11 +193,11 @@ module T =
     | "BOOL_AND" -> "&&"
     | "BOOL_NOT" -> "!"
 
-    | "BIT_AND"  -> "&"
+    (* | "BIT_AND"  -> "&"
     | "BIT_NOT"  -> "~"
     | "BIT_XOR"  -> "^"
     | "SHIFT_L"  -> "<<<"
-    | "SHIFT_R"  -> ">>>"
+    | "SHIFT_R"  -> ">>>" *)
 
     | "EQ"       -> "="
     | "EQ2"      -> "=="
@@ -208,7 +208,7 @@ module T =
     | "LE"       -> "<="
     | "GE"       -> ">="
 
-    | "PLUS_EQ"  -> "+="
+    (* | "PLUS_EQ"  -> "+="
     | "MINUS_EQ" -> "-="
     | "MULT_EQ"  -> "*="
     | "REM_EQ"   -> "%="
@@ -217,7 +217,7 @@ module T =
     | "SR_EQ"    -> ">>>="
     | "AND_EQ"   -> "&="
     | "OR_EQ"    -> "|="
-    | "XOR_EQ"   -> "^="
+    | "XOR_EQ"   -> "^=" *)
 
     | "VBAR"     -> "|"
     | "ARROW"    -> "=>"
@@ -225,9 +225,9 @@ module T =
 
     (* JavaScript Keywords *)
 
-    | "Break"    -> "break"
+    (* | "Break"    -> "break" *)
     | "Case"     -> "case"
-    | "Class"    -> "class"
+    (* | "Class"    -> "class" *)
     | "Const"    -> "const"
     | "Default"  -> "default"
     | "Else"     -> "else"
@@ -242,11 +242,11 @@ module T =
     | "Of"       -> "of"
     | "Return"   -> "return"
     | "Switch"   -> "switch"
-    | "This"     -> "this"
+    (* | "This"     -> "this" *)
     | "True"     -> "true"
-    | "Void"     -> "void"
+    (* | "Void"     -> "void" *)
     | "While"    -> "while"
-    | "With"     -> "with"
+    (* | "With"     -> "with" *)
 
     (* TypeScript keywords *)
 
@@ -288,16 +288,16 @@ module T =
         sprintf "Bytes (%S, \"0x%s\")" s (Hex.show b)
     | Int Region.{region; value = s,n} ->
         region, sprintf "Int (%S, %s)" s (Z.to_string n)
-    | Nat Region.{region; value = s,n} ->
+    (* | Nat Region.{region; value = s,n} ->
         region, sprintf "Nat (%S, %s)" s (Z.to_string n)
     | Mutez Region.{region; value = s,n} ->
-        region, sprintf "Mutez (%S, %s)" s (Z.to_string n)
+        region, sprintf "Mutez (%S, %s)" s (Z.to_string n) *)
     | Lident Region.{region; value} ->
         region, sprintf "Lident %S" value
     | Uident Region.{region; value} ->
         region, sprintf "Uident %S" value
-    | Lang Region.{region; value} ->
-        region, sprintf "Lang %S" (value.Region.value)
+    (* | Lang Region.{region; value} ->
+        region, sprintf "Lang %S" (value.Region.value) *)
     | Attr Region.{region; value} ->
         region, sprintf "Attr %S" value
 
@@ -308,8 +308,8 @@ module T =
     | SLASH    region -> region, "SLASH"
     | TIMES    region -> region, "TIMES"
     | REM      region -> region, "REM"
-    | PLUS2    region -> region, "PLUS2"
-    | MINUS2   region -> region, "MINUS2"
+    (* | PLUS2    region -> region, "PLUS2"
+    | MINUS2   region -> region, "MINUS2" *)
 
     | LPAR     region -> region, "LPAR"
     | RPAR     region -> region, "RPAR"
@@ -329,11 +329,11 @@ module T =
     | BOOL_AND region -> region, "BOOL_AND"
     | BOOL_NOT region -> region, "BOOL_NOT"
 
-    | BIT_AND  region -> region, "BIT_AND"
+    (* | BIT_AND  region -> region, "BIT_AND"
     | BIT_NOT  region -> region, "BIT_NOT"
     | BIT_XOR  region -> region, "BIT_XOR"
     | SHIFT_L  region -> region, "SHIFT_L"
-    | SHIFT_R  region -> region, "SHIFT_R"
+    | SHIFT_R  region -> region, "SHIFT_R" *)
 
     | EQ       region -> region, "EQ"
     | EQ2      region -> region, "EQ2"
@@ -344,7 +344,7 @@ module T =
     | LE       region -> region, "LE"
     | GE       region -> region, "GE"
 
-    | PLUS_EQ  region -> region, "PLUS_EQ"
+    (* | PLUS_EQ  region -> region, "PLUS_EQ"
     | MINUS_EQ region -> region, "MINUS_EQ"
     | MULT_EQ  region -> region, "MULT_EQ"
     | REM_EQ   region -> region, "REM_EQ"
@@ -353,7 +353,7 @@ module T =
     | SR_EQ    region -> region, "SR_EQ"
     | AND_EQ   region -> region, "AND_EQ"
     | OR_EQ    region -> region, "OR_EQ"
-    | XOR_EQ   region -> region, "XOR_EQ"
+    | XOR_EQ   region -> region, "XOR_EQ" *)
 
     | VBAR     region -> region, "VBAR"
     | ARROW    region -> region, "ARROW"
@@ -361,9 +361,9 @@ module T =
 
     (* JavaScript Keywords *)
 
-    | Break    region -> region, "Break"
+    (* | Break    region -> region, "Break" *)
     | Case     region -> region, "Case"
-    | Class    region -> region, "Class"
+    (* | Class    region -> region, "Class" *)
     | Const    region -> region, "Const"
     | Default  region -> region, "Default"
     | Else     region -> region, "Else"
@@ -378,11 +378,11 @@ module T =
     | Of       region -> region, "Of"
     | Return   region -> region, "Return"
     | Switch   region -> region, "Switch"
-    | This     region -> region, "This"
+    (* | This     region -> region, "This" *)
     | True     region -> region, "True"
-    | Void     region -> region, "Void"
+    (* | Void     region -> region, "Void" *)
     | While    region -> region, "While"
-    | With     region -> region, "With"
+    (* | With     region -> region, "With" *)
     | C_None   region -> region, "C_None"
     | C_Some   region -> region, "C_Some"
 
@@ -408,13 +408,11 @@ module T =
     | String s   -> sprintf "%S" (String.escaped s.Region.value)
     | Verbatim v -> String.escaped v.Region.value
     | Bytes b    -> fst b.Region.value
-    | Int i
-    | Nat i
-    | Mutez i    -> fst i.Region.value
+    | Int i      -> fst i.Region.value
     | Lident id  -> id.Region.value
     | Uident id  -> id.Region.value
     | Attr a     -> sprintf "[@%s]" a.Region.value
-    | Lang lang  -> Region.(lang.value.value)
+    (* | Lang lang  -> Region.(lang.value.value) *)
 
     (* Symbols *)
 
@@ -423,8 +421,8 @@ module T =
     | SLASH    _ -> "/"
     | TIMES    _ -> "*"
     | REM      _ -> "%"
-    | PLUS2    _ -> "++"
-    | MINUS2   _ -> "--"
+    (* | PLUS2    _ -> "++"
+    | MINUS2   _ -> "--" *)
 
     | LPAR     _ -> "("
     | RPAR     _ -> ")"
@@ -444,11 +442,11 @@ module T =
     | BOOL_AND _ -> "&&"
     | BOOL_NOT _ -> "!"
 
-    | BIT_AND  _ -> "&"
+    (* | BIT_AND  _ -> "&"
     | BIT_NOT  _ -> "~"
     | BIT_XOR  _ -> "^"
     | SHIFT_L  _ -> "<<<"
-    | SHIFT_R  _ -> ">>>"
+    | SHIFT_R  _ -> ">>>" *)
 
     | EQ       _ -> "="
     | EQ2      _ -> "=="
@@ -459,7 +457,7 @@ module T =
     | LE       _ -> "<="
     | GE       _ -> ">="
 
-    | PLUS_EQ  _ -> "+="
+    (* | PLUS_EQ  _ -> "+="
     | MINUS_EQ _ -> "-="
     | MULT_EQ  _ -> "*="
     | REM_EQ   _ -> "%="
@@ -468,7 +466,7 @@ module T =
     | SR_EQ    _ -> ">>>="
     | AND_EQ   _ -> "&="
     | OR_EQ    _ -> "|="
-    | XOR_EQ   _ -> "^="
+    | XOR_EQ   _ -> "^=" *)
 
     | VBAR     _ -> "|"
     | ARROW    _ -> "=>"
@@ -476,9 +474,9 @@ module T =
 
     (* JavaScript Keywords *)
 
-    | Break    _ -> "break"
+    (* | Break    _ -> "break" *)
     | Case     _ -> "case"
-    | Class    _ -> "class"
+    (* | Class    _ -> "class" *)
     | Const    _ -> "const"
     | Default  _ -> "default"
     | Else     _ -> "else"
@@ -493,11 +491,11 @@ module T =
     | Of       _ -> "of"
     | Return   _ -> "return"
     | Switch   _ -> "switch"
-    | This     _ -> "this"
+    (* | This     _ -> "this" *)
     | True     _ -> "true"
-    | Void     _ -> "void"
+    (* | Void     _ -> "void" *)
     | While    _ -> "while"
-    | With     _ -> "with"
+    (* | With     _ -> "with" *)
 
     (* TypeScript keywords *)
     
@@ -528,9 +526,9 @@ module T =
     let keywords = [
         (* JavaScript Keywords *)
 
-       (fun reg -> Break   reg);
+       (* (fun reg -> Break   reg); *)
        (fun reg -> Case    reg);
-       (fun reg -> Class   reg);
+       (* (fun reg -> Class   reg); *)
        (fun reg -> Const   reg);
        (fun reg -> Default reg);
        (fun reg -> Else    reg);
@@ -545,11 +543,11 @@ module T =
        (fun reg -> Of     reg);
        (fun reg -> Return  reg);
        (fun reg -> Switch  reg);
-       (fun reg -> This    reg);
+       (* (fun reg -> This    reg); *)
        (fun reg -> True    reg);
-       (fun reg -> Void    reg);
+       (* (fun reg -> Void    reg); *)
        (fun reg -> While   reg);
-       (fun reg -> With    reg);
+       (* (fun reg -> With    reg); *)
 
        (* TypeScript keywords *)
 
@@ -655,8 +653,9 @@ and scan_constr region lexicon = parse
     Invalid_natural
   | Non_canonical_zero_nat
 
-  let mk_nat lexeme region =
-    match String.index_opt lexeme 'n' with
+  let mk_nat _lexeme _region =
+    failwith "Not supported"
+    (* match String.index_opt lexeme 'n' with
       None -> Error Invalid_natural
     | Some _ ->
         let z =
@@ -665,15 +664,16 @@ and scan_constr region lexicon = parse
             Z.of_string in
         if   Z.equal z Z.zero && lexeme <> "0n"
         then Error Non_canonical_zero_nat
-        else Ok (Nat Region.{region; value = lexeme,z})
+        else Ok (Nat Region.{region; value = lexeme,z}) *)
 
-  let mk_mutez lexeme region =
-    let z = Str.(global_replace (regexp "_") "" lexeme) |>
+  let mk_mutez _lexeme _region =
+    failwith "Not supported"
+    (* let z = Str.(global_replace (regexp "_") "" lexeme) |>
               Str.(global_replace (regexp "mutez") "") |>
               Z.of_string in
     if   Z.equal z Z.zero && lexeme <> "0mutez"
     then Error Non_canonical_zero
-    else Ok (Mutez Region.{region; value = lexeme, z})
+    else Ok (Mutez Region.{region; value = lexeme, z}) *)
 
   let eof region = EOF region
 
@@ -708,8 +708,8 @@ and scan_constr region lexicon = parse
     (* Symbols specific to JsLIGO *)
 
     | "%"   -> Ok (REM      region)
-    | "++"  -> Ok (PLUS2    region)
-    | "--"  -> Ok (MINUS2   region)
+    (* | "++"  -> Ok (PLUS2    region)
+    | "--"  -> Ok (MINUS2   region) *)
 
     | "..." -> Ok (ELLIPSIS region)
     |  "?"  -> Ok (QMARK    region)
@@ -718,16 +718,16 @@ and scan_constr region lexicon = parse
     | "&&"  -> Ok (BOOL_AND region)
     | "!"   -> Ok (BOOL_NOT region)
 
-    | "&"   -> Ok (BIT_AND  region)
+    (* | "&"   -> Ok (BIT_AND  region)
     | "~"   -> Ok (BIT_NOT  region)
     | "^"   -> Ok (BIT_XOR  region)
     | "<<<" -> Ok (SHIFT_L  region)
-    | ">>>" -> Ok (SHIFT_R  region)
+    | ">>>" -> Ok (SHIFT_R  region) *)
 
     | "==" -> Ok (EQ2      region)
     | "!=" -> Ok (NE       region)
 
-    | "+="  -> Ok (PLUS_EQ  region)
+    (* | "+="  -> Ok (PLUS_EQ  region)
     | "-="  -> Ok (MINUS_EQ region)
     | "*="  -> Ok (MULT_EQ  region)
     | "%="  -> Ok (REM_EQ   region)
@@ -737,7 +737,7 @@ and scan_constr region lexicon = parse
     | ">>>=" -> Ok (SR_EQ   region)
     | "&="   -> Ok (AND_EQ  region)
     | "|="   -> Ok (OR_EQ   region)
-    | "^="   -> Ok (XOR_EQ  region)
+    | "^="   -> Ok (XOR_EQ  region) *)
 
     | "=>"   -> Ok (ARROW   region)
 
@@ -762,7 +762,9 @@ and scan_constr region lexicon = parse
 
     (* Code injection *)
 
-    let mk_lang lang region = Lang Region.{value=lang; region}
+    let mk_lang _lang _region = 
+      failwith "Not supported"
+    (* Lang Region.{value=lang; region} *)
 
     (* Predicates *)
 

@@ -366,13 +366,11 @@ flip Head
 In the case of pattern matching over a list, a list should be used as argument:
 
 ```jsligo group=f
-let main = ([action, s] : [parameter, storage]) : returnx => {
-  let storage = match(action, list([
-    ([]: parameter) => s,
-    ([hd, ...tl]: parameter) => [s[0] + hd, tl]
+let main = (a: list<int>): int =>
+  match(a, list([
+    ([]: list<string>) => -1,
+    ([hd, ...tl]: list<string>) => hd
   ]));
-  return [(list([]) as list<operation>), [s[0] + hd, tl]]
-};
 ```
 
 </Syntax>

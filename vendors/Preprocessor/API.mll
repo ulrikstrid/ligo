@@ -528,14 +528,14 @@ rule scan state = parse
           in (proc_nl state lexbuf; scan state lexbuf)
         else (proc_nl state lexbuf; scan state lexbuf)
     | "import" ->
-        let reg, import_path, imported_module = scan_import state lexbuf in
+        let reg, import_file, imported_module = scan_import state lexbuf in
         if state.mode = Copy then
           let path = mk_path state in
-          let imp_path =
-            match find path imp_file state.config#dirs with
+          let import_path =
+            match find path import_file state.config#dirs with
               Some p -> fst p
-            | None -> fail state reg (File_not_found imp_file) in
-          let state  = {state with imp = (imp_path,imp_name)::state.imp}
+            | None -> fail state reg (File_not_found import_file) in
+          let state  = {state with import = (import_path, imported_module)::state.import}
           in (proc_nl state lexbuf; scan state lexbuf)
         else (proc_nl state lexbuf; scan state lexbuf)
     | "if" ->
