@@ -349,6 +349,9 @@ let sum_map = (m: map<string, int>): [string, int] => {
 }
 ```
 
+> In the experimental version of JsLIGO looping over maps is not supported.
+> Use `Map.iter` instead.
+
 You can call the function `sum_map` defined above using the LIGO compiler
 like so:
 ```shell
