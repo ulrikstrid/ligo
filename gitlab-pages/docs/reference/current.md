@@ -347,7 +347,7 @@ val address : 'a contract -> address
 let address: contract('a) => address
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let address: (contract: contract&lt;'a&gt;) => address
+let address: (contract: contract&lt;&apos;a&gt;) => address
 </SyntaxTitle>
 
 Get the address associated with a value of type `contract`.
@@ -463,7 +463,7 @@ val self : string -> 'a contract
 let self: string => contract('a)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let self: (entrypoint: string) => contract&lt;'a&gt;
+let self: (entrypoint: string) => contract&lt;&apos;a&gt;
 </SyntaxTitle>
 
 Typecast the currently running contract with an entrypoint annotation.
@@ -647,7 +647,7 @@ val failwith : 'a -> unit
 let failwith: 'a -> unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-function failwith: (message: 'a) -> unit
+function failwith: (message: &apos;a) -> unit
 </SyntaxTitle>
 
 [See `failwith`](toplevel.md#failwith)
@@ -744,7 +744,7 @@ val transaction : 'parameter -> mutez -> 'parameter contract -> operation
 let transaction: ('parameter, mutez , contract('parameter)) => operation
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let transaction: (action: 'parameter, amount: mutez, contract: contract&lt;'parameter&gt;) => operation
+let transaction: (action: &apos;parameter, amount: mutez, contract: contract&lt;&apos;parameter&gt;) => operation
 </SyntaxTitle>
 
 Transfer `tez` to an account, or run code of another smart contract.
@@ -807,7 +807,7 @@ val get_contract_opt : address -> 'parameter contract option
 let get_contract_opt : address => option(contract('parameter))
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let get_contract_opt : (a: address) => option&lt;contract&lt;'parameter&gt;&gt;
+let get_contract_opt : (a: address) => option&lt;contract&lt;&apos;parameter&gt;&gt;
 </SyntaxTitle>
 
 Get a contract from an address.
@@ -838,7 +838,7 @@ val get_entrypoint_opt : string -> address -> 'parameter contract option
 let get_entrypoint_opt: (string, address) => option(contract('parameter))
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let get_entrypoint_opt: (entrypoint: string, a: address) => option&lt;contract&lt;'parameter&gt;&gt;
+let get_entrypoint_opt: (entrypoint: string, a: address) => option&lt;contract&lt;&apos;parameter&gt;&gt;
 </SyntaxTitle>
 
 Get a contract from an address and entrypoint.

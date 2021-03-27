@@ -20,7 +20,7 @@ val empty : 'value set
 let empty: set('value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let empty: set&lt;'value&gt;
+let empty: set&lt;&apos;value&gt;
 </SyntaxTitle>
 
 Create an empty set.
@@ -70,7 +70,7 @@ val literal : 'value list -> 'value set
 let literal: list('value) => set('value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let literal: (input: list&lt;'value&gt;) => set&lt;'value&gt;
+let literal: (input: list&lt;&apos;value&gt;) => set&lt;&apos;value&gt;
 </SyntaxTitle>
 
 Create a non-empty set.
@@ -123,7 +123,7 @@ val mem : 'value -> 'value set -> bool
 let mem: ('value, set('value)) => bool
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let mem: (v: 'value, set: set&lt;'value&gt;) => bool
+let mem: (v: &apos;value, set: set&lt;&apos;value&gt;) => bool
 </SyntaxTitle>
 
 Checks if a value exists in the set.
@@ -173,7 +173,7 @@ val cardinal : 'value set -> nat
 let cardinal: set('value) => nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let cardinal: (set: set&lt;'value&gt;) => nat
+let cardinal: (set: set&lt;&apos;value&gt;) => nat
 </SyntaxTitle>
 
 Number of elements in a set.
@@ -219,7 +219,7 @@ val add : 'value -> 'value set -> 'value set
 let add: ('value, set('value)) => set('value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let add: (value: 'value, set: set&lt;'value&gt;) => set&lt;'value&gt;
+let add: (value: &apos;value, set: set&lt;&apos;value&gt;) => set&lt;&apos;value&gt;
 </SyntaxTitle>
 
 Add a value to a set.
@@ -234,7 +234,7 @@ val remove : 'value -> 'value set -> 'value set
 let remove: ('value, set('value)) => set('value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let remove: (value: 'value, set: set&lt;'value&gt;) => set&lt;'value&gt;
+let remove: (value: &apos;value, set: set&lt;&apos;value&gt;) => set&lt;&apos;value&gt;
 </SyntaxTitle>
 
 Remove a value from a set.

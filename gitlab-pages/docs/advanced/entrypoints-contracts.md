@@ -536,6 +536,7 @@ let proxy (action, store : parameter * storage) : return =
 
 </Syntax>
 <Syntax syntax="reasonligo">
+
 ```reasonligo skip
 // counter.religo
 
@@ -580,6 +581,7 @@ let proxy = ((action, store): (parameter, storage)) : return => {
 
 </Syntax>
 <Syntax syntax="jsligo">
+
 ```jsligo skip
 // counter.jsligo
 

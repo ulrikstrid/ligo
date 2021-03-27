@@ -18,7 +18,7 @@ val and : 'a -> nat -> nat
 let and: ('a, nat) => nat
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let and: (a: 'a, b: nat) => nat
+let and: (a: &apos;a, b: nat) => nat
 </SyntaxTitle>
 
 `'a` can either be an `int` or `nat`.
@@ -49,7 +49,7 @@ let zero: nat = Bitwise.and(2n, 1n);
 <Syntax syntax="jsligo">
 
 ```jsligo
-let zero: nat = Bitwise.and((2 as nat), (1 as nat));
+let zero: nat = Bitwise.and(2 as nat, 1 as nat);
 ```
 
 </Syntax>
@@ -94,7 +94,7 @@ let three: nat = Bitwise.or(2n, 1n);
 <Syntax syntax="jsligo">
 
 ```jsligo
-let three: nat = Bitwise.or((2 as nat), (1 as nat));
+let three: nat = Bitwise.or(2 as nat, 1 as nat);
 ```
 
 </Syntax>
@@ -138,7 +138,7 @@ let three: nat = Bitwise.xor(2n, 1n);
 <Syntax syntax="jsligo">
 
 ```jsligo
-let three: nat = Bitwise.xor((2 as nat), (1 as nat));
+let three: nat = Bitwise.xor(2 as nat, 1 as nat);
 ```
 
 </Syntax>
@@ -182,7 +182,7 @@ let four: nat = Bitwise.shift_left(2n, 1n);
 <Syntax syntax="jsligo">
 
 ```jsligo
-let four: nat = Bitwise.shift_left((2 as nat), (1 as nat));
+let four: nat = Bitwise.shift_left(2 as nat, 1 as nat);
 ```
 
 </Syntax>
@@ -226,7 +226,7 @@ let one: nat = Bitwise.shift_right(2n, 1n);
 <Syntax syntax="jsligo">
 
 ```jsligo
-let one: nat = Bitwise.shift_right((2 as nat), (1 as nat));
+let one: nat = Bitwise.shift_right(2 as nat, 1 as nat);
 ```
 
 </Syntax>

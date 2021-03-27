@@ -139,7 +139,7 @@ function CodeExamples (props) {
     { label: 'PascaLIGO', value: 'pascaligo', },
     { label: 'CameLIGO', value: 'cameligo', },
     { label: 'ReasonLIGO', value: 'reasonligo', },
-    { label: 'JsLIGO', value: 'jsligo', },
+    { label: 'JsLIGO (experimental)', value: 'jsligo', },
   ]
 }>
         <TabItem value="pascaligo">
