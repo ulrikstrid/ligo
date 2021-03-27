@@ -72,14 +72,6 @@ let preprocess_string ~(options:options) ~meta file_path =
   in trace preproc_tracer @@
      preprocess_string options.libs file_path
 
-(* Lexing only *)
-
-(* TODO *)
-
-(* Parsing only *)
-
-(* TODO *)
-
 (* Front-end compilation *)
 
 type file_path = string
@@ -240,14 +232,13 @@ let parse_and_abstract_string_cameligo buffer =
   in ok imperative
 
 let parse_and_abstract_string_jsligo buffer =
-  let%bind _raw =
+  let%bind raw =
     trace parser_tracer @@
     Parsing.Jsligo.parse_string buffer in
-  failwith "TODO : abstraction"
-  (*let%bind imperative =
+  let%bind imperative =
     trace cit_jsligo_tracer @@
     Tree_abstraction.Jsligo.compile_module raw
-  in ok imperative *)
+  in ok imperative
 
 let parse_and_abstract_string syntax buffer =
   let%bind parse_and_abstract =

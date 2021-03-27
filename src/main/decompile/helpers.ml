@@ -28,7 +28,7 @@ let syntax_to_variant ?dialect (Syntax_name syntax) source =
                     ok (PascaLIGO dialect)
        | ".mligo"           -> ok CameLIGO
        | ".religo"          -> ok ReasonLIGO
-       | ".JSligo"          -> ok JsLIGO
+       | ".jsligo"          -> ok JsLIGO
        | ext                -> fail (syntax_auto_detection ext))
   | ("pascaligo" | "PascaLIGO"),   _ ->
      let%bind dialect = dialect_to_variant dialect in
