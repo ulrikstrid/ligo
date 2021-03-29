@@ -88,6 +88,8 @@ let x = (a: int): int => {
 };
 ```
 
+> This is not yet enforced in the experimental version of JsLIGO, but will in the future.
+
 You can evaluate the constant definition above using the following CLI
 command:
 ```shell
