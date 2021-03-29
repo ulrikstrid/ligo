@@ -631,7 +631,7 @@ let moves : register =
 The `Map.literal` predefined function builds a map from a list of
 key-value pair tuples, `(<key>, <value>)`.  Note also the `;` to
 separate individual map entries.  `("<string value>": address)` means
-that we type-cast a string into an address. -->
+that we type-cast a string into an address. 
 
 </Syntax>
 <Syntax syntax="reasonligo">
@@ -646,7 +646,7 @@ let moves : register =
 The `Map.literal` predefined function builds a map from a list of
 key-value pair tuples, `(<key>, <value>)`.  Note also the `;` to
 separate individual map entries.  `("<string value>": address)` means
-that we type-cast a string into an address. -->
+that we type-cast a string into an address. 
 
 </Syntax>
 <Syntax syntax="jsligo">
@@ -659,9 +659,9 @@ let moves : register =
 ```
 
 The `Map.literal` predefined function builds a map from a list of
-key-value pair tuples, `(<key>, <value>)`.  Note also the `;` to
-separate individual map entries.  `("<string value>": address)` means
-that we type-cast a string into an address. -->
+key-value pair tuples, `[<key>, <value>]`.  Note also the `;` to
+separate individual map entries.  `"<string value>" as address` means
+that we type-cast a string into an address.
 
 </Syntax>
 
@@ -700,8 +700,8 @@ let my_balance : option (move) =
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let my_balance : option <move> =
-  Map.find_opt ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, moves);
+let my_balance: option<move> =
+  Map.find_opt("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, moves);
 ```
 
 </Syntax>
@@ -752,7 +752,7 @@ let force_access = ((key, moves) : (address, register)) : move => {
 let force_access = ([key, moves]: [address, register]): move => {
   return match(Map.find_opt (key, moves), {
    Some: (move: register) => move,
-   None: () => (failwith ("No move.") as move)
+   None: () => (failwith("No move.") as move)
   });
 };
 ```
@@ -1032,7 +1032,7 @@ let map_op = (m : register) : register => {
 
 ```jsligo group=maps
 let map_op = (m: register): register => {
-  let increment = ([i, j]: [address, move]): [int, int]=> [j[0], j[1] + 1];
+  let increment = ([i, j]: [address, move]): [int, int] => [j[0], j[1] + 1];
   return Map.map(increment, m);
 };
 ```
@@ -1089,7 +1089,7 @@ let fold_op = (m : register) : int => {
 
 ```jsligo group=maps
 let fold_op = (m: register): int => {
-  let folded = ([i,j]: [int, [address, move]]):int => i + j[1][1];
+  let folded = ([i, j]: [int, [address, move]]): int => i + j[1][1];
   return Map.fold(folded, m, 5);
 };
 ```
@@ -1238,8 +1238,8 @@ value>" : address)` means that we cast a string into an address.
 ```jsligo group=big_maps
 let moves : register =
   Big_map.literal (list([
-    ["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address, [1,2]],
-    ["tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, [0,3]]]));
+    ["tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address, [1, 2]],
+    ["tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, [0, 3]]]));
 ```
 
 The predefined function `Big_map.literal` constructs a big map from a
@@ -1355,7 +1355,7 @@ built-in:
 ```jsligo group=big_maps
 let updated_map: register =
   Big_map.update
-    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, Some([4,9]), moves);
+    ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address, Some([4, 9]), moves);
 ```
 
 </Syntax>

@@ -220,8 +220,8 @@ type storage = int;
 let main = ([action,store]: [parameter, storage]) => {
   let storage =
     match(action, {
-    | Increment(n) => store + n
-    | Extend(k) => (Michelson`{ NEVER }` as ((n: never) => int))(k);
+     Increment: (n: int) => store + n,
+     Extend: (k: never) => (Michelson`{ NEVER }` as ((n: never) => int))(k);
     });
   return [list([]) as list<operation>, storage];
 };

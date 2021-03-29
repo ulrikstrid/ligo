@@ -60,6 +60,7 @@ module Compile_type = struct
   type type_compiler_opt = CST.type_expr -> (AST.type_expression option, abs_error) result
 
   let rec type_expression_to_constructor : CST.type_expr -> (string * AST.type_expression * attributes, _) result = function
+    | TString s -> ok (s.value, t_unit () ~loc:(Location.lift s.region), [])
     | TProd {inside = {value = {inside = (TString s, []); _}; region}; attributes} ->
       let attributes = compile_attributes attributes in
       ok (s.value, t_unit () ~loc:(Location.lift region), attributes)
@@ -1179,7 +1180,6 @@ and compile_statements_to_program : CST.ast -> (AST.module_, _) result = fun ast
       ok []
   in
   let statements = nseq_to_list ast.statements in
-  (* let statements = List.map fst statements in *)
   let%bind declarations = bind_map_list aux statements in
   let lst = List.flatten declarations in
   ok lst

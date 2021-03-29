@@ -421,6 +421,11 @@ let rem4 : nat = a mod d;  // 3
 </Syntax>
 <Syntax syntax="jsligo">
 
+> The behaviour of the `%` operator in JsLIGO is different from JavaScript. 
+> In JsLIGO, `%` is a modulus operator and in JavaScript it's a remainder 
+> operator. In the case of positive numbers everything is the same, but
+> not with negative numbers.
+ 
 ```jsligo group=d
 let a: int = 120;
 let b: int = 9;
