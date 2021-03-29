@@ -34,6 +34,8 @@ let mk_mod_path :
 
 (* Reductions on error *)
 
+%on_error_reduce seq_expr
+%on_error_reduce selected_expr
 %on_error_reduce nsepseq(selection,DOT)
 %on_error_reduce call_expr_level
 %on_error_reduce add_expr_level
@@ -46,8 +48,6 @@ let mk_mod_path :
 %on_error_reduce bin_op(disj_expr_level,BOOL_OR,conj_expr_level)
 %on_error_reduce base_expr(expr)
 %on_error_reduce base_expr(base_cond)
-%on_error_reduce module_var_e
-%on_error_reduce module_var_t
 %on_error_reduce nsepseq(module_name,DOT)
 %on_error_reduce core_expr
 %on_error_reduce match_expr(base_cond)
@@ -141,6 +141,7 @@ sep_or_term_list(item,sep):
 %inline type_name   : "<ident>"  { $1 }
 %inline field_name  : "<ident>"  { $1 }
 %inline struct_name : "<ident>"  { $1 }
+%inline variable    : "<ident>"  { $1 }
 %inline module_name : "<uident>" { $1 }
 %inline ctor        : "<uident>" { $1 }
 
@@ -797,7 +798,8 @@ last_expr:
   seq_expr
 | fun_expr(last_expr)
 | match_expr(last_expr)
-| let_in_sequence       { $1 }
+| let_in_sequence
+| tuple_expr { $1 }
 
 let_in_sequence:
   seq("[@<attr>]") "let" ioption("rec") let_binding "in" series  {
