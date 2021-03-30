@@ -107,8 +107,8 @@ sep_or_term_list(item,sep):
 
 (* Helpers *)
 
-%inline type_name   : "<lident>" { $1 }
-%inline field_name  : "<lident>" { $1 }
+%inline type_name   : "<ident>" { $1 }
+%inline field_name  : "<ident>" { $1 }
 %inline module_name : "<uident>" { $1 }
 %inline constr      : "<uident>" { $1 }
 
@@ -193,7 +193,7 @@ initializer_:
   }
 
 rest:
-  "..." "<lident>" {
+  "..." "<ident>" {
     let region = cover $1 $2.region in
     let value = {
       ellipsis = $1;
@@ -206,7 +206,7 @@ rest:
   }
 
 object_binding_property:
-  "<lident>" initializer_? {
+  "<ident>" initializer_? {
     match $2 with
     | Some (eq, expr) ->
       let region = cover $1.region (expr_to_region expr) in
@@ -222,7 +222,7 @@ object_binding_property:
     | None ->
       PVar $1
   }
-| "<lident>" ":" binding_initializer {
+| "<ident>" ":" binding_initializer {
     let region = cover $1.region $3.region in
     let value = {
       property = $1;
@@ -258,7 +258,7 @@ object_binding_pattern:
 array_binding_pattern_item:
   /* empty  */          { PWild Region.ghost }
 | rest                  { $1 }
-| "<lident>"            { PVar $1}
+| "<ident>"            { PVar $1}
 | "_"                   { PWild $1 }
 | array_binding_pattern { $1 }
 
@@ -278,7 +278,7 @@ array_binding_pattern:
   }
 
 binding_pattern:
-  "<lident>"              { PVar $1 }
+  "<ident>"              { PVar $1 }
 | object_binding_pattern  { $1 }
 | array_binding_pattern   { $1 }
 | "_"                     { PWild $1 }
@@ -346,7 +346,7 @@ type_expr:
   fun_type | sum_type | record_type { $1 }
 
 fun_type_arg:
-  "<lident>" ":" type_expr {
+  "<ident>" ":" type_expr {
     {name      = $1;
      colon     = $2;
      type_expr = $3; }
@@ -385,7 +385,7 @@ module_access_t:
 
 module_var_t: 
   module_access_t   { TModA $1 }
-| "<lident>"             { TVar  $1 }
+| "<ident>"             { TVar  $1 }
 
 core_type:
   type_name            {       TVar $1 }
@@ -522,7 +522,7 @@ iteration_statement:
 | while_statement  { $1 }
 
 for_of_statement:
-  "for" "(" "let" "<lident>" "of" assignment_expr ")" statement {
+  "for" "(" "let" "<ident>" "of" assignment_expr ")" statement {
     let region = cover $1 (statement_to_region $8) in
     SForOf {
       value = {
@@ -538,7 +538,7 @@ for_of_statement:
       region
     }
   }
-| "for" "(" "const" "<lident>" "of" assignment_expr ")" statement {
+| "for" "(" "const" "<ident>" "of" assignment_expr ")" statement {
     let region = cover $1 (statement_to_region $8) in
     SForOf {
       value = {
@@ -724,7 +724,7 @@ arrow_function:
       value;
     }
  }
-| "<lident>" "=>" arrow_function_body {
+| "<ident>" "=>" arrow_function_body {
     let region = cover $1.region (arrow_function_body_to_region $3) in
     let value = {
       parameters = EVar $1;
@@ -897,7 +897,7 @@ object_literal:
   }
 
 member_expr:
-  "<lident>"                 {                               EVar $1 }
+  "<ident>"                 {                               EVar $1 }
 | "_"                        {        EVar {value = "_"; region = $1}}
 | "<int>"                    {                       EArith (Int $1) }
 | "<bytes>"                  {                             EBytes $1 }

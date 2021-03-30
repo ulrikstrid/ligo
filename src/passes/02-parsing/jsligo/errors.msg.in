@@ -40,7 +40,7 @@ interactive_expr: LBRACE ELLIPSIS While
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: LBRACE Lident COMMA ELLIPSIS Bytes SEMI
+interactive_expr: LBRACE Ident COMMA ELLIPSIS Bytes SEMI
 ##
 ## Ends in an error in state: 199.
 ##
@@ -70,7 +70,7 @@ interactive_expr: LBRACE Lident COMMA ELLIPSIS Bytes SEMI
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: LBRACE Lident COMMA Lident COMMA While
+interactive_expr: LBRACE Ident COMMA Ident COMMA While
 ##
 ## Ends in an error in state: 200.
 ##
@@ -83,7 +83,7 @@ interactive_expr: LBRACE Lident COMMA Lident COMMA While
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: LBRACE Lident COMMA While
+interactive_expr: LBRACE Ident COMMA While
 ##
 ## Ends in an error in state: 197.
 ##
@@ -96,15 +96,15 @@ interactive_expr: LBRACE Lident COMMA While
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: LBRACE Lident While
+interactive_expr: LBRACE Ident While
 ##
 ## Ends in an error in state: 96.
 ##
-## property -> Lident . [ RBRACE COMMA ]
-## property_name -> Lident . [ COLON ]
+## property -> Ident . [ RBRACE COMMA ]
+## property_name -> Ident . [ COLON ]
 ##
 ## The known suffix of the stack is as follows:
-## Lident
+## Ident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -209,7 +209,7 @@ contract: Attr While
 ##
 ## Ends in an error in state: 33.
 ##
-## seq(Attr) -> Attr . seq(Attr) [ WILD VBAR Lident Let LBRACKET LBRACE Const ]
+## seq(Attr) -> Attr . seq(Attr) [ WILD VBAR Ident Let LBRACKET LBRACE Const ]
 ##
 ## The known suffix of the stack is as follows:
 ## Attr
@@ -314,26 +314,26 @@ contract: Export As
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: For LPAR Const Lident Of WILD RPAR Verbatim
+contract: For LPAR Const Ident Of WILD RPAR Verbatim
 ##
 ## Ends in an error in state: 302.
 ##
-## for_of_statement -> For LPAR Const Lident Of assignment_expr RPAR . statement [ SEMI RBRACE Else EOF Default Case ]
+## for_of_statement -> For LPAR Const Ident Of assignment_expr RPAR . statement [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## For LPAR Const Lident Of assignment_expr RPAR
+## For LPAR Const Ident Of assignment_expr RPAR
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: For LPAR Const Lident Of WILD SEMI
+contract: For LPAR Const Ident Of WILD SEMI
 ##
 ## Ends in an error in state: 301.
 ##
-## for_of_statement -> For LPAR Const Lident Of assignment_expr . RPAR statement [ SEMI RBRACE Else EOF Default Case ]
+## for_of_statement -> For LPAR Const Ident Of assignment_expr . RPAR statement [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## For LPAR Const Lident Of assignment_expr
+## For LPAR Const Ident Of assignment_expr
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -353,26 +353,26 @@ contract: For LPAR Const Lident Of WILD SEMI
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: For LPAR Const Lident Of While
+contract: For LPAR Const Ident Of While
 ##
 ## Ends in an error in state: 300.
 ##
-## for_of_statement -> For LPAR Const Lident Of . assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
+## for_of_statement -> For LPAR Const Ident Of . assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## For LPAR Const Lident Of
+## For LPAR Const Ident Of
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: For LPAR Const Lident While
+contract: For LPAR Const Ident While
 ##
 ## Ends in an error in state: 299.
 ##
-## for_of_statement -> For LPAR Const Lident . Of assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
+## for_of_statement -> For LPAR Const Ident . Of assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## For LPAR Const Lident
+## For LPAR Const Ident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -381,7 +381,7 @@ contract: For LPAR Const While
 ##
 ## Ends in an error in state: 298.
 ##
-## for_of_statement -> For LPAR Const . Lident Of assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
+## for_of_statement -> For LPAR Const . Ident Of assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
 ## For LPAR Const
@@ -389,26 +389,26 @@ contract: For LPAR Const While
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: For LPAR Let Lident Of WILD RPAR Verbatim
+contract: For LPAR Let Ident Of WILD RPAR Verbatim
 ##
 ## Ends in an error in state: 232.
 ##
-## for_of_statement -> For LPAR Let Lident Of assignment_expr RPAR . statement [ SEMI RBRACE Else EOF Default Case ]
+## for_of_statement -> For LPAR Let Ident Of assignment_expr RPAR . statement [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## For LPAR Let Lident Of assignment_expr RPAR
+## For LPAR Let Ident Of assignment_expr RPAR
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: For LPAR Let Lident Of WILD SEMI
+contract: For LPAR Let Ident Of WILD SEMI
 ##
 ## Ends in an error in state: 231.
 ##
-## for_of_statement -> For LPAR Let Lident Of assignment_expr . RPAR statement [ SEMI RBRACE Else EOF Default Case ]
+## for_of_statement -> For LPAR Let Ident Of assignment_expr . RPAR statement [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## For LPAR Let Lident Of assignment_expr
+## For LPAR Let Ident Of assignment_expr
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -428,26 +428,26 @@ contract: For LPAR Let Lident Of WILD SEMI
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: For LPAR Let Lident Of While
+contract: For LPAR Let Ident Of While
 ##
 ## Ends in an error in state: 230.
 ##
-## for_of_statement -> For LPAR Let Lident Of . assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
+## for_of_statement -> For LPAR Let Ident Of . assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## For LPAR Let Lident Of
+## For LPAR Let Ident Of
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: For LPAR Let Lident While
+contract: For LPAR Let Ident While
 ##
 ## Ends in an error in state: 229.
 ##
-## for_of_statement -> For LPAR Let Lident . Of assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
+## for_of_statement -> For LPAR Let Ident . Of assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## For LPAR Let Lident
+## For LPAR Let Ident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -456,7 +456,7 @@ contract: For LPAR Let While
 ##
 ## Ends in an error in state: 228.
 ##
-## for_of_statement -> For LPAR Let . Lident Of assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
+## for_of_statement -> For LPAR Let . Ident Of assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
 ## For LPAR Let
@@ -468,8 +468,8 @@ contract: For LPAR While
 ##
 ## Ends in an error in state: 227.
 ##
-## for_of_statement -> For LPAR . Let Lident Of assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
-## for_of_statement -> For LPAR . Const Lident Of assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
+## for_of_statement -> For LPAR . Let Ident Of assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
+## for_of_statement -> For LPAR . Const Ident Of assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
 ## For LPAR
@@ -481,8 +481,8 @@ contract: For While
 ##
 ## Ends in an error in state: 226.
 ##
-## for_of_statement -> For . LPAR Let Lident Of assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
-## for_of_statement -> For . LPAR Const Lident Of assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
+## for_of_statement -> For . LPAR Let Ident Of assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
+## for_of_statement -> For . LPAR Const Ident Of assignment_expr RPAR statement [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
 ## For
@@ -547,7 +547,7 @@ contract: If LPAR WILD SEMI
 ##
 ## Ends in an error in state: 223.
 ##
-## par(expr) -> LPAR expr . RPAR [ While WILD Uident Type True Switch String Return New MINUS Lident Let LPAR LBRACKET LBRACE Int Import If For False Export Const C_Some C_None Bytes BOOL_NOT Attr ]
+## par(expr) -> LPAR expr . RPAR [ While WILD Uident Type True Switch String Return New MINUS Ident Let LPAR LBRACKET LBRACE Int Import If For False Export Const C_Some C_None Bytes BOOL_NOT Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## LPAR expr
@@ -575,7 +575,7 @@ contract: If LPAR While
 ##
 ## Ends in an error in state: 222.
 ##
-## par(expr) -> LPAR . expr RPAR [ While WILD Uident Type True Switch String Return New MINUS Lident Let LPAR LBRACKET LBRACE Int Import If For False Export Const C_Some C_None Bytes BOOL_NOT Attr ]
+## par(expr) -> LPAR . expr RPAR [ While WILD Uident Type True Switch String Return New MINUS Ident Let LPAR LBRACKET LBRACE Int Import If For False Export Const C_Some C_None Bytes BOOL_NOT Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## LPAR
@@ -815,7 +815,7 @@ contract: LBRACKET While
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: LPAR LBRACE Lident RBRACE While
+contract: LPAR LBRACE Ident RBRACE While
 ##
 ## Ends in an error in state: 330.
 ##
@@ -1118,7 +1118,7 @@ contract: Let Attr VBAR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LBRACE ELLIPSIS Lident While
+contract: Let LBRACE ELLIPSIS Ident While
 ##
 ## Ends in an error in state: 275.
 ##
@@ -1130,19 +1130,19 @@ contract: Let LBRACE ELLIPSIS Lident While
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LBRACE Lident COLON While
+contract: Let LBRACE Ident COLON While
 ##
 ## Ends in an error in state: 266.
 ##
-## object_binding_property -> Lident COLON . binding_initializer [ RBRACE COMMA ]
+## object_binding_property -> Ident COLON . binding_initializer [ RBRACE COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## Lident COLON
+## Ident COLON
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LBRACE Lident COMMA While
+contract: Let LBRACE Ident COMMA While
 ##
 ## Ends in an error in state: 272.
 ##
@@ -1154,7 +1154,7 @@ contract: Let LBRACE Lident COMMA While
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LBRACE Lident EQ WILD SEMI
+contract: Let LBRACE Ident EQ WILD SEMI
 ##
 ## Ends in an error in state: 271.
 ##
@@ -1182,20 +1182,20 @@ contract: Let LBRACE Lident EQ WILD SEMI
 ## In state 265, spurious reduction of production initializer_expr -> expr 
 ## In state 264, spurious reduction of production initializer_ -> EQ initializer_expr 
 ## In state 269, spurious reduction of production option(initializer_) -> initializer_ 
-## In state 268, spurious reduction of production object_binding_property -> Lident option(initializer_) 
+## In state 268, spurious reduction of production object_binding_property -> Ident option(initializer_) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Let LBRACE Lident While
+contract: Let LBRACE Ident While
 ##
 ## Ends in an error in state: 262.
 ##
-## object_binding_property -> Lident . option(initializer_) [ RBRACE COMMA ]
-## object_binding_property -> Lident . COLON binding_initializer [ RBRACE COMMA ]
+## object_binding_property -> Ident . option(initializer_) [ RBRACE COMMA ]
+## object_binding_property -> Ident . COLON binding_initializer [ RBRACE COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## Lident
+## Ident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -1228,7 +1228,7 @@ contract: Let LBRACKET ELLIPSIS While
 ##
 ## Ends in an error in state: 252.
 ##
-## rest -> ELLIPSIS . Lident [ RBRACKET RBRACE COMMA ]
+## rest -> ELLIPSIS . Ident [ RBRACKET RBRACE COMMA ]
 ##
 ## The known suffix of the stack is as follows:
 ## ELLIPSIS
@@ -1374,7 +1374,7 @@ contract: Let While
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Lident ARROW LBRACE Verbatim
+contract: Ident ARROW LBRACE Verbatim
 ##
 ## Ends in an error in state: 90.
 ##
@@ -1386,7 +1386,7 @@ contract: Lident ARROW LBRACE Verbatim
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Lident ARROW LBRACE WILD Default
+contract: Ident ARROW LBRACE WILD Default
 ##
 ## Ends in an error in state: 324.
 ##
@@ -1414,27 +1414,27 @@ contract: Lident ARROW LBRACE WILD Default
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Lident ARROW While
+contract: Ident ARROW While
 ##
 ## Ends in an error in state: 16.
 ##
-## arrow_function -> Lident ARROW . arrow_function_body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
+## arrow_function -> Ident ARROW . arrow_function_body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
 ##
 ## The known suffix of the stack is as follows:
-## Lident ARROW
+## Ident ARROW
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Lident While
+contract: Ident While
 ##
 ## Ends in an error in state: 15.
 ##
-## arrow_function -> Lident . ARROW arrow_function_body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
-## member_expr -> Lident . [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
+## arrow_function -> Ident . ARROW arrow_function_body [ SEMI RPAR RBRACKET RBRACE Else EOF Default Case COMMA COLON ]
+## member_expr -> Ident . [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
 ##
 ## The known suffix of the stack is as follows:
-## Lident
+## Ident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -1552,7 +1552,7 @@ contract: Namespace While
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: New LPAR LBRACE Lident RBRACE While
+contract: New LPAR LBRACE Ident RBRACE While
 ##
 ## Ends in an error in state: 358.
 ##
@@ -1582,7 +1582,7 @@ contract: New WILD While
 ## Ends in an error in state: 360.
 ##
 ## member_expr -> member_expr . LBRACKET expr RBRACKET [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
-## member_expr -> member_expr . DOT Lident [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
+## member_expr -> member_expr . DOT Ident [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
 ## new_expr -> member_expr . [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LE GT GE Else EQ2 EQ EOF Default Case COMMA COLON BOOL_OR BOOL_AND As ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1767,26 +1767,26 @@ contract: Switch While
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Lident EQ While
+contract: Type Ident EQ While
 ##
 ## Ends in an error in state: 241.
 ##
-## type_decl -> Type Lident EQ . type_expr [ SEMI RBRACE Else EOF Default Case ]
+## type_decl -> Type Ident EQ . type_expr [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## Type Lident EQ
+## Type Ident EQ
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: Type Lident While
+contract: Type Ident While
 ##
 ## Ends in an error in state: 240.
 ##
-## type_decl -> Type Lident . EQ type_expr [ SEMI RBRACE Else EOF Default Case ]
+## type_decl -> Type Ident . EQ type_expr [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
-## Type Lident
+## Type Ident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -1795,7 +1795,7 @@ contract: Type While
 ##
 ## Ends in an error in state: 239.
 ##
-## type_decl -> Type . Lident EQ type_expr [ SEMI RBRACE Else EOF Default Case ]
+## type_decl -> Type . Ident EQ type_expr [ SEMI RBRACE Else EOF Default Case ]
 ##
 ## The known suffix of the stack is as follows:
 ## Type
@@ -1943,8 +1943,8 @@ contract: WILD As LBRACE Attr WILD
 ##
 ## Ends in an error in state: 61.
 ##
-## field_decl -> seq(Attr) . Lident [ RBRACE COMMA ]
-## field_decl -> seq(Attr) . Lident COLON type_expr [ RBRACE COMMA ]
+## field_decl -> seq(Attr) . Ident [ RBRACE COMMA ]
+## field_decl -> seq(Attr) . Ident COLON type_expr [ RBRACE COMMA ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr)
@@ -1959,7 +1959,7 @@ contract: WILD As LBRACE Attr WILD
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: WILD As LBRACE Lident COLON Int SEMI
+contract: WILD As LBRACE Ident COLON Int SEMI
 ##
 ## Ends in an error in state: 69.
 ##
@@ -1977,24 +1977,24 @@ contract: WILD As LBRACE Lident COLON Int SEMI
 ## In state 48, spurious reduction of production nsepseq(cartesian,VBAR) -> cartesian 
 ## In state 44, spurious reduction of production sum_type -> nsepseq(cartesian,VBAR) 
 ## In state 36, spurious reduction of production type_expr -> sum_type 
-## In state 64, spurious reduction of production field_decl -> seq(Attr) Lident COLON type_expr 
+## In state 64, spurious reduction of production field_decl -> seq(Attr) Ident COLON type_expr 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: WILD As LBRACE Lident COLON While
+contract: WILD As LBRACE Ident COLON While
 ##
 ## Ends in an error in state: 63.
 ##
-## field_decl -> seq(Attr) Lident COLON . type_expr [ RBRACE COMMA ]
+## field_decl -> seq(Attr) Ident COLON . type_expr [ RBRACE COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## seq(Attr) Lident COLON
+## seq(Attr) Ident COLON
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: WILD As LBRACE Lident COMMA Lident COLON Int SEMI
+contract: WILD As LBRACE Ident COMMA Ident COLON Int SEMI
 ##
 ## Ends in an error in state: 73.
 ##
@@ -2012,12 +2012,12 @@ contract: WILD As LBRACE Lident COMMA Lident COLON Int SEMI
 ## In state 48, spurious reduction of production nsepseq(cartesian,VBAR) -> cartesian 
 ## In state 44, spurious reduction of production sum_type -> nsepseq(cartesian,VBAR) 
 ## In state 36, spurious reduction of production type_expr -> sum_type 
-## In state 64, spurious reduction of production field_decl -> seq(Attr) Lident COLON type_expr 
+## In state 64, spurious reduction of production field_decl -> seq(Attr) Ident COLON type_expr 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: WILD As LBRACE Lident COMMA Lident COMMA While
+contract: WILD As LBRACE Ident COMMA Ident COMMA While
 ##
 ## Ends in an error in state: 74.
 ##
@@ -2030,7 +2030,7 @@ contract: WILD As LBRACE Lident COMMA Lident COMMA While
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: WILD As LBRACE Lident COMMA While
+contract: WILD As LBRACE Ident COMMA While
 ##
 ## Ends in an error in state: 70.
 ##
@@ -2043,15 +2043,15 @@ contract: WILD As LBRACE Lident COMMA While
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: WILD As LBRACE Lident While
+contract: WILD As LBRACE Ident While
 ##
 ## Ends in an error in state: 62.
 ##
-## field_decl -> seq(Attr) Lident . [ RBRACE COMMA ]
-## field_decl -> seq(Attr) Lident . COLON type_expr [ RBRACE COMMA ]
+## field_decl -> seq(Attr) Ident . [ RBRACE COMMA ]
+## field_decl -> seq(Attr) Ident . COLON type_expr [ RBRACE COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## seq(Attr) Lident
+## seq(Attr) Ident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -2134,19 +2134,19 @@ contract: WILD As LBRACKET While
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: WILD As LPAR Lident COLON Int COMMA Lident While
+contract: WILD As LPAR Ident COLON Int COMMA Ident While
 ##
 ## Ends in an error in state: 84.
 ##
-## fun_type_arg -> Lident . COLON type_expr [ RPAR COMMA ]
+## fun_type_arg -> Ident . COLON type_expr [ RPAR COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## Lident
+## Ident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: WILD As LPAR Lident COLON Int COMMA While
+contract: WILD As LPAR Ident COLON Int COMMA While
 ##
 ## Ends in an error in state: 83.
 ##
@@ -2158,7 +2158,7 @@ contract: WILD As LPAR Lident COLON Int COMMA While
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: WILD As LPAR Lident COLON Int RPAR ARROW While
+contract: WILD As LPAR Ident COLON Int RPAR ARROW While
 ##
 ## Ends in an error in state: 78.
 ##
@@ -2170,7 +2170,7 @@ contract: WILD As LPAR Lident COLON Int RPAR ARROW While
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: WILD As LPAR Lident COLON Int RPAR While
+contract: WILD As LPAR Ident COLON Int RPAR While
 ##
 ## Ends in an error in state: 77.
 ##
@@ -2182,7 +2182,7 @@ contract: WILD As LPAR Lident COLON Int RPAR While
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: WILD As LPAR Lident COLON Int SEMI
+contract: WILD As LPAR Ident COLON Int SEMI
 ##
 ## Ends in an error in state: 82.
 ##
@@ -2199,33 +2199,33 @@ contract: WILD As LPAR Lident COLON Int SEMI
 ## In state 48, spurious reduction of production nsepseq(cartesian,VBAR) -> cartesian 
 ## In state 44, spurious reduction of production sum_type -> nsepseq(cartesian,VBAR) 
 ## In state 36, spurious reduction of production type_expr -> sum_type 
-## In state 35, spurious reduction of production fun_type_arg -> Lident COLON type_expr 
+## In state 35, spurious reduction of production fun_type_arg -> Ident COLON type_expr 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: WILD As LPAR Lident COLON While
+contract: WILD As LPAR Ident COLON While
 ##
 ## Ends in an error in state: 31.
 ##
-## fun_type_arg -> Lident COLON . type_expr [ RPAR COMMA ]
+## fun_type_arg -> Ident COLON . type_expr [ RPAR COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## Lident COLON
+## Ident COLON
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: WILD As LPAR Lident While
+contract: WILD As LPAR Ident While
 ##
 ## Ends in an error in state: 30.
 ##
-## core_type -> Lident . [ VBAR RPAR ]
-## core_type -> Lident . LT nsepseq(type_expr,COMMA) GT [ VBAR RPAR ]
-## fun_type_arg -> Lident . COLON type_expr [ RPAR COMMA ]
+## core_type -> Ident . [ VBAR RPAR ]
+## core_type -> Ident . LT nsepseq(type_expr,COMMA) GT [ VBAR RPAR ]
+## fun_type_arg -> Ident . COLON type_expr [ RPAR COMMA ]
 ##
 ## The known suffix of the stack is as follows:
-## Lident
+## Ident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -2263,14 +2263,14 @@ contract: WILD As LPAR While
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: WILD As Lident LT WILD RBRACKET
+contract: WILD As Ident LT WILD RBRACKET
 ##
 ## Ends in an error in state: 86.
 ##
-## core_type -> Lident LT nsepseq(type_expr,COMMA) . GT [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON BOOL_OR BOOL_AND ARROW ]
+## core_type -> Ident LT nsepseq(type_expr,COMMA) . GT [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON BOOL_OR BOOL_AND ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## Lident LT nsepseq(type_expr,COMMA)
+## Ident LT nsepseq(type_expr,COMMA)
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -2284,27 +2284,27 @@ contract: WILD As Lident LT WILD RBRACKET
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: WILD As Lident LT While
+contract: WILD As Ident LT While
 ##
 ## Ends in an error in state: 28.
 ##
-## core_type -> Lident LT . nsepseq(type_expr,COMMA) GT [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON BOOL_OR BOOL_AND ARROW ]
+## core_type -> Ident LT . nsepseq(type_expr,COMMA) GT [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON BOOL_OR BOOL_AND ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## Lident LT
+## Ident LT
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-contract: WILD As Lident While
+contract: WILD As Ident While
 ##
 ## Ends in an error in state: 27.
 ##
-## core_type -> Lident . [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON BOOL_OR BOOL_AND ARROW ]
-## core_type -> Lident . LT nsepseq(type_expr,COMMA) GT [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON BOOL_OR BOOL_AND ARROW ]
+## core_type -> Ident . [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON BOOL_OR BOOL_AND ARROW ]
+## core_type -> Ident . LT nsepseq(type_expr,COMMA) GT [ VBAR SEMI RPAR RBRACKET RBRACE GT Else EQ EOF Default Case COMMA COLON BOOL_OR BOOL_AND ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## Lident
+## Ident
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -2463,7 +2463,7 @@ contract: WILD DOT While
 ##
 ## Ends in an error in state: 181.
 ##
-## member_expr -> member_expr DOT . Lident [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
+## member_expr -> member_expr DOT . Ident [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
 ##
 ## The known suffix of the stack is as follows:
 ## member_expr DOT
@@ -2833,7 +2833,7 @@ contract: WILD While
 ## call_expr -> member_expr . par(nsepseq(expr,COMMA)) [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE GT GE Else EQ2 EQ EOF Default Case COMMA COLON BOOL_OR BOOL_AND As ]
 ## call_expr -> member_expr . LPAR RPAR [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE GT GE Else EQ2 EQ EOF Default Case COMMA COLON BOOL_OR BOOL_AND As ]
 ## member_expr -> member_expr . LBRACKET expr RBRACKET [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
-## member_expr -> member_expr . DOT Lident [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
+## member_expr -> member_expr . DOT Ident [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LPAR LE LBRACKET GT GE Else EQ2 EQ EOF Default DOT Case COMMA COLON BOOL_OR BOOL_AND As ]
 ## new_expr -> member_expr . [ TIMES SLASH SEMI RPAR REM RBRACKET RBRACE PLUS NE MINUS LT LE GT GE Else EQ2 EQ EOF Default Case COMMA COLON BOOL_OR BOOL_AND As ]
 ##
 ## The known suffix of the stack is as follows:

@@ -37,7 +37,7 @@ module T =
     | Int      of (lexeme * Z.t) Region.reg
    (* | Nat      of (lexeme * Z.t) Region.reg *)
    (* | Mutez    of (lexeme * Z.t) Region.reg *)
-    | Lident   of lexeme Region.reg
+    | Ident   of lexeme Region.reg
     | Uident   of lexeme Region.reg
    (* | Lang     of lexeme Region.reg Region.reg*)
     | Attr     of string Region.reg
@@ -154,7 +154,7 @@ module T =
     let concrete = function
         (* Identifiers, labels, numbers and strings *)
 
-      "Lident"   -> id_sym ()
+      "Ident"   -> id_sym ()
     | "Uident"   -> ctor_sym ()
     | "Int"      -> "1"
     (* | "Nat"      -> "1n"
@@ -292,8 +292,8 @@ module T =
         region, sprintf "Nat (%S, %s)" s (Z.to_string n)
     | Mutez Region.{region; value = s,n} ->
         region, sprintf "Mutez (%S, %s)" s (Z.to_string n) *)
-    | Lident Region.{region; value} ->
-        region, sprintf "Lident %S" value
+    | Ident Region.{region; value} ->
+        region, sprintf "Ident %S" value
     | Uident Region.{region; value} ->
         region, sprintf "Uident %S" value
     (* | Lang Region.{region; value} ->
@@ -409,7 +409,7 @@ module T =
     | Verbatim v -> String.escaped v.Region.value
     | Bytes b    -> fst b.Region.value
     | Int i      -> fst i.Region.value
-    | Lident id  -> id.Region.value
+    | Ident id  -> id.Region.value
     | Uident id  -> id.Region.value
     | Attr a     -> sprintf "[@%s]" a.Region.value
     (* | Lang lang  -> Region.(lang.value.value) *)
@@ -614,7 +614,7 @@ rule scan_ident region lexicon = parse
     then Error Reserved_name
     else Ok (match SMap.find_opt value lexicon.kwd with
                Some mk_kwd -> mk_kwd region
-             |        None -> Lident Region.{region; value}) }
+             |        None -> Ident Region.{region; value}) }
 
 and scan_constr region lexicon = parse
   (constr as value) eof {
