@@ -278,7 +278,7 @@ module T =
     | LineCom Region.{region; value} -> region, sprintf "Line comment %S" value
     | BlockCom Region.{region; value} -> region, sprintf "Block comment %S" value
 
-      (* Literals *) 
+      (* Literals *)
     | String Region.{region; value} ->
         region, sprintf "String %S" value
     | Verbatim Region.{region; value} ->
@@ -390,7 +390,7 @@ module T =
     | As          region -> region, "As"
     | Namespace   region -> region, "Namespace"
     | Type        region -> region, "Type"
-    
+
     | EOF    region -> region, "EOF"
 
 
@@ -398,11 +398,11 @@ module T =
       (* Directives *)
 
       Directive d -> Directive.to_lexeme d
-    
+
       (* Comments *)
     | LineCom c -> sprintf "// %s" c.value
     | BlockCom c -> sprintf "/* %s */" c.value
-    
+
       (* Literals *)
 
     | String s   -> sprintf "%S" (String.escaped s.Region.value)
@@ -498,7 +498,7 @@ module T =
     (* | With     _ -> "with" *)
 
     (* TypeScript keywords *)
-    
+
     | As          _ -> "as"
     | Namespace   _ -> "namespace"
     | Type        _ -> "type"
@@ -507,7 +507,7 @@ module T =
 
     | C_None  _ -> "None"
     | C_Some  _ -> "Some"
-    
+
     (* Virtual tokens *)
 
     | EOF _ -> ""
@@ -554,7 +554,7 @@ module T =
        (fun reg -> As        reg);
        (fun reg -> Namespace reg);
        (fun reg -> Type      reg);
-       
+
     ]
 
     let reserved = SSet.empty
@@ -762,7 +762,7 @@ and scan_constr region lexicon = parse
 
     (* Code injection *)
 
-    let mk_lang _lang _region = 
+    let mk_lang _lang _region =
       failwith "Not supported"
     (* Lang Region.{value=lang; region} *)
 
