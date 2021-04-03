@@ -50,8 +50,8 @@ module Token = Lexer_cameligo.Token
 %token <Region.t> LE "<="
 %token <Region.t> GE ">="
 
-%token <Region.t> DISJ "||"
-%token <Region.t> CONJ "&&"
+%token <Region.t> BOOL_OR  "||"
+%token <Region.t> BOOL_AND "&&"
 
  (* Keywords *)
 
