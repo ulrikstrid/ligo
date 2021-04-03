@@ -18,7 +18,7 @@ module Token = Lexing_jsligo.Token
 %token                  <string Region.reg> Ident    "<ident>"
 %token                  <string Region.reg> Uident   "<uident>"
 %token                  <string Region.reg> Attr     "[@attr]"
-// %token <Token.lexeme Region.reg Region.reg> Lang     "<lang>"
+// %token <Token.lexeme Region.reg Region.reg> Lang     "[%lang"
 
   (* Symbols *)
 
