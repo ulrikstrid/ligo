@@ -1,13 +1,13 @@
 let a = 1;
-let b = 1 as nat;
-let c = 2 as mutez;
-let d = 1 as nat + 2 as nat;
-let e = 1 as mutez + 3 as mutez;
+let b = (1 as nat);
+let c = (2 as mutez);
+let d = (1 as nat) + (2 as nat);
+let e = (1 as mutez) + (3 as mutez);
 let f = [a, c];
 let g = [a + 1, c];
-let h = ["a" + "2", d];
-let i = (a: int, b: int) => a + b;
-let j = (a: int, b: int) => a - b;
+/* let h = ["a" + "2", d]; */
+let i = (a: int, b: int): int => a + b;
+let j = (a: int, b: int): int => a - b;
 /* not supported by typer yet: let k = () => b; */
 /* not supported by typer yet: let l = () => i(2,3); */
 // let m = {
@@ -30,8 +30,8 @@ let q = {
     k: {
       l: 1,
       z: 2
-    },
-  },
+    }
+  }
 };
 
 /*

@@ -7,6 +7,7 @@ open Types
 open Main_errors
 
 type file_name = string
+type module_name = string
 type graph = G.t * (Compile.Helpers.meta * Compile.Of_core.form * Buffer.t * (string * string) list) SMap.t
 
 type 'a build_error = ('a , Main_errors.all) result
@@ -108,7 +109,7 @@ let type_file_with_dep ~(options:Compiler_options.t)  asts_typed (file_name, (me
   in
   let%bind deps = bind_map_list aux deps in
   let init_env = add_modules_in_env options.init_env deps in
-  let%bind ast_typed,ast_typed_env,_ = Compile.Of_core.compile ~typer_switch:options.typer_switch ~init_env form ast_core in
+  let%bind ast_typed,ast_typed_env = Compile.Of_core.compile ~infer:options.infer ~init_env form ast_core in
   ok @@ SMap.add file_name (ast_typed,ast_typed_env) asts_typed
 
 let type_contract : options:Compiler_options.t -> string -> Compile.Of_core.form -> file_name -> (_, _) result =
@@ -137,3 +138,22 @@ let build_contract : options:Compiler_options.t -> string -> _ -> file_name -> (
     let%bind mini_c,_   = build_mini_c ~options syntax (Contract entry_point) file_name in
     let%bind michelson  = trace build_error_tracer @@ Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c entry_point in
     ok michelson
+
+let build_contract_use : options:Compiler_options.t -> string -> file_name -> (_, _) result =
+  fun ~options syntax file_name ->
+    let%bind contract,env = combined_contract ~options syntax Compile.Of_core.Env file_name in
+    let%bind mini_c,map = trace build_error_tracer @@ Compile.Of_typed.compile_with_modules @@ contract in
+    ok (mini_c, map, contract, env)
+
+let build_contract_module : options:Compiler_options.t -> string -> _ -> file_name -> module_name -> (_, _) result =
+  fun ~options syntax entry_point file_name module_name ->
+  let%bind deps = dependency_graph syntax ~options entry_point file_name in
+  let%bind order_deps = solve_graph deps file_name in
+  let%bind asts_typed = bind_fold_list (type_file_with_dep ~options) (SMap.empty) order_deps in
+  let _, env = SMap.find file_name asts_typed in
+  let%bind contract = aggregate_contract order_deps asts_typed in
+  let module_contract = Ast_typed.Declaration_module { module_binder = module_name;
+                                                       module_ = contract } in
+  let contract = Ast_typed.Module_Fully_Typed [Location.wrap module_contract] in
+  let%bind mini_c,map = trace build_error_tracer @@ Compile.Of_typed.compile_with_modules @@ contract in
+  ok (mini_c, map, contract, env)

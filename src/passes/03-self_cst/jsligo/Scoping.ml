@@ -145,12 +145,11 @@ and check_patterns patterns =
 let check_variants variants =
   let rec add acc = function
     TString value
-  | TConstr value
   | TVar value -> 
       if VarSet.mem value acc then
         fail @@ duplicate_variant value
       else ok @@ VarSet.add value acc
-  | TProd {value = {inside; _}; _} as t -> (
+  | TProd {inside = {value = {inside; _}; _}; _ } as t -> (
     let items = Utils.nsepseq_to_list inside in
     match items with 
       hd :: [] -> add acc hd
@@ -190,8 +189,8 @@ let peephole_type : unit -> type_expr -> (unit,'err) result = fun _ t ->
   | TPar _
   | TString _
   | TVar _
-  | TConstr _
   | TModA _
+  | TInt _
   | TWild _ -> ok @@ ()
 
 let peephole_expression : unit -> expr -> (unit,'err) result = fun () _ ->
@@ -223,6 +222,11 @@ let rec peephole_statement : unit -> statement -> (unit, 'err) result = fun _ s 
     ok @@ ()
   | SType  {value = {name; _}; _} ->
     let%bind () = check_reserved_name name in 
+    ok @@ ()
+  | SWhile {value = {expr; statement; _}; _}
+  | SForOf {value = {expr; statement; _}; _} ->
+    let%bind () = peephole_expression () expr in
+    let%bind () = peephole_statement () statement in
     ok @@ ()
   | SBlock  _
   | SCond   _

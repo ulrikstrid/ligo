@@ -19,6 +19,7 @@ let first_region = function
 
 (* Reductions on error *)
 
+%on_error_reduce seq_expr
 %on_error_reduce nsepseq(selection,DOT)
 %on_error_reduce call_expr_level
 %on_error_reduce add_expr_level
@@ -160,6 +161,7 @@ declaration:
 | let_declaration {         Let $1 }
 | module_decl     {  ModuleDecl $1 }
 | module_alias    { ModuleAlias $1 }
+| "<directive>"   {   Directive $1 }
 
 (* Type declarations *)
 
@@ -295,8 +297,8 @@ module_access_t :
     in {region; value} }
 
 module_var_t:
-  module_access_t   { TModA $1 }
-| field_name        { TVar  $1 }
+  module_access_t  { TModA $1 }
+| field_name       { TVar  $1 }
 
 field_decl:
   seq("[@attr]") field_name ":" type_expr {
@@ -827,7 +829,8 @@ last_expr:
   seq_expr
 | fun_expr(last_expr)
 | match_expr(last_expr)
-| let_in_sequence       { $1 }
+| let_in_sequence
+| tuple_expr { $1 }
 
 let_in_sequence:
   seq("[@attr]") "let" ioption("rec") let_binding "in" series  {

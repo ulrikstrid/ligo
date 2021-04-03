@@ -4,33 +4,20 @@
 
 [@@@warning "-30-40-42"]
 
-(* Utilities *)
+(* Vendor dependencies *)
 
-module Utils = Simple_utils.Utils
+module Directive = LexerLib.Directive
+module Utils     = Simple_utils.Utils
+module Region    = Simple_utils.Region
+
 open Utils
-
-(* Regions
-
-   The AST carries all the regions where tokens have been found by the
-   lexer, plus additional regions corresponding to whole subtrees
-   (like entire expressions, patterns etc.). These regions are needed
-   for error reporting and source-to-source transformations. To make
-   these pervasive regions more legible, we define singleton types for
-   the symbols, keywords etc. with suggestive names like "kwd_and"
-   denoting the _region_ of the occurrence of the keyword "and".
-*)
-
-module Region = Simple_utils.Region
-
 type 'a reg = 'a Region.reg
 
 (* Lexemes *)
 
-type lexeme = string
-type field_name = string reg
-type ident = string reg
+type lexeme       = string
 
-(* Keywords of Reason *)
+(* Keywords of JsLIGO *)
 
 type kwd_else      = Region.t
 type kwd_false     = Region.t
@@ -52,6 +39,9 @@ type kwd_break     = Region.t
 type kwd_namespace = Region.t
 type kwd_export    = Region.t
 type kwd_import    = Region.t
+type kwd_while     = Region.t
+type kwd_for     = Region.t
+type kwd_of     = Region.t
 
 (* Data constructors *)
 
@@ -114,12 +104,15 @@ type eof = Region.t
 
 (* Literals *)
 
-type variable    = string reg
-type fun_name    = string reg
-type type_name   = string reg
-type type_constr = string reg
-type constr      = string reg
-type attribute   = string reg
+type variable     = string reg
+type fun_name     = string reg
+type type_name    = string reg
+type type_constr  = string reg
+type constr       = string reg
+type attribute    = string reg
+type field_name   = string reg
+type module_name  = string reg
+
 
 (* Parentheses *)
 
@@ -156,11 +149,11 @@ type t = {
   eof        : eof
 }
 
-and toplevel_statements = toplevel_statement_semi nseq
+and toplevel_statements = toplevel_statement nseq
 
-and toplevel_statement_semi = statement * semi option
-
-and statements = (statement, semi) nsepseq
+and toplevel_statement =
+  TopLevel  of statement * semi option
+| Directive of Directive.t
 
 and ast = t
 
@@ -201,21 +194,25 @@ and type_expr =
 | TFun    of (fun_type_args * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
-| TConstr of variable
 | TWild   of wild
 | TString of lexeme reg
+| TInt    of (lexeme * Z.t) reg
 | TModA   of type_expr module_access reg
 
 and 'a module_access = {
-  module_name : ident;
+  module_name : module_name;
   selector    : dot;
   field       : 'a;
 }
 
-and cartesian = (type_expr, comma) nsepseq brackets reg
+
+and cartesian = {
+  inside: (type_expr, comma) nsepseq brackets reg;
+  attributes: attributes
+}
 
 and sum_type = {
-  lead_vbar  : vbar;
+  lead_vbar  : vbar option;
   variants   : (type_expr, vbar) nsepseq;
   attributes : attributes
 }
@@ -318,8 +315,8 @@ and expr =
   EFun     of fun_expr reg
 | EPar     of expr par reg
 | ESeq     of (expr, comma) nsepseq reg
-| ELident  of variable
-| EUident  of variable
+| EVar     of variable
+| EModA    of expr module_access reg
 | ELogic   of logic_expr
 | EArith   of arith_expr
 | ECall    of (expr * arguments) reg
@@ -330,6 +327,7 @@ and expr =
 | EString  of string_expr
 | EProj    of projection reg
 | EAssign  of expr * equal * expr
+| EConstr  of constr_expr
 
 | EAnnot   of annot_expr reg
 | EUnit    of the_unit reg
@@ -345,16 +343,39 @@ and statement =
 | SType       of type_decl reg
 | SSwitch     of switch reg
 | SBreak      of kwd_break
-| SNamespace  of (kwd_namespace * ident * (statements braced reg)) reg
+| SNamespace  of (kwd_namespace * module_name * (statements braced reg)) reg
 | SExport     of (kwd_export * statement) reg
 | SImport     of import reg
+| SWhile      of while_ reg
+| SForOf      of for_of reg
+
+and while_ = {
+  kwd_while: kwd_while;
+  lpar:      lpar;
+  expr:      expr;
+  rpar:      rpar;
+  statement: statement;
+}
+
+and for_of = {
+  kwd_for   : kwd_for;
+  lpar      : lpar;
+  const     : bool;
+  name      : variable;
+  kwd_of    : kwd_of;
+  expr      : expr;
+  rpar      : rpar;
+  statement : statement
+}
 
 and import = {
   kwd_import   : kwd_import;
-  alias        : ident;
+  alias        : module_name;
   equal        : equal;
-  module_path  : (ident, dot) nsepseq
+  module_path  : (module_name, dot) nsepseq
 }
+
+and statements = (statement, semi) nsepseq
 
 and arguments =
   Multiple of (expr,comma) nsepseq par reg
@@ -378,6 +399,11 @@ and 'a ne_injection = {
 and compound =
 | Braces   of lbrace * rbrace
 | Brackets of lbracket * rbracket
+
+and constr_expr =
+  ENone      of c_None
+| ESomeApp   of (c_Some * expr) reg
+| EConstrApp of (constr * expr option) reg
 
 and arith_expr =
   Add   of plus bin_op reg
@@ -463,9 +489,8 @@ and cond_statement = {
    the innermost covers the <language>. *)
 
 and code_inj = {
-  language : string reg reg;
+  language : string reg;
   code     : expr;
-  rbracket : rbracket;
 }
 
 (* Projecting regions from some nodes of the AST *)
@@ -480,7 +505,7 @@ let nsepseq_to_region to_region (hd,tl) =
   Region.cover (to_region hd) (last reg tl)
 
 let type_expr_to_region = function
-  TProd   {region; _}
+  TProd   {inside = {region; _}; _}
 | TSum    {region; _}
 | TObject {region; _}
 | TApp    {region; _}
@@ -489,7 +514,7 @@ let type_expr_to_region = function
 | TString {region; _}
 | TVar    {region; _}
 | TModA   {region; _}
-| TConstr {region; _}
+| TInt    {region; _}
 | TWild    region
  -> region
 
@@ -521,17 +546,22 @@ let arith_expr_to_region = function
 let string_expr_to_region = function
   Verbatim {region;_} | String {region;_} -> region
 
+and constr_expr_to_region = function
+  ENone region
+| EConstrApp {region; _}
+| ESomeApp   {region; _} -> region
+
 let rec expr_to_region = function
   ELogic e -> logic_expr_to_region e
 | EArith e -> arith_expr_to_region e
 | EString e -> string_expr_to_region e
+| EConstr e -> constr_expr_to_region e
 | EAssign (f, _, e) -> Region.cover (expr_to_region f) (expr_to_region e)
 | EAnnot {region;_ } | EFun {region;_}
-| ECall {region;_}   | ELident {region; _}    | EProj {region; _}
+| ECall {region;_}   | EVar {region; _}    | EProj {region; _}
 | EUnit {region;_}   | EPar {region;_}     | EBytes {region; _}
 | ESeq {region; _}   | EObject {region; _} | EArray { region; _}
-| ENew {region; _}   | EUident {region; _}
-| ECodeInj {region; _} -> region
+| ENew {region; _}   | ECodeInj {region; _} | EModA { region; _} -> region
 
 let statement_to_region = function
   SBreak b -> b
@@ -545,6 +575,8 @@ let statement_to_region = function
 | SType {region; _} 
 | SImport {region; _}
 | SExport {region; _}
+| SForOf {region; _}
+| SWhile {region; _}
 | SNamespace {region; _} -> region
 
 let selection_to_region = function

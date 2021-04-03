@@ -74,7 +74,7 @@ let transfer = ([p,s] : [transfer, storage]) : [list <operation>, storage] => {
 	    None: () => (0 as nat)
 	  });
 	  let new_tokens2 = Big_map.update (p.address_to, (Some (receiver_balance + p.value)), new_tokens);
-	  return [(List() as list <operation>), { ...s,tokens:new_tokens2, allowances:new_allowances}];
+	  return [(list([]) as list <operation>), { ...s,tokens:new_tokens2, allowances:new_allowances}];
   };
 };
 
@@ -89,7 +89,7 @@ let approve = ([p,s] : [approve, storage]) : [list <operation>, storage] => {
   }
   else {
     let new_allowances = Big_map.update ([p.spender, Tezos.sender], (Some (p.value)), s.allowances);
-    return [(List() as list <operation>), { ...s, allowances : new_allowances}];
+    return [(list([]) as list <operation>), { ...s, allowances : new_allowances}];
   };
 };
 
@@ -120,7 +120,7 @@ let getTotalSupply = ([p,s] : [getTotalSupply, storage]) : [list <operation>, st
 };
 
 
-let main = ([a,s]: [action, storage]) =>
+let main = ([a,s]: [action, storage]): [list<operation>, storage] =>
   match(a, {
 	  Transfer: (p: transfer) => transfer([p, s]),
 	  Approve: (p: approve) => approve ([p, s]),
@@ -148,12 +148,12 @@ let foo      = (n : int) : int => n + 10;
 let neg_op_2 = (b : int) : int => -foo(b);  
 let ediv_op  = (n : int) : option<[int, int]> => ediv (n,2);
 
-let main = ([p, s] : [bool, unit]) => {
+let main = ([p, s] : [bool, unit]): [list<operation>, unit] => {
   let u : unit = assert (p);
-  return ((List() as list<operation>), s);
+  return [(list([]) as list<operation>), s];
 };
 
-let some = (o : option<unit>) => {
+let some = (o : option<unit>):unit => {
   assert_some(o)
 };
 // [@inline]
@@ -171,7 +171,7 @@ let y = 1;
 
 let bar = (b : int) : int => {
   // [@inline][@foo][@bar]
-  let test = (z : int) => 2 + b + z;
+  let test = (z : int): int => 2 + b + z;
   return test (b);
 };
 /**
@@ -188,10 +188,10 @@ generated. unrecognized constant: {"constant":"BALANCE","location":"generated"}
 
 type storage = tez;
 
-let main3 = ([p, s] : [unit, storage]) =>
-  [(List() as list<operation>), Tezos.balance];
+let main3 = ([p, s] : [unit, storage]):[list<operation>, storage] =>
+  [(list([]) as list<operation>), Tezos.balance];
 
-let main4 = (x : [unit, storage]) => main3 ([x[0], x[1]]);
+let main4 = (x : [unit, storage]):[list<operation, storage>] => main3 ([x[0], x[1]]);
 let a = 3, b = 5, c = 6;
 type foo = big_map<int, int>;
 
@@ -249,10 +249,10 @@ let check_signature = (param : [key, signature, bytes]) : bool => {
   let [pk, signed, msg] = param;
   return Crypto.check (pk, signed, msg);
 };
-  let main = (i : int) => {
+  let main = (i : int): int => {
   if (((i == 2) as bool)) { return (42 as int); } else { return (0 as int); }
 };
-let main = (i: int) => {
+let main = (i: int):int => {
   let result = 0;
   if (i == 2) {
     let result = 42;
@@ -264,12 +264,13 @@ let main = (i: int) => {
 };
 /* Test conditional in JsLIGO */
 
-let main = (i : int) => { if (i == 2) { return 42; } else { return 0; }; };
+let main = (i : int):int => { if (i == 2) { return 42; } else { return 0; }; };
 type storage = int;
 
 let main9 = ([p, s] : [int, storage]) : [list <operation>, storage] =>
-  [(List() as list <operation>), p + s];let hasherman512    = (s : bytes) => Crypto.sha512 (s);
-let hasherman_blake = (s : bytes) => Crypto.blake2b (s);
+  [(list([]) as list <operation>), p + s];
+  let hasherman512    = (s : bytes):bytes => Crypto.sha512 (s);
+let hasherman_blake = (s : bytes):bytes => Crypto.blake2b (s);
 type tokenId = nat;
 type tokenOwner = address;
 type tokenAmount = nat;
@@ -340,7 +341,7 @@ let transferIterator = ([storage, transferMichelson]: [storage, transferMichelso
 };
 let transfer = ([transferParameter, storage]: [transferParameter, storage]): entrypointReturn => {
   let storage2 = List.fold(transferIterator, transferParameter, storage);
-  return [(List() as list<operation>), storage2];
+  return [(list([]) as list<operation>), storage2];
 };
 let main = ([parameter, storage]: entrypointParameter): entrypointReturn =>
   match(parameter, {
@@ -348,12 +349,12 @@ let main = ([parameter, storage]: entrypointParameter): entrypointReturn =>
   });
 /* Test boolean comparison in JsLIGO */
 
-let main = ([a, b] : [bool, bool]) => {
+let main = ([a, b] : [bool, bool]): int => {
   if (a == b) { return 999; } else { return 1; }
 };
 type storage = unit;
 
-let main = (p: [unit, storage]) => {
+let main = (p: [unit, storage]):unit => {
   if (true) { failwith("This contract always fails"); };
 };
 /* Test use of multiple subroutines in a JsLIGO function */
@@ -465,13 +466,13 @@ let main = ([action, s] : [parameter, storage]) : returnx => {
     ([]: parameter) => s,
     ([hd, ...tl]: parameter) => [s[0] + hd, tl]
   ]));
-  return [(List() as list<operation>), [s[0] + hd, tl]]
+  return [(list([]) as list<operation>), [s[0] + hd, tl]]
 };
 
 let size_ = (s : list <int>) : nat => List.length (s);
 
 let fold_op = (s : list <int>) : int => {
-  let aggregate = (t: [int, int]) => t[0] + t[1];
+  let aggregate = (t: [int, int]):int => t[0] + t[1];
   return List.fold (aggregate, s, 10);
 };
 
@@ -479,7 +480,7 @@ let map_op = (s : list <int>) : list <int> =>
   List.map ((cur : int) => cur + 1, s);
 
 let iter_op = (s : list <int>) : unit => {
-  let do_nothing = (useless : int) => unit;
+  let do_nothing = (useless : int):unit => unit;
   List.iter (do_nothing, s);
 };
 /* Test loops in JsLIGO */
@@ -529,9 +530,9 @@ type foobar = map <int, int>;
 let empty_map: foobar = Map.empty;
 
 let map1 : foobar =
-  Map.literal ([[144, 23], [51, 23], [42, 23], [120, 23], [421, 23]]);
+  Map.literal (list([[144, 23], [51, 23], [42, 23], [120, 23], [421, 23]]));
 
-let map2 : foobar = Map.literal ([[23, 0], [42, 0]]);
+let map2 : foobar = Map.literal (list([[23, 0], [42, 0]]));
 
 let set_ = (n: int, m: foobar) : foobar => Map.update (23, Some (n), m);
 
@@ -542,17 +543,17 @@ let rm = (m: foobar) : foobar => Map.remove (42, m);
 /* Dummy test so that we can add the same test for PascaLIGO */
 
 let patch_ = (m : foobar) : foobar =>
-  Map.literal ([[0, 5], [1, 6], [2, 7]]);
+  Map.literal (list([[0, 5], [1, 6], [2, 7]]));
 
 /* Second dummy test, see above */
 
 let patch_empty = (m : foobar) : foobar =>
-  Map.literal ([[0, 0], [1, 1], [2, 2]]);
+  Map.literal (list([[0, 0], [1, 1], [2, 2]]));
 
 /* Third dummy test, see above */
 
 let patch_deep = (m : [foobar, nat]) : [foobar, nat] =>
-  [Map.literal([[0, 0], [1, 9], [2, 2]]), (10 as nat)];
+  [Map.literal(list([[0, 0], [1, 9], [2, 2]])), (10 as nat)];
 
 let size_ = (m : foobar) : nat => Map.size (m);
 
@@ -562,18 +563,18 @@ let get_ = (m: foobar): option<int> => Map.find_opt(42, m);
 let mem = (km: [int, foobar]): bool => Map.mem (km[0], km[1]);
 
 let iter_op = (m: foobar): unit => {
-  let assert_eq = (i: int, j: int) => assert (i == j);
+  let assert_eq = (i: int, j: int):unit => assert (i == j);
   Map.iter (assert_eq, m);
   return unit;
 };
 
 let map_op = (m: foobar) : foobar => {
-  let increment = (z: int, j: int) => j + 1;
+  let increment = (z: int, j: int): int => j + 1;
   return Map.map (increment, m);
 };
 
 let fold_op = (m: foobar): int => {
-  let aggregate = (i: int, j: [int, int]) => i + j[0] + j[1];
+  let aggregate = (i: int, j: [int, int]): int => i + j[0] + j[1];
   return Map.fold (aggregate, m, 10);
 };
 
@@ -591,12 +592,12 @@ type parameter =
 
 type return_ = [list <operation>, storage];
 
-let main = ([action, store]: [parameter, storage]) => {
+let main = ([action, store]: [parameter, storage]):return_ => {
   let store2 = match (action, {
     Add: (n: nat) => n,
     Sub: (n: nat) => -n
   });  
-  return [(List() as list <operation>), store2];
+  return [(list([]) as list <operation>), store2];
 };
 type storage = int;
 
@@ -604,15 +605,15 @@ type parameter =
 | ["Increment", int]
 | ["Decrement", int];
 
-let add = (a: int, b: int) => a + b;
-let sub = (a: int, b: int) => a - b;
+let add = (a: int, b: int):int => a + b;
+let sub = (a: int, b: int):int => a - b;
 
-let main = ([action, store] : [parameter, storage]) => {
+let main = ([action, store] : [parameter, storage]): [list<operation>, storage] => {
   let store2 = match(action, {
     Increment: (value: int) => add (store, value),
     Decrement: (value: int) => sub (store, value)
   });
-  return [(List() as list <operation>), store2];
+  return [(list([]) as list <operation>), store2];
 };
 
 /// <reference path="./ligo.d.ts" />
@@ -624,7 +625,7 @@ type return_ = [list <operation> , storage];
 
 let main = ([action, store] : [unit , storage]) : return_ => {
   let foo = [3,[1, (2 as nat)]] ;
-  return [(List() as list<operation>), (foo as storage)]
+  return [(list([]) as list<operation>), (foo as storage)]
 };/* Test function with several parameters */
 
 let abcde_curried =
@@ -635,7 +636,7 @@ let abcde = (x: [int , int , int , int , int]) : int =>
 type foobar = option <int>;
 
 let s : foobar = Some (42);
-let n : foobar = None;
+let n : foobar = None ();
 type foobar = {
  foo : int,
  bar : int
@@ -673,7 +674,7 @@ type big_record = {
   b : int,
   c : int,
   d : int,
-  e : int
+  e : int,
 };
 
 let br : big_record = {
@@ -681,7 +682,7 @@ let br : big_record = {
   b : 23,
   c : 23,
   d : 23,
-  e : 23
+  e : 23,
 };
 
 type double_record = {
@@ -711,7 +712,7 @@ let main = (p: unit) : address => Tezos.self_address;
 /* Test set operations in JsLIGO */
 
 let literal_op = (p: unit) : set <string> =>
-  Set.literal (["foo", "bar", "foobar"]);
+  Set.literal (list(["foo", "bar", "foobar"]));
 
 let add_op = (s: set <string>) : set <string> =>
   Set.add ("foobar", s);
@@ -729,13 +730,13 @@ let size_op = (s: set <string>): nat =>
   Set.cardinal (s);
 let main = (p: key_hash) : list <operation> => {
   let unused : operation = (Tezos.set_delegate (Some (p)));
-  return (List() as list <operation>);
+  return (list([]) as list <operation>);
 } ;
 /* Test that the string concatenation syntax in JsLIGO works */
 
 let size_op = (s: string) : nat => String.length (s);
 let slice_op = (s: string) : string => String.sub ((1 as nat), (2 as nat), s);
-let concat_syntax = (s: string) => s + "test_literal";
+// let concat_syntax = (s: string) => s + "test_literal";
 
 type parameter =
 | ["Increment", int]
@@ -750,7 +751,7 @@ let main = ([action, store]: [parameter, storage]) : return_ => {
     Increment: (n: nat) => store + n,
     Decrement: (n: nat) => store - n
   });
-  return [(List() as list <operation>), storage];
+  return [(list([]) as list <operation>), storage];
 };
 type abc = [int, int, int];
 
@@ -779,66 +780,65 @@ let o: z = [[2,4], [4, 6]];/*
 
 type fun_type = (a: int, b: int) => int;
 
-let arguments_ = (b: int, c: int) => b + c;
+let arguments_ = (b: int, c: int): int => b + c;
 
-let arguments_type_def = (b: fun_type) => b (5, 3);
+let arguments_type_def = (b: fun_type): int => b (5, 3);
 
-let arguments_test = (t_: int) => arguments_type_def (arguments_);
+let arguments_test = (t_: int): int => arguments_type_def (arguments_);
 
 type tuple_type = (a: [int, int]) => int;
 
-let tuple = ([a, b]: [int, int]) => a + b;
+let tuple = ([a, b]: [int, int]):int => a + b;
 
-let tuple_type_def = (b: tuple_type) => b ([5, 3]);
+let tuple_type_def = (b: tuple_type):int => b ([5, 3]);
 
-let tuple_test = (t_: int) => tuple_type_def (tuple);
+let tuple_test = (t_: int):int => tuple_type_def (tuple);
 
 
 /* inline */
 
-let arguments_inline = (b: int, c: int) => b + c;
+let arguments_inline = (b: int, c: int):int => b + c;
 
-let arguments_type_def_inline = (b: (a: int, b: int) => int) => b(5, 3);
+let arguments_type_def_inline = (b: (a: int, b: int) => int):int => b(5, 3);
 
-let arguments_test_inline = (t_: int) =>
+let arguments_test_inline = (t_: int):int =>
   arguments_type_def_inline (arguments_inline);
 
-let tuple_inline = ([a, b]: [int, int]) => { return a + b; };
+let tuple_inline = ([a, b]: [int, int]):int => { return a + b; };
 
-let tuple_type_def_inline = (b: (a: [int, int]) => int) => b ([5, 3]);
+let tuple_type_def_inline = (b: (a: [int, int]) => int):int => b ([5, 3]);
 
-let tuple_test_inline = (t_: int) =>
+let tuple_test_inline = (t_: int):int =>
   tuple_type_def_inline(tuple_inline);
 type storage = [int, string, nat, bool];
 
 type parameter = int;
 
-let main = ([p,storage]: [parameter, storage]) => {  
-  return ((List() as list <operation>), [2, "2", (2 as nat), false]);
+let main = ([p,storage]: [parameter, storage]):[list<operation>, storage] => {  
+  return ((list([]) as list <operation>), [2, "2", (2 as nat), false])
 };
 let a = 1;
 let b = (1 as nat);
 let c = (2 as mutez);
 let d = (1 as nat) + (2 as nat);
 let e = (1 as mutez) + (3 as mutez);
-let f = [a, c];
-let g = [a + 1, c];
+let f = [a, c]
+let g = [a + 1, c]
 let h = ["a" + "2", d];
-let i = (a: int, b: int) => a + b;
-let j = (a: int, b: int) => a - b;
+let i = (a: int, b: int): int => a + b;
+let j = (a: int, b: int): int => a - b;
 /* not supported by typer yet: let k = () => b; */
 /* not supported by typer yet: let l = () => i(2,3); */
 // let m = {
 //     let z = 3;
 //     z;
 // };
-let n = (a: int): int => a + 1;
-let o = (a: int): int => a + 1;
-let n2 = (a: int, b: int): int => a + 1;
+// @foo:bar
+let n = (a: int): int => a + 1
+let o = (a: int): int => a + 1
+let n2 = (a: int, b: int): int => a + 1
 let o2 = (a: int, b: int): int => a + 1;
 // let p = {{
-//     3;
-// }};
 let q = {
   f: 3,
   g: 6,
@@ -877,7 +877,7 @@ type foobar =
 | ["Kee", nat];
 
 let foo: foobar = { kind: "Foo", value: 42 };
-let bar: foobar = { kind: "Bar", value: true };
+let bar: foobar = { kind: "Bar", value: true }
 let kee: foobar = { kind: "Kee", value: (23 as nat) };
 /* IF YOU CHANGE THIS, CHANGE THE EXAMPLE ON THE FRONT PAGE OF THE WEBSITE */
 
@@ -889,17 +889,17 @@ type parameter =
 | ["Increment", int]
 | ["Decrement", int];
 
-let add = ([a,b]: [int, int]): int => a + b;
+let add = ([a,b]: [int, int]): int => a + b
 let sub = ([a,b]: [int, int]): int => a - b;
 
 /* real entrypoint that re-routes the flow based on the parameter provided */
 
-let main = ([p,storage]: [parameter, storage]) => {
+let main = ([p,storage]: [parameter, storage]):[list<operation>, storage] => {
   let storage2 = match(p, {
     increment: (n: int) => add ([storage, n]),
     decrement: (n: int) => sub ([storage, n]) 
-  });
-  return [(List() as list <operation>), storage2];
-};
+  })
+  return [(list([]) as list <operation>), storage2]
+}
 
 /* IF YOU CHANGE THIS, CHANGE THE EXAMPLE ON THE FRONT PAGE OF THE WEBSITE */

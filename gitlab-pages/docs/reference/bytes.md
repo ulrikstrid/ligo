@@ -102,7 +102,7 @@ let slice_op = (s: bytes): bytes => Bytes.sub(1n, 2n, s);
 <Syntax syntax="jsligo">
 
 ```
-let slice_op = (s: bytes): bytes => Bytes.sub((1 as nat), (2 as nat), s);
+let slice_op = (s: bytes): bytes => Bytes.sub(1 as nat, 2 as nat, s);
 ```
 
 </Syntax>
@@ -119,7 +119,7 @@ val pack : 'a -> bytes
 let pack : 'a => bytes
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let pack : (data: 'a) => bytes
+let pack : (data: &apos;a) => bytes
 </SyntaxTitle>
 
 Converts Michelson data structures to a binary format for serialization.
@@ -178,7 +178,7 @@ val unpack : bytes -> 'a option
 let unpack: bytes => option('a)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let unpack: (serialized_data: bytes) => option&lt;'a&gt;
+let unpack: (serialized_data: bytes) => option&lt;&apos;a&gt;
 </SyntaxTitle>
 
 Reverses the result of using `pack` on data. 

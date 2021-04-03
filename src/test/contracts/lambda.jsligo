@@ -1,4 +1,4 @@
-type storagex = unit;
+type storage = unit;
 
-let mainx = ([p,s] : [unit, storage]) : unit =>
-  ((useless : unit) => unit) (unit);
+let main = ([p,s] : [unit, storage]) : unit =>
+  ((useless : unit):unit => unit) (unit);

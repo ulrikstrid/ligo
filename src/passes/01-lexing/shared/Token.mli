@@ -83,17 +83,9 @@ module type S =
 
     (* Predicates *)
 
-    val is_string   : token -> bool
-    val is_verbatim : token -> bool
-    val is_bytes    : token -> bool
-    val is_int      : token -> bool
-    val is_nat      : token -> bool
-    val is_mutez    : token -> bool
-    val is_ident    : token -> bool
-    val is_constr   : token -> bool
-    val is_lang     : token -> bool
-    val is_minus    : token -> bool
     val is_eof      : token -> bool
-    val is_hexa     : token -> bool
-    val is_sym      : token -> bool
+
+    val support_string_delimiter : char -> bool
+    val verbatim_delimiters : string * string
+
   end

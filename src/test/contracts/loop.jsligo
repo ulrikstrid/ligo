@@ -2,7 +2,7 @@
 
 let aux_simple = (i : int) : int => {
   if (i < 100) { return aux_simple (i + 1); } else { return i; };
-}
+};
 
 let counter_simple = (n : int) : int => aux_simple (n);
 
@@ -20,7 +20,7 @@ let counter = (n : int) : int => {
     } else {
       return prev.sum;
     };
-  }
+  };
   return aggregate (initial);
 };
 
@@ -33,7 +33,7 @@ let aux_nest = (prev : sum_aggregator) : sum_aggregator => {
   } else {
     return ({counter: prev.counter, sum: prev.sum});
   };
-}
+};
 
 let counter_nest = (n : int) : int => {
   let initial : sum_aggregator = {counter: 0, sum: 0};

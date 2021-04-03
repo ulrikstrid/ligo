@@ -8,9 +8,14 @@ open! PPrint
 module Option = Simple_utils.Option
 
 let rec print ast =
-  let app (s, _) = group (pp_statement s ^^ string ";")
-  and stmt  = Utils.nseq_to_list ast.statements
+  let stmt     = Utils.nseq_to_list ast.statements in
+  let stmt     = List.filter_map pp_toplevel_statement stmt in
+  let app stmt = group (stmt ^^ string ";")
   in separate_map (hardline ^^ hardline) app stmt
+
+and pp_toplevel_statement = function
+  TopLevel (stmt, _) -> Some (pp_statement stmt)
+| Directive _   -> None
 
 and pp_braced :
   'a. string -> ('a -> document) -> ('a, t) Utils.nsepseq braced reg -> document =
@@ -25,7 +30,6 @@ and pp_brackets :
     let ({inside; _}: _ Utils.nsepseq brackets) = value in
     let elements = pp_nsepseq sep printer inside in
     string "[" ^^ break 0 ^^ group elements ^^ string "]"
-
 
 and pp_nsepseq :
   'a. string -> ('a -> document) -> ('a, t) Utils.nsepseq -> document =
@@ -47,6 +51,17 @@ and pp_statement = function
 | SNamespace  s -> pp_namespace s
 | SExport     s -> pp_export s
 | SImport     s -> pp_import s
+| SForOf      s -> pp_for_of s
+| SWhile      s -> pp_while s
+
+and pp_for_of {value; _} =
+  string "for" ^^ string "(" ^^ string 
+    (if value.const then "const" else "let") ^^ string value.name.value ^^ 
+    string " of " ^^ 
+    pp_expr value.expr ^^ string ")" ^^ pp_statement value.statement
+
+and pp_while {value; _} =
+  string "while" ^^ string "(" ^^ pp_expr value.expr ^^ string ")" ^^ pp_statement value.statement 
 
 and pp_import {value; _} = 
   string "import" ^^ string value.alias.value ^^ string "=" ^^ pp_nsepseq "." (fun a -> string a.value) value.module_path
@@ -75,7 +90,10 @@ and pp_let {value = {bindings; _}; _} =
 and pp_const {value = {bindings; _}; _} =
   string "const " ^^ pp_nsepseq "," pp_let_binding bindings
 
-and pp_let_binding {value = {binders; lhs_type; expr; _}; _} =
+and pp_let_binding {value = {binders; lhs_type; expr; attributes; _}; _} =
+  (if attributes = [] then empty else 
+  pp_attributes attributes)
+  ^^ 
   prefix 2 0 ((match lhs_type with
     Some (_, type_expr) -> pp_pattern binders ^^ string ": " ^^ pp_type_expr type_expr
   | None -> pp_pattern binders)
@@ -118,21 +136,22 @@ and pp_type {value; _} =
   string "type " ^^ string name.value ^^ string " = "
   ^^ group (pp_type_expr type_expr)
 
-and pp_ident {value; _} = string value
+and pp_ident Region.{value; _} = string value
 
 and pp_string s = string "\"" ^^ pp_ident s ^^ string "\""
 
 and pp_verbatim s = string "`" ^^ pp_ident s ^^ string "`"
 
-and pp_bytes {value; _} =
-  string ("0x" ^ Hex.show (snd value))
+and pp_bytes (byte: (string * Hex.t) reg)  =
+  let _, hex = byte.Region.value
+  in string ("0x" ^ Hex.show hex)
 
 and pp_expr = function
   EFun     e -> pp_fun e
 | EPar     e -> pp_par_expr e.value
 | ESeq     e -> pp_seq e
-| ELident  v -> pp_ident v
-| EUident  e -> pp_ident e
+| EVar     v -> pp_ident v
+| EModA    e -> pp_module_access pp_expr e
 | ELogic   e -> pp_logic_expr e
 | EArith   e -> group (pp_arith_expr e)
 | ECall    e -> pp_call_expr e
@@ -144,6 +163,7 @@ and pp_expr = function
 | EProj    e -> pp_projection e
 | EAssign  (a,b,c) -> pp_assign (a,b,c)
 | EAnnot   e -> pp_annot_expr e
+| EConstr  e -> pp_constr_expr e
 | EUnit    _ -> string "unit"
 | ECodeInj _ -> failwith "TODO: ECodeInj"
 
@@ -164,6 +184,21 @@ and pp_array_item = function
 | Expr_entry e -> pp_expr e
 | Rest_entry {value = {expr; _}; _} -> string "..." ^^ pp_expr expr
 
+
+and pp_constr_expr = function
+  ENone      _ -> string "None ()" 
+| ESomeApp   a -> pp_some a
+| EConstrApp a -> pp_constr_app a
+
+and pp_some {value=_, e; _} =
+  prefix 4 1 (string "Some") (string "(" ^^ pp_expr e ^^ string ")")
+
+and pp_constr_app {value; _} =
+  let constr, arg = value in
+  let constr = string constr.value in
+  match arg with
+      None -> constr ^^ string "()"
+  | Some e -> prefix 2 1 constr (string "(" ^^ pp_expr e ^^ string ")")
 
 and pp_object_property = function
   Punned_property {value; _} -> pp_expr value
@@ -235,13 +270,14 @@ and pp_par_expr value =
   string "(" ^^ nest 1 (pp_expr value.inside ^^ string ")")
 
 and pp_expr_fun = function
-| EPar     {value; _} ->
+  EPar {value; _} ->
     string "(" ^^ nest 1 (pp_expr_fun value.inside ^^ string ")")
-| ESeq {value; _} -> group(pp_nsepseq "," pp_expr_fun value)
+| ESeq {value; _} ->
+    group (pp_nsepseq "," pp_expr_fun value)
 | EAnnot   {value; _} ->
     let expr, _, type_expr = value in
       group (nest 1 (pp_expr_fun expr ^^ string ": "
-      ^^ pp_type_expr type_expr))
+                     ^^ pp_type_expr type_expr))
 | _ as c -> pp_expr c
 
 and pp_fun {value; _} =
@@ -268,10 +304,10 @@ and pp_type_expr: type_expr -> document = function
 | TFun    t -> pp_fun_type t
 | TPar    t -> pp_type_par t
 | TVar    t -> pp_ident t
-| TConstr t -> pp_ident t
 | TWild   _ -> string "_"
 | TString s -> pp_string s
 | TModA   t -> pp_module_access pp_type_expr t
+| TInt    t -> pp_int t
 
 and pp_module_access : type a.(a -> document) -> a module_access reg -> document
 = fun f {value; _} ->
@@ -279,7 +315,10 @@ and pp_module_access : type a.(a -> document) -> a module_access reg -> document
   group (pp_ident module_name ^^ string "." ^^ break 0 ^^ f field)
 
 and pp_cartesian v =
-  group(pp_brackets "," pp_type_expr v)
+  (if v.attributes = [] then empty
+  else pp_attributes v.attributes)
+  ^/^
+  group(pp_brackets "," pp_type_expr v.inside)
 
 and pp_sum_type {value; _} =
   let {variants; attributes; _} = value in
@@ -295,7 +334,11 @@ and pp_sum_type {value; _} =
   else pp_attributes attributes ^/^ whole
 
 and pp_attributes = function
-  _ -> empty
+  [] -> empty
+| attr -> 
+  let make s = string "@" ^^ string s.value ^^ string " "
+  in 
+  string "/* " ^^ concat_map make attr ^^ string "*/ "
 
 and pp_object_type fields = group (pp_ne_injection pp_field_decl fields)
 
@@ -347,7 +390,7 @@ and pp_type_tuple {value; _} =
       pp_type_expr head ^^ string "," ^^ app (List.map snd tail)
     in components
 
-and pp_fun_type_arg {name; type_expr; _} =
+and pp_fun_type_arg ({name; type_expr; _} : CST.fun_type_arg) =
   pp_ident name ^^ string ":" ^^ pp_type_expr type_expr
 
 and pp_fun_type {value; _} =

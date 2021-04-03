@@ -6,16 +6,17 @@ module Token = Lexing_cameligo.Token
 
   (* Literals *)
 
-%token                  <string Region.reg> String   "<string>"
-%token                  <string Region.reg> Verbatim "<verbatim>"
-%token  <(Token.lexeme * Hex.t) Region.reg> Bytes    "<bytes>"
-%token          <(string * Z.t) Region.reg> Int      "<int>"
-%token          <(string * Z.t) Region.reg> Nat      "<nat>"
-%token          <(string * Z.t) Region.reg> Mutez    "<mutez>"
-%token                  <string Region.reg> Ident    "<ident>"
-%token                  <string Region.reg> Constr   "<constr>"
-%token                   <string Region.reg> Attr    "[@attr]"
-%token <Token.lexeme Region.reg Region.reg> Lang     "[%lang"
+%token               <LexerLib.Directive.t> Directive "<directive>"
+%token                  <string Region.reg> String    "<string>"
+%token                  <string Region.reg> Verbatim  "<verbatim>"
+%token  <(Token.lexeme * Hex.t) Region.reg> Bytes     "<bytes>"
+%token          <(string * Z.t) Region.reg> Int       "<int>"
+%token          <(string * Z.t) Region.reg> Nat       "<nat>"
+%token          <(string * Z.t) Region.reg> Mutez     "<mutez>"
+%token                  <string Region.reg> Ident     "<ident>"
+%token                  <string Region.reg> Constr    "<constr>"
+%token                  <string Region.reg> Attr      "[@attr]"
+%token <Token.lexeme Region.reg Region.reg> Lang      "[%lang"
 
   (* Symbols *)
 

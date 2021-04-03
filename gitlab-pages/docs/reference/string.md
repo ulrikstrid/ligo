@@ -108,7 +108,7 @@ let slice_op = (s: string): string => String.sub(1n, 2n, s);
 <Syntax syntax="jsligo">
 
 ```jsligo
-let slice_op = (s: string): string => String.sub((1 as nat), (2 as nat), s);
+let slice_op = (s: string): string => String.sub(1 as nat, 2 as nat, s);
 ```
 
 </Syntax>
@@ -175,13 +175,13 @@ let concat_syntax_alt = (s: string) => s ++ "test_literal";
 <Syntax syntax="jsligo">
 
 ```jsligo
-let concat_syntax = (s: string) => String.concat(s, "test_literal");
+let concat_syntax = (s: string): string => String.concat(s, "test_literal");
 ```
 
 Alternatively:
 
 ```jsligo
-let concat_syntax_alt = (s: string) => s + "test_literal";
+let concat_syntax_alt = (s: string): string => s + "test_literal";
 ```
 
 </Syntax>

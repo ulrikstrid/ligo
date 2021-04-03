@@ -36,6 +36,20 @@ the OCaml convention.
 let n : unit = ()
 ```
 
+Sequences of expressions that return the `unit` type can be written
+using `begin` and `end`, separating expressions using semi-colons. The
+last expression, which represents the value returned, can have a
+different type to `unit`:
+
+```cameligo group=a
+let m (x : int) =
+  begin
+    assert (x > 0);
+    assert (x < 10);
+    x
+  end
+```
+
 </Syntax>
 <Syntax syntax="reasonligo">
 
@@ -43,6 +57,18 @@ In ReasonLIGO, the unique value of the `unit` type is `()`, following
 the OCaml convention.
 ```reasonligo group=a
 let n : unit = ();
+```
+
+Sequences of expressions that return the `unit` type can be written
+using braces, separating expressions using semi-colons. The last
+expression, which represents the value returned, can have a different
+type to `unit`:
+
+```reasonligo group=a
+let m = (x : int) =>
+  { assert (x > 0);
+    assert (x < 10);
+    x }
 ```
 
 </Syntax>
@@ -95,10 +121,11 @@ let tail : coin = Tail;
 
 </Syntax>
 <Syntax syntax="jsligo">
+
 ```jsligo group=b
-type coin = | ["Head"] | ["Tail"];
-let head : coin = ["Head"];
-let tail : coin = ["Tail"];
+type coin = ["Head"] | ["Tail"];
+let head: coin = Head();
+let tail: coin = Tail();
 ```
 
 </Syntax>
@@ -129,6 +156,10 @@ const u : user = Admin (1000n)
 const g : user = Guest
 ```
 
+In PascaLIGO, a constant constructor is equivalent to the same constructor
+taking an argument of type `unit`, so, for example, `Guest` is the
+same value as `Guest (unit)`.
+
 </Syntax>
 <Syntax syntax="cameligo">
 
@@ -143,6 +174,10 @@ type user =
 let u : user = Admin 1000n
 let g : user = Guest
 ```
+
+In CameLIGO, a constant constructor is equivalent to the same constructor
+taking an argument of type `unit`, so, for example, `Guest` is the
+same value as `Guest (unit)`.
 
 </Syntax>
 <Syntax syntax="reasonligo">
@@ -159,26 +194,31 @@ let u : user = Admin (1000n);
 let g : user = Guest;
 ```
 
+In ReasonLIGO, a constant constructor is equivalent to the same constructor
+taking an argument of type `unit`, so, for example, `Guest` is the
+same value as `Guest (unit)`.
+
 </Syntax>
 <Syntax syntax="jsligo">
+
 ```jsligo group=c
 type id = nat;
 
 type user =
-| ["Admin", id]
+  ["Admin", id]
 | ["Manager", id]
 | ["Guest"];
 
-let u : user = ["Admin", (1000 as nat)];
-let g : user = ["Guest"];
+let u : user = Admin(1000 as nat);
+let g : user = Guest();
 ```
 
+
+In JsLIGO, a constant constructor is equivalent to the same constructor
+taking an argument of type `unit`, so, for example, `Guest ()` is the
+same value as `Guest (unit)`.
 </Syntax>
 
-
-In LIGO, a constant constructor is equivalent to the same constructor
-taking an argument of type `unit`, so, for example, `Guest` is the
-same value as `Guest (unit)`.
 
 ## Optional values
 
@@ -218,8 +258,12 @@ let div = ((a, b) : (nat, nat)) : option (nat) =>
 <Syntax syntax="jsligo">
 
 ```jsligo group=d
-let div = ([a, b] : [nat, nat]) : option <nat> => {
-  if (b == (0 as nat)) { return (None as option <nat>); } else { return (Some (a/b)); };
+let div = ([a, b]: [nat, nat]): option<nat> => {
+  if(b == (0 as nat)){ 
+    return (None() as option <nat>); 
+  } else { 
+    return (Some (a/b)); 
+  };
 };
 ```
 
@@ -299,23 +343,34 @@ flip Head
 </Syntax>
 <Syntax syntax="jsligo">
 
+JsLIGO uses a predefined function called `match` to perform pattern matching.
+In the case of pattern matching over a variant, an object should be used as argument:
+
 ```jsligo group=e
-type coin = | ["Head"] | ["Tail"];
-let Tail = ["Tail"];
-let Head = ["Head"];
-let flip = (c : coin) : coin =>
+type coin = ["Head"] | ["Tail"];
+let flip = (c: coin): coin =>
   match (c, {
-  Head: () => Tail,
-  Tail: () => Head  
+    Head: () => Tail(),
+    Tail: () => Head()
   });
 ```
 
 You can call the function `flip` by using the LIGO compiler like so:
 ```shell
 ligo run-function
-gitlab-pages/docs/language-basics/src/unit-option-pattern-matching/flip.religo
+gitlab-pages/docs/language-basics/src/unit-option-pattern-matching/flip.jsligo
 flip Head
 # Outputs: Tail(Unit)
+```
+
+In the case of pattern matching over a list, a list should be used as argument:
+
+```jsligo group=f
+let main = (a: list<int>): int =>
+  match(a, list([
+    ([]: list<string>) => -1,
+    ([hd, ...tl]: list<string>) => hd
+  ]));
 ```
 
 </Syntax>

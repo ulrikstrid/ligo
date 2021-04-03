@@ -127,17 +127,17 @@ type parameter =
 
 type storage = int;
 
-type return_ = [list <operation>, storage];
+type return_ = [list<operation>, storage];
 
-let add = ([n, store] : [int, storage]) : storage => store + n;
-let sub = ([n, store] : [int, storage]) : storage => store - n;
+let add = ([n, store]: [int, storage]): storage => store + n;
+let sub = ([n, store]: [int, storage]): storage => store - n;
 
-let main = ([action, store] : [parameter, storage]) : return_ =>
-  ((List() as list <operation>),
+let main = ([action, store]: [parameter, storage]): return_ =>
+  [list([]) as list <operation>,
     (match (action, {
      Increment: (n: int) => add ([n, store]),
      Decrement: (n: int) => sub ([n, store])
-    })));
+    }))];
 ```
 
 </Syntax>

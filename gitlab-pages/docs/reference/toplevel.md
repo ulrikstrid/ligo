@@ -35,7 +35,7 @@ type ('key, 'value) big_map
 type big_map ('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-type big_map &lt;'key, 'value&gt;
+type big_map &lt;&apos;key, &apos;value&gt;
 </SyntaxTitle>
 
 <Syntax syntax="pascaligo">
@@ -121,7 +121,7 @@ type 'parameter contract
 type contract('parameter)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-type contract&lt;'parameter&gt;
+type contract&lt;&apos;parameter&gt;
 </SyntaxTitle>
 
 A typed contract. 
@@ -200,7 +200,7 @@ type 't list
 type list('t)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-type list&lt;'t&gt;
+type list&lt;&apos;t&gt;
 </SyntaxTitle>
 
 A sequence of elements of the same type.
@@ -215,7 +215,7 @@ type ('key, 'value) map
 type map ('key, 'value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-type map &lt;'key, 'value&gt;
+type map &lt;&apos;key, &apos;value&gt;
 </SyntaxTitle>
 
 <Syntax syntax="pascaligo">
@@ -306,7 +306,7 @@ type 'value set
 type set('value)
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-type set&lt;'value&gt;
+type set&lt;&apos;value&gt;
 </SyntaxTitle>
 
 <SyntaxTitle syntax="pascaligo">
@@ -457,7 +457,7 @@ val failwith : 'a -> unit
 let failwith: 'a => unit
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let failwith: (message: 'a) => unit
+let failwith: (message: &apos;a) => unit
 </SyntaxTitle>
 
 Cause the contract to fail with an error message or integer. Other types are 
@@ -495,7 +495,7 @@ let main = ((p,s) : (int, unit)) =>
 <Syntax syntax="jsligo">
 
 ```jsligo
-let main = ([p, s] : [int, unit]) => {
+let main = ([p, s] : [int, unit]): unit => {
   if (p > 10) { failwith ("Failure."); };
 };
 ```
@@ -564,16 +564,16 @@ let ediv: (nat, nat) => option((nat, nat))
 </SyntaxTitle>
 
 <SyntaxTitle syntax="jsligo">
-let ediv: (value: int, divided_by: int) => option([int, nat])
+let ediv: (value: int, divided_by: int) => option&lt;[int, nat]&gt;
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let ediv: (value: mutez, divided_by: nat) => option([mutez, mutez])
+let ediv: (value: mutez, divided_by: nat) => option&lt;[mutez, mutez]&gt;
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let ediv: (value: mutez, divided_by: mutez) => option([nat, mutez])
+let ediv: (value: mutez, divided_by: mutez) => option&lt;[nat, mutez]&gt;
 </SyntaxTitle>
 <SyntaxTitle syntax="jsligo">
-let ediv: (value: nat, divided_by: nat) => option([nat, nat])
+let ediv: (value: nat, divided_by: nat) => option&lt;[nat, nat]&gt;
 </SyntaxTitle>
 
 Compiles to Michelson `EDIV`, one operation to get both the quotient and remainder of a division. `ediv x y` returns None if `y` is zero, otherwise returns `Some (quotient, remainder)` such that `x = (quotient * y) + remainder` and `0 <= remainder < abs(y)`.

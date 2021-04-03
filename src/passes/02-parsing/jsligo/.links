@@ -18,5 +18,6 @@ $HOME/git/ligo/src/passes/00-preprocessing/jsligo/Comments.ml
 $HOME/git/ligo/src/passes/00-preprocessing/jsligo/File.ml
 $HOME/git/ligo/src/passes/01-lexing/jsligo/Self_tokens.ml
 $HOME/git/ligo/src/passes/01-lexing/jsligo/Token.mll
+$HOME/git/ligo/src/passes/01-lexing/jsligo/Style.ml
 $HOME/git/ligo/src/passes/01-lexing/shared/LexerMainGen.ml
 $HOME/git/ligo/src/passes/01-lexing/shared/Lexer.mll

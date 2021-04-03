@@ -1,6 +1,5 @@
 import cors from 'cors';
 import express from 'express';
-import fs from 'fs';
 import { dirname, join } from 'path';
 
 import { compileContractHandler } from './handlers/compile-contract';
@@ -12,11 +11,11 @@ import { evaluateValueHandler } from './handlers/evaluate-value';
 import { runFunctionHandler } from './handlers/run-function';
 import { shareHandler } from './handlers/share';
 import { sharedLinkHandler } from './handlers/shared-link';
+import { listDeclarationHandler } from './handlers/list-declaration';
 import { errorLoggerMiddleware, loggerMiddleware } from './logger';
 require('./metrics');
 
 const bodyParser = require('body-parser');
-const escape = require('escape-html');
 const prometheus = require('express-prometheus-middleware');
 
 const app = express();
@@ -65,6 +64,7 @@ app.post('/api/share', cors(corsOptions), shareHandler);
 app.post('/api/evaluate-value', evaluateValueHandler);
 app.post('/api/run-function', runFunctionHandler);
 app.post('/api/deploy', deployHandler);
+app.post('/api/list-declaration', listDeclarationHandler);
 
 app.use(errorLoggerMiddleware);
 

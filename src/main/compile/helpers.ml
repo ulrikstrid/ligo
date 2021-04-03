@@ -39,12 +39,6 @@ let syntax_to_variant (Syntax_name syntax) source =
   | ("jsligo" | "JsLIGO"),         _ -> ok JsLIGO
   | _ -> fail (invalid_syntax syntax)
 
-let typer_switch_to_variant t =
-  match t with
-  | "old" -> ok Ast_typed.Old
-  | "new" -> ok Ast_typed.New
-  | _ -> fail (invalid_typer_switch t)
-
 (* Preprocessing *)
 
 type options = Compiler_options.t
@@ -71,14 +65,6 @@ let preprocess_string ~(options:options) ~meta file_path =
     | JsLIGO     -> Jsligo.preprocess_string
   in trace preproc_tracer @@
      preprocess_string options.libs file_path
-
-(* Lexing only *)
-
-(* TODO *)
-
-(* Parsing only *)
-
-(* TODO *)
 
 (* Front-end compilation *)
 
@@ -240,14 +226,13 @@ let parse_and_abstract_string_cameligo buffer =
   in ok imperative
 
 let parse_and_abstract_string_jsligo buffer =
-  let%bind _raw =
+  let%bind raw =
     trace parser_tracer @@
     Parsing.Jsligo.parse_string buffer in
-  failwith "TODO : abstraction"
-  (*let%bind imperative =
+  let%bind imperative =
     trace cit_jsligo_tracer @@
     Tree_abstraction.Jsligo.compile_module raw
-  in ok imperative *)
+  in ok imperative
 
 let parse_and_abstract_string syntax buffer =
   let%bind parse_and_abstract =

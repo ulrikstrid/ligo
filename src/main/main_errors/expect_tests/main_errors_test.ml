@@ -464,7 +464,7 @@ let%expect_test "main_cit_reasonligo" =
 let%expect_test "typer" =
   let open Ast_typed in
   let open Location in
-  let error e = human_readable_error (`Main_typer e) in
+  let error e = human_readable_error (`Main_checking e) in
   let location_t = File default_location in
   let environment = Environment.empty in
   let type_variable = Var.of_name "foo" in
@@ -476,7 +476,7 @@ let%expect_test "typer" =
     E_variable ast_core_expression_variable
   in
   let ast_core_expression : Ast_core.expression =
-    {content= ast_core_expression_content; sugar= None; location= location_t}
+    {expression_content= ast_core_expression_content; sugar= None; location= location_t}
   in
   let type_expression : Ast_typed.type_expression =
     { type_content= T_variable (Var.of_name "foo");
@@ -727,7 +727,7 @@ let%expect_test "typer" =
     in file "a dummy file name", line 20, characters 5-5
 
     Incorrect argument.
-    Expected a tuple, but got an argument of type "foo".|}] ;
+    Expected a pair, but got an argument of type "foo".|}] ;
   error (`Typer_expected_list (location_t, type_expression)) ;
   [%expect
     {|
@@ -1073,7 +1073,7 @@ let%expect_test "self_ast_typed" =
 let%expect_test "self_mini_c" =
   let error e = human_readable_error (`Main_self_mini_c e) in
   error (`Self_mini_c_bad_self_address C_SELF_ADDRESS) ;
-  [%expect {|"Tezos.self_address" must be used directly and cannot be used via another function. |}] ;
+  [%expect {|"Tezos.self" must be used directly and cannot be used via another function. |}] ;
   error `Self_mini_c_not_a_function ;
   [%expect {|
     Invalid type for entrypoint.

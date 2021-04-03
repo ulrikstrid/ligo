@@ -35,8 +35,8 @@ let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> ('a, 'err
   let self = fold_type_expression f in
   let%bind init = f.t init t in
   match t with
-    TProd   {value;region=_} ->
-    bind_fold_ne_list self init @@ npseq_to_ne_list value.inside
+    TProd  {inside; _} -> 
+    bind_fold_ne_list self init @@ npseq_to_ne_list inside.value.inside
   | TSum    {value;region=_} ->
     let {lead_vbar=_;variants;attributes=_} = value in
     bind_fold_ne_list self init @@ npseq_to_ne_list variants
@@ -58,9 +58,9 @@ let rec fold_type_expression : ('a, 'err) folder -> 'a -> type_expr -> ('a, 'err
   | TPar    {value;region=_} ->
     self init value.inside
   | TVar    _
-  | TConstr    _
   | TWild   _
   | TModA _
+  | TInt _
   | TString _ -> ok @@ init
 
 let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> ('a, 'err) result = fun f init e  ->
@@ -109,7 +109,8 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> ('a, 'err) result =
   | EArith Int _ -> ok init
   | EString String   _
   | EString Verbatim _
-  | EUident _ -> ok init
+  | EModA _
+  | EVar _ -> ok init
   | EObject  {value;region=_} ->
     let aux init = function
       Punned_property {value; _} -> self init value
@@ -134,7 +135,6 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> ('a, 'err) result =
     let%bind res = self init expr in
     let%bind res = fold_selection res selection in
     ok res
-  | ELident     _ -> ok init
   | ECall    {value;region=_} ->
     let (lam, args) = value in
     let%bind res = self init lam in
@@ -162,9 +162,8 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> ('a, 'err) result =
     )
   | ESeq     {value;region=_} ->
     bind_fold_npseq self init value
-  | ECodeInj {value;region=_} ->
-    let {language=_;code;rbracket=_} = value in
-    self init code
+  | ECodeInj _ ->
+    ok @@ init
   | ENew {value = (_, e); _} -> self init e
   | EArray {value = {inside; _}; _} ->
     let fold_array_item init = function
@@ -177,7 +176,17 @@ let rec fold_expression : ('a, 'err) folder -> 'a -> expr -> ('a, 'err) result =
     let%bind res = self init e1 in
     let%bind res = self res e2 in
     self res e1
-
+  | EConstr ENone _ -> ok @@ init
+  | EConstr ESomeApp {value;region=_} ->
+    let _, expr = value in
+    self init expr
+  | EConstr EConstrApp {value;region=_} ->
+    let _, expr = value in
+    (match expr with
+      None -> ok @@ init
+    | Some e -> self init e
+    )
+    
 and fold_statement : ('a, 'err) folder -> 'a -> statement -> ('a, 'err) result =
   fun f init d ->
   let self_expr = fold_expression f in
@@ -232,12 +241,23 @@ and fold_statement : ('a, 'err) folder -> 'a -> statement -> ('a, 'err) result =
   | SNamespace {value = (_, _, {value = {inside; _}; _} ); _} -> bind_fold_npseq self init inside
   | SExport {value = (_, s); _} -> self init s 
   | SImport _ -> ok init
+  | SForOf {value = {expr; statement; _}; _}
+  | SWhile {value = {expr; statement; _}; _} ->
+      let%bind res = self_expr init expr in
+      self res statement  
+
+and remove_directives : toplevel_statements -> statement list =
+fun (first, rest) ->
+  let app top acc =
+    match top with
+      TopLevel (stmt, _) -> stmt::acc
+    | Directive _ -> acc in
+  List.fold_right app (first::rest) []
 
 and fold_module : ('a, 'err) folder -> 'a -> t -> ('a, 'err) result =
-  fun f init {statements;eof=_} ->
-    let statements = Utils.nseq_map fst statements in
-    let self = fold_statement f in
-    bind_fold_nseq self init statements
+  fun f init {statements; _} ->
+    let stmts = remove_directives statements in
+    bind_fold_list (fold_statement f) init stmts
 
 type 'err mapper = {
   e : expr -> (expr, 'err) result;
@@ -250,10 +270,10 @@ let rec map_type_expression : ('err) mapper -> type_expr -> ('b, 'err) result = 
   let%bind t = f.t t in
   let return = ok in
   match t with
-    TProd   {value;region} ->
+    TProd   {inside ={value;region}; attributes} ->
     let%bind inside = bind_map_npseq self value.inside in
     let value = {value with inside} in
-    return @@ TProd {value;region}
+    return @@ TProd {inside = {value;region}; attributes}
   | TSum {value;region} ->
     let%bind variants = bind_map_npseq self value.variants in
     let value = {value with variants} in
@@ -291,9 +311,9 @@ let rec map_type_expression : ('err) mapper -> type_expr -> ('b, 'err) result = 
     let value = {value with inside} in
     return @@ TPar {value;region}
   | (TVar    _
-  | TConstr _
   | TWild   _
   | TModA _
+  | TInt _
   | TString _ as e) -> ok e
 
 let rec map_expression : 'err mapper -> expr -> (expr, 'err) result = fun f e  ->
@@ -343,8 +363,8 @@ let rec map_expression : 'err mapper -> expr -> (expr, 'err) result = fun f e  -
   | ESeq  {value; region} ->
       let%bind value = bind_map_npseq self value in
       return @@ ESeq { value; region }
-  | ELident v -> return @@ ELident v
-  | EUident c -> return @@ EUident c
+  | EVar v -> return @@ EVar v
+  | EModA a -> return @@ EModA a
   | ELogic BoolExpr Or  {value;region} ->
     let%bind value = bin_op value in
     return @@ ELogic (BoolExpr (Or {value;region}))
@@ -471,6 +491,17 @@ let rec map_expression : 'err mapper -> expr -> (expr, 'err) result = fun f e  -
     let%bind code = self value.code in
     let value = {value with code} in
     return @@ ECodeInj {value;region}
+  | EConstr ENone _ as e -> return @@ e
+  | EConstr ESomeApp {value;region} ->
+    let some_, expr = value in
+    let%bind expr = self expr in
+    let value = some_,expr in
+    return @@ EConstr (ESomeApp {value;region})
+  | EConstr EConstrApp {value;region} ->
+    let const, expr = value in
+    let%bind expr = bind_map_option self expr in
+    let value = const,expr in
+    return @@ EConstr (EConstrApp {value;region})
 
 and map_statement : ('err) mapper -> statement -> (statement, 'err) result =
   fun f s ->
@@ -582,13 +613,30 @@ and map_statement : ('err) mapper -> statement -> (statement, 'err) result =
       region
     }
   | SImport i -> return @@ SImport i
+  | SForOf {value; region} -> (
+    let%bind expr = self_expr value.expr in
+    let%bind statement = self value.statement in
+    return @@ SForOf {
+      value = {value with expr; statement };
+      region
+    }
+  )
+  | SWhile {value; region} -> (
+    let%bind expr = self_expr value.expr in
+    let%bind statement = self value.statement in
+    return @@ SWhile {
+      value = {value with expr; statement };
+      region
+    }
+  )
 
-and map_toplevel_statement =
-  fun f (statement, semi_opt) ->
-  let stmt = map_statement f statement
-  in Trace.map (fun stmt -> (stmt, semi_opt)) stmt
+and map_toplevel_statement f = function
+  TopLevel (statement, terminator) ->
+    let stmt = map_statement f statement
+    in Trace.map (fun stmt -> TopLevel (stmt, terminator)) stmt
+  | Directive _ as d -> ok d
 
-and map_module : ('err) mapper -> t -> (t, 'err) result =
+and map_module : 'err mapper -> t -> (t, 'err) result =
   fun f {statements; eof} ->
     let self = map_toplevel_statement f in
     map (fun statements -> {statements; eof})

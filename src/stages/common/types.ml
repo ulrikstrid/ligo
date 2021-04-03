@@ -1,5 +1,7 @@
 include Enums
 
+module SMap = Map.Make(String)
+
 type location = Location.t
 type 'a location_wrap = 'a Location.wrap
 
@@ -165,6 +167,7 @@ and collect_type =
   | Map
   | Set
   | List
+  | Any
 
 and 'exp while_loop = {
   cond : 'exp ;

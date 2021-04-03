@@ -7,7 +7,7 @@
 (library
   (name lexing_jsligo)
   (public_name ligo.lexing.jsligo)
-  (modules Token Self_tokens)
+  (modules Token Self_tokens Style)
   (libraries
     ;; LIGO
     lexing_shared

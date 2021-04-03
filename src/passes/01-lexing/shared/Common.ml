@@ -44,16 +44,16 @@ module Make (Comments : COMMENTS) (Token : Token.S) =
 
     let from_file file_path =
       let config = mk_config ~input:(Some file_path)
-      in Scan.all_from_file config file_path |> lift
+      in Scan.Tokens.from_file config file_path |> lift
 
     let from_string string =
-      Scan.all_from_string (mk_config ~input:None) string |> lift
+      Scan.Tokens.from_string (mk_config ~input:None) string |> lift
 
     let from_buffer buffer =
-      Scan.all_from_buffer (mk_config ~input:None) buffer |> lift
+      Scan.Tokens.from_buffer (mk_config ~input:None) buffer |> lift
 
     let from_channel channel =
-      Scan.all_from_channel (mk_config ~input:None) channel |> lift
+      Scan.Tokens.from_channel (mk_config ~input:None) channel |> lift
 
     (* Aliases *)
 

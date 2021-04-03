@@ -12,12 +12,12 @@ let sub = ([a,b]: [int, int]): int => a - b;
 
 /* real entrypoint that re-routes the flow based on the parameter provided */
 
-let main = ([p,storage]: [parameter, storage]) => {
+let main = ([p, storage]: [parameter, storage]):[list<operation>, int] => {
   let storage2 = match(p, {
     Increment: (n: int) => add ([storage, n]),
     Decrement: (n: int) => sub ([storage, n]) 
   });
-  return [(List() as list <operation>), storage2];
+  return [(list([]) as list <operation>), storage2];
 };
 
 /* IF YOU CHANGE THIS, CHANGE THE EXAMPLE ON THE FRONT PAGE OF THE WEBSITE */

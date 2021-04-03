@@ -63,9 +63,9 @@ let empty : register = Map.empty
 
 ```jsligo group=maps
 type move = [int, int];
-type register = map <address, move>;
+type register = map<address, move>;
 
-let empty : register = Map.empty;
+let empty: register = Map.empty;
 ```
 
 </Syntax>
@@ -128,10 +128,10 @@ let moves : register =
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let moves : register =
-  Map.literal ([
+let moves: register =
+  Map.literal(list([
     [("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address), [1, 2]],
-    [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [0, 3]]]);
+    [("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), [0, 3]]]));
 ```
 
 </Syntax>
@@ -188,8 +188,8 @@ let my_balance : option (move) =
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let my_balance : option <move> =
-  Map.find_opt (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves);
+let my_balance: option<move> =
+  Map.find_opt(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves);
 ```
 
 </Syntax>
@@ -439,7 +439,7 @@ let iter_op = (m : register) : unit => {
 
 ```jsligo group=maps
 let iter_op = (m : register) : unit => {
-  let predicate = ([i, j] : [address, move]) => assert (j[0] > 3);
+  let predicate = ([i, j] : [address, move]): unit => assert (j[0] > 3);
   Map.iter (predicate, m);
 };
 ```
@@ -543,8 +543,8 @@ let fold_op = (m : register) : int => {
 <Syntax syntax="jsligo">
 
 ```jsligo group=maps
-let fold_op = (m : register) : int => {
-  let folded = ([i,j]: [int, [address, move]]) => i + j[1][1];
+let fold_op = (m : register): int => {
+  let folded = ([i,j]: [int, [address, move]]):int => i + j[1][1];
   return Map.fold (folded, m, 5);
 };
 ```

@@ -18,5 +18,6 @@ $HOME/git/ligo/src/passes/00-preprocessing/pascaligo/Comments.ml
 $HOME/git/ligo/src/passes/00-preprocessing/pascaligo/File.ml
 $HOME/git/ligo/src/passes/01-lexing/pascaligo/Self_tokens.ml
 $HOME/git/ligo/src/passes/01-lexing/pascaligo/Token.mll
+$HOME/git/ligo/src/passes/01-lexing/pascaligo/Style.ml
 $HOME/git/ligo/src/passes/01-lexing/shared/LexerMainGen.ml
 $HOME/git/ligo/src/passes/01-lexing/shared/Lexer.mll

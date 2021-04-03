@@ -1,4 +1,4 @@
-open Ast
+open Types
 open Stage_common.To_yojson
 type json = Yojson.Safe.t
 type 'a json_printer = 'a -> json
@@ -7,17 +7,17 @@ let constant' = Stage_common.To_yojson.constant'
 
 let label = label_to_yojson
 let option f o =
-    match o with
-    | None   -> `List [ `String "None" ; `Null ]
-    | Some v -> `List [ `String "Some" ; f v ]
+  match o with
+  | None   -> `List [ `String "None" ; `Null ]
+  | Some v -> `List [ `String "Some" ; f v ]
 
 let pair f g (x, y) = `Tuple [ f x ; g y ]
 let list f lst = `List (List.map f lst)
 let label_map f lmap =
   let lst = List.sort (fun (Label a, _) (Label b, _) -> String.compare a b) (LMap.bindings lmap) in
   let lst' = List.fold_left
-    (fun acc (Label k, v) -> (k , f v)::acc)
-    [] lst
+      (fun acc (Label k, v) -> (k , f v)::acc)
+      [] lst
   in
   `Assoc lst'
 
@@ -308,239 +308,30 @@ and environment {expression_environment=ee;type_environment=te;module_environmen
 (* Solver types *)
 
 let constant_tag : constant_tag -> json = function
-  | C_arrow     -> `List [`String "C_arrow"; `Null]
-  | C_option    -> `List [`String "C_option"; `Null]
-  | C_map       -> `List [`String "C_map"; `Null]
-  | C_big_map   -> `List [`String "C_big_map"; `Null]
-  | C_list      -> `List [`String "C_list"; `Null]
-  | C_set       -> `List [`String "C_set"; `Null]
-  | C_unit      -> `List [`String "C_unit"; `Null]
-  | C_string    -> `List [`String "C_string"; `Null]
-  | C_nat       -> `List [`String "C_nat"; `Null]
-  | C_mutez     -> `List [`String "C_mutez"; `Null]
-  | C_timestamp -> `List [`String "C_timestamp"; `Null]
-  | C_int       -> `List [`String "C_int"; `Null]
-  | C_address   -> `List [`String "C_address"; `Null]
-  | C_bytes     -> `List [`String "C_bytes"; `Null]
-  | C_key_hash  -> `List [`String "C_key_hash"; `Null]
-  | C_key       -> `List [`String "C_key"; `Null]
-  | C_signature -> `List [`String "C_signature"; `Null]
-  | C_operation -> `List [`String "C_operation"; `Null]
-  | C_contract  -> `List [`String "C_contract"; `Null]
-  | C_chain_id  -> `List [`String "C_chain_id"; `Null]
+  | C_arrow        -> `List [`String "C_arrow"; `Null]
+  | C_option       -> `List [`String "C_option"; `Null]
+  | C_map          -> `List [`String "C_map"; `Null]
+  | C_big_map      -> `List [`String "C_big_map"; `Null]
+  | C_list         -> `List [`String "C_list"; `Null]
+  | C_set          -> `List [`String "C_set"; `Null]
+  | C_unit         -> `List [`String "C_unit"; `Null]
+  | C_string       -> `List [`String "C_string"; `Null]
+  | C_nat          -> `List [`String "C_nat"; `Null]
+  | C_mutez        -> `List [`String "C_mutez"; `Null]
+  | C_timestamp    -> `List [`String "C_timestamp"; `Null]
+  | C_int          -> `List [`String "C_int"; `Null]
+  | C_address      -> `List [`String "C_address"; `Null]
+  | C_bytes        -> `List [`String "C_bytes"; `Null]
+  | C_key_hash     -> `List [`String "C_key_hash"; `Null]
+  | C_key          -> `List [`String "C_key"; `Null]
+  | C_signature    -> `List [`String "C_signature"; `Null]
+  | C_operation    -> `List [`String "C_operation"; `Null]
+  | C_contract     -> `List [`String "C_contract"; `Null]
+  | C_chain_id     -> `List [`String "C_chain_id"; `Null]
+  | C_bls12_381_g1 -> `List [`String "C_bls12_381_g1"; `Null]
+  | C_bls12_381_g2 -> `List [`String "C_bls12_381_g2"; `Null]
+  | C_bls12_381_fr -> `List [`String "C_bls12_381_fr"; `Null]
 
 let row_tag = function
   | C_record  -> `List [`String "C_record"; `Null]
   | C_variant -> `List [`String "C_variant"; `Null]
-
-let rec type_value t = Location.wrap_to_yojson type_value_ t
-
-and type_value_ = function
-  | P_forall    p -> `List [`String "P_"; p_forall p ]
-  | P_variable  p -> `List [`String "P_"; type_variable_to_yojson p ]
-  | P_constant  p -> `List [`String "P_"; p_constant p ]
-  | P_apply     p -> `List [`String "P_"; p_apply p ]
-  | P_row       p -> `List [`String "P_"; p_row p ]
-
-
-and typeclass tc = list (list type_value) tc
-and c_equation {aval;bval} =
-  `Assoc [
-    ("aval", type_value aval);
-    ("bval", type_value bval);
-  ]
-
-and constraint_identifier (ConstraintIdentifier ci : constraint_identifier) : json =
-  `Assoc [
-    "ConstraintIdentifier", `String (Format.asprintf "%Li" ci);
-  ]
-
-and c_typeclass {tc_args; typeclass=tc;original_id} =
-  `Assoc [
-    ("tc_args", list type_value tc_args);
-    ("original_id", match original_id with Some x -> constraint_identifier x | None -> `String "none");
-    ("typeclass", typeclass tc)
-  ]
-
-and c_access_label {c_access_label_tval; accessor; c_access_label_tvar} =
-  `Assoc [
-    ("c_access_label_tval", type_value c_access_label_tval);
-    ("accessor", label accessor);
-    ("c_acces_label_tvar", type_variable_to_yojson c_access_label_tvar);
-  ]
-
-and type_constraint_ = function
-  | C_equation     c -> `List [`String "C_equation"; c_equation c]
-  | C_typeclass    c -> `List [`String "C_typeclass"; c_typeclass c]
-  | C_access_label c -> `List [`String "C_access_label"; c_access_label c]
-
-and type_constraint {reason;c} =
-  `Assoc [
-    ("reason", `String reason);
-    ("c", type_constraint_ c);
-  ]
-and p_constraints p = list type_constraint p
-and p_forall {binder; constraints;body} =
-  `Assoc [
-    ("binder", type_variable_to_yojson binder);
-    ("constraints", p_constraints constraints);
-    ("body", type_value body);
-  ]
-
-and p_constant {p_ctor_tag; p_ctor_args} =
-  `Assoc [
-    ("p_ctor_tag", constant_tag p_ctor_tag);
-    ("p_ctor_args", list type_value p_ctor_args);
-  ]
-
-and p_apply {tf;targ} =
-  `Assoc [
-    ("tf", type_value tf);
-    ("targ", type_value targ);
-  ]
-
-and p_row {p_row_tag;p_row_args} =
-  `Assoc [
-    ("p_row_tag", row_tag p_row_tag);
-    ("p_row_args", label_map row_value p_row_args);
-  ]
-
-and row_value {associated_value; michelson_annotation; decl_pos} =
-  `Assoc [
-    ("associated_value", type_value associated_value);
-    ("michelson_annotation", option (fun s -> `String s) michelson_annotation);
-    ("decl_pos", `Int decl_pos);
-  ]
-
-
-let c_constructor_simpl {id_constructor_simpl = ConstraintIdentifier ci;reason_constr_simpl;original_id;tv;c_tag;tv_list} =
-  `Assoc [
-    ("id_row_simpl", `String (Format.sprintf "%Li" ci));
-    ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
-    ("reason_constr_simpl", `String reason_constr_simpl);
-    ("tv", type_variable_to_yojson tv);
-    ("c_tag", constant_tag c_tag);
-    ("tv_list", list type_variable_to_yojson tv_list)
-  ]
-
-let c_alias {reason_alias_simpl; a; b} =
-  `Assoc [
-    ("reason_alias_simpl", `String reason_alias_simpl);
-    ("a", type_variable_to_yojson a);
-    ("b", type_variable_to_yojson b);
-  ]
-
-let c_poly_simpl {id_poly_simpl = ConstraintIdentifier ci; reason_poly_simpl; original_id; tv; forall} =
-  `Assoc [
-    ("id_row_simpl", `String (Format.sprintf "%Li" ci));
-    ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
-    ("reason_poly_simpl", `String reason_poly_simpl);
-    ("tv", type_variable_to_yojson tv);
-    ("forall", p_forall forall)
-  ]
-
-let c_typeclass_simpl {id_typeclass_simpl = ConstraintIdentifier ci;reason_typeclass_simpl;original_id;tc;args} =
-  `Assoc [
-    ("id_typeclass_simpl", `String (Format.sprintf "%Li" ci));
-    ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
-    ("reason_typeclass_simpl", `String reason_typeclass_simpl);
-    ("tc", typeclass tc);
-    ("args", list type_variable_to_yojson args)
-  ]
-
-let c_access_label_simpl { id_access_label_simpl = ConstraintIdentifier ci ; reason_access_label_simpl ; record_type ; label = l ; tv } =
-  `Assoc [
-    ("id_access_label_simpl", `String (Format.sprintf "%Li" ci));
-    ("reason_access_label_simpl", `String reason_access_label_simpl);
-    ("record_type", type_variable_to_yojson record_type);
-    ("label", label_to_yojson l);
-    ("tv", type_variable_to_yojson tv)
-  ]
-
-let row_variable {associated_variable; michelson_annotation; decl_pos} =
-  `Assoc [
-    ("associated_variable", type_variable_to_yojson associated_variable);
-    ("michelson_annotation", option (fun s -> `String s) michelson_annotation);
-    ("decl_pos", `Int decl_pos);
-  ]
-
-let c_row_simpl {id_row_simpl = ConstraintIdentifier ci; reason_row_simpl; original_id; tv;r_tag;tv_map} =
-  `Assoc [
-    ("id_row_simpl", `String (Format.sprintf "%Li" ci));
-    ("original_id", `String (match original_id with Some (ConstraintIdentifier x) -> Format.asprintf "%Li" x | None -> "null" ));
-    ("reason_row_simpl", `String reason_row_simpl);
-    ("tv", type_variable_to_yojson tv);
-    ("r_tag", row_tag r_tag);
-    ("tv_map", label_map row_variable tv_map)
-  ]
-let type_constraint_simpl = function
-  | SC_Constructor c -> `List [`String "SC_constructor"; c_constructor_simpl c]
-  | SC_Alias       c -> `List [`String "SC_alias"; c_alias c]
-  | SC_Poly        c -> `List [`String "SC_Poly"; c_poly_simpl c]
-  | SC_Typeclass   c -> `List [`String "SC_Typclass"; c_typeclass_simpl c]
-  | SC_Access_label c -> `List [`String "SC_Access_label"; c_access_label_simpl c]
-  | SC_Row         c -> `List [`String "SC_Row"; c_row_simpl c]
-
-let poly_unionfind f p =
-  let lst = (UnionFind.Poly2.partitions p) in
-  let lst' = List.map
-      (fun l ->
-         let repr = f (UnionFind.Poly2.repr (List.hd l) p ) in
-         `List (repr :: List.map f l)) lst in
-  `Assoc ["UnionFind", `List lst']
-
-let unionfind : type_variable UnionFind.Poly2.t -> _ = poly_unionfind type_variable_to_yojson
-
-let typeVariableMap f tvmap =
-  let lst = List.sort (fun (a, _) (b, _) -> Var.compare a b) (RedBlackTrees.PolyMap.bindings tvmap) in
-  let aux (k, v) =
-    `Assoc [ Format.asprintf "%a" Var.pp k , f v ] in
-  let lst' = List.map aux lst in
-  `Assoc ["typeVariableMap",  `List lst']
-let ciMap f tvmap =
-  let lst = List.sort (fun (ConstraintIdentifier a, _) (ConstraintIdentifier b, _) -> Int64.compare a b) (RedBlackTrees.PolyMap.bindings tvmap) in
-  let aux (ConstraintIdentifier k, v) =
-    `Assoc [ Format.asprintf "%Li" k , f v ] in
-  let lst' = List.map aux lst in
-  `Assoc ["typeVariableMap",  `List lst']
-let jmap (fk : _ -> json) (fv : _ -> json)  tvmap : json =
-  let lst = RedBlackTrees.PolyMap.bindings tvmap in
-  let aux (k, v) =
-    `List [ fk k ; fv v ] in
-  let lst' = List.map aux lst in
-  `Assoc ["typeVariableMap",  `List lst']
-let constraint_identifier_set s =
-  let lst = List.sort (fun (ConstraintIdentifier a) (ConstraintIdentifier b) -> Int64.compare a b) (RedBlackTrees.PolySet.elements s) in
-  let aux (ConstraintIdentifier ci) =
-    `String (Format.asprintf "ConstraintIdentifier %Li" ci) in
-  let lst' = List.map aux lst in
-  `Assoc ["constraintIdentifierSet",  `List lst']
-let type_variable_set s =
-  let lst = List.sort Var.compare (RedBlackTrees.PolySet.elements s) in
-  let aux v =
-    `String (Format.asprintf "%a" Var.pp v) in
-  let lst' = List.map aux lst in
-  `Assoc ["typeVariableSet",  `List lst']
-
-let constraint_identifier (ConstraintIdentifier ci : constraint_identifier) : json =
-  `Assoc [
-    "ConstraintIdentifier", `String (Format.asprintf "%Li" ci);
-  ]
-
-(* let structured_dbs {refined_typeclasses;refined_typeclasses_back;typeclasses_constrained_by;by_constraint_identifier;all_constraints;aliases;assignments;grouped_by_variable;cycle_detection_toposort=_} =
- *   `Assoc [
- *     ("refined_typeclasses", jmap constraint_identifier refined_typeclass refined_typeclasses);
- *     ("refined_typeclasses", jmap constraint_identifier constraint_identifier refined_typeclasses_back);
- *     ("typeclasses_constrained_by", typeVariableMap constraint_identifier_set typeclasses_constrained_by);
- *     ("by_constraint_identifier", ciMap c_typeclass_simpl by_constraint_identifier);
- *     ("all_constrants", list type_constraint_simpl all_constraints);
- *     ("aliases", unionfind aliases);
- *     ("assignments", typeVariableMap c_constructor_simpl assignments);
- *     ("grouped_by_variable", typeVariableMap constraints grouped_by_variable);
- *     ("cycl_detection_toposort", `Null)
- *   ] *)
-let constructor_or_row (t : constructor_or_row ) =
-  match t with
-  | `Row r -> `Assoc [ ("row" , c_row_simpl r) ]
-  | `Constructor c -> `Assoc [ ("constructor" , c_constructor_simpl c) ]
-

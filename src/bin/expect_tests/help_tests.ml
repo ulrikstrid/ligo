@@ -102,6 +102,9 @@ let%expect_test _ =
                Subcommand: Print Mini-C. Warning: Intended for development of
                LIGO and can break at any time.
 
+           repl
+               Subcommand: REPL
+
            run-function
                Subcommand: Run a function with the given parameter.
 
@@ -223,6 +226,9 @@ let%expect_test _ =
                Subcommand: Print Mini-C. Warning: Intended for development of
                LIGO and can break at any time.
 
+           repl
+               Subcommand: REPL
+
            run-function
                Subcommand: Run a function with the given parameter.
 
@@ -277,6 +283,9 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --infer
+               enable type inferance
+
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
@@ -288,20 +297,25 @@ let%expect_test _ =
 
            -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
                PROTOCOL_VERSION will decide protocol's types/values pre-loaded
-               into the LIGO environment (carthage , dalphanet , edo). By
-               default, the current protocol (edo) will be used
+               into the LIGO environment (edo). By default, the current protocol
+               (edo) will be used
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo,
-               .jsligo respectively).
-
-           --typer=TYPER_SWITCH (absent=old)
-               TYPER_SWITCH is the typer to be used ('new' or 'old')
+               syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo".
+               By default, the syntax is guessed from the extension (.ligo,
+               .mligo, .religo, and .jsligo respectively).
 
            --version
-               Show version information. |} ] ;
+               Show version information.
+
+           --warn=BOOL (absent=true)
+               BOOL indicates whether warning messages should be printed in
+               stderr or not
+
+           --werror=BOOL (absent=false)
+               BOOL indicates whether warning messages should be treated as
+               errors or not |} ] ;
 
   run_ligo_good [ "compile-parameter" ; "--help" ] ;
   [%expect {|
@@ -346,6 +360,9 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --infer
+               enable type inferance
+
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
@@ -361,14 +378,14 @@ let%expect_test _ =
 
            -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
                PROTOCOL_VERSION will decide protocol's types/values pre-loaded
-               into the LIGO environment (carthage , dalphanet , edo). By
-               default, the current protocol (edo) will be used
+               into the LIGO environment (edo). By default, the current protocol
+               (edo) will be used
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo,
-               .jsligo respectively).
+               syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo".
+               By default, the syntax is guessed from the extension (.ligo,
+               .mligo, .religo, and .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -378,11 +395,16 @@ let%expect_test _ =
                SOURCE is the source the Michelson interpreter transaction will
                use.
 
-           --typer=TYPER_SWITCH (absent=old)
-               TYPER_SWITCH is the typer to be used ('new' or 'old')
-
            --version
-               Show version information. |} ] ;
+               Show version information.
+
+           --warn=BOOL (absent=true)
+               BOOL indicates whether warning messages should be printed in
+               stderr or not
+
+           --werror=BOOL (absent=false)
+               BOOL indicates whether warning messages should be treated as
+               errors or not |} ] ;
 
   run_ligo_good [ "compile-storage" ; "--help" ] ;
   [%expect {|
@@ -428,6 +450,9 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --infer
+               enable type inferance
+
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
                compile-contract for the resulting Michelson. Available formats
@@ -443,14 +468,14 @@ let%expect_test _ =
 
            -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
                PROTOCOL_VERSION will decide protocol's types/values pre-loaded
-               into the LIGO environment (carthage , dalphanet , edo). By
-               default, the current protocol (edo) will be used
+               into the LIGO environment (edo). By default, the current protocol
+               (edo) will be used
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo,
-               .jsligo respectively).
+               syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo".
+               By default, the syntax is guessed from the extension (.ligo,
+               .mligo, .religo, and .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -460,11 +485,16 @@ let%expect_test _ =
                SOURCE is the source the Michelson interpreter transaction will
                use.
 
-           --typer=TYPER_SWITCH (absent=old)
-               TYPER_SWITCH is the typer to be used ('new' or 'old')
-
            --version
-               Show version information. |} ] ;
+               Show version information.
+
+           --warn=BOOL (absent=true)
+               BOOL indicates whether warning messages should be printed in
+               stderr or not
+
+           --werror=BOOL (absent=false)
+               BOOL indicates whether warning messages should be treated as
+               errors or not |} ] ;
 
   run_ligo_good [ "dry-run" ; "--help" ] ;
   [%expect {|
@@ -511,20 +541,23 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --infer
+               enable type inferance
+
            --now=NOW
                NOW is the NOW value the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
            -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
                PROTOCOL_VERSION will decide protocol's types/values pre-loaded
-               into the LIGO environment (carthage , dalphanet , edo). By
-               default, the current protocol (edo) will be used
+               into the LIGO environment (edo). By default, the current protocol
+               (edo) will be used
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo,
-               .jsligo respectively).
+               syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo".
+               By default, the syntax is guessed from the extension (.ligo,
+               .mligo, .religo, and .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -534,11 +567,16 @@ let%expect_test _ =
                SOURCE is the source the Michelson interpreter transaction will
                use.
 
-           --typer=TYPER_SWITCH (absent=old)
-               TYPER_SWITCH is the typer to be used ('new' or 'old')
-
            --version
-               Show version information. |} ] ;
+               Show version information.
+
+           --warn=BOOL (absent=true)
+               BOOL indicates whether warning messages should be printed in
+               stderr or not
+
+           --werror=BOOL (absent=false)
+               BOOL indicates whether warning messages should be treated as
+               errors or not |} ] ;
 
   run_ligo_good [ "run-function" ; "--help" ] ;
   [%expect {|
@@ -582,20 +620,23 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --infer
+               enable type inferance
+
            --now=NOW
                NOW is the NOW value the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
            -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
                PROTOCOL_VERSION will decide protocol's types/values pre-loaded
-               into the LIGO environment (carthage , dalphanet , edo). By
-               default, the current protocol (edo) will be used
+               into the LIGO environment (edo). By default, the current protocol
+               (edo) will be used
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo,
-               .jsligo respectively).
+               syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo".
+               By default, the syntax is guessed from the extension (.ligo,
+               .mligo, .religo, and .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -604,9 +645,6 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the Michelson interpreter transaction will
                use.
-
-           --typer=TYPER_SWITCH (absent=old)
-               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;
@@ -648,20 +686,23 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --infer
+               enable type inferance
+
            --now=NOW
                NOW is the NOW value the Michelson interpreter will use (e.g.
                '2000-01-01T10:10:10Z')
 
            -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
                PROTOCOL_VERSION will decide protocol's types/values pre-loaded
-               into the LIGO environment (carthage , dalphanet , edo). By
-               default, the current protocol (edo) will be used
+               into the LIGO environment (edo). By default, the current protocol
+               (edo) will be used
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo,
-               .jsligo respectively).
+               syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo".
+               By default, the syntax is guessed from the extension (.ligo,
+               .mligo, .religo, and .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -670,9 +711,6 @@ let%expect_test _ =
            --source=SOURCE
                SOURCE is the source the Michelson interpreter transaction will
                use.
-
-           --typer=TYPER_SWITCH (absent=old)
-               TYPER_SWITCH is the typer to be used ('new' or 'old')
 
            --version
                Show version information. |} ] ;
@@ -709,6 +747,9 @@ let%expect_test _ =
                `pager', `groff' or `plain'. With `auto', the format is `pager` or
                `plain' whenever the TERM env var is `dumb' or undefined.
 
+           --infer
+               enable type inferance
+
            --init-file=INIT_FILE
                INIT_FILE is the path to smart contract file to be used for
                context initialization.
@@ -720,11 +761,16 @@ let%expect_test _ =
 
            -p PROTOCOL_VERSION, --protocol=PROTOCOL_VERSION (absent=current)
                PROTOCOL_VERSION will decide protocol's types/values pre-loaded
-               into the LIGO environment (carthage , dalphanet , edo). By
-               default, the current protocol (edo) will be used
-
-           --typer=TYPER_SWITCH (absent=old)
-               TYPER_SWITCH is the typer to be used ('new' or 'old')
+               into the LIGO environment (edo). By default, the current protocol
+               (edo) will be used
 
            --version
-               Show version information. |} ] ;
+               Show version information.
+
+           --warn=BOOL (absent=true)
+               BOOL indicates whether warning messages should be printed in
+               stderr or not
+
+           --werror=BOOL (absent=false)
+               BOOL indicates whether warning messages should be treated as
+               errors or not |} ] ;

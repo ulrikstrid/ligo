@@ -125,10 +125,8 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
      | C_ITER -> (O.E_iter (meta, ss, body, expr), us)
      | C_MAP -> (O.E_map (meta, ss, body, expr), us)
      | C_LOOP_LEFT ->
-       (match body with
-        | Binds (_, [Prim (_, "or", [_; b], _)], _) ->
-          (O.E_loop_left (meta, ss, body, b, expr), us)
-        | _ -> internal_error __LOC__ "type of loop_left accumulator is not or")
+       let b = translate_type ty in
+       (O.E_loop_left (meta, ss, body, b, expr), us)
      | _ -> internal_error __LOC__ "invalid iterator constant")
   | E_fold (body, coll, init) ->
     let (body, body_usages) = translate_binder body env in
@@ -137,6 +135,14 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
     let (ss1, us1) = union coll_usages body_usages in
     let (ss2, us2) = union init_usages us1 in
     (O.E_fold (meta, ss2, init, ss1, coll, body), us2)
+  | E_fold_right (body, (coll, elem_type), init) ->
+    let elem_type = translate_type elem_type in
+    let (body, body_usages) = translate_binder body env in
+    let (coll, coll_usages) = translate_expression coll env in
+    let (init, init_usages) = translate_expression init env in
+    let (ss1, us1) = union coll_usages body_usages in
+    let (ss2, us2) = union init_usages us1 in
+    (O.E_fold_right (meta, elem_type, ss2, init, ss1, coll, body), us2)
   | E_if_bool (e1, e2, e3) ->
     let (e1, us1) = translate_expression e1 env in
     let (e2, us2) = translate_expression e2 env in
@@ -171,11 +177,11 @@ let rec translate_expression (expr : I.expression) (env : I.environment) =
     let (e2, us2) = translate_binder e2 env in
     let (ss, us) = union us1 us2 in
     (E_let_in (meta, ss, e1, e2), us)
-  | E_let_pair (e1, e2) ->
+  | E_let_tuple (e1, e2) ->
     let (e1, us1) = translate_expression e1 env in
-    let (e2, us2) = translate_binder2 e2 env in
+    let (e2, us2) = translate_binderN e2 env in
     let (ss, us) = union us1 us2 in
-    (E_let_pair (meta, ss, e1, e2), us)
+    (E_let_tuple (meta, ss, e1, e2), us)
   | E_raw_michelson code ->
     (* maybe should move type into syntax? *)
     let (a, b) = match Mini_c.get_t_function ty with
@@ -198,6 +204,16 @@ and translate_binder2 ((binder1, binder2), body) env =
             [translate_type binder1_type; translate_type binder2_type],
             body),
    List.tl (List.tl usages))
+
+and translate_binderN (vars, body) env =
+  let env' = List.fold_right I.Environment.add vars env in
+  let (body, usages) = translate_expression body env' in
+  let var_types = List.map snd vars in
+  let n = List.length vars in
+  (O.Binds (List.firstn n usages,
+            List.map translate_type var_types,
+            body),
+   List.skipn n usages)
 
 and translate_args (arguments : I.expression list) env : _ O.args * usage list =
   let arguments = List.map (fun argument -> translate_expression argument env) arguments in

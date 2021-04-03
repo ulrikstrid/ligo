@@ -8,19 +8,27 @@ let () = Unix.putenv "TERM" "dumb"
 
 let%expect_test _ =
   run_ligo_good [ "measure-contract" ; contract "coase.ligo" ; "main" ] ;
-  [%expect {| 1247 bytes |}] ;
+  [%expect {| 1175 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig.ligo" ; "main" ] ;
-  [%expect {| 627 bytes |}] ;
+  [%expect {|
+    Warning: unused variable "keys" in file "../../test/contracts/multisig.ligo", line 49, characters 10-20.
+    567 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
-  [%expect {| 1695 bytes |}] ;
+  [%expect {|
+    Warning: unused variable "p" in file "../../test/contracts/multisig-v2.ligo", line 135, characters 24-25.
+    1539 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "vote.mligo" ; "main" ] ;
-  [%expect {| 460 bytes |}] ;
+  [%expect {|
+    Warning: unused variable "now" in file "../../test/contracts/vote.mligo", line 34, characters 6-9.
+    430 bytes |}] ;
 
   run_ligo_good [ "measure-contract" ; contract "issue-184-combs.mligo" ; "main2" ] ;
-  [%expect {| 235 bytes |}] ;
+  [%expect {|
+    Warning: unused variable "us" in file "../../test/contracts/issue-184-combs.mligo", line 30, characters 16-18.
+    231 bytes |}] ;
 
   run_ligo_good [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {| (Left (Left 1)) |}] ;
@@ -58,7 +66,10 @@ record[card_patterns -> map (nat , record[coefficient -> tez , quantity -> nat])
 
 let%expect_test _  =
   run_ligo_good [ "compile-storage" ; contract "timestamp.ligo" ; "main" ; "now" ; "--now" ; "2042-01-01T00:00:00Z" ] ;
-  [%expect {| "2042-01-01T00:00:00Z" |}]
+  [%expect {|
+    Warning: unused variable "s" in file "../../test/contracts/timestamp.ligo", line 3, characters 37-38.
+    Warning: unused variable "p" in file "../../test/contracts/timestamp.ligo", line 3, characters 21-22.
+    "2042-01-01T00:00:00Z" |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "coase.ligo" ; "main" ] ;
@@ -108,22 +119,16 @@ let%expect_test _ =
                  SWAP ;
                  CAR ;
                  PAIR ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  CDR ;
-                 DIG 3 ;
-                 DUP ;
-                 DUG 4 ;
+                 DUP 4 ;
                  CAR ;
                  CDR ;
                  DIG 4 ;
                  CAR ;
                  CAR ;
                  DIG 3 ;
-                 DIG 4 ;
-                 DUP ;
-                 DUG 5 ;
+                 DUP 5 ;
                  SWAP ;
                  SOME ;
                  SWAP ;
@@ -136,9 +141,7 @@ let%expect_test _ =
                  DIG 2 ;
                  SENDER ;
                  PAIR ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  CDR ;
                  SWAP ;
                  SOME ;
@@ -183,9 +186,7 @@ let%expect_test _ =
                  COMPARE ;
                  NEQ ;
                  IF { PUSH string "This card doesn't belong to you" ; FAILWITH } {} ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  CAR ;
                  CAR ;
                  SWAP ;
@@ -204,21 +205,15 @@ let%expect_test _ =
                  SWAP ;
                  CAR ;
                  PAIR ;
-                 DIG 3 ;
-                 DUP ;
-                 DUG 4 ;
+                 DUP 4 ;
                  CDR ;
-                 DIG 4 ;
-                 DUP ;
-                 DUG 5 ;
+                 DUP 5 ;
                  CAR ;
                  CDR ;
                  DIG 5 ;
                  CAR ;
                  CAR ;
-                 DIG 3 ;
-                 DUP ;
-                 DUG 4 ;
+                 DUP 4 ;
                  DIG 5 ;
                  CDR ;
                  SWAP ;
@@ -244,9 +239,7 @@ let%expect_test _ =
                  DUP ;
                  DUG 2 ;
                  CDR ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  CAR ;
                  CDR ;
                  DIG 4 ;
@@ -268,9 +261,7 @@ let%expect_test _ =
              CAR ;
              CDR ;
              DUP ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              CAR ;
              GET ;
              IF_NONE { PUSH string "transfer_single: No card." ; FAILWITH } {} ;
@@ -282,15 +273,11 @@ let%expect_test _ =
              COMPARE ;
              NEQ ;
              IF { PUSH string "This card doesn't belong to you" ; FAILWITH } {} ;
-             DIG 3 ;
-             DUP ;
-             DUG 4 ;
+             DUP 4 ;
              CDR ;
              DUG 2 ;
              CDR ;
-             DIG 3 ;
-             DUP ;
-             DUG 4 ;
+             DUP 4 ;
              CDR ;
              PAIR ;
              DIG 3 ;
@@ -310,6 +297,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "multisig.ligo" ; "main" ] ;
   [%expect {|
+Warning: unused variable "keys" in file "../../test/contracts/multisig.ligo", line 49, characters 10-20.
 { parameter
     (pair (pair (nat %counter) (lambda %message unit (list operation)))
           (list %signatures (pair key_hash signature))) ;
@@ -319,41 +307,29 @@ let%expect_test _ =
          DUP ;
          CAR ;
          CDR ;
-         DIG 2 ;
-         DUP ;
-         DUG 3 ;
+         DUP 3 ;
          CAR ;
          CDR ;
-         DIG 2 ;
-         DUP ;
-         DUG 3 ;
+         DUP 3 ;
          CAR ;
          CAR ;
          COMPARE ;
          NEQ ;
          IF { SWAP ; DROP ; PUSH string "Counters does not match" ; FAILWITH }
             { CHAIN_ID ;
-              DIG 3 ;
-              DUP ;
-              DUG 4 ;
+              DUP 4 ;
               CDR ;
               CAR ;
               PAIR ;
-              DIG 2 ;
-              DUP ;
-              DUG 3 ;
+              DUP 3 ;
               CAR ;
               CAR ;
-              DIG 2 ;
-              DUP ;
-              DUG 3 ;
+              DUP 3 ;
               PAIR ;
               PAIR ;
               PACK ;
               PUSH nat 0 ;
-              DIG 4 ;
-              DUP ;
-              DUG 5 ;
+              DUP 5 ;
               CAR ;
               CAR ;
               PAIR ;
@@ -379,15 +355,11 @@ let%expect_test _ =
                          DROP ;
                          DUP ;
                          HASH_KEY ;
-                         DIG 3 ;
-                         DUP ;
-                         DUG 4 ;
+                         DUP 4 ;
                          CAR ;
                          COMPARE ;
                          EQ ;
-                         IF { DIG 4 ;
-                              DUP ;
-                              DUG 5 ;
+                         IF { DUP 5 ;
                               DIG 3 ;
                               CDR ;
                               DIG 2 ;
@@ -400,9 +372,7 @@ let%expect_test _ =
                        { DROP ; PAIR } } ;
               SWAP ;
               DROP ;
-              DIG 2 ;
-              DUP ;
-              DUG 3 ;
+              DUP 3 ;
               CDR ;
               CDR ;
               SWAP ;
@@ -415,9 +385,7 @@ let%expect_test _ =
                    DUG 2 ;
                    CDR ;
                    PUSH nat 1 ;
-                   DIG 3 ;
-                   DUP ;
-                   DUG 4 ;
+                   DUP 4 ;
                    CAR ;
                    CDR ;
                    ADD ;
@@ -435,6 +403,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "multisig-v2.ligo" ; "main" ] ;
   [%expect {|
+Warning: unused variable "p" in file "../../test/contracts/multisig-v2.ligo", line 135, characters 24-25.
 { parameter
     (or (or (unit %default) (lambda %send bytes (list operation)))
         (lambda %withdraw bytes (list operation))) ;
@@ -459,9 +428,7 @@ let%expect_test _ =
                  IF { PUSH string "Unauthorized address" ; FAILWITH } {} ;
                  DUP ;
                  PACK ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  CAR ;
                  CAR ;
                  CDR ;
@@ -472,9 +439,7 @@ let%expect_test _ =
                  COMPARE ;
                  GT ;
                  IF { PUSH string "Message size exceed maximum limit" ; FAILWITH } {} ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  CAR ;
                  CDR ;
                  CDR ;
@@ -483,27 +448,19 @@ let%expect_test _ =
                  DUG 2 ;
                  GET ;
                  IF_NONE
-                   { DIG 2 ;
-                     DUP ;
-                     DUG 3 ;
+                   { DUP 3 ;
                      CDR ;
                      CDR ;
-                     DIG 3 ;
-                     DUP ;
-                     DUG 4 ;
+                     DUP 4 ;
                      CDR ;
                      CAR ;
                      CDR ;
-                     DIG 4 ;
-                     DUP ;
-                     DUG 5 ;
+                     DUP 5 ;
                      CDR ;
                      CAR ;
                      CAR ;
                      PUSH nat 1 ;
-                     DIG 6 ;
-                     DUP ;
-                     DUG 7 ;
+                     DUP 7 ;
                      CDR ;
                      CAR ;
                      CAR ;
@@ -528,27 +485,19 @@ let%expect_test _ =
                      SENDER ;
                      MEM ;
                      IF { DIG 3 }
-                        { DIG 3 ;
-                          DUP ;
-                          DUG 4 ;
+                        { DUP 4 ;
                           CDR ;
                           CDR ;
-                          DIG 4 ;
-                          DUP ;
-                          DUG 5 ;
+                          DUP 5 ;
                           CDR ;
                           CAR ;
                           CDR ;
-                          DIG 5 ;
-                          DUP ;
-                          DUG 6 ;
+                          DUP 6 ;
                           CDR ;
                           CAR ;
                           CAR ;
                           PUSH nat 1 ;
-                          DIG 7 ;
-                          DUP ;
-                          DUG 8 ;
+                          DUP 8 ;
                           CDR ;
                           CAR ;
                           CAR ;
@@ -593,9 +542,7 @@ let%expect_test _ =
                  DUP ;
                  CDR ;
                  CDR ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  SIZE ;
                  COMPARE ;
                  GE ;
@@ -607,15 +554,11 @@ let%expect_test _ =
                       CAR ;
                       CDR ;
                       CDR ;
-                      DIG 4 ;
-                      DUP ;
-                      DUG 5 ;
+                      DUP 5 ;
                       NONE (set address) ;
                       SWAP ;
                       UPDATE ;
-                      DIG 2 ;
-                      DUP ;
-                      DUG 3 ;
+                      DUP 3 ;
                       CAR ;
                       CDR ;
                       CAR ;
@@ -638,17 +581,13 @@ let%expect_test _ =
                       CDR ;
                       CDR ;
                       DIG 4 ;
-                      DIG 3 ;
-                      DUP ;
-                      DUG 4 ;
+                      DUP 4 ;
                       CDR ;
                       CAR ;
                       CDR ;
                       CONCAT ;
                       SHA256 ;
-                      DIG 3 ;
-                      DUP ;
-                      DUG 4 ;
+                      DUP 4 ;
                       CDR ;
                       CAR ;
                       CAR ;
@@ -670,9 +609,7 @@ let%expect_test _ =
                              DUG 2 ;
                              CDR ;
                              CAR ;
-                             DIG 4 ;
-                             DUP ;
-                             DUG 5 ;
+                             DUP 5 ;
                              SWAP ;
                              DUP ;
                              DUG 2 ;
@@ -682,15 +619,11 @@ let%expect_test _ =
                                   DUG 2 ;
                                   CDR ;
                                   CDR ;
-                                  DIG 2 ;
-                                  DUP ;
-                                  DUG 3 ;
+                                  DUP 3 ;
                                   CDR ;
                                   CAR ;
                                   CDR ;
-                                  DIG 3 ;
-                                  DUP ;
-                                  DUG 4 ;
+                                  DUP 4 ;
                                   CDR ;
                                   CAR ;
                                   CAR ;
@@ -731,9 +664,7 @@ let%expect_test _ =
                       SOME ;
                       SWAP ;
                       UPDATE ;
-                      DIG 2 ;
-                      DUP ;
-                      DUG 3 ;
+                      DUP 3 ;
                       CAR ;
                       CDR ;
                       CAR ;
@@ -768,27 +699,19 @@ let%expect_test _ =
                  SIZE ;
                  COMPARE ;
                  NEQ ;
-                 IF { DIG 2 ;
-                      DUP ;
-                      DUG 3 ;
+                 IF { DUP 3 ;
                       CDR ;
                       CDR ;
-                      DIG 3 ;
-                      DUP ;
-                      DUG 4 ;
+                      DUP 4 ;
                       CDR ;
                       CAR ;
                       CDR ;
-                      DIG 4 ;
-                      DUP ;
-                      DUG 5 ;
+                      DUP 5 ;
                       CDR ;
                       CAR ;
                       CAR ;
                       PUSH nat 1 ;
-                      DIG 6 ;
-                      DUP ;
-                      DUG 7 ;
+                      DUP 7 ;
                       CDR ;
                       CAR ;
                       CAR ;
@@ -807,9 +730,7 @@ let%expect_test _ =
                       PAIR }
                     { DIG 2 } ;
                  PUSH nat 0 ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  SIZE ;
                  COMPARE ;
                  EQ ;
@@ -827,9 +748,7 @@ let%expect_test _ =
                       NONE (set address) ;
                       SWAP ;
                       UPDATE ;
-                      DIG 2 ;
-                      DUP ;
-                      DUG 3 ;
+                      DUP 3 ;
                       CAR ;
                       CDR ;
                       CAR ;
@@ -853,9 +772,7 @@ let%expect_test _ =
                       SOME ;
                       SWAP ;
                       UPDATE ;
-                      DIG 2 ;
-                      DUP ;
-                      DUG 3 ;
+                      DUP 3 ;
                       CAR ;
                       CDR ;
                       CAR ;
@@ -871,6 +788,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "vote.mligo" ; "main" ] ;
   [%expect {|
+Warning: unused variable "now" in file "../../test/contracts/vote.mligo", line 34, characters 6-9.
 { parameter
     (or (pair %reset (pair (timestamp %finish_time) (timestamp %start_time)) (string %title))
         (or %vote (unit %nay) (unit %yea))) ;
@@ -889,9 +807,7 @@ let%expect_test _ =
              DUP ;
              DUG 2 ;
              CDR ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              CAR ;
              CDR ;
              PAIR ;
@@ -912,15 +828,11 @@ let%expect_test _ =
                  DUP ;
                  DUG 2 ;
                  CDR ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  CAR ;
                  CDR ;
                  PUSH nat 1 ;
-                 DIG 4 ;
-                 DUP ;
-                 DUG 5 ;
+                 DUP 5 ;
                  CAR ;
                  CAR ;
                  CDR ;
@@ -934,15 +846,11 @@ let%expect_test _ =
                  PAIR }
                { DROP ;
                  PUSH nat 1 ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  CDR ;
                  CDR ;
                  ADD ;
-                 DIG 2 ;
-                 DUP ;
-                 DUG 3 ;
+                 DUP 3 ;
                  CDR ;
                  CAR ;
                  PAIR ;
@@ -988,14 +896,10 @@ let%expect_test _ =
          DIG 2 ;
          IF_LEFT
            { READ_TICKET ;
-             UNPAIR ;
-             SWAP ;
-             DROP ;
+             CAR ;
              DIG 3 ;
              NONE (ticket unit) ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              GET_AND_UPDATE ;
              IF_NONE
                { DIG 2 }
@@ -1020,22 +924,16 @@ let%expect_test _ =
              IF {} { PUSH string "failed assertion" ; FAILWITH } ;
              DIG 2 ;
              NONE (ticket unit) ;
-             DIG 2 ;
-             DUP ;
-             DUG 3 ;
+             DUP 3 ;
              CDR ;
              CDR ;
              GET_AND_UPDATE ;
              IF_NONE
                { DROP 3 ; PUSH string "no tickets" ; FAILWITH }
                { READ_TICKET ;
-                 UNPAIR ;
-                 DROP ;
-                 UNPAIR ;
-                 DROP ;
-                 DIG 3 ;
-                 DUP ;
-                 DUG 4 ;
+                 CDR ;
+                 CDR ;
+                 DUP 4 ;
                  CDR ;
                  CAR ;
                  DUP ;
@@ -1052,9 +950,7 @@ let%expect_test _ =
                    { UNPAIR ;
                      DUG 2 ;
                      SOME ;
-                     DIG 3 ;
-                     DUP ;
-                     DUG 4 ;
+                     DUP 4 ;
                      CDR ;
                      CDR ;
                      GET_AND_UPDATE ;
@@ -1075,6 +971,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "ticket_builder.mligo" ; "main" ; "--protocol=edo" ] ;
   [%expect {|
+Warning: unused variable "ticket" in file "../../test/contracts/ticket_builder.mligo", line 29, characters 28-34.
 { parameter
     (or (ticket %burn unit)
         (pair %mint (contract %destination (ticket unit)) (nat %amount))) ;
@@ -1089,9 +986,7 @@ let%expect_test _ =
            { READ_TICKET ;
              SWAP ;
              DROP ;
-             UNPAIR ;
-             SWAP ;
-             DROP ;
+             CAR ;
              SELF_ADDRESS ;
              SWAP ;
              COMPARE ;
@@ -1123,6 +1018,8 @@ let%expect_test _ =
 let%expect_test _ =
     run_ligo_good [ "compile-contract" ; contract "implicit.mligo" ; "main" ] ;
     [%expect {|
+      Warning: unused variable "s" in file "../../test/contracts/implicit.mligo", line 1, characters 25-35.
+      Warning: unused variable "c" in file "../../test/contracts/implicit.mligo", line 2, characters 6-7.
       { parameter key_hash ;
         storage unit ;
         code { DROP ; UNIT ; NIL operation ; PAIR } } |}]
@@ -1131,11 +1028,14 @@ let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "amount_lambda.mligo" ; "main" ] ;
   (* AMOUNT should occur inside the second lambda, but not the first lambda *)
   [%expect {|
+    Warning: unused variable "x" in file "../../test/contracts/amount_lambda.mligo", line 2, characters 7-17.
+    Warning: unused variable "x" in file "../../test/contracts/amount_lambda.mligo", line 4, characters 6-16.
+    Warning: unused variable "x" in file "../../test/contracts/amount_lambda.mligo", line 7, characters 7-17.
+    Warning: unused variable "x" in file "../../test/contracts/amount_lambda.mligo", line 8, characters 6-16.
+    Warning: unused variable "s" in file "../../test/contracts/amount_lambda.mligo", line 10, characters 12-13.
     { parameter bool ;
       storage (lambda unit mutez) ;
-      code { UNPAIR ;
-             SWAP ;
-             DROP ;
+      code { CAR ;
              IF { AMOUNT ; LAMBDA (pair mutez unit) mutez { CAR } ; SWAP ; APPLY }
                 { LAMBDA unit mutez { DROP ; AMOUNT } } ;
              NIL operation ;
@@ -1180,15 +1080,23 @@ let%expect_test _ =
 
 let%expect_test _ =
     run_ligo_good [ "dry-run" ; contract "redeclaration.ligo" ; "main" ; "unit" ; "0" ] ;
-    [%expect {|( LIST_EMPTY() , 0 ) |}]
+    [%expect {|
+      Warning: unused variable "p" in file "../../test/contracts/redeclaration.ligo", line 1, characters 20-21.
+      Warning: unused variable "s" in file "../../test/contracts/redeclaration.ligo", line 3, characters 37-38.
+      Warning: unused variable "p" in file "../../test/contracts/redeclaration.ligo", line 3, characters 21-22.
+      Warning: unused variable "p" in file "../../test/contracts/redeclaration.ligo", line 6, characters 20-21.
+      ( LIST_EMPTY() , 0 ) |}]
 
 let%expect_test _ =
     run_ligo_good [ "dry-run" ; contract "double_main.ligo" ; "main" ; "unit" ; "0" ] ;
-    [%expect {|( LIST_EMPTY() , 2 ) |}]
+    [%expect {|
+      Warning: unused variable "p" in file "../../test/contracts/double_main.ligo", line 5, characters 20-21.
+      ( LIST_EMPTY() , 2 ) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "subtle_nontail_fail.mligo" ; "main" ] ;
   [%expect {|
+    Warning: unused variable "ps" in file "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 9-27.
     { parameter unit ;
       storage unit ;
       code { DROP ;
@@ -1200,24 +1108,29 @@ let%expect_test _ =
   (* TODO should not be bad? *)
   run_ligo_good [ "dry-run" ; contract "subtle_nontail_fail.mligo" ; "main" ; "()" ; "()" ] ;
   [%expect {|
+    Warning: unused variable "ps" in file "../../test/contracts/subtle_nontail_fail.mligo", line 1, characters 9-27.
     failwith("This contract always fails") |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "self_in_lambda.mligo" ; "main" ] ;
   [%expect {|
-    "Tezos.self_address" must be used directly and cannot be used via another function. |}]
+    "Tezos.self" must be used directly and cannot be used via another function. |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-storage" ; contract "big_map.ligo" ; "main" ; "(big_map1,unit)" ] ;
   [%expect {|
+    Warning: unused variable "p" in file "../../test/contracts/big_map.ligo", line 5, characters 21-22.
+    Warning: unused variable "toto" in file "../../test/contracts/big_map.ligo", line 7, characters 8-12.
+    Warning: unused variable "toto" in file "../../test/contracts/big_map.ligo", line 8, characters 4-19.
     (Pair { Elt 23 0 ; Elt 42 0 } Unit) |}]
 
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "key_hash_comparable.ligo" ; "main" ] ;
   [%expect {|
+    Warning: unused variable "a" in file "../../test/contracts/key_hash_comparable.ligo", line 8, characters 21-22.
     { parameter int ;
       storage (pair (map %one key_hash nat) (big_map %two key_hash bool)) ;
-      code { UNPAIR ; DROP ; NIL operation ; PAIR } } |}]
+      code { CDR ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "long_sum_type_names.ligo" ; "main" ] ;
@@ -1288,10 +1201,12 @@ Free variable 'a' is not allowed in CREATE_CONTRACT lambda |}] ;
 
   run_ligo_good [ "compile-contract" ; contract "create_contract.mligo" ; "main" ] ;
   [%expect {|
+    Warning: unused variable "action" in file "../../test/contracts/create_contract.mligo", line 3, characters 10-16.
+    Warning: unused variable "s" in file "../../test/contracts/create_contract.mligo", line 5, characters 13-14.
+    Warning: unused variable "p" in file "../../test/contracts/create_contract.mligo", line 5, characters 10-11.
     { parameter string ;
       storage string ;
-      code { UNPAIR ;
-             DROP ;
+      code { CDR ;
              PUSH string "un" ;
              PUSH mutez 300000000 ;
              NONE key_hash ;
@@ -1309,6 +1224,8 @@ Free variable 'a' is not allowed in CREATE_CONTRACT lambda |}] ;
 
   run_ligo_good [ "compile-contract" ; contract "tuples_no_annotation.religo" ; "main" ] ;
   [%expect {|
+    Warning: unused variable "storage" in file "../../test/contracts/tuples_no_annotation.religo", line 5, characters 15-22.
+    Warning: unused variable "p" in file "../../test/contracts/tuples_no_annotation.religo", line 5, characters 13-14.
     { parameter int ;
       storage (pair (pair int string) (pair nat bool)) ;
       code { DROP ;
@@ -1336,9 +1253,9 @@ let%expect_test _ =
 
   run_ligo_good [ "compile-contract" ; contract "self_type_annotation.ligo" ; "main" ] ;
   [%expect {|
-    { parameter nat ;
-      storage int ;
-      code { UNPAIR ; DROP ; NIL operation ; PAIR } } |}]
+    Warning: unused variable "p" in file "../../test/contracts/self_type_annotation.ligo", line 6, characters 21-22.
+    Warning: unused variable "self_contract" in file "../../test/contracts/self_type_annotation.ligo", line 8, characters 10-23.
+    { parameter nat ; storage int ; code { CDR ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract.mligo" ; "main" ] ;
@@ -1374,10 +1291,10 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "self_with_entrypoint.ligo" ; "main" ] ;
   [%expect {|
+    Warning: unused variable "p" in file "../../test/contracts/self_with_entrypoint.ligo", line 6, characters 21-22.
     { parameter (or (unit %default) (int %toto)) ;
       storage nat ;
-      code { UNPAIR ;
-             DROP ;
+      code { CDR ;
              SELF %toto ;
              PUSH mutez 300000000 ;
              PUSH int 2 ;
@@ -1390,10 +1307,10 @@ let%expect_test _ =
 
   run_ligo_good [ "compile-contract" ; contract "self_without_entrypoint.ligo" ; "main" ] ;
   [%expect {|
+    Warning: unused variable "p" in file "../../test/contracts/self_without_entrypoint.ligo", line 6, characters 21-22.
     { parameter int ;
       storage nat ;
-      code { UNPAIR ;
-             DROP ;
+      code { CDR ;
              SELF %default ;
              PUSH mutez 300000000 ;
              PUSH int 2 ;
@@ -1544,10 +1461,77 @@ let%expect_test _ =
   run_ligo_good [ "compile-contract" ; contract "uncurry_contract.mligo" ; "main" ] ;
   let output = [%expect.output] in
   let lines = String.split_on_char '\n' output in
-  let lines = List.take 3 lines in
+  let lines = List.take 8 lines in
   let output = String.concat "\n" lines in
   print_string output;
   [%expect {|
+    Warning: unused variable "x" in file "../../test/contracts/uncurry_contract.mligo", line 5, characters 8-18.
+    Warning: unused variable "y" in file "../../test/contracts/uncurry_contract.mligo", line 5, characters 19-29.
+    Warning: unused variable "z" in file "../../test/contracts/uncurry_contract.mligo", line 5, characters 30-40.
+    Warning: unused variable "w" in file "../../test/contracts/uncurry_contract.mligo", line 5, characters 41-51.
     { parameter unit ;
       storage unit ;
-      code { LAMBDA (pair unit (pair unit (pair unit unit))) unit { DROP ; PUSH unit Unit } ; |}]
+      code { LAMBDA
+               (pair unit (pair unit (pair unit unit))) |}]
+
+(* old uncurry bugs: *)
+let%expect_test _ =
+  run_ligo_good [ "interpret"; "-s"; "cameligo"; "let f (y : int) (x : int) (y : int) = (x, y) in f 1 2 3" ] ;
+  [%expect {| ( 2 , 3 ) |}]
+
+let%expect_test _ =
+  run_ligo_good [ "interpret"; "-s"; "cameligo"; "let f (x0 : int) (x1 : int) (x2 : int) (x3 : int) (x4 : int) (x5 : int) (x6 : int) (x7 : int) (x8 : int) (x9 : int) (x10 : int) : int list = [x0; x1; x2; x3; x4; x5; x6; x7; x8; x9; x10] in f 0 1 2 3 4 5 6 7 8 9 10" ] ;
+  [%expect {|
+    CONS(0 ,
+         CONS(1 ,
+              CONS(2 ,
+                   CONS(3 ,
+                        CONS(4 ,
+                             CONS(5 ,
+                                  CONS(6 ,
+                                       CONS(7 ,
+                                            CONS(8 ,
+                                                 CONS(9 ,
+                                                      CONS(10 , LIST_EMPTY()))))))))))) |}]
+
+(* uncurrying w/ interpret (old bug) *)
+let%expect_test _ =
+  run_ligo_good [ "interpret"; "--init-file"; contract "uncurry_contract.mligo"; "mul 3n 4n" ] ;
+  [%expect {| +12 |}]
+
+(* Edo combs example *)
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "edo_combs.mligo" ; "main" ] ;
+  [%expect {|
+    Warning: unused variable "s" in file "../../test/contracts/edo_combs.mligo", line 10, characters 13-14.
+    { parameter (pair (int %x) (pair (int %y) (pair (int %z) (int %w)))) ;
+      storage int ;
+      code { CAR ; UNPAIR 4 ; ADD ; ADD ; ADD ; NIL operation ; PAIR } } |}]
+
+(* warning unused variables example *)
+let%expect_test _ =
+  run_ligo_good [ "compile-contract" ; contract "warning_unused.mligo" ; "main" ] ;
+  [%expect {|
+    Warning: unused variable "x" in file "../../test/contracts/warning_unused.mligo", line 11, characters 6-7.
+    { parameter int ;
+      storage (pair (int %x) (int %y)) ;
+      code { CDR ;
+             PUSH int 3 ;
+             SWAP ;
+             DUP ;
+             DUG 2 ;
+             CAR ;
+             ADD ;
+             DROP ;
+             PUSH int 3 ;
+             PUSH int 9 ;
+             DUP 3 ;
+             CAR ;
+             MUL ;
+             ADD ;
+             SWAP ;
+             CDR ;
+             SWAP ;
+             PAIR ;
+             NIL operation ;
+             PAIR } } |}]

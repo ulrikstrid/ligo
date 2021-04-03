@@ -48,7 +48,7 @@ let today : timestamp = Tezos.now;
 <Syntax syntax="jsligo">
 
 ```jsligo group=a
-let today : timestamp = Tezos.now;
+let today: timestamp = Tezos.now;
 ```
 
 </Syntax>
@@ -107,11 +107,11 @@ let one_day_later : timestamp = some_date + one_day;
 <Syntax syntax="jsligo">
 
 ```jsligo group=b
-let today : timestamp = Tezos.now;
-let one_day : int = 86_400;
-let in_24_hrs : timestamp = today + one_day;
-let some_date : timestamp = ("2000-01-01t10:10:10Z" as timestamp);
-let one_day_later : timestamp = some_date + one_day;
+let today: timestamp = Tezos.now;
+let one_day: int = 86_400;
+let in_24_hrs: timestamp = today + one_day;
+let some_date: timestamp = "2000-01-01t10:10:10Z" as timestamp;
+let one_day_later: timestamp = some_date + one_day;
 ```
 
 </Syntax>
@@ -156,9 +156,9 @@ let in_24_hrs : timestamp = today - one_day;
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let today : timestamp = Tezos.now;
-let one_day : int = 86400;
-let in_24_hrs : timestamp = today - one_day;
+let today: timestamp = Tezos.now;
+let one_day: int = 86400;
+let in_24_hrs: timestamp = today - one_day;
 ```
 
 </Syntax>
@@ -200,7 +200,7 @@ let not_tomorrow : bool = (Tezos.now == in_24_hrs);
 <Syntax syntax="jsligo">
 
 ```jsligo group=c
-let not_tomorrow : bool = (Tezos.now == in_24_hrs);
+let not_tomorrow: bool = (Tezos.now == in_24_hrs);
 ```
 
 </Syntax>
@@ -241,8 +241,8 @@ let my_account : address =
 <Syntax syntax="jsligo">
 
 ```jsligo group=d
-let my_account : address =
-  ("tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address);
+let my_account: address =
+  "tz1KqTpEZ7Yob7QbPE4Hy4Wo8fHG8LhKxZSx" as address;
 ```
 
 </Syntax>
@@ -286,9 +286,9 @@ signature);
 <Syntax syntax="jsligo">
 
 ```jsligo group=e
-let my_sig : signature =
-("edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7" as
-signature);
+let my_sig: signature =
+"edsigthTzJ8X7MPmNeEwybRAvdxS1pupqcM5Mk4uCuyZAe7uEk68YpuGDeViW8wSXMrCi5CwoNgqs8V2w8ayB5dMJzrYCHhD8C7" as
+signature;
 ```
 
 </Syntax>
@@ -331,7 +331,7 @@ let my_key : key =
 
 ```jsligo group=f
 let my_key : key =
-  ("edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav" as key);
+  "edpkuBknW28nW72KG6RoHtYW7p12T6GKc7nAbwYX5m8Wd9sDVC9yav" as key;
 ```
 
 </Syntax>

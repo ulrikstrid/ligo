@@ -7,7 +7,7 @@
 
 open Simple_utils.Region
 module CST = Cst.Jsligo
-open CST
+open! CST
 
 (* Utilities *)
 
@@ -28,8 +28,8 @@ let first_region = function
 (* Entry points *)
 
 %start contract interactive_expr
-%type <Cst.Jsligo.t> contract
-%type <Cst.Jsligo.expr> interactive_expr
+%type <CST.t> contract
+%type <CST.expr> interactive_expr
 
 %%
 
@@ -107,11 +107,12 @@ sep_or_term_list(item,sep):
 
 (* Helpers *)
 
+%inline type_name   : "<ident>" { $1 }
+%inline field_name  : "<ident>" { $1 }
+%inline module_name : "<uident>" { $1 }
+%inline constr      : "<uident>" { $1 }
 
-%inline type_name        : "<lident>"  { $1 }
-%inline field_name       : "<lident>"  { $1 }
-(* %inline struct_name      : "<lident>"  { $1 } *)
-// %inline module_name      : "<uident>" { $1 }
+%inline 
 
 (* Non-empty comma-separated values (at least two values) *)
 
@@ -192,8 +193,7 @@ initializer_:
   }
 
 rest:
-  "..." "<uident>"
-| "..." "<lident>" {
+  "..." "<ident>" {
     let region = cover $1 $2.region in
     let value = {
       ellipsis = $1;
@@ -206,8 +206,7 @@ rest:
   }
 
 object_binding_property:
-  "<uident>" initializer_?
-| "<lident>" initializer_?  {
+  "<ident>" initializer_? {
     match $2 with
     | Some (eq, expr) ->
       let region = cover $1.region (expr_to_region expr) in
@@ -223,8 +222,7 @@ object_binding_property:
     | None ->
       PVar $1
   }
-| "<uident>" ":" binding_initializer
-| "<lident>" ":" binding_initializer {
+| "<ident>" ":" binding_initializer {
     let region = cover $1.region $3.region in
     let value = {
       property = $1;
@@ -260,8 +258,7 @@ object_binding_pattern:
 array_binding_pattern_item:
   /* empty  */          { PWild Region.ghost }
 | rest                  { $1 }
-| "<uident>"            { PConstr $1 }
-| "<lident>"             { PVar $1 }
+| "<ident>"            { PVar $1}
 | "_"                   { PWild $1 }
 | array_binding_pattern { $1 }
 
@@ -281,8 +278,7 @@ array_binding_pattern:
   }
 
 binding_pattern:
-  "<uident>"              { PConstr $1 }
-| "<lident>"               { PVar $1 }
+  "<ident>"              { PVar $1 }
 | object_binding_pattern  { $1 }
 | array_binding_pattern   { $1 }
 | "_"                     { PWild $1 }
@@ -295,15 +291,15 @@ binding_pattern:
   ":" type_expr { $1, $2 }
 
 binding_initializer:
-  binding_pattern type_annot_opt initializer_ {
-    let region = cover (pattern_to_region $1) (expr_to_region (snd $3))
+  seq("[@attr]") binding_pattern type_annot_opt initializer_ {
+    let region = cover (pattern_to_region $2) (expr_to_region (snd $4))
     in
     let value = {
-      binders    = $1;
-      lhs_type   = $2;
-      eq         = fst $3;
-      expr       = snd $3;
-      attributes = []
+      binders    = $2;
+      lhs_type   = $3;
+      eq         = fst $4;
+      expr       = snd $4;
+      attributes = $1;
     } in
     {
       region; value
@@ -316,19 +312,29 @@ binding_list:
   }
 
 declaration:
-  "let" binding_list {
-    let region = cover $1 (nsepseq_to_region (fun e -> e.region) $2) in
+  seq("[@attr]") "let" binding_list {
+    let region = cover $2 (nsepseq_to_region (fun e -> e.region) $3) in
+    let bindings = Utils.nsepseq_map 
+      (fun ({value; region}: let_binding Region.reg) ->
+      ({value = {value with attributes = ($1 @ value.attributes)}; region }: let_binding Region.reg)) 
+      $3 
+    in
     let value = {
-      kwd_let    = $1;
-      bindings   = $2
+      kwd_let  = $2;
+      bindings
     } in
     SLet { region; value }
   }
-| "const" binding_list {
-    let region = cover $1 (nsepseq_to_region (fun e -> e.region) $2) in
+| seq("[@attr]") "const" binding_list {
+    let region = cover $2 (nsepseq_to_region (fun e -> e.region) $3) in
+    let bindings = Utils.nsepseq_map 
+      (fun ({value; region}: let_binding Region.reg) ->
+      ({value = {value with attributes = ($1 @ value.attributes)}; region }: let_binding Region.reg)) 
+      $3 
+    in
     let value = {
-      kwd_const  = $1;
-      bindings   = $2
+      kwd_const  = $2;
+      bindings
     }
     in
     SConst { region; value }
@@ -340,16 +346,17 @@ type_expr:
   fun_type | sum_type | record_type { $1 }
 
 fun_type_arg:
-  "<uident>" ":" type_expr
-| "<lident>" ":" type_expr {
+  "<ident>" ":" type_expr {
     {name      = $1;
      colon     = $2;
      type_expr = $3; }
   }
 
+fun_type2:
+  cartesian | fun_type { $1 }
+
 fun_type:
-  cartesian { $1 }
-| "(" nsepseq(fun_type_arg, ",") ")" "=>" fun_type {
+  "(" nsepseq(fun_type_arg, ",") ")" "=>" fun_type2 {
     let start = $1
     and stop   = type_expr_to_region $5 in
     let region = cover start stop in
@@ -362,10 +369,13 @@ fun_type:
 
 cartesian:
   core_type { $1 }
-| brackets(nsepseq(type_expr, ",")) {  TProd $1 }
+| seq("[@attr]") brackets(nsepseq(type_expr, ",")) {  TProd {
+  inside = $2;
+  attributes = $1} 
+}
 
 module_access_t:
-  ident "." module_var_t {
+  "<uident>" "." module_var_t {
   let start       = $1.region in
     let stop        = type_expr_to_region $3 in
     let region      = cover start stop in
@@ -375,12 +385,12 @@ module_access_t:
 
 module_var_t: 
   module_access_t   { TModA $1 }
-| ident             { TVar  $1 }
+| "<ident>"             { TVar  $1 }
 
 core_type:
-  "<lident>"           {       TVar $1 }
-| "<uident>"           {    TConstr $1 }
+  type_name            {       TVar $1 }
 | "<string>"           {    TString $1 }
+| "<int>"              {       TInt $1 }
 |  "_"                 {      TWild $1 }
 | par(type_expr)       {       TPar $1 }
 | module_access_t      {      TModA $1 }
@@ -389,52 +399,66 @@ core_type:
    in TApp {region; value = $1,$2} }
 
 sum_type:
-  "|" nsepseq(cartesian,"|") {
+  nsepseq(cartesian,"|") {
+    let region = nsepseq_to_region type_expr_to_region $1 in
+    (match $1 with 
+      (hd, []) -> hd
+    | _ ->
+      TSum {
+        region;
+        value = {
+          lead_vbar  = None;
+          variants   = $1;
+          attributes = []
+        }
+      })
+  }
+| seq("[@attr]") "|" nsepseq(cartesian,"|") {
+    let region = cover $2 (nsepseq_to_region type_expr_to_region $3) in
     TSum {
-      region = cover $1 (nsepseq_to_region type_expr_to_region $2);
+      region;
       value = {
-        lead_vbar  = $1;
-        variants   = $2;
-        attributes = []
+        lead_vbar  = Some $2;
+        variants   = $3;
+        attributes = $1
       }
     }
   }
 
 record_type:
-  "{" sep_or_term_list(field_decl,",") "}" {
-    let fields, terminator = $2 in
-    let region = cover $1 $3
+  seq("[@attr]") "{" sep_or_term_list(field_decl,",") "}" {
+    let fields, terminator = $3 in
+    let region = cover $2 $4
     and value = {
-      compound = Some (Braces ($1,$3));
+      compound = Some (Braces ($2,$4));
       ne_elements = fields;
       terminator;
-      attributes=[]}
+      attributes=$1}
     in TObject {region; value} }
 
 field_decl:
-  field_name {
+  seq("[@attr]") field_name {
     let value = {
-      field_name=$1;
+      field_name=$2;
       colon=ghost;
-      field_type = TVar $1;
-      attributes=[]}
-    in {$1 with value}
+      field_type = TVar $2;
+      attributes=$1}
+    in {$2 with value}
   }
-| field_name ":" type_expr {
-    let stop   = type_expr_to_region $3 in
-    let region = cover $1.region stop in
-    let field_name = $1 in
+| seq("[@attr]") field_name ":" type_expr {
+    let stop   = type_expr_to_region $4 in
+    let region = cover $2.region stop in
+    let field_name = $2 in
     let value: field_decl = {
       field_name = field_name;
-      colon=$2;
-      field_type=$3;
-      attributes= []}
+      colon=$3;
+      field_type=$4;
+      attributes= $1}
     in {region; value}
   }
 
 type_decl:
-  "type" "<uident>" "=" type_expr
-| "type" type_name "=" type_expr {
+  "type" type_name "=" type_expr {
     let region = cover $1 (type_expr_to_region $4) in
     let value  = {kwd_type  = $1;
                   name      = $2;
@@ -484,16 +508,70 @@ statement:
 | if_else_statement
 | switch_statement
 | import_statement
+| iteration_statement
 | return_statement { $1 }
 | "export"? declaration
-  { $2 }
+  { 
+    match $1 with 
+      Some s -> SExport {value = (s, $2); region = cover s (statement_to_region $2)}
+    | None -> $2 
+  }
 
-ident:
-  "<lident>"
-| "<uident>" { $1 }
+iteration_statement:
+  for_of_statement
+| while_statement  { $1 }
+
+for_of_statement:
+  "for" "(" "let" "<ident>" "of" assignment_expr ")" statement {
+    let region = cover $1 (statement_to_region $8) in
+    SForOf {
+      value = {
+        kwd_for   = $1;
+        lpar      = $2;
+        const     = false;
+        name      = $4;
+        kwd_of    = $5;
+        expr      = $6;
+        rpar      = $7;
+        statement = $8;
+      };
+      region
+    }
+  }
+| "for" "(" "const" "<ident>" "of" assignment_expr ")" statement {
+    let region = cover $1 (statement_to_region $8) in
+    SForOf {
+      value = {
+        kwd_for   = $1;
+        lpar      = $2;
+        const     = true;
+        name      = $4;
+        kwd_of    = $5;
+        expr      = $6;
+        rpar      = $7;
+        statement = $8;
+      };
+      region
+    }
+  }
+
+while_statement: 
+  "while" "(" expr ")" statement {
+    let region = cover $1 (statement_to_region $5) in
+    SWhile {
+      value = {
+        kwd_while = $1;
+        lpar      = $2;
+        expr      = $3;
+        rpar      = $4;
+        statement = $5;
+      };
+      region
+    }
+  }
 
 import_statement: 
-  "import" ident "=" nsepseq(ident, ".") { 
+  "import" module_name "=" nsepseq(module_name, ".") { 
     let region = cover $1 (nsepseq_to_region (fun a -> a.region) $4) in 
     SImport {
       value = {
@@ -508,7 +586,7 @@ import_statement:
 
 
 namespace_statement: 
-  "export"? "namespace" ident "{" statements_with_namespace "}" { 
+  "export"? "namespace" module_name "{" statements_with_namespace "}" { 
     let region = cover (match $1 with Some s -> s | _ -> $2) $6 in 
     let value = ($2, $3, {
       value = {
@@ -524,17 +602,6 @@ namespace_statement:
 statement_with_namespace:
   statement { $1 }
 | namespace_statement { $1 }
-
-toplevel_statements:
-  statement_with_namespace ";" toplevel_statements {
-    Utils.nseq_cons ($1, Some $2) $3
-  }
-| statement_with_namespace ";"? { ($1,$2), [] }
-(*
-| "<directive>" toplevel_statements {
-    Utils.nseq_cons ($1, None) $2
-  }
-*)
 
 statements:
   statement ";" statements? {
@@ -554,7 +621,16 @@ statements_with_namespace:
 
 
 contract:
-  toplevel_statements EOF { {statements=$1; eof=$2} }
+  toplevel_statements EOF { {statements=$1; eof=$2} : CST.t }
+
+toplevel_statements:
+  statement_with_namespace ";" toplevel_statements {
+    Utils.nseq_cons (TopLevel ($1, Some $2)) $3
+  }
+| "<directive>" toplevel_statements {
+    Utils.nseq_cons (Directive $1) $2
+  }
+| statement_with_namespace ";"? { TopLevel ($1, $2), [] }
 
 (* Expressions *)
 
@@ -648,11 +724,10 @@ arrow_function:
       value;
     }
  }
-| "<uident>" "=>" arrow_function_body
-| "<lident>" "=>" arrow_function_body {
+| "<ident>" "=>" arrow_function_body {
     let region = cover $1.region (arrow_function_body_to_region $3) in
     let value = {
-      parameters = ELident $1;
+      parameters = EVar $1;
       lhs_type = None; (* TODO *)
       arrow = $2;
       body = $3
@@ -680,6 +755,12 @@ conj_expr_level:
   bin_op(conj_expr_level, "&&", comp_expr_level) {
     ELogic (BoolExpr (And $1)) }
 | comp_expr_level { $1 }
+| call_expr_level "as" type_expr { 
+   EAnnot {
+      region = cover (expr_to_region $1) (type_expr_to_region $3);
+      value = $1, $2, $3
+    }
+}
 
 comp_expr_level:
   bin_op(comp_expr_level, "<", add_expr_level) {
@@ -724,22 +805,10 @@ unary_expr_level:
   }
 | call_expr_level { $1 }
 
+
 call_expr_level:
   call_expr { $1 }
 | new_expr  { $1 }
-| "(" call_expr_level "as" type_expr ")" {
-    EPar {
-      region = cover $1 $5;
-      value = {
-        lpar = $1;
-        inside = EAnnot {
-          region = cover (expr_to_region $2) (type_expr_to_region $4);
-          value = $2, $3, $4
-        };
-        rpar = $5;
-      }
-    }
-  }
 
 array_item:
   /* */      { Empty_entry Region.ghost }
@@ -776,22 +845,14 @@ array_literal:
 
 property_name:
   "<int>"    {       EArith (Int $1) }
-| "<lident>"  {           ELident $1 }
-| "<uident>" {            EUident $1 }
+| constr
+| field_name {               EVar $1 }
 | "<string>" {   EString (String $1) }
 
 property:
-  "<lident>" {
+  field_name {
     let region = $1.region in
-    let value = ELident $1 in
-    Punned_property {
-      region;
-      value
-    }
-  }
-| "<uident>" {
-    let region = $1.region in
-    let value = EUident $1 in
+    let value = EVar $1 in
     Punned_property {
       region;
       value
@@ -811,7 +872,7 @@ property:
  }
 | "..." assignment_expr             {
   let region = cover $1 (expr_to_region $2) in
-  let value = {
+  let value : CST.property_rest = {
     ellipsis = $1;
     expr     = $2;
   } in
@@ -821,16 +882,12 @@ property:
   }
  }
 
-properties:
-  property "," properties { Utils.nsepseq_cons $1 $2 $3 }
-| property                { ($1, []) }
-
 object_literal:
-  "{" properties "}" {
+  "{" sep_or_term_list(property, ",") "}" {
     let region = cover $1 $3 in
     let value = {
       lbrace = $1;
-      inside = $2;
+      inside = fst $2;
       rbrace = $3
     } in
     EObject {
@@ -840,14 +897,20 @@ object_literal:
   }
 
 member_expr:
-  "<lident>"                  {                     ELident $1 }
-| "<uident>"                 {                      EUident $1 }
-| "<int>"                    {                 EArith (Int $1) }
-| "<bytes>"                  {                       EBytes $1 }
-| "<string>"                 {             EString (String $1) }
-// | unit
-| "false"                    {    ELogic (BoolExpr (False $1)) }
-| "true"                     {     ELogic (BoolExpr (True $1)) }
+  "<ident>"                 {                               EVar $1 }
+| "_"                        {        EVar {value = "_"; region = $1}}
+| "<int>"                    {                       EArith (Int $1) }
+| "<bytes>"                  {                             EBytes $1 }
+| "<string>"                 {                   EString (String $1) }
+| "<uident>" "<verbatim>"    {                           
+  let value = {
+    language = $1;
+    code = EString (Verbatim $2);
+  }
+  in
+  ECodeInj {value; region = cover $1.region $2.region } }
+| "false"                    {          ELogic (BoolExpr (False $1)) }
+| "true"                     {           ELogic (BoolExpr (True $1)) }
 | member_expr "[" expr "]"   {
   let region = cover (expr_to_region $1) $4 in
   let value = {
@@ -866,8 +929,7 @@ member_expr:
     value
   }
 }
-| member_expr "." "<uident>"
-| member_expr "." "<lident>"  {
+| member_expr "." field_name {
   let region = cover (expr_to_region $1) $3.region in
   let value = {
     expr = $1;
@@ -884,6 +946,7 @@ member_expr:
     value
   }
  }
+| module_access_e         { $1}
 | array_literal           { $1 }
 | "(" object_literal ")"  {
     let region = cover $1 $3 in
@@ -903,6 +966,36 @@ member_expr:
     } in
     EPar { region; value }
   }
+
+module_access_e :
+  module_name "." module_var_e {
+    let start       = $1.region in
+    let stop        = expr_to_region $3 in
+    let region      = cover start stop in
+    let value       = {module_name=$1; selector=$2; field=$3}
+    in 
+    EModA {region; value} }
+| "Some" "(" expr_sequence ")" {
+    let region = cover $1 $4 in
+    EConstr (ESomeApp {region; value = ($1, ESeq $3)})
+}
+| "None" "(" ")" { 
+    EConstr (ENone (cover $1 $3))  
+}
+| constr "(" ")" {
+    EConstr (EConstrApp {$1 with value = ($1, None)})
+}
+| constr "(" expr_sequence ")" {
+    let region = cover $1.region $4 in
+    EConstr (EConstrApp {region; value = ($1, Some (ESeq $3))})
+}
+
+module_var_e:
+  module_access_e   { $1 }
+// | "or"              { EVar {value="or"; region=$1} }
+| field_name        { EVar  $1 }
+// | projection        { EProj $1 }
+
 
 call_expr:
   member_expr par(nsepseq(expr, ","))

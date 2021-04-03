@@ -1,8 +1,8 @@
 open Test_helpers
 module Core = Typesystem.Core
-open Ast_typed.Types
-open Ast_typed.Reasons
-open Ast_typed.Combinators
+open Ast_core.Types
+open Ast_core.Reasons
+open Ast_core.Combinators
 open Trace
 
 module Random_type_generator = struct
@@ -17,7 +17,7 @@ module Random_type_generator = struct
   let pp : Format.formatter -> m -> unit = fun ppf {var ; cor_opt} ->
     match cor_opt with
     | None -> Format.fprintf ppf "Alias %a" Var.pp var
-    | Some cor -> Format.fprintf ppf "Concrete %a -> %a" Var.pp var Ast_typed.PP.constructor_or_row cor
+    | Some cor -> Format.fprintf ppf "Concrete %a -> %a" Var.pp var Ast_core.PP.constructor_or_row cor
   let rec make_type ~base_type1 ~base_type2 ~max_depth i depth tmap  : int * m * m list =
     let tvar = make_var i in
     let continue () = make_type ~base_type1 ~base_type2 ~max_depth i 0 tmap in
@@ -70,8 +70,8 @@ module Random_type_generator = struct
     let all_vars : type_variable list = List.map (fun ({var ;_}:m) -> var) map in
     let test_checker constraints_list =
       trace (Main_errors.test_tracer "typechecker tests") @@
-      trace (Main_errors.typer_tracer) @@
-      Typer_new.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock
+      trace (Main_errors.inference_tracer) @@
+      Inferance.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock
     in
     let test_checker_neg lst =
       Trace.Assert.assert_fail (Main_errors.test_internal "This check should fail") (test_checker lst)
@@ -121,8 +121,8 @@ module Small_env_manual_test = struct
     | v -> failwith ("test internal : FIND_ASSIGNENT_MOCK" ^ (Format.asprintf "%a" Var.pp v))
   let test_checker constraints_list =
     trace (Main_errors.test_tracer "typechecker tests") @@
-      trace (Main_errors.typer_tracer) @@
-        Typer_new.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock
+      trace (Main_errors.inference_tracer) @@
+        Inferance.Typecheck.check constraints_list all_vars repr_mock find_assignment_mock
   let test_checker_neg lst =
     Trace.Assert.assert_fail (Main_errors.test_internal "This check should fail") (test_checker lst)
 end
@@ -167,10 +167,10 @@ let typeclass () =
   let mutez = wrap (Todo "test") @@ P_constant { p_ctor_tag = C_mutez ; p_ctor_args = [] } in
   let args = [c ; d] in
   let tc_ok : typeclass = [[nat ; mutez]; [mutez ; nat]] in
-  let tcc_ok = make_sc_typeclass tc_ok args in
+  let tcc_ok = make_sc_typeclass ~bound:[] ~constraints:[] () tc_ok args in
   let%bind () = test_checker [tcc_ok] in
   let tc_nok : typeclass = [[nat ; nat]; [mutez ; nat]] in
-  let tcc_nok = make_sc_typeclass tc_nok args in
+  let tcc_nok = make_sc_typeclass ~bound:[] ~constraints:[] () tc_nok args in
   let%bind () = test_checker_neg [tcc_nok] in
   ok ()
 
@@ -180,7 +180,7 @@ let forall () =
   (* a = map(c,d) , b = a, c = nat, d = mutez, e = map(f, d), f = nat , g = variant | Foo | Bar , j = record {baz goo} *)
   let unwrap (f:type_value) = match f.wrap_content with P_forall x -> x | _ -> failwith "test internal failure" in
   (* let d = wrap (Todo "test") @@ P_variable d in *)
-  let tc x = tc "test" [x] [ [nat] ; [int] ] in
+  let tc x = tc "test" ~bound:[] ~constraints:[] () [x] [ [nat] ; [int] ] in
   let map_lhs x = wrap (Todo "test") @@ P_constant { p_ctor_tag = C_map ; p_ctor_args = [ x ; mutez ] } in
   let forall = forall_tc "x" @@ fun x -> [tc x] => map_lhs x in
   let forall_sc = make_sc_poly a (unwrap forall) in

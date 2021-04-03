@@ -5,8 +5,9 @@
 
 (* Vendor dependencies *)
 
-module Region = Simple_utils.Region
-module Markup = LexerLib.Markup
+module Region    = Simple_utils.Region
+module Markup    = LexerLib.Markup
+module Directive = LexerLib.Directive
 
 (* Utility modules *)
 
@@ -20,9 +21,13 @@ type lexeme = string
 module T =
   struct
     type t =
+      (* Preprocessing directives *)
+
+      Directive of Directive.t
+
       (* Literals *)
 
-      String   of lexeme Region.reg
+    | String   of lexeme Region.reg
     | Verbatim of lexeme Region.reg
     | Bytes    of (lexeme * Hex.t) Region.reg
     | Int      of (lexeme * Z.t) Region.reg
@@ -118,8 +123,7 @@ module T =
 
     let gen_sym prefix =
       let count = ref 0 in
-      fun () -> incr count;
-             prefix ^ string_of_int !count
+      fun () -> incr count; prefix ^ string_of_int !count
 
     let id_sym   = gen_sym "id"
     and ctor_sym = gen_sym "C"
@@ -229,9 +233,14 @@ module T =
     type token = t
 
     let proj_token = function
-        (* Literals *)
+        (* Preprocessing directives *)
 
-      String Region.{region; value} ->
+      Directive d ->
+        Directive.project d
+
+      (* Literals *)
+
+    | String Region.{region; value} ->
         region, sprintf "String %S" value
     | Verbatim Region.{region; value} ->
         region, sprintf "Verbatim %S" value
@@ -335,9 +344,13 @@ module T =
 
 
     let to_lexeme = function
+      (* Directives *)
+
+      Directive d -> Directive.to_lexeme d
+
       (* Literals *)
 
-      String s   -> sprintf "%S" (String.escaped s.Region.value)
+    | String s   -> sprintf "%S" (String.escaped s.Region.value)
     | Verbatim v -> String.escaped v.Region.value
     | Bytes b    -> fst b.Region.value
     | Int i
@@ -667,51 +680,12 @@ and scan_constr region lexicon = parse
 
     (* Predicates *)
 
-    let is_string   = function String _   -> true | _ -> false
-    let is_verbatim = function Verbatim _ -> true | _ -> false
-    let is_bytes    = function Bytes _    -> true | _ -> false
-    let is_int      = function Int _      -> true | _ -> false
-    let is_nat      = function Nat _      -> true | _ -> false
-    let is_mutez    = function Mutez _    -> true | _ -> false
-    let is_ident    = function Ident _    -> true | _ -> false
-    let is_constr   = function Constr _   -> true | _ -> false
-    let is_lang     = function Lang _     -> true | _ -> false
-    let is_minus    = function MINUS _    -> true | _ -> false
-    let is_eof      = function EOF _      -> true | _ -> false
+    let is_eof = function EOF _ -> true | _ -> false
 
-    let is_hexa = function
-      Constr Region.{value="A"|"a"|"B"|"b"|"C"|"c"
-                     |"D"|"d"|"E"|"e"|"F"|"f"; _} -> true
-    | _ -> false
-
-    let is_sym = function
-      SEMI _
-    | COMMA _
-    | LPAR _
-    | RPAR _
-    | LBRACE _
-    | RBRACE _
-    | LBRACKET _
-    | RBRACKET _
-    | CONS _
-    | VBAR _
-    | ARROW _
-    | ASS _
-    | EQ _
-    | COLON _
-    | LT _
-    | LE _
-    | GT _
-    | GE _
-    | NE _
-    | PLUS _
-    | MINUS _
-    | SLASH _
-    | TIMES _
-    | DOT _
-    | WILD _
-    | CARET _ -> true
-    | _ -> false
+    let support_string_delimiter c =
+      c = '"'
+    
+    let verbatim_delimiters = ("{|", "|}")
   end
 
 include T

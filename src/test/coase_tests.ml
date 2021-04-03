@@ -17,8 +17,7 @@ let get_program =
     )
 
 let compile_main () = 
-  let%bind typed_prg, _env, state = get_program () in
-  let () = Typer.Solver.discard_state state in
+  let%bind typed_prg, _env = get_program () in
   let%bind mini_c_prg         = Ligo.Compile.Of_typed.compile typed_prg in
   let%bind michelson_prg      = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
   let%bind _contract =
@@ -170,7 +169,7 @@ let dispatch_buy () =
         Memory_proto_alpha.Protocol.Alpha_context.Tez.of_mutez @@ Int64.of_int 0 in
       let options = Proto_alpha_utils.Memory_proto_alpha.make_options ~amount ~sender:second_contract () in
       Assert.assert_fail (test_internal "could buy without money") @@
-        expect_eq_n_pos_small ~options program "buy_single" make_input make_expected in
+        expect_eq_n_pos_small ~options program "main" make_input make_expected in
     ok ()
   in
   ok ()
@@ -219,10 +218,10 @@ let sell () =
     in
     let make_expecter : int -> Ast_core.expression -> (unit,_) result = fun n result ->
       let%bind (ops , storage) = trace_option (test_internal __LOC__) @@
-        Ast_core.get_e_pair result.content in
+        Ast_core.get_e_pair result.expression_content in
       let%bind () =
         let%bind lst = trace_option (test_internal __LOC__) @@
-          Ast_core.get_e_list ops.content in
+          Ast_core.get_e_list ops.expression_content in
           Assert.assert_list_size (test_internal __LOC__) lst 1 in
       let expected_storage =
         let cards = List.hds @@ cards_ez first_owner n in
