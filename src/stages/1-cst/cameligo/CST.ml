@@ -36,7 +36,6 @@ type lexeme = string
 
 type keyword    = Region.t
 
-type kwd_and    = Region.t
 type kwd_begin  = Region.t
 type kwd_else   = Region.t
 type kwd_end    = Region.t
@@ -66,8 +65,8 @@ type kwd_with   = Region.t
    modify some, please make sure they remain in order. *)
 
 type arrow    = Region.t  (* "->" *)
-type bool_and = Region.t  (* "&&" *)
-type bool_or  = Region.t  (* "||" *)
+type conj     = Region.t  (* "&&" *)
+type disj     = Region.t  (* "||" *)
 type caret    = Region.t  (* "^"  *)
 type colon    = Region.t  (* ":"  *)
 type comma    = Region.t  (* ","  *)
@@ -181,7 +180,7 @@ and module_alias = {
   kwd_module : kwd_module;
   alias      : module_name;
   eq         : equal;
-  mod_path   : (module_name, dot) nsepseq;
+  mod_path   : (module_name, dot) nsepseq
 }
 
 (* TYPE EXPRESSIONS *)
@@ -296,48 +295,52 @@ and field_pattern = {
 
 (* EXPRESSIONS *)
 
+(* IMPORTANT: The data constructors are sorted alphabetically. If you
+   add or modify some, please make sure they remain in order. *)
+
 and expr =
   E_Add      of plus bin_op reg                (* "+"   *)
-| E_And      of kwd_and bin_op reg
 | E_Annot    of annot_expr par reg
 | E_Bytes    of (string * Hex.t) reg
 | E_Call     of (expr * expr nseq) reg
 | E_Case     of expr case reg
-| E_Cat      of caret bin_op reg
+| E_Cat      of caret bin_op reg               (* "^"   *)
 | E_CodeInj  of code_inj reg
-| E_Equal    of equal bin_op reg
 | E_Cond     of cond_expr reg
-| E_Cons     of cons bin_op reg
+| E_Conj     of conj bin_op reg                (* "&&"  *)
+| E_Cons     of cons bin_op reg                (* "::"  *)
 | E_Ctor     of (ctor * expr option) reg
-| E_Div      of slash bin_op reg
+| E_Disj     of disj bin_op reg                (* "||"  *)
+| E_Div      of slash bin_op reg               (* "/"   *)
+| E_Equal    of equal bin_op reg               (* "="   *)
 | E_False    of kwd_false
 | E_Fun      of fun_expr reg
-| E_Geq      of geq bin_op reg
-| E_Gt       of gt bin_op reg
+| E_Geq      of geq bin_op reg                 (* ">="  *)
+| E_Gt       of gt bin_op reg                  (* ">"   *)
 | E_Int      of (string * Z.t) reg
-| E_Leq      of leq bin_op reg
+| E_Leq      of leq bin_op reg                 (* "<="  *)
 | E_LetIn    of let_in reg
 | E_List     of expr injection reg
-| E_Lt       of lt bin_op reg
-| E_Mod      of kwd_mod bin_op reg
+| E_Lt       of lt bin_op reg                  (* "<"   *)
+| E_Mod      of kwd_mod bin_op reg             (* "mod" *)
 | E_ModAlias of mod_alias reg
 | E_ModIn    of mod_in reg
 | E_ModPath  of expr module_path reg
-| E_Mult     of times bin_op reg
+| E_Mult     of times bin_op reg               (* "*"   *)
 | E_Mutez    of (string * Z.t) reg
 | E_Nat      of (string * Z.t) reg
-| E_Neg      of minus un_op reg
-| E_Neq      of neq bin_op reg
+| E_Neg      of minus un_op reg                (* "-a"  *)
+| E_Neq      of neq bin_op reg                 (* "<>"  *)
 | E_None     of kwd_None
-| E_Not      of kwd_not un_op reg
-| E_Or       of kwd_or bin_op reg
+| E_Not      of kwd_not un_op reg              (* "not" *)
+| E_Or       of kwd_or bin_op reg              (* "or"  *)
 | E_Par      of expr par reg
 | E_Proj     of projection reg
 | E_Record   of record reg
 | E_Seq      of expr injection reg
 | E_Some     of (kwd_Some * expr) reg
 | E_String   of string reg
-| E_Sub      of minus bin_op reg
+| E_Sub      of minus bin_op reg               (* "a-b" *)
 | E_True     of kwd_true
 | E_Tuple    of (expr, comma) nsepseq reg
 | E_TypeIn   of type_in reg
@@ -425,29 +428,29 @@ and let_in = {
 }
 
 and type_in = {
-  type_decl  : type_decl;
-  kwd_in     : kwd_in;
-  body       : expr;
+  type_decl : type_decl;
+  kwd_in    : kwd_in;
+  body      : expr
 }
 
 and mod_in = {
   mod_decl : module_decl;
   kwd_in   : kwd_in;
-  body     : expr;
+  body     : expr
 }
 
 and mod_alias = {
   mod_alias : module_alias;
   kwd_in    : kwd_in;
-  body      : expr;
+  body      : expr
 }
 
 and fun_expr = {
-  kwd_fun    : kwd_fun;
-  binders    : pattern nseq;
-  lhs_type   : type_annot option;
-  arrow      : arrow;
-  body       : expr;
+  kwd_fun  : kwd_fun;
+  binders  : pattern nseq;
+  lhs_type : type_annot option;
+  arrow    : arrow;
+  body     : expr
 }
 
 and cond_expr = {
@@ -455,7 +458,7 @@ and cond_expr = {
   test     : expr;
   kwd_then : kwd_then;
   ifso     : expr;
-  ifnot    : (kwd_else * expr) option;
+  ifnot    : (kwd_else * expr) option
 }
 
 (* Code injection.  Note how the field [language] wraps a region in
@@ -465,7 +468,7 @@ and cond_expr = {
 and code_inj = {
   language : language reg;
   code     : expr;
-  rbracket : rbracket;
+  rbracket : rbracket
 }
 
 (* Projecting regions from some nodes of the CST *)
@@ -514,17 +517,18 @@ let pattern_to_region = function
 
 let expr_to_region = function
   E_Add      {region; _}
-| E_And      {region; _}
 | E_Annot    {region; _}
 | E_Bytes    {region; _}
 | E_Call     {region; _}
 | E_Case     {region; _}
 | E_Cat      {region; _}
 | E_CodeInj  {region; _}
-| E_Equal    {region; _}
 | E_Cond     {region; _}
+| E_Conj     {region; _}
 | E_Cons     {region; _}
 | E_Ctor     {region; _}
+| E_Disj     {region; _}
+| E_Equal    {region; _}
 | E_Div      {region; _}
 | E_False    region
 | E_Fun      {region; _}

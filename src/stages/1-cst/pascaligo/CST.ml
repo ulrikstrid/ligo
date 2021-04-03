@@ -553,7 +553,7 @@ and expr =
 | E_Mult      of times bin_op reg              (* "*"   *)
 | E_Mutez     of (lexeme * Z.t) reg
 | E_Nat       of (lexeme * Z.t) reg
-| E_Neg       of minus un_op reg               (* "-"   *)
+| E_Neg       of minus un_op reg               (* "-a"  *)
 | E_Nil       of kwd_nil
 | E_Neq       of neq bin_op reg                (* "=/=" *)
 | E_None      of kwd_None
@@ -566,7 +566,7 @@ and expr =
 | E_SetMem    of set_mem reg
 | E_Some      of (kwd_Some * arguments) reg
 | E_String    of lexeme reg
-| E_Sub       of minus bin_op reg              (* "-"   *)
+| E_Sub       of minus bin_op reg              (* "a-b" *)
 | E_True      of kwd_True
 | E_Tuple     of tuple_expr
 | E_Unit      of kwd_Unit
@@ -702,7 +702,7 @@ let type_expr_to_region = function
 
 let expr_to_region = function
   E_Add       {region; _}
-| E_And       {region; _}
+| E_Conj      {region; _}
 | E_Annot     {region; _}
 | E_BigMap    {region; _}
 | E_Block     {region; _}
@@ -715,6 +715,7 @@ let expr_to_region = function
 | E_Cond      {region; _}
 | E_Cons      {region; _}
 | E_Ctor      {region; _}
+| E_Disj      {region; _}
 | E_Div       {region; _}
 | E_False      region
 | E_Fun       {region; _}

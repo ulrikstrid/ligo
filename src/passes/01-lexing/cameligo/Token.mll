@@ -59,8 +59,8 @@ module T =
     | GT       of Region.t  (* ">"  *)
     | LE       of Region.t  (* "<=" *)
     | GE       of Region.t  (* ">=" *)
-    | BOOL_OR  of Region.t  (* "||" *)
-    | BOOL_AND of Region.t  (* "&&" *)
+    | DISJ     of Region.t  (* "||" *)
+    | CONJ     of Region.t  (* "&&" *)
 
     (* Keywords *)
 
@@ -157,8 +157,8 @@ module T =
     | "LE" -> "<="
     | "GE" -> ">="
 
-    | "BOOL_OR"  -> "||"
-    | "BOOL_AND" -> "&&"
+    | "DISJ"  -> "||"
+    | "CONJ" -> "&&"
 
     (* Keywords *)
 
@@ -326,8 +326,8 @@ module T =
     | GT       _ -> ">"
     | LE       _ -> "<="
     | GE       _ -> ">="
-    | BOOL_OR  _ -> "||"
-    | BOOL_AND _ -> "&&"
+    | DISJ  _ -> "||"
+    | CONJ  _ -> "&&"
 
     (* Keywords *)
 
@@ -547,8 +547,8 @@ and scan_uident region lexicon = parse
       | "->"  -> Ok (ARROW     region)
       | "<>"  -> Ok (NE        region)
       | "::"  -> Ok (CONS      region)
-      | "||"  -> Ok (BOOL_OR   region)
-      | "&&"  -> Ok (BOOL_AND  region)
+      | "||"  -> Ok (DISJ   region)
+      | "&&"  -> Ok (CONJ  region)
 
       (* Invalid symbols *)
 

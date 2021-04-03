@@ -581,10 +581,8 @@ fun_expr(right_expr):
     in EFun {region; value} }
 
 disj_expr_level:
-  bin_op(disj_expr_level, "||", conj_expr_level)
-| bin_op(disj_expr_level, "or", conj_expr_level) {
-    ELogic (BoolExpr (Or $1))
-  }
+  bin_op(disj_expr_level, "||", conj_expr_level) { E_Disj $1 }
+| bin_op(disj_expr_level, "or", conj_expr_level) { E_Or   $1 }
 | conj_expr_level { $1 }
 
 bin_op(arg1,op,arg2):
