@@ -6,6 +6,10 @@ title: Smart contract security
 # Smart contract security
 In this article, we will cover the basics of Tezos smart contract security. We will describe several potential vulnerabilities that stem from developers' misconceptions about the distributed nature of blockchains. We will also suggest ways to protect your contracts against these kinds of attacks.
 
+**Disclaimer:**
+1. This guide is aimed at giving the reader an overview of popular attacks on smart contracts and ditributed applications. It is not an exhaustive list of all the possible attack vectors. Please, use your own judgement.
+2. The descriptions in this document are valid for the protocol 008_PtEdo2Zk (Edo). Since Tezos is an upgradeable blockchain, some of the blockchain mechanics may change in case a new proposal is adopted.
+
 ## Resource constraints
 
 Tezos limits the resources available to the contracts. It bounds operations size so that nodes can broadcast the operations over the network in a reasonable time. It also places a limit on the computations the bakers need to perform to validate an operation – the **gas limit.** When you develop your contract, you need to bear these limits in mind.
@@ -145,10 +149,13 @@ Generally, you need to think about whether the side effect of gas consumption ca
    - If using non-lazy containers is absolutely required, place an upper bound on the size of non-lazy containers.
    - Limit the maximum size of strings and byte strings.
    - Do not put untrusted lambdas in storage.
+   - Be careful with all unbounded types, including `nat`, `int`, etc. Although exploiting gas exhaustion attacks with non-container types may be harder, it is still possible.
 2. Ensure that your contract logic does not allow attackers to increase the interpretation cost, e.g., by forcing future transactions to run a huge loop.
 
 ## Transaction ordering
 It is crucial to understand that all blockchains, including Tezos, are distributed systems where block producers – bakers in Tezos – are free to include, censor, and reorder transactions within a block. For most of the practical applications, this does not pose a threat. However, in some cases, especially in Decentralised Finance (DeFi) applications, bakers can use their power to gain economic benefit from reordering or censoring out user transactions.
+
+Aside from bakers, other actors can indirectly influence the transaction ordering as well. Attackers can set higher fees or use accounts with lower counter values to make bakers put the attackers' transactions in front of others.
 
 A classic example of a system vulnerable to this kind of attacks is a decentralised exchange with an on-chain orderbook, like this one (let us assume just one asset pair for clarity):
 
@@ -198,15 +205,15 @@ let main = ((p, s) : (parameter, storage)) => ...
 
 </Syntax>
 
-A baker may notice some transaction, for example, a request to buy some big volume of asset. The baker may then _front-run_ this transaction and, anticipating the price going up, insert a _buy_ order at the current price before the trader's transaction. He can then benefit from the price change by selling the asset at a higher price.
+An attacker may notice some transaction, for example, a request to buy some big volume of asset. They may then _front-run_ this transaction and, anticipating the price going up, insert a _buy_ order at the current price before the trader's transaction. Thus, they can benefit from the price change by selling the asset at a higher price.
 
-In fact, the so-called _miner extracted value_ [poses a big risk](https://arxiv.org/pdf/1904.05234.pdf) to security of blockchains in general. You should avoid letting miners get rewards from transaction ordering. In this particular case, moving the order book off-chain would be a good option.
+In fact, if the front-runner is a baker, the so-called _miner extracted value_ [poses a big risk](https://arxiv.org/pdf/1904.05234.pdf) to security of blockchains in general. You should avoid letting miners get rewards from transaction ordering. In this particular case, moving the order book off-chain would be a good option.
 
 ## Timestamps
 
-Aside from transaction ordering, bakers can manipulate other variables you might want to rely on. A classic example of such a value is block timestamp (`Tezos.now`). Since Tezos is a distributed system, there is no way to make sure the block was produced _exactly_ at the specified timestamp. Other nodes can only check that the block timestamp is within the reasonable bounds: it is not set to a time _before_ the latest known block, and it is not too far away in the future.
+Aside from transaction ordering, bakers can manipulate other variables you might want to rely on. A classic example of such a value is `Tezos.now`. Previously, it used to be equal to the current block timestamp. This behaviour has been changed to eliminate straghtforward manipulations. Since Tezos is a distributed system, there is no way to make sure the block was produced _exactly_ at the specified time. Thus, bakers could slightly adjust the timestamp to make a transaction produce a different result.
 
-Assuming an operation goes through _roughly about_ the specified timestamp is fine for most of the practical applications. However, in some cases, bakers can slightly modify the timestamp to gain economic benefit.
+In the current protocol, `Tezos.now` is equal to the _previous_ block timestamp plus a fixed value. Although `Tezos.now` becomes less manipulable with this new behaviour, the only assumption you can make is that the operation goes through _roughly about_ the specified timestamp. And, of course, you should never use `Tezos.now` as a source of randomness.
 
 ## Reentrancy and call injection
 
