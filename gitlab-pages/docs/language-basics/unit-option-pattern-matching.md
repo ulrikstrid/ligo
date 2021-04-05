@@ -177,7 +177,7 @@ let g : user = Guest
 
 In CameLIGO, a constant constructor is equivalent to the same constructor
 taking an argument of type `unit`, so, for example, `Guest` is the
-same value as `Guest (unit)`.
+same value as `Guest ()`.
 
 </Syntax>
 <Syntax syntax="reasonligo">

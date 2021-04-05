@@ -135,7 +135,7 @@ let gcd = (x: nat, y: nat): nat => {
 ```
 
 And here is how to compute the greatest common divisors of two natural
-numbers by means of Euclid's algorithm with using recursion:
+numbers by means of Euclid's algorithm using tail recursion:
 
 ```jsligo group=a
 let iter = ([x,y]: [nat, nat]): nat => {
@@ -333,8 +333,6 @@ Loops over maps are actually loops over the bindings of the map.
 Given a map from strings to integers, here is how to sum
 all the integers and concatenate all the strings.
 
-Here is an example where the keys are concatenated and the values are
-summed up.
 
 ```jsligo skip
 let sum_map = (m: map<string, int>): [string, int] => {

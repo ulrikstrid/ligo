@@ -60,8 +60,8 @@ ligo evaluate-value gitlab-pages/docs/language-basics/src/variables-and-constant
 </Syntax>
 <Syntax syntax="jsligo">
 
-> In the experimental version of JsLIGO constants are not enforced, but will 
-> in the future to match JavaScript's behaviour.
+> In the experimental version of JsLIGO, constants are not enforced but will 
+> be in the future, to match JavaScript's behaviour.
 
 ```jsligo group=a
 const age: int = 25;
@@ -88,7 +88,7 @@ let x = (a: int): int => {
 };
 ```
 
-> This is not yet enforced in the experimental version of JsLIGO, but will in the future.
+> This is not yet enforced in the experimental version of JsLIGO, but will be in the future.
 
 You can evaluate the constant definition above using the following CLI
 command:

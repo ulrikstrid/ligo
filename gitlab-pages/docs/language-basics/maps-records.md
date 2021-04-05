@@ -644,7 +644,7 @@ let moves : register =
 ```
 
 The `Map.literal` predefined function builds a map from a list of
-key-value pair tuples, `(<key>, <value>)`.  Note also the `;` to
+key-value pair tuples, `(<key>, <value>)`.  Note also the `,` to
 separate individual map entries.  `("<string value>": address)` means
 that we type-cast a string into an address. 
 
@@ -659,7 +659,7 @@ let moves : register =
 ```
 
 The `Map.literal` predefined function builds a map from a list of
-key-value pair tuples, `[<key>, <value>]`.  Note also the `;` to
+key-value pair tuples, `[<key>, <value>]`.  Note also the `,` to
 separate individual map entries.  `"<string value>" as address` means
 that we type-cast a string into an address.
 
