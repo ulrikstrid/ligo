@@ -23,8 +23,8 @@ WORKDIR /app
 
 RUN apt-get update && apt-get -y install perl6 libev-dev perl pkg-config libgmp-dev libhidapi-dev m4 libcap-dev bubblewrap rsync
 
-COPY ligo_deb10.deb /tmp/ligo_deb10.deb
-RUN dpkg -i /tmp/ligo_deb10.deb && rm /tmp/ligo_deb10.deb
+# COPY ligo_deb10.deb /tmp/ligo_deb10.deb
+# RUN dpkg -i /tmp/ligo_deb10.deb && rm /tmp/ligo_deb10.deb
 
 COPY --from=builder /app/packages/client/build /app/client/build
 COPY --from=builder /app/node_modules /app/node_modules
