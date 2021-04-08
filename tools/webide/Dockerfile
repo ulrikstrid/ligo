@@ -31,6 +31,7 @@ COPY --from=builder /app/node_modules /app/node_modules
 COPY --from=builder /app/packages/server/dist/src /app/server/dist
 
 ENV STATIC_ASSETS /app/client
-ENV LIGO_CMD /etc
+ENV LIGO_CMD /bin/ligo
+ENV LIGO_CMD2 /bin/ligo2
 
 ENTRYPOINT [ "node", "server/dist/index.js" ]
