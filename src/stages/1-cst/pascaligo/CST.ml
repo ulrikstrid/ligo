@@ -658,7 +658,6 @@ and ne_injection_kwd =
 and pattern =
   PConstr of constr_pattern
 | PVar    of lexeme reg
-| PWild   of wild
 | PInt    of (lexeme * Z.t) reg
 | PNat    of (lexeme * Z.t) reg
 | PBytes  of (lexeme * Hex.t) reg
@@ -829,7 +828,6 @@ let if_clause_to_region = function
 
 let pattern_to_region = function
   PVar        {region; _}
-| PWild        region
 | PInt        {region; _}
 | PNat        {region; _}
 | PBytes      {region; _}

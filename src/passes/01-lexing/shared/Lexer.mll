@@ -205,7 +205,8 @@ let decimal    = natural '.' natural
 let small      = ['a'-'z']
 let capital    = ['A'-'Z']
 let letter     = small | capital
-let ident      = small (letter | '_' | digit)*
+let ident      = small (letter | '_' | digit)* |
+                 '_' (letter | '_' (letter | digit) | digit)+
 let constr     = capital (letter | '_' | digit)*
 let attr       = letter (letter | '_' | ':' | digit)*
 let hexa_digit = digit | ['A'-'F' 'a'-'f']
@@ -217,9 +218,9 @@ let directive  = '#' (blank* as space) (small+ as id) (* For #include *)
 
 (* Symbols *)
 
-let common_sym     = ';' | ',' | '(' | ')'  | '[' | ']'  | '{' | '}'
-                   | '=' | ':' | '|' | '.' | '_'  | '^'
-                   | '+' | '-' | '*' | '/'  | '<' | "<=" | '>' | ">="
+let common_sym     =   ';' | ',' | '(' | ')'  | '[' | ']'  | '{' | '}'
+                     | '=' | ':' | '|' | '.' | '_' | '^'
+                     | '+' | '-' | '*' | '/'  | '<' | "<=" | '>' | ">="
 let pascaligo_sym  = "->" | "=/=" | '#' | ":="
 let cameligo_sym   = "->" | "<>" | "::" | "||" | "&&"
 let reasonligo_sym = '!' | "=>" | "!=" | "==" | "++" | "..." | "||" | "&&"
