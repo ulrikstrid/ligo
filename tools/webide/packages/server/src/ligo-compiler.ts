@@ -20,6 +20,7 @@ export class CompilerError extends Error {
 }
 
 export class LigoCompiler {
+  // TODO: Removed this code just for testing
   // private ligoCmd = process.env['LIGO_CMD'] || [
   //   'docker',
   //   'run',
