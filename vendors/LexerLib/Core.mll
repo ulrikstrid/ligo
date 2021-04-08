@@ -480,9 +480,9 @@ let scan_utf8_wrap scan_utf8 callback thread state lexbuf =
 
    https://gcc.gnu.org/onlinedocs/cpp/Preprocessor-Output.html
 
-   of which 1 and 2 indicate, respectively, the start of a new file
-   and the return from a file (after its inclusion has been
-   processed). *)
+   of which we will retain in our context 1 and 2 (either 1 or 2),
+   indicating, respectively, the start of a new file and the return
+   from a file (after its inclusion has been processed). *)
 
 let linemarker prefix ~line ~file ?flag state lexbuf =
   let {state; region; _} = state#sync lexbuf in
@@ -515,6 +515,7 @@ let hexa_digit = digit | ['A'-'F' 'a'-'f']
 let byte       = hexa_digit hexa_digit
 let esc        = "\\n" | "\\\"" | "\\\\" | "\\b"
                | "\\r" | "\\t" | "\\x" byte
+let flag       = '1' | '2' (* Linemarkers *)
 
 (* Comment delimiters *)
 
