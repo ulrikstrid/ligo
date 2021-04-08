@@ -70,6 +70,7 @@ let
   ligo-editor = writeShellScriptBin "ligo-editor" ''
     set -e
     LIGO_CMD=${../ligo} \
+    LIGO_CMD2=${../ligo} \
     STATIC_ASSETS=${client} \
     DATA_DIR=/tmp \
     ${nodejs}/bin/node ${server}/node_modules/server/dist/src/index.js
