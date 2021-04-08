@@ -31,6 +31,17 @@ export class LigoCompiler {
   //   dataDir,
   //   'ligolang/ligo:next',
   // ];
+  private ligoCmd = [
+    'docker',
+    'run',
+    '-t',
+    '--rm',
+    '-v',
+    `${dataDir}:${dataDir}`,
+    '-w',
+    dataDir,
+    'ligolang/ligo:next',
+  ];
 
   private execPromise(cmd: string | string[], args: string[]): Promise<string> {
     let command: string[] = [];
