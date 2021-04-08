@@ -866,6 +866,26 @@ interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARR
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
+interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARROW Module Constr EQ Constr WILD
+##
+## Ends in an error in state: 445.
+##
+## local_module_alias(base_if_then_else) -> module_alias . SEMI base_if_then_else [ VBAR SEMI RBRACE ]
+##
+## The known suffix of the stack is as follows:
+## module_alias
+##
+## WARNING: This example involves spurious reductions.
+## This implies that, although the LR(1) items shown above provide an
+## accurate view of the past (what has been recognized so far), they
+## may provide an INCOMPLETE view of the future (what was expected next).
+## In state 712, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
+## In state 715, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
+##
+
+<YOUR SYNTAX ERROR MESSAGE HERE>
+
+
 interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARROW Type Ident EQ Constr WILD
 ##
 ## Ends in an error in state: 436.
@@ -4139,35 +4159,11 @@ contract: Type Ident EQ Constr RBRACE
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
 
-interactive_expr: Module Constr EQ LBRACE Type Ident EQ Constr RBRACE WILD
-##
-## Ends in an error in state: 276.
-##
-## local_module_decl(expr) -> module_decl . SEMI expr [ Type SEMI RPAR RBRACKET RBRACE Module Let EOF COMMA COLON Attr ]
-##
-## The known suffix of the stack is as follows:
-## module_decl
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
 interactive_expr: Switch Verbatim LBRACE VBAR WILD ARROW Module Constr EQ LBRACE Type Ident EQ Constr RBRACE WILD
 ##
 ## Ends in an error in state: 653.
 ##
 ## local_module_decl(base_cond) -> module_decl . SEMI base_cond [ VBAR SEMI RBRACE ]
-##
-## The known suffix of the stack is as follows:
-## module_decl
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: If LPAR Bytes RPAR LBRACE Module Constr EQ LBRACE Type Ident EQ Constr RBRACE WILD
-##
-## Ends in an error in state: 394.
-##
-## local_module_decl(closed_if) -> module_decl . SEMI closed_if [ SEMI RBRACE ]
 ##
 ## The known suffix of the stack is as follows:
 ## module_decl
@@ -4183,63 +4179,6 @@ interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARR
 ##
 ## The known suffix of the stack is as follows:
 ## module_decl
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: Module Constr EQ Constr Type
-##
-## Ends in an error in state: 278.
-##
-## local_module_alias(expr) -> module_alias . SEMI expr [ Type SEMI RPAR RBRACKET RBRACE Module Let EOF COMMA COLON Attr ]
-##
-## The known suffix of the stack is as follows:
-## module_alias
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 709, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
-## In state 712, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: If LPAR Bytes RPAR LBRACE Module Constr EQ Constr Type
-##
-## Ends in an error in state: 396.
-##
-## local_module_alias(closed_if) -> module_alias . SEMI closed_if [ SEMI RBRACE ]
-##
-## The known suffix of the stack is as follows:
-## module_alias
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 709, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
-## In state 712, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: If LPAR Bytes RPAR LBRACE Switch Verbatim LBRACE VBAR WILD ARROW Module Constr EQ Constr Type
-##
-## Ends in an error in state: 444.
-##
-## local_module_alias(base_if_then_else) -> module_alias . SEMI base_if_then_else [ VBAR SEMI RBRACE ]
-##
-## The known suffix of the stack is as follows:
-## module_alias
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 709, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
-## In state 712, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
@@ -4290,33 +4229,6 @@ contract: Module Constr EQ Constr WILD
 ## may provide an INCOMPLETE view of the future (what was expected next).
 ## In state 709, spurious reduction of production nsepseq(module_name,DOT) -> Constr 
 ## In state 712, spurious reduction of production module_alias -> Module Constr EQ nsepseq(module_name,DOT) 
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: Constr WILD
-##
-## Ends in an error in state: 251.
-##
-## constant_constr -> Constr . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
-## constr_expr -> Constr . argument [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
-## module_access_e -> Constr . DOT module_var_e [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LPAR LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
-##
-## The known suffix of the stack is as follows:
-## Constr
-##
-
-<YOUR SYNTAX ERROR MESSAGE HERE>
-
-interactive_expr: Constr Constr WILD
-##
-## Ends in an error in state: 252.
-##
-## constant_constr -> Constr . [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
-## module_access_e -> Constr . DOT module_var_e [ VBAR Type TIMES SLASH SEMI RPAR RBRACKET RBRACE PLUS Or NE Module Mod MINUS Let LT LE GT GE EQEQ EOF COMMA COLON CAT BOOL_OR BOOL_AND Attr ]
-##
-## The known suffix of the stack is as follows:
-## Constr
 ##
 
 <YOUR SYNTAX ERROR MESSAGE HERE>
