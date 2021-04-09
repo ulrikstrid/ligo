@@ -8,6 +8,8 @@ let
   installPhase = "mkdir $out; cp -Lr node_modules $out/node_modules";
 
   # node_modules of the server
+
+  # TODO: add back LIGO_CMD=${../ligo} to checkPhase
   server = mkYarnPackage {
     name = "webide-server";
     src = ../tools/webide/packages/server;
@@ -17,7 +19,7 @@ let
       rm node_modules/server/server
     '';
     doCheck = true;
-    checkPhase = "DATA_DIR=/tmp LIGO_CMD=${../ligo} yarn --offline jest";
+    checkPhase = "DATA_DIR=/tmp yarn --offline jest";
     distPhase = "true";
     inherit yarnLock installPhase;
   };
