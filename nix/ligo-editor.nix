@@ -8,8 +8,6 @@ let
   installPhase = "mkdir $out; cp -Lr node_modules $out/node_modules";
 
   # node_modules of the server
-
-  # TODO: add back LIGO_CMD=${../ligo} to checkPhase
   server = mkYarnPackage {
     name = "webide-server";
     src = ../tools/webide/packages/server;
@@ -19,7 +17,7 @@ let
       rm node_modules/server/server
     '';
     doCheck = true;
-    checkPhase = "DATA_DIR=/tmp yarn --offline jest";
+    checkPhase = "DATA_DIR=/tmp LIGO_CMD=${../ligo} yarn --offline jest";
     distPhase = "true";
     inherit yarnLock installPhase;
   };
@@ -70,6 +68,8 @@ let
 
   # Run the WebIDE server with all the needed env variables
   ligo-editor = writeShellScriptBin "ligo-editor" ''
+    set -e
+    LIGO_CMD=${../ligo} \
     STATIC_ASSETS=${client} \
     DATA_DIR=/tmp \
     ${nodejs}/bin/node ${server}/node_modules/server/dist/src/index.js
