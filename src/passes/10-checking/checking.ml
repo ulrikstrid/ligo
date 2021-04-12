@@ -472,13 +472,11 @@ and type_expression' : environment -> ?tv_opt:O.type_expression -> I.expression 
         | {expression_content = E_constant {cons_name = C_ADD; _ }; _ } :: _ -> C_ADD
         | {expression_content = E_constant {cons_name = C_CONCAT; _ }; _ } :: _ -> C_CONCAT
         | {expression_content = E_literal (Literal_int _); _ } :: _ -> C_ADD
-        | {expression_content = E_variable _; type_expression = {type_content = T_constant { injection; _} }} :: _ -> 
-          let type_operator = Var.of_name (Ligo_string.extract injection) in
-          if type_operator = Var.of_name "string" then 
-            C_CONCAT
-          else 
-            C_ADD
-          
+        | {expression_content = E_variable _; type_expression = texpr } :: _ ->
+                if is_t_string texpr then
+                  C_CONCAT
+                else
+                  C_ADD
       | _ -> C_ADD
       ) in
       let%bind (name', tv) =
