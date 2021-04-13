@@ -215,7 +215,8 @@ let decimal    = natural '.' natural
 let small      = ['a'-'z']
 let capital    = ['A'-'Z']
 let letter     = small | capital
-let ident      = small (letter | '_' | digit)*
+let ident      = small (letter | '_' | digit)* |
+                 '_' (letter | '_' (letter | digit) | digit)+
 let uident     = capital (letter | '_' | digit)*
 let attr       = letter (letter | '_' | ':' | digit)*
 let lang       = attr
@@ -228,7 +229,7 @@ let string     = [^'"' '\\' '\n']*  (* For strings of #include *)
 (* Symbols *)
 
 let common_sym     =   ';' | ',' | '(' | ')'  | '[' | ']'  | '{' | '}'
-                     | '=' | ':' | '|' | '.' | '_'  | '^'
+                     | '=' | ':' | '|' | '.' | '_' | '^'
                      | '+' | '-' | '*' | '/'  | '<' | "<=" | '>' | ">="
 let pascaligo_sym  = "->" | "=/=" | '#' | ":="
 let cameligo_sym   = "->" | "<>" | "::" | "||" | "&&"

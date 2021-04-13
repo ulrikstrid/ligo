@@ -626,7 +626,6 @@ and pp_pattern = function
 | P_Tuple   p -> pp_tuple_pattern p
 | P_Unit    _ -> string "Unit"
 | P_Var     p -> pp_ident p
-| P_Wild    _ -> string "_"
 
 and pp_int {value; _} =
   string (Z.to_string (snd value))

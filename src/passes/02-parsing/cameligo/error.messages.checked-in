@@ -2627,36 +2627,6 @@ interactive_expr: Ident WILD
 ## In state 335, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
 ## In state 336, spurious reduction of production expr -> base_cond__open(expr)
 ##
-interactive_expr: UIdent DOT Ident WILD
-##
-## Ends in an error in state: 696.
-##
-## interactive_expr -> expr . EOF [ # ]
-##
-## The known suffix of the stack is as follows:
-## expr
-##
-## WARNING: This example involves spurious reductions.
-## This implies that, although the LR(1) items shown above provide an
-## accurate view of the past (what has been recognized so far), they
-## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 194, spurious reduction of production selected_expr -> Ident
-## In state 202, spurious reduction of production module_path(selected_expr) -> UIdent DOT selected_expr
-## In state 251, spurious reduction of production value_in_module -> module_path(selected_expr)
-## In state 230, spurious reduction of production core_expr -> value_in_module
-## In state 254, spurious reduction of production call_expr_level -> core_expr
-## In state 262, spurious reduction of production unary_expr_level -> call_expr_level
-## In state 233, spurious reduction of production mult_expr_level -> unary_expr_level
-## In state 248, spurious reduction of production add_expr_level -> mult_expr_level
-## In state 293, spurious reduction of production cons_expr_level -> add_expr_level
-## In state 283, spurious reduction of production cat_expr_level -> cons_expr_level
-## In state 315, spurious reduction of production comp_expr_level -> cat_expr_level
-## In state 322, spurious reduction of production conj_expr_level -> comp_expr_level
-## In state 329, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 281, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 335, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 336, spurious reduction of production expr -> base_cond__open(expr)
-##
 
 Ill-formed expression.
 At this point, if the expression is complete, the end of file is

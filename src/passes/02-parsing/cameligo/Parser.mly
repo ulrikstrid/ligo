@@ -346,11 +346,11 @@ irrefutable:
 
 sub_irrefutable:
   "<ident>"               { P_Var    $1 }
-| "_"                     { P_Wild   $1 }
+| "_"                     { P_Var    {value="_"; region=$1} }
 | unit                    { P_Unit   $1 }
 | record_pattern          { P_Record $1 }
 | par(closed_irrefutable) { P_Par    $1 }
-| ctor                    { P_Ctor {$1 with value = $1,None} }
+| ctor                    { P_Ctor   {$1 with value = $1,None} }
 
 closed_irrefutable:
   ctor sub_pattern {
@@ -388,7 +388,7 @@ sub_pattern:
 | core_pattern {       $1 }
 
 core_pattern:
-  "_"            { P_Wild   $1 }
+  "_"            { P_Var    {value="_"; region=$1} }
 | "<int>"        { P_Int    $1 }
 | "<nat>"        { P_Nat    $1 }
 | "<bytes>"      { P_Bytes  $1 }

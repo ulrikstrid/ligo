@@ -277,7 +277,6 @@ and pattern =
 | P_Typed  of typed_pattern reg
 | P_Unit   of the_unit reg
 | P_Var    of variable
-| P_Wild   of wild
 
 and tuple_pattern = (pattern, comma) nsepseq par reg
 
@@ -513,7 +512,7 @@ let pattern_to_region = function
 | P_Typed  {region; _}
 | P_Unit   {region; _}
 | P_Var    {region; _}
-| P_Wild   region -> region
+  -> region
 
 let expr_to_region = function
   E_Add      {region; _}

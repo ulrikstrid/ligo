@@ -62,6 +62,8 @@ let mk_mod_path :
 %type <CST.t> contract
 %type <CST.expr> interactive_expr
 
+%on_error_reduce nsepseq(module_name,DOT)
+%on_error_reduce ctor_expr
 %on_error_reduce nseq(__anonymous_0(field_decl,SEMI))
 %on_error_reduce nseq(__anonymous_0(field_path_assignment,SEMI))
 %on_error_reduce nseq(__anonymous_0(binding,SEMI))
@@ -78,11 +80,8 @@ let mk_mod_path :
 %on_error_reduce lhs
 %on_error_reduce map_lookup
 %on_error_reduce nsepseq(statement,SEMI)
-(*%on_error_reduce nsepseq(core_pattern,COMMA)*)
 %on_error_reduce ctor_pattern
 %on_error_reduce core_expr
-(*%on_error_reduce module_var_e*)
-(*%on_error_reduce module_var_t*)
 %on_error_reduce nsepseq(param_decl,SEMI)
 %on_error_reduce nsepseq(selection,DOT)
 %on_error_reduce nsepseq(field_path_assignment,SEMI)
@@ -112,9 +111,6 @@ let mk_mod_path :
 %on_error_reduce option(SEMI)
 %on_error_reduce option(VBAR)
 %on_error_reduce projection
-(*%on_error_reduce value_in_module*)
-(*%on_error_reduce type_in_module*)
-(*%on_error_reduce nsepseq(module_name,DOT)*)
 %on_error_reduce nseq(declaration)
 %on_error_reduce option(arguments)
 %on_error_reduce path
@@ -451,18 +447,40 @@ parameters:
 param_decl:
   "var" variable param_type? {
     let stop   = match $3 with
-                          None -> $2.region
-                 | Some (_, t) -> type_expr_to_region t in
+                   None -> $2.region
+                 | Some (_,t) -> type_expr_to_region t in
     let region = cover $1 stop
-    and value  = {kwd_var=$1; var=$2; param_type=$3}
+    and value  = {kwd_var    = $1;
+                  var        = $2;
+                  param_type = $3}
     in ParamVar {region; value}
   }
+| "var" "_" param_type? {
+    let stop   = match $3 with
+                   None -> $2
+                 | Some (_,t) -> type_expr_to_region t in
+    let region = cover $1 stop
+    and value  = {kwd_var    =                                $1;
+                  var        =      { value = "_"; region = $2 };
+                  param_type =                                $3}
+    in ParamVar {region; value} }
 | "const" variable param_type? {
     let stop   = match $3 with
-                          None -> $2.region
-                 | Some (_, t) -> type_expr_to_region t in
+                   None -> $2.region
+                 | Some (_,t) -> type_expr_to_region t in
     let region = cover $1 stop
-    and value  = {kwd_const=$1; var=$2; param_type=$3}
+    and value  = {kwd_const  = $1;
+                  var        = $2;
+                  param_type = $3}
+    in ParamConst {region; value} }
+| "const" "_" param_type? {
+    let stop   = match $3 with
+                   None -> $2
+                 | Some (_,t) -> type_expr_to_region t in
+    let region = cover $1 stop
+    and value  = {kwd_const  =                                $1;
+                  var        =      { value = "_"; region = $2 };
+                  param_type =                                $3}
     in ParamConst {region; value} }
 
 param_type:
@@ -527,7 +545,7 @@ instruction:
 | case_instr   { I_Case        $1 }
 | conditional  { I_Cond        $1 }
 | for_int      { I_For         $1 }
-| for_in         { I_ForIn       $1 }
+| for_in       { I_ForIn       $1 }
 | map_patch    { I_MapPatch    $1 }
 | map_remove   { I_MapRemove   $1 }
 | record_patch { I_RecordPatch $1 }
@@ -981,22 +999,22 @@ pattern:
 | core_pattern { $1 }
 
 core_pattern:
-  "_"               { P_Wild   $1 }
-| "<int>"           { P_Int    $1 }
-| "<nat>"           { P_Nat    $1 }
-| "<bytes>"         { P_Bytes  $1 }
-| "<string>"        { P_String $1 }
-| "Unit"            { P_Unit   $1 }
-| "False"           { P_False  $1 }
-| "True"            { P_True   $1 }
-| "None"            { P_None   $1 }
-| "nil"             { P_Nil    $1 }
-| variable          { P_Var    $1 }
-| some_pattern      { P_Some   $1 }
-| list_pattern      { P_List   $1 }
-| ctor_pattern      { P_Ctor   $1 }
-| tuple_pattern     { P_Tuple  $1 }
-| par(pattern)      { P_Par    $1 }
+  "_"           { P_Var { value = "_"; region = $1 } }
+| "<int>"       { P_Int    $1 }
+| "<nat>"       { P_Nat    $1 }
+| "<bytes>"     { P_Bytes  $1 }
+| "<string>"    { P_String $1 }
+| "Unit"        { P_Unit   $1 }
+| "False"       { P_False  $1 }
+| "True"        { P_True   $1 }
+| "None"        { P_None   $1 }
+| "nil"         { P_Nil    $1 }
+| variable      { P_Var    $1 }
+| some_pattern  { P_Some   $1 }
+| list_pattern  { P_List   $1 }
+| ctor_pattern  { P_Ctor   $1 }
+| tuple_pattern { P_Tuple  $1 }
+| par(pattern)  { P_Par    $1 }
 
 some_pattern:
   "Some" par(core_pattern) {

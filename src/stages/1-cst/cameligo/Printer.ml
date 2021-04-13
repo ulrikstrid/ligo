@@ -709,8 +709,6 @@ and pp_pattern state = function
 | PVar p ->
     pp_node  state "PVar";
     pp_ident (state#pad 1 0) p
-| PWild p ->
-    pp_loc_node state "PWild" p
 | PInt p ->
     pp_node state "PInt";
     pp_int  state p

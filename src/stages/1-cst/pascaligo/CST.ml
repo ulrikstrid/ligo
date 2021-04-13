@@ -513,7 +513,6 @@ and pattern =
 | P_Tuple  of tuple_pattern
 | P_Unit   of kwd_Unit
 | P_Var    of lexeme reg
-| P_Wild   of wild
 
 and tuple_pattern = (pattern, comma) nsepseq par reg
 
@@ -694,7 +693,8 @@ let type_expr_to_region = function
 | T_String  {region; _}
 | T_Sum     {region; _}
 | T_Var     {region; _}
-| T_Wild     region -> region
+| T_Wild     region
+  -> region
 
 (* IMPORTANT: In the following function definition, the data
    constructors are sorted alphabetically. If you add or modify some,
@@ -702,7 +702,7 @@ let type_expr_to_region = function
 
 let expr_to_region = function
   E_Add       {region; _}
-| E_Conj      {region; _}
+| E_And       {region; _}
 | E_Annot     {region; _}
 | E_BigMap    {region; _}
 | E_Block     {region; _}
@@ -715,7 +715,6 @@ let expr_to_region = function
 | E_Cond      {region; _}
 | E_Cons      {region; _}
 | E_Ctor      {region; _}
-| E_Disj      {region; _}
 | E_Div       {region; _}
 | E_False      region
 | E_Fun       {region; _}
@@ -809,12 +808,7 @@ let pattern_to_region = function
 | P_Tuple   {region; _}
 | P_Unit     region
 | P_Var     {region; _}
-| P_Wild     region
   -> region
-
-(* IMPORTANT: In the following function definition, the data
-   constructors are sorted alphabetically. If you add or modify some,
-   please make sure they remain in order. *)
 
 let declaration_to_region = function
   D_Const    {region; _}
