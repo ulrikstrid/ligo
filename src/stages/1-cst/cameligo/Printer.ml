@@ -2,6 +2,8 @@
 [@@@coverage exclude_file]
 
 open CST
+
+module Directive = LexerLib.Directive
 module Region = Simple_utils.Region
 open! Region
 
@@ -167,6 +169,12 @@ and print_statement state = function
     print_var     state alias;
     print_token   state eq "=";
     print_nsepseq state "." print_var binders;
+| Directive dir -> print_directive state dir
+
+and print_directive state dir =
+  let s =
+    Directive.to_string ~offsets:state#offsets state#mode dir
+  in Buffer.add_string state#buffer s
 
 and print_type_expr state = function
   TProd prod      -> print_cartesian state prod
@@ -322,7 +330,6 @@ and print_pattern state = function
 | PBytes b -> print_bytes state b
 | PString s -> print_string state s
 | PVerbatim v -> print_verbatim state v
-| PWild wild -> print_token state wild "_"
 | PPar {value={lpar;inside=p;rpar}; _} ->
     print_token   state lpar "(";
     print_pattern state p;
@@ -735,6 +742,10 @@ and pp_declaration state = function
 | ModuleAlias {value; region} ->
     pp_loc_node    state "ModuleDecl" region;
     pp_module_alias state value
+| Directive dir ->
+    let region, string = Directive.project dir in
+    pp_loc_node state "Directive" region;
+    pp_node state string
 
 and pp_let_binding state node attr =
   let {binders; lhs_type; let_rhs; _} = node in
@@ -794,8 +805,6 @@ and pp_pattern state = function
 | PVar v ->
     pp_node  state "PVar";
     pp_ident (state#pad 1 0) v
-| PWild region ->
-    pp_loc_node state "PWild" region
 | PInt i ->
     pp_node state "PInt";
     pp_int  state i

@@ -1,4 +1,4 @@
-open Ast
+open Types
 
 module Free_variables = struct
 
@@ -9,7 +9,6 @@ module Free_variables = struct
   let union : bindings -> bindings -> bindings = (@)
   let unions : bindings list -> bindings = List.concat
   let empty : bindings = []
-  let of_list : expression_variable list -> bindings = fun x -> x
 
   let rec expression_content : bindings -> expression_content -> bindings = fun b ec ->
     let self = expression b in
@@ -49,18 +48,16 @@ module Free_variables = struct
   and expression : bindings -> expression -> bindings = fun b e ->
     expression_content b e.expression_content
 
-  and matching_variant_case : (bindings -> expression -> bindings) -> bindings -> matching_content_case -> bindings  = fun f b { constructor=_ ; pattern ; body } ->
-    f (union (singleton pattern) b) body
+    and matching_variant_case : (bindings -> expression -> bindings) -> bindings -> matching_content_case -> bindings  = fun f b { constructor=_ ; pattern ; body } ->
+      f (union (singleton pattern) b) body
+  
+    and matching : (bindings -> expression -> bindings) -> bindings -> matching_expr -> bindings = fun f b m ->
+      match m with
+      | Match_variant { cases ; tv=_ } -> unions @@ List.map (matching_variant_case f b) cases
+      | Match_record {fields; body; tv = _} ->
+        f (union (List.map fst (LMap.to_list fields)) b) body
 
-  and matching : (bindings -> expression -> bindings) -> bindings -> matching_expr -> bindings = fun f b m ->
-    match m with
-    | Match_list { match_nil = n ; match_cons = {hd; tl; body; tv=_} } -> union (f b n) (f (union (of_list [hd ; tl]) b) body)
-    | Match_option { match_none = n ; match_some = {opt; body; tv=_} } -> union (f b n) (f (union (singleton opt) b) body)
-    | Match_variant { cases ; tv=_ } -> unions @@ List.map (matching_variant_case f b) cases
-    | Match_record {fields; body; tv = _} ->
-      f (union (List.map fst (LMap.to_list fields)) b) body
-
-  and matching_expression = fun x -> matching expression x
+    and matching_expression = fun x -> matching expression x
 
 end
 
@@ -255,50 +252,3 @@ let equal_variables a b : bool =
   match a.expression_content, b.expression_content with
   | E_variable a, E_variable b -> Var.equal a.wrap_content b.wrap_content
   |  _, _ -> false
-
-let p_constant (p_ctor_tag : constant_tag) (p_ctor_args : p_ctor_args) =
-  Reasons.wrap Builtin_type @@
-    P_constant {
-      p_ctor_tag : constant_tag ;
-      p_ctor_args : p_ctor_args ;
-    }
-
-let p_row (p_row_tag : row_tag) (p_row_args : row_lmap ) =
-  Reasons.wrap Builtin_type @@
-    P_row {
-      p_row_tag ;
-      p_row_args ;
-    }
-
-let p_row_ez (p_row_tag : row_tag) (p_row_args : (string * type_value) list ) =
-  let p_row_args = LMap.of_list @@ List.mapi (fun i (x,y) -> Label x,{associated_value=y; michelson_annotation = None; decl_pos = i }) p_row_args in
-  p_row p_row_tag p_row_args
-
-let p_apply tf targ =
-  Reasons.wrap Builtin_type @@
-    P_apply { tf ; targ }
-
-let p_var var = 
-  Reasons.wrap Builtin_type @@
-    P_variable var
-
-let p_var_ez var = 
-  Reasons.wrap Builtin_type @@
-    P_variable (Var.of_name var)
-
-let c_equation aval bval reason = { c = C_equation { aval ; bval }; reason }
-let c_apply f arg reason = {c = C_apply {f; arg}; reason}
-
-let reason_simpl_ : type_constraint_simpl -> string = function
-  | SC_Apply { reason_apply_simpl=reason; _ }
-  | SC_Abs { reason_abs_simpl=reason; _ }
-  | SC_Constructor { reason_constr_simpl=reason; _ }
-  | SC_Row { reason_row_simpl=reason; _ }
-  | SC_Alias { reason_alias_simpl=reason; _ }
-  | SC_Poly { reason_poly_simpl=reason; _ }
-  | SC_Access_label { reason_access_label_simpl=reason; _ }
-  | SC_Typeclass { reason_typeclass_simpl=reason; _ }
-  -> reason
-
-let reason_simpl : type_constraint_simpl -> string = fun c -> reason_simpl_ c
-

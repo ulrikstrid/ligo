@@ -19,6 +19,7 @@ let first_region = function
 
 (* Reductions on error *)
 
+%on_error_reduce seq_expr
 %on_error_reduce nsepseq(selection,DOT)
 %on_error_reduce call_expr_level
 %on_error_reduce add_expr_level
@@ -160,6 +161,7 @@ declaration:
 | let_declaration {         Let $1 }
 | module_decl     {  ModuleDecl $1 }
 | module_alias    { ModuleAlias $1 }
+| "<directive>"   {   Directive $1 }
 
 (* Type declarations *)
 
@@ -295,8 +297,8 @@ module_access_t :
     in {region; value} }
 
 module_var_t:
-  module_access_t   { TModA $1 }
-| field_name        { TVar  $1 }
+  module_access_t  { TModA $1 }
+| field_name       { TVar  $1 }
 
 field_decl:
   seq("[@attr]") field_name ":" type_expr {
@@ -343,7 +345,7 @@ irrefutable:
 
 sub_irrefutable:
   "<ident>"                                              {    PVar $1 }
-| "_"                                                    {   PWild $1 }
+| "_"                             { PVar { value = "_"; region = $1 } }
 | unit                                                   {   PUnit $1 }
 | record_pattern                                         { PRecord $1 }
 | par(closed_irrefutable)                                {    PPar $1 }
@@ -383,18 +385,18 @@ sub_pattern:
 | core_pattern {      $1 }
 
 core_pattern:
-  "<ident>"                                    {              PVar $1 }
-| "_"                                          {             PWild $1 }
-| "<int>"                                      {              PInt $1 }
-| "<nat>"                                      {              PNat $1 }
-| "<bytes>"                                    {            PBytes $1 }
-| "<string>"                                   {           PString $1 }
-| "<verbatim>"                                 {         PVerbatim $1 }
-| unit                                         {             PUnit $1 }
-| par(ptuple)                                  {              PPar $1 }
-| list__(tail)                                 { PList (PListComp $1) }
-| constr_pattern                               {           PConstr $1 }
-| record_pattern                               {           PRecord $1 }
+  "<ident>"                       {                           PVar $1 }
+| "_"                             { PVar { value = "_"; region = $1 } }
+| "<int>"                         {                           PInt $1 }
+| "<nat>"                         {                           PNat $1 }
+| "<bytes>"                       {                         PBytes $1 }
+| "<string>"                      {                        PString $1 }
+| "<verbatim>"                    {                      PVerbatim $1 }
+| unit                            {                          PUnit $1 }
+| par(ptuple)                     {                           PPar $1 }
+| list__(tail)                    {              PList (PListComp $1) }
+| constr_pattern                  {                        PConstr $1 }
+| record_pattern                  {                        PRecord $1 }
 
 record_pattern:
   "{" sep_or_term_list(field_pattern,";") "}" {
@@ -408,7 +410,12 @@ record_pattern:
     in {region; value} }
 
 field_pattern:
-  field_name "=" sub_pattern {
+  field_name {
+    let region  = $1.region
+    and value  = {field_name=$1; eq=Region.ghost; pattern=PVar $1}
+    in {region; value}
+  }
+| field_name "=" sub_pattern {
     let start  = $1.region
     and stop   = pattern_to_region $3 in
     let region = cover start stop
@@ -438,7 +445,7 @@ ptuple:
     in PTuple {region; value=$1} }
 
 unit:
-  "(" ")" { {region = cover $1 $2; value = ghost, ghost} }
+  "(" ")" { {region = cover $1 $2; value = $1,$2} }
 
 tail:
   sub_pattern { $1 }
@@ -827,7 +834,8 @@ last_expr:
   seq_expr
 | fun_expr(last_expr)
 | match_expr(last_expr)
-| let_in_sequence       { $1 }
+| let_in_sequence
+| tuple_expr { $1 }
 
 let_in_sequence:
   seq("[@attr]") "let" ioption("rec") let_binding "in" series  {

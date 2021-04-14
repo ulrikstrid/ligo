@@ -16,7 +16,6 @@ stages:
 .nix:
   before_script:
     - find "$CI_PROJECT_DIR" -path "$CI_PROJECT_DIR/.git" -prune -o "(" -type d -a -not -perm -u=w ")" -exec chmod --verbose u+w {} ";"
-    - nix-env -f "https://gitlab.com/ligolang/nixpkgs/repository/archive.tar.gz?ref=7f50e4b4311f1489bc73ee8470ab797c271d04b1" -iA gnutar gitMinimal
     - export COMMIT_DATE="$(git show --no-patch --format=%ci)"
 
 changelog:
@@ -36,6 +35,17 @@ changelog:
       - changelog.txt
       - release-notes.md
       - release-notes.txt
+
+to_dos:
+  stage: pretooling
+  only:
+    - merge_requests
+    - /^.*-run-dev$/
+  script:
+    - ./scripts/list-to-dos.sh > to-dos.html
+  artifacts:
+    paths:
+      - to-dos.html
 
 # TODO: https://docs.gitlab.com/ee/ci/yaml/#onlychangesexceptchanges ?
 docker_build:
@@ -237,9 +247,11 @@ release:
   extends: .nix
   dependencies:
     - docker_extract
+    - to_dos
   script:
     - nix-build nix -A ligo-website
     - cp -Lr --no-preserve=mode,ownership,timestamps result/ public
+    - touch to-dos.html; cp to-dos.html public/to-dos.html
   artifacts:
     paths:
       - public

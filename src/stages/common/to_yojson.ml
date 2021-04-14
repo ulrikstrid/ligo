@@ -137,12 +137,19 @@ let constant' = function
   | C_TEST_ORIGINATE           -> `List [`String "TEST_ORIGINATE"; `Null ]
   | C_TEST_SET_NOW             -> `List [`String "TEST_SET_NOW"; `Null ]
   | C_TEST_SET_SOURCE          -> `List [`String "TEST_SET_SOURCE"; `Null ]
-  | C_TEST_SET_BALANCE         -> `List [`String "TEST_SET_BALANCE"; `Null ]
+  | C_TEST_SET_BAKER           -> `List [`String "TEST_SET_BAKER"; `Null ]
   | C_TEST_EXTERNAL_CALL       -> `List [`String "TEST_EXTERNAL_CALL"; `Null ]
+  | C_TEST_EXTERNAL_CALL_EXN   -> `List [`String "TEST_EXTERNAL_CALL_EXN"; `Null ]
   | C_TEST_GET_STORAGE         -> `List [`String "TEST_GET_STORAGE"; `Null ]
   | C_TEST_GET_BALANCE         -> `List [`String "TEST_GET_BALANCE"; `Null ]
-  | C_TEST_ASSERT_FAILURE      -> `List [`String "TEST_ASSERT_FAILURE"; `Null ]
+  | C_TEST_COMPILE_EXPRESSION  -> `List [`String "TEST_COMPILE_EXPRESSION"; `Null]
+  | C_TEST_MICHELSON_EQUAL        -> `List [`String "TEST_ASSERT_FAILURE"; `Null ]
+  | C_TEST_GET_NTH_BS          -> `List [`String "TEST_GET_NTH_BS"; `Null ]
   | C_TEST_LOG                 -> `List [`String "TEST_LOG"; `Null ]
+  | C_TEST_STATE_RESET         -> `List [`String "TEST_STATE_RESET"; `Null ]
+  | C_TEST_LAST_ORIGINATIONS   -> `List [`String "TEST_LAST_ORIGINATIONS"; `Null ]
+  | C_TEST_COMPILE_META_VALUE  -> `List [`String "TEST_COMPILE_META_VALUE"; `Null ]
+  | C_TEST_COMPILE_EXPRESSION_SUBST -> `List [`String "TEST_COMPILE_EXPRESSION_SUBST"; `Null ]
   | C_SHA3                     -> `List [`String "SHA3"; `Null ]
   | C_KECCAK                   -> `List [`String "KECCAK"; `Null ]
   | C_LEVEL                    -> `List [`String "LEVEL"; `Null ]
@@ -155,7 +162,8 @@ let constant' = function
   | C_PAIRING_CHECK            -> `List [`String "PAIRING_CHECK"; `Null ]
   | C_SAPLING_VERIFY_UPDATE    -> `List [`String "SAPLING_VERIFY_UPDATE"; `Null ]
   | C_SAPLING_EMPTY_STATE      -> `List [`String "SAPLING_EMPTY_STATE"; `Null ]
-
+  (* JsLIGO *)
+  | C_POLYMORPHIC_ADD          -> `List [`String "POLYMORPHIC_ADD"; `Null ]
 
 let literal = function
   | Literal_unit        -> `List [`String "Literal_unit"; `Null ]
@@ -366,6 +374,32 @@ let while_loop expression {cond;body} =
   `Assoc [
     ("cond", expression cond);
     ("body", expression body);
+  ]
+
+let rec list_pattern type_expression lp =
+  match lp with
+  | Cons (a,b) -> `List [`String "Cons" ; pattern type_expression a ; pattern type_expression b]
+  | List lp -> `List [`String "Tuple" ; list (pattern type_expression) lp ]
+
+and pattern type_expression p =
+  match p.wrap_content with
+  | P_unit -> `List [`String "Unit" ; `Null]
+  | P_var b -> `List [`String "Var"; binder type_expression b]
+  | P_list lp -> `List [`String "List" ; list_pattern type_expression lp]
+  | P_variant (l,popt) -> `List [`String "Variant" ; label l ; option (pattern type_expression) popt ]
+  | P_tuple lp -> `List [`String "Tuple" ; list (pattern type_expression) lp ]
+  | P_record (ll,lp) -> `List [`String "Record" ; list label ll ; list (pattern type_expression) lp ]
+
+and match_case expression type_expression {pattern=p ; body } =
+  `Assoc [
+    ("pattern", pattern type_expression p) ;
+    ("body", expression body) ;
+  ]
+
+let match_exp expression type_expression {matchee ; cases} =
+  `Assoc [
+    ("matchee", expression matchee) ;
+    ("cases", list (match_case expression type_expression) cases) ;
   ]
 
 let declaration_type type_expression {type_binder; type_expr} =

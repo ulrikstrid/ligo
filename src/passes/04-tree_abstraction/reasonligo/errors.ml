@@ -1,7 +1,7 @@
 open Simple_utils.Display
 
 module Raw = Cst.Reasonligo
-module Parser = Parser.Reasonligo
+module Parsing = Parsing.Reasonligo
 
 let stage = "abstracter"
 
@@ -59,13 +59,7 @@ let error_ppformat : display_format:string display_format ->
     | `Concrete_reasonligo_unsupported_pattern_type pl ->
       Format.fprintf f
         "@[<hv>%a@.Invalid pattern matching.
-If this is pattern matching over Booleans, then \"true\" or \"false\" is expected.
-If this is pattern matching on a list, then one of the following is expected:
-  * an empty list pattern \"[]\";
-  * a cons list pattern \"[head, ...tail]\".
-If this is pattern matching over variants, then a constructor of a variant is expected.
-
-Other forms of pattern matching are not (yet) supported. @]"
+        Can't match on values. @]"
         Snippet.pp_lift ((fun a p -> Region.cover a (Raw.pattern_to_region p)) Region.ghost pl)
     | `Concrete_reasonligo_unsupported_string_singleton te ->
       Format.fprintf f
@@ -96,8 +90,8 @@ Other forms of pattern matching are not (yet) supported. @]"
           Snippet.pp_lift v.region
           v.value
     | `Concrete_reasonligo_funarg_tuple_type_mismatch (region, pattern, texpr) -> (
-      let p = Parser.pretty_print_pattern pattern |> Buffer.contents in
-      let t = Parser.pretty_print_type_expr texpr |> Buffer.contents in
+      let p = Parsing.pretty_print_pattern pattern |> Buffer.contents in
+      let t = Parsing.pretty_print_type_expr texpr |> Buffer.contents in
       Format.fprintf
         f
         "@[<hv>%a@.The tuple \"%s\" does not match the type \"%s\". @]"

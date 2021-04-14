@@ -9,7 +9,7 @@
 
 open Simple_utils.Region
 module CST = Cst.Pascaligo
-open CST
+open! CST
 
 (* Utilities *)
 
@@ -61,8 +61,6 @@ let mk_arith f arg1 op arg2 =
 %on_error_reduce nsepseq(core_pattern,COMMA)
 %on_error_reduce constr_pattern
 %on_error_reduce core_expr
-%on_error_reduce module_var_e
-%on_error_reduce module_var_t
 %on_error_reduce nsepseq(param_decl,SEMI)
 %on_error_reduce nsepseq(selection,DOT)
 %on_error_reduce nsepseq(field_path_assignment,SEMI)
@@ -99,6 +97,8 @@ let mk_arith f arg1 op arg2 =
 %on_error_reduce option(arguments)
 %on_error_reduce path
 %on_error_reduce nseq(Attr)
+%on_error_reduce module_var_e
+%on_error_reduce module_var_t
 
 %%
 
@@ -198,11 +198,12 @@ module_:
   nseq(declaration) { {decl=$1; eof=Region.ghost} }
 
 declaration:
-  type_decl    {    TypeDecl $1 }
-| const_decl   {   ConstDecl $1 }
-| fun_decl     {     FunDecl $1 }
-| module_decl  {  ModuleDecl $1 }
-| module_alias { ModuleAlias $1 }
+  type_decl     {    TypeDecl $1 }
+| const_decl    {   ConstDecl $1 }
+| fun_decl      {     FunDecl $1 }
+| module_decl   {  ModuleDecl $1 }
+| module_alias  { ModuleAlias $1 }
+| "<directive>" {   Directive $1 }
 
 (* Type declarations *)
 
@@ -465,6 +466,15 @@ param_decl:
                   param_type = $3}
     in ParamVar {region; value}
   }
+| "var" "_" param_type? {
+    let stop   = match $3 with
+                   None -> $2
+                 | Some (_,t) -> type_expr_to_region t in
+    let region = cover $1 stop
+    and value  = {kwd_var    =                                $1;
+                  var        =      { value = "_"; region = $2 };
+                  param_type =                                $3}
+    in ParamVar {region; value} }
 | "const" var param_type? {
     let stop   = match $3 with
                    None -> $2.region
@@ -473,6 +483,15 @@ param_decl:
     and value  = {kwd_const  = $1;
                   var        = $2;
                   param_type = $3}
+    in ParamConst {region; value} }
+| "const" "_" param_type? {
+    let stop   = match $3 with
+                   None -> $2
+                 | Some (_,t) -> type_expr_to_region t in
+    let region = cover $1 stop
+    and value  = {kwd_const  =                                $1;
+                  var        =      { value = "_"; region = $2 };
+                  param_type =                                $3}
     in ParamConst {region; value} }
 
 param_type:
@@ -509,13 +528,13 @@ open_data_decl:
 
 open_const_decl:
   seq("[@attr]") "const" unqualified_decl("=") {
-    let name, const_type, equal, init, stop = $3 in
+    let pattern, const_type, equal, init, stop = $3 in
     let region= match first_region $1 with
                   None -> cover $2 stop
                 | Some start -> cover start stop
     and value  = {attributes=$1;
                   kwd_const=$2;
-                  name;
+                  pattern;
                   const_type;
                   equal;
                   init;
@@ -524,10 +543,10 @@ open_const_decl:
 
 open_var_decl:
   "var" unqualified_decl(":=") {
-    let name, var_type, assign, init, stop = $2 in
+    let pattern, var_type, assign, init, stop = $2 in
     let region = cover $1 stop
     and value  = {kwd_var = $1;
-                  name;
+                  pattern;
                   var_type;
                   assign;
                   init;
@@ -535,9 +554,10 @@ open_var_decl:
     in {region; value} }
 
 unqualified_decl(OP):
-  var ioption(type_annot) OP expr {
+  core_pattern ioption(type_annot) OP expr {
     let region = expr_to_region $4
-    in $1, $2, $3, $4, region }
+    in $1, $2, $3, $4, region
+  }
 
 const_decl:
   open_const_decl ";"? {
@@ -1099,7 +1119,7 @@ pattern:
 
 core_pattern:
   var                      {    PVar $1 }
-| "_"                      {   PWild $1 }
+| "_"                      { PVar { value = "_"; region = $1 } }
 | "<int>"                  {    PInt $1 }
 | "<nat>"                  {    PNat $1 }
 | "<bytes>"                {  PBytes $1 }
@@ -1107,6 +1127,25 @@ core_pattern:
 | list_pattern             {   PList $1 }
 | tuple_pattern            {  PTuple $1 }
 | constr_pattern           { PConstr $1 }
+| record_pattern           { PRecord $1 }
+
+field_pattern:
+  field_name {
+    let region = $1.region in
+    let value = {field_name=$1;eq=Region.ghost;pattern=PVar $1} in
+    {region; value}
+  }
+| field_name "=" core_pattern {
+    let start  = $1.region
+    and stop   = pattern_to_region $3 in
+    let region = cover start stop
+    and value  = {field_name=$1; eq=$2; pattern=$3}
+    in {region; value} }
+
+record_pattern:
+  injection("record", field_pattern) {
+    $1 (fun region -> InjRecord region)
+  }
 
 list_pattern:
   "nil"                          {      PNil $1 }
@@ -1130,6 +1169,7 @@ constr_pattern:
     let region = cover $1.region $2.region in
     PConstrApp {region; value = $1, Some $2}
   }
-| "Some" par(core_pattern) {
+| "Some" tuple_pattern {
     let region = cover $1 $2.region
-    in PSomeApp {region; value = $1,$2} }
+    in PSomeApp {region; value = $1, PTuple $2 }
+}

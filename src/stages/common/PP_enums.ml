@@ -138,12 +138,19 @@ let constant' ppf : constant' -> unit = function
   | C_TEST_ORIGINATE -> fprintf ppf "TEST_ORIGINATE"
   | C_TEST_SET_NOW -> fprintf ppf "TEST_SET_NOW"
   | C_TEST_SET_SOURCE -> fprintf ppf "TEST_SET_SOURCE"
-  | C_TEST_SET_BALANCE -> fprintf ppf "TEST_SET_BALANCE"
+  | C_TEST_SET_BAKER -> fprintf ppf "TEST_SET_BAKER"
   | C_TEST_EXTERNAL_CALL -> fprintf ppf "TEST_EXTERNAL_CALL"
+  | C_TEST_EXTERNAL_CALL_EXN -> fprintf ppf "TEST_EXTERNAL_CALL_EXN"
   | C_TEST_GET_STORAGE -> fprintf ppf "TEST_GET_STORAGE"
   | C_TEST_GET_BALANCE -> fprintf ppf "TEST_GET_BALANCE"
-  | C_TEST_ASSERT_FAILURE -> fprintf ppf "TEST_ASSERT_FAILURE"
+  | C_TEST_MICHELSON_EQUAL -> fprintf ppf "TEST_ASSERT_FAILURE"
+  | C_TEST_GET_NTH_BS -> fprintf ppf "TEST_GET_NTH_BS"
+  | C_TEST_COMPILE_EXPRESSION -> fprintf ppf "TEST_COMPILE_EXPRESSION"
+  | C_TEST_STATE_RESET -> fprintf ppf "TEST_STATE_RESET"
   | C_TEST_LOG -> fprintf ppf "TEST_LOG"
+  | C_TEST_LAST_ORIGINATIONS -> fprintf ppf "TEST_LAST_ORIGINATIONS"
+  | C_TEST_COMPILE_META_VALUE -> fprintf ppf "TEST_COMPILE_META_VALUE"
+  | C_TEST_COMPILE_EXPRESSION_SUBST -> fprintf ppf "TEST_COMPILE_EXPRESSION_SUBST"
   | C_SHA3 -> fprintf ppf "SHA3"
   | C_KECCAK -> fprintf ppf "KECCAK"
   | C_LEVEL -> fprintf ppf "LEVEL"
@@ -156,6 +163,8 @@ let constant' ppf : constant' -> unit = function
   | C_PAIRING_CHECK -> fprintf ppf "PAIRING_CHECK"
   | C_SAPLING_EMPTY_STATE -> fprintf ppf "SAPLING_EMPTY_STATE"
   | C_SAPLING_VERIFY_UPDATE -> fprintf ppf "SAPLING_VERIFY_UPDATE"
+  (* JsLIGO *)
+  | C_POLYMORPHIC_ADD -> fprintf ppf "C_POLYMORPHIC_ADD"
 
 let literal ppf (l : literal) =
   match l with

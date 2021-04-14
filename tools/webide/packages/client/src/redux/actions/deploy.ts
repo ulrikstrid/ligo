@@ -19,14 +19,15 @@ import { DoneLoadingAction, UpdateLoadingAction } from '../loading';
 import { ChangeContractAction, ChangeOutputAction } from '../result';
 import { CommandType } from '../types';
 import { CancellableAction } from './cancellable';
+import { networkType } from '../deploy';
 
 export class DeployAction extends CancellableAction {
   async deployOnServerSide(dispatch: Dispatch, getState: () => AppState) {
-    dispatch({
-      ...new UpdateLoadingAction('Deploying to Edonet network...'),
-    });
-
     const { editor: editorState, deploy: deployState } = getState();
+    const network = deployState.network;
+    dispatch({
+      ...new UpdateLoadingAction(`Deploying to ${network} network...`),
+    });
 
     return await deploy(
       editorState.language,
@@ -41,7 +42,7 @@ export class DeployAction extends CancellableAction {
     beaconWallet: any,
     launchNetwork: string
   ): Promise<void> => {
-    if (launchNetwork === 'edonet') {
+    if (launchNetwork === NetworkType.EDONET) {
       await beaconWallet.requestPermissions({
         network: {
           type: NetworkType.EDONET,
@@ -49,7 +50,15 @@ export class DeployAction extends CancellableAction {
           rpcUrl: `https://api.tez.ie/rpc/edonet`,
         },
       });
-    } else if (launchNetwork === 'mainnet') {
+    } else if (launchNetwork === NetworkType.CUSTOM) {
+      await beaconWallet.requestPermissions({
+        network: {
+          type: NetworkType.CUSTOM,
+          name: 'Florencenet',
+          rpcUrl: `https://api.tez.ie/rpc/florencenet`,
+        },
+      });
+    } else if (launchNetwork === NetworkType.MAINNET) {
       await beaconWallet.requestPermissions({
         network: {
           type: NetworkType.MAINNET,
@@ -83,7 +92,10 @@ export class DeployAction extends CancellableAction {
     let networkURL = 'https://api.tez.ie/rpc/edonet';
     let network = { type: NetworkType.EDONET };
 
-    if (deployState.network === NetworkType.MAINNET) {
+    if (deployState.network === 'florencenet') {
+      networkURL = 'https://api.tez.ie/rpc/florencenet';
+      network = { type: NetworkType.CUSTOM };
+    } else if (deployState.network === NetworkType.MAINNET) {
       networkURL = 'https://api.tez.ie/rpc/mainnet';
       network = { type: NetworkType.MAINNET };
     }

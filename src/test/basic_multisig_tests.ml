@@ -11,18 +11,18 @@ let get_program f st =
     | Some s -> ok s
     | None -> (
       let options = Compiler_options.make () in
-      let%bind program = Ligo.Compile.Utils.type_file ~options f st (Contract "main") in
+      let%bind program = Ligo_compile.Utils.type_file ~options f st (Contract "main") in
       s := Some program ;
       ok program
     )
 
 let compile_main f s () =
-  let%bind typed_prg,_,_ = get_program f s () in
-  let%bind mini_c_prg    = Ligo.Compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg = Ligo.Compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
+  let%bind typed_prg,_ = get_program f s () in
+  let%bind mini_c_prg    = Ligo_compile.Of_typed.compile typed_prg in
+  let%bind michelson_prg = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
   let%bind _contract =
     (* fails if the given entry point is not a valid contract *)
-    Ligo.Compile.Of_michelson.build_contract michelson_prg in
+    Ligo_compile.Of_michelson.build_contract michelson_prg in
   ok ()
 
 open Ast_imperative
@@ -73,7 +73,7 @@ let chain_id_zero =
 
 (* sign the message 'msg' with 'keys', if 'is_valid'=false the providid signature will be incorrect *)
 let params counter payload keys is_validl f s =
-  let%bind _,env,_ = get_program f s () in
+  let%bind _,env   = get_program f s () in
   let aux = fun acc (key,is_valid) ->
     let (_,_pk,sk) = key in
     let (pkh,_,_) = str_keys key in

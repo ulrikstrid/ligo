@@ -18,7 +18,7 @@ let get_groups md_file =
   bind_fold_list
     (fun (grp_map: _ SnippetsGroup.t) (el:Md.block) ->
       match el.header  with
-      | Some ("pascaligo" as s) | Some ("cameligo" as s) | Some ("reasonligo" as s) -> (
+      | Some ("pascaligo" as s) | Some ("cameligo" as s) | Some ("reasonligo" as s) | Some ("jsligo" as s) -> (
         let%bind () = bind_iter_list
           (fun arg -> match arg with
           | Md.Field "" | Md.Field "skip" | Md.NameValue ("group",_) -> ok ()
@@ -59,16 +59,15 @@ let compile_groups filename grp_list =
     (fun ((s,grp),contents) ->
       trace (test_md_file filename s grp contents) @@
       let options         = Compiler_options.make () in
-      let {typer_switch;init_env} : Compiler_options.t = options in
-      let%bind meta       = Compile.Of_source.make_meta s None in
-      let%bind c_unit,_   = Compile.Of_source.compile_string ~options ~meta contents in
-      let%bind imperative = Compile.Of_c_unit.compile ~options ~meta c_unit filename in
-      let%bind sugar      = Ligo.Compile.Of_imperative.compile imperative in
-      let%bind core       = Ligo.Compile.Of_sugar.compile sugar in
-      let%bind typed,_,_  = Compile.Of_core.compile ~typer_switch ~init_env Env core in
-      let%bind mini_c     = Compile.Of_typed.compile typed in
+      let%bind meta       = Ligo_compile.Of_source.make_meta s None in
+      let%bind c_unit,_   = Ligo_compile.Of_source.compile_string ~options ~meta contents in
+      let%bind imperative = Ligo_compile.Of_c_unit.compile ~meta c_unit filename in
+      let%bind sugar      = Ligo_compile.Of_imperative.compile imperative in
+      let%bind core       = Ligo_compile.Of_sugar.compile sugar in
+      let%bind typed,_    = Ligo_compile.Of_core.compile ~options Env core in
+      let%bind mini_c     = Ligo_compile.Of_typed.compile typed in
       bind_map_list
-        (fun ((_, _, exp),_) -> Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp)
+        (fun ((_, _, exp),_) -> Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp)
         mini_c
     )
     grp_list in

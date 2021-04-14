@@ -19,7 +19,7 @@ let make_meta_from_syntax syntax =
   ok @@ {syntax}
 
 let compile ~options ~meta (source_filename:string) : (c_unit , _) result =
-  trace Main_errors.preproc_tracer @@ preprocess_file ~options ~meta source_filename
+  preprocess_file ~options ~meta source_filename
 
 let compile_string ~options ~meta source : (c_unit , _) result =
   preprocess_string ~options ~meta source
@@ -30,5 +30,5 @@ let compile_string_without_preproc source : (c_unit , _) result =
   ok @@ (buffer, [])
 
 let compile_contract_input : options:Compiler_options.t -> meta:meta -> string -> string -> (c_unit * c_unit , _) result =
-    fun ~options ~meta storage parameter ->
-  bind_map_pair (compile_string ~options ~meta) (storage,parameter)
+    fun ~options ~meta parameter storage ->
+  bind_map_pair (compile_string ~options ~meta) (parameter,storage)
