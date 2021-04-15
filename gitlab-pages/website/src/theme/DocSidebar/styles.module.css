@@ -71,17 +71,17 @@
   }
 
   .switchContainer {
-    display: flex; 
-    background-color: var(--ifm-pre-background); 
-    align-items: center; 
+    display: flex;
+    background-color: var(--ifm-pre-background);
+    align-items: center;
     justify-content: center;
-    padding: 1rem 0; 
+    padding: 1rem 0;
     border-bottom: 1px solid var(--ifm-contents-border-color);
   }
 }
 
 .switchContainerResponsive {
-  background-color: var(--ifm-pre-background); 
+  background-color: var(--ifm-pre-background);
   flex: 1;
   display: flex;
   flex-direction: row;

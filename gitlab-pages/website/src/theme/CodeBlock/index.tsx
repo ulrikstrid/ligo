@@ -88,7 +88,7 @@ import rangeParser from 'parse-numeric-range';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import useThemeContext from '@theme/hooks/useThemeContext';
 import type {Props} from '@theme/CodeBlock';
-import {LigoSnippet} from '@ligolang/ligo-snippets'
+// import {LigoSnippet} from '@ligolang/ligo-snippets'
 
 import styles from './styles.module.css';
 
@@ -295,7 +295,7 @@ export default ({
       }
 
       if (metadata.editor) {
-        return <LigoSnippet data={snippetData} />
+        // return <LigoSnippet data={snippetData} />
       }
     }
   }
