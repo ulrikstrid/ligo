@@ -8,13 +8,21 @@
    associativity with the same kind or the expected priority over
    another. *)
 
+[@@@warning "-42"]
 [@@@coverage exclude_file]
+
+(* Internal dependencies *)
 
 open CST
 
-module Region = Simple_utils.Region
-module Utils  = Simple_utils.Utils
+(* Vendor dependencies *)
+
+module Directive = LexerLib.Directive
+module Utils     = Simple_utils.Utils
+module Region    = Simple_utils.Region
 open! Region
+
+(* Utilities *)
 
 let sprintf = Printf.sprintf
 
@@ -245,11 +253,12 @@ let rec print_cst state (node : cst) =
    [print_D_Const] comes before [print_D_Fun]. *)
 
 and print_declaration state = function
-  D_Const    d -> print_D_Const    state d
-| D_Fun      d -> print_D_Fun      state d
-| D_Module   d -> print_D_Module   state d
-| D_ModAlias d -> print_D_ModAlias state d
-| D_Type     d -> print_D_Type     state d
+  D_Const     d -> print_D_Const     state d
+| D_Directive d -> print_D_Directive state d
+| D_Fun       d -> print_D_Fun       state d
+| D_Module    d -> print_D_Module    state d
+| D_ModAlias  d -> print_D_ModAlias  state d
+| D_Type      d -> print_D_Type      state d
 
 (* Constant declarations *)
 
@@ -267,6 +276,11 @@ and print_type_annot state =
 
 and print_attributes state =
   print_tree state "<attributes>" <@ List.map (mk_child print_long)
+
+(* Preprocessing directives *)
+
+and print_D_Directive state dir =
+  print_unary state "Directive" print_string (Directive.project dir)
 
 (* Function declarations *)
 
@@ -403,12 +417,12 @@ and print_T_Int = swap print_int "T_Int"
 
 (* Module paths *)
 
-and print_T_ModPath state (node : type_expr module_path reg) =
+and print_T_ModPath state (node : type_name module_path reg) =
   let {value; region} = node in
   let children =
     (List.map (mk_child print_long)
     @@ Utils.nsepseq_to_list value.module_path)
-    @ [mk_child print_type_expr value.field]
+    @ [mk_child print_string value.field]
   in print_tree state "T_ModPath" ~region children
 
 (* Parenthesised type expressions *)
@@ -852,7 +866,6 @@ and print_pattern state = function
 | P_Tuple   p -> print_P_Tuple   state p
 | P_Unit    p -> print_P_Unit    state p
 | P_Var     p -> print_P_Var     state p
-| P_Wild    p -> print_P_Wild    state p
 
 (* Bytes as literals in patterns *)
 
@@ -949,10 +962,6 @@ and print_P_Unit = swap print_long' "P_Unit"
 (* A pattern variable *)
 
 and print_P_Var state = print_unary state "P_Var" print_long
-
-(* The catch-all pattern (a.k.a. the joker) *)
-
-and print_P_Wild state = print_unary state "P_Wild" print_wild
 
 
 (* EXPRESSIONS *)

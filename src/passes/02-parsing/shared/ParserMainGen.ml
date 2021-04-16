@@ -4,10 +4,19 @@
 (* Vendor dependencies *)
 
 module Region = Simple_utils.Region
+module PreprocMainGen = Preprocessor.PreprocMainGen
+
+(* Internal dependencies *)
+
+module type FILE        = Preprocessing_shared.File.S
+module type COMMENTS    = Preprocessing_shared.Comments.S
+module type TOKEN       = Lexing_shared.Token.S
+module type SELF_TOKENS = Lexing_shared.Self_tokens.S
+module type PARSER      = ParserLib.API.PARSER
+
+module LexerMainGen = Lexing_shared.LexerMainGen
 
 (* The functor *)
-
-module type PARSER = ParserLib.API.PARSER
 
 module type PRINTER =
   sig
@@ -26,30 +35,31 @@ module type PRETTY =
     val print : tree -> PPrint.document
   end
 
-module Make (Comments    : Shared_lexer.Comments.S)
-            (File        : Shared_lexer.File.S)
-            (Token       : Shared_lexer.Token.S)
+module Make (File        : FILE)
+            (Comments    : COMMENTS)
+            (Token       : TOKEN)
+            (Self_tokens : SELF_TOKENS with type token = Token.t)
             (CST         : sig type t end)
-            (Parser      : PARSER with type token = Token.t
-                                  and type tree = CST.t)
             (ParErr      : sig val message : int -> string end)
+            (Parser      : PARSER with type token = Token.t
+                                   and type tree = CST.t)
             (PrintTokens : PRINTER with type tree = CST.t)
             (PrintCST    : PRINTER with type tree = CST.t)
             (Pretty      : PRETTY with type tree = CST.t)
             (CLI         : ParserLib.CLI.S)
-            (Self_lexing : Shared_lexer.Self_lexing.S with type token = Token.t) =
-  struct
+= struct
     (* Instantiating the lexer *)
 
     module Lexer_CLI = CLI.Lexer_CLI
 
     module MainLexer =
-      Shared_lexer.LexerMainGen.Make (Comments) (File) (Token)
+      LexerMainGen.Make (File)
+                        (Token)
                         (Lexer_CLI : LexerLib.CLI.S)
-                        (Self_lexing)
+                        (Self_tokens)
     (* Other CLIs *)
 
-    module Preproc_CLI = Lexer_CLI.Preproc_CLI
+    module Preprocessor_CLI = Lexer_CLI.Preprocessor_CLI
 
     (* All exits *)
 
@@ -75,7 +85,7 @@ module Make (Comments    : Shared_lexer.Comments.S)
       | `Conflict (o1,o2) ->
            cli_error (Printf.sprintf "Choose either %s or %s." o1 o2)
       | `Done ->
-           match Preproc_CLI.extension with
+           match Preprocessor_CLI.extension with
              Some ext when ext <> File.extension ->
                let msg =
                  Printf.sprintf "Expected extension %s." File.extension
@@ -102,35 +112,38 @@ module Make (Comments    : Shared_lexer.Comments.S)
           else
             if CLI.cst then
               let state = PrintCST.mk_state
-                            ~offsets:Preproc_CLI.offsets
+                            ~offsets:Preprocessor_CLI.offsets
                             Lexer_CLI.mode in
               let result = PrintCST.to_string state tree
               in Printf.printf "%s%!" result
             else
               if CLI.cst_tokens then
                 let state = PrintTokens.mk_state
-                              ~offsets:Preproc_CLI.offsets
+                              ~offsets:Preprocessor_CLI.offsets
                               Lexer_CLI.mode in
                 let result = PrintTokens.to_string state tree
                 in Printf.printf "%s%!" result
               else ();
             flush_all ()
-      | Error msg -> (flush_all (); print_in_red msg.Region.value)
-
-    module Preproc = Preprocessor.PreprocMainGen.Make (Preproc_CLI)
+      | Error Region.{value; region} ->
+         let reg = region#to_string ~file:true ~offsets:true `Point in
+         let msg = Printf.sprintf "Parse error %s:\n%s" reg value
+         in (flush_all (); print_in_red msg)
 
     let config =
       object
-        method offsets = Preproc_CLI.offsets
+        method offsets = Preprocessor_CLI.offsets
         method mode    = Lexer_CLI.mode
       end
 
+    module Preproc = PreprocMainGen.Make (Preprocessor_CLI)
+
     let parse () =
-      if Lexer_CLI.preproc then
+      if Lexer_CLI.preprocess then
         match Preproc.preprocess () with
           Stdlib.Error _ -> ()
         | Stdlib.Ok (buffer, _deps) ->
-            if Preproc_CLI.show_pp then
+            if Preprocessor_CLI.show_pp then
               Printf.printf "%s%!" (Buffer.contents buffer)
             else ();
             let string = Buffer.contents buffer in
@@ -142,7 +155,7 @@ module Make (Comments    : Shared_lexer.Comments.S)
               incr_from_lexbuf (module ParErr) lexbuf |> wrap
       else
         let open MainParser in
-        match Preproc_CLI.input with
+        match Preprocessor_CLI.input with
           None ->
             if CLI.mono then
               mono_from_channel stdin |> wrap

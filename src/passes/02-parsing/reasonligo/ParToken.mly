@@ -1,11 +1,12 @@
 %{
-module Token = Lexer_reasonligo.Token
+module Token = Lexing_reasonligo.Token
 %}
 
 (* Tokens (mirroring those defined in module Token) *)
 
   (* Literals *)
 
+%token               <LexerLib.Directive.t> Directive "<directive>"
 %token                  <string Region.reg> String   "<string>"
 %token                  <string Region.reg> Verbatim "<verbatim>"
 %token  <(Token.lexeme * Hex.t) Region.reg> Bytes    "<bytes>"

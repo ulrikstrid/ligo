@@ -14,7 +14,7 @@ let first_region = function
 | x::_ -> Some x.Region.region
 
 let mk_mod_path :
-  (module_name, dot) Utils.nseq * 'a ->
+  (module_name * dot) Utils.nseq * 'a ->
   ('a -> Region.t) ->
   'a CST.module_path Region.reg =
   fun (nseq, field) to_region ->
@@ -25,7 +25,8 @@ let mk_mod_path :
         trans ((prev_sep, item) :: seq, next_sep) others in
     let list, last_dot = trans ([], sep) tail in
     let module_path = first, List.rev list in
-    let region = nsepseq_to_region to_region nsepseq
+    let region = CST.nseq_to_region (fun (x,_) -> x.region) nseq in
+    let region = Region.cover region (to_region field)
     and value = {module_path; selector=last_dot; field}
     in {value; region}
 
@@ -175,10 +176,11 @@ declarations:
   nseq(declaration) { $1 }
 
 declaration:
-  type_decl    { D_Type     $1 }
-| let_decl     { D_Let      $1 }
-| module_decl  { D_Module   $1 }
-| module_alias { D_ModAlias $1 }
+  "<directive>" { D_Directive $1 }
+| type_decl     { D_Type      $1 }
+| let_decl      { D_Let       $1 }
+| module_decl   { D_Module    $1 }
+| module_alias  { D_ModAlias  $1 }
 
 (* Module declarations *)
 
@@ -700,13 +702,13 @@ core_expr:
 | "<bytes>"       {                     EBytes $1 }
 | "<ident>"       {                       EVar $1 }
 | projection      {                      EProj $1 }
-| value_in_module {                      E_ModPath $1 }
+| value_in_module {                  E_ModPath $1 }
 | "<string>"      {           EString (String $1) }
 | "<verbatim>"    {         EString (Verbatim $1) }
 | unit            {                      EUnit $1 }
 | "false"         {  ELogic (BoolExpr (False $1)) }
 | "true"          {  ELogic (BoolExpr (True  $1)) }
-| list_of(expr)    {          EList (EListComp $1) }
+| list_of(expr)   {          EList (EListComp $1) }
 | sequence        {                       ESeq $1 }
 | record_expr     {                    ERecord $1 }
 | update_record   {                    EUpdate $1 }

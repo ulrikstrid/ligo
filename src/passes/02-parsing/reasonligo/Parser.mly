@@ -147,16 +147,14 @@ list__(item):
 (* Main *)
 
 contract:
-  structure EOF { {$1 with eof=$2} }
-
-structure:
-  nseq(declaration) { {decl=$1; eof=Region.ghost} }
+  nseq(declaration) EOF { {decl=$1; eof=$2} }
 
 declaration:
-  type_decl ";"?    {    TypeDecl $1 }
-| let_decl ";"?     {   ConstDecl $1 }
-| module_decl ";"?  {  ModuleDecl $1 }
-| module_alias ";"? { ModuleAlias $1 }
+  type_decl ";"?        { TypeDecl    $1 }
+| let_declaration ";"?  { ConstDecl   $1 }
+| module_decl ";"?      { ModuleDecl  $1 }
+| module_alias ";"?     { ModuleAlias $1 }
+| "<directive>"         { Directive   $1 }
 
 (* Module declarations *)
 
@@ -689,7 +687,7 @@ call_expr:
     in ECall {region; value} }
 
 core_expr:
-  par(tuple(annot_expr))    {
+  par(tuple(annot_expr)) {
     let region = $1.region
     and inside = ETuple {value = $1.value.inside; region} in
     let value  = {$1.value with inside}

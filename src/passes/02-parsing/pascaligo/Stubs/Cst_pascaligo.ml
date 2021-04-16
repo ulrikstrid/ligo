@@ -1,1 +1,2 @@
-module Printer = Printer
+module PrintTokens = PrintTokens
+module PrintCST    = PrintCST

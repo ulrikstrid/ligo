@@ -4,24 +4,13 @@
 
 [@@@warning "-30"]
 
-(* Utilities *)
+(* Vendor dependencies *)
 
-module Utils = Simple_utils.Utils
+module Directive = LexerLib.Directive
+module Utils     = Simple_utils.Utils
+module Region    = Simple_utils.Region
+
 open Utils
-
-(* Regions
-
-   The CST carries all the regions where tokens have been found by the
-   lexer, plus additional regions corresponding to whole subtrees
-   (like entire expressions, patterns etc.). These regions are needed
-   for error reporting and source-to-source transformations. To make
-   these pervasive regions more legible, we define singleton types for
-   the symbols, keywords etc. with suggestive names like "kwd_and"
-   denoting the _region_ of the occurrence of the keyword "and".
-*)
-
-module Region = Simple_utils.Region
-
 type 'a reg = 'a Region.reg
 
 (* Lexemes *)
@@ -135,10 +124,11 @@ and cst = t
    add or modify some, please make sure they remain in order. *)
 
 and declaration =
-  D_Let      of let_decl     reg
-| D_Module   of module_decl  reg
-| D_ModAlias of module_alias reg
-| D_Type     of type_decl    reg
+  D_Directive of Directive.t
+| D_Let       of let_decl     reg
+| D_Module    of module_decl  reg
+| D_ModAlias  of module_alias reg
+| D_Type      of type_decl    reg
 
 (* Value declarations (a.k.a. let/let-rec declarations) *)
 
@@ -477,9 +467,8 @@ let rec last to_region = function
 |  [x] -> to_region x
 | _::t -> last to_region t
 
-let nsepseq_to_region to_region (hd,tl) =
-  let reg (_, item) = to_region item in
-  Region.cover (to_region hd) (last reg tl)
+let nsepseq_to_region to_region (hd, tl) =
+  Region.cover (to_region hd) (last (to_region <@ snd) tl)
 
 let type_expr_to_region = function
   T_Ctor    {region; _}
@@ -566,7 +555,8 @@ let expr_to_region = function
 | E_Verbatim {region; _} -> region
 
 let declaration_to_region = function
-  D_Let      {region;_}
+  D_Directive d -> Directive.to_region d
+| D_Let      {region;_}
 | D_Module   {region;_}
 | D_ModAlias {region;_}
 | D_Type     {region;_} -> region

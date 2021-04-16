@@ -4,24 +4,13 @@
 
 [@@@warning "-30-40-42"]
 
-(* Utilities *)
+(* Vendor dependencies *)
 
-module Utils = Simple_utils.Utils
+module Directive = LexerLib.Directive
+module Utils     = Simple_utils.Utils
+module Region    = Simple_utils.Region
+
 open Utils
-
-(* Regions
-
-   The CST carries all the regions where tokens have been found by the
-   lexer, plus additional regions corresponding to whole subtrees
-   (like entire expressions, patterns etc.). These regions are needed
-   for error reporting and source-to-source transformations. To make
-   these pervasive regions more legible, we define singleton types for
-   the symbols, keywords etc. with suggestive names like "kwd_and"
-   denoting the _region_ of the occurrence of the keyword "and".
-*)
-
-module Region = Simple_utils.Region
-
 type 'a reg = 'a Region.reg
 
 (* Lexemes *)
@@ -145,6 +134,7 @@ and declaration =
 | TypeDecl    of type_decl    reg
 | ModuleDecl  of module_decl  reg
 | ModuleAlias of module_alias reg
+| Directive   of Directive.t
 
 (* Non-recursive values *)
 
@@ -577,10 +567,11 @@ let expr_to_region = function
   -> region
 
 let declaration_to_region = function
-| ConstDecl   {region;_}
+  ConstDecl   {region;_}
 | TypeDecl    {region;_}
 | ModuleDecl  {region;_}
 | ModuleAlias {region;_} -> region
+| Directive d -> Directive.to_region d
 
 let selection_to_region = function
   FieldName f -> f.region

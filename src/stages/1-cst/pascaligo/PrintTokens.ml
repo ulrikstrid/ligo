@@ -6,13 +6,21 @@
    enables to test the transmission of the tokens from the lexer to
    the parser. *)
 
+[@@@warning "-42"]
 [@@@coverage exclude_file]
+
+(* Internal dependencies *)
 
 open CST
 
-module Region = Simple_utils.Region
-module Utils  = Simple_utils.Utils
+(* Vendor dependencies *)
+
+module Directive = LexerLib.Directive
+module Utils     = Simple_utils.Utils
+module Region    = Simple_utils.Region
 open! Region
+
+(* Utilities *)
 
 let sprintf = Printf.sprintf
 
@@ -190,14 +198,14 @@ let print_ctor = print_UIdent
 
 (* HIGHER-ORDER PRINTERS *)
 
-let print_par : 'a.state -> (state -> 'a -> unit) -> 'a par reg -> unit =
+let print_par : state -> (state -> 'a -> unit) -> 'a par reg -> unit =
   fun state print {value; _} ->
     print_token state "LPAR" value.lpar;
     print       state value.inside;
     print_token state "RPAR" value.rpar
 
-let print_brackets : 'a.state -> (state -> 'a -> unit) -> 'a brackets reg -> unit =
-  fun state print {value; _} ->
+let print_brackets : 'state -> (state -> 'a -> unit) -> 'a brackets reg -> unit =
+  fun state print ({value; _}: 'a brackets reg) ->
     print_token state "LBRACKET" value.lbracket;
     print       state value.inside;
     print_token state "LBRACKET" value.rbracket
@@ -214,11 +222,12 @@ let rec print_cst state (node : cst) =
    add or modify some, please make sure they remain in order. *)
 
 and print_declaration state = function
-  D_Const    d -> print_D_Const    state d
-| D_Fun      d -> print_D_Fun      state d
-| D_Module   d -> print_D_Module   state d
-| D_ModAlias d -> print_D_ModAlias state d
-| D_Type     d -> print_D_Type     state d
+  D_Const     d -> print_D_Const     state d
+| D_Directive d -> print_D_Directive state d
+| D_Fun       d -> print_D_Fun       state d
+| D_Module    d -> print_D_Module    state d
+| D_ModAlias  d -> print_D_ModAlias  state d
+| D_Type      d -> print_D_Type      state d
 
 (* Constant declarations *)
 
@@ -242,6 +251,13 @@ and print_attribute state {region; value} =
 and print_type_annot state (colon, type_expr) =
   print_token     state "COLON" colon;
   print_type_expr state type_expr;
+
+(* Preprocessing directives *)
+
+and print_D_Directive state dir =
+  let s =
+    Directive.to_string ~offsets:state#offsets state#mode dir
+  in Buffer.add_string state#buffer s
 
 (* Function declarations *)
 
@@ -362,7 +378,7 @@ and print_T_Int state = print_int state
 
 (* Module paths *)
 
-and print_T_ModPath state = print_module_path state print_type_expr
+and print_T_ModPath state = print_module_path state print_ident
 
 and print_module_path :
   'a.state -> (state -> 'a -> unit ) -> 'a module_path reg -> unit =
@@ -749,7 +765,6 @@ and print_pattern state = function
 | P_Tuple    p -> print_P_Tuple   state p
 | P_Unit     p -> print_P_Unit    state p
 | P_Var      p -> print_P_Var     state p
-| P_Wild     p -> print_P_Wild    state p
 
 (* Bytes as literals in patterns *)
 
@@ -853,11 +868,6 @@ and print_P_Unit state = print_token state "Unit"
 (* A pattern variable *)
 
 and print_P_Var state = print_ident state
-
-(* The catch-all pattern (a.k.a. the joker) *)
-
-and print_P_Wild state = print_token state "WILD"
-
 
 (* EXPRESSIONS *)
 
@@ -980,7 +990,7 @@ and print_E_CodeInj state (node : code_inj reg) =
   let {value; region} = node.value.language in
   let line =
     sprintf "%s: Lang %S" (compact state region)
-            value.Region.value
+            value.value
   in Buffer.add_string state#buffer line
 
 (* Equality *)

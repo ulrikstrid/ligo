@@ -1,6 +1,8 @@
 [@@@coverage exclude_file]
 
 open CST
+
+module Directive = LexerLib.Directive
 module Region = Simple_utils.Region
 open! Region
 module Utils = Simple_utils.Utils
@@ -153,10 +155,16 @@ and print_attributes state (node : attribute list) =
   in List.iter apply node
 
 and print_declaration state = function
-  Let         d -> print_let_decl     state d
+  Directive   d -> print_directive    state d
+| Let         d -> print_let_decl     state d
 | TypeDecl    d -> print_type_decl    state d
 | ModuleDecl  d -> print_module_decl  state d
 | ModuleAlias d -> print_module_alias state d
+
+and print_directive state dir =
+  let s =
+    Directive.to_string ~offsets:state#offsets state#mode dir
+  in Buffer.add_string state#buffer s
 
 and print_let_decl state (node : let_decl reg) =
   let kwd_let, kwd_rec, let_binding, attributes = node.value in
@@ -652,6 +660,10 @@ and pp_declaration state = function
 | ModuleAlias {value; region} ->
     pp_loc_node     state "ModuleDecl" region;
     pp_module_alias state value
+| Directive dir ->
+    let region, string = Directive.project dir in
+    pp_loc_node state "Directive" region;
+    pp_node state string
 
 and pp_let_binding state node attr =
   let {binders; lhs_type; let_rhs; _} = node in

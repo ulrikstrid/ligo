@@ -1,11 +1,12 @@
 %{
-module Token = Lexer_pascaligo.Token
+module Token = Lexing_pascaligo.Token
 %}
 
 (* Tokens (mirroring thise defined in module Token) *)
 
   (* Literals *)
 
+%token               <LexerLib.Directive.t> Directive "<directive>"
 %token            <Token.lexeme Region.reg> String   "<string>"
 %token            <Token.lexeme Region.reg> Verbatim "<verbatim>"
 %token  <(Token.lexeme * Hex.t) Region.reg> Bytes    "<bytes>"

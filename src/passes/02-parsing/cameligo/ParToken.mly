@@ -1,11 +1,12 @@
 %{
-module Token = Lexer_cameligo.Token
+module Token = Lexing_cameligo.Token
 %}
 
 (* Tokens (mirroring thise defined in module Token) *)
 
   (* Literals *)
 
+%token               <LexerLib.Directive.t> Directive "<directive>"
 %token                  <string Region.reg> String   "<string>"
 %token                  <string Region.reg> Verbatim "<verbatim>"
 %token  <(Token.lexeme * Hex.t) Region.reg> Bytes    "<bytes>"

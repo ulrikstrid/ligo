@@ -14,8 +14,8 @@ open CST
 (* Utilities *)
 
 let first_region = function
-  [] -> None
-| x::_ -> Some x.Region.region
+    [] -> None
+| x::_ -> Some x.region
 
 let mk_un_op op arg =
   let region = cover op (expr_to_region arg)
@@ -29,14 +29,16 @@ let mk_bin_op arg1 op arg2 =
   and value  = {arg1; op; arg2}
   in Region.{value; region}
 
-let mk_set region = `Set region
-let mk_list region = `List region
-let mk_map region = `Map region
+let mk_set     region = `Set    region
+let mk_list    region = `List   region
+let mk_map     region = `Map    region
 let mk_big_map region = `BigMap region
-let mk_record region = `Record region
+let mk_record  region = `Record region
+
+let mk_wild region = {value="_"; region}
 
 let mk_mod_path :
-  (module_name, dot) Utils.nseq * 'a ->
+  (module_name * dot) Utils.nseq * 'a ->
   ('a -> Region.t) ->
   'a CST.module_path Region.reg =
   fun (nseq, field) to_region ->
@@ -47,8 +49,9 @@ let mk_mod_path :
         trans ((prev_sep, item) :: seq, next_sep) others in
     let list, last_dot = trans ([], sep) tail in
     let module_path = first, List.rev list in
-    let region = nsepseq_to_region to_region nsepseq
-    and value = {module_path; selector=last_dot; field}
+    let region = CST.nseq_to_region (fun (x,_) -> x.region) nseq in
+    let region = Region.cover region (to_region field)
+    and value  = {module_path; selector=last_dot; field}
     in {value; region}
 
 (* END HEADER *)
@@ -62,6 +65,7 @@ let mk_mod_path :
 %type <CST.t> contract
 %type <CST.expr> interactive_expr
 
+%on_error_reduce selected_expr
 %on_error_reduce nsepseq(module_name,DOT)
 %on_error_reduce ctor_expr
 %on_error_reduce nseq(__anonymous_0(field_decl,SEMI))
@@ -211,11 +215,12 @@ declarations:
   nseq(declaration) { $1 }
 
 declaration:
-  type_decl         { D_Type     $1 }
-| const_decl        { D_Const    $1 }
-| fun_decl          { D_Fun      $1 }
-| module_decl       { D_Module   $1 }
-| module_alias      { D_ModAlias $1 }
+  type_decl     { D_Type      $1 }
+| const_decl    { D_Const     $1 }
+| fun_decl      { D_Fun       $1 }
+| module_decl   { D_Module    $1 }
+| module_alias  { D_ModAlias  $1 }
+| "<directive>" { D_Directive $1 }
 
 open_declaration:
   open_type_decl    { D_Type     $1 }
@@ -229,7 +234,7 @@ open_declaration:
 open_module_decl:
   "module" module_name "is" "block"? "{" declarations "}" {
     let enclosing = Braces ($4,$5,$7) in
-    let region    = cover $1 $6
+    let region    = cover $1 $7
     and value     = {kwd_module=$1; name=$2; kwd_is=$3; enclosing;
                      declarations=$6; terminator=None}
     in {region; value}
@@ -269,7 +274,7 @@ open_type_decl:
 
 type_decl:
   open_type_decl ";"? {
-    {$1 with value = {$1.value with terminator=$2}} : type_decl reg }
+    {$1 with value = {$1.value with terminator=$2}} : type_decl Region.reg }
 
 type_annot:
   ":" type_expr { $1,$2 }
@@ -447,12 +452,10 @@ parameters:
 param_decl:
   "var" variable param_type? {
     let stop   = match $3 with
-                   None -> $2.region
+                         None -> $2.region
                  | Some (_,t) -> type_expr_to_region t in
     let region = cover $1 stop
-    and value  = {kwd_var    = $1;
-                  var        = $2;
-                  param_type = $3}
+    and value  = {kwd_var=$1; var=$2; param_type=$3}
     in ParamVar {region; value}
   }
 | "var" "_" param_type? {
@@ -460,27 +463,27 @@ param_decl:
                    None -> $2
                  | Some (_,t) -> type_expr_to_region t in
     let region = cover $1 stop
-    and value  = {kwd_var    =                                $1;
-                  var        =      { value = "_"; region = $2 };
-                  param_type =                                $3}
-    in ParamVar {region; value} }
+    and value  = {kwd_var    = $1;
+                  var        = mk_wild $2;
+                  param_type = $3}
+    in ParamVar {region; value}
+  }
 | "const" variable param_type? {
     let stop   = match $3 with
-                   None -> $2.region
+                         None -> $2.region
+                 | Some (_,t) -> type_expr_to_region t in
+    let region = cover $1 stop
+    and value  = {kwd_const=$1; var=$2; param_type=$3}
+    in ParamConst {region; value}
+  }
+| "const" "_" param_type? {
+    let stop   = match $3 with
+                         None -> $2
                  | Some (_,t) -> type_expr_to_region t in
     let region = cover $1 stop
     and value  = {kwd_const  = $1;
-                  var        = $2;
+                  var        = mk_wild $2;
                   param_type = $3}
-    in ParamConst {region; value} }
-| "const" "_" param_type? {
-    let stop   = match $3 with
-                   None -> $2
-                 | Some (_,t) -> type_expr_to_region t in
-    let region = cover $1 stop
-    and value  = {kwd_const  =                                $1;
-                  var        =      { value = "_"; region = $2 };
-                  param_type =                                $3}
     in ParamConst {region; value} }
 
 param_type:
@@ -499,7 +502,8 @@ block:
      and enclosing : block_enclosing = Braces (Some $1, $2, $4) in
      let region    = cover $1 $4
      and value     = {enclosing; statements; terminator}
-     in {region; value} }
+     in {region; value}
+  }
 | "{" sep_or_term_list(statement,";") "}" {
      let statements, terminator = $2
      and enclosing : block_enclosing = Braces (None,$1,$3) in
@@ -589,7 +593,7 @@ injection(Kind,element):
       and elements, terminator =
         match $2 with
           Some (elts, term) -> Some elts, term
-        | None -> None, None in
+        |              None -> None, None in
       let region = cover $1 $3
       and value  = {kind; enclosing; elements; terminator}
       in {region; value}
@@ -600,7 +604,7 @@ injection(Kind,element):
       and elements, terminator =
         match $3 with
           Some (elts, term) -> Some elts, term
-        | None -> None, None in
+        |              None -> None, None in
       let region = cover $1 $4
       and value  = {kind; enclosing; elements; terminator}
       in {region; value} }
@@ -837,32 +841,32 @@ unary_expr:
 | core_expr       { $1 }
 
 core_expr:
-  "<int>"                      { E_Int       $1 }
-| "<nat>"                      { E_Nat       $1 }
-| "<mutez>"                    { E_Mutez     $1 }
-| "<ident>"                    { E_Var       $1 }
-| "<string>"                   { E_String    $1 }
-| "<verbatim>"                 { E_Verbatim  $1 }
-| "<bytes>"                    { E_Bytes     $1 }
-| "False"                      { E_False     $1 }
-| "True"                       { E_True      $1 }
-| "Unit"                       { E_Unit      $1 }
-| "nil"                        { E_Nil       $1 }
-| "None"                       { E_None      $1 }
-| par(annot_expr)              { E_Annot     $1 }
-| tuple_expr                   { E_Tuple     $1 }
-| list_expr                    { E_List      $1 }
-| value_in_module              { E_ModPath   $1 }
-| map_lookup                   { E_MapLookUp $1 }
-| record_expr                  { E_Record    $1 }
-| record_update                { E_Update    $1 }
-| code_inj                     { E_CodeInj   $1 }
-| some_expr                    { E_Some      $1 }
-| ctor_expr                    { E_Ctor      $1 }
-| map_expr                     { E_Map       $1 }
-| big_map_expr                 { E_BigMap    $1 }
-| set_expr                     { E_Set       $1 }
-| call_or_par_or_proj          {             $1 }
+  "<int>"             { E_Int       $1 }
+| "<nat>"             { E_Nat       $1 }
+| "<mutez>"           { E_Mutez     $1 }
+| "<ident>"           { E_Var       $1 }
+| "<string>"          { E_String    $1 }
+| "<verbatim>"        { E_Verbatim  $1 }
+| "<bytes>"           { E_Bytes     $1 }
+| "False"             { E_False     $1 }
+| "True"              { E_True      $1 }
+| "Unit"              { E_Unit      $1 }
+| "nil"               { E_Nil       $1 }
+| "None"              { E_None      $1 }
+| par(annot_expr)     { E_Annot     $1 }
+| tuple_expr          { E_Tuple     $1 }
+| list_expr           { E_List      $1 }
+| value_in_module     { E_ModPath   $1 }
+| map_lookup          { E_MapLookUp $1 }
+| record_expr         { E_Record    $1 }
+| record_update       { E_Update    $1 }
+| code_inj            { E_CodeInj   $1 }
+| some_expr           { E_Some      $1 }
+| ctor_expr           { E_Ctor      $1 }
+| map_expr            { E_Map       $1 }
+| big_map_expr        { E_BigMap    $1 }
+| set_expr            { E_Set       $1 }
+| call_or_par_or_proj {             $1 }
 
 map_expr:
   injection("map",binding) { $1 mk_map }
@@ -898,7 +902,7 @@ call_or_par_or_proj:
       None -> parens
     | Some args ->
         let region = cover $1.region args.region
-        in E_Call {region; value = parens, args}
+        in E_Call {region; value = (parens, args)}
   }
 | projection arguments? {
     let project = E_Proj $1 in
@@ -906,7 +910,7 @@ call_or_par_or_proj:
       None -> project
     | Some args ->
         let region = cover $1.region args.region
-        in E_Call {region; value = project, args}
+        in E_Call {region; value = (project, args)}
   }
 | fun_call { E_Call $1 }
 
@@ -999,27 +1003,27 @@ pattern:
 | core_pattern { $1 }
 
 core_pattern:
-  "_"           { P_Var { value = "_"; region = $1 } }
-| "<int>"       { P_Int    $1 }
-| "<nat>"       { P_Nat    $1 }
-| "<bytes>"     { P_Bytes  $1 }
-| "<string>"    { P_String $1 }
-| "Unit"        { P_Unit   $1 }
-| "False"       { P_False  $1 }
-| "True"        { P_True   $1 }
-| "None"        { P_None   $1 }
-| "nil"         { P_Nil    $1 }
-| variable      { P_Var    $1 }
-| some_pattern  { P_Some   $1 }
-| list_pattern  { P_List   $1 }
-| ctor_pattern  { P_Ctor   $1 }
-| tuple_pattern { P_Tuple  $1 }
-| par(pattern)  { P_Par    $1 }
+  "_"           { P_Var (mk_wild $1) }
+| "<int>"       { P_Int           $1 }
+| "<nat>"       { P_Nat           $1 }
+| "<bytes>"     { P_Bytes         $1 }
+| "<string>"    { P_String        $1 }
+| "Unit"        { P_Unit          $1 }
+| "False"       { P_False         $1 }
+| "True"        { P_True          $1 }
+| "None"        { P_None          $1 }
+| "nil"         { P_Nil           $1 }
+| variable      { P_Var           $1 }
+| some_pattern  { P_Some          $1 }
+| list_pattern  { P_List          $1 }
+| ctor_pattern  { P_Ctor          $1 }
+| tuple_pattern { P_Tuple         $1 }
+| par(pattern)  { P_Par           $1 }
 
 some_pattern:
   "Some" par(core_pattern) {
     let region = cover $1 $2.region
-    in {region; value = $1,$2} }
+    in {region; value=($1,$2)} }
 
 list_pattern:
   injection("list",core_pattern) { $1 mk_list }
