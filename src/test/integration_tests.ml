@@ -856,6 +856,41 @@ let set_arithmetic_jsligo () : (unit, _) result =
   in
   ok ()
 
+let set_arithmetic_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/set_arithmetic.jsligo" in
+  let%bind program_1 = ptype_file "./contracts/set_arithmetic-1.ligo" in
+  let%bind () =
+    expect_eq program "literal_op"
+      (e_unit ())
+      (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
+  in
+  let%bind () =
+    expect_eq program "size_op"
+      (e_set [e_string "foo"; e_string "bar"; e_string "foobar"])
+      (e_nat 3) in
+  let%bind () =
+    expect_eq program "add_op"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"]) in
+  let%bind () =
+    expect_eq program "add_op"
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"]) in
+  let%bind () =
+    expect_eq program "remove_op"
+      (e_set [e_string "foo" ; e_string "bar"])
+      (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
+    expect_eq program "remove_op"
+      (e_set [e_string "foo" ; e_string "bar" ; e_string "foobar"])
+      (e_set [e_string "foo" ; e_string "bar"]) in
+  let%bind () =
+    expect_eq program_1 "fold_op"
+      (e_set [ e_int 4 ; e_int 10 ])
+      (e_int 29)
+  in
+  ok ()
+
 let unit_expression () : (unit, _) result =
   let%bind program = ptype_file "./contracts/unit.ligo" in
   expect_eq_evaluate program "u" (e_unit ())
@@ -1931,6 +1966,97 @@ let loop2_jsligo () : (unit, _) result =
 
 let matching () : (unit, _) result =
   let%bind program = ptype_file "./contracts/match.ligo" in
+  let%bind () =
+    let make_input = e_int in
+    let make_expected = fun n -> e_int (if n = 2 then 42 else 0) in
+    expect_eq_n program "match_bool" make_input make_expected
+  in
+  let%bind () =
+    let input = e_int 0 in
+    let expected = e_int 100 in
+    expect_eq program "counter_simple" input expected
+  in
+  let%bind () =
+    let input = e_int 100 in
+    let expected = e_int 5050 in
+    expect_eq program "counter" input expected
+  in
+  let%bind () =
+    let input = e_int 100 in
+    let expected = e_int 10000 in
+    expect_eq program "counter_nest" input expected
+  in ok ()
+
+let loop2_jsligo () : (unit, _) result =
+  let%bind program = jstype_file "./contracts/loop2.jsligo" in
+  (* let%bind () =
+    let make_input = e_nat in
+    let make_expected = e_nat in
+    expect_eq_n_pos program "dummy" make_input make_expected in *)
+  let%bind () =
+    let make_input = e_nat in
+    let make_expected = e_nat in
+    expect_eq_n_pos_mid program "counter" make_input make_expected in
+  (* let%bind () =
+    let make_input = e_nat in
+    let make_expected = fun n -> e_nat (n * (n + 1) / 2) in
+    expect_eq_n_pos_mid program "while_sum" make_input make_expected in
+  let%bind () =
+    let make_input = e_nat in
+    let make_expected = fun n -> e_int (n * (n + 1) / 2) in
+    expect_eq_n_pos_mid program "for_sum" make_input make_expected in
+  let%bind () =
+    let make_input = e_nat in
+    let make_expected = fun n -> e_int (n * n) in
+    expect_eq_n_pos_mid program "for_sum_step" make_input make_expected in
+  let input = e_unit () in
+  let%bind () =
+    let expected = e_pair (e_int 3) (e_string "totototo") in
+    expect_eq program "for_collection_list" input expected in
+  let%bind () =
+    let expected = e_pair (e_int 6) (e_string "totototo") in
+    expect_eq program "for_collection_set" input expected in
+  let%bind () =
+    let expected = e_pair (e_int 6) (e_string "123") in
+    expect_eq program "for_collection_map_kv" input expected in
+  let%bind () =
+    let expected = (e_int 0) in
+    expect_eq program "for_collection_empty" input expected in
+  let%bind () =
+    let expected = (e_int 13) in
+    expect_eq program "for_collection_if_and_local_var" input expected in
+  let%bind () =
+    let expected = (e_int 1020) in
+    expect_eq program "for_collection_rhs_capture" input expected in
+  let%bind () =
+    let expected = (e_int 1040) in
+    expect_eq program "for_collection_proc_call" input expected in
+  let%bind () =
+    let expected = (e_int 20) in
+    expect_eq program "for_collection_comp_with_acc" input expected in
+  let%bind () =
+    let expected = e_pair (e_int 24)
+      (e_string "1 one,two 2 one,two 3 one,two 1 one,two 2 one,two 3 one,two 1 one,two 2 one,two 3 one,two ") in
+    expect_eq program "nested_for_collection" input expected in
+  let%bind () =
+    let expected = e_pair (e_int 24)
+      (e_string "123123123") in
+    expect_eq program "nested_for_collection_local_var" input expected in
+  let%bind () =
+    let expected = e_pair (e_bool true) (e_int 4) in
+    expect_eq program "inner_capture_in_conditional_block"  input expected in
+  let%bind () =
+    let ez lst =
+      let lst' = List.map (fun (x, y) -> e_string x, e_int y) lst in
+        e_typed_map lst' (t_string ()) (t_int ())
+    in
+    let expected = ez [ ("I" , 12) ; ("am" , 12) ; ("foo" , 12) ] in
+    expect_eq program "for_collection_with_patches" input expected in *)
+  ok ()
+  
+
+let matching () : (unit, _) result =
+  let%bind program = type_file "./contracts/match.ligo" in
   let%bind () =
     let make_input = e_int in
     let make_expected = fun n -> e_int (if n = 2 then 42 else 0) in
