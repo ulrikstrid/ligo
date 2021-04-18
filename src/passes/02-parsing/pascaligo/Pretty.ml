@@ -242,9 +242,9 @@ and print_T_ModPath (node : type_name module_path reg) =
 and print_module_path :
   'a.('a -> document) -> 'a module_path reg -> document =
   fun print {value; _} ->
-  let {module_path; field; _} = value in
-  let path = print_nsepseq "." print_ident module_path
-  in group (path ^^ string "." ^^ break 0 ^^ print field)
+    let {module_path; field; _} = value in
+    let path = print_nsepseq "." print_ident module_path
+    in group (path ^^ string "." ^^ break 0 ^^ print field)
 
 (* Parenthesised type expressions *)
 
@@ -278,9 +278,8 @@ and print_ne_injection :
     let inj      = group (string (kwd ^ " [")
                           ^^ group (nest 2 (break 0 ^^ elements ))
                           ^^ break 0 ^^ string "]") in
-    let inj      = if attributes = [] then inj
-                   else group (print_attributes attributes ^/^ inj)
-    in inj
+    if attributes = [] then inj
+    else group (print_attributes attributes ^/^ inj)
 
 and print_ne_injection_kwd = function
   `Set    _ -> "set"
@@ -941,8 +940,7 @@ and print_E_Mod node = print_op2 "mod" node
 
 (* Module path as an expression *)
 
-and print_E_ModPath (node : expr module_path reg) =
-  print_module_path print_expr node
+and print_E_ModPath node = print_module_path print_expr node
 
 (* Arithmetic multiplication *)
 
@@ -1000,8 +998,7 @@ and print_E_Record (node : record reg) = print_record node
 (* Set expression defined intensionally (that is, by listing all the
    elements) *)
 
-and print_E_Set (node : expr injection reg) =
-  print_injection print_expr node
+and print_E_Set node = print_injection print_expr node
 
 (* Set membership *)
 
