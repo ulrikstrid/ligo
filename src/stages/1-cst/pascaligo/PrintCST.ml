@@ -45,12 +45,6 @@ type ('a, 'sep) nsepseq = ('a, 'sep) Utils.nsepseq
    for instance:
 
    [mk_child (swap print_then print) value.ifso]
-
-   Note that this is not always possible in mutually recursive
-   definitions when calling a function with a polymorphic type, for
-   example we CANNOT write:
-
-   [and print_P_Int = swap print_int "P_Int"]
  *)
 
 let swap = Utils.swap
@@ -201,8 +195,8 @@ let print_unary state label ?region print_sub node =
    [print_T_String], [print_E_Nat], [print_P_Int] etc.
 
    Note that, contrary to the following utility functions,
-   higher-order printers, like [print_call], [print_case],
-   [print_conditional] etc. are defined when they are first needed.*)
+   higher-order printers, like [print_case], [print_conditional]
+   etc. are defined when they are first needed.*)
 
 (* Strings *)
 
@@ -234,7 +228,7 @@ let print_bytes state label {value=(lexeme, hex); region} =
 
 (* Catch-all variables *)
 
-let print_wild = swap print_long' "_"
+let print_wild state = print_long' state "_"
 
 
 (* PRINTING THE CST *)
@@ -413,7 +407,7 @@ and print_T_Fun state (node : (type_expr * arrow * type_expr) reg) =
 
 (* The integer type *)
 
-and print_T_Int = swap print_int "T_Int"
+and print_T_Int state = print_int state "T_Int"
 
 (* Module paths *)
 
@@ -774,7 +768,7 @@ and print_field_assignment state (node : field_assignment reg) =
 
 (* Skipping (non-operation) *)
 
-and print_I_Skip = swap print_long' "I_Skip"
+and print_I_Skip state = print_long' state "I_Skip"
 
 (* Patching sets *)
 
@@ -869,7 +863,7 @@ and print_pattern state = function
 
 (* Bytes as literals in patterns *)
 
-and print_P_Bytes = swap print_bytes "P_Bytes"
+and print_P_Bytes state = print_bytes state "P_Bytes"
 
 (* A series of cons operators in patterns *)
 
@@ -899,7 +893,7 @@ and print_ctor_args :
 
 (* The Boolean untruth as a pattern *)
 
-and print_P_False = swap print_long' "P_False"
+and print_P_False state = print_long' state "P_False"
 
 (* Integers in patterns *)
 
@@ -920,11 +914,11 @@ and print_P_Nat state = print_int state "P_Nat"
 
 (* The pattern for the empty list *)
 
-and print_P_Nil = swap print_long' "P_Nil"
+and print_P_Nil state = print_long' state "P_Nil"
 
 (* The pattern for the predefined constructor [None] *)
 
-and print_P_None = swap print_long' "P_None"
+and print_P_None state = print_long' state "P_None"
 
 (* Parenthesised patterns *)
 
@@ -944,7 +938,7 @@ and print_P_String state = print_unary state "P_String" print_string
 
 (* The Boolean for truth in patterns *)
 
-and print_P_True = swap print_long' "P_True"
+and print_P_True state = print_long' state "P_True"
 
 (* The pattern matching a tuple *)
 
@@ -957,7 +951,7 @@ and print_P_Tuple state (node : (pattern, comma) nsepseq par reg) =
 
 (* The pattern matching the unique value of the type "unit". *)
 
-and print_P_Unit = swap print_long' "P_Unit"
+and print_P_Unit state = print_long' state "P_Unit"
 
 (* A pattern variable *)
 
@@ -996,7 +990,7 @@ and print_expr state = function
 | E_List      e -> print_E_List      state e
 | E_Lt        e -> print_E_Lt        state e
 | E_Map       e -> print_E_Map       state e
-| E_MapLookUp e -> print_E_MapLookUp state e
+| E_MapLookup e -> print_E_MapLookup state e
 | E_Mod       e -> print_E_Mod       state e
 | E_ModPath   e -> print_E_ModPath   state e
 | E_Mult      e -> print_E_Mult      state e
@@ -1067,7 +1061,7 @@ and print_E_Block state (node : block_with reg) =
 
 (* Bytes as expressions *)
 
-and print_E_Bytes = swap print_bytes "E_Bytes"
+and print_E_Bytes state = print_bytes state "E_Bytes"
 
 (* Function calls *)
 
@@ -1123,7 +1117,7 @@ and print_E_Div state = print_op2 state "E_Div"
 
 (* The Boolean untruth *)
 
-and print_E_False = swap print_long' "E_False"
+and print_E_False state = print_long' state "E_False"
 
 (* Functional expressions *)
 
@@ -1176,7 +1170,7 @@ and print_E_Map state (node : binding reg injection reg) =
 
 (* Map lookup as an expression (denoting the key or a failure) *)
 
-and print_E_MapLookUp state = print_map_lookup state "E_MapLookUp"
+and print_E_MapLookup state = print_map_lookup state "E_MapLookup"
 
 (* Euclidean reminder ("modulo") *)
 
@@ -1213,7 +1207,7 @@ and print_op1 state label {value; region} =
 
 (* The empty list as a value *)
 
-and print_E_Nil = swap print_long' "E_Nil"
+and print_E_Nil state = print_long' state "E_Nil"
 
 (* Not Equal *)
 
@@ -1221,7 +1215,7 @@ and print_E_Neq state = print_op2 state "E_Neq"
 
 (* The predefined constant constructor [None] as an expression *)
 
-and print_E_None = swap print_long' "E_None"
+and print_E_None state = print_long' state "E_None"
 
 (* Boolean negation *)
 
@@ -1299,7 +1293,7 @@ and print_E_Sub state = print_op2 state "E_Sub"
 
 (* Boolean truth as an expression *)
 
-and print_E_True = swap print_long' "E_True"
+and print_E_True state = print_long' state "E_True"
 
 (* Tuples of expressions *)
 
@@ -1312,7 +1306,7 @@ and print_E_Tuple state (node : (expr, comma) nsepseq par reg) =
 
 (* The unique value of the type "unit" *)
 
-and print_E_Unit = swap print_long' "E_Unit"
+and print_E_Unit state = print_long' state "E_Unit"
 
 (* Functional updates of record expressions *)
 

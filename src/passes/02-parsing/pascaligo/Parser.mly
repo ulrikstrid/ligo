@@ -857,7 +857,7 @@ core_expr:
 | tuple_expr          { E_Tuple     $1 }
 | list_expr           { E_List      $1 }
 | value_in_module     { E_ModPath   $1 }
-| map_lookup          { E_MapLookUp $1 }
+| map_lookup          { E_MapLookup $1 }
 | record_expr         { E_Record    $1 }
 | record_update       { E_Update    $1 }
 | code_inj            { E_CodeInj   $1 }

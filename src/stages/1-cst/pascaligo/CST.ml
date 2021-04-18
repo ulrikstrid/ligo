@@ -536,7 +536,7 @@ and expr =
 | E_List      of expr injection reg
 | E_Lt        of lt bin_op reg                 (* "<"   *)
 | E_Map       of binding reg injection reg
-| E_MapLookUp of map_lookup reg
+| E_MapLookup of map_lookup reg
 | E_Mod       of kwd_mod bin_op reg            (* "mod" *)
 | E_ModPath   of expr module_path reg
 | E_Mult      of times bin_op reg              (* "*"   *)
@@ -715,7 +715,7 @@ let expr_to_region = function
 | E_List      {region; _}
 | E_Lt        {region; _}
 | E_Map       {region; _}
-| E_MapLookUp {region; _}
+| E_MapLookup {region; _}
 | E_Mod       {region; _}
 | E_ModPath   {region; _}
 | E_Mult      {region; _}

@@ -125,8 +125,8 @@ let strip : 'a.(state -> 'a -> unit) -> state -> 'a reg -> unit =
    [print_T_String], [print_E_Nat], [print_P_Int] etc.
 
    Note that, contrary to the following utility functions,
-   higher-order printers, like [print_call], [print_case],
-   [print_conditional] etc. are defined when they are first needed.*)
+   higher-order printers, like [print_case], [print_conditional]
+   etc. are defined when they are first needed.*)
 
 (* Keywords and symbols *)
 
@@ -684,6 +684,12 @@ and print_I_MapPatch state (node : map_patch reg) =
   print_token        state "With" node.kwd_with;
   print_ne_injection state print_binding node.map_inj
 
+and print_binding state (node : binding reg) =
+  let node = node.value in
+  print_expr  state node.source;
+  print_token state "ARROW" node.arrow;
+  print_expr  state node.image
+
 (* Removal of entries in a map *)
 
 and print_I_MapRemove state (node : map_remove reg) =
@@ -901,7 +907,7 @@ and print_expr state = function
 | E_List      e -> print_E_List      state e
 | E_Lt        e -> print_E_Lt        state e
 | E_Map       e -> print_E_Map       state e
-| E_MapLookUp e -> print_E_MapLookup state e
+| E_MapLookup e -> print_E_MapLookup state e
 | E_Mod       e -> print_E_Mod       state e
 | E_ModPath   e -> print_E_ModPath   state e
 | E_Mult      e -> print_E_Mult      state e
@@ -953,12 +959,6 @@ and print_annot_expr state (expr, type_annot) =
 (* Big maps defined intensionally *)
 
 and print_E_BigMap state = print_injection state print_binding
-
-and print_binding state (node : binding reg) =
-  let node = node.value in
-  print_expr  state node.source;
-  print_token state "ARROW" node.arrow;
-  print_expr  state node.image
 
 (* Block expressions *)
 
