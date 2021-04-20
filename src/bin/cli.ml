@@ -345,14 +345,26 @@ let print_ast_sugar =
   in (Term.ret term, Term.info ~man ~doc cmdname)
 
 let print_ast_core =
-  let f source_file syntax display_format =
-    return_result ~display_format (Ast_core.Formatter.module_format) @@
-      let options = Compiler_options.make () in
-      let%bind meta     = Compile.Of_source.extract_meta syntax source_file in
-      let%bind c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
-      Compile.Utils.to_core ~options ~meta c_unit source_file
+  let f source_file syntax infer protocol_version display_format =
+    if infer then
+      (* Do the same thing as for print_ast_typed, but only infer the main module
+         (it still needs to infer+typecheck the dependencies) *)
+      return_result ~display_format (Ast_core.Formatter.module_format) @@
+        let%bind options =
+          let%bind init_env = Helpers.get_initial_env protocol_version in
+          ok @@ Compiler_options.make ~infer ~init_env ()
+        in
+        let%bind _,inferred_core,_,_ = Build.infer_contract ~options syntax Env source_file in
+        ok @@ inferred_core
+    else
+      (* Print the ast as-is without inferring and typechecking dependencies *)
+      return_result ~display_format (Ast_core.Formatter.module_format) @@
+        let options = Compiler_options.make ~infer () in
+        let%bind meta     = Compile.Of_source.extract_meta syntax source_file in
+        let%bind c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
+        Compile.Utils.to_core ~options ~meta c_unit source_file
   in
-  let term = Term.(const f $ source_file 0  $ syntax $ display_format) in
+  let term = Term.(const f $ source_file 0  $ syntax $ infer $ protocol_version $ display_format) in
   let cmdname = "print-ast-core" in
   let doc = "Subcommand: Print the AST.\n Warning: Intended for development of LIGO and can break at any time." in
   let man = [`S Manpage.s_description;
@@ -441,8 +453,7 @@ let measure_contract =
   let doc = "Subcommand: Measure a contract's compiled size in bytes." in
   let man = [`S Manpage.s_description;
              `P "This sub-command compiles a source file and measures \
-                 the contract's compiled size in bytes. It does not \
-                 use the build system."]
+                 the contract's compiled size in bytes."]
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let compile_parameter =
@@ -499,9 +510,9 @@ let interpret =
   let doc = "Subcommand: Interpret the expression in the context initialized by the provided source file." in
   let man = [`S Manpage.s_description;
              `P "This sub-command interprets a LIGO expression. The \
-                 context can be initialized by providing a source file \
-                 (which is compiled not using the build system). The \
-                 interpretation is done using Michelson's interpreter."]
+                 context can be initialized by providing a source \
+                 file. The interpretation is done using Michelson's \
+                 interpreter."]
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let compile_storage =
@@ -768,6 +779,9 @@ let test =
                  under development, there are features that are work \
                  in progress and are subject to change. No real test \
                  procedure should rely on this sub-command alone.";
+             (* 
+             TODO: correct text below
+             
              `S "EXTRA PRIMITIVES FOR TESTING";
              `P "Test.originate c st : binds contract c with the \
                  address addr which is returned, st as the initial \
@@ -784,7 +798,7 @@ let test =
                  address addr.";
              `P "Test.assert_failure (f : unit -> _) : returns true if \
                  f () fails.";
-             `P "Test.log x : prints x into the console."
+             `P "Test.log x : prints x into the console." *)
             ]
   in (Term.ret term , Term.info ~man ~doc cmdname)
 

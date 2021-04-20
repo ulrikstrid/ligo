@@ -14,6 +14,20 @@ module Utils  = Simple_utils.Utils
 open! Region
 open! PPrint
 
+(*
+and print_dir_decl = function
+  Directive.Linemarker {value; _} ->
+    let open Directive in
+    let linenum, file_path, flag_opt = value in
+    let flag =
+      match flag_opt with
+        Some Push -> " 1"
+      | Some Pop  -> " 2"
+      | None      -> "" in
+    let lexeme = Printf.sprintf "# %d %S%s" linenum file_path flag
+    in string lexeme
+*)
+
 
 (* UTILITY PRINTERS *)
 
@@ -88,8 +102,8 @@ and print_declaration = function
 (* Constant declarations *)
 
 and print_D_Const (node : const_decl reg) =
-  let {name; const_type; init; attributes; _} = node.value in
-  let start = string ("const " ^ name.value) in
+  let {pattern; const_type; init; attributes; _} = node.value in
+  let start = string "const " ^^ print_pattern pattern in
   let start = if attributes = [] then start
               else print_attributes attributes ^/^ start in
   let start =
@@ -356,8 +370,8 @@ and print_S_Instr node = print_instruction node
 and print_S_Decl node = print_declaration node
 
 and print_S_VarDecl {value; _} =
-  let {name; var_type; init; _} = value in
-  let start = string ("var " ^ name.value) in
+  let {pattern; var_type; init; _} = value in
+  let start = string "var " ^^ print_pattern pattern in
   let start =
     match var_type with
       None -> start
@@ -621,6 +635,7 @@ and print_pattern = function
 | P_Nil    p -> print_P_Nil    p
 | P_None   p -> print_P_None   p
 | P_Par    p -> print_P_Par    p
+| P_Record p -> print_P_Record p
 | P_Some   p -> print_P_Some   p
 | P_String p -> print_P_String p
 | P_True   p -> print_P_True   p
@@ -704,6 +719,19 @@ and print_P_None _ = string "None"
 
 and print_P_Par (node : pattern par reg) =
   print_par print_pattern node
+
+(* Record patterns *)
+
+and print_P_Record (node : field_pattern reg ne_injection reg) =
+  group (print_ne_injection print_field_pattern node)
+
+and print_field_pattern (node : field_pattern reg) =
+  match node.value with
+    Punned field_name ->
+      print_ident field_name
+  | Complete {field_name; field_pattern; _} ->
+      prefix 2 1 (print_ident   field_name ^^ string " =")
+                 (print_pattern field_pattern)
 
 (* The pattern for the application of the predefined constructor
    [Some] *)

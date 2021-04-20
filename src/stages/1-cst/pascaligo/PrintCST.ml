@@ -259,7 +259,7 @@ and print_declaration state = function
 and print_D_Const state (node : const_decl reg) =
   let node = node.value in
   let children = [
-    mk_child      print_long       node.name;
+    mk_child      print_pattern    node.pattern;
     mk_child_opt  print_type_annot node.const_type;
     mk_child      print_expr       node.init;
     mk_child_list print_attributes node.attributes]
@@ -516,7 +516,7 @@ and print_S_VarDecl state =
 and print_var_decl state (node : var_decl reg) =
   let node = node.value in
   let children = [
-    mk_child     print_long       node.name;
+    mk_child     print_pattern    node.pattern;
     mk_child_opt print_type_annot node.var_type;
     mk_child     print_expr       node.init]
   in print_tree state "D_VarDecl" children
@@ -854,6 +854,7 @@ and print_pattern state = function
 | P_Nil     p -> print_P_Nil     state p
 | P_None    p -> print_P_None    state p
 | P_Par     p -> print_P_Par     state p
+| P_Record  p -> print_P_Record  state p
 | P_Some    p -> print_P_Some    state p
 | P_String  p -> print_P_String  state p
 | P_True    p -> print_P_True    state p
@@ -924,6 +925,26 @@ and print_P_None state = print_long' state "P_None"
 
 and print_P_Par state (node : pattern par reg) =
   print_unary state "P_Par" print_pattern node.value.inside
+
+(* Record patterns *)
+
+and print_P_Record state (node : field_pattern reg ne_injection reg) =
+  let {value; region} = node in
+  let children =
+     List.map (mk_child print_field_pattern)
+  @@ Utils.nsepseq_to_list value.ne_elements
+  in print_tree state "P_Record" ~region children
+
+and print_field_pattern state (node : field_pattern reg) =
+  let field_name, field_pattern =
+    match node.value with
+      Punned field_name -> field_name, None
+    | Complete {field_name; field_pattern; _} ->
+         field_name, Some field_pattern in
+  let children = [
+    mk_child     print_long    field_name;
+    mk_child_opt print_pattern field_pattern]
+  in print_tree state "<field pattern>" children
 
 (* The pattern for the application of the predefined constructor
    [Some] *)

@@ -272,9 +272,11 @@ module T =
         (* Preprocessing directives *)
 
       Directive d ->
-        Directive.project d
+        let Region.{region; value} = Directive.project d
+        in region, value
 
-      (* comments *)
+      (* Comments *)
+
     | LineCom Region.{region; value} -> region, sprintf "Line comment %S" value
     | BlockCom Region.{region; value} -> region, sprintf "Block comment %S" value
 
@@ -400,8 +402,8 @@ module T =
       Directive d -> Directive.to_lexeme d
 
       (* Comments *)
-    | LineCom c -> sprintf "// %s" c.value
-    | BlockCom c -> sprintf "/* %s */" c.value
+    | LineCom c -> sprintf "// %s" c.Region.value
+    | BlockCom c -> sprintf "/* %s */" c.Region.value
 
       (* Literals *)
 
@@ -603,8 +605,9 @@ let small   = ['a'-'z']
 let capital = ['A'-'Z']
 let letter  = small | capital
 let digit   = ['0'-'9']
-let ident   = small (letter | '_' | digit)*
-let constr  = capital (letter | '_' | digit)*
+let ident   = small (letter | '_' | digit)* |
+              '_' (letter | '_' (letter | digit) | digit)+
+let uident  = capital (letter | '_' | digit)*
 
 (* Rules *)
 
@@ -616,8 +619,8 @@ rule scan_ident region lexicon = parse
                Some mk_kwd -> mk_kwd region
              |        None -> Ident Region.{region; value}) }
 
-and scan_constr region lexicon = parse
-  (constr as value) eof {
+and scan_uident region lexicon = parse
+  (uident as value) eof {
     match SMap.find_opt value lexicon.cstr with
       Some mk_cstr -> mk_cstr region
     |         None -> Uident Region.{region; value} }
@@ -677,7 +680,7 @@ and scan_constr region lexicon = parse
 
   let eof region = EOF region
 
-  type sym_err = Invalid_symbol
+  type sym_err = Invalid_symbol of string
 
   let mk_sym lexeme region =
     match lexeme with
@@ -743,7 +746,7 @@ and scan_constr region lexicon = parse
 
       (* Invalid symbols *)
 
-    | _ ->  Error Invalid_symbol
+    | s ->  Error (Invalid_symbol s)
 
 
     (* Identifiers *)
@@ -753,8 +756,8 @@ and scan_constr region lexicon = parse
 
     (* Constructors *)
 
-    let mk_constr lexeme region =
-      Lexing.from_string lexeme |> scan_constr region lexicon
+    let mk_uident lexeme region =
+      Lexing.from_string lexeme |> scan_uident region lexicon
 
     (* Attributes *)
 

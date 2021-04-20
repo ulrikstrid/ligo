@@ -157,7 +157,7 @@ and declaration =
 
 and const_decl = {
   kwd_const  : kwd_const;
-  name       : variable;
+  pattern    : pattern;
   const_type : type_annot option;
   equal      : equal;
   init       : expr;
@@ -313,7 +313,7 @@ and statements = (statement, semi) nsepseq
 
 and var_decl = {
   kwd_var    : kwd_var;
-  name       : variable;
+  pattern    : pattern;
   var_type   : type_annot option;
   assign     : assign;
   init       : expr;
@@ -497,6 +497,7 @@ and pattern =
 | P_Nil    of kwd_nil
 | P_None   of kwd_None
 | P_Par    of pattern par reg
+| P_Record of field_pattern reg ne_injection reg
 | P_Some   of (kwd_Some * pattern par reg) reg
 | P_String of lexeme reg
 | P_True   of kwd_True
@@ -505,6 +506,16 @@ and pattern =
 | P_Var    of lexeme reg
 
 and tuple_pattern = (pattern, comma) nsepseq par reg
+
+and field_pattern =
+  Punned   of field_name
+| Complete of full_field_pattern
+
+and full_field_pattern = {
+  field_name    : field_name;
+  assignment    : equal;
+  field_pattern : pattern
+}
 
 (* EXPRESSIONS *)
 
@@ -792,6 +803,7 @@ let pattern_to_region = function
 | P_Nil      region
 | P_None     region
 | P_Par     {region; _}
+| P_Record  {region; _}
 | P_Some    {region; _}
 | P_String  {region; _}
 | P_True     region

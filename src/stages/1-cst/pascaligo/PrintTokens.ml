@@ -235,7 +235,7 @@ and print_D_Const state (node : const_decl reg) =
   let node = node.value in
   print_attributes state node.attributes;
   print_token      state "Const" node.kwd_const;
-  print_ident      state node.name;
+  print_pattern    state node.pattern;
   print_option     state print_type_annot node.const_type;
   print_token      state "EQ" node.equal;
   print_expr       state node.init;
@@ -484,7 +484,7 @@ and print_S_Decl state = print_declaration state
 and print_S_VarDecl state (node : var_decl reg) =
   let node = node.value in
   print_token     state "Var" node.kwd_var;
-  print_ident     state node.name;
+  print_pattern   state node.pattern;
   print_option    state print_type_annot node.var_type;
   print_token     state "ASSIGN" node.assign;
   print_expr      state node.init;
@@ -764,7 +764,8 @@ and print_pattern state = function
 | P_Nat      p -> print_P_Nat     state p
 | P_Nil      p -> print_P_Nil     state p
 | P_None     p -> print_P_None    state p
-| P_Par      p -> print_P_Par state p
+| P_Par      p -> print_P_Par     state p
+| P_Record   p -> print_P_Record  state p
 | P_Some     p -> print_P_Some    state p
 | P_String   p -> print_P_String  state p
 | P_True     p -> print_P_True    state p
@@ -846,6 +847,20 @@ and print_P_None state = print_token state "Ctor_None"
    whole between parentheses. *)
 
 and print_P_Par state = print_par state print_pattern
+
+(* Record patterns *)
+
+and print_P_Record state =
+  print_ne_injection state print_field_pattern
+
+and print_field_pattern state (node : field_pattern reg) =
+  match node.value with
+    Punned field_name ->
+      print_ident state field_name
+  | Complete {field_name; assignment; field_pattern} ->
+     print_ident   state field_name;
+     print_token   state "=" assignment;
+     print_pattern state field_pattern
 
 (* The pattern for the application of the predefined constructor
    [Some] *)

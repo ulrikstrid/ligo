@@ -24,7 +24,7 @@ module Make (Token : Token.S) =
       Unexpected_character of char
     | Non_canonical_zero
     | Reserved_name of string
-    | Invalid_symbol
+    | Invalid_symbol of string
     | Invalid_natural
     | Unterminated_verbatim
     | Invalid_linemarker_argument
@@ -40,9 +40,9 @@ module Make (Token : Token.S) =
     | Reserved_name s ->
         sprintf "Reserved name: \"%s\".\n\
          Hint: Change the name." s
-    | Invalid_symbol ->
-        "Invalid symbol.\n\
-         Hint: Check the LIGO syntax you use."
+    | Invalid_symbol s ->
+        sprintf "Invalid symbol: %S.\n\
+                 Hint: Check the LIGO syntax you use." s
     | Invalid_natural ->
         "Invalid natural number."
     | Unterminated_verbatim ->
@@ -57,8 +57,8 @@ module Make (Token : Token.S) =
     exception Error of message
 
     let fail region error =
-      let msg = error_to_string error in
-      raise (Error Region.{value=msg;region})
+      let value = error_to_string error in
+      raise (Error Region.{value; region})
 
     let support_string_delimiter = Token.support_string_delimiter
 
@@ -98,19 +98,19 @@ module Make (Token : Token.S) =
     let mk_nat state buffer =
       let Core.{region; lexeme; state} = state#sync buffer in
       match Token.mk_nat lexeme region with
-        Ok token ->
+        Stdlib.Ok token ->
           Core.Token token, state
-      | Error Token.Non_canonical_zero_nat ->
+      | Stdlib.Error Token.Non_canonical_zero_nat ->
           fail region Non_canonical_zero
-      | Error Token.Invalid_natural ->
+      | Stdlib.Error Token.Invalid_natural ->
           fail region Invalid_natural
 
     let mk_mutez state buffer =
       let Core.{region; lexeme; state} = state#sync buffer in
       match Token.mk_mutez lexeme region with
-        Ok token ->
+        Stdlib.Ok token ->
           Core.Token token, state
-      | Error Token.Non_canonical_zero ->
+      | Stdlib.Error Token.Non_canonical_zero ->
           fail region Non_canonical_zero
 
     let mk_tez state buffer =
@@ -118,9 +118,9 @@ module Make (Token : Token.S) =
       let lexeme = Str.string_before lexeme (String.index lexeme 't') in
       let lexeme = Z.mul (Z.of_int 1_000_000) (Z.of_string lexeme) in
       match Token.mk_mutez (Z.to_string lexeme ^ "mutez") region with
-        Ok token ->
+        Stdlib.Ok token ->
           Core.Token token, state
-      | Error Token.Non_canonical_zero ->
+      | Stdlib.Error Token.Non_canonical_zero ->
           fail region Non_canonical_zero
 
     let format_tez s =
@@ -145,17 +145,17 @@ module Make (Token : Token.S) =
         None -> assert false
       | Some tz ->
           match Token.mk_mutez (Z.to_string tz ^ "mutez") region with
-            Ok token ->
+            Stdlib.Ok token ->
               Core.Token token, state
-          | Error Token.Non_canonical_zero ->
+          | Stdlib.Error Token.Non_canonical_zero ->
               fail region Non_canonical_zero
 
     let mk_ident state buffer =
       let Core.{region; lexeme; state} = state#sync buffer in
       match Token.mk_ident lexeme region with
-        Ok token ->
+        Stdlib.Ok token ->
           Core.Token token, state
-      | Error Token.Reserved_name ->
+      | Stdlib.Error Token.Reserved_name ->
           fail region (Reserved_name lexeme)
 
     let mk_attr attr state buffer =
@@ -181,10 +181,10 @@ module Make (Token : Token.S) =
     let mk_sym state buffer =
       let Core.{region; lexeme; state} = state#sync buffer in
       match Token.mk_sym lexeme region with
-        Ok token ->
+        Stdlib.Ok token ->
           Core.Token token, state
-      | Error Token.Invalid_symbol ->
-          fail region Invalid_symbol
+      | Stdlib.Error Token.Invalid_symbol s ->
+          fail region (Invalid_symbol  s)
 
     let mk_eof state buffer =
       let Core.{region; state; _} = state#sync buffer in
