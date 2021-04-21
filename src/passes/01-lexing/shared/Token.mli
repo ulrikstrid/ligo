@@ -83,6 +83,7 @@ module type S =
 
     (* Predicates *)
 
+    val is_eof : token -> bool
     val support_string_delimiter : char -> bool
     val verbatim_delimiters : string * string
 
