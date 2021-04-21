@@ -196,6 +196,13 @@ let print_UIdent state {region; value} =
 
 let print_ctor = print_UIdent
 
+(* Attributes *)
+
+let print_attribute state {region; value} =
+  let line =
+    sprintf "%s: Attr %S\n" (compact state region) value
+  in Buffer.add_string state#buffer line
+
 (* HIGHER-ORDER PRINTERS *)
 
 let print_par : state -> (state -> 'a -> unit) -> 'a par reg -> unit =
@@ -242,11 +249,6 @@ and print_D_Const state (node : const_decl reg) =
   print_token_opt  state "SEMI" node.terminator
 
 and print_attributes state = List.iter (print_attribute state)
-
-and print_attribute state {region; value} =
-  let line =
-    sprintf "%s: Attr %S\n" (compact state region) value
-  in Buffer.add_string state#buffer line
 
 and print_type_annot state (colon, type_expr) =
   print_token     state "COLON" colon;
@@ -350,6 +352,7 @@ and print_type_expr state = function
 | T_Record  t -> print_T_Record  state t
 | T_String  t -> print_T_String  state t
 | T_Sum     t -> print_T_Sum     state t
+| T_Typed   t -> print_T_Typed   state t
 | T_Var     t -> print_T_Var     state t
 | T_Wild    t -> print_T_Wild    state t
 
@@ -381,9 +384,9 @@ and print_T_Int state = print_int state
 and print_T_ModPath state = print_module_path state print_ident
 
 and print_module_path :
-  'a.state -> (state -> 'a -> unit ) -> 'a module_path reg -> unit =
+  'a.state -> (state -> 'a -> unit) -> 'a module_path reg -> unit =
   fun state print {value; _} ->
-    print_nsepseq state print_UIdent "." value.module_path;
+    print_nsepseq state print_UIdent "DOT" value.module_path;
     print_token   state "DOT" value.selector;
     print         state value.field
 
@@ -452,6 +455,13 @@ and print_variant state (node : variant) =
 and print_of_type_expr state (kwd_of, type_expr) =
   print_token     state "Of" kwd_of;
   print_type_expr state type_expr
+
+(* Typed pattern *)
+
+and print_P_Typed state (node : typed_pattern reg) =
+  let node = node.value in
+  print_pattern    state node.pattern;
+  print_type_annot state node.type_annot
 
 (* A type variable *)
 
@@ -851,7 +861,18 @@ and print_P_Par state = print_par state print_pattern
 (* Record patterns *)
 
 and print_P_Record state =
-  print_ne_injection state print_field_pattern
+  print_ne_injection state (swap print_field print_pattern)
+
+and print_field :
+  'rhs.state -> (state -> 'rhs -> unit) -> 'rhs field reg -> unit =
+  fun state print (node : 'rhs field reg) ->
+  match node.value with
+    Punned field_name ->
+      print_ident state field_name
+  | Complete {field_name; assignment; field_rhs} ->
+     print_ident   state field_name;
+     print_token   state "EQ" assignment;
+     print         state field_rhs
 
 and print_field_pattern state (node : field_pattern reg) =
   match node.value with
@@ -859,7 +880,7 @@ and print_field_pattern state (node : field_pattern reg) =
       print_ident state field_name
   | Complete {field_name; assignment; field_pattern} ->
      print_ident   state field_name;
-     print_token   state "=" assignment;
+     print_token   state "EQ" assignment;
      print_pattern state field_pattern
 
 (* The pattern for the application of the predefined constructor

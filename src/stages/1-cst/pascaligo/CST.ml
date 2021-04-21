@@ -158,7 +158,6 @@ and declaration =
 and const_decl = {
   kwd_const  : kwd_const;
   pattern    : pattern;
-  const_type : type_annot option;
   equal      : equal;
   init       : expr;
   terminator : semi option;
@@ -222,7 +221,7 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 
 and field_decl = {
   field_name : field_name;
-  field_type : type_annot;
+  field_type : type_annot option;
   attributes : attribute list
 }
 
@@ -314,7 +313,6 @@ and statements = (statement, semi) nsepseq
 and var_decl = {
   kwd_var    : kwd_var;
   pattern    : pattern;
-  var_type   : type_annot option;
   assign     : assign;
   init       : expr;
   terminator : semi option;
@@ -380,7 +378,7 @@ and record_patch = {
   kwd_patch  : kwd_patch;
   path       : path;
   kwd_with   : kwd_with;
-  record_inj : record reg
+  record_inj : record_expr reg
 }
 
 and 'branch conditional = {
@@ -497,24 +495,31 @@ and pattern =
 | P_Nil    of kwd_nil
 | P_None   of kwd_None
 | P_Par    of pattern par reg
-| P_Record of field_pattern reg ne_injection reg
+| P_Record of pattern field reg ne_injection reg
 | P_Some   of (kwd_Some * pattern par reg) reg
 | P_String of lexeme reg
 | P_True   of kwd_True
 | P_Tuple  of tuple_pattern
+| P_Typed  of typed_pattern reg
 | P_Unit   of kwd_Unit
 | P_Var    of lexeme reg
 
 and tuple_pattern = (pattern, comma) nsepseq par reg
 
-and field_pattern =
-  Punned   of field_name
-| Complete of full_field_pattern
+and typed_pattern = {
+  pattern    : pattern;
+  type_annot : type_annot
+}
 
-and full_field_pattern = {
-  field_name    : field_name;
-  assignment    : equal;
-  field_pattern : pattern
+and 'rhs field =
+  Punned   of field_name
+| Complete of 'rhs full_field
+
+and 'rhs full_field = {
+  field_name : field_name;
+  assign     : equal;
+  field_rhs  : 'rhs;
+  attributes : attribute list
 }
 
 (* EXPRESSIONS *)
@@ -561,7 +566,7 @@ and expr =
 | E_Or        of kwd_or bin_op reg             (* "or"  *)
 | E_Par       of expr par reg
 | E_Proj      of projection reg
-| E_Record    of record reg
+| E_Record    of record_expr reg
 | E_Set       of expr injection reg
 | E_SetMem    of set_mem reg
 | E_Some      of (kwd_Some * arguments) reg
@@ -610,13 +615,7 @@ and 'a un_op = {
   arg : expr
 }
 
-and field_assignment = {
-  field_name : field_name;
-  assignment : equal;
-  field_expr : expr
-}
-
-and record = field_assignment reg ne_injection
+and record_expr = expr field reg ne_injection
 
 and projection = {
   struct_name : variable;
@@ -632,7 +631,7 @@ and update = {
 
 and field_path_assignment = {
   field_path : path;
-  assignment : equal;
+  assign     : equal;
   field_expr : expr
 }
 
@@ -808,6 +807,7 @@ let pattern_to_region = function
 | P_String  {region; _}
 | P_True     region
 | P_Tuple   {region; _}
+| P_Typed   {region; _}
 | P_Unit     region
 | P_Var     {region; _}
   -> region

@@ -203,8 +203,7 @@ and type_tuple = (type_expr, comma) nsepseq par reg
 
 and field_decl = {
   field_name : field_name;
-  colon      : colon;
-  field_type : type_expr;
+  field_type : type_annot;
   attributes : attribute list
 }
 
@@ -271,9 +270,8 @@ and pattern =
 and tuple_pattern = (pattern, comma) nsepseq par reg
 
 and typed_pattern = {
-  pattern   : pattern;
-  colon     : colon;
-  type_expr : type_expr
+  pattern    : pattern;
+  type_annot : type_annot
 }
 
 and field_pattern = {

@@ -859,6 +859,7 @@ and print_pattern state = function
 | P_String  p -> print_P_String  state p
 | P_True    p -> print_P_True    state p
 | P_Tuple   p -> print_P_Tuple   state p
+| P_Typed   p -> print_P_Typed   state p
 | P_Unit    p -> print_P_Unit    state p
 | P_Var     p -> print_P_Var     state p
 
@@ -969,6 +970,16 @@ and print_P_Tuple state (node : (pattern, comma) nsepseq par reg) =
      List.map (mk_child print_pattern)
   @@ Utils.nsepseq_to_list value.inside
   in print_tree state "P_Tuple" ~region children
+
+(* Typed pattern *)
+
+and print_P_Typed state (node : typed_pattern reg) =
+  let {value; region} = node in
+  let {pattern; type_annot} = value in
+  let children = [
+    mk_child print_pattern pattern;
+    mk_child print_type_annot type_annot]
+  in print_tree state "P_Typed" ~region children
 
 (* The pattern matching the unique value of the type "unit". *)
 

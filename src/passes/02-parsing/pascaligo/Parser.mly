@@ -65,9 +65,9 @@ let mk_mod_path :
 %type <CST.t> contract
 %type <CST.expr> interactive_expr
 
-%on_error_reduce nseq(__anonymous_0(field_pattern,SEMI))
-%on_error_reduce nsepseq(field_pattern,SEMI)
-%on_error_reduce field_pattern
+%on_error_reduce nseq(__anonymous_0(field(core_pattern),SEMI))
+%on_error_reduce nsepseq(field(core_pattern),SEMI)
+%on_error_reduce field(core_pattern)
 %on_error_reduce selected_expr
 %on_error_reduce nsepseq(module_name,DOT)
 %on_error_reduce ctor_expr
@@ -418,7 +418,14 @@ field_decl:
     let region = match first_region $1 with
                          None -> cover $2.region stop
                  | Some start -> cover start stop
-    and value  = {attributes=$1; field_name=$2; field_type=($3,$4)}
+    and value  = {attributes=$1; field_name=$2; field_type = Some ($3,$4)}
+    in {region; value} }
+| seq("[@<attr>]") field_name {
+    let stop   = $2.region in
+    let region = match first_region $1 with
+                         None -> stop
+                 | Some start -> cover start stop
+    and value  = {attributes=$1; field_name=$2; field_type=None}
     in {region; value} }
 
 fun_expr:
@@ -521,27 +528,23 @@ statement:
 
 open_const_decl:
   seq("[@<attr>]") "const" unqualified_decl("=") {
-    let pattern, const_type, equal, init, stop = $3 in
+    let pattern, equal, init, stop = $3 in
     let region= match first_region $1 with
                   None -> cover $2 stop
                 | Some start -> cover start stop
     and value  = {attributes=$1; kwd_const=$2; pattern;
-                  const_type; equal; init; terminator=None}
+                  equal; init; terminator=None}
     in {region; value} }
 
 open_var_decl:
   "var" unqualified_decl(":=") {
-    let pattern, var_type, assign, init, stop = $2 in
+    let pattern, assign, init, stop = $2 in
     let region = cover $1 stop
-    and value  = {kwd_var=$1; pattern; var_type; assign; init;
-                  terminator=None}
+    and value  = {kwd_var=$1; pattern; assign; init; terminator=None}
     in {region; value} }
 
 unqualified_decl(OP):
-  core_pattern ioption(type_annot) OP expr {
-    let region = expr_to_region $4
-    in $1, $2, $3, $4, region
-  }
+  core_pattern OP expr { $1, $2, $3, expr_to_region $3 }
 
 const_decl:
   open_const_decl ";"? {
@@ -940,12 +943,12 @@ value_in_module:
   module_path(selected_expr) { mk_mod_path $1 CST.expr_to_region }
 
 selected_expr:
-  field_name    { E_Var $1                          }
-| "map"         { E_Var {value="map";    region=$1} }
-| "or"          { E_Var {value="or";     region=$1} }
-| "and"         { E_Var {value="and";    region=$1} }
-| "remove"      { E_Var {value="remove"; region=$1} }
-| projection    { E_Proj $1                         }
+  field_name { E_Var  $1                          }
+| "map"      { E_Var  {value="map";    region=$1} }
+| "or"       { E_Var  {value="or";     region=$1} }
+| "and"      { E_Var  {value="and";    region=$1} }
+| "remove"   { E_Var  {value="remove"; region=$1} }
+| projection { E_Proj $1                          }
 
 record_expr:
   ne_injection("record", field_assignment) { $1 mk_record }
@@ -953,8 +956,11 @@ record_expr:
 field_assignment:
   field_name "=" expr {
     let region = cover $1.region (expr_to_region $3)
-    and value  = {field_name=$1; assignment=$2; field_expr=$3}
-    in {region; value} }
+    and value  = Complete {field_name=$1; assign=$2;
+                           field_rhs=$3; attributes=[]}
+    in {region; value}
+   }
+| field_name { {region = $1.region; value = Punned $1} }
 
 record_update:
   path "with" ne_injection("record", field_path_assignment) {
@@ -966,7 +972,7 @@ record_update:
 field_path_assignment:
   path "=" expr {
     let region = cover (path_to_region $1) (expr_to_region $3)
-    and value  = {field_path=$1; assignment=$2; field_expr=$3}
+    and value  = {field_path=$1; assign=$2; field_expr=$3}
     in {region; value} }
 
 code_inj:
@@ -1007,45 +1013,62 @@ pattern:
 | core_pattern { $1 }
 
 core_pattern:
-  "_"            { P_Var (mk_wild $1) }
-| "<int>"        { P_Int           $1 }
-| "<nat>"        { P_Nat           $1 }
-| "<bytes>"      { P_Bytes         $1 }
-| "<string>"     { P_String        $1 }
-| "Unit"         { P_Unit          $1 }
-| "False"        { P_False         $1 }
-| "True"         { P_True          $1 }
-| "None"         { P_None          $1 }
-| "nil"          { P_Nil           $1 }
-| variable       { P_Var           $1 }
-| some_pattern   { P_Some          $1 }
-| list_pattern   { P_List          $1 }
-| ctor_pattern   { P_Ctor          $1 }
-| tuple_pattern  { P_Tuple         $1 }
-| par(pattern)   { P_Par           $1 }
-| record_pattern { P_Record        $1 }
+  "<int>"            { P_Int           $1 }
+| "<nat>"            { P_Nat           $1 }
+| "<bytes>"          { P_Bytes         $1 }
+| "<string>"         { P_String        $1 }
+| "Unit"             { P_Unit          $1 }
+| "False"            { P_False         $1 }
+| "True"             { P_True          $1 }
+| "None"             { P_None          $1 }
+| "nil"              { P_Nil           $1 }
+| "_"                { P_Var (mk_wild $1) }
+| variable           { P_Var           $1 }
+| some_pattern       { P_Some          $1 }
+| list_pattern       { P_List          $1 }
+| ctor_pattern       { P_Ctor          $1 }
+| tuple_pattern      { P_Tuple         $1 }
+| record_pattern     { P_Record        $1 }
+| par(pattern)
+| par(typed_pattern) { P_Par           $1 }
 
-some_pattern:
+typed_pattern:
+  core_pattern type_annot  {
+    let start  = pattern_to_region $1 in
+    let stop   = type_expr_to_region (snd $2) in
+    let region = cover start stop in
+    let value  = {pattern=$1; type_annot=$2}
+    in P_Typed {region; value} }
+
+  some_pattern:
   "Some" par(core_pattern) {
     let region = cover $1 $2.region
     in {region; value=($1,$2)} }
 
 record_pattern:
-  ne_injection("record", field_pattern) { $1 mk_record }
+  ne_injection("record", field(core_pattern)) { $1 mk_record }
 
-field_pattern:
-  field_name {
-    let region = $1.region
-    and value  = Punned $1
-    in {region; value}
-  }
-| field_name "=" core_pattern {
+field(rhs):
+  field_name "=" rhs {
     let start  = $1.region
     and stop   = pattern_to_region $3 in
     let region = cover start stop
-    and value  = Complete {field_name=$1; assignment=$2;
-                           field_pattern=$3}
+    and value  = Complete {field_name=$1; assign=$2;
+                           field_rhs=$3; attributes=[]}
     in {region; value} }
+| field_name { {region = $1.region; value = Punned $1} }
+
+(*
+field_pattern:
+  field_name "=" core_pattern {
+    let start  = $1.region
+    and stop   = pattern_to_region $3 in
+    let region = cover start stop
+    and value  = Complete {field_name=$1; assign=$2;
+                           field_rhs=$3; attributes=[]}
+    in {region; value} }
+| field_name { {region = $1.region; value = Punned $1} }
+*)
 
 list_pattern:
   injection("list",core_pattern) { $1 mk_list }
