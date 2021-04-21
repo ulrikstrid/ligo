@@ -269,18 +269,21 @@ module T =
     type token = t
 
     let proj_token = function
-        (* Preprocessing directives *)
+      (* Preprocessing directives *)
 
       Directive d ->
         let Region.{region; value} = Directive.project d
         in region, value
 
-      (* Comments *)
+    (* Comments *)
 
-    | LineCom Region.{region; value} -> region, sprintf "Line comment %S" value
-    | BlockCom Region.{region; value} -> region, sprintf "Block comment %S" value
+    | LineCom Region.{region; value} ->
+        region, sprintf "Line comment %S" value
+    | BlockCom Region.{region; value} ->
+        region, sprintf "Block comment %S" value
 
-      (* Literals *)
+    (* Literals *)
+
     | String Region.{region; value} ->
         region, sprintf "String %S" value
     | Verbatim Region.{region; value} ->
@@ -556,7 +559,6 @@ module T =
        (fun reg -> As        reg);
        (fun reg -> Namespace reg);
        (fun reg -> Type      reg);
-
     ]
 
     let reserved = SSet.empty
