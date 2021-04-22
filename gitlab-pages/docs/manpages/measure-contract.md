@@ -10,7 +10,7 @@ in bytes.
 ### DESCRIPTION
 
 This sub-command compiles a source file and measures the contract\`s
-compiled size in bytes. It does not use the build system.
+compiled size in bytes.
 
 ### ARGUMENTS
 
@@ -40,7 +40,7 @@ compiled size in bytes. It does not use the build system.
 
 **\--infer**
 
-:   enable type inferance
+:   enable type inference
 
 **-p** *PROTOCOL_VERSION*, **\--protocol**=*PROTOCOL_VERSION* (absent=current)
 
@@ -51,9 +51,9 @@ compiled size in bytes. It does not use the build system.
 **-s** *SYNTAX*, **\--syntax**=*SYNTAX* (absent=auto)
 
 :   *SYNTAX* is the syntax that will be used. Currently supported
-    syntaxes are \"pascaligo\", \"cameligo\" and \"reasonligo\". By
-    default, the syntax is guessed from the extension (.ligo, .mligo,
-    .religo respectively).
+    syntaxes are \"pascaligo\", \"cameligo\", \"reasonligo\" and
+    \"jsligo\". By default, the syntax is guessed from the extension
+    (.ligo, .mligo, .religo, and .jsligo respectively).
 
 **\--version**
 

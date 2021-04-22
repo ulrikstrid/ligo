@@ -1,6 +1,6 @@
 (library
-  (name inferance)
-  (public_name ligo.inferance)
+  (name inference)
+  (public_name ligo.inference)
   (libraries
     simple-utils
     tezos-utils
@@ -11,6 +11,7 @@
     environment
     database_plugins
     type_variable_abstraction
+    self_ast_core
   )
   (preprocess
     (pps ppx_let)

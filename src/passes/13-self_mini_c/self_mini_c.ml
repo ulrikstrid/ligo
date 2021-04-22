@@ -64,7 +64,7 @@ let is_pure_constant : constant' -> bool =
   (* unfortunately impure: *)
   | C_BALANCE | C_AMOUNT | C_NOW | C_SOURCE | C_SENDER | C_CHAIN_ID
   | C_ADD | C_SUB |C_MUL|C_DIV|C_MOD | C_LSL | C_LSR
-  | C_LEVEL | C_VOTING_POWER | C_TOTAL_VOTING_POWER
+  | C_LEVEL | C_VOTING_POWER | C_TOTAL_VOTING_POWER | C_POLYMORPHIC_ADD
   (* impure: *)
   | C_ASSERTION
   | C_ASSERT_SOME
@@ -105,16 +105,23 @@ let is_pure_constant : constant' -> bool =
   | C_SELF
   | C_SELF_ADDRESS
   | C_IMPLICIT_ACCOUNT
-  (* Test - ligo interpreter *)
+  (* Test - ligo interpreter, should never end up here *)
   | C_TEST_ORIGINATE
   | C_TEST_GET_STORAGE
   | C_TEST_GET_BALANCE
   | C_TEST_SET_NOW
   | C_TEST_SET_SOURCE
-  | C_TEST_SET_BALANCE
+  | C_TEST_SET_BAKER
   | C_TEST_EXTERNAL_CALL
-  | C_TEST_ASSERT_FAILURE
+  | C_TEST_EXTERNAL_CALL_EXN
+  | C_TEST_MICHELSON_EQUAL
+  | C_TEST_GET_NTH_BS
   | C_TEST_LOG
+  | C_TEST_COMPILE_EXPRESSION
+  | C_TEST_COMPILE_EXPRESSION_SUBST
+  | C_TEST_STATE_RESET
+  | C_TEST_LAST_ORIGINATIONS
+  | C_TEST_COMPILE_META_VALUE
     -> false
 
 let rec is_pure : expression -> bool = fun e ->

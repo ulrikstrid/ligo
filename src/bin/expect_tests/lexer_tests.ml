@@ -28,6 +28,7 @@ The string starting here is interrupted by a line break.
 Hint: Remove the break, close the string before or insert a backslash.
  |} ];
 
+(*
 run_ligo_bad [ "compile-contract" ; "../../test/lexer/negative_byte_sequence.ligo" ; "main" ] ;
   [%expect {|
 File "../../test/lexer/negative_byte_sequence.ligo", line 1, characters 18-31:
@@ -52,14 +53,13 @@ Negative byte sequence.
 Hint: Remove the leading minus sign.
  |} ];
 
-(*
+
  run_ligo_bad [ "compile-contract" ; "../../test/lexer/reserved_name.ligo" ; "main" ] ;
   [%expect {|
 ligo: : Lexical error in file "reserved_name.ligo", line 1, characters 4-13:
       Reserved name: "arguments".
       Hint: Change the name.
        {}
-
 
  If you're not sure how to fix this error, you can
  do one of the following:
@@ -69,7 +69,6 @@ ligo: : Lexical error in file "reserved_name.ligo", line 1, characters 4-13:
 * Open a gitlab issue: https://gitlab.com/ligolang/ligo/issues/new
 * Check the changelog by running 'ligo changelog'
  |} ];
- *)
 
 run_ligo_bad [ "compile-contract" ; "../../test/lexer/reserved_name.religo" ; "main" ] ;
   [%expect {|
@@ -86,6 +85,7 @@ File "../../test/lexer/reserved_name.mligo", line 1, characters 4-10:
 Reserved name: "object".
 Hint: Change the name.
  |} ];
+  *)
 
 run_ligo_bad [ "compile-contract" ; "../../test/lexer/unexpected_character.ligo" ; "main" ] ;
   [%expect {|
@@ -112,7 +112,7 @@ Unexpected character '\239'.
   [%expect {|
 File "../../test/lexer/unterminated_comment.mligo", line 1, characters 0-2:
   1 | (* not closed
-File "../../test/lexer/unterminated_comment.mligo", line 1, characters 0-2::
+File "../../test/lexer/unterminated_comment.mligo", line 1, characters 0-2:
 Unterminated comment.
 Hint: Close with "*)".
  |} ];
@@ -121,7 +121,7 @@ run_ligo_bad [ "compile-contract" ; "../../test/lexer/invalid_symbol.ligo" ; "ma
   [%expect {|
 File "../../test/lexer/invalid_symbol.ligo", line 1, characters 17-20:
   1 | const b: int = 1 ... 10;
-Invalid symbol.
+Invalid symbol: "...".
 Hint: Check the LIGO syntax you use.
  |} ];
 
@@ -129,7 +129,7 @@ run_ligo_bad [ "compile-contract" ; "../../test/lexer/invalid_symbol.mligo" ; "m
   [%expect {|
 File "../../test/lexer/invalid_symbol.mligo", line 1, characters 10-13:
   1 | let b = 1 ... 10;
-Invalid symbol.
+Invalid symbol: "...".
 Hint: Check the LIGO syntax you use.
  |} ];
 
@@ -137,7 +137,7 @@ run_ligo_bad [ "compile-contract" ; "../../test/lexer/invalid_symbol.religo" ; "
   [%expect {|
 File "../../test/lexer/invalid_symbol.religo", line 1, characters 10-11:
   1 | let b = 1 # 10;
-Invalid symbol.
+Invalid symbol: "#".
 Hint: Check the LIGO syntax you use.
  |} ];
 

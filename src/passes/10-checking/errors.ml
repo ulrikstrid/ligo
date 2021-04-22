@@ -17,7 +17,7 @@ type typer_error = [
   | `Typer_michelson_or_no_annotation of Ast_core.label * Location.t
   | `Typer_module_tracer of Ast_core.module_ * typer_error
   | `Typer_constant_declaration_tracer of Ast_core.expression_variable * Ast_core.expression * (Ast_typed.type_expression option) * typer_error
-  | `Typer_match_error of Ast_core.matching_expr * Ast_typed.type_expression * Location.t
+  | `Typer_match_error of Ast_typed.type_expression * Ast_typed.type_expression * Location.t
   | `Typer_needs_annotation of Ast_core.expression * string
   | `Typer_fvs_in_create_contract_lambda of Ast_core.expression * Ast_typed.expression_variable
   | `Typer_create_contract_lambda of Ast_core.constant' * Ast_core.expression
@@ -54,6 +54,9 @@ type typer_error = [
   | `Typer_expected_ticket of Location.t * Ast_typed.type_expression
   | `Typer_expected_sapling_transaction of Location.t * Ast_typed.type_expression
   | `Typer_expected_sapling_state of Location.t * Ast_typed.type_expression
+  | `Typer_expected_ligo_code of Location.t * Ast_typed.type_expression
+  | `Typer_expected_michelson_code of Location.t * Ast_typed.type_expression
+  | `Typer_expected_unit of Location.t * Ast_typed.type_expression
   | `Typer_not_matching of Location.t * Ast_typed.type_expression * Ast_typed.type_expression
   | `Typer_not_annotated of Location.t
   | `Typer_bad_substraction of Location.t
@@ -65,7 +68,6 @@ type typer_error = [
   | `Typer_uncomparable_types of Location.t * Ast_typed.type_expression * Ast_typed.type_expression
   | `Typer_comparator_composed of Location.t * Ast_typed.type_expression
   | `Typer_constant_decl_tracer of Ast_core.expression_variable * Ast_core.expression * Ast_typed.type_expression option * typer_error
-  | `Typer_match_variant_tracer of Ast_core.matching_expr * typer_error
   | `Typer_unrecognized_type_constant of Ast_core.type_expression
   | `Typer_expected_ascription of Ast_core.expression
   | `Typer_different_types of Ast_typed.type_expression * Ast_typed.type_expression
@@ -76,10 +78,11 @@ type typer_error = [
   | `Typer_internal_error of string * string
   | `Trace_debug of string * typer_error
   | `Typer_pattern_do_not_match of Location.t
-  | `Typer_label_do_not_match of Ast_typed.label * Ast_typed.label * Location.t
+  | `Typer_pattern_do_not_conform_type of Ast_core.type_expression Ast_core.pattern * Ast_typed.type_expression
+  | `Typer_redundant_pattern of Location.t
 ]
 
-let label_do_not_match la lb loc = `Typer_label_do_not_match (la , lb , loc )
+let pattern_do_not_conform_type p t = `Typer_pattern_do_not_conform_type (p,t)
 let pattern_do_not_match loc = `Typer_pattern_do_not_match loc
 let missing_funarg_annotation v = `Typer_missing_funarg_annotation v
 let variant_redefined_error (loc:Location.t) = `Typer_variant_redefined_error loc
@@ -98,7 +101,7 @@ let michelson_or (c:Ast_core.label) (loc:Location.t) = `Typer_michelson_or_no_an
 let module_error_tracer (p:Ast_core.module_) (err:typer_error) = `Typer_module_tracer (p,err)
 let constant_declaration_error_tracer (name:Ast_core.expression_variable) (ae:Ast_core.expression) (expected: Ast_typed.type_expression option) (err:typer_error) =
   `Typer_constant_declaration_tracer (name,ae,expected,err)
-let match_error ~(expected: Ast_core.matching_expr) ~(actual: Ast_typed.type_expression) (loc:Location.t) =
+let match_error ~(expected: Ast_typed.type_expression) ~(actual: Ast_typed.type_expression) (loc:Location.t) =
   `Typer_match_error (expected,actual,loc)
 let needs_annotation (e:Ast_core.expression) (case:string) = `Typer_needs_annotation (e,case)
 let fvs_in_create_contract_lambda (e:Ast_core.expression) (fvar:Ast_typed.expression_variable) = `Typer_fvs_in_create_contract_lambda (e,fvar)
@@ -126,6 +129,8 @@ let expected_pair (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expect
 let expected_list (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_list (loc,t)
 let expected_sapling_transaction (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_sapling_transaction (loc,t)
 let expected_sapling_state (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_sapling_state (loc,t)
+let expected_ligo_code (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_ligo_code (loc,t)
+let expected_michelson_code (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_michelson_code (loc,t)
 let expected_set (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_set (loc,t)
 let expected_map (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_map (loc,t)
 let expected_big_map (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_big_map (loc,t)
@@ -142,6 +147,7 @@ let expected_mutez (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expec
 let expected_op_list (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_op_list (loc,t)
 let expected_int (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_int (loc,t)
 let expected_bool (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_bool (loc,t)
+let expected_unit (loc:Location.t) (t:Ast_typed.type_expression) = `Typer_expected_unit (loc,t)
 let expected_ascription (t:Ast_core.expression) = `Typer_expected_ascription t
 let not_matching (loc:Location.t) (t1:Ast_typed.type_expression) (t2:Ast_typed.type_expression) = `Typer_not_matching (loc,t1,t2)
 let not_annotated (loc: Location.t) = `Typer_not_annotated loc
@@ -160,14 +166,13 @@ let unrecognized_type_constant (e:Ast_core.type_expression) = `Typer_unrecognize
 (* new typer errors *)
 let constant_declaration_tracer (name: Ast_core.expression_variable) (ae:Ast_core.expression) (expected: Ast_typed.type_expression option) (err:typer_error) =
   `Typer_constant_decl_tracer (name,ae,expected,err)
-let in_match_variant_tracer (ae:Ast_core.matching_expr) (err:typer_error) =
-  `Typer_match_variant_tracer (ae,err)
 let different_types a b = `Typer_different_types (a,b)
 let different_constant_tag_number_of_arguments loc opa opb lena lenb = `Typer_constant_tag_number_of_arguments (loc, opa, opb, lena, lenb)
 let typeclass_not_a_rectangular_matrix = `Typer_typeclass_not_a_rectangular_matrix
 let internal_error (loc : string) (msg : string) : typer_error = `Typer_internal_error (loc, msg)
 let could_not_remove = fun constraints -> `Typer_could_not_remove constraints
 let trace_debug (msg : string) (err : typer_error) : typer_error = `Trace_debug (msg,err)
+let redundant_pattern (x : Location.t) : typer_error = `Typer_redundant_pattern x
 
 
 let rec error_ppformat : display_format:string display_format ->
@@ -180,12 +185,6 @@ let rec error_ppformat : display_format:string display_format ->
       (match display_format with
       | Human_readable -> Format.fprintf f "%a" (error_ppformat ~display_format) err
       | _ -> Format.fprintf f "%s\n%a" msg (error_ppformat ~display_format) err)
-    | `Typer_label_do_not_match (la , lb , loc ) ->
-      Format.fprintf f
-        "@[<hv>%a@.Labels do not match: Expected %a but got %a .@]"
-          Snippet.pp loc
-          Ast_typed.PP.label la
-          Ast_typed.PP.label lb
     | `Typer_pattern_do_not_match loc ->
       Format.fprintf f
         "@[<hv>%a@.Pattern do not match returned expression.@]"
@@ -292,7 +291,7 @@ let rec error_ppformat : display_format:string display_format ->
       Format.fprintf f
         "@[<hv>%a@.Pattern matching over an expression of an incorrect type.@.Type \"%a\" was expected, but got type \"%a\". @]"
         Snippet.pp loc
-        Ast_core.PP.matching_type expected
+        Ast_typed.PP.type_expression expected
         Ast_typed.PP.type_expression actual
     | `Typer_needs_annotation (exp,case) ->
       Format.fprintf f
@@ -371,9 +370,6 @@ The following forms of subtractions are possible:
     | `Typer_constant_decl_tracer (_name,_ae,_expected,err) ->
       Format.fprintf f
         "%a" (error_ppformat ~display_format) err
-    | `Typer_match_variant_tracer (_ae,err) ->
-      Format.fprintf f
-        "%a" (error_ppformat ~display_format) err
     | `Typer_unrecognized_type_constant e ->
       Format.fprintf f
         "@[<hv>%a@.Unrecognized type constant %a. @]"
@@ -412,6 +408,16 @@ The following forms of subtractions are possible:
         Snippet.pp loc
         name
         expected (List.length actual)
+    | `Typer_expected_ligo_code (loc,t) ->
+      Format.fprintf f
+        "@[<hv>%a@.Invalid argument.@.Expected raw ligo code, but got an argument of type \"%a\". @]"
+        Snippet.pp loc
+        Ast_typed.PP.type_expression t
+    | `Typer_expected_michelson_code (loc,t) ->
+      Format.fprintf f
+        "@[<hv>%a@.Invalid argument.@.Expected raw michelson code, but got an argument of type \"%a\". @]"
+        Snippet.pp loc
+        Ast_typed.PP.type_expression t
     | `Typer_expected_sapling_state (loc,t) ->
       Format.fprintf f
         "@[<hv>%a@.Invalid argument.@.Expected sapling_state, but got an argument of type \"%a\". @]"
@@ -512,6 +518,11 @@ The following forms of subtractions are possible:
         "@[<hv>%a@.Incorrect argument.@.Expected an int, but got an argument of type \"%a\". @]"
         Snippet.pp loc
         Ast_typed.PP.type_expression t
+    | `Typer_expected_unit (loc,t) ->
+      Format.fprintf f
+        "@[<hv>%a@.Incorrect argument.@.Expected unit, but got an argument of type \"%a\". @]"
+        Snippet.pp loc
+        Ast_typed.PP.type_expression t
     | `Typer_expected_bool (loc,t) ->
       Format.fprintf f
         "@[<hv>%a@.Incorrect argument.@.Expected a boolean, but got an argument of type \"%a\". @]"
@@ -560,6 +571,19 @@ The following forms of subtractions are possible:
     | `Typer_typeclass_not_a_rectangular_matrix ->
       Format.fprintf f "@[<hv>internal error: typeclass is not represented as a rectangular matrix with one column per argument@]"
     | `Typer_internal_error (loc, msg) -> Format.fprintf f "internal error at %s: %s" loc msg
+    | `Typer_pattern_do_not_conform_type (p,t) ->
+      let pf ppf value =
+        match p.location with 
+        | Virtual _ ->  Format.fprintf ppf "%a " (Stage_common.PP.match_pattern Ast_core.PP.type_expression) value
+        | File _ -> ()
+      in
+      Format.fprintf f
+        "@[<hv>%a@.Pattern %ado not conform type %a @]"
+        Snippet.pp p.location pf p Ast_typed.PP.type_expression t
+    | `Typer_redundant_pattern loc ->
+      Format.fprintf f
+        "@[<hv>%a@.Redundant pattern matching@]"
+        Snippet.pp loc
   )
 
 let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
@@ -575,13 +599,11 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("message", `String msg );
       ("children", error_jsonformat err); ] in
     json_error ~stage ~content
-  | `Typer_label_do_not_match (la , lb , loc ) ->
-    let message = Format.asprintf "Labels do not match" in
+  | `Typer_redundant_pattern loc ->
+    let message = "Redundant pattern matching" in
     let content = `Assoc [
       ("message", `String message );
       ("location", Location.to_yojson loc);
-      ("expected", Ast_typed.Yojson.label la) ;
-      ("actual", Ast_typed.Yojson.label lb) ;
     ] in
     json_error ~stage ~content
   | `Typer_pattern_do_not_match loc ->
@@ -761,7 +783,7 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     json_error ~stage ~content
   | `Typer_constant_declaration_tracer (name,ae,None,err) ->
     let message = `String "Typing constant declaration" in
-    let loc = `String (Format.asprintf "%a" Location.pp ae.location) in
+    let loc = Location.to_yojson ae.location in
     let name = `String (Format.asprintf "%a" Ast_core.PP.expression_variable name) in
     let content = `Assoc [
       ("message", message);
@@ -771,10 +793,10 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     ] in
     json_error ~stage ~content
   | `Typer_match_error (expected,actual,loc) ->
-    let message = `String "Typing match" in
-    let loc = `String (Format.asprintf "%a" Location.pp loc) in
-    let expected = `String (Format.asprintf "%a" Ast_core.PP.matching_type expected) in
-    let actual = `String (Format.asprintf "%a" Ast_typed.PP.type_expression actual) in
+    let message = `String "matching over an expression of the wrong type" in
+    let loc = Location.to_yojson loc in
+    let expected = Ast_typed.Yojson.type_expression expected in
+    let actual = Ast_typed.Yojson.type_expression actual in
     let content = `Assoc [
       ("message", message);
       ("location", loc);
@@ -920,6 +942,15 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("value", value);
     ] in
     json_error ~stage ~content
+  | `Typer_expected_unit (loc,t) ->
+    let message = `String "expected unit" in
+    let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+      ("value", value);
+    ] in
+    json_error ~stage ~content
   | `Typer_expected_nat (loc,t) ->
     let message = `String "expected a nat" in
     let value = `String (Format.asprintf "%a" Ast_typed.PP.type_expression t) in
@@ -1018,6 +1049,24 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("value", value);
       ("actual", actual);
       ("expected", expected);
+    ] in
+    json_error ~stage ~content
+  | `Typer_expected_ligo_code (loc,t) ->
+    let message = `String "expected ligo code" in
+    let value = Ast_typed.Yojson.type_expression t in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+      ("value", value);
+    ] in
+    json_error ~stage ~content
+  | `Typer_expected_michelson_code (loc,t) ->
+    let message = `String "expected michelson code" in
+    let value = Ast_typed.Yojson.type_expression t in
+    let content = `Assoc [
+      ("message", message);
+      ("location", Location.to_yojson loc);
+      ("value", value);
     ] in
     json_error ~stage ~content
   | `Typer_expected_sapling_state (loc,t) ->
@@ -1212,15 +1261,6 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
       ("children", error_jsonformat err) ;
     ] in
     json_error ~stage ~content
-  | `Typer_match_variant_tracer (m,err) ->
-    let message = `String "typing matching expression" in
-    let expected = `String (Format.asprintf "%a" Ast_core.PP.matching_type m) in
-    let content = `Assoc [
-      ("message", message) ;
-      ("expected", expected) ;
-      ("children", error_jsonformat err) ;
-    ] in
-    json_error ~stage ~content
   | `Typer_unrecognized_type_constant e ->
     let message = `String "unrecognized type constant" in
     let value = `String (Format.asprintf "%a" Ast_core.PP.type_expression e) in
@@ -1294,5 +1334,16 @@ let rec error_jsonformat : typer_error -> Yojson.Safe.t = fun a ->
     let message = `String (Format.sprintf "internal error at %s: %s" loc msg) in
     let content = `Assoc [
       ("message", message);
+    ] in
+    json_error ~stage ~content
+  | `Typer_pattern_do_not_conform_type (p,t) ->
+    let message = `String "pattern do not conform type" in
+    let pattern = (Stage_common.To_yojson.pattern Ast_core.Yojson.type_expression) p in
+    let t = Ast_typed.Yojson.type_expression t in
+    let content = `Assoc [
+      ("message", message);
+      ("type", t);
+      ("pattern", pattern);
+      ("location", Location.to_yojson p.location);
     ] in
     json_error ~stage ~content

@@ -60,7 +60,7 @@ implemented. The interpretation is done using Michelson\`s interpreter.
 
 **\--infer**
 
-:   enable type inferance
+:   enable type inference
 
 **\--now**=*NOW*
 
@@ -76,9 +76,9 @@ implemented. The interpretation is done using Michelson\`s interpreter.
 **-s** *SYNTAX*, **\--syntax**=*SYNTAX* (absent=auto)
 
 :   *SYNTAX* is the syntax that will be used. Currently supported
-    syntaxes are \"pascaligo\", \"cameligo\" and \"reasonligo\". By
-    default, the syntax is guessed from the extension (.ligo, .mligo,
-    .religo respectively).
+    syntaxes are \"pascaligo\", \"cameligo\", \"reasonligo\" and
+    \"jsligo\". By default, the syntax is guessed from the extension
+    (.ligo, .mligo, .religo, and .jsligo respectively).
 
 **\--sender**=*SENDER*
 

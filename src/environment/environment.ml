@@ -1,7 +1,8 @@
 open Ast_typed
 open Stage_common.Constant
 module Protocols = Protocols
-let star = t_variable @@ Var.of_name "will_be_ignored" (* This will later be replaced by the kind of the constant *)
+let starvar = Var.of_name "will_be_ignored"
+let star = t_variable @@ starvar (* This will later be replaced by the kind of the constant *)
 
 let basic_types : (type_variable * type_expression) list = [
     (v_bool , t_sum_ez [ ("true" ,t_unit ()); ("false",t_unit ()) ] ) ;
@@ -46,7 +47,25 @@ let basic_types : (type_variable * type_expression) list = [
     (v_ticket , t_constant ticket_name [star]);
 ]
 
-let edo_types = basic_types @ michelson_base
+let meta_ligo_types : (type_variable * type_expression) list = 
+  basic_types @ [
+    (v_test_michelson, t_constant test_michelson_name []) ;
+    (v_test_ligo , t_constant test_ligo_name []) ;
+    (v_test_exec_error, t_test_exec_error () ) ;
+    (v_test_exec_result , t_test_exec_result () ) ;
+    (* common with object ligo *)
+    (v_address , t_constant address_name []) ;
+    (v_timestamp , t_constant timestamp_name []) ;
+    (v_list , t_constant list_name [star]) ;
+    (v_big_map , t_constant big_map_name [star;star]);
+    (v_map , t_constant map_name [star;star]) ;
+    (v_set , t_constant set_name [star]);
+    (v_map_or_big_map , t_constant map_or_big_map_name [star;star]);
+  ]
 
+let edo_types = basic_types @ michelson_base
 let default : Protocols.t -> environment = function
   | Protocols.Edo -> Environment.of_list_type edo_types
+
+let default_with_test : Protocols.t -> environment = function
+  | Protocols.Edo -> Environment.of_list_type meta_ligo_types

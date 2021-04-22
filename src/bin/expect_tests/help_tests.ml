@@ -105,7 +105,7 @@ let%expect_test _ =
                Subcommand: Run a function with the given parameter.
 
            test
-               Subcommand: Test a contract with the LIGO interpreter (BETA).
+               Subcommand: Test a contract with the LIGO test framework (BETA).
 
            transpile-contract
                Subcommand: Transpile a contract to another syntax (BETA).
@@ -225,7 +225,7 @@ let%expect_test _ =
                Subcommand: Run a function with the given parameter.
 
            test
-               Subcommand: Test a contract with the LIGO interpreter (BETA).
+               Subcommand: Test a contract with the LIGO test framework (BETA).
 
            transpile-contract
                Subcommand: Transpile a contract to another syntax (BETA).
@@ -281,7 +281,7 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --infer
-               enable type inferance
+               enable type inference
 
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
@@ -299,9 +299,9 @@ let%expect_test _ =
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo".
+               By default, the syntax is guessed from the extension (.ligo,
+               .mligo, .religo, and .jsligo respectively).
 
            --version
                Show version information.
@@ -362,7 +362,7 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --infer
-               enable type inferance
+               enable type inference
 
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
@@ -384,9 +384,9 @@ let%expect_test _ =
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo".
+               By default, the syntax is guessed from the extension (.ligo,
+               .mligo, .religo, and .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -455,7 +455,7 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --infer
-               enable type inferance
+               enable type inference
 
            --michelson-format=MICHELSON_FORMAT (absent=text)
                MICHELSON_FORMAT is the format that will be used by
@@ -477,9 +477,9 @@ let%expect_test _ =
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo".
+               By default, the syntax is guessed from the extension (.ligo,
+               .mligo, .religo, and .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -552,7 +552,7 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --infer
-               enable type inferance
+               enable type inference
 
            --now=NOW
                NOW is the NOW value the Michelson interpreter will use (e.g.
@@ -565,9 +565,9 @@ let%expect_test _ =
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo".
+               By default, the syntax is guessed from the extension (.ligo,
+               .mligo, .religo, and .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -636,7 +636,7 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --infer
-               enable type inferance
+               enable type inference
 
            --now=NOW
                NOW is the NOW value the Michelson interpreter will use (e.g.
@@ -649,9 +649,9 @@ let%expect_test _ =
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo".
+               By default, the syntax is guessed from the extension (.ligo,
+               .mligo, .religo, and .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -707,7 +707,7 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --infer
-               enable type inferance
+               enable type inference
 
            --now=NOW
                NOW is the NOW value the Michelson interpreter will use (e.g.
@@ -720,9 +720,9 @@ let%expect_test _ =
 
            -s SYNTAX, --syntax=SYNTAX (absent=auto)
                SYNTAX is the syntax that will be used. Currently supported
-               syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               syntaxes are "pascaligo", "cameligo", "reasonligo" and "jsligo".
+               By default, the syntax is guessed from the extension (.ligo,
+               .mligo, .religo, and .jsligo respectively).
 
            --sender=SENDER
                SENDER is the sender the Michelson interpreter transaction will
@@ -755,8 +755,8 @@ let%expect_test _ =
            SYNTAX (required)
                SYNTAX is the syntax that will be used. Currently supported
                syntaxes are "pascaligo", "cameligo" and "reasonligo". By default,
-               the syntax is guessed from the extension (.ligo, .mligo, .religo
-               respectively).
+               the syntax is guessed from the extension (.ligo, .mligo, .religo,
+               .jsligo respectively).
 
     OPTIONS
            --format=DISPLAY_FORMAT, --display-format=DISPLAY_FORMAT
@@ -773,7 +773,7 @@ let%expect_test _ =
                `plain' whenever the TERM env var is `dumb' or undefined.
 
            --infer
-               enable type inferance
+               enable type inference
 
            --init-file=INIT_FILE
                INIT_FILE is the path to smart contract file to be used for
