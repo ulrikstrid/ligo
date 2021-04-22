@@ -290,11 +290,20 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     List.mem module_name.value build_ins ->
     let loc = Location.lift region in
     let%bind fun_name = match field with
-      EVar v -> ok @@ v.value
+        EVar v -> ok @@ v.value
       | EModA _ -> fail @@ unknown_constant module_name.value loc
-      |ECase _|ECond _|EAnnot _|EList _|EConstr _|EUpdate _|ELetIn _|EFun _|ESeq _|ECodeInj _
-      |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETypeIn _|EModIn _
-      |EModAlias _|ETuple _|EPar _ -> failwith "Corner case : This couldn't be produce by the parser"
+      | EProj {value={field_path=(s,ss);struct_name;_};_} ->
+         let sel_to_string (s : CST.selection) = match s with
+           | FieldName v -> v.value
+           | Component {value=(s,_)} -> s in
+         let s = struct_name.value ^ "." ^ sel_to_string s in
+         let ss = List.map snd ss in
+         let path = List.fold_left (fun r s -> r ^ sel_to_string s) s ss  in
+         ok @@ path
+      | ECase _| ECond _| EAnnot _| EList _| EConstr _| EUpdate _| ELetIn _| EFun _
+        | ESeq _| ECodeInj _ | ELogic _| EArith _| EString _| ERecord _| ECall _
+        | EBytes _| EUnit _| ETypeIn _| EModIn _ | EModAlias _| ETuple _| EPar _ ->
+         failwith "Corner case : This couldn't be produce by the parser"
     in
     let var = module_name.value ^ "." ^ fun_name in
     (match constants var with
@@ -336,11 +345,20 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     (*TODO: move to proper module*)
     if List.mem module_name build_ins then
       let%bind fun_name = match ma.field with
-        EVar v -> ok @@ v.value
-      | EModA _ -> fail @@ unknown_constant module_name loc
-      |ECase _|ECond _|EAnnot _|EList _|EConstr _|EUpdate _|ELetIn _|EFun _|ESeq _|ECodeInj _
-      |ELogic _|EArith _|EString _|ERecord _|EProj _|ECall _|EBytes _|EUnit _|ETypeIn _|EModIn _
-      |EModAlias _|ETuple _|EPar _ -> failwith "Corner case : This couldn't be produce by the parser"
+          EVar v -> ok @@ v.value
+        | EModA _ -> fail @@ unknown_constant module_name loc
+        | EProj {value={field_path=(s,ss);struct_name;_};_} ->
+           let sel_to_string (s : CST.selection) = match s with
+             | FieldName v -> v.value
+             | Component {value=(s,_)} -> s in
+           let s = struct_name.value ^ "." ^ sel_to_string s in
+           let ss = List.map snd ss in
+           let path = List.fold_left (fun r s -> r ^ sel_to_string s) s ss  in
+           ok @@ path
+        | ECase _| ECond _| EAnnot _| EList _| EConstr _| EUpdate _| ELetIn _| EFun _
+          | ESeq _| ECodeInj _ | ELogic _| EArith _| EString _| ERecord _| ECall _
+          | EBytes _| EUnit _| ETypeIn _| EModIn _ | EModAlias _| ETuple _| EPar _ ->
+           failwith "Corner case : This couldn't be produce by the parser"
       in
       let var = module_name ^ "." ^ fun_name in
       (match constants var with
