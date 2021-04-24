@@ -181,20 +181,20 @@ type 'token cut =
     module. *)
 
 type 'token client = <
-  mk_string                : 'token cut;
-  mk_eof                   : 'token scanner;
-  callback                 : 'token scanner;
-  support_string_delimiter : char -> bool
+  mk_string           : 'token cut;
+  mk_eof              : 'token scanner;
+  callback            : 'token scanner;
+  is_string_delimiter : char -> bool
 >
 
 type 'token internal_scanner =
   'token state -> Lexing.lexbuf -> 'token lex_unit * 'token state
 
 type 'token internal_client = <
-  mk_string                : 'token cut;
-  mk_eof                   : 'token internal_scanner;
-  callback                 : 'token internal_scanner;
-  support_string_delimiter : char -> bool
+  mk_string           : 'token cut;
+  mk_eof              : 'token internal_scanner;
+  callback            : 'token internal_scanner;
+  is_string_delimiter : char -> bool
 >
 
 let mk_state ~config ~window ~pos ~decoder ~supply : 'token state =
@@ -531,13 +531,13 @@ let reasonligo_block_comment_opening = "/*"
 let reasonligo_block_comment_closing = "*/"
 let reasonligo_line_comment          = "//"
 
-let michelson_block_comment_opening = "/*"
-let michelson_block_comment_closing = "*/"
-let michelson_line_comment          = "#"
+let michelson_block_comment_opening  = "/*"
+let michelson_block_comment_closing  = "*/"
+let michelson_line_comment           = "#"
 
-let jsligo_block_comment_opening    = "/*"
-let jsligo_block_comment_closing    = "*/"
-let jsligo_line_comment             = "//"
+let jsligo_block_comment_opening     = "/*"
+let jsligo_block_comment_closing     = "*/"
+let jsligo_line_comment              = "//"
 
 let block_comment_openings =
   pascaligo_block_comment_opening
@@ -570,17 +570,14 @@ rule scan client state = parse
 | '\t'+ { state#mk_tabs    lexbuf }
 
   (* Strings *)
-| '\''
-| '"' as lexeme {   
-  if client#support_string_delimiter lexeme then (
+
+| '\'' | '"' as lexeme {
+  if client#is_string_delimiter lexeme then
     let {region; state; _} = state#sync lexbuf in
     let thread             = mk_thread region in
     scan_string lexeme thread state lexbuf |> client#mk_string
-  )
-  else (
-    rollback lexbuf; client#callback state lexbuf
-  )
-}
+  else
+    (rollback lexbuf; client#callback state lexbuf) }
 
   (* Comment *)
 
@@ -617,8 +614,7 @@ rule scan client state = parse
 
 | eof { client#mk_eof state lexbuf }
 
-| _ { 
-  rollback lexbuf;
+| _ { rollback lexbuf;
       client#callback state lexbuf (* May raise exceptions *) }
 
 (* Finishing a linemarker *)
@@ -637,7 +633,7 @@ and eol region line file flag state = parse
    [scan_block]. *)
 
 and scan_block block thread state = parse
-  '"' | block_comment_openings as lexeme {
+  '"' | block_comment_openings as lexeme { (* TODO: '\'' *)
     if   block#opening = lexeme || lexeme = "\""
     then let opening            = thread#opening in
          let {region; state; _} = state#sync lexbuf in
@@ -714,23 +710,16 @@ and scan_string delimiter thread state = parse
 | ['\t' '\r' '\b']
          { let {region; _} = state#sync lexbuf
            in fail region Invalid_character_in_string }
-| '"'    { 
-  if delimiter = '"' then
-    let {state; _} = state#sync lexbuf
-        in thread, state
-  else 
+| '"'    {
     let {state; _} = state#sync lexbuf in
-           scan_string delimiter (thread#push_char '"') state lexbuf
+    if delimiter = '"' then thread, state
+    else scan_string delimiter (thread#push_char '"') state lexbuf
   }
 | '\''   {
-  if delimiter = '\'' then
-    let {state; _} = state#sync lexbuf
-        in thread, state
-  else 
     let {state; _} = state#sync lexbuf in
-           scan_string delimiter (thread#push_char '\'') state lexbuf
-
-}
+    if delimiter = '\'' then thread, state
+    else scan_string delimiter (thread#push_char '\'') state lexbuf
+  }
 | esc    { let {lexeme; state; _} = state#sync lexbuf in
            let thread = thread#push_string lexeme
            in scan_string delimiter thread state lexbuf }
@@ -754,10 +743,10 @@ let mk_scan (client: 'token client) =
   let internal_client : 'token internal_client =
     let open Utils in
     object
-      method mk_string                = client#mk_string
-      method mk_eof                   = drop <@ client#mk_eof
-      method callback                 = drop <@ client#callback
-      method support_string_delimiter = client#support_string_delimiter
+      method mk_string           = client#mk_string
+      method mk_eof              = drop <@ client#mk_eof
+      method callback            = drop <@ client#callback
+      method is_string_delimiter = client#is_string_delimiter
     end
   and first_call = ref true in
   fun state ->

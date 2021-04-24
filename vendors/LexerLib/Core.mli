@@ -39,10 +39,8 @@ val reset :
    ocamllex is byte-oriented, we need to store the parsed bytes as
    characters in an accumulator [acc] and also its length [len], so,
    we are done, it is easy to build the string making up the
-   structured construct with [mk_str] (see above).
-
-   The resulting data structure is called a _thread_. (Note for Emacs:
-   "*)".)  *)
+   structured construct. The resulting data structure is called a
+   _thread_. (Note for Emacs: "*)".)  *)
 
 type thread = <
   opening     : Region.t;
@@ -158,8 +156,8 @@ type message = string Region.reg
 
 (* LEXING COMMENTS AND STRINGS *)
 
-(* Updating the state after scanning a line preprocessing
-   directive. *)
+(* Updating the state after scanning a linemarker (preprocessing
+   directive). *)
 
 val linemarker :
   Region.t ->
@@ -170,20 +168,39 @@ val linemarker :
   Lexing.lexbuf ->
   'token lex_unit * 'token state
 
+(* The type of scanners. Note how scanners return a lexical unit in
+   case of sucess, that is, either a token or a markup unit (like
+   whitespace, comment, newline etc.) *)
+
 type 'token scanner =
   'token state ->
   Lexing.lexbuf ->
   ('token lex_unit * 'token state, message) Stdlib.result
 
+(* A value of the type [cut] is function that cuts the thread [thread]
+   at a given state of scanning, and returns an updated state and a
+   lexical unit made from the thread. It is used when finishing to
+   scan strings. *)
+
 type 'token cut =
   thread * 'token state -> 'token lex_unit * 'token state
 
+(* The type client exports an object type to the client of this
+   module, that is, a lexer. The method [callback] is used to register
+   a callback scanner (from the client point of view), so this module
+   can call user-defined scanners at specific call sites during
+   lexing. The method [is_string_delimiter] is a predicate on the
+   character used to delimit strings, e.g., double or single quote, to
+   accomodate various language conventions. *)
+
 type 'token client = <
-  mk_string                : 'token cut;
-  mk_eof                   : 'token scanner;
-  callback                 : 'token scanner;
-  support_string_delimiter : char -> bool
+  mk_string           : 'token cut;
+  mk_eof              : 'token scanner;
+  callback            : 'token scanner;
+  is_string_delimiter : char -> bool
 >
+
+(* Making a scanner from a client's callback and other specifics *)
 
 val mk_scan : 'token client -> 'token scanner
 
