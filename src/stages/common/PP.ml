@@ -103,12 +103,15 @@ let wildcard ppf = fun () ->
 
 (* Expressions *)
 
-let binder type_expression ppf {var;ascr;_} =
+let binder type_expression ppf {var;ascr;attributes=attr} =
+  let attributes ppf attr =
+    if attr.shadowable then
+      fprintf ppf "[@shadowable]" in
   match ascr with
   | None ->
-      fprintf ppf "%a" expression_variable var
+      fprintf ppf "%a%a" expression_variable var attributes attr
   | Some ty ->
-      fprintf ppf "%a : %a" expression_variable var type_expression ty
+      fprintf ppf "%a%a : %a" expression_variable var attributes attr type_expression ty
 
 let application expression ppf = fun {lamb;args} ->
   fprintf ppf "@[<hv>(%a)@@(%a)@]" expression lamb expression args
