@@ -3,8 +3,8 @@ type myr is record [ a : int ; b : nat ; c : string ]
 type myd is One of myt | Two of myr
 
 function t1 (const x: myt * myt) is block {
-  const fr = function (const x: myt) is 1 ;
-  const fl = function (const x: myt) is 2 ;
+  const fr = function (const xr: myt) is 1 ;
+  const fl = function (const xl: myt) is 2 ;
   const ret =
     case x of
     | (Nil , ys)  -> fr(ys)

@@ -28,11 +28,11 @@ let rec shadowing_match_case : expression_variable list -> (expression, type_exp
 and shadowing_expr : expression_variable list -> expression -> (unit, _) result = fun vars expr ->
   match expr.expression_content with
   | E_literal _ | E_constant _ | E_variable _ -> ok @@ ()
-  | E_lambda {binder={var;_};_} when in_vars var vars ->
-     fail @@ shadowing var
   | E_application {lamb;args} ->
      let%bind _ = shadowing_expr vars lamb in
      shadowing_expr vars args
+  | E_lambda {binder={var;_};_} when in_vars var vars ->
+     fail @@ shadowing var
   | E_lambda {binder={var;attributes;_};result} when is_not_shadowable attributes ->
      shadowing_expr (var :: vars) result
   | E_lambda {result;_} ->

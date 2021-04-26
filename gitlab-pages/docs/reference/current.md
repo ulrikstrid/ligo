@@ -1311,10 +1311,10 @@ type return is list (operation) * storage
 function main (const i : parameter ; const store : storage) : return is
   block {
     const my_ticket1 : ticket(int) = Tezos.create_ticket (i, 10n) ;
-    const res = Big_map.get_and_update("hello", (Some (my_ticket1)), store) ;
-    var res : return := ((nil : list (operation)), store) ;
-    case res of
-    | (t,x) -> res := ((nil : list (operation)), x)
+    const upd = Big_map.get_and_update("hello", (Some (my_ticket1)), store) ;
+    var res := ((nil : list (operation)), store);
+    case upd of
+    | (_,x) -> res := ((nil : list (operation)), x)
     end
   } with res
 ```

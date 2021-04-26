@@ -373,7 +373,7 @@ You can update the nested record with the following code:
 
 ```pascaligo
 
-function change_color_preference (const account : account; const color : color ) : account is
+function change_color_preference (var account : account; const color : color ) : account is
   block {
       account := account with record [preferences.color = color]
   } with account
