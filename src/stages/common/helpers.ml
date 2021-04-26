@@ -126,3 +126,5 @@ let rec map_pattern_t : ('a binder -> ('b binder, 'err) result) -> 'a pattern ->
     | P_record (x,lp) ->
       let%bind lp = bind_map_list self lp in
       ret @@ P_record (x,lp)
+
+let default_binder_attributes : binder_attributes = { shadowable = true; }

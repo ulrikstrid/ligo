@@ -47,7 +47,7 @@ let untype_declaration_constant untype_expression O.{name;binder;expr;inline} =
   let attr = I.{inline} in
   let%bind ty = untype_type_expression expr.type_expression in
   let var = Location.map Var.todo_cast binder in
-  let binder = ({var;ascr= Some ty;attributes=[]}: _ I.binder) in
+  let binder = ({var;ascr= Some ty;attributes=Stage_common.Helpers.default_binder_attributes}: _ I.binder) in
   let%bind expr = untype_expression expr in
   let expr = I.e_ascription expr ty in
   ok @@ I.{name;binder;attr;expr;}

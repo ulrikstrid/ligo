@@ -207,11 +207,14 @@ let attributes attr =
   let list = List.map (fun string -> `String string) attr
   in `Assoc [("attributes", `List list)]
 
+let binder_attributes attr =
+  `Assoc [("shadowable", `Bool attr.shadowable)]
+
 let binder type_expression {var;ascr;attributes=attr} =
   `Assoc [
     ("var", expression_variable_to_yojson var);
     ("ty", yojson_opt type_expression ascr);
-    ("attributes", attributes attr);
+    ("attributes", binder_attributes attr);
   ]
 
 let row_element g {associated_type; michelson_annotation; decl_pos} =

@@ -118,14 +118,14 @@ let e_variable_ez ?loc v = e_variable ?loc @@ Location.wrap ?loc (Var.of_name v)
 let e_application ?loc a b = make_e ?loc @@ E_application {lamb=a ; args=b}
 let e_lambda    ?loc binder output_type result : expression = make_e ?loc @@ E_lambda {binder; output_type; result}
 let e_lambda_ez ?loc var ?ascr ?var_attributes output_type result : expression =
-  let var_attributes = Option.unopt ~default:[] var_attributes in
+  let var_attributes = Option.unopt ~default:Stage_common.Helpers.default_binder_attributes var_attributes in
   e_lambda ?loc {var;ascr;attributes=var_attributes} output_type result
 let e_recursive ?loc fun_name fun_type lambda = make_e ?loc @@ E_recursive {fun_name; fun_type; lambda}
 
 (* let e_recursive_ez ?loc fun_name fun_type lambda = e_recursive ?loc (Var.of_name fun_name) fun_type lambda *)
 let e_let_in    ?loc let_binder attributes rhs let_result = make_e ?loc @@ E_let_in { let_binder; rhs ; let_result; attributes }
 let e_let_in_ez ?loc var ?ascr ?var_attributes attributes rhs let_result =
-  let var_attributes = Option.unopt ~default:[] var_attributes in
+  let var_attributes = Option.unopt ~default:Stage_common.Helpers.default_binder_attributes var_attributes in
   make_e ?loc @@ E_let_in { let_binder={var;ascr;attributes=var_attributes}; rhs ; let_result; attributes }
 (* let e_let_in_ez ?loc binder ascr inline rhs let_result = e_let_in ?loc (Var.of_name binder, ascr) inline rhs let_result *)
 let e_type_in   ?loc type_binder   rhs let_result = make_e ?loc @@ E_type_in { type_binder; rhs ; let_result }

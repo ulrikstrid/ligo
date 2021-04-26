@@ -472,7 +472,7 @@ and compile_expression : CST.expr -> (AST.expr, _) result = fun e ->
         let pvar = match p_opt with
           | Some p ->
             let parameters = Location.wrap ~loc:param_loc p in
-            Some (Location.wrap ~loc:param_loc @@ P_var ({var = parameters ; ascr = None ; attributes = []}:_ AST.binder))
+            Some (Location.wrap ~loc:param_loc @@ P_var ({var = parameters ; ascr = None ; attributes = Stage_common.Helpers.default_binder_attributes}:_ AST.binder))
           | None -> None
         in 
         let pattern = Location.wrap ~loc:whole_pattern_loc @@ P_variant (constructor, pvar) in
@@ -532,8 +532,8 @@ and compile_expression : CST.expr -> (AST.expr, _) result = fun e ->
           in
           let cons_case =
             (* TODO: improve locations here *)
-            let a = Location.wrap @@ P_var {var = a ; ascr = None ; attributes = []} in
-            let b = Location.wrap @@ P_var {var = b ; ascr = None ; attributes = []} in
+            let a = Location.wrap @@ P_var {var = a ; ascr = None ; attributes = Stage_common.Helpers.default_binder_attributes} in
+            let b = Location.wrap @@ P_var {var = b ; ascr = None ; attributes = Stage_common.Helpers.default_binder_attributes} in
             let pattern = Location.wrap @@ P_list (Cons (a,b)) in
             {pattern ; body = body}
           in
@@ -740,18 +740,18 @@ and conv : CST.pattern -> (nested_match_repr,_) result =
   | CST.PWild reg ->
     let loc = Location.lift reg in
     let var = Location.wrap ~loc @@ Var.fresh () in
-    ok (PatternVar { var ; ascr = None ; attributes = [] })
+    ok (PatternVar { var ; ascr = None ; attributes = Stage_common.Helpers.default_binder_attributes })
   | CST.PVar var ->
     let (var,loc) = r_split var in
     let var = Location.wrap ~loc @@ Var.of_name var in
-    ok (PatternVar { var ; ascr = None ; attributes = [] })
+    ok (PatternVar { var ; ascr = None ; attributes = Stage_common.Helpers.default_binder_attributes })
   | CST.PArray tuple ->
     let (tuple, _loc) = r_split tuple in
     let lst = npseq_to_ne_list tuple.inside in
     let patterns = List.Ne.to_list lst in
     let%bind nested = bind_map_list conv patterns in
     let var = Location.wrap @@ Var.fresh () in
-    ok (TupleVar ({var ; ascr = None ; attributes = []} , nested))
+    ok (TupleVar ({var ; ascr = None ; attributes = Stage_common.Helpers.default_binder_attributes} , nested))
   | _ -> 
     fail @@ unsupported_pattern_type p
 
@@ -843,7 +843,7 @@ and compile_object_let_destructuring : AST.expression -> (CST.pattern, Region.t)
 and compile_parameter : CST.expr ->
     (type_expression binder * (type_expression binder * Types.attributes * expression) list, _) result = fun expr ->
   let return ?ascr loc (exprs: (type_expression binder * Types.attributes * expression) list) var =
-    ok ({var=Location.wrap ~loc var; ascr; attributes = []}, exprs) in
+    ok ({var=Location.wrap ~loc var; ascr; attributes = Stage_common.Helpers.default_binder_attributes}, exprs) in
   match expr with
   | EPar { value = { inside = ESeq { value = arguments; _ }; _ }; region} ->
     let argument = function
@@ -950,7 +950,7 @@ and merge_statement_results : statement_result -> statement_result -> statement_
 and compile_pattern : const:bool -> CST.pattern -> (type_expression binder * (_ -> _), _) result =
   fun ~const pattern ->
   let return ?ascr loc fun_ var =
-    ok ({var=Location.wrap ~loc var; ascr; attributes = []}, fun_) in
+    ok ({var=Location.wrap ~loc var; ascr; attributes = Stage_common.Helpers.default_binder_attributes}, fun_) in
     let return_1 ?ascr loc var = return ?ascr loc (fun e -> e) var in
   match pattern with 
     PVar var -> 
@@ -992,7 +992,7 @@ and compile_let_binding: const:bool -> CST.attributes -> CST.expr -> (Region.t *
       | _ -> ok @@ expr 
       )
     in
-    ok @@ [(Some name.value, {var=fun_binder;ascr=lhs_type; attributes = []}, attributes, expr)]
+    ok @@ [(Some name.value, {var=fun_binder;ascr=lhs_type; attributes = Stage_common.Helpers.default_binder_attributes}, attributes, expr)]
   | CST.PArray a ->  (* tuple destructuring (for top-level only) *)
     let matchee = expr in  
     let (tuple, loc) = r_split a in

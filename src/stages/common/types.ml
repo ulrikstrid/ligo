@@ -69,11 +69,15 @@ type 'ty_exp arrow = {
   type2: 'ty_exp ;
   }
 
+type binder_attributes = {
+  shadowable: bool ;
+  }
+
 (* Expression level types *)
 type 'ty_exp binder = {
   var  : expression_variable ;
   ascr : 'ty_exp option;
-  attributes : attributes;
+  attributes : binder_attributes;
   }
 
 
