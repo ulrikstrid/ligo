@@ -41,6 +41,7 @@ type all =
  | `Main_depurification of Purification.Errors.purification_error
  | `Main_desugaring of Desugaring.Errors.desugaring_error
  | `Main_sugaring   of Desugaring.Errors.desugaring_error
+ | `Main_self_ast_core of Self_ast_core.Errors.self_ast_core_error
  | `Main_inference of Inference.Errors.typer_error
  | `Main_checking of Checking.Errors.typer_error
  | `Main_self_ast_typed of Self_ast_typed.Errors.self_ast_typed_error

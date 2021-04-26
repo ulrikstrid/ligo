@@ -26,6 +26,7 @@ let purification_tracer (e:Purification.Errors.purification_error) : all = `Main
 let depurification_tracer (e:Purification.Errors.purification_error) : all = `Main_depurification e
 let desugaring_tracer (e:Desugaring.Errors.desugaring_error) : all = `Main_desugaring e
 let sugaring_tracer (e:Desugaring.Errors.desugaring_error) : all = `Main_sugaring e
+let self_ast_core_tracer (e:Self_ast_core.Errors.self_ast_core_error) : all = `Main_self_ast_core e
 let inference_tracer (e:Inference.Errors.typer_error) : all = `Main_inference e
 let checking_tracer (e:Checking.Errors.typer_error) : all = `Main_checking e
 let self_ast_typed_tracer (e:Self_ast_typed.Errors.self_ast_typed_error) : all = `Main_self_ast_typed e
