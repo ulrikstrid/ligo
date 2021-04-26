@@ -34,7 +34,7 @@ const empty : register = Map.empty
 
 Or
 
-```pascaligo group=maps
+```pascaligo skip
 const empty : register = map []
 ```
 
@@ -345,7 +345,7 @@ let remove: (key: key, map: map&lt;'key, 'value&gt;) => map&lt;'key, 'value&gt;
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=maps
+```pascaligo skip
   const updated_map : register = 
     Map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
 ```
@@ -353,10 +353,10 @@ let remove: (key: key, map: map&lt;'key, 'value&gt;) => map&lt;'key, 'value&gt;
 Alternatively, the instruction `remove key from map m` removes the key
 `key` from the map `m`.
 
-```pascaligo group=maps
+```pascaligo skip
 function rem (var m : register) : register is
   block {
-    remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) from map moves
+    remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) from map m
   } with m
 
 const updated_map : register = rem (moves)
@@ -365,7 +365,7 @@ const updated_map : register = rem (moves)
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=maps
+```cameligo skip
 let updated_map : register =
   Map.remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
 ```
@@ -373,7 +373,7 @@ let updated_map : register =
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=maps
+```reasonligo skip
 let updated_map : register =
   Map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
 ```
@@ -381,7 +381,7 @@ let updated_map : register =
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=maps
+```jsligo skip
 let updated_map : register =
   Map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves);
 ```

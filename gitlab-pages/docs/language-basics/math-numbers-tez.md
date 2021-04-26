@@ -379,7 +379,7 @@ division. In LIGO, it is a natural number.
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=d
+```pascaligo group=e
 const a : int = 120
 const b : int = 9
 const rem1 : nat = a mod b  // 3
@@ -393,7 +393,7 @@ const rem4 : nat = a mod d  // 3
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=d
+```cameligo group=e
 let a : int = 120
 let b : int = 9
 let rem1 : nat = a mod b  // 3
@@ -407,7 +407,7 @@ let rem4 : nat = a mod d  // 3
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=d
+```reasonligo group=e
 let a : int = 120;
 let b : int = 9;
 let rem1 : nat = a mod b;  // 3
@@ -426,7 +426,7 @@ let rem4 : nat = a mod d;  // 3
 > operator. In the case of positive numbers everything is the same, but
 > not with negative numbers.
  
-```jsligo group=d
+```jsligo group=e
 let a: int = 120;
 let b: int = 9;
 let rem1: nat = a % b;  // 3
@@ -510,7 +510,7 @@ You can *cast* an `int` to a `nat` and vice versa. Here is how:
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=e
+```pascaligo group=g
 const a : int = int (1n)
 const b : nat = abs (1)
 ```
@@ -518,7 +518,7 @@ const b : nat = abs (1)
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=e
+```cameligo group=g
 let a : int = int (1n)
 let b : nat = abs (1)
 ```
@@ -526,7 +526,7 @@ let b : nat = abs (1)
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=e
+```reasonligo group=g
 let a : int = int (1n);
 let b : nat = abs (1);
 ```
@@ -534,7 +534,7 @@ let b : nat = abs (1);
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=e
+```jsligo group=g
 let a: int = int(1 as nat);
 let b: nat = abs(1);
 ```
@@ -552,28 +552,28 @@ number, and not otherwise.
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=e
+```pascaligo group=h
 const is_a_nat : option (nat) = is_nat (1)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=e
+```cameligo group=h
 let is_a_nat : nat option = Michelson.is_nat (1)
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=e
+```reasonligo group=h
 let is_a_nat : option (nat) = Michelson.is_nat (1);
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=e
+```jsligo group=h
 let is_a_nat: option<nat> = Michelson.is_nat(1);
 ```
 

@@ -35,8 +35,8 @@ function higher3 (const i : int;
 
 function foobar5 (const i : int) : int is
   block {
-    const a : int = 0;
-    function foo (const j : int) : int is a+j;
+    const k : int = 0;
+    function foo (const j : int) : int is k+j;
     function goo (const j : int) : int is foo (j)
   } with higher3 (i, foo, goo)
 

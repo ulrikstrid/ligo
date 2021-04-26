@@ -204,7 +204,7 @@ If Statement
 </div>
 <div className="example">
 
-```pascaligo
+```pascaligo group=if
 function if_statement (const age : int) : int is
   block {
     var id: int := -1;
@@ -224,8 +224,8 @@ Options
 
 ```pascaligo
 type middleName is option(string);
-const middleName : middleName = Some("Foo");
-const middleName : middleName = None;
+const middleNameS : middleName = Some("Foo");
+const middleNameN : middleName = None;
 ```
 
 </div>
@@ -249,7 +249,7 @@ This feature is not supported at the top-level scope, you can use it e.g. within
 :::
 
 ```pascaligo
-function assignment_existing (const age : int) : int is
+function assignment_existing (const w : int) : int is
   block {
     var x : int := 2;
     x := 3;
@@ -300,7 +300,7 @@ Records
 </div>
 <div className="example">
 
-```pascaligo
+```pascaligo group=record
 type person is record
   age: int;
   name: string;
@@ -311,7 +311,7 @@ const john : person = record
   name = "john doe";
 end
 
-const name: string = john.name;
+const name : string = john.name;
 ```
 
 </div>
@@ -331,8 +331,9 @@ end
 
 const price: option(tez) = prices[50n];
 
-function mutate (const u: unit) : unit is block {
-    prices[200n] := 10mutez;
+function mutate (const _: unit) : unit is block {
+    var p := prices;
+    p[200n] := 10mutez;
 } with unit;
 ```
 
@@ -376,7 +377,7 @@ Exception/Failure
 <div className="example">
 
 ```pascaligo
-function fail (const u: unit) : unit is
+function fail (const _: unit) : unit is
   failwith("a failure message")
 ```
 
@@ -570,7 +571,7 @@ If Statement
 </div>
 <div className="example">
 
-```cameligo
+```cameligo group=if
 let if_statement (age : int) : int =
   if age < 16 then 
     (failwith ("Too young to drive"): int)
@@ -642,7 +643,7 @@ Records
 </div>
 <div className="example">
 
-```cameligo
+```cameligo group=record
 type person = {
   age: int;
   name: string;
@@ -919,7 +920,7 @@ If Statement
 </div>
 <div className="example">
 
-```reasonligo
+```reasonligo group=if
 let if_statement = (age : int) : int =>
   if (age < 16) { 
     (failwith ("Too young to drive"): int)
@@ -993,7 +994,7 @@ Records
 </div>
 <div className="example">
 
-```reasonligo
+```reasonligo group=record
 type person = {
   age: int,
   name: string
@@ -1272,7 +1273,7 @@ If Statement
 </div>
 <div className="example">
 
-```jsligo
+```jsligo group=if
 let if_statement = (age : int): int => {
   if (age < 16) { 
     return (failwith ("Too young to drive") as int)
@@ -1347,7 +1348,7 @@ Records
 </div>
 <div className="example">
 
-```jsligo
+```jsligo group=record
 type person = {
   age: int,
   name: string

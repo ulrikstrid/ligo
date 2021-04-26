@@ -33,7 +33,7 @@ const my_set : set (int) = Set.empty
 
 Alternative syntax:
 
-```pascaligo group=sets
+```pascaligo skip
 const my_set : set (int) = set []
 ```
 
@@ -77,20 +77,20 @@ Create a non-empty set.
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=sets
+```pascaligo group=setslit
 const my_set : set (int) = Set.literal (list [3; 2; 2; 1])
 ```
 
 Or use the following syntax sugar:
 
-```pascaligo group=sets
+```pascaligo group=sets4
 const my_set : set (int) = set [3; 2; 2; 1]
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=sets
+```cameligo group=sets4
 let my_set : int set =
   Set.literal [3; 2; 2; 1]
 ```
@@ -98,7 +98,7 @@ let my_set : int set =
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=sets
+```reasonligo group=sets4
 let my_set : set (int) =
   Set.literal ([3, 2, 2, 1]);
 ```
@@ -106,7 +106,7 @@ let my_set : set (int) =
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=sets
+```jsligo group=sets4
 let my_set : set<int> =
   Set.literal(list([3, 2, 2, 1]));
 ```
@@ -379,7 +379,7 @@ let fold_desc: (((a: [&apos;item, &apos;accumulator]) => &apos;accumulator), set
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=sets
+```pascaligo group=sets4
 function sum_right (const i : int; const acc : int): int is acc + i
 const sum_of_elements : int = Set.fold_desc (sum_right, my_set, 0)
 ```
@@ -387,7 +387,7 @@ const sum_of_elements : int = Set.fold_desc (sum_right, my_set, 0)
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=sets
+```cameligo group=sets4
 let sum_right (i, acc : int * int) : int = acc + i
 let sum_of_elements : int = Set.fold_desc sum_right my_set 0
 ```
@@ -395,7 +395,7 @@ let sum_of_elements : int = Set.fold_desc sum_right my_set 0
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=sets
+```reasonligo group=sets4
 let sum_right = ((i, acc) : (int, int)) : int => acc + i;
 let sum_of_elements : int = Set.fold_desc (sum_right, my_set, 0);
 ```
@@ -403,7 +403,7 @@ let sum_of_elements : int = Set.fold_desc (sum_right, my_set, 0);
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=sets
+```jsligo group=sets4
 let sum_right = ([i, acc] : [int, int]) : int => acc + i;
 let sum_of_elements : int = Set.fold_desc (sum_right, my_set, 0);
 ```

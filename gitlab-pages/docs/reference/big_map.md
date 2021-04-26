@@ -407,7 +407,7 @@ let remove: (key: &apos;key, big_map: big_map&lt;&apos;key, &apos;value&gt;) => 
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=big_map
+```pascaligo skip
   const updated_map : register = 
     Big_map.remove (("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
 ```
@@ -416,10 +416,10 @@ Alternatively, the instruction `remove key from map m` removes the key
 `key` from the big map `m` (note that the keyword is `map`, not
 `big_map`).
 
-```pascaligo group=big_map
+```pascaligo skip
 function rem (var m : register) : register is
   block {
-    remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) from map moves
+    remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) from map m
   } with m
 
 const updated_map : register = rem (moves)
@@ -428,7 +428,7 @@ const updated_map : register = rem (moves)
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=big_map
+```cameligo skip
 let updated_map : register =
   Big_map.remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) moves
 ```
@@ -436,7 +436,7 @@ let updated_map : register =
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=big_map
+```reasonligo skip
 let updated_map: register =
   Big_map.remove(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address), moves)
 ```
@@ -444,7 +444,7 @@ let updated_map: register =
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=big_map
+```jsligo skip
 let updated_map: register =
   Big_map.remove(("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN" as address), moves); 
 ```

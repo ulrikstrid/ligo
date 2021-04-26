@@ -17,7 +17,7 @@ let error_ppformat : display_format:string display_format ->
     match a with
     | `Self_ast_core_shadowing v ->
       Format.fprintf f
-        "@[<hv>%a@ Variable cannot be shadowed. @]"
+        "@[<hv>%a@ Cannot be shadowed. @]"
         Snippet.pp v.location
   )
 
@@ -30,7 +30,7 @@ let error_jsonformat : self_ast_core_error -> json = fun a ->
   in
   match a with
   | `Self_ast_core_shadowing v ->
-    let message = `String "Variable cannot be shadowed" in
+    let message = `String "Cannot be shadowed" in
     let loc = `String (Format.asprintf "%a" Location.pp v.location) in
     let content = `Assoc [
       ("message", message);

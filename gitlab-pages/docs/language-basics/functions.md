@@ -73,13 +73,13 @@ functions. In case we do not use a parameter, we can use the wildcard
 `_` to prevent warnings. Either use `_` instead of the parameter
 identifier:
 
-```pascaligo
+```pascaligo group=k1
 function k (const x : int; const _ : int) is x
 ```
 
 or use a parameter identifier starting with wildcard:
 
-```pascaligo
+```pascaligo group=k2
 function k (const x : int; const _y : int) is x
 ```
 
@@ -168,13 +168,13 @@ functions. In case we do not use an argument, we can use the wildcard
 `_` to prevent warnings. Either use `_` instead of the argument
 identifier:
 
-```cameligo
+```cameligo group=k1
 let k (x : int) (_ : int) = x
 ```
 
 or use an identifier starting with wildcard:
 
-```cameligo
+```cameligo group=k2
 let k (x : int) (_y : int) = x
 ```
 
@@ -215,13 +215,13 @@ functions. In case we do not use an argument, we can use the wildcard
 `_` to prevent warnings. Either use `_` instead of the argument
 identifier:
 
-```reasonligo
+```reasonligo group=k1
 let k = ((x, _) : (int, int)) => x;
 ```
 
 or use an identifier starting with wildcard:
 
-```reasonligo
+```reasonligo group=k2
 let k = ((x, _y) : (int, int)) => x;
 ```
 
@@ -270,13 +270,13 @@ functions. In case we do not use an argument, we can use the wildcard
 `_` to prevent warnings. Either use `_` instead of the argument
 identifier:
 
-```jsligo
+```jsligo group=k1
 let k = ([x, _] : [int, int]) : int => x;
 ```
 
 or use an identifier starting with wildcard:
 
-```jsligo
+```jsligo group=k2
 let k = ([x, _y] : [int, int]) : int => x;
 ```
 

@@ -61,7 +61,7 @@ The call to failwith should be annoted with a type as the typechecker cannot inf
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=failwith
+```jsligo group=failwith2
 let main = (p: unit, s: unit): unit => {
   if (true) { 
     return failwith("This contract always fails"); 

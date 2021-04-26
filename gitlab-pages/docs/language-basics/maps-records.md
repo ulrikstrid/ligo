@@ -876,10 +876,10 @@ To remove a binding from a map, we need its key.
 In PascaLIGO, there is a special instruction to remove a binding from
 a map.
 ```pascaligo group=maps
-function delete (const key : address; var moves : register) : register is
+function delete (const key : address; var m : register) : register is
   block {
-    remove key from map moves
-  } with moves
+    remove key from map m
+  } with m
 ```
 
 </Syntax>
@@ -1376,7 +1376,7 @@ from maps, of the form `remove <key> from map <map>`. For example,
 ```pascaligo group=big_maps
 function rem (var m : register) : register is
   block {
-    remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) from map moves
+    remove ("tz1gjaF81ZRRvdzjobyfVNsAeSC6PScjfQwN": address) from map m
   } with m
 
 const updated_map : register = rem (moves)

@@ -568,7 +568,7 @@ whereas they can be repeated in a *list*.
 In PascaLIGO, the notation for sets is similar to that for lists,
 except the keyword `set` is used before:
 
-```pascaligo group=sets
+```pascaligo group=sets0
 const my_set : set (int) = set []
 ```
 
@@ -578,7 +578,7 @@ const my_set : set (int) = set []
 In CameLIGO, the empty set is denoted by the predefined value
 `Set.empty`.
 
-```cameligo group=sets
+```cameligo group=sets0
 let my_set : int set = Set.empty
 ```
 
@@ -588,7 +588,7 @@ let my_set : int set = Set.empty
 In ReasonLIGO, the empty set is denoted by the predefined value
 `Set.empty`.
 
-```reasonligo group=sets
+```reasonligo group=sets0
 let my_set : set (int) = Set.empty;
 ```
 
@@ -598,7 +598,7 @@ let my_set : set (int) = Set.empty;
 In JsLIGO, the empty set is denoted by the predefined value
 `Set.empty`.
 
-```jsligo group=sets
+```jsligo group=sets0
 let my_set: set<int> = Set.empty;
 ```
 

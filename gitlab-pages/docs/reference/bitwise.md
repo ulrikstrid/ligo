@@ -116,28 +116,28 @@ A bitwise `xor` operation.
 
 <Syntax syntax="pascaligo">
 
-```pascaligo
+```pascaligo group=xor
 const three: nat = Bitwise.xor(2n, 1n)
 ```
 
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo
+```cameligo group=xor
 let three: nat = Bitwise.xor 2n 1n
 ```
 
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo
+```reasonligo group=xor
 let three: nat = Bitwise.xor(2n, 1n);
 ```
 
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo
+```jsligo group=xor
 let three: nat = Bitwise.xor(2 as nat, 1 as nat);
 ```
 

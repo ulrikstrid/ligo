@@ -74,11 +74,20 @@ and shadowing_expr : expression_variable list -> expression -> (unit, _) result 
 
 let rec shadowing_map_module : module' -> (module', _) result = fun m' ->
   let _self = shadowing_map_module in
-  let aux = fun (x : declaration) ->
-    match x with
-    | Declaration_constant {expr;_} ->
-       shadowing_expr [] expr
-    | _ -> ok @@ ()
+  let aux = fun (l : expression_variable list) (x : declaration Location.wrap) ->
+    match x.wrap_content with
+    | Declaration_constant {expr;binder={var;attributes;_};_} ->
+       if in_vars var l then
+         fail @@ shadowing var
+       else
+         begin
+           let%bind _ = shadowing_expr l expr in
+           if is_not_shadowable attributes then
+             ok @@ var :: l
+           else 
+             ok @@ l
+         end
+    | _ -> ok @@ l
   in
-  let%bind _ = bind_map_list (bind_map_location aux) m' in
+  let%bind _ = bind_fold_list (fun a d -> aux a d) [] m' in
   ok @@ m'

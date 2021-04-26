@@ -275,7 +275,7 @@ let fold_left: (((a: [&apos;accumulator, &apos;item]) => &apos;accumulator), &ap
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=lists
+```pascaligo group=fold_left
 const my_list: list(int) = list [1; 2; 3]
 
 function sum (const acc : int; const i : int): int is acc + i
@@ -286,7 +286,7 @@ const sum_of_elements : int = List.fold_left (sum, 0, my_list)
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=lists
+```cameligo group=fold_left
 let my_list : int list = [1; 2; 3]
 
 let sum (acc, i : int * int) : int = acc + i
@@ -297,7 +297,7 @@ let sum_of_elements : int = List.fold_left sum 0 my_list
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=lists
+```reasonligo group=fold_left
 let my_list : list(int) = [1, 2, 3];
 
 let sum = ((result, i): (int, int)): int => result + i;
@@ -308,7 +308,7 @@ let sum_of_elements : int = List.fold_left (sum, 0, my_list);
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=lists
+```jsligo group=fold_left
 let my_list : list<int> = list([1, 2, 3]);
 
 let sum = ([result, i]: [int, int]): int => result + i;
@@ -335,7 +335,7 @@ let fold_right: (((a: [&apos;item, &apos;accumulator]) => &apos;accumulator), li
 
 <Syntax syntax="pascaligo">
 
-```pascaligo group=lists
+```pascaligo group=fold_right
 const my_list: list(int) = list [1; 2; 3]
 
 function sum_right (const i : int; const acc : int): int is acc + i
@@ -346,7 +346,7 @@ const sum_of_elements : int = List.fold_right (sum_right, my_list, 0)
 </Syntax>
 <Syntax syntax="cameligo">
 
-```cameligo group=lists
+```cameligo group=fold_right
 let my_list : int list = [1; 2; 3]
 
 let sum_right (i, acc : int * int) : int = acc + i
@@ -357,7 +357,7 @@ let sum_of_elements : int = List.fold_right sum_right my_list 0
 </Syntax>
 <Syntax syntax="reasonligo">
 
-```reasonligo group=lists
+```reasonligo group=fold_right
 let my_list : list(int) = [1, 2, 3];
 
 let sum_right = ((i, result): (int, int)): int => result + i;
@@ -368,7 +368,7 @@ let sum_of_elements : int = List.fold_right (sum_right, my_list, 0);
 </Syntax>
 <Syntax syntax="jsligo">
 
-```jsligo group=lists
+```jsligo group=fold_right
 let my_list : list<int> = list([1, 2, 3]);
 
 let sum_right = ([i, result]: [int, int]): int => result + i;

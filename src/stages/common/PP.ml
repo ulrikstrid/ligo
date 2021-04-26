@@ -105,8 +105,9 @@ let wildcard ppf = fun () ->
 
 let binder type_expression ppf {var;ascr;attributes=attr} =
   let attributes ppf attr =
-    if attr.shadowable then
-      fprintf ppf "[@shadowable]" in
+    ignore ppf; ignore attr in
+    (* if attr.shadowable then
+     *   fprintf ppf "[@shadowable]" in *)
   match ascr with
   | None ->
       fprintf ppf "%a%a" expression_variable var attributes attr

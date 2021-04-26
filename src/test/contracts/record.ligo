@@ -21,8 +21,8 @@ function modify (var r : foobar) : foobar is
 
 function modify_abc (var r : abc) : abc is
   block {
-    const c : int = 42;
-    r := r with record [b=2048; c=c]
+    const cc : int = 42;
+    r := r with record [b=2048; c=cc]
   } with r
 
 type big_record is record [a : int; b : int; c : int; d : int; e : int]
