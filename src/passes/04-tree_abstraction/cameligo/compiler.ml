@@ -511,7 +511,7 @@ and conv : CST.pattern -> (AST.ty_expr AST.pattern,_) result =
     let (var,loc) = r_split var in
     let b =
       let var = Location.wrap ~loc @@ Var.of_name var in
-      { var ; ascr = None }
+      { var ; ascr = None ; attributes = [] }
     in
     ok @@ Location.wrap ~loc @@ P_var b
   | CST.PTuple tuple ->
@@ -663,14 +663,14 @@ and compile_let_binding ?kwd_rec attributes binding =
     | None   ->
         ok @@ expr
     in
-    return_1 @@ (Some name.value, {var=fun_binder;ascr=lhs_type}, attributes, expr)
+    return_1 @@ (Some name.value, {var=fun_binder;ascr=lhs_type;attributes=[]}, attributes, expr)
   | _ -> fail @@ unsupported_pattern_type @@ nseq_to_list binders
   in aux binders
 
 and compile_parameter : CST.pattern -> (_ binder * (_ -> _),_) result =
   fun pattern ->
   let return ?ascr loc fun_ var =
-    ok ({var=Location.wrap ~loc var; ascr}, fun_) in
+    ok ({var=Location.wrap ~loc var; ascr; attributes=[]}, fun_) in
   let return_1 ?ascr loc var = return ?ascr loc (fun e -> e) var in
   match pattern with
     PConstr _ -> fail @@ unsupported_pattern_type [pattern]

@@ -4,7 +4,9 @@ open Desugaring
 open Main_errors
 
 let compile (m : module_) : (Ast_core.module_ , _) result =
-  trace desugaring_tracer @@ compile_module m
+  let%bind m' = trace desugaring_tracer @@ compile_module m in
+  let%bind m' = Self_ast_core.all_module m' in
+  ok @@ m'
 
 let compile_expression (e : expression) : (Ast_core.expression , _) result =
   trace desugaring_tracer @@ compile_expression e

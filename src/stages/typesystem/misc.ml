@@ -48,10 +48,10 @@ module Substitution = struct
       let () = ignore @@ substs in
       ok var
 
-    and s_binder : (_ T.binder,_) w = fun ~substs {var;ascr} ->
+    and s_binder : (_ T.binder,_) w = fun ~substs {var;ascr;attributes} ->
       let%bind var = s_variable ~substs var in
       let%bind ascr = bind_map_option (s_type_expression ~substs) ascr in
-      ok @@ T.{var;ascr}
+      ok @@ T.{var;ascr;attributes}
 
     and s_label : (T.label,_) w = fun ~substs l ->
       let () = ignore @@ substs in

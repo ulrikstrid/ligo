@@ -103,7 +103,7 @@ let wildcard ppf = fun () ->
 
 (* Expressions *)
 
-let binder type_expression ppf {var;ascr} =
+let binder type_expression ppf {var;ascr;_} =
   match ascr with
   | None ->
       fprintf ppf "%a" expression_variable var

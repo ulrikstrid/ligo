@@ -73,6 +73,7 @@ type 'ty_exp arrow = {
 type 'ty_exp binder = {
   var  : expression_variable ;
   ascr : 'ty_exp option;
+  attributes : attributes;
   }
 
 

@@ -370,14 +370,14 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
         let%bind p_type =
           bind_map_option (compile_type_expression  <@ snd)
                           p.param_type in
-        return {var=Location.wrap ~loc @@ Var.of_name var;ascr=p_type}
+        return {var=Location.wrap ~loc @@ Var.of_name var;ascr=p_type;attributes=["not_shadowable"]}
       | ParamVar p ->
         let (p, _) = r_split p in
         let (var, loc) = r_split p.var in
         let%bind p_type =
           bind_map_option (compile_type_expression  <@ snd)
                           p.param_type in
-        return {var=Location.wrap ~loc @@ Var.of_name var;ascr=p_type} in
+        return {var=Location.wrap ~loc @@ Var.of_name var;ascr=p_type;attributes=["shadowable"]} in
     let (func, loc) = r_split func in
     let (param, loc_par)  = r_split func.param in
     let%bind param =
@@ -518,7 +518,7 @@ and conv : CST.pattern -> (AST.ty_expr AST.pattern,_) result =
     let (var,loc) = r_split var in
     let b =
       let var = Location.wrap ~loc @@ Var.of_name var in
-      { var ; ascr = None }
+      { var ; ascr = None ; attributes = ["shadowable"] }
     in
     ok @@ Location.wrap ~loc @@ P_var b
   | CST.PTuple tuple -> (
@@ -638,7 +638,7 @@ and compile_parameters (params : CST.parameters) =
       let%bind param_type =
         bind_map_option (compile_type_expression <@ snd)
                         pc.param_type in
-      return {var;ascr= param_type}
+      return {var;ascr= param_type ; attributes = ["not_shadowable"]}
     | ParamVar pv ->
       let (pv, _loc) = r_split pv in
       let (var, loc) = r_split pv.var in
@@ -646,7 +646,7 @@ and compile_parameters (params : CST.parameters) =
       let%bind param_type =
         bind_map_option (compile_type_expression  <@ snd)
                         pv.param_type in
-      return {var; ascr=param_type}
+      return {var; ascr=param_type; attributes = ["shadowable"]}
   in
   let (params, _loc) = r_split params in
   let params = npseq_to_list params.inside in
@@ -859,8 +859,8 @@ and compile_let_destructuring :
 
 and compile_data_declaration : next:AST.expression -> CST.data_decl -> _ =
   fun ~next data_decl ->
-  let return loc var ascr attr init =
-    ok @@ e_let_in ~loc {var;ascr} attr init next
+  let return loc var ascr var_attr attr init =
+    ok @@ e_let_in ~loc {var;ascr;attributes=var_attr} attr init next
   in
   match data_decl with
     LocalConst const_decl -> (
@@ -873,7 +873,7 @@ and compile_data_declaration : next:AST.expression -> CST.data_decl -> _ =
         let p = Location.wrap ~loc:ploc @@ Var.of_name name
         and attr = const_decl.value.attributes in
         let attr = compile_attributes attr in
-        return loc p type_ attr init
+        return loc p type_ ["shadowable"] attr init
       )
       | pattern ->
         (* not sure what to do with  attributes in that case *)
@@ -887,7 +887,7 @@ and compile_data_declaration : next:AST.expression -> CST.data_decl -> _ =
         let name, ploc = r_split name in
         let%bind init = compile_expression vd.init in
         let p = Location.wrap ~loc:ploc @@ Var.of_name name in
-        return loc p type_ [] init
+        return loc p type_ ["shadowable"] [] init
       | pattern ->
         (* not sure what to do with  attributes in that case *)
         compile_let_destructuring loc vd.init pattern next type_
@@ -896,7 +896,7 @@ and compile_data_declaration : next:AST.expression -> CST.data_decl -> _ =
       let fun_decl, loc = r_split fun_decl in
       let%bind _fun_name, fun_var, fun_type, attr, lambda =
         compile_fun_decl fun_decl in
-      return loc fun_var fun_type attr lambda
+      return loc fun_var fun_type ["shadowable"] attr lambda
 
   | LocalType type_decl ->
     let td,loc = r_split type_decl in
@@ -968,7 +968,7 @@ and compile_fun_decl : CST.fun_decl -> (string * expression_variable * type_expr
         let input_type = Option.map t_tuple lst in
         let binder = Location.wrap @@ Var.fresh ~name:"parameters" () in
         let lambda : _ AST.lambda = {
-          binder={var=binder;ascr=input_type};
+          binder={var=binder;ascr=input_type;attributes=["shadowable"]};
           output_type = ret_type;
           result = e_matching_tuple (e_variable binder) param result;
           } in
@@ -1004,14 +1004,14 @@ and compile_declaration : CST.declaration -> _ result =
       let%bind ascr =
         bind_map_option (compile_type_expression <@ snd) const_type in
       let%bind expr = compile_expression init in
-      let binder = {var;ascr} in
+      let binder = {var;ascr;attributes=["not_shadowable"]} in
       return region @@ AST.Declaration_constant {name = Some name; binder;attr;expr}
     | _ ->
       failwith "REMITODO : destructuring at top level is not supported"
   )
   | FunDecl {value;region} ->
     let%bind (name,var,ascr,attr,expr) = compile_fun_decl value in
-    let binder = {var;ascr} in
+    let binder = {var;ascr;attributes=["not_shadowable"]} in
     let ast = AST.Declaration_constant {name = Some name; binder;attr;expr}
     in return region ast
 
