@@ -370,14 +370,14 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
         let%bind p_type =
           bind_map_option (compile_type_expression  <@ snd)
                           p.param_type in
-        return {var=Location.wrap ~loc @@ Var.of_name var;ascr=p_type;attributes={shadowable = false}}
+        return {var=Location.wrap ~loc @@ Var.of_name var;ascr=p_type;attributes=Stage_common.Helpers.const_binder_attributes}
       | ParamVar p ->
         let (p, _) = r_split p in
         let (var, loc) = r_split p.var in
         let%bind p_type =
           bind_map_option (compile_type_expression  <@ snd)
                           p.param_type in
-        return {var=Location.wrap ~loc @@ Var.of_name var;ascr=p_type;attributes=Stage_common.Helpers.default_binder_attributes} in
+        return {var=Location.wrap ~loc @@ Var.of_name var;ascr=p_type;attributes=Stage_common.Helpers.var_binder_attributes} in
     let (func, loc) = r_split func in
     let (param, loc_par)  = r_split func.param in
     let%bind param =
@@ -638,7 +638,7 @@ and compile_parameters (params : CST.parameters) =
       let%bind param_type =
         bind_map_option (compile_type_expression <@ snd)
                         pc.param_type in
-      return {var;ascr= param_type ; attributes = { shadowable = false} }
+      return {var;ascr= param_type ; attributes = Stage_common.Helpers.const_binder_attributes}
     | ParamVar pv ->
       let (pv, _loc) = r_split pv in
       let (var, loc) = r_split pv.var in
@@ -646,7 +646,7 @@ and compile_parameters (params : CST.parameters) =
       let%bind param_type =
         bind_map_option (compile_type_expression  <@ snd)
                         pv.param_type in
-      return {var; ascr=param_type; attributes = Stage_common.Helpers.default_binder_attributes}
+      return {var; ascr=param_type; attributes = Stage_common.Helpers.var_binder_attributes}
   in
   let (params, _loc) = r_split params in
   let params = npseq_to_list params.inside in
@@ -873,7 +873,7 @@ and compile_data_declaration : next:AST.expression -> CST.data_decl -> _ =
         let p = Location.wrap ~loc:ploc @@ Var.of_name name
         and attr = const_decl.value.attributes in
         let attr = compile_attributes attr in
-        return loc p type_ {shadowable = false} attr init
+        return loc p type_ Stage_common.Helpers.const_binder_attributes attr init
       )
       | pattern ->
         (* not sure what to do with  attributes in that case *)
@@ -887,7 +887,7 @@ and compile_data_declaration : next:AST.expression -> CST.data_decl -> _ =
         let name, ploc = r_split name in
         let%bind init = compile_expression vd.init in
         let p = Location.wrap ~loc:ploc @@ Var.of_name name in
-        return loc p type_ Stage_common.Helpers.default_binder_attributes [] init
+        return loc p type_ Stage_common.Helpers.var_binder_attributes [] init
       | pattern ->
         (* not sure what to do with  attributes in that case *)
         compile_let_destructuring loc vd.init pattern next type_
@@ -1004,7 +1004,7 @@ and compile_declaration : CST.declaration -> _ result =
       let%bind ascr =
         bind_map_option (compile_type_expression <@ snd) const_type in
       let%bind expr = compile_expression init in
-      let binder = {var;ascr;attributes={shadowable = false} } in
+      let binder = {var;ascr;attributes=Stage_common.Helpers.const_binder_attributes} in
       return region @@ AST.Declaration_constant {name = Some name; binder;attr;expr}
     | _ ->
       failwith "REMITODO : destructuring at top level is not supported"

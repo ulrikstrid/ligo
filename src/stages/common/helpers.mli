@@ -36,3 +36,5 @@ val fold_pattern_list : ('a -> 'b pattern -> 'a) -> 'a -> 'b pattern list -> 'a
 val map_pattern_t : ('a binder -> ('b binder, 'err) result) -> 'a pattern -> ('b pattern, 'err) result
 
 val default_binder_attributes : binder_attributes
+val const_binder_attributes : binder_attributes
+val var_binder_attributes : binder_attributes
