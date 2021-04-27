@@ -258,3 +258,77 @@ let rec fold_map_expression : ('a , 'err) fold_mapper -> 'a -> expression -> ('a
     ok (res, return @@ E_module_accessor { module_name; element })
   )
   | E_literal _ | E_variable _ | E_raw_code _ as e' -> ok (init', return e')
+
+let rec get_pattern_vars : type_expression pattern -> expression_variable list = fun pattern ->
+  match pattern.wrap_content with
+  | P_var {var} -> [var]
+  | P_list (List l) ->
+     List.concat @@ List.map get_pattern_vars l
+  | P_list (Cons (hd, tl)) ->
+     let hd = get_pattern_vars hd in
+     let tl = get_pattern_vars tl in
+     hd @ tl
+  | P_variant (_, Some p) ->
+     get_pattern_vars p
+  | P_tuple l ->
+     List.concat @@ List.map get_pattern_vars l
+  | P_record (_, ps) ->
+     List.concat @@ List.map get_pattern_vars ps
+  | _ -> []
+
+let compare_vars e e' =
+  Location.compare_content ~compare:Var.compare e e'
+
+let in_vars var vars =
+  List.mem ~compare:compare_vars var vars
+
+let rec get_fv : expression -> expression_variable list = fun expr ->
+  let remove_from var vars =
+  if List.mem ~compare:compare_vars var vars then
+    let ith = List.find_index (fun v -> compare_vars var v = 0) vars in
+    List.remove ith vars
+  else
+    vars in
+  match expr.expression_content with
+  | E_literal _ -> []
+  | E_variable v -> [v]
+  | E_constant {arguments} ->
+     List.concat @@ List.map get_fv arguments
+  | E_application {lamb;args} ->
+     get_fv lamb @ get_fv args
+  | E_lambda {binder={var;_};result} ->
+     remove_from var @@ get_fv result
+  | E_recursive {lambda={result;binder={var;_}};fun_name} ->
+     remove_from fun_name @@ remove_from var @@ get_fv result
+  | E_let_in {let_binder={var;_};rhs;let_result} ->
+     let rhs_vars = get_fv rhs in
+     let result_vars = remove_from var @@ get_fv let_result in
+     rhs_vars @ result_vars
+  | E_type_in {let_result;_} ->
+     get_fv let_result
+  | E_mod_in {let_result;_} ->
+     get_fv let_result
+  | E_mod_alias {result;_} ->
+     get_fv result
+  | E_raw_code _ ->
+     []
+  | E_constructor {element;_} ->
+     get_fv element
+  | E_matching {matchee;cases} ->
+     let get_fv_case {pattern;body} = 
+       let vars_in_pattern = get_pattern_vars pattern in
+       let body_vars = get_fv body in
+       List.fold_right remove_from vars_in_pattern body_vars in
+     let matchee_vars = get_fv matchee in
+     let cases_vars = List.map get_fv_case cases in
+     matchee_vars @ List.concat cases_vars
+  | E_record rows ->
+     let rows = LMap.to_list rows in
+     List.concat @@ List.map get_fv rows
+  | E_ascription {anno_expr} ->
+     get_fv anno_expr
+  | E_record_accessor {record} ->
+     get_fv record
+  | E_record_update {record;update} ->
+     get_fv record @ get_fv update
+  | E_module_accessor _ -> []

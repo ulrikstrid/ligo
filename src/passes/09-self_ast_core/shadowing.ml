@@ -1,9 +1,9 @@
+open Helpers
 open Ast_core
 open Trace
 open Errors
 
 let is_not_shadowable attrs = not attrs.shadowable
-let in_vars var vars = List.mem ~compare:(Location.compare_content ~compare:Var.compare) var vars
 
 let rec get_all_pattern_vars : type_expression pattern -> expression_variable list = fun pattern ->
   match pattern.wrap_content with
@@ -75,8 +75,7 @@ and shadowing_expr : expression_variable list -> expression -> (unit, _) result 
      shadowing_expr vars anno_expr
   | E_module_accessor _ -> ok @@ ()
 
-let rec shadowing_map_module : module' -> (module', _) result = fun m' ->
-  let _self = shadowing_map_module in
+let shadowing_map_module : module' -> (module', _) result = fun m' ->
   let aux = fun (l : expression_variable list) (x : declaration Location.wrap) ->
     match x.wrap_content with
     | Declaration_constant {expr;binder={var;attributes;_};_} ->
