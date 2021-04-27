@@ -67,14 +67,16 @@ let rec get_fv : expression -> expression_variable list = fun expr ->
      List.concat @@ List.map get_fv rows
   | E_ascription {anno_expr} ->
      get_fv anno_expr
-  | E_record_accessor _ -> []
-  | E_record_update _ -> []
+  | E_record_accessor {record} ->
+     get_fv record
+  | E_record_update {record;update} ->
+     get_fv record @ get_fv update
   | E_module_accessor _ -> []
 and get_fv_case : (expression, type_expression) match_case -> expression_variable list
   = fun {pattern;body} ->
   let vars_in_pattern = get_pattern_vars pattern in
   let body_vars = get_fv body in
-  List.fold_right (fun a b -> remove_from a b) vars_in_pattern body_vars
+  List.fold_right remove_from vars_in_pattern body_vars
 
   
 let rec get_some_pattern_vars : type_expression pattern -> expression_variable list = fun pattern ->
