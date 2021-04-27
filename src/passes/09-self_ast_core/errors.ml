@@ -44,12 +44,13 @@ let error_jsonformat : self_ast_core_error -> json = fun a ->
       ("location", loc);
     ] in
     json_error ~stage ~content
-  | `Self_ast_core_capturing v ->
+  | `Self_ast_core_capturing vars ->
     let message = `String "Cannot be captured" in
-    let v0 = List.nth v 0 in
-    let loc = `String (Format.asprintf "%a" Location.pp v0.location) in
+    let loc (v : expression_variable) =
+      `String (Format.asprintf "%a" Location.pp v.location) in
+    let locs = `List (List.map loc vars) in
     let content = `Assoc [
       ("message", message);
-      ("location", loc);
+      ("locations", locs);
     ] in
     json_error ~stage ~content
