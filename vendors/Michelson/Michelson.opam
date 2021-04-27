@@ -6,8 +6,8 @@ description  : "A lexer and a parser for Michelson"
 maintainer   : "rinderknecht@free.fr"
 authors      : "Christian Rinderknecht"
 license      : "MIT"
-homepage     : "https://gitlab.com/ligolang/Michelson"
-bug-reports  : "https://gitlab.com/ligolang/Michelson/issues"
+homepage     : "https://gitlab.com/ligolang/ligo/-/tree/dev/vendors/Michelson"
+bug-reports  : "https://gitlab.com/ligolang/ligo/-/issues"
 # If you change the dependencies, run `opam lock` in the root
 depends      : ["dune" "base" "ocaml" "simple-utils" "bisect_ppx"
                 "getopt" "LexerLib" "Preprocessor" "ParserLib"]

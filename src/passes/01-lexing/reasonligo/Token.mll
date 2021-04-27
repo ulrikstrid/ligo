@@ -194,7 +194,7 @@ module T =
 
     type token = t
 
-    let proj_token = function
+    let project = function
       (* Preprocessing directives *)
 
       Directive d ->
@@ -351,13 +351,13 @@ module T =
     (* Converting a token to a string *)
 
     let to_string ~offsets mode token =
-      let region, val_str = proj_token token in
+      let region, val_str = project token in
       let reg_str = region#compact ~offsets mode
       in sprintf "%s: %s" reg_str val_str
 
     (* Extracting the source region of a token *)
 
-    let to_region token = proj_token token |> fst
+    let to_region token = project token |> fst
 
     (* Keywords *)
 
@@ -556,13 +556,15 @@ and scan_uident region lexicon = parse
 
     let mk_lang lang region = Lang Region.{value=lang; region}
 
+    (* Verbatim string delimiters *)
+
+    let verbatim_delimiters = "{|", "|}"
+
     (* Predicates *)
 
     let is_eof = function EOF _ -> true | _ -> false
 
-    let support_string_delimiter c = (c = '"')
-
-    let verbatim_delimiters = ("{|", "|}")
+    let is_string_delimiter s = (s = "\"")
   end
 
 include T

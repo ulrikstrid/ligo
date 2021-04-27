@@ -127,97 +127,97 @@ module T =
     let concrete = function
       (* Literals *)
 
-        "Ident"    -> id_sym ()
-      | "UIdent"   -> uid_sym ()
-      | "Int"      -> "1"
-      | "Nat"      -> "1n"
-      | "Mutez"    -> "1mutez"
-      | "String"   -> "\"a string\""
-      | "Verbatim" -> "{|verbatim|}"
-      | "Bytes"    -> "0xAA"
-      | "Attr"     -> "[@attr]"
-      | "Lang"     -> "[%Michelson"
+      "Ident"    -> id_sym ()
+    | "UIdent"   -> uid_sym ()
+    | "Int"      -> "1"
+    | "Nat"      -> "1n"
+    | "Mutez"    -> "1mutez"
+    | "String"   -> "\"a string\""
+    | "Verbatim" -> "{|verbatim|}"
+    | "Bytes"    -> "0xAA"
+    | "Attr"     -> "[@attr]"
+    | "Lang"     -> "[%Michelson"
 
-      (* Symbols *)
+    (* Symbols *)
 
-      | "SEMI"     -> ";"
-      | "COMMA"    -> ","
-      | "LPAR"     -> "("
-      | "RPAR"     -> ")"
-      | "LBRACE"   -> "{"
-      | "RBRACE"   -> "}"
-      | "LBRACKET" -> "["
-      | "RBRACKET" -> "]"
-      | "SHARP"     -> "#"
-      | "VBAR"     -> "|"
-      | "ARROW"    -> "->"
-      | "ASSIGN"      -> ":="
-      | "EQ"       -> "="
-      | "COLON"    -> ":"
-      | "LT"       -> "<"
-      | "LE"       -> "<="
-      | "GT"       -> ">"
-      | "GE"       -> ">="
-      | "NE"       -> "=/="
-      | "PLUS"     -> "+"
-      | "MINUS"    -> "-"
-      | "SLASH"    -> "/"
-      | "TIMES"    -> "*"
-      | "DOT"      -> "."
-      | "WILD"     -> "_"
-      | "CARET"    -> "^"
+    | "SEMI"     -> ";"
+    | "COMMA"    -> ","
+    | "LPAR"     -> "("
+    | "RPAR"     -> ")"
+    | "LBRACE"   -> "{"
+    | "RBRACE"   -> "}"
+    | "LBRACKET" -> "["
+    | "RBRACKET" -> "]"
+    | "SHARP"     -> "#"
+    | "VBAR"     -> "|"
+    | "ARROW"    -> "->"
+    | "ASSIGN"      -> ":="
+    | "EQ"       -> "="
+    | "COLON"    -> ":"
+    | "LT"       -> "<"
+    | "LE"       -> "<="
+    | "GT"       -> ">"
+    | "GE"       -> ">="
+    | "NE"       -> "=/="
+    | "PLUS"     -> "+"
+    | "MINUS"    -> "-"
+    | "SLASH"    -> "/"
+    | "TIMES"    -> "*"
+    | "DOT"      -> "."
+    | "WILD"     -> "_"
+    | "CARET"    -> "^"
 
-      (* Keywords *)
+    (* Keywords *)
 
-      | "And"       -> "and"
-      | "Begin"     -> "begin"
-      | "BigMap"    -> "big_map"
-      | "Block"     -> "block"
-      | "Case"      -> "case"
-      | "Const"     -> "const"
-      | "Contains"  -> "contains"
-      | "Else"      -> "else"
-      | "End"       -> "end"
-      | "False"     -> "False"
-      | "For"       -> "for"
-      | "From"      -> "from"
-      | "Function"  -> "function"
-      | "If"        -> "if"
-      | "In"        -> "in"
-      | "Is"        -> "is"
-      | "List"      -> "list"
-      | "Map"       -> "map"
-      | "Mod"       -> "mod"
-      | "Module"    -> "module"
-      | "Nil"       -> "nil"
-      | "Ctor_None" -> "None"
-      | "Not"       -> "not"
-      | "Of"        -> "of"
-      | "Or"        -> "or"
-      | "Patch"     -> "patch"
-      | "Record"    -> "record"
-      | "Recursive" -> "recursive"
-      | "Remove"    -> "remove"
-      | "Set"       -> "set"
-      | "Ctor_Some" -> "Some"
-      | "Skip"      -> "skip"
-      | "Step"      -> "step"
-      | "Then"      -> "then"
-      | "To"        -> "to"
-      | "True"      -> "True"
-      | "Type"      -> "type"
-      | "Unit"      -> "Unit"
-      | "Var"       -> "var"
-      | "While"     -> "while"
-      | "With"      -> "with"
+    | "And"       -> "and"
+    | "Begin"     -> "begin"
+    | "BigMap"    -> "big_map"
+    | "Block"     -> "block"
+    | "Case"      -> "case"
+    | "Const"     -> "const"
+    | "Contains"  -> "contains"
+    | "Else"      -> "else"
+    | "End"       -> "end"
+    | "False"     -> "False"
+    | "For"       -> "for"
+    | "From"      -> "from"
+    | "Function"  -> "function"
+    | "If"        -> "if"
+    | "In"        -> "in"
+    | "Is"        -> "is"
+    | "List"      -> "list"
+    | "Map"       -> "map"
+    | "Mod"       -> "mod"
+    | "Module"    -> "module"
+    | "Nil"       -> "nil"
+    | "Ctor_None" -> "None"
+    | "Not"       -> "not"
+    | "Of"        -> "of"
+    | "Or"        -> "or"
+    | "Patch"     -> "patch"
+    | "Record"    -> "record"
+    | "Recursive" -> "recursive"
+    | "Remove"    -> "remove"
+    | "Set"       -> "set"
+    | "Ctor_Some" -> "Some"
+    | "Skip"      -> "skip"
+    | "Step"      -> "step"
+    | "Then"      -> "then"
+    | "To"        -> "to"
+    | "True"      -> "True"
+    | "Type"      -> "type"
+    | "Unit"      -> "Unit"
+    | "Var"       -> "var"
+    | "While"     -> "while"
+    | "With"      -> "with"
 
-      (* Virtual tokens *)
+    (* Virtual tokens *)
 
-      | "EOF" -> ""
+    | "EOF" -> ""
 
-      (* This case should not happen! *)
+    (* This case should not happen! *)
 
-      | _  -> "\\Unknown" (* Backslash meant to trigger an error *)
+    | _  -> "\\Unknown" (* Backslash meant to trigger an error *)
 
     (* Projections *)
 
@@ -225,7 +225,7 @@ module T =
 
     type token = t
 
-    let proj_token = function
+    let project = function
         (* Preprocessing directives *)
 
       Directive d ->
@@ -433,13 +433,13 @@ module T =
     (* Converting a token to a string *)
 
     let to_string ~offsets mode token =
-      let region, val_str = proj_token token in
+      let region, val_str = project token in
       let reg_str = region#compact ~offsets mode
       in sprintf "%s: %s" reg_str val_str
 
     (* Extracting the source region of a token *)
 
-    let to_region token = proj_token token |> fst
+    let to_region token = project token |> fst
 
     (* Keywords *)
 
@@ -530,8 +530,8 @@ module T =
 
 let small   = ['a'-'z']
 let capital = ['A'-'Z']
-let letter  = small | capital
 let digit   = ['0'-'9']
+let letter  = small | capital
 let ident   = small (letter | '_' | digit)* |
               '_' (letter | '_' (letter | digit) | digit)+
 let uident  = capital (letter | '_' | digit)*
@@ -663,13 +663,15 @@ and scan_uident region lexicon = parse
 
     let mk_lang lang region = Lang Region.{value=lang; region}
 
+    (* Verbatim string delimiters *)
+
+    let verbatim_delimiters = "{|", "|}"
+
     (* Predicates *)
 
     let is_eof = function EOF _ -> true | _ -> false
 
-    let support_string_delimiter c = (c = '"')
-
-    let verbatim_delimiters = ("{|", "|}")
+    let is_string_delimiter s = (s = "\"")
   end
 
 include T

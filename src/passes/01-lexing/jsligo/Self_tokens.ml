@@ -70,8 +70,8 @@ let automatic_semicolon_insertion tokens =
   | token :: (Type _ as t) :: rest
   | token :: (Return _ as t) :: rest
   | token :: (Let _ as t) :: rest ->
-      let r, _  = Token.proj_token token
-      and r2, _ = Token.proj_token t in
+      let r, _  = Token.project token
+      and r2, _ = Token.project t in
       if r#stop#line < r2#start#line  then
         inner (t :: SEMI Region.ghost :: token :: result) rest
       else (

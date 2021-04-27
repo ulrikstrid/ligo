@@ -50,7 +50,7 @@ module type S =
        a token is that the latter is the textual representation of the
        OCaml value denoting the token (its abstract syntax), rather
        than its lexeme (concrete syntax). Note that [concrete] is used
-       by the modukle [UnlexerGen] to transform the textual
+       by the module [UnlexerGen] to transform the textual
        representation of a token (not a lexeme) into a lexeme. *)
 
     val to_lexeme : token -> lexeme
@@ -81,10 +81,12 @@ module type S =
     val mk_lang     : lexeme Region.reg -> Region.t -> token
     val eof         : Region.t -> token
 
-    (* Predicates *)
+    (* Verbatim string delimiters *)
 
-    val is_eof : token -> bool
-    val support_string_delimiter : char -> bool
     val verbatim_delimiters : string * string
 
+    (* Predicates *)
+
+    val is_eof              : token -> bool
+    val is_string_delimiter : string -> bool
   end

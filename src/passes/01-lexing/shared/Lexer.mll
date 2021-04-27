@@ -60,8 +60,6 @@ module Make (Token : Token.S) =
       let value = error_to_string error in
       raise (Error Region.{value; region})
 
-    let support_string_delimiter = Token.support_string_delimiter
-
     (* TOKENS *)
 
     (* Making tokens *)
@@ -164,18 +162,17 @@ module Make (Token : Token.S) =
       in Core.Token token, state
 
     let mk_uident state buffer =
-      let open Core in
-      let {region; lexeme; state} = state#sync buffer in
+      let Core.{region; lexeme; state} = state#sync buffer in
       let token = Token.mk_uident lexeme region
       in Core.Token token, state
 
     let mk_lang lang state buffer =
       let Core.{region; state; _} = state#sync buffer in
-      let start              = region#start#shift_bytes 1 in
-      let stop               = region#stop in
-      let lang_reg           = Region.make ~start ~stop in
-      let lang               = Region.{value=lang; region=lang_reg} in
-      let token              = Token.mk_lang lang region
+      let start    = region#start#shift_bytes 1 in
+      let stop     = region#stop in
+      let lang_reg = Region.make ~start ~stop in
+      let lang     = Region.{value=lang; region=lang_reg} in
+      let token    = Token.mk_lang lang region
       in Core.Token token, state
 
     let mk_sym state buffer =
@@ -183,32 +180,50 @@ module Make (Token : Token.S) =
       match Token.mk_sym lexeme region with
         Stdlib.Ok token ->
           Core.Token token, state
-      | Stdlib.Error Token.Invalid_symbol s ->
-          fail region (Invalid_symbol  s)
+      | Stdlib.Error Token.Invalid_symbol char ->
+          fail region (Invalid_symbol char)
 
     let mk_eof state buffer =
       let Core.{region; state; _} = state#sync buffer in
       let token = Token.eof region
       in Core.Token token, state
 
+    let try_verb scan_verb state lexbuf =
+      let lexeme = Lexing.lexeme lexbuf
+      and verb_open, verb_close = Token.verbatim_delimiters in
+      if lexeme = verb_open then
+        let Core.{region; state; _} = state#sync lexbuf in
+        let thread = Core.mk_thread region
+        in scan_verb verb_close thread state lexbuf |> mk_verbatim
+      else
+        let Core.{region; _} = state#sync lexbuf
+        in fail region (Unexpected_character lexeme.[0])
+
+    let unexpected state lexbuf =
+      let Core.{region; lexeme; _} = state#sync lexbuf
+      in fail region (Unexpected_character lexeme.[0])
+
 (* END HEADER *)
 }
 
 (* START LEXER DEFINITION *)
 
-(* Named regular expressions *)
+(* Those regular expressions must be identical to those in Token.mll *)
 
-let nl         = ['\n' '\r'] | "\r\n"
-let blank      = ' ' | '\t'
-let digit      = ['0'-'9']
-let natural    = digit | digit (digit | '_')* digit
-let decimal    = natural '.' natural
 let small      = ['a'-'z']
 let capital    = ['A'-'Z']
+let digit      = ['0'-'9']
 let letter     = small | capital
 let ident      = small (letter | '_' | digit)* |
                  '_' (letter | '_' (letter | digit) | digit)+
 let uident     = capital (letter | '_' | digit)*
+
+(* Local regular expressions *)
+
+let nl         = ['\n' '\r'] | "\r\n"
+let blank      = ' ' | '\t'
+let natural    = digit | digit (digit | '_')* digit
+let decimal    = natural '.' natural
 let attr       = letter (letter | '_' | ':' | digit)*
 let lang       = attr
 let hexa_digit = digit | ['A'-'F' 'a'-'f']
@@ -243,66 +258,55 @@ let symbol =
    through recursive calls. *)
 
 rule scan state = parse
-  ident                  { mk_ident        state lexbuf }
-| uident                 { mk_uident       state lexbuf }
-| bytes                  { mk_bytes seq    state lexbuf }
-| natural 'n'            { mk_nat          state lexbuf }
-| natural "mutez"        { mk_mutez        state lexbuf }
+  ident                { mk_ident           state lexbuf }
+| uident               { mk_uident          state lexbuf }
+| bytes                { mk_bytes       seq state lexbuf }
+| natural 'n'          { mk_nat             state lexbuf }
+| natural "mutez"      { mk_mutez           state lexbuf }
 | natural "tz"
-| natural "tez"          { mk_tez          state lexbuf }
+| natural "tez"        { mk_tez             state lexbuf }
 | decimal "tz"
-| decimal "tez"          { mk_tez_decimal  state lexbuf }
-| natural                { mk_int          state lexbuf }
-| symbol                 { mk_sym          state lexbuf }
-| eof                    { mk_eof          state lexbuf }
-| "[@"  (attr as a) "]"  { mk_attr       a state lexbuf }
-| "[%"  (lang as l)      { mk_lang       l state lexbuf }
-| "`"
-| "{|" as lexeme {
-    if lexeme = fst Token.verbatim_delimiters then
-      let Core.{region; state; _} = state#sync lexbuf in
-      let thread = Core.mk_thread region
-      in scan_verbatim (snd Token.verbatim_delimiters) thread state lexbuf
-         |> mk_verbatim
-    else
-      let Core.{region; _} = state#sync lexbuf
-      in fail region (Unexpected_character lexeme.[0])
-  }
-
-| _ as c { let Core.{region; _} = state#sync lexbuf
-           in fail region (Unexpected_character c) }
+| decimal "tez"        { mk_tez_decimal     state lexbuf }
+| natural              { mk_int             state lexbuf }
+| symbol               { mk_sym             state lexbuf }
+| eof                  { mk_eof             state lexbuf }
+| "[@" (attr as a) "]" { mk_attr          a state lexbuf }
+| "[%" (lang as l)     { mk_lang          l state lexbuf }
+| "`" | "{|"           { try_verb scan_verb state lexbuf }
+| _                    { unexpected         state lexbuf }
 
 (* Scanning verbatim strings *)
 
-and scan_verbatim verbatim_end thread state = parse
+and scan_verb close thread state = parse
   (* Inclusion of Michelson code *)
   '#' blank* (natural as line) blank+ '"' (string as file) '"'
   (blank+ (('1' | '2') as flag))? blank* {
     let Core.{state; region; _} = state#sync lexbuf
-    in eol verbatim_end region line file flag thread state lexbuf
+    in eol close region line file flag thread state lexbuf
   }
-| nl as nl { let ()    = Lexing.new_line lexbuf
-             and state = state#set_pos (state#pos#new_line nl) in
-             scan_verbatim verbatim_end (thread#push_string nl) state lexbuf }
-| eof      { fail thread#opening Unterminated_verbatim }
-
-| "`"
-| "|}" as lexeme  {
-    if verbatim_end = lexeme then
-      Core.(thread, (state#sync lexbuf).state)
+| "`" | "|}" {
+    let lexeme = Lexing.lexeme lexbuf in
+    if lexeme = close then
+      thread, (state#sync lexbuf).Core.state
     else
       let Core.{state; _} = state#sync lexbuf in
-      scan_verbatim verbatim_end (thread#push_string lexeme) state lexbuf
+      scan_verb close (thread#push_string lexeme) state lexbuf
   }
+| nl     { let () = Lexing.new_line lexbuf
+           and nl = Lexing.lexeme lexbuf in
+           let state = state#set_pos (state#pos#new_line nl) in
+           scan_verb close (thread#push_string nl) state lexbuf }
+| eof    { fail thread#opening Unterminated_verbatim }
 | _ as c { let Core.{state; _} = state#sync lexbuf in
-           scan_verbatim verbatim_end (thread#push_char c) state lexbuf }
+           scan_verb close (thread#push_char c) state lexbuf }
 
-and eol verbatim_end region_prefix line file flag thread state = parse
-  nl | eof { let _, state =
-               Core.linemarker region_prefix ~line ~file ?flag state lexbuf
-             in scan_verbatim verbatim_end thread state lexbuf }
-| _        { let Core.{region; _} = state#sync lexbuf
-             in fail region Invalid_linemarker_argument }
+and eol close region_prefix line file flag thread state = parse
+  nl
+| eof { let _, state =
+          Core.linemarker region_prefix ~line ~file ?flag state lexbuf
+        in scan_verb close thread state lexbuf }
+| _   { let Core.{region; _} = state#sync lexbuf
+        in fail region Invalid_linemarker_argument }
 
 (* END LEXER DEFINITION *)
 
@@ -324,7 +328,7 @@ and eol verbatim_end region_prefix line file flag thread state = parse
         method mk_string = mk_string
         method mk_eof    = lift <@ mk_eof
         method callback  = lift <@ scan
-        method support_string_delimiter = support_string_delimiter
+        method is_string_delimiter = Token.is_string_delimiter
       end
 
     let scan = Core.mk_scan client

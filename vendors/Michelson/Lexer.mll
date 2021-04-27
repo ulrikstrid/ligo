@@ -117,7 +117,7 @@ module Make (Token : TOKEN) =
     | Truncated_encoding (child, tree) ->
         let expected =
           match child with
-            `Left -> 'A'
+            `Left  -> 'A'
           | `Right -> 'I' in
         sprintf "\
           Unexpected end of encoding.\n\
@@ -185,27 +185,27 @@ module Make (Token : TOKEN) =
       let token  = Token.mk_string lexeme region
       in Core.Token token, state
 
-    let mk_bytes bytes state buffer =
-      let Core.{region; state; _} = state#sync buffer in
+    let mk_bytes bytes state lexbuf =
+      let Core.{region; state; _} = state#sync lexbuf in
       let token = Token.mk_bytes bytes region
       in Core.Token token, state
 
-    let mk_int state buffer =
-      let Core.{region; lexeme; state} = state#sync buffer in
+    let mk_int state lexbuf =
+      let Core.{region; lexeme; state} = state#sync lexbuf in
       match Token.mk_int lexeme region with
         Ok token -> Core.Token token, state
       | Error Token.Non_canonical_zero ->
           fail region Non_canonical_zero
 
-    let mk_ident state buffer =
+    let mk_ident state lexbuf =
       let mk_region index start =
         let start = start#shift_bytes index in
         let stop  = start#shift_bytes 1
         in Region.make ~start ~stop
       and start = state#pos in
-      let Core.{region; lexeme; state} = state#sync buffer in
+      let Core.{region; lexeme; state} = state#sync lexbuf in
       match Token.mk_ident lexeme region with
-        Ok token -> Core.Token token, state
+        Stdlib.Ok token -> Core.Token token, state
       | Error Token.Valid_prefix (index, tree) ->
           let region = mk_region index start in
           fail region (Valid_prefix tree)
@@ -222,22 +222,27 @@ module Make (Token : TOKEN) =
           let region = Region.make ~start ~stop:start
           in fail region Missing_break
 
-    let mk_annot state buffer =
-      let Core.{region; lexeme; state} = state#sync buffer
+    let mk_annot state lexbuf =
+      let Core.{region; lexeme; state} = state#sync lexbuf
       in match Token.mk_annot lexeme region with
            Ok token -> Core.Token token, state
          | Error Token.Annotation_length max ->
              fail region (Annotation_length max)
 
-    let mk_sym state buffer =
-      let Core.{region; lexeme; state} = state#sync buffer in
+    let mk_sym state lexbuf =
+      let Core.{region; lexeme; state} = state#sync lexbuf in
       let token = Token.mk_sym lexeme region
       in Core.Token token, state
 
-    let mk_eof state buffer =
-      let Core.{region; state; _} = state#sync buffer in
+    let mk_eof state lexbuf =
+      let Core.{region; state; _} = state#sync lexbuf in
       let token = Token.eof region
       in Core.Token token, state
+
+    let unexpected state lexbuf =
+      let lexeme = Lexing.lexeme lexbuf
+      and Core.{region; _} = state#sync lexbuf
+      in fail region (Unexpected_character lexeme)
 
 (* END HEADER *)
 }
@@ -282,8 +287,7 @@ rule scan state = parse
 | annotation { mk_annot     state lexbuf }
 | symbol     { mk_sym       state lexbuf }
 | eof        { mk_eof       state lexbuf }
-| _ as c     { let Core.{region; _} = state#sync lexbuf
-               in fail region (Unexpected_character c) }
+| _          { unexpected   state lexbuf }
 
 (* END LEXER DEFINITION *)
 

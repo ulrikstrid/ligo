@@ -73,13 +73,18 @@ val mk_thread : Region.t -> thread
    with the markup at the left of its lexeme until either the start of
    the file or the end of the previously recognised token.
 
+     The field [config] gathers information already required by the
+   preprocessor (if any), for example, it specifies what kind of block
+   comments there are (if any), or how to assert that a token is the
+   end of the file.
+
+     The field [window] is a two-token window, that is, a buffer that
+   contains the last recognised token, and the penultimate (if any).
+
      The state includes a field [pos] which holds the current position
    in the source file. The position is not always updated after a
    single character has been matched: that depends on the regular
    expression that matched the lexing buffer.
-
-     The field [window] is a two-token window, that is, a buffer that
-   contains the last recognised token, and the penultimate (if any).
 
      The fields [decoder] and [supply] offer the support needed for
    the lexing of UTF-8 encoded characters in comments (the only place
@@ -197,7 +202,7 @@ type 'token client = <
   mk_string           : 'token cut;
   mk_eof              : 'token scanner;
   callback            : 'token scanner;
-  is_string_delimiter : char -> bool
+  is_string_delimiter : string -> bool
 >
 
 (* Making a scanner from a client's callback and other specifics *)

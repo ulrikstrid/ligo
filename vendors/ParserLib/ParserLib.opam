@@ -6,8 +6,8 @@ description  : "A wrapper that exposes the monolithic and incremental API of Men
 maintainer   : "rinderknecht@free.fr"
 authors      : "Christian Rinderknecht"
 license      : "MIT"
-homepage     : "https://gitlab.com/ligolang/ParserLib"
-bug-reports  : "https://gitlab.com/ligolang/Parser/issues"
+homepage     : "https://gitlab.com/ligolang/ligo/-/tree/dev/vendors/ParserLib"
+bug-reports  : "https://gitlab.com/ligolang/ligo/-/issues"
 # If you change the dependencies, run `opam lock` in the root
 depends      : ["dune" "base" "ocaml" "simple-utils" "bisect_ppx"
                 "menhir" "getopt"]
