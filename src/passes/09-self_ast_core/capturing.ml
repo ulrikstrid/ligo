@@ -146,7 +146,7 @@ and capturing_expr : expression_variable list -> expression -> (unit, _) result 
      let%bind _ = bind_map_list (capturing_match_case vars) cases in
      ok @@ ()
   | E_record rows ->
-     let%bind _ = Helpers.bind_map_lmap (fun expr -> capturing_expr vars expr) rows in
+     let%bind _ = Helpers.bind_map_lmap (capturing_expr vars) rows in
      ok @@ ()
   | E_record_accessor _ -> ok @@ ()
   | E_record_update _ -> ok @@ ()
