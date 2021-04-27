@@ -27,7 +27,10 @@ let rec shadowing_match_case : expression_variable list -> (expression, type_exp
   shadowing_expr (vars_in_pattern @ vars) body
 and shadowing_expr : expression_variable list -> expression -> (unit, _) result = fun vars expr ->
   match expr.expression_content with
-  | E_literal _ | E_constant _ | E_variable _ -> ok @@ ()
+  | E_literal _ | E_variable _ -> ok @@ ()
+  | E_constant {arguments} ->
+     let%bind _ = bind_map_list (shadowing_expr vars) arguments in
+     ok @@ ()
   | E_application {lamb;args} ->
      let%bind _ = shadowing_expr vars lamb in
      shadowing_expr vars args
