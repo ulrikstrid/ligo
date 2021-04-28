@@ -282,13 +282,11 @@ let compare_vars e e' =
 let in_vars var vars =
   List.mem ~compare:compare_vars var vars
 
+let remove_from var vars =
+  let f v vars = if compare_vars var v = 0 then vars else v :: vars in
+  List.fold_right f vars []
+
 let rec get_fv : expression -> expression_variable list = fun expr ->
-  let remove_from var vars =
-  if List.mem ~compare:compare_vars var vars then
-    let ith = List.find_index (fun v -> compare_vars var v = 0) vars in
-    List.remove ith vars
-  else
-    vars in
   match expr.expression_content with
   | E_literal _ -> []
   | E_variable v -> [v]
