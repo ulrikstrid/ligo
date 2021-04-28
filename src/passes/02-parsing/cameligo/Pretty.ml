@@ -8,6 +8,20 @@ open! PPrint
 module Option = Simple_utils.Option
 (*module Directive = LexerLib.Directive*)
 
+let foo_region_t text  = 
+  (* let text = func in *)
+
+  object 
+    method requirement = 1
+    method pretty o _s _indent _flat = 
+      let len = String.length text in
+      o#substring text 0 len;
+      ()
+    method compact _0 = ()
+  end
+(* 
+let foo x = 
+  fancystring x 0 *)
 
 let pp_markup markup pos = 
   let rec inner result previous_after = function 
@@ -43,6 +57,19 @@ let pp_markup markup pos =
   | _ -> empty
   in
   inner empty None markup
+(* 
+let pp_markup *)
+
+let pp_region_reg2 (func: _ -> string) (token:_ reg): document =
+  let text = func token in 
+  custom (object 
+    method requirement = String.length text
+    method pretty o _s _indent _flat = 
+      let len = String.length text in
+      o#substring text 0 len;
+      ()
+    method compact _0 = ()
+  end)
 
 let pp_region_reg func token  = 
   (pp_markup token.region#markup Before) ^^ 
@@ -50,13 +77,19 @@ let pp_region_reg func token  =
   (pp_markup token.region#markup Inline) ^^ 
   (pp_markup token.region#markup After)
 
-let pp_region_t func token  =
+  (* (pp_markup token.region#markup Before) ^^ 
+  func token ^^ 
+  (pp_markup token.region#markup Inline) ^^ 
+  (pp_markup token.region#markup After) *)
+
+let pp_region_t func token =
   (pp_markup token#markup Before) ^^ 
   func ^^ 
   (pp_markup token#markup Inline) ^^ 
   (pp_markup token#markup After)
 
 let pp_par printer {value; _} =
+  pp_region_reg (fun p -> )
   (pp_region_t lparen value.lpar) ^^ printer value.inside ^^ (pp_region_t rparen value.rpar)
 
 
