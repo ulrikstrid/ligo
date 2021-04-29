@@ -4,11 +4,12 @@ open Errors
 open Trace
 
 let is_not_capturable attrs = not attrs.capturable
+let is_not_looper attrs = not attrs.looper
 let in_vars var vars = List.mem ~compare:compare_vars var vars
 
 let are_any_of m l =
   List.exists (fun v -> List.mem ~compare:compare_vars v l) m
-  
+
 let rec get_some_pattern_vars : type_expression pattern -> expression_variable list = fun pattern ->
   match pattern.wrap_content with
   | P_var {var;attributes;} when is_not_capturable attributes -> [var]
@@ -32,30 +33,24 @@ let rec capturing_match_case : expression_variable list -> (expression, type_exp
 and capturing_expr : expression_variable list -> expression -> (unit, _) result = fun vars expr ->
   match expr.expression_content with
   | E_literal _ | E_variable _ -> ok @@ ()
-  | E_constant {cons_name=C_FOLD_WHILE} | E_constant {cons_name=C_ITER}
-  | E_constant {cons_name=C_FOLD} | E_constant {cons_name=C_FOLD_LEFT}
-  | E_constant {cons_name=C_FOLD_RIGHT} | E_constant {cons_name=C_SET_ITER}
-  | E_constant {cons_name=C_SET_FOLD} | E_constant {cons_name=C_SET_FOLD_DESC}
-  | E_constant {cons_name=C_LIST_FOLD} | E_constant {cons_name=C_LIST_FOLD_LEFT}
-  | E_constant {cons_name=C_LIST_FOLD_RIGHT} | E_constant {cons_name=C_LIST_ITER}
-  | E_constant {cons_name=C_MAP_FOLD} | E_constant {cons_name=C_MAP_ITER}
-    ->
-     ok @@ ()
   | E_constant {arguments} ->
      let%bind _ = bind_map_list (capturing_expr vars) arguments in
      ok @@ ()
   | E_application {lamb;args} ->
      let%bind _ = capturing_expr vars lamb in
      capturing_expr vars args
-  | E_lambda _ when are_any_of (get_fv expr) vars ->
+  | E_lambda {binder={attributes}} when are_any_of (get_fv expr) vars
+                                        && is_not_looper attributes ->
      fail @@ capturing vars
   | E_lambda {binder={var;attributes;_};result} ->
+     let vars = remove_from var vars in
      let vars = if is_not_capturable attributes then var :: vars else vars in
      capturing_expr vars result
   | E_recursive {lambda={result;_};_} ->
      capturing_expr [] result
   | E_let_in {let_binder={var;attributes};rhs;let_result} ->
      let%bind _ = capturing_expr vars rhs in
+     let vars = remove_from var vars in
      let vars = if is_not_capturable attributes then var :: vars else vars in
      capturing_expr vars let_result
   | E_type_in {let_result;_} ->
@@ -92,11 +87,10 @@ let capturing_map_module : module' -> (module', _) result = fun m' ->
            let%bind _ = capturing_expr l expr in
            if is_not_capturable attributes then
              ok @@ var :: l
-           else 
+           else
              ok @@ l
          end
     | _ -> ok @@ l
   in
   let%bind _ = bind_fold_list (fun a d -> aux a d) [] m' in
   ok @@ m'
-

@@ -361,7 +361,7 @@ and compile_while I.{cond;body} =
   let continue_expr = O.e_constant C_FOLD_CONTINUE [for_body] in
   let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable binder] in
   let aux_func =
-    O.e_lambda_ez binder None @@
+    O.e_lambda_ez binder ~var_attributes:Stage_common.Helpers.looper_binder_attributes None @@
     restore @@
     O.e_cond cond continue_expr stop_expr in
   let loop = O.e_constant C_FOLD_WHILE [aux_func; O.e_variable env_rec] in
@@ -401,7 +401,7 @@ and compile_for I.{binder;start;final;incr;f_body} =
 
   (*Prep the lambda for the fold*)
   let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable loop_binder] in
-  let aux_func = O.e_lambda_ez loop_binder None @@
+  let aux_func = O.e_lambda_ez loop_binder ~var_attributes:Stage_common.Helpers.looper_binder_attributes None @@
                  O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] (O.e_accessor (O.e_variable loop_binder) [Access_tuple Z.one]) @@
                  O.e_cond cond (restore for_body) (stop_expr) in
 
@@ -446,7 +446,7 @@ and compile_for_each I.{fe_binder;collection;collection_type; fe_body} =
     )
     | _ -> fun expr -> restore (O.e_let_in_ez (fst fe_binder) false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one]) expr)
   in
-  let lambda = O.e_lambda_ez args None (restore for_body) in
+  let lambda = O.e_lambda_ez args ~var_attributes:Stage_common.Helpers.looper_binder_attributes None (restore for_body) in
   let%bind op_name = match collection_type with
    | Map -> ok @@ O.C_MAP_FOLD | Set -> ok @@ O.C_SET_FOLD | List -> ok @@ O.C_LIST_FOLD | Any -> ok @@ O.C_FOLD
   in
