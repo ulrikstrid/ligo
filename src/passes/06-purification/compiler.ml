@@ -118,6 +118,55 @@ and restore_mutable_variable (expr : O.expression->O.expression) (free_vars : O.
     | None -> expr (ef (O.e_skip ()))
     | Some e -> expr (ef e)
 
+let compare_vars e e' =
+  Location.compare_content ~compare:Var.compare e e'
+
+let in_vars var vars =
+  List.mem ~compare:compare_vars var vars
+
+let remove_from var vars =
+  let f v vars = if compare_vars var v = 0 then vars else v :: vars in
+  List.fold_right f vars []
+
+let get_pattern_bounds pattern =
+  Stage_common.Helpers.fold_pattern (fun vars p ->
+      match p.wrap_content with
+      | P_var {var} -> var :: vars
+      | _ -> vars) [] pattern
+
+let rec get_free_variable_in_loops (mutable_vars : O.expression_variable list) (for_body : O.expression) =
+  let self = get_free_variable_in_loops mutable_vars in
+  let%bind (fv,fb) = Self_ast_sugar.fold_map_expression
+    (* TODO : these should use Variables sets *)
+    (fun (free_var : O.expression_variable list) (ass_exp : O.expression) ->
+      match ass_exp.expression_content with
+      | E_variable v when not (in_vars v mutable_vars) ->
+         ok (false, free_var @ [v], ass_exp)
+      | E_let_in {let_binder={var};rhs;let_result} ->
+         let%bind rhs_vars,_ = self rhs in
+         let%bind result_vars,_ = self let_result in
+         let result_vars = remove_from var result_vars in
+         ok (false, rhs_vars @ result_vars, ass_exp)
+      | E_lambda {binder={var};result} ->
+         let%bind result_vars,_ = self result in
+         ok (false, remove_from var result_vars, ass_exp)
+      | E_matching {matchee=e;cases} ->
+         let%bind (res,_) = self e in
+         let aux acc ({ pattern ; body } : (O.expression, O.type_expression) O.match_case) =
+           let%bind cur,_ = self body in
+           let cur = List.fold_right remove_from (get_pattern_bounds pattern) cur in
+           ok (acc @ cur)
+         in
+         let%bind res = bind_fold_list aux res cases in
+         ok @@ (false, res, ass_exp)
+      | E_recursive {lambda={binder={var};result};fun_name} ->
+         let%bind result_vars,_ = self result in
+         ok (false, remove_from fun_name @@ remove_from var @@ result_vars, ass_exp)
+      | _ -> ok (true,free_var, ass_exp)
+    )
+      []
+      for_body in
+  ok @@ (fv,fb)
 
 let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors.purification_error) result =
   fun te ->
@@ -349,8 +398,11 @@ and compile_while I.{cond;body} =
     (O.e_variable binder)
   in
 
-  let%bind for_body = compile_expression body in
-  let%bind ((_,captured_name_list),for_body) = repair_mutable_variable_in_loops for_body [] binder in
+  let%bind for_body_ = compile_expression body in
+  let%bind ((_,captured_name_list),for_body) = repair_mutable_variable_in_loops for_body_ [] binder in
+  let%bind (fv_body,_) = get_free_variable_in_loops captured_name_list for_body_ in
+  let%bind (fv_cond,_) = get_free_variable_in_loops (captured_name_list @ fv_body) cond in
+  let captured_name_list = captured_name_list @ fv_body @ fv_cond in
   let for_body = add_to_end for_body ctrl in
 
   let aux name expr=
@@ -361,7 +413,7 @@ and compile_while I.{cond;body} =
   let continue_expr = O.e_constant C_FOLD_CONTINUE [for_body] in
   let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable binder] in
   let aux_func =
-    O.e_lambda_ez binder ~var_attributes:Stage_common.Helpers.looper_binder_attributes None @@
+    O.e_lambda_ez binder ~var_attributes:Stage_common.Helpers.default_binder_attributes None @@
     restore @@
     O.e_cond cond continue_expr stop_expr in
   let loop = O.e_constant C_FOLD_WHILE [aux_func; O.e_variable env_rec] in
@@ -390,6 +442,10 @@ and compile_for I.{binder;start;final;incr;f_body} =
   (* Modify the body loop*)
   let%bind body = compile_expression f_body in
   let%bind ((_,captured_name_list),for_body) = repair_mutable_variable_in_loops body [binder] loop_binder in
+  let%bind (fv_body,_) = get_free_variable_in_loops captured_name_list body in
+  let%bind (fv_cond,_) = get_free_variable_in_loops (captured_name_list @ fv_body) cond in
+  let%bind (fv_step,_) = get_free_variable_in_loops (captured_name_list @ fv_body @ fv_cond) step in
+  let free_vars = fv_body @ fv_cond @ fv_step in
   let for_body = add_to_end for_body ctrl in
 
   let aux name expr=
@@ -401,13 +457,14 @@ and compile_for I.{binder;start;final;incr;f_body} =
 
   (*Prep the lambda for the fold*)
   let stop_expr = O.e_constant C_FOLD_STOP [O.e_variable loop_binder] in
-  let aux_func = O.e_lambda_ez loop_binder ~var_attributes:Stage_common.Helpers.looper_binder_attributes None @@
-                 O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] (O.e_accessor (O.e_variable loop_binder) [Access_tuple Z.one]) @@
-                 O.e_cond cond (restore for_body) (stop_expr) in
+  let aux_func = O.e_lambda_ez loop_binder ~var_attributes:Stage_common.Helpers.default_binder_attributes None @@
+                   List.fold_right aux free_vars @@
+                     O.e_let_in_ez binder ~ascr:(O.t_int ()) false [] (O.e_accessor (O.e_variable loop_binder) [Access_tuple Z.one]) @@
+                       O.e_cond cond (restore for_body) (stop_expr) in
 
   (* Make the fold_while en precharge the vakye *)
   let loop = O.e_constant C_FOLD_WHILE [aux_func; O.e_variable env_rec] in
-  let init_rec = O.e_pair (store_mutable_variable captured_name_list) @@ O.e_variable binder in
+  let init_rec = O.e_pair (store_mutable_variable (captured_name_list @ free_vars)) @@ O.e_variable binder in
 
   let%bind start = compile_expression start in
   let return_expr = fun expr ->
@@ -428,16 +485,18 @@ and compile_for_each I.{fe_binder;collection;collection_type; fe_body} =
     | None -> [fst fe_binder]
   in
 
-  let%bind body = compile_expression fe_body in
-  let%bind ((_,free_vars), body) = repair_mutable_variable_in_loops body element_names args in
+  let%bind body_ = compile_expression fe_body in
+  let%bind ((_,free_vars), body) = repair_mutable_variable_in_loops body_ element_names args in
+  let%bind (_fv_body,_) = get_free_variable_in_loops (free_vars @ element_names) body_ in
+
   let for_body = add_to_end body @@ (O.e_accessor (O.e_variable args) [Access_tuple Z.zero]) in
 
-  let init_record = store_mutable_variable free_vars in
+  let init_record = store_mutable_variable (free_vars @ _fv_body) in
   let%bind collect = compile_expression collection in
   let aux name expr=
     O.e_let_in_ez name false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.zero; Access_record (Var.to_name name.wrap_content)]) expr
   in
-  let restore = fun expr -> List.fold_right aux free_vars expr in
+  let restore = fun expr -> List.fold_right aux (free_vars @ _fv_body) expr in
   let restore = match collection_type with
     | Map -> (match snd fe_binder with
       | Some v -> fun expr -> restore (O.e_let_in_ez (fst fe_binder) false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one; Access_tuple Z.zero])
@@ -446,7 +505,7 @@ and compile_for_each I.{fe_binder;collection;collection_type; fe_body} =
     )
     | _ -> fun expr -> restore (O.e_let_in_ez (fst fe_binder) false [] (O.e_accessor (O.e_variable args) [Access_tuple Z.one]) expr)
   in
-  let lambda = O.e_lambda_ez args ~var_attributes:Stage_common.Helpers.looper_binder_attributes None (restore for_body) in
+  let lambda = O.e_lambda_ez args ~var_attributes:Stage_common.Helpers.default_binder_attributes None (restore for_body) in
   let%bind op_name = match collection_type with
    | Map -> ok @@ O.C_MAP_FOLD | Set -> ok @@ O.C_SET_FOLD | List -> ok @@ O.C_LIST_FOLD | Any -> ok @@ O.C_FOLD
   in
