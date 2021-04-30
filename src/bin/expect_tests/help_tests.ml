@@ -42,7 +42,14 @@ let%expect_test _ =
            dry-run
                Subcommand: Run a smart-contract with the given storage and input.
 
+           evaluate-call
+               Subcommand: Run a function with the given parameter.
+
            evaluate-expr
+               Subcommand: Evaluate a given definition.
+
+           evaluate-value
+               Deprecated, renamed to evaluate-expr. Use evaluate-expr instead.
                Subcommand: Evaluate a given definition.
 
            get-scope
@@ -101,7 +108,8 @@ let%expect_test _ =
            repl
                Subcommand: REPL
 
-           evaluate-call
+           run-function
+               Deprecated, renamed to evaluate-call. Use evaluate-call instead.
                Subcommand: Run a function with the given parameter.
 
            test
@@ -162,7 +170,14 @@ let%expect_test _ =
            dry-run
                Subcommand: Run a smart-contract with the given storage and input.
 
+           evaluate-call
+               Subcommand: Run a function with the given parameter.
+
            evaluate-expr
+               Subcommand: Evaluate a given definition.
+
+           evaluate-value
+               Deprecated, renamed to evaluate-expr. Use evaluate-expr instead.
                Subcommand: Evaluate a given definition.
 
            get-scope
@@ -221,7 +236,8 @@ let%expect_test _ =
            repl
                Subcommand: REPL
 
-           evaluate-call
+           run-function
+               Deprecated, renamed to evaluate-call. Use evaluate-call instead.
                Subcommand: Run a function with the given parameter.
 
            test
