@@ -641,7 +641,7 @@ let evaluate_expr ~cmdname_deprecation =
                  "This sub-command evaluates a LIGO definition. The \
                   context is initialized from a source file where the \
                   definition is written. The interpretation is done \
-                  using Michelson's interpreter.")]
+                  using a Michelson interpreter.")]
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let compile_expression =
