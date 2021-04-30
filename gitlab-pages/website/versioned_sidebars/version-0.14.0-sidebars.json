@@ -175,7 +175,7 @@
         },
         {
           "type": "doc",
-          "id": "version-0.14.0/manpages/evaluate-expr"
+          "id": "version-0.14.0/manpages/evaluate-value"
         },
         {
           "type": "doc",
@@ -235,7 +235,7 @@
         },
         {
           "type": "doc",
-          "id": "version-0.14.0/manpages/evaluate-call"
+          "id": "version-0.14.0/manpages/run-function"
         },
         {
           "type": "doc",
