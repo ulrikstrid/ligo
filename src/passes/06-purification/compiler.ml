@@ -141,7 +141,7 @@ let rec get_free_variables_in_loops (mutable_vars : O.expression_variable list) 
     (fun (free_var : O.expression_variable list) (ass_exp : O.expression) ->
       match ass_exp.expression_content with
       | E_variable v when not (in_vars v mutable_vars) && not (in_vars v free_var) ->
-         ok (false, free_var @ [v], ass_exp)
+         ok (false, v :: free_var, ass_exp)
       | E_let_in {let_binder={var};rhs;let_result} ->
          let%bind rhs_vars = self rhs in
          let%bind result_vars = self let_result in
