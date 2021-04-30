@@ -103,11 +103,21 @@ let wildcard ppf = fun () ->
 
 (* Expressions *)
 
+let option_shadowable ppf shadowable =
+  if not shadowable then
+    fprintf ppf "[@@shadowable false]"
+  else
+    fprintf ppf ""
+
+let option_capturable ppf capturable =
+  if not capturable then
+    fprintf ppf "[@@capturable false]"
+  else
+    fprintf ppf ""
+
 let binder type_expression ppf {var;ascr;attributes=attr} =
-  let attributes ppf attr =
-    ignore ppf; ignore attr in
-    (* if attr.shadowable then
-     *   fprintf ppf "[@shadowable]" in *)
+  let attributes ppf attr = fprintf ppf "%a%a" option_shadowable attr.shadowable
+                              option_capturable attr.capturable in
   match ascr with
   | None ->
       fprintf ppf "%a%a" expression_variable var attributes attr

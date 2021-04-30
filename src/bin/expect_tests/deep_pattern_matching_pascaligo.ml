@@ -295,7 +295,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_good [ "print-ast-core" ; (good_test "list_pattern.ligo") ] ;
   [%expect{|
-    const a =
+    const a[@shadowable false] =
        match CONS(1 , LIST_EMPTY()) with
         | [  ] -> 1
         | a :: b :: c :: [  ] -> 2
