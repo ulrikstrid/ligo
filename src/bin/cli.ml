@@ -196,7 +196,7 @@ let optimize =
 let infer =
   let open Arg in
   let info =
-    let doc = "enable type inferance" in
+    let doc = "enable type inference" in
     info ~doc ["infer"] in
     value @@ flag info
 
@@ -345,14 +345,26 @@ let print_ast_sugar =
   in (Term.ret term, Term.info ~man ~doc cmdname)
 
 let print_ast_core =
-  let f source_file syntax display_format =
-    return_result ~display_format (Ast_core.Formatter.module_format) @@
-      let options = Compiler_options.make () in
-      let%bind meta     = Compile.Of_source.extract_meta syntax source_file in
-      let%bind c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
-      Compile.Utils.to_core ~options ~meta c_unit source_file
+  let f source_file syntax infer protocol_version display_format =
+    if infer then
+      (* Do the same thing as for print_ast_typed, but only infer the main module
+         (it still needs to infer+typecheck the dependencies) *)
+      return_result ~display_format (Ast_core.Formatter.module_format) @@
+        let%bind options =
+          let%bind init_env = Helpers.get_initial_env protocol_version in
+          ok @@ Compiler_options.make ~infer ~init_env ()
+        in
+        let%bind _,inferred_core,_,_ = Build.infer_contract ~options syntax Env source_file in
+        ok @@ inferred_core
+    else
+      (* Print the ast as-is without inferring and typechecking dependencies *)
+      return_result ~display_format (Ast_core.Formatter.module_format) @@
+        let options = Compiler_options.make ~infer () in
+        let%bind meta     = Compile.Of_source.extract_meta syntax source_file in
+        let%bind c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
+        Compile.Utils.to_core ~options ~meta c_unit source_file
   in
-  let term = Term.(const f $ source_file 0  $ syntax $ display_format) in
+  let term = Term.(const f $ source_file 0  $ syntax $ infer $ protocol_version $ display_format) in
   let cmdname = "print-ast-core" in
   let doc = "Subcommand: Print the AST.\n Warning: Intended for development of LIGO and can break at any time." in
   let man = [`S Manpage.s_description;
@@ -441,8 +453,7 @@ let measure_contract =
   let doc = "Subcommand: Measure a contract's compiled size in bytes." in
   let man = [`S Manpage.s_description;
              `P "This sub-command compiles a source file and measures \
-                 the contract's compiled size in bytes. It does not \
-                 use the build system."]
+                 the contract's compiled size in bytes."]
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let compile_parameter =
@@ -499,9 +510,9 @@ let interpret =
   let doc = "Subcommand: Interpret the expression in the context initialized by the provided source file." in
   let man = [`S Manpage.s_description;
              `P "This sub-command interprets a LIGO expression. The \
-                 context can be initialized by providing a source file \
-                 (which is compiled not using the build system). The \
-                 interpretation is done using Michelson's interpreter."]
+                 context can be initialized by providing a source \
+                 file. The interpretation is done using Michelson's \
+                 interpreter."]
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let compile_storage =
@@ -602,6 +613,7 @@ let evaluate_value =
       let options = Compiler_options.make ~infer ~init_env () in
       let%bind mini_c,_,typed_prg,_ = Build.build_contract_use ~options syntax source_file in
       let%bind (exp,_)       = trace_option Main_errors.entrypoint_not_found @@ Mini_c.get_entry mini_c entry_point in
+      let exp = Mini_c.e_var ~loc:exp.location (Location.wrap @@ Var.of_name entry_point) exp.type_expression in
       let%bind compiled      = Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp in
       let%bind options       = Run.make_dry_run_options {now ; amount ; balance ; sender ; source } in
       let%bind runres        = Run.run_expression ~options compiled.expr compiled.expr_ty in
@@ -678,8 +690,8 @@ let list_declarations =
   in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let transpile_contract =
-  let f source_file new_syntax syntax new_dialect display_format =
-    return_result ~display_format (Parsing.Formatter.ppx_format) @@
+  let f source_file new_syntax syntax new_dialect display_format output_file =
+    return_result ~output_file ~display_format (Parsing.Formatter.ppx_format) @@
       let options         = Compiler_options.make () in
       let%bind meta       = Compile.Of_source.extract_meta syntax source_file in
       let%bind c_unit,_   = Compile.Utils.to_c_unit ~options ~meta source_file in
@@ -692,7 +704,7 @@ let transpile_contract =
       ok @@ buffer
   in
   let term =
-    Term.(const f $ source_file 0 $ req_syntax 1  $ syntax $ dialect $ display_format) in
+    Term.(const f $ source_file 0 $ req_syntax 1  $ syntax $ dialect $ display_format $ output_file) in
   let cmdname = "transpile-contract" in
   let doc = "Subcommand: Transpile a contract to another syntax (BETA)." in
   let man = [`S Manpage.s_description;

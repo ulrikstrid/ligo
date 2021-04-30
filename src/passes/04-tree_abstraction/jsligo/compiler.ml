@@ -76,6 +76,9 @@ module Compile_type = struct
     | _ as t -> fail @@ invalid_constructor t
 
   and get_t_int_singleton_opt = function
+  | CST.TInt x -> 
+    let (_,z) = x.value in
+    Some z
   | _ -> None
 
   and get_t_string_singleton_opt = function
@@ -257,7 +260,7 @@ module Compile_type = struct
       let (name,loc) = r_split var in
       let v = Var.of_name name in
       return @@ t_variable ~loc v
-    | TWild _reg -> failwith "TWild unsupported"
+    | TWild _reg -> fail @@ unsupported_twild te
     | TString _s -> fail @@ unsupported_string_singleton te
     | TInt _s -> fail @@ unsupported_string_singleton te
     | TModA ma ->

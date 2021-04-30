@@ -26,7 +26,7 @@ let purification_tracer (e:Purification.Errors.purification_error) : all = `Main
 let depurification_tracer (e:Purification.Errors.purification_error) : all = `Main_depurification e
 let desugaring_tracer (e:Desugaring.Errors.desugaring_error) : all = `Main_desugaring e
 let sugaring_tracer (e:Desugaring.Errors.desugaring_error) : all = `Main_sugaring e
-let inference_tracer (e:Inferance.Errors.typer_error) : all = `Main_inferance e
+let inference_tracer (e:Inference.Errors.typer_error) : all = `Main_inference e
 let checking_tracer (e:Checking.Errors.typer_error) : all = `Main_checking e
 let self_ast_typed_tracer (e:Self_ast_typed.Errors.self_ast_typed_error) : all = `Main_self_ast_typed e
 let self_mini_c_tracer (e:Self_mini_c.Errors.self_mini_c_error) : all = `Main_self_mini_c e
@@ -34,7 +34,7 @@ let spilling_tracer (e:Spilling.Errors.spilling_error) : all = `Main_spilling e
 let stacking_tracer (e:Stacking.Errors.stacking_error) : all = `Main_stacking e
 let decompile_mini_c : Spilling.Errors.spilling_error -> all = fun e -> `Main_decompile_mini_c e
 let decompile_typed : Checking.Errors.typer_error -> all = fun e -> `Main_decompile_typed e
-let decompile_inferred : Inferance.Errors.typer_error -> all = fun e -> `Main_decompile_inferred e
+let decompile_inferred : Inference.Errors.typer_error -> all = fun e -> `Main_decompile_inferred e
 let decompile_michelson : Stacking.Errors.stacking_error -> all = fun e -> `Main_decompile_michelson e
 
 (* top-level glue (in between passes) *)
@@ -86,6 +86,5 @@ let test_expect_eq_n_tracer i err : all = `Test_expect_eq_n_tracer (i,err)
 let test_internal loc : all = `Test_internal loc
 let test_internal_msg loc msg : all = `Test_internal_msg (loc, msg)
 let test_md_file md_file s group prg err : all = `Test_md_file (md_file,s,group,prg,err)
-let test_code_block_arg arg : all = `Test_bad_code_block arg
 let test_expected_to_fail : all = `Test_expected_to_fail
 let test_not_expected_to_fail : all = `Test_not_expected_to_fail

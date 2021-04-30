@@ -942,8 +942,7 @@ let%expect_test _ =
              DIG 2 ;
              NONE (ticket unit) ;
              DUP 3 ;
-             CDR ;
-             CDR ;
+             GET 4 ;
              GET_AND_UPDATE ;
              IF_NONE
                { DROP 3 ; PUSH string "no tickets" ; FAILWITH }
@@ -951,8 +950,7 @@ let%expect_test _ =
                  CDR ;
                  CDR ;
                  DUP 4 ;
-                 CDR ;
-                 CAR ;
+                 GET 3 ;
                  DUP ;
                  DIG 2 ;
                  SUB ;
@@ -968,8 +966,7 @@ let%expect_test _ =
                      DUG 2 ;
                      SOME ;
                      DUP 4 ;
-                     CDR ;
-                     CDR ;
+                     GET 4 ;
                      GET_AND_UPDATE ;
                      DROP ;
                      DIG 2 ;
@@ -977,8 +974,8 @@ let%expect_test _ =
                      PUSH mutez 0 ;
                      DIG 3 ;
                      TRANSFER_TOKENS ;
+                     DUG 2 ;
                      SWAP ;
-                     DIG 2 ;
                      PAIR ;
                      NIL operation ;
                      DIG 2 ;
@@ -1304,13 +1301,16 @@ let%expect_test _ =
     Note that "Tezos.self" refers to this contract, so the parameters should be the same. |}] ;
 
   run_ligo_good [ "compile-contract" ; contract "self_type_annotation.ligo" ; "main" ] ;
-  [%expect {|
-    File "../../test/contracts/self_type_annotation.ligo", line 6, characters 21-22:
-    Warning: unused variable "p".
-    File "../../test/contracts/self_type_annotation.ligo", line 8, characters 10-23:
-    Warning: unused variable "self_contract".
+  [%expect{|
+    { parameter nat ;
+      storage address ;
+      code { DROP ; SELF %default ; ADDRESS ; NIL operation ; PAIR } } |}] ;
 
-    { parameter nat ; storage int ; code { CDR ; NIL operation ; PAIR } } |}]
+  run_ligo_good [ "compile-contract" ; contract "self_default_with_variant_parameter.mligo" ; "main" ] ;
+    [%expect{|
+      { parameter (or (address %one) (unit %two)) ;
+        storage address ;
+        code { DROP ; SELF %default ; ADDRESS ; NIL operation ; PAIR } } |}]
 
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "bad_contract.mligo" ; "main" ] ;
