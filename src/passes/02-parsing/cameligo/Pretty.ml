@@ -6,18 +6,36 @@ module Region = Simple_utils.Region
 open! Region
 open! PPrint
 module Option = Simple_utils.Option
+(*module Directive = LexerLib.Directive*)
 
 let pp_par printer {value; _} =
   string "(" ^^ nest 1 (printer value.inside ^^ string ")")
 
 let rec print ast =
-  let app decl = group (pp_declaration decl) in
   let decl = Utils.nseq_to_list ast.decl in
-  separate_map (hardline ^^ hardline) app decl
+  let decl = List.filter_map pp_declaration decl
+  in separate_map (hardline ^^ hardline) group decl
 
 and pp_declaration = function
-  Let decl -> pp_let_decl decl
-| TypeDecl decl -> pp_type_decl decl
+  Let         decl -> Some (pp_let_decl     decl)
+| TypeDecl    decl -> Some (pp_type_decl    decl)
+| ModuleDecl  decl -> Some (pp_module_decl  decl)
+| ModuleAlias decl -> Some (pp_module_alias decl)
+| Directive      _ -> None
+
+(*
+and pp_dir_decl = function
+  Directive.Linemarker {value; _} ->
+    let open Directive in
+    let linenum, file_path, flag_opt = value in
+    let flag =
+      match flag_opt with
+        Some Push -> " 1"
+      | Some Pop  -> " 2"
+      | None      -> "" in
+    let lexeme = Printf.sprintf "# %d %S%s" linenum file_path flag
+    in string lexeme
+*)
 
 and pp_let_decl {value; _} =
   let _, rec_opt, binding, attr = value in
@@ -62,7 +80,6 @@ and pp_pattern = function
 | PBytes    b -> pp_bytes b
 | PString   s -> pp_string s
 | PVerbatim s -> pp_verbatim s
-| PWild     _ -> string "_"
 | PList     l -> pp_plist l
 | PTuple    t -> pp_ptuple t
 | PPar      p -> pp_ppar p
@@ -130,8 +147,19 @@ and pp_ptyped {value; _} =
 and pp_type_decl decl =
   let {name; type_expr; _} = decl.value in
   let padding = match type_expr with TSum _ -> 0 | _ -> 2 in
-  string "type " ^^ string name.value ^^ string " ="
+  string "type " ^^ pp_ident name ^^ string " ="
   ^^ group (nest padding (break 1 ^^ pp_type_expr type_expr))
+
+and pp_module_decl decl =
+  let {name; module_; _} = decl.value in
+  string "module " ^^ pp_ident name ^^ string " =" ^^ string " struct"
+  ^^ group (nest 0 (break 1 ^^ print module_))
+  ^^ string " end"
+
+and pp_module_alias decl =
+  let {alias; binders; _} = decl.value in
+  string "module " ^^ pp_ident alias ^^ string " ="
+  ^^ group (nest 0 (break 1 ^^ pp_nsepseq "." pp_ident binders))
 
 and pp_expr = function
   ECase       e -> pp_case_expr e
@@ -154,6 +182,8 @@ and pp_expr = function
 | EPar        e -> pp_par_expr e
 | ELetIn      e -> pp_let_in e
 | ETypeIn     e -> pp_type_in e
+| EModIn      e -> pp_mod_in e
+| EModAlias   e -> pp_mod_alias e
 | EFun        e -> pp_fun e
 | ESeq        e -> pp_seq e
 | ECodeInj    e -> pp_code_inj e
@@ -328,7 +358,7 @@ and pp_update {value; _} =
 
 and pp_code_inj {value; _} =
   let {language; code; _} = value in
-  let language = pp_string language.value
+  let language = string language.value.value
   and code     = pp_expr code in
   string "[%" ^^ language ^/^ code ^^ string "]"
 
@@ -373,9 +403,27 @@ and pp_let_in {value; _} =
 and pp_type_in {value; _} =
   let {type_decl; body; _} = value in
   let {name; type_expr; _} = type_decl
-  in string "let"
-     ^^ prefix 2 1 (pp_ident name ^^ string "=")
+  in string "type "
+     ^^ prefix 2 1 (pp_ident name ^^ string " =")
                    (pp_type_expr type_expr)
+     ^^ string " in" ^^ hardline ^^ group (pp_expr body)
+
+and pp_mod_in {value; _} =
+  let {mod_decl; body; _} = value in
+  let {name; module_; _} = mod_decl
+  in string "module"
+     ^^ prefix 2 1 (pp_ident name ^^ string " = struct")
+                   (print module_)
+     ^^ string " end"
+     ^^ string " in" ^^ hardline ^^ group (pp_expr body)
+
+and pp_mod_alias {value; _} =
+  let {mod_alias; body; _} = value in
+  let {alias; binders; _} = mod_alias
+  in string "module"
+     ^^ prefix 2 1 (pp_ident alias ^^ string " =")
+                   (pp_nsepseq "." pp_ident binders)
+     ^^ string " end"
      ^^ string " in" ^^ hardline ^^ group (pp_expr body)
 
 and pp_fun {value; _} =

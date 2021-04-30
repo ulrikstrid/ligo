@@ -68,6 +68,21 @@ The function body consists of two parts:
 - `block { <instructions and declarations> }` is the logic of the function;
 - `with <value>` is the value returned by the function.
 
+By default, LIGO will warn about unused parameters inside
+functions. In case we do not use a parameter, we can use the wildcard
+`_` to prevent warnings. Either use `_` instead of the parameter
+identifier:
+
+```pascaligo
+function k (const x : int; const _ : int) is x
+```
+
+or use a parameter identifier starting with wildcard:
+
+```pascaligo
+function k (const x : int; const _y : int) is x
+```
+
 ### Blockless functions
 
 Functions that can contain all of their logic into a single
@@ -148,6 +163,21 @@ ligo run-function gitlab-pages/docs/language-basics/src/functions/curry.mligo in
 
 The function body is a single expression, whose value is returned.
 
+By default, LIGO will warn about unused arguments inside
+functions. In case we do not use an argument, we can use the wildcard
+`_` to prevent warnings. Either use `_` instead of the argument
+identifier:
+
+```cameligo
+let k (x : int) (_ : int) = x
+```
+
+or use an identifier starting with wildcard:
+
+```cameligo
+let k (x : int) (_y : int) = x
+```
+
 </Syntax>
 <Syntax syntax="reasonligo">
 
@@ -178,6 +208,76 @@ let myFun = ((x, y) : (int, int)) : int => {
   let doubleY = y + y;
   doubleX + doubleY
 };
+```
+
+By default, LIGO will warn about unused arguments inside
+functions. In case we do not use an argument, we can use the wildcard
+`_` to prevent warnings. Either use `_` instead of the argument
+identifier:
+
+```reasonligo
+let k = ((x, _) : (int, int)) => x;
+```
+
+or use an identifier starting with wildcard:
+
+```reasonligo
+let k = ((x, _y) : (int, int)) => x;
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+Functions in JsLIGO are defined using the `let` or `const` keyword, like
+other values. The difference is that parameters are provided
+after the value name, with its type, then followed by the return type.
+
+Here is how you define a basic function that sums two integers:
+
+```jsligo group=b
+let add = ([a, b]: [int, int]): int => a + b;
+```
+
+You can call the function `add` defined above using the LIGO compiler
+like this:
+```shell
+ligo run-function gitlab-pages/docs/language-basics/src/functions/blockless.jsligo add '(1,2)'
+# Outputs: 3
+```
+
+
+
+As in CameLIGO and with blockless functions in PascaLIGO, the function
+body is a single expression, whose value is returned.
+
+If the body contains more than a single expression, you use block
+between braces:
+
+```jsligo group=b
+let myFun = ([x, y]: [int, int]): int => {
+  let doubleX = x + x;
+  let doubleY = y + y;
+  return doubleX + doubleY;
+};
+```
+
+Note that JsLIGO, like JavaScript, requires the `return` keyword to indicate 
+what is being returned. If `return` is not used, it will be the same as 
+`return unit`.
+
+By default, LIGO will warn about unused arguments inside
+functions. In case we do not use an argument, we can use the wildcard
+`_` to prevent warnings. Either use `_` instead of the argument
+identifier:
+
+```jsligo
+let k = ([x, _] : [int, int]) : int => x;
+```
+
+or use an identifier starting with wildcard:
+
+```jsligo
+let k = ([x, _y] : [int, int]) : int => x;
 ```
 
 </Syntax>
@@ -234,6 +334,21 @@ You can check the value of `a` defined above using the LIGO compiler
 like this:
 ```shell
 ligo evaluate-value gitlab-pages/docs/language-basics/src/functions/anon.religo a
+# Outputs: 2
+```
+
+</Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=c
+let increment = (b: int): int => ((a: int): int => a + 1) (b);
+let a: int = increment(1); // a == 2
+```
+
+You can check the value of `a` defined above using the LIGO compiler
+like this:
+```shell
+ligo evaluate-value gitlab-pages/docs/language-basics/src/functions/anon.jsligo a
 # Outputs: 2
 ```
 
@@ -298,6 +413,22 @@ gitlab-pages/docs/language-basics/src/functions/incr_map.religo incr_map
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo group=c
+let incr_map = (l: list<int>): list<int> =>
+  List.map((i: int) => i + 1, l);
+```
+You can call the function `incr_map` defined above using the LIGO compiler
+like so:
+```shell
+ligo run-function
+gitlab-pages/docs/language-basics/src/functions/incr_map.jsligo incr_map
+"list [1;2;3]"
+# Outputs: [ 2 ; 3 ; 4 ]
+```
+
+</Syntax>
 
 
 ## Nested functions (also known as closures)
@@ -333,15 +464,28 @@ let closure_example = (i : int) : int => {
 ```
 
 </Syntax>
+<Syntax syntax="jsligo">
+
+```jsligo
+let closure_example = (i: int): int => {
+  let closure = (j: int): int => i + j;
+  return closure(i);
+};
+```
+
+</Syntax>
+
+
+
+<Syntax syntax="pascaligo">
 
 ## Recursive function
 
 LIGO functions are not recursive by default, the user need to indicate that the function is recursive.
 
 At the moment, recursive function are limited to one (possibly tupled) parameter and recursion is
-limited to tail recursion (i.e the recursive call should be the last expression of the function)
+limited to tail recursion (i.e the recursive call should be the last expression of the function).
 
-<Syntax syntax="pascaligo">
 In PascaLIGO recursive functions are defined using the `recursive` keyword
 
 ```pascaligo group=d
@@ -353,6 +497,14 @@ recursive function fibo (const n: int; const n_1: int; const n_0 :int) : int is
 ```
 </Syntax>
 <Syntax syntax="cameligo">
+
+## Recursive function
+
+LIGO functions are not recursive by default, the user need to indicate that the function is recursive.
+
+At the moment, recursive function are limited to one (possibly tupled) parameter and recursion is
+limited to tail recursion (i.e the recursive call should be the last expression of the function)
+
 In CameLIGO recursive functions are defined using the `rec` keyword
 
 ```cameligo group=d
@@ -364,6 +516,14 @@ let rec fibo ((n,n_1,n_0):int*int*int) : int =
 ```
 </Syntax>
 <Syntax syntax="reasonligo">
+
+## Recursive function
+
+LIGO functions are not recursive by default, the user need to indicate that the function is recursive.
+
+At the moment, recursive function are limited to one (possibly tupled) parameter and recursion is
+limited to tail recursion (i.e the recursive call should be the last expression of the function)
+
 In ReasonLIGO recursive functions are defined using the `rec` keyword
 
 ```reasonligo group=d

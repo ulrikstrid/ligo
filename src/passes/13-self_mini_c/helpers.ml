@@ -50,6 +50,10 @@ let rec fold_expression : ('a,'err) folder -> 'a -> expression -> ('a, 'err) res
       let%bind res = bind_fold_triple self init' (body,col,init) in
       ok res
   )
+  | E_fold_right (((_ , _) , body) , (col,_) , init) -> (
+      let%bind res = bind_fold_triple self init' (body,col,init) in
+      ok res
+  )
   | E_if_bool cab -> (
       let%bind res = bind_fold_triple self init' cab in
       ok res
@@ -70,7 +74,7 @@ let rec fold_expression : ('a,'err) folder -> 'a -> expression -> ('a, 'err) res
       let%bind res = bind_fold_pair self init' (expr,body) in
       ok res
   )
-  | E_let_pair (expr , (((_, _) , (_, _)) , body)) -> (
+  | E_let_tuple (expr, (_, body)) -> (
       let%bind res = bind_fold_pair self init' (expr,body) in
       ok res
   )
@@ -104,6 +108,10 @@ let rec map_expression : 'err mapper -> expression -> (expression, 'err) result 
       let%bind (body',col',init') = bind_map_triple self (body,col,init) in
       return @@ E_fold (((name , tv) , body') , col', init')
   )
+  | E_fold_right (((name , tv) , body) , (col,el_ty) , init) -> (
+      let%bind (body',col',init') = bind_map_triple self (body,col,init) in
+      return @@ E_fold_right (((name , tv) , body') , (col',el_ty), init')
+  )
   | E_if_bool cab -> (
       let%bind cab' = bind_map_triple self cab in
       return @@ E_if_bool cab'
@@ -124,9 +132,9 @@ let rec map_expression : 'err mapper -> expression -> (expression, 'err) result 
       let%bind (expr',body') = bind_map_pair self (expr,body) in
       return @@ E_let_in (expr', inline, ((v , tv) , body'))
   )
-  | E_let_pair (expr, ((x, y), body)) -> (
+  | E_let_tuple (expr, (xs, body)) -> (
       let%bind (expr', body') = bind_map_pair self (expr, body) in
-      return @@ E_let_pair (expr', ((x, y), body'))
+      return @@ E_let_tuple (expr', (xs, body'))
   )
 
 let map_sub_level_expression : 'err mapper -> expression -> (expression , 'err) result = fun f e ->

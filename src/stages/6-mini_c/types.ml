@@ -75,6 +75,7 @@ type value =
   | D_none
   | D_map of (value * value) list
   | D_big_map of (value * value) list
+  | D_ticket of (value * value)
   | D_list of value list
   | D_set of value list
   (* | `Macro of anon_macro ... The future. *)
@@ -90,12 +91,13 @@ and expression_content =
   | E_variable of var_name
   | E_iterator of constant' * ((var_name * type_expression) * expression) * expression
   | E_fold     of (((var_name * type_expression) * expression) * expression * expression)
+  | E_fold_right of (((var_name * type_expression) * expression) * (expression * type_expression) * expression)
   | E_if_bool  of (expression * expression * expression)
   | E_if_none  of expression * expression * ((var_name * type_expression) * expression)
   | E_if_cons  of expression * expression * (((var_name * type_expression) * (var_name * type_expression)) * expression)
   | E_if_left  of expression * ((var_name * type_expression) * expression) * ((var_name * type_expression) * expression)
   | E_let_in   of expression * inline * ((var_name * type_expression) * expression)
-  | E_let_pair of expression * (((var_name * type_expression) * (var_name * type_expression)) * expression)
+  | E_let_tuple of expression * (((var_name * type_expression) list) * expression)
   | E_raw_michelson of (Location.t, string) Tezos_micheline.Micheline.node list
 
 and expression = {

@@ -81,6 +81,10 @@ let get_set (v:value) = match v with
   | D_set lst -> Some lst
   | _ -> None
 
+let get_ticket (v:value) = match v with
+  | D_ticket t -> Some t
+  | _ -> None
+
 let get_function_with_ty (e : expression) =
   match (e.content , e.type_expression.type_content) with
   | E_closure f , T_function ty -> Some (f , ty)
@@ -126,6 +130,10 @@ let get_t_list (t:type_expression) = match t.type_content with
 let get_t_set (t:type_expression) = match t.type_content with
   | T_set t -> Some t
   | _ -> None
+
+let get_t_collection (t:type_expression ) = match t.type_content with
+  | T_list t | T_set t | T_map (_,t) | T_big_map (_,t) -> Some t
+  | _ -> None 
 
 let get_left (v:value) = match v with
   | D_left b -> Some b

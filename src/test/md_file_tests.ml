@@ -18,7 +18,7 @@ let get_groups md_file =
   bind_fold_list
     (fun (grp_map: _ SnippetsGroup.t) (el:Md.block) ->
       match el.header  with
-      | Some ("pascaligo" as s) | Some ("cameligo" as s) | Some ("reasonligo" as s) -> (
+      | Some ("pascaligo" as s) | Some ("cameligo" as s) | Some ("reasonligo" as s) | Some ("jsligo" as s) -> (
         let%bind () = bind_iter_list
           (fun arg -> match arg with
           | Md.Field "" | Md.Field "skip" | Md.NameValue ("group",_) -> ok ()
@@ -57,18 +57,18 @@ let get_groups md_file =
 let compile_groups filename grp_list =
   let%bind (_michelsons : Stacking.compiled_expression list list) = bind_map_list
     (fun ((s,grp),contents) ->
-      trace (test_md_file_tracer filename s grp contents) @@
+      trace (test_md_file filename s grp contents) @@
       let options         = Compiler_options.make () in
-      let {typer_switch;init_env} : Compiler_options.t = options in
-      let%bind meta       = Compile.Of_source.make_meta s None in
-      let%bind c_unit,_   = Compile.Of_source.compile_string ~options ~meta contents in
-      let%bind imperative = Compile.Of_c_unit.compile ~options ~meta c_unit filename in
-      let%bind sugar      = Ligo.Compile.Of_imperative.compile imperative in
-      let%bind core       = Ligo.Compile.Of_sugar.compile sugar in
-      let%bind typed,_,_  = Compile.Of_core.compile ~typer_switch ~init_env Env core in
-      let%bind mini_c     = Compile.Of_typed.compile typed in
+      let%bind meta       = Ligo_compile.Of_source.make_meta s None in
+      let%bind c_unit,_   = Ligo_compile.Of_source.compile_string ~options ~meta contents in
+      let%bind imperative = Ligo_compile.Of_c_unit.compile ~meta c_unit filename in
+      let%bind sugar      = Ligo_compile.Of_imperative.compile imperative in
+      let%bind core       = Ligo_compile.Of_sugar.compile sugar in
+      let%bind inferred   = Ligo_compile.Of_core.infer ~options core in
+      let%bind typed,_    = Ligo_compile.Of_core.typecheck ~options Env inferred in
+      let%bind mini_c     = Ligo_compile.Of_typed.compile typed in
       bind_map_list
-        (fun ((_, _, exp),_) -> Compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp)
+        (fun ((_, _, exp),_) -> Ligo_compile.Of_mini_c.aggregate_and_compile_expression ~options mini_c exp)
         mini_c
     )
     grp_list in
@@ -91,7 +91,9 @@ let md_files = [
   "/gitlab-pages/docs/intro/ligo-intro.md";
   "/gitlab-pages/docs/language-basics/math-numbers-tez.md";
   "/gitlab-pages/docs/language-basics/functions.md";
+  "/gitlab-pages/docs/language-basics/exceptions.md";
   "/gitlab-pages/docs/language-basics/boolean-if-else.md";
+  "/gitlab-pages/docs/language-basics/modules.md";
   "/gitlab-pages/docs/language-basics/types.md";
   "/gitlab-pages/docs/language-basics/strings.md";
   "/gitlab-pages/docs/language-basics/maps-records.md";
@@ -119,6 +121,7 @@ let md_files = [
   "/gitlab-pages/docs/advanced/inline.md";
   "/gitlab-pages/docs/advanced/interop.md";
   "/gitlab-pages/docs/advanced/code-injection.md";
+  "/gitlab-pages/docs/advanced/testing.md";
   "/gitlab-pages/docs/api/cli-commands.md";
   "/gitlab-pages/docs/api/cheat-sheet.md";
   "/gitlab-pages/docs/reference/toplevel.md";
