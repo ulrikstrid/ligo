@@ -691,7 +691,7 @@ let%expect_test _ =
     DESCRIPTION
            This sub-command evaluates a LIGO definition. The context is
            initialized from a source file where the definition is written. The
-           interpretation is done using Michelson's interpreter.
+           interpretation is done using a Michelson interpreter.
 
     ARGUMENTS
            ENTRY_POINT (required)
