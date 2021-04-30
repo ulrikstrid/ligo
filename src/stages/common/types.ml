@@ -72,7 +72,6 @@ type 'ty_exp arrow = {
 type binder_attributes = {
   shadowable: bool ;
   capturable: bool ;
-  looper: bool ;
   }
 
 (* Expression level types *)

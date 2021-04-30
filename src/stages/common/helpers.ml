@@ -129,18 +129,10 @@ let rec map_pattern_t : ('a binder -> ('b binder, 'err) result) -> 'a pattern ->
 
 let default_binder_attributes : binder_attributes = { shadowable = true;
                                                       capturable = true;
-                                                      looper = false;
                                                     }
 let const_binder_attributes : binder_attributes = { shadowable = false;
                                                     capturable = true;
-                                                    looper = false;
                                                   }
 let var_binder_attributes : binder_attributes = { shadowable = true;
                                                   capturable = false;
-                                                  looper = false;
                                                 }
-
-let looper_binder_attributes : binder_attributes = { shadowable = true;
-                                                     capturable = true;
-                                                     looper = true;
-                                                   }

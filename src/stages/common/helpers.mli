@@ -38,4 +38,3 @@ val map_pattern_t : ('a binder -> ('b binder, 'err) result) -> 'a pattern -> ('b
 val default_binder_attributes : binder_attributes
 val const_binder_attributes : binder_attributes
 val var_binder_attributes : binder_attributes
-val looper_binder_attributes : binder_attributes

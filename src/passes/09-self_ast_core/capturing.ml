@@ -4,7 +4,6 @@ open Errors
 open Trace
 
 let is_not_capturable attrs = not attrs.capturable
-let is_not_looper attrs = not attrs.looper
 let in_vars var vars = List.mem ~compare:compare_vars var vars
 
 let are_any_of m l =
@@ -39,8 +38,7 @@ and capturing_expr : expression_variable list -> expression -> (unit, _) result 
   | E_application {lamb;args} ->
      let%bind _ = capturing_expr vars lamb in
      capturing_expr vars args
-  | E_lambda {binder={attributes}} when are_any_of (get_fv expr) vars
-                                        && is_not_looper attributes ->
+  | E_lambda _ when are_any_of (get_fv expr) vars ->
      fail @@ capturing vars
   | E_lambda {binder={var;attributes;_};result} ->
      let vars = remove_from var vars in
