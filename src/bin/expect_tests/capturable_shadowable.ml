@@ -59,15 +59,16 @@ let%expect_test _ =
   run_ligo_good [ "print-ast-core" ; (good_test "shadow_var_with_const.ligo") ] ;
   [%expect{|
     const foo : int -> int =
-      lambda (x : int) : int return let bar : int -> int =
-                                      lambda (x : int) : int return x in
-                                    (bar)@(42) |}]
+      lambda (x[@capturable false] : int) : int return let bar : int -> int =
+                                                         lambda (x[@shadowable false] : int) : int return
+                                                         x in
+                                                       (bar)@(42) |}]
 
 let%expect_test _ =
   run_ligo_good [ "print-ast-core" ; (good_test "capture_const_param.ligo") ] ;
   [%expect{|
     const foo : int -> int -> int =
-      lambda (x : int) : int -> int return let bar : int -> int =
-                                             lambda (y : int) : int return
-                                             ADD(x , y) in
-                                           bar |}]
+      lambda (x[@shadowable false] : int) : int -> int return let bar : int -> int =
+                                                                lambda (y[@capturable false] : int) : int return
+                                                                ADD(x , y) in
+                                                              bar |}]
