@@ -42,7 +42,7 @@ let%expect_test _ =
            dry-run
                Subcommand: Run a smart-contract with the given storage and input.
 
-           evaluate-value
+           evaluate-expr
                Subcommand: Evaluate a given definition.
 
            get-scope
@@ -101,7 +101,7 @@ let%expect_test _ =
            repl
                Subcommand: REPL
 
-           run-function
+           evaluate-call
                Subcommand: Run a function with the given parameter.
 
            test
@@ -162,7 +162,7 @@ let%expect_test _ =
            dry-run
                Subcommand: Run a smart-contract with the given storage and input.
 
-           evaluate-value
+           evaluate-expr
                Subcommand: Evaluate a given definition.
 
            get-scope
@@ -221,7 +221,7 @@ let%expect_test _ =
            repl
                Subcommand: REPL
 
-           run-function
+           evaluate-call
                Subcommand: Run a function with the given parameter.
 
            test
@@ -588,14 +588,14 @@ let%expect_test _ =
                BOOL indicates whether warning messages should be treated as
                errors or not |} ] ;
 
-  run_ligo_good [ "run-function" ; "--help" ] ;
+  run_ligo_good [ "evaluate-call" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-run-function - Subcommand: Run a function with the given
+           ligo-evaluate-call - Subcommand: Run a function with the given
            parameter.
 
     SYNOPSIS
-           ligo run-function [OPTION]... SOURCE_FILE ENTRY_POINT
+           ligo evaluate-call [OPTION]... SOURCE_FILE ENTRY_POINT
            PARAMETER_EXPRESSION
 
     DESCRIPTION
@@ -664,13 +664,13 @@ let%expect_test _ =
            --version
                Show version information. |} ] ;
 
-  run_ligo_good [ "evaluate-value" ; "--help" ] ;
+  run_ligo_good [ "evaluate-expr" ; "--help" ] ;
   [%expect {|
     NAME
-           ligo-evaluate-value - Subcommand: Evaluate a given definition.
+           ligo-evaluate-expr - Subcommand: Evaluate a given definition.
 
     SYNOPSIS
-           ligo evaluate-value [OPTION]... SOURCE_FILE ENTRY_POINT
+           ligo evaluate-expr [OPTION]... SOURCE_FILE ENTRY_POINT
 
     DESCRIPTION
            This sub-command evaluates a LIGO definition. The context is

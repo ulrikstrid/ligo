@@ -597,7 +597,7 @@ let run_function =
     in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ expression "PARAMETER" 2 $ amount $ balance $ sender $ source $ now  $ syntax $ infer $ protocol_version $ display_format) in
-  let cmdname = "run-function" in
+  let cmdname = "evaluate-call" in
   let doc = "Subcommand: Run a function with the given parameter." in
   let man = [`S Manpage.s_description;
              `P "This sub-command runs a LIGO function on a given \
@@ -621,7 +621,7 @@ let evaluate_value =
     in
   let term =
     Term.(const f $ source_file 0 $ entry_point 1 $ amount $ balance $ sender $ source $ now  $ syntax $ infer $ protocol_version $ display_format) in
-  let cmdname = "evaluate-value" in
+  let cmdname = "evaluate-expr" in
   let doc = "Subcommand: Evaluate a given definition." in
   let man = [`S Manpage.s_description;
              `P "This sub-command evaluates a LIGO definition. The \

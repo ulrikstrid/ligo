@@ -1,10 +1,10 @@
 ### NAME
 
-ligo-evaluate-value - Subcommand: Evaluate a given definition.
+ligo-evaluate-expr - Subcommand: Evaluate a given definition.
 
 ### SYNOPSIS
 
-**ligo evaluate-value** \[*OPTION*\]\... *SOURCE_FILE* *ENTRY_POINT*
+**ligo evaluate-expr** \[*OPTION*\]\... *SOURCE_FILE* *ENTRY_POINT*
 
 ### DESCRIPTION
 

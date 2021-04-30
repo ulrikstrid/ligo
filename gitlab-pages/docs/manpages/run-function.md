@@ -1,10 +1,10 @@
 ### NAME
 
-ligo-run-function - Subcommand: Run a function with the given parameter.
+ligo-evaluate-call - Subcommand: Run a function with the given parameter.
 
 ### SYNOPSIS
 
-**ligo run-function** \[*OPTION*\]\... *SOURCE_FILE* *ENTRY_POINT*
+**ligo evaluate-call** \[*OPTION*\]\... *SOURCE_FILE* *ENTRY_POINT*
 *PARAMETER_EXPRESSION*
 
 ### DESCRIPTION
