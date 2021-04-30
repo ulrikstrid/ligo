@@ -136,37 +136,37 @@ let get_pattern_bounds pattern =
 
 let rec get_free_variables_in_loops (mutable_vars : O.expression_variable list) (for_body : O.expression) =
   let self = get_free_variables_in_loops mutable_vars in
-  let%bind (fv,fb) = Self_ast_sugar.fold_map_expression
+  let%bind (fv, _) = Self_ast_sugar.fold_map_expression
     (* TODO : these should use Variables sets *)
     (fun (free_var : O.expression_variable list) (ass_exp : O.expression) ->
       match ass_exp.expression_content with
-      | E_variable v when not (in_vars v mutable_vars) ->
+      | E_variable v when not (in_vars v mutable_vars) && not (in_vars v free_var) ->
          ok (false, free_var @ [v], ass_exp)
       | E_let_in {let_binder={var};rhs;let_result} ->
-         let%bind rhs_vars,_ = self rhs in
-         let%bind result_vars,_ = self let_result in
+         let%bind rhs_vars = self rhs in
+         let%bind result_vars = self let_result in
          let result_vars = remove_from var result_vars in
          ok (false, rhs_vars @ result_vars, ass_exp)
       | E_lambda {binder={var};result} ->
-         let%bind result_vars,_ = self result in
+         let%bind result_vars = self result in
          ok (false, remove_from var result_vars, ass_exp)
       | E_matching {matchee=e;cases} ->
-         let%bind (res,_) = self e in
+         let%bind res = self e in
          let aux acc ({ pattern ; body } : (O.expression, O.type_expression) O.match_case) =
-           let%bind cur,_ = self body in
+           let%bind cur = self body in
            let cur = List.fold_right remove_from (get_pattern_bounds pattern) cur in
            ok (acc @ cur)
          in
          let%bind res = bind_fold_list aux res cases in
          ok @@ (false, res, ass_exp)
       | E_recursive {lambda={binder={var};result};fun_name} ->
-         let%bind result_vars,_ = self result in
+         let%bind result_vars = self result in
          ok (false, remove_from fun_name @@ remove_from var @@ result_vars, ass_exp)
       | _ -> ok (true,free_var, ass_exp)
     )
       []
       for_body in
-  ok @@ (fv,fb)
+  ok @@ fv
 
 let rec compile_type_expression : I.type_expression -> (O.type_expression,Errors.purification_error) result =
   fun te ->
@@ -400,8 +400,8 @@ and compile_while I.{cond;body} =
 
   let%bind for_body_ = compile_expression body in
   let%bind ((_,captured_name_list),for_body) = repair_mutable_variable_in_loops for_body_ [] binder in
-  let%bind (fv_body,_) = get_free_variables_in_loops captured_name_list for_body_ in
-  let%bind (fv_cond,_) = get_free_variables_in_loops (captured_name_list @ fv_body) cond in
+  let%bind fv_body = get_free_variables_in_loops captured_name_list for_body_ in
+  let%bind fv_cond = get_free_variables_in_loops (captured_name_list @ fv_body) cond in
   let captured_name_list = captured_name_list @ fv_body @ fv_cond in
   let for_body = add_to_end for_body ctrl in
 
@@ -442,9 +442,9 @@ and compile_for I.{binder;start;final;incr;f_body} =
   (* Modify the body loop*)
   let%bind body = compile_expression f_body in
   let%bind ((_,captured_name_list),for_body) = repair_mutable_variable_in_loops body [binder] loop_binder in
-  let%bind (fv_body,_) = get_free_variables_in_loops captured_name_list body in
-  let%bind (fv_cond,_) = get_free_variables_in_loops (captured_name_list @ fv_body) cond in
-  let%bind (fv_step,_) = get_free_variables_in_loops (captured_name_list @ fv_body @ fv_cond) step in
+  let%bind fv_body = get_free_variables_in_loops captured_name_list body in
+  let%bind fv_cond = get_free_variables_in_loops (captured_name_list @ fv_body) cond in
+  let%bind fv_step = get_free_variables_in_loops (captured_name_list @ fv_body @ fv_cond) step in
   let free_vars = fv_body @ fv_cond @ fv_step in
   let for_body = add_to_end for_body ctrl in
 
@@ -487,7 +487,7 @@ and compile_for_each I.{fe_binder;collection;collection_type; fe_body} =
 
   let%bind body_ = compile_expression fe_body in
   let%bind ((_,free_vars), body) = repair_mutable_variable_in_loops body_ element_names args in
-  let%bind (fv_body,_) = get_free_variables_in_loops (free_vars @ element_names) body_ in
+  let%bind fv_body = get_free_variables_in_loops (free_vars @ element_names) body_ in
 
   let for_body = add_to_end body @@ (O.e_accessor (O.e_variable args) [Access_tuple Z.zero]) in
 
