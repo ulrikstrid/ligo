@@ -24,7 +24,7 @@ export interface EditorState {
   code: string;
   title: string;
   dirty: boolean;
-  cursorPosition: CursorPosition | null;
+  cursorPosition?: CursorPosition | null;
   lastEditedTime: Date | null;
 }
 
