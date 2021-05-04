@@ -57,7 +57,7 @@ module T =
     | VBAR     of Region.t  (* "|"  *)
     | COLON    of Region.t  (* ":"  *)
     | DOT      of Region.t  (* "."  *)
-    | WILD     of Region.t  (*  "_" *)
+    | WILD     of Region.t  (* "_"  *)
     | EQ       of Region.t  (* "="  *)
     | NE       of Region.t  (* "<>" *)
     | LT       of Region.t  (* "<"  *)
@@ -86,11 +86,11 @@ module T =
     | Or        of Region.t  (* or     *)
     | Rec       of Region.t  (* rec    *)
     | Ctor_Some of Region.t  (* Some   *)
+    | Struct    of Region.t  (* struct *)
     | Then      of Region.t  (* then   *)
     | True      of Region.t  (* true   *)
     | Type      of Region.t  (* type   *)
     | With      of Region.t  (* with   *)
-    | Struct    of Region.t  (* struct *)
 
     (* Virtual tokens *)
 

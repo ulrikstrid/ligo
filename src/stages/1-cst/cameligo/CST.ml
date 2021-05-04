@@ -258,7 +258,7 @@ and pattern =
 | P_Nat    of (lexeme * Z.t) reg
 | P_None   of kwd_None
 | P_Par    of pattern par reg
-| P_Record of field_pattern reg ne_injection reg
+| P_Record of pattern field reg ne_injection reg
 | P_Some   of (kwd_Some * pattern) reg
 | P_String of string reg
 | P_True   of kwd_true
@@ -274,10 +274,15 @@ and typed_pattern = {
   type_annot : type_annot
 }
 
-and field_pattern = {
+and 'rhs field =
+  Punned   of field_name
+| Complete of 'rhs full_field
+
+and 'rhs full_field = {
   field_name : field_name;
-  eq         : equal;
-  pattern    : pattern
+  assign     : equal;
+  field_rhs  : 'rhs;
+  attributes : attribute list
 }
 
 (* EXPRESSIONS *)
@@ -290,7 +295,6 @@ and expr =
 | E_Annot    of annot_expr par reg
 | E_Bytes    of (string * Hex.t) reg
 | E_Call     of (expr * expr nseq) reg
-| E_Case     of expr case reg
 | E_Cat      of caret bin_op reg               (* "^"   *)
 | E_CodeInj  of code_inj reg
 | E_Cond     of cond_expr reg
@@ -309,6 +313,7 @@ and expr =
 | E_LetIn    of let_in reg
 | E_List     of expr injection reg
 | E_Lt       of lt bin_op reg                  (* "<"   *)
+| E_Match    of match_expr reg
 | E_Mod      of kwd_mod bin_op reg             (* "mod" *)
 | E_ModAlias of mod_alias reg
 | E_ModIn    of mod_in reg
@@ -323,7 +328,7 @@ and expr =
 | E_Or       of kwd_or bin_op reg              (* "or"  *)
 | E_Par      of expr par reg
 | E_Proj     of projection reg
-| E_Record   of record reg
+| E_Record   of record_expr reg
 | E_Seq      of expr injection reg
 | E_Some     of (kwd_Some * expr) reg
 | E_String   of string reg
@@ -355,7 +360,7 @@ and 'a un_op = {
   arg : expr
 }
 
-and record = field_assignment reg ne_injection
+and record_expr = expr field reg ne_injection
 
 and projection = {
   struct_name : variable;
@@ -366,12 +371,6 @@ and projection = {
 and selection =
   FieldName of variable
 | Component of (string * Z.t) reg
-
-and field_assignment = {
-  field_name : field_name;
-  assignment : equal;
-  field_expr : expr
-}
 
 and update = {
   lbrace   : lbrace;
@@ -391,18 +390,18 @@ and path =
   Name of variable
 | Path of projection reg
 
-and 'a case = {
+and match_expr = {
   kwd_match : kwd_match;
   expr      : expr;
   kwd_with  : kwd_with;
   lead_vbar : vbar option;
-  cases     : ('a case_clause reg, vbar) nsepseq reg
+  cases     : (case_clause reg, vbar) nsepseq reg
 }
 
-and 'a case_clause = {
+and case_clause = {
   pattern : pattern;
   arrow   : arrow;
-  rhs     : 'a
+  rhs     : expr
 }
 
 and let_in = {
@@ -506,7 +505,6 @@ let expr_to_region = function
 | E_Annot    {region; _}
 | E_Bytes    {region; _}
 | E_Call     {region; _}
-| E_Case     {region; _}
 | E_Cat      {region; _}
 | E_CodeInj  {region; _}
 | E_Cond     {region; _}
@@ -525,6 +523,7 @@ let expr_to_region = function
 | E_LetIn    {region; _}
 | E_List     {region; _}
 | E_Lt       {region; _}
+| E_Match    {region; _}
 | E_Mod      {region; _}
 | E_ModAlias {region; _}
 | E_ModIn    {region; _}

@@ -102,15 +102,10 @@ and print_declaration = function
 (* Constant declarations *)
 
 and print_D_Const (node : const_decl reg) =
-  let {pattern; const_type; init; attributes; _} = node.value in
+  let {pattern; init; attributes; _} = node.value in
   let start = string "const " ^^ print_pattern pattern in
   let start = if attributes = [] then start
               else print_attributes attributes ^/^ start in
-  let start =
-    match const_type with
-      None -> start
-    | Some (_, e) ->
-        group (start ^/^ nest 2 (string ": " ^^ print_type_expr e)) in
   start
   ^^ group (break 1 ^^ nest 2 (string "= " ^^ print_expr init))
 
@@ -275,8 +270,7 @@ and print_T_Prod (node: cartesian) =
   | e::items ->
       group (break 1 ^^ print_type_expr e ^^ string " *")
       ^^ app items
-  in print_type_expr head
-     ^^ string " *" ^^ app (List.map snd tail)
+  in print_type_expr head ^^ string " *" ^^ app (List.map snd tail)
 
 (* Record types *)
 
@@ -290,7 +284,7 @@ and print_ne_injection :
     let elements = print_nsepseq ";" print ne_elements in
     let kwd      = print_ne_injection_kwd kind in
     let inj      = group (string (kwd ^ " [")
-                          ^^ group (nest 2 (break 0 ^^ elements ))
+                          ^^ group (nest 2 (break 0 ^^ elements))
                           ^^ break 0 ^^ string "]") in
     if attributes = [] then inj
     else group (print_attributes attributes ^/^ inj)
@@ -301,12 +295,15 @@ and print_ne_injection_kwd = function
 | `Record _ -> "record"
 
 and print_field_decl (node : field_decl reg) =
-  let {field_name; field_type; attributes; _} = node.value in
+  let {field_name; field_type; attributes} = node.value in
   let attr = print_attributes attributes in
   let name = if attributes = [] then print_ident field_name
              else attr ^/^ print_ident field_name in
-  let t_expr = print_type_expr (snd field_type)
-  in prefix 2 1 (group (name ^^ string " :")) t_expr
+  match field_type with
+    None -> name
+  | Some (_, t_expr) ->
+      let t_expr = print_type_expr t_expr
+      in prefix 2 1 (group (name ^^ string " :")) t_expr
 
 (* The string type *)
 
@@ -369,15 +366,9 @@ and print_S_Instr node = print_instruction node
 
 and print_S_Decl node = print_declaration node
 
-and print_S_VarDecl {value; _} =
-  let {pattern; var_type; init; _} = value in
-  let start = string "var " ^^ print_pattern pattern in
-  let start =
-    match var_type with
-      None -> start
-    | Some (_, e) ->
-        group (start ^/^ nest 2 (string ": " ^^ print_type_expr e)) in
-  start
+and print_S_VarDecl (node : var_decl reg) =
+  let {pattern; init; _} : var_decl = node.value in
+  string "var " ^^ print_pattern pattern
   ^^ group (break 1 ^^ nest 2 (string ":= " ^^ print_expr init))
 
 (* INSTRUCTIONS *)
@@ -486,7 +477,7 @@ and print_case_clause :
 
 (* Conditional instructions *)
 
-and print_I_Cond (node : test_clause conditional reg) =
+and print_I_Cond (node : (test_clause, test_clause) conditional reg) =
   let {test; ifso; ifnot; _} = node.value in
   let test = string "if "  ^^ group (nest 3 (print_expr test))
   and ifso =
@@ -498,16 +489,19 @@ and print_I_Cond (node : test_clause conditional reg) =
         string "then {"
         ^^ group (nest 2 (hardline ^^ print_if_clause ifso))
         ^^ hardline ^^ string "}"
-  and ifnot =
-    match ifnot with
-      ClauseInstr _ ->
-        string "else"
-        ^^ group (nest 2 (break 1 ^^ print_if_clause ifnot))
-    | ClauseBlock _ ->
-        string "else {"
-        ^^ group (nest 2 (hardline ^^ print_if_clause ifnot))
-        ^^ hardline ^^ string "}"
-  in group (test ^/^ ifso ^/^ ifnot)
+  in match ifnot with
+       None -> group (test ^/^ ifso)
+     | Some (_, (ClauseInstr _ as clause)) ->
+         let ifnot =
+           string "else"
+           ^^ group (nest 2 (break 1 ^^ print_if_clause clause))
+         in group (test ^/^ ifso ^/^ ifnot)
+     | Some (_, (ClauseBlock _ as clause)) ->
+         let ifnot =
+           string "else {"
+           ^^ group (nest 2 (hardline ^^ print_if_clause clause))
+           ^^ hardline ^^ string "}"
+         in group (test ^/^ ifso ^/^ ifnot)
 
 and print_if_clause = function
   ClauseInstr i -> print_instruction i
@@ -576,18 +570,13 @@ and print_I_MapRemove (node : map_remove reg) =
 
 and print_I_RecordPatch (node : record_patch reg) =
   let {path; record_inj; _} = node.value in
-  let inj = print_record record_inj in
+  let inj = print_record_expr record_inj in
   string "patch"
   ^^ group (nest 2 (break 1 ^^ print_path path) ^/^ string "with")
   ^^ group (nest 2 (break 1 ^^ inj))
 
-and print_record (node : record reg) =
-  group (print_ne_injection print_field_assignment node)
-
-and print_field_assignment (node : field_assignment reg) =
-  let {field_name; field_expr; _} = node.value in
-  prefix 2 1 (print_ident field_name ^^ string " =")
-             (print_expr field_expr)
+and print_record_expr (node : record_expr reg) =
+  group (print_ne_injection (print_field print_expr) node)
 
 (* Skipping (non-operation) *)
 
@@ -640,6 +629,7 @@ and print_pattern = function
 | P_String p -> print_P_String p
 | P_True   p -> print_P_True   p
 | P_Tuple  p -> print_P_Tuple  p
+| P_Typed  p -> print_P_Typed  p
 | P_Unit   p -> print_P_Unit   p
 | P_Var    p -> print_P_Var    p
 
@@ -722,16 +712,16 @@ and print_P_Par (node : pattern par reg) =
 
 (* Record patterns *)
 
-and print_P_Record (node : field_pattern reg ne_injection reg) =
-  group (print_ne_injection print_field_pattern node)
+and print_P_Record (node : pattern field reg ne_injection reg) =
+  group (print_ne_injection (print_field print_pattern) node)
 
-and print_field_pattern (node : field_pattern reg) =
-  match node.value with
-    Punned field_name ->
-      print_ident field_name
-  | Complete {field_name; field_pattern; _} ->
-      prefix 2 1 (print_ident   field_name ^^ string " =")
-                 (print_pattern field_pattern)
+and print_field : 'rhs.('rhs -> document) -> 'rhs field reg -> document =
+  fun print node ->
+    match node.value with
+      Punned field_name ->
+        print_ident field_name
+    | Complete {field_name; field_rhs; _} ->
+        prefix 2 1 (print_ident field_name ^^ string " =") (print field_rhs)
 
 (* The pattern for the application of the predefined constructor
    [Some] *)
@@ -752,6 +742,15 @@ and print_P_True _ = string "True"
 
 and print_P_Tuple node = print_tuple_pattern node
 
+(* Typed patterns *)
+
+and print_P_Typed (node : typed_pattern reg) =
+  let {pattern; type_annot} = node.value in
+  print_pattern pattern ^/^ nest 2 (print_type_annot type_annot)
+
+and print_type_annot (node : type_annot) =
+  string ": " ^^ print_type_expr (snd node)
+
 (* The pattern matching the unique value of the type "unit". *)
 
 and print_P_Unit _ = string "Unit"
@@ -771,7 +770,6 @@ and print_P_Var node = print_ident node
 and print_expr = function
   E_Add       e -> print_E_Add       e
 | E_And       e -> print_E_And       e
-| E_Annot     e -> print_E_Annot     e
 | E_BigMap    e -> print_E_BigMap    e
 | E_Block     e -> print_E_Block     e
 | E_Bytes     e -> print_E_Bytes     e
@@ -815,6 +813,7 @@ and print_expr = function
 | E_Sub       e -> print_E_Sub       e
 | E_True      e -> print_E_True      e
 | E_Tuple     e -> print_E_Tuple     e
+| E_Typed     e -> print_E_Typed     e
 | E_Unit      e -> print_E_Unit      e
 | E_Update    e -> print_E_Update    e
 | E_Var       e -> print_E_Var       e
@@ -826,21 +825,13 @@ and print_E_Add node = print_op2 "+" node
 
 and print_op2 op (node : Region.t bin_op reg) =
   let {arg1; arg2; _} = node.value
-  and length = String.length op + 1 in
+  and indentation = 1 + String.length op in
   group (print_expr arg1 ^/^ string (op ^ " ")
-         ^^ nest length (print_expr arg2))
+         ^^ nest indentation (print_expr arg2))
 
 (* Boolean conjunction *)
 
 and print_E_And node = print_op2 "and" node
-
-(* Expressions annotated with a type *)
-
-and print_E_Annot (node : annot_expr par reg) =
-  let expr, (_, type_expr) = node.value.inside in
-  group (string "("
-         ^^ nest 1 (print_expr expr ^/^ string ": "
-                    ^^ print_type_expr type_expr ^^ string ")"))
 
 (* Big maps defined intensionally *)
 
@@ -884,12 +875,16 @@ and print_E_Equal node = print_op2 "=" node
 
 (* Conditional expressions *)
 
-and print_E_Cond (node : expr conditional reg) =
-  let {test; ifso; ifnot; _} : expr conditional = node.value in
+and print_E_Cond (node : (expr, expr) conditional reg) =
+  let {test; ifso; ifnot; _} : (expr, expr) conditional = node.value in
   let test  = string "if "  ^^ group (nest 3 (print_expr test))
   and ifso  = string "then" ^^ group (nest 2 (break 1 ^^ print_expr ifso))
-  and ifnot = string "else" ^^ group (nest 2 (break 1 ^^ print_expr ifnot))
-  in group (test ^/^ ifso ^/^ ifnot)
+  in match ifnot with
+       None -> group (test ^/^ ifso)
+     | Some (_, expr) ->
+        let ifnot =
+          string "else" ^^ group (nest 2 (break 1 ^^ print_expr expr))
+        in group (test ^/^ ifso ^/^ ifnot)
 
 (* Consing (that is, pushing an item on top of a stack/list *)
 
@@ -1021,7 +1016,7 @@ and print_E_Proj (node : projection reg) = print_projection node
 (* Record expression defined intensionally (that is, by listing all
    the field assignments) *)
 
-and print_E_Record (node : record reg) = print_record node
+and print_E_Record (node : record_expr reg) = print_record_expr node
 
 (* Set expression defined intensionally (that is, by listing all the
    elements) *)
@@ -1054,6 +1049,14 @@ and print_E_True _ = string "True"
 (* Tuples of expressions *)
 
 and print_E_Tuple node = print_tuple_expr node
+
+(* Expressions annotated with a type *)
+
+and print_E_Typed (node : typed_expr par reg) =
+  let expr, (_, type_expr) = node.value.inside in
+  group (string "("
+         ^^ nest 1 (print_expr expr ^/^ string ": "
+                    ^^ print_type_expr type_expr ^^ string ")"))
 
 (* The unique value of the type "unit" *)
 

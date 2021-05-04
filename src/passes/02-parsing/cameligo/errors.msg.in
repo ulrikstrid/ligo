@@ -75,10 +75,10 @@ interactive_expr: Begin If Verbatim Then Verbatim Else With
 ##
 ## Ends in an error in state: 549.
 ##
-## if_then_else(seq_expr) -> If expr Then closed_if Else . seq_expr [ SEMI End ]
+## if_then_else(seq_expr) -> If expr Then closed_expr Else . seq_expr [ SEMI End ]
 ##
 ## The known suffix of the stack is as follows:
-## If expr Then closed_if Else
+## If expr Then closed_expr Else
 ##
 
 Ill-formed conditional expression.
@@ -88,8 +88,8 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Fun WILD ARROW With
 ##
 ## Ends in an error in state: 514.
 ##
-## let_expr(base_cond) -> seq(Attr) . Let let_binding In base_cond [ VBAR ]
-## let_expr(base_cond) -> seq(Attr) . Let Rec let_binding In base_cond [ VBAR ]
+## let_expr(base_and_cond) -> seq(Attr) . Let let_binding In base_and_cond [ VBAR ]
+## let_expr(base_and_cond) -> seq(Attr) . Let Rec let_binding In base_and_cond [ VBAR ]
 ## let_in_sequence -> seq(Attr) . Let let_binding In series [ End ]
 ## let_in_sequence -> seq(Attr) . Let Rec let_binding In series [ End ]
 ##
@@ -106,8 +106,8 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW With
 ##
 ## Ends in an error in state: 444.
 ##
-## let_expr(base_cond) -> seq(Attr) . Let let_binding In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## let_expr(base_cond) -> seq(Attr) . Let Rec let_binding In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(base_and_cond) -> seq(Attr) . Let let_binding In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(base_and_cond) -> seq(Attr) . Let Rec let_binding In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ## let_expr(base_if_then_else) -> seq(Attr) . Let let_binding In base_if_then_else [ Else ]
 ## let_expr(base_if_then_else) -> seq(Attr) . Let Rec let_binding In base_if_then_else [ Else ]
 ##
@@ -140,8 +140,8 @@ interactive_expr: Begin If Verbatim Then With
 ##
 ## Ends in an error in state: 534.
 ##
-## let_expr(closed_if) -> seq(Attr) . Let let_binding In closed_if [ Else ]
-## let_expr(closed_if) -> seq(Attr) . Let Rec let_binding In closed_if [ Else ]
+## let_expr(closed_expr) -> seq(Attr) . Let let_binding In closed_expr [ Else ]
+## let_expr(closed_expr) -> seq(Attr) . Let Rec let_binding In closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr)
@@ -156,8 +156,8 @@ interactive_expr: If Verbatim Then With
 ##
 ## Ends in an error in state: 599.
 ##
-## let_expr(closed_if) -> seq(Attr) . Let let_binding In closed_if [ Else ]
-## let_expr(closed_if) -> seq(Attr) . Let Rec let_binding In closed_if [ Else ]
+## let_expr(closed_expr) -> seq(Attr) . Let let_binding In closed_expr [ Else ]
+## let_expr(closed_expr) -> seq(Attr) . Let Rec let_binding In closed_expr [ Else ]
 ## let_expr(expr) -> seq(Attr) . Let let_binding In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ## let_expr(expr) -> seq(Attr) . Let Rec let_binding In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
@@ -174,10 +174,10 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then With
 ##
 ## Ends in an error in state: 384.
 ##
-## let_expr(base_cond) -> seq(Attr) . Let let_binding In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## let_expr(base_cond) -> seq(Attr) . Let Rec let_binding In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## let_expr(closed_if) -> seq(Attr) . Let let_binding In closed_if [ Else ]
-## let_expr(closed_if) -> seq(Attr) . Let Rec let_binding In closed_if [ Else ]
+## let_expr(base_and_cond) -> seq(Attr) . Let let_binding In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(base_and_cond) -> seq(Attr) . Let Rec let_binding In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(closed_expr) -> seq(Attr) . Let let_binding In closed_expr [ Else ]
+## let_expr(closed_expr) -> seq(Attr) . Let Rec let_binding In closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr)
@@ -192,8 +192,8 @@ interactive_expr: Match Verbatim With WILD ARROW Let WILD EQ Bytes In With
 ##
 ## Ends in an error in state: 494.
 ##
-## let_expr(base_cond) -> seq(Attr) . Let let_binding In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## let_expr(base_cond) -> seq(Attr) . Let Rec let_binding In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(base_and_cond) -> seq(Attr) . Let let_binding In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(base_and_cond) -> seq(Attr) . Let Rec let_binding In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr)
@@ -245,10 +245,10 @@ interactive_expr: Begin If Verbatim Then If Verbatim Then Verbatim COMMA Bytes W
 ##
 ## Ends in an error in state: 546.
 ##
-## if_then_else(closed_if) -> If expr Then closed_if . Else closed_if [ Else ]
+## if_then_else(closed_expr) -> If expr Then closed_expr . Else closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
-## If expr Then closed_if
+## If expr Then closed_expr
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -266,18 +266,18 @@ interactive_expr: Begin If Verbatim Then If Verbatim Then Verbatim COMMA Bytes W
 ## In state 327, spurious reduction of production nsepseq(disj_expr_level,COMMA) -> disj_expr_level
 ## In state 326, spurious reduction of production tuple(disj_expr_level) -> disj_expr_level COMMA nsepseq(disj_expr_level,COMMA)
 ## In state 238, spurious reduction of production tuple_expr -> tuple(disj_expr_level)
-## In state 533, spurious reduction of production base_expr(closed_if) -> tuple_expr
-## In state 411, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr(closed_if)
-## In state 410, spurious reduction of production closed_if -> base_if_then_else__open(closed_if)
+## In state 533, spurious reduction of production base_expr(closed_expr) -> tuple_expr
+## In state 411, spurious reduction of production base_if_then_else__open(closed_expr) -> base_expr(closed_expr)
+## In state 410, spurious reduction of production closed_expr -> base_if_then_else__open(closed_expr)
 ##
 interactive_expr: Begin If Verbatim Then Verbatim COMMA Bytes With
 ##
 ## Ends in an error in state: 548.
 ##
-## if_then_else(seq_expr) -> If expr Then closed_if . Else seq_expr [ SEMI End ]
+## if_then_else(seq_expr) -> If expr Then closed_expr . Else seq_expr [ SEMI End ]
 ##
 ## The known suffix of the stack is as follows:
-## If expr Then closed_if
+## If expr Then closed_expr
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -295,15 +295,15 @@ interactive_expr: Begin If Verbatim Then Verbatim COMMA Bytes With
 ## In state 327, spurious reduction of production nsepseq(disj_expr_level,COMMA) -> disj_expr_level
 ## In state 326, spurious reduction of production tuple(disj_expr_level) -> disj_expr_level COMMA nsepseq(disj_expr_level,COMMA)
 ## In state 238, spurious reduction of production tuple_expr -> tuple(disj_expr_level)
-## In state 533, spurious reduction of production base_expr(closed_if) -> tuple_expr
-## In state 411, spurious reduction of production base_if_then_else__open(closed_if) -> base_expr(closed_if)
-## In state 410, spurious reduction of production closed_if -> base_if_then_else__open(closed_if)
+## In state 533, spurious reduction of production base_expr(closed_expr) -> tuple_expr
+## In state 411, spurious reduction of production base_if_then_else__open(closed_expr) -> base_expr(closed_expr)
+## In state 410, spurious reduction of production closed_expr -> base_if_then_else__open(closed_expr)
 ##
 interactive_expr: Begin If Verbatim Then Verbatim With
 ##
 ## Ends in an error in state: 543.
 ##
-## base_expr(closed_if) -> disj_expr_level . [ Else ]
+## base_expr(closed_expr) -> disj_expr_level . [ Else ]
 ## bin_op(disj_expr_level,BOOL_OR,conj_expr_level) -> disj_expr_level . BOOL_OR conj_expr_level [ Or Else COMMA BOOL_OR ]
 ## bin_op(disj_expr_level,Or,conj_expr_level) -> disj_expr_level . Or conj_expr_level [ Or Else COMMA BOOL_OR ]
 ## tuple(disj_expr_level) -> disj_expr_level . COMMA nsepseq(disj_expr_level,COMMA) [ Else ]
@@ -334,7 +334,7 @@ interactive_expr: Begin If Verbatim Then If Verbatim With
 ##
 ## Ends in an error in state: 526.
 ##
-## if_then_else(closed_if) -> If expr . Then closed_if Else closed_if [ Else ]
+## if_then_else(closed_expr) -> If expr . Then closed_expr Else closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## If expr
@@ -353,14 +353,14 @@ interactive_expr: Begin If Verbatim Then If Verbatim With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ##
 interactive_expr: Begin If Verbatim With
 ##
 ## Ends in an error in state: 523.
 ##
-## if_then_else(seq_expr) -> If expr . Then closed_if Else seq_expr [ SEMI End ]
+## if_then_else(seq_expr) -> If expr . Then closed_expr Else seq_expr [ SEMI End ]
 ##
 ## The known suffix of the stack is as follows:
 ## If expr
@@ -379,16 +379,16 @@ interactive_expr: Begin If Verbatim With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ##
 interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim With
 ##
 ## Ends in an error in state: 364.
 ##
-## if_then(base_cond) -> If expr . Then base_cond [ VBAR ]
-## if_then_else(base_cond) -> If expr . Then closed_if Else base_cond [ VBAR ]
-## if_then_else(seq_expr) -> If expr . Then closed_if Else seq_expr [ SEMI End ]
+## if_then(base_and_cond) -> If expr . Then base_and_cond [ VBAR ]
+## if_then_else(base_and_cond) -> If expr . Then closed_expr Else base_and_cond [ VBAR ]
+## if_then_else(seq_expr) -> If expr . Then closed_expr Else seq_expr [ SEMI End ]
 ##
 ## The known suffix of the stack is as follows:
 ## If expr
@@ -407,16 +407,16 @@ interactive_expr: Begin Match Verbatim With WILD ARROW If Verbatim With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ##
 interactive_expr: If Verbatim Then If Verbatim With
 ##
 ## Ends in an error in state: 591.
 ##
 ## if_then(expr) -> If expr . Then expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## if_then_else(closed_if) -> If expr . Then closed_if Else closed_if [ Else ]
-## if_then_else(expr) -> If expr . Then closed_if Else expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## if_then_else(closed_expr) -> If expr . Then closed_expr Else closed_expr [ Else ]
+## if_then_else(expr) -> If expr . Then closed_expr Else expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## If expr
@@ -435,16 +435,16 @@ interactive_expr: If Verbatim Then If Verbatim With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ##
 interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW If Verbatim With
 ##
 ## Ends in an error in state: 373.
 ##
-## if_then(base_cond) -> If expr . Then base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## if_then_else(base_cond) -> If expr . Then closed_if Else base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## if_then_else(base_if_then_else) -> If expr . Then closed_if Else base_if_then_else [ Else ]
+## if_then(base_and_cond) -> If expr . Then base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## if_then_else(base_and_cond) -> If expr . Then closed_expr Else base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## if_then_else(base_if_then_else) -> If expr . Then closed_expr Else base_if_then_else [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## If expr
@@ -463,15 +463,15 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW If Verbatim Wi
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ##
 interactive_expr: If Verbatim With
 ##
 ## Ends in an error in state: 583.
 ##
 ## if_then(expr) -> If expr . Then expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## if_then_else(expr) -> If expr . Then closed_if Else expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## if_then_else(expr) -> If expr . Then closed_expr Else expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## If expr
@@ -490,16 +490,16 @@ interactive_expr: If Verbatim With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ##
 interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then If Verbatim With
 ##
 ## Ends in an error in state: 376.
 ##
-## if_then(base_cond) -> If expr . Then base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## if_then_else(base_cond) -> If expr . Then closed_if Else base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## if_then_else(closed_if) -> If expr . Then closed_if Else closed_if [ Else ]
+## if_then(base_and_cond) -> If expr . Then base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## if_then_else(base_and_cond) -> If expr . Then closed_expr Else base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## if_then_else(closed_expr) -> If expr . Then closed_expr Else closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## If expr
@@ -518,15 +518,15 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then If Verbatim Wi
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ##
 interactive_expr: Match Verbatim With WILD ARROW If Verbatim With
 ##
 ## Ends in an error in state: 487.
 ##
-## if_then(base_cond) -> If expr . Then base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## if_then_else(base_cond) -> If expr . Then closed_if Else base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## if_then(base_and_cond) -> If expr . Then base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## if_then_else(base_and_cond) -> If expr . Then closed_expr Else base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## If expr
@@ -545,8 +545,8 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ##
 
 Ill-formed conditional expression.
@@ -557,7 +557,7 @@ interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes With
 ##
 ## Ends in an error in state: 537.
 ##
-## let_expr(closed_if) -> seq(Attr) Let Rec let_binding . In closed_if [ Else ]
+## let_expr(closed_expr) -> seq(Attr) Let Rec let_binding . In closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr) Let Rec let_binding
@@ -576,8 +576,8 @@ interactive_expr: Begin If Verbatim Then Let Rec WILD EQ Bytes With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 343, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 interactive_expr: Begin Let Rec WILD EQ Bytes With
@@ -603,15 +603,15 @@ interactive_expr: Begin Let Rec WILD EQ Bytes With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 343, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes With
 ##
 ## Ends in an error in state: 517.
 ##
-## let_expr(base_cond) -> seq(Attr) Let Rec let_binding . In base_cond [ VBAR ]
+## let_expr(base_and_cond) -> seq(Attr) Let Rec let_binding . In base_and_cond [ VBAR ]
 ## let_in_sequence -> seq(Attr) Let Rec let_binding . In series [ End ]
 ##
 ## The known suffix of the stack is as follows:
@@ -631,15 +631,15 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes Wit
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 343, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 interactive_expr: If Verbatim Then Let Rec WILD EQ Bytes With
 ##
 ## Ends in an error in state: 602.
 ##
-## let_expr(closed_if) -> seq(Attr) Let Rec let_binding . In closed_if [ Else ]
+## let_expr(closed_expr) -> seq(Attr) Let Rec let_binding . In closed_expr [ Else ]
 ## let_expr(expr) -> seq(Attr) Let Rec let_binding . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
@@ -659,15 +659,15 @@ interactive_expr: If Verbatim Then Let Rec WILD EQ Bytes With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 343, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes With
 ##
 ## Ends in an error in state: 447.
 ##
-## let_expr(base_cond) -> seq(Attr) Let Rec let_binding . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(base_and_cond) -> seq(Attr) Let Rec let_binding . In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ## let_expr(base_if_then_else) -> seq(Attr) Let Rec let_binding . In base_if_then_else [ Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -687,8 +687,8 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Let Rec WILD E
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 343, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 interactive_expr: Let Rec WILD EQ Bytes With
@@ -714,16 +714,16 @@ interactive_expr: Let Rec WILD EQ Bytes With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 343, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Let Rec WILD EQ Bytes With
 ##
 ## Ends in an error in state: 387.
 ##
-## let_expr(base_cond) -> seq(Attr) Let Rec let_binding . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## let_expr(closed_if) -> seq(Attr) Let Rec let_binding . In closed_if [ Else ]
+## let_expr(base_and_cond) -> seq(Attr) Let Rec let_binding . In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(closed_expr) -> seq(Attr) Let Rec let_binding . In closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr) Let Rec let_binding
@@ -742,15 +742,15 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Let Rec WILD E
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 343, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 interactive_expr: Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes With
 ##
 ## Ends in an error in state: 497.
 ##
-## let_expr(base_cond) -> seq(Attr) Let Rec let_binding . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(base_and_cond) -> seq(Attr) Let Rec let_binding . In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr) Let Rec let_binding
@@ -769,15 +769,15 @@ interactive_expr: Match Verbatim With WILD ARROW Let Rec WILD EQ Bytes With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 343, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes With
 ##
 ## Ends in an error in state: 544.
 ##
-## let_expr(closed_if) -> seq(Attr) Let let_binding . In closed_if [ Else ]
+## let_expr(closed_expr) -> seq(Attr) Let let_binding . In closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr) Let let_binding
@@ -796,8 +796,8 @@ interactive_expr: Begin If Verbatim Then Let WILD EQ Bytes With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 343, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 interactive_expr: Begin Let WILD EQ Bytes With
@@ -823,15 +823,15 @@ interactive_expr: Begin Let WILD EQ Bytes With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 343, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 interactive_expr: Begin Match Verbatim With WILD ARROW Let WILD EQ Bytes With
 ##
 ## Ends in an error in state: 570.
 ##
-## let_expr(base_cond) -> seq(Attr) Let let_binding . In base_cond [ VBAR ]
+## let_expr(base_and_cond) -> seq(Attr) Let let_binding . In base_and_cond [ VBAR ]
 ## let_in_sequence -> seq(Attr) Let let_binding . In series [ End ]
 ##
 ## The known suffix of the stack is as follows:
@@ -851,15 +851,15 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Let WILD EQ Bytes With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 343, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Let WILD EQ Bytes With
 ##
 ## Ends in an error in state: 465.
 ##
-## let_expr(base_cond) -> seq(Attr) Let let_binding . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(base_and_cond) -> seq(Attr) Let let_binding . In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ## let_expr(base_if_then_else) -> seq(Attr) Let let_binding . In base_if_then_else [ Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -879,15 +879,15 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Let WILD EQ By
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 343, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 interactive_expr: If Verbatim Then Let WILD EQ Bytes With
 ##
 ## Ends in an error in state: 609.
 ##
-## let_expr(closed_if) -> seq(Attr) Let let_binding . In closed_if [ Else ]
+## let_expr(closed_expr) -> seq(Attr) Let let_binding . In closed_expr [ Else ]
 ## let_expr(expr) -> seq(Attr) Let let_binding . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
@@ -907,8 +907,8 @@ interactive_expr: If Verbatim Then Let WILD EQ Bytes With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 343, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 interactive_expr: Let WILD EQ Bytes With
@@ -934,16 +934,16 @@ interactive_expr: Let WILD EQ Bytes With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 343, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Let WILD EQ Bytes With
 ##
 ## Ends in an error in state: 419.
 ##
-## let_expr(base_cond) -> seq(Attr) Let let_binding . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## let_expr(closed_if) -> seq(Attr) Let let_binding . In closed_if [ Else ]
+## let_expr(base_and_cond) -> seq(Attr) Let let_binding . In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(closed_expr) -> seq(Attr) Let let_binding . In closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr) Let let_binding
@@ -962,15 +962,15 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Let WILD EQ By
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 343, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 interactive_expr: Match Verbatim With WILD ARROW Let WILD EQ Bytes With
 ##
 ## Ends in an error in state: 504.
 ##
-## let_expr(base_cond) -> seq(Attr) Let let_binding . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(base_and_cond) -> seq(Attr) Let let_binding . In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr) Let let_binding
@@ -989,8 +989,8 @@ interactive_expr: Match Verbatim With WILD ARROW Let WILD EQ Bytes With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 343, spurious reduction of production let_binding -> irrefutable option(type_annotation) EQ expr
 ##
 
@@ -1002,7 +1002,7 @@ interactive_expr: Begin If Verbatim Then Let Rec With
 ##
 ## Ends in an error in state: 536.
 ##
-## let_expr(closed_if) -> seq(Attr) Let Rec . let_binding In closed_if [ Else ]
+## let_expr(closed_expr) -> seq(Attr) Let Rec . let_binding In closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr) Let Rec
@@ -1011,7 +1011,7 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Let Rec With
 ##
 ## Ends in an error in state: 516.
 ##
-## let_expr(base_cond) -> seq(Attr) Let Rec . let_binding In base_cond [ VBAR ]
+## let_expr(base_and_cond) -> seq(Attr) Let Rec . let_binding In base_and_cond [ VBAR ]
 ## let_in_sequence -> seq(Attr) Let Rec . let_binding In series [ End ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1030,7 +1030,7 @@ interactive_expr: If Verbatim Then Let Rec With
 ##
 ## Ends in an error in state: 601.
 ##
-## let_expr(closed_if) -> seq(Attr) Let Rec . let_binding In closed_if [ Else ]
+## let_expr(closed_expr) -> seq(Attr) Let Rec . let_binding In closed_expr [ Else ]
 ## let_expr(expr) -> seq(Attr) Let Rec . let_binding In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1040,7 +1040,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Let Rec With
 ##
 ## Ends in an error in state: 446.
 ##
-## let_expr(base_cond) -> seq(Attr) Let Rec . let_binding In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(base_and_cond) -> seq(Attr) Let Rec . let_binding In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ## let_expr(base_if_then_else) -> seq(Attr) Let Rec . let_binding In base_if_then_else [ Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1059,8 +1059,8 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Let Rec With
 ##
 ## Ends in an error in state: 386.
 ##
-## let_expr(base_cond) -> seq(Attr) Let Rec . let_binding In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## let_expr(closed_if) -> seq(Attr) Let Rec . let_binding In closed_if [ Else ]
+## let_expr(base_and_cond) -> seq(Attr) Let Rec . let_binding In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(closed_expr) -> seq(Attr) Let Rec . let_binding In closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr) Let Rec
@@ -1069,7 +1069,7 @@ interactive_expr: Match Verbatim With WILD ARROW Let Rec With
 ##
 ## Ends in an error in state: 496.
 ##
-## let_expr(base_cond) -> seq(Attr) Let Rec . let_binding In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(base_and_cond) -> seq(Attr) Let Rec . let_binding In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr) Let Rec
@@ -1092,8 +1092,8 @@ interactive_expr: Begin If Verbatim Then Let With
 ##
 ## Ends in an error in state: 535.
 ##
-## let_expr(closed_if) -> seq(Attr) Let . let_binding In closed_if [ Else ]
-## let_expr(closed_if) -> seq(Attr) Let . Rec let_binding In closed_if [ Else ]
+## let_expr(closed_expr) -> seq(Attr) Let . let_binding In closed_expr [ Else ]
+## let_expr(closed_expr) -> seq(Attr) Let . Rec let_binding In closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr) Let
@@ -1112,8 +1112,8 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Let With
 ##
 ## Ends in an error in state: 515.
 ##
-## let_expr(base_cond) -> seq(Attr) Let . let_binding In base_cond [ VBAR ]
-## let_expr(base_cond) -> seq(Attr) Let . Rec let_binding In base_cond [ VBAR ]
+## let_expr(base_and_cond) -> seq(Attr) Let . let_binding In base_and_cond [ VBAR ]
+## let_expr(base_and_cond) -> seq(Attr) Let . Rec let_binding In base_and_cond [ VBAR ]
 ## let_in_sequence -> seq(Attr) Let . let_binding In series [ End ]
 ## let_in_sequence -> seq(Attr) Let . Rec let_binding In series [ End ]
 ##
@@ -1124,8 +1124,8 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Let With
 ##
 ## Ends in an error in state: 445.
 ##
-## let_expr(base_cond) -> seq(Attr) Let . let_binding In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## let_expr(base_cond) -> seq(Attr) Let . Rec let_binding In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(base_and_cond) -> seq(Attr) Let . let_binding In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(base_and_cond) -> seq(Attr) Let . Rec let_binding In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ## let_expr(base_if_then_else) -> seq(Attr) Let . let_binding In base_if_then_else [ Else ]
 ## let_expr(base_if_then_else) -> seq(Attr) Let . Rec let_binding In base_if_then_else [ Else ]
 ##
@@ -1136,8 +1136,8 @@ interactive_expr: If Verbatim Then Let With
 ##
 ## Ends in an error in state: 600.
 ##
-## let_expr(closed_if) -> seq(Attr) Let . let_binding In closed_if [ Else ]
-## let_expr(closed_if) -> seq(Attr) Let . Rec let_binding In closed_if [ Else ]
+## let_expr(closed_expr) -> seq(Attr) Let . let_binding In closed_expr [ Else ]
+## let_expr(closed_expr) -> seq(Attr) Let . Rec let_binding In closed_expr [ Else ]
 ## let_expr(expr) -> seq(Attr) Let . let_binding In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ## let_expr(expr) -> seq(Attr) Let . Rec let_binding In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
@@ -1158,10 +1158,10 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Let With
 ##
 ## Ends in an error in state: 385.
 ##
-## let_expr(base_cond) -> seq(Attr) Let . let_binding In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## let_expr(base_cond) -> seq(Attr) Let . Rec let_binding In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## let_expr(closed_if) -> seq(Attr) Let . let_binding In closed_if [ Else ]
-## let_expr(closed_if) -> seq(Attr) Let . Rec let_binding In closed_if [ Else ]
+## let_expr(base_and_cond) -> seq(Attr) Let . let_binding In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(base_and_cond) -> seq(Attr) Let . Rec let_binding In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(closed_expr) -> seq(Attr) Let . let_binding In closed_expr [ Else ]
+## let_expr(closed_expr) -> seq(Attr) Let . Rec let_binding In closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr) Let
@@ -1170,8 +1170,8 @@ interactive_expr: Match Verbatim With WILD ARROW Let With
 ##
 ## Ends in an error in state: 495.
 ##
-## let_expr(base_cond) -> seq(Attr) Let . let_binding In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## let_expr(base_cond) -> seq(Attr) Let . Rec let_binding In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(base_and_cond) -> seq(Attr) Let . let_binding In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## let_expr(base_and_cond) -> seq(Attr) Let . Rec let_binding In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## seq(Attr) Let
@@ -1216,8 +1216,8 @@ interactive_expr: Begin If Verbatim Then Match Verbatim Type
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ##
 interactive_expr: Begin Match Verbatim Type
 ##
@@ -1242,14 +1242,14 @@ interactive_expr: Begin Match Verbatim Type
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ##
 interactive_expr: Match Verbatim Type
 ##
 ## Ends in an error in state: 661.
 ##
-## match_expr(base_cond) -> Match expr . With option(VBAR) cases(base_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## match_expr(base_and_cond) -> Match expr . With option(VBAR) cases(base_and_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Match expr
@@ -1268,14 +1268,14 @@ interactive_expr: Match Verbatim Type
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ##
 interactive_expr: If Verbatim Then Match Verbatim Type
 ##
 ## Ends in an error in state: 586.
 ##
-## match_expr(base_cond) -> Match expr . With option(VBAR) cases(base_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## match_expr(base_and_cond) -> Match expr . With option(VBAR) cases(base_and_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ## match_expr(base_if_then_else) -> Match expr . With option(VBAR) cases(base_if_then_else) [ Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1295,8 +1295,8 @@ interactive_expr: If Verbatim Then Match Verbatim Type
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ##
 
 Ill-formed pattern matching.
@@ -1307,11 +1307,11 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Verbatim With
 ##
 ## Ends in an error in state: 574.
 ##
-## cases(base_cond) -> cases(base_cond) . VBAR case_clause(base_cond) [ VBAR ]
-## cases(last_expr) -> cases(base_cond) . VBAR case_clause(last_expr) [ End ]
+## cases(base_and_cond) -> cases(base_and_cond) . VBAR case_clause(base_and_cond) [ VBAR ]
+## cases(last_expr) -> cases(base_and_cond) . VBAR case_clause(last_expr) [ End ]
 ##
 ## The known suffix of the stack is as follows:
-## cases(base_cond)
+## cases(base_and_cond)
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -1326,21 +1326,21 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Verbatim With
 ## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 508, spurious reduction of production base_expr(base_cond) -> disj_expr_level
-## In state 412, spurious reduction of production base_cond__open(base_cond) -> base_expr(base_cond)
-## In state 413, spurious reduction of production base_cond -> base_cond__open(base_cond)
-## In state 472, spurious reduction of production case_clause(base_cond) -> pattern ARROW base_cond
-## In state 480, spurious reduction of production cases(base_cond) -> case_clause(base_cond)
+## In state 508, spurious reduction of production base_expr(base_and_cond) -> disj_expr_level
+## In state 412, spurious reduction of production base_and_cond__open(base_and_cond) -> base_expr(base_and_cond)
+## In state 413, spurious reduction of production base_and_cond -> base_and_cond__open(base_and_cond)
+## In state 472, spurious reduction of production case_clause(base_and_cond) -> pattern ARROW base_and_cond
+## In state 480, spurious reduction of production cases(base_and_cond) -> case_clause(base_and_cond)
 ##
 interactive_expr: Begin If Verbatim Then Match Verbatim With WILD ARROW Bytes With
 ##
 ## Ends in an error in state: 475.
 ##
-## cases(base_cond) -> cases(base_cond) . VBAR case_clause(base_cond) [ VBAR ]
-## cases(base_if_then_else) -> cases(base_cond) . VBAR case_clause(base_if_then_else) [ Else ]
+## cases(base_and_cond) -> cases(base_and_cond) . VBAR case_clause(base_and_cond) [ VBAR ]
+## cases(base_if_then_else) -> cases(base_and_cond) . VBAR case_clause(base_if_then_else) [ Else ]
 ##
 ## The known suffix of the stack is as follows:
-## cases(base_cond)
+## cases(base_and_cond)
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -1355,11 +1355,11 @@ interactive_expr: Begin If Verbatim Then Match Verbatim With WILD ARROW Bytes Wi
 ## In state 316, spurious reduction of production comp_expr_level -> cat_expr_level
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
-## In state 459, spurious reduction of production base_expr(base_cond) -> disj_expr_level
-## In state 412, spurious reduction of production base_cond__open(base_cond) -> base_expr(base_cond)
-## In state 413, spurious reduction of production base_cond -> base_cond__open(base_cond)
-## In state 472, spurious reduction of production case_clause(base_cond) -> pattern ARROW base_cond
-## In state 480, spurious reduction of production cases(base_cond) -> case_clause(base_cond)
+## In state 459, spurious reduction of production base_expr(base_and_cond) -> disj_expr_level
+## In state 412, spurious reduction of production base_and_cond__open(base_and_cond) -> base_expr(base_and_cond)
+## In state 413, spurious reduction of production base_and_cond -> base_and_cond__open(base_and_cond)
+## In state 472, spurious reduction of production case_clause(base_and_cond) -> pattern ARROW base_and_cond
+## In state 480, spurious reduction of production cases(base_and_cond) -> case_clause(base_and_cond)
 ##
 
 Ill-formed pattern matching.
@@ -1370,7 +1370,7 @@ interactive_expr: Begin Match Verbatim With WILD CONS Bytes SEMI
 ##
 ## Ends in an error in state: 361.
 ##
-## case_clause(base_cond) -> pattern . ARROW base_cond [ VBAR ]
+## case_clause(base_and_cond) -> pattern . ARROW base_and_cond [ VBAR ]
 ## case_clause(last_expr) -> pattern . ARROW last_expr [ End ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1387,7 +1387,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD CONS Bytes SEMI
 ##
 ## Ends in an error in state: 370.
 ##
-## case_clause(base_cond) -> pattern . ARROW base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## case_clause(base_and_cond) -> pattern . ARROW base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ## case_clause(base_if_then_else) -> pattern . ARROW base_if_then_else [ Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1404,7 +1404,7 @@ interactive_expr: Match Verbatim With WILD CONS Bytes SEMI
 ##
 ## Ends in an error in state: 664.
 ##
-## case_clause(base_cond) -> pattern . ARROW base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## case_clause(base_and_cond) -> pattern . ARROW base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## pattern
@@ -1434,11 +1434,11 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Bytes VBAR With
 ##
 ## Ends in an error in state: 575.
 ##
-## cases(base_cond) -> cases(base_cond) VBAR . case_clause(base_cond) [ VBAR ]
-## cases(last_expr) -> cases(base_cond) VBAR . case_clause(last_expr) [ End ]
+## cases(base_and_cond) -> cases(base_and_cond) VBAR . case_clause(base_and_cond) [ VBAR ]
+## cases(last_expr) -> cases(base_and_cond) VBAR . case_clause(last_expr) [ End ]
 ##
 ## The known suffix of the stack is as follows:
-## cases(base_cond) VBAR
+## cases(base_and_cond) VBAR
 ##
 interactive_expr: Begin If Verbatim Then Match Verbatim With VBAR Begin
 ##
@@ -1471,7 +1471,7 @@ interactive_expr: If Verbatim Then Match Verbatim With With
 ##
 ## Ends in an error in state: 587.
 ##
-## match_expr(base_cond) -> Match expr With . option(VBAR) cases(base_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## match_expr(base_and_cond) -> Match expr With . option(VBAR) cases(base_and_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ## match_expr(base_if_then_else) -> Match expr With . option(VBAR) cases(base_if_then_else) [ Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1481,7 +1481,7 @@ interactive_expr: If Verbatim Then Match Verbatim With VBAR Begin
 ##
 ## Ends in an error in state: 588.
 ##
-## match_expr(base_cond) -> Match expr With option(VBAR) . cases(base_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## match_expr(base_and_cond) -> Match expr With option(VBAR) . cases(base_and_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ## match_expr(base_if_then_else) -> Match expr With option(VBAR) . cases(base_if_then_else) [ Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1491,17 +1491,17 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Bytes VBAR Wit
 ##
 ## Ends in an error in state: 476.
 ##
-## cases(base_cond) -> cases(base_cond) VBAR . case_clause(base_cond) [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## cases(base_if_then_else) -> cases(base_cond) VBAR . case_clause(base_if_then_else) [ Else ]
+## cases(base_and_cond) -> cases(base_and_cond) VBAR . case_clause(base_and_cond) [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## cases(base_if_then_else) -> cases(base_and_cond) VBAR . case_clause(base_if_then_else) [ Else ]
 ##
 ## The known suffix of the stack is as follows:
-## cases(base_cond) VBAR
+## cases(base_and_cond) VBAR
 ##
 interactive_expr: Match Verbatim With VBAR Begin
 ##
 ## Ends in an error in state: 663.
 ##
-## match_expr(base_cond) -> Match expr With option(VBAR) . cases(base_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## match_expr(base_and_cond) -> Match expr With option(VBAR) . cases(base_and_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Match expr With option(VBAR)
@@ -1510,16 +1510,16 @@ interactive_expr: Match Verbatim With WILD ARROW Bytes VBAR With
 ##
 ## Ends in an error in state: 667.
 ##
-## cases(base_cond) -> cases(base_cond) VBAR . case_clause(base_cond) [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## cases(base_and_cond) -> cases(base_and_cond) VBAR . case_clause(base_and_cond) [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## cases(base_cond) VBAR
+## cases(base_and_cond) VBAR
 ##
 interactive_expr: Match Verbatim With With
 ##
 ## Ends in an error in state: 662.
 ##
-## match_expr(base_cond) -> Match expr With . option(VBAR) cases(base_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## match_expr(base_and_cond) -> Match expr With . option(VBAR) cases(base_and_cond) [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Match expr With
@@ -1680,7 +1680,7 @@ interactive_expr: Begin Match Verbatim With WILD ARROW Fun With
 ##
 ## Ends in an error in state: 509.
 ##
-## fun_expr(base_cond) -> Fun . nseq(irrefutable) ARROW base_cond [ VBAR ]
+## fun_expr(base_and_cond) -> Fun . nseq(irrefutable) ARROW base_and_cond [ VBAR ]
 ## fun_expr(last_expr) -> Fun . nseq(irrefutable) ARROW last_expr [ End ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1699,7 +1699,7 @@ interactive_expr: If Verbatim Then Fun With
 ##
 ## Ends in an error in state: 593.
 ##
-## fun_expr(closed_if) -> Fun . nseq(irrefutable) ARROW closed_if [ Else ]
+## fun_expr(closed_expr) -> Fun . nseq(irrefutable) ARROW closed_expr [ Else ]
 ## fun_expr(expr) -> Fun . nseq(irrefutable) ARROW expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1709,7 +1709,7 @@ interactive_expr: Begin If Verbatim Then Fun With
 ##
 ## Ends in an error in state: 528.
 ##
-## fun_expr(closed_if) -> Fun . nseq(irrefutable) ARROW closed_if [ Else ]
+## fun_expr(closed_expr) -> Fun . nseq(irrefutable) ARROW closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## Fun
@@ -1718,7 +1718,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Fun With
 ##
 ## Ends in an error in state: 438.
 ##
-## fun_expr(base_cond) -> Fun . nseq(irrefutable) ARROW base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## fun_expr(base_and_cond) -> Fun . nseq(irrefutable) ARROW base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ## fun_expr(base_if_then_else) -> Fun . nseq(irrefutable) ARROW base_if_then_else [ Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -1728,7 +1728,7 @@ interactive_expr: Match Verbatim With WILD ARROW Fun With
 ##
 ## Ends in an error in state: 483.
 ##
-## fun_expr(base_cond) -> Fun . nseq(irrefutable) ARROW base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## fun_expr(base_and_cond) -> Fun . nseq(irrefutable) ARROW base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Fun
@@ -1737,8 +1737,8 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Fun With
 ##
 ## Ends in an error in state: 378.
 ##
-## fun_expr(base_cond) -> Fun . nseq(irrefutable) ARROW base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## fun_expr(closed_if) -> Fun . nseq(irrefutable) ARROW closed_if [ Else ]
+## fun_expr(base_and_cond) -> Fun . nseq(irrefutable) ARROW base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## fun_expr(closed_expr) -> Fun . nseq(irrefutable) ARROW closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## Fun
@@ -1822,8 +1822,8 @@ interactive_expr: LBRACE Ident EQ Bytes SEMI Ident EQ Bytes With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 617, spurious reduction of production field_assignment -> Ident EQ expr
 ##
 interactive_expr: LBRACE Ident EQ Bytes With
@@ -1851,8 +1851,8 @@ interactive_expr: LBRACE Ident EQ Bytes With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 617, spurious reduction of production field_assignment -> Ident EQ expr
 ##
 
@@ -1887,8 +1887,8 @@ interactive_expr: LBRACE Ident With Ident EQ Bytes SEMI Ident EQ Bytes With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 628, spurious reduction of production field_path_assignment -> path EQ expr
 ##
 interactive_expr: LBRACE Ident With Ident EQ Bytes With
@@ -1916,8 +1916,8 @@ interactive_expr: LBRACE Ident With Ident EQ Bytes With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ## In state 628, spurious reduction of production field_path_assignment -> path EQ expr
 ##
 
@@ -2081,8 +2081,8 @@ interactive_expr: LBRACKET Verbatim SEMI Verbatim With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ##
 interactive_expr: LBRACKET Verbatim With
 ##
@@ -2109,8 +2109,8 @@ interactive_expr: LBRACKET Verbatim With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ##
 
 Ill-formed list of expressions.
@@ -2138,10 +2138,10 @@ interactive_expr: LPAR Verbatim COLON Ident VBAR
 ##
 ## Ends in an error in state: 672.
 ##
-## par(annot_expr) -> LPAR annot_expr . RPAR [ With Verbatim VBAR UIdent Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Module Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Directive Ctor_None CONS COMMA COLON CARET Bytes Begin BOOL_OR BOOL_AND Attr ]
+## par(typed_expr) -> LPAR typed_expr . RPAR [ With Verbatim VBAR UIdent Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Module Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Directive Ctor_None CONS COMMA COLON CARET Bytes Begin BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
-## LPAR annot_expr
+## LPAR typed_expr
 ##
 ## WARNING: This example involves spurious reductions.
 ## This implies that, although the LR(1) items shown above provide an
@@ -2150,7 +2150,7 @@ interactive_expr: LPAR Verbatim COLON Ident VBAR
 ## In state 34, spurious reduction of production cartesian -> core_type
 ## In state 41, spurious reduction of production fun_type -> cartesian
 ## In state 61, spurious reduction of production type_expr -> fun_type
-## In state 671, spurious reduction of production annot_expr -> expr COLON type_expr
+## In state 671, spurious reduction of production typed_expr -> expr COLON type_expr
 ##
 
 Ill-formed annotated expression.
@@ -2186,7 +2186,7 @@ interactive_expr: LPAR Verbatim With
 ##
 ## Ends in an error in state: 668.
 ##
-## annot_expr -> expr . COLON type_expr [ RPAR ]
+## typed_expr -> expr . COLON type_expr [ RPAR ]
 ## par(expr) -> LPAR expr . RPAR [ With Verbatim VBAR UIdent Type True Then TIMES String SLASH SEMI RPAR RBRACKET RBRACE PLUS Or Nat NE Mutez Module Mod MINUS Let Lang LT LPAR LE LBRACKET LBRACE Int In Ident GT GE False End Else EQ EOF Directive Ctor_None CONS COMMA COLON CARET Bytes Begin BOOL_OR BOOL_AND Attr ]
 ##
 ## The known suffix of the stack is as follows:
@@ -2206,8 +2206,8 @@ interactive_expr: LPAR Verbatim With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ##
 
 Ill formed expression.
@@ -2240,8 +2240,8 @@ interactive_expr: Lang Verbatim With
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ##
 
 Ill-formed code injection.
@@ -2624,8 +2624,8 @@ interactive_expr: Ident WILD
 ## In state 323, spurious reduction of production conj_expr_level -> comp_expr_level
 ## In state 330, spurious reduction of production disj_expr_level -> conj_expr_level
 ## In state 282, spurious reduction of production base_expr(expr) -> disj_expr_level
-## In state 336, spurious reduction of production base_cond__open(expr) -> base_expr(expr)
-## In state 337, spurious reduction of production expr -> base_cond__open(expr)
+## In state 336, spurious reduction of production base_and_cond__open(expr) -> base_expr(expr)
+## In state 337, spurious reduction of production expr -> base_and_cond__open(expr)
 ##
 
 Ill-formed expression.
@@ -3360,7 +3360,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Type Ident EQ 
 ##
 ## Ends in an error in state: 441.
 ##
-## local_type_decl(base_cond) -> type_decl . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## local_type_decl(base_and_cond) -> type_decl . In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ## local_type_decl(base_if_then_else) -> type_decl . In base_if_then_else [ Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -3380,7 +3380,7 @@ interactive_expr: Begin If Verbatim Then Type Ident EQ UIdent With
 ##
 ## Ends in an error in state: 531.
 ##
-## local_type_decl(closed_if) -> type_decl . In closed_if [ Else ]
+## local_type_decl(closed_expr) -> type_decl . In closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## type_decl
@@ -3399,7 +3399,7 @@ interactive_expr: If Verbatim Then Type Ident EQ UIdent With
 ##
 ## Ends in an error in state: 596.
 ##
-## local_type_decl(closed_if) -> type_decl . In closed_if [ Else ]
+## local_type_decl(closed_expr) -> type_decl . In closed_expr [ Else ]
 ## local_type_decl(expr) -> type_decl . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
@@ -3419,8 +3419,8 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Type Ident EQ 
 ##
 ## Ends in an error in state: 381.
 ##
-## local_type_decl(base_cond) -> type_decl . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## local_type_decl(closed_if) -> type_decl . In closed_if [ Else ]
+## local_type_decl(base_and_cond) -> type_decl . In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## local_type_decl(closed_expr) -> type_decl . In closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## type_decl
@@ -3439,7 +3439,7 @@ interactive_expr: Match Verbatim With WILD ARROW Type Ident EQ UIdent With
 ##
 ## Ends in an error in state: 491.
 ##
-## local_type_decl(base_cond) -> type_decl . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## local_type_decl(base_and_cond) -> type_decl . In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## type_decl
@@ -3576,8 +3576,8 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Module UIdent 
 ##
 ## Ends in an error in state: 389.
 ##
-## local_module_decl(base_cond) -> module_decl . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## local_module_decl(closed_if) -> module_decl . In closed_if [ Else ]
+## local_module_decl(base_and_cond) -> module_decl . In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## local_module_decl(closed_expr) -> module_decl . In closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## module_decl
@@ -3586,7 +3586,7 @@ interactive_expr: Match Verbatim With WILD ARROW Module UIdent EQ Struct Type Id
 ##
 ## Ends in an error in state: 499.
 ##
-## local_module_decl(base_cond) -> module_decl . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## local_module_decl(base_and_cond) -> module_decl . In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## module_decl
@@ -3595,7 +3595,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Module UIdent 
 ##
 ## Ends in an error in state: 449.
 ##
-## local_module_decl(base_cond) -> module_decl . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## local_module_decl(base_and_cond) -> module_decl . In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ## local_module_decl(base_if_then_else) -> module_decl . In base_if_then_else [ Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -3605,7 +3605,7 @@ interactive_expr: If Verbatim Then Module UIdent EQ Struct Type Ident EQ UIdent 
 ##
 ## Ends in an error in state: 604.
 ##
-## local_module_decl(closed_if) -> module_decl . In closed_if [ Else ]
+## local_module_decl(closed_expr) -> module_decl . In closed_expr [ Else ]
 ## local_module_decl(expr) -> module_decl . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
@@ -3615,7 +3615,7 @@ interactive_expr: Begin If Verbatim Then Module UIdent EQ Struct Type Ident EQ U
 ##
 ## Ends in an error in state: 539.
 ##
-## local_module_decl(closed_if) -> module_decl . In closed_if [ Else ]
+## local_module_decl(closed_expr) -> module_decl . In closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## module_decl
@@ -3644,8 +3644,8 @@ interactive_expr: Match Verbatim With WILD ARROW If Verbatim Then Module UIdent 
 ##
 ## Ends in an error in state: 391.
 ##
-## local_module_alias(base_cond) -> module_alias . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
-## local_module_alias(closed_if) -> module_alias . In closed_if [ Else ]
+## local_module_alias(base_and_cond) -> module_alias . In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## local_module_alias(closed_expr) -> module_alias . In closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## module_alias
@@ -3661,7 +3661,7 @@ interactive_expr: If Verbatim Then Match Verbatim With WILD ARROW Module UIdent 
 ##
 ## Ends in an error in state: 451.
 ##
-## local_module_alias(base_cond) -> module_alias . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## local_module_alias(base_and_cond) -> module_alias . In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ## local_module_alias(base_if_then_else) -> module_alias . In base_if_then_else [ Else ]
 ##
 ## The known suffix of the stack is as follows:
@@ -3678,7 +3678,7 @@ interactive_expr: Match Verbatim With WILD ARROW Module UIdent EQ UIdent Type
 ##
 ## Ends in an error in state: 501.
 ##
-## local_module_alias(base_cond) -> module_alias . In base_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
+## local_module_alias(base_and_cond) -> module_alias . In base_and_cond [ With VBAR Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## module_alias
@@ -3694,7 +3694,7 @@ interactive_expr: Begin If Verbatim Then Module UIdent EQ UIdent Type
 ##
 ## Ends in an error in state: 541.
 ##
-## local_module_alias(closed_if) -> module_alias . In closed_if [ Else ]
+## local_module_alias(closed_expr) -> module_alias . In closed_expr [ Else ]
 ##
 ## The known suffix of the stack is as follows:
 ## module_alias
@@ -3710,7 +3710,7 @@ interactive_expr: If Verbatim Then Module UIdent EQ UIdent Type
 ##
 ## Ends in an error in state: 606.
 ##
-## local_module_alias(closed_if) -> module_alias . In closed_if [ Else ]
+## local_module_alias(closed_expr) -> module_alias . In closed_expr [ Else ]
 ## local_module_alias(expr) -> module_alias . In expr [ With Type Then SEMI RPAR RBRACKET RBRACE Module Let In End EOF Directive COLON Attr ]
 ##
 ## The known suffix of the stack is as follows:

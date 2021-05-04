@@ -295,7 +295,7 @@ core_expr ::=
 | C_False
 | C_True
 | C_Unit
-| annot_expr
+| typed_expr
 | tuple_expr
 | list_expr
 | C_None
@@ -308,7 +308,7 @@ core_expr ::=
 | Constr
 | C_Some arguments
 
-annot_expr ::=
+typed_expr ::=
   LPAR disj_expr COLON type_expr RPAR
 
 set_expr ::=

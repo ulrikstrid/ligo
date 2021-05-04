@@ -260,7 +260,6 @@ and print_D_Const state (node : const_decl reg) =
   let node = node.value in
   let children = [
     mk_child      print_pattern    node.pattern;
-    mk_child_opt  print_type_annot node.const_type;
     mk_child      print_expr       node.init;
     mk_child_list print_attributes node.attributes]
   in print_tree state "D_Const" children
@@ -447,7 +446,7 @@ and print_T_Record state (node : field_decl reg ne_injection reg) =
 and print_field_decl state (node : field_decl reg) =
   let {value; _} = node in
   let children = [
-    mk_child      print_type_annot value.field_type;
+    mk_child_opt  print_type_annot value.field_type;
     mk_child_list print_attributes value.attributes] in
   let {value; region} = value.field_name in
   print_tree state value ~region children
@@ -516,9 +515,8 @@ and print_S_VarDecl state =
 and print_var_decl state (node : var_decl reg) =
   let node = node.value in
   let children = [
-    mk_child     print_pattern    node.pattern;
-    mk_child_opt print_type_annot node.var_type;
-    mk_child     print_expr       node.init]
+    mk_child print_pattern node.pattern;
+    mk_child print_expr    node.init]
   in print_tree state "D_VarDecl" children
 
 (* INSTRUCTIONS *)
@@ -637,26 +635,24 @@ and print_case_clause :
 (* Conditional instructions *)
 
 and print_I_Cond state =
-  print_conditional state "I_Cond" print_test_clause
+  print_conditional state "I_Cond"
+                    ~print_ifso:print_test_clause
+                    ~print_ifnot:print_test_clause
 
 and print_conditional :
-  'a.state -> string -> (state -> 'a -> unit) -> 'a conditional reg -> unit =
-  fun state label print {value; region} ->
-
-    let print_condition state =
-      print_unary state "<condition>" print_expr
-
-    and print_then : 'a.state -> (state -> 'a -> unit) -> 'a -> unit =
-      fun state print -> print_unary state "<true>" print
-
-    and print_else : 'a.state -> (state -> 'a -> unit) -> 'a -> unit =
-      fun state print -> print_unary state "<false>" print in
-
+  'ifso 'ifnot.state ->
+  string ->
+  print_ifso:(state -> 'ifso -> unit) ->
+  print_ifnot:(state -> 'ifnot -> unit) ->
+  ('ifso,'ifnot) conditional reg -> unit =
+  fun state label ~print_ifso ~print_ifnot {value; region} ->
+    let print_cond state = print_unary state "<condition>" print_expr
+    and print_then state = print_unary state "<true>" print_ifso
+    and print_else state = print_unary state "<false>" print_ifnot <@ snd in
     let children = [
-      mk_child print_condition         value.test;
-      mk_child (swap print_then print) value.ifso;
-      mk_child (swap print_else print) value.ifnot]
-
+      mk_child     print_cond value.test;
+      mk_child     print_then value.ifso;
+      mk_child_opt print_else value.ifnot]
     in print_tree state label ~region children
 
 (* Bounded iterations on integer intervals (a.k.a. "for loops") *)
@@ -755,16 +751,9 @@ and print_I_RecordPatch state (node : record_patch reg) =
   let {value; region} = node in
   let path = mk_child print_path value.path in
   let fields =
-     List.map (mk_child print_field_assignment)
+     List.map (mk_child @@ swap print_field print_expr)
   @@ Utils.nsepseq_to_list value.record_inj.value.ne_elements
-  in print_tree state "I_RecordPatch" ~region (path :: fields)
-
-and print_field_assignment state (node : field_assignment reg) =
-  let node = node.value in
-  let children = [
-    mk_child print_long node.field_name;
-    mk_child print_expr node.field_expr]
-  in print_tree state "<field assignment>" children
+  in print_tree state "I_RecordPatch" ~region (path::fields)
 
 (* Skipping (non-operation) *)
 
@@ -929,23 +918,25 @@ and print_P_Par state (node : pattern par reg) =
 
 (* Record patterns *)
 
-and print_P_Record state (node : field_pattern reg ne_injection reg) =
+and print_P_Record state (node : pattern field reg ne_injection reg) =
   let {value; region} = node in
   let children =
-     List.map (mk_child print_field_pattern)
+     List.map (mk_child @@ swap print_field print_pattern)
   @@ Utils.nsepseq_to_list value.ne_elements
   in print_tree state "P_Record" ~region children
 
-and print_field_pattern state (node : field_pattern reg) =
-  let field_name, field_pattern =
-    match node.value with
-      Punned field_name -> field_name, None
-    | Complete {field_name; field_pattern; _} ->
-         field_name, Some field_pattern in
-  let children = [
-    mk_child     print_long    field_name;
-    mk_child_opt print_pattern field_pattern]
-  in print_tree state "<field pattern>" children
+and print_field :
+  'rhs.state -> (state -> 'rhs -> unit) -> 'rhs field reg -> unit =
+  fun state print {value; region} ->
+    match value with
+      Punned field_name ->
+        print_unary state "<field>" ~region print_long field_name
+    | Complete {field_name; field_rhs; attributes; _} ->
+        let children = [
+          mk_child      print_long       field_name;
+          mk_child      print            field_rhs;
+          mk_child_list print_attributes attributes]
+        in print_tree state "<field>" ~region children
 
 (* The pattern for the application of the predefined constructor
    [Some] *)
@@ -1000,7 +991,6 @@ and print_P_Var state = print_unary state "P_Var" print_long
 and print_expr state = function
   E_Add       e -> print_E_Add       state e
 | E_And       e -> print_E_And       state e
-| E_Annot     e -> print_E_Annot     state e
 | E_BigMap    e -> print_E_BigMap    state e
 | E_Block     e -> print_E_Block     state e
 | E_Bytes     e -> print_E_Bytes     state e
@@ -1044,6 +1034,7 @@ and print_expr state = function
 | E_Sub       e -> print_E_Sub       state e
 | E_True      e -> print_E_True      state e
 | E_Tuple     e -> print_E_Tuple     state e
+| E_Typed     e -> print_E_Typed     state e
 | E_Unit      e -> print_E_Unit      state e
 | E_Update    e -> print_E_Update    state e
 | E_Var       e -> print_E_Var       state e
@@ -1062,16 +1053,6 @@ and print_op2 state label {value; region} =
 (* Boolean conjunction *)
 
 and print_E_And state = print_op2 state "E_And"
-
-(* Expressions annotated with a type *)
-
-and print_E_Annot state (node : annot_expr par reg) =
-  let {value; region} = node in
-  let expr, annotation = value.inside in
-  let children = [
-    mk_child print_expr expr;
-    mk_child print_type_annot annotation]
-  in print_tree state "E_Annot" ~region children
 
 (* Big maps defined intensionally *)
 
@@ -1127,7 +1108,10 @@ and print_E_Equal state = print_op2 state "E_Equal"
 
 (* Conditional expressions *)
 
-and print_E_Cond state = print_conditional state "E_Cond" print_expr
+and print_E_Cond state =
+  print_conditional state "E_Cond"
+                    ~print_ifso:print_expr
+                    ~print_ifnot:print_expr
 
 (* Consing (that is, pushing an item on top of a stack/list *)
 
@@ -1276,10 +1260,10 @@ and print_E_Proj state (node : projection reg) =
 (* Record expression defined intensionally (that is, by listing all
    the field assignments) *)
 
-and print_E_Record state (node : record reg) =
+and print_E_Record state (node : record_expr reg) =
   let {value; region} = node in
   let children =
-     List.map (mk_child print_field_assignment)
+     List.map (mk_child @@ swap print_field print_expr)
   @@ Utils.nsepseq_to_list value.ne_elements
   in print_tree state "E_Record" ~region children
 
@@ -1335,6 +1319,16 @@ and print_E_Tuple state (node : (expr, comma) nsepseq par reg) =
     List.map (mk_child print_expr)
     @@ Utils.nsepseq_to_list value.inside
   in print_tree state "E_Tuple" ~region children
+
+(* Expressions annotated with a type *)
+
+and print_E_Typed state (node : typed_expr par reg) =
+  let {value; region} = node in
+  let expr, annotation = value.inside in
+  let children = [
+    mk_child print_expr expr;
+    mk_child print_type_annot annotation]
+  in print_tree state "E_Typed" ~region children
 
 (* The unique value of the type "unit" *)
 

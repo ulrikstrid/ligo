@@ -24,7 +24,11 @@ open! Region
 
 let sprintf = Printf.sprintf
 
-type ('a, 'sep) nsepseq = ('a, 'sep) Utils.nsepseq
+type           'a nseq = 'a Utils.nseq
+type ('a,'sep) nsepseq = ('a,'sep) Utils.nsepseq
+type ('a,'sep)  sepseq = ('a,'sep) Utils.sepseq
+
+let swap = Utils.swap
 
 (* STATE *)
 
@@ -91,7 +95,7 @@ let print_option : state -> (state -> 'a -> unit) -> 'a option -> unit =
    [Utils.nseq], respectively. *)
 
 let print_nsepseq :
-  state -> (state -> 'a -> unit) -> string -> ('a, region) Utils.nsepseq -> unit =
+  state -> (state -> 'a -> unit) -> string -> ('a, region) nsepseq -> unit =
   fun state print sep (head, tail) ->
     let print_aux (sep_reg, item) =
       let sep_line =
@@ -101,11 +105,11 @@ let print_nsepseq :
     in print state head; List.iter print_aux tail
 
 let print_sepseq :
-  state -> (state -> 'a -> unit) -> string -> ('a, region) Utils.sepseq -> unit =
+  state -> (state -> 'a -> unit) -> string -> ('a, region) sepseq -> unit =
   fun state print sep ->
     print_option state (fun state -> print_nsepseq state print sep)
 
-let print_nseq : state -> (state -> 'a -> unit) -> 'a Utils.nseq -> unit =
+let print_nseq : state -> (state -> 'a -> unit) -> 'a nseq -> unit =
   fun state print -> Utils.nseq_iter (print state)
 
 (* When printing a sequence, e.g., by means of [nsepseq], whose items
@@ -136,7 +140,7 @@ let print_token state token region =
   in Buffer.add_string state#buffer line
 
 let print_token_opt state lexeme =
-  print_option state (fun state -> print_token state lexeme)
+  print_option state (swap print_token lexeme)
 
 (* Strings *)
 
@@ -172,9 +176,10 @@ let print_nat state {region; value} =
 
 let print_bytes state {region; value} =
   let lexeme, abstract = value in
-  let line = sprintf "%s: Bytes (%S, \"0x%s\")\n"
-                     (compact state region) lexeme
-                     (Hex.show abstract)
+  let line =
+    sprintf "%s: Bytes (%S, \"0x%s\")\n"
+            (compact state region) lexeme
+            (Hex.show abstract)
   in Buffer.add_string state#buffer line
 
 (* Mutez *)
@@ -183,6 +188,8 @@ let print_mutez state {region; value=lex,z} =
   let line =
     sprintf "Mutez %s (%s)" lex (Z.to_string z)
   in print_token state line region
+
+(* Identifiers *)
 
 let print_ident state {region; value} =
   let line =
@@ -205,13 +212,15 @@ let print_attribute state {region; value} =
 
 (* HIGHER-ORDER PRINTERS *)
 
-let print_par : state -> (state -> 'a -> unit) -> 'a par reg -> unit =
+let print_par :
+  state -> (state -> 'a -> unit) -> 'a par reg -> unit =
   fun state print {value; _} ->
     print_token state "LPAR" value.lpar;
     print       state value.inside;
     print_token state "RPAR" value.rpar
 
-let print_brackets : 'state -> (state -> 'a -> unit) -> 'a brackets reg -> unit =
+let print_brackets :
+  state -> (state -> 'a -> unit) -> 'a brackets reg -> unit =
   fun state print ({value; _}: 'a brackets reg) ->
     print_token state "LBRACKET" value.lbracket;
     print       state value.inside;
@@ -243,7 +252,6 @@ and print_D_Const state (node : const_decl reg) =
   print_attributes state node.attributes;
   print_token      state "Const" node.kwd_const;
   print_pattern    state node.pattern;
-  print_option     state print_type_annot node.const_type;
   print_token      state "EQ" node.equal;
   print_expr       state node.init;
   print_token_opt  state "SEMI" node.terminator
@@ -252,7 +260,7 @@ and print_attributes state = List.iter (print_attribute state)
 
 and print_type_annot state (colon, type_expr) =
   print_token     state "COLON" colon;
-  print_type_expr state type_expr;
+  print_type_expr state type_expr
 
 (* Preprocessing directives *)
 
@@ -304,7 +312,7 @@ and print_D_Module state (node : module_decl reg) =
       print_token_opt state "BLOCK" kwd_block_opt;
       print_token     state "LBRACE" lbrace;
       print_nseq      state print_declaration node.declarations;
-      print_token     state  "RBRACE" rbrace;
+      print_token     state "RBRACE" rbrace;
       print_token_opt state "SEMI" node.terminator
   | BeginEnd (kwd_begin, kwd_end) ->
       print_token     state "Module" node.kwd_module;
@@ -352,7 +360,6 @@ and print_type_expr state = function
 | T_Record  t -> print_T_Record  state t
 | T_String  t -> print_T_String  state t
 | T_Sum     t -> print_T_Sum     state t
-| T_Typed   t -> print_T_Typed   state t
 | T_Var     t -> print_T_Var     state t
 | T_Wild    t -> print_T_Wild    state t
 
@@ -407,7 +414,7 @@ and print_field_decl state (node : field_decl reg) =
   let node = node.value in
   print_attributes state node.attributes;
   print_ident      state node.field_name;
-  print_type_annot state node.field_type
+  print_option     state print_type_annot node.field_type
 
 and print_ne_injection :
   'a.state -> (state -> 'a -> unit) -> 'a ne_injection reg -> unit =
@@ -456,13 +463,6 @@ and print_of_type_expr state (kwd_of, type_expr) =
   print_token     state "Of" kwd_of;
   print_type_expr state type_expr
 
-(* Typed pattern *)
-
-and print_P_Typed state (node : typed_pattern reg) =
-  let node = node.value in
-  print_pattern    state node.pattern;
-  print_type_annot state node.type_annot
-
 (* A type variable *)
 
 and print_T_Var state = print_ident state
@@ -495,7 +495,6 @@ and print_S_VarDecl state (node : var_decl reg) =
   let node = node.value in
   print_token     state "Var" node.kwd_var;
   print_pattern   state node.pattern;
-  print_option    state print_type_annot node.var_type;
   print_token     state "ASSIGN" node.assign;
   print_expr      state node.init;
   print_token_opt state "SEMI" node.terminator
@@ -575,14 +574,16 @@ and print_tuple_expr state (node : tuple_expr) =
 
 and print_I_Case state = print_case state print_test_clause
 
-and print_case : 'a.state -> (state -> 'a -> unit) -> 'a case reg -> unit =
+and print_case :
+  'a.state -> (state -> 'a -> unit) -> 'a case reg -> unit =
   fun state print {value; _} ->
     print_token          state "Case" value.kwd_case;
     print_expr           state value.expr;
     print_token          state "Of" value.kwd_of;
     print_case_enclosing state print value
 
-and print_case_enclosing : 'a.state  -> (state -> 'a -> unit) -> 'a case -> unit =
+and print_case_enclosing :
+  'a.state  -> (state -> 'a -> unit) -> 'a case -> unit =
   fun state print node ->
     match node.enclosing with
       Brackets (lbracket, rbracket) ->
@@ -596,11 +597,10 @@ and print_case_enclosing : 'a.state  -> (state -> 'a -> unit) -> 'a case -> unit
         print_token     state "End" kwd_end
 
 and print_cases :
-  'a.state -> (state -> 'a -> unit) ->
-  ('a case_clause reg, vbar) Utils.nsepseq -> unit =
-    fun state print node ->
-      let print state node = print_case_clause state print node.value
-      in print_nsepseq state print "VBAR" node
+  'a.state -> (state -> 'a -> unit) -> ('a case_clause reg, vbar) nsepseq -> unit =
+  fun state print node ->
+    let print state node = print_case_clause state print node.value
+    in print_nsepseq state print "VBAR" node
 
 and print_case_clause :
   'a.state -> (state -> 'a -> unit) -> 'a case_clause -> unit =
@@ -634,18 +634,29 @@ and print_block state (node : block reg) =
 
 (* Conditional instructions *)
 
-and print_I_Cond state = print_conditional state print_test_clause
+and print_I_Cond state =
+  print_conditional state
+                    ~print_ifso:print_test_clause
+                    ~print_ifnot:print_test_clause
 
 and print_conditional :
-  'a.state -> (state -> 'a -> unit) -> 'a conditional reg -> unit =
-  fun state print {value; _} ->
+  'ifso 'ifnot.state ->
+  print_ifso:(state -> 'ifso -> unit) ->
+  print_ifnot:(state -> 'ifnot -> unit) ->
+  ('ifso,'ifnot) conditional reg -> unit =
+  fun state ~print_ifso ~print_ifnot {value; _} ->
     print_token     state "If" value.kwd_if;
     print_expr      state value.test;
     print_token     state "Then" value.kwd_then;
-    print           state value.ifso;
+    print_ifso      state value.ifso;
     print_token_opt state "SEMI" value.terminator;
-    print_token     state "Else" value.kwd_else;
-    print           state value.ifnot
+    print_option    state (swap print_else print_ifnot) value.ifnot
+
+and print_else :
+  'a.state -> (state -> 'a -> unit) -> (kwd_else * 'a) -> unit =
+  fun state print (kwd_else, ifnot) ->
+    print_token state "Else" kwd_else;
+    print       state ifnot
 
 (* Bounded iterations on integer intervals (a.k.a. "for loops") *)
 
@@ -717,14 +728,7 @@ and print_I_RecordPatch state (node : record_patch reg) =
   print_token        state "Patch" node.kwd_patch;
   print_path         state node.path;
   print_token        state "With" node.kwd_with;
-  print_ne_injection state print_field_assignment
-                           node.record_inj
-
-and print_field_assignment state (node : field_assignment reg) =
-  let node = node.value in
-  print_ident state node.field_name;
-  print_token state "EQ" node.assignment;
-  print_expr  state node.field_expr
+  print_ne_injection state (swap print_field print_expr) node.record_inj
 
 (* Skipping (non-operation) *)
 
@@ -765,23 +769,24 @@ and print_I_While state (node : while_loop reg) =
    [print_I_Bytes] comes before [print_P_Cons]. *)
 
 and print_pattern state = function
-  P_Bytes    p -> print_P_Bytes   state p
-| P_Cons     p -> print_P_Cons    state p
-| P_Ctor     p -> print_P_Ctor    state p
-| P_False    p -> print_P_False   state p
-| P_Int      p -> print_P_Int     state p
-| P_List     p -> print_P_List    state p
-| P_Nat      p -> print_P_Nat     state p
-| P_Nil      p -> print_P_Nil     state p
-| P_None     p -> print_P_None    state p
-| P_Par      p -> print_P_Par     state p
-| P_Record   p -> print_P_Record  state p
-| P_Some     p -> print_P_Some    state p
-| P_String   p -> print_P_String  state p
-| P_True     p -> print_P_True    state p
-| P_Tuple    p -> print_P_Tuple   state p
-| P_Unit     p -> print_P_Unit    state p
-| P_Var      p -> print_P_Var     state p
+  P_Bytes    p -> print_P_Bytes  state p
+| P_Cons     p -> print_P_Cons   state p
+| P_Ctor     p -> print_P_Ctor   state p
+| P_False    p -> print_P_False  state p
+| P_Int      p -> print_P_Int    state p
+| P_List     p -> print_P_List   state p
+| P_Nat      p -> print_P_Nat    state p
+| P_Nil      p -> print_P_Nil    state p
+| P_None     p -> print_P_None   state p
+| P_Par      p -> print_P_Par    state p
+| P_Record   p -> print_P_Record state p
+| P_Some     p -> print_P_Some   state p
+| P_String   p -> print_P_String state p
+| P_True     p -> print_P_True   state p
+| P_Tuple    p -> print_P_Tuple  state p
+| P_Typed    p -> print_P_Typed  state p
+| P_Unit     p -> print_P_Unit   state p
+| P_Var      p -> print_P_Var    state p
 
 (* Bytes as literals in patterns *)
 
@@ -865,23 +870,15 @@ and print_P_Record state =
 
 and print_field :
   'rhs.state -> (state -> 'rhs -> unit) -> 'rhs field reg -> unit =
-  fun state print (node : 'rhs field reg) ->
-  match node.value with
-    Punned field_name ->
-      print_ident state field_name
-  | Complete {field_name; assignment; field_rhs} ->
-     print_ident   state field_name;
-     print_token   state "EQ" assignment;
-     print         state field_rhs
-
-and print_field_pattern state (node : field_pattern reg) =
-  match node.value with
-    Punned field_name ->
-      print_ident state field_name
-  | Complete {field_name; assignment; field_pattern} ->
-     print_ident   state field_name;
-     print_token   state "EQ" assignment;
-     print_pattern state field_pattern
+  fun state print node ->
+    match node.value with
+      Punned field_name ->
+        print_ident state field_name
+    | Complete {field_name; assign; field_rhs; attributes} ->
+        print_attributes state attributes;
+        print_ident      state field_name;
+        print_token      state "EQ" assign;
+        print            state field_rhs
 
 (* The pattern for the application of the predefined constructor
    [Some] *)
@@ -903,6 +900,13 @@ and print_P_True state = print_token state "True"
 
 and print_P_Tuple state = print_tuple_pattern state
 
+(* Typed pattern *)
+
+and print_P_Typed state (node : typed_pattern reg) =
+  let node = node.value in
+  print_pattern    state node.pattern;
+  print_type_annot state node.type_annot
+
 (* The pattern matching the unique value of the type "unit". *)
 
 and print_P_Unit state = print_token state "Unit"
@@ -921,7 +925,6 @@ and print_P_Var state = print_ident state
 and print_expr state = function
   E_Add       e -> print_E_Add       state e
 | E_And       e -> print_E_And       state e
-| E_Annot     e -> print_E_Annot     state e
 | E_BigMap    e -> print_E_BigMap    state e
 | E_Block     e -> print_E_Block     state e
 | E_Bytes     e -> print_E_Bytes     state e
@@ -965,6 +968,7 @@ and print_expr state = function
 | E_Sub       e -> print_E_Sub       state e
 | E_True      e -> print_E_True      state e
 | E_Tuple     e -> print_E_Tuple     state e
+| E_Typed     e -> print_E_Typed     state e
 | E_Unit      e -> print_E_Unit      state e
 | E_Update    e -> print_E_Update    state e
 | E_Var       e -> print_E_Var       state e
@@ -983,14 +987,6 @@ and print_op2 state lexeme (node : keyword bin_op reg) =
 (* Boolean conjunction *)
 
 and print_E_And state = print_op2 state "And"
-
-(* Expressions annotated with a type *)
-
-and print_E_Annot state = print_par state print_annot_expr
-
-and print_annot_expr state (expr, type_annot) =
-  print_expr       state expr;
-  print_type_annot state type_annot
 
 (* Big maps defined intensionally *)
 
@@ -1022,20 +1018,25 @@ and print_E_Cat state = print_op2 state "CARET"
 
 (* Code Injection *)
 
+(* NOTE: This printer is an exception to the rule. Indeed, we here
+   deconstruct this token into its constituents and we print them as
+   concrete syntax, instead of tokens. This is hopefully better for
+   debugging tokens whose lexemes have been scanned with not trivial
+   rules. *)
+
 and print_E_CodeInj state (node : code_inj reg) =
   let {value; region} = node.value.language in
-  let line =
-    sprintf "%s: Lang %S" (compact state region)
-            value.value
-  in Buffer.add_string state#buffer line
-
-(* Equality *)
-
-and print_E_Equal state = print_op2 state "EQ"
+  let header_stop = region#start#shift_bytes 1 in
+  let header_reg  = Region.make ~start:region#start ~stop:header_stop in
+  print_token  state "[%" header_reg;
+  print_string state value;
+  print_expr   state node.value.code;
+  print_token  state "]" node.value.rbracket
 
 (* Conditional expressions *)
 
-and print_E_Cond state = print_conditional state print_expr
+and print_E_Cond state =
+  print_conditional state ~print_ifso:print_expr ~print_ifnot:print_expr
 
 (* Consing (that is, pushing an item on top of a stack/list *)
 
@@ -1051,6 +1052,10 @@ and print_E_Ctor state (node : (ctor * arguments option) reg) =
 (* The Euclidean quotient *)
 
 and print_E_Div state = print_op2 state "SLASH"
+
+(* Equality *)
+
+and print_E_Equal state = print_op2 state "EQ"
 
 (* The Boolean untruth *)
 
@@ -1160,7 +1165,7 @@ and print_E_Proj state = print_projection state
    the field assignments) *)
 
 and print_E_Record state =
-  print_ne_injection state print_field_assignment
+  print_ne_injection state (swap print_field print_expr)
 
 (* Set expression defined intensionally (that is, by listing all the
    elements) *)
@@ -1198,6 +1203,14 @@ and print_E_True state = print_token state "True"
 
 and print_E_Tuple state = print_tuple_expr state
 
+(* Expressions annotated with a type *)
+
+and print_E_Typed state = print_par state print_typed_expr
+
+and print_typed_expr state (expr, type_annot) =
+  print_expr       state expr;
+  print_type_annot state type_annot
+
 (* The unique value of the type "unit" *)
 
 and print_E_Unit state = print_token state "Unit"
@@ -1214,7 +1227,7 @@ and print_E_Update state (node : update reg) =
 and print_field_path_assignment state (node : field_path_assignment reg) =
   let node = node.value in
   print_path  state node.field_path;
-  print_token state "EQ" node.assignment;
+  print_token state "EQ" node.assign;
   print_expr  state node.field_expr
 
 (* Expression variables *)

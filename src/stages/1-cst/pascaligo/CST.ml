@@ -327,7 +327,7 @@ and instruction =
   I_Assign      of assignment reg
 | I_Call        of call
 | I_Case        of test_clause case reg
-| I_Cond        of test_clause conditional reg
+| I_Cond        of (test_clause, test_clause) conditional reg
 | I_For         of for_int reg
 | I_ForIn       of for_in reg
 | I_MapPatch    of map_patch reg
@@ -381,14 +381,13 @@ and record_patch = {
   record_inj : record_expr reg
 }
 
-and 'branch conditional = {
+and ('ifso, 'ifnot) conditional = {
   kwd_if     : kwd_if;
   test       : expr;
   kwd_then   : kwd_then;
-  ifso       : 'branch;
+  ifso       : 'ifso;
   terminator : semi option;
-  kwd_else   : kwd_else;
-  ifnot      : 'branch
+  ifnot      : (kwd_else * 'ifnot) option
 }
 
 and test_clause =
@@ -530,7 +529,6 @@ and 'rhs full_field = {
 and expr =
   E_Add       of plus bin_op reg               (* "+"   *)
 | E_And       of kwd_and bin_op reg            (* "and" *)
-| E_Annot     of annot_expr par reg
 | E_BigMap    of binding reg injection reg
 | E_Block     of block_with reg
 | E_Bytes     of (lexeme * Hex.t) reg
@@ -539,7 +537,7 @@ and expr =
 | E_Cat       of caret bin_op reg              (* "^"   *)
 | E_CodeInj   of code_inj reg
 | E_Equal     of equal bin_op reg              (* "="   *)
-| E_Cond      of expr conditional reg
+| E_Cond      of (expr, expr) conditional reg
 | E_Cons      of cons bin_op reg
 | E_Ctor      of (ctor * arguments option) reg
 | E_Div       of slash bin_op reg              (* "/"   *)
@@ -574,6 +572,7 @@ and expr =
 | E_Sub       of minus bin_op reg              (* "a-b" *)
 | E_True      of kwd_True
 | E_Tuple     of tuple_expr
+| E_Typed     of typed_expr par reg
 | E_Unit      of kwd_Unit
 | E_Update    of update reg
 | E_Var       of lexeme reg
@@ -593,7 +592,7 @@ and fun_expr = {
   return       : expr
 }
 
-and annot_expr = expr * type_annot
+and typed_expr = expr * type_annot
 
 and map_lookup = {
   path  : path;
@@ -703,7 +702,7 @@ let type_expr_to_region = function
 let expr_to_region = function
   E_Add       {region; _}
 | E_And       {region; _}
-| E_Annot     {region; _}
+| E_Typed     {region; _}
 | E_BigMap    {region; _}
 | E_Block     {region; _}
 | E_Bytes     {region; _}
@@ -755,7 +754,7 @@ let expr_to_region = function
 
 and tuple_expr_to_region x = x.Region.region
 
-and annot_expr_to_region x = x.Region.region
+and typed_expr_to_region x = x.Region.region
 
 and record_expr_to_region x = x.Region.region
 
