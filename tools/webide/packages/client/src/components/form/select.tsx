@@ -45,7 +45,6 @@ const List = styled.ul`
   z-index: 1;
   position: absolute;
   list-style-type: none;
-  background-color: white;
   width: 100%;
   margin: 0;
   padding: 0;
@@ -140,7 +139,7 @@ export const Select = (props: {
   return (
     <Container className={props.className}>
       <OutsideClickHandler onOutsideClick={() => setOpen(false)}>
-        <List visible={isOpen}>
+        <List id="configList" visible={isOpen}>
           {moveOptionToTop(props.value).map((option: OptionElement) => (
             <OptionContainer
               id={option.props.value}

@@ -1,5 +1,8 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
+import Switch from "react-switch";
+import sunIcon from "../components/icons/sunIcon.png"
+
 require('typeface-inter')
 
 const Container = styled.div`
@@ -27,7 +30,6 @@ const Logo = styled.img`
 
 const Link = styled.a`
   text-decoration: none;
-  color: black;
   padding: 0.5em 1em;
   margin: 0.5em;
   font-family: 'Inter var';
@@ -50,7 +52,23 @@ const Link = styled.a`
     `}
 `;
 
-export const HeaderComponent = () => {
+const SwitchOptions = styled.div`
+  display: flex;
+  justifyContent: center;
+  alignItems: center;
+  height: 100%;
+  width: 100%;
+  fontSize: 20;
+  padding: 3px;
+`
+
+export const HeaderComponent = ({onThemeChange}) => {
+  const [isSwitchChecked, setIsSwitchChecked] = React.useState(false);
+  const toggleDarkMode = (checked: boolean) => {
+    setIsSwitchChecked(checked);
+    onThemeChange()
+  };
+
   return (
     <Container className="navbar navbar-default navbar-fixed-top">
       <Group className="navbar-header">
@@ -58,18 +76,25 @@ export const HeaderComponent = () => {
           <Logo src="/logo.svg" />
         </a>
         
-        <Link href="https://ligolang.org/docs/intro/installation">Install</Link>
-        <Link href="https://ligolang.org/docs/intro/introduction">Docs</Link>
-        <Link href="https://ligolang.org/docs/tutorials/get-started/tezos-taco-shop-smart-contract">
+        <Link className="headerLink" href="https://ligolang.org/docs/intro/installation">Install</Link>
+        <Link className="headerLink" href="https://ligolang.org/docs/intro/introduction">Docs</Link>
+        <Link className="headerLink" href="https://ligolang.org/docs/tutorials/get-started/tezos-taco-shop-smart-contract">
           Tutorials
         </Link>
-        <Link href="https://forum.tezosagora.org/tag/ligo" target="_blank">Blog</Link>
-        <Link href="https://ligolang.org/contact">
+        <Link className="headerLink" href="https://forum.tezosagora.org/tag/ligo" target="_blank">Blog</Link>
+        <Link className="headerLink" href="https://ligolang.org/contact">
           Ask Questions
         </Link>
       
       </Group>
-      <Link cheatSheetStyle href="https://ligolang.org/docs/api/cheat-sheet" target="_blank">
+      <Switch onChange={toggleDarkMode} checked={isSwitchChecked} 
+      uncheckedIcon={<SwitchOptions>🌞</SwitchOptions>}
+      checkedIcon={ <SwitchOptions>🌜</SwitchOptions>}
+      offColor="#4d4d4d"
+      onColor="#4d4d4d"
+      />
+
+    <Link cheatSheetStyle href="https://ligolang.org/docs/api/cheat-sheet" target="_blank">
           Cheat Sheet
         </Link>
     </Container>

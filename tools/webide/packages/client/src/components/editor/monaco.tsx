@@ -18,7 +18,7 @@ const Container = styled.div<TopPaneStyled>`
   font-size: 0.8em;
 `;
 
-export const MonacoComponent = ({editorHeight}) => {
+export const MonacoComponent = ({editorHeight, isDarkMode}) => {
   let containerRef = useRef(null);
   const store = useStore();
   const dispatch = useDispatch();
@@ -31,15 +31,26 @@ export const MonacoComponent = ({editorHeight}) => {
       editorState && editorState.language
     );
 
+    const getColors = () => {
+      if(isDarkMode()) {
+        return {
+          'editor.background': '#191a1b',
+          'editor.lineHighlightBackground': '#1a293f',
+          'editorLineNumber.foreground': '#1a293f'
+        }
+      }
+      return {
+          'editor.background': '#eff7ff',
+          'editor.lineHighlightBackground': '#cee3ff',
+          'editorLineNumber.foreground': '#888'
+      }
+    }
+
     monaco.editor.defineTheme('ligoTheme', {
-      base: 'vs',
+      base: 'vs-dark',
       inherit: true,
       rules: [],
-      colors: {
-        'editor.background': '#eff7ff',
-        'editor.lineHighlightBackground': '#cee3ff',
-        'editorLineNumber.foreground': '#888'
-      }
+      colors: getColors()
     });
 
     monaco.editor.setTheme('ligoTheme');
@@ -97,7 +108,7 @@ export const MonacoComponent = ({editorHeight}) => {
     return function cleanUp() {
       cleanupFunc.forEach(f => f());
     };
-  }, [store, dispatch]);
+  }, [store, dispatch, isDarkMode]);
 
   return <Container id="editor" ref={containerRef} editorHeight={editorHeight}></Container>;
 };
