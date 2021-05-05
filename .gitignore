@@ -17,3 +17,6 @@ version.ml
 /_coverage_*/
 .history
 /to-dos.html
+_esy
+esy.lock
+node_modules
