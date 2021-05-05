@@ -821,6 +821,29 @@ let repl =
   let doc = "Subcommand: REPL" in
   (Term.ret term , Term.info ~doc cmdname)
 
+let mutate =
+  let f source_file syntax infer protocol_version libs display_format =
+    return_result ~display_format (Parsing.Formatter.ppx_format) @@
+      let%bind init_env   = Helpers.get_initial_env protocol_version in
+      let options       = Compiler_options.make ~infer ~init_env ~libs () in
+      let%bind meta     = Compile.Of_source.extract_meta syntax source_file in
+      let%bind c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
+      let%bind imperative_prg = Compile.Utils.to_imperative ~options ~meta c_unit source_file in
+      let%bind imperative_prg = Fuzz.mutate_module_ imperative_prg in
+      let dialect         = Decompile.Helpers.Dialect_name "verbose" in
+      let syntax = Helpers.variant_to_syntax meta.syntax in
+      let%bind buffer     =
+        Decompile.Of_imperative.decompile ~dialect imperative_prg (Syntax_name syntax) in
+      ok @@ buffer
+  in
+  let term =
+    Term.(const f $ source_file 0 $ syntax $ infer $ protocol_version $ libraries $ display_format) in
+  let cmdname = "mutate" in
+  let doc = "Subcommand: Return a mutated version for a given file." in
+  let man = [`S Manpage.s_description;
+             `P "This sub-command returns a mutated version for a \
+                 given file. It does not use the build system."]
+  in (Term.ret term , Term.info ~man ~doc cmdname)
 
 let buffer = Buffer.create 100
 
@@ -854,4 +877,5 @@ let run ?argv () =
     pretty_print;
     get_scope;
     repl;
+    mutate;
   ]

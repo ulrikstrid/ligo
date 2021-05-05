@@ -1,14 +1,12 @@
 (library
-  (name ligo_main)
-  (public_name ligo.main)
+  (name fuzz)
+  (public_name ligo.fuzz)
   (libraries
-    run
-    ligo_compile
-    decompile
     main_errors
-    scopes
+    ligo_compile
+    simple-utils
     compiler_options
-    fuzz
+    qcheck
   )
   (preprocess
     (pps ppx_let bisect_ppx --conditional)
