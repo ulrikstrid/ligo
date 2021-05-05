@@ -386,7 +386,6 @@ and ('ifso, 'ifnot) conditional = {
   test       : expr;
   kwd_then   : kwd_then;
   ifso       : 'ifso;
-  terminator : semi option;
   ifnot      : (kwd_else * 'ifnot) option
 }
 
@@ -603,6 +602,12 @@ and path =
   Name of variable
 | Path of projection reg
 
+and projection = {
+  record_name : variable;
+  selector    : dot;
+  field_path  : (selection, dot) nsepseq
+}
+
 and 'a bin_op = {
   op   : 'a;
   arg1 : expr;
@@ -615,12 +620,6 @@ and 'a un_op = {
 }
 
 and record_expr = expr field reg ne_injection
-
-and projection = {
-  struct_name : variable;
-  selector    : dot;
-  field_path  : (selection, dot) nsepseq
-}
 
 and update = {
   record   : path;

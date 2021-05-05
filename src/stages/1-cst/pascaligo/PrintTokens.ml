@@ -649,7 +649,6 @@ and print_conditional :
     print_expr      state value.test;
     print_token     state "Then" value.kwd_then;
     print_ifso      state value.ifso;
-    print_token_opt state "SEMI" value.terminator;
     print_option    state (swap print_else print_ifnot) value.ifnot
 
 and print_else :
