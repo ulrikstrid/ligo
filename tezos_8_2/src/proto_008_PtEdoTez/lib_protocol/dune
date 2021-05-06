@@ -1,0 +1,21 @@
+;; -*- mode: dune; -*-
+
+(include dune.inc)
+
+(env
+ (_
+   (env-vars (DYLD_LIBRARY_PATH "/Users/ulrik/.esy/3__________________________________________________________________/i/opam__s__hacl_star_raw-opam__c__0.3.2-084f1567/lib/hacl-star-raw"))))
+
+(rule
+ (targets "dune.inc.gen")
+ (deps TEZOS_PROTOCOL (glob_files *.ml) (glob_files *.mli))
+ (action
+  (run
+    %{libexec:tezos-protocol-compiler:replace}
+    %{libexec:tezos-protocol-compiler:dune_protocol.template}
+    "dune.inc.gen"
+    %{libexec:tezos-protocol-compiler:final_protocol_versions})))
+
+(rule
+ (alias   runtest_dune_template)
+ (action (diff dune.inc dune.inc.gen)))

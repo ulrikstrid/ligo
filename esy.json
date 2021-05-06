@@ -59,7 +59,7 @@
         }
       },
       "@opam/tezos-sapling": {
-        "source": "https://gitlab.com/tezos/tezos/-/archive/v9.1/tezos-v9.1.tar.bz2#sha256:114073c8038a3329158557cfec00d2c8a1fadac3b622b30f8ecf1479949028d0",
+        "source": "link:./tezos_8_2",
         "override": {
           "buildsInSource": true,
           "buildEnvOverride": {
@@ -76,16 +76,55 @@
             "@opam/data-encoding": "*",
             "@opam/tezos-rust-libs": "*",
             "@opam/ctypes": "*",
-            "@opam/tezos-error-monad": "*",
             "@opam/ctypes-foreign": "*",
-            "@opam/tezos-stdlib": "*",
+            "@opam/tezos-error-monad": "*",
+            "@opam/tezos-stdlib": "8.2",
             "@opam/tezos-crypto": "*",
-            "@opam/tezos-lwt-result-stdlib": "*"
+            "@opam/tezos-lwt-result-stdlib": "8.2"
+          }
+        }
+      },
+      "@opam/tezos-embedded-protocol-008-PtEdo2Zk": {
+        "source": "link:./tezos_8_2",
+        "override": {
+          "buildsInSource": true,
+          "buildEnvOverride": {
+            "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
+          },
+          "build": [
+            [
+              "#{ @opam/tezos-protocol-compiler.lib / 'tezos-protocol-compiler' / 'replace'}",
+              "#{ @opam/tezos-protocol-compiler.lib / 'tezos-protocol-compiler' / 'dune_protocol.template'}",
+              "dune",
+              "#{ @opam/tezos-protocol-compiler.lib / 'tezos-protocol-compiler' / 'final_protocol_versions' }",
+              "008_PtEdo2Zk"
+            ],
+            [
+              "dune",
+              "build",
+              "-j",
+              "4",
+              "-p",
+              "tezos-embedded-protocol-008-PtEdo2Zk",
+              "@install"
+            ]
+          ],
+          "dependencies": {
+            "@opam/dune": "*",
+            "@opam/tezos-base": "8.2",
+            "@opam/tezos-protocol-008-PtEdo2Zk": "8.2",
+            "@opam/tezos-protocol-compiler": "8.2",
+            "@opam/tezos-protocol-updater": "8.2",
+            "@opam/bls12-381": "*",
+            "@opam/bls12-381-unix": "*",
+            "@opam/hacl-star": "*",
+            "@opam/hacl-star-raw": "*",
+            "@opam/tezos-rust-libs": "*"
           }
         }
       },
       "@opam/tezos-protocol-compiler": {
-        "source": "link:./tezos_9_1",
+        "source": "link:./tezos_8_2",
         "override": {
           "buildsInSource": true,
           "buildEnvOverride": {
@@ -126,11 +165,12 @@
         }
       },
       "@opam/tezos-protocol-008-PtEdo2Zk-parameters": {
-        "source": "link:./tezos_9_1",
+        "source": "link:./tezos_8_2",
         "override": {
           "buildsInSource": true,
           "buildEnvOverride": {
             "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }",
+            "CUSTOM_DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
             "DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
             "LD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
           },
@@ -168,7 +208,7 @@
         }
       },
       "@opam/tezos-protocol-008-PtEdo2Zk": {
-        "source": "link:./tezos_9_1",
+        "source": "link:./tezos_8_2",
         "override": {
           "buildsInSource": true,
           "build": [
@@ -197,7 +237,7 @@
         }
       },
       "@opam/tezos-crypto": {
-        "source": "https://gitlab.com/tezos/tezos/-/archive/v9.1/tezos-v9.1.tar.bz2#sha256:114073c8038a3329158557cfec00d2c8a1fadac3b622b30f8ecf1479949028d0",
+        "source": "link:./tezos_8_2",
         "override": {
           "buildsInSource": true,
           "buildEnvOverride": {
