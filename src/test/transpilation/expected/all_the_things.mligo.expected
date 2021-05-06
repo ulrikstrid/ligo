@@ -740,6 +740,7 @@ let main (p, s : parameter * storage) : return =
   match p with
   | Commit c -> commit (c, s)
   | Reveal r -> reveal (r, s)
+(* Test a function which takes another function as an argument *)
 
 let foobar (i : int) : int =
   let foo : (int -> int) = fun (i : int) -> i in
@@ -1041,6 +1042,19 @@ let variant_match =
   | Foo -> false
   | Bar i -> true
   | Baz s -> false
+(* UNSUPPORTED: No deep patterns yet.
+type bar_variant =
+| Baz
+| Buz of int * int
+| Biz of int * int * string
+
+let long_variant_match =
+  let a = Biz (1,2,"Biz") in
+  match a with
+  | Baz -> "Baz"
+  | Buz (a,b) -> "Buz"
+  | Biz (a,b,c) -> c
+ *)
 
 let bool_match =
   let b = true in
@@ -2208,6 +2222,7 @@ let main (action, store : parameter * storage) : return =
   match action with
   | Vote v -> vote (v, store)
   | Reset r -> reset (r, store)
+(* IF YOU CHANGE THIS, CHANGE THE EXAMPLE ON THE FRONT PAGE OF THE WEBSITE *)
 
 type storage = int
 (* variant defining pseudo multi-entrypoint actions *)

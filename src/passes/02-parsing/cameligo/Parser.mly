@@ -145,8 +145,8 @@ let cover_m (a: 'a update_region) (b: 'b update_region): Region.t * 'a * 'b =
   region, a, b
 
 let cover_nsepseq (n: _ Utils.nsepseq) =
-  let (before, rest) = n in
-  let (last, rest2) = Utils.nsepseq_rev (before, rest) in
+  let (before, _) = n in
+  let (last, rest2) = Utils.nsepseq_rev n in
   let region, before_region, last_region = cover_tokens before.region last.region in
   let before = {before with region = before_region} in
   let last = {last with region = last_region} in
@@ -665,10 +665,11 @@ closed_if:
 
 match_expr(right_expr):
   "match" expr "with" "|"? cases(right_expr) {
-    let region, kwd_match, _ = cover_m (c_token $1) (c_nsepseq_last $5 c_reg) in
-    let cases_region, value = cover_nsepseq $5 in
+    let cases = Utils.nsepseq_rev $5 in
+    let cases_region, cases = cover_nsepseq cases in
+    let region, kwd_match, _ = cover_m (c_token $1) (c_token cases_region) in
     let cases = {
-          value  = Utils.nsepseq_rev value;
+          value = cases;
           region = cases_region} in
     let value  = {kwd_match;
                   expr      = $2;
