@@ -806,7 +806,7 @@ type action =
   | Update_owner of update_owner
   | Update_details of update_details
   | Skip
-  (* The prices kept in storage can be changed by bakers, though they
+(* The prices kept in storage can be changed by bakers, though they
    should only be adjusted down over time, not up. *)
 
 (* The prices kept in storage can be changed by bakers, though they should only be
@@ -1568,7 +1568,11 @@ type st4 =
   | Baz4 of string
   | Boz4 of bool
 
-type st3 = | Foo3 of int | Bar3 of nat | Baz3 of string
+type st3 = 
+  | Foo3 of int
+  | Bar3 of nat
+  | Baz3 of string
+(*convert from*)
 
 type tr3 = (string, "baz4", bool, "boz4") michelson_or
 
@@ -1640,7 +1644,10 @@ type param_l = t4 michelson_pair_left_comb
 let main_l (p, s : param_l * string) :
   (operation list * string) =
   let r4 : t4 = Layout.convert_from_left_comb p in
-  ([] : operation list), r4.three ^ p.0.1
+  ([] : operation list),
+  r4.three
+  ^ p.0.1
+  (*convert to*)
 
 let v3 = { foo = 2; bar = 3n; baz = "q" }
 

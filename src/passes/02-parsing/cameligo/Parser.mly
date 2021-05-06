@@ -81,14 +81,16 @@ let c_nseq_last n (func: 'a -> 'a update_region) =
     )
   }
 
-let update_nsepseq_last col region (func: 'a -> 'a update_region) = 
-  let c = Utils.nsepseq_rev col in
-  let last = (func (fst c)).kupdate region in
-  Utils.nsepseq_rev (last, snd c)
-
-let c_nsepseq_last n (func: 'a -> 'a update_region) = {
-  kregion = nsepseq_to_region (fun x -> (func x).kregion) n;
-  kupdate = fun r -> update_nsepseq_last n r func
+let c_nsepseq_last (n: _ Utils.nsepseq) (func: 'a -> 'a update_region) = 
+  let n_rev = Utils.nsepseq_rev n in
+  let last = fst n_rev in
+  let klast = func last in
+  {
+    kregion = klast.kregion;
+    kupdate = fun r -> (
+      let last = klast.kupdate r in 
+      Utils.nsepseq_rev (last, snd n_rev);
+  )
 }
 
 let c_seq_fst s = 
@@ -396,13 +398,15 @@ variant:
     in {region; value}
   }
 | "<constr>" {
-    {$1 with value = {constr=$1; arg=None; attributes=[]}}
+    let region = Region.set_markup $1.region [] in
+    let constr = {$1 with region} in
+    {value = {constr; arg=None; attributes=[]}; region = $1.region}
   }
 | nseq("[@attr]") "<constr>" "of" fun_type {
     let region, attr, fun_type = cover_m (c_nseq_fst $1) (c_type_expr $4) in
     let attr   = Utils.nseq_to_list attr in
-    let value  = {constr=$2; arg = Some ($3,fun_type); attributes=attr}
-    in {region; value}
+    let value  = {constr=$2; arg = Some ($3,fun_type); attributes=attr} in 
+    {region; value}
   }
 | "<constr>" "of" fun_type {
     let region, constr, fun_type = cover_m (c_reg $1) (c_type_expr $3) in
