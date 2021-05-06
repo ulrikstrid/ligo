@@ -7,7 +7,7 @@
       "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }",
       "LD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
     },
-    "build": "dune build --root=./",
+    "build": "dune build -p ligo",
     "dependencies": {
       "@opam/tezos-rust-libs": "*",
       "@opam/hacl-star-raw": "*",
@@ -84,21 +84,61 @@
           }
         }
       },
+      "@opam/tezos-protocol-plugin-008-PtEdo2Zk": {
+        "source": "link:./tezos_8_2",
+        "override": {
+          "buildsInSource": true,
+          "buildEnvOverride": {
+            "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }",
+            "CUSTOM_DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
+            "DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
+            "DYLD_FALLBACK_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
+            "LD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
+          },
+          "build": [
+            ["rm", "-r", "vendors"],
+            [
+              "dune",
+              "build",
+              "-j",
+              "4",
+              "-p",
+              "tezos-protocol-plugin-008-PtEdo2Zk",
+              "@install"
+            ],
+            [
+              "mv",
+              "src/proto_008_PtEdo2Zk/lib_plugin/tezos-protocol-plugin-008-PtEdo2Zk.install",
+              "./"
+            ]
+          ],
+          "install": [
+            ["esy-installer", "./tezos-protocol-plugin-008-PtEdo2Zk.install"]
+          ],
+          "dependencies": {
+            "@opam/dune": "*",
+            "@opam/tezos-shell": "8.2",
+            "@opam/tezos-protocol-008-PtEdo2Zk": "8.2",
+            "@opam/tezos-embedded-protocol-008-PtEdo2Zk": "8.2",
+            "@opam/bls12-381-unix": "*",
+            "@opam/hacl-star-raw": "*",
+            "@opam/tezos-rust-libs": "*"
+          }
+        }
+      },
       "@opam/tezos-embedded-protocol-008-PtEdo2Zk": {
         "source": "link:./tezos_8_2",
         "override": {
           "buildsInSource": true,
           "buildEnvOverride": {
-            "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
+            "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }",
+            "CUSTOM_DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
+            "DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
+            "DYLD_FALLBACK_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
+            "LD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
           },
           "build": [
-            [
-              "#{ @opam/tezos-protocol-compiler.lib / 'tezos-protocol-compiler' / 'replace'}",
-              "#{ @opam/tezos-protocol-compiler.lib / 'tezos-protocol-compiler' / 'dune_protocol.template'}",
-              "dune",
-              "#{ @opam/tezos-protocol-compiler.lib / 'tezos-protocol-compiler' / 'final_protocol_versions' }",
-              "008_PtEdo2Zk"
-            ],
+            ["rm", "-r", "vendors"],
             [
               "dune",
               "build",
@@ -107,7 +147,15 @@
               "-p",
               "tezos-embedded-protocol-008-PtEdo2Zk",
               "@install"
+            ],
+            [
+              "mv",
+              "src/proto_008_PtEdo2Zk/lib_protocol/tezos-embedded-protocol-008-PtEdo2Zk.install",
+              "./"
             ]
+          ],
+          "install": [
+            ["esy-installer", "./tezos-embedded-protocol-008-PtEdo2Zk.install"]
           ],
           "dependencies": {
             "@opam/dune": "*",
@@ -128,7 +176,11 @@
         "override": {
           "buildsInSource": true,
           "buildEnvOverride": {
-            "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
+            "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }",
+            "CUSTOM_DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
+            "DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
+            "DYLD_FALLBACK_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
+            "LD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
           },
           "build": [
             ["rm", "-r", "vendors"],
@@ -159,6 +211,7 @@
             "@opam/tezos-stdlib": "*",
             "@opam/tezos-crypto": "*",
             "@opam/tezos-protocol-environment": "*",
+            "@opam/hacl-star-raw": "*",
             "@opam/bls12-381": "*",
             "@opam/bls12-381-unix": "*"
           }
