@@ -222,7 +222,7 @@ let seed =
     let docv = "SEED" in
     let doc = "$(docv) is the seed or counter used for generation." in
     info ~docv ~doc ["seed"] in
-  value @@ opt int 0 info
+  value @@ opt (some int) None info
 
 let generator =
   let open Arg in
@@ -851,7 +851,7 @@ let mutate =
       let%bind meta     = Compile.Of_source.extract_meta syntax source_file in
       let%bind c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
       let%bind imperative_prg = Compile.Utils.to_imperative ~options ~meta c_unit source_file in
-      let%bind imperative_prg = Fuzzer.mutate_module_ ~n:seed imperative_prg in
+      let%bind imperative_prg = Fuzzer.mutate_module_ ?n:seed imperative_prg in
       let dialect         = Decompile.Helpers.Dialect_name "verbose" in
       let syntax = Helpers.variant_to_syntax meta.syntax in
       let%bind buffer     =

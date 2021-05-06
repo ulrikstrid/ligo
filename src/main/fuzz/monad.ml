@@ -1,11 +1,13 @@
 open QCheck
-open Ast_imperative
 
 module type Monad = sig
   type 'a t
   val return : 'a -> 'a t
   val get_one : ?n:int -> 'a t -> 'a
   val oneof : 'a t list -> 'a t
+  val mutate_int : int -> int t
+  val mutate_nat : int -> int t
+  val mutate_string : string -> string t
   
   module Let_syntax : sig
     val return : 'a -> 'a t
@@ -35,6 +37,9 @@ module Rnd : Monad = struct
          rand in
     Gen.generate1 ~rand x
   let oneof l = Gen.oneof l
+  let mutate_int _ = Gen.oneof [Gen.small_int; Gen.int]
+  let mutate_nat _ = Gen.big_nat
+  let mutate_string _ = Gen.small_string ~gen:Gen.printable
   
   module Let_syntax = struct
     let return = return
@@ -55,6 +60,9 @@ module Lst : Monad = struct
   let map x ~f = List.map f x
   let get_one ?(n = 0) l = List.nth l n
   let oneof l = List.concat l
+  let mutate_int n = [n]
+  let mutate_nat n = [n]
+  let mutate_string s = [s]
   
   module Let_syntax = struct
     let return = return
@@ -73,7 +81,8 @@ module Monad_context (M : Monad) = struct
   let bind_location (x:_ Location.wrap) =
     let%bind wrap_content = x.wrap_content in
     return { x with wrap_content }
-  
+
+  open Ast_imperative
   let bind_lmap (l:_ label_map) =
     let open LMap in
     let aux k v prev =
