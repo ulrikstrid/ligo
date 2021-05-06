@@ -227,7 +227,7 @@ let seed =
 let generator =
   let open Arg in
   let info =
-    let docv = "SYNTAX" in
+    let docv = "GENERATOR" in
     let doc = "$(docv) is the generator for mutation." in
     info ~docv ~doc ["generator" ; "g"] in
   value @@ opt string "random" info
@@ -838,14 +838,21 @@ let repl =
   (Term.ret term , Term.info ~doc cmdname)
 
 let mutate =
+  let generator_to_variant s =
+    if String.equal s "list" then
+      ok @@ `Generator_list
+    else if String.equal s "random" then
+      ok @@ `Generator_random
+    else
+      fail @@ Main_errors.invalid_generator s in
   let f source_file syntax infer protocol_version libs display_format seed generator =
-    let get_module = if String.equal generator "list" then
-                       (module Fuzz.Lst : Fuzz.Monad)
-                     else
-                       (module Fuzz.Rnd : Fuzz.Monad) in
-    let module Gen : Fuzz.Monad = (val get_module : Fuzz.Monad) in
-    let module Fuzzer = Fuzz.Mutator(Gen) in
     return_result ~display_format (Parsing.Formatter.ppx_format) @@
+      let%bind generator = generator_to_variant generator in
+      let get_module = match generator with
+        | `Generator_list -> (module Fuzz.Lst : Fuzz.Monad)
+        | `Generator_random -> (module Fuzz.Rnd : Fuzz.Monad) in
+      let module Gen : Fuzz.Monad = (val get_module : Fuzz.Monad) in
+      let module Fuzzer = Fuzz.Mutator(Gen) in
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let options       = Compiler_options.make ~infer ~init_env ~libs () in
       let%bind meta     = Compile.Of_source.extract_meta syntax source_file in
