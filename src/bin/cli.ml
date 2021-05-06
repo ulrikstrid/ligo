@@ -216,6 +216,22 @@ let werror =
     info ~docv ~doc ["werror"] in
     value @@ opt bool false info
 
+let seed =
+  let open Arg in
+  let info =
+    let docv = "SEED" in
+    let doc = "$(docv) is the seed or counter used for generation." in
+    info ~docv ~doc ["seed"] in
+  value @@ opt int 0 info
+
+let generator =
+  let open Arg in
+  let info =
+    let docv = "SYNTAX" in
+    let doc = "$(docv) is the generator for mutation." in
+    info ~docv ~doc ["generator" ; "g"] in
+  value @@ opt string "random" info
+
 module Compile = Ligo_compile
 module Helpers   = Ligo_compile.Helpers
 module Run = Run.Of_michelson
@@ -822,14 +838,20 @@ let repl =
   (Term.ret term , Term.info ~doc cmdname)
 
 let mutate =
-  let f source_file syntax infer protocol_version libs display_format =
+  let f source_file syntax infer protocol_version libs display_format seed generator =
+    let get_module = if String.equal generator "list" then
+                       (module Fuzz.Lst : Fuzz.Monad)
+                     else
+                       (module Fuzz.Rnd : Fuzz.Monad) in
+    let module Gen : Fuzz.Monad = (val get_module : Fuzz.Monad) in
+    let module Fuzzer = Fuzz.Mutator(Gen) in
     return_result ~display_format (Parsing.Formatter.ppx_format) @@
       let%bind init_env   = Helpers.get_initial_env protocol_version in
       let options       = Compiler_options.make ~infer ~init_env ~libs () in
       let%bind meta     = Compile.Of_source.extract_meta syntax source_file in
       let%bind c_unit,_ = Compile.Utils.to_c_unit ~options ~meta source_file in
       let%bind imperative_prg = Compile.Utils.to_imperative ~options ~meta c_unit source_file in
-      let%bind imperative_prg = Fuzz.mutate_module_ imperative_prg in
+      let%bind imperative_prg = Fuzzer.mutate_module_ ~n:seed imperative_prg in
       let dialect         = Decompile.Helpers.Dialect_name "verbose" in
       let syntax = Helpers.variant_to_syntax meta.syntax in
       let%bind buffer     =
@@ -837,7 +859,7 @@ let mutate =
       ok @@ buffer
   in
   let term =
-    Term.(const f $ source_file 0 $ syntax $ infer $ protocol_version $ libraries $ display_format) in
+    Term.(const f $ source_file 0 $ syntax $ infer $ protocol_version $ libraries $ display_format $ seed $ generator) in
   let cmdname = "mutate" in
   let doc = "Subcommand: Return a mutated version for a given file." in
   let man = [`S Manpage.s_description;
