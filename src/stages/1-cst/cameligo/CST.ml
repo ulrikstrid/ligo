@@ -569,3 +569,92 @@ let selection_to_region = function
 let path_to_region = function
   Name var -> var.region
 | Path {region; _} -> region
+
+let update_expr_region: expr -> Region.t -> expr = 
+  fun e region ->
+    match e with 
+      ECase     {value; _} ->                         ECase {region; value}
+    | ECond     {value; _} ->                         ECond {region; value}
+    | EAnnot    {value; _} ->                         EAnnot {region; value}
+    | ERecord   {value; _} ->                         ERecord {region; value}
+    | EProj     {value; _} ->                         EProj {region; value}
+    | EModA     {value; _} ->                         EModA {region; value}
+    | EUpdate   {value; _} ->                         EUpdate {region; value}
+    | EVar      {value; _} ->                         EVar {region; value}
+    | ECall     {value; _} ->                         ECall {region; value}
+    | EBytes    {value; _} ->                         EBytes {region; value}
+    | EUnit     {value; _} ->                         EUnit {region; value}
+    | ETuple    {value; _} ->                         ETuple {region; value}
+    | EPar      {value; _} ->                         EPar {region; value}
+    | ELetIn    {value; _} ->                         ELetIn {region; value}
+    | ETypeIn   {value; _} ->                         ETypeIn {region; value}
+    | EModIn    {value; _} ->                         EModIn {region; value}
+    | EModAlias {value; _} ->                         EModAlias {region; value}
+    | EFun      {value; _} ->                         EFun {region; value}
+    | ESeq      {value; _} ->                         ESeq {region; value}
+    | ECodeInj  {value; _} ->                         ECodeInj {region; value}
+    | ELogic    (BoolExpr (Or {value; _})) ->         ELogic (BoolExpr (Or {region; value}))
+    | ELogic    (BoolExpr (And {value; _})) ->        ELogic (BoolExpr (And {region; value}))
+    | ELogic    (BoolExpr (Not {value; _})) ->        ELogic (BoolExpr (Not {region; value}))
+    | ELogic    (BoolExpr (True _)) ->                ELogic (BoolExpr (True region))
+    | ELogic    (BoolExpr (False _)) ->               ELogic (BoolExpr (False region))
+    | ELogic    (CompExpr (Lt {value; _})) ->         ELogic (CompExpr (Lt {value; region}))
+    | ELogic    (CompExpr (Leq {value; _})) ->        ELogic (CompExpr (Leq {value; region}))
+    | ELogic    (CompExpr (Gt {value; _})) ->         ELogic (CompExpr (Gt {value; region}))
+    | ELogic    (CompExpr (Geq {value; _})) ->        ELogic (CompExpr (Geq {value; region}))
+    | ELogic    (CompExpr (Equal {value; _})) ->      ELogic (CompExpr (Equal {value; region}))
+    | ELogic    (CompExpr (Neq {value; _})) ->        ELogic (CompExpr (Neq {value; region}))
+    | EArith    (Add {value; _}) ->                   EArith (Add {value; region})
+    | EArith    (Sub {value; _}) ->                   EArith (Sub {value; region})
+    | EArith    (Mult {value; _}) ->                  EArith (Mult {value; region})
+    | EArith    (Div {value; _}) ->                   EArith (Div {value; region})
+    | EArith    (Mod {value; _}) ->                   EArith (Mod {value; region})
+    | EArith    (Neg {value; _}) ->                   EArith (Neg {value; region})
+    | EArith    (Int {value; _}) ->                   EArith (Int {value; region})
+    | EArith    (Nat {value; _}) ->                   EArith (Nat {value; region})
+    | EArith    (Mutez {value; _}) ->                 EArith (Mutez {value; region})
+    | EString   (Cat {value; _}) ->                   EString (Cat {value; region})
+    | EString   (String {value; _}) ->                EString (String {value; region})
+    | EString   (Verbatim {value; _}) ->              EString (Verbatim {value; region})
+    | EList     (ECons {value; _}) ->                 EList (ECons {value; region})
+    | EList     (EListComp {value; _}) ->             EList (EListComp {value; region})
+    | EConstr   (ENone _) ->                          EConstr (ENone region)
+    | EConstr   (ESomeApp {value; _}) ->              EConstr (ESomeApp {value; region})
+    | EConstr   (EConstrApp {value; _}) ->            EConstr (EConstrApp {value; region})
+
+let update_type_expr_region: type_expr -> Region.t -> type_expr = 
+  fun t region ->
+    match t with 
+      TProd   {value; _} -> TProd {value; region}
+    | TSum    {value; _} -> TSum {value; region}
+    | TRecord {value; _} -> TRecord {value; region}
+    | TApp    {value; _} -> TApp {value; region}
+    | TFun    {value; _} -> TFun {value; region}
+    | TPar    {value; _} -> TPar {value; region}
+    | TVar    {value; _} -> TVar {value; region}
+    | TWild   _ -> TWild region
+    | TString {value; _} -> TString {value; region}
+    | TInt    {value; _} -> TInt {value; region}
+    | TModA   {value; _} -> TModA {value; region}
+    
+let update_pattern_region: pattern -> Region.t -> pattern = 
+  fun p region ->
+    match p with 
+      PConstr   (PNone _) -> PConstr (PNone region)
+    | PConstr   (PSomeApp {value; _} ) -> PConstr (PSomeApp {value; region})
+    | PConstr   (PFalse _) -> PConstr (PFalse region)
+    | PConstr   (PTrue _) -> PConstr (PTrue region)
+    | PConstr   (PConstrApp {value; _}) -> PConstr (PConstrApp {value; region})
+    | PUnit     {value; _} -> PUnit {value; region}
+    | PVar      {value; _} -> PVar {value; region}
+    | PInt      {value; _} -> PInt {value; region}
+    | PNat      {value; _} -> PNat {value; region}
+    | PBytes    {value; _} -> PBytes {value; region}
+    | PString   {value; _} -> PString {value; region}
+    | PVerbatim {value; _} -> PVerbatim {value; region}
+    | PList     (PListComp {value; _}) -> PList (PListComp {value; region})
+    | PList     (PCons {value; _}) -> PList (PCons {value; region})
+    | PTuple    {value; _} -> PTuple {value; region}
+    | PPar      {value; _} -> PPar {value; region}
+    | PRecord   {value; _} -> PRecord {value; region}
+    | PTyped    {value; _} -> PTyped {value; region}

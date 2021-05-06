@@ -87,8 +87,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail3.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.mligo", line 4, character 2 to line 6, character 21:
-      3 | let t = fun (x: myt * ( int * int * int)) ->
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail3.mligo", line 5, character 4 to line 6, character 21:
       4 |   match x with
       5 |   | xs , (a,b,c) -> 1
       6 |   | xs , (c,b,a) -> 2
@@ -100,8 +99,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail11.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail11.mligo", line 2, character 2 to line 4, character 11:
-      1 | let t12 = fun (x : int list) ->
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail11.mligo", line 3, character 4 to line 4, character 11:
       2 |   match x with
       3 |   | hd::(hd2::tl) -> hd + hd2
       4 |   | [] -> 0
@@ -111,8 +109,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail12.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail12.mligo", line 4, character 2 to line 6, character 40:
-      3 | let t13 = fun (x:recordi) ->
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail12.mligo", line 5, character 4 to line 6, character 40:
       4 |   match x with
       5 |   | { a = Some ([]) ; b = (hd::tl) } -> hd
       6 |   | { a = Some (hd::tl) ; b = [] } -> hd
@@ -122,8 +119,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "print-ast-typed" ; (bad_test "pm_fail4.mligo") ] ;
   [%expect{|
-    File "../../test/contracts/negative//deep_pattern_matching/pm_fail4.mligo", line 4, character 2 to line 6, character 18:
-      3 | let t = fun (x: myt * myt) ->
+    File "../../test/contracts/negative//deep_pattern_matching/pm_fail4.mligo", line 5, character 4 to line 6, character 18:
       4 |   match x with
       5 |   | Nil , ys  -> 1
       6 |   | xs  , Nil -> 2

@@ -86,7 +86,7 @@ and pp_dir_decl = function
 *)
 
 
-and pp_let_decl {value; _} =
+and pp_let_decl {value; region} =
   let kwd_let, rec_opt, binding, attr = value in
   let let_str =
     match rec_opt with
@@ -95,7 +95,7 @@ and pp_let_decl {value; _} =
   in
   let let_str = if attr = [] then let_str
                 else pp_attributes attr ^/^ let_str
-  in let_str ^^ pp_let_binding binding
+  in pp_region_t (let_str ^^ pp_let_binding binding) region
 
 and pp_attributes = function
     [] -> empty
@@ -196,11 +196,10 @@ and pp_ptyped {value; _} =
   group (pp_pattern pattern ^^ (pp_region_t (string " :") colon) ^/^ pp_type_expr type_expr)
 
 and pp_type_decl decl =
-  let {name; type_expr; kwd_type; eq; _} = decl.value in
-  (* let padding = match type_expr with TSum _ -> 0 | _ -> 2 in *)
-  pp_region_t (string "type ") kwd_type 
+  let {name; type_expr; eq; _} = decl.value in
+  pp_region_t (string "type " 
   ^^ pp_region_reg pp_ident name ^^ (pp_region_t (string " = ") eq)
-  ^^ pp_type_expr type_expr
+  ^^ pp_type_expr type_expr) decl.region
 
 and pp_module_decl decl =
   let {kwd_module; name; module_; eq; kwd_struct; kwd_end} = decl.value in

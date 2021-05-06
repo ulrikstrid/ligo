@@ -362,9 +362,8 @@ let bar (b : int) : int =
   [@foo]
   [@bar]
   let test = fun (z : int) -> 2 + b + z in
-  test
-    b
-    (*
+  test b
+(*
 This test makes sure that the balance is accessible in CameLIGO.
 
 It is there to detect a regression of:
@@ -410,11 +409,8 @@ let map1 : foo = Big_map.literal [(23, 0); (42, 0)]
 
 let mutimaps (m : foo) (n : foo) : foo =
   let bar : foo = Big_map.update 42 (Some 0) m in
-  Big_map.update
-    42
-    (get bar)
-    n
-    (* Test CameLIGO bitwise operators *)
+  Big_map.update 42 (get bar) n
+(* Test CameLIGO bitwise operators *)
 
 let or_op (n : nat) : nat = Bitwise.or n 4n
 
@@ -458,11 +454,8 @@ let id_address (p : address) : address option =
 
 let check_signature
   (pk, signed, msg : key * signature * bytes) : bool =
-  Crypto.check
-    pk
-    signed
-    msg
-    (*
+  Crypto.check pk signed msg
+(*
 $ tezos-client gen keys testsign
 
 $ tezos-client show address testsign -S
@@ -485,15 +478,14 @@ let example : bool =
     ("edsigtnzKd51CDomKVMFBoU8SzFZgNqRkYUaQH4DLUg8Lsimz98DFB82uiHAkdvx29DDqHxPf1noQ8noWpKMZoxTCsfprrbs4Xo"
      : signature)
     0x05010000000568656c6c6f
-    (* Test whether closures capture variables in CameLIGO *)
+(* Test whether closures capture variables in CameLIGO *)
 
 let test (k : int) : int =
   let j : int = k + 5 in
   let close : int -> int = fun (i : int) -> i + j in
   let j : int = 20 (* Shadow original variable *)  in
-  close
-    20
-    (* This test check that the type are comparable *)
+  close 20
+(* This test check that the type are comparable *)
 
 let int_ (a : int) = a < a
 
@@ -515,10 +507,8 @@ let key_hash_ (a : key_hash) = a < a
 
 type comp_pair = int * int
 
-let comp_pair (a : comp_pair) =
-  a
-  < a
-    (* 
+let comp_pair (a : comp_pair) = a < a
+(* 
 type uncomp_pair_1 = int * int * int
 
 let uncomp_pair_1 (a: uncomp_pair_1) = a < a
@@ -657,7 +647,7 @@ let main (p, s : unit * storage) =
   (fun (f : int -> int) (x : int) -> f x)
     (fun (x : int) -> x)
     1
-    (* Test use of multiple subroutines in a CameLIGO function *)
+(* Test use of multiple subroutines in a CameLIGO function *)
 
 let foo (i : int) : int = i + 20
 
@@ -749,18 +739,14 @@ let reveal (p, s : reveal * storage) : return =
 let main (p, s : parameter * storage) : return =
   match p with
   | Commit c -> commit (c, s)
-  | Reveal r ->
-      reveal
-        (r, s)
-        (* Test a function which takes another function as an argument *)
+  | Reveal r -> reveal (r, s)
 
 let foobar (i : int) : int =
   let foo : (int -> int) = fun (i : int) -> i in
   let bar : ((int -> int) -> int) =
     fun (f : int -> int) -> f i in
-  bar
-    foo
-    (* higher order function with more than one argument *)
+  bar foo
+(* higher order function with more than one argument *)
 
 let higher2 (i : int) (f : int -> int) : int =
   let ii : int = f i in
@@ -1054,21 +1040,7 @@ let variant_match =
   match a with
   | Foo -> false
   | Bar i -> true
-  | Baz s ->
-      false
-      (* UNSUPPORTED: No deep patterns yet.
-type bar_variant =
-| Baz
-| Buz of int * int
-| Biz of int * int * string
-
-let long_variant_match =
-  let a = Biz (1,2,"Biz") in
-  match a with
-  | Baz -> "Baz"
-  | Buz (a,b) -> "Buz"
-  | Biz (a,b,c) -> c
- *)
+  | Baz s -> false
 
 let bool_match =
   let b = true in
@@ -1189,10 +1161,8 @@ let assertion_pass =
   let unitt = assert (1 = 1) in
   true
 
-let main (i : int) : nat option =
-  is_nat
-    i
-    (* Test case from https://gitlab.com/ligolang/ligo/-/issues/184 *)
+let main (i : int) : nat option = is_nat i
+(* Test case from https://gitlab.com/ligolang/ligo/-/issues/184 *)
 
 type foo = { bar : string; baz : nat }
 
@@ -1287,11 +1257,8 @@ let sum (p : int * int) : int =
 
 let sum2 (p : string * string * string * string) : string =
   let a, b, c, d = p in
-  a
-  ^ b
-    ^ c
-      ^ d
-        (* Simple test of binding multiple values *)
+  a ^ b ^ c ^ d
+(* Simple test of binding multiple values *)
 
 let (x : int), (y : int) = 1, 2
 
@@ -1303,16 +1270,13 @@ let main_paren (p : unit) : int = x + y
 
 let foobar : (int * int) = (23, 42)
 
-let (foo : int), (bar : int) =
-  foobar
-  (* Here to prevent a regression of https://gitlab.com/ligolang/ligo/issues/63#note_254106580 *)
+let (foo : int), (bar : int) = foobar
+(* Here to prevent a regression of https://gitlab.com/ligolang/ligo/issues/63#note_254106580 *)
 
 let correct_values_bound (p : unit) : int * int = foo, bar
 
-let non_tuple_rhs (p : unit) : int =
-  bar
-  - foo
-    (* Here to prevent a regression of https://gitlab.com/ligolang/ligo/issues/63#note_254106580 *)
+let non_tuple_rhs (p : unit) : int = bar - foo
+(* Here to prevent a regression of https://gitlab.com/ligolang/ligo/issues/63#note_254106580 *)
 
 let big_tuple : int * int * int * int * int =
   10, 20, 30, 40, 50
@@ -1405,7 +1369,7 @@ let local_type (u : unit) : int =
   let titi : toto = 1 in
   let titi = titi + 2 in
   titi
-  (* Test functional iterators in CameLIGO *)
+(* Test functional iterators in CameLIGO *)
 
 let rec aux_simple (i : int) : int =
   if i < 100 then aux_simple (i + 1) else i
@@ -1455,25 +1419,16 @@ let set_ (t : int * foobar) : foobar = set_2 t.0 t.1
 
 let add (n, m : int * foobar) : foobar = Map.add 23 n m
 
-let rm (m : foobar) : foobar =
-  Map.remove
-    42
-    m
-    (* Dummy test so that we can add the same test for PascaLIGO *)
+let rm (m : foobar) : foobar = Map.remove 42 m
+(* Dummy test so that we can add the same test for PascaLIGO *)
 
 let patch_ (m : foobar) : foobar =
-  Map.literal
-    [(0, 5);
-     (1, 6);
-     (2, 7)]
-    (* Second dummy test, see above *)
+  Map.literal [(0, 5); (1, 6); (2, 7)]
+(* Second dummy test, see above *)
 
 let patch_empty (m : foobar) : foobar =
-  Map.literal
-    [(0, 0);
-     (1, 1);
-     (2, 2)]
-    (* Third dummy test, see above *)
+  Map.literal [(0, 0); (1, 1); (2, 2)]
+(* Third dummy test, see above *)
 
 let patch_deep (m : foobar * nat) : foobar * nat =
   Map.literal [(0, 0); (1, 9); (2, 2)], 10n
@@ -1599,12 +1554,7 @@ type st4 =
   | Baz4 of string
   | Boz4 of bool
 
-type st3 = 
-  | Foo3 of int
-  | Bar3 of nat
-  | Baz3 of
-      string
-      (*convert from*)
+type st3 = | Foo3 of int | Bar3 of nat | Baz3 of string
 
 type tr3 = (string, "baz4", bool, "boz4") michelson_or
 
@@ -1676,12 +1626,7 @@ type param_l = t4 michelson_pair_left_comb
 let main_l (p, s : param_l * string) :
   (operation list * string) =
   let r4 : t4 = Layout.convert_from_left_comb p in
-  ([] : operation list),
-  r4.three
-  ^ p.
-    0.
-    1
-    (*convert to*)
+  ([] : operation list), r4.three ^ p.0.1
 
 let v3 = { foo = 2; bar = 3n; baz = "q" }
 
@@ -1918,12 +1863,8 @@ let y (_ : unit) : nat =
 
 let aggregate (i : int) (j : int) : int = i + j
 
-let fold_op (s : int set) : int =
-  Set.fold
-    aggregate
-    s
-    15
-    (* Test set operations in CameLIGO *)
+let fold_op (s : int set) : int = Set.fold aggregate s 15
+(* Test set operations in CameLIGO *)
 
 let literal_op (p : unit) : string set =
   Set.literal ["foo"; "bar"; "foobar"]
@@ -1935,11 +1876,8 @@ let remove_op (s : string set) : string set =
   Set.remove "foobar" s
 
 let remove_deep (s : string set * nat) : string set =
-  Set.remove
-    "foobar"
-    s.
-    0
-    (*
+  Set.remove "foobar" s.0
+(*
 let patch_op (s: string set) : string set =
   begin patch s with set ["foobar"]; end with s
 
@@ -1953,9 +1891,8 @@ let size_op (s : string set) : nat = Set.cardinal s
 
 let main (p : key_hash) : operation list =
   let useless : operation = Tezos.set_delegate (Some p) in
-  ([]
-   : operation list)
-   (* Test that the string concatenation syntax in CameLIGO works *)
+  ([] : operation list)
+(* Test that the string concatenation syntax in CameLIGO works *)
 
 let size_op (s : string) : nat = String.length s
 
@@ -1999,7 +1936,7 @@ let add_more_tez : tez =
   + 100000mutez
   + 10000mutez
   + 1000mutez
-    (*
+(*
 Modelled after:
 
   https://gitlab.com/tezos/tezos/-/blob/95a072715b/tests_python/contracts_alpha/mini_scenarios/ticket_builder_fungible.tz
@@ -2041,7 +1978,7 @@ let main (arg : parameter * storage) :
           ([op], s)
         end
   end
-  (*
+(*
 Modelled after:
 
   https://gitlab.com/tezos/tezos/-/blob/95a072715b/tests_python/contracts_alpha/mini_scenarios/ticket_wallet_fungible.tz
@@ -2270,10 +2207,7 @@ let vote (vote, store : vote * storage) : return =
 let main (action, store : parameter * storage) : return =
   match action with
   | Vote v -> vote (v, store)
-  | Reset r ->
-      reset
-        (r, store)
-        (* IF YOU CHANGE THIS, CHANGE THE EXAMPLE ON THE FRONT PAGE OF THE WEBSITE *)
+  | Reset r -> reset (r, store)
 
 type storage = int
 (* variant defining pseudo multi-entrypoint actions *)
@@ -2282,10 +2216,8 @@ type parameter = | Increment of int | Decrement of int
 
 let add (a, b : int * int) : int = a + b
 
-let sub (a, b : int * int) : int =
-  a
-  - b
-    (* real entrypoint that re-routes the flow based on the parameter provided *)
+let sub (a, b : int * int) : int = a - b
+(* real entrypoint that re-routes the flow based on the parameter provided *)
 
 let main (p, s : parameter * storage) =
   let storage =

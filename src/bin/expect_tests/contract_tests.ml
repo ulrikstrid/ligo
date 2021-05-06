@@ -1195,7 +1195,7 @@ let%expect_test _ =
 let%expect_test _ =
   run_ligo_bad [ "compile-contract" ; bad_contract "redundant_constructors.mligo" ; "main" ] ;
   [%expect{|
-    File "../../test/contracts/negative/redundant_constructors.mligo", line 7, character 2 to line 9, character 15:
+    File "../../test/contracts/negative/redundant_constructors.mligo", line 7, character 0 to line 9, character 15:
       6 | type union_b =
       7 | | Add of nat
       8 | | Remove of nat
