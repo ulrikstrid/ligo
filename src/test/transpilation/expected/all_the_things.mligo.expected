@@ -691,8 +691,7 @@ type reveal = {
 
 type parameter = Commit of bytes | Reveal of reveal
 
-type return = operation list *
-storage
+type return = operation list * storage
 (* We use hash-commit so that a baker can not steal *)
 
 let commit (p, s : bytes * storage) : return =
@@ -818,8 +817,7 @@ type storage = {
   skip_price : tez
 }
 
-type return = operation list *
-storage
+type return = operation list * storage
 (* Preliminary thoughts on ids:
 
 I very much like the simplicity of http://gurno.com/adam/mne/.  5 three
@@ -1300,9 +1298,8 @@ let (a : int), (b : int), (c : int), (d : int), (e : int) =
 
 let correct_values_big_tuple (p : unit) :
   int * int * int * int * int =
-  a, b, c, d,
-  e
-  (* Here to prevent a regression of https://gitlab.com/ligolang/ligo/issues/63#note_254106580 *)
+  a, b, c, d, e
+(* Here to prevent a regression of https://gitlab.com/ligolang/ligo/issues/63#note_254106580 *)
 
 let different_types : int * string = 10, "hello"
 
@@ -1600,9 +1597,8 @@ type param_l = st4 michelson_or_left_comb
 
 let main_l (p, s : param_l * st4) : (operation list * st4) =
   let r4 : st4 = Layout.convert_from_left_comb p in
-  ([] : operation list),
-  r4
-  (** convert_to **)
+  ([] : operation list), r4
+(** convert_to **)
 
 let vst3 = Bar3 3n
 
@@ -1644,10 +1640,8 @@ type param_l = t4 michelson_pair_left_comb
 let main_l (p, s : param_l * string) :
   (operation list * string) =
   let r4 : t4 = Layout.convert_from_left_comb p in
-  ([] : operation list),
-  r4.three
-  ^ p.0.1
-  (*convert to*)
+  ([] : operation list), r4.three ^ p.0.1
+(*convert to*)
 
 let v3 = { foo = 2; bar = 3n; baz = "q" }
 

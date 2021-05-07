@@ -146,14 +146,17 @@ let cover_m (a: 'a update_region) (b: 'b update_region): Region.t * 'a * 'b =
   let b = b.kupdate b_region in
   region, a, b
 
-let cover_nsepseq (n: _ Utils.nsepseq) =
+let cover_nsepseq (n: ('a, _) Utils.nsepseq) (func: 'a -> 'a update_region) : Region.t * ('a, _) Utils.nsepseq =
   let (before, _) = n in
   let (last, rest2) = Utils.nsepseq_rev n in
-  let region, before_region, last_region = cover_tokens before.region last.region in
-  let before = {before with region = before_region} in
-  let last = {last with region = last_region} in
+  let kbefore = func before in
+  let klast = func last in
+  let region, before_region, last_region = cover_tokens kbefore.kregion klast.kregion in
+  let before = kbefore.kupdate before_region in
+  let last = klast.kupdate last_region in
   let (_, rest2) = Utils.nsepseq_rev (last, rest2) in
   region, (before, rest2)
+
 
 (* END HEADER *)
 %}
@@ -348,8 +351,8 @@ fun_type:
 cartesian:
   core_type { $1 }
 | core_type "*" nsepseq(core_type,"*") {
-    let value  = Utils.nsepseq_cons $1 $2 $3 in
-    let region = nsepseq_to_region type_expr_to_region value in    
+    let region, item, col = cover_m (c_type_expr $1) (c_nsepseq_last $3 c_type_expr) in
+    let value  = Utils.nsepseq_cons item $2 col in
     TProd {region; value} }
 
 core_type:
@@ -375,7 +378,7 @@ type_tuple:
 
 sum_type:
   nsepseq(variant,"|") {
-    let region, variants = cover_nsepseq $1 in
+    let region, variants = cover_nsepseq $1 c_reg in
     let value  = {variants; attributes=[]; lead_vbar=None} in 
     TSum {region; value}
   }
@@ -499,8 +502,8 @@ type_annotation:
 irrefutable:
   sub_irrefutable        { $1 }
 | tuple(sub_irrefutable) {
-    let region = nsepseq_to_region pattern_to_region $1
-    in PTuple {region; value=$1} }
+    let region, value = cover_nsepseq $1 c_pattern in
+    PTuple {region; value} }
 
 sub_irrefutable:
   "<ident>"                                              {    PVar $1 }
@@ -531,8 +534,8 @@ pattern:
     PList (PCons {region; value=hd,$2,tl})
   }
 | tuple(sub_pattern) {
-    let region =  nsepseq_to_region pattern_to_region $1
-    in PTuple {region; value=$1} }
+    let region, value = cover_nsepseq $1 c_pattern in
+    PTuple {region; value} }
 
 sub_pattern:
   par(tail)    { PPar $1 }
@@ -592,8 +595,8 @@ constr_pattern:
 
 ptuple:
   tuple(tail) {
-    let region = nsepseq_to_region pattern_to_region $1
-    in PTuple {region; value=$1} }
+    let region, value = cover_nsepseq $1 c_pattern in
+    PTuple {region; value} }
 
 unit:
   "(" ")" { 
@@ -631,8 +634,8 @@ base_expr(right_expr):
 
 tuple_expr:
   tuple(disj_expr_level) {
-    let region = nsepseq_to_region expr_to_region $1
-    in ETuple {region; value=$1} }
+    let region, value = cover_nsepseq $1 c_expr in
+    ETuple {region; value} }
 
 conditional(right_expr):
   if_then_else(right_expr) | if_then(right_expr) { $1 }
@@ -670,7 +673,7 @@ closed_if:
 match_expr(right_expr):
   "match" expr "with" "|"? cases(right_expr) {
     let cases = Utils.nsepseq_rev $5 in
-    let cases_region, cases = cover_nsepseq cases in
+    let cases_region, cases = cover_nsepseq cases c_reg in
     let region, kwd_match, _ = cover_m (c_token $1) (c_token cases_region) in
     let cases = {
           value = cases;
