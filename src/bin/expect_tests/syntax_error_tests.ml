@@ -17,3 +17,14 @@ let%expect_test _ =
   run_ligo_bad [ "compile-expression" ; "jsligo" ; "Bytes.X()" ] ;
   [%expect {| Unknown constructor in module: Bytes |} ]
 
+let%expect_test _ =
+  run_ligo_bad [ "compile-expression" ; "cameligo" ; "Tezos.x.y" ] ;
+  [%expect {| Variable "Tezos.x.y" not found. |} ]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile-expression" ; "reasonligo" ; "Tezos.x.y" ] ;
+  [%expect {| Variable "Tezos.x.y" not found. |} ]
+
+let%expect_test _ =
+  run_ligo_bad [ "compile-expression" ; "pascaligo" ; "Tezos.x.y" ] ;
+  [%expect {| Variable "Tezos.x.y" not found. |} ]
