@@ -39,8 +39,8 @@ Fixpoint compile_usages_aux (n : nat) (us : list usage) : list (node A string) :
   match us with
   | [] => []
   | Drop :: us => [Prim nil "DIG" [Int nil (Z.of_nat n)] [];
+                   Seq nil (compile_usages_aux (S n) us);
                    Prim nil "DROP" [] []]
-                  ++ compile_usages_aux n us
   | Keep :: us => compile_usages_aux (S n) us
   end.
 
@@ -75,12 +75,35 @@ Definition PAIR (n : nat) : list (node A string) :=
   | _ => [Prim nil "PAIR" [Int nil (Z.of_nat n)] []]
   end.
 
+(* Unfortunately there is a bug in the typechecking of `PAIR k` which
+   makes it difficult to use in general. This is a workaround.
+
+   Note that it takes its arguments in reverse order. *)
+Definition REV_PAIR (n : nat) : list (node A string) :=
+  match n with
+  | 0 => [Prim nil "UNIT" [] []]
+  | 1 => []
+  | _ => List.concat (repeat [Prim nil "SWAP" [] []; Prim nil "PAIR" [] []] (n - 1))
+  end.
+
 Definition UNPAIR (n : nat) : list (node A string) :=
   match n with
   | 0 => [Prim nil "DROP" [] []]
   | 1 => []
   | _ => [Prim nil "UNPAIR" [Int nil (Z.of_nat n)] []]
   end.
+
+Definition GET (i n : nat) : list (node A string) :=
+  let i := if beq_nat (S i) n
+           then 2 * i
+           else 2 * i + 1 in
+  [Prim nil "GET" [Int nil (Z.of_nat i)] []].
+
+Definition UPDATE (i n : nat) : list (node A string) :=
+  let i := if beq_nat (S i) n
+           then 2 * i
+           else 2 * i + 1 in
+  [Prim nil "UPDATE" [Int nil (Z.of_nat i)] []].
 
 Fixpoint compile_expr
   (env : list (node A string)) (outer : splitting)
@@ -92,12 +115,22 @@ Fixpoint compile_expr
     let (outer, inner) := assoc_splitting outer inner in
     [Seq nil (compile_expr env1 outer e1);
      Seq nil (compile_binds env2 inner (filter_keeps (right_usages outer)) e2)]
+  (* TODO use PAIR instead of REV_PAIR when possible *)
+  | E_tuple _ args =>
+    [Seq nil (compile_args env outer args);
+     Seq nil (REV_PAIR (args_length args))]
   | E_let_tuple _ inner e1 e2 =>
     let (env1, env2) := split inner env in
     let (outer, inner) := assoc_splitting outer inner in
     [Seq nil (compile_expr env1 outer e1);
      Seq nil (UNPAIR (binds_length e2));
      Seq nil (compile_binds env2 inner (filter_keeps (right_usages outer)) e2)]
+  | E_proj _ e i n =>
+    [Seq nil (compile_expr env outer e);
+     Seq nil (GET i n)]
+  | E_update _ args i n =>
+    [Seq nil (compile_args env outer args);
+     Seq nil (UPDATE i n)]
   | E_app _ e => [Seq nil (compile_args env outer e);
                   Prim nil "SWAP" [] [];
                   Prim nil "EXEC" [] []]
@@ -260,9 +293,14 @@ Proof.
   intros us; induction us; intros n s1 s2 H1 H2; eauto;
     destruct s2; inversion H2 as [H3];
       simpl; eauto; destruct a; simpl; eauto.
-  eenough (prog_typed (compile_usages_aux (S n) us) ((s1 ++ [_]) ++ s2) ((s1 ++ [_]) ++ select us s2))
-    by (repeat rewrite <- app_assoc in H; eassumption);
-    apply IHus; auto; rewrite app_length, plus_comm; auto.
+  (* Drop *)
+  - enough (prog_typed (compile_usages_aux (S n) us) ((n0 :: s1) ++ s2) ((n0 :: s1) ++ select us s2))
+      by eauto 10;
+    eapply IHus; simpl; eauto.
+  (* Keep *)
+  - enough (H : prog_typed (compile_usages_aux (S n) us) ((s1 ++ [n0]) ++ s2) ((s1 ++ [n0]) ++ select us s2))
+      by (repeat rewrite <- app_assoc in H; apply H);
+    eapply IHus; eauto; rewrite length_snoc; eauto.
 Qed.
 
 Lemma compile_usages_typed :
@@ -550,7 +588,13 @@ Proof.
       specialize (H0 _ _ _ H9); eapply H0; eauto.
       eapply used_filter_keeps_right_usages; eauto.
       eauto.
+  (* E_tuple *)
+  - admit. (* TODO *)
   (* E_let_tuple *)
+  - admit. (* TODO *)
+  (* E_proj *)
+  - admit. (* TODO *)
+  (* E_update *)
   - admit. (* TODO *)
   (* E_app *)
   - eapply H in H4; eauto; simpl in *; eauto.
@@ -599,6 +643,9 @@ Proof.
           apply invert_compile_usages_aux_keeps_typed in H; simpl in H
         end;
         repeat crush;
+        match goal with
+        | [H : _ :: _ = _ :: _ |- _] => invert H
+        end;
         eauto.
   (* E_operator *)
   - eapply H0 in H8; eauto;

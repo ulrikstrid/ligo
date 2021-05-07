@@ -76,6 +76,9 @@ module Compile_type = struct
     | _ as t -> fail @@ invalid_constructor t
 
   and get_t_int_singleton_opt = function
+  | CST.TInt x -> 
+    let (_,z) = x.value in
+    Some z
   | _ -> None
 
   and get_t_string_singleton_opt = function
@@ -580,7 +583,11 @@ and compile_expression : CST.expr -> (AST.expr, _) result = fun e ->
       let loc = Location.lift region in
       let%bind fun_name = match field with
           EVar v -> ok @@ v.value
-        | EModA _ -> fail @@ unknown_constant module_name.value loc
+        | EConstr _ -> fail @@ unknown_constructor module_name.value loc
+        | EModA ma ->
+           let (ma, loc) = r_split ma in
+           let (module_name, _) = r_split ma.module_name in
+           fail @@ unknown_constant module_name loc
         | _ -> failwith "Corner case : This couldn't be produce by the parser"
       in
       let var = module_name.value ^ "." ^ fun_name in
@@ -661,7 +668,11 @@ and compile_expression : CST.expr -> (AST.expr, _) result = fun e ->
     if List.mem module_name build_ins then
       let%bind fun_name = match ma.field with
         EVar v -> ok @@ v.value
-      | EModA _ -> fail @@ unknown_constant module_name loc
+      | EConstr _ -> fail @@ unknown_constructor module_name loc
+      | EModA ma ->
+         let (ma, loc) = r_split ma in
+         let (module_name, _) = r_split ma.module_name in
+         fail @@ unknown_constant module_name loc
       | _ -> failwith "Corner case : This couldn't be produce by the parser"
       in
       let var = module_name ^ "." ^ fun_name in
