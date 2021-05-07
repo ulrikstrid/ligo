@@ -68,12 +68,7 @@ export const EditorComponent = ({editorHeight, theme}) => {
     }
   }
   
-  const isDarkMode = () => {
-if( theme === 'dark'){
-  return true
-}
-return false
-  }
+  const isDarkMode = theme === 'dark'
 
   return (
     <Container>

@@ -91,6 +91,14 @@ export const GlobalStyles = createGlobalStyle`
     color: ${({ theme }) => theme.text};
   }
 
+  .margin-view-overlays{
+    color: ${({ theme }) => theme.lightGrey};
+  }
+
+  .monaco-editor{
+    color: ${({ theme }) => theme.lightGrey};
+  }
+
   .headerLink{
     background: ${({ theme }) => theme.body};
     color: ${({ theme }) => theme.text};

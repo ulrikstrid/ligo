@@ -23,6 +23,23 @@ export const MonacoComponent = ({editorHeight, isDarkMode}) => {
   const store = useStore();
   const dispatch = useDispatch();
 
+  const getColors = () => {
+    if(isDarkMode) {
+      return {
+        'editor.background': '#191a1b',
+        'editor.lineHighlightBackground': '#1a293f',
+        'editorLineNumber.foreground': '#1a293f'
+      }
+    }
+    return {
+        'editor.background': '#eff7ff',
+        'editor.lineHighlightBackground': '#cee3ff',
+        'editorLineNumber.foreground': '#888'
+    }
+  }
+
+  const getTheme = isDarkMode? 'vs-dark': 'vs'
+
   useEffect(() => {
     const cleanupFunc: Array<() => void> = [];
     const { editor: editorState } = store.getState();
@@ -31,23 +48,8 @@ export const MonacoComponent = ({editorHeight, isDarkMode}) => {
       editorState && editorState.language
     );
 
-    const getColors = () => {
-      if(isDarkMode()) {
-        return {
-          'editor.background': '#191a1b',
-          'editor.lineHighlightBackground': '#1a293f',
-          'editorLineNumber.foreground': '#1a293f'
-        }
-      }
-      return {
-          'editor.background': '#eff7ff',
-          'editor.lineHighlightBackground': '#cee3ff',
-          'editorLineNumber.foreground': '#888'
-      }
-    }
-
     monaco.editor.defineTheme('ligoTheme', {
-      base: 'vs-dark',
+      base: getTheme,
       inherit: true,
       rules: [],
       colors: getColors()

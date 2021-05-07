@@ -1,7 +1,6 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
 import Switch from "react-switch";
-import sunIcon from "../components/icons/sunIcon.png"
 
 require('typeface-inter')
 
@@ -74,6 +73,7 @@ export const HeaderComponent = ({onThemeChange}) => {
       <Group className="navbar-header">
         <a href="https://ligolang.org" style={{margin: "1em"}}>
           <Logo src="/logo.svg" />
+          <Logo src="./icons/logo-night.svg" />
         </a>
         
         <Link className="headerLink" href="https://ligolang.org/docs/intro/installation">Install</Link>
@@ -87,16 +87,17 @@ export const HeaderComponent = ({onThemeChange}) => {
         </Link>
       
       </Group>
-      <Switch onChange={toggleDarkMode} checked={isSwitchChecked} 
-      uncheckedIcon={<SwitchOptions>🌞</SwitchOptions>}
-      checkedIcon={ <SwitchOptions>🌜</SwitchOptions>}
-      offColor="#4d4d4d"
-      onColor="#4d4d4d"
-      />
-
-    <Link cheatSheetStyle href="https://ligolang.org/docs/api/cheat-sheet" target="_blank">
+      <Group>
+        <Switch onChange={toggleDarkMode} checked={isSwitchChecked} 
+        uncheckedIcon={<SwitchOptions>🌞</SwitchOptions>}
+        checkedIcon={ <SwitchOptions>🌜</SwitchOptions>}
+        offColor="#4d4d4d"
+        onColor="#4d4d4d"
+        />
+        <Link cheatSheetStyle href="https://ligolang.org/docs/api/cheat-sheet" target="_blank">
           Cheat Sheet
         </Link>
+      </Group>
     </Container>
   );
 };
