@@ -10,10 +10,6 @@
                    -linkall))
 )
 
-(env
- (_
-   (env-vars (DYLD_LIBRARY_PATH "/Users/ulrik/.esy/3__________________________________________________________________/i/opam__s__hacl_star_raw-opam__c__0.3.2-084f1567/lib/hacl-star-raw"))))
-
 (executable
  (name gen)
  (libraries bls12-381-unix

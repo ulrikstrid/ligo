@@ -2,12 +2,11 @@
   "name": "ligo",
   "source": "./ligo.opam",
   "override": {
-    "buildsInSource": "_build",
     "buildEnv": {
       "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }",
       "LD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
     },
-    "build": "dune build -p ligo",
+    "build": ["rm -r tezos_8_2/vendors", "dune build -p ligo"],
     "dependencies": {
       "@opam/tezos-rust-libs": "*",
       "@opam/hacl-star-raw": "*",
@@ -90,21 +89,14 @@
           "buildsInSource": true,
           "buildEnvOverride": {
             "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }",
-            "CUSTOM_DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
-            "DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
-            "DYLD_FALLBACK_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
-            "LD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
+            "ESY__DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
           },
           "build": [
             ["rm", "-r", "vendors"],
             [
-              "dune",
-              "build",
-              "-j",
-              "4",
-              "-p",
-              "tezos-protocol-plugin-008-PtEdo2Zk",
-              "@install"
+              "sh",
+              "-c",
+              "DYLD_LIBRARY_PATH=\"$ESY__DYLD_LIBRARY_PATH\" dune build -j 4 -p tezos-protocol-plugin-008-PtEdo2Zk @install"
             ],
             [
               "mv",
@@ -132,21 +124,14 @@
           "buildsInSource": true,
           "buildEnvOverride": {
             "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }",
-            "CUSTOM_DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
-            "DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
-            "DYLD_FALLBACK_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
-            "LD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
+            "ESY__DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
           },
           "build": [
             ["rm", "-r", "vendors"],
             [
-              "dune",
-              "build",
-              "-j",
-              "4",
-              "-p",
-              "tezos-embedded-protocol-008-PtEdo2Zk",
-              "@install"
+              "sh",
+              "-c",
+              "DYLD_LIBRARY_PATH=\"$ESY__DYLD_LIBRARY_PATH\" dune build -j 4 -p tezos-embedded-protocol-008-PtEdo2Zk @install"
             ],
             [
               "mv",
@@ -176,11 +161,7 @@
         "override": {
           "buildsInSource": true,
           "buildEnvOverride": {
-            "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }",
-            "CUSTOM_DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
-            "DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
-            "DYLD_FALLBACK_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
-            "LD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
+            "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
           },
           "build": [
             ["rm", "-r", "vendors"],
@@ -223,20 +204,14 @@
           "buildsInSource": true,
           "buildEnvOverride": {
             "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }",
-            "CUSTOM_DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
-            "DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }",
-            "LD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
+            "ESY__DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
           },
           "build": [
             ["rm", "-r", "vendors"],
             [
-              "dune",
-              "build",
-              "-j",
-              "4",
-              "-p",
-              "tezos-protocol-008-PtEdo2Zk-parameters",
-              "@install"
+              "sh",
+              "-c",
+              "DYLD_LIBRARY_PATH=\"$ESY__DYLD_LIBRARY_PATH\" dune build -j 4 -p tezos-protocol-008-PtEdo2Zk-parameters @install"
             ],
             [
               "mv",
@@ -325,6 +300,7 @@
       "@opam/LexerLib": "link:./vendors/LexerLib/LexerLib.opam",
       "@opam/UnionFind": "link:./vendors/UnionFind/UnionFind.opam",
       "@opam/RedBlackTrees": "link:./vendors/Red-Black_Trees/RedBlackTrees.opam",
+      "@opam/preprocessor": "link:./vendors/Preprocessor/Preprocessor.opam",
       "@opam/conf-libev": "esy-packages/libev#0b5eb6685b688649045aceac55dc559f6f21b829",
       "@opam/conf-gmp": "esy-packages/esy-gmp#e27cb300adfb0c0b320c273082c5affafcd225fa",
       "@opam/bisect_ppx": "aantron/bisect_ppx:bisect_ppx.opam#02dfb10188033a26d07d23480c2bc44a3a670357"
