@@ -292,13 +292,11 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let%bind fun_name = match field with
         EVar v -> ok @@ v.value
       | EModA _ -> fail @@ unknown_constant module_name.value loc
-      | EProj {value={field_path=(s,ss);struct_name;_};_} ->
+      | EProj {value={field_path;struct_name;_};_} ->
          let sel_to_string (s : CST.selection) = match s with
            | FieldName v -> v.value
            | Component {value=(s,_)} -> s in
-         let s = struct_name.value ^ "." ^ sel_to_string s in
-         let ss = List.map snd ss in
-         let path = List.fold_left (fun r s -> r ^ sel_to_string s) s ss  in
+         let path = List.fold_left (fun r s -> r ^ "." ^ sel_to_string s) struct_name.value @@ npseq_to_list field_path in
          ok @@ path
       | ECase _| ECond _| EAnnot _| EList _| EConstr _| EUpdate _| ELetIn _| EFun _
         | ESeq _| ECodeInj _ | ELogic _| EArith _| EString _| ERecord _| ECall _
@@ -347,13 +345,11 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
       let%bind fun_name = match ma.field with
           EVar v -> ok @@ v.value
         | EModA _ -> fail @@ unknown_constant module_name loc
-        | EProj {value={field_path=(s,ss);struct_name;_};_} ->
+        | EProj {value={field_path;struct_name;_};_} ->
            let sel_to_string (s : CST.selection) = match s with
              | FieldName v -> v.value
              | Component {value=(s,_)} -> s in
-           let s = struct_name.value ^ "." ^ sel_to_string s in
-           let ss = List.map snd ss in
-           let path = List.fold_left (fun r s -> r ^ sel_to_string s) s ss  in
+           let path = List.fold_left (fun r s -> r ^ "." ^ sel_to_string s) struct_name.value @@ npseq_to_list field_path in
            ok @@ path
         | ECase _| ECond _| EAnnot _| EList _| EConstr _| EUpdate _| ELetIn _| EFun _
           | ESeq _| ECodeInj _ | ELogic _| EArith _| EString _| ERecord _| ECall _
