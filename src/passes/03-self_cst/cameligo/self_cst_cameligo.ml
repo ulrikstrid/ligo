@@ -2,7 +2,8 @@ module Errors = Errors
 open Trace
 
 let all_mapper = [
-  Helpers.fold_to_map () Scoping.peephole
+  Helpers.fold_to_map () Scoping.peephole;
+  Comments.promote
 ]
 
 let all_module =

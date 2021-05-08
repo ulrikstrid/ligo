@@ -662,8 +662,8 @@ let update_pattern_region: pattern -> Region.t -> pattern =
     | PRecord   {value; _} -> PRecord {value; region}
     | PTyped    {value; _} -> PTyped {value; region}
 (*
-  Creates a region with the markup before r1 and after r2.
-  Also returns r1 and r2 without this markup.
+  Creates a new region that covers r1 and r2 with markup before r1 and after r2.
+  Returns the new region and the modified r1 and r2.
 *)
 let cover_tokens r1 r2 = 
   let new_region = Region.cover r1 r2 in

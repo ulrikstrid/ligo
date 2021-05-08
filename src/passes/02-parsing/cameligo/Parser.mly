@@ -167,32 +167,33 @@ declaration:
 
 type_decl:
   "type" type_name "=" type_expr {
-    let region, kwd_type, type_expr = cover_m (c_token $1) (c_type_expr $4) in
-    let value  = {kwd_type;
+    let region = cover $1 (type_expr_to_region $4) in
+    let value  = {kwd_type  = $1;
                   name      = $2;
                   eq        = $3;
-                  type_expr
+                  type_expr = $4
                   }
     in {region; value} }
 
 module_decl:
   "module" module_name "=" "struct" module_ "end" {
-    let region, kwd_module, kwd_end = cover_tokens $1 $6 in
-    let value  = {kwd_module;
+    let region = cover $1 $6 in
+    let value  = {kwd_module  = $1;
                   name        = $2;
                   eq          = $3;
                   kwd_struct  = $4;
                   module_     = $5;
-                  kwd_end}
+                  kwd_end     = $6}
     in {region; value} }
 
 module_alias:
   "module" module_name "=" nsepseq(module_name,".") {
-    let region, kwd_module, binders = cover_m (c_token $1) (c_nsepseq_last $4 c_reg) in
-    let value  = {kwd_module;
+    let stop   = nsepseq_to_region (fun x -> x.region) $4 in
+    let region = cover $1 stop in
+    let value  = {kwd_module  = $1;
                   alias       = $2;
                   eq          = $3;
-                  binders}
+                  binders     = $4}
     in {region; value} }
 
 type_expr:
@@ -201,15 +202,16 @@ type_expr:
 fun_type:
   cartesian { $1 }
 | cartesian "->" fun_type {
-    let region, start, stop = cover_m (c_type_expr $1) (c_type_expr $3) in
-    TFun {region; value=start, $2, stop} }
+    let region = cover (type_expr_to_region $1) (type_expr_to_region $3) in
+    TFun {region; value=$1, $2, $3} }
 
 cartesian:
   core_type { $1 }
 | core_type "*" nsepseq(core_type,"*") {
-    let region, item, col = cover_m (c_type_expr $1) (c_nsepseq_last $3 c_type_expr) in
-    let value  = Utils.nsepseq_cons item $2 col in
-    TProd {region; value} }
+    let value  = Utils.nsepseq_cons $1 $2 $3 in
+    let region = nsepseq_to_region type_expr_to_region value
+    in TProd {region; value} 
+  }
 
 core_type:
   type_name           {    TVar $1 }
@@ -219,36 +221,30 @@ core_type:
 | "<int>"             { TInt    $1 }
 | module_access_t     {   TModA $1 }
 | core_type type_name {
-    let region, arg, constr = cover_m (c_type_expr $1) (c_reg $2) in
+    let arg, constr = $1, $2 in
+    let region = cover (type_expr_to_region arg) constr.region in
     let lpar, rpar  = ghost, ghost in
     let value       = {lpar; inside=arg,[]; rpar} in
     let arg         = {region = type_expr_to_region arg; value}
     in TApp {region; value = constr,arg}
   }
 | type_tuple type_name {
-    let region, arg, constr = cover_m (c_reg $1) (c_reg $2) in
-    TApp {region; value = constr,arg} }
+    let region = cover $1.region $2.region in
+    TApp {region; value = $2,$1} }
 
 type_tuple:
   par(tuple(type_expr)) { $1 }
 
 sum_type:
   nsepseq(variant,"|") {
-    let region, variants = cover_nsepseq $1 c_reg in
-    let value  = {variants; attributes=[]; lead_vbar=None} in 
-    TSum {region; value}
+    let region = nsepseq_to_region (fun x -> x.region) $1 in
+    let value  = {variants=$1; attributes=[]; lead_vbar=None}
+    in TSum {region; value}
   }
 | seq("[@attr]") "|" nsepseq(variant,"|") {
-    match first_region $1 with
-      None ->
-        let region, vbar, variants = cover_m (c_token $2) (c_nsepseq_last $3 c_reg) in
-        let value  = {variants; attributes = []; lead_vbar = Some vbar} in 
-        TSum {region; value}
-    | Some _ ->
-        let region, attributes, variants = cover_m (c_seq_fst $1) (c_nsepseq_last $3 c_reg) in
-        let value  = {variants; attributes; lead_vbar = Some $2} in 
-        TSum {region; value}
-}
+    let region = nsepseq_to_region (fun x -> x.region) $3 in
+    let value  = {variants=$3; attributes=$1; lead_vbar = Some $2}
+    in TSum {region; value} }
 
 variant:
   nseq("[@attr]") "<constr>" {
@@ -277,35 +273,22 @@ variant:
 record_type:
   seq("[@attr]") "{" sep_or_term_list(field_decl,";") "}" {
     let fields, terminator = $3 in
-    match first_region $1 with
-      None -> 
-        let region, lbrace, rbrace = cover_m (c_token $2) (c_token $4) in
-        TRecord {
-          value = {
-            compound = Some (Braces (lbrace, rbrace));
-            ne_elements = fields;
-            terminator;
-            attributes = []
-          };
-          region
-        }
-    | Some _ ->
-        let region, attributes, rbrace = cover_m (c_seq_fst $1) (c_token $4) in
-        TRecord {
-          value = {
-            compound = Some (Braces ($2, rbrace));
-            ne_elements = fields;
-            terminator;
-            attributes
-          };
-          region
-        }
+    let region =
+      match first_region $1 with
+        None -> cover $2 $4
+      | Some start -> cover start $4
+    and value = {
+      compound = Some (Braces ($2,$4));
+      ne_elements = fields;
+      terminator;
+      attributes=$1}
+    in TRecord {region; value}
  }
 
 module_access_t :
   module_name "." module_var_t {
-    let region, module_name, field = cover_m (c_reg $1) (c_type_expr $3) in
-    let value = {module_name; selector=$2; field} in 
+    let region = cover $1.region (type_expr_to_region $3) in
+    let value = {module_name=$1; selector=$2; field=$3} in 
     {region; value} 
   }
 
@@ -331,14 +314,15 @@ field_decl:
 let_declaration:
   seq("[@attr]") "let" ioption("rec") let_binding {
     let binding = $4 in
+    let stop = expr_to_region $4.let_rhs in
     match first_region $1 with
       None -> 
-      let region, token, binding_let_rhs = cover_m (c_token $2) (c_expr binding.let_rhs) in
-      let value = token, $3, {binding with let_rhs = binding_let_rhs}, [] in
+      let region = cover $2 stop in
+      let value = $2, $3, binding, [] in
       {region; value} 
-    | Some _ -> 
-      let region, attributes, binding_let_rhs = cover_m (c_seq_fst $1) (c_expr binding.let_rhs) in
-      let value = $2, $3, {binding with let_rhs = binding_let_rhs}, attributes in
+    | Some s -> 
+      let region = cover s stop in
+      let value = $2, $3, binding, $1 in
       {region; value} 
   }
 
