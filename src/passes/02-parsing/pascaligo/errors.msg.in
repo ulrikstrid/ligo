@@ -148,7 +148,7 @@ interactive_expr: LBRACE Case Verbatim VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -252,7 +252,7 @@ interactive_expr: LBRACE For Ident In Set Verbatim VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -312,7 +312,7 @@ interactive_expr: Begin For Ident ASSIGN Verbatim To Verbatim Step Verbatim Attr
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -359,7 +359,7 @@ interactive_expr: Begin For Ident ASSIGN Verbatim To Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -410,7 +410,7 @@ interactive_expr: LBRACE For Ident ASSIGN Verbatim VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -456,7 +456,7 @@ interactive_expr: LBRACE For Ident ARROW Ident In Map Verbatim VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -749,7 +749,7 @@ interactive_expr: LBRACE If Verbatim VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -776,7 +776,7 @@ interactive_expr: LBRACE If Verbatim Then If Verbatim VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -882,7 +882,7 @@ interactive_expr: LBRACE Patch Ident With Map LBRACKET Verbatim ARROW Bytes VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -935,7 +935,7 @@ interactive_expr: Begin Patch Ident With Map Verbatim ARROW Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -1010,7 +1010,7 @@ interactive_expr: Begin Patch Ident With Set LBRACKET Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -1058,7 +1058,7 @@ interactive_expr: Begin Patch Ident With Set Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -1182,7 +1182,7 @@ interactive_expr: Begin Remove Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -1352,7 +1352,7 @@ interactive_expr: Begin Var With
 ##
 ## Ends in an error in state: 160.
 ##
-## open_var_decl -> Var . unqualified_decl(ASSIGN) [ SEMI RBRACE End ]
+## short_var_decl -> Var . unqualified_decl(ASSIGN) [ SEMI RBRACE End ]
 ##
 ## The known suffix of the stack is as follows:
 ## Var
@@ -1375,7 +1375,7 @@ interactive_expr: LBRACE While Verbatim VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -1420,7 +1420,7 @@ interactive_expr: BigMap LBRACKET Verbatim ARROW Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -1477,7 +1477,7 @@ interactive_expr: BigMap Verbatim ARROW Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -1644,7 +1644,7 @@ interactive_expr: Case Verbatim Of LBRACKET WILD ARROW Bytes Type
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -1834,7 +1834,7 @@ interactive_expr: Case Verbatim Of WILD ARROW Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -1930,7 +1930,7 @@ interactive_expr: Case Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -2060,8 +2060,8 @@ contract: Attr Function Ident LPAR Const Ident RPAR With
 ##
 ## Ends in an error in state: 469.
 ##
-## open_fun_decl -> nseq(Attr) Function Ident parameters . Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_fun_decl -> nseq(Attr) Function Ident parameters . type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Function Ident parameters . Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Function Ident parameters . type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr) Function Ident parameters
@@ -2238,7 +2238,7 @@ interactive_expr: Ident LBRACKET Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -2294,7 +2294,7 @@ interactive_expr: UIdent LPAR Verbatim VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -2407,7 +2407,7 @@ interactive_expr: Ident With Record LBRACKET Ident EQ Bytes With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -2537,7 +2537,7 @@ interactive_expr: If Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -2564,7 +2564,7 @@ interactive_expr: If Verbatim Then If Verbatim VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -2644,7 +2644,7 @@ interactive_expr: LPAR Verbatim COMMA Bytes VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -2692,7 +2692,7 @@ interactive_expr: LPAR Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -2742,7 +2742,7 @@ interactive_expr: Lang Verbatim VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -2786,7 +2786,7 @@ interactive_expr: List LBRACKET Verbatim RBRACE
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -2836,7 +2836,7 @@ interactive_expr: List Verbatim EOF
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -2879,7 +2879,7 @@ interactive_expr: MINUS With
 ##
 ## Ends in an error in state: 131.
 ##
-## unary_op(MINUS,core_expr) -> MINUS . core_expr [ VBAR Type To Then TIMES Step SLASH SHARP SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Module Mod MINUS LT LE LBRACE GT GE Function From End Else EQ EOF Directive Const COMMA COLON CARET Block Begin Attr And ARROW ]
+## unary_op(MINUS,update_expr_level) -> MINUS . update_expr_level [ VBAR Type To Then TIMES Step SLASH SHARP SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Module Mod MINUS LT LE LBRACE GT GE Function From End Else EQ EOF Directive Const COMMA COLON CARET Block Begin Attr And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## MINUS
@@ -2901,7 +2901,7 @@ interactive_expr: Map LBRACKET Verbatim ARROW Bytes RBRACE
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -2971,7 +2971,7 @@ interactive_expr: Map Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -3011,7 +3011,7 @@ interactive_expr: Not With
 ##
 ## Ends in an error in state: 126.
 ##
-## unary_op(Not,core_expr) -> Not . core_expr [ VBAR Type To Then TIMES Step SLASH SHARP SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Module Mod MINUS LT LE LBRACE GT GE Function From End Else EQ EOF Directive Const COMMA COLON CARET Block Begin Attr And ARROW ]
+## unary_op(Not,update_expr_level) -> Not . update_expr_level [ VBAR Type To Then TIMES Step SLASH SHARP SEMI Recursive RPAR RBRACKET RBRACE PLUS Or Of NE Module Mod MINUS LT LE LBRACE GT GE Function From End Else EQ EOF Directive Const COMMA COLON CARET Block Begin Attr And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
 ## Not
@@ -3118,7 +3118,7 @@ interactive_expr: Set LBRACKET Verbatim With
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -3165,7 +3165,7 @@ interactive_expr: Set Verbatim EOF
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -3234,10 +3234,10 @@ interactive_expr: Verbatim Contains With
 ##
 ## Ends in an error in state: 316.
 ##
-## set_mem_level -> core_expr Contains . set_mem_level [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of Module LBRACE Function From End Else EOF Directive Const COMMA COLON Block Begin Attr And ARROW ]
+## set_mem_level -> update_expr_level Contains . set_mem_level [ VBAR Type To Then Step SEMI Recursive RPAR RBRACKET RBRACE Or Of Module LBRACE Function From End Else EOF Directive Const COMMA COLON Block Begin Attr And ARROW ]
 ##
 ## The known suffix of the stack is as follows:
-## core_expr Contains
+## update_expr_level Contains
 ##
 
 Ill-formed membership test in a set.
@@ -3385,7 +3385,7 @@ interactive_expr: Verbatim VBAR
 ## This implies that, although the LR(1) items shown above provide an
 ## accurate view of the past (what has been recognized so far), they
 ## may provide an INCOMPLETE view of the future (what was expected next).
-## In state 315, spurious reduction of production unary_expr_level -> core_expr
+## In state 315, spurious reduction of production unary_expr_level -> update_expr_level
 ## In state 263, spurious reduction of production mult_expr_level -> unary_expr_level
 ## In state 288, spurious reduction of production add_expr_level -> mult_expr_level
 ## In state 328, spurious reduction of production cons_expr_level -> add_expr_level
@@ -3453,7 +3453,7 @@ contract: Const With
 ##
 ## Ends in an error in state: 436.
 ##
-## open_const_decl -> Const . unqualified_decl(EQ) [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_const_decl -> Const . unqualified_decl(EQ) [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Const
@@ -3462,7 +3462,7 @@ contract: Attr Const With
 ##
 ## Ends in an error in state: 475.
 ##
-## open_const_decl -> nseq(Attr) Const . unqualified_decl(EQ) [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_const_decl -> nseq(Attr) Const . unqualified_decl(EQ) [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr) Const
@@ -3476,7 +3476,7 @@ contract: Function Ident LPAR Const Ident RPAR COLON Ident With
 ##
 ## Ends in an error in state: 431.
 ##
-## open_fun_decl -> Function Ident parameters type_annotation . Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Function Ident parameters type_annotation . Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Function Ident parameters type_annotation
@@ -3495,7 +3495,7 @@ contract: Recursive Function Ident LPAR Const Ident RPAR COLON String With
 ##
 ## Ends in an error in state: 716.
 ##
-## open_fun_decl -> Recursive Function Ident parameters type_annotation . Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Recursive Function Ident parameters type_annotation . Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Recursive Function Ident parameters type_annotation
@@ -3513,7 +3513,7 @@ contract: Attr Recursive Function Ident LPAR Const Ident RPAR COLON UIdent With
 ##
 ## Ends in an error in state: 464.
 ##
-## open_fun_decl -> nseq(Attr) Recursive Function Ident parameters type_annotation . Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Recursive Function Ident parameters type_annotation . Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr) Recursive Function Ident parameters type_annotation
@@ -3532,7 +3532,7 @@ contract: Attr Function Ident LPAR Const Ident RPAR COLON UIdent With
 ##
 ## Ends in an error in state: 472.
 ##
-## open_fun_decl -> nseq(Attr) Function Ident parameters type_annotation . Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Function Ident parameters type_annotation . Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr) Function Ident parameters type_annotation
@@ -3557,7 +3557,7 @@ contract: Function Ident LPAR Const Ident RPAR COLON UIdent Is With
 ##
 ## Ends in an error in state: 432.
 ##
-## open_fun_decl -> Function Ident parameters type_annotation Is . expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Function Ident parameters type_annotation Is . expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Function Ident parameters type_annotation Is
@@ -3566,7 +3566,7 @@ contract: Attr Function Ident LPAR Const Ident RPAR Is With
 ##
 ## Ends in an error in state: 470.
 ##
-## open_fun_decl -> nseq(Attr) Function Ident parameters Is . expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Function Ident parameters Is . expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr) Function Ident parameters Is
@@ -3575,7 +3575,7 @@ contract: Function Ident LPAR Const Ident RPAR Is With
 ##
 ## Ends in an error in state: 429.
 ##
-## open_fun_decl -> Function Ident parameters Is . expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Function Ident parameters Is . expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Function Ident parameters Is
@@ -3584,7 +3584,7 @@ contract: Recursive Function Ident LPAR Const Ident RPAR Is With
 ##
 ## Ends in an error in state: 114.
 ##
-## open_fun_decl -> Recursive Function Ident parameters Is . expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Recursive Function Ident parameters Is . expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Recursive Function Ident parameters Is
@@ -3593,7 +3593,7 @@ contract: Attr Recursive Function Ident LPAR Const Ident RPAR COLON UIdent Is Wi
 ##
 ## Ends in an error in state: 465.
 ##
-## open_fun_decl -> nseq(Attr) Recursive Function Ident parameters type_annotation Is . expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Recursive Function Ident parameters type_annotation Is . expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr) Recursive Function Ident parameters type_annotation Is
@@ -3602,7 +3602,7 @@ contract: Attr Function Ident LPAR Const Ident RPAR COLON UIdent Is With
 ##
 ## Ends in an error in state: 473.
 ##
-## open_fun_decl -> nseq(Attr) Function Ident parameters type_annotation Is . expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Function Ident parameters type_annotation Is . expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr) Function Ident parameters type_annotation Is
@@ -3620,7 +3620,7 @@ contract: Recursive Function Ident LPAR Const Ident RPAR COLON WILD Is With
 ##
 ## Ends in an error in state: 717.
 ##
-## open_fun_decl -> Recursive Function Ident parameters type_annotation Is . expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Recursive Function Ident parameters type_annotation Is . expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Recursive Function Ident parameters type_annotation Is
@@ -3629,7 +3629,7 @@ contract: Attr Recursive Function Ident LPAR Const Ident RPAR Is With
 ##
 ## Ends in an error in state: 462.
 ##
-## open_fun_decl -> nseq(Attr) Recursive Function Ident parameters Is . expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Recursive Function Ident parameters Is . expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr) Recursive Function Ident parameters Is
@@ -3652,8 +3652,8 @@ contract: Function Ident LPAR Const Ident RPAR With
 ##
 ## Ends in an error in state: 428.
 ##
-## open_fun_decl -> Function Ident parameters . Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_fun_decl -> Function Ident parameters . type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Function Ident parameters . Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Function Ident parameters . type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Function Ident parameters
@@ -3669,8 +3669,8 @@ contract: Function Ident With
 ##
 ## Ends in an error in state: 427.
 ##
-## open_fun_decl -> Function Ident . parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_fun_decl -> Function Ident . parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Function Ident . parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Function Ident . parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Function Ident
@@ -3679,8 +3679,8 @@ contract: Recursive Function Ident With
 ##
 ## Ends in an error in state: 93.
 ##
-## open_fun_decl -> Recursive Function Ident . parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_fun_decl -> Recursive Function Ident . parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Recursive Function Ident . parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Recursive Function Ident . parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Recursive Function Ident
@@ -3694,8 +3694,8 @@ contract: Function With
 ##
 ## Ends in an error in state: 426.
 ##
-## open_fun_decl -> Function . Ident parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_fun_decl -> Function . Ident parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Function . Ident parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Function . Ident parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Function
@@ -3704,8 +3704,8 @@ contract: Recursive Function With
 ##
 ## Ends in an error in state: 92.
 ##
-## open_fun_decl -> Recursive Function . Ident parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_fun_decl -> Recursive Function . Ident parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Recursive Function . Ident parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Recursive Function . Ident parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Recursive Function
@@ -3714,8 +3714,8 @@ contract: Attr Function With
 ##
 ## Ends in an error in state: 467.
 ##
-## open_fun_decl -> nseq(Attr) Function . Ident parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_fun_decl -> nseq(Attr) Function . Ident parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Function . Ident parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Function . Ident parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr) Function
@@ -3724,8 +3724,8 @@ contract: Attr Recursive Function With
 ##
 ## Ends in an error in state: 459.
 ##
-## open_fun_decl -> nseq(Attr) Recursive Function . Ident parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_fun_decl -> nseq(Attr) Recursive Function . Ident parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Recursive Function . Ident parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Recursive Function . Ident parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr) Recursive Function
@@ -3738,8 +3738,8 @@ contract: Recursive Function Ident LPAR Const Ident RPAR With
 ##
 ## Ends in an error in state: 113.
 ##
-## open_fun_decl -> Recursive Function Ident parameters . Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_fun_decl -> Recursive Function Ident parameters . type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Recursive Function Ident parameters . Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Recursive Function Ident parameters . type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Recursive Function Ident parameters
@@ -3755,8 +3755,8 @@ contract: Recursive With
 ##
 ## Ends in an error in state: 91.
 ##
-## open_fun_decl -> Recursive . Function Ident parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_fun_decl -> Recursive . Function Ident parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Recursive . Function Ident parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> Recursive . Function Ident parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Recursive
@@ -3765,8 +3765,8 @@ contract: Attr Recursive With
 ##
 ## Ends in an error in state: 458.
 ##
-## open_fun_decl -> nseq(Attr) Recursive . Function Ident parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_fun_decl -> nseq(Attr) Recursive . Function Ident parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Recursive . Function Ident parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Recursive . Function Ident parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr) Recursive
@@ -3882,7 +3882,7 @@ contract: Type Ident Is With
 ##
 ## Ends in an error in state: 3.
 ##
-## open_type_decl -> Type Ident Is . type_expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_type_decl -> Type Ident Is . type_expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Type Ident Is
@@ -4125,7 +4125,7 @@ contract: Type Ident With
 ##
 ## Ends in an error in state: 2.
 ##
-## open_type_decl -> Type Ident . Is type_expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_type_decl -> Type Ident . Is type_expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Type Ident
@@ -4139,7 +4139,7 @@ contract: Type With
 ##
 ## Ends in an error in state: 1.
 ##
-## open_type_decl -> Type . Ident Is type_expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_type_decl -> Type . Ident Is type_expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Type
@@ -4440,11 +4440,11 @@ contract: Attr VBAR
 ##
 ## Ends in an error in state: 457.
 ##
-## open_const_decl -> nseq(Attr) . Const unqualified_decl(EQ) [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_fun_decl -> nseq(Attr) . Function Ident parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_fun_decl -> nseq(Attr) . Function Ident parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_fun_decl -> nseq(Attr) . Recursive Function Ident parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_fun_decl -> nseq(Attr) . Recursive Function Ident parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_const_decl -> nseq(Attr) . Const unqualified_decl(EQ) [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) . Function Ident parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) . Function Ident parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) . Recursive Function Ident parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) . Recursive Function Ident parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr)
@@ -4468,8 +4468,8 @@ contract: Attr Recursive Function Ident With
 ##
 ## Ends in an error in state: 460.
 ##
-## open_fun_decl -> nseq(Attr) Recursive Function Ident . parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_fun_decl -> nseq(Attr) Recursive Function Ident . parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Recursive Function Ident . parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Recursive Function Ident . parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr) Recursive Function Ident
@@ -4478,8 +4478,8 @@ contract: Attr Function Ident With
 ##
 ## Ends in an error in state: 468.
 ##
-## open_fun_decl -> nseq(Attr) Function Ident . parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_fun_decl -> nseq(Attr) Function Ident . parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Function Ident . parameters Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Function Ident . parameters type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr) Function Ident
@@ -4493,8 +4493,8 @@ contract: Attr Recursive Function Ident LPAR Const Ident RPAR With
 ##
 ## Ends in an error in state: 461.
 ##
-## open_fun_decl -> nseq(Attr) Recursive Function Ident parameters . Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_fun_decl -> nseq(Attr) Recursive Function Ident parameters . type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Recursive Function Ident parameters . Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_fun_decl -> nseq(Attr) Recursive Function Ident parameters . type_annotation Is expr [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## nseq(Attr) Recursive Function Ident parameters
@@ -4563,9 +4563,9 @@ contract: Type Ident Is UIdent With
 ## In state 32, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 53, spurious reduction of production type_expr -> sum_type
-## In state 90, spurious reduction of production open_type_decl -> Type Ident Is type_expr
+## In state 90, spurious reduction of production short_type_decl -> Type Ident Is type_expr
 ## In state 445, spurious reduction of production option(SEMI) ->
-## In state 447, spurious reduction of production type_decl -> open_type_decl option(SEMI)
+## In state 447, spurious reduction of production type_decl -> short_type_decl option(SEMI)
 ## In state 444, spurious reduction of production declaration -> type_decl
 ## In state 482, spurious reduction of production nseq(declaration) -> declaration
 ## In state 456, spurious reduction of production declarations -> nseq(declaration)
@@ -4594,7 +4594,7 @@ contract: Module UIdent Is Begin Type Ident Is UIdent RBRACE
 ##
 ## Ends in an error in state: 480.
 ##
-## open_module_decl -> Module UIdent Is Begin declarations . End [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_module_decl -> Module UIdent Is Begin declarations . End [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Module UIdent Is Begin declarations
@@ -4607,9 +4607,9 @@ contract: Module UIdent Is Begin Type Ident Is UIdent RBRACE
 ## In state 32, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 53, spurious reduction of production type_expr -> sum_type
-## In state 90, spurious reduction of production open_type_decl -> Type Ident Is type_expr
+## In state 90, spurious reduction of production short_type_decl -> Type Ident Is type_expr
 ## In state 445, spurious reduction of production option(SEMI) ->
-## In state 447, spurious reduction of production type_decl -> open_type_decl option(SEMI)
+## In state 447, spurious reduction of production type_decl -> short_type_decl option(SEMI)
 ## In state 444, spurious reduction of production declaration -> type_decl
 ## In state 482, spurious reduction of production nseq(declaration) -> declaration
 ## In state 456, spurious reduction of production declarations -> nseq(declaration)
@@ -4623,7 +4623,7 @@ contract: Module UIdent Is Begin With
 ##
 ## Ends in an error in state: 425.
 ##
-## open_module_decl -> Module UIdent Is Begin . declarations End [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_module_decl -> Module UIdent Is Begin . declarations End [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Module UIdent Is Begin
@@ -4632,7 +4632,7 @@ contract: Module UIdent Is LBRACE With
 ##
 ## Ends in an error in state: 486.
 ##
-## open_module_decl -> Module UIdent Is option(Block) LBRACE . declarations RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_module_decl -> Module UIdent Is option(Block) LBRACE . declarations RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Module UIdent Is option(Block) LBRACE
@@ -4648,7 +4648,7 @@ contract: Module UIdent Is LBRACE Type Ident Is UIdent End
 ##
 ## Ends in an error in state: 487.
 ##
-## open_module_decl -> Module UIdent Is option(Block) LBRACE declarations . RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_module_decl -> Module UIdent Is option(Block) LBRACE declarations . RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Module UIdent Is option(Block) LBRACE declarations
@@ -4661,9 +4661,9 @@ contract: Module UIdent Is LBRACE Type Ident Is UIdent End
 ## In state 32, spurious reduction of production nsepseq(variant,VBAR) -> variant
 ## In state 67, spurious reduction of production sum_type -> nsepseq(variant,VBAR)
 ## In state 53, spurious reduction of production type_expr -> sum_type
-## In state 90, spurious reduction of production open_type_decl -> Type Ident Is type_expr
+## In state 90, spurious reduction of production short_type_decl -> Type Ident Is type_expr
 ## In state 445, spurious reduction of production option(SEMI) ->
-## In state 447, spurious reduction of production type_decl -> open_type_decl option(SEMI)
+## In state 447, spurious reduction of production type_decl -> short_type_decl option(SEMI)
 ## In state 444, spurious reduction of production declaration -> type_decl
 ## In state 482, spurious reduction of production nseq(declaration) -> declaration
 ## In state 456, spurious reduction of production declarations -> nseq(declaration)
@@ -4677,9 +4677,9 @@ contract: Module UIdent Is With
 ##
 ## Ends in an error in state: 420.
 ##
-## open_module_alias -> Module UIdent Is . nsepseq(module_name,DOT) [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_module_decl -> Module UIdent Is . option(Block) LBRACE declarations RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_module_decl -> Module UIdent Is . Begin declarations End [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_module_alias -> Module UIdent Is . nsepseq(module_name,DOT) [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_module_decl -> Module UIdent Is . option(Block) LBRACE declarations RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_module_decl -> Module UIdent Is . Begin declarations End [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Module UIdent Is
@@ -4695,9 +4695,9 @@ contract: Module UIdent With
 ##
 ## Ends in an error in state: 419.
 ##
-## open_module_alias -> Module UIdent . Is nsepseq(module_name,DOT) [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_module_decl -> Module UIdent . Is option(Block) LBRACE declarations RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_module_decl -> Module UIdent . Is Begin declarations End [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_module_alias -> Module UIdent . Is nsepseq(module_name,DOT) [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_module_decl -> Module UIdent . Is option(Block) LBRACE declarations RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_module_decl -> Module UIdent . Is Begin declarations End [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Module UIdent
@@ -4711,9 +4711,9 @@ contract: Module With
 ##
 ## Ends in an error in state: 418.
 ##
-## open_module_alias -> Module . UIdent Is nsepseq(module_name,DOT) [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_module_decl -> Module . UIdent Is option(Block) LBRACE declarations RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
-## open_module_decl -> Module . UIdent Is Begin declarations End [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_module_alias -> Module . UIdent Is nsepseq(module_name,DOT) [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_module_decl -> Module . UIdent Is option(Block) LBRACE declarations RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_module_decl -> Module . UIdent Is Begin declarations End [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Module
@@ -4765,7 +4765,7 @@ contract: Module UIdent Is Block With
 ##
 ## Ends in an error in state: 485.
 ##
-## open_module_decl -> Module UIdent Is option(Block) . LBRACE declarations RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
+## short_module_decl -> Module UIdent Is option(Block) . LBRACE declarations RBRACE [ Type SEMI Recursive RBRACE Module Function End EOF Directive Const Attr ]
 ##
 ## The known suffix of the stack is as follows:
 ## Module UIdent Is option(Block)

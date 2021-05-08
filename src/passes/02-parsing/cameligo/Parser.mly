@@ -190,12 +190,9 @@ bin_op(arg1,op,arg2):
 (* Main *)
 
 contract:
-  declarations EOF { {decl=$1; eof=$2} }
+  nseq(declaration) EOF { {decl=$1; eof=$2} }
 
 (* Declarations *)
-
-declarations:
-  nseq(declaration) { $1 }
 
 declaration:
   "<directive>" { D_Directive $1 }
@@ -488,6 +485,12 @@ tail:
 interactive_expr:
   expr EOF { $1 }
 
+expr:
+  base_and_cond__open(expr) | match_expr(base_and_cond) { $1 }
+
+base_and_cond__open(right_expr):
+  base_expr(right_expr) | conditional(right_expr) { $1 }
+
 base_expr(right_expr):
   let_expr(right_expr)
 | local_type_decl(right_expr)
@@ -500,19 +503,8 @@ base_expr(right_expr):
 conditional(right_expr):
   if_then_else(right_expr) | if_then(right_expr) { $1 }
 
-base_and_cond__open(right_expr):
-  base_expr(right_expr) | conditional(right_expr) { $1 }
-
 base_and_cond:
   base_and_cond__open(base_and_cond) { $1 }
-
-expr:
-  base_and_cond__open(expr) | match_expr(base_and_cond) { $1 }
-
-tuple_expr:
-  tuple(disj_expr_level) {
-    let region = nsepseq_to_region expr_to_region $1
-    in E_Tuple {region; value=$1} }
 
 if_then_else(right_expr):
   "if" expr "then" closed_expr "else" right_expr {
@@ -537,6 +529,11 @@ base_if_then_else:
 closed_expr:
   base_if_then_else__open(closed_expr)
 | match_expr(base_if_then_else) { $1 }
+
+tuple_expr:
+  tuple(disj_expr_level) {
+    let region = nsepseq_to_region expr_to_region $1
+    in E_Tuple {region; value=$1} }
 
 match_expr(right_expr):
   "match" expr "with" "|"? cases(right_expr) {
