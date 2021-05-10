@@ -93,6 +93,7 @@ export const EditorComponent = ({editorHeight}) => {
             <Option value={Language.PascaLigo}>PascaLIGO</Option>
             <Option value={Language.CameLigo}>CameLIGO</Option>
             <Option value={Language.ReasonLIGO}>ReasonLIGO</Option>
+            <Option value={Language.ReasonLIGO}>JsLIGO</Option>
           </SelectLanguage>
         </LeftActions>
       </Header>
