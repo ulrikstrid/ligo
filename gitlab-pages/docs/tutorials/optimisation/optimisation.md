@@ -214,7 +214,6 @@ The second way is to replace the function call (`LAMBDA`, `SWAP`, `EXEC` sequenc
 | `ADD`                 | `parameter + storage`                          |
 | `NIL operation`       | `[]`; `parameter + storage`                    |
 | `PAIR`                | `([], parameter + storage)`                    |
-+-----------------------+------------------------------------------------+
 
 You may notice that in this case, inlining reduced the size of the contract.
 
