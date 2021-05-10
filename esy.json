@@ -38,12 +38,12 @@
         "override": {
           "build": [
             [
-              "/Users/ulrik/.cargo/bin/cargo",
+              "cargo",
               "build",
               "--target-dir",
               "target",
               "--release"
-            ]
+            ] 
           ]
         }
       },
@@ -57,6 +57,252 @@
           }
         }
       },
+      "@opam/tezos-stdlib": {
+        "source": "link:./tezos_8_2",
+        "override": {
+          "buildsInSource": true,
+          "build": [
+            ["dune", "build", "-j", "4", "-p", "tezos-stdlib"],
+            ["mv", "src/lib_stdlib/tezos-stdlib.install", "./"]
+          ],
+          "install": [["esy-installer", "./tezos-stdlib.install"]],
+          "dependencies": {
+            "@opam/dune": "*",
+            "@opam/hex": "*",
+            "@opam/lwt": "*",
+            "@opam/zarith": "*"
+          }
+        }
+      },
+      "@opam/tezos-p2p-services": {
+        "source": "link:./tezos_8_2",
+        "override": {
+          "buildsInSource": true,
+          "build": [
+            ["dune", "build", "-j", "4", "-p", "tezos-p2p-services"],
+            ["mv", "src/lib_p2p_services/tezos-p2p-services.install", "./"]
+          ],
+          "install": [["esy-installer", "./tezos-p2p-services.install"]],
+          "dependencies": {
+            "@opam/dune": "*",
+            "@opam/tezos-base": "*"
+          }
+        }
+      },
+      "@opam/tezos-lmdb": "link:./tezos_7_4/ocaml-lmdb/tezos-lmdb.opam",
+      "@opam/tezos-stdlib-unix": {
+        "source": "link:./tezos_8_2",
+        "override": {
+          "buildsInSource": true,
+          "build": [
+            ["dune", "build", "-j", "4", "-p", "tezos-stdlib"],
+            ["mv", "src/lib_stdlib/tezos-stdlib-unix.install", "./"]
+          ],
+          "install": [["esy-installer", "./tezos-stdlib-unix.install"]],
+          "dependencies": {
+            "@opam/dune": "*",
+            "@opam/tezos-event-logging": "*",
+            "@opam/lwt": "*",
+            "@opam/ptime": "*",
+            "@opam/mtime": "*",
+            "@opam/ipaddr": "*",
+            "@opam/re": "*",
+            "@opam/conf-libev": "*"
+          }
+        }
+      },
+      "@opam/tezos-clic": {
+        "source": "link:./tezos_8_2",
+        "override": {
+          "buildsInSource": true,
+          "build": [
+            ["dune", "build", "-j", "4", "-p", "tezos-clic"],
+            ["mv", "src/lib_clic/tezos-clic.install", "./"]
+          ],
+          "install": [["esy-installer", "./tezos-clic.install"]],
+          "dependencies": {
+            "@opam/dune": "*",
+            "@opam/tezos-stdlib-unix": "*",
+            "@opam/lwt": "*"
+          }
+        }
+      },
+      "@opam/tezos-rpc": {
+        "source": "link:./tezos_8_2",
+        "override": {
+          "buildsInSource": true,
+          "build": [
+            ["dune", "build", "-j", "4", "-p", "tezos-rpc"],
+            ["mv", "src/lib_rpc/tezos-rpc.install", "./"]
+          ],
+          "install": [["esy-installer", "./tezos-rpc.install"]],
+          "dependencies": {
+            "@opam/dune": "*",
+            "@opam/tezos-error-monad": "*",
+            "@opam/lwt": "*",
+            "@opam/resto": "*",
+            "@opam/resto-directory": "*"
+          }
+        }
+      },
+      "@opam/tezos-rpc-http": {
+        "source": "link:./tezos_8_2",
+        "override": {
+          "buildsInSource": true,
+          "build": [
+            ["dune", "build", "-j", "4", "-p", "tezos-rpc-http"],
+            ["mv", "src/lib_rpc_http/tezos-rpc-http.install", "./"]
+          ],
+          "install": [["esy-installer", "./tezos-rpc-http.install"]],
+          "dependencies": {
+            "@opam/dune": "*",
+            "@opam/tezos-base": "*",
+            "@opam/lwt": "*",
+            "@opam/resto": "*",
+            "@opam/resto-directory": "*",
+            "@opam/resto-cohttp": "*"
+          }
+        }
+      },
+      "@opam/tezos-rpc-http-client": "link:./tezos_8_2/src/lib_rpc_http/tezos-rpc-http-client.opam",
+      "@opam/tezos-rpc-http-client-unix": "link:./tezos_8_2/src/lib_rpc_http/tezos-rpc-http-client-unix.opam",
+      "@opam/tezos-shell-services": "link:./tezos_8_2/src/lib_shell_services/tezos-shell-services.opam",
+      "@opam/tezos-storage": "link:./tezos_8_2/src/lib_storage/tezos-storage.opam",
+      "@opam/tezos-client-base": "link:./tezos_8_2/src/lib_client_base/tezos-client-base.opam",
+      "@opam/tezos-client-base-unix": "link:./tezos_8_2/src/lib_client_base_unix/tezos-client-base-unix.opam",
+      "@opam/tezos-client-commands": "link:./tezos_8_2/src/lib_client_commands/tezos-client-commands.opam",
+      "@opam/tezos-client-008-PtEdo2Zk": "link:./tezos_8_2/src/proto_008_PtEdo2Zk/lib_client/tezos-client-008-PtEdo2Zk.opam",
+      "@opam/tezos-signer-services": "link:./tezos_8_2/src/lib_signer_services/tezos-signer-services.opam",
+      "@opam/tezos-signer-backends": "link:./tezos_8_2/src/lib_signer_backends/tezos-signer-backends.opam",
+      "@opam/tezos-protocol-environment-packer": "link:./tezos_8_2/src/lib_protocol_environment/tezos-protocol-environment-packer.opam",
+      "@opam/tezos-protocol-environment-sigs": "link:./tezos_8_2/src/lib_protocol_environment/tezos-protocol-environment-sigs.opam",
+      "@opam/tezos-protocol-environment-structs": "link:./tezos_8_2/src/lib_protocol_environment/tezos-protocol-environment-structs.opam",
+      "@opam/tezos-protocol-environment": "link:./tezos_8_2/src/lib_protocol_environment/tezos-protocol-environment.opam",
+      "@opam/tezos-shell-context": "link:./tezos_8_2/src/lib_protocol_environment/tezos-shell-context.opam",
+      "@opam/tezos-protocol-updater": "link:./tezos_8_2/src/lib_protocol_updater/tezos-protocol-updater.opam",
+      "@opam/tezos-mockup": "link:./tezos_8_2/src/lib_mockup/tezos-mockup.opam",
+      "@opam/tezos-mockup-registration": "link:./tezos_8_2/src/lib_mockup/tezos-mockup-registration.opam",
+      "@opam/tezos-mockup-commands": "link:./tezos_8_2/src/lib_mockup/tezos-mockup-commands.opam",
+      "@opam/tezos-p2p": "link:./tezos_8_2/src/lib_p2p/tezos-p2p.opam",
+      "@opam/tezos-requester": "link:./tezos_8_2/src/lib_requester/tezos-requester.opam",
+      "@opam/tezos-validation": "link:./tezos_8_2/src/lib_validation/tezos-validation.opam",
+      "@opam/tezos-shell": "link:./tezos_8_2/src/lib_shell/tezos-shell.opam",
+      "@opam/tezos-micheline": {
+        "source": "link:./tezos_8_2",
+        "override": {
+          "buildsInSource": true,
+          "build": [
+            ["dune", "build", "-j", "4", "-p", "tezos-micheline"],
+            ["mv", "src/lib_micheline/tezos-micheline.install", "./"]
+          ],
+          "install": [["esy-installer", "./tezos-micheline.install"]],
+          "dependencies": {
+            "@opam/dune": "*",
+            "@opam/tezos-error-monad": "*",
+            "@opam/lwt": "*",
+            "@opam/uutf": "*"
+          }
+        }
+      },
+      "@opam/tezos-version": {
+        "source": "link:./tezos_8_2",
+        "override": {
+          "buildsInSource": true,
+          "build": [
+            ["dune", "build", "-j", "4", "-p", "tezos-version"],
+            ["mv", "src/lib_version/tezos-version.install", "./"]
+          ],
+          "install": [["esy-installer", "./tezos-version.install"]],
+          "dependencies": {
+            "@opam/dune": "*",
+            "@opam/tezos-base": "*"
+          }
+        }
+      },
+      "@opam/tezos-workers": {
+        "source": "link:./tezos_8_2",
+        "override": {
+          "buildsInSource": true,
+          "build": [
+            ["dune", "build", "-j", "4", "-p", "tezos-workers"],
+            ["mv", "src/lib_workers/tezos-workers.install", "./"]
+          ],
+          "install": [["esy-installer", "./tezos-workers.install"]],
+          "dependencies": {
+            "@opam/dune": "*",
+            "@opam/tezos-base": "*"
+          }
+        }
+      },
+      "@opam/tezos-base": {
+        "source": "link:./tezos_8_2",
+        "override": {
+          "buildsInSource": true,
+          "build": [
+            ["dune", "build", "-j", "4", "-p", "tezos-base"],
+            ["mv", "src/lib_base/tezos-base.install", "./"]
+          ],
+          "install": [["esy-installer", "./tezos-base.install"]],
+          "dependencies": {
+            "@opam/dune": "*",
+            "@opam/tezos-crypto": "*",
+            "@opam/tezos-micheline": "*",
+            "@opam/ptime": "*",
+            "@opam/ezjsonm": "*",
+            "@opam/ipaddr": "*"
+          }
+        }
+      },
+      "@opam/tezos-lwt-result-stdlib": {
+        "source": "link:./tezos_8_2",
+        "override": {
+          "buildsInSource": true,
+          "build": [
+            ["dune", "build", "-j", "4", "-p", "tezos-stdlib"],
+            ["mv", "src/lib_lwt_result_stdlib/tezos-lwt-result-stdlib.install", "./"]
+          ],
+          "install": [["esy-installer", "./tezos-lwt-result-stdlib.install"]],
+          "dependencies": {
+            "@opam/dune": "*",
+            "@opam/tezos-error-monad": "*",
+            "@opam/lwt": "*"
+          }
+        }
+      },
+      "@opam/tezos-event-logging": {
+        "source": "link:./tezos_8_2",
+        "override": {
+          "buildsInSource": true,
+          "build": [
+            ["dune", "build", "-j", "4", "-p", "tezos-stdlib"],
+            ["mv", "src/lib_event_logging/tezos-event-logging.install", "./"]
+          ],
+          "install": [["esy-installer", "./tezos-event-logging.install"]],
+          "dependencies": {
+            "@opam/dune": "*",
+            "@opam/tezos-lwt-result-stdlib": "*",
+            "@opam/lwt": "*",
+            "@opam/lwt_log": "*"
+          }
+        }
+      },
+      "@opam/tezos-error-monad": {
+        "source": "link:./tezos_8_2",
+        "override": {
+          "buildsInSource": true,
+          "build": [
+            ["dune", "build", "-j", "4", "-p", "tezos-error-monad"],
+            ["mv", "src/lib_error_monad/tezos-error-monad.install", "./"]
+          ],
+          "install": [["esy-installer", "./tezos-error-monad.install"]],
+          "dependencies": {
+            "@opam/dune": "*",
+            "@opam/tezos-stdlib": "*",
+            "@opam/lwt-canceler": "0.2",
+            "@opam/data-encoding": "0.2"
+          }
+        }
+      },
       "@opam/tezos-sapling": {
         "source": "link:./tezos_8_2",
         "override": {
@@ -65,7 +311,6 @@
             "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
           },
           "build": [
-            ["rm", "-r", "vendors"],
             ["dune", "build", "-j", "4", "-p", "tezos-sapling", "@install"],
             ["mv", "src/lib_sapling/tezos-sapling.install", "./"]
           ],
@@ -92,7 +337,6 @@
             "ESY__DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
           },
           "build": [
-            ["rm", "-r", "vendors"],
             [
               "sh",
               "-c",
@@ -127,7 +371,6 @@
             "ESY__DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
           },
           "build": [
-            ["rm", "-r", "vendors"],
             [
               "sh",
               "-c",
@@ -164,7 +407,6 @@
             "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
           },
           "build": [
-            ["rm", "-r", "vendors"],
             [
               "dune",
               "build",
@@ -207,7 +449,6 @@
             "ESY__DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
           },
           "build": [
-            ["rm", "-r", "vendors"],
             [
               "sh",
               "-c",
@@ -240,7 +481,6 @@
         "override": {
           "buildsInSource": true,
           "build": [
-            ["rm", "-r", "vendors"],
             [
               "sed",
               "-i.back",
@@ -272,7 +512,6 @@
             "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
           },
           "build": [
-            ["rm", "-r", "vendors"],
             ["dune", "build", "-j", "4", "-p", "tezos-crypto", "@install"],
             ["mv", "src/lib_crypto/tezos-crypto.install", "./"]
           ],
