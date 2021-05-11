@@ -6,7 +6,7 @@
       "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }",
       "LD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
     },
-    "build": ["rm -r tezos_8_2/vendors", "dune build -p ligo"],
+    "build": ["dune build -p ligo"],
     "dependencies": {
       "@opam/tezos-rust-libs": "*",
       "@opam/hacl-star-raw": "*",
@@ -164,6 +164,7 @@
           }
         }
       },
+      "@opam/getopt": "ulrikstrid/ocaml-getopt:getopt.opam#645ab74",
       "@opam/tezos-rpc-http-client": "link:./tezos_8_2/src/lib_rpc_http/tezos-rpc-http-client.opam",
       "@opam/tezos-rpc-http-client-unix": "link:./tezos_8_2/src/lib_rpc_http/tezos-rpc-http-client-unix.opam",
       "@opam/tezos-shell-services": "link:./tezos_8_2/src/lib_shell_services/tezos-shell-services.opam",
