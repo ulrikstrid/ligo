@@ -9,8 +9,9 @@
      http://gallium.inria.fr/~fpottier/menhir/manual.pdf
 
    This grammar specification actually encompasses two dialects of
-   PascaLIGO. On is called _terse_ because it requires less keywords;
-   the other is _verbose_. Generally speaking, the latter replaces
+   PascaLIGO. One is called _verbose_ because it uses quite a number
+   of keywords, and the other one is called _terse_ because it
+   requires fewer keywords. Generally speaking, the latter replaces
    many keywords 'end' by using symbols instead. An example of verbose
    record type definition would be:
 
@@ -544,21 +545,7 @@ module_path(selected):
    vertical bar introducing to its right the variant, as seen in rule
    [variant].
 
-     The reason for distinguishing on the presence of not of
-   attributes is meant to improve error reporting in the presence of
-   nullable prefixes in an LR framework. So, for example, we have
-
-     variant:
-       nseq("[@<attr>]") ctor { ...
-       }
-     | ctor { ... }
-
-   instead of the straightforward
-
-     variant:
-       seq("[@<attr>]") ctor { ... }
-
-   We also chose to distinguish the cases of constant (nullary)
+   We chose to distinguish the cases of constant (nullary)
    constructors, to keep the semantic actions shorter. *)
 
 sum_type:
@@ -573,72 +560,40 @@ sum_type:
     in T_Sum {region; value} }
 
 variant:
-  nseq("[@<attr>]") ctor {
-    let attributes = Utils.nseq_to_list $1 in
-    let value      = {ctor=$2; arg=None; attributes}
-    and region     = cover (fst $1).region $2.region
+  seq("[@<attr>]") ctor {
+    let region = match $1 with
+                        [] -> $2.region
+                | start::_ -> cover start.region $2.region in
+    let value = {ctor=$2; arg=None; attributes=$1}
     in {region; value}
   }
-| ctor {
-    {$1 with value = {ctor=$1; arg=None; attributes=[]}}
-  }
-| nseq("[@<attr>]") ctor "of" fun_type_level {
-    let attributes = Utils.nseq_to_list $1 in
-    let value      = {ctor = $2; arg = Some ($3,$4); attributes}
-    and stop       = type_expr_to_region $4 in
-    let region     = cover (fst $1).region stop
-    in {region; value}
-  }
-| ctor "of" fun_type_level {
-    let stop   = type_expr_to_region $3 in
-    let region = cover $1.region stop
-    and value  = {ctor=$1; arg = Some ($2,$3); attributes=[]}
+| seq("[@<attr>]") ctor "of" fun_type_level {
+    let stop   = type_expr_to_region $4 in
+    let region = match $1 with
+                         [] -> stop
+                 | start::_ -> cover start.region stop in
+    let value = {ctor=$2; arg = Some ($3,$4); attributes=$1}
     in {region; value} }
 
 (* Record types *)
 
 record_type:
-  seq("[@<attr>]") "record" "[" sep_or_term_list(field_decl,";") "]" {
-    let fields, terminator = $4 in
+  seq("[@<attr>]") ne_injection("record",field_decl) {
     let region = match $1 with
-                         [] -> cover $2 $5
-                 | start::_ -> cover start.region $5
-    and value  = {kind        = `Record $2;
-                  enclosing   = Brackets ($3,$5);
-                  ne_elements = fields;
-                  terminator;
-                  attributes  = $1}
+                         [] -> $2.region
+                 | start::_ -> cover start.region $2.region
+    and value = {$2 with value = {$2.value with attributes=$1}}
     in {region; value} }
 
-| seq("[@<attr>]") "record" sep_or_term_list(field_decl,";") "end" {
-    let fields, terminator = $3 in
-    let region = match $1 with
-                         [] -> cover $2 $4
-                 | start::_ -> cover start.region $4
-    and value  = {kind        = `Record $2;
-                  enclosing   = End $4;
-                  ne_elements = fields;
-                  terminator;
-                  attributes  = $1}
-    in {region; value}
-  }
-
 field_decl:
-  seq("[@<attr>]") field_name ":" type_expr {
-    let stop   = type_expr_to_region $4 in
+  seq("[@<attr>]") field_name ioption(type_annotation) {
+    let stop = match $3 with
+                 None -> $2.region
+               | Some (_, t) -> type_expr_to_region t in
     let region = match $1 with
                          [] -> cover $2.region stop
-                 | start::_ -> cover start.region stop
-    and value  =
-      {attributes=$1; field_name=$2; field_type = Some ($3,$4)}
-    in {region; value}
-  }
-| seq("[@<attr>]") field_name {
-    let stop   = $2.region in
-    let region = match $1 with
-                         [] -> stop
-                 | start::_ -> cover start.region stop
-    and value  = {attributes=$1; field_name=$2; field_type=None}
+                 | start::_ -> cover start.region stop in
+    let value = {attributes=$1; field_name=$2; field_type = Some $3}
     in {region; value} }
 
 (* Constant declarations *)
