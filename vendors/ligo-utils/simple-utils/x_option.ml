@@ -1,3 +1,5 @@
+(* code quality: okay 2021-05-12 *)
+
 (* Constructors *)
 let none = None
 let some x = Some x
@@ -14,7 +16,7 @@ let unopt_failwith str x = match x with
   | None -> failwith str
   | Some x -> x
 
-(* Base Tranformers *)
+(* Base Transformers *)
 let bind f = function
   | None -> None
   | Some x -> f x
