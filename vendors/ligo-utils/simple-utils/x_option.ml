@@ -14,7 +14,6 @@ let unopt_failwith str x = match x with
   | None -> failwith str
   | Some x -> x
 
-
 (* Base Tranformers *)
 let bind f = function
   | None -> None
@@ -24,7 +23,7 @@ let map f x =
   bind f' x
 
 (* Syntax *)
-let (>>=) x f = bind f x
+let (let*) x f = bind f x
 
 (* Interaction with List *)
 let to_list = function
@@ -62,8 +61,8 @@ let rec bind_list = fun lst ->
     )
 
 let bind_pair = fun (a , b) ->
-  a >>= fun a' ->
-  b >>= fun b' ->
+  let* a' = a in 
+  let* b' = b in
   Some (a' , b')
 
 let bind_map_list = fun f lst -> bind_list (X_list.map f lst)
@@ -73,8 +72,8 @@ let bind_map_pair = fun f (a , b) -> bind_pair (f a , f b)
 let bind_smap (s:_ X_map.String.t) =
   let open X_map.String in
   let aux k v prev =
-    prev >>= fun prev' ->
-    v >>= fun v' ->
+    let* prev' = prev in 
+    let* v' = v in
     Some (add k v' prev') in
   fold aux s (Some empty)
 

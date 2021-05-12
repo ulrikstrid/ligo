@@ -194,7 +194,7 @@ let make_initial_state syntax protocol infer dry_run_opts =
 
 let rec read_input prompt delim =
   let module Let_syntax = struct
-      let bind m ~f = Option.(>>=) m f
+      let bind m ~f = Option.(let*) m f
       module Open_on_rhs_bind = struct end
     end in
   let open Option in
