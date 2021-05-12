@@ -273,37 +273,37 @@ let pretty_print_cst ~meta buffer file_path=
   in trace parser_tracer @@ print buffer file_path
 
 let pretty_print_pascaligo buffer file_path =
-  let%bind raw =
+  let* raw =
     trace parser_tracer @@
     Parsing.Pascaligo.parse_file buffer file_path in
-  let%bind applied =
+  let* applied =
     trace self_cst_pascaligo_tracer @@
     Self_cst.Pascaligo.all_module raw in
   ok @@ Parsing.Pascaligo.pretty_print applied
 
 let pretty_print_cameligo buffer file_path =  
-  let%bind raw =
+  let* raw =
     trace parser_tracer @@
     Parsing.Cameligo.parse_file buffer file_path in
-  let%bind applied =
+  let* applied =
     trace self_cst_cameligo_tracer @@
     Self_cst.Cameligo.all_module raw in
   ok @@ Parsing.Cameligo.pretty_print applied
   
 let pretty_print_reasonligo buffer file_path =
-  let%bind raw =
+  let* raw =
     trace parser_tracer @@
     Parsing.Reasonligo.parse_file buffer file_path in
-  let%bind applied =
+  let* applied =
     trace self_cst_reasonligo_tracer @@
     Self_cst.Reasonligo.all_module raw in
   ok @@ Parsing.Reasonligo.pretty_print applied
 
 let pretty_print_jsligo buffer file_path =
-  let%bind raw =
+  let* raw =
     trace parser_tracer @@
     Parsing.Jsligo.parse_file buffer file_path in
-  let%bind applied =
+  let* applied =
     trace self_cst_jsligo_tracer @@
     Self_cst.Jsligo.all_module raw in
   ok @@ Parsing.Jsligo.pretty_print applied

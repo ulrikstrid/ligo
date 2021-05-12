@@ -100,7 +100,7 @@ and promote_to_type: type_expr -> (type_expr,'err) result = fun t ->
         let value = {value with variants} in
         ok @@ TSum {region; value}
       )
-  | TRecord {value; _} ->   
+  | TRecord {value; region} ->   
       let attributes = value.attributes in
       let compound = value.compound in
       (match attributes, compound with 
@@ -112,7 +112,7 @@ and promote_to_type: type_expr -> (type_expr,'err) result = fun t ->
         let region, lbrace, rbrace = cover_m (c_token lbrace) (c_token rbrace) in
         let value = {value with compound = Some (Braces(lbrace, rbrace))} in
         ok @@ TRecord {value; region}
-      | _, _ -> failwith "should never happen" (* TODO: drop this case by modifying the CST *)
+      | _, _ -> ok @@ TRecord {value; region}
       );
   | TApp {value; _} ->
       let constr, arg = value in
@@ -152,18 +152,39 @@ and promote_pattern: pattern -> (pattern, 'err) result = fun p ->
       let region, hd, tl = cover_m (c_pattern hd) (c_pattern tl) in
       let value = hd, sep, tl in
       ok @@ PList (PCons {value; region})
+  | PUnit {value; _} ->
+      let region, lpar, rpar = cover_tokens (fst value) (snd value) in
+      let value = lpar, rpar in 
+      ok @@ PUnit {value; region}
+  | PList (PListComp {value; region}) ->
+      (match value.compound with 
+        Some (Brackets(lbracket, rbracket)) ->
+          let region, lbracket, rbracket = cover_tokens lbracket rbracket in
+          let compound = Some (Brackets (lbracket, rbracket)) in
+          let value = {value with compound} in 
+          ok @@ PList (PListComp {value; region})
+      | _ -> ok @@ PList (PListComp {value; region}) (* TODO: drop this case by modifying the CST *)
+      )
+  | PTuple {value; _} ->
+      let region, value = cover_nsepseq value c_pattern in
+      ok @@ PTuple {region; value}
+  | PPar {value; _} ->
+      let region, lpar, rpar = cover_tokens value.lpar value.rpar in
+      let value = {value with lpar; rpar} in
+      ok @@ PPar {value; region}
+  | PRecord {value; region} -> (
+      match value.compound with 
+        Some (Braces (lbrace, rbrace)) ->
+          let region, lbrace, rbrace = cover_tokens lbrace rbrace in 
+          let compound = Some (Braces (lbrace, rbrace)) in
+          let value = {value with compound} in 
+          ok @@ PRecord {value; region}
+      | _ -> ok @@ PRecord {value; region})
+  | PTyped {value; _} -> 
+    let region, pattern, type_expr = cover_m (c_pattern value.pattern) (c_type_expr value.type_expr) in
+    let value = {value with pattern; type_expr} in
+    ok @@ PTyped {value; region}
   | _ as p -> ok p
-  (* | PUnit     of the_unit reg
-  | PVar      of variable
-  | PInt      of (lexeme * Z.t) reg
-  | PNat      of (lexeme * Z.t) reg
-  | PBytes    of (lexeme * Hex.t) reg
-  | PString   of string reg
-  | PList     of list_pattern
-  | PTuple    of (pattern, comma) nsepseq reg
-  | PPar      of pattern par reg
-  | PRecord   of field_pattern reg ne_injection reg
-  | PTyped    of typed_pattern reg *)
 
 and promote_case_clause: ('a ->  ('a CST.update_region, _) result) -> 'a case_clause reg ->  ('a case_clause reg, _) result = fun func c -> 
   let value = c.value in
@@ -266,7 +287,7 @@ and promote_to_expression: expr -> (expr,'err) result =
         let region, kwd_fun, body = cover_m (c_token value.kwd_fun) (c_expr value.body) in
         let value = {value with kwd_fun; body} in 
         ok @@ EFun {value; region}
-    | ERecord {value; _} ->     
+    | ERecord {value; region} ->     
         let attributes = value.attributes in
         let compound = value.compound in
         (match attributes, compound with 
@@ -278,7 +299,7 @@ and promote_to_expression: expr -> (expr,'err) result =
           let region, lbrace, rbrace = cover_m (c_token lbrace) (c_token rbrace) in
           let value = {value with compound = Some (Braces(lbrace, rbrace))} in
           ok @@ ERecord {value; region}
-        | _, _ -> failwith "should never happen" (* TODO: drop this case by modifying the CST *)
+        | _, _ -> ok @@ ERecord {value; region}
         );  
     | EProj {value; _} ->
       let region, struct_name, field_path = cover_m (c_reg value.struct_name) (c_nsepseq_last value.field_path c_selection) in 
@@ -336,14 +357,14 @@ and promote_to_expression: expr -> (expr,'err) result =
       let mod_alias = {mod_alias with kwd_module} in
       let value = {value with mod_alias; body} in
       ok @@ EModAlias {value; region}
-    | ESeq {value; _} -> (
+    | ESeq {value; region}  -> (
       match value.compound with 
         Some (BeginEnd (kwd_begin, kwd_end)) -> 
           let region, kwd_begin, kwd_end = cover_tokens kwd_begin kwd_end in
           let compound = Some (BeginEnd (kwd_begin, kwd_end)) in
           let value = {value with compound} in
           ok @@ ESeq {value; region}
-      | _ -> failwith "should never happen" (* TODO: drop this case by modifying the CST *)
+      | _ -> ok @@ ESeq {value; region}
     )
     | ECodeInj {value; _} ->
       let region, language, rbracket = cover_m (c_reg value.language) (c_token value.rbracket) in
