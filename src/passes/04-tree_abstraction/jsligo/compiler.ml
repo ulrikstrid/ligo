@@ -93,7 +93,8 @@ module Compile_type = struct
     match compilers with
     | [] -> ok None
     | hd :: tl -> (
-      match%bind hd te with
+      let* x = hd te in
+      match x with
       | Some x -> ok (Some x)
       | None -> type_compiler_opt_list tl te
     )
@@ -107,9 +108,10 @@ module Compile_type = struct
     (unit -> (AST.type_expression, _) result) ->
     (AST.type_expression, _) result =
   fun compilers te other ->
-  match%bind type_compiler_opt_list compilers te with
-  | Some x -> ok x
-  | None -> other ()
+    let* x = type_compiler_opt_list compilers te in
+    match x with
+    | Some x -> ok x
+    | None -> other ()
 
   and compile_type_function_args : CST.fun_type_args -> (type_expression, _) result = fun args ->
     let unpar = args.inside in
@@ -472,8 +474,8 @@ and compile_expression : CST.expr -> (AST.expr, _) result = fun e ->
         let pvar = match p_opt with
           | Some p ->
             let parameters = Location.wrap ~loc:param_loc p in
-            Some (Location.wrap ~loc:param_loc @@ P_var ({var = parameters ; ascr = None}:_ AST.binder))
-          | None -> None
+            Location.wrap ~loc:param_loc @@ P_var ({var = parameters ; ascr = None}:_ AST.binder)
+          | None -> Location.wrap ~loc:param_loc P_unit
         in 
         let pattern = Location.wrap ~loc:whole_pattern_loc @@ P_variant (constructor, pvar) in
         ({body ; pattern} : _ AST.match_case)
@@ -1017,7 +1019,7 @@ and compile_let_binding: const:bool -> CST.attributes -> CST.expr -> (Region.t *
 
 and compile_statements : CST.statements -> (statement_result, _) result = fun statements ->
   let rec aux result = function
-    (_, (CST.SExpr _ as hd)) :: tl ->       
+    (_, hd) :: tl ->
       let wrapper = CST.SBlock {
         value = {
           inside = (hd, tl); 
@@ -1027,9 +1029,6 @@ and compile_statements : CST.statements -> (statement_result, _) result = fun st
       } in
       let* block = compile_statement wrapper in
       aux (merge_statement_results result block) []
-  | (_, hd) :: tl -> 
-      let* a = compile_statement hd in
-      aux (merge_statement_results result a) tl
   | [] -> ok result
   in
   let hd  = fst statements in
