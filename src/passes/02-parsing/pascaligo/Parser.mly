@@ -1,4 +1,95 @@
-(* Menhir specification of the parser of PascaLIGO *)
+(* Menhir specification of the parser of PascaLIGO
+
+   "beaucoup de mal durable est souvent fait par les choses provisoires."
+                                              Victor Hugo, 11 Sept. 1848
+                         http://classes.bnf.fr/laicite/anthologie/32.htm
+
+   About Menhir:
+     http://gallium.inria.fr/blog/parser-construction-menhir-appetizers/
+     http://gallium.inria.fr/~fpottier/menhir/manual.pdf
+
+   This grammar specification actually encompasses two dialects of
+   PascaLIGO. On is called _terse_ because it requires less keywords;
+   the other is _verbose_. Generally speaking, the latter replaces
+   many keywords 'end' by using symbols instead. An example of verbose
+   record type definition would be:
+
+     type t is record a : int end
+
+   The terse version is
+
+     type t is record [a : int]
+
+   This grammar does not enforce one dialect over the other. We always
+   present the terse version before the verbose one, in each rule
+   where the distinction applies.
+
+   When laying out rules for the same non-terminal, we use the closing
+   brace of a rule to separate it from the next by being on its own
+   line, like so:
+
+     foo:
+       .... { ...
+       }
+     | ... { ... }
+
+   When there are many rules for the same terminal, we present the
+   rules for the non-terminals involved in a left-right prefix manner
+   (a.k.a depth-first traversal in an algorithmic context). For
+   example:
+
+     foo:
+       bar { ... }
+     | baz { ... }
+
+     bar:
+       zoo { ... }
+
+     zoo:
+       A { ... }
+
+     baz:
+       B { ... }
+
+   When you change the grammar, take some time to see if you cannot
+   remove a reduction on error that is related to your change.
+
+   Write comments. Inside them, escape text by writing it between
+   square brackets, following the ocamldoc convention.
+
+   Please avoid writing a leading vertical bar, like
+
+     foo:
+       | bar {}
+
+   The above is equivalent to
+
+     foo:
+       bar {}
+
+   but people could think it means
+
+     for:
+       {} | bar {}
+
+   because Menhir enables the sharing of semantic actions. (By the
+   way, the leading vertical bar is the only cause of an LR conflict
+   in the grammar of Menhir itself (personal communication to
+   Rinderknecht by Pottier, June 23, 2006).
+
+   We do not rely on predefined Menhir symbols, like $symbolstartpos,
+   to help determine the regions (that is, source locations) of our
+   tokens and subtrees of our CST. One reason is that the semantic of
+   $symbolstartpos is that of ocamlyacc, and this does not blend well
+   with nullable prefixes of rules. That is why we use [Region.cover]
+   to compute the region in the source that corresponds to any given
+   CST node. This is more verbose than letting Menhir ask the lexer
+   buffer with a surprising semantic, but we are 100% in control.
+
+   A note on terminology: I sometimes use words taken from the context
+   of formal logic or programming theory. For example:
+   https://en.wikipedia.org/wiki/Extensional_and_intensional_definitions
+ *)
 
 %{
 (* START HEADER *)
@@ -11,11 +102,13 @@ open Simple_utils.Region
 module CST = Cst.Pascaligo
 open CST
 
-(* Utilities *)
+(* UTILITIES
 
-let first_region = function
-    [] -> None
-| x::_ -> Some x.region
+   The following functions help build CST nodes. When they are
+   complicated, like [mk_mod_path], it is because the grammar rule had
+   to be written in a certain way to remain LR, and that way did not
+   make it easy in the semantic action to collate the information into
+   CST nodes. *)
 
 let mk_set     region = `Set    region
 let mk_list    region = `List   region
@@ -44,6 +137,12 @@ let mk_mod_path :
     and value  = {module_path; selector=last_dot; field}
     in {value; region}
 
+(* The function [terminate_decl] adds a semicolon terminator to a
+   declaration. It is a functional update (patch). This because we
+   want to share rules for declarations that are valid at top-level
+   and at inner levels (blocks), and the latter require a semicolon
+   --- which we patch afterwards in semantic actions. *)
+
 let terminate_decl semi = function
   D_Const     d -> {d with value = {d.value with terminator=semi}}
 | D_Directive d -> d
@@ -63,6 +162,53 @@ let terminate_decl semi = function
 %type <CST.t> contract
 %type <CST.expr> interactive_expr
 
+(* Reductions on error states is sometimes needed in order to end on a
+   state where there is hopefully more right context to provide better
+   error messages about possible futures. Practically, if, when
+   examining the syntax error messages file, one comes accros an LR
+   item of the form
+
+     X -> some Things . [SOME TOKENS]
+
+   where the next tokens between the square brackets are numerous
+   and/or diverse in nature, then it is a good idea to add a clause
+
+   %on_error_reduce X
+
+   This will instruct the run-time generated by Menhir to reduce after
+   the error, in the hopes to find a state where it is easier to
+   predict possible futures. One typical use of this pleasant feature
+   is required by the design choice we made to mix two dialects of
+   PascaLIGO in the same grammar, the so-called "terse" and "verbose"
+   dialects. One difference between both is the way compound
+   constructs are closed. In the verbose dialect, the keyword "end" is
+   used, instead of a symbol in the terse dialect. This yields error
+   states of the form
+
+      some_compound_construct -> ... . [End RBRACKET]
+
+   In that state, we do not know the exact future and we cannot
+   confuse the user with the two dialects, and who might not even be
+   aware of the existence of those dialects. Whence the
+
+     %on_error_reduce some_compound_construct
+
+  Beware that the same item that would benefit from a reduction on
+  error may occur in different states of the underlying LR
+  automaton. In that case, priority will have to be specified by order
+  of writing. When not using priorities, it is normally advised to
+  list all the sentences to reduce in the same %on_error_reduce, but
+  we do not do so, which make it is hard to remember when priority
+  played a role, because Menhir only reports the number of states where
+  priority of reduction played a role, but does not tell which
+  ones. In the PascaLIGO grammar, two states are concerned. To find
+  which, we would need to rewrite the following clauses as one until
+  Menhir warns of the need of a priority specification. Unfortunately,
+  the algorithm in Menhir for --list-errors is currently very slow, so
+  this kind of refactoring would be very costly to do. A much faster
+  algorithm will be in production in the near future, enabling that
+  work tp be carried out in a reasonable amount of time. *)
+
 %on_error_reduce field_decl
 %on_error_reduce field_assignment
 %on_error_reduce test_clause(closed_instr)
@@ -71,12 +217,12 @@ let terminate_decl semi = function
 %on_error_reduce base_instr(closed_instr,closed_expr)
 %on_error_reduce bin_op(add_expr_level,PLUS,mult_expr_level)
 %on_error_reduce bin_op(add_expr_level,MINUS,mult_expr_level)
-%on_error_reduce nseq(__anonymous_0(field(core_pattern),SEMI))
-%on_error_reduce nsepseq(field(core_pattern),SEMI)
-%on_error_reduce field(core_pattern)
-(*%on_error_reduce selected_expr*)
+%on_error_reduce nseq(__anonymous_0(field_pattern,SEMI))
+%on_error_reduce nsepseq(field_pattern,SEMI)
+%on_error_reduce field_pattern
+%on_error_reduce core_expr
 %on_error_reduce nsepseq(module_name,DOT)
-%on_error_reduce ctor_expr
+%on_error_reduce ctor_app(arguments)
 %on_error_reduce nseq(__anonymous_0(field_decl,SEMI))
 %on_error_reduce nseq(__anonymous_0(field_path_assignment,SEMI))
 %on_error_reduce nseq(__anonymous_0(binding,SEMI))
@@ -90,14 +236,15 @@ let terminate_decl semi = function
 %on_error_reduce pattern
 %on_error_reduce nsepseq(core_pattern,SHARP)
 %on_error_reduce nsepseq(case_clause(test_clause(instruction)),VBAR)
-(*%on_error_reduce lhs*)
-(*%on_error_reduce map_lookup*)
+%on_error_reduce lhs
+%on_error_reduce nseq(__anonymous_1)
 %on_error_reduce nsepseq(statement,SEMI)
-%on_error_reduce ctor_pattern
+%on_error_reduce ctor_app(tuple_pattern)
 %on_error_reduce update_expr_level
 %on_error_reduce nsepseq(param_decl,SEMI)
 %on_error_reduce nsepseq(selection,DOT)
 %on_error_reduce nsepseq(field_path_assignment,SEMI)
+%on_error_reduce field_path
 %on_error_reduce nsepseq(binding,SEMI)
 %on_error_reduce nsepseq(expr,SEMI)
 %on_error_reduce add_expr_level
@@ -122,9 +269,7 @@ let terminate_decl semi = function
 %on_error_reduce nsepseq(expr,COMMA)
 %on_error_reduce option(SEMI)
 %on_error_reduce option(VBAR)
-(*%on_error_reduce projection*)
 %on_error_reduce nseq(top_declaration)
-%on_error_reduce local_path
 %on_error_reduce nseq(Attr)
 
 %%
@@ -133,7 +278,11 @@ let terminate_decl semi = function
 
 (* The rule [sep_or_term(item,sep)] ("separated or terminated list")
    parses a non-empty list of items separated by [sep], and optionally
-   terminated by [sep]. *)
+   terminated by [sep]. The follwing rules were inspired by the
+   following blog post by Pottier:
+
+   http://gallium.inria.fr/blog/lr-lists/
+*)
 
 sep_or_term_list(item,sep):
   nsepseq(item,sep) {
@@ -233,24 +382,21 @@ bin_op(arg1,op,arg2):
 contract:
   nseq(top_declaration) EOF { {decl=$1; eof=$2} }
 
-(* DECLARATIONS (top-level) *)
+(* DECLARATIONS (top-level)
 
-(* We define two versions of each declaration: a low one and a top
-   one. The latter is the former with an optional semicolon, plus the
-   preprocessing directives (which are never follwed by a
-   semicolon). The low declarations bear names which are prefixed by
-   [low_], for example, [low_module_decl]. See below. The reason
-   for this is that in certain contexts, the semicolon is allowed, and
-   it is not in others. In blocks, semicolons as separators or
-   terminators are mandatory because declarations can be mixed with
-   instructions (see statements). At the top-level (here),
-   instructions are not allowed and, because declarations start with
-   keywords, it is not mandatory to force them to be separated or
-   terminated by a semicolon. *)
+   Some declarations occur at the top level and others in
+   blocks. They differ in what is allowed according to the
+   context. For instance, at top-level, no "var" variable is allowed,
+   but preprocessing directives (linemarkers from #include) are,
+   whereas in a block it is the opposite. Also, at the top level,
+   semicolons are optional when terminating declarations, whereas they
+   are mandatory in blocks, because instructions can be mixed with
+   them, providing no clear lexical indication as to where the next
+   declaration starts, hence the semicolons. *)
 
 top_declaration:
   declaration ";"? { terminate_decl $2 $1 }
-| "<directive>"    { D_Directive       $1 }
+| "<directive>"    { D_Directive       $1 } (* Only here *)
 
 declaration:
   type_decl    { D_Type     $1 }
@@ -262,31 +408,6 @@ declaration:
 declarations:
   nseq(declaration ";"? { terminate_decl $2 $1}) { $1 }
 
-(* Module declarations *)
-
-module_decl:
-  "module" module_name "is" "block"? "{" declarations "}" {
-    let enclosing = Braces ($4,$5,$7) in
-    let region    = cover $1 $7
-    and value     = {kwd_module=$1; name=$2; kwd_is=$3; enclosing;
-                     declarations=$6; terminator=None}
-    in {region; value}
-  }
-| "module" module_name "is" "begin" declarations "end" {
-    let enclosing = BeginEnd ($4,$6) in
-    let region    = cover $1 $6
-    and value     = {kwd_module=$1; name=$2; kwd_is=$3; enclosing;
-                     declarations=$5; terminator=None}
-    in {region; value} }
-
-module_alias:
-  "module" module_name "is" nsepseq(module_name,".") {
-    let stop   = nsepseq_to_region (fun x -> x.region) $4 in
-    let region = cover $1 stop in
-    let value  = {kwd_module=$1; alias=$2; kwd_is=$3;
-                  mod_path=$4; terminator=None}
-    in {region; value} }
-
 (* Type declarations *)
 
 type_decl:
@@ -297,10 +418,30 @@ type_decl:
                   type_expr=$4; terminator=None}
     in {region; value} }
 
-(* Type expressions *)
+(* Type expressions
+
+   The following subgrammar is _stratified_ in the usual manner to
+   build in the grammar the different priorities between the syntactic
+   categories. This is the same technique often used to handle
+   arithmetic and Boolean expressions, for instance, without resorting
+   to Menhir annotations. For example, see [cartesian_level] where
+   [core_type] cannot derive a cartesian type.
+
+     The rule [fun_type_level] enforces the right-associativity of the
+   arrow type constructor because the rule is right-recursive. So "a
+   -> b -> c" is parsed as "a -> (b -> c)". This is also a classic.
+
+     Note also how [sum_type] is at the same level as
+   [fun_type_level], so, for instance, the derivation of [t -> Foo] is
+   not permitted. In that case, parentheses are needed: [t ->
+   (Foo)]. If that case does not seem a good rationale, consider [t ->
+   Foo of string * int]: is it [t -> Foo of (string * int)] or [t ->
+   (Foo of string) * int]? In OCaml, the closest are polymorphic
+   variants, and they require delimiters in this case, like so: [t ->
+   [`Foo of string * int]]. *)
 
 type_expr:
-  fun_type_level | sum_type | record_type { $1 }
+  fun_type_level | sum_type { $1 }
 
 fun_type_level:
   cartesian_level "->" fun_type_level {
@@ -327,8 +468,12 @@ core_type:
 | par(type_expr) { T_Par     $1 }
 | type_name      { T_Var     $1 }
 | type_in_module { T_ModPath $1 }
+| record_type    { T_Record  $1 }
 
-(* Type constructor applications *)
+(* Type constructor applications
+
+   We handle here "map", "big_map", "set" and "list" because they are
+   keywords. *)
 
 type_ctor_app:
   type_name type_tuple {
@@ -362,7 +507,18 @@ type_ctor_app:
 type_tuple:
   par(nsepseq(type_expr,",")) { $1 }
 
-(* Type qualification *)
+(* Type qualifications
+
+   The rule [module_path] is parameterised by what is derived after a
+   series of selections of modules inside modules (nested modules),
+   like [A.B.C.D]. For example, here, we want to qualify ("select") a
+   type in a module, so the parameter is [type_name], because only
+   types defined at top-level are in the scope (that is, any type
+   declaration inside blocks is not). Then we can derive
+   [A.B.C.D.t]. Notice that, in the semantic action of
+   [type_in_module] we call the function [mk_mod_path] to reorganise
+   the steps of the path and thus fit our CST. That complicated step
+   is necessary because we need an LR(1) grammar. *)
 
 type_in_module:
   module_path(type_name) { mk_mod_path $1 (fun x -> x.region) }
@@ -374,7 +530,36 @@ module_path(selected):
   }
 | module_name "." selected { (($1,$2), []), $3 }
 
-(* Sum type *)
+(* Sum type
+
+   The syntax of PascaLIGO's sum types (a.k.a variant types) is
+   inspired by OCaml, and shared as such with the grammar of
+   CameLIGO. The reason is that Pascal has no real equivalent of sum
+   types, beyond enumerated types.
+
+     Note the position of the attributes that apply to the sum type,
+   in the second rule [sum_type]: the attributes are first and must be
+   followed by a vertical bar before the variants are laid
+   out. Attributes about a specific variant is written _after_ the
+   vertical bar introducing to its right the variant, as seen in rule
+   [variant].
+
+     The reason for distinguishing on the presence of not of
+   attributes is meant to improve error reporting in the presence of
+   nullable prefixes in an LR framework. So, for example, we have
+
+     variant:
+       nseq("[@<attr>]") ctor { ...
+       }
+     | ctor { ... }
+
+   instead of the straightforward
+
+     variant:
+       seq("[@<attr>]") ctor { ... }
+
+   We also chose to distinguish the cases of constant (nullary)
+   constructors, to keep the semantic actions shorter. *)
 
 sum_type:
   nsepseq(variant,"|") {
@@ -410,133 +595,68 @@ variant:
     and value  = {ctor=$1; arg = Some ($2,$3); attributes=[]}
     in {region; value} }
 
-(* Record type *)
+(* Record types *)
 
 record_type:
-  seq("[@<attr>]") "record" sep_or_term_list(field_decl,";") "end" {
-    let fields, terminator = $3 in
-    let region = match first_region $1 with
-                         None -> cover $2 $4
-                 | Some start -> cover start $4
-    and value  = {kind        = `Record $2;
-                  enclosing   = End $4;
-                  ne_elements = fields;
-                  terminator;
-                  attributes  = $1}
-    in T_Record {region; value}
-  }
-| seq("[@<attr>]") "record" "[" sep_or_term_list(field_decl,";") "]" {
+  seq("[@<attr>]") "record" "[" sep_or_term_list(field_decl,";") "]" {
     let fields, terminator = $4 in
-    let region = match first_region $1 with
-                         None -> cover $2 $5
-                 | Some start -> cover start $5
+    let region = match $1 with
+                         [] -> cover $2 $5
+                 | start::_ -> cover start.region $5
     and value  = {kind        = `Record $2;
                   enclosing   = Brackets ($3,$5);
                   ne_elements = fields;
                   terminator;
                   attributes  = $1}
-    in T_Record {region; value} }
+    in {region; value} }
+
+| seq("[@<attr>]") "record" sep_or_term_list(field_decl,";") "end" {
+    let fields, terminator = $3 in
+    let region = match $1 with
+                         [] -> cover $2 $4
+                 | start::_ -> cover start.region $4
+    and value  = {kind        = `Record $2;
+                  enclosing   = End $4;
+                  ne_elements = fields;
+                  terminator;
+                  attributes  = $1}
+    in {region; value}
+  }
 
 field_decl:
   seq("[@<attr>]") field_name ":" type_expr {
     let stop   = type_expr_to_region $4 in
-    let region = match first_region $1 with
-                         None -> cover $2.region stop
-                 | Some start -> cover start stop
+    let region = match $1 with
+                         [] -> cover $2.region stop
+                 | start::_ -> cover start.region stop
     and value  =
       {attributes=$1; field_name=$2; field_type = Some ($3,$4)}
     in {region; value}
   }
 | seq("[@<attr>]") field_name {
     let stop   = $2.region in
-    let region = match first_region $1 with
-                         None -> stop
-                 | Some start -> cover start stop
+    let region = match $1 with
+                         [] -> stop
+                 | start::_ -> cover start.region stop
     and value  = {attributes=$1; field_name=$2; field_type=None}
     in {region; value} }
 
-(* Function declarations *)
+(* Constant declarations *)
 
-fun_decl:
-  seq("[@<attr>]") ioption("recursive") "function" fun_name parameters
-  ioption(type_annotation) "is" expr {
-    let stop   = expr_to_region $8 in
-    let region = match first_region $1 with
-                   Some start -> cover start stop
-                 | None -> match $2 with
-                             Some start -> cover start stop
-                           |       None -> cover $3 stop
-    and value  = {attributes=$1; kwd_recursive=$2; kwd_function=$3;
-                  fun_name=$4; param=$5;
-                  ret_type=$6; kwd_is=$7; return=$8; terminator=None}
-    in {region; value} }
-
-parameters:
-  par(nsepseq(param_decl,";")) { $1 }
-
-param_decl:
-  "var" variable param_type? {
-    let stop   = match $3 with
-                         None -> $2.region
-                 | Some (_,t) -> type_expr_to_region t in
-    let region = cover $1 stop
-    and value  = {kwd_var=$1; var=$2; param_type=$3}
-    in ParamVar {region; value}
-  }
-| "var" "_" param_type? {
-    let stop   = match $3 with
-                   None -> $2
-                 | Some (_,t) -> type_expr_to_region t in
-    let region = cover $1 stop
-    and value  = {kwd_var=$1; var = mk_wild $2; param_type=$3}
-    in ParamVar {region; value}
-  }
-| "const" variable param_type? {
-    let stop   = match $3 with
-                         None -> $2.region
-                 | Some (_,t) -> type_expr_to_region t in
-    let region = cover $1 stop
-    and value  = {kwd_const=$1; var=$2; param_type=$3}
-    in ParamConst {region; value}
-  }
-| "const" "_" param_type? {
-    let stop   = match $3 with
-                         None -> $2
-                 | Some (_,t) -> type_expr_to_region t in
-    let region = cover $1 stop
-    and value  = {kwd_const=$1; var = mk_wild $2; param_type=$3}
-    in ParamConst {region; value} }
-
-param_type:
-  ":" fun_type_level { $1,$2 }
-
-type_annotation:
-  ":" type_expr { $1,$2 }
-
-(* STATEMENTS *)
-
-statement:
-  declaration { S_Decl    $1 }
-| var_decl    { S_VarDecl $1 } (* Not allowed at top-level *)
-| instruction { S_Instr   $1 }
-
-(* Declarations *)
+(* Note the use of the rule [unqualified_decl]. It takes a parameter
+   that derives the kind of definitional symbol. In the case of
+   constants, that symbol is the mathematical equality '='. The case
+   of "var" variables, which are not allowed in top-level
+   declarations, that symbol would be ':='. See [var_decl] below. *)
 
 const_decl:
   seq("[@<attr>]") "const" unqualified_decl("=") {
     let pattern, equal, init, stop = $3 in
-    let region = match first_region $1 with
-                   None -> cover $2 stop
-                 | Some start -> cover start stop
+    let region = match $1 with
+                         [] -> cover $2 stop
+                 | start::_ -> cover start.region stop
     and value  = {attributes=$1; kwd_const=$2; pattern;
                   equal; init; terminator=None}
-    in {region; value} }
-
-var_decl:
-  "var" unqualified_decl(":=") {
-    let pattern, assign, init, stop = $2 in
-    let region = cover $1 stop
-    and value  = {kwd_var=$1; pattern; assign; init; terminator=None}
     in {region; value} }
 
 unqualified_decl(OP):
@@ -551,14 +671,137 @@ unqualified_decl(OP):
     let pattern = P_Typed {region; value}
     in pattern, $3, $4, expr_to_region $4 }
 
-(* Instructions *)
+(* Function declarations *)
 
-(* Note: The rule [base_instr] is parameterised by an expression
+fun_decl:
+  seq("[@<attr>]") ioption("recursive") "function" fun_name parameters
+  ioption(type_annotation) "is" expr {
+    let stop   = expr_to_region $8 in
+    let region = match $1 with
+                   start::_ -> cover start.region stop
+                 | [] -> match $2 with
+                           Some start -> cover start stop
+                         |       None -> cover $3 stop
+    and value  = {attributes=$1; kwd_recursive=$2; kwd_function=$3;
+                  fun_name=$4; param=$5;
+                  ret_type=$6; kwd_is=$7; return=$8; terminator=None}
+    in {region; value} }
+
+parameters:
+  par(nsepseq(param_decl,";")) { $1 }
+
+param_decl:
+  "var" variable type_annotation? {
+    let stop   = match $3 with
+                         None -> $2.region
+                 | Some (_,t) -> type_expr_to_region t in
+    let region = cover $1 stop
+    and value  = {kwd_var=$1; var=$2; param_type=$3}
+    in ParamVar {region; value}
+  }
+| "var" "_" type_annotation? {
+    let stop   = match $3 with
+                   None -> $2
+                 | Some (_,t) -> type_expr_to_region t in
+    let region = cover $1 stop
+    and value  = {kwd_var=$1; var = mk_wild $2; param_type=$3}
+    in ParamVar {region; value}
+  }
+| "const" variable type_annotation? {
+    let stop   = match $3 with
+                         None -> $2.region
+                 | Some (_,t) -> type_expr_to_region t in
+    let region = cover $1 stop
+    and value  = {kwd_const=$1; var=$2; param_type=$3}
+    in ParamConst {region; value}
+  }
+| "const" "_" type_annotation? {
+    let stop   = match $3 with
+                         None -> $2
+                 | Some (_,t) -> type_expr_to_region t in
+    let region = cover $1 stop
+    and value  = {kwd_const=$1; var = mk_wild $2; param_type=$3}
+    in ParamConst {region; value} }
+
+type_annotation:
+  ":" type_expr { $1,$2 }
+
+(* Module declaration *)
+
+(* The first rule [module_decl] is the terse version, whereas the the
+   second is the verbose one. *)
+
+module_decl:
+  "module" module_name "is" "block"? "{" declarations "}" {
+    let enclosing = Braces ($4,$5,$7) in
+    let region    = cover $1 $7
+    and value     = {kwd_module=$1; name=$2; kwd_is=$3; enclosing;
+                     declarations=$6; terminator=None}
+    in {region; value}
+  }
+| "module" module_name "is" "begin" declarations "end" {
+    let enclosing = BeginEnd ($4,$6) in
+    let region    = cover $1 $6
+    and value     = {kwd_module=$1; name=$2; kwd_is=$3; enclosing;
+                     declarations=$5; terminator=None}
+    in {region; value} }
+
+(* Module aliase *)
+
+module_alias:
+  "module" module_name "is" nsepseq(module_name,".") {
+    let stop   = nsepseq_to_region (fun x -> x.region) $4 in
+    let region = cover $1 stop in
+    let value  = {kwd_module=$1; alias=$2; kwd_is=$3;
+                  mod_path=$4; terminator=None}
+    in {region; value} }
+
+(* STATEMENTS *)
+
+statement:
+  declaration { S_Decl    $1 }
+| var_decl    { S_VarDecl $1 } (* Not allowed at top-level *)
+| instruction { S_Instr   $1 } (* Not allowed at top-level *)
+
+(* Variable declarations *)
+
+(* Programming theory jargon calls "variables" any name, which is
+   unfortunate in the case that name denotes a constant, or _immutable
+   data_. In PascaLIGO, we distinguish between constants and "variable
+   variables", the former being qualified by the keyword "const" at
+   their declaration, and the latter by "var". The rule [var_decl]
+   describes those variables that are mutable. Notice that the
+   definitional symbol is ':=' instead of '=' for constants. *)
+
+var_decl:
+  "var" unqualified_decl(":=") {
+    let pattern, assign, init, stop = $2 in
+    let region = cover $1 stop
+    and value  = {kwd_var=$1; pattern; assign; init; terminator=None}
+    in {region; value} }
+
+(* INSTRUCTIONS *)
+
+(* The rule [base_instr] is parameterised by an expression
    [right_expr] because [assignment], [map_remove] and [set_remove]
    can derive [right_expr] to the right. This has an impact on the
-   so-called "dangling else" problem. Compare with [base_expr] below,
-   which is a bit simpler, as expressions do not depend on
-   instructions. *)
+   so-called "dangling else" problem because both [instruction] and
+   [expr] have conditionals. For example
+
+   if a then x := if b then c else d
+
+   could either mean
+
+   if a then (x := if b then c) else d
+
+   or
+
+   if a then x := (if b then c else d)
+
+   The latter is our interpretation.
+
+   Compare with [base_expr] below, which is a bit simpler, as
+   expressions do not depend on instructions. *)
 
 instruction:
   base_instr(instruction,expr)
@@ -579,7 +822,7 @@ base_instr(right_instr,right_expr):
 | while_loop                      { I_While       $1 }
 | "skip"                          { I_Skip        $1 }
 
-(* Conditional instruction (see [cond_expr] below) *)
+(* Conditional instructions (see [cond_expr] below for comparison) *)
 
 if_then_instr(right_instr):
   "if" expr "then" test_clause(right_instr) {
@@ -644,23 +887,30 @@ binding:
     and value  = {source=$1; arrow=$2; image=$3}
     in {region; value} }
 
+(* The rule [ne_injection] derives some of the most common compound
+   constructs of PascaLIGO, typically definitions by extension of
+   records, updates and patches. Those constructs cannot be empty,
+   hence he prefix "ne_" meaning "non-empty". For constructs that can
+   be empty, like list definitions, see [injection]. We present first
+   the terse version. *)
+
 ne_injection(Kind,element):
-  Kind sep_or_term_list(element,";") "end" {
-    fun mk_kwd ->
-      let kind, enclosing = mk_kwd $1, End $3
-      and ne_elements, terminator = $2 in
-      let region = cover $1 $3
-      and value  = {kind; enclosing; ne_elements;
-                    terminator; attributes=[]}
-      in {region; value}
-  }
-| Kind "[" sep_or_term_list(element,";") "]" {
+  Kind "[" sep_or_term_list(element,";") "]" {
     fun mk_kwd ->
       let kind, enclosing = mk_kwd $1, Brackets ($2, $4)
       and ne_elements, terminator = $3 in
       let region = cover $1 $4
       and value = {kind; enclosing; ne_elements;
                    terminator; attributes=[]}
+      in {region; value}
+  }
+| Kind sep_or_term_list(element,";") "end" {
+    fun mk_kwd ->
+      let kind, enclosing = mk_kwd $1, End $3
+      and ne_elements, terminator = $2 in
+      let region = cover $1 $3
+      and value  = {kind; enclosing; ne_elements;
+                    terminator; attributes=[]}
       in {region; value} }
 
 (* Procedure calls *)
@@ -668,28 +918,32 @@ ne_injection(Kind,element):
 call_instr:
   call_expr { $1 }
 
-(* Generic case construct. A case construct features pattern matching
-and it can either be an instruction or an expression, depending on the
-syntactic category allowed on the right-hand sides (rhs) of each
-individual case clause. *)
+(* Generic case construct. A case construct features pattern
+   matching and it can either be an instruction or an expression,
+   depending on the syntactic category allowed on the right-hand sides
+   (rhs) of each individual case clause. The first rule [case(rhs)] is
+   the terse version, the second the verbose one. Since the rule is
+   parameterised by the right-hand side, we need to return in the
+   semantic action a function parameterised by a function projecting
+   the region out of it -- see parameter [rhs_to_region]. *)
 
 case(rhs):
-  "case" expr "of" "|"? cases(rhs) "end" {
-    fun rhs_to_region ->
-      let enclosing = End $6
-      and cases     = $5 rhs_to_region in
-      let region    = cover $1 $6 in
-      let value     = {kwd_case=$1; expr=$2; kwd_of=$3;
-                       enclosing; lead_vbar=$4; cases}
-      in {region; value}
-  }
-| "case" expr "of" "[" "|"? cases(rhs) "]" {
+  "case" expr "of" "[" "|"? cases(rhs) "]" {
     fun rhs_to_region ->
       let region    = cover $1 $7
       and enclosing = Brackets ($4,$7)
       and cases     = $6 rhs_to_region in
       let value     = {kwd_case=$1; expr=$2; kwd_of=$3;
                        enclosing; lead_vbar=$5; cases}
+      in {region; value}
+  }
+| "case" expr "of" "|"? cases(rhs) "end" {
+    fun rhs_to_region ->
+      let enclosing = End $6
+      and cases     = $5 rhs_to_region in
+      let region    = cover $1 $6 in
+      let value     = {kwd_case=$1; expr=$2; kwd_of=$3;
+                       enclosing; lead_vbar=$4; cases}
       in {region; value} }
 
 cases(rhs):
@@ -708,8 +962,12 @@ case_clause(rhs):
       and value  = {pattern=$1; arrow=$2; rhs=$3}
       in {region; value} }
 
-(* Case instructions (see [case_expr] below). The right-hand
-   sides are [test_clause(instruction)].  *)
+(* Case instructions (see [case_expr] below for comparison). The
+   right-hand sides are [test_clause(instruction)]. The first rule
+   [block] is the terse version, the second the verbose one. Note how,
+   following Pascal syntax, we allow a single instruction in the
+   conditional branches, instead of always forcing the user to open a
+   block, which would be verbose. *)
 
 case_instr:
   case(test_clause(instruction)) { $1 test_clause_to_region }
@@ -719,14 +977,7 @@ test_clause(instr):
 | block { ClauseBlock $1 }
 
 block:
-  "begin" sep_or_term_list(statement,";") "end" {
-     let statements, terminator = $2
-     and enclosing : block_enclosing = BeginEnd ($1,$3) in
-     let region    = cover $1 $3
-     and value     = {enclosing; statements; terminator}
-     in {region; value}
-  }
-| "block"? "{" sep_or_term_list(statement,";") "}" {
+  "block"? "{" sep_or_term_list(statement,";") "}" {
      let statements, terminator = $3
      and enclosing : block_enclosing = Braces ($1,$2,$4) in
      let start  = match $1 with
@@ -734,16 +985,31 @@ block:
                   | Some b -> b in
      let region = cover start $4
      and value  = {enclosing; statements; terminator}
+     in {region; value}
+  }
+| "begin" sep_or_term_list(statement,";") "end" {
+     let statements, terminator = $2
+     and enclosing : block_enclosing = BeginEnd ($1,$3) in
+     let region    = cover $1 $3
+     and value     = {enclosing; statements; terminator}
      in {region; value} }
 
-(* Assignments *)
+(* Assignments
+
+   The left-hand side (rhs) of an assignment can only be a path, but
+   the semantic action is a general expression. This means that the
+   parser is more restrictive that what the CST will tell. *)
 
 assignment(right_expr):
-  path_expr ":=" right_expr {
-    let stop   = expr_to_region $3 in
+  lhs ":=" right_expr {
+    let stop   = lhs_to_region $3 in
     let region = cover (expr_to_region $1) stop
     and value  = {lhs=$1; assign=$2; rhs=$3}
     in {region; value} }
+
+lhs:
+  path_expr  { $1 }
+| map_lookup { E_MapLookup $1 }
 
 (* Loops *)
 
@@ -788,30 +1054,51 @@ interactive_expr:
   expr EOF { $1 }
 
 (* Our definition of [expr] aims at solving the "dangling else"
-   problem in the grammar itself. Two subgoals are achieved:
+   problem in the grammar itself. That syntactical ambiguity arises
+   when there is in a language a _closed_ conditional of the form "if
+   e1 then e2 else e3" and an _open_ one of the form "if e1 then
+   e2". Indeed,
+
+     if a then if b then c else d
+
+   could be construed either as
+
+     if a then (if b then c) else d
+
+   or
+
+     if a then (if b then c else d)
+
+   The latter is the standard interpretation ("The 'else' sticks to
+   the last 'then'.").
+
+   To achieve this interpretation, two technical aims are implemented:
 
      * separating the conditional expressions ([cond_expr]) from the
        others ([base_expr]),
 
-     * identify the productions that are right-recursive.
+     * identifying the productions that are right-recursive.
 
-     The first point is needed to distinguish if-then, called "open",
-   from if-then-else conditionals, called "closed" because the "then"
-   clause cannot derive an open one.
+     The first point is needed to distinguish if-then from
+   if-then-else conditionals.
 
      The second point enables us to parameterise [base_expr] with
    [right_expr], for the benefit of those right-recursive
    rules. Depending on the right context, [base_expr] will be
    instanciated with different kinds of expressions. For example, we
    need [close_expr] to be an expression that is always suitable in
-   the "then" branch of a *closed* conditional, without triggering an
-   LR conflict because of a dangling else: see the definition of
-   [if_then_else_expr]. The [right_expr] parameter is useful because,
-   in the "then" branch of a closed conditional, we do not want to
-   generate on the right an expression that is not closed, that is an
-   open conditional, e.g.
+   the "then" branch of a _closed_ conditional, but a general
+   expression is always suitable in the "then" branch of an open
+   conditional. So the [right_expr] parameter is useful because, in
+   the "then" branch of a closed conditional, we do not want to
+   generate to its right an expression that is an open conditional,
+   e.g.
 
       if a then fun x -> if x then b else c // dangling else!
+
+   could be misconstrued as
+
+      if a then (fun x -> if x then b) else c // wrong
 
    Instead, using [close_expr] in the "then" branch of a close
    conditional yields the intended goal as if we had written
@@ -838,7 +1125,16 @@ base_expr(right_expr):
 | case(expr)                    { E_Case ($1 expr_to_region) }
 | disj_expr_level               { $1 }
 
-(* Conditional expressions *)
+(* Conditional expressions
+
+   The CST node [E_Cond] is used in the semantic action of rule
+   [if_then_expr], but not [if_then_else]. This enables a smoother,
+   more uniform reading of the semantic actions above.
+
+   Note how beautiful rule [closed_expr] is. We could have duplicate
+   instead [base_expr], but we did not, thanks to rule
+   parameterisation of Menhir, which is a very powerful design
+   feature. *)
 
 if_then_expr(right_expr):
   "if" expr "then" right_expr {
@@ -909,7 +1205,17 @@ set_mem_level:
   }
 | comp_expr_level { $1 }
 
-(* Comparisons *)
+(* Comparisons
+
+   Note that we made the choice of using the parameterised rule
+   [bin_op] instead of a more direct definition, like
+
+   comp_expr_level:
+     comp_expr_level "<" cat_expr_level { ... }
+   | ...
+
+   This is because we wanted the simplest possible semantic actions:
+   making a CST node, to avoid mistakes and confuse two operators. *)
 
 comp_expr_level:
   bin_op(comp_expr_level, "<",   cat_expr_level) { E_Lt    $1 }
@@ -953,43 +1259,54 @@ unary_expr_level:
 | update_expr_level                  { $1 }
 
 (* The rationale for the existence of [update_expr_level] is that we
-   use the keyword "with" in two very different contexts: record
-   updates and patches (see [instruction]) and the latter can derive
-   the former, leading to a conflict, like so:
+   use the keyword "with" in two different contexts: record updates
+   and patches (see [instruction]) and the latter can derive the
+   former, leading to a conflict, like so:
 
-     patch (e) with ... // Is "(e)" part of "(e) with" or the patch? *)
+     patch (e) with ...
+
+   could be the prefix of (adding parentheses):
+
+     patch ((e) with ...) with ...
+
+   Here, we enforce the first interpretation because of the rules for
+   patches starting with:
+
+    "patch" core_expr "with"
+ *)
 
 update_expr_level:
-  record_update       { E_Update    $1 }
-| core_expr           { $1 }
+  record_update   { E_Update    $1 }
+| core_expr       { $1 }
 
 core_expr:
-  "<int>"             { E_Int       $1 }
-| "<nat>"             { E_Nat       $1 }
-| "<mutez>"           { E_Mutez     $1 }
-| "<string>"          { E_String    $1 }
-| "<verbatim>"        { E_Verbatim  $1 }
-| "<bytes>"           { E_Bytes     $1 }
-| "False"             { E_False     $1 }
-| "True"              { E_True      $1 }
-| "Unit"              { E_Unit      $1 }
-| "nil"               { E_Nil       $1 }
-| "None"              { E_None      $1 }
-| some_expr           { E_Some      $1 }
-| tuple_expr          { E_Tuple     $1 }
-| list_expr           { E_List      $1 }
-| record_expr         { E_Record    $1 }
-| code_inj            { E_CodeInj   $1 }
-| ctor_expr           { E_Ctor      $1 }
-| map_expr            { E_Map       $1 }
-| big_map_expr        { E_BigMap    $1 }
-| set_expr            { E_Set       $1 }
-| par(typed_expr)     { E_Typed     $1 }
-| call_expr           { E_Call      $1 }
-| par(expr)           { E_Par       $1 }
-| path_expr           { $1 }
+  "<int>"         { E_Int       $1 }
+| "<nat>"         { E_Nat       $1 }
+| "<mutez>"       { E_Mutez     $1 }
+| "<string>"      { E_String    $1 }
+| "<verbatim>"    { E_Verbatim  $1 }
+| "<bytes>"       { E_Bytes     $1 }
+| "False"         { E_False     $1 }
+| "True"          { E_True      $1 }
+| "Unit"          { E_Unit      $1 }
+| "nil"           { E_Nil       $1 }
+| "None"          { E_None      $1 }
+| some_expr       { E_Some      $1 }
+| tuple_expr      { E_Tuple     $1 }
+| list_expr       { E_List      $1 }
+| record_expr     { E_Record    $1 }
+| code_inj        { E_CodeInj   $1 }
+| ctor_expr       { E_Ctor      $1 }
+| map_expr        { E_Map       $1 }
+| big_map_expr    { E_BigMap    $1 }
+| set_expr        { E_Set       $1 }
+| par(typed_expr) { E_Typed     $1 }
+| call_expr       { E_Call      $1 }
+| par(expr)       { E_Par       $1 }
+| map_lookup      { E_MapLookup $1 }
+| path_expr       { $1 }
 
-(* Map expressions (literal) *)
+(* Map expressions (extensional definition) *)
 
 map_expr:
   injection("map",binding) { $1 mk_map }
@@ -997,19 +1314,18 @@ map_expr:
 big_map_expr:
   injection("big_map",binding) { $1 mk_big_map }
 
+(* The rule [injection] derives some of the most common compound
+   constructs of PascaLIGO, typically definitions by extension of
+   lists, sets and maps. Those constructs can be empty, for instance,
+   an empty set makes sense. For compound constructs that cannot be
+   empty, like record types or patches, see [ne_injection]. Following
+   the writing guidelines here, we write first the terse version of
+   injections. The first parameter [Kind] is the keyword that
+   determine the sort of definition: "set", "list", "map" or
+   "big_map". *)
+
 injection(Kind,element):
-  Kind option(sep_or_term_list(element,";")) "end" {
-    fun mk_kwd ->
-      let kind, enclosing = mk_kwd $1, End $3
-      and elements, terminator =
-        match $2 with
-          Some (elts, term) -> Some elts, term
-        |              None -> None, None in
-      let region = cover $1 $3
-      and value  = {kind; enclosing; elements; terminator}
-      in {region; value}
-  }
-| Kind "[" option(sep_or_term_list(element,";")) "]" {
+  Kind "[" option(sep_or_term_list(element,";")) "]" {
     fun mk_kwd ->
       let kind, enclosing = mk_kwd $1, Brackets ($2,$4)
       and elements, terminator =
@@ -1018,9 +1334,20 @@ injection(Kind,element):
         |              None -> None, None in
       let region = cover $1 $4
       and value  = {kind; enclosing; elements; terminator}
+      in {region; value}
+  }
+| Kind option(sep_or_term_list(element,";")) "end" {
+    fun mk_kwd ->
+      let kind, enclosing = mk_kwd $1, End $3
+      and elements, terminator =
+        match $2 with
+          Some (elts, term) -> Some elts, term
+        |              None -> None, None in
+      let region = cover $1 $3
+      and value  = {kind; enclosing; elements; terminator}
       in {region; value} }
 
-(* Set expressions (literal) *)
+(* Set expressions (extensional definition) *)
 
 set_expr:
   injection("set",expr) { $1 mk_set }
@@ -1028,11 +1355,30 @@ set_expr:
 (* Constructed expressions *)
 
 ctor_expr:
-  ctor arguments { mk_reg (cover $1.region $2.region) ($1, Some $2) }
-| ctor           { {$1 with value = ($1, None)} }
+  ctor_app(arguments) { $1 }
+
+ctor_app(payload):
+  ctor payload { mk_reg (cover $1.region $2.region) ($1, Some $2) }
+| ctor         { {$1 with value = ($1, None)} }
+
+arguments:
+  par(nsepseq(expr,",")) { $1 }
 
 some_expr:
   "Some" arguments { mk_reg (cover $1 $2.region) ($1,$2) }
+
+(* Tuples of expressions *)
+
+tuple_expr:
+  par(tuple(expr)) { $1 }
+
+tuple(item):
+  item "," nsepseq(item,",") { Utils.nsepseq_cons $1 $2 $3 }
+
+(* List expressions (extensional definition) *)
+
+list_expr:
+  injection("list",expr) { $1 mk_list }
 
 (* Function calls *)
 
@@ -1040,32 +1386,34 @@ call_expr:
   path_expr arguments {
     let start  = expr_to_region $1 in
     let region = cover start $2.region
-    in mk_reg region ($1,$2)
-  }
+    in mk_reg region ($1,$2) }
 
 (* Typed expressions *)
 
 typed_expr:
   disj_expr_level type_annotation { $1,$2 }
 
-(* Paths *)
+(* Path expressions
 
-path_expr:
-  value_in_module brackets(expr)?
-| local_path brackets(expr)? { failwith "TODO" }
+   A path expression is a construct that qualifies unambiguously a
+   value or type. When maintaining this subgrammar, be wary of not
+   introducing a regression. Here are the possible cases:
 
-(*
-map_lookup:
-  local_path brackets(expr) {
-    let region = cover (expr_to_region $1) $2.region in
-    let value  = {map=$1; index=$2}
-    in {region; value} }
+      * a single variable: "a"
+      * a single variable in a nested module: "A.B.a"
+      * nested fields and compoments from a variable: "a.0.1.b"
+      * same withing a nested module: "A.B.a.0.1.b"
+      * nested fields and components from an expression: "(e).a.0.1.b"
  *)
 
+path_expr:
+  value_in_module | local_path { $1 }
+
 value_in_module:
-  module_path(field_path) { mk_mod_path $1 CST.expr_to_region }
-| module_name "." "or"    { mk_E_Var $1 "or"      }
+  module_name "." "or"    { mk_E_Var $1 "or"      }
 | module_name "." "and"   { mk_E_Var $1 "and"     }
+| module_path(field_path) {
+    E_ModPath (mk_mod_path $1 CST.expr_to_region) }
 
 field_path:
   variable "." nsepseq(selection,".") {
@@ -1073,50 +1421,63 @@ field_path:
     and stop   = nsepseq_to_region selection_to_region $3 in
     let region = cover start stop
     and value  = {record=$1; selector=$2; field_path=$3}
-    in E_Proj {region; value} (* TODO *)
-  }
-| variable { E_Var $1 } (* TODO *)
-
-local_path:
-  field_path { failwith "TODO" }
-| par(expr) "." nsepseq(selection,".") {
-    let start  = expr_to_region $1
-    and stop   = nsepseq_to_region selection_to_region $3 in
-    let region = cover start stop
-    and value  = {record=$1; selector=$2; field_path=$3}
     in E_Proj {region; value}
   }
+| variable { E_Var $1 }
 
 selection:
   field_name { FieldName $1 }
 | "<int>"    { Component $1 }
 
-(*
-value_in_module:
-  module_name "." "map"     { mk_E_Var $1 "map"     }
-| module_name "." "big_map" { mk_E_Var $1 "big_map" }
-| module_name "." "set"     { mk_E_Var $1 "set"     }
-| module_name "." "remove"  { mk_E_Var $1 "remove"  }
-
 local_path:
-  record "." nsepseq(selection,".") {
-    let start  = expr_to_region $1
-    and stop   = nsepseq_to_region selection_to_region $3 in
-    let region = cover start stop
+  par(expr) "." nsepseq(selection,".") {
+    let stop   = nsepseq_to_region selection_to_region $3 in
+    let region = cover $1.region stop
     and value  = {record=$1; selector=$2; field_path=$3}
     in E_Proj {region; value}
   }
-| variable { E_Var $1 }
+| field_path { $1 }
 
-record:
-  variable  { E_Var $1 }
-| par(expr) { E_Par $1 }
+(* Map lookups
+
+   With the first rule of map_lookup], all the above paths (rule
+   [path_expr]) can be terminated with a lookup, for example:
+
+      * "a[i]"
+      * "A.B.a[i]"
+      * "a.0.1.b[i]"
+      * "A.B.a.0.1.b[i]"
+
+   and we have a second rule that adds the possibility to lookup a
+   dynamically computed value, without introducing an intermediary
+   variable:
+
+      * "(e)[i]"
+*)
+
+map_lookup:
+  path_expr brackets(expr) {
+    let region = cover (expr_to_region $1) $2.region in
+    let value  = {map=$1; index=$2}
+    in {region; value}
+  }
+| par(expr) brackets(expr) {
+    let region = cover $1.region $2.region
+    let value  = {map=$1; index=$2}
+    in {region; value} }
+
+(* Record expressions
+
+   The extensional definitions of records can make use of _punning_,
+   by which the right-hand side of a field assigment is taken to be
+   the variable is the current scope which is the same has the field
+   name. This is a feature inspired by OCaml:
+
+  https://ocaml.org/releases/4.12/htmlman/coreexamples.html#s%3Atut-recvariants
  *)
 
-(* Record expressions *)
-
 record_expr:
-  ne_injection("record", field_assignment) { $1 mk_record }
+  ne_injection("record",field_assignment) { $1 mk_record }
 
 field_assignment:
   field_name "=" expr {
@@ -1127,8 +1488,10 @@ field_assignment:
   }
 | field_name { {$1 with value = Punned $1} }
 
+(* Record updates *)
+
 record_update:
-  core_expr "with" ne_injection("record", field_path_assignment) {
+  core_expr "with" ne_injection("record",field_path_assignment) {
     let updates = $3 mk_record in
     let region  = cover (expr_to_region $1) updates.region
     and value   = {record=$1; kwd_with=$2; updates}
@@ -1140,25 +1503,15 @@ field_path_assignment:
     and value  = {field_lhs=$1; assign=$2; field_rhs=$3}
     in {region; value} }
 
+(* Code injection *)
+
 code_inj:
   "[%<lang>" expr "]" {
     let region = cover $1.region $3
     and value  = {language=$1; code=$2; rbracket=$3}
     in {region; value} }
 
-tuple_expr:
-  par(tuple(expr)) { $1 }
-
-tuple(item):
-  item "," nsepseq(item,",") { Utils.nsepseq_cons $1 $2 $3 }
-
-arguments:
-  par(nsepseq(expr,",")) { $1 }
-
-list_expr:
-  injection("list",expr) { $1 mk_list }
-
-(* Patterns *)
+(* PATTERNS *)
 
 pattern:
   core_pattern "#" nsepseq(core_pattern,"#") {
@@ -1188,39 +1541,42 @@ core_pattern:
 | par(pattern)
 | par(typed_pattern) { P_Par           $1 }
 
+(* Typed patterns *)
+
 typed_pattern:
-  pattern type_annotation  {
+  pattern type_annotation {
     let start  = pattern_to_region $1 in
     let stop   = type_expr_to_region (snd $2) in
     let region = cover start stop in
     let value  = {pattern=$1; type_annot=$2}
     in P_Typed {region; value} }
 
-some_pattern:
-  "Some" par(core_pattern) { mk_reg (cover $1 $2.region) ($1,$2) }
-
-record_pattern:
-  ne_injection("record", field(core_pattern)) { $1 mk_record }
-
-field(rhs):
-  field_name "=" rhs {
-    let start  = $1.region
-    and stop   = pattern_to_region $3 in
-    let region = cover start stop
-    and value  = Complete {field_name=$1; assign=$2;
-                           field_rhs=$3; attributes=[]}
-    in {region; value} }
-| field_name { {$1 with value = Punned $1} }
+(* List patterns *)
 
 list_pattern:
   injection("list",core_pattern) { $1 mk_list }
 
+(* Constructed patterns *)
+
 ctor_pattern:
-  ctor tuple_pattern {
-    let region = cover $1.region $2.region
-    in mk_reg region ($1, Some $2)
-  }
-| ctor { {$1 with value = ($1, None)} }
+  ctor_app(tuple_pattern) { $1 }
 
 tuple_pattern:
   par(tuple(pattern)) { $1 }
+
+some_pattern:
+  "Some" par(core_pattern) { mk_reg (cover $1 $2.region) ($1,$2) }
+
+(* Record patterns *)
+
+record_pattern:
+  ne_injection("record", field_pattern) { $1 mk_record }
+
+field_pattern:
+  field_name "=" core_pattern {
+    let stop   = pattern_to_region $3 in
+    let region = cover $1.region stop
+    and value  = Complete {field_name=$1; assign=$2;
+                           field_rhs=$3; attributes=[]}
+    in {region; value} }
+| field_name { {$1 with value = Punned $1} }
