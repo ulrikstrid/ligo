@@ -3,7 +3,7 @@ open Trace
 
 let all_mapper = [
   Helpers.fold_to_map () Scoping.peephole;
-  Comments.promote
+  Comments.map_comments
 ]
 
 let all_module =
