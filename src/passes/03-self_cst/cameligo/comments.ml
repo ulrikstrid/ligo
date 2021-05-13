@@ -186,9 +186,9 @@ and promote_pattern: pattern -> (pattern, 'err) result = fun p ->
     ok @@ PTyped {value; region}
   | _ as p -> ok p
 
-and promote_case_clause: ('a ->  ('a CST.update_region, _) result) -> 'a case_clause reg ->  ('a case_clause reg, _) result = fun func c -> 
+and promote_case_clause: ('a ->  'a CST.update_region) -> 'a case_clause reg ->  ('a case_clause reg, _) result = fun func c -> 
   let value = c.value in
-  let* rhs = func value.rhs in
+  let rhs = func value.rhs in
   let region, pattern, rhs = cover_m (c_pattern value.pattern) rhs in
   let value = {value with pattern; rhs} in
   ok @@ {value; region}
@@ -203,6 +203,8 @@ and promote_to_expression: expr -> (expr,'err) result =
     match e with 
       ECase {value; _} ->
         let cases = value.cases in
+        let* cases_value = Helpers.bind_map_npseq (promote_case_clause c_expr) value.cases.value in
+        let cases = {cases with value=cases_value} in
         let region, kwd_match, c = cover_m (c_token value.kwd_match) (c_nsepseq_last cases.value c_reg) in
         let cases = {cases with value = c} in
         let value = {value with cases; kwd_match} in
@@ -316,7 +318,6 @@ and promote_to_expression: expr -> (expr,'err) result =
     | ECall {value; _} ->
       let region, func, arg = cover_m (c_expr (fst value)) (c_nseq_last (snd value) c_expr) in
       let value = func, arg in
-      (* print_endline ("ECall: " ^ string_of_int (List.length region#markup)); *)
       ok @@ ECall {value; region}
     | EUnit {value; _} ->
       let region, lpar, rpar = cover_m (c_token (fst value)) (c_token (snd value)) in
