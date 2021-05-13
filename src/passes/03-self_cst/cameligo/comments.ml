@@ -103,14 +103,15 @@ and promote_to_type: type_expr -> (type_expr,'err) result = fun t ->
   | TRecord {value; region} ->   
       let attributes = value.attributes in
       let compound = value.compound in
+      let* ne_elements = Helpers.bind_map_npseq promote_field_decl value.ne_elements in
       (match attributes, compound with 
         hd :: tl, Some (Braces (lbrace, rbrace)) ->
           let region, hd, rbrace = cover_m (c_reg hd) (c_token rbrace) in
-          let value = {value with attributes = hd :: tl; compound = Some (Braces(lbrace, rbrace))} in
+          let value = {value with attributes = hd :: tl; compound = Some (Braces(lbrace, rbrace)); ne_elements} in
           ok @@ TRecord {value; region}
       | [], Some (Braces (lbrace, rbrace)) -> 
         let region, lbrace, rbrace = cover_m (c_token lbrace) (c_token rbrace) in
-        let value = {value with compound = Some (Braces(lbrace, rbrace))} in
+        let value = {value with compound = Some (Braces(lbrace, rbrace)); ne_elements} in
         ok @@ TRecord {value; region}
       | _, _ -> ok @@ TRecord {value; region}
       );
@@ -300,14 +301,15 @@ and promote_to_expression: expr -> (expr,'err) result =
     | ERecord {value; region} ->     
         let attributes = value.attributes in
         let compound = value.compound in
+        let* ne_elements = Helpers.bind_map_npseq promote_field_assign value.ne_elements in
         (match attributes, compound with 
           hd :: tl, Some (Braces (lbrace, rbrace)) ->
             let region, hd, rbrace = cover_m (c_reg hd) (c_token rbrace) in
-            let value = {value with attributes = hd :: tl; compound = Some (Braces(lbrace, rbrace))} in
+            let value = {value with attributes = hd :: tl; compound = Some (Braces(lbrace, rbrace)); ne_elements} in
             ok @@ ERecord {value; region}
         | [], Some (Braces (lbrace, rbrace)) -> 
           let region, lbrace, rbrace = cover_m (c_token lbrace) (c_token rbrace) in
-          let value = {value with compound = Some (Braces(lbrace, rbrace))} in
+          let value = {value with compound = Some (Braces(lbrace, rbrace)); ne_elements} in
           ok @@ ERecord {value; region}
         | _, _ -> ok @@ ERecord {value; region}
         );  
