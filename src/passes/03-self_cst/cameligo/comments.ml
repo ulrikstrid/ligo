@@ -1,10 +1,7 @@
-[@@@warning "-33"]
-
 module Region = Simple_utils.Region
 module CST    = Cst.Cameligo
 
 open Region
-open Errors
 open Trace
 open CST
 
