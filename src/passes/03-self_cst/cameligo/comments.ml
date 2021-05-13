@@ -269,6 +269,14 @@ and promote_to_expression: expr -> (expr,'err) result =
     | EList (ECons {value; _}) ->
         let* v = bin_op value in 
         ok @@ EList (ECons v)
+    | EList (EListComp {value; region}) ->
+        (match value.compound with 
+          Some (Brackets (lbracket, rbracket)) ->
+            let region, lbracket, rbracket = cover_tokens lbracket rbracket in
+            let compound = Some (Brackets (lbracket, rbracket)) in
+            let value = {value with compound} in
+            ok @@ EList (EListComp {value; region})
+        | _ -> ok @@ EList (EListComp {value; region}))
     | EConstr (ESomeApp {value; _}) ->
         let constr, arg = value in
         let region, c_some, e = cover_m (c_token constr) (c_expr arg) in
