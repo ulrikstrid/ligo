@@ -85,7 +85,7 @@ and promote_to_type: type_expr -> (type_expr,'err) result = fun t ->
   | TSum {value; _} ->
       let attributes = value.attributes in
       let lead_vbar = value.lead_vbar in
-      let variants = value.variants in
+      let* variants = Helpers.bind_map_npseq promote_variant value.variants in
       (match attributes, lead_vbar with 
         hd :: tl, _ -> 
           let region, hd, variants = cover_m (c_reg hd) (c_nsepseq_last variants c_reg) in
