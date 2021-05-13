@@ -160,6 +160,7 @@ let constant'_tag = function
   | C_TEST_COMPILE_META_VALUE -> 146
   | C_TEST_COMPILE_EXPRESSION_SUBST -> 147
   | C_POLYMORPHIC_ADD         -> 148
+  | C_TEST_MUTATE_EXPRESSION  -> 149
 
 let constant' a b = Int.compare (constant'_tag a) (constant'_tag b)
 

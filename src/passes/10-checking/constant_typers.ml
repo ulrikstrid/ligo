@@ -971,6 +971,10 @@ let test_last_originations loc = typer_1 loc "TEST_LAST_ORIGINATIONS" @@ fun u -
 let test_compile_meta_value loc = typer_1 loc "TEST_LAST_ORIGINATIONS" @@ fun _ ->
   ok (t_michelson_code ())
 
+let test_mutate_expression loc = typer_1 loc "TEST_MUTATE_EXPRESSION" @@ fun expr ->
+  let* () = assert_eq loc expr (t_ligo_code ()) in
+  ok (t_ligo_code ())
+
 let constant_typers loc c : (typer , typer_error) result = match c with
   | C_INT                 -> ok @@ int loc ;
   | C_UNIT                -> ok @@ unit loc ;
@@ -1104,6 +1108,7 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_TEST_STATE_RESET -> ok @@ test_state_reset loc ;
   | C_TEST_LAST_ORIGINATIONS -> ok @@ test_last_originations loc ;
   | C_TEST_COMPILE_META_VALUE -> ok @@ test_compile_meta_value loc ;
+  | C_TEST_MUTATE_EXPRESSION -> ok @@ test_mutate_expression loc ;
   (* JsLIGO *)
   | C_POLYMORPHIC_ADD  -> ok @@ polymorphic_add loc ;
   | _ as cst -> fail (corner_case @@ Format.asprintf "typer not implemented for constant %a" PP.constant' cst)

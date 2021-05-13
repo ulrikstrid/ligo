@@ -215,6 +215,13 @@ let%expect_test _ =
   [%expect {|
   Test passed with 111 |}]
 
+let%expect_test _ =
+  run_ligo_good [ "test" ; test "test_mutate_example.mligo" ; "test" ] ;
+  [%expect {|
+    Increment (-30 - -6)
+    -14
+    Test passed with false |}]
+
 (* do not remove that :) *)
 let () = Sys.chdir pwd
 
