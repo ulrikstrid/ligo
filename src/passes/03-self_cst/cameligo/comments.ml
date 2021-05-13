@@ -316,6 +316,7 @@ and promote_to_expression: expr -> (expr,'err) result =
     | ECall {value; _} ->
       let region, func, arg = cover_m (c_expr (fst value)) (c_nseq_last (snd value) c_expr) in
       let value = func, arg in
+      (* print_endline ("ECall: " ^ string_of_int (List.length region#markup)); *)
       ok @@ ECall {value; region}
     | EUnit {value; _} ->
       let region, lpar, rpar = cover_m (c_token (fst value)) (c_token (snd value)) in
@@ -332,7 +333,7 @@ and promote_to_expression: expr -> (expr,'err) result =
       (match value.attributes with 
         hd :: tl ->
           let region, fst_attr, body = cover_m (c_reg hd) (c_expr value.body) in
-          let value = {value with attributes = fst_attr :: tl; body} in
+          let value = {value with attributes = fst_attr :: tl; body} in          
           ok @@ ELetIn {value; region}
       | [] -> 
         let region, kwd_let, body = cover_m (c_token value.kwd_let) (c_expr value.body) in
@@ -378,7 +379,7 @@ and promote_to_declaration: declaration -> (declaration,'err) result = fun d ->
       match attributes with  
         hd :: tl  ->
           let region, hd_attr, binding_let_rhs = cover_m (c_reg hd) (c_expr binding.let_rhs) in
-          let value = kwd_let, kwd_rec, {binding with let_rhs = binding_let_rhs}, (hd_attr :: tl) in
+          let value = kwd_let, kwd_rec, {binding with let_rhs = binding_let_rhs}, (hd_attr :: tl) in          
           ok @@ Let {region; value} 
       | [] ->
           let region, kwd_let, binding_let_rhs = cover_m (c_token kwd_let) (c_expr binding.let_rhs) in

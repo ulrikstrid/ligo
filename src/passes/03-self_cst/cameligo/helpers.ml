@@ -257,9 +257,8 @@ type ('err) mapper = {
 
 let rec map_type_expression : ('err) mapper -> type_expr -> ('b, 'err) result = fun f t ->
   let self = map_type_expression f in
-  let* t = f.t t in
   let return = ok in
-  match t with
+  let* t = match t with
     TProd   {value;region} ->
     let* value = bind_map_npseq self value in
     return @@ TProd {value;region}
@@ -305,20 +304,21 @@ let rec map_type_expression : ('err) mapper -> type_expr -> ('b, 'err) result = 
   | TWild   _
   | TInt _
   | TString _ -> ok @@ t
-
+  in 
+  f.t t
+  
 let rec map_expression : ('err) mapper -> expr -> (expr, 'err) result = fun f e  ->
   let self = map_expression f in
   let self_type = map_type_expression f in
   let self_module = map_module f in
   let return = ok in
-  let* e = f.e e in
   let bin_op value =
     let {op;arg1;arg2} = value in
     let* arg1 = self arg1 in
     let* arg2 = self arg2 in
     ok @@ {op;arg1;arg2}
   in
-  match e with
+  let* e = match e with
     ECase    {value;region} ->
     let {kwd_match=_;expr;kwd_with=_;lead_vbar=_;cases} = value in
     let* expr = self expr in
@@ -500,6 +500,8 @@ let rec map_expression : ('err) mapper -> expr -> (expr, 'err) result = fun f e 
     let* code = self value.code in
     let value = {value with code} in
     return @@ ECodeInj {value;region}
+  in 
+  f.e e
 
 and matching_cases self (cases: _ Utils.nsepseq reg) =
   let* value = bind_map_npseq (case_clause self) @@ cases.value in
@@ -517,8 +519,7 @@ and map_declaration : ('err) mapper -> declaration -> (declaration, 'err) result
   let self_type = map_type_expression f in
   let self_module = map_module f in
   let return = ok in
-  let* d = f.d d in
-  match d with
+  let* d = match d with
     Let {value;region} ->
     let (kwd_let,kwd_rec,let_binding,attr) = value in
     let {binders;lhs_type;eq;let_rhs} = let_binding in
@@ -542,6 +543,8 @@ and map_declaration : ('err) mapper -> declaration -> (declaration, 'err) result
     let {kwd_module=_;alias=_;eq=_;binders=_} = value in
     return @@ ModuleAlias {value;region}
   | Directive _ as d -> return d
+  in 
+  f.d d
 
 and map_module : ('err) mapper -> t -> (t, 'err) result =
   fun f {decl;eof} ->
