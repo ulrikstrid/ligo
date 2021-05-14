@@ -2,23 +2,16 @@ open Trace
 open Test_helpers
 open Ast_imperative
 
-let retype_file f = Ligo_compile.Utils.type_file ~options f "reasonligo" Env
-
-let get_program =
-  let s = ref None in
-  fun () -> match !s with
-    | Some s -> ok s
-    | None -> (
-      let%bind program = retype_file "./contracts/pledge.religo" in
+let get_program = wrap_ref (fun s ->
+      let* program = type_file "./contracts/pledge.religo" Env options in
       s := Some program ;
-      ok program
-    )
+      ok program)
 
 let compile_main () =
-  let%bind typed_prg,_    = get_program () in
-  let%bind mini_c_prg     = Ligo_compile.Of_typed.compile typed_prg in
-  let%bind michelson_prg  = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
-  let%bind _contract =
+  let* typed_prg,_    = get_program () in
+  let* mini_c_prg     = Ligo_compile.Of_typed.compile typed_prg in
+  let* michelson_prg  = Ligo_compile.Of_mini_c.aggregate_and_compile_contract ~options mini_c_prg "main" in
+  let* _contract =
     (* fails if the given entry point is not a valid contract *)
     Ligo_compile.Of_michelson.build_contract michelson_prg in
   ok ()
@@ -43,7 +36,7 @@ let empty_message = e_lambda_ez (Location.wrap @@ Var.of_name "arguments")
 
 
 let pledge () =
-  let%bind (program,env) = get_program () in
+  let* (program,env) = get_program () in
   let storage = e_address oracle_addr in
   let parameter = e_unit () in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
@@ -55,7 +48,7 @@ let pledge () =
     (e_pair (e_list []) storage)
 
 let distribute () =
-  let%bind (program,env) = get_program () in
+  let* (program,env) = get_program () in
   let storage = e_address oracle_addr in
   let parameter =  empty_message in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
@@ -66,7 +59,7 @@ let distribute () =
     (e_pair (e_list []) storage)
 
 let distribute_unauthorized () =
-  let%bind (program,env) = get_program () in
+  let* (program,env) = get_program () in
   let storage = e_address oracle_addr in
   let parameter =  empty_message in
   let options = Proto_alpha_utils.Memory_proto_alpha.make_options
