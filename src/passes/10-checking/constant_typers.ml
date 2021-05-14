@@ -971,7 +971,8 @@ let test_last_originations loc = typer_1 loc "TEST_LAST_ORIGINATIONS" @@ fun u -
 let test_compile_meta_value loc = typer_1 loc "TEST_LAST_ORIGINATIONS" @@ fun _ ->
   ok (t_michelson_code ())
 
-let test_mutate_expression loc = typer_1 loc "TEST_MUTATE_EXPRESSION" @@ fun expr ->
+let test_mutate_expression loc = typer_2 loc "TEST_MUTATE_EXPRESSION" @@ fun n expr ->
+  let* () = assert_eq loc n (t_nat ()) in
   let* () = assert_eq loc expr (t_ligo_code ()) in
   ok (t_ligo_code ())
 
