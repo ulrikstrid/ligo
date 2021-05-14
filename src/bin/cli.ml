@@ -907,7 +907,7 @@ let mutate_cst =
           let* applied =
             trace Main_errors.self_cst_cameligo_tracer @@
               Self_cst.Cameligo.all_module raw in
-          let* mutated_prg = Fuzzer.mutate_module_ ?n:seed applied in
+          let mutated_prg = Fuzzer.mutate_module_ ?n:seed applied in
           let* buffer = trace Main_errors.pretty_tracer @@
                           ok (Parsing.Cameligo.pretty_print mutated_prg) in
           ok @@ buffer
@@ -921,7 +921,7 @@ let mutate_cst =
           let* applied =
             trace Main_errors.self_cst_reasonligo_tracer @@
               Self_cst.Reasonligo.all_module raw in
-          let* mutated_prg = Fuzzer.mutate_module_ ?n:seed applied in
+          let mutated_prg = Fuzzer.mutate_module_ ?n:seed applied in
           let* buffer = trace Main_errors.pretty_tracer @@
                           ok (Parsing.Reasonligo.pretty_print mutated_prg) in
           ok @@ buffer
@@ -935,7 +935,7 @@ let mutate_cst =
           let* applied =
             trace Main_errors.self_cst_pascaligo_tracer @@
               Self_cst.Pascaligo.all_module raw in
-          let* mutated_prg = Fuzzer.mutate_module_ ?n:seed applied in
+          let mutated_prg = Fuzzer.mutate_module_ ?n:seed applied in
           let* buffer = trace Main_errors.pretty_tracer @@
                           ok (Parsing.Pascaligo.pretty_print mutated_prg) in
           ok @@ buffer
@@ -949,7 +949,7 @@ let mutate_cst =
           let* applied =
             trace Main_errors.self_cst_jsligo_tracer @@
               Self_cst.Jsligo.all_module raw in
-          let* mutated_prg = Fuzzer.mutate_module_ ?n:seed applied in
+          let mutated_prg = Fuzzer.mutate_module_ ?n:seed applied in
           let* buffer = trace Main_errors.pretty_tracer @@
                           ok (Parsing.Jsligo.pretty_print mutated_prg) in
           ok @@ buffer

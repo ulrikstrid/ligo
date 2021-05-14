@@ -223,7 +223,11 @@ let%expect_test _ =
     Increment (-32)
     -22
     Increment (33)
-    11
+    43
+    Increment (31)
+    41
+    Increment (64)
+    74
     Test passed with true |}]
 
 (* do not remove that :) *)

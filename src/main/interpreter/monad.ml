@@ -33,6 +33,7 @@ module Command = struct
     | Compile_contract : string * string -> (LT.value * LT.value) t
     | Compile_meta_value : Location.t * LT.value -> LT.value t
     | Mutate_expression : Location.t * Z.t * string * string -> (string * string) t
+    | Mutate_count : Location.t * string * string -> LT.value t
     | Inject_script : Location.t * LT.value * LT.value -> LT.value t
     | Set_now : Location.t * Z.t -> unit t
     | Set_source : LT.value -> unit t
@@ -179,7 +180,7 @@ module Command = struct
              let module Fuzzer = Fuzz.Cameligo.Mutator(Gen) in
              let* raw = trace Main_errors.parser_tracer @@
                           Parsing.Cameligo.parse_expression c_unit_exp in
-             let* mutated_prg = Fuzzer.mutate_expression ~n raw in
+             let mutated_prg = Fuzzer.mutate_expression ~n raw in
              trace Main_errors.pretty_tracer @@
                ok (Parsing.Cameligo.pretty_print_expression mutated_prg)
            end
@@ -188,7 +189,7 @@ module Command = struct
              let module Fuzzer = Fuzz.Reasonligo.Mutator(Gen) in
              let* raw = trace Main_errors.parser_tracer @@
                           Parsing.Reasonligo.parse_expression c_unit_exp in
-             let* mutated_prg = Fuzzer.mutate_expression ~n raw in
+             let mutated_prg = Fuzzer.mutate_expression ~n raw in
              trace Main_errors.pretty_tracer @@
                ok (Parsing.Reasonligo.pretty_print_expression mutated_prg)
            end
@@ -197,7 +198,7 @@ module Command = struct
              let module Fuzzer = Fuzz.Pascaligo.Mutator(Gen) in
              let* raw = trace Main_errors.parser_tracer @@
                           Parsing.Pascaligo.parse_expression c_unit_exp in
-             let* mutated_prg = Fuzzer.mutate_expression ~n raw in
+             let mutated_prg = Fuzzer.mutate_expression ~n raw in
              trace Main_errors.pretty_tracer @@
                ok (Parsing.Pascaligo.pretty_print_expression mutated_prg)
            end
@@ -206,12 +207,54 @@ module Command = struct
              let module Fuzzer = Fuzz.Jsligo.Mutator(Gen) in
              let* raw = trace Main_errors.parser_tracer @@
                           Parsing.Jsligo.parse_expression c_unit_exp in
-             let* mutated_prg = Fuzzer.mutate_expression ~n raw in
+             let mutated_prg = Fuzzer.mutate_expression ~n raw in
              trace Main_errors.pretty_tracer @@
                ok (Parsing.Jsligo.pretty_print_expression mutated_prg)
            end in
       let expr = Buffer.contents buffer in
       ok ((syntax, expr), ctxt)
+    | Mutate_count (_loc, syntax, expr) ->
+      begin
+        let open Ligo_compile in
+        let options = Compiler_options.make () in
+        let* meta  = Of_source.make_meta syntax None in
+        let* c_unit_exp, _ = Of_source.compile_string ~options ~meta expr in
+        let module Gen = Fuzz.Lst in
+        let* count = match meta.syntax with
+          | CameLIGO ->
+             begin
+               let module Fuzzer = Fuzz.Cameligo.Mutator(Gen) in
+               let* raw = trace Main_errors.parser_tracer @@
+                            Parsing.Cameligo.parse_expression c_unit_exp in
+               let mutated_prgs = Fuzzer.mutate_expression_list raw in
+               ok @@ List.length mutated_prgs
+             end
+          | ReasonLIGO ->
+             begin
+               let module Fuzzer = Fuzz.Reasonligo.Mutator(Gen) in
+               let* raw = trace Main_errors.parser_tracer @@
+                            Parsing.Reasonligo.parse_expression c_unit_exp in
+               let mutated_prgs = Fuzzer.mutate_expression_list raw in
+               ok @@ List.length mutated_prgs
+             end
+          | PascaLIGO ->
+             begin
+               let module Fuzzer = Fuzz.Pascaligo.Mutator(Gen) in
+               let* raw = trace Main_errors.parser_tracer @@
+                            Parsing.Pascaligo.parse_expression c_unit_exp in
+               let mutated_prgs = Fuzzer.mutate_expression_list raw in
+               ok @@ List.length mutated_prgs
+             end
+          | JsLIGO ->
+             begin
+               let module Fuzzer = Fuzz.Jsligo.Mutator(Gen) in
+               let* raw = trace Main_errors.parser_tracer @@
+                            Parsing.Jsligo.parse_expression c_unit_exp in
+               let mutated_prgs = Fuzzer.mutate_expression_list raw in
+               ok @@ List.length mutated_prgs
+             end in
+        ok (LT.V_Ct (C_nat (Z.of_int count)) , ctxt)
+      end
     | Set_now (loc, now) ->
       let* ctxt = Tezos_state.set_timestamp ~loc ctxt now in
       ok ((), ctxt) 

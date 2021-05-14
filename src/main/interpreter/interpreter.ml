@@ -296,6 +296,9 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
     | ( C_TEST_MUTATE_EXPRESSION , [ V_Ct (C_nat n); V_Ligo (syntax,ligo_exp) ] ) ->
       let>> x = Mutate_expression (loc,n,syntax,ligo_exp) in
       return (V_Ligo x)
+    | ( C_TEST_MUTATE_COUNT , [ V_Ligo (syntax,ligo_exp) ] ) ->
+      let>> x = Mutate_count (loc,syntax,ligo_exp) in
+      return x
     | ( C_FAILWITH , [ a ] ) ->
       raise (Meta_lang_ex {location = loc ; reason = Val a})
     | _ -> Fail_ligo (Errors.generic_error loc "Unbound primitive.")

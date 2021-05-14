@@ -4,6 +4,7 @@ module type Monad = sig
   type 'a t
   val return : 'a -> 'a t
   val get_one : ?n:int -> 'a t -> 'a
+  val get_list : ?n:int -> 'a t -> 'a list
   val oneof : 'a t list -> 'a t
   val mutate_int : int -> int t
   val mutate_nat : int -> int t
@@ -26,6 +27,8 @@ module Rnd : Monad = struct
          Random.set_state curr;
          rand in
     Gen.generate1 ~rand x
+  let get_list ?(n = 100) l =
+    Gen.generate ~n l
   let oneof l = Gen.oneof l
   let mutate_int z = Gen.oneof [Gen.return z; Gen.small_int]
   let mutate_nat n = Gen.oneof [Gen.return n; Gen.big_nat]
@@ -38,6 +41,9 @@ module Lst : Monad = struct
   let return x = [x]
   let (let*) x f = List.concat (List.map f x)
   let get_one ?(n = 0) l = List.nth l n
+  let get_list ?n l =
+    let n = Option.unopt ~default:(List.length l) n in
+    List.take n l
   let oneof l = List.concat l
   let mutate_int n = [n]
   let mutate_nat n = [n]
