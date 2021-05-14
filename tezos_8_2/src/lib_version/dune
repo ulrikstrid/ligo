@@ -1,6 +1,7 @@
 (library
  (name tezos_version)
  (public_name tezos-version)
+ (modules_without_implementation version)
  (libraries tezos-base)
  (flags (:standard -open Tezos_base__TzPervasives)))
 

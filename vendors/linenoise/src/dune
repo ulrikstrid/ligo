@@ -1,0 +1,11 @@
+
+(library
+  (name linenoise)
+  (public_name linenoise)
+  (modules LNoise)
+  (wrapped false)
+  (flags :standard -warn-error -3)
+  (c_flags :standard -I/usr/include)
+  (c_names linenoise_src linenoise_stubs)
+  (libraries result))
+   
