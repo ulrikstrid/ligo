@@ -167,29 +167,51 @@ module Command = struct
       | Tezos_state.Fail errs -> raise (Exc.Object_lang_ex (loc,errs))
     )
     | Mutate_expression (_loc, syntax, expr) ->
-       begin
-         match syntax with
-         | "cameligo" ->
-            begin
-              let open Ligo_compile in
-              let options = Compiler_options.make () in
-              let module Gen = Fuzz.Rnd in
-              let module Fuzzer = Fuzz.Cameligo.Mutator(Gen) in
-              let init_env   = options.init_env in
-              let options = Compiler_options.make ~init_env () in
-              let* meta  = Of_source.make_meta syntax None in
-              let* c_unit_exp, _ = Of_source.compile_string ~options ~meta expr in
-              let* raw = trace Main_errors.parser_tracer @@
-                           Parsing.Cameligo.parse_expression c_unit_exp in
-              let* mutated_prg = Fuzzer.mutate_expression ~n:3 raw in
-              let* buffer = trace Main_errors.pretty_tracer @@
-                              ok (Parsing.Cameligo.pretty_print_expression mutated_prg) in
-              let expr = Buffer.contents buffer in
-              ok ((syntax, expr), ctxt)
-            end
-         | _ ->
-            ok ((syntax, expr), ctxt)
-       end
+      let open Ligo_compile in
+      let options = Compiler_options.make () in
+      let* meta  = Of_source.make_meta syntax None in
+      let* c_unit_exp, _ = Of_source.compile_string ~options ~meta expr in
+      let module Gen = Fuzz.Rnd in
+      let seed = 3 in
+      let* buffer = match meta.syntax with
+        | CameLIGO ->
+           begin
+             let module Fuzzer = Fuzz.Cameligo.Mutator(Gen) in
+             let* raw = trace Main_errors.parser_tracer @@
+                          Parsing.Cameligo.parse_expression c_unit_exp in
+             let* mutated_prg = Fuzzer.mutate_expression ~n:seed raw in
+             trace Main_errors.pretty_tracer @@
+               ok (Parsing.Cameligo.pretty_print_expression mutated_prg)
+           end
+        | ReasonLIGO ->
+           begin
+             let module Fuzzer = Fuzz.Reasonligo.Mutator(Gen) in
+             let* raw = trace Main_errors.parser_tracer @@
+                          Parsing.Reasonligo.parse_expression c_unit_exp in
+             let* mutated_prg = Fuzzer.mutate_expression ~n:seed raw in
+             trace Main_errors.pretty_tracer @@
+               ok (Parsing.Reasonligo.pretty_print_expression mutated_prg)
+           end
+        | PascaLIGO ->
+           begin
+             let module Fuzzer = Fuzz.Pascaligo.Mutator(Gen) in
+             let* raw = trace Main_errors.parser_tracer @@
+                          Parsing.Pascaligo.parse_expression c_unit_exp in
+             let* mutated_prg = Fuzzer.mutate_expression ~n:seed raw in
+             trace Main_errors.pretty_tracer @@
+               ok (Parsing.Pascaligo.pretty_print_expression mutated_prg)
+           end
+        | JsLIGO ->
+           begin
+             let module Fuzzer = Fuzz.Jsligo.Mutator(Gen) in
+             let* raw = trace Main_errors.parser_tracer @@
+                          Parsing.Jsligo.parse_expression c_unit_exp in
+             let* mutated_prg = Fuzzer.mutate_expression ~n:seed raw in
+             trace Main_errors.pretty_tracer @@
+               ok (Parsing.Jsligo.pretty_print_expression mutated_prg)
+           end in
+      let expr = Buffer.contents buffer in
+      ok ((syntax, expr), ctxt)
     | Set_now (loc, now) ->
       let* ctxt = Tezos_state.set_timestamp ~loc ctxt now in
       ok ((), ctxt) 
