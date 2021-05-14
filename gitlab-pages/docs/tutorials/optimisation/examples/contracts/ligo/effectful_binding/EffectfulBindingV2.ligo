@@ -4,22 +4,19 @@
    we can inline the calls to this function.
 *)
 
-const some_contract
-= ("KT1WhG8rMaC1azBJApBHW2JJdhWuhvemw4Zf" : address)
+const some_contract = ("KT1WhG8rMaC1azBJApBHW2JJdhWuhvemw4Zf" : address)
 
 (* Calls to a function can be inlined *)
 [@inline] function target_exists (const u : unit) is
 block {
-  const c : option (contract (int))
-  = Tezos.get_contract_opt (some_contract)
+  const c : option (contract (int)) = Tezos.get_contract_opt (some_contract)
 } with
     case c of [
       Some (contract) -> True
     | None -> False
     ]
 
-type parameter is
-    Increment | IncrementIfEmpty | IncrementIfExists
+type parameter is Increment | IncrementIfEmpty | IncrementIfExists
 
 function main (const p : parameter; const s : int) is
 block {

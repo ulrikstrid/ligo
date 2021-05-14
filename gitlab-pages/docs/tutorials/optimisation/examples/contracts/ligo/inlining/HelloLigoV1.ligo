@@ -4,19 +4,21 @@
 
 type a_complex_record is
   record [
-    h : int;
-    e : int;
-    l : int;
-    l_ : int;
-    o : int;
-    ligo : int
+    complex : int;
+    object : int;
+    that : int;
+    has : int;
+    many : int;
+    fields : int;
+    and_some : int;
+    counter : int
   ]
 
 (* A function that doesn't perform a lot of computations
    but has a complex type *)
-function h_plus_one (const r : a_complex_record) is
+function plus_one (const r : a_complex_record) is
   r with
-    record [h = r.h + 1]
+    record [counter = r.counter + 1]
 
 function main (const p : int; const s : a_complex_record) is
-  ((list [] : list (operation)), h_plus_one (h_plus_one (s)))
+  ((list [] : list (operation)), plus_one (plus_one (s)))

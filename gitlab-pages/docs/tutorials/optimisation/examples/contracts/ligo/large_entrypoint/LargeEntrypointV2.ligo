@@ -18,8 +18,7 @@ type large_record is
    see /migrations/5_deploy_large_entrypoint.js *)
 function large_entrypoint (const p : int) is
 block {
-  const x
-  = "A long line of meaningless words occupying storage";
+  const x = "A long line of meaningless words occupying storage";
   function some_lambda (const n : int) is
     record [
       a = "A large record with dummy values";
@@ -35,14 +34,10 @@ block {
 
 function small_entrypoint (const p : int) is p
 
-type parameter is
-    LargeEntrypoint of int | SmallEntrypoint of int
+type parameter is LargeEntrypoint of int | SmallEntrypoint of int
 
 type storage is
-  record [
-    large_entrypoint : big_map (bool, int -> int);
-    result : int
-  ]
+  record [large_entrypoint : big_map (bool, int -> int); result : int]
 
 function load_large_ep (const storage : storage) is
 block {
@@ -54,15 +49,13 @@ block {
     | None -> (failwith ("Internal error") : int -> int)
     ]
 
-function main
-  (const parameter : parameter;
-   const storage : storage) is
+function main (const parameter : parameter; const storage : storage) is
 block {
   const nop = (list [] : list (operation))
 } with
     case parameter of [
       LargeEntrypoint (n) ->
-        (nop, storage with record [result = (load_large_ep (storage))(n)])
+        (nop, storage with record [result = (load_large_ep (storage)) (n)])
     | SmallEntrypoint (n) ->
         (nop, storage with record [result = small_entrypoint (n)])
     ]

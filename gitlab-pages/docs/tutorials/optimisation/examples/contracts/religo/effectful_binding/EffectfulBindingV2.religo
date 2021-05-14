@@ -4,24 +4,19 @@
    we can inline the calls to this function.
 */
 
-let some_contract = 
-  ("KT1WhG8rMaC1azBJApBHW2JJdhWuhvemw4Zf" : address);
+let some_contract = ("KT1WhG8rMaC1azBJApBHW2JJdhWuhvemw4Zf" : address);
 
 /* Calls to a function can be inlined */
 [@inline]
 let target_exists = (_: unit) => {
-  let c: option(contract(int)) = 
-    Tezos.get_contract_opt(some_contract);
+  let c: option(contract(int)) = Tezos.get_contract_opt(some_contract);
   switch(c){
   | Some (contract) => true
   | None => false
   }
 };
 
-type parameter = 
-  Increment
-| IncrementIfEmpty
-| IncrementIfExists;
+type parameter = Increment | IncrementIfEmpty | IncrementIfExists;
 
 let main = ((p, s): (parameter, int)) => {
   let nop: list(operation) = [];

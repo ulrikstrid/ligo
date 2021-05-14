@@ -19,8 +19,7 @@ type large_record is
 (* An entrypoint that occupies a lot of space *)
 function large_entrypoint (const p : int) is
 block {
-  const x
-  = "A long line of meaningless words occupying storage";
+  const x = "A long line of meaningless words occupying storage";
   function some_lambda (const n : int) is
     record [
       a = "A large record with dummy values";
@@ -36,24 +35,17 @@ block {
 
 function small_entrypoint (const p : int) is p
 
-type parameter is
-    LargeEntrypoint of int | SmallEntrypoint of int
+type parameter is LargeEntrypoint of int | SmallEntrypoint of int
 
 type storage is record [result : int]
 
-function main
-  (const parameter : parameter;
-   const storage : storage) is
+function main (const parameter : parameter; const storage : storage) is
 block {
   const nop = (list [] : list (operation))
 } with
     case parameter of [
       LargeEntrypoint (n) ->
-        (nop,
-         storage with
-           record [result = large_entrypoint (n)])
+        (nop, storage with record [result = large_entrypoint (n)])
     | SmallEntrypoint (n) ->
-        (nop,
-         storage with
-           record [result = small_entrypoint (n)])
+        (nop, storage with record [result = small_entrypoint (n)])
     ]

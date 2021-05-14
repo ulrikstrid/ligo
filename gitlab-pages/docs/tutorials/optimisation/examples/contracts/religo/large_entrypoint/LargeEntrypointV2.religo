@@ -16,8 +16,7 @@ type large_record = {
    in the code of the contract: we put it to a big map upon origination;
    see /migrations/5_deploy_large_entrypoint.js */
 let large_entrypoint = (p: int) => {
-  let x = 
-    "A long line of meaningless words occupying storage";
+  let x = "A long line of meaningless words occupying storage";
   let some_lambda = (n: int) =>
     {
       a: "A large record with dummy values",
@@ -36,10 +35,7 @@ let small_entrypoint = ((p: int) => p);
 
 type parameter = LargeEntrypoint(int) | SmallEntrypoint(int);
 
-type storage = {
-  large_entrypoint: big_map(bool, (int => int)),
-  result: int
-};
+type storage = {large_entrypoint: big_map(bool, (int => int)), result: int };
 
 let load_large_ep = (storage: storage) => {
   let maybe_large_entrypoint: option(int => int) =
@@ -55,7 +51,6 @@ let main = ((parameter, storage): (parameter, storage)) => {
   switch(parameter){
   | LargeEntrypoint n =>
       (nop, {...storage, result: (load_large_ep(storage))(n)})
-  | SmallEntrypoint n =>
-      (nop, {...storage, result: small_entrypoint(n)})
+  | SmallEntrypoint n => (nop, {...storage, result: small_entrypoint(n)})
   }
 };

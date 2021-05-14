@@ -234,8 +234,7 @@ function main (const p : int; const s : int) is
 ```cameligo
 let n = 4
 
-let main (p, s : unit * int) =
-  ([] : operation list), n * n
+let main (p, s : unit * int) = ([] : operation list), n * n
 ```
 
 </Syntax>
@@ -244,8 +243,7 @@ let main (p, s : unit * int) =
 ```reasonligo
 let n = 4;
 
-let main = ((p, s): (unit, int)) =>
-  (([] : list(operation)), n * n);
+let main = ((p, s): (unit, int)) => (([] : list(operation)), n * n);
 ```
 
 </Syntax>
@@ -256,7 +254,7 @@ LIGO will automatically inline declarations if two conditions are met:
 
 If any of these conditions is not met, LIGO will **not** inline the declaration. You may use the `[@inline]` attribute to force inlining if the declaration is used more than once. You cannot force inlining if the declaration is not pure.
 
-Unfortunately, there is no general rule on when to inline your declarations: sometimes inlining may increase the size of the contract, but in some cases – decrease it. 
+Unfortunately, there is no general rule on when to inline your declarations: sometimes inlining may increase the size of the contract, but in some cases – decrease it.
 
 Intuitively, inlining functions is useful if:
 1. You are inlining a function with a complex argument or return type – lambdas in Michelson require an explicit type annotation, and if you inline a function, you can omit it.
@@ -276,14 +274,10 @@ It turns out we can do better. Tezos has a lazy container – big map. The conte
 Here is how it looks like:
 
 ```pascaligo skip
-type parameter is
-    LargeEntrypoint of int | ...
+type parameter is LargeEntrypoint of int | ...
 
 type storage is
-  record [
-    large_entrypoint : big_map (bool, int -> int);
-    result : int
-  ]
+  record [large_entrypoint : big_map (bool, int -> int); result : int]
 
 function load_large_ep (const storage : storage) is
 block {
@@ -295,20 +289,13 @@ block {
     | None -> (failwith ("Internal error") : int -> int)
     ]
 
-function main
-  (const parameter : parameter;
-   const storage : storage) is
+function main (const parameter : parameter; const storage : storage) is
 block {
   const nop = (list [] : list (operation))
 } with
     case parameter of [
       LargeEntrypoint (n) ->
-        block {
-          const loaded_entrypoint = load_large_ep (storage)
-        } with
-            (nop,
-             storage with
-               record [result = loaded_entrypoint (n)])
+        (nop, storage with record [result = (load_large_ep (storage)) (n)])
     | ...
       (* Other entrypoints *)
     | ...
@@ -322,12 +309,9 @@ It turns out we can do better. Tezos has a lazy container – big map. The conte
 
 Here is how it looks like:
 ```cameligo skip
-type parameter =
-  LargeEntrypoint of int | ...
+type parameter = LargeEntrypoint of int | ...
 
-type storage =
-  {large_entrypoint : (bool, int -> int) big_map;
-   result : int}
+type storage = { large_entrypoint : (bool, int -> int) big_map; result : int }
 
 let load_large_ep (storage : storage) =
   let maybe_large_entrypoint : (int -> int) option =
@@ -339,9 +323,7 @@ let load_large_ep (storage : storage) =
 let main (parameter, storage : parameter * storage) =
   match parameter with
     LargeEntrypoint n ->
-      ([] : operation list),
-      {storage with
-        result = (load_large_ep storage) n}
+      ([] : operation list), {storage with result = (load_large_ep storage) n}
   | ...
     (* Other entrypoints *)
   | ...
@@ -356,10 +338,7 @@ Here is how it looks like:
 ```reasonligo skip
 type parameter = LargeEntrypoint(int) | ...;
 
-type storage = {
-  large_entrypoint: big_map(bool, (int => int)),
-  result: int
-};
+type storage = {large_entrypoint: big_map(bool, (int => int)), result: int };
 
 let load_large_ep = (storage: storage) => {
   let maybe_large_entrypoint: option(int => int) =
@@ -374,11 +353,7 @@ let main = ((parameter, storage): (parameter, storage)) => {
   let nop: list(operation) = [];
   switch(parameter){
   | LargeEntrypoint n =>
-      {
-        let loaded_entrypoint: (int => int) =
-          load_large_ep(storage);
-        (nop, {...storage, result: loaded_entrypoint(n)})
-      }
+      (nop, {...storage, result: (load_large_ep(storage))(n)})
   | ...
     /* Other entrypoints */
   | ...

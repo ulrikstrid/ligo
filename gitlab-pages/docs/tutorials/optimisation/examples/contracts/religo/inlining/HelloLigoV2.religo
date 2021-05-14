@@ -2,16 +2,18 @@
    gets smaller and consumes less gas */
 
 type a_complex_record = {
-  h: int,
-  e: int,
-  l: int,
-  l_: int,
-  o: int,
-  ligo: int
+  complex: int,
+  record: int,
+  that: int,
+  has: int,
+  many: int,
+  fields: int,
+  and_some: int,
+  counter: int
 };
 
 [@inline]
-let h_plus_one = (r: a_complex_record) => {...r, h: r.h + 1};
+let plus_one = (r: a_complex_record) => {...r, counter: r.counter + 1};
 
 let main = ((p, s): (int, a_complex_record)) =>
-  ([] : list(operation), h_plus_one(h_plus_one(s)));
+  ([] : list(operation), plus_one(plus_one(s)));
