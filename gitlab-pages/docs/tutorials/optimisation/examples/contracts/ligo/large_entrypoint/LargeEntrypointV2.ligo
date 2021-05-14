@@ -62,14 +62,7 @@ block {
 } with
     case parameter of [
       LargeEntrypoint (n) ->
-        block {
-          const loaded_entrypoint = load_large_ep (storage)
-        } with
-            (nop,
-             storage with
-               record [result = loaded_entrypoint (n)])
+        (nop, storage with record [result = (load_large_ep (storage))(n)])
     | SmallEntrypoint (n) ->
-        (nop,
-         storage with
-           record [result = small_entrypoint (n)])
+        (nop, storage with record [result = small_entrypoint (n)])
     ]

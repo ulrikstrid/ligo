@@ -5,7 +5,7 @@ type migrations = {
 
 let main (completed_migration, migrations : int * migrations) =
   let st =
-    if sender <> migrations.owner
-    then migrations
-    else { migrations with last_completed_migration = completed_migration }
+    if sender = migrations.owner
+    then { migrations with last_completed_migration = completed_migration }
+    else migrations
   in ([] : operation list), st

@@ -28,10 +28,10 @@ let main = ((p, s): (parameter, int)) => {
   switch(p){
   | Increment => (nop, s + 1)
   | IncrementIfEmpty =>
-      if (! target_exists()) {
-        (nop, s + 1)
-      } else {
+      if (target_exists()) {
         (nop, s)
+      } else {
+        (nop, s + 1)
       }
   | IncrementIfExists =>
       if (target_exists()) {

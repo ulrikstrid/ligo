@@ -54,11 +54,7 @@ let main = ((parameter, storage): (parameter, storage)) => {
   let nop: list(operation) = [];
   switch(parameter){
   | LargeEntrypoint n =>
-      {
-        let loaded_entrypoint: (int => int) =
-          load_large_ep(storage);
-        (nop, {...storage, result: loaded_entrypoint(n)})
-      }
+      (nop, {...storage, result: (load_large_ep(storage))(n)})
   | SmallEntrypoint n =>
       (nop, {...storage, result: small_entrypoint(n)})
   }

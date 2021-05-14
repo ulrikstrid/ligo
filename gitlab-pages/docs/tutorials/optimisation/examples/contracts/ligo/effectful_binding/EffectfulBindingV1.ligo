@@ -30,7 +30,7 @@ block {
     case p of [
       Increment -> (nop, s + 1)
     | IncrementIfEmpty ->
-        if not target_exists then (nop, s + 1) else (nop, s)
+        if target_exists then (nop, s) else (nop, s + 1)
     | IncrementIfExists ->
         if target_exists then (nop, s + 1) else (nop, s)
     ]
