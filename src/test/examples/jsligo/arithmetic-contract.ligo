@@ -1,5 +1,5 @@
 (*_*
-  name: Increment (jsLIGO)
+  name: Increment (JsLIGO)
   language: jsligo
   compile:
     entrypoint: main
@@ -22,7 +22,7 @@
 *_*)
 type storage = int
 
-(* variant defining pseudo multi-entrypoint actions *)
+// variant defining pseudo multi-entrypoint actions 
 
 type storage = int;
 type parameter =

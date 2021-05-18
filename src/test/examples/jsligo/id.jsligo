@@ -1,6 +1,6 @@
 (*_*
-  name: ID (CameLIGO)
-  language: cameligo
+  name: ID (JsLIGO)
+  language: JsLIGO
   compile:
     entrypoint: main
   dryRun:
