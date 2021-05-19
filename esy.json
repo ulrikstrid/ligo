@@ -2,13 +2,15 @@
   "name": "ligo",
   "source": "./ligo.opam",
   "override": {
-    "buildEnv": {
-      "LD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
-    },
     "build": ["dune build -p ligo"],
+    "exportedEnv": {
+      "DYLD_LIBRARY_PATH": {
+        "val": "#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $DYLD_LIBRARY_PATH}",
+        "scope": "global"
+      }
+    },
     "dependencies": {
-      "@opam/hacl-star-raw": "*",
-      "@opam/bls12-381-unix": "*"
+      "@opam/hacl-star-raw": "*"
     },
     "resolutions": {
       "@opam/ctypes-foreign": {
@@ -34,9 +36,15 @@
       "@opam/tezos-rust-libs": {
         "source": "git+https://gitlab.com/tezos/tezos-rust-libs:tezos-rust-libs.opam#7e6517823d2835e2b79e47124f37cdd5f5c13567",
         "override": {
+          "exportedEnv": {
+            "DYLD_LIBRARY_PATH": {
+              "val": "#{self.lib : $DYLD_LIBRARY_PATH}",
+              "scope": "global"
+            }
+          },
           "build": [
             [
-              "C://Users//ulrik//.cargo//bin//cargo",
+              "/Users/ulrik/.cargo/bin/cargo",
               "build",
               "--target-dir",
               "target",
@@ -462,6 +470,7 @@
           }
         }
       },
+      "@opam/ligo-008-PtEdo2Zk-test-helpers": "link:./vendors/ligo-utils/ligo_008_PtEdo2Zk_test_helpers/ligo-008-PtEdo2Zk-test-helpers.opam",
       "@opam/conf-gmp-powm-sec": {
         "source": "no-source:",
         "override": {
@@ -481,19 +490,23 @@
         "source": "https://github.com/libusb/hidapi/archive/refs/tags/hidapi-0.10.1.tar.gz#sha256:f71dd8a1f46979c17ee521bc2117573872bbf040f8a4750e492271fc141f2644",
         "override": {
           "build": [
+            "libtoolize",
             "autoreconf --install --verbose --force",
             [
               "./configure",
               "--prefix=#{self.install}",
-              "#{os == 'windows' ? '--host x86_64-w64-mingw32' : ''}"
+              "#{os == 'windows' ? '--host x86_64-w64-mingw32' : ''}",
+              "--disable-dependency-tracking"
             ],
-            "make LIBTOOL=#{libtool.bin}"
+            "make"
           ],
+          "exportedEnv": {
+            "PKG_CONFIG_PATH": {
+              "scope": "global",
+              "val": "#{$PKG_CONFIG_PATH : self.lib / 'pkgconfig'}"
+            }
+          },
           "install": "make install",
-          "buildEnv": {
-            "LT_INIT": "2.4.2",
-            "LIBTOOL": "#{libtool.bin}"
-          },          
           "buildsInSource": true,
           "dependencies": {
             "autoconf": "esy-packages/esy-autoconf:package.json#fb93edf57b0adc4b27b34a57a562395b224002d3",
@@ -508,26 +521,18 @@
         "override": {
           "build": [
             "find ./ -exec touch -t 200905010101 {} +",
-            [
-              "chmod",
-              "755",
-              "./configure"
-            ],
+            ["chmod", "755", "./configure"],
             [
               "bash",
               "-c",
               "#{os == 'windows' ? './configure --prefix=$cur__install --host x86_64-w64-mingw32' : './configure --prefix=$cur__install'}"
             ],
-            [
-              "make"
-            ],
-            [
-              "make",
-              "install"
-            ]
+            ["make"],
+            ["make", "install"]
           ]
         }
-      },"libtool": {
+      },
+      "libtool": {
         "source": "esy-packages/esy-libtools:package.json#0fe768722d345533f86df32f4de3b6a374160e2e",
         "override": {
           "build": [
@@ -548,9 +553,13 @@
       "esy-help2man": {
         "source": "esy-packages/esy-help2man:package.json#c8e6931d1dcf58a81bd801145a777fd3b115c443",
         "override": {
-          "build":[
+          "build": [
             ["chmod", "755", "./configure", "./mkinstalldirs"],
-            ["bash", "-c", "#{os == 'windows' ? './configure --prefix=$cur__install --host x86_64-w64-mingw32' : './configure --prefix=$cur__install'}"],
+            [
+              "bash",
+              "-c",
+              "#{os == 'windows' ? './configure --prefix=$cur__install --host x86_64-w64-mingw32' : './configure --prefix=$cur__install'}"
+            ],
             ["make"],
             ["make", "install"]
           ]
