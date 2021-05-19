@@ -3,10 +3,11 @@ module Errors = Errors
 module Helpers = Helpers
 
 let all_module_passes = [
+  Unused.unused_map_module ;
+  Muchused.muchused_map_module ;
   Helpers.map_module Tail_recursion.peephole_expression ;
   Helpers.map_module Michelson_layout.peephole_expression ;
   Helpers.map_module Pattern_matching_simpl.peephole_expression ;
-  Unused.unused_map_module ;
 ]
 
 let all_expression_passes = [
@@ -27,7 +28,7 @@ let all_expression =
   bind_chain all_expression_passes
 
 let all_contract main_name prg =
-  let%bind contract_type = Helpers.fetch_contract_type main_name prg in
+  let* contract_type = Helpers.fetch_contract_type main_name prg in
   let data : Contract_passes.contract_pass_data = {
     contract_type = contract_type ;
     main_name = main_name ;

@@ -10,6 +10,7 @@ open Tezos_micheline.Micheline
 open Tezos_utils.Michelson
 include Helpers
 open Peephole
+open Peephole.Let_syntax 
 
 type proto = Environment.Protocols.t
 
@@ -255,6 +256,29 @@ let opt_drop2 : _ peep2 = function
     Some [Prim (l1, p, [Seq (l2, bt @ [drop]); bf], annot1)]
   | _ -> None
 
+(* "depth" is the length of the prefix of the stack which an
+   instruction affects. *)
+let digdug_depth : _ michelson -> int option = function
+  | Prim (_, "SWAP", [], _) -> Some 2
+  | Prim (_, ("DIG"|"DUG"), [Int (_, k)], _) -> Some (Z.to_int (Z.succ k))
+  | _ -> None
+
+(* elide SWAP/DIG/DUG when followed by sufficiently many DROP *)
+let opt_digdug_drop () : _ peep =
+  let* x = peep in
+  match digdug_depth x with
+  | None -> No_change
+  | Some depth ->
+    let rec aux acc depth =
+      if depth = 0
+      then Changed (List.rev acc)
+      else
+        let* x = peep in
+        match x with
+        | Prim (_, "DROP", [], _) as drop -> aux (drop :: acc) (depth - 1)
+        | _ -> No_change in
+    aux [] depth
+
 let opt_drop3 : _ peep3 = function
   (* SWAP ; DROP ; DROP  ↦  DROP ; DROP *)
   | Prim (_, "SWAP", [], _), (Prim (_, "DROP", [], _) as drop1), (Prim (_, "DROP", [], _) as drop2) ->
@@ -382,14 +406,16 @@ let flip_digdug : string -> string = function
 (* DIG k ; ...k times  ↦  DUG k
    DUG k ; ...k times  ↦  DIG k *)
 let opt_digdug_cycles () =
-  match%bind peep with
+  let* x = peep in
+  match x with
   | Prim (l1, ("DIG"|"DUG" as p), [Int (l2, k)], _)
     when Z.geq k (Z.of_int 2) ->
     let rec aux n =
       if Z.equal k n
       then Changed [Prim (l1, flip_digdug p, [Int (l2, k)], [])]
       else
-        match%bind peep with
+        let* x = peep in
+        match x with
         | Prim (_, ("DIG"|"DUG" as p'), [Int (_, k')], _)
           when String.equal p p' && Z.equal k k' ->
           aux (Z.succ n)
@@ -432,20 +458,25 @@ let opt_dupn_edo : _ peep3 = function
   | _ -> None
 
 let opt_unpair_cdr () : _ peep =
-  match%bind peep with
+  let* x = peep in
+  match x with
   | Prim (l, "UNPAIR", [], _) ->
-    (match%bind peep with
+    let* x = peep in
+    (match x with
      | Prim (_, "DROP", [], _) ->
        Changed [Prim (l, "CDR", [], [])]
      | _ -> No_change)
   | _ -> No_change
 
 let opt_unpair_car () : _ peep =
-  match%bind peep with
+  let* x = peep in
+  match x with
   | Prim (l, "UNPAIR", [], _) ->
-    (match%bind peep with
+    let* x = peep in
+    (match x with
      | Prim (_, "SWAP", [], _) ->
-       (match%bind peep with
+      let* x = peep in
+       (match x with
         | Prim (_, "DROP", [], _) ->
           Changed [Prim (l, "CAR", [], [])]
         | _ -> No_change)
@@ -454,14 +485,16 @@ let opt_unpair_car () : _ peep =
 
 (* UNPAIR 2  ↦  UNPAIR *)
 let opt_unpair2 () : _ peep =
-  match%bind peep with
+  let* x = peep in
+  match x with
   | Prim (l, "UNPAIR", [Int (_, k)], _) when Z.(equal k (of_int 2)) ->
     Changed [Prim (l, "UNPAIR", [], [])]
   | _ -> No_change
 
 (* PAIR 2  ↦  PAIR *)
 let opt_pair2 () : _ peep =
-  match%bind peep with
+  let* x = peep in
+  match x with
   | Prim (l, "PAIR", [Int (_, k)], _) when Z.(equal k (of_int 2)) ->
     Changed [Prim (l, "PAIR", [], [])]
   | _ -> No_change
@@ -470,7 +503,8 @@ let opt_pair2 () : _ peep =
 (* GET 1  ↦  CAR *)
 (* GET 2  ↦  CDR *)
 let opt_get () : _ peep =
-  match%bind peep with
+  let* x = peep in
+  match x with
   | Prim (l, "GET", [Int (_, k)], _) ->
     if Z.(equal k (of_int 0))
     then Changed []
@@ -611,6 +645,7 @@ let optimize : 'l. Environment.Protocols.t -> 'l michelson -> 'l michelson =
                      peephole @@ peep3 opt_dupn_edo ;
                      peephole @@ opt_pair2 () ;
                      peephole @@ opt_unpair2 () ;
+                     peephole @@ opt_digdug_drop () ;
                      peephole @@ opt_get () ;
                    ] in
   let optimizers = List.map on_seqs optimizers in
