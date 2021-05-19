@@ -42,17 +42,26 @@ val reset :
    structured construct. The resulting data structure is called a
    _thread_. (Note for Emacs: "*)".)  *)
 
-type thread = <
-  opening     : Region.t;
-  length      : int;
-  acc         : char list;
-  to_string   : string;
-  push_char   : char -> thread;
-  push_string : string -> thread;
-  set_opening : Region.t -> thread
+type enclosure = <
+  opening : string Region.reg;
+  closing : string
 >
 
-val mk_thread : Region.t -> thread
+type thread = <
+(*  delimiter     : string;
+  opening       : Region.t;*)
+  enclosure : enclosure;
+  length        : int;
+  acc           : char list;
+  to_string     : string;
+  push_char     : char -> thread;
+  push_string   : string -> thread;
+(*  set_opening   : Region.t -> thread;
+  set_delimiter : string -> thread*)
+  set_enclosure : opening:string Region.reg -> closing:string -> thread
+>
+
+val mk_thread : opening:string Region.reg -> closing:string -> thread
 
 (* STATE *)
 

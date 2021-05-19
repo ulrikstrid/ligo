@@ -61,16 +61,17 @@ type lexeme = string
 (* THREAD FOR STRUCTURED CONSTRUCTS (STRINGS, COMMENTS) *)
 
 type thread = <
-  opening     : Region.t;
-  length      : int;
-  acc         : char list;
-  to_string   : string;
-  push_char   : char -> thread;
-  push_string : string -> thread;
-  set_opening : Region.t -> thread
+  opening       : string Region.reg;
+  closing       : string;
+  length        : int;
+  acc           : char list;
+  to_string     : string;
+  push_char     : char -> thread;
+  push_string   : string -> thread;
+  set_enclosure : opening:string Region.reg -> closing:string -> thread
 >
 
-let mk_thread region : thread =
+let mk_thread ~(opening: string Region.reg) ~(closing: string) : thread =
   (* The call [explode s a] is the list made by pushing the characters
      in the string [s] on top of [a], in reverse order. For example,
      [explode "ba" ['c';'d'] = ['a'; 'b'; 'c'; 'd']]. *)
@@ -81,16 +82,20 @@ let mk_thread region : thread =
     | i -> s.[i-1] :: push (i-1)
     in push (String.length s) in
   object
-    val opening = region
+    val opening = opening
     method opening = opening
+
+    val closing = closing
+    method closing = closing
+
+    method set_enclosure ~opening ~closing =
+      {< opening = opening; closing = closing >}
 
     val length = 0
     method length = length
 
     val acc = []
     method acc = acc
-
-    method set_opening opening = {< opening; length; acc >}
 
     method push_char char =
       {< opening; length=length+1; acc=char::acc >}
@@ -184,6 +189,7 @@ type 'token client = <
   mk_string           : 'token cut;
   mk_eof              : 'token scanner;
   callback            : 'token scanner;
+  (*  delimiters*)
   is_string_delimiter : string -> bool
 >
 
@@ -247,14 +253,16 @@ let mk_state ~config ~window ~pos ~decoder ~supply : 'token state =
       in Markup markup, self#set_pos stop
 
     method mk_line thread =
-      let start  = thread#opening#start in
+      (*      let start  = thread#opening#start in*)
+      let start  = thread#enclosure#opening#start in
       let region = Region.make ~start ~stop:self#pos
       and value  = thread#to_string in
       let markup = Markup.LineCom Region.{region; value}
       in Markup markup, self
 
     method mk_block thread =
-      let start  = thread#opening#start in
+      (*      let start  = thread#opening#start in*)
+      let start  = thread#enclosure#opening#start in
       let region = Region.make ~start ~stop:self#pos
       and value  = thread#to_string in
       let markup = Markup.BlockCom Region.{region; value}
@@ -511,7 +519,7 @@ let hexa_digit = digit | ['A'-'F' 'a'-'f']
 let byte       = hexa_digit hexa_digit
 let flag       = '1' | '2' (* Linemarkers *)
 
-(* Comment delimiters *)
+(* Comment and string delimiters *)
 
 let pascaligo_block_comment_opening  = "(*"
 let pascaligo_block_comment_closing  = "*)"
@@ -536,35 +544,35 @@ let michelson_string_delimiter       = '"'
 let jsligo_block_comment_opening     = "/*"
 let jsligo_block_comment_closing     = "*/"
 let jsligo_line_comment              = "//"
-let jsligo_string_delimiter          = '"' | "'"
+let jsligo_string_delimiter          = '"' | '\''
 
 let block_comment_opening =
-  pascaligo_block_comment_opening
-| cameligo_block_comment_opening
+   pascaligo_block_comment_opening
+|   cameligo_block_comment_opening
 | reasonligo_block_comment_opening
-| michelson_block_comment_opening
-| jsligo_block_comment_opening
+|  michelson_block_comment_opening
+|     jsligo_block_comment_opening
 
 let block_comment_closing =
-  pascaligo_block_comment_closing
-| cameligo_block_comment_closing
+   pascaligo_block_comment_closing
+|   cameligo_block_comment_closing
 | reasonligo_block_comment_closing
-| michelson_block_comment_closing
-| jsligo_block_comment_opening
+|  michelson_block_comment_closing
+|     jsligo_block_comment_closing
 
 let line_comment =
-  pascaligo_line_comment
-| cameligo_line_comment
+   pascaligo_line_comment
+|   cameligo_line_comment
 | reasonligo_line_comment
-| michelson_line_comment
-| jsligo_line_comment
+|  michelson_line_comment
+|     jsligo_line_comment
 
 let string_delimiter =
-  pascaligo_string_delimiter
-| cameligo_string_delimiter
+   pascaligo_string_delimiter
+|   cameligo_string_delimiter
 | reasonligo_string_delimiter
-| michelson_string_delimiter
-| jsligo_string_delimiter
+|  michelson_string_delimiter
+|     jsligo_string_delimiter
 
 (* RULES (SCANNERS) *)
 
@@ -575,18 +583,20 @@ rule scan client state = parse
 | ' '+  { state#mk_space   lexbuf }
 | '\t'+ { state#mk_tabs    lexbuf }
 
-(* Strings *)
+  (* Strings *)
 
 | string_delimiter {
     let lexeme = Lexing.lexeme lexbuf in
     if client#is_string_delimiter lexeme then
       let {region; state; _} = state#sync lexbuf in
-      let thread             = mk_thread region in
-      scan_string lexeme thread state lexbuf |> client#mk_string
-    else
+      (*      let thread             = mk_thread region in
+      let thread             = thread#set_delimiter lexeme *)
+      let thread = mk_thread ~opening:{region; value=lexeme} ~closing:lexeme
+      in scan_string thread state lexbuf |> client#mk_string
+    else (* Not a string for this syntax *)
       (rollback lexbuf; client#callback state lexbuf) }
 
-(* Comment *)
+  (* Comment *)
 
 | block_comment_opening {
     let lexeme = Lexing.lexeme lexbuf in
@@ -624,12 +634,14 @@ rule scan client state = parse
 | eof { client#mk_eof state lexbuf }
 | _   { rollback lexbuf; client#callback state lexbuf }
 
+
 (* Finishing a linemarker *)
 
 and eol region line file flag state = parse
   nl | eof { linemarker region ~line ~file ?flag state lexbuf }
 | _        { let {region; _} = state#sync lexbuf
              in fail region Invalid_linemarker_argument }
+
 
 (* Block comments
 
@@ -645,17 +657,16 @@ and scan_block block thread client state = parse
     if   client#is_string_delimiter lexeme
     then let opening            = thread#opening in
          let {region; state; _} = state#sync lexbuf in
+ (*         let thread             = thread#set_delimiter lexeme in*)
          let thread             = thread#push_string lexeme in
          let thread             = thread#set_opening region in
-         let scan_next          = scan_string lexeme in
-         let thread, state      = scan_next thread state lexbuf in
+         let thread, state      = scan_string thread state lexbuf in
          let thread             = thread#set_opening opening
          in scan_block block thread client state lexbuf
     else begin
            rollback lexbuf;
            scan_char_in_block block thread client state lexbuf
-         end
-  }
+         end }
 | block_comment_opening {
     let lexeme = Lexing.lexeme lexbuf in
     if   block#opening = lexeme
@@ -670,8 +681,7 @@ and scan_block block thread client state = parse
     else begin
            rollback lexbuf;
            scan_char_in_block block thread client state lexbuf
-         end
-  }
+         end }
 | block_comment_closing {
     let lexeme = Lexing.lexeme lexbuf in
     if   block#closing = lexeme
@@ -679,8 +689,7 @@ and scan_block block thread client state = parse
     else begin
            rollback lexbuf;
            scan_char_in_block block thread client state lexbuf
-         end
-  }
+         end }
 | nl  { let nl     = Lexing.lexeme lexbuf in
         let ()     = Lexing.new_line lexbuf
         and state  = state#set_pos (state#pos#new_line nl)
@@ -726,23 +735,42 @@ and scan_utf8_char if_eof thread client state = parse
 
 (* Scanning strings *)
 
-and scan_string delimiter thread state = parse
+and scan_string thread state = parse
   string_delimiter {
-    let {state; lexeme; _} = state#sync lexbuf in
-    if delimiter = lexeme then thread, state
-    else let thread = thread#push_string lexeme
-         in scan_string delimiter thread state lexbuf
-  }
-| nl  { fail thread#opening Broken_string }
-| eof { fail thread#opening Unterminated_string }
-| ['\t' '\r' '\b'] as c
-      { let {region; _} = state#sync lexbuf
-        in fail region (Invalid_character_in_string c )}
-| _   { let {state; lexeme; _} = state#sync lexbuf in
-        let thread = thread#push_string lexeme
-        in scan_string delimiter thread state lexbuf }
+         let {state; lexeme; _} = state#sync lexbuf in
+         if thread#delimiter = lexeme then thread, state
+         else let thread = thread#push_string lexeme
+              in scan_string thread state lexbuf }
+| '\\' { let {state; _} = state#sync lexbuf
+         in scan_escape thread state lexbuf }
+| nl   { fail thread#opening Broken_string }
+| eof  { fail thread#opening Unterminated_string }
+| ['\000' - '\031'] as c
+       { let {region; _} = state#sync lexbuf
+         in fail region (Invalid_character_in_string c )}
+| _    { let {state; lexeme; _} = state#sync lexbuf in
+         let thread = thread#push_string lexeme
+         in scan_string thread state lexbuf }
 
-  (* Scanner called first *)
+and scan_escape thread state = parse
+  string_delimiter {
+         let {state; lexeme; _} = state#sync lexbuf in
+         let thread =
+           if thread#delimiter = lexeme
+           then thread#push_string lexeme
+           else thread#push_string ("\\" ^ lexeme)
+         in scan_string thread state lexbuf }
+| 'n'  { let {state; _} = state#sync lexbuf in
+         let thread = thread#push_char '\n'
+         in scan_string thread state lexbuf }
+| '\\' { let {state; _} = state#sync lexbuf in
+         let thread = thread#push_char '\\'
+         in scan_string thread state lexbuf }
+| _    { rollback lexbuf;
+         let thread = thread#push_char '\\'
+         in scan_string thread state lexbuf }
+
+(* Scanner called first *)
 
 and init client state = parse
   utf8_bom { state#mk_bom lexbuf                       }
