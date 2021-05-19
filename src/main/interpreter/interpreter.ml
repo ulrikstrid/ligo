@@ -293,6 +293,9 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
     | ( C_TEST_COMPILE_META_VALUE , [ a ] ) ->
       let>> x = Compile_meta_value (loc,a) in
       return x
+    | ( C_TEST_RUN , [ V_Func_val f ; v ] ) ->
+      let>> x = Run (loc,f,v) in
+      return x
     | ( C_FAILWITH , [ a ] ) ->
       raise (Meta_lang_ex {location = loc ; reason = Val a})
     | _ -> Fail_ligo (Errors.generic_error loc "Unbound primitive.")

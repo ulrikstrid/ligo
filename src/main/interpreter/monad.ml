@@ -32,6 +32,7 @@ module Command = struct
     | Compile_expression : Location.t * LT.value * string * string * LT.value option -> LT.value t
     | Compile_contract : string * string -> (LT.value * LT.value) t
     | Compile_meta_value : Location.t * LT.value -> LT.value t
+    | Run : Location.t * LT.func_val * LT.value -> LT.value t
     | Inject_script : Location.t * LT.value * LT.value -> LT.value t
     | Set_now : Location.t * Z.t -> unit t
     | Set_source : LT.value -> unit t
@@ -155,6 +156,19 @@ module Command = struct
       in
       let contract = LT.V_Michelson (LT.Contract contract_code) in
       ok ((contract,size), ctxt)
+    | Run (loc, f, v) ->
+      let* func_code = Michelson_backend.compile_function f.orig_lambda in
+      let* arg_code,_,_ = Michelson_backend.compile_simple_val ~loc v in
+      let* input_ty,_ = Run.Of_michelson.fetch_lambda_types func_code.expr_ty in
+      let* options = Run.Of_michelson.make_dry_run_options {now=None ; amount="" ; balance="" ; sender=None ; source=None ; parameter_ty = Some input_ty  } in
+      let* runres = Run.Of_michelson.run_function ~options func_code.expr func_code.expr_ty arg_code in
+      let value = match runres with
+        | Success (_, value) -> value
+        | _ -> failwith "error" in
+      let _ = print_endline (Format.asprintf "Result: %a" Tezos_utils__X_michelson.pp value) in
+      (* just dummy output *)
+      let ret = LT.V_Michelson (Ty_code (Tezos_utils.Michelson.int (Z.of_int 5),Tezos_utils.Michelson.int (Z.of_int 4),Ast_typed.t_unit ())) in
+      ok (ret, ctxt)
     | Inject_script (loc, code, storage) -> (
       let* contract_code = trace_option (corner_case ()) @@ LC.get_michelson_contract code in
       let* (storage,_,_) = trace_option (corner_case ()) @@ LC.get_michelson_expr storage in

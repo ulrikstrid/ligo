@@ -122,6 +122,7 @@ let is_pure_constant : constant' -> bool =
   | C_TEST_STATE_RESET
   | C_TEST_LAST_ORIGINATIONS
   | C_TEST_COMPILE_META_VALUE
+  | C_TEST_RUN
     -> false
 
 let rec is_pure : expression -> bool = fun e ->

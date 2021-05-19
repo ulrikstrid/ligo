@@ -151,6 +151,7 @@ let constant' ppf : constant' -> unit = function
   | C_TEST_LAST_ORIGINATIONS -> fprintf ppf "TEST_LAST_ORIGINATIONS"
   | C_TEST_COMPILE_META_VALUE -> fprintf ppf "TEST_COMPILE_META_VALUE"
   | C_TEST_COMPILE_EXPRESSION_SUBST -> fprintf ppf "TEST_COMPILE_EXPRESSION_SUBST"
+  | C_TEST_RUN -> fprintf ppf "TEST_RUN"
   | C_SHA3 -> fprintf ppf "SHA3"
   | C_KECCAK -> fprintf ppf "KECCAK"
   | C_LEVEL -> fprintf ppf "LEVEL"

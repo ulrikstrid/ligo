@@ -35,6 +35,13 @@ let simple_val_insertion ~loc michelson_ty michelson_value ligo_obj_ty : (Ast_ty
   let applied = e_a_application insertion e_a_unit ligo_obj_ty in 
   ok applied
 
+let compile_function typed_exp =
+  let open Ligo_compile in
+  let options = Compiler_options.make () in
+  let* mini_c_exp     = Of_typed.compile_expression typed_exp in
+  let* compiled_exp   = Of_mini_c.aggregate_and_compile_expression ~options [] mini_c_exp in
+  ok compiled_exp
+
 let compile_expression ~loc syntax exp_as_string source_file subst_lst =
   let open Ligo_compile in
   let options = Compiler_options.make () in

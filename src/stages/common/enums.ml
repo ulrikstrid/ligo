@@ -181,6 +181,7 @@ type constant' =
   | C_TEST_STATE_RESET
   | C_TEST_LAST_ORIGINATIONS
   | C_TEST_COMPILE_META_VALUE
+  | C_TEST_RUN
   (* New with EDO*)
   | C_SHA3
   | C_KECCAK
