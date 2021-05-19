@@ -141,7 +141,7 @@ let is_sym =
   | While     _  (* while      *)
   | With      _  (* with       *)
 
-  (* Virtual tokens *)
+  (* End Of File *)
 
   | EOF _ -> false
 

@@ -111,7 +111,7 @@ module T =
     | While     of Region.t  (* while      *)
     | With      of Region.t  (* with       *)
 
-    (* Virtual tokens *)
+    (* End Of File *)
 
     | EOF of Region.t
 
@@ -148,10 +148,10 @@ module T =
     | "RBRACE"   -> "}"
     | "LBRACKET" -> "["
     | "RBRACKET" -> "]"
-    | "SHARP"     -> "#"
+    | "SHARP"    -> "#"
     | "VBAR"     -> "|"
     | "ARROW"    -> "->"
-    | "ASSIGN"      -> ":="
+    | "ASSIGN"   -> ":="
     | "EQ"       -> "="
     | "COLON"    -> ":"
     | "LT"       -> "<"
@@ -211,7 +211,7 @@ module T =
     | "While"     -> "while"
     | "With"      -> "with"
 
-    (* Virtual tokens *)
+    (* End Of File *)
 
     | "EOF" -> ""
 
@@ -266,10 +266,10 @@ module T =
     | RBRACE   region -> region, "RBRACE"
     | LBRACKET region -> region, "LBRACKET"
     | RBRACKET region -> region, "RBRACKET"
-    | SHARP     region -> region, "SHARP"
+    | SHARP    region -> region, "SHARP"
     | VBAR     region -> region, "VBAR"
     | ARROW    region -> region, "ARROW"
-    | ASSIGN      region -> region, "ASSIGN"
+    | ASSIGN   region -> region, "ASSIGN"
     | EQ       region -> region, "EQ"
     | COLON    region -> region, "COLON"
     | LT       region -> region, "LT"
@@ -329,7 +329,7 @@ module T =
     | While      region -> region, "While"
     | With       region -> region, "With"
 
-    (* Virtual tokens *)
+    (* End Of File *)
 
     | EOF region -> region, "EOF"
 
@@ -363,10 +363,10 @@ module T =
     | RBRACE   _ -> "}"
     | LBRACKET _ -> "["
     | RBRACKET _ -> "]"
-    | SHARP     _ -> "#"
+    | SHARP    _ -> "#"
     | VBAR     _ -> "|"
     | ARROW    _ -> "->"
-    | ASSIGN      _ -> ":="
+    | ASSIGN   _ -> ":="
     | EQ       _ -> "="
     | COLON    _ -> ":"
     | LT       _ -> "<"
@@ -426,7 +426,7 @@ module T =
     | While      _ -> "while"
     | With       _ -> "with"
 
-    (* Virtual tokens *)
+    (* End Of File *)
 
     | EOF _ -> ""
 

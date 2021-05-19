@@ -124,7 +124,7 @@ let is_sym =
   | With      _  (* with   *)
   | Struct    _  (* struct *)
 
-  (* Virtual tokens *)
+  (* End Of File *)
 
   | EOF _ -> false
 

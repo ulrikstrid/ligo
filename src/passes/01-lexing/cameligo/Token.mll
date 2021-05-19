@@ -92,7 +92,7 @@ module T =
     | Type      of Region.t  (* type   *)
     | With      of Region.t  (* with   *)
 
-    (* Virtual tokens *)
+    (* End Of File *)
 
     | EOF of Region.t
 
@@ -190,7 +190,7 @@ module T =
     | "Type"      -> "type"
     | "With"      -> "with"
 
-    (* Virtual tokens *)
+    (* End Of File *)
 
     | "EOF" -> ""
 
@@ -290,7 +290,7 @@ module T =
     | Type      region -> region, "Type"
     | With      region -> region, "With"
 
-    (* Virtual tokens *)
+    (* End Of File *)
 
     | EOF region -> region, "EOF"
 
@@ -369,7 +369,7 @@ module T =
     | Then       _ -> "then"
     | With       _ -> "with"
 
-    (* Virtual tokens *)
+    (* End Of File *)
 
     | EOF _ -> ""
 

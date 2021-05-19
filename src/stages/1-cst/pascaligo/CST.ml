@@ -27,6 +27,7 @@ type keyword       = Region.t
 
 type kwd_and       = Region.t
 type kwd_begin     = Region.t
+type kwd_big_map   = Region.t
 type kwd_block     = Region.t
 type kwd_case      = Region.t
 type kwd_const     = Region.t
@@ -131,6 +132,24 @@ type 'a brackets = {
   rbracket : rbracket
 }
 
+(* Collections *)
+
+type removable = [
+  `Map    of kwd_map
+| `BigMap of kwd_big_map
+| `Set    of kwd_set
+]
+
+type iterable = [
+  `List of kwd_list
+| removable
+]
+
+type ne_collection = [
+  `Record of kwd_record
+| removable
+]
+
 (* The Concrete Syntax Tree *)
 
 type t = {
@@ -207,7 +226,7 @@ and type_expr =
 | T_ModPath of type_name module_path reg
 | T_Par     of type_expr par reg
 | T_Prod    of cartesian
-| T_Record  of field_decl reg ne_injection reg
+| T_Record  of field_decl reg injection reg
 | T_String  of lexeme reg
 | T_Sum     of sum_type reg
 | T_Var     of variable
@@ -224,24 +243,6 @@ and field_decl = {
   field_type : type_annot option;
   attributes : attribute list
 }
-
-and 'a ne_injection = {
-  kind        : ne_injection_kwd;
-  enclosing   : enclosing;
-  ne_elements : ('a, semi) nsepseq;
-  terminator  : semi option;
-  attributes  : attribute list
-}
-
-and ne_injection_kwd = [
-  `Set    of keyword
-| `Map    of keyword
-| `Record of keyword
-]
-
-and enclosing =
-  Brackets of lbracket * rbracket
-| End      of kwd_end
 
 (* Sum types *)
 
@@ -273,20 +274,10 @@ and fun_decl = {
   attributes    : attribute list
 }
 
-and parameters = (param_decl, semi) nsepseq par reg
+and parameters = (param_decl reg, semi) nsepseq par reg
 
-and param_decl =
-  ParamConst of param_const reg
-| ParamVar   of param_var reg
-
-and param_const = {
-  kwd_const  : kwd_const;
-  var        : variable;
-  param_type : type_annot option
-}
-
-and param_var = {
-  kwd_var    : kwd_var;
+and param_decl = {
+  param_kind : [`Var of kwd_var | `Const of kwd_const];
   var        : variable;
   param_type : type_annot option
 }
@@ -330,42 +321,27 @@ and instruction =
 | I_Cond        of (test_clause, test_clause) conditional reg
 | I_For         of for_int reg
 | I_ForIn       of for_in reg
-| I_MapPatch    of map_patch reg
-| I_MapRemove   of map_remove reg
-| I_RecordPatch of record_patch reg
+| I_MapPatch    of binding patch reg
+| I_MapRem      of removal reg
+| I_RecordPatch of expr field patch reg
 | I_Skip        of kwd_skip
-| I_SetPatch    of set_patch reg
-| I_SetRemove   of set_remove reg
+| I_SetPatch    of expr patch reg
+| I_SetRem      of removal reg
 | I_While       of while_loop reg
 
-and set_remove = {
+and removal = {
   kwd_remove : kwd_remove;
-  element    : expr;
+  item       : expr;
   kwd_from   : kwd_from;
-  kwd_set    : kwd_set;
-  set        : path
+  keyword    : removable;
+  collection : expr
 }
 
-and map_remove = {
-  kwd_remove : kwd_remove;
-  key        : expr;
-  kwd_from   : kwd_from;
-  kwd_map    : kwd_map;
-  map        : path
-}
-
-and set_patch  = {
-  kwd_patch : kwd_patch;
-  path      : path;
-  kwd_with  : kwd_with;
-  set_inj   : expr ne_injection reg
-}
-
-and map_patch  = {
-  kwd_patch : kwd_patch;
-  path      : path;
-  kwd_with  : kwd_with;
-  map_inj   : binding reg ne_injection reg
+and 'a patch = {
+  kwd_patch  : kwd_patch;
+  collection : expr;
+  kwd_with   : kwd_with;
+  delta      : 'a injection reg
 }
 
 and binding = {
@@ -374,19 +350,12 @@ and binding = {
   image  : expr
 }
 
-and record_patch = {
-  kwd_patch  : kwd_patch;
-  path       : path;
-  kwd_with   : kwd_with;
-  record_inj : record_expr reg
-}
-
-and ('ifso, 'ifnot) conditional = {
-  kwd_if     : kwd_if;
-  test       : expr;
-  kwd_then   : kwd_then;
-  ifso       : 'ifso;
-  ifnot      : (kwd_else * 'ifnot) option
+and ('if_so, 'if_not) conditional = {
+  kwd_if   : kwd_if;
+  test     : expr;
+  kwd_then : kwd_then;
+  if_so    : 'if_so;
+  if_not   : (kwd_else * 'if_not) option
 }
 
 and test_clause =
@@ -418,6 +387,10 @@ and 'a case = {
   cases     : ('a case_clause reg, vbar) nsepseq reg
 }
 
+and enclosing =
+  Brackets of lbracket * rbracket
+| End      of kwd_end
+
 and 'a case_clause = {
   pattern : pattern;
   arrow   : arrow;
@@ -425,14 +398,10 @@ and 'a case_clause = {
 }
 
 and assignment = {
-  lhs    : lhs;
+  lhs    : expr;
   assign : assign;
   rhs    : expr
 }
-
-and lhs =
-  Path    of path
-| MapPath of map_lookup reg
 
 and while_loop = {
   kwd_while : kwd_while;
@@ -452,20 +421,14 @@ and for_int = {
 }
 
 and for_in = {
-  kwd_for    : kwd_for;
-  var        : variable;
-  bind_to    : (arrow * variable) option;
-  kwd_in     : kwd_in;
-  collection : collection;
-  expr       : expr;
-  block      : block reg
+  kwd_for  : kwd_for;
+  var      : variable;
+  bind_to  : (arrow * variable) option;
+  kwd_in   : kwd_in;
+  iterated : iterable;
+  expr     : expr;
+  block    : block reg
 }
-
-and collection = [
-  `List of kwd_list
-| `Map  of kwd_map
-| `Set  of kwd_set
-]
 
 (* Code injection. Note how the field [language] wraps a region in
    another: the outermost region covers the header "[%<language>",
@@ -493,7 +456,7 @@ and pattern =
 | P_Nil    of kwd_nil
 | P_None   of kwd_None
 | P_Par    of pattern par reg
-| P_Record of pattern field reg ne_injection reg
+| P_Record of pattern field reg injection reg
 | P_Some   of (kwd_Some * pattern par reg) reg
 | P_String of lexeme reg
 | P_True   of kwd_True
@@ -510,8 +473,13 @@ and typed_pattern = {
 }
 
 and 'rhs field =
-  Punned   of field_name
+  Punned   of punned
 | Complete of 'rhs full_field
+
+and punned = {
+  field_name : field_name;
+  attributes : attribute list
+}
 
 and 'rhs full_field = {
   field_name : field_name;
@@ -551,7 +519,6 @@ and expr =
 | E_Map       of binding reg injection reg
 | E_MapLookup of map_lookup reg
 | E_Mod       of kwd_mod bin_op reg            (* "mod" *)
-| E_ModPath   of expr module_path reg
 | E_Mult      of times bin_op reg              (* "*"   *)
 | E_Mutez     of (lexeme * Z.t) reg
 | E_Nat       of (lexeme * Z.t) reg
@@ -562,7 +529,6 @@ and expr =
 | E_Not       of kwd_not un_op reg             (* "not" *)
 | E_Or        of kwd_or bin_op reg             (* "or"  *)
 | E_Par       of expr par reg
-| E_Proj      of projection reg
 | E_Record    of record_expr reg
 | E_Set       of expr injection reg
 | E_SetMem    of set_mem reg
@@ -574,8 +540,10 @@ and expr =
 | E_Typed     of typed_expr par reg
 | E_Unit      of kwd_Unit
 | E_Update    of update reg
-| E_Var       of lexeme reg
 | E_Verbatim  of lexeme reg
+| E_ModPath   of expr module_path reg
+| E_Var       of lexeme reg
+| E_Proj      of projection reg
 
 and block_with = {
   block    : block reg;
@@ -594,18 +562,22 @@ and fun_expr = {
 and typed_expr = expr * type_annot
 
 and map_lookup = {
-  path  : path;
+  map   : path;
   index : expr brackets reg
 }
 
 and path =
-  Name of variable
-| Path of projection reg
+  LocalPath of local_path
+| InModule  of local_path module_path reg
+
+and local_path =
+  Name     of variable
+| InRecord of projection reg
 
 and projection = {
-  record_name : variable;
-  selector    : dot;
-  field_path  : (selection, dot) nsepseq
+  record     : expr;
+  selector   : dot;
+  field_path : (selection, dot) nsepseq
 }
 
 and 'a bin_op = {
@@ -619,18 +591,18 @@ and 'a un_op = {
   arg : expr
 }
 
-and record_expr = expr field reg ne_injection
+and record_expr = expr field reg injection
 
 and update = {
-  record   : path;
+  record   : expr;
   kwd_with : kwd_with;
-  updates  : field_path_assignment reg ne_injection reg
+  updates  : field_path_assignment reg injection reg
 }
 
 and field_path_assignment = {
-  field_path : path;
-  assign     : equal;
-  field_expr : expr
+  field_lhs : path;
+  assign    : equal;
+  field_rhs : expr
 }
 
 and selection =
@@ -646,18 +618,11 @@ and arguments = tuple_expr
 (* Injections *)
 
 and 'a injection = {
-  kind       : injection_kwd;
+  kind       : iterable;
   enclosing  : enclosing;
   elements   : ('a, semi) sepseq;
   terminator : semi option
 }
-
-and injection_kwd = [
-  `BigMap of keyword
-| `List   of keyword
-| `Map    of keyword
-| `Set    of keyword
-]
 
 (* PROJECTING REGIONS *)
 
@@ -757,9 +722,13 @@ and typed_expr_to_region x = x.Region.region
 
 and record_expr_to_region x = x.Region.region
 
-let path_to_region = function
+let local_path_to_region = function
   Name var  -> var.region
-| Path path -> path.region
+| InRecord path -> path.region
+
+let path_to_region = function
+  LocalPath p -> local_path_to_region p
+| InModule  p -> p.region
 
 (* IMPORTANT: In the following function definition, the data
    constructors are sorted alphabetically. If you add or modify some,
@@ -773,11 +742,11 @@ let instr_to_region = function
 | I_For         {region; _}
 | I_ForIn       {region; _}
 | I_MapPatch    {region; _}
-| I_MapRemove   {region; _}
+| I_MapRem      {region; _}
 | I_RecordPatch {region; _}
 | I_Skip         region
 | I_SetPatch    {region; _}
-| I_SetRemove   {region; _}
+| I_SetRem      {region; _}
 | I_While       {region; _}
   -> region
 

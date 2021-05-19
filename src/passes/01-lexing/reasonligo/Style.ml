@@ -117,11 +117,13 @@ let is_sym =
   | True      _  (* true   *)
   | Type      _  (* type   *)
 
+  (* End Of File *)
+
+  | EOF _
+
   (* Virtual tokens *)
 
-  | EOF    _
-  | ES6FUN _
-    -> false
+  | ES6FUN _ -> false
 
 (* Checking the style *)
 

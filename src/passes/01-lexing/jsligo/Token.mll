@@ -137,8 +137,7 @@ module T =
     | C_None  of Region.t  (* None *)
     | C_Some  of Region.t  (* Some *)
 
-    (* Virtual tokens *)
-
+    (* End Of File *)
 
     | EOF of Region.t
 
@@ -255,7 +254,7 @@ module T =
     | "Namespace"   -> "namespace"
     | "As"          -> "as"
 
-    (* Virtual tokens *)
+    (* End Of File *)
 
     | "EOF" -> ""
 
@@ -514,7 +513,7 @@ module T =
     | C_None  _ -> "None"
     | C_Some  _ -> "Some"
 
-    (* Virtual tokens *)
+    (* End Of File *)
 
     | EOF _ -> ""
 

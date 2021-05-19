@@ -85,9 +85,12 @@ module T =
     | True      of Region.t  (* true   *)
     | Type      of Region.t  (* type   *)
 
+    (* End Of File *)
+
+    | EOF of Region.t
+
     (* Virtual tokens *)
 
-    | EOF    of Region.t
     | ES6FUN of Region.t
 
     (* Unlexing the tokens *)
@@ -179,9 +182,12 @@ module T =
     | "True"      -> "true"
     | "Type"      -> "type"
 
+    (* End Of File *)
+
+    | "EOF" -> ""
+
     (* Virtual tokens *)
 
-    | "EOF"    -> ""
     | "ES6FUN" -> ""
 
     (* This case should not happen! *)
@@ -343,9 +349,12 @@ module T =
     | Type      _ -> "type"
     | Module    _ -> "module"
 
+    (* End Of File *)
+
+    | EOF _ -> ""
+
     (* Virtual tokens *)
 
-    | EOF    _ -> ""
     | ES6FUN _ -> ""
 
     (* Converting a token to a string *)
