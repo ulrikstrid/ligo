@@ -1,6 +1,6 @@
 (*_*
   name: ID (JsLIGO)
-  language: JsLIGO
+  language: jsligo
   compile:
     entrypoint: main
   dryRun:
