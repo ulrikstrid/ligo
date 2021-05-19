@@ -123,8 +123,8 @@ Multiplication & Division
 <div className="example">
 
 ```pascaligo
-const mul_int: int = 3 + 4;
-const mul_nat: nat = 3n + 4n;
+const mul_int: int = 3 * 4;
+const mul_nat: nat = 3n * 4n;
 
 const div_int: int = 10 / 5;
 const div_nat: nat = 10n / 5n;
