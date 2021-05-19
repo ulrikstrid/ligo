@@ -40,7 +40,7 @@ let test_restrict
     (* TODO: use an error not an assert *)
     (* Format.printf "\n\nActual: %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl (restrict info tc);
      * Format.printf "\n\nExpected %a\n\n" Ast_typed.PP_generic.c_typeclass_simpl expected; *)
-    let%bind restricted = restrict repr info tc in
+    let* restricted = restrict repr info tc in
     Assert.assert_true (Typer_common.Errors.different_typeclasses expected restricted) (Ast_core.Compare.c_typeclass_simpl_compare_all_fields restricted expected = 0)
 
 
@@ -52,7 +52,7 @@ let tests1 restrict = [
     (* Initial typeclass constraint: *)
     [x;y;z] "∈" [[int ; unit ; unit] ; [nat ; int ; int] ; [nat ; int ; string] ; ]
     (* Intermediate step (not tested): *)
-    (**)        [ false              ;  true             ;  true                ; ]
+    (* *)        [ false              ;  true             ;  true                ; ]
     (* Expected restricted typeclass: *)
     [x;y;z] "∈" [                      [nat ; int ; int] ; [nat ; int ; string] ; ]
 );
@@ -63,7 +63,7 @@ let tests1 restrict = [
     (* Initial typeclass constraint: *)
     [x;y]   "∈" [[int  ; unit] ; [map(nat,nat)   ; int] ; [map(nat,string)   ; int] ; ]
     (* Intermediate step (not tested): *)
-    (**)        [ false        ;  true                  ; true                      ; ]
+    (* *)        [ false        ;  true                  ; true                      ; ]
     (* Expected restricted typeclass constraint: *)
     [x;y]   "∈" [                [map(nat,nat)   ; int] ; [map(nat,string)   ; int] ; ]
 )  ;
@@ -74,7 +74,7 @@ let tests1 restrict = [
     (* Initial typeclass constraint: *)
     [x;y;z] "∈" [[int ; unit ; unit] ; [nat ; int ; int] ; [nat ; int ; string] ; ]
     (* Intermediate step (not tested): *)
-    (**)        [false               ; true              ; true                 ; ]
+    (* *)        [false               ; true              ; true                 ; ]
     (* Expected restricted typeclass: *)
     [x;y;z] "∈" [                      [nat ; int ; int] ; [nat ; int ; string] ; ]
 )  ;    
@@ -94,7 +94,7 @@ let test_deduce_and_clean
       let expected_inferred = List.map
           (fun (tv , c_tag , tv_list) -> `Constructor {reason_constr_simpl = "unit test" ; original_id = None; id_constructor_simpl = ConstraintIdentifier.T 42L ; tv ; c_tag ; tv_list})
           expected_inferred in
-      let%bind actual = deduce_and_clean repr input_tc in
+      let* actual = deduce_and_clean repr input_tc in
       Heuristic_tc_fundep_tests_compare_cleaned.compare_and_check_vars_deduce_and_clean_result { deduced = expected_inferred ; cleaned = expected_tc ; changed = true } actual
 
 let inferred v (_eq : string) c args = v, c, args

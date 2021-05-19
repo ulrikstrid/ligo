@@ -11,6 +11,9 @@ val map : ('a -> 'b) -> ('a, 'd) result -> ('b, 'd) result
 val ( >>? ) :
   ('a, 'c) result ->
   ('a -> ('d, 'c) result) -> ('d, 'c) result
+val ( let* ) :
+  ('a, 'c) result ->
+  ('a -> ('d, 'c) result) -> ('d, 'c) result
 val ( >>|? ) : ('a, 'c) result -> ('a -> 'd) -> ('d, 'c) result
 module Let_syntax :
 sig
@@ -50,9 +53,6 @@ val bind_map_smap :
   ('a -> ('b, 'd) result) ->
   'a X_map.String.t ->
   ('b X_map.String.t, 'd) result
-val bind_concat :
-  ('a list, 'c) result ->
-  ('a list, 'c) result -> ('a list, 'c) result
 val bind_map_list :
   ('a -> ('b, 'd) result) ->
   'a list -> ('b list, 'd) result
