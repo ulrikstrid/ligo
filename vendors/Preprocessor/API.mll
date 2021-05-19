@@ -20,18 +20,19 @@ let rollback buffer =
 (* Utility functions *)
 
 let sprintf = Printf.sprintf
+let (<@) f g x = f (g x)
 
 (* STRING PROCESSING *)
 
-(* The value of [mk_str len p] ("make string") is a string of length
-   [len] containing the [len] characters in the list [p], in reverse
-   order. For instance, [mk_str 3 ['c';'b';'a'] = "abc"]. *)
+(* The value of [mk_str p] ("make string") is a string containing the
+   characters in the list [p], in reverse order. For instance, [mk_str
+   ['c';'b';'a'] = "abc"]. *)
 
-let mk_str (len: int) (p: char list) : string =
-  let () = assert (len = List.length p) in
+let mk_str (p: char list) : string =
+  let len   = List.length p in
   let bytes = Bytes.make len ' ' in
   let rec fill i = function
-    [] -> bytes
+         [] -> bytes
   | char::l -> Bytes.set bytes i char; fill (i-1) l
   in fill (len-1) p |> Bytes.to_string
 
@@ -61,14 +62,15 @@ type trace = cond list
      * the field [incl] is the file system's path to the the
        current input file;
      * the field [import] is a list of (filename, module) imports
-       (#import);
-     *)
-
-type line_comment  = string (* Opening of a line comment *)
-type block_comment = <opening : string; closing : string>
+       (#import) *)
 
 type file_path = string
 type module_name = string
+
+type delimiter = string
+
+type line_comment  = delimiter (* Opening of a line comment *)
+type block_comment = <opening : delimiter; closing : delimiter>
 
 type config = <
   block   : block_comment option;
@@ -86,7 +88,7 @@ type state = {
   out    : Buffer.t;
   chans  : in_channel list;
   incl   : file_path list;
-  import : (file_path * module_name) list;
+  import : (file_path * module_name) list
 }
 
 (* Directories *)
@@ -203,7 +205,7 @@ let mk_reg buffer =
   and stop  = Lexing.lexeme_end_p buffer |> Pos.from_byte
   in Region.make ~start ~stop
 
-let stop state buffer = fail state (mk_reg buffer)
+let stop state = fail state <@ mk_reg
 
 (* The function [reduce_cond] is called when a #endif directive is
    found, and the trace (see type [trace] above) needs updating. *)
@@ -237,35 +239,35 @@ let extend cond state region =
   | Else,        [] -> fail state region Dangling_else
   | Elif _, Else::_ -> fail state region Elif_follows_else
   | Elif _,      [] -> fail state region Dangling_elif
-  |     hd,     tl  -> hd::tl
+  |     hd,      tl -> hd :: tl
 
 (* The function [last_mode] seeks the last mode as recorded in the
    trace (see type [trace] above). *)
 
 let rec last_mode = function
-                        [] -> assert false
+                        [] -> Copy (* Initial mode: should not happen *)
 | (If mode | Elif mode)::_ -> mode
 |                 _::trace -> last_mode trace
 
 (* Finding a file to #include *)
 
 let rec find file_path = function
-         [] -> None
-| dir::dirs ->
+           [] -> None
+| dir :: dirs ->
     let path =
       if dir = "." || dir = "" then file_path
-      else dir ^ Filename.dir_sep ^ file_path in
-    try Some (path, open_in path) with
-      Sys_error _ -> find file_path dirs
+      else dir ^ Filename.dir_sep ^ file_path
+    in try Some (path, open_in path) with
+         Sys_error _ -> find file_path dirs
 
-let find dir file dirs =
+let find dir file_path dirs =
   let path =
-    if dir = "." || dir = "" then file
-    else dir ^ Filename.dir_sep ^ file in
+    if dir = "." || dir = "" then file_path
+    else dir ^ Filename.dir_sep ^ file_path in
   try Some (path, open_in path) with
     Sys_error _ ->
-      let base = Filename.basename file in
-      if base = file then find file dirs else None
+      let base = Filename.basename file_path in
+      if base = file_path then find file_path dirs else None
 
 (* PRINTING *)
 
@@ -281,7 +283,7 @@ let proc_nl state buffer =
 
 (* Copying a string *)
 
-let print state string = Buffer.add_string state.out string
+let print state = Buffer.add_string state.out
 
 (* Evaluating a preprocessor expression
 
@@ -302,72 +304,74 @@ let expr state buffer : mode =
   let () = print state "\n" in
   if E_AST.eval state.env ast then Copy else Skip
 
-(* DIRECTIVES *)
-
-let directives = [
-  "define";
-  "elif";
-  "else";
-  "endif";
-  "endregion";
-  "error";
-  "if";
-  "import";
-  "include";
-  "region";
-  "undef"
-]
-
 (* END OF HEADER *)
 }
 
 (* REGULAR EXPRESSIONS *)
 
-let nl        = '\n' | '\r' | "\r\n"
-let blank     = ' ' | '\t'
-let digit     = ['0'-'9']
-let natural   = digit | digit (digit | '_')* digit
-let small     = ['a'-'z']
-let capital   = ['A'-'Z']
-let letter    = small | capital
-let ident     = letter (letter | '_' | digit)*
-let directive = '#' (blank* as space) (small+ as id)
+let nl      = '\n' | '\r' | "\r\n"
+let blank   = ' ' | '\t'
+let digit   = ['0'-'9']
+let natural = digit | digit (digit | '_')* digit
+let small   = ['a'-'z']
+let capital = ['A'-'Z']
+let letter  = small | capital
+let ident   = letter (letter | '_' | digit)*
 
-(* Comments *)
+(* Comment and string delimiters *)
 
-let pascaligo_block_comment_opening = "(*"
-let pascaligo_block_comment_closing = "*)"
-let pascaligo_line_comment          = "//"
+let pascaligo_block_comment_opening  = "(*"
+let pascaligo_block_comment_closing  = "*)"
+let pascaligo_line_comment_opening   = "//"
+let pascaligo_string_delimiter       = '"'
 
-let cameligo_block_comment_opening = "(*"
-let cameligo_block_comment_closing = "*)"
-let cameligo_line_comment          = "//"
+let cameligo_block_comment_opening   = "(*"
+let cameligo_block_comment_closing   = "*)"
+let cameligo_line_comment_opening    = "//"
+let cameligo_string_delimiter        = '"'
 
 let reasonligo_block_comment_opening = "/*"
 let reasonligo_block_comment_closing = "*/"
-let reasonligo_line_comment          = "//"
+let reasonligo_line_comment_opening  = "//"
+let reasonligo_string_delimiter      = '"'
 
-let michelson_block_comment_opening = "/*"
-let michelson_block_comment_closing = "*/"
-let michelson_line_comment          = "#"
+let michelson_block_comment_opening  = "/*"
+let michelson_block_comment_closing  = "*/"
+let michelson_line_comment_opening   = "#"
+let michelson_string_delimiter       = '"'
 
-let block_comment_openings =
-  pascaligo_block_comment_opening
-| cameligo_block_comment_opening
+let jsligo_block_comment_opening     = "/*"
+let jsligo_block_comment_closing     = "*/"
+let jsligo_line_comment_opening      = "//"
+let jsligo_string_delimiter          = '"' | '\''
+
+let block_comment_opening =
+   pascaligo_block_comment_opening
+|   cameligo_block_comment_opening
 | reasonligo_block_comment_opening
-| michelson_block_comment_opening
+|  michelson_block_comment_opening
+|     jsligo_block_comment_opening
 
-let block_comment_closings =
-  pascaligo_block_comment_closing
-| cameligo_block_comment_closing
+let block_comment_closing =
+   pascaligo_block_comment_closing
+|   cameligo_block_comment_closing
 | reasonligo_block_comment_closing
-| michelson_block_comment_closing
+|  michelson_block_comment_closing
+|     jsligo_block_comment_closing
 
-let line_comments =
-  pascaligo_line_comment
-| cameligo_line_comment
-| reasonligo_line_comment
-| michelson_line_comment
+let line_comment_opening =
+   pascaligo_line_comment_opening
+|   cameligo_line_comment_opening
+| reasonligo_line_comment_opening
+|  michelson_line_comment_opening
+|     jsligo_line_comment_opening
+
+let string_delimiter =
+   pascaligo_string_delimiter
+|   cameligo_string_delimiter
+| reasonligo_string_delimiter
+|  michelson_string_delimiter
+|     jsligo_string_delimiter
 
 (* Rules *)
 
@@ -484,21 +488,17 @@ let line_comments =
 
    Important note: Comments and strings are recognised as such only in
    copy mode, which is a different behaviour from the preprocessor of
-   GNU GCC, which always does.
- *)
+   GNU GCC, which always does. *)
 
 rule scan state = parse
   nl    { proc_nl state lexbuf; scan state lexbuf }
 | blank { if state.mode = Copy then copy state lexbuf;
           scan state lexbuf }
-| directive {
+
+  (* Directives *)
+
+| '#' (blank* as space) (small+ as id) {
     let  region = mk_reg lexbuf in
-    if   not (List.mem id directives)
-    then begin
-           if state.mode = Copy then copy state lexbuf;
-           scan state lexbuf
-         end
-    else
     if   region#start#offset `Byte > 0
     then stop state lexbuf Directive_inside_line
     else
@@ -538,7 +538,9 @@ rule scan state = parse
             match find path import_file state.config#dirs with
               Some p -> fst p
             | None -> fail state reg (File_not_found import_file) in
-          let state  = {state with import = (import_path, imported_module)::state.import}
+          let state  =
+            {state with import = (import_path, imported_module)
+                                 :: state.import}
           in (proc_nl state lexbuf; scan state lexbuf)
         else (proc_nl state lexbuf; scan state lexbuf)
     | "if" ->
@@ -589,17 +591,16 @@ rule scan state = parse
     | "region" ->
         let msg = message [] lexbuf
         in print state ("#" ^ space ^ "region" ^ msg ^ "\n");
-           let state = {state with trace=Region::state.trace}
+           let state = {state with trace = Region::state.trace}
            in scan state lexbuf
     | "endregion" ->
         let msg = message [] lexbuf
         in print state ("#" ^ space ^ "endregion" ^ msg ^ "\n");
            scan (reduce_region state region) lexbuf
-    | _ -> assert false
-  }
+    | _ -> if state.mode = Copy then copy state lexbuf;
+           scan state lexbuf }
 
-| eof { if state.trace = [] then state
-        else stop state lexbuf Missing_endif }
+  (* Strings *)
 
 | '"' { if state.mode = Copy then
           begin
@@ -608,7 +609,9 @@ rule scan state = parse
           end
         else scan state lexbuf }
 
-| block_comment_openings {
+  (* Block comments *)
+
+| block_comment_opening {
     let lexeme = Lexing.lexeme lexbuf in
     match state.config#block with
       Some block when block#opening = lexeme ->
@@ -621,13 +624,13 @@ rule scan state = parse
         else scan state lexbuf
     | Some _ | None ->
         let n = String.length lexeme in
-          begin
-            rollback lexbuf;
-            assert (n > 0);
-            scan (scan_n_char n state lexbuf) lexbuf
-          end }
+        let n = if n > 0 then n else 1 in (* [n] <= 0 should not happen *)
+        rollback lexbuf;
+        scan (scan_n_char n state lexbuf) lexbuf }
 
-| line_comments {
+  (* Line comments *)
+
+| line_comment_opening {
     let lexeme = Lexing.lexeme lexbuf in
     match state.config#line with
       Some line when line = lexeme ->
@@ -639,14 +642,20 @@ rule scan state = parse
         else scan state lexbuf
     | Some _ | None ->
         let n = String.length lexeme in
-          begin
-            rollback lexbuf;
-            assert (n > 0);
-            scan (scan_n_char n state lexbuf) lexbuf
-          end }
+        let n = if n > 0 then n else 1 in (* [n] <= 0 should not happen *)
+        rollback lexbuf;
+        scan (scan_n_char n state lexbuf) lexbuf }
+
+  (* End-Of-File *)
+
+| eof { if state.trace = [] then state
+        else stop state lexbuf Missing_endif }
+
+  (* Others *)
 
 | _ { if state.mode = Copy then copy state lexbuf;
       scan state lexbuf }
+
 
 (* Scanning a series of characters *)
 
@@ -667,30 +676,28 @@ and symbol state = parse
 (* Skipping all characters until the end of line or end of file. *)
 
 and skip_line state = parse
-  nl     { proc_nl state lexbuf   }
-| eof    { rollback lexbuf        }
-| _      { skip_line state lexbuf }
+  nl  { proc_nl state lexbuf   }
+| eof { rollback lexbuf        }
+| _   { skip_line state lexbuf }
 
 (* For #error, #region and #endregion *)
 
 and message acc = parse
-  nl     { Lexing.new_line lexbuf;
-           mk_str (List.length acc) acc }
-| eof    { rollback lexbuf;
-           mk_str (List.length acc) acc }
-| blank* { message acc lexbuf           }
-| _ as c { message (c::acc) lexbuf      }
+  nl     { Lexing.new_line lexbuf; mk_str acc }
+| eof    { rollback lexbuf; mk_str acc        }
+| blank* { message acc lexbuf                 }
+| _ as c { message (c::acc) lexbuf            }
 
 (* Comments *)
 
 and in_line_com state = parse
   nl  { proc_nl state lexbuf; state                  }
-| eof { rollback lexbuf; state              }
+| eof { rollback lexbuf; state                       }
 | _   { if state.mode = Copy then copy state lexbuf;
         in_line_com state lexbuf                     }
 
 and in_block block opening state = parse
-  '"' | block_comment_openings {
+  '"' | block_comment_opening {
     let lexeme = Lexing.lexeme lexbuf in
     if   block#opening = lexeme || lexeme = "\""
     then let ()       = copy state lexbuf in
@@ -699,79 +706,79 @@ and in_block block opening state = parse
                         else in_block block in
          let state    = next opening' state lexbuf
          in in_block block opening state lexbuf
-    else let ()    = rollback lexbuf in
-         let n     = String.length lexeme in
-         let ()    = assert (n > 0) in
+    else let n     = String.length lexeme in
+         let ()    = rollback lexbuf in
+         let n     = if n > 0 then n else 1 in (* <= 0 should not happen *)
          let state = scan_n_char n state lexbuf
          in in_block block opening state lexbuf }
 
-| block_comment_closings {
+| block_comment_closing {
     let lexeme = Lexing.lexeme lexbuf in
     if   block#closing = lexeme
     then (copy state lexbuf; state)
-    else let ()    = rollback lexbuf in
-         let n     = String.length lexeme in
-         let ()    = assert (n > 0) in
+    else let n     = String.length lexeme in
+         let ()    = rollback lexbuf in
+         let n     = if n > 0 then n else 1 in (* <= 0 should not happen *)
          let state = scan_n_char n state lexbuf
          in in_block block opening state lexbuf }
 
-| nl   { proc_nl state lexbuf; in_block block opening state lexbuf }
-| eof  { let err = Unterminated_comment block#closing
-         in fail state opening err                                 }
-| _    { copy state lexbuf; in_block block opening state lexbuf    }
+| nl  { proc_nl state lexbuf; in_block block opening state lexbuf }
+| eof { let err = Unterminated_comment block#closing
+        in fail state opening err                                 }
+| _   { copy state lexbuf; in_block block opening state lexbuf    }
 
 (* #include *)
 
 and scan_include state = parse
-  blank+ { scan_include state lexbuf                    }
-| '"'    { in_include (mk_reg lexbuf) [] 0 state lexbuf }
-| _      { stop state lexbuf Missing_filename           }
+  blank+ { scan_include state lexbuf                  }
+| '"'    { in_include (mk_reg lexbuf) [] state lexbuf }
+| _      { stop state lexbuf Missing_filename         }
 
-and in_include opening acc len state = parse
+and in_include opening acc state = parse
   '"'    { let region = Region.cover opening (mk_reg lexbuf)
-           in region, end_include acc len state lexbuf       }
-| nl     { stop state lexbuf Newline_in_string               }
-| eof    { fail state opening Unterminated_string            }
-| _ as c { in_include opening (c::acc) (len+1) state lexbuf  }
+           in region, end_include acc state lexbuf   }
+| nl     { stop state lexbuf Newline_in_string       }
+| eof    { fail state opening Unterminated_string    }
+| _ as c { in_include opening (c::acc) state lexbuf  }
 
-and end_include acc len state = parse
-  nl     { Lexing.new_line lexbuf; mk_str len acc         }
-| eof    { mk_str len acc                                 }
-| blank+ { end_include acc len state lexbuf               }
+and end_include acc state = parse
+  nl     { Lexing.new_line lexbuf; mk_str acc             }
+| eof    { mk_str acc                                     }
+| blank+ { end_include acc state lexbuf                   }
 | _      { fail state (mk_reg lexbuf) Unexpected_argument }
 
 (* #import *)
 
 and scan_import state = parse
-  blank+ { scan_import state lexbuf                    }
-| '"'    { in_import (mk_reg lexbuf) [] 0 state lexbuf }
-| _      { stop state lexbuf Missing_filename          }
+  blank+ { scan_import state lexbuf                  }
+| '"'    { in_import (mk_reg lexbuf) [] state lexbuf }
+| _      { stop state lexbuf Missing_filename        }
 
-and in_import opening acc len state = parse
-  '"'    { let imp_path = mk_str len acc
-           in scan_module opening imp_path state lexbuf    }
-| nl     { stop state lexbuf Newline_in_string             }
-| eof    { fail state opening Unterminated_string          }
-| _ as c { in_import opening (c::acc) (len+1) state lexbuf }
+and in_import opening acc state = parse
+  '"'    { let imp_path = mk_str acc
+           in scan_module opening imp_path state lexbuf }
+| nl     { stop state lexbuf Newline_in_string          }
+| eof    { fail state opening Unterminated_string       }
+| _ as c { in_import opening (c::acc) state lexbuf      }
 
 and scan_module opening imp_path state = parse
-  blank+ { scan_module opening imp_path state lexbuf    }
-| '"'    { in_module opening imp_path [] 0 state lexbuf }
-| _      { stop state lexbuf Missing_filename           }
+  blank+ { scan_module opening imp_path state lexbuf  }
+| '"'    { in_module opening imp_path [] state lexbuf }
+| _      { stop state lexbuf Missing_filename         }
 
-and in_module opening imp_path acc len state = parse
-  '"'    { end_module opening (mk_reg lexbuf) imp_path acc len state lexbuf }
-| nl     { stop state lexbuf Newline_in_string                              }
-| eof    { fail state opening Unterminated_string                           }
-| _ as c { in_module opening imp_path (c::acc) (len+1) state lexbuf         }
+and in_module opening imp_path acc state = parse
+  '"'    { end_module opening (mk_reg lexbuf) imp_path acc state lexbuf }
+| nl     { stop state lexbuf Newline_in_string                          }
+| eof    { fail state opening Unterminated_string                       }
+| _ as c { in_module opening imp_path (c::acc) state lexbuf             }
 
 
-and end_module opening closing imp_path acc len state = parse
+and end_module opening closing imp_path acc state = parse
   nl     { proc_nl state lexbuf;
-           Region.cover opening closing, imp_path, mk_str len acc   }
-| eof    { Region.cover opening closing, imp_path, mk_str len acc   }
-| blank+ { end_module opening closing imp_path acc len state lexbuf }
-| _      { fail state (mk_reg lexbuf) Unexpected_argument           }
+           Region.cover opening closing, imp_path, mk_str acc   }
+| eof    { Region.cover opening closing, imp_path, mk_str acc   }
+| blank+ { end_module opening closing imp_path acc state lexbuf }
+| _      { fail state (mk_reg lexbuf) Unexpected_argument       }
 
 (* Strings *)
 
@@ -817,8 +824,7 @@ let from_lexbuf config buffer =
     out    = Buffer.create 80;
     chans  = [];
     incl   = [Filename.dirname path];
-    import = []
-  } in
+    import = []} in
   match preproc state buffer with
     state ->
       List.iter close_in state.chans;

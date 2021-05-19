@@ -18,7 +18,7 @@
 module Region = Simple_utils.Region
 
 (* The source configuration gathers all the information about the
-   input to be preprocessed. Comments can be chose from the following
+   input to be preprocessed. Comments can be chosen from the following
    list:
       * "(*" and "*)" for blocks and "//" for lines;
       * "/*" and "*/" for blocks and "//" for lines;
@@ -35,13 +35,15 @@ module Region = Simple_utils.Region
 type file_path = string
 type module_name = string
 
-type line_comment  = string (* Opening of a line comment *)
-type block_comment = <opening : string; closing : string>
+type delimiter = string
+
+type line_comment  = delimiter (* Opening of a line comment *)
+type block_comment = <opening : delimiter; closing : delimiter>
 
 type config = <
   block   : block_comment option;
   line    : line_comment option;
-  input   : file_path option;
+  input   : file_path option; (* [None] means stding *)
   offsets : bool;          (* [true] for horizontal offsets *)
   dirs    : file_path list (* Directories to search for #include files *)
 >
