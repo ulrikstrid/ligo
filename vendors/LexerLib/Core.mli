@@ -231,9 +231,6 @@ val mk_scan : 'token client -> 'token scanner
      * a function [window] that returns a window of zero, one or
        two tokens.
 
-     Note that a module [Token] is exported too, because the
-   signature of the exported functions depend on it.
-
      The type [window] is a two-token window, that is, a buffer
    that contains the last recognised token, and the penultimate
    (if any). *)

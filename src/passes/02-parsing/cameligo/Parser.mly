@@ -32,6 +32,20 @@ let mk_mod_path :
     and value = {module_path; selector=last_dot; field}
     in {value; region}
 
+(* The function [terminate_decl] adds a semicolon terminator to a
+   declaration. It is a functional update (patch). This because we
+   want to share rules for declarations that are valid at top-level
+   and at inner levels (blocks), and the latter require a semicolon
+   --- which we patch afterwards in semantic actions. *)
+
+let terminate_decl semi = function
+  D_Const     d -> {d with value = {d.value with terminator=semi}}
+| D_Directive d -> d
+| D_Fun       d -> {d with value = {d.value with terminator=semi}}
+| D_Module    d -> {d with value = {d.value with terminator=semi}}
+| D_ModAlias  d -> {d with value = {d.value with terminator=semi}}
+| D_Type      d -> {d with value = {d.value with terminator=semi}}
+
 (* END HEADER *)
 %}
 
@@ -61,7 +75,7 @@ let mk_mod_path :
 %on_error_reduce bin_op(add_expr_level,MINUS,mult_expr_level)
 %on_error_reduce bin_op(add_expr_level,PLUS,mult_expr_level)
 %on_error_reduce seq(Attr)
-%on_error_reduce constr_pattern
+%on_error_reduce ctor_pattern
 %on_error_reduce cons_pattern_level
 %on_error_reduce nsepseq(cons_pattern_level,COMMA)
 %on_error_reduce pattern
@@ -211,6 +225,9 @@ module_decl:
     let value  = {kwd_module=$1; name=$2; eq=$3; kwd_struct=$4;
                   structure=$5; kwd_end=$6}
     in {region; value} }
+
+declarations:
+  nseq(declaration ";"? { terminate_decl $2 $1}) { $1 }
 
 module_alias:
   "module" module_name "=" nsepseq(module_name,".") {
@@ -424,15 +441,12 @@ core_pattern:
 | variable       { P_Var    $1 }
 | list_pattern   { P_List   $1 }
 | ctor_pattern   { P_Ctor   $1 }
-| tuple_pattern  { P_Tuple  $1 }
 | record_pattern { P_Record $1 }
-| par(pattern)   { P_Par    $1 }
+| par(pattern)
+| par(typed_pattern) { P_Par $1 }
 
 list_pattern:
   list_of(cons_pattern_level) { $1 }
-
-tuple_pattern:
-  par(tuple(cons_pattern_level)) { $1 }
 
 some_pattern:
   "Some" core_pattern {
