@@ -771,8 +771,8 @@ let test =
     return_result ~display_format (Ligo_interpreter.Formatter.test_format) @@
       let* init_env   = Helpers.get_initial_env ~test_env:true protocol_version in
       let options = Compiler_options.make ~infer ~init_env () in
-      let* typed,_    = Compile.Utils.type_file ~options source_file syntax Env in
-      Interpreter.eval_test typed test_entry
+      let* typed,env    = Compile.Utils.type_file ~options source_file syntax Env in
+      Interpreter.eval_test env typed test_entry
   in
   let term =
     Term.(const f $ source_file 0 $ test_entry 1 $ syntax $ infer $ protocol_version $ display_format) in

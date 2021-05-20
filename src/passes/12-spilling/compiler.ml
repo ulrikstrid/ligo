@@ -176,6 +176,7 @@ let compile_constant' : AST.constant' -> constant' = function
       | C_TEST_STATE_RESET
       | C_TEST_LAST_ORIGINATIONS
       | C_TEST_RUN
+      | C_TEST_EVAL
       | C_TEST_COMPILE_META_VALUE ) as c ->
     failwith (Format.asprintf "%a is only available for LIGO interpreter" PP.constant c)
 

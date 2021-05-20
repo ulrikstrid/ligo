@@ -151,6 +151,7 @@ let constant' = function
   | C_TEST_COMPILE_META_VALUE  -> `List [`String "TEST_COMPILE_META_VALUE"; `Null ]
   | C_TEST_COMPILE_EXPRESSION_SUBST -> `List [`String "TEST_COMPILE_EXPRESSION_SUBST"; `Null ]
   | C_TEST_RUN                 -> `List [`String "TEST_RUN"; `Null ]
+  | C_TEST_EVAL                -> `List [`String "TEST_EVAL"; `Null ]
   | C_SHA3                     -> `List [`String "SHA3"; `Null ]
   | C_KECCAK                   -> `List [`String "KECCAK"; `Null ]
   | C_LEVEL                    -> `List [`String "LEVEL"; `Null ]

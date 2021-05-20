@@ -39,11 +39,14 @@ let rec pp_value : Format.formatter -> value -> unit = fun ppf v ->
   | V_Michelson (Ty_code (code,_,_) | Contract code (* | Subst_code (code,_) *) ) ->
     Format.fprintf ppf "%a" Tezos_utils.Michelson.pp code
   | V_Ligo (_syntax , code) ->
-    Format.fprintf ppf "%s" code
+     Format.fprintf ppf "%s" code
+
+let pp_value_expr : Format.formatter -> value_expr -> unit = fun ppf v ->
+  Format.fprintf ppf "%a" pp_value v.eval_term
 
 let pp_env : Format.formatter -> env -> unit = fun ppf env ->
-  let aux : Format.formatter -> expression_variable * value -> unit = fun ppf (var,v) ->
-    Format.fprintf ppf "%a -> %a" Var.pp var.wrap_content pp_value v in
+  let aux : Format.formatter -> expression_variable * value_expr -> unit = fun ppf (var,v) ->
+    Format.fprintf ppf "%a -> %a" Var.pp var.wrap_content pp_value_expr v in
   Format.fprintf ppf "@[<v 2>%i bindings in environment:@ %a@]"
     (Env.cardinal env)
     (list_sep aux (tag "@ "))

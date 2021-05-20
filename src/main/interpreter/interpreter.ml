@@ -54,15 +54,15 @@ let apply_comparison : Location.t -> Ast_typed.constant' -> value list -> value 
       Monad.return @@ v_bool (f_op a' b')
     | _ -> raise (Meta_lang_ex {location = loc ; reason = Reason "Not comparable" })
 
-let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> value Monad.t =
-  fun loc c operands ->
+let rec apply_operator : Location.t -> Ast_typed.environment -> env -> Ast_typed.constant' -> value list -> value Monad.t =
+  fun loc type_env env c operands ->
   let open Monad in
   let return_ct v = return @@ V_Ct v in
   let return_none () = return @@ v_none () in
-  let return_some v  = return @@ v_some v in
+  let return_some v = return @@ v_some v in
   ( match (c,operands) with
     (* nullary *)
-    | ( C_NONE , [] ) -> return_none ()
+    | ( C_NONE , [] ) -> return_none () 
     | ( C_UNIT , [] ) -> return @@ V_Ct C_unit
     | ( C_NIL  , [] ) -> return @@ V_List []
     (* unary *)
@@ -144,7 +144,7 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
         Monad.bind_map_list
           (fun elt ->
             let env' = Env.extend env (arg_binder,elt) in
-            eval_ligo body env')
+            eval_ligo body type_env env')
           elts
       in
       return (V_List elts)
@@ -153,7 +153,7 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
         Monad.bind_map_list
           (fun (k,v) ->
             let env' = Env.extend env (arg_binder,v_pair (k,v)) in
-            let* v' = eval_ligo body env' in
+            let* v' = eval_ligo body type_env env' in
             return @@ (k,v')
           )
           elts
@@ -163,20 +163,20 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
       Monad.bind_fold_list
         (fun _ elt ->
           let env' = Env.extend env (arg_binder,elt) in
-          eval_ligo body env'
+          eval_ligo body type_env env'
         )
         (V_Ct C_unit) elts
     | ( C_MAP_ITER , [ V_Func_val {arg_binder ; body ; env}  ; V_Map (elts) ] ) ->
       Monad.bind_fold_list
         (fun _ kv ->
           let env' = Env.extend env (arg_binder,v_pair kv) in
-          eval_ligo body env'
+          eval_ligo body type_env env'
         )
         (V_Ct C_unit) elts
     | ( C_FOLD_WHILE , [ V_Func_val {arg_binder ; body ; env}  ; init ] ) -> (
       let rec aux b el =
         let env' = Env.extend env (arg_binder, el) in
-        let* res = eval_ligo body env' in
+        let* res = eval_ligo body type_env env' in
         let (b',el') = Option.unopt_failwith "bad pair" (extract_fold_while_result res) in
         if b then aux b' el' else return el' in
       aux true init
@@ -190,7 +190,7 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
         (fun prev elt ->
           let fold_args = v_pair (prev,elt) in
           let env' = Env.extend env (arg_binder,  fold_args) in
-          eval_ligo body env'
+          eval_ligo body type_env env'
         )
         init elts
     | ( C_MAP_EMPTY , []) -> return @@ V_Map ([])
@@ -199,7 +199,7 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
         (fun prev kv ->
           let fold_args = v_pair (prev, v_pair kv) in
           let env' = Env.extend env (arg_binder,  fold_args) in
-          eval_ligo body env'
+          eval_ligo body type_env env'
         )
         init kvs
     | ( C_MAP_MEM , [ k ; V_Map kvs ] ) -> return @@ v_bool (List.mem_assoc k kvs)
@@ -217,14 +217,14 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
         (fun prev elt ->
           let fold_args = v_pair (prev,elt) in
           let env' = Env.extend env (arg_binder, fold_args) in
-          eval_ligo body env'
+          eval_ligo body type_env env'
         )
         init elts
     | ( C_SET_ITER , [ V_Func_val {arg_binder ; body ; env}  ; V_Set (elts) ] ) ->
       Monad.bind_fold_list
         (fun _ elt ->
           let env' = Env.extend env (arg_binder,elt) in
-          eval_ligo body env'
+          eval_ligo body type_env env'
         )
         (V_Ct C_unit) elts
     | ( C_SET_MEM    , [ v ; V_Set (elts) ] ) -> return @@ v_bool (List.mem v elts)
@@ -264,7 +264,7 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
     | ( C_TEST_EXTERNAL_CALL , [ addr ; param ; amt ] ) -> (
       let>> err_opt = External_call (loc,addr,param,amt) in
       match err_opt with
-      | None -> return (LC.v_ctor "Success" @@ LC.v_unit ())
+      | None -> return (LC.v_ctor "Success" (LC.v_unit ()))
       | Some e ->
         let>> a = State_error_to_value e in
         return a
@@ -294,7 +294,7 @@ let rec apply_operator : Location.t -> Ast_typed.constant' -> value list -> valu
       let>> x = Compile_meta_value (loc,a) in
       return x
     | ( C_TEST_RUN , [ V_Func_val f ; v ] ) ->
-      let>> x = Run (loc,f,v) in
+      let>> x = Run (loc,type_env,env,f,v) in
       return x
     | ( C_FAILWITH , [ a ] ) ->
       raise (Meta_lang_ex {location = loc ; reason = Val a})
@@ -311,49 +311,49 @@ and eval_literal : Ast_typed.literal -> value Monad.t = function
   | Literal_bytes s     -> Monad.return @@ V_Ct (C_bytes s)
   | _   -> Monad.fail @@ Errors.generic_error Location.generated "Unsupported literal"
 
-and eval_ligo : Ast_typed.expression -> env -> value Monad.t
-  = fun term env ->
+and eval_ligo : Ast_typed.expression -> Ast_typed.environment -> env -> value Monad.t
+  = fun term typed_env env ->
     let open Monad in
     match term.expression_content with
     | E_application {lamb = f; args} -> (
-        let* f' = eval_ligo f env in
-        let* args' = eval_ligo args env in
+        let* f' = eval_ligo f typed_env env in
+        let* args' = eval_ligo args typed_env env in
         match f' with
           | V_Func_val {arg_binder ; body ; env; _} ->
             let f_env' = Env.extend env (arg_binder, args') in
-            eval_ligo body f_env'
+            eval_ligo body typed_env f_env'
           | V_Func_rec (fun_name, arg_names, body, f_env) ->
             let f_env' = Env.extend f_env (arg_names, args') in
             let f_env'' = Env.extend f_env' (fun_name, f') in
-            eval_ligo body f_env''
+            eval_ligo body typed_env f_env''
           | _ -> failwith "trying to apply on something that is not a function"
       )
     | E_lambda {binder; result;} ->
       return @@ V_Func_val {orig_lambda = term ; arg_binder=binder ; body=result ; env}
     | E_let_in {let_binder ; rhs; let_result} -> (
-      let* rhs' = eval_ligo rhs env in
-      eval_ligo (let_result) (Env.extend env (let_binder,rhs'))
+      let* rhs' = eval_ligo rhs typed_env env in
+      eval_ligo (let_result) typed_env (Env.extend env (let_binder,rhs'))
     )
     | E_type_in {type_binder=_ ; rhs=_; let_result} -> (
-      eval_ligo (let_result) env
+      eval_ligo (let_result) typed_env env
     )
     | E_mod_in    _ -> failwith "Module are not handled in interpreter yet"
     | E_mod_alias _ -> failwith "Module are not handled in interpreter yet"
     | E_literal l ->
       eval_literal l
     | E_variable var ->
-      let v = Option.unopt_failwith "unbound variable" (Env.lookup env var) in
+      let {eval_term=v} = Option.unopt_failwith "unbound variable" (Env.lookup env var) in
       return v
     | E_record recmap ->
       let* lv' = Monad.bind_map_list
         (fun (label,(v:Ast_typed.expression)) ->
-          let* v' = eval_ligo v env in
+          let* v' = eval_ligo v typed_env env in
           return (label,v'))
         (LMap.to_kv_list_rev recmap)
       in
       return @@ V_Record (LMap.of_list lv')
     | E_record_accessor { record ; path} -> (
-      let* record' = eval_ligo record env in
+      let* record' = eval_ligo record typed_env env in
       match record' with
       | V_Record recmap ->
         let a = LMap.find path recmap in
@@ -361,29 +361,33 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
       | _ -> failwith "trying to access a non-record"
     )
     | E_record_update {record ; path ; update} -> (
-      let* record' = eval_ligo record env in
+      let* record' = eval_ligo record typed_env env in
       match record' with
       | V_Record recmap ->
         if LMap.mem path recmap then
-          let* field' = eval_ligo update env in
+          let* field' = eval_ligo update typed_env env in
           return @@ V_Record (LMap.add path field' recmap)
         else
           failwith "field l does not exist in record"
       | _ -> failwith "this expression isn't a record"
     )
+    | E_constant {cons_name=C_TEST_EVAL ; arguments=[expr]} -> (
+      let>> code = Eval (term.location, typed_env, env, expr, expr.type_expression) in
+      return code
+    )
     | E_constant {cons_name ; arguments} -> (
       let* arguments' = Monad.bind_map_list
-        (fun (ae:Ast_typed.expression) -> eval_ligo ae env)
+        (fun (ae:Ast_typed.expression) -> eval_ligo ae typed_env env)
         arguments in
-      apply_operator term.location cons_name arguments'
+      apply_operator term.location typed_env env cons_name arguments'
     )
     | E_constructor { constructor = Label c ; element } when (String.equal c "true" || String.equal c "false")
      && element.expression_content = Ast_typed.e_unit () -> return @@ V_Ct (C_bool (bool_of_string c))
     | E_constructor { constructor = Label c ; element } ->
-      let* v' = eval_ligo element env in
+       let* v' = eval_ligo element typed_env env in
       return @@ V_Construct (c,v')
     | E_matching { matchee ; cases} -> (
-      let* e' = eval_ligo matchee env in
+      let* e' = eval_ligo matchee typed_env env in
       match cases, e' with
       | Match_variant {cases;_}, V_List [] ->
         let {constructor=_ ; pattern=_ ; body} =
@@ -391,7 +395,7 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
             (fun {constructor = (Label c) ; pattern=_ ; body=_} ->
               String.equal "Nil" c)
             cases in
-        eval_ligo body env
+        eval_ligo body typed_env env
       | Match_variant {cases;_}, V_List lst ->
         let {constructor=_ ; pattern ; body} =
           List.find
@@ -402,7 +406,7 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
         let tl = V_List (List.tl lst) in
         let proj = v_pair (hd,tl) in
         let env' = Env.extend env (pattern, proj) in
-        eval_ligo body env'
+        eval_ligo body typed_env env'
       | Match_variant {cases;_}, V_Ct (C_bool b) ->
         let ctor_body (case : matching_content_case) = (case.constructor, case.body) in
         let cases = LMap.of_list (List.map ctor_body cases) in
@@ -410,8 +414,8 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
             (LMap.find (Label c) cases) in
         let match_true  = get_case "true" in
         let match_false = get_case "false" in
-        if b then eval_ligo match_true env
-        else eval_ligo match_false env
+        if b then eval_ligo match_true typed_env env
+        else eval_ligo match_false typed_env env
       | Match_variant {cases ; tv=_} , V_Construct (matched_c , proj) ->
         let {constructor=_ ; pattern ; body} =
           List.find
@@ -419,7 +423,7 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
               String.equal matched_c c)
             cases in
         let env' = Env.extend env (pattern, proj) in
-        eval_ligo body env'
+        eval_ligo body typed_env env'
       | Match_record {fields ; body ; tv = _} , V_Record rv ->
         let aux : label -> ( expression_variable * _ ) -> env -> env =
           fun l (v,_) env ->
@@ -430,7 +434,7 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
             Env.extend env (v,iv)
         in
         let env' = LMap.fold aux fields env in
-        eval_ligo body env'
+        eval_ligo body typed_env env'
       | _ , v -> failwith ("not yet supported case "^ Format.asprintf "%a" Ligo_interpreter.PP.pp_value v^ Format.asprintf "%a" Ast_typed.PP.expression term)
     )
     | E_recursive {fun_name; fun_type=_; lambda} ->
@@ -447,44 +451,47 @@ and eval_ligo : Ast_typed.expression -> env -> value Monad.t
 
 let ( let>>= ) o f = Trace.bind f o
 
-let eval : Ast_typed.module_fully_typed -> (env , Errors.interpreter_error) result =
-  fun (Module_Fully_Typed prg) ->
-    let aux : env * Tezos_state.context -> declaration location_wrap -> (env * Tezos_state.context, Errors.interpreter_error) Trace.result =      
-      fun (top_env,state) el ->
+let eval : Ast_typed.environment -> Ast_typed.module_fully_typed -> (env , Errors.interpreter_error) result =
+  fun typed_env (Module_Fully_Typed prg) ->
+    let aux : Ast_typed.environment * env * Tezos_state.context -> declaration location_wrap -> (Ast_typed.environment * env * Tezos_state.context, Errors.interpreter_error) Trace.result =      
+      fun (type_env,top_env,state) el ->
         match Location.unwrap el with
-        | Ast_typed.Declaration_type _ -> ok (top_env,state)
+        (* | Ast_typed.Declaration_type {type_binder;type_expr} ->
+         *    ok (Env.type_extend type_env (type_binder, type_expr), top_env,state) *)
+        | Ast_typed.Declaration_type _ ->
+           ok (type_env, top_env,state)
         | Ast_typed.Declaration_constant {binder; expr ; inline=_ ; _} ->
           let>>= (v,state) =
-            try Monad.eval (eval_ligo expr top_env) state None
+            try Monad.eval (eval_ligo expr typed_env top_env) state None
             with
               | Object_lang_ex (loc,e) -> fail @@ Errors.target_lang_error loc e
               | Meta_lang_ex {location ; reason = Val x} -> fail @@ Errors.meta_lang_failwith location x
               | Meta_lang_ex {location ; reason = Reason x} -> fail @@ Errors.meta_lang_eval location x
           in
           let top_env' = Env.extend top_env (binder, v) in
-          ok (top_env',state)
+          ok (type_env,top_env',state)
         | Ast_typed.Declaration_module {module_binder; module_=_} ->
           let>>= module_env =
             failwith "Module are not handled in interpreter yet"
           in
           let top_env' = Env.extend top_env (Location.wrap @@ Var.of_name module_binder, module_env) in
-          ok (top_env',state)
+          ok (type_env,top_env',state)
         | Ast_typed.Module_alias _ -> failwith "Module are not handled in interpreter yet"
     in
     let* initial_state = Tezos_state.init_ctxt () in
-    let* (env,_) = bind_fold_list aux (Env.empty_env, initial_state) prg in
+    let* (_,env,_) = bind_fold_list aux (typed_env, Env.empty_env, initial_state) prg in
     ok env
 
-let eval_test : Ast_typed.module_fully_typed -> string -> (value , Errors.interpreter_error) result =
-  fun prg test_entry ->
-    let>>= env = eval prg in
+let eval_test : Ast_typed.environment -> Ast_typed.module_fully_typed -> string -> (value , Errors.interpreter_error) result =
+  fun env prg test_entry ->
+    let>>= env = eval env prg in
     let v = Env.to_kv_list env in
-    let aux : expression_variable * value -> bool = fun (ev, _) ->
+    let aux : expression_variable * value_expr -> bool = fun (ev, _) ->
       let name = Var.to_name @@ Location.unwrap ev in
       String.equal name test_entry
     in
     match List.find_opt aux v with
-    | Some (_,v) -> ok v
+    | Some (_,{eval_term=v}) -> ok v
     | None -> fail @@ Errors.test_entry_not_found test_entry
 
 let () = Printexc.record_backtrace true

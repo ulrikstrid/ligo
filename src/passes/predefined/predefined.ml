@@ -183,6 +183,7 @@ module Tree_abstraction = struct
     | "Test.last_originations" -> some_const C_TEST_LAST_ORIGINATIONS
     | "Test.compile_value" -> some_const C_TEST_COMPILE_META_VALUE
     | "Test.run" -> some_const C_TEST_RUN
+    | "Test.eval" -> some_const C_TEST_EVAL
 
     | _ -> None
 
@@ -316,6 +317,7 @@ module Tree_abstraction = struct
     | C_TEST_LAST_ORIGINATIONS -> "Test.last_originations"
     | C_TEST_COMPILE_META_VALUE -> "Test.compile_value"
     | C_TEST_RUN -> "Test.run"
+    | C_TEST_EVAL -> "Test.eval"
     
     | _ as c -> failwith @@ Format.asprintf "Constant not handled : %a" Stage_common.PP.constant' c
 
