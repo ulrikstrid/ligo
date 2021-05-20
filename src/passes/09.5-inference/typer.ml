@@ -71,6 +71,7 @@ end = struct
       bind_fold_list (fun () texpr -> te where texpr) () arguments
     | O.T_module_accessor {module_name=_; element} -> te where element
     | O.T_singleton _ -> failwith "TODO: singleton?"
+    | O.T_for_all _ -> failwith "REMITODO"
   and te where : O.type_expression -> _ = function { type_content; sugar=_; location=_ } -> tc where type_content
 
   let check_expression_has_no_unification_vars (expr : O.expression) =
@@ -193,6 +194,7 @@ and evaluate_type : environment -> I.type_expression -> (O.type_expression, type
     in
     evaluate_type module_ element
   | T_singleton x -> return (T_singleton x)
+  | T_for_all x -> return (T_for_all x) (* REMITODO : sure about that ? *)
 
 
 and type_expression : ?tv_opt:O.type_expression -> environment -> _ O'.typer_state -> I.expression -> (environment * _ O'.typer_state * O.expression * O.type_expression, typer_error) result = fun ?tv_opt e state ae ->

@@ -13,6 +13,7 @@ type type_content =
   | T_app             of ty_expr type_app
   | T_module_accessor of ty_expr module_access
   | T_singleton       of literal
+  | T_for_all         of ty_expr for_all
 
 and type_expression = {type_content: type_content; location: Location.t}
 and ty_expr = type_expression

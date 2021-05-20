@@ -21,6 +21,7 @@ and type_content =
   | T_arrow    of ty_expr arrow
   | T_module_accessor of ty_expr module_access
   | T_singleton of literal
+  | T_for_all of ty_expr for_all
 
 and type_injection = {
   language : string ;
