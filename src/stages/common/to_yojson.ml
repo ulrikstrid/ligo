@@ -207,6 +207,13 @@ let attributes attr =
   let list = List.map (fun string -> `String string) attr
   in `Assoc [("attributes", `List list)]
 
+let for_all type_expression {ty_binder ; kind = _ ; type_ } =
+  `Assoc [
+    ("ty_binder", type_variable_to_yojson ty_binder) ;
+    (* ("kind", ) *)
+    ("type_", type_expression type_)
+  ]  
+
 let binder type_expression {var;ascr} =
   `Assoc [
     ("var", expression_variable_to_yojson var);

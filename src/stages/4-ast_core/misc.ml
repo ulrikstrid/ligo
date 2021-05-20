@@ -128,6 +128,10 @@ let rec assert_type_expression_eq (a, b: (type_expression * type_expression)) : 
   | T_module_accessor _, _ -> None
   | T_singleton a , T_singleton b -> assert_literal_eq (a , b)
   | T_singleton _ , _ -> None
+  | T_for_all a , T_for_all b ->
+    assert_type_expression_eq (a.type_, b.type_) >>= fun _ ->
+    Some (assert (a.kind = b.kind)) (* REMITODO: improve later *)
+  | T_for_all _ , _ -> None
 
 and type_expression_eq ab = Option.is_some @@ assert_type_expression_eq ab
 

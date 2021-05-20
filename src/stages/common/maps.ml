@@ -8,6 +8,11 @@ let module_access : ('a -> ('b, _) result) -> 'a module_access -> ('b module_acc
 
 (* Types level *)
 
+let for_all : ('a -> ('b, _) result) -> 'a for_all -> ('b for_all, _) result =
+  fun f ({ type_ ; _} as fa) ->
+    let* type_ = f type_ in
+    ok @@ { fa with type_}
+
 let type_app : ('a -> ('b, _) result) -> 'a type_app -> ('b type_app, _) result
 = fun g {type_operator;arguments} ->
   let* arguments = bind_map_list g arguments in

@@ -92,6 +92,9 @@ let rec compile_type_expression : I.type_expression -> (O.type_expression , desu
       return @@ O.T_module_accessor ma
     | I.T_singleton x ->
       return @@ O.T_singleton x
+    | I.T_for_all x ->
+      let* type_ = self x.type_ in
+      return @@ O.T_for_all { x with type_ }
 
 let compile_binder = binder compile_type_expression
 

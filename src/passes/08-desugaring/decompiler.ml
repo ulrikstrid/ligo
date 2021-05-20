@@ -50,6 +50,9 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, des
         let* ma = module_access self ma in
         return @@ T_module_accessor ma
       | O.T_singleton x -> return @@ I.T_singleton x
+      | O.T_for_all x ->
+        let* type_ = self x.type_ in
+        return @@ I.T_for_all { x with type_ }
 
 let rec decompile_expression : O.expression -> (I.expression, desugaring_error) result =
   fun e ->

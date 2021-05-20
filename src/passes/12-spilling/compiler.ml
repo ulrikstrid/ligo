@@ -284,6 +284,8 @@ let rec compile_type (t:AST.type_expression) : (type_expression, spilling_error)
     fail @@ corner_case ~loc:__LOC__ "Module access should de resolved earlier"
   | T_singleton _ ->
     fail @@ corner_case ~loc:__LOC__ "Singleton uncaught"
+  | T_for_all _ ->
+    fail @@ corner_case ~loc:__LOC__ "For all type uncaught"
 
 (* probably should use result monad for conformity? but these errors
    are supposed to be impossible *)

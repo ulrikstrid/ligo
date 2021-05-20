@@ -42,6 +42,7 @@ and type_content = function
   | T_constant        t -> `List [ `String "t_constant"; type_injection t]
   | T_module_accessor t -> `List [ `String "t_module_accessor"; module_access type_expression t]
   | T_singleton       t -> `List [ `String "t_singleton" ; literal t ]
+  | T_for_all         t -> `List [ `String "t_for_all" ; for_all type_expression t]
 
 and type_injection {language;injection;parameters} =
   `Assoc [

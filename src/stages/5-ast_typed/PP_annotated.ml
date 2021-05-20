@@ -70,6 +70,7 @@ let rec type_content : formatter -> type_content -> unit =
   | T_arrow            a -> arrow         type_expression ppf a
   | T_module_accessor ma -> module_access type_expression ppf ma
   | T_singleton       x  -> literal       ppf             x
+  | T_for_all         x  -> for_all       type_expression ppf x
 
 and row_element : formatter -> row_element -> unit =
   fun ppf { associated_type ; michelson_annotation=_ ; decl_pos } ->

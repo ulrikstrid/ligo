@@ -32,6 +32,9 @@ let rec decompile_type_expression : O.type_expression -> (I.type_expression, Err
       return @@ I.T_module_accessor ma
     | O.T_singleton x ->
       return @@ I.T_singleton x
+    | O.T_for_all x ->
+      let* type_ = self x.type_ in
+      return @@ I.T_for_all {x with type_}
 
 let rec decompile_expression : O.expression -> (I.expression, Errors.purification_error) result =
   fun e ->
