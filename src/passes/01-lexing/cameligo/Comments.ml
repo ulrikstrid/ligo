@@ -152,6 +152,72 @@ let to_t = function
 | Attr i -> Attr {region={t_region = i.region; markup=[]}; value= i.value}
 | Directive (Linemarker d) -> Directive (Linemarker d)
 
+let to_token = function
+  ARROW region -> Token.ARROW region.t_region
+| CONS region  -> CONS region.t_region
+| CARET region -> CARET region.t_region
+| MINUS region -> MINUS region.t_region
+| PLUS region  -> PLUS region.t_region
+| SLASH region -> SLASH region.t_region
+| TIMES region -> TIMES region.t_region
+| LPAR region -> LPAR region.t_region
+| RPAR region -> RPAR region.t_region
+| LBRACKET region -> LBRACKET region.t_region
+| RBRACKET region -> RBRACKET region.t_region
+| LBRACE region -> LBRACE region.t_region
+| RBRACE region -> RBRACE region.t_region
+| COMMA region -> COMMA region.t_region
+| SEMI region -> SEMI region.t_region
+| VBAR region -> VBAR region.t_region
+| COLON region -> COLON region.t_region
+| DOT region -> DOT region.t_region
+| WILD region -> WILD region.t_region
+| EQ region -> EQ region.t_region
+| NE region -> NE region.t_region
+| LT region -> LT region.t_region
+| GT region -> GT region.t_region
+| LE region -> LE region.t_region
+| GE region -> GE region.t_region
+| BOOL_OR region -> BOOL_OR region.t_region
+| BOOL_AND region -> BOOL_AND region.t_region
+| Begin region -> Begin region.t_region
+| Else region -> Else region.t_region
+| End region -> End region.t_region
+| False region -> False region.t_region
+| Fun region -> Fun region.t_region
+| Rec region -> Rec region.t_region
+| If region -> If region.t_region
+| In region -> In region.t_region
+| Let region -> Let region.t_region
+| Match region -> Match region.t_region
+| Mod region -> Mod region.t_region
+| Not region -> Not region.t_region
+| Of region -> Of region.t_region
+| Or region -> Or region.t_region
+| Then region -> Then region.t_region
+| True region -> True region.t_region
+| Type region -> Type region.t_region
+| With region -> With region.t_region
+| Module region -> Module region.t_region
+| Struct region -> Struct region.t_region
+| C_None region -> C_None region.t_region
+| C_Some region -> C_Some region.t_region
+| EOF region -> EOF region.t_region
+| String i -> String {region=i.region.t_region; value=i.value}
+| Verbatim i -> Verbatim {region=i.region.t_region; value=i.value}
+| Bytes i -> Bytes {region=i.region.t_region; value=i.value}
+| Int i -> Int {region=i.region.t_region; value=i.value}
+| Nat i -> Nat {region=i.region.t_region; value=i.value}
+| Mutez i -> Mutez {region=i.region.t_region; value=i.value}
+| Ident i -> Ident {region=i.region.t_region; value=i.value}
+| Constr i -> Constr {region=i.region.t_region; value=i.value}
+| Lang i -> 
+
+  let region = Region.{region=i.region.t_region; value={region = i.region.t_region; value = i.value.value}} in
+  Lang region
+| Attr i -> Attr {region=i.region.t_region; value=i.value}
+| Directive (Linemarker d) -> Directive (Linemarker d)
+
 let to_ext_region_t = function
   ARROW region -> region
 | CONS region  -> region

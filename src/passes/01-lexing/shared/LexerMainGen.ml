@@ -153,7 +153,7 @@ module Make (File        : FILE)
           let lex_units = Scan.LexUnits.from_lexbuf config lexbuf
           in match Self_tokens.filter lex_units with
                Stdlib.Ok tokens ->
-                 store  := tokens;
+                 store  := List.map Self_tokens.to_token tokens;
                  called := true;
                  scan lexbuf
              | Error _ as err -> err
