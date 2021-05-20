@@ -33,6 +33,42 @@
           }
         }
       },
+      "esy-rustup": {
+        "source": "https://github.com/rust-lang/rustup/archive/refs/tags/1.24.2.tar.gz#979e8139734d39313b0147e0db3bfd2675f49507",
+        "override": {
+          "buildEnvOverride": {
+            "RUSTUP_USE_CURL": "1",
+            "CARGO_HOME": "#{self.install}",
+            "RUSTUP_HOME": "#{self.install / '.rustup'}"
+          },
+          "exportedEnv": {
+            "CARGO_HOME": {
+              "val": "#{self.install}",
+              "scope": "global"
+            },
+            "RUSTUP_HOME": {
+              "val": "#{self.install / '.rustup'}",
+              "scope": "global"
+            }
+          },
+          "dependencies": {
+            "esy-openssl": "esy-packages/esy-openssl#44762916645a5b6d4f6037aabf80e95fa4140547"
+          },
+          "build": [
+            [
+              "./rustup-init.sh",
+              "-y",
+              "--no-modify-path",
+              "--default-toolchain",
+              "1.44",
+              "--profile",
+              "minimal",
+              "#{os == 'windows' ? '--default-host' : ''",
+              "#{os == 'windows' ? 'x86_64-pc-windows-gnu' : ''"
+            ]
+          ]
+        }
+      },
       "@opam/tezos-rust-libs": {
         "source": "git+https://gitlab.com/tezos/tezos-rust-libs:tezos-rust-libs.opam#7e6517823d2835e2b79e47124f37cdd5f5c13567",
         "override": {
@@ -42,15 +78,10 @@
               "scope": "global"
             }
           },
-          "build": [
-            [
-              "/Users/ulrik/.cargo/bin/cargo",
-              "build",
-              "--target-dir",
-              "target",
-              "--release"
-            ]
-          ]
+          "build": [["cargo", "build", "--target-dir", "target", "--release"]],
+          "dependencies": {
+            "esy-rustup": "*"
+          }
         }
       },
       "@opam/conf-rust": {
