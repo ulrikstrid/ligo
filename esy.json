@@ -51,9 +51,6 @@
               "scope": "global"
             }
           },
-          "dependencies": {
-            "esy-openssl": "esy-packages/esy-openssl#44762916645a5b6d4f6037aabf80e95fa4140547"
-          },
           "build": [
             [
               "./rustup-init.sh",
@@ -63,8 +60,8 @@
               "1.44",
               "--profile",
               "minimal",
-              "#{os == 'windows' ? '--default-host' : ''",
-              "#{os == 'windows' ? 'x86_64-pc-windows-gnu' : ''"
+              "#{os == 'windows' ? '--default-host' : ''}",
+              "#{os == 'windows' ? 'x86_64-pc-windows-gnu' : ''}"
             ]
           ]
         }
@@ -526,7 +523,7 @@
             [
               "./configure",
               "--prefix=#{self.install}",
-              "#{os == 'windows' ? '--host x86_64-w64-mingw32' : ''}",
+              "#{os == 'windows' ? '--host=x86_64-w64-mingw32' : ''}",
               "--disable-dependency-tracking"
             ],
             "make"
