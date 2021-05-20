@@ -2,20 +2,20 @@
 
 module CST = Cst.Cameligo
 open CST
-module Region = Simple_utils.Region
-open! Region
+module ExtRegion = Stage_common.Ext_region
+open! ExtRegion
 open! PPrint
 module Option = Simple_utils.Option
 (*module Directive = LexerLib.Directive*)
 
 let pp_markup markup pos = 
   let rec inner result previous_after = function 
-    (LineCom (c, Before))  :: rest when pos = Before -> inner (result ^^ string "//" ^^ string c.value ^^ hardline) None rest
+    (ExtRegion.LineCom (c, Before))  :: rest when pos = Before -> inner (result ^^ string "//" ^^ string c.value ^^ hardline) None rest
   | (BlockCom (c, Before)) :: rest when pos = Before -> inner (result ^^ string "(*" ^^ string c.value ^^ string "*)"  ^^ hardline) None rest
   | (LineCom (c, Inline)) :: rest when pos = Inline -> inner (result ^^ string "//" ^^ string c.value) None rest
   | (BlockCom (c, Inline)) :: rest when pos = Inline -> inner (result ^^ string " (*" ^^ string c.value ^^ string "*) ") None rest
   | (LineCom (c, After)) :: rest when pos = After -> 
-      let line = c.region#stop#line in
+      let line = c.region.t_region#stop#line in
       let hl = match previous_after with
         Some previous_after ->
           if line > previous_after + 1 then 
@@ -27,7 +27,7 @@ let pp_markup markup pos =
       in
       inner (result ^^ hl ^^ string "//" ^^ string c.value) (Some line) rest
   | (BlockCom (c, After)) :: rest  when pos = After -> 
-    let line = c.region#stop#line in
+    let line = c.region.t_region#stop#line in
     let hl = match previous_after with
       Some previous_after ->
         if line > previous_after + 1 then 
@@ -43,17 +43,17 @@ let pp_markup markup pos =
   in
   inner empty None markup
 
-let pp_region_reg func token  = 
-  (pp_markup token.region#markup Before) ^^ 
+let pp_region_reg func (token: _ ExtRegion.reg)  = 
+  (pp_markup token.region.markup Before) ^^ 
   func token ^^ 
-  (pp_markup token.region#markup Inline) ^^ 
-  (pp_markup token.region#markup After)
+  (pp_markup token.region.markup Inline) ^^ 
+  (pp_markup token.region.markup After)
 
-let pp_region_t func token =
-  (pp_markup token#markup Before) ^^ 
+let pp_region_t func (token: ExtRegion.t) =
+  (pp_markup token.markup Before) ^^ 
   func ^^ 
-  (pp_markup token#markup Inline) ^^ 
-  (pp_markup token#markup After)
+  (pp_markup token.markup Inline) ^^ 
+  (pp_markup token.markup After)
 
 let pp_par printer {value; _} =
   (pp_region_t lparen value.lpar) ^^ printer value.inside ^^ (pp_region_t rparen value.rpar)

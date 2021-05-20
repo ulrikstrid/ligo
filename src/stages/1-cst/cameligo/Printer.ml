@@ -4,8 +4,8 @@
 open CST
 
 module Directive = LexerLib.Directive
-module Region = Simple_utils.Region
-open! Region
+module ExtRegion = Stage_common.Ext_region
+open! ExtRegion
 
 let sprintf = Printf.sprintf
 
@@ -46,14 +46,14 @@ let mk_state ~offsets ~mode ~buffer =
       >}
   end
 
-let compact state (region: Region.t) =
+let compact state ({t_region=region;_}: ExtRegion.t) =
   region#compact ~offsets:state#offsets state#mode
 
 (* Printing the tokens with their source regions *)
 
 let print_nsepseq :
   state -> string -> (state -> 'a -> unit) ->
-  ('a, Region.t) Utils.nsepseq -> unit =
+  ('a, ExtRegion.t) Utils.nsepseq -> unit =
   fun state sep print (head, tail) ->
     let print_aux (sep_reg, item) =
       let sep_line =
@@ -64,7 +64,7 @@ let print_nsepseq :
 
 let print_sepseq :
   state -> string -> (state -> 'a -> unit) ->
-  ('a, Region.t) Utils.sepseq -> unit =
+  ('a, ExtRegion.t) Utils.sepseq -> unit =
   fun state sep print -> function
         None -> ()
   | Some seq -> print_nsepseq state sep print seq
@@ -88,7 +88,7 @@ let print_markup state comments =
   List.iter (print_markup state) comments
 
 let print_token state region lexeme =
-  print_markup state region#markup;
+  print_markup state region.markup;
   let line =
     sprintf "%s: %s\n" (compact state region) lexeme
   in Buffer.add_string state#buffer line
@@ -258,7 +258,7 @@ and print_selection state = function
   FieldName id -> print_var state id
 | Component c  -> print_int state c
 
-and print_cartesian state Region.{value;_} =
+and print_cartesian state ExtRegion.{value;_} =
   print_nsepseq state "*" print_type_expr value
 
 and print_variant state {value; _} =
@@ -579,9 +579,9 @@ and print_record_expr state e =
 
 and print_code_inj state {value; _} =
   let {language; code; rbracket} = value in
-  let {value=lang; region} = language in
+  let {value=lang; region = {t_region=region; markup}} = language in
   let header_stop = region#start#shift_bytes 1 in
-  let header_reg  = Region.make ~start:region#start ~stop:header_stop in
+  let header_reg  = ExtRegion.make (Region.make ~start:region#start ~stop:header_stop) markup in
   print_token  state header_reg "[%";
   print_string state lang;
   print_expr   state code;
@@ -740,7 +740,7 @@ let pp_markup state comments =
   List.iter (pp_markup_item state) comments
 
 let pp_loc_node state name region =
-  pp_markup state region#markup;
+  pp_markup state region.markup;
   pp_ident state {value=name; region}
 
 let rec pp_cst state {decl; _} =
@@ -752,7 +752,7 @@ let rec pp_cst state {decl; _} =
 
 and pp_declaration state = function
   Let {value = (kwd_let, kwd_rec, let_binding, attr); region} ->
-    pp_markup state kwd_let#markup;
+    pp_markup state kwd_let.markup;
     pp_loc_node state "Let" region;
     (if kwd_rec <> None then pp_node (state#pad 0 0) "rec"); (* Hack *)
     pp_let_binding state let_binding attr
@@ -767,7 +767,7 @@ and pp_declaration state = function
     pp_module_alias state value
 | Directive dir ->
     let region, string = Directive.project dir in
-    pp_loc_node state "Directive" region;
+    pp_loc_node state "Directive" (ExtRegion.make region []);
     pp_node state string
 
 and pp_let_binding state node attr =

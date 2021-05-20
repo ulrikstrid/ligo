@@ -4,6 +4,7 @@
   (instrumentation (backend bisect_ppx))
   (libraries
     ;; Vendors
+    stage_common
     LexerLib
     simple-utils
     ;; Third party

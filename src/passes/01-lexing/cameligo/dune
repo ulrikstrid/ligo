@@ -10,6 +10,7 @@
   (modules Token Self_tokens Style Comments)
   (libraries
     ;; LIGO
+    stage_common
     lexing_shared
     ;; Third party
     str

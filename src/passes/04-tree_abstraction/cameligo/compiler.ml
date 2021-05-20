@@ -23,11 +23,13 @@ let build_ins = ["Test";"Tezos";"Crypto";"Bytes";"List";"Set";"Map";"Big_map";"B
 
 open Predefined.Tree_abstraction.Cameligo
 
-let r_split = Location.r_split
+let location_lift (t: ExtRegion.t) = Location.File t.t_region
+
+let r_split (r: _ ExtRegion.reg) = r.value, (Location.File r.region.t_region)
 
 let mk_var var = if String.compare var Var.wildcard = 0 then Var.fresh () else Var.of_name var
 
-let compile_variable var = Location.map mk_var @@ Location.lift_region var
+let compile_variable (var: _ ExtRegion.reg) = Location.map mk_var @@ Location.wrap ~loc:(File var.region.t_region) var.value
 let compile_attributes attributes : string list =
   List.map (fst <@ r_split) attributes
 
@@ -56,7 +58,7 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
       let aux (field : CST.field_decl CST.reg) =
         let f, _ = r_split field in
         let* type_expr = self f.field_type in
-        let field_attr = List.map (fun x -> x.Region.value) f.attributes
+        let field_attr = List.map (fun x -> x.ExtRegion.value) f.attributes
         in return @@ (f.field_name.value, type_expr, field_attr) in
       let* fields = bind_map_list aux lst in
       return @@ t_record_ez_attr ~loc ~attr fields
@@ -114,7 +116,7 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
         let lst = npseq_to_list args.value.inside in
         (match lst with
         | [(a : CST.type_expr)] -> (
-          let sloc = Location.lift @@ Raw.type_expr_to_region a in
+          let sloc = location_lift @@ Raw.type_expr_to_region a in
           let* a' =
             trace_option (michelson_type_wrong te operator.value) @@
               get_t_int_singleton_opt a in
@@ -126,7 +128,7 @@ let rec compile_type_expression : CST.type_expr -> _ result = fun te ->
         let lst = npseq_to_list args.value.inside in
         (match lst with
         | [(a : CST.type_expr)] -> (
-          let sloc = Location.lift @@ Raw.type_expr_to_region a in
+          let sloc = location_lift @@ Raw.type_expr_to_region a in
           let* a' =
             trace_option (michelson_type_wrong te operator.value) @@
               get_t_int_singleton_opt a in
@@ -213,7 +215,7 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     )
   | EPar par -> self par.value.inside
   | EUnit the_unit ->
-    let loc = Location.lift the_unit.region in
+    let loc = location_lift the_unit.region in
     return @@ e_unit ~loc ()
   | EBytes bytes ->
     let (bytes, loc) = r_split bytes in
@@ -258,8 +260,8 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
         Or or_   -> compile_bin_op C_OR  or_
       | And and_ -> compile_bin_op C_AND and_
       | Not not_ -> compile_un_op  C_NOT not_
-      | True  reg -> let loc = Location.lift reg in return @@ e_true  ~loc ()
-      | False reg -> let loc = Location.lift reg in return @@ e_false ~loc ()
+      | True  reg -> let loc = location_lift reg in return @@ e_true  ~loc ()
+      | False reg -> let loc = location_lift reg in return @@ e_false ~loc ()
     )
     | CompExpr ce -> (
       match ce with
@@ -274,7 +276,7 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
   (* This case is due to a bad besign of our constant it as to change
     with the new typer so LIGO-684 on Jira *)
   | ECall {value=(EVar var,args);region} ->
-    let loc = Location.lift region in
+    let loc = location_lift region in
     let (var, loc_var) = r_split var in
     (match constants var with
       Some const ->
@@ -288,7 +290,7 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
   (*TODO: move to proper module*)
   | ECall {value=(EModA {value={module_name;field};region=_},args);region} when
     List.mem module_name.value build_ins ->
-    let loc = Location.lift region in
+    let loc = location_lift region in
     let* fun_name = match field with
       EVar v -> ok @@ v.value
       | EModA _ -> fail @@ unknown_constant module_name.value loc
@@ -396,12 +398,12 @@ let rec compile_expression : CST.expr -> (AST.expr , abs_error) result = fun e -
     let* args = compile_tuple_expression @@ List.Ne.singleton arg in
     return @@ e_some ~loc args
   | EConstr (ENone reg) ->
-    let loc = Location.lift reg in
+    let loc = location_lift reg in
     return @@ e_none ~loc ()
   | EConstr (EConstrApp constr) ->
     let ((constr,args_o), loc) = r_split constr in
     let* args_o = bind_map_option (compile_tuple_expression <@ List.Ne.singleton) args_o in
-    let args = Option.unopt ~default:(e_unit ~loc:(Location.lift constr.region) ()) args_o in
+    let args = Option.unopt ~default:(e_unit ~loc:(location_lift constr.region) ()) args_o in
     return @@ e_constructor ~loc constr.value args
   | ECase case ->
     let (case, loc1) = r_split case in
@@ -534,13 +536,13 @@ and conv : CST.pattern -> (AST.ty_expr AST.pattern,_) result =
   | CST.PConstr constr_pattern -> (
     match constr_pattern with
     | PFalse reg ->
-      let loc = Location.lift reg in
+      let loc = location_lift reg in
       ok @@ Location.wrap ~loc @@ P_variant (Label "false" , Location.wrap ~loc P_unit)
     | PTrue reg ->
-      let loc = Location.lift reg in
+      let loc = location_lift reg in
       ok @@ Location.wrap ~loc @@ P_variant (Label "true" , Location.wrap ~loc P_unit)
     | PNone reg ->
-      let loc = Location.lift reg in
+      let loc = location_lift reg in
       ok @@ Location.wrap ~loc @@ P_variant (Label "None" , Location.wrap ~loc P_unit)
     | PSomeApp some ->
       let ((_,p), loc) = r_split some in
@@ -558,7 +560,7 @@ and conv : CST.pattern -> (AST.ty_expr AST.pattern,_) result =
   | CST.PList list_pattern -> (
     let* repr = match list_pattern with
     | PListComp p_inj -> (
-      let loc = Location.lift p_inj.region in
+      let loc = location_lift p_inj.region in
       match p_inj.value.elements with
       | None ->
         ok @@ Location.wrap ~loc @@ P_list (List [])
@@ -573,7 +575,7 @@ and conv : CST.pattern -> (AST.ty_expr AST.pattern,_) result =
         ok conscomb
     )
     | PCons p ->
-      let loc = Location.lift p.region in
+      let loc = location_lift p.region in
       let (hd, _, tl) = p.value in
       let* hd = conv hd in
       let* tl = conv tl in
@@ -582,7 +584,7 @@ and conv : CST.pattern -> (AST.ty_expr AST.pattern,_) result =
     ok @@ repr
   )
   | CST.PUnit u ->
-    let loc = Location.lift u.region in
+    let loc = location_lift u.region in
     ok @@ Location.wrap ~loc @@ P_unit
   | _ -> fail @@ unsupported_pattern_type [p]
 
@@ -662,7 +664,7 @@ and compile_let_binding ?kwd_rec attributes binding =
       Some reg ->
         let* fun_type = trace_option (untyped_recursive_fun reg) @@ lhs_type in
         let* lambda = trace_option (recursion_on_non_function expr.location) @@ get_e_lambda expr.expression_content in
-        ok @@ e_recursive ~loc:(Location.lift reg) fun_binder fun_type lambda
+        ok @@ e_recursive ~loc:(location_lift reg) fun_binder fun_type lambda
     | None   ->
         ok @@ expr
     in
@@ -678,7 +680,7 @@ and compile_parameter : CST.pattern -> (_ binder * (_ -> _),_) result =
   match pattern with
     PConstr _ -> fail @@ unsupported_pattern_type [pattern]
   | PUnit the_unit  ->
-    let loc = Location.lift the_unit.region in
+    let loc = Location.lift the_unit.region.t_region in
     return_1 ~ascr:(t_unit ~loc ()) loc @@ Var.fresh ()
   | PVar var ->
     let (var,loc) = r_split var in
@@ -709,8 +711,8 @@ and compile_parameter : CST.pattern -> (_ binder * (_ -> _),_) result =
   | _ -> fail @@ unsupported_pattern_type [pattern]
 
 and compile_declaration : CST.declaration -> _ = fun decl ->
-  let return reg decl =
-    ok @@ List.map (Location.wrap ~loc:(Location.lift reg)) decl in
+  let return (reg: ExtRegion.t) decl =
+    ok @@ List.map (Location.wrap ~loc:(Location.lift reg.t_region)) decl in
   let return_1 reg decl = return reg [decl] in
   match decl with
     TypeDecl {value={name; type_expr; _};region} ->

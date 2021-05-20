@@ -3,7 +3,8 @@
 
 [@@@warning "-42"]
 
-open Simple_utils.Region
+module ExtRegion = Stage_common.Ext_region
+open ExtRegion
 module CST = Cst.Cameligo
 open CST
 
@@ -12,7 +13,7 @@ open CST
 
 let first_region = function
   [] -> None
-| x::_ -> Some x.Region.region
+| x::_ -> Some x.ExtRegion.region
 
 (* END HEADER *)
 %}
@@ -154,7 +155,7 @@ contract:
   module_ EOF { {$1 with eof=$2} }
 
 module_:
-  nseq(declaration) { {decl=$1; eof=Region.ghost} }
+  nseq(declaration) { {decl=$1; eof=ExtRegion.ghost} }
 
 declaration:
   type_decl       {    TypeDecl $1 }
@@ -251,7 +252,7 @@ sum_type:
 
 variant:
   nseq("[@attr]") "<constr>" {
-    let attr   = Utils.nseq_to_list $1 in
+    let attr = Utils.nseq_to_list $1 in
     let region = cover (fst $1).region $2.region
     and value  = {constr=$2; arg=None; attributes=attr}
     in {region; value}
@@ -268,11 +269,13 @@ variant:
   }
 | "<constr>" "of" fun_type {
     let stop   = type_expr_to_region $3 in
-    let region = cover $1.region stop
+    let region: ExtRegion.t = cover $1.region stop
     and value  = {constr=$1;
                   arg = Some ($2,$3);
                   attributes=[]}
-    in {region; value} }
+    in 
+    let result = {region; value} in 
+    result }
 
 record_type:
   seq("[@attr]") "{" sep_or_term_list(field_decl,";") "}" {
@@ -412,7 +415,7 @@ record_pattern:
 field_pattern:
   field_name {
     let region  = $1.region
-    and value  = {field_name=$1; eq=Region.ghost; pattern=PVar $1}
+    and value  = {field_name=$1; eq=ExtRegion.ghost; pattern=PVar $1}
     in {region; value}
   }
 | field_name "=" sub_pattern {

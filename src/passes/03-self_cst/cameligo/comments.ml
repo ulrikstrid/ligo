@@ -1,7 +1,7 @@
-module Region = Simple_utils.Region
+module ExtRegion = Stage_common.Ext_region
 module CST    = Cst.Cameligo
 
-open Region
+open ExtRegion
 open Trace
 open CST
 
@@ -50,7 +50,7 @@ and promote_variant: variant reg -> (variant reg, 'err) result = fun v ->
       ok {region; value}
   | {constr; arg=None } ->
       let c_region = constr.region in
-      let region = Region.set_markup constr.region [] in
+      let region = ExtRegion.make c_region.t_region [] in
       let constr = {constr with region} in
       let value = {value with constr} in
       ok @@ {value; region = c_region}
@@ -288,7 +288,7 @@ and promote_to_expression: expr -> (expr,'err) result =
             ok @@ EConstr (EConstrApp {value = constr, Some arg; region})  
         | None -> 
             let region = constr.region in
-            let constr_region = Region.set_markup constr.region [] in
+            let constr_region = ExtRegion.make region.t_region [] in
             let constr = {constr with region=constr_region} in
             ok @@ EConstr (EConstrApp {value = constr, arg; region}))
     | EFun {value; _} -> 

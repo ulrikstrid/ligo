@@ -2,10 +2,10 @@
 
 (* Dependencies *)
 
-module Region = Simple_utils.Region
+module ExtRegion = Stage_common.Ext_region
 module CST    = Cst.Cameligo
 
-open Region
+open ExtRegion
 open Errors
 open Trace
 

@@ -18,6 +18,7 @@
     ;; LIGO
     lexing_cameligo
     cst
+    stage_common
     ;; Vendors
     simple-utils
     ParserLib

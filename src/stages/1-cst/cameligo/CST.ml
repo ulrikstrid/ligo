@@ -8,10 +8,10 @@
 
 module Directive = LexerLib.Directive
 module Utils     = Simple_utils.Utils
-module Region    = Simple_utils.Region
+module ExtRegion = Stage_common.Ext_region
 
 open Utils
-type 'a reg = 'a Region.reg
+type 'a reg = 'a ExtRegion.reg
 
 (* Lexemes *)
 
@@ -19,87 +19,87 @@ type lexeme = string
 
 (* Keywords of OCaml *)
 
-type keyword       = Region.t
-type kwd_and       = Region.t
-type kwd_begin     = Region.t
-type kwd_else      = Region.t
-type kwd_end       = Region.t
-type kwd_false     = Region.t
-type kwd_fun       = Region.t
-type kwd_rec       = Region.t
-type kwd_if        = Region.t
-type kwd_in        = Region.t
-type kwd_let       = Region.t
-type kwd_match     = Region.t
-type kwd_mod       = Region.t
-type kwd_not       = Region.t
-type kwd_of        = Region.t
-type kwd_or        = Region.t
-type kwd_then      = Region.t
-type kwd_true      = Region.t
-type kwd_type      = Region.t
-type kwd_with      = Region.t
-type kwd_let_entry = Region.t
-type kwd_module    = Region.t
-type kwd_struct    = Region.t
+type keyword       = ExtRegion.t
+type kwd_and       = ExtRegion.t
+type kwd_begin     = ExtRegion.t
+type kwd_else      = ExtRegion.t
+type kwd_end       = ExtRegion.t
+type kwd_false     = ExtRegion.t
+type kwd_fun       = ExtRegion.t
+type kwd_rec       = ExtRegion.t
+type kwd_if        = ExtRegion.t
+type kwd_in        = ExtRegion.t
+type kwd_let       = ExtRegion.t
+type kwd_match     = ExtRegion.t
+type kwd_mod       = ExtRegion.t
+type kwd_not       = ExtRegion.t
+type kwd_of        = ExtRegion.t
+type kwd_or        = ExtRegion.t
+type kwd_then      = ExtRegion.t
+type kwd_true      = ExtRegion.t
+type kwd_type      = ExtRegion.t
+type kwd_with      = ExtRegion.t
+type kwd_let_entry = ExtRegion.t
+type kwd_module    = ExtRegion.t
+type kwd_struct    = ExtRegion.t
 
 (* Data constructors *)
 
-type c_None  = Region.t
-type c_Some  = Region.t
+type c_None  = ExtRegion.t
+type c_Some  = ExtRegion.t
 
 (* Symbols *)
 
-type arrow    = Region.t  (* "->" *)
-type cons     = Region.t  (* "::" *)
-type cat      = Region.t  (* "^"  *)
-type append   = Region.t  (* "@"  *)
-type dot      = Region.t  (* "."  *)
+type arrow    = ExtRegion.t  (* "->" *)
+type cons     = ExtRegion.t  (* "::" *)
+type cat      = ExtRegion.t  (* "^"  *)
+type append   = ExtRegion.t  (* "@"  *)
+type dot      = ExtRegion.t  (* "."  *)
 
 (* Arithmetic operators *)
 
-type minus    = Region.t  (* "-" *)
-type plus     = Region.t  (* "+" *)
-type slash    = Region.t  (* "/" *)
-type times    = Region.t  (* "*" *)
+type minus    = ExtRegion.t  (* "-" *)
+type plus     = ExtRegion.t  (* "+" *)
+type slash    = ExtRegion.t  (* "/" *)
+type times    = ExtRegion.t  (* "*" *)
 
 (* Boolean operators *)
 
-type bool_or  = Region.t  (* "||" *)
-type bool_and = Region.t  (* "&&" *)
+type bool_or  = ExtRegion.t  (* "||" *)
+type bool_and = ExtRegion.t  (* "&&" *)
 
 (* Comparisons *)
 
-type equal = Region.t  (* "="  *)
-type neq   = Region.t  (* "<>" *)
-type lt    = Region.t  (* "<"  *)
-type gt    = Region.t  (* ">"  *)
-type leq   = Region.t  (* "=<" *)
-type geq   = Region.t  (* ">=" *)
+type equal = ExtRegion.t  (* "="  *)
+type neq   = ExtRegion.t  (* "<>" *)
+type lt    = ExtRegion.t  (* "<"  *)
+type gt    = ExtRegion.t  (* ">"  *)
+type leq   = ExtRegion.t  (* "=<" *)
+type geq   = ExtRegion.t  (* ">=" *)
 
 (* Compounds *)
 
-type lpar     = Region.t  (* "(" *)
-type rpar     = Region.t  (* ")" *)
-type lbracket = Region.t  (* "[" *)
-type rbracket = Region.t  (* "]" *)
-type lbrace   = Region.t  (* "{" *)
-type rbrace   = Region.t  (* "}" *)
+type lpar     = ExtRegion.t  (* "(" *)
+type rpar     = ExtRegion.t  (* ")" *)
+type lbracket = ExtRegion.t  (* "[" *)
+type rbracket = ExtRegion.t  (* "]" *)
+type lbrace   = ExtRegion.t  (* "{" *)
+type rbrace   = ExtRegion.t  (* "}" *)
 
 (* Separators *)
 
-type comma = Region.t  (* "," *)
-type semi  = Region.t  (* ";" *)
-type vbar  = Region.t  (* "|" *)
-type colon = Region.t  (* ":" *)
+type comma = ExtRegion.t  (* "," *)
+type semi  = ExtRegion.t  (* ";" *)
+type vbar  = ExtRegion.t  (* "|" *)
+type colon = ExtRegion.t  (* ":" *)
 
 (* Wildcard *)
 
-type wild = Region.t  (* "_" *)
+type wild = ExtRegion.t  (* "_" *)
 
 (* Virtual tokens *)
 
-type eof = Region.t
+type eof = ExtRegion.t
 
 (* Literals *)
 
@@ -466,13 +466,13 @@ and code_inj = {
 (* Projecting regions from some nodes of the AST *)
 
 let rec last to_region = function
-    [] -> Region.ghost
+    [] -> ExtRegion.ghost
 |  [x] -> to_region x
 | _::t -> last to_region t
 
 let nsepseq_to_region to_region (hd,tl) =
   let reg (_, item) = to_region item in
-  Region.cover (to_region hd) (last reg tl)
+  ExtRegion.cover (to_region hd) (last reg tl)
 
 let type_expr_to_region = function
   TProd   {region; _}
@@ -560,7 +560,7 @@ let declaration_to_region = function
 | TypeDecl    {region;_}
 | ModuleDecl  {region;_}
 | ModuleAlias {region;_} -> region
-| Directive d -> Directive.to_region d
+| Directive d -> ExtRegion.make (Directive.to_region d) []
 
 let selection_to_region = function
   FieldName f -> f.region
@@ -573,7 +573,7 @@ let path_to_region = function
 
 (* Helper functions to move regions and markup a level up. *)
 
-let update_expr_region: expr -> Region.t -> expr = 
+let update_expr_region: expr -> ExtRegion.t -> expr = 
   fun e region ->
     match e with 
       ECase     {value; _} ->                         ECase {region; value}
@@ -625,7 +625,7 @@ let update_expr_region: expr -> Region.t -> expr =
     | EConstr   (ESomeApp {value; _}) ->              EConstr (ESomeApp {value; region})
     | EConstr   (EConstrApp {value; _}) ->            EConstr (EConstrApp {value; region})
 
-let update_type_expr_region: type_expr -> Region.t -> type_expr = 
+let update_type_expr_region: type_expr -> ExtRegion.t -> type_expr = 
   fun t region ->
     match t with 
       TProd   {value; _} -> TProd {value; region}
@@ -640,7 +640,7 @@ let update_type_expr_region: type_expr -> Region.t -> type_expr =
     | TInt    {value; _} -> TInt {value; region}
     | TModA   {value; _} -> TModA {value; region}
     
-let update_pattern_region: pattern -> Region.t -> pattern = 
+let update_pattern_region: pattern -> ExtRegion.t -> pattern = 
   fun p region ->
     match p with 
       PConstr   (PNone _) -> PConstr (PNone region)
@@ -666,9 +666,9 @@ let update_pattern_region: pattern -> Region.t -> pattern =
   Returns the new region and the modified r1 and r2.
 *)
 let cover_tokens r1 r2 = 
-  let new_region = Region.cover r1 r2 in
+  let new_region = ExtRegion.cover r1 r2 in
   let rec extract_before (other_comments, comments) = function
-    (Region.BlockCom (_, Before) as b) :: rest
+    (ExtRegion.BlockCom (_, Before) as b) :: rest
   | (LineCom (_, Before) as b) :: rest ->
     extract_before (other_comments, b :: comments) rest
   | other :: rest ->
@@ -676,31 +676,31 @@ let cover_tokens r1 r2 =
   | [] -> (other_comments, comments) 
   in
   let rec extract_after (other_comments, comments) = function
-    (Region.BlockCom (_, After) as a) :: rest
+    (ExtRegion.BlockCom (_, After) as a) :: rest
   | (LineCom (_, After) as a) :: rest ->
     extract_after (other_comments, a :: comments) rest
   | other :: rest ->
     extract_after (other :: other_comments, comments) rest
   | [] -> (other_comments, comments) 
   in
-  let r1_markup, before = extract_before ([], []) r1#markup in 
-  let r2_markup, before_after = extract_after ([], before) r2#markup in
-  let r1 = Region.set_markup r1 r1_markup in
-  let r2 = Region.set_markup r2 r2_markup in
-  let new_region = Region.set_markup new_region before_after in
+  let r1_markup, before = extract_before ([], []) r1.markup in 
+  let r2_markup, before_after = extract_after ([], before) r2.markup in
+  let r1 = ExtRegion.make r1.t_region r1_markup in
+  let r2 = ExtRegion.make r2.t_region r2_markup in
+  let new_region = {new_region with markup=before_after} in
   new_region, r1, r2
 
 type 'a update_region = {
-  kregion: Region.t;
-  kupdate: Region.t -> 'a
+  kregion: ExtRegion.t;
+  kupdate: ExtRegion.t -> 'a
 }
 
-let c_token (t: Region.t) = {
+let c_token (t: ExtRegion.t) = {
   kregion = t;
   kupdate = fun a -> a;
 }
 
-let c_reg (r1: _ Region.reg) = {
+let c_reg (r1: _ ExtRegion.reg) = {
   kregion = r1.region;
   kupdate = fun r -> {r1 with region = r}
 }
@@ -711,7 +711,7 @@ let c_type_expr (t: type_expr) = {
 }
 
 let c_nseq_fst n = 
-  let fst_n: _ Region.reg = fst n in
+  let fst_n: _ ExtRegion.reg = fst n in
   {
     kregion = fst_n.region;
     kupdate = fun r -> (
@@ -748,12 +748,12 @@ let c_seq_fst s =
   match s with 
     hd :: tl ->
       {
-        kregion = hd.Region.region;
+        kregion = hd.ExtRegion.region;
         kupdate = fun r -> {hd with region = r} :: tl
       }
   | [] -> 
       {
-        kregion = Region.ghost;
+        kregion = ExtRegion.ghost;
         kupdate = fun _ -> []
       }
 
@@ -791,13 +791,13 @@ let c_pattern p = {
   kupdate = fun r -> update_pattern_region p r
 }
 
-let cover_m (a: 'a update_region) (b: 'b update_region): Region.t * 'a * 'b = 
+let cover_m (a: 'a update_region) (b: 'b update_region): ExtRegion.t * 'a * 'b = 
   let region, a_region, b_region = cover_tokens a.kregion b.kregion in
   let a = a.kupdate a_region in
   let b = b.kupdate b_region in
   region, a, b
 
-let cover_nsepseq (n: ('a, _) Utils.nsepseq) (func: 'a -> 'a update_region) : Region.t * ('a, _) Utils.nsepseq =
+let cover_nsepseq (n: ('a, _) Utils.nsepseq) (func: 'a -> 'a update_region) : ExtRegion.t * ('a, _) Utils.nsepseq =
   let (before, _) = n in
   let (last, rest2) = Utils.nsepseq_rev n in
   let kbefore = func before in

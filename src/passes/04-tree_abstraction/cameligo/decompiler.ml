@@ -1,15 +1,16 @@
 module AST = Ast_imperative
 module CST = Cst.Cameligo
 module Predefined = Predefined.Tree_abstraction.Cameligo
+module ExtRegion = Stage_common.Ext_region
 
 open Trace
 open Function
 
 (* Utils *)
 
-let ghost = Region.ghost
+let ghost = ExtRegion.ghost
 
-let wrap = Region.wrap_ghost
+let wrap = ExtRegion.wrap_ghost
 
 let decompile_attributes = List.map wrap
 
@@ -118,7 +119,7 @@ let rec decompile_type_expr : AST.type_expression -> _ result = fun te ->
   | T_singleton x -> (
     match x with
     | Literal_int i ->
-      let z : CST.type_expr = CST.TInt { region = Region.ghost ; value = (Z.to_string i, i) } in
+      let z : CST.type_expr = CST.TInt { region = ExtRegion.ghost ; value = (Z.to_string i, i) } in
       return z
     | _ -> failwith "unsupported singleton"
   )
@@ -471,7 +472,7 @@ and decompile_lambda : (AST.expr,AST.ty_expr) AST.lambda -> _ = fun {binder;outp
 
 and decompile_declaration : AST.declaration Location.wrap -> (CST.declaration, _) result = fun decl ->
   let decl = Location.unwrap decl in
-  let wrap value = ({value;region=Region.ghost} : _ Region.reg) in
+  let wrap value = ({value;region=ExtRegion.ghost} : _ ExtRegion.reg) in
   match decl with
     Declaration_type {type_binder;type_expr} ->
     let name = decompile_variable type_binder in

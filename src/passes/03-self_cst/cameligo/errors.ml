@@ -45,8 +45,8 @@ let error_ppformat :
         var.value
   )
 
-let mk_error (var: string Region.reg) (msg: string) =
-  let loc = Location.lift @@ var.region in
+let mk_error (var: string ExtRegion.reg) (msg: string) =
+  let loc = Location.lift @@ var.region.t_region in
   let content =
     `Assoc [("message",  `String msg);
             ("variable", `String var.value);
