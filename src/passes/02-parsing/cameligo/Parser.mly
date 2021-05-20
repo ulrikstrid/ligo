@@ -61,8 +61,10 @@ let mk_mod_path :
 %on_error_reduce bin_op(add_expr_level,MINUS,mult_expr_level)
 %on_error_reduce bin_op(add_expr_level,PLUS,mult_expr_level)
 %on_error_reduce seq(Attr)
-%on_error_reduce ctor_pattern
-%on_error_reduce tail
+%on_error_reduce constr_pattern
+%on_error_reduce cons_pattern_level
+%on_error_reduce nsepseq(cons_pattern_level,COMMA)
+%on_error_reduce pattern
 %on_error_reduce nsepseq(sub_irrefutable,COMMA)
 %on_error_reduce irrefutable
 %on_error_reduce variant
@@ -377,7 +379,7 @@ const_ctor_pattern:
   ctor { {$1 with value = $1,None} }
 
 closed_irrefutable:
-  ctor sub_pattern {
+  ctor core_pattern {
     let stop   = pattern_to_region $2 in
     let region = cover $1.region stop
     and value  = $1, Some $2 in
@@ -395,20 +397,17 @@ typed_pattern:
     in P_Typed {region; value} }
 
 pattern:
-  sub_pattern "::" tail {
+  tuple(cons_pattern_level) {
+    let region = nsepseq_to_region pattern_to_region $1
+    in P_Tuple {region; value=$1} }
+| cons_pattern_level { $1 }
+
+cons_pattern_level:
+  core_pattern "::" cons_pattern_level {
     let start  = pattern_to_region $1 in
     let stop   = pattern_to_region $3 in
     let region = cover start stop in
-    P_Cons {region; value=$1,$2,$3}
-  }
-| tuple(sub_pattern) {
-    let region = nsepseq_to_region pattern_to_region $1
-    in P_Tuple {region; value=$1}
-  }
-| core_pattern { $1 }
-
-sub_pattern:
-  par(tail)    { P_Par $1 }
+    P_Cons {region; value=$1,$2,$3} }
 | core_pattern { $1 }
 
 core_pattern:
@@ -427,21 +426,22 @@ core_pattern:
 | ctor_pattern   { P_Ctor   $1 }
 | tuple_pattern  { P_Tuple  $1 }
 | record_pattern { P_Record $1 }
+| par(pattern)   { P_Par    $1 }
 
 list_pattern:
-  list_of(tail) { $1 }
+  list_of(cons_pattern_level) { $1 }
 
 tuple_pattern:
-  par(tuple(tail)) { $1 }
+  par(tuple(cons_pattern_level)) { $1 }
 
 some_pattern:
-  "Some" sub_pattern {
+  "Some" core_pattern {
     let stop   = pattern_to_region $2 in
     let region = cover $1 stop
     in {region; value=$1,$2} }
 
 ctor_pattern:
-  ctor sub_pattern {
+  ctor core_pattern {
     let region = cover $1.region (pattern_to_region $2)
     in {region; value = ($1, Some $2)}
   }
@@ -461,7 +461,7 @@ field_pattern:
     and value  = {field_name=$1; eq=Region.ghost; pattern=PVar $1}
     in {region; value}
   }
-| field_name "=" sub_pattern {
+| field_name "=" core_pattern {
     let start  = $1.region
     and stop   = pattern_to_region $3 in
     let region = cover start stop
@@ -470,15 +470,6 @@ field_pattern:
 
 unit:
   "(" ")" { {region = cover $1 $2; value=$1,$2} }
-
-tail:
-  sub_pattern "::" tail {
-    let start  = pattern_to_region $1 in
-    let stop   = pattern_to_region $3 in
-    let region = cover start stop in
-    P_Cons {region; value=$1,$2,$3}
-  }
-| sub_pattern { $1 }
 
 (* Expressions *)
 
