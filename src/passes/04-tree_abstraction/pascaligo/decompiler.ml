@@ -146,6 +146,7 @@ let rec decompile_type_expr : dialect -> AST.type_expression -> _ result = fun d
       return z
     | _ -> failwith "unsupported singleton"
   )
+  | T_for_all _ -> failwith "REMITODO"
 
 let get_e_variable : AST.expression -> _ result = fun expr ->
   match expr.expression_content with
