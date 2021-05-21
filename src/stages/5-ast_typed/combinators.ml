@@ -10,6 +10,8 @@ let make_e ?(location = Location.generated) expression_content type_expression =
   location ;
   }
 let t_variable   ?loc ?core t  : type_expression = make_t ?loc (T_variable t) core
+let t_for_all ?loc ?core ty_binder kind type_ =
+  make_t ?loc (T_for_all {ty_binder ; kind ; type_}) core
 
 let t_constant ?loc ?core injection parameters : type_expression =
   make_t ?loc (T_constant {language=Stage_common.Backends.michelson; injection = Ligo_string.verbatim injection ; parameters}) core
@@ -32,6 +34,15 @@ let t_bls12_381_g1 ?loc ?core () : type_expression = t_constant ?loc ?core bls12
 let t_bls12_381_g2 ?loc ?core () : type_expression = t_constant ?loc ?core bls12_381_g2_name []
 let t_bls12_381_fr ?loc ?core () : type_expression = t_constant ?loc ?core bls12_381_fr_name []
 
+let t_for_all1 ?loc ?core name kind : type_expression = 
+  let ty_binder = Var.fresh () in
+  let type_ = t_constant name [t_variable ty_binder] in
+  t_for_all ?loc ?core ty_binder kind type_
+let t_for_all2 ?loc ?core name kind_l kind_r : type_expression = 
+  let ty_binder_l = Var.fresh () in
+  let ty_binder_r = Var.fresh () in
+  let type_ = t_constant name [t_variable ty_binder_l ; t_variable ty_binder_r] in
+  t_for_all ?loc ?core ty_binder_l kind_l (t_for_all ?loc ?core ty_binder_r kind_r type_)
 
 let t_option         ?loc ?core o   : type_expression = t_constant ?loc ?core option_name [o]
 let t_list           ?loc ?core t   : type_expression = t_constant ?loc ?core list_name [t]
@@ -297,7 +308,7 @@ let e_a_string s = make_e (e_string s) (t_string ())
 let e_a_address s = make_e (e_address s) (t_address ())
 let e_a_pair a b = make_e (e_pair a b)
   (t_pair a.type_expression b.type_expression )
-let e_a_some s = make_e (e_some s) (t_option s.type_expression)
+let e_a_some s = make_e (e_some s) (t_constant option_name [s.type_expression])
 let e_a_lambda l in_ty out_ty = make_e (e_lambda l) (t_function in_ty out_ty ())
 let e_a_none t = make_e (e_none ()) (t_option t)
 let e_a_record ?(layout=default_layout) r = make_e (e_record r) (t_record ~layout
