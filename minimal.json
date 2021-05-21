@@ -1,0 +1,191 @@
+{
+  "name": "ligo",
+  "source": "./ligo.opam",
+  "esy": {
+    "release": {
+      "bin": ["ligo"],
+      "includePackages": [
+        "root",
+        "@opam/hacl-star-raw",
+        "@opam/tezos-rusmt-libs",
+        "@opam/conf-libev",
+        "@opam/conf-libffi",
+        "@opam/conf-gmp"
+      ],
+      "rewritePrefix": true
+    }
+  },
+  "override": {
+    "build": ["dune build -p ligo"],
+    "exportedEnv": {
+      "DYLD_LIBRARY_PATH": {
+        "val": "#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $DYLD_LIBRARY_PATH}",
+        "scope": "global"
+      }
+    },
+    "dependencies": {
+      "@opam/hacl-star-raw": "*"
+    },
+    "resolutions": {
+      "@opam/ctypes-foreign": {
+        "source": "ocamllabs/ocaml-ctypes:ctypes-foreign.opam#0cbd0378b494d6377fd40606433a846736109c22",
+        "override": {
+          "dependencies": {
+            "@opam/ctypes": null
+          }
+        }
+      },
+      "@opam/ctypes": {
+        "source": "ocamllabs/ocaml-ctypes:ctypes.opam#0cbd0378b494d6377fd40606433a846736109c22",
+        "override": {
+          "build": [
+            ["make", "libffi.config", "ctypes-base", "ctypes-stubs"],
+            ["make", "ctypes-foreign"]
+          ],
+          "dependencies": {
+            "@opam/conf-libffi": "*"
+          }
+        }
+      },
+      "@opam/bls12-381-unix": {
+        "source": "git:https://gitlab.com/marigold/ocaml-bls12-381.git:bls12-381-unix.opam#72d425b7",
+        "override": {
+          "buildEnv": {
+            "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
+          },
+          "dependencies": {
+            "@opam/bls12-381-gen": "0.4.2",
+            "@opam/bls12-381": "0.4.2"
+          }
+        }
+      },
+      "@opam/secp256k1-internal": "git:https://gitlab.com/marigold/ocaml-secp256k1-internal.git:secp256k1-internal.opam#45588ff9",
+
+      "@opam/tezos-sapling": {
+        "source": "link:./tezos_8_2/src/lib_sapling/tezos-sapling.opam",
+        "override": {
+          "buildsInSource": true,
+          "buildEnvOverride": {
+            "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
+          },
+          "dependencies": {
+            "@opam/tezos-rust-libs": "*"
+          }
+        }
+      },
+      "@opam/tezos-crypto": {
+        "source": "link:./tezos_8_2/src/lib_crypto/tezos-crypto.opam",
+        "override": {
+          "buildEnvOverride": {
+            "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
+          },
+          "dependencies": {
+            "@opam/tezos-rust-libs": "*"
+          }
+        }
+      },
+      "@opam/tezos-protocol-plugin-008-PtEdo2Zk": {
+        "source": "link:./tezos_8_2/src/proto_008_PtEdo2Zk/lib_plugin/tezos-protocol-plugin-008-PtEdo2Zk.opam",
+        "override": {
+          "buildsInSource": true,
+          "buildEnvOverride": {
+            "ESY__DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
+          },
+          "build": [
+            [
+              "sh",
+              "-c",
+              "DYLD_LIBRARY_PATH=\"$ESY__DYLD_LIBRARY_PATH\" dune build -j 4 -p tezos-protocol-plugin-008-PtEdo2Zk @install"
+            ]
+          ],
+          "dependencies": {
+            "@opam/hacl-star-raw": "*"
+          }
+        }
+      },
+      "@opam/tezos-protocol-compiler": {
+        "source": "link:./tezos_8_2/src/lib_protocol_compiler/tezos-protocol-compiler.opam",
+        "override": {
+          "dependencies": {
+            "@opam/bls12-381-unix": "*"
+          }
+        }
+      },
+      "@opam/tezos-protocol-008-PtEdo2Zk": {
+        "source": "link:./tezos_8_2/src/proto_008_PtEdo2Zk/lib_protocol/tezos-protocol-008-PtEdo2Zk.opam",
+        "override": {
+          "buildsInSource": true,
+          "buildEnvOverride": {
+            "ESY__DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
+          },
+          "build": [
+            [
+              "sh",
+              "-c",
+              "DYLD_LIBRARY_PATH=\"$ESY__DYLD_LIBRARY_PATH\" dune build -j 4 -p tezos-protocol-008-PtEdo2Zk @install"
+            ]
+          ],
+          "dependencies": {
+            "@opam/hacl-star-raw": "*"
+          }
+        }
+      },
+      "@opam/tezos-protocol-008-PtEdo2Zk-parameters": {
+        "source": "link:./tezos_8_2/src/proto_008_PtEdo2Zk/lib_parameters/tezos-protocol-008-PtEdo2Zk-parameters.opam",
+        "override": {
+          "buildsInSource": true,
+          "buildEnvOverride": {
+            "ESY__DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
+          },
+          "build": [
+            [
+              "sh",
+              "-c",
+              "DYLD_LIBRARY_PATH=\"$ESY__DYLD_LIBRARY_PATH\" dune build -j 4 -p tezos-protocol-008-PtEdo2Zk-parameters @install"
+            ]
+          ],
+          "dependencies": {
+            "@opam/hacl-star-raw": "*"
+          }
+        }
+      },
+      "@opam/tezos-embedded-protocol-008-PtEdo2Zk": {
+        "source": "link:./tezos_8_2/src/proto_008_PtEdo2Zk/lib_protocol/tezos-embedded-protocol-008-PtEdo2Zk.opam",
+        "override": {
+          "buildsInSource": true,
+          "buildEnvOverride": {
+            "ESY__DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
+          },
+          "build": [
+            [
+              "sh",
+              "-c",
+              "DYLD_LIBRARY_PATH=\"$ESY__DYLD_LIBRARY_PATH\" dune build -j 4 -p tezos-embedded-protocol-008-PtEdo2Zk @install"
+            ]
+          ],
+          "dependencies": {
+            "@opam/hacl-star-raw": "*"
+          }
+        }
+      },
+
+      "@opam/tezos-utils": "link:./vendors/ligo-utils/tezos-utils/tezos-utils.opam",
+      "@opam/simple-utils": "link:./vendors/ligo-utils/simple-utils/simple-utils.opam",
+      "@opam/proto-alpha-utils": "link:./vendors/ligo-utils/proto-alpha-utils/proto-alpha-utils.opam",
+      "@opam/tezos-memory-proto-alpha": "link:./vendors/ligo-utils/memory-proto-alpha/tezos-memory-proto-alpha.opam",
+      "@opam/ligo-008-PtEdo2Zk-test-helpers": "link:./vendors/ligo-utils/ligo_008_PtEdo2Zk_test_helpers/ligo-008-PtEdo2Zk-test-helpers.opam",
+
+      "@opam/ParserLib": "link:./vendors/ParserLib/ParserLib.opam",
+      "@opam/LexerLib": "link:./vendors/LexerLib/LexerLib.opam",
+      "@opam/UnionFind": "link:./vendors/UnionFind/UnionFind.opam",
+      "@opam/RedBlackTrees": "link:./vendors/Red-Black_Trees/RedBlackTrees.opam",
+      "@opam/preprocessor": "link:./vendors/Preprocessor/Preprocessor.opam",
+
+      "@opam/conf-libffi": "esy-ocaml/libffi#c61127dba57b18713039ab9c1892c9f2563e280c",
+      "@opam/conf-rust": "ulrikstrid/esy-rustup:esy.json#e86b5aadc4af6a04f1f7cd950d7d9adb61b6dc87",
+      "@opam/conf-libev": "esy-packages/libev#0b5eb6685b688649045aceac55dc559f6f21b829",
+      "@opam/conf-gmp": "esy-packages/esy-gmp#e27cb300adfb0c0b320c273082c5affafcd225fa",
+      "@opam/conf-hidapi": "esy-packages/esy-hidapi:esy.json#e21f930d6474e460fa5bb955a26505f6c3500c7a"
+    }
+  }
+}

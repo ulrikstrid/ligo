@@ -18,5 +18,6 @@ version.ml
 .history
 /to-dos.html
 _esy
-esy.lock
+*esy.lock
 node_modules
+_release

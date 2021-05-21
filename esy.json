@@ -33,39 +33,7 @@
           }
         }
       },
-      "esy-rustup": {
-        "source": "https://github.com/rust-lang/rustup/archive/refs/tags/1.24.2.tar.gz#979e8139734d39313b0147e0db3bfd2675f49507",
-        "override": {
-          "buildEnvOverride": {
-            "RUSTUP_USE_CURL": "1",
-            "CARGO_HOME": "#{self.install}",
-            "RUSTUP_HOME": "#{self.install / '.rustup'}"
-          },
-          "exportedEnv": {
-            "CARGO_HOME": {
-              "val": "#{self.install}",
-              "scope": "global"
-            },
-            "RUSTUP_HOME": {
-              "val": "#{self.install / '.rustup'}",
-              "scope": "global"
-            }
-          },
-          "build": [
-            [
-              "./rustup-init.sh",
-              "-y",
-              "--no-modify-path",
-              "--default-toolchain",
-              "1.44",
-              "--profile",
-              "minimal",
-              "#{os == 'windows' ? '--default-host' : ''}",
-              "#{os == 'windows' ? 'x86_64-pc-windows-gnu' : ''}"
-            ]
-          ]
-        }
-      },
+      "esy-rustup": "ulrikstrid/esy-rustup#2592989a4f6336a3640dc851bcc1f6a77111436e",
       "@opam/tezos-rust-libs": {
         "source": "git+https://gitlab.com/tezos/tezos-rust-libs:tezos-rust-libs.opam#7e6517823d2835e2b79e47124f37cdd5f5c13567",
         "override": {
@@ -468,8 +436,8 @@
             "@opam/tezos-rust-libs": "*",
             "@opam/tezos-clic": "*",
             "@opam/tezos-rpc": "*",
-            "@opam/bls12-381": "*",
-            "@opam/bls12-381-unix": "*",
+            "@opam/bls12-381": "0.4.2",
+            "@opam/bls12-381-unix": "0.4.2",
             "@opam/hacl-star": "*",
             "@opam/secp256k1-internal": "*",
             "@opam/tezos-lwt-result-stdlib": "*",
