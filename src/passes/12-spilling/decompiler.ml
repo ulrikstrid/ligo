@@ -182,7 +182,7 @@ let rec decompile (v : value) (t : AST.type_expression) : (AST.expression , spil
     )
     | (i, _) when String.equal i contract_name ->
       fail @@ bad_decompile v
-    | (i,_) when List.exists (fun el ->String.equal i el) [michelson_pair_name ; michelson_or_name; michelson_pair_left_comb_name ; michelson_pair_right_comb_name ; michelson_or_left_comb_name ; michelson_or_right_comb_name ] ->
+    | (i,_) when List.exists (fun el ->String.equal i el) [michelson_pair_name ; michelson_or_name] ->
       fail @@ corner_case ~loc:"unspiller" "Michelson_combs t should not be present in mini-c"
     | _ ->
       (* let () = Format.printf "%a" Mini_c.PP.value v in *)

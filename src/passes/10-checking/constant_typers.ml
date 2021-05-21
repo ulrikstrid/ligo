@@ -752,60 +752,6 @@ let cons loc = typer_2 loc "CONS" @@ fun hd tl ->
   let* () = assert_eq loc hd elt in
   ok tl
 
-let convert_to_right_comb loc = typer_1 loc "CONVERT_TO_RIGHT_COMB" @@ fun t ->
-  match t.type_content with
-  | T_record lmap ->
-    let kvl = LMap.to_kv_list_rev lmap.content in
-    let* () = Michelson_type_converter.field_checks kvl loc in
-    let pair = Michelson_type_converter.convert_pair_to_right_comb kvl in
-    ok {t with type_content = pair}
-  | T_sum cmap ->
-    let kvl = LMap.to_kv_list_rev cmap.content in
-    let* () = Michelson_type_converter.field_checks kvl loc in
-    let michelson_or = Michelson_type_converter.convert_variant_to_right_comb kvl in
-    ok {t with type_content = michelson_or}
-  | _ -> fail @@ wrong_converter t
-
-let convert_to_left_comb loc = typer_1 loc "CONVERT_TO_LEFT_COMB" @@ fun t ->
-  match t.type_content with
-  | T_record lmap ->
-    let kvl =  LMap.to_kv_list_rev lmap.content in
-    let* () = Michelson_type_converter.field_checks kvl loc in
-    let pair = Michelson_type_converter.convert_pair_to_left_comb kvl in
-    ok {t with type_content = pair}
-  | T_sum cmap ->
-    let kvl = LMap.to_kv_list_rev cmap.content in
-    let* () = Michelson_type_converter.field_checks kvl loc in
-    let michelson_or = Michelson_type_converter.convert_variant_to_left_comb kvl in
-    ok {t with type_content = michelson_or}
-  | _ -> fail @@ wrong_converter t
-
-let convert_from_right_comb loc = typer_1_opt loc "CONVERT_FROM_RIGHT_COMB" @@ fun t opt ->
-  let* dst_t = trace_option (not_annotated loc) opt in
-  match t.type_content with
-  | T_record {content=src_lmap;_} ->
-    let* dst_lmap = trace_option (expected_record loc dst_t) @@ get_t_record dst_t in
-    let* record = Michelson_type_converter.convert_pair_from_right_comb src_lmap dst_lmap.content in
-    ok {t with type_content = record}
-  | T_sum src_cmap ->
-    let* dst_cmap = trace_option (expected_variant loc dst_t) @@ get_t_sum dst_t in
-    let* variant = Michelson_type_converter.convert_variant_from_right_comb src_cmap.content dst_cmap.content in
-    ok {t with type_content = variant}
-  | _ -> fail @@ wrong_converter t
-
-let convert_from_left_comb loc = typer_1_opt loc "CONVERT_FROM_LEFT_COMB" @@ fun t opt ->
-  let* dst_t = trace_option (not_annotated loc) opt in
-  match t.type_content with
-  | T_record {content=src_lmap;_} ->
-    let* dst_lmap = trace_option (expected_record loc dst_t) @@ get_t_record dst_t in
-    let* record = Michelson_type_converter.convert_pair_from_left_comb src_lmap dst_lmap.content in
-    ok {t with type_content = record}
-  | T_sum src_cmap ->
-    let* dst_cmap = trace_option (expected_variant loc dst_t) @@ get_t_sum dst_t in
-    let* variant = Michelson_type_converter.convert_variant_from_left_comb src_cmap.content dst_cmap.content in
-    ok {t with type_content = variant}
-  | _ -> fail @@ wrong_converter t
-
 let simple_comparator : Location.t -> string -> typer = fun loc s -> typer_2 loc s @@ fun a b ->
   let* () =
     Assert.assert_true (uncomparable_types loc a b) @@
@@ -1081,10 +1027,6 @@ let constant_typers loc c : (typer , typer_error) result = match c with
   | C_IMPLICIT_ACCOUNT    -> ok @@ implicit_account loc ;
   | C_SET_DELEGATE        -> ok @@ set_delegate loc ;
   | C_CREATE_CONTRACT     -> ok @@ create_contract loc ;
-  | C_CONVERT_TO_RIGHT_COMB -> ok @@ convert_to_right_comb loc ;
-  | C_CONVERT_TO_LEFT_COMB  -> ok @@ convert_to_left_comb loc ;
-  | C_CONVERT_FROM_RIGHT_COMB -> ok @@ convert_from_right_comb loc ;
-  | C_CONVERT_FROM_LEFT_COMB  -> ok @@ convert_from_left_comb loc ;
   | C_SHA3              -> ok @@ sha3 loc ;
   | C_KECCAK            -> ok @@ keccak loc ;
   | C_LEVEL             -> ok @@ level loc ;

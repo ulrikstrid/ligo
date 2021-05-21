@@ -157,13 +157,6 @@ module Tree_abstraction = struct
     | "String.sub"      -> some_const C_SLICE
     | "String.concat"   -> some_const C_CONCAT
 
-    (* michelson pair/or type converter module *)
-
-    | "Layout.convert_to_right_comb" -> some_const C_CONVERT_TO_RIGHT_COMB
-    | "Layout.convert_to_left_comb" -> some_const C_CONVERT_TO_LEFT_COMB
-    | "Layout.convert_from_right_comb" -> some_const C_CONVERT_FROM_RIGHT_COMB
-    | "Layout.convert_from_left_comb" -> some_const C_CONVERT_FROM_LEFT_COMB
-
     (* Testing module *)
 
     | "Test.originate" -> some_const C_TEST_ORIGINATE
@@ -284,13 +277,6 @@ module Tree_abstraction = struct
     (*  | C_SIZE   -> "String.length" (* will never trigger, rename size *)
         | C_SLICE  -> "String.sub"
         | C_CONCAT -> "String.concat" *)
-
-    (* michelson pair/or type converter module *)
-
-    | C_CONVERT_TO_RIGHT_COMB   -> "Layout.convert_to_right_comb"
-    | C_CONVERT_TO_LEFT_COMB    -> "Layout.convert_to_left_comb"
-    | C_CONVERT_FROM_RIGHT_COMB -> "Layout.convert_from_right_comb"
-    | C_CONVERT_FROM_LEFT_COMB  -> "Layout.convert_from_left_comb"
 
     (* Not parsed *)
     | C_SOME -> "Some"
@@ -434,9 +420,6 @@ module Tree_abstraction = struct
       | "assert_some"     -> some_const C_ASSERT_SOME
       | "size"            -> some_deprecated C_SIZE (* Deprecated *)
 
-      | "Layout.convert_to_right_comb" -> some_const C_CONVERT_TO_RIGHT_COMB
-      | "Layout.convert_to_left_comb" -> some_const C_CONVERT_TO_LEFT_COMB
-
       | _ as c            -> pseudo_modules c
 
     let constant'_to_string = function
@@ -471,9 +454,6 @@ module Tree_abstraction = struct
 
       | C_ASSERTION   -> "assert"
       | C_ASSERT_SOME -> "assert_some"
-
-      | C_CONVERT_TO_RIGHT_COMB -> "Layout.convert_to_right_comb"
-      | C_CONVERT_TO_LEFT_COMB  -> "Layout.convert_to_left_comb"
 
       | _ as c            -> pseudo_module_to_string c
 

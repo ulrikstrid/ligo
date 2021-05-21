@@ -34,14 +34,6 @@ let%expect_test _ =
 
     430 bytes |}] ;
 
-  run_ligo_good [ "measure-contract" ; contract "issue-184-combs.mligo" ; "main2" ] ;
-  [%expect {|
-    File "../../test/contracts/issue-184-combs.mligo", line 30, characters 16-18:
-    Warning: unused variable "us".
-    Hint: replace it by "_us" to prevent this warning.
-
-    231 bytes |}] ;
-
   run_ligo_good [ "compile-parameter" ; contract "coase.ligo" ; "main" ; "Buy_single (record card_to_buy = 1n end)" ] ;
   [%expect {| (Left (Left 1)) |}] ;
 

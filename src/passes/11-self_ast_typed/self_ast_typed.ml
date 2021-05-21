@@ -6,13 +6,11 @@ let all_module_passes = [
   Unused.unused_map_module ;
   Muchused.muchused_map_module ;
   Helpers.map_module Tail_recursion.peephole_expression ;
-  Helpers.map_module Michelson_layout.peephole_expression ;
   Helpers.map_module Pattern_matching_simpl.peephole_expression ;
 ]
 
 let all_expression_passes = [
   Helpers.map_expression Tail_recursion.peephole_expression ;
-  Helpers.map_expression Michelson_layout.peephole_expression ;
   Pattern_matching_simpl.peephole_expression ;
 ]
 

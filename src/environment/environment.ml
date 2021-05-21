@@ -30,10 +30,6 @@ let basic_types : (type_variable * type_expression) list = [
     (v_michelson_or , t_for_all2 michelson_or_name star star);
     (v_michelson_pair , t_for_all2 michelson_pair_name star star);
     (v_chain_id , t_constant chain_id_name []) ;
-    (v_michelson_pair_right_comb , t_for_all1 michelson_pair_right_comb_name star);
-    (v_michelson_pair_left_comb , t_for_all1 michelson_pair_right_comb_name star);
-    (v_michelson_or_right_comb , t_for_all1 michelson_pair_right_comb_name star);
-    (v_michelson_or_left_comb , t_for_all1 sapling_state_name star);
     (v_baker_hash , t_constant baker_hash_name []);
     (v_pvss_key , t_constant pvss_key_name []);
     (v_sapling_state , t_for_all1 sapling_state_name star);

@@ -63,10 +63,6 @@ let t_michelson_or ?loc l l_ann r r_ann   : type_expression = t_app ?loc v_miche
 let t_michelson_pair ?loc l l_ann r r_ann : type_expression = t_app ?loc v_michelson_pair [t_annoted l l_ann; t_annoted r r_ann]
 let t_sapling_state ?loc a                : type_expression = t_app ?loc v_sapling_state [a]
 let t_sapling_transaction ?loc a                : type_expression = t_app ?loc v_sapling_trasaction [a]
-let t_michelson_pair_right_comb ?loc c    : type_expression = t_app ?loc v_michelson_pair_right_comb [c]
-let t_michelson_pair_left_comb ?loc c     : type_expression = t_app ?loc v_michelson_pair_left_comb [c]
-let t_michelson_or_right_comb ?loc c      : type_expression = t_app ?loc v_michelson_or_right_comb [c]
-let t_michelson_or_left_comb ?loc c       : type_expression = t_app ?loc v_michelson_or_left_comb [c]
 
 let get_t_annoted = fun te ->
   match te.type_content with
