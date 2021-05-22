@@ -54,6 +54,7 @@ module Token = Lexing_cameligo.Token
 
 %token <Region.t> BOOL_OR  "||"
 %token <Region.t> BOOL_AND "&&"
+%token <Region.t> QUOTE    "'"
 
  (* Keywords *)
 

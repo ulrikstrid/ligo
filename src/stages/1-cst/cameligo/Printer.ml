@@ -77,14 +77,14 @@ let print_option : state -> (state -> 'a -> unit ) -> 'a option -> unit =
 let print_csv state print {value; _} =
   print_nsepseq state "," print value
 
-let print_markup state c = 
-  let markup = match c with 
+let print_markup state c =
+  let markup = match c with
     LineCom (c, _) -> sprintf "// %s" c.value
   | BlockCom (c, _) -> sprintf "(* %s *)" c.value
   in
   Buffer.add_string state#buffer markup
 
-let print_markup state comments = 
+let print_markup state comments =
   List.iter (print_markup state) comments
 
 let print_token state region lexeme =
@@ -92,6 +92,12 @@ let print_token state region lexeme =
   let line =
     sprintf "%s: %s\n" (compact state region) lexeme
   in Buffer.add_string state#buffer line
+
+let print_par : state -> (state -> 'a -> unit) -> 'a par -> unit =
+  fun state print {lpar; inside; rpar} ->
+    print_token state lpar "(";
+    print state inside;
+    print_token state rpar ")"
 
 let print_var state {region; value} =
   let line =
@@ -163,8 +169,9 @@ and print_statement state = function
     print_token        state kwd_let "let";
     print_token_opt    state kwd_rec "rec";
     print_let_binding  state let_binding;
-| TypeDecl {value={kwd_type; name; eq; type_expr}; _} ->
+| TypeDecl {value={kwd_type; params; name; eq; type_expr}; _} ->
     print_token     state kwd_type "type";
+    List.iter (print_type_parameter state) params;
     print_var       state name;
     print_token     state eq "=";
     print_type_expr state type_expr
@@ -181,6 +188,11 @@ and print_statement state = function
     print_token   state eq "=";
     print_nsepseq state "." print_var binders;
 | Directive dir -> print_directive state dir
+
+and print_type_parameter state node =
+  let {quote; name} = node.value in
+  print_token state quote "'";
+  print_var   state name
 
 and print_directive state dir =
   let s =
@@ -220,8 +232,12 @@ and print_type_app state {value; _} =
 and print_type_tuple state {value; _} =
   let {lpar; inside; rpar} = value in
   print_token   state lpar "(";
-  print_nsepseq state "," print_type_expr inside;
+  print_nsepseq state "," print_type_arg inside;
   print_token   state rpar ")"
+
+and print_type_arg state = function
+  TArg  t -> print_type_parameter state t
+| TExpr t -> print_type_expr state t
 
 and print_type_par state {value; _} =
   let {lpar; inside=t; rpar} = value in
@@ -318,8 +334,9 @@ and print_terminator state = function
   Some semi -> print_token state semi ";"
 | None -> ()
 
-and print_let_binding state {binders; lhs_type; eq; let_rhs} =
+and print_let_binding state {binders; type_binders; lhs_type; eq; let_rhs} =
   let () = Utils.nseq_iter (print_pattern state) binders in
+  let () = print_option state print_type_binders_par type_binders in
   let () =
     match lhs_type with
       None -> ()
@@ -328,6 +345,15 @@ and print_let_binding state {binders; lhs_type; eq; let_rhs} =
         print_type_expr state type_expr in
   let () = print_token state eq "="
   in print_expr state let_rhs
+
+and print_type_binders_par state node =
+  print_par state print_type_binders node.value
+
+and print_type_binders state {kwd_type; type_vars} =
+  print_token state kwd_type "type";
+  Utils.nseq_iter (print_type_name state) type_vars
+
+and print_type_name state = print_var state
 
 and print_pattern state = function
   PTuple ptuple ->
@@ -634,8 +660,9 @@ and print_let_in state {value; _} =
 
 and print_type_in state {value; _} =
   let {type_decl; kwd_in; body} = value in
-  let {kwd_type; name; eq; type_expr} = type_decl in
+  let {kwd_type; params; name; eq; type_expr} = type_decl in
   print_token        state kwd_type "type";
+  List.iter (print_type_parameter state) params;
   print_var          state name;
   print_token        state eq     "eq";
   print_type_expr    state type_expr;
@@ -729,14 +756,14 @@ let pp_verbatim state {value=name; region} =
   let node = sprintf "%s{|%s|} (%s)\n" state#pad_path name reg
   in Buffer.add_string state#buffer node
 
-let pp_markup_item state c = 
-  let comment = match c with 
+let pp_markup_item state c =
+  let comment = match c with
     LineCom (c, _) -> sprintf "//%s" c.value
   | BlockCom (c, _) -> sprintf "(*%s*)" c.value
   in
   Buffer.add_string state#buffer comment
 
-let pp_markup state comments = 
+let pp_markup state comments =
   List.iter (pp_markup_item state) comments
 
 let pp_loc_node state name region =
@@ -801,8 +828,17 @@ and pp_let_binding state node attr =
   in ()
 
 and pp_type_decl state decl =
-  pp_ident     (state#pad 2 0) decl.name;
-  pp_type_expr (state#pad 2 1) decl.type_expr
+  pp_ident       (state#pad 3 0) decl.name;
+  pp_type_params (state#pad 3 1) decl.params;
+  pp_type_expr   (state#pad 3 2) decl.type_expr
+
+and pp_type_params state params =
+  let arity = List.length params in
+  let apply len rank = pp_type_parameter (state#pad len rank)
+  in List.iteri (apply arity) params
+
+and pp_type_parameter state (node : type_parameter reg) =
+  pp_ident state node.value.name
 
 and pp_module_decl state decl =
   pp_ident     (state#pad 2 0) decl.name;
@@ -1402,8 +1438,12 @@ and pp_sum_type state {variants; attributes; _} =
 
 and pp_type_tuple state {value; _} =
   let components     = Utils.nsepseq_to_list value.inside in
-  let apply len rank = pp_type_expr (state#pad len rank)
+  let apply len rank = pp_type_arg (state#pad len rank)
   in List.iteri (List.length components |> apply) components
+
+and pp_type_arg state = function
+  TArg  t -> pp_type_parameter state t
+| TExpr t -> pp_type_expr state t
 
 and pp_field_decl state {value; _} =
   let arity = if value.attributes = [] then 1 else 2 in

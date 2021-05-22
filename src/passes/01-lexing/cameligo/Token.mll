@@ -66,6 +66,7 @@ module T =
     | GE       of Region.t  (* ">=" *)
     | BOOL_OR  of Region.t  (* "||" *)
     | BOOL_AND of Region.t  (* "&&" *)
+    | QUOTE    of Region.t  (* "'"  *)
 
     (* Keywords *)
 
@@ -168,6 +169,8 @@ module T =
     | "BOOL_OR"  -> "||"
     | "BOOL_AND" -> "&&"
 
+    | "QUOTE" -> "'"
+
     (* Keywords *)
 
     | "Begin" -> "begin"
@@ -269,6 +272,7 @@ module T =
     | GE       region -> region, "GE"
     | BOOL_OR  region -> region, "BOOL_OR"
     | BOOL_AND region -> region, "BOOL_AND"
+    | QUOTE    region -> region, "QUOTE"
 
     (* Keywords *)
 
@@ -350,6 +354,7 @@ module T =
     | GE       _ -> ">="
     | BOOL_OR  _ -> "||"
     | BOOL_AND _ -> "&&"
+    | QUOTE    _ -> "'"
 
     (* Keywords *)
 
@@ -537,8 +542,8 @@ and scan_constr region lexicon = parse
       let value = lexeme, `Hex norm
       in Bytes Region.{region; value}
 
-    type int_err = 
-      Non_canonical_zero 
+    type int_err =
+      Non_canonical_zero
 
     let mk_int lexeme region =
       let z =
@@ -564,7 +569,7 @@ and scan_constr region lexicon = parse
           then Error Non_canonical_zero_nat
           else Ok (Nat Region.{region; value = lexeme,z})
 
-    type mutez_err = 
+    type mutez_err =
         Unsupported_mutez_syntax
       | Non_canonical_zero_tez
 
@@ -614,6 +619,7 @@ and scan_constr region lexicon = parse
       | "::"  -> Ok (CONS     region)
       | "||"  -> Ok (BOOL_OR  region)
       | "&&"  -> Ok (BOOL_AND region)
+      | "'"   -> Ok (QUOTE    region)
 
       (* Invalid symbols *)
 
@@ -636,7 +642,7 @@ and scan_constr region lexicon = parse
 
     (* Code injection *)
 
-    type lang_err = 
+    type lang_err =
       Unsupported_lang_syntax
 
     let mk_lang lang region = Ok (Lang Region.{value=lang; region})

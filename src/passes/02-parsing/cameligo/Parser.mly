@@ -32,6 +32,7 @@ let first_region = function
 %on_error_reduce bin_op(disj_expr_level,BOOL_OR,conj_expr_level)
 %on_error_reduce base_expr(expr)
 %on_error_reduce base_expr(base_cond)
+%on_error_reduce base_expr(closed_if)
 %on_error_reduce module_var_e
 %on_error_reduce module_var_t
 %on_error_reduce nsepseq(module_name,DOT)
@@ -48,14 +49,15 @@ let first_region = function
 %on_error_reduce cons_pattern_level
 %on_error_reduce nsepseq(cons_pattern_level,COMMA)
 %on_error_reduce pattern
-%on_error_reduce nsepseq(sub_irrefutable,COMMA)
+%on_error_reduce nsepseq(core_irrefutable,COMMA)
 %on_error_reduce irrefutable
 %on_error_reduce variant
 %on_error_reduce nsepseq(variant,VBAR)
 %on_error_reduce nsepseq(core_type,TIMES)
 %on_error_reduce fun_type
 %on_error_reduce cartesian
-%on_error_reduce sub_irrefutable
+%on_error_reduce core_irrefutable
+%on_error_reduce type_arg
 
 (* See [ParToken.mly] for the definition of tokens. *)
 
@@ -126,10 +128,11 @@ sep_or_term_list(item,sep):
 
 (* Helpers *)
 
-%inline type_name        : "<ident>"  { $1 }
-%inline field_name       : "<ident>"  { $1 }
-%inline struct_name      : "<ident>"  { $1 }
-%inline module_name      : "<constr>" { $1 }
+%inline type_var    : "<ident>"  { $1 }
+%inline type_name   : "<ident>"  { $1 }
+%inline field_name  : "<ident>"  { $1 }
+%inline struct_name : "<ident>"  { $1 }
+%inline module_name : "<constr>" { $1 }
 
 (* Non-empty comma-separated values (at least two values) *)
 
@@ -168,12 +171,19 @@ declaration:
 (* Type declarations *)
 
 type_decl:
-  "type" type_name "=" type_expr {
-    let region = cover $1 (type_expr_to_region $4) in
+  "type" seq(type_parameter) type_name "=" type_expr {
+    let region = cover $1 (type_expr_to_region $5) in
     let value  = {kwd_type  = $1;
-                  name      = $2;
-                  eq        = $3;
-                  type_expr = $4}
+                  params    = $2;
+                  name      = $3;
+                  eq        = $4;
+                  type_expr = $5}
+    in {region; value} }
+
+type_parameter:
+  "'" type_var {
+    let region = cover $1 $2.region
+    and value = {quote=$1; name=$2}
     in {region; value} }
 
 module_decl:
@@ -222,9 +232,9 @@ core_type:
 | "<string>"          { TString $1 }
 | "<int>"             { TInt    $1 }
 | module_access_t     {   TModA $1 }
-| core_type type_name {
+| unique_type_arg type_name {
     let arg, constr = $1, $2 in
-    let start       = type_expr_to_region arg
+    let start       = type_arg_to_region arg
     and stop        = constr.region in
     let region      = cover start stop in
     let lpar, rpar  = ghost, ghost in
@@ -232,13 +242,18 @@ core_type:
     let arg         = {region=start; value}
     in TApp {region; value = constr,arg}
   }
-| type_tuple type_name {
+| par(tuple(type_arg)) type_name {
     let arg, constr = $1, $2 in
     let region = cover arg.region constr.region
     in TApp {region; value = constr,arg} }
 
-type_tuple:
-  par(tuple(type_expr)) { $1 }
+unique_type_arg:
+  core_type      { TExpr $1 }
+| type_parameter { TArg  $1 }
+
+type_arg:
+  type_expr      { TExpr $1 }
+| type_parameter { TArg  $1 }
 
 sum_type:
   nsepseq(variant,"|") {
@@ -327,12 +342,16 @@ let_declaration:
     in {region; value} }
 
 let_binding:
-  "<ident>" nseq(sub_irrefutable) type_annotation? "=" expr {
-    let binders = Utils.nseq_cons (PVar $1) $2 in
-    {binders; lhs_type=$3; eq=$4; let_rhs=$5}
+  "<ident>" ioption(par(type_binders)) nseq(core_irrefutable)
+  type_annotation? "=" expr {
+    let binders = Utils.nseq_cons (PVar $1) $3 in
+    {binders; type_binders=$2; lhs_type=$4; eq=$5; let_rhs=$6}
   }
 | irrefutable type_annotation? "=" expr {
-    {binders=$1,[]; lhs_type=$2; eq=$3; let_rhs=$4} }
+    {binders=$1,[]; type_binders=None; lhs_type=$2; eq=$3; let_rhs=$4} }
+
+type_binders:
+  "type" nseq(type_var) { {kwd_type=$1; type_vars=$2} }
 
 type_annotation:
   ":" type_expr { $1,$2 }
@@ -340,35 +359,36 @@ type_annotation:
 (* Patterns *)
 
 irrefutable:
-  sub_irrefutable        { $1 }
-| tuple(sub_irrefutable) {
+  tuple(core_irrefutable) {
     let region = nsepseq_to_region pattern_to_region $1
-    in PTuple {region; value=$1} }
+    in PTuple {region; value=$1}
+  }
+| core_irrefutable { $1 }
 
-sub_irrefutable:
+core_irrefutable:
   "<ident>"                                              {    PVar $1 }
 | "_"                             { PVar { value = "_"; region = $1 } }
 | unit                                                   {   PUnit $1 }
-| record_pattern                                         { PRecord $1 }
+| record_pattern(irrefutable)                            { PRecord $1 }
 | par(closed_irrefutable)                                {    PPar $1 }
 | "<constr>"         { PConstr (PConstrApp {$1 with value = $1,None}) }
 
 closed_irrefutable:
-  irrefutable
-| typed_pattern { $1 }
-| "<constr>" core_pattern {
+  "<constr>" core_irrefutable {
     let stop   = pattern_to_region $2 in
     let region = cover $1.region stop
     and value  = $1, Some $2 in
-    PConstr (PConstrApp {region; value}) }
-
-typed_pattern:
-  irrefutable ":" type_expr  {
+    PConstr (PConstrApp {region; value})
+  }
+| irrefutable type_annotation {
+    let colon, type_expr = $2 in
     let start  = pattern_to_region $1 in
-    let stop   = type_expr_to_region $3 in
+    let stop   = type_expr_to_region type_expr in
     let region = cover start stop in
-    let value  = {pattern=$1; colon=$2; type_expr=$3}
-    in PTyped {region; value} }
+    let value  = {pattern=$1; colon; type_expr}
+    in PTyped {region; value}
+  }
+| irrefutable { $1 }
 
 pattern:
   tuple(cons_pattern_level) {
@@ -395,11 +415,22 @@ core_pattern:
 | unit                            {                          PUnit $1 }
 | list__(cons_pattern_level)      {              PList (PListComp $1) }
 | constr_pattern                  {                        PConstr $1 }
-| record_pattern                  {                        PRecord $1 }
-| par(pattern)                    {                           PPar $1 }
+| record_pattern(core_pattern)    {                        PRecord $1 }
+| par(closed_pattern)             {                           PPar $1 }
 
-record_pattern:
-  "{" sep_or_term_list(field_pattern,";") "}" {
+closed_pattern:
+  pattern type_annotation {
+    let colon, type_expr = $2 in
+    let start  = pattern_to_region $1 in
+    let stop   = type_expr_to_region type_expr in
+    let region = cover start stop in
+    let value  = {pattern=$1; colon; type_expr}
+    in PTyped {region; value}
+  }
+| pattern { $1 }
+
+record_pattern(rhs_pattern):
+  "{" sep_or_term_list(field_pattern(rhs_pattern),";") "}" {
     let ne_elements, terminator = $2 in
     let region = cover $1 $3 in
     let value  = {
@@ -409,13 +440,13 @@ record_pattern:
       attributes=[]}
     in {region; value} }
 
-field_pattern:
+field_pattern(rhs_pattern):
   field_name {
     let region  = $1.region
     and value  = {field_name=$1; eq=Region.ghost; pattern=PVar $1}
     in {region; value}
   }
-| field_name "=" core_pattern {
+| field_name "=" rhs_pattern {
     let start  = $1.region
     and stop   = pattern_to_region $3 in
     let region = cover start stop
@@ -438,13 +469,6 @@ constr_pattern:
 | "<constr>" core_pattern {
     let region = cover $1.region (pattern_to_region $2)
     in PConstrApp {region; value = $1, Some $2} }
-
-(*
-ptuple:
-  tuple(tail) {
-    let region = nsepseq_to_region pattern_to_region $1
-    in PTuple {region; value=$1} }
- *)
 
 unit:
   "(" ")" { {region = cover $1 $2; value = $1,$2} }

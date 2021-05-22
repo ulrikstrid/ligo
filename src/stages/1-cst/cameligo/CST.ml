@@ -93,6 +93,8 @@ type semi  = Region.t  (* ";" *)
 type vbar  = Region.t  (* "|" *)
 type colon = Region.t  (* ":" *)
 
+type quote = Region.t  (* "'" *)
+
 (* Wildcard *)
 
 type wild = Region.t  (* "_" *)
@@ -111,6 +113,7 @@ type field_name  = string reg
 type type_constr = string reg
 type constr      = string reg
 type attribute   = string reg
+type type_param  = string reg
 
 (* Parentheses *)
 
@@ -146,19 +149,31 @@ and let_decl =
   (kwd_let * kwd_rec option * let_binding * attributes)
 
 and let_binding = {
-  binders  : pattern nseq;
-  lhs_type : (colon * type_expr) option;
-  eq       : equal;
-  let_rhs  : expr
+  binders      : pattern nseq;
+  type_binders : type_binders par reg option;
+  lhs_type     : (colon * type_expr) option;
+  eq           : equal;
+  let_rhs      : expr
+}
+
+and type_binders = {
+  kwd_type  : kwd_type;
+  type_vars : type_name nseq
 }
 
 (* Type declarations *)
 
 and type_decl = {
   kwd_type   : kwd_type;
+  params     : type_parameter reg list;
   name       : type_name;
   eq         : equal;
   type_expr  : type_expr
+}
+
+and type_parameter = {
+  quote : quote;
+  name  : type_param
 }
 
 and module_decl = {
@@ -190,6 +205,12 @@ and type_expr =
 | TInt    of (lexeme * Z.t) reg
 | TModA   of type_expr module_access reg
 
+and type_tuple = (type_arg, comma) nsepseq par reg
+
+and type_arg =
+  TArg  of type_parameter reg
+| TExpr of type_expr
+
 and cartesian = (type_expr, times) nsepseq reg
 
 and sum_type = {
@@ -210,8 +231,6 @@ and field_decl = {
   field_type : type_expr;
   attributes : attributes
 }
-
-and type_tuple = (type_expr, comma) nsepseq par reg
 
 and pattern =
   PConstr   of constr_pattern
@@ -569,3 +588,7 @@ let selection_to_region = function
 let path_to_region = function
   Name var -> var.region
 | Path {region; _} -> region
+
+let type_arg_to_region = function
+  TArg  t -> t.region
+| TExpr t -> type_expr_to_region t
