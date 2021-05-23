@@ -405,8 +405,8 @@ cons_pattern_level:
 | core_pattern { $1 }
 
 core_pattern:
-  "<ident>"                       {                           PVar $1 }
-| "_"                             { PVar { value = "_"; region = $1 } }
+  var_pattern                     {                           PVar $1 }
+| "_"                             { PVar { var = { value = "_"; region = $1 }; attributes = [] } }
 | "<int>"                         {                           PInt $1 }
 | "<nat>"                         {                           PNat $1 }
 | "<bytes>"                       {                         PBytes $1 }
@@ -443,7 +443,7 @@ record_pattern(rhs_pattern):
 field_pattern(rhs_pattern):
   field_name {
     let region  = $1.region
-    and value  = {field_name=$1; eq=Region.ghost; pattern=PVar $1}
+    and value  = {field_name=$1; eq=Region.ghost; pattern=PVar { var = $1; attributes = [] }}
     in {region; value}
   }
 | field_name "=" rhs_pattern {
