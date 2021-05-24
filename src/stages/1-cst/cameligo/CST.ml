@@ -149,14 +149,14 @@ and let_decl =
   (kwd_let * kwd_rec option * let_binding * attributes)
 
 and let_binding = {
-  binders      : pattern nseq;
-  type_binders : type_binders par reg option;
-  lhs_type     : (colon * type_expr) option;
-  eq           : equal;
-  let_rhs      : expr
+  binders     : pattern nseq;
+  type_params : type_params par reg option;
+  lhs_type    : (colon * type_expr) option;
+  eq          : equal;
+  let_rhs     : expr
 }
 
-and type_binders = {
+and type_params = {
   kwd_type  : kwd_type;
   type_vars : type_name nseq
 }
@@ -164,14 +164,18 @@ and type_binders = {
 (* Type declarations *)
 
 and type_decl = {
-  kwd_type   : kwd_type;
-  params     : type_parameter reg list;
-  name       : type_name;
-  eq         : equal;
-  type_expr  : type_expr
+  kwd_type  : kwd_type;
+  params    : quoted_params option;
+  name      : type_name;
+  eq        : equal;
+  type_expr : type_expr
 }
 
-and type_parameter = {
+and quoted_params =
+  QParam      of quoted_param reg
+| QParamTuple of (quoted_param reg, comma) nsepseq par reg
+
+and quoted_param = {
   quote : quote;
   name  : type_param
 }
@@ -196,7 +200,7 @@ and type_expr =
   TProd   of cartesian
 | TSum    of sum_type reg
 | TRecord of field_decl reg ne_injection reg
-| TApp    of (type_constr * type_tuple) reg
+| TApp    of (type_constr * type_constr_arg) reg
 | TFun    of (type_expr * arrow * type_expr) reg
 | TPar    of type_expr par reg
 | TVar    of variable
@@ -204,12 +208,11 @@ and type_expr =
 | TString of lexeme reg
 | TInt    of (lexeme * Z.t) reg
 | TModA   of type_expr module_access reg
+| TArg    of quoted_param reg
 
-and type_tuple = (type_arg, comma) nsepseq par reg
-
-and type_arg =
-  TArg  of type_parameter reg
-| TExpr of type_expr
+and type_constr_arg =
+  CArg      of type_expr
+| CArgTuple of (type_expr, comma) nsepseq par reg
 
 and cartesian = (type_expr, times) nsepseq reg
 
@@ -235,7 +238,7 @@ and field_decl = {
 and pattern =
   PConstr   of constr_pattern
 | PUnit     of the_unit reg
-| PVar      of bound_variable
+| PVar      of var_pattern reg
 | PInt      of (lexeme * Z.t) reg
 | PNat      of (lexeme * Z.t) reg
 | PBytes    of (lexeme * Hex.t) reg
@@ -246,6 +249,11 @@ and pattern =
 | PPar      of pattern par reg
 | PRecord   of field_pattern reg ne_injection reg
 | PTyped    of typed_pattern reg
+
+and var_pattern = {
+  variable   : variable;
+  attributes : attribute list
+}
 
 and constr_pattern =
   PNone      of c_None
@@ -505,6 +513,7 @@ let type_expr_to_region = function
 | TVar    {region; _}
 | TWild    region
 | TModA   {region; _}
+| TArg    {region; _}
  -> region
 
 let list_pattern_to_region = function
@@ -519,7 +528,7 @@ let pattern_to_region = function
 | PList p -> list_pattern_to_region p
 | PConstr c -> constr_pattern_to_region c
 | PUnit {region;_}
-| PTuple {region;_} | PVar {var={region;_};_}
+| PTuple {region;_} | PVar {region;_}
 | PInt {region;_}
 | PString {region;_} | PVerbatim {region;_}
 | PPar {region;_}
@@ -589,6 +598,6 @@ let path_to_region = function
   Name var -> var.region
 | Path {region; _} -> region
 
-let type_arg_to_region = function
-  TArg  t -> t.region
-| TExpr t -> type_expr_to_region t
+let type_constr_arg_to_region = function
+  CArg  t -> type_expr_to_region t
+| CArgTuple t -> t.region

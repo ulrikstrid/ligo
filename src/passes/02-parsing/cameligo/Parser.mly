@@ -14,6 +14,11 @@ let first_region = function
   [] -> None
 | x::_ -> Some x.Region.region
 
+let mk_wild region =
+  let variable = {value="_"; region} in
+  let value = {variable; attributes=[]}
+  in {region; value}
+
 (* END HEADER *)
 %}
 
@@ -171,7 +176,7 @@ declaration:
 (* Type declarations *)
 
 type_decl:
-  "type" seq(type_parameter) type_name "=" type_expr {
+  "type" quoted_type_params? type_name "=" type_expr {
     let region = cover $1 (type_expr_to_region $5) in
     let value  = {kwd_type  = $1;
                   params    = $2;
@@ -180,7 +185,11 @@ type_decl:
                   type_expr = $5}
     in {region; value} }
 
-type_parameter:
+quoted_type_params:
+  quoted_type_parameter             { QParam      $1 }
+| par(tuple(quoted_type_parameter)) { QParamTuple $1 }
+
+quoted_type_parameter:
   "'" type_var {
     let region = cover $1 $2.region
     and value = {quote=$1; name=$2}
@@ -226,34 +235,33 @@ cartesian:
     in TProd {region; value} }
 
 core_type:
-  type_name           {    TVar $1 }
-| "_"                 {   TWild $1 }
-| par(type_expr)      {    TPar $1 }
-| "<string>"          { TString $1 }
-| "<int>"             { TInt    $1 }
-| module_access_t     {   TModA $1 }
-| unique_type_arg type_name {
-    let arg, constr = $1, $2 in
-    let start       = type_arg_to_region arg
-    and stop        = constr.region in
-    let region      = cover start stop in
-    let lpar, rpar  = ghost, ghost in
-    let value       = {lpar; inside=arg,[]; rpar} in
-    let arg         = {region=start; value}
-    in TApp {region; value = constr,arg}
-  }
-| par(tuple(type_arg)) type_name {
-    let arg, constr = $1, $2 in
-    let region = cover arg.region constr.region
-    in TApp {region; value = constr,arg} }
+  type_name        {    TVar $1 }
+| "_"              {   TWild $1 }
+| par(type_expr)   {    TPar $1 }
+| "<string>"       { TString $1 }
+| "<int>"          {    TInt $1 }
+| module_access_t  {   TModA $1 }
+| type_constr_app  {    TApp $1 }
+
+type_constr_app:
+  type_constr_arg type_name {
+    let start  = type_constr_arg_to_region $1
+    and stop   = $2.region in
+    let region = cover start stop
+    and value  = $2, $1
+    in {region; value} }
+
+type_constr_arg:
+  unique_type_arg      { CArg      $1 }
+| par(tuple(type_arg)) { CArgTuple $1 }
 
 unique_type_arg:
-  core_type      { TExpr $1 }
-| type_parameter { TArg  $1 }
+  core_type             { $1 }
+| quoted_type_parameter { TArg $1 }
 
 type_arg:
-  type_expr      { TExpr $1 }
-| type_parameter { TArg  $1 }
+  type_expr             { $1 }
+| quoted_type_parameter { TArg $1 }
 
 sum_type:
   nsepseq(variant,"|") {
@@ -342,21 +350,28 @@ let_declaration:
     in {region; value} }
 
 let_binding:
-  "<ident>" ioption(par(type_binders)) nseq(core_irrefutable)
-  type_annotation? "=" expr {
+  def_var type_parameters parameters type_annotation? "=" expr {
     let binders = Utils.nseq_cons (PVar $1) $3 in
-    {binders; type_binders=$2; lhs_type=$4; eq=$5; let_rhs=$6}
+    {binders; type_params=$2; lhs_type=$4; eq=$5; let_rhs=$6}
   }
 | irrefutable type_annotation? "=" expr {
-    {binders=$1,[]; type_binders=None; lhs_type=$2; eq=$3; let_rhs=$4} }
+    {binders=$1,[]; type_params=None; lhs_type=$2; eq=$3; let_rhs=$4} }
 
-type_binders:
+%inline type_parameters:
+  ioption(par(type_parameters_list)) { $1 }
+
+type_parameters_list:
   "type" nseq(type_var) { {kwd_type=$1; type_vars=$2} }
+
+parameters:
+  nseq(core_irrefutable) { $1 }
 
 type_annotation:
   ":" type_expr { $1,$2 }
 
-(* Patterns *)
+(* PATTERNS *)
+
+(* Irrefutable Patterns *)
 
 irrefutable:
   tuple(core_irrefutable) {
@@ -366,12 +381,22 @@ irrefutable:
 | core_irrefutable { $1 }
 
 core_irrefutable:
-  "<ident>"                                              {    PVar $1 }
-| "_"                             { PVar { value = "_"; region = $1 } }
+  def_var                                                   { PVar $1 }
+| "_"                                             { PVar (mk_wild $1) }
 | unit                                                   {   PUnit $1 }
 | record_pattern(irrefutable)                            { PRecord $1 }
 | par(closed_irrefutable)                                {    PPar $1 }
 | "<constr>"         { PConstr (PConstrApp {$1 with value = $1,None}) }
+
+def_var:
+  seq("[@attr]") "<ident>" {
+    let region =
+      match first_region $1 with
+        None -> $2.region
+      | Some start -> cover start $2.region in
+    let value = {variable=$2; attributes=$1}
+    in {region; value}
+  }
 
 closed_irrefutable:
   "<constr>" core_irrefutable {
@@ -390,6 +415,8 @@ closed_irrefutable:
   }
 | irrefutable { $1 }
 
+(* General Patterns *)
+
 pattern:
   tuple(cons_pattern_level) {
     let region = nsepseq_to_region pattern_to_region $1
@@ -405,8 +432,8 @@ cons_pattern_level:
 | core_pattern { $1 }
 
 core_pattern:
-  var_pattern                     {                           PVar $1 }
-| "_"                             { PVar { var = { value = "_"; region = $1 }; attributes = [] } }
+  def_var                         { PVar $1 }
+| "_"                             { PVar (mk_wild $1) }
 | "<int>"                         {                           PInt $1 }
 | "<nat>"                         {                           PNat $1 }
 | "<bytes>"                       {                         PBytes $1 }
@@ -442,8 +469,9 @@ record_pattern(rhs_pattern):
 
 field_pattern(rhs_pattern):
   field_name {
-    let region  = $1.region
-    and value  = {field_name=$1; eq=Region.ghost; pattern=PVar { var = $1; attributes = [] }}
+    let region  = $1.region in
+    let pattern = PVar {region; value = {variable=$1; attributes=[]}} in
+    let value   = {field_name=$1; eq=Region.ghost; pattern}
     in {region; value}
   }
 | field_name "=" rhs_pattern {

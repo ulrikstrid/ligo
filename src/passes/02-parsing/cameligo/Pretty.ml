@@ -138,7 +138,9 @@ and pp_pattern = function
 | PRecord   r -> pp_region_reg pp_precord r
 | PTyped    t -> pp_region_reg pp_ptyped t
 
-and pp_pvar {var; attributes} = pp_region_reg pp_ident var ^^ pp_attributes attributes
+and pp_pvar {value; _} =
+  let {variable; attributes} = value in
+  group (pp_attributes attributes ^/^ pp_region_reg pp_ident variable)
 
 and pp_pconstr = function
   PNone      t -> pp_region_t (string "None") t
@@ -533,6 +535,10 @@ and pp_type_expr = function
 | TString s -> pp_region_reg pp_string s
 | TInt i    -> pp_region_reg pp_int i
 | TModA   t -> pp_region_reg (pp_module_access pp_type_expr) t
+| TArg    t -> pp_region_reg pp_quoted_param t
+
+and pp_quoted_param {value; _} =
+  pp_region_reg pp_ident value.name
 
 and pp_cartesian {value; _} =
   let head, tail = value in
@@ -585,31 +591,29 @@ and pp_field_decl {value; _} =
   let t_expr = pp_type_expr field_type
   in prefix 2 1 (name ^^ pp_region_t (string " :") colon) t_expr
 
-and pp_type_app {value=ctor, tuple; _} =
-  pp_type_tuple tuple ^^ pp_region_t (group (nest 2 (break 1 ^^ pp_type_constr ctor))) ctor.region
+and pp_type_app {value = (ctor, type_constr_arg); _} =
+  pp_type_constr_arg type_constr_arg
+  ^^ pp_region_t (group (nest 2 (break 1 ^^ pp_type_constr ctor)))
+                 ctor.region
 
-and pp_type_tuple {value; _} =
+and pp_type_constr_arg = function
+  CArg t -> pp_type_expr t
+| CArgTuple t -> pp_constr_arg_tuple t
+
+and pp_constr_arg_tuple {value; _} =
   let head, tail = value.inside in
   let rec app = function
     []  -> empty
-  | [(_, e)] -> group (break 1 ^^ pp_type_arg e)
+  | [(_, e)] -> group (break 1 ^^ pp_type_expr e)
   | (c, e)::items ->
-      group (break 1 ^^ pp_type_arg e ^^ pp_region_t (string ",") c) ^^ app items
+      group (break 1 ^^ pp_type_expr e ^^ pp_region_t (string ",") c) ^^ app items
   in
   match tail with
-    []        -> pp_type_arg head
+    []        -> pp_type_expr head
   | h :: tail ->
     let components =
-      pp_type_arg head ^^ (pp_region_t (string ",") (fst h)) ^^ app (h :: tail)
+      pp_type_expr head ^^ (pp_region_t (string ",") (fst h)) ^^ app (h :: tail)
     in (pp_region_t (string "(") value.lpar) ^^ nest 1 (components ^^ (pp_region_t (string ")") value.rpar))
-
-and pp_type_arg = function
-  TArg {value; _} -> pp_type_parameter value
-| TExpr t -> pp_type_expr t
-
-and pp_type_parameter (node: type_parameter) =
-  let param = node.name in
-  string "'" ^^ pp_ident param
 
 and pp_type_constr ctor = string ctor.value
 
