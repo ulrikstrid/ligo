@@ -7,7 +7,6 @@
       "includePackages": [
         "root",
         "@opam/hacl-star-raw",
-        "@opam/tezos-rusmt-libs",
         "@opam/conf-libev",
         "@opam/conf-libffi",
         "@opam/conf-gmp"
@@ -62,108 +61,250 @@
       "@opam/secp256k1-internal": "git:https://gitlab.com/marigold/ocaml-secp256k1-internal.git:secp256k1-internal.opam#45588ff9",
 
       "@opam/tezos-sapling": {
-        "source": "link:./tezos_8_2/src/lib_sapling/tezos-sapling.opam",
+        "source": "https://gitlab.com/tezos/tezos/-/archive/v8.3/tezos-v8.3.tar.bz2#16e984fa8f377f6c55543c30117f211fdcd7f44b",
         "override": {
           "buildsInSource": true,
           "buildEnvOverride": {
             "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
           },
+          "build": [
+            ["rm", "-r", "vendors"],
+            [
+              "curl",
+              "https://gist.githubusercontent.com/ulrikstrid/6a6cd52f86672ed0c47d4d4ae0b1ef64/raw/e3ba3f71f5116d40d1ad8489023d3d1cd8c4d0b5/tezos-fix-virtual-libraries.patch",
+              "--output",
+              "0001-Patch-dune-files.patch"
+            ],
+            ["patch", "-p1", "-i", "./0001-Patch-dune-files.patch"],
+            "dune build -j 4 -p tezos-sapling @install",
+            ["mv", "src/lib_sapling/tezos-sapling.install", "./"]
+          ],
+          "install": [["esy-installer", "./tezos-sapling.install"]],
           "dependencies": {
+            "@opam/dune": "*",
+            "@opam/hex": "*",
+            "@opam/ctypes": "*",
+            "@opam/ctypes-foreign": "*",
+            "@opam/data-encoding": "*",
+            "@opam/tezos-crypto": "*",
+            "@opam/tezos-stdlib": "*",
+            "@opam/tezos-error-monad": "*",
             "@opam/tezos-rust-libs": "*"
           }
         }
       },
       "@opam/tezos-crypto": {
-        "source": "link:./tezos_8_2/src/lib_crypto/tezos-crypto.opam",
+        "source": "https://gitlab.com/tezos/tezos/-/archive/v8.3/tezos-v8.3.tar.bz2#16e984fa8f377f6c55543c30117f211fdcd7f44b",
         "override": {
+          "buildsInSource": true,
           "buildEnvOverride": {
             "OPAM_SWITCH_PREFIX": "#{ @opam/tezos-rust-libs.install }"
           },
+          "build": [
+            "rm -r vendors",
+            "dune build -j 4 -p tezos-crypto @install",
+            ["mv", "src/lib_crypto/tezos-crypto.install", "./"]
+          ],
+          "install": [["esy-installer", "./tezos-crypto.install"]],
           "dependencies": {
-            "@opam/tezos-rust-libs": "*"
+            "@opam/dune": "*",
+            "@opam/tezos-stdlib": "8.3",
+            "@opam/tezos-rust-libs": "*",
+            "@opam/tezos-clic": "*",
+            "@opam/tezos-rpc": "*",
+            "@opam/bls12-381": "0.4.2",
+            "@opam/bls12-381-unix": "0.4.2",
+            "@opam/hacl-star": "*",
+            "@opam/secp256k1-internal": "*",
+            "@opam/tezos-lwt-result-stdlib": "*",
+            "@opam/uecc": ">=0.3",
+            "@opam/ringo": "0.5"
           }
         }
       },
       "@opam/tezos-protocol-plugin-008-PtEdo2Zk": {
-        "source": "link:./tezos_8_2/src/proto_008_PtEdo2Zk/lib_plugin/tezos-protocol-plugin-008-PtEdo2Zk.opam",
+        "source": "https://gitlab.com/tezos/tezos/-/archive/v8.3/tezos-v8.3.tar.bz2#16e984fa8f377f6c55543c30117f211fdcd7f44b",
         "override": {
           "buildsInSource": true,
           "buildEnvOverride": {
             "ESY__DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
           },
           "build": [
+            ["rm", "-r", "vendors"],
+            [
+              "curl",
+              "https://gist.githubusercontent.com/ulrikstrid/6a6cd52f86672ed0c47d4d4ae0b1ef64/raw/e3ba3f71f5116d40d1ad8489023d3d1cd8c4d0b5/tezos-fix-virtual-libraries.patch",
+              "--output",
+              "0001-Patch-dune-files.patch"
+            ],
+            ["patch", "-p1", "-i", "./0001-Patch-dune-files.patch"],
             [
               "sh",
               "-c",
               "DYLD_LIBRARY_PATH=\"$ESY__DYLD_LIBRARY_PATH\" dune build -j 4 -p tezos-protocol-plugin-008-PtEdo2Zk @install"
+            ],
+            [
+              "mv",
+              "src/proto_008_PtEdo2Zk/lib_plugin/tezos-protocol-plugin-008-PtEdo2Zk.install",
+              "./"
             ]
           ],
+          "install": [
+            ["esy-installer", "./tezos-protocol-plugin-008-PtEdo2Zk.install"]
+          ],
           "dependencies": {
+            "@opam/dune": "*",
+            "@opam/tezos-base": "8.3",
+            "@opam/tezos-embedded-protocol-008-PtEdo2Zk": "8.3",
             "@opam/hacl-star-raw": "*"
           }
         }
       },
       "@opam/tezos-protocol-compiler": {
-        "source": "link:./tezos_8_2/src/lib_protocol_compiler/tezos-protocol-compiler.opam",
+        "source": "https://gitlab.com/tezos/tezos/-/archive/v8.3/tezos-v8.3.tar.bz2#16e984fa8f377f6c55543c30117f211fdcd7f44b",
         "override": {
+          "buildsInSource": true,
+          "build": [
+            ["rm", "-r", "vendors"],
+            [
+              "curl",
+              "https://gist.githubusercontent.com/ulrikstrid/6a6cd52f86672ed0c47d4d4ae0b1ef64/raw/e3ba3f71f5116d40d1ad8489023d3d1cd8c4d0b5/tezos-fix-virtual-libraries.patch",
+              "--output",
+              "0001-Patch-dune-files.patch"
+            ],
+            ["patch", "-p1", "-i", "./0001-Patch-dune-files.patch"],
+            ["dune", "build", "-p", "tezos-protocol-compiler", "-j", "4"],
+            [
+              "mv",
+              "src/lib_protocol_compiler/tezos-protocol-compiler.install",
+              "./"
+            ]
+          ],
+          "install": [["esy-installer", "./tezos-protocol-compiler.install"]],
           "dependencies": {
+            "@opam/dune": "*",
+            "@opam/ocp-ocamlres": "*",
+            "@opam/data-encoding": "*",
+            "@opam/tezos-rust-libs": "*",
+            "@opam/ctypes": "*",
+            "@opam/tezos-error-monad": "*",
+            "@opam/ctypes-foreign": "*",
+            "@opam/tezos-stdlib": "*",
+            "@opam/tezos-crypto": "*",
+            "@opam/tezos-protocol-environment": "*",
+            "@opam/hacl-star-raw": "*",
+            "@opam/bls12-381": "*",
+            "@opam/bls12-381-unix": "*"
+          }
+        }
+      },
+      "@opam/tezos-protocol-008-PtEdo2Zk-parameters": {
+        "source": "https://gitlab.com/tezos/tezos/-/archive/v8.3/tezos-v8.3.tar.bz2#16e984fa8f377f6c55543c30117f211fdcd7f44b",
+        "override": {
+          "buildsInSource": true,
+          "buildEnvOverride": {
+            "ESY__DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
+          },
+          "build": [
+            ["rm", "-r", "vendors"],
+            [
+              "curl",
+              "https://gist.githubusercontent.com/ulrikstrid/6a6cd52f86672ed0c47d4d4ae0b1ef64/raw/e3ba3f71f5116d40d1ad8489023d3d1cd8c4d0b5/tezos-fix-virtual-libraries.patch",
+              "--output",
+              "0001-Patch-dune-files.patch"
+            ],
+            ["patch", "-p1", "-i", "./0001-Patch-dune-files.patch"],
+            [
+              "sh",
+              "-c",
+              "DYLD_LIBRARY_PATH=\"$ESY__DYLD_LIBRARY_PATH\" dune build -j 4 -p tezos-protocol-008-PtEdo2Zk-parameters @install"
+            ],
+            [
+              "mv",
+              "src/proto_008_PtEdo2Zk/lib_parameters/tezos-protocol-008-PtEdo2Zk-parameters.install",
+              "./"
+            ]
+          ],
+          "install": [
+            [
+              "esy-installer",
+              "./tezos-protocol-008-PtEdo2Zk-parameters.install"
+            ]
+          ],
+          "dependencies": {
+            "@opam/dune": "*",
+            "@opam/tezos-protocol-008-PtEdo2Zk": "*",
+            "@opam/tezos-rust-libs": "*",
+            "@opam/tezos-crypto": "*",
+            "@opam/hacl-star": "*",
+            "@opam/hacl-star-raw": "*",
             "@opam/bls12-381-unix": "*"
           }
         }
       },
       "@opam/tezos-protocol-008-PtEdo2Zk": {
-        "source": "link:./tezos_8_2/src/proto_008_PtEdo2Zk/lib_protocol/tezos-protocol-008-PtEdo2Zk.opam",
+        "source": "link:./tezos_8_2",
         "override": {
           "buildsInSource": true,
-          "buildEnvOverride": {
-            "ESY__DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
-          },
           "build": [
             [
-              "sh",
-              "-c",
-              "DYLD_LIBRARY_PATH=\"$ESY__DYLD_LIBRARY_PATH\" dune build -j 4 -p tezos-protocol-008-PtEdo2Zk @install"
-            ]
-          ],
-          "dependencies": {
-            "@opam/hacl-star-raw": "*"
-          }
-        }
-      },
-      "@opam/tezos-protocol-008-PtEdo2Zk-parameters": {
-        "source": "link:./tezos_8_2/src/proto_008_PtEdo2Zk/lib_parameters/tezos-protocol-008-PtEdo2Zk-parameters.opam",
-        "override": {
-          "buildsInSource": true,
-          "buildEnvOverride": {
-            "ESY__DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
-          },
-          "build": [
+              "sed",
+              "-i.back",
+              "-e",
+              "s/-nostdlib//g",
+              "#{$cur__target_dir}/src/proto_008_PtEdo2Zk/lib_protocol/dune.inc"
+            ],
+            ["dune", "build", "-p", "tezos-protocol-008-PtEdo2Zk", "-j", "4"],
             [
-              "sh",
-              "-c",
-              "DYLD_LIBRARY_PATH=\"$ESY__DYLD_LIBRARY_PATH\" dune build -j 4 -p tezos-protocol-008-PtEdo2Zk-parameters @install"
+              "mv",
+              "src/proto_008_PtEdo2Zk/lib_protocol/tezos-protocol-008-PtEdo2Zk.install",
+              "./"
             ]
           ],
+          "install": [
+            ["esy-installer", "./tezos-protocol-008-PtEdo2Zk.install"]
+          ],
           "dependencies": {
-            "@opam/hacl-star-raw": "*"
+            "@opam/dune": "*",
+            "@opam/tezos-protocol-compiler": "*"
           }
         }
       },
       "@opam/tezos-embedded-protocol-008-PtEdo2Zk": {
-        "source": "link:./tezos_8_2/src/proto_008_PtEdo2Zk/lib_protocol/tezos-embedded-protocol-008-PtEdo2Zk.opam",
+        "source": "https://gitlab.com/tezos/tezos/-/archive/v8.3/tezos-v8.3.tar.bz2#16e984fa8f377f6c55543c30117f211fdcd7f44b",
         "override": {
           "buildsInSource": true,
           "buildEnvOverride": {
             "ESY__DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
           },
           "build": [
+            ["rm", "-r", "vendors"],
+            [
+              "curl",
+              "https://gist.githubusercontent.com/ulrikstrid/6a6cd52f86672ed0c47d4d4ae0b1ef64/raw/e3ba3f71f5116d40d1ad8489023d3d1cd8c4d0b5/tezos-fix-virtual-libraries.patch",
+              "--output",
+              "0001-Patch-dune-files.patch"
+            ],
+            ["patch", "-p1", "-i", "./0001-Patch-dune-files.patch"],
             [
               "sh",
               "-c",
               "DYLD_LIBRARY_PATH=\"$ESY__DYLD_LIBRARY_PATH\" dune build -j 4 -p tezos-embedded-protocol-008-PtEdo2Zk @install"
+            ],
+            [
+              "mv",
+              "src/proto_008_PtEdo2Zk/lib_protocol/tezos-embedded-protocol-008-PtEdo2Zk.install",
+              "./"
             ]
           ],
+          "install": [
+            ["esy-installer", "./tezos-embedded-protocol-008-PtEdo2Zk.install"]
+          ],
           "dependencies": {
+            "@opam/tezos-base": "*",
+            "@opam/tezos-protocol-008-PtEdo2Zk": "*",
+            "@opam/tezos-protocol-compiler": "*",
+            "@opam/tezos-protocol-updater": "*",
             "@opam/hacl-star-raw": "*"
           }
         }
