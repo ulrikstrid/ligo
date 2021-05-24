@@ -330,7 +330,7 @@
       "@opam/LexerLib": "link:./vendors/LexerLib/LexerLib.opam",
       "@opam/UnionFind": "link:./vendors/UnionFind/UnionFind.opam",
       "@opam/RedBlackTrees": "link:./vendors/Red-Black_Trees/RedBlackTrees.opam",
-      "@opam/preprocessor": "link:./vendors/Preprocessor/Preprocessor.opam",
+      "@opam/Preprocessor": "link:./vendors/Preprocessor/Preprocessor.opam",
 
       "@opam/conf-libffi": "esy-ocaml/libffi#c61127dba57b18713039ab9c1892c9f2563e280c",
       "@opam/conf-rust": "ulrikstrid/esy-rustup:esy.json#e86b5aadc4af6a04f1f7cd950d7d9adb61b6dc87",

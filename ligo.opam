@@ -27,7 +27,7 @@ depends: [
   "terminal_size"
   "pprint"
   "ParserLib"
-  "preprocessor"
+  "Preprocessor"
   "LexerLib"
   "UnionFind"
   "RedBlackTrees"
