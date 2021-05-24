@@ -210,15 +210,15 @@ module Command = struct
       let ret = LT.V_Michelson (Ty_code (expr, expr_ty, f.body.type_expression)) in
       ok (ret, ctxt)
     | Eval (loc, _typed_env, env, v, _ty_expr) ->
-       let* _subst_lst = make_subst_env env in
-      let* code,code_ty,_ = Michelson_backend.compile_simple_val ~loc v _ty_expr in
-      let* options = Run.Of_michelson.make_dry_run_options {now=None ; amount="" ; balance="" ; sender=None ; source=None ; parameter_ty = None } in
-      let* runres = Run.Of_michelson.run_expression ~options code code_ty in
-      let* (expr_ty,expr) = match runres with | Success x -> ok x | Fail _ -> fail @@ Errors.generic_error loc "Running failed" in
-      let expr = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations expr) in
-      let expr_ty = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations expr_ty) in
-      let ret = LT.V_Michelson (Ty_code (expr, expr_ty, _ty_expr)) in
-      ok (ret, ctxt)
+      let* _subst_lst = make_subst_env env in
+      let* value = Michelson_backend.compile_simple_val ~loc v _ty_expr in
+      (* let* options = Run.Of_michelson.make_dry_run_options {now=None ; amount="" ; balance="" ; sender=None ; source=None ; parameter_ty = None } in
+       * let* runres = Run.Of_michelson.run_expression ~options code code_ty in
+       * let* (expr_ty,expr) = match runres with | Success x -> ok x | Fail _ -> fail @@ Errors.generic_error loc "Running failed" in
+       * let expr = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations expr) in
+       * let expr_ty = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations expr_ty) in
+       * let ret = LT.V_Michelson (Ty_code (expr, expr_ty, _ty_expr)) in *)
+      ok (LT.V_Michelson (Ty_code value), ctxt)
     (* | Eval (loc, typed_env, env, expr, _ty_expr) ->
      *   let* subst_lst = make_subst_env env in
      *   let* code = Michelson_backend.compile_expression' ~loc typed_env expr subst_lst  in
