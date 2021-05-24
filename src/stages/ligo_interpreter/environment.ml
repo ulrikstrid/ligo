@@ -1,9 +1,9 @@
 open Types
 
 let extend :
-  env -> ?init_term:Ast_typed.expression -> (expression_variable * value) -> env
-  = fun env ?init_term (var,eval_term) ->
-  Env.add var {init_term;eval_term} env
+  env -> ?ast_type:Ast_typed.type_expression -> (expression_variable * value) -> env
+  = fun env ?ast_type (var,eval_term) ->
+  Env.add var {ast_type;eval_term} env
 
 let lookup :
   env -> expression_variable -> value_expr option

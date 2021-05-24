@@ -94,8 +94,8 @@ let compile_groups filename grp_list =
       | Meta ->
         let init_env = Environment.default_with_test options.protocol_version in
         let options = { options with init_env } in
-        let* typed,_    = Ligo_compile.Of_core.typecheck ~options Env inferred in
-        let* _ = Interpreter.eval_test typed "test" in
+        let* typed,env    = Ligo_compile.Of_core.typecheck ~options Env inferred in
+        let* _ = Interpreter.eval_test env typed "test" in
         ok ()
       | Object ->
         let* typed,_    = Ligo_compile.Of_core.typecheck ~options Env inferred in

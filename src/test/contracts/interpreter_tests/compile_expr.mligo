@@ -20,7 +20,7 @@ let test1 =
   assert (Test.michelson_equal d_one ret)
 
 let test2 =
-  let x1 = Test.compile_value (1,2) in
+  let x1 = Test.eval (1,2) in
   let x2 = Test.compile_expression (None: string option) [%cameligo ({| (1,2) |} : ligo_program)] in
   let eq = Test.michelson_equal x1 x2 in
   assert eq

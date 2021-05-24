@@ -291,7 +291,7 @@ let rec apply_operator : Location.t -> Ast_typed.environment -> env -> Ast_typed
       let>> x = Get_last_originations () in
       return x
     | ( C_TEST_COMPILE_META_VALUE , [ a ] ) ->
-      let>> x = Compile_meta_value (loc,a) in
+      let>> x = Compile_meta_value (loc,a,Ast_typed.t_unit ()) in
       return x
     | ( C_TEST_RUN , [ V_Func_val f ; v ] ) ->
       let>> x = Run (loc,type_env,env,f,v) in
@@ -372,7 +372,8 @@ and eval_ligo : Ast_typed.expression -> Ast_typed.environment -> env -> value Mo
       | _ -> failwith "this expression isn't a record"
     )
     | E_constant {cons_name=C_TEST_EVAL ; arguments=[expr]} -> (
-      let>> code = Eval (term.location, typed_env, env, expr, expr.type_expression) in
+      let* value = eval_ligo expr typed_env env in
+      let>> code = Eval (term.location, typed_env, env, value, expr.type_expression) in
       return code
     )
     | E_constant {cons_name ; arguments} -> (

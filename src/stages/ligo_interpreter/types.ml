@@ -34,7 +34,8 @@ and constant_val =
   | C_bytes of bytes
   | C_address of Tezos_protocol_008_PtEdo2Zk.Protocol.Alpha_context.Contract.t (*should be represented as michelson data ? not convenient *)
 
-and value_expr = { init_term : Ast_typed.expression option ; eval_term : value }
+and value_expr = { ast_type : Ast_typed.type_expression option ;
+                   eval_term : value }
 and value =
   | V_Func_val of func_val
   | V_Func_rec of (expression_variable * expression_variable * Ast_typed.expression * env)

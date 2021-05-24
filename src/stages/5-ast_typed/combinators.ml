@@ -186,6 +186,20 @@ let get_t_record (t:type_expression) : rows option = match t.type_content with
   | T_record m -> Some m
   | _ -> None
 
+let get_t_record_exn (t:type_expression) : rows = match t.type_content with
+  | T_record m -> m
+  | _ -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
+
+let get_t_list_exn (t:type_expression) : type_expression =
+  match get_t_list t with
+  | Some value -> value
+  | _ -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
+
+let get_t_set_exn (t:type_expression) : type_expression =
+  match get_t_set t with
+  | Some value -> value
+  | _ -> raise (Failure ("Internal error: broken invariant at " ^ __LOC__))
+
 let get_t_map (t:type_expression) : (type_expression * type_expression) option =
   match t.type_content with
   | T_constant {language=_;injection; parameters = [k;v]} when String.equal (Ligo_string.extract injection) map_name -> Some (k,v)
@@ -261,6 +275,12 @@ let ez_e_record (lst : (label * expression) list) : expression_content =
   e_record map
 let e_some s : expression_content = E_constant {cons_name=C_SOME;arguments=[s]}
 let e_none (): expression_content = E_constant {cons_name=C_NONE; arguments=[]}
+let e_cons hd tl : expression_content = E_constant {cons_name=C_CONS;arguments=[hd;tl]}
+let e_nil (): expression_content = E_constant {cons_name=C_LIST_EMPTY; arguments=[]}
+let e_set_add hd tl : expression_content = E_constant {cons_name=C_SET_ADD;arguments=[hd;tl]}
+let e_set_empty (): expression_content = E_constant {cons_name=C_SET_EMPTY; arguments=[]}
+let e_map_add k v tl : expression_content = E_constant {cons_name=C_MAP_ADD;arguments=[k;v;tl]}
+let e_map_empty (): expression_content = E_constant {cons_name=C_MAP_EMPTY; arguments=[]}
 
 let e_failwith e : expression_content = E_constant {cons_name=C_FAILWITH ; arguments=[e]}
 
@@ -314,6 +334,12 @@ let e_a_variable v ty = make_e (e_variable v) ty
 let ez_e_a_record ?layout r = make_e (ez_e_record r) (ez_t_record ?layout (List.mapi (fun i (x, y) -> x, {associated_type = y.type_expression ; michelson_annotation = None ; decl_pos = i}) r))
 let e_a_let_in binder expr body attributes = make_e (e_let_in binder expr body attributes) (get_type_expression body)
 let e_a_raw_code l c t = make_e (e_raw_code l c) t
+let e_a_nil t = make_e (e_nil ()) (t_list t)
+let e_a_cons hd tl = make_e (e_cons hd tl) (t_list hd.type_expression)
+let e_a_set_empty t = make_e (e_set_empty ()) (t_set t)
+let e_a_set_add hd tl = make_e (e_set_add hd tl) (t_set hd.type_expression)
+let e_a_map_empty kt vt = make_e (e_map_empty ()) (t_map kt vt)
+let e_a_map_add k v tl = make_e (e_map_add k v tl) (t_map k.type_expression v.type_expression)
 
 
 let get_a_int (t:expression) =
