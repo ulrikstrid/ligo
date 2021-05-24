@@ -51,7 +51,6 @@ module Command = struct
     | Compile_contract : string * string -> (LT.value * LT.value) t
     | Compile_meta_value : Location.t * LT.value * Ast_typed.type_expression -> LT.value t
     | Run : Location.t * Ast_typed.environment * LT.env * LT.func_val * LT.value -> LT.value t
-    | Run_ : Location.t * Ast_typed.environment * LT.env * LT.func_val * Ast_typed.expression -> LT.value t
     | Eval : Location.t * Ast_typed.environment * LT.env * LT.value * Ast_typed.type_expression -> LT.value t
     | Inject_script : Location.t * LT.value * LT.value -> LT.value t
     | Set_now : Location.t * Z.t -> unit t
@@ -176,7 +175,7 @@ module Command = struct
       in
       let contract = LT.V_Michelson (LT.Contract contract_code) in
       ok ((contract,size), ctxt)
-    | Run (loc, _typed_env, _env, f, v) ->
+    | Run (loc, _, _, f, v) ->
       let* subst_lst = make_subst_env f.env in 
       let in_ty,out_ty = Ast_typed.get_t_function_exn f.orig_lambda.type_expression in
       let* func_code = Michelson_backend.compile_function' ~loc in_ty out_ty f.arg_binder f.body subst_lst in
@@ -189,46 +188,9 @@ module Command = struct
       let expr_ty = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations expr_ty) in
       let ret = LT.V_Michelson (Ty_code (expr, expr_ty, f.body.type_expression)) in
       ok (ret, ctxt)
-    | Run_ (loc, typed_env, env, f, param_expr) ->
-      (* compiler parameter *)
-      let* subst_lst' = make_subst_env env in
-      let* arg_code = Michelson_backend.compile_expression' ~loc typed_env param_expr subst_lst' in
-      let* options = Run.Of_michelson.make_dry_run_options {now=None ; amount="" ; balance="" ; sender=None ; source=None ; parameter_ty = None } in
-      let* runres = Run.Of_michelson.run_expression ~options arg_code.expr arg_code.expr_ty in
-      let* (_,expr) = match runres with | Success x -> ok x | Fail _ -> fail @@ Errors.generic_error loc "Running failed" in
-      let expr = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations expr) in
-      (* execute the two together *)
-      let* subst_lst = make_subst_env f.env in
-      let in_ty,out_ty = Ast_typed.get_t_function_exn f.orig_lambda.type_expression in
-      let* func_code = Michelson_backend.compile_function' ~loc in_ty out_ty f.arg_binder f.body subst_lst in
-      let* input_ty,_ = Run.Of_michelson.fetch_lambda_types func_code.expr_ty in
-      let* options = Run.Of_michelson.make_dry_run_options {now=None ; amount="" ; balance="" ; sender=None ; source=None ; parameter_ty = Some input_ty  } in
-      let* runres = Run.Of_michelson.run_function ~options func_code.expr func_code.expr_ty expr in
-      let* (expr_ty,expr) = match runres with | Success x -> ok x | Fail _ -> fail @@ Errors.generic_error loc "Running failed" in
-      let expr = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations expr) in
-      let expr_ty = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations expr_ty) in
-      let ret = LT.V_Michelson (Ty_code (expr, expr_ty, f.body.type_expression)) in
-      ok (ret, ctxt)
-    | Eval (loc, _typed_env, env, v, _ty_expr) ->
-      let* _subst_lst = make_subst_env env in
-      let* value = Michelson_backend.compile_simple_val ~loc v _ty_expr in
-      (* let* options = Run.Of_michelson.make_dry_run_options {now=None ; amount="" ; balance="" ; sender=None ; source=None ; parameter_ty = None } in
-       * let* runres = Run.Of_michelson.run_expression ~options code code_ty in
-       * let* (expr_ty,expr) = match runres with | Success x -> ok x | Fail _ -> fail @@ Errors.generic_error loc "Running failed" in
-       * let expr = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations expr) in
-       * let expr_ty = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations expr_ty) in
-       * let ret = LT.V_Michelson (Ty_code (expr, expr_ty, _ty_expr)) in *)
+    | Eval (loc, _, _, v, ty_expr) ->
+      let* value = Michelson_backend.compile_simple_val ~loc v ty_expr in
       ok (LT.V_Michelson (Ty_code value), ctxt)
-    (* | Eval (loc, typed_env, env, expr, _ty_expr) ->
-     *   let* subst_lst = make_subst_env env in
-     *   let* code = Michelson_backend.compile_expression' ~loc typed_env expr subst_lst  in
-     *   let* options = Run.Of_michelson.make_dry_run_options {now=None ; amount="" ; balance="" ; sender=None ; source=None ; parameter_ty = None } in
-     *   let* runres = Run.Of_michelson.run_expression ~options code.expr code.expr_ty in
-     *   let* (expr_ty,expr) = match runres with | Success x -> ok x | Fail _ -> fail @@ Errors.generic_error loc "Running failed" in
-     *   let expr = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations expr) in
-     *   let expr_ty = Tezos_micheline.Micheline.inject_locations (fun _ -> ()) (Tezos_micheline.Micheline.strip_locations expr_ty) in
-     *   let ret = LT.V_Michelson (Ty_code (expr, expr_ty, _ty_expr)) in
-     *   ok (ret, ctxt) *)
     | Inject_script (loc, code, storage) -> (
       let* contract_code = trace_option (corner_case ()) @@ LC.get_michelson_contract code in
       let* (storage,_,_) = trace_option (corner_case ()) @@ LC.get_michelson_expr storage in
