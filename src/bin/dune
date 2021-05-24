@@ -45,6 +45,7 @@
   (public_name ligo)
   (instrumentation (backend bisect_ppx))
   (libraries
+    bls12-381-unix
     simple-utils
     cmdliner
     ligo
