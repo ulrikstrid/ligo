@@ -26,7 +26,6 @@ and type_content =
 and type_injection = {
   language : string ;
   injection : Ligo_string.t ;
-  (* kind (?) *)
   parameters : ty_expr list ;
 }
 

@@ -91,11 +91,15 @@ module Substitution = struct
           ok @@ T.T_arrow { type1; type2 }
         | T.T_app {type_operator;arguments} ->
           let* arguments = bind_map_list (s_type_expression ~substs) arguments in
+          (* REMITODO ? Could we apply a substitution here ? in case type_operator is binded to a forall ?*)
           ok @@ T.T_app {type_operator;arguments}
         | T.T_module_accessor { module_name; element } ->
           let* element = s_type_expression ~substs element in
           ok @@ T.T_module_accessor { module_name; element }
         | T.T_singleton x -> ok @@ T.T_singleton x
+        | T.T_for_all x ->
+          let* type_ = s_type_expression ~substs x.type_ in
+          ok @@ T.T_for_all {x with type_}
 
     and s_type_expression : (T.type_expression,_) w = fun ~substs { type_content; location; sugar } ->
       let* type_content = s_type_content ~substs type_content in

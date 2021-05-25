@@ -256,3 +256,33 @@ let equal_variables a b : bool =
   match a.expression_content, b.expression_content with
   | E_variable a, E_variable b -> Var.equal a.wrap_content b.wrap_content
   |  _, _ -> false
+
+module Substitution = struct
+
+  let rec type_subst : (type_variable * type_expression) -> type_expression -> type_expression =
+    fun (to_subst , x) ty_expr ->
+      let return type_content = { ty_expr with type_content } in
+      let self = type_subst (to_subst,x) in
+      let content = ty_expr.type_content in
+      match content with
+      | T_variable tv ->
+        if Var.equal tv to_subst then x else return content
+      | T_constant x ->
+        let parameters = List.map self x.parameters in
+        return (T_constant {x with parameters})
+      | T_sum x | T_record x ->
+        let aux : type_expression row_element_mini_c -> type_expression row_element_mini_c =
+          fun x -> { x with associated_type = self x.associated_type }
+        in
+        return (T_sum { x with content = LMap.map aux x.content })
+      | T_arrow { type1 ; type2 } ->
+        let type1 = self type1 in
+        let type2 = self type2 in
+        return (T_arrow {type1 ; type2})
+      | T_module_accessor x ->
+        return (T_module_accessor { x with element = self x.element})
+      | T_for_all x ->
+        return (T_for_all {x with type_ = self x.type_})
+      | T_singleton _ -> return content
+
+end

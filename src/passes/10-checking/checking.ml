@@ -6,8 +6,6 @@ module I = Ast_core
 module O = Ast_typed
 open O.Combinators
 
-let starvar = Environment.starvar
-
 module Environment = O.Environment
 
 type environment = Environment.t
@@ -15,23 +13,20 @@ type environment = Environment.t
 let cast_var (orig: 'a Var.t Location.wrap) = { orig with wrap_content = Var.todo_cast orig.wrap_content}
 let assert_type_expression_eq = Helpers.assert_type_expression_eq
 
-let is_not_will_be_ignored te = not @@ match te.O.type_content with
-  | O.T_variable var -> Var.equal var starvar
-  | _ -> false
-
 let rec is_closed ~loc (t : O.type_content) =
+  ignore loc;
   let self = is_closed in
   let self_list = bind_list_iter
                     (fun (v : O.type_expression) -> self ~loc:v.location v.type_content) in
   match t with
-  | O.T_constant {injection;parameters} ->
+  (*REMITODO: error should appear when applying the type | O.T_constant {injection;parameters} ->
      let arg_len = List.length parameters in
      let arg_actual = List.filter is_not_will_be_ignored parameters |>  List.length in
      let name = injection |> Ligo_string.extract |> Var.of_name in
      if arg_len <> arg_actual then
        fail @@ type_constant_wrong_number_of_arguments name arg_len arg_actual loc
      else
-       ok ()
+       ok () *)
   | O.T_sum rows | O.T_record rows ->
      self_list (O.LMap.to_list rows.content |> List.map (fun v -> v.O.associated_type))
   | O.T_arrow {type1;type2} ->
@@ -86,7 +81,7 @@ match Location.unwrap d with
 
 and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, typer_error) result =
   let return tv' =
-    let* _ = is_closed ~loc:t.location tv' in
+    let* () = is_closed ~loc:t.location tv' in
     ok (make_t ~loc:t.location tv' (Some t)) in
   match t.type_content with
   | T_arrow {type1;type2} ->
@@ -143,40 +138,22 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
   | T_app {type_operator;arguments} -> (
     let name : O.type_variable = Var.todo_cast type_operator in
     let* v = trace_option (unbound_type_variable e name t.location) @@
-      Environment.get_type_opt name e in
-    let aux : O.type_injection -> (O.type_expression, typer_error) result = fun inj ->
-      (*handles converters*)
-      let open Stage_common.Constant in
-      let {language=_ ; injection ; parameters} : O.type_injection = inj in
-      match Ligo_string.extract injection, parameters with
-      | (i, [t]) when String.equal i michelson_pair_right_comb_name ->
-        let* lmap = match t.type_content with
-            | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap.content)) -> ok lmap
-            | _ -> fail (michelson_comb_no_record t.location) in
-        let record = Michelson_type_converter.convert_pair_to_right_comb (Ast_typed.LMap.to_kv_list_rev lmap.content) in
-        return @@ record
-      | (i, [t]) when String.equal i  michelson_pair_left_comb_name ->
-          let* lmap = match t.type_content with
-            | T_record lmap when (not (Ast_typed.Helpers.is_tuple_lmap lmap.content)) -> ok lmap
-            | _ -> fail (michelson_comb_no_record t.location) in
-          let record = Michelson_type_converter.convert_pair_to_left_comb (Ast_typed.LMap.to_kv_list_rev lmap.content) in
-          return @@ record
-      | (i, [t]) when String.equal i michelson_or_right_comb_name ->
-        let* cmap = match t.type_content with
-            | T_sum cmap -> ok cmap.content
-            | _ -> fail (michelson_comb_no_variant t.location) in
-          let pair = Michelson_type_converter.convert_variant_to_right_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
-          return @@ pair
-      | (i, [t]) when String.equal i michelson_or_left_comb_name ->
-        let* cmap = match t.type_content with
-            | T_sum cmap -> ok cmap.content
-            | _ -> fail (michelson_comb_no_variant t.location) in
-          let pair = Michelson_type_converter.convert_variant_to_left_comb (Ast_typed.LMap.to_kv_list_rev cmap) in
-          return @@ pair
-      | _ -> return (T_constant inj)
+      Environment.get_type_opt name e
     in
-    match get_param_inj v with
-    | Some (language,injection,parameters) ->
+    let aux : O.type_expression -> I.type_expression -> (O.type_expression,_) result =
+      fun operator arg ->
+        match operator.type_content with
+        | T_for_all {ty_binder ; kind = _ ; type_ } ->
+          let* arg = evaluate_type e arg in
+          let x = O.Substitution.type_subst (ty_binder,arg) type_ in
+          ok x
+        | _ ->
+          (* REMITODO: might need to change the phrasing for this error (?) *)
+          fail @@ type_variable_with_parameters_not_injection type_operator t.location
+    in
+    bind_fold_list aux v arguments
+    (* match v.type_content with
+    | T_constant {language;injection;parameters} ->
       let arg_env = List.length parameters in
       let arg_actual = List.length arguments in
       let* parameters =
@@ -185,7 +162,7 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
       in
       let inj : O.type_injection = {language ; injection ; parameters } in
       aux inj
-    | None -> fail @@ type_variable_with_parameters_not_injection type_operator t.location
+    | _ -> fail @@ type_variable_with_parameters_not_injection type_operator t.location *)
   )
   | T_module_accessor {module_name; element} ->
     let* module_ = match Environment.get_module_opt module_name e with
@@ -194,6 +171,9 @@ and evaluate_type (e:environment) (t:I.type_expression) : (O.type_expression, ty
     in
     evaluate_type module_ element
   | T_singleton x -> return (T_singleton x)
+  | T_for_all x ->
+    let* type_ = evaluate_type e x.type_ in
+    return (T_for_all {x with type_})
 
 and type_expression : environment -> ?tv_opt:O.type_expression -> I.expression -> (O.environment * O.expression, typer_error) result
   = fun e ?tv_opt ae ->
@@ -606,6 +586,9 @@ let rec untype_type_expression (t:O.type_expression) : (I.type_expression, typer
     return @@ I.T_module_accessor ma
   | O.T_singleton l ->
     return @@ I.T_singleton l
+  | O.T_for_all x ->
+    let* type_ = untype_type_expression x.type_ in
+    return @@ T_for_all {x with type_}
 
 let rec untype_expression (e:O.expression) : (I.expression , typer_error) result =
   untype_expression_content e.type_expression e.expression_content

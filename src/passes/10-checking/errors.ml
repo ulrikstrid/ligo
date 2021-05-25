@@ -98,7 +98,7 @@ let unbound_variable (e:Ast_typed.Environment.t) (v:Ast_typed.expression_variabl
 let match_missing_case (m:Ast_core.label list) (v:Ast_core.label list) (loc:Location.t) = `Typer_match_missing_case (m, v, loc)
 let match_extra_case (m:Ast_core.label list) (v:Ast_core.label list) (loc:Location.t) = `Typer_match_extra_case (m, v, loc)
 let unbound_constructor (e:Ast_typed.Environment.t) (c:Ast_core.label) (loc:Location.t) = `Typer_unbound_constructor (e,c,loc)
-let type_constant_wrong_number_of_arguments (op:Ast_core.type_variable) (expected:int) (actual:int) loc = `Typer_type_constant_wrong_number_of_arguments (op,expected,actual,loc)
+let type_constant_wrong_number_of_arguments (op:Ast_core.type_variable) (expected:int) (actual:int) loc = `Typer_type_constant_wrong_number_of_arguments (op,expected,actual,loc) (* REMITODO: unused ?*)
 let type_variable_with_parameters_not_injection (op:Ast_core.type_variable) loc = `Typer_type_variable_with_parameters_not_injection (op,loc)
 let redundant_constructor (e:Ast_typed.Environment.t) (c:Ast_core.label) (loc:Location.t) = `Typer_redundant_constructor (e,c,loc)
 let michelson_or (c:Ast_core.label) (loc:Location.t) = `Typer_michelson_or_no_annotation (c,loc)

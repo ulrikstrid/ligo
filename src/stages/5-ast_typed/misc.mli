@@ -32,3 +32,7 @@ val layout_eq : layout -> layout -> bool
 
 val assert_eq : 'a -> 'a -> unit option
 val assert_list_eq : ('a -> 'a -> unit option) -> 'a list -> 'a list -> unit option
+
+module Substitution : sig
+  val type_subst : (type_variable * type_expression) -> type_expression -> type_expression
+end
