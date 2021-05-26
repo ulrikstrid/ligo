@@ -1,4 +1,5 @@
 open Display
+open Client_utils_008_PtEdo2Zk
 
 let rec error_ppformat : display_format:string display_format ->
   Format.formatter -> Types.all -> unit =
@@ -128,24 +129,24 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_unparse_michelson_result errs ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while unparsing the Michelson result:@.%a @]"
-      (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_parse_payload _ -> Format.fprintf f "@[<hv>Error parsing message. @]" (* internal testing *)
     | `Main_pack_payload _ -> Format.fprintf f "@[<hv>Error packing message. @]" (* internal testing *)
     | `Main_parse_michelson_input errs ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while parsing the Michelson input:@.%a @]"
-      (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_parse_michelson_code errs ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while checking the contract:@.%a @]"
-        (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+        (Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_michelson_execution_error errs ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while executing the contract:@.%a @]"
-      (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_preproc e -> Preprocessing.Errors.error_ppformat ~display_format f e
     | `Main_parser e -> Parsing.Errors.error_ppformat ~display_format f e
@@ -175,7 +176,7 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_interpret_target_lang_error (loc, errs) ->
       Format.fprintf f "@[<v 4>%a@.An uncaught error occured in the object language:@.%a@]"
         Snippet.pp loc
-        (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+        (Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
     | `Main_interpret_boostrap_not_enough loc ->
       Format.fprintf f "@[<hv>%a@.We need at least two boostrap accounts for the default source and baker@]"
       Snippet.pp loc
