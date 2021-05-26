@@ -36,7 +36,7 @@ let pp_manager_operation_content (type kind) source internal pp_result ppf
         ppf
         "@[<v 2>%s:@,Amount: %s%a@,From: %a@,To: %a"
         (if internal then "Internal transaction" else "Transaction")
-        Client_proto_args.tez_sym
+        "\xEA\x9C\xA9"
         Tez.pp
         amount
         Contract.pp
@@ -50,8 +50,7 @@ let pp_manager_operation_content (type kind) source internal pp_result ppf
           Format.fprintf ppf "@,Entrypoint: %s" entrypoint ) ;
       ( if not (Script_repr.is_unit_parameter parameters) then
         let expr =
-          WithExceptions.Option.to_exn
-            ~none:(Failure "ill-serialized argument")
+          Option.get
             (Data_encoding.force_decode parameters)
         in
         Format.fprintf
@@ -68,16 +67,14 @@ let pp_manager_operation_content (type kind) source internal pp_result ppf
         (if internal then "Internal origination" else "Origination")
         Contract.pp
         source
-        Client_proto_args.tez_sym
+        "\xEA\x9C\xA9"
         Tez.pp
         credit ;
       let code =
-        WithExceptions.Option.to_exn
-          ~none:(Failure "ill-serialized code")
+        Option.get
           (Data_encoding.force_decode code)
       and storage =
-        WithExceptions.Option.to_exn
-          ~none:(Failure "ill-serialized storage")
+        Option.get
           (Data_encoding.force_decode storage)
       in
       let {Michelson_v1_parser.source; _} =
@@ -171,9 +168,9 @@ let pp_balance_updates ppf = function
       in
       let pp_update ppf = function
         | Credited amount ->
-            Format.fprintf ppf "+%s%a" Client_proto_args.tez_sym Tez.pp amount
+            Format.fprintf ppf "+%s%a" "\xEA\x9C\xA9" Tez.pp amount
         | Debited amount ->
-            Format.fprintf ppf "-%s%a" Client_proto_args.tez_sym Tez.pp amount
+            Format.fprintf ppf "-%s%a" "\xEA\x9C\xA9" Tez.pp amount
       in
       let pp_one ppf (balance, update) =
         let to_fill = column_size + 3 - String.length balance in
@@ -344,7 +341,7 @@ let pp_manager_operation_contents_and_result ppf
      Storage limit: %s bytes"
     Signature.Public_key_hash.pp
     source
-    Client_proto_args.tez_sym
+    "\xEA\x9C\xA9"
     Tez.pp
     fee
     (Z.to_string counter)

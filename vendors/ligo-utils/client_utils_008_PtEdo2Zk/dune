@@ -10,10 +10,12 @@
   tezos-protocol-008-PtEdo2Zk-parameters
   tezos-protocol-environment
   tezos-memory-proto-alpha
+  tezos-lwt-result-stdlib
   data-encoding
+  tezos-client-base
   simple-utils
   tezos-utils
   tezos-shell-services
   tezos-error-monad)
  (flags
-  (:standard -open Simple_utils -open Tezos_base__TzPervasives)))
+  (:standard -open Simple_utils -open Tezos_base__TzPervasives -open Tezos_client_base)))
