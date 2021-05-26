@@ -2,11 +2,12 @@
   (name proto_alpha_utils)
   (public_name proto-alpha-utils)
   (libraries
-    tezos-error-monad
+    tezos-base
     tezos-stdlib-unix
     tezos-protocol-008-PtEdo2Zk
     tezos-protocol-008-PtEdo2Zk-parameters
-    tezos-client-008-PtEdo2Zk
+    tezos-protocol-environment
+    ;tezos-client-008-PtEdo2Zk
     tezos-memory-proto-alpha
     data-encoding
     simple-utils

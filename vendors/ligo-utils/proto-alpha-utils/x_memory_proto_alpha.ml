@@ -5,7 +5,7 @@ let init_environment = Init_proto_alpha.init_environment
 let dummy_environment = Init_proto_alpha.dummy_environment
 
 
-open Protocol
+open Tezos_protocol_008_PtEdo2Zk.Protocol
 open Script_typed_ir
 open Script_ir_translator
 open Script_interpreter
@@ -58,7 +58,7 @@ let ty_eq (type a b)
 (* should not need lwt *)
 let prims_of_strings michelson =
   let (michelson, errs) =
-    Tezos_client_008_PtEdo2Zk.Michelson_v1_macros.expand_rec michelson in
+    Michelson_v1_macros.expand_rec michelson in
   match errs with
   | _ :: _ ->
     Lwt.return (Error errs)

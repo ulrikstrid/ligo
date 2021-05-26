@@ -83,17 +83,17 @@ let rec error_ppformat : display_format:string display_format ->
     | `Main_unparse_tracer errs ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[Error(s) occurred while translating to Michelson:@.%a@]"
-      (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_typecheck_contract_tracer (_c,err_l) ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) err_l in
       Format.fprintf f "@[<hv>Error(s) occurred while type checking the contract:@.%a@]"
-      (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_could_not_serialize errs ->
       let errs = List.map ( fun e -> match e with `Tezos_alpha_error a -> a) errs in
       Format.fprintf f "@[<hv>Error(s) occurred while serializing Michelson code:@.%a @]"
-      (Tezos_client_008_PtEdo2Zk.Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
+      (Michelson_v1_error_reporter.report_errors ~details:true ~show_source:true ?parsed:(None)) errs
 
     | `Main_check_typed_arguments (Simple_utils.Runned_result.Check_parameter, err) ->
       Format.fprintf f "@[<hv>Invalid command line argument. @.The provided parameter does not have the correct type for the given entrypoint.@ %a@]"

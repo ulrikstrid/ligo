@@ -17,7 +17,7 @@ depends: [
   "cstruct"
   "ezjsonm"
   "hex"
-  "hidapi"
+  # "hidapi"
   "irmin"
   "js_of_ocaml"
   "lwt"
