@@ -9,6 +9,7 @@
             tezos-protocol-008-PtEdo2Zk
             tezos-protocol-008-PtEdo2Zk-parameters
             tezos-error-monad
+            client_utils-008-PtEdo2Zk
             ;tezos-client-008-PtEdo2Zk
  )
  (flags (:standard -open Tezos_base__TzPervasives
@@ -16,5 +17,6 @@
                    -open Tezos_stdlib_unix
                    -open Tezos_protocol_008_PtEdo2Zk
                    ;-open Tezos_client_008_PtEdo2Zk
+                   -open Client_utils_008_PtEdo2Zk
                    -open Tezos_protocol_environment_008_PtEdo2Zk
                    -open Tezos_shell_services)))

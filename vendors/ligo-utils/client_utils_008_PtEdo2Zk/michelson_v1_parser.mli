@@ -23,43 +23,33 @@
 (*                                                                           *)
 (*****************************************************************************)
 
-open Protocol
-open Alpha_context
+open Tezos_protocol_008_PtEdo2Zk.Protocol
+open Memory_proto_alpha.Protocol.Alpha_context
 open Tezos_micheline
 
-val print_expr : Format.formatter -> Script_repr.expr -> unit
+(** The result of parsing and expanding a Michelson V1 script or data. *)
+type parsed = {
+  source : string;  (** The original source code. *)
+  unexpanded : string Micheline.canonical;
+      (** Original expression with macros. *)
+  expanded : Script.expr;  (** Expression with macros fully expanded. *)
+  expansion_table : (int * (Micheline_parser.location * int list)) list;
+      (** Associates unexpanded nodes to their parsing locations and
+        the nodes expanded from it in the expanded expression. *)
+  unexpansion_table : (int * int) list;
+      (** Associates an expanded node to its source in the unexpanded
+        expression. *)
+}
 
-val print_expr_unwrapped : Format.formatter -> Script_repr.expr -> unit
+val compare_parsed : parsed -> parsed -> int
 
-val print_execution_trace :
-  Format.formatter ->
-  (Script.location * Gas.t * (Script.expr * string option) list) list ->
-  unit
+val parse_toplevel :
+  ?check:bool -> string -> parsed Micheline_parser.parsing_result
 
-val print_big_map_diff : Format.formatter -> Lazy_storage.diffs -> unit
+val parse_expression :
+  ?check:bool -> string -> parsed Micheline_parser.parsing_result
 
-(** Insert the type map returned by the typechecker as comments in a
-    printable Micheline AST. *)
-val inject_types :
-  Script_tc_errors.type_map ->
-  Michelson_v1_parser.parsed ->
-  Micheline_printer.node
-
-(** Unexpand the macros and produce the result of parsing an
-    intermediate pretty printed source. Useful when working with
-    contracts extracted from the blockchain and not local files. *)
-val unparse_toplevel :
-  ?type_map:Script_tc_errors.type_map ->
-  Script.expr ->
-  Michelson_v1_parser.parsed
-
-val unparse_expression : Script.expr -> Michelson_v1_parser.parsed
-
-(** Unexpand the macros and produce the result of parsing an
-    intermediate pretty printed source. Works on generic trees,for
-    programs that fail to be converted to a specific script version. *)
-val unparse_invalid : string Micheline.canonical -> Michelson_v1_parser.parsed
-
-val ocaml_constructor_of_prim : Michelson_v1_primitives.prim -> string
-
-val micheline_string_of_expression : zero_loc:bool -> Script.expr -> string
+val expand_all :
+  source:string ->
+  original:Micheline_parser.node ->
+  parsed Micheline_parser.parsing_result
