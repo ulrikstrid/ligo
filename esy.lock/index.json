@@ -1,5 +1,5 @@
 {
-  "checksum": "dc98687036f6c6aaff9ca46cc3ccfbd4",
+  "checksum": "a77fbc7862c34ae2b3d964aada146d49",
   "root": "ligo@link-dev:./ligo.opam",
   "node": {
     "yarn-pkg-config@github:esy-ocaml/yarn-pkg-config#db3a0b63883606dd57c54a7158d560d6cba8cd79@d41d8cd9": {
@@ -4314,7 +4314,7 @@
         "ocaml@4.10.2000@d41d8cd9",
         "@opam/dune-configurator@opam:2.8.5@eae07e15",
         "@opam/dune@opam:2.8.5@83fb0224",
-        "@opam/conf-hidapi@archive:https://github.com/libusb/hidapi/archive/refs/tags/hidapi-0.10.1.tar.gz#sha256:f71dd8a1f46979c17ee521bc2117573872bbf040f8a4750e492271fc141f2644@01ec8486",
+        "@opam/conf-hidapi@archive:https://github.com/libusb/hidapi/archive/refs/tags/hidapi-0.10.1.tar.gz#sha256:f71dd8a1f46979c17ee521bc2117573872bbf040f8a4750e492271fc141f2644@3b859bba",
         "@opam/bigstring@opam:0.3@3fa3c6dc",
         "@esy-ocaml/substs@0.0.1@d41d8cd9"
       ],
@@ -5130,9 +5130,9 @@
       "dependencies": [],
       "devDependencies": []
     },
-    "@opam/conf-hidapi@archive:https://github.com/libusb/hidapi/archive/refs/tags/hidapi-0.10.1.tar.gz#sha256:f71dd8a1f46979c17ee521bc2117573872bbf040f8a4750e492271fc141f2644@01ec8486": {
+    "@opam/conf-hidapi@archive:https://github.com/libusb/hidapi/archive/refs/tags/hidapi-0.10.1.tar.gz#sha256:f71dd8a1f46979c17ee521bc2117573872bbf040f8a4750e492271fc141f2644@3b859bba": {
       "id":
-        "@opam/conf-hidapi@archive:https://github.com/libusb/hidapi/archive/refs/tags/hidapi-0.10.1.tar.gz#sha256:f71dd8a1f46979c17ee521bc2117573872bbf040f8a4750e492271fc141f2644@01ec8486",
+        "@opam/conf-hidapi@archive:https://github.com/libusb/hidapi/archive/refs/tags/hidapi-0.10.1.tar.gz#sha256:f71dd8a1f46979c17ee521bc2117573872bbf040f8a4750e492271fc141f2644@3b859bba",
       "name": "@opam/conf-hidapi",
       "version":
         "archive:https://github.com/libusb/hidapi/archive/refs/tags/hidapi-0.10.1.tar.gz#sha256:f71dd8a1f46979c17ee521bc2117573872bbf040f8a4750e492271fc141f2644",
@@ -5144,7 +5144,7 @@
       },
       "overrides": [
         "esy.lock/overrides/c96ee6805a1ac070e5ef89cd99c2f722/esy.json",
-        { "@opam/conf-pkg-config": "*" }
+        { "@opam/conf-libudev": "*" }
       ],
       "dependencies": [
         "libtool@github:esy-packages/esy-libtools#0fe768722d345533f86df32f4de3b6a374160e2e@d41d8cd9",

@@ -188,7 +188,7 @@
         "source": "https://gitlab.com/tezos/tezos/-/archive/v8.3/tezos-v8.3.tar.bz2#16e984fa8f377f6c55543c30117f211fdcd7f44b",
         "override": {
           "buildsInSource": true,
-          "buildEnvOverride": {              
+          "buildEnvOverride": {
             "LD_LIBRARY_PATH": "#{@opam/conf-libffi.lib : $LD_LIBRARY_PATH}",
             "ESY__DYLD_LIBRARY_PATH": "#{ @opam/hacl-star-raw.lib / 'hacl-star-raw' }"
           },
@@ -313,12 +313,19 @@
       "@opam/conf-hidapi": {
         "source": "esy-packages/esy-hidapi:esy.json#e21f930d6474e460fa5bb955a26505f6c3500c7a",
         "override": {
-          "@opam/conf-pkg-config": "*"
+          "@opam/conf-libudev": "*"
+        }
+      },
+      "@opam/conf-libudev": {
+        "source": "https://github.com/systemd/systemd/archive/refs/tags/v248.tar.gz#e21f930d6474e460fa5bb955a26505f6c3500c7a",
+        "override": {
+          "build": [["configure", "--prefix=#{self.install}"], "make"],
+          "install": [["make", "install"]]
         }
       },
       "autoconf": {
         "source": "esy-packages/esy-autoconf#ea58671a08c7ebf89b0cebd41f4950ca67157b01",
-        "override":  {
+        "override": {
           "dependencies": {
             "@opam/conf-m4": "*"
           }
