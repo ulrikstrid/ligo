@@ -310,19 +310,7 @@
         }
       },
       "@opam/conf-m4": "esy-packages/esy-m4#c7cf0ac9221be2b1f9d90e83559ca08397a629e7",
-      "@opam/conf-hidapi": {
-        "source": "esy-packages/esy-hidapi:esy.json#e21f930d6474e460fa5bb955a26505f6c3500c7a",
-        "override": {
-          "@opam/conf-libudev": "*"
-        }
-      },
-      "@opam/conf-libudev": {
-        "source": "https://github.com/systemd/systemd/archive/refs/tags/v248.tar.gz#e21f930d6474e460fa5bb955a26505f6c3500c7a",
-        "override": {
-          "build": [["configure", "--prefix=#{self.install}"], "make"],
-          "install": [["make", "install"]]
-        }
-      },
+
       "autoconf": {
         "source": "esy-packages/esy-autoconf#ea58671a08c7ebf89b0cebd41f4950ca67157b01",
         "override": {

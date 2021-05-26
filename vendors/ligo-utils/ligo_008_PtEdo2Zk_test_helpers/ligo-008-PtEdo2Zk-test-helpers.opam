@@ -13,7 +13,7 @@ depends: [
   "tezos-protocol-environment"
   "tezos-protocol-008-PtEdo2Zk"
   "tezos-protocol-008-PtEdo2Zk-parameters"
-  "tezos-client-008-PtEdo2Zk"
+  # "tezos-client-008-PtEdo2Zk"
   "alcotest-lwt"
 ]
 build: [
