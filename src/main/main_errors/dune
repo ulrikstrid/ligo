@@ -22,6 +22,7 @@
     self_mini_c
     stacking
     self_michelson
+    client_utils-008-PtEdo2Zk
   )
-  (flags (:standard -w +1..62-4-9-44-40-42-48-30@39@33 -open Simple_utils -open Tezos_utils ))
+  (flags (:standard -w +1..62-4-9-44-40-42-48-30@39@33 -open Simple_utils -open Tezos_utils -open Client_utils_008_PtEdo2Zk))
 )

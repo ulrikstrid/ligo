@@ -43,6 +43,7 @@ depends: [
   "tezos-protocol-environment"
   "tezos-protocol-008-PtEdo2Zk"
   "tezos-protocol-008-PtEdo2Zk-parameters"
+  "client_utils-008-PtEdo2Zk"
   # "tezos-client-008-PtEdo2Zk"
   "tezos-memory-proto-alpha"
   "simple-utils"

@@ -8,17 +8,18 @@ license: "MIT"
 depends: [
   "dune" { >= "2.0" }
   "tezos-base"
+  "tezos-utils"
   "tezos-stdlib-unix"
   "tezos-shell-services"
   "tezos-protocol-environment"
   "tezos-protocol-008-PtEdo2Zk"
   "tezos-protocol-008-PtEdo2Zk-parameters"
-  "client_utils-008-PtEdo2Zk"
+  "tezos-memory-proto-alpha"
   # "tezos-client-008-PtEdo2Zk"
-  "alcotest-lwt"
+  "alcotest-lwt" {with-test}
 ]
 build: [
   ["dune" "build" "-p" name "-j" jobs]
   ["dune" "runtest" "-p" name "-j" jobs] {with-test}
 ]
-synopsis: "Tezos/Protocol: protocol testing framework"
+synopsis: "Slim version of tezos client"

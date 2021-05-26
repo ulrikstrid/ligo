@@ -30,7 +30,7 @@
     },
     "resolutions": {
       "@opam/ctypes-foreign": {
-        "source": "ocamllabs/ocaml-ctypes:ctypes-foreign.opam#0cbd0378b494d6377fd40606433a846736109c22",
+        "source": "ocamllabs/ocaml-ctypes:ctypes-foreign.opam#15c225ea4f3efd1936fb045494a6b1803f42f594",
         "override": {
           "dependencies": {
             "@opam/ctypes": null,
@@ -39,10 +39,14 @@
         }
       },
       "@opam/ctypes": {
-        "source": "ocamllabs/ocaml-ctypes:ctypes.opam#0cbd0378b494d6377fd40606433a846736109c22",
+        "source": "ocamllabs/ocaml-ctypes:ctypes.opam#15c225ea4f3efd1936fb045494a6b1803f42f594",
         "override": {
+          "buildEnvOverride": {
+            "LD_LIBRARY_PATH": "#{@opam/conf-libffi.lib : $LD_LIBRARY_PATH}"
+          },
           "build": [
-            ["make", "libffi.config", "ctypes-base", "ctypes-stubs"],
+            ["make", "libffi.config"],
+            ["make", "ctypes-base", "ctypes-stubs"],
             ["make", "ctypes-foreign"]
           ],
           "dependencies": {
@@ -62,6 +66,7 @@
           "buildEnvOverride": {
             "LD_LIBRARY_PATH": "#{@opam/conf-libffi.lib : $LD_LIBRARY_PATH}"
           },
+          "buildsInSource": true,
           "build": [
             ["sh", "-exc", "cd raw && ./configure"],
             ["make", "-C", "raw"]
@@ -291,6 +296,7 @@
       "@opam/simple-utils": "link:./vendors/ligo-utils/simple-utils/simple-utils.opam",
       "@opam/proto-alpha-utils": "link:./vendors/ligo-utils/proto-alpha-utils/proto-alpha-utils.opam",
       "@opam/tezos-memory-proto-alpha": "link:./vendors/ligo-utils/memory-proto-alpha/tezos-memory-proto-alpha.opam",
+      "@opam/client_utils-008-PtEdo2Zk": "link:./vendors/ligo-utils/client_utils_008_PtEdo2Zk/client_utils-008-PtEdo2Zk.opam",
       "@opam/ligo-008-PtEdo2Zk-test-helpers": "link:./vendors/ligo-utils/ligo_008_PtEdo2Zk_test_helpers/ligo-008-PtEdo2Zk-test-helpers.opam",
       "@opam/ParserLib": "link:./vendors/ParserLib/ParserLib.opam",
       "@opam/LexerLib": "link:./vendors/LexerLib/LexerLib.opam",
@@ -298,7 +304,7 @@
       "@opam/RedBlackTrees": "link:./vendors/Red-Black_Trees/RedBlackTrees.opam",
       "@opam/Preprocessor": "link:./vendors/Preprocessor/Preprocessor.opam",
 
-      "@opam/conf-libffi": "ManasJayanth/esy-libffi:esy.json#64e2774e366e76b9742cd4b81af63cc933ea6e7f",
+      "@opam/conf-libffi": "ManasJayanth/esy-libffi:esy.json#cb5d52027bdf5b1f0f125dcb9eaa7283e8a824cb",
       "@opam/conf-rust": "ulrikstrid/esy-rustup:esy.json#e86b5aadc4af6a04f1f7cd950d7d9adb61b6dc87",
       "@opam/conf-libev": "esy-packages/libev#0b5eb6685b688649045aceac55dc559f6f21b829",
       "@opam/conf-gmp": {

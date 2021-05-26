@@ -42,7 +42,7 @@ module Tezos_List = struct
     rev_map2 ~when_different_lengths f xs ys >|? List.rev
 end
 
-open Protocol
+open Tezos_protocol_008_PtEdo2Zk.Protocol
 open Tezos_micheline
 open Micheline_parser
 open Micheline
