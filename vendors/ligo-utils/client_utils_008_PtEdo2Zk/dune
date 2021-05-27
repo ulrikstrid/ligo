@@ -12,10 +12,9 @@
   tezos-memory-proto-alpha
   tezos-lwt-result-stdlib
   data-encoding
-  tezos-client-base
   simple-utils
   tezos-utils
   tezos-shell-services
   tezos-error-monad)
  (flags
-  (:standard -open Simple_utils -open Tezos_base__TzPervasives -open Tezos_client_base)))
+  (:standard -open Simple_utils -open Tezos_base__TzPervasives)))

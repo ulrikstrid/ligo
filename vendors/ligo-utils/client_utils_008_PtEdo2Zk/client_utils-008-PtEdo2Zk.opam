@@ -15,7 +15,6 @@ depends: [
   "tezos-protocol-008-PtEdo2Zk"
   "tezos-protocol-008-PtEdo2Zk-parameters"
   "tezos-memory-proto-alpha"
-  "tezos-client-base"
   # "tezos-client-008-PtEdo2Zk"
   "alcotest-lwt" {with-test}
 ]
