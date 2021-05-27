@@ -1,4 +1,5 @@
 {
+  "version": "1.0.0",
   "name": "ligo",
   "source": "./ligo.opam",
   "esy": {
@@ -304,7 +305,7 @@
       "@opam/RedBlackTrees": "link:./vendors/Red-Black_Trees/RedBlackTrees.opam",
       "@opam/Preprocessor": "link:./vendors/Preprocessor/Preprocessor.opam",
 
-      "@opam/conf-libffi": "ManasJayanth/esy-libffi:esy.json#cb5d52027bdf5b1f0f125dcb9eaa7283e8a824cb",
+      "@opam/conf-libffi": "ManasJayanth/esy-libffi:esy.json#41698aeda66c004df26c0c1d80a191503bada03d",
       "@opam/conf-rust": "ulrikstrid/esy-rustup:esy.json#e86b5aadc4af6a04f1f7cd950d7d9adb61b6dc87",
       "@opam/conf-libev": "esy-packages/libev#0b5eb6685b688649045aceac55dc559f6f21b829",
       "@opam/conf-gmp": {
