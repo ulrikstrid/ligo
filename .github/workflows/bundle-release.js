@@ -72,18 +72,22 @@ fs.writeFileSync(
 try {
   console.log("Copying LICENSE");
   fs.copyFileSync(
-    path.join(__dirname, "..", "..", "LICENSE"),
+    path.join(__dirname, "..", "..", "LICENSE.md"),
     path.join(__dirname, "..", "..", "_release", "LICENSE")
   );
 } catch (e) {
   console.warn("No LICENSE found");
 }
 
-console.log("Copying README.md");
-fs.copyFileSync(
-  path.join(__dirname, "..", "..", "README.md"),
-  path.join(__dirname, "..", "..", "_release", "README.md")
-);
+try {
+  console.log("Copying README.md");
+  fs.copyFileSync(
+    path.join(__dirname, "..", "..", "README.md"),
+    path.join(__dirname, "..", "..", "_release", "README.md")
+  );
+} catch (e) {
+  console.warn("No README.md found");
+}
 
 console.log("Copying postinstall.js");
 fs.copyFileSync(
