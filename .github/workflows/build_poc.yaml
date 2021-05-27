@@ -124,7 +124,3 @@ jobs:
       - name: test binary
         run: |
           ligo --help
-          ligo compile-contract src/test/contracts/website2.ligo main
-          ligo compile-storage src/test/contracts/website2.ligo main 1
-          ligo compile-parameter src/test/contracts/website2.ligo main "Increment(1)"
-          ligo dry-run src/test/contracts/website2.ligo main "Increment(1)" 1
