@@ -29,6 +29,11 @@
       [
         "strip",
         "#{$cur__target_dir / '_build' / 'default' / 'src' / 'bin' / 'runligo.exe'}"
+      ],
+      [
+        "chmod",
+        "-w",
+        "#{$cur__target_dir / '_build' / 'default' / 'src' / 'bin' / 'runligo.exe'}"
       ]
     ],
     "install": [
