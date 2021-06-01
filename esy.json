@@ -19,7 +19,11 @@
     "test": "esy x ligo compile-contract src/test/contracts/website2.ligo main"
   },
   "override": {
-    "build": ["dune build -p ligo"],
+    "build": [["dune", "build", "-p", "ligo"]],
+    "install": [
+      ["esy-installer", "./ligo.install"],
+      ["rm", "-rf", "#{self.lib / 'ligo'}"]
+    ],
     "exportedEnv": {
       "DYLD_LIBRARY_PATH": {
         "val": "#{@opam/hacl-star-raw.lib / 'hacl-star-raw' : $DYLD_LIBRARY_PATH}",
