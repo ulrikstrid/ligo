@@ -1,16 +1,17 @@
 (library
-  (name proto_alpha_utils)
-  (public_name proto-alpha-utils)
-  (libraries
-    tezos-error-monad
-    tezos-stdlib-unix
-    tezos-protocol-008-PtEdo2Zk
-    tezos-protocol-008-PtEdo2Zk-parameters
-    tezos-client-008-PtEdo2Zk
-    tezos-memory-proto-alpha
-    data-encoding
-    simple-utils
-    tezos-utils
-  )
- (flags (:standard -open Simple_utils))
-)
+ (name proto_alpha_utils)
+ (public_name proto-alpha-utils)
+ (libraries
+  tezos-base
+  tezos-stdlib-unix
+  tezos-protocol-008-PtEdo2Zk
+  tezos-protocol-008-PtEdo2Zk-parameters
+  tezos-protocol-environment
+  ;tezos-client-008-PtEdo2Zk
+  tezos-memory-proto-alpha
+  client_utils-008-PtEdo2Zk
+  data-encoding
+  simple-utils
+  tezos-utils)
+ (flags
+  (:standard -open Simple_utils -open Client_utils_008_PtEdo2Zk)))
