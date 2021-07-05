@@ -37,8 +37,6 @@ let rec assoc ~equal k = function
   | (kk, v) :: kvs ->
       if equal k kk then Some v else assoc ~equal k kvs
 
-let hd = function x :: _ -> Some x | [] -> None
-
 let print_ty ppf ty = Michelson_v1_printer.print_expr_unwrapped ppf ty
 
 let print_var_annot ppf annot = List.iter (Format.fprintf ppf "@ %s") annot

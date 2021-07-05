@@ -23,7 +23,6 @@
 (*                                                                           *)
 (*****************************************************************************)
 
-open Tezos_protocol_008_PtEdo2Zk.Protocol
 open Memory_proto_alpha.Protocol.Alpha_context
 open Tezos_micheline
 
